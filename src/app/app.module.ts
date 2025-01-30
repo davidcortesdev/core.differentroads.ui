@@ -36,6 +36,7 @@ import { CarouselModule } from 'primeng/carousel';
 import { CardModule } from 'primeng/card';
 import { HomeComponent } from './pages/home/home.component';
 import { FormsModule } from '@angular/forms';
+import { DatePickerModule } from 'primeng/datepicker';
 
 @NgModule({
   declarations: [
@@ -60,6 +61,7 @@ import { FormsModule } from '@angular/forms';
     CarouselModule,
     CardModule,
     FormsModule,
+    DatePickerModule
   ],
   providers: [
     provideAnimationsAsync(),

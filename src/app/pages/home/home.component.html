@@ -14,17 +14,17 @@
           [(ngModel)]="selectedDestination">
         </p-autoComplete>
 
-        <p-calendar 
+        <p-datepicker 
           [(ngModel)]="departureDate" 
           placeholder="Ida"
           [showIcon]="true">
-        </p-calendar>
+        </p-datepicker>
 
-        <p-calendar 
+        <p-datepicker 
           [(ngModel)]="returnDate" 
           placeholder="Vuelta"
           [showIcon]="true">
-        </p-calendar>
+        </p-datepicker>
 
         <p-autoComplete 
           [suggestions]="filteredTripTypes" 

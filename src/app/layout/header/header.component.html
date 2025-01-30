@@ -1,0 +1,32 @@
+<div class="header-wrapper">
+    <div class="top-section">
+        <p-menubar styleClass="top-menu">
+            <ng-template #start>
+                <img src="white-logo.svg" alt="Different Roads Logo" class="logo" />
+            </ng-template>
+            <ng-template #end>
+                <div class="flex items-center gap-4">
+                    <div class="search-container">
+                        <span class="p-input-icon-right">
+                            <i class="pi pi-search"></i>
+                            <input type="text" pInputText class="search-input" />
+                        </span>
+                    </div>
+                    <span class="currency">€</span>
+                </div>
+            </ng-template>
+        </p-menubar>
+    </div>
+
+    <div class="bottom-section">
+        <p-menubar styleClass="nav-menu">
+            <ng-template #start>
+                <p-menubar [model]="leftMenuItems" styleClass="left-menu"></p-menubar>
+            </ng-template>
+            <ng-template #end>
+                <p-menubar [model]="rightMenuItems" styleClass="right-menu"></p-menubar>
+            </ng-template>
+        </p-menubar>
+    </div>
+</div>
+

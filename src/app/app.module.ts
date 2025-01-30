@@ -30,13 +30,20 @@ import { provideHttpClient } from '@angular/common/http';
 import { AvatarModule } from 'primeng/avatar';
 import { AvatarGroupModule } from 'primeng/avatargroup';
 import { AutoCompleteModule } from 'primeng/autocomplete';
+import { CalendarModule } from 'primeng/calendar';
+import { ButtonModule } from 'primeng/button';
+import { CarouselModule } from 'primeng/carousel';
+import { CardModule } from 'primeng/card';
+import { HomeComponent } from './pages/home/home.component';
+import { FormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [
     AppComponent,
     HeaderComponent,
     FooterComponent,
-    MainComponent
+    MainComponent,
+    HomeComponent
   ],
   imports: [
     BrowserModule,
@@ -47,7 +54,12 @@ import { AutoCompleteModule } from 'primeng/autocomplete';
     AvatarModule,
     AvatarGroupModule,
     InputTextModule,
-    AutoCompleteModule
+    AutoCompleteModule,
+    CalendarModule,
+    ButtonModule,
+    CarouselModule,
+    CardModule,
+    FormsModule,
   ],
   providers: [
     provideAnimationsAsync(),

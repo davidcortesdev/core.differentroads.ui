@@ -1,0 +1,67 @@
+<div class="home-container">
+  <!-- Hero Section with Search -->
+  <section class="hero-section">
+    <video class="background-video" autoplay muted loop playsinline>
+      <source src="https://d2sk3o7yhm4ek9.cloudfront.net/public/main-banner/desktop/fdb7592e-79e7-41bf-b1dd-36db39611353/different_roads_2025_tours_organizados_video_home.mp4" type="video/mp4">
+    </video>
+    <div class="search-container">
+      <div class="search-form">
+        <p-autoComplete 
+          [suggestions]="filteredDestinations" 
+          (completeMethod)="filterDestinations($event)"
+          placeholder="¿Donde quieres ir?"
+          [dropdown]="true"
+          [(ngModel)]="selectedDestination">
+        </p-autoComplete>
+
+        <p-calendar 
+          [(ngModel)]="departureDate" 
+          placeholder="Ida"
+          [showIcon]="true">
+        </p-calendar>
+
+        <p-calendar 
+          [(ngModel)]="returnDate" 
+          placeholder="Vuelta"
+          [showIcon]="true">
+        </p-calendar>
+
+        <p-autoComplete 
+          [suggestions]="filteredTripTypes" 
+          (completeMethod)="filterTripTypes($event)"
+          placeholder="Tipo de viaje"
+          [dropdown]="true"
+          [(ngModel)]="selectedTripType">
+        </p-autoComplete>
+
+        <button pButton type="button" label="Buscar" icon="pi pi-search"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tours Section -->
+  <section class="tours-section">
+    <h2>Descubre lo mejor de Europa</h2>
+    <p-carousel [value]="tours" [numVisible]="3" [numScroll]="1" [circular]="true">
+      <ng-template let-tour pTemplate="item">
+        <div class="tour-card">
+          <p-card>
+            <ng-template pTemplate="header">
+              <img [src]="tour.imageUrl" [alt]="tour.title">
+              <span class="tour-rating">{{tour.rating}} ★</span>
+              <span class="tour-tag">{{tour.tag}}</span>
+            </ng-template>
+            <h3>{{tour.title}}</h3>
+            <p>{{tour.description}}</p>
+            <ng-template pTemplate="footer">
+              <div class="tour-footer">
+                <span class="tour-price">desde {{tour.price}}€</span>
+                <button pButton type="button" label="Ver tour"></button>
+              </div>
+            </ng-template>
+          </p-card>
+        </div>
+      </ng-template>
+    </p-carousel>
+  </section>
+</div>

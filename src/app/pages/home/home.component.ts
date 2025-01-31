@@ -42,6 +42,14 @@ export class HomeComponent implements OnInit {
       rating: 4.5,
       tag: 'Etiqueta destacada',
       price: 1295
+    },
+    {
+      imageUrl: 'assets/images/tours/switzerland.jpg',
+      title: 'De los viñedos de Alaska',
+      description: 'Alaska asdf ',
+      rating: 4.5,
+      tag: 'ET',
+      price: 1234
     }
   ];
 

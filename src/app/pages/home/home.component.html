@@ -42,7 +42,7 @@
   <!-- Tours Section -->
   <section class="tours-section">
     <h2>Descubre lo mejor de Europa</h2>
-    <p-carousel [value]="tours" [numVisible]="3" [numScroll]="1" [circular]="true">
+    <p-carousel [value]="tours" [numVisible]="3" [numScroll]="1" [circular]="true" autoplayInterval="3000">
       <ng-template let-tour pTemplate="item">
         <div class="tour-card">
           <p-card>

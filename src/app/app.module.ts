@@ -17,8 +17,7 @@ import { FloatLabelModule } from 'primeng/floatlabel';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { FileUploadModule } from 'primeng/fileupload';
-
-import { RippleModule } from 'primeng/ripple';
+import { ImageModule } from 'primeng/image';
 
 import { ApplicationConfig } from '@angular/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
@@ -39,6 +38,11 @@ import { FormsModule } from '@angular/forms';
 import { DatePickerModule } from 'primeng/datepicker';
 import { HeroSectionComponent } from './pages/home/components/hero-section/hero-section.component';
 import { ToursSectionComponent } from './pages/home/components/tours-section/tours-section.component';
+import { CommunitySectionComponent } from './pages/home/components/community-section/community-section.component';
+import { RippleModule } from 'primeng/ripple';
+import { CommunityHeroComponent } from './pages/home/components/community-section/components/community-hero/community-hero.component';
+import { CommunityGalleryComponent } from './pages/home/components/community-section/components/community-gallery/community-gallery.component';
+import { CommunityReviewsComponent } from './pages/home/components/community-section/components/community-reviews/community-reviews.component';
 
 @NgModule({
   declarations: [
@@ -48,7 +52,11 @@ import { ToursSectionComponent } from './pages/home/components/tours-section/tou
     MainComponent,
     HomeComponent,
     HeroSectionComponent,
-    ToursSectionComponent
+    ToursSectionComponent,
+    CommunitySectionComponent,
+    CommunityHeroComponent,
+    CommunityGalleryComponent,
+    CommunityReviewsComponent
   ],
   imports: [
     BrowserModule,
@@ -65,7 +73,9 @@ import { ToursSectionComponent } from './pages/home/components/tours-section/tou
     CarouselModule,
     CardModule,
     FormsModule,
-    DatePickerModule
+    DatePickerModule,
+    ImageModule,
+    RatingModule
   ],
   providers: [
     provideAnimationsAsync(),

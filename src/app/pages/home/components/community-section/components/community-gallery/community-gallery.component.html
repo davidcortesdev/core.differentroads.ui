@@ -1,0 +1,15 @@
+<div class="community-gallery">
+  <p-carousel [value]="communityImages" [numVisible]="6" [numScroll]="1" [circular]="true"
+    [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000">
+    <ng-template let-image pTemplate="item">
+      <div class="carousel-item">
+        <p-image [src]="image.url" [alt]="image.location" [preview]="true">
+          <ng-template pTemplate="indicator">
+            <span class="location-tag">{{image.location}}</span>
+            <span class="username">{{image.username}}</span>
+          </ng-template>
+        </p-image>
+      </div>
+    </ng-template>
+  </p-carousel>
+</div>

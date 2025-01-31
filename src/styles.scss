@@ -18,6 +18,8 @@
     --primary-color-900:#901a10;
     --primary-color-950:#780a01;
 
+    --background-azul: #002B57;
+
 
     
     --p-primary-50: var(--primary-color-50);
@@ -33,5 +35,13 @@
     --p-primary-950: var(--primary-color-950);
 
     --p-primary-color:var(--p-primary-500);
+
+    /*
+    --p-menubar-background:var(--p-primary-800);
+    --p-menubar-color:var(--p-primary-50);
+    --p-menubar-item-color:var(--p-primary-50);
+    --p-menubar-border-color:var(--p-primary-50);
+    */
+    --p-menubar-border-color:var(--p-menubar-background);
     
 }

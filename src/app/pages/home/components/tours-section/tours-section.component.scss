@@ -8,8 +8,8 @@
     color: #333;
   }
 
-  p-button{
-    width: 5rem;
+  .buttonVertour{
+    width: 7rem;
   }
 
   .tour-card {
@@ -129,6 +129,8 @@
             flex-wrap: wrap;
             width: 15rem;
             height: 2.5rem;
+            align-items: center;
+            justify-content: flex-start;
 
             .month {
               display: flex;

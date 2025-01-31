@@ -2,9 +2,11 @@
   <h2>Descubre lo mejor de Europa</h2>
   <p-carousel
     [value]="tours"
-    [numVisible]="2"
+    [numVisible]="3"
     [numScroll]="1"
     [circular]="true"
+    [responsiveOptions]="responsiveOptions"
+    [autoplayInterval]="5000"
   >
     <ng-template let-tour pTemplate="item">
       <div class="tour-card">

@@ -23,13 +23,14 @@
       padding: 2rem;
       width: 80%;
       max-width: 1200px;
-      
+
       .search-form {
         display: flex;
         gap: 1rem;
         align-items: center;
 
-        p-autoComplete, p-calendar {
+        p-autoComplete,
+        p-calendar {
           flex: 1;
         }
 
@@ -52,42 +53,151 @@
 
     .tour-card {
       padding: 0.5rem;
+      height: 100%;
 
-      img {
-        width: 100%;
-        height: 200px;
-        object-fit: cover;
-      }
+      ::ng-deep .tour-card-wrapper {
+        .p-card {
+          border-radius: 1rem;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          height: 100%;
+          display: flex;
+          flex-direction: column;
 
-      .tour-rating {
-        position: absolute;
-        top: 1rem;
-        left: 1rem;
-        background: rgba(0, 0, 0, 0.7);
-        color: white;
-        padding: 0.3rem 0.6rem;
-        border-radius: 4px;
-      }
+          .p-card-body {
+            padding: 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+          }
 
-      .tour-tag {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        background: #e57373;
-        color: white;
-        padding: 0.3rem 0.6rem;
-        border-radius: 4px;
-      }
+          .p-card-content {
+            padding: 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+          }
+        }
 
-      .tour-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        .image-container {
+          position: relative;
+          height: 280px;
 
-        .tour-price {
-          font-size: 1.2rem;
-          font-weight: bold;
-          color: #333;
+          img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+          }
+
+          .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+              to bottom,
+              rgba(0, 0, 0, 0.2),
+              rgba(0, 0, 0, 0.7)
+            );
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+
+            .rating {
+              align-self: flex-start;
+              background: var(--p-primary-color);
+              color: var(--p-button-primary-color);
+              padding: 0.3rem 0.6rem;
+              border-radius: 4px;
+              font-size: 0.9rem;
+            }
+
+            .tag {
+              position: absolute;
+              top: 1rem;
+              right: 1rem;
+              background: var(--p-button-primary-color);
+              color: var(--p-primary-color);
+              padding: 0.3rem 0.6rem;
+              border-radius: 4px;
+              font-size: 0.9rem;
+            }
+
+            .title-overlay {
+              margin-top: auto;
+              color: white;
+
+              h3 {
+                font-size: 1.5rem;
+                margin-bottom: 0.5rem;
+              }
+
+              p {
+                margin: 0;
+                font-size: 1rem;
+              }
+            }
+          }
+        }
+
+        .card-footer {
+          padding: 1rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end; // Changed from center to flex-start
+
+          .price-section {
+            display: flex;
+            flex-direction: column;
+
+            .desde {
+              font-size: 0.9rem;
+              color: #666;
+            }
+
+            .price {
+              font-size: 1.5rem;
+              font-weight: bold;
+              color: #333;
+            }
+
+            .months {
+              display: flex;
+              gap: 0.5rem;
+              margin-top: 0.5rem;
+              flex-wrap: wrap; // Added to allow multiple rows
+              max-width: 15rem; // Added to control wrapping
+
+              .month {
+                /*      font-size: 0.8rem;
+                color: #666;
+                padding: 0.2rem 0.4rem;
+                border-radius: 3px;
+                background: #f5f5f5;
+                margin-bottom: 0.3rem; // Added spacing between rows
+*/
+                display: flex;
+                width: 1.90038rem;
+                height: 0.81444rem;
+                padding: 0.13575rem 0.33938rem;
+                justify-content: center;
+                align-items: center;
+                gap: 0.67869rem;
+
+                color: #fff;
+                leading-trim: both;
+                text-edge: cap;
+                font-size: 0.67869rem;
+                font-style: normal;
+                font-weight: 500;
+                line-height: 0.67869rem; /* 100% */
+                &.active {
+                  background: #0a1e3c;
+                  color: white;
+                }
+              }
+            }
+          }
         }
       }
     }

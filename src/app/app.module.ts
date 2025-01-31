@@ -66,17 +66,17 @@ import { DatePickerModule } from 'primeng/datepicker';
   providers: [
     provideAnimationsAsync(),
     provideHttpClient(),
-        providePrimeNG({
-            theme: {
-                preset: Aura,
-                options: {
-                  cssLayer: {
-                      name: 'primeng',
-                      order: 'tailwind-base, primeng, tailwind-utilities'
-                  }
-              }
-            }
-        })
+    providePrimeNG({
+      theme: {
+        preset: Aura,
+        options: {
+          cssLayer: {
+            name: 'primeng',
+            order: 'tailwind-base, primeng, tailwind-utilities'
+          },
+        }
+      }
+    })
   ],
   bootstrap: [AppComponent]
 })

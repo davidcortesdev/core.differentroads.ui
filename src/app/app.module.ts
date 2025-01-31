@@ -37,6 +37,8 @@ import { CardModule } from 'primeng/card';
 import { HomeComponent } from './pages/home/home.component';
 import { FormsModule } from '@angular/forms';
 import { DatePickerModule } from 'primeng/datepicker';
+import { HeroSectionComponent } from './pages/home/components/hero-section/hero-section.component';
+import { ToursSectionComponent } from './pages/home/components/tours-section/tours-section.component';
 
 @NgModule({
   declarations: [
@@ -44,7 +46,9 @@ import { DatePickerModule } from 'primeng/datepicker';
     HeaderComponent,
     FooterComponent,
     MainComponent,
-    HomeComponent
+    HomeComponent,
+    HeroSectionComponent,
+    ToursSectionComponent
   ],
   imports: [
     BrowserModule,

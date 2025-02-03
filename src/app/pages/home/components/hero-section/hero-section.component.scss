@@ -40,12 +40,13 @@
           ::ng-deep .p-autocomplete,
           ::ng-deep .p-calendar {
             width: 100%;
-          }
+          }          
         }
       }
 
-      button {
+      p-button {
         min-width: 120px;
+        width: 7rem;
       }
     }
   }

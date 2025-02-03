@@ -27,10 +27,21 @@
       display: flex;
       gap: 1rem;
       align-items: center;
+      flex-wrap: wrap;
 
-      p-autoComplete,
-      p-calendar {
+      p-floatlabel {
         flex: 1;
+        display: flex;
+        min-width: 200px;
+        p-autoComplete,
+        p-datepicker {
+          flex: 1;
+          width: 100%;
+          ::ng-deep .p-autocomplete,
+          ::ng-deep .p-calendar {
+            width: 100%;
+          }
+        }
       }
 
       button {

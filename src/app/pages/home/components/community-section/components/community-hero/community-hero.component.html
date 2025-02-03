@@ -1,26 +1,30 @@
 <div class="community-hero">
   <div class="header">
-    <h2>Titular para sección comunidad</h2>
+    <h2>{{ data.title }}</h2>
     <div class="google-rating">
-      <img src="assets/images/google-logo.png" alt="Google" />
-      <span class="rating">4.5</span>
-      <p-rating [ngModel]="4.5" [readonly]="true" [stars]="5"></p-rating>
+      <img src="google_icon-icons.svg" alt="Google" />
+      <span class="rating">{{ data.googleRating }}</span>
+      <p-rating
+        [ngModel]="data.googleRating"
+        [readonly]="true"
+        [stars]="5"
+      ></p-rating>
     </div>
   </div>
 
   <div class="featured-content">
     <div class="featured-images">
-      <img src="https://picsum.photos/200" alt="Featured 1" class="featured-image" />
-      <img src="https://picsum.photos/200" alt="Featured 2" class="featured-image" />
+      <p-image
+        *ngFor="let image of data.featured.images"
+        [src]="image"
+        [alt]="'Featured image'"
+        [preview]="true"
+        class="featured-image"
+      >
+      </p-image>
     </div>
     <div class="featured-text">
-      <span class="location">País</span>
-      <h3>Descubre el viaje de influencer a Japón con Different</h3>
-      <p>Lorem ipsum dolor sit amet consectetur. Lorem ipsum dolor sit amet consectetur.</p>
-      <div class="social-info">
-        <i class="pi pi-instagram"></i>
-        <span>nombre_user22</span>
-      </div>
+      <div [innerHTML]="data.featured.content"></div>
     </div>
   </div>
 </div>

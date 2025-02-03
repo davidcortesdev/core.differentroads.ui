@@ -76,7 +76,8 @@ import { CommunityReviewsComponent } from './pages/home/components/community-sec
     DatePickerModule,
     ImageModule,
     RatingModule,
-    FloatLabelModule
+    FloatLabelModule,
+    ImageModule
   ],
   providers: [
     provideAnimationsAsync(),

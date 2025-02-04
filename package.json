@@ -3,8 +3,12 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --host=0.0.0.0 --disable-host-check",
+    "start": "ng serve --configuration=development --host=0.0.0.0 --disable-host-check",
+    "start:pre": "ng serve --configuration=pre --host=0.0.0.0 --disable-host-check",
+    "start:prod": "ng serve --configuration=production --host=0.0.0.0 --disable-host-check",
     "build": "ng build",
+    "build:pre": "ng build --configuration=pre",
+    "build:prod": "ng build --configuration=production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

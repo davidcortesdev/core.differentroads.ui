@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { HomeSchema } from '../models/home.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class HomeService {
-  private readonly API_URL = 'https://api.differentroads.co/dev/v3/data/cms/globals/es/home-page';
+  private readonly API_URL = `${environment.apiUrl}/data/cms/globals/es/home-page`;
 
   constructor(private http: HttpClient) { }
 

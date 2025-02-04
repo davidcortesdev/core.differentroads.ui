@@ -1,59 +1,68 @@
-# CoreDifferentroadsUi
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.0.6.
+# Core Different Roads UI
 
-## Development server
+Este proyecto fue generado con [Angular CLI](https://github.com/angular/angular-cli) versión 19.0.6.
 
-To start a local development server, run:
+## Estructura del Proyecto
 
-```bash
-ng serve
+La aplicación sigue una arquitectura modular y está organizada de la siguiente manera:
+
+```
+src/
+├── app/
+│   ├── core/           # Servicios core, modelos y utilidades
+│   ├── layout/         # Componentes de layout (header, footer, etc.)
+│   ├── pages/         # Páginas principales de la aplicación
+│   └── shared/        # Componentes, directivas y pipes compartidos
+├── environments/      # Configuraciones por entorno
+└── assets/           # Recursos estáticos
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+### Módulos Principales
 
-## Code scaffolding
+- **Core**: Contiene la lógica de negocio central y modelos de datos
+- **Layout**: Gestiona la estructura visual común de la aplicación
+- **Pages**: Contiene los componentes específicos de cada página
+- **Shared**: Elementos reutilizables en toda la aplicación
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Flujo de Trabajo con Git
 
-```bash
-ng generate component component-name
-```
+Seguimos un flujo de trabajo basado en GIT, aquí tienes [guía detallada de flujo de ramas](https://github.com/Different-Roads/core.differentroads.help/blob/main/git/flujo_ramas.md).
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Configuración del Entorno de Desarrollo
 
-```bash
-ng generate --help
-```
+1. **Instalación de Dependencias**:
+   ```bash
+   npm install
+   ```
 
-## Building
+2. **Servidor de Desarrollo**:
+   ```bash
+   npm start               # Entorno de desarrollo
+   npm run start:pre      # Entorno de preproducción
+   npm run start:prod     # Entorno de producción
+   ```
 
-To build the project run:
+3. **Construcción del Proyecto**:
+   ```bash
+   npm run build          # Build de desarrollo
+   npm run build:pre     # Build de preproducción
+   npm run build:prod    # Build de producción
+   ```
 
-```bash
-ng build
-```
+4. **Pruebas Unitarias**:
+   ```bash
+   npm test
+   ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Entornos
 
-## Running unit tests
+El proyecto cuenta con tres entornos configurados:
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+- **Desarrollo**: `environment.ts`
+- **Preproducción**: `environment.development.ts`
+- **Producción**: `environment.production.ts`
 
-```bash
-ng test
-```
+## Documentación Adicional
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Para más información sobre Angular CLI, visita la [documentación oficial de Angular](https://angular.dev/tools/cli).

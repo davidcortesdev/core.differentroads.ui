@@ -8,7 +8,7 @@
     h2 {
       font-size: 3rem;
       font-weight: 600;
-      color: var(--text-color);
+      color: var(--background-azul-color-letra);
     }
 
     .google-rating {
@@ -65,5 +65,6 @@
     flex-direction: column;
     justify-content: flex-end;
     gap: 1rem;
+    color: var(--background-azul-color-letra);
   }
 }

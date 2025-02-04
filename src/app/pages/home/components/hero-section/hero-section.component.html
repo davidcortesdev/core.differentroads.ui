@@ -1,10 +1,20 @@
 <section class="hero-section">
-  <video class="background-video" autoplay muted loop playsinline>
-    <source
-      src="https://d2sk3o7yhm4ek9.cloudfront.net/public/main-banner/desktop/fdb7592e-79e7-41bf-b1dd-36db39611353/different_roads_2025_tours_organizados_video_home.mp4"
-      type="video/mp4"
-    />
-  </video>
+  <ng-container *ngIf="!bannerSection.bType; else videoContent">
+    <ng-container *ngFor="let image of bannerSection['banner-image']">
+      <img [src]="image.url" [alt]="image.alt || ''" class="background-video" />
+    </ng-container>
+  </ng-container>
+  <ng-template #videoContent>
+    <video
+      *ngIf="bannerSection['banner-video']"
+      class="background-video"
+      autoplay
+      loop
+      muted
+    >
+      <source [src]="bannerSection['banner-video']" type="video/mp4" />
+    </video>
+  </ng-template>
   <div class="search-container">
     <div class="search-form">
       <p-floatlabel variant="on">

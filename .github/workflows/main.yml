@@ -30,7 +30,7 @@ jobs:
 
       - name: Set project directory variable
         run: |
-          REPO_LOWER=$(echo ${{ github.event.repository.name }}
+          REPO_LOWER=$(echo ${{ github.event.repository.name }})
           echo "PROJECT_DIR=${{ vars.WORKING_DIR }}/yml/${REPO_LOWER}" >> $GITHUB_ENV
 
       - name: Create project directory if it doesn't exist

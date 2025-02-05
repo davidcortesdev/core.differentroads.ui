@@ -1,19 +1,27 @@
 <section class="hero-section">
-  <ng-container *ngIf="!bannerSection.bType; else videoContent">
-    <ng-container *ngFor="let image of bannerSection['banner-image']">
-      <img [src]="image.url" [alt]="image.alt || ''" class="background-video" />
+  <ng-container *ngIf="bannerSection; else loadingState">
+    <ng-container *ngIf="!bannerSection.bType; else videoContent">
+      <ng-container *ngFor="let image of bannerSection['banner-image']">
+        <img [src]="image.url" [alt]="image.alt || ''" class="background-video" />
+      </ng-container>
     </ng-container>
+    <ng-template #videoContent>
+      <video
+        *ngIf="bannerSection['banner-video']"
+        class="background-video"
+        autoplay
+        loop
+        muted
+      >
+        <source [src]="bannerSection['banner-video']" type="video/mp4" />
+      </video>
+    </ng-template>
   </ng-container>
-  <ng-template #videoContent>
-    <video
-      *ngIf="bannerSection['banner-video']"
-      class="background-video"
-      autoplay
-      loop
-      muted
-    >
-      <source [src]="bannerSection['banner-video']" type="video/mp4" />
-    </video>
+
+  <ng-template #loadingState>
+    <div class="spinner-container">
+      <p-progressSpinner></p-progressSpinner>
+    </div>
   </ng-template>
   <div class="search-container">
     <div class="search-form">

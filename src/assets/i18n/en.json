@@ -1,0 +1,16 @@
+{
+  "MENU": {
+    "ABOUT": "About",
+    "PRESS": "Press",
+    "BLOG": "Blog",
+    "DESTINATIONS": "Destinations",
+    "SEASON": "Season",
+    "TRIP_TYPE": "Trip Type",
+    "LAST_MINUTE": "Last Minute"
+  },
+  "DESTINATIONS": {
+    "EUROPE": "Europe",
+    "ASIA": "Asia",
+    "AFRICA": "Africa"
+  }
+}

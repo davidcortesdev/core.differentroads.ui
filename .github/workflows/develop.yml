@@ -28,6 +28,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set project directory variable
+        run: |
+          echo "PROJECT_DIR=${{ vars.WORKING_DIR }}/yml/${{ github.event.repository.name }}-dev" >> $GITHUB_ENV
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6.11.0
         with:
@@ -36,8 +40,8 @@ jobs:
             BUILD_COMMAND=build
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:develop
-            ghcr.io/${{ github.repository }}:develop-${{ github.sha }}
+            ghcr.io/different-roads/${{ github.event.repository.name }}:develop
+            ghcr.io/different-roads/${{ github.event.repository.name }}:develop-${{ github.sha }}
 
   deploy:
     runs-on: ubuntu-latest
@@ -50,7 +54,7 @@ jobs:
 
       - name: Set project directory variable
         run: |
-          echo "PROJECT_DIR=${{ vars.WORKING_DIR }}/yml/${{ github.repository }}-dev" >> $GITHUB_ENV
+          echo "PROJECT_DIR=${{ vars.WORKING_DIR }}/yml/${{ github.event.repository.name }}-dev" >> $GITHUB_ENV
 
       - name: Create project directory if it doesn't exist
         uses: appleboy/ssh-action@v1.2.0
@@ -67,7 +71,7 @@ jobs:
           services:
             ui-admin:
               container_name: ui-admin-dev
-              image: ghcr.io/${{ github.repository }}:develop
+              image: ghcr.io/different-roads/${{ github.event.repository.name }}:develop
               cpus: 0.5
               restart: always
               mem_limit: 256MB

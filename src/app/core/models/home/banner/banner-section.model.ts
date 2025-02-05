@@ -1,4 +1,4 @@
-import { CldImage } from '../cloudinary/cld-image.model';
+import { CldImage } from '../../commons/cld-image.model';
 
 export interface BannerSection {
   bType: boolean;

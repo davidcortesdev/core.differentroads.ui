@@ -1,3 +1,5 @@
+import { Pagination } from '../commons/pagination.model';
+
 export interface TourList {
   id: string;
   status: string;
@@ -9,11 +11,4 @@ export interface TourList {
 export interface TourListResponse {
   data: TourList[];
   pagination: Pagination;
-}
-
-export interface Pagination {
-  totalDocuments: number;
-  totalPages: number;
-  currentPage: number;
-  pageSize: number;
 }

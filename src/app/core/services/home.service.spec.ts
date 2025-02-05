@@ -4,7 +4,7 @@ import {
   HttpTestingController,
 } from '@angular/common/http/testing';
 import { HomeService } from './home.service';
-import { HomeSchema } from '../models/home.model';
+import { HomeSchema } from '../models/home/home.model';
 
 describe('HomeService', () => {
   let service: HomeService;

@@ -2,13 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { HomeSchema } from '../models/home.model';
+import { HomeSchema } from '../models/home/home.model';
 import { environment } from '../../../environments/environment';
-import { BannerSection } from '../models/banner/banner-section.model';
-import { FeaturedToursSection } from '../models/featured-tours/featured-tour.model';
-import { TravelersSection } from '../models/travelers/travelers-section.model';
+import { FeaturedToursSection } from '../models/home/featured-tours/featured-tour.model';
+import { TravelersSection } from '../models/home/travelers/travelers-section.model';
 import { Block } from '../models/blocks/block.model';
-import { SEO } from '../models/seo/seo.model';
+import { SEO } from '../models/commons/seo.model';
+import { BannerSection } from '../models/home/banner/banner-section.model';
 
 @Injectable({
   providedIn: 'root',

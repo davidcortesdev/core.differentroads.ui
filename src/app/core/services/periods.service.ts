@@ -2,13 +2,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import {
-  Period,
-  Activity,
-  Insurance,
-  ReservationMode,
-  Flight,
-} from '../models/tours/period.model';
+import { Activity } from '../models/tours/activity.model';
+import { Insurance } from '../models/tours/insurance.model';
+import { Period } from '../models/tours/period.model';
+import { ReservationMode } from '../models/tours/reservation-mode.model';
+import { Flight } from '../models/tours/flight.model';
 
 @Injectable({
   providedIn: 'root',
@@ -42,7 +40,7 @@ export class PeriodsService {
    */
   getActivities(id: string): Observable<Activity[]> {
     return this.getPeriodDetail(id, ['activities']).pipe(
-      map((period: Period) => period.activities)
+      map((period: Period) => period.activities || [])
     );
   }
 
@@ -53,7 +51,7 @@ export class PeriodsService {
    */
   getInsurances(id: string): Observable<Insurance[]> {
     return this.getPeriodDetail(id, ['insurances']).pipe(
-      map((period: Period) => period.insurances)
+      map((period: Period) => period.insurances || [])
     );
   }
 
@@ -63,8 +61,8 @@ export class PeriodsService {
    * @returns Observable of ReservationMode array.
    */
   getReservationModes(id: string): Observable<ReservationMode[]> {
-    return this.getPeriodDetail(id, ['reservationModes']).pipe(
-      map((period: Period) => period.reservationModes)
+    return this.getPeriodDetail(id, ['reservationmodes']).pipe(
+      map((period: Period) => period.reservationModes || [])
     );
   }
 
@@ -75,7 +73,7 @@ export class PeriodsService {
    */
   getFlights(id: string): Observable<Flight[]> {
     return this.getPeriodDetail(id, ['flights']).pipe(
-      map((period: Period) => period.flights)
+      map((period: Period) => period.flights || [])
     );
   }
 }

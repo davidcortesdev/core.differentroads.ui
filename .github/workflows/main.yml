@@ -30,8 +30,7 @@ jobs:
 
       - name: Set project directory variable
         run: |
-          REPO_LOWER=$(echo ${{ github.event.repository.name }})
-          echo "PROJECT_DIR=${{ vars.WORKING_DIR }}/yml/${REPO_LOWER}" >> $GITHUB_ENV
+          echo "PROJECT_DIR=${{ vars.WORKING_DIR }}/yml/${{ github.event.repository.name }}" >> $GITHUB_ENV
 
       - name: Create project directory if it doesn't exist
         uses: appleboy/ssh-action@v1.2.0
@@ -50,8 +49,8 @@ jobs:
             BUILD_COMMAND=build:prod
           push: true
           tags: |
-            ghcr.io/$(echo ${{ github.event.repository.name }}:latest
-            ghcr.io/$(echo ${{ github.event.repository.name }}:${{ github.sha }}
+            ghcr.io/${{ github.event.repository.name }}:latest
+            ghcr.io/${{ github.event.repository.name }}:${{ github.sha }}
 
   deploy:
     runs-on: ubuntu-latest
@@ -77,12 +76,11 @@ jobs:
 
       - name: Generate docker-compose.yml for production
         run: |
-          REPO_LOWER=$(echo ${{ github.event.repository.name }}
           cat > docker-compose.yml << EOL
           services:
             ui-admin:
               container_name: ui-admin
-              image: ghcr.io/${REPO_LOWER}:latest
+              image: ghcr.io/${{ github.event.repository.name }}:latest
               cpus: 0.5
               restart: always
               mem_limit: 256MB

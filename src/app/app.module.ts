@@ -54,6 +54,7 @@ import { CarouselModule } from 'primeng/carousel';
 import { CardModule } from 'primeng/card';
 import { DatePickerModule } from 'primeng/datepicker';
 import { RippleModule } from 'primeng/ripple';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -103,6 +104,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     ImageModule,
     RatingModule,
     FloatLabelModule,
+    ProgressSpinnerModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

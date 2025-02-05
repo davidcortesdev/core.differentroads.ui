@@ -7,6 +7,10 @@ import { ApplicationConfig } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
+import { HttpClient } from '@angular/common/http';
+import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+
 // App Routing and Components
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -51,6 +55,11 @@ import { CardModule } from 'primeng/card';
 import { DatePickerModule } from 'primeng/datepicker';
 import { RippleModule } from 'primeng/ripple';
 
+// Add this function outside the class
+export function HttpLoaderFactory(http: HttpClient) {
+  return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+}
+
 @NgModule({
   declarations: [
     // App Components
@@ -94,6 +103,14 @@ import { RippleModule } from 'primeng/ripple';
     ImageModule,
     RatingModule,
     FloatLabelModule,
+    TranslateModule.forRoot({
+      loader: {
+        provide: TranslateLoader,
+        useFactory: HttpLoaderFactory,
+        deps: [HttpClient]
+      },
+      defaultLanguage: 'es'
+    })
   ],
   providers: [
     provideAnimationsAsync(),
@@ -112,4 +129,4 @@ import { RippleModule } from 'primeng/ripple';
   ],
   bootstrap: [AppComponent],
 })
-export class AppModule {}
+export class AppModule { }

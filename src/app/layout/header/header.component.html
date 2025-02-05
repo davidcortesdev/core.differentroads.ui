@@ -22,7 +22,16 @@
     <div class="bottom-section">
         <p-menubar styleClass="nav-menu">
             <ng-template #start>
-                <p-menubar [model]="leftMenuItems" styleClass="left-menu"></p-menubar>
+                <!-- <p-autocomplete
+                    [(ngModel)]="selectedLanguage"
+                    [suggestions]="filteredLanguages"
+                    (completeMethod)="filterLanguages($event)"
+                    [dropdown]="true"
+                    [style]="{'width': '100px'}"
+                    (onSelect)="onLanguageChange($event)">
+                </p-autocomplete> -->
+                
+                <p-menubar [model]="leftMenuItems"></p-menubar>
             </ng-template>
             <ng-template #end>
                 <p-menubar [model]="rightMenuItems" styleClass="right-menu"></p-menubar>

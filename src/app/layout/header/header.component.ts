@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { MenuItem } from 'primeng/api';
+import { LanguageService } from '../../core/services/language.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 
 @Component({
   selector: 'app-header',
@@ -14,7 +17,30 @@ export class HeaderComponent implements OnInit {
   leftMenuItems: MenuItem[] | undefined;
   rightMenuItems: MenuItem[] | undefined;
 
+  constructor(
+    private languageService: LanguageService,
+    private translate: TranslateService
+  ) {}
+
   ngOnInit() {
+    this.initializeMenus();
+    this.languageService.getCurrentLang().subscribe(lang => {
+      this.selectedLanguage = lang.toUpperCase();
+    });
+  }
+
+  filterLanguages(event: AutoCompleteCompleteEvent) {
+    const query = event.query.toUpperCase();
+    this.filteredLanguages = this.languages.filter(lang => 
+      lang.includes(query)
+    );
+  }
+
+  onLanguageChange(lang: any) {
+    this.languageService.setLanguage(lang.toLowerCase());
+  }
+
+  private initializeMenus() {
     this.leftMenuItems = [
       { label: 'ABOUT' },
       { label: 'PRENSA' },

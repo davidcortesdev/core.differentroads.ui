@@ -63,7 +63,7 @@ jobs:
 
       - name: Set project directory variable
         run: |
-          echo "PROJECT_DIR=${{ vars.WORKING_DIR }}/yml/${{ github.event.repository.name }} >> $GITHUB_ENV
+          echo "PROJECT_DIR=${{ vars.WORKING_DIR }}/yml/${{ github.event.repository.name }}" >> $GITHUB_ENV
 
       - name: Create project directory if it doesn't exist
         uses: appleboy/ssh-action@v1.2.0

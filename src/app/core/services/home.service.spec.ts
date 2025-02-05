@@ -1,5 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import {
+  HttpClientTestingModule,
+  HttpTestingController,
+} from '@angular/common/http/testing';
 import { HomeService } from './home.service';
 import { HomeSchema } from '../models/home.model';
 
@@ -10,7 +13,7 @@ describe('HomeService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
-      providers: [HomeService]
+      providers: [HomeService],
     });
     service = TestBed.inject(HomeService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -29,11 +32,13 @@ describe('HomeService', () => {
       // Add mock data here
     } as HomeSchema;
 
-    service.getHomeData().subscribe(data => {
+    service.getHomeData().subscribe((data) => {
       expect(data).toEqual(mockHomeData);
     });
 
-    const req = httpMock.expectOne('https://api.differentroads.co/dev/v3/data/cms/globals/es/home-page');
+    const req = httpMock.expectOne(
+      'https://api.differentroads.co/dev/v3/data/cms/globals/es/home-page'
+    );
     expect(req.request.method).toBe('GET');
     req.flush(mockHomeData);
   });

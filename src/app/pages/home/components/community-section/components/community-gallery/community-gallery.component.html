@@ -1,15 +1,21 @@
 <div class="community-gallery">
-  <p-carousel [value]="communityImages" [numVisible]="6" [numScroll]="1" [circular]="true"
-    [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000">
-    <ng-template let-image pTemplate="item">
-      <div class="carousel-item">
-        <p-image [src]="image.url" [alt]="image.location" [preview]="true">
-          <ng-template pTemplate="indicator">
-            <span class="location-tag">{{image.location}}</span>
-            <span class="username">{{image.username}}</span>
-          </ng-template>
-        </p-image>
-      </div>
-    </ng-template>
-  </p-carousel>
+  <div *ngFor="let image of communityImages" class="community-gallery-card">
+    <img
+      [src]="image.url"
+      [alt]="'Image from ' + image.location"
+      class="community-gallery-card-img"
+    />
+    <div class="community-gallery-card-info">
+      <span class="community-gallery-card-info-location">
+        <span>{{ image.location }}</span>
+        <i class="pi pi-map-marker"></i>
+      </span>
+      <span class="community-gallery-card-info-username">
+        <i class="pi pi-instagram"></i>
+        <span>
+          {{ image.username }}
+        </span>
+      </span>
+    </div>
+  </div>
 </div>

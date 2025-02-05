@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 
-// Definición de una interfaz única para el tipado
 interface FooterData {
   newsletterTitle: string;
   contactInfo: {

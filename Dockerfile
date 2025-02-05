@@ -24,7 +24,7 @@ FROM nginx:alpine
 COPY --from=build /app/dist/core.differentroads.ui/browser /usr/share/nginx/html
 
 # Copiar el archivo de configuración de Nginx
-#COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Exponer el puerto 80
 EXPOSE 80

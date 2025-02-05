@@ -13,7 +13,6 @@ export interface HomeSchema {
   status: string;
   'featured-tours': FeaturedToursSection;
   'travelers-section': TravelersSection;
-  'banner-image': CldImage[];
   blocks: Block[];
   seo: SEO;
   'banner-section': BannerSection;

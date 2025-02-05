@@ -21,10 +21,10 @@ RUN npm run ${BUILD_COMMAND}
 
 # Usar una imagen base de Nginx para servir la aplicación
 FROM nginx:alpine
-COPY --from=build /app/dist/core.differentroads.ui-admin/browser /usr/share/nginx/html
+COPY --from=build /app/dist/core.differentroads.ui/browser /usr/share/nginx/html
 
 # Copiar el archivo de configuración de Nginx
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+#COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Exponer el puerto 80
 EXPOSE 80

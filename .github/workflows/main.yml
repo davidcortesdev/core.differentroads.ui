@@ -36,8 +36,8 @@ jobs:
             BUILD_COMMAND=build:prod
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ github.repository | toLowerCase }}:latest
+            ghcr.io/${{ github.repository | toLowerCase }}:${{ github.sha }}
 
   deploy:
     runs-on: ubuntu-latest
@@ -50,7 +50,7 @@ jobs:
 
       - name: Set project directory variable
         run: |
-          echo "PROJECT_DIR=${{ vars.WORKING_DIR }}/yml/${{ github.repository }}" >> $GITHUB_ENV
+          echo "PROJECT_DIR=${{ vars.WORKING_DIR }}/yml/${{ github.repository | toLowerCase }}" >> $GITHUB_ENV
 
       - name: Create project directory if it doesn't exist
         uses: appleboy/ssh-action@v1.2.0
@@ -67,7 +67,7 @@ jobs:
           services:
             ui-admin:
               container_name: ui-admin
-              image: ghcr.io/${{ github.repository }}:latest
+              image: ghcr.io/${{ github.repository| toLowerCase }}:latest
               cpus: 0.5
               restart: always
               mem_limit: 256MB

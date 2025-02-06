@@ -35,7 +35,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `⚠️ This branch is behind main by ${process.env.behind_by} commits. Please update your branch with the latest changes from main using:\n\`\`\`\ngit merge --no-ff origin/main\n\`\`\``
+              body: `⚠️ This branch is behind main by ${process.env.behind_by} commits. Please update your branch with the latest changes from main using:\n\`\`\`\n git fetch origin main \n git merge --no-ff origin/main\n\`\`\``
             })
       - name: Fail if branch is not up to date
         if: env.behind_by > 0

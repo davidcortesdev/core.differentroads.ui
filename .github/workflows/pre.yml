@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - pre
+  workflow_dispatch:
 
 jobs:
   build:
@@ -92,7 +93,7 @@ jobs:
               labels:
                 - "traefik.http.routers.ui-pre.rule=Host(\`ui-pre.differentroads.es\`)"
                 - "traefik.http.services.ui-pre.loadbalancer.server.port=80"
-          
+
           networks:
             traefik-net:
               external: true

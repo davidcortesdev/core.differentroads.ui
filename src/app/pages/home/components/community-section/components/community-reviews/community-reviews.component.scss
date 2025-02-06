@@ -1,0 +1,50 @@
+.reviews-section {
+  &>h3 {
+    color: var(--background-azul-color-letra);
+    font-size: 3rem;
+    font-weight: 400;
+  }
+
+  .reviews-carousel-item {
+    border: 1px solid red;
+
+    &-card {
+      background: var(--accent-white);
+      border-radius: .75rem;
+      margin: .5rem;
+      padding: 1rem;
+
+      &-wrap {
+        &>h4 {
+          color: var(--background-azul);
+          font-size: 1.5rem;
+          font-weight: 700;
+          margin: 0;
+        }
+
+        &-content {
+          margin-bottom: 1.5rem;
+
+          &>span {
+            color: var(--p-primary-color);
+            font-size: .75rem;
+            font-weight: 700;
+          }
+
+          &>p {
+            color: var(--background-azul);
+            font-size: 1rem;
+            font-weight: 500;
+            margin: 0;
+          }
+        }
+
+        &-date {
+          color: var(--p-primary-color);
+          font-size: 1rem;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+}

@@ -33,6 +33,9 @@ import { CommunityReviewsComponent } from './pages/home/components/community-sec
 // Blog Components
 import { BlogSectionComponent } from './pages/home/components/blog-section/blog-section.component';
 
+// Press Components
+import { PressSectionComponent } from './pages/home/components/press-section/press-section.component';
+
 // PrimeNG Configuration
 import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeng/themes/aura';
@@ -86,6 +89,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 
     // Blog Components
     BlogSectionComponent,
+
+    // Press Components
+    PressSectionComponent,
   ],
   imports: [
     // Angular Modules

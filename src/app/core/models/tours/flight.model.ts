@@ -1,0 +1,41 @@
+export interface Airline {
+  name: string;
+  email: string;
+  logo: string;
+}
+
+export interface FlightSegment {
+  departureCity: string;
+  arrivalCity: string;
+  flightNumber: string;
+  departureIata: string;
+  departureTime: string;
+  arrivalTime: string;
+  arrivalIata: string;
+  numNights: number;
+  differential: number;
+  order: number;
+  airline: Airline;
+}
+
+export interface Flight {
+  id: string;
+  externalID: string;
+  inbound: {
+    activityID: number;
+    availability: number;
+    date: string;
+    name: string;
+    segments: FlightSegment[];
+    serviceCombinationID: number;
+  };
+  name: string;
+  outbound: {
+    activityID: number;
+    availability: number;
+    date: string;
+    name: string;
+    segments: FlightSegment[];
+    serviceCombinationID: number;
+  };
+}

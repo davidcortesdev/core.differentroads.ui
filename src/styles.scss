@@ -1,39 +1,40 @@
 /* You can add global styles to this file, and also import other style files */
 @import url("https://fonts.cdnfonts.com/css/general-sans");
 @import "primeicons/primeicons.css";
+
 * {
-  font-family: "General Sans", sans-serif;
+    font-family: "General Sans", sans-serif;
 }
 
 :root {
-  --primary-color-50: #fdfffb;
-  --primary-color-100: #faded8;
-  --primary-color-200: #f8bdb5;
-  --primary-color-300: #f59c92;
-  --primary-color-400: #f27b6f;
-  --primary-color-500: #f05a4c;
-  --primary-color-600: #d84a3d;
-  --primary-color-700: #c03a2e;
-  --primary-color-800: #a82a1f;
-  --primary-color-900: #901a10;
-  --primary-color-950: #780a01;
+    --primary-color-50: #fdfffb;
+    --primary-color-100: #faded8;
+    --primary-color-200: #f8bdb5;
+    --primary-color-300: #f59c92;
+    --primary-color-400: #f27b6f;
+    --primary-color-500: #f05a4c;
+    --primary-color-600: #d84a3d;
+    --primary-color-700: #c03a2e;
+    --primary-color-800: #a82a1f;
+    --primary-color-900: #901a10;
+    --primary-color-950: #780a01;
 
-  --background-azul: #002b57;
-  --background-azul-color-letra: white;
+    --background-azul: #002b57;
+    --background-azul-color-letra: white;
 
-  --p-primary-50: var(--primary-color-50);
-  --p-primary-100: var(--primary-color-100);
-  --p-primary-200: var(--primary-color-200);
-  --p-primary-300: var(--primary-color-300);
-  --p-primary-400: var(--primary-color-400);
-  --p-primary-500: var(--primary-color-500);
-  --p-primary-600: var(--primary-color-600);
-  --p-primary-700: var(--primary-color-700);
-  --p-primary-800: var(--primary-color-800);
-  --p-primary-900: var(--primary-color-900);
-  --p-primary-950: var(--primary-color-950);
+    --p-primary-50: var(--primary-color-50);
+    --p-primary-100: var(--primary-color-100);
+    --p-primary-200: var(--primary-color-200);
+    --p-primary-300: var(--primary-color-300);
+    --p-primary-400: var(--primary-color-400);
+    --p-primary-500: var(--primary-color-500);
+    --p-primary-600: var(--primary-color-600);
+    --p-primary-700: var(--primary-color-700);
+    --p-primary-800: var(--primary-color-800);
+    --p-primary-900: var(--primary-color-900);
+    --p-primary-950: var(--primary-color-950);
 
-  --p-primary-color: var(--p-primary-500);
+    --p-primary-color: var(--p-primary-500);
 
   /*
     --p-menubar-background:var(--p-primary-800);
@@ -41,5 +42,5 @@
     --p-menubar-item-color:var(--p-primary-50);
     --p-menubar-border-color:var(--p-primary-50);
     */
-  --p-menubar-border-color: var(--p-menubar-background);
+    --p-menubar-border-color: var(--p-menubar-background);
 }

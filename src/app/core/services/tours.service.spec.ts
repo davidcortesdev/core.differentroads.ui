@@ -3,19 +3,18 @@ import {
   HttpClientTestingModule,
   HttpTestingController,
 } from '@angular/common/http/testing';
-import { HomeService } from './home.service';
-import { HomeSchema } from '../models/home/home.model';
+import { ToursService } from './tours.service';
 
-describe('HomeService', () => {
-  let service: HomeService;
+describe('ToursService', () => {
+  let service: ToursService;
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
-      providers: [HomeService],
+      providers: [ToursService],
     });
-    service = TestBed.inject(HomeService);
+    service = TestBed.inject(ToursService);
     httpMock = TestBed.inject(HttpTestingController);
   });
 
@@ -27,19 +26,10 @@ describe('HomeService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should fetch home data', () => {
-    const mockHomeData: HomeSchema = {
-      // Add mock data here
-    } as HomeSchema;
-
-    service.getHomeData().subscribe((data) => {
-      expect(data).toEqual(mockHomeData);
-    });
-
+  it('should fetch tours list', () => {
     const req = httpMock.expectOne(
-      'https://api.differentroads.co/dev/v3/data/cms/globals/es/home-page'
+      'https://api.differentroads.co/dev/v3/data/cms/collections/es/tours'
     );
     expect(req.request.method).toBe('GET');
-    req.flush(mockHomeData);
   });
 });

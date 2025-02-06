@@ -20,7 +20,6 @@ jobs:
           git fetch origin main
           BEHIND_BY=$(git rev-list --count HEAD..origin/main)
           echo "behind_by=$BEHIND_BY" >> $GITHUB_ENV
-          echo "::set-output name=behind_by::$BEHIND_BY"
           if [ $BEHIND_BY -gt 0 ]; then
             echo "⚠️ This branch is behind main by $BEHIND_BY commits"
           else
@@ -28,7 +27,7 @@ jobs:
           fi
 
       - name: Add comment to PR if branch is not up to date
-        if: steps.check_branch.outputs.behind_by != '0'
+        if: env.behind_by > 0
         uses: actions/github-script@v7.0.1
         with:
           script: |

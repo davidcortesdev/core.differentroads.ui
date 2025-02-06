@@ -1,0 +1,33 @@
+name: Merge to Develop and Pre
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Merge main into develop
+        run: |
+          git checkout develop
+          git merge main --no-ff --commit -m "Merge branch 'main' into develop"
+          git push origin develop
+
+      - name: Merge main into pre
+        run: |
+          git checkout pre
+          git merge main --no-ff --commit -m "Merge branch 'main' into pre"
+          git push origin pre

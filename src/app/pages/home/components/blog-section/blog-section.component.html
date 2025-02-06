@@ -1,20 +1,37 @@
-<!-- blog-section.component.html -->
-<section class="tourSection">
-  <h2 class="tourSectionTitle">{{ title }}</h2>
-  <div class="tourSectionGrid">
-    <p-card *ngFor="let item of blogList" class="tourCard">
-      <div class="tourCardImage">
-        <img [src]="item.image[0].url" [alt]="item.image[0].alt" class="tourImage" />
-      </div>
-      <span class="tourCardLocation">{{ item.subtitle }}</span>
-      <h3 class="tourCardTitle">{{ item.title }}</h3>
-      <div class="tourCardButtons">
-        <p-button *ngIf="item.travels.btntext" [label]="item.travels.btntext" icon="pi pi-arrow-right" class="tourCardButtonsTravel"></p-button>
-        <p-button label="Leer más" class="tourCardButtonsMore"></p-button>
+<section class="blog">
+  <h2 class="blogTitle">{{ title }}</h2>
+  <div class="blogGrid">
+    <p-card *ngFor="let item of blogList" [style]="{'width': '100%'}" styleClass="blogCard">
+      <ng-template pTemplate="header">
+        <div class="blogCardImage">
+          <img [src]="item.image[0].url" [alt]="item.image[0].alt" class="blogImage" />
+        </div>
+      </ng-template>
+      <div class="blogCardContent">
+        <span class="blogCardLocation">{{ item.subtitle }}</span>
+        <h3 class="blogCardTitle">{{ item.title }}</h3>
+        <div class="blogCardButtons">
+          <p-button *ngIf="item.travels.btntext"
+                    [rounded]="true"
+                    [label]="item.travels.btntext"
+                    icon="pi pi-arrow-circle-right"
+                    styleClass="p-button-outlined blogCardButtonsTravel"
+                    iconPos="left"
+                    (onClick)="navigateToTravels(item.travels.linkTravels)">
+          </p-button>
+          <p-button label="Leer más"
+                    [rounded]="true"
+                    styleClass="blogCardButtonsMore"
+                    (onClick)="navigateToBlog(item.slug)">
+          </p-button>
+        </div>
       </div>
     </p-card>
   </div>
-  <div class="tourSectionMore">
-    <p-button [label]="'Ver más'" class="main-btn-circle"></p-button>
+  <div class="blogMore">
+    <p-button label="Ver más"
+              styleClass="p-button-rounded main-btn-circle"
+              (onClick)="navigateToAllBlogs()">
+    </p-button>
   </div>
 </section>

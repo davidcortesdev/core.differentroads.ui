@@ -1,5 +1,5 @@
-// blog-section.component.ts
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 
 interface BlogData {
   id: string;
@@ -24,10 +24,10 @@ export class BlogSectionComponent implements OnInit {
   blogList: BlogData[] = [
     {
       id: '1',
-      title: 'Jordania',
-      subtitle: '¿Por qué ha bajado la tasa de turismo en Jordania?',
+      subtitle: 'Jordania',
+      title: '¿Por qué ha bajado la tasa de turismo en Jordania?',
       slug: 'jordania',
-      image: [{ url: 'path/to/image1.png', alt: 'Jordania' }],
+      image: [{ url: 'https://picsum.photos/800/600?random=1', alt: 'Jordania' }],
       travels: {
         btntext: 'Ver viajes relacionados',
         linkTravels: '#'
@@ -35,10 +35,10 @@ export class BlogSectionComponent implements OnInit {
     },
     {
       id: '2',
-      title: 'Cornejos',
-      subtitle: 'Los 10 imprescindibles de tu maleta para viajar donde sea',
+      subtitle: 'Cornejos',
+      title: 'Los 10 imprescindibles de tu maleta para viajar donde sea',
       slug: 'cornejos',
-      image: [{ url: 'path/to/image2.png', alt: 'Cornejos' }],
+      image: [{ url: 'https://picsum.photos/800/600?random=2', alt: 'Cornejos' }],
       travels: {
         btntext: 'Ver viajes relacionados',
         linkTravels: '#'
@@ -46,10 +46,10 @@ export class BlogSectionComponent implements OnInit {
     },
     {
       id: '3',
-      title: 'Vietnam',
-      subtitle: 'Street food en Hanoi, la joya de la ciudad vietnamita',
+      subtitle: 'Vietnam',
+      title: 'Street food en Hanoi, la joya de la ciudad vietnamita',
       slug: 'vietnam',
-      image: [{ url: 'path/to/image3.png', alt: 'Vietnam' }],
+      image: [{ url: 'https://picsum.photos/800/600?random=3', alt: 'Vietnam' }],
       travels: {
         btntext: 'Ver viajes relacionados',
         linkTravels: '#'
@@ -57,10 +57,10 @@ export class BlogSectionComponent implements OnInit {
     },
     {
       id: '4',
-      title: 'Burgo',
-      subtitle: 'Tours en ruta: descubre el circuito de Centroeuropa',
+      subtitle: 'Burgo',
+      title: 'Tours en ruta: descubre el circuito de Centroeuropa',
       slug: 'burgo',
-      image: [{ url: 'path/to/image4.png', alt: 'Burgo' }],
+      image: [{ url: 'https://picsum.photos/800/600?random=4', alt: 'Burgo' }],
       travels: {
         btntext: 'Ver viajes relacionados',
         linkTravels: '#'
@@ -68,7 +68,19 @@ export class BlogSectionComponent implements OnInit {
     }
   ];
 
-  constructor() {}
+  constructor(private router: Router) {}
 
   ngOnInit(): void {}
+
+  navigateToBlog(slug: string) {
+    this.router.navigate(['/blog', slug]);
+  }
+
+  navigateToTravels(link: string) {
+    window.location.href = link;
+  }
+
+  navigateToAllBlogs() {
+    this.router.navigate(['/blog']);
+  }
 }

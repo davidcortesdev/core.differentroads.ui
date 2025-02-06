@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
-import { BannerSection } from '../../../../core/models/banner/banner-section.model';
 import { HomeService } from '../../../../core/services/home.service';
+import { BannerSection } from '../../../../core/models/home/banner/banner-section.model';
 
 @Component({
   selector: 'app-hero-section',

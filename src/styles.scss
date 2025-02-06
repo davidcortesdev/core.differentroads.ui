@@ -1,9 +1,9 @@
 /* You can add global styles to this file, and also import other style files */
-@import url('https://fonts.cdnfonts.com/css/general-sans');
+@import url("https://fonts.cdnfonts.com/css/general-sans");
 @import "primeicons/primeicons.css";
 
 * {
-    font-family: 'General Sans', sans-serif;
+    font-family: "General Sans", sans-serif;
 }
 
 :root {
@@ -19,10 +19,8 @@
     --primary-color-900: #901a10;
     --primary-color-950: #780a01;
 
-    --background-azul: #002B57;
+    --background-azul: #002b57;
     --background-azul-color-letra: white;
-
-
 
     --p-primary-50: var(--primary-color-50);
     --p-primary-100: var(--primary-color-100);
@@ -38,12 +36,6 @@
 
     --p-primary-color: var(--p-primary-500);
 
-    --degrade-bg: linear-gradient(90deg,
-            rgba(0, 0, 0, .5) 0%,
-            rgba(0, 0, 0, 0) 15%,
-            rgba(0, 0, 0, 0) 85%,
-            rgba(0, 0, 0, .5) 100%);
-
     /*
     --p-menubar-background:var(--p-primary-800);
     --p-menubar-color:var(--p-primary-50);
@@ -51,5 +43,4 @@
     --p-menubar-border-color:var(--p-primary-50);
     */
     --p-menubar-border-color: var(--p-menubar-background);
-
 }

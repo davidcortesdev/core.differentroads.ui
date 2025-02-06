@@ -30,11 +30,8 @@ import { CommunityHeroComponent } from './pages/home/components/community-sectio
 import { CommunityGalleryComponent } from './pages/home/components/community-section/components/community-gallery/community-gallery.component';
 import { CommunityReviewsComponent } from './pages/home/components/community-section/components/community-reviews/community-reviews.component';
 
-// Blog Components
-import { BlogSectionComponent } from './pages/home/components/blog-section/blog-section.component';
-
-// Press Components
-import { PressSectionComponent } from './pages/home/components/press-section/press-section.component';
+// Content List
+import { ContentListComponent } from './pages/home/components/content-list/content-list-section.component';
 
 // PrimeNG Configuration
 import { providePrimeNG } from 'primeng/config';
@@ -87,11 +84,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     CommunityGalleryComponent,
     CommunityReviewsComponent,
 
-    // Blog Components
-    BlogSectionComponent,
-
-    // Press Components
-    PressSectionComponent,
+    // Content List
+    ContentListComponent
   ],
   imports: [
     // Angular Modules

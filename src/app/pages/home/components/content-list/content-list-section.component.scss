@@ -1,0 +1,259 @@
+.content {
+  padding: 2rem 4rem;
+  width: 100%;
+
+  @media (max-width: 1200px) {
+    padding: 2rem 3rem;
+  }
+
+  @media (max-width: 768px) {
+    padding: 2rem 2rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 2rem 1rem;
+  }
+
+  &Title {
+    text-align: center;
+    color: var(--background-azul);
+    font-weight: 400;
+    font-size: 2rem; // Tamaño fijo para desktop
+    margin-bottom: 2rem;
+
+    @media (max-width: 1024px) {
+      font-size: 1.75rem; // Tamaño para tablets
+    }
+
+    @media (max-width: 768px) {
+      font-size: 1.5rem; // Tamaño para móviles
+    }
+
+    @media (min-width: 1920px) {
+      font-size: 2.5rem; // Tamaño más grande para pantallas muy grandes
+    }
+  }
+
+  &Grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+
+    @media (max-width: 1200px) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    @media (max-width: 1024px) {
+      grid-template-columns: repeat(2, 1fr); // 2 columnas en tablets
+    }
+
+    @media (max-width: 768px) {
+      grid-template-columns: repeat(2, 1fr); // 2 columnas en móviles
+    }
+
+    @media (max-width: 480px) {
+      grid-template-columns: 1fr; // 1 columna en móviles pequeños
+    }
+  }
+
+  &More {
+    display: flex;
+    justify-content: center;
+    margin-top: 3rem;
+
+    ::ng-deep .main-btn-circle {
+      font-size: 1rem; // Usar unidades relativas
+      width: 6.25rem !important; // Usar unidades relativas
+      height: 6.25rem !important; // Usar unidades relativas
+      border-radius: 50% !important;
+      background: transparent;
+      color: var(--p-primary-color);
+
+      &:hover {
+        background-color: var(--background-azul);
+        border: var(--background-azul);
+        color: white;
+      }
+
+      @media (max-width: 1024px) {
+        font-size: 0.875rem; // Tamaño para tablets
+        width: 5.625rem !important; // Tamaño para tablets
+        height: 5.625rem !important; // Tamaño para tablets
+      }
+
+      @media (max-width: 768px) {
+        font-size: 0.875rem; // Tamaño para móviles
+        width: 5.625rem !important; // Tamaño para móviles
+        height: 5.625rem !important; // Tamaño para móviles
+      }
+
+      @media (min-width: 1920px) {
+        font-size: 1.25rem; // Tamaño más grande para pantallas muy grandes
+        width: 7.5rem !important; // Botón más grande
+        height: 7.5rem !important; // Botón más grande
+      }
+    }
+  }
+}
+
+::ng-deep {
+  .blogCard,
+  .pressCard {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    overflow: hidden;
+    box-shadow: none !important;
+
+    .p-card-body {
+      padding: 0.5rem;
+    }
+
+    .contentCardImage {
+      width: 100%;
+      overflow: hidden;
+      border-radius: 12px;
+      object-fit: cover;
+      height: auto; // Altura automática para que sea responsiva
+      max-height: 250px; // Altura máxima para desktop
+
+      @media (max-width: 1024px) {
+        max-height: 220px; // Altura máxima para tablets
+      }
+
+      @media (max-width: 768px) {
+        max-height: 200px; // Altura máxima para móviles
+      }
+
+      @media (min-width: 1920px) {
+        max-height: 300px; // Altura máxima para pantallas muy grandes
+      }
+    }
+
+    .blogImage,
+    .pressImage {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 12px;
+    }
+
+    .contentCardLocation {
+      display: block;
+      color: var(--background-azul);
+      font-size: 0.8125rem; // Usar unidades relativas
+      margin-bottom: 0.5rem;
+
+      @media (max-width: 1024px) {
+        font-size: 0.75rem; // Tamaño para tablets
+      }
+
+      @media (max-width: 768px) {
+        font-size: 0.75rem; // Tamaño para móviles
+      }
+
+      @media (min-width: 1920px) {
+        font-size: 1rem; // Tamaño más grande para pantallas muy grandes
+      }
+    }
+
+    .contentCardTitle {
+      font-size: 1rem; // Tamaño fijo para desktop
+      color: var(--background-azul);
+      font-weight: 600;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+
+      @media (max-width: 1024px) {
+        font-size: 0.9rem; // Tamaño para tablets
+      }
+
+      @media (max-width: 768px) {
+        font-size: 0.9rem; // Tamaño para móviles
+      }
+
+      @media (min-width: 1920px) {
+        font-size: 1.25rem; // Tamaño más grande para pantallas muy grandes
+      }
+    }
+
+    .contentCardButtons {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: nowrap;
+
+      .p-button {
+        font-size: 0.8125rem; // Usar unidades relativas
+        background-color: var(--p-primary-color);
+        border-color: var(--p-primary-color);
+        color: white;
+
+        &:hover {
+          background-color: var(--background-azul);
+          border-color: var(--background-azul);
+          color: white;
+        }
+
+        @media (max-width: 1024px) {
+          font-size: 0.75rem; // Tamaño para tablets
+        }
+
+        @media (max-width: 768px) {
+          font-size: 0.75rem; // Tamaño para móviles
+        }
+
+        @media (min-width: 1920px) {
+          font-size: 1rem; // Tamaño más grande para pantallas muy grandes
+        }
+      }
+
+      .blog-card-buttons-travel {
+        background-color: transparent !important; // Sin color de fondo
+        border-color: var(--p-primary-color) !important; // Solo borde
+        color: var(--p-primary-color) !important; // Color del texto
+
+        &:hover {
+          background-color: var(--background-azul) !important;
+          border-color: var(--background-azul) !important;
+          color: white !important;
+        }
+      }
+    }
+  }
+
+  .blogCard {
+    .contentCardImage {
+      max-height: 380px; // Altura máxima para desktop
+
+      @media (max-width: 1024px) {
+        max-height: 380px; // Altura máxima para tablets
+      }
+
+      @media (max-width: 768px) {
+        max-height: 380px; // Altura máxima para móviles
+      }
+
+      @media (min-width: 1920px) {
+        max-height: 380px; // Altura máxima para pantallas muy grandes
+      }
+    }
+  }
+
+  .pressCard {
+    .contentCardImage {
+      max-height: 200px; // Altura máxima para desktop
+
+      @media (max-width: 1024px) {
+        max-height: 180px; // Altura máxima para tablets
+      }
+
+      @media (max-width: 768px) {
+        max-height: 150px; // Altura máxima para móviles
+      }
+
+      @media (min-width: 1920px) {
+        max-height: 250px; // Altura máxima para pantallas muy grandes
+      }
+    }
+  }
+}

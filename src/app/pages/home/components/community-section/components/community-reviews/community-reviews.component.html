@@ -1,15 +1,31 @@
 <div class="reviews-section">
   <h3>Déjate inspirar por otros viajeros</h3>
-  <p-carousel [value]="reviews" [numVisible]="4" [numScroll]="1" [circular]="true">
-    <ng-template let-review pTemplate="item">
-      <p-card styleClass="review-card">
-        <div class="review-content">
-          <h4>{{review.name}}</h4>
-          <p>{{review.destination}}</p>
-          <p class="date">{{review.date}}</p>
-          <p-rating [ngModel]="review.rating" [readonly]="true" [stars]="5"></p-rating>
+  <p-carousel
+    [value]="reviews"
+    [numVisible]="4"
+    [numScroll]="1"
+    [circular]="true"
+    [responsiveOptions]="responsiveOptions"
+    class="reviews-carousel"
+  >
+    <ng-template let-review pTemplate="item" class="reviews-carousel-item">
+      <div class="reviews-carousel-item-card">
+        <div class="reviews-carousel-item-card-wrap">
+          <h4>{{ review.name }}</h4>
+          <div class="reviews-carousel-item-card-wrap-content">
+            <span>{{ review.destination }}</span>
+            <p>{{ review.description }}</p>
+          </div>
+          <span class="reviews-carousel-item-card-wrap-date">{{
+            review.date
+          }}</span>
+          <p-rating
+            [ngModel]="review.rating"
+            [readonly]="true"
+            [stars]="5"
+          ></p-rating>
         </div>
-      </p-card>
+      </div>
     </ng-template>
   </p-carousel>
 </div>

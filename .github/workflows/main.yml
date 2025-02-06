@@ -28,19 +28,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set project directory variable
-        run: |
-          echo "PROJECT_DIR=${{ vars.WORKING_DIR }}/yml/${{ github.event.repository.name }}" >> $GITHUB_ENV
-
-      - name: Create project directory if it doesn't exist
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ vars.REMOTE_HOST }}
-          username: ${{ vars.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            mkdir -p ${{ env.PROJECT_DIR }}
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v6.11.0
         with:

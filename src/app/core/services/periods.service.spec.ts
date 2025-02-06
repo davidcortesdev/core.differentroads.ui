@@ -3,18 +3,18 @@ import {
   HttpClientTestingModule,
   HttpTestingController,
 } from '@angular/common/http/testing';
-import { ToursService } from './tours.service';
+import { PeriodsService } from './periods.service';
 
-describe('ToursService', () => {
-  let service: ToursService;
+describe('PeriodsService', () => {
+  let service: PeriodsService;
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
-      providers: [ToursService],
+      providers: [PeriodsService],
     });
-    service = TestBed.inject(ToursService);
+    service = TestBed.inject(PeriodsService);
     httpMock = TestBed.inject(HttpTestingController);
   });
 
@@ -24,12 +24,5 @@ describe('ToursService', () => {
 
   it('should be created', () => {
     expect(service).toBeTruthy();
-  });
-
-  it('should fetch tours list', () => {
-    const req = httpMock.expectOne(
-      'https://api.differentroads.co/dev/v3/data/cms/collections/es/tours'
-    );
-    expect(req.request.method).toBe('GET');
   });
 });

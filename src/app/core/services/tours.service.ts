@@ -37,7 +37,7 @@ export class ToursService {
       params = params.set('selectedFields', selectedFields.join(','));
     }
 
-    return this.http.get<Tour>(`${this.API_URL}${id}`, { params });
+    return this.http.get<Tour>(`${this.API_URL}/${id}`, { params });
   }
 
   getTourCardData(id: string): Observable<Partial<Tour>> {

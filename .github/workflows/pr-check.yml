@@ -50,12 +50,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
 
-      - name: Build check
-        run: |
-          # Aquí puedes agregar el comando para compilar tu proyecto
-          echo "Compiling the project..."
-          # Simulación de compilación exitosa
-          echo "Build succeeded"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build:prod
 
       - name: Add comment to PR if build fails
         if: failure()

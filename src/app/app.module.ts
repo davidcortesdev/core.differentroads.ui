@@ -43,6 +43,7 @@ import { MenubarModule } from 'primeng/menubar';
 import { TabsModule } from 'primeng/tabs';
 import { EditorModule } from 'primeng/editor';
 import { FloatLabelModule } from 'primeng/floatlabel';
+import { IftaLabelModule } from 'primeng/iftalabel';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { FileUploadModule } from 'primeng/fileupload';
@@ -113,6 +114,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     ImageModule,
     RatingModule,
     FloatLabelModule,
+    IftaLabelModule,
     ProgressSpinnerModule,
     TranslateModule.forRoot({
       loader: {

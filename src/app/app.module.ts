@@ -58,6 +58,7 @@ import { CardModule } from 'primeng/card';
 import { DatePickerModule } from 'primeng/datepicker';
 import { RippleModule } from 'primeng/ripple';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { DynamicComponentsComponent } from './pages/home/components/dynamic-components/dynamic-components.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -76,6 +77,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 
     // Page Components
     HomeComponent,
+    DynamicComponentsComponent,
     HeroSectionComponent,
     ToursSectionComponent,
     HighlightSectionComponent,
@@ -116,10 +118,10 @@ export function HttpLoaderFactory(http: HttpClient) {
       loader: {
         provide: TranslateLoader,
         useFactory: HttpLoaderFactory,
-        deps: [HttpClient]
+        deps: [HttpClient],
       },
-      defaultLanguage: 'es'
-    })
+      defaultLanguage: 'es',
+    }),
   ],
   providers: [
     provideAnimationsAsync(),
@@ -138,4 +140,4 @@ export function HttpLoaderFactory(http: HttpClient) {
   ],
   bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}

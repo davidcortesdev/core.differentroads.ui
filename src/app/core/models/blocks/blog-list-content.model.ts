@@ -11,3 +11,15 @@ interface Blog {
   name: string;
   type: string;
 }
+
+export interface BlogData {
+  id: string;
+  title: string;
+  subtitle: string;
+  slug: string;
+  image: { url: string; alt: string }[];
+  travels: {
+    btntext: string;
+    linkTravels: string;
+  };
+}

@@ -9,7 +9,7 @@
       <span class="tourCardLocation">{{ item.subtitle }}</span>
       <h3 class="tourCardTitle">{{ item.title }}</h3>
       <div class="tourCardButtons">
-        <p-button *ngIf="item.travels.btntext" [label]="item.travels.btntext" icon="pi pi-arrow-right" class="tourCardButtonsTravel"></p-button>
+        <p-button *ngIf="item.travels?.btntext" [label]="item.travels.btntext" icon="pi pi-arrow-right" class="tourCardButtonsTravel"></p-button>
         <p-button label="Leer más" class="tourCardButtonsMore"></p-button>
       </div>
     </p-card>

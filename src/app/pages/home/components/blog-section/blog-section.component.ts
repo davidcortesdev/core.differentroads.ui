@@ -17,7 +17,7 @@ interface BlogData {
   selector: 'app-blog-section',
   standalone: false,
   templateUrl: './blog-section.component.html',
-  styleUrls: ['./blog-section.component.scss']
+  styleUrls: ['./blog-section.component.scss'],
 })
 export class BlogSectionComponent implements OnInit {
   title = 'No te pierdas nuestro blog';
@@ -30,8 +30,8 @@ export class BlogSectionComponent implements OnInit {
       image: [{ url: 'path/to/image1.png', alt: 'Jordania' }],
       travels: {
         btntext: 'Ver viajes relacionados',
-        linkTravels: '#'
-      }
+        linkTravels: '#',
+      },
     },
     {
       id: '2',
@@ -41,8 +41,8 @@ export class BlogSectionComponent implements OnInit {
       image: [{ url: 'path/to/image2.png', alt: 'Cornejos' }],
       travels: {
         btntext: 'Ver viajes relacionados',
-        linkTravels: '#'
-      }
+        linkTravels: '#',
+      },
     },
     {
       id: '3',
@@ -52,8 +52,8 @@ export class BlogSectionComponent implements OnInit {
       image: [{ url: 'path/to/image3.png', alt: 'Vietnam' }],
       travels: {
         btntext: 'Ver viajes relacionados',
-        linkTravels: '#'
-      }
+        linkTravels: '#',
+      },
     },
     {
       id: '4',
@@ -63,9 +63,9 @@ export class BlogSectionComponent implements OnInit {
       image: [{ url: 'path/to/image4.png', alt: 'Burgo' }],
       travels: {
         btntext: 'Ver viajes relacionados',
-        linkTravels: '#'
-      }
-    }
+        linkTravels: '#',
+      },
+    },
   ];
 
   constructor() {}

@@ -20,7 +20,7 @@ export enum BlockType {
   BlogList = 'blog-list',
 }
 
-type BlockContent =
+export type BlockContent =
   | TourListContent
   | CardSliderVerticalContent
   | SingleFeaturedContent

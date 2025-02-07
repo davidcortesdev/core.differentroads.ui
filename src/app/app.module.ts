@@ -23,6 +23,7 @@ import { MainComponent } from './layout/main/main.component';
 import { HomeComponent } from './pages/home/home.component';
 import { HeroSectionComponent } from './pages/home/components/hero-section/hero-section.component';
 import { ToursSectionComponent } from './pages/home/components/tours-section/tours-section.component';
+import { HighlightSectionComponent } from './pages/home/components/highlight-section/highlight-section.component';
 
 // Community Components
 import { CommunitySectionComponent } from './pages/home/components/community-section/community-section.component';
@@ -77,6 +78,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     HomeComponent,
     HeroSectionComponent,
     ToursSectionComponent,
+    HighlightSectionComponent,
 
     // Community Components
     CommunitySectionComponent,

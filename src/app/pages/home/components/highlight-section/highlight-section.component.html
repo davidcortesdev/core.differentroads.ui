@@ -1,0 +1,17 @@
+<section class="highlight-section">
+  <div class="highlight-section-image-container">
+    <img [src]="highlight.imageUrl" [alt]="highlight.title" />
+  </div>
+
+  <div class="highlight-section-content">
+    <span class="highlight-section-title">{{ highlight.title }}</span>
+    <p class="highlight-section-descripcion">{{ highlight.description }}</p>
+    <p-button
+      type="button"
+      label="Ver tour"
+      class="p-button-rounded, buttonVertour"
+      [rounded]="true"
+      fluid="true"
+    ></p-button>
+  </div>
+</section>

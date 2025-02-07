@@ -36,11 +36,20 @@ export class DynamicComponentsComponent implements OnInit {
 
   getComponent(block: Block): Type<any> | null {
     switch (block.type) {
-      case BlockType.BlogList:
-        return BlogSectionComponent;
       case BlockType.SingleFeatured:
         return HighlightSectionComponent;
-      // Add other cases as needed
+      /* 
+      case BlockType.BlogList:
+        return BlogSectionComponent;
+      case BlockType.TourList:
+        return TourListComponent;
+      case BlockType.CardSliderVertical:
+        return CardSliderVerticalComponent;
+      case BlockType.FullSlider:
+        return FullSliderComponent;
+      case BlockType.PressList:
+        return PressListComponent;
+      */
       default:
         return null;
     }

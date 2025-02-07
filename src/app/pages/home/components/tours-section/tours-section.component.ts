@@ -19,7 +19,7 @@ interface Tour {
 export class ToursSectionComponent {
   tours: Tour[] = [
     {
-      imageUrl: 'assets/images/tours/iceland.jpg',
+      imageUrl: 'https://picsum.photos/800/800?random=1',
       title: 'Recorriendo la tierra del hielo y el fuego',
       description: 'Islandia: en 8 días',
       rating: 4.5,
@@ -28,7 +28,7 @@ export class ToursSectionComponent {
       availableMonths: ['JUN', 'JUL', 'AGO', 'SEP']
     },
     {
-      imageUrl: 'assets/images/tours/tuscany.jpg',
+      imageUrl: 'https://picsum.photos/800/800?random=2',
       title: 'Travesía por los paisajes más bellos de la toscana',
       description: 'Italia: en 8 días',
       rating: 4.5,
@@ -37,7 +37,7 @@ export class ToursSectionComponent {
       availableMonths: ['ENE', 'JUL', 'AGO']
     },
     {
-      imageUrl: 'assets/images/tours/switzerland.jpg',
+      imageUrl: 'https://picsum.photos/800/800?random=3',
       title: 'De los viñedos de Alsacia a los alpes suizos',
       description: 'Suiza y Selva Negra en: 8 días',
       rating: 4.5,
@@ -46,7 +46,7 @@ export class ToursSectionComponent {
       availableMonths: ['JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DEC']
     },
     {
-      imageUrl: 'assets/images/tours/switzerland.jpg',
+      imageUrl: 'https://picsum.photos/800/800?random=4',
       title: 'De los viñedos de Alaska',
       description: 'Alaska asdf ',
       rating: 4.5,

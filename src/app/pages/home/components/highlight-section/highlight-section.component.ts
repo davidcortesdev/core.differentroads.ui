@@ -1,6 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { SingleFeaturedContent } from '../../../../core/models/blocks/single-featured-content.model';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { BlockType } from '../../../../core/models/blocks/block.model';
 
 @Component({
   selector: 'app-highlight-section',
@@ -10,6 +11,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 })
 export class HighlightSectionComponent implements OnInit {
   @Input() content!: SingleFeaturedContent;
+  @Input() type!: BlockType;
   public imageUrl!: string;
   public imageAlt!: string;
   public description!: string;
@@ -23,7 +25,6 @@ export class HighlightSectionComponent implements OnInit {
       this.imageAlt = this.content.image[0]?.alt;
       this.description = this.content.content;
       this.buttonUrl = this.content.link;
-      console.log('Received content:', this.content);
     } else {
       console.error('Content is undefined');
     }

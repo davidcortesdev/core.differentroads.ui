@@ -1,4 +1,3 @@
-// Angular Core Imports
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -24,12 +23,16 @@ import { MainComponent } from './layout/main/main.component';
 import { HomeComponent } from './pages/home/home.component';
 import { HeroSectionComponent } from './pages/home/components/hero-section/hero-section.component';
 import { ToursSectionComponent } from './pages/home/components/tours-section/tours-section.component';
+import { HighlightSectionComponent } from './pages/home/components/highlight-section/highlight-section.component';
 
 // Community Components
 import { CommunitySectionComponent } from './pages/home/components/community-section/community-section.component';
 import { CommunityHeroComponent } from './pages/home/components/community-section/components/community-hero/community-hero.component';
 import { CommunityGalleryComponent } from './pages/home/components/community-section/components/community-gallery/community-gallery.component';
 import { CommunityReviewsComponent } from './pages/home/components/community-section/components/community-reviews/community-reviews.component';
+
+// Content List
+import { ContentListComponent } from './pages/home/components/content-list/content-list-section.component';
 
 // PrimeNG Configuration
 import { providePrimeNG } from 'primeng/config';
@@ -56,6 +59,7 @@ import { CardModule } from 'primeng/card';
 import { DatePickerModule } from 'primeng/datepicker';
 import { RippleModule } from 'primeng/ripple';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { DynamicComponentsComponent } from './pages/home/components/dynamic-components/dynamic-components.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -74,14 +78,19 @@ export function HttpLoaderFactory(http: HttpClient) {
 
     // Page Components
     HomeComponent,
+    DynamicComponentsComponent,
     HeroSectionComponent,
     ToursSectionComponent,
+    HighlightSectionComponent,
 
     // Community Components
     CommunitySectionComponent,
     CommunityHeroComponent,
     CommunityGalleryComponent,
     CommunityReviewsComponent,
+
+    // Content List
+    ContentListComponent
   ],
   imports: [
     // Angular Modules

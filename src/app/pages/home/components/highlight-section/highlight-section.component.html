@@ -1,0 +1,16 @@
+<section class="highlight-section">
+  <div class="highlight-section-image-container">
+    <img [src]="imageUrl" [alt]="imageAlt" />
+  </div>
+
+  <div class="highlight-section-content">
+    <div class="highlight-section-descripcion formated-content" [innerHTML]="sanitizedDescription"></div>
+    <p-button
+      type="button"
+      label="Ver tour"
+      class="p-button-rounded, buttonVertour"
+      [rounded]="true"
+      fluid="true"
+    ></p-button>
+  </div>
+</section>

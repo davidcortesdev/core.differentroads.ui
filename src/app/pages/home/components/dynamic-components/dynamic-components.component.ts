@@ -1,12 +1,9 @@
-import { Component, OnInit, Injector, Type } from '@angular/core';
+import { Component, OnInit, Type } from '@angular/core';
 import { HomeService } from '../../../../core/services/home.service';
 import { Block, BlockType } from '../../../../core/models/blocks/block.model';
 import { HighlightSectionComponent } from '../highlight-section/highlight-section.component';
-import { SingleFeaturedContent } from '../../../../core/models/blocks/single-featured-content.model';
-import { BlogListContent } from '../../../../core/models/blocks/blog-list-content.model';
-import { CommonModule } from '@angular/common';
 import { ContentListComponent } from '../content-list/content-list-section.component';
-
+import { ToursSectionComponent } from '../tours-section/tours-section.component';
 @Component({
   selector: 'app-dynamic-components',
   standalone: false,
@@ -27,7 +24,6 @@ export class DynamicComponentsComponent implements OnInit {
       },
       error: (error: any) => {
         console.error('Error fetching home data:', error);
-        // Handle the error
       },
     });
   }
@@ -40,6 +36,8 @@ export class DynamicComponentsComponent implements OnInit {
         return ContentListComponent;
       case BlockType.PressList:
         return ContentListComponent;
+      case BlockType.TourList:
+        return ToursSectionComponent;
       /* 
       case BlockType.BlogList:
         return BlogSectionComponent;
@@ -56,31 +54,4 @@ export class DynamicComponentsComponent implements OnInit {
         return null;
     }
   }
-  /*
-  createInjector(block: Block): Injector {
-    if (!block.content) {
-      console.error('Block content is undefined for block:', block);
-    }
-    return Injector.create({
-      providers: [
-        {
-          provide: 'content',
-          useValue: block.content as BlogListContent | SingleFeaturedContent,
-        },
-        {
-          provide: 'type',
-          useValue: block.type === BlockType.BlogList ? 'blog' : 'press',
-        },
-        {
-          provide: 'title',
-          useValue:
-            block.type === BlockType.BlogList
-              ? 'No te pierdas nuestro blog'
-              : 'Lo que dicen sobre nosotros',
-        },
-      ],
-      parent: this.injector,
-    });
-  }
-    */
 }

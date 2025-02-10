@@ -59,6 +59,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { RippleModule } from 'primeng/ripple';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DynamicComponentsComponent } from './pages/home/components/dynamic-components/dynamic-components.component';
+import { NotFoundComponent } from './pages/not-found/not-found.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -89,7 +90,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     CommunityReviewsComponent,
 
     // Content List
-    ContentListComponent
+    ContentListComponent,
+    NotFoundComponent,
   ],
   imports: [
     // Angular Modules

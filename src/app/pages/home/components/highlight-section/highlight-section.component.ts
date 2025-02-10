@@ -25,7 +25,6 @@ export class HighlightSectionComponent implements OnInit {
       this.imageAlt = this.content.image[0]?.alt;
       this.description = this.content.content;
       this.buttonUrl = this.content.link;
-      console.log('Received content:', this.content);
     } else {
       console.error('Content is undefined');
     }

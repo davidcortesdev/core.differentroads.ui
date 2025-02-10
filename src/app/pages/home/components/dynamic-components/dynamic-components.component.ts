@@ -4,6 +4,7 @@ import { Block, BlockType } from '../../../../core/models/blocks/block.model';
 import { HighlightSectionComponent } from '../highlight-section/highlight-section.component';
 import { SingleFeaturedContent } from '../../../../core/models/blocks/single-featured-content.model';
 import { BlogListContent } from '../../../../core/models/blocks/blog-list-content.model';
+import { ContentListComponent } from '../content-list/content-list-section.component';
 
 @Component({
   selector: 'app-dynamic-components',
@@ -33,17 +34,21 @@ export class DynamicComponentsComponent implements OnInit {
     switch (block.type) {
       case BlockType.SingleFeatured:
         return HighlightSectionComponent;
+      case BlockType.BlogList:
+        return ContentListComponent;
+      case BlockType.PressList:
+        return ContentListComponent;
       /* 
       case BlockType.BlogList:
         return BlogSectionComponent;
+      case BlockType.PressList:
+        return PressListComponent;
       case BlockType.TourList:
         return TourListComponent;
       case BlockType.CardSliderVertical:
         return CardSliderVerticalComponent;
       case BlockType.FullSlider:
         return FullSliderComponent;
-      case BlockType.PressList:
-        return PressListComponent;
       */
       default:
         return null;
@@ -59,6 +64,17 @@ export class DynamicComponentsComponent implements OnInit {
         {
           provide: 'content',
           useValue: block.content as BlogListContent | SingleFeaturedContent,
+        },
+        {
+          provide: 'type',
+          useValue: block.type === BlockType.BlogList ? 'blog' : 'press',
+        },
+        {
+          provide: 'title',
+          useValue:
+            block.type === BlockType.BlogList
+              ? 'No te pierdas nuestro blog'
+              : 'Lo que dicen sobre nosotros',
         },
       ],
       parent: this.injector,

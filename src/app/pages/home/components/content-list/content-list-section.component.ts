@@ -1,5 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { BlogListContent } from '../../../../core/models/blocks/blog-list-content.model';
+import { BlogsService } from '../../../../core/services/blogs.service'; // Import BlogsService
+import { forkJoin } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 interface ContentData {
   id: string;
@@ -20,14 +24,25 @@ interface ContentData {
   templateUrl: './content-list-section.component.html',
   styleUrls: ['./content-list-section.component.scss'],
 })
-export class ContentListComponent {
-  @Input() type!: 'blog' | 'press';
-  @Input() title!: string;
+export class ContentListComponent implements OnInit {
+  type!: 'blog' | 'press';
+  title!: string;
+  content: BlogListContent;
 
   contentList: ContentData[] = [];
   showMoreButton: boolean = false;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private blogsService: BlogsService, // Inject BlogsService
+    @Inject('content') content: BlogListContent,
+    @Inject('type') type: 'blog' | 'press',
+    @Inject('title') title: string
+  ) {
+    this.type = type;
+    this.title = title;
+    this.content = content;
+  }
 
   ngOnInit() {
     this.loadContent();
@@ -35,134 +50,101 @@ export class ContentListComponent {
 
   loadContent() {
     if (this.type === 'blog') {
-      this.contentList = [
-        {
-          id: '1',
-          subtitle: 'Jordania',
-          title: '¿Por qué ha bajado la tasa de turismo en Jordania?',
-          slug: 'jordania',
-          image: [
-            { url: 'https://picsum.photos/800/600?random=1', alt: 'Jordania' },
-          ],
-          travels: {
-            btntext: 'Ver viajes relacionados',
-            linkTravels: '#',
-          },
-          type: 'blog',
-        },
-        {
-          id: '2',
-          subtitle: 'Cornejos',
-          title: 'Los 10 imprescindibles de tu maleta para viajar donde sea',
-          slug: 'cornejos',
-          image: [
-            { url: 'https://picsum.photos/800/600?random=2', alt: 'Cornejos' },
-          ],
-          travels: {
-            btntext: 'Ver viajes relacionados',
-            linkTravels: '#',
-          },
-          type: 'blog',
-        },
-        {
-          id: '3',
-          subtitle: 'Cornejos',
-          title: 'Los 10 imprescindibles de tu maleta para viajar donde sea',
-          slug: 'cornejos',
-          image: [
-            { url: 'https://picsum.photos/800/600?random=3', alt: 'Cornejos' },
-          ],
-          travels: {
-            btntext: 'Ver viajes relacionados',
-            linkTravels: '#',
-          },
-          type: 'blog',
-        },
-        {
-          id: '4',
-          subtitle: 'Cornejos',
-          title: 'Los 10 imprescindibles de tu maleta para viajar donde sea',
-          slug: 'cornejos',
-          image: [
-            { url: 'https://picsum.photos/800/600?random=4', alt: 'Cornejos' },
-          ],
-          travels: {
-            btntext: 'Ver viajes relacionados',
-            linkTravels: '#',
-          },
-          type: 'blog',
-        },
-        {
-          id: '5',
-          subtitle: 'Cornejos',
-          title: 'Los 10 imprescindibles de tu maleta para viajar donde sea',
-          slug: 'cornejos',
-          image: [
-            { url: 'https://picsum.photos/800/600?random=5', alt: 'Cornejos' },
-          ],
-          travels: {
-            btntext: 'Ver viajes relacionados',
-            linkTravels: '#',
-          },
-          type: 'blog',
-        },
-      ];
+      this.loadBlogs();
     } else if (this.type === 'press') {
-      this.contentList = [
-        {
-          id: '1',
-          subtitle: 'La Vanguardia Magazine',
-          title: 'Circuito por el Loira para pasar fin de año.',
-          slug: 'jordania',
-          image: [
-            { url: 'https://picsum.photos/800/600?random=3', alt: 'Jordania' },
-          ],
-          type: 'press',
-        },
-        {
-          id: '2',
-          subtitle: 'El País',
-          title: 'Los mejores destinos para viajar en 2025 con tu familia',
-          slug: 'el-pais',
-          image: [
-            { url: 'https://picsum.photos/800/600?random=4', alt: 'El País' },
-          ],
-          type: 'press',
-        },
-        {
-          id: '3',
-          subtitle: 'La Vanguardia Magazine',
-          title: 'Circuito por el Loira para pasar fin de año.',
-          slug: 'jordania',
-          image: [
-            { url: 'https://picsum.photos/800/600?random=5', alt: 'Jordania' },
-          ],
-          type: 'press',
-        },
-        {
-          id: '4',
-          subtitle: 'La Vanguardia Magazine',
-          title: 'Circuito por el Loira para pasar fin de año.',
-          slug: 'jordania',
-          image: [
-            { url: 'https://picsum.photos/800/600?random=6', alt: 'Jordania' },
-          ],
-          type: 'press',
-        },
-        {
-          id: '5',
-          subtitle: 'La Vanguardia Magazine',
-          title: 'Circuito por el Loira para pasar fin de año.',
-          slug: 'jordania',
-          image: [
-            { url: 'https://picsum.photos/800/600?random=7', alt: 'Jordania' },
-          ],
-          type: 'press',
-        },
-      ];
+      this.loadPress();
+    }
+  }
+
+  private loadBlogs() {
+    const blogIds = this.content['blog-list'].map(
+      (blog: { id: string }) => blog.id
+    );
+
+    if (blogIds.length === 0) {
+      this.contentList = [];
+      this.showMoreButton = false;
+      return;
     }
 
-    // Mostrar el botón "Ver más" si hay más de 4 elementos
+    const blogObservables = blogIds.map((id) =>
+      this.blogsService.getBlogThumbnailById(id).pipe(
+        catchError(() => {
+          console.error(`Error cargando blog con ID ${id}`);
+          return []; // Devolver un array vacío para que no interrumpa forkJoin
+        })
+      )
+    );
+
+    forkJoin(blogObservables).subscribe((blogs) => {
+      this.contentList = blogs
+        .flat()
+        .filter((blog) => blog)
+        .map((blog) => ({
+          id: blog.id,
+          title: blog.title,
+          subtitle: blog.subtitle,
+          slug: blog.slug,
+          image: blog.image,
+          type: 'blog',
+        }));
+    });
+  }
+
+  private loadPress() {
+    this.contentList = [
+      {
+        id: '1',
+        subtitle: 'La Vanguardia Magazine',
+        title: 'Circuito por el Loira para pasar fin de año.',
+        slug: 'jordania',
+        image: [
+          { url: 'https://picsum.photos/800/600?random=3', alt: 'Jordania' },
+        ],
+        type: 'press',
+      },
+      {
+        id: '2',
+        subtitle: 'El País',
+        title: 'Los mejores destinos para viajar en 2025 con tu familia',
+        slug: 'el-pais',
+        image: [
+          { url: 'https://picsum.photos/800/600?random=4', alt: 'El País' },
+        ],
+        type: 'press',
+      },
+      {
+        id: '3',
+        subtitle: 'La Vanguardia Magazine',
+        title: 'Circuito por el Loira para pasar fin de año.',
+        slug: 'jordania',
+        image: [
+          { url: 'https://picsum.photos/800/600?random=5', alt: 'Jordania' },
+        ],
+        type: 'press',
+      },
+      {
+        id: '4',
+        subtitle: 'La Vanguardia Magazine',
+        title: 'Circuito por el Loira para pasar fin de año.',
+        slug: 'jordania',
+        image: [
+          { url: 'https://picsum.photos/800/600?random=6', alt: 'Jordania' },
+        ],
+        type: 'press',
+      },
+      {
+        id: '5',
+        subtitle: 'La Vanguardia Magazine',
+        title: 'Circuito por el Loira para pasar fin de año.',
+        slug: 'jordania',
+        image: [
+          { url: 'https://picsum.photos/800/600?random=7', alt: 'Jordania' },
+        ],
+        type: 'press',
+      },
+    ];
+
     this.showMoreButton = this.contentList.length > 4;
   }
 

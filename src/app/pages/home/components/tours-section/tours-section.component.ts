@@ -8,6 +8,7 @@ interface Tour {
   tag: string;
   price: number;
   availableMonths: string[];
+  isByDr: boolean;
 }
 
 @Component({
@@ -21,20 +22,22 @@ export class ToursSectionComponent {
     {
       imageUrl: 'https://picsum.photos/800/800?random=1',
       title: 'Recorriendo la tierra del hielo y el fuego',
-      description: 'Islandia: en 8 días',
+      description: 'Islandia en 8 días',
       rating: 4.5,
       tag: 'Ahora más barato',
       price: 2545,
-      availableMonths: ['JUN', 'JUL', 'AGO', 'SEP']
+      availableMonths: ['JUN', 'JUL', 'AGO', 'SEP'],
+      isByDr: true
     },
     {
       imageUrl: 'https://picsum.photos/800/800?random=2',
       title: 'Travesía por los paisajes más bellos de la toscana',
-      description: 'Italia: en 8 días',
+      description: 'Italia en 8 días',
       rating: 4.5,
       tag: 'Etiqueta destacada',
       price: 1295,
-      availableMonths: ['ENE', 'JUL', 'AGO']
+      availableMonths: ['ENE', 'JUL', 'AGO'],
+      isByDr: false
     },
     {
       imageUrl: 'https://picsum.photos/800/800?random=3',
@@ -43,7 +46,8 @@ export class ToursSectionComponent {
       rating: 4.5,
       tag: 'Etiqueta destacada',
       price: 1295,
-      availableMonths: ['JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DEC']
+      availableMonths: ['JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DEC'],
+      isByDr: true
     },
     {
       imageUrl: 'https://picsum.photos/800/800?random=4',
@@ -52,7 +56,8 @@ export class ToursSectionComponent {
       rating: 4.5,
       tag: 'ET',
       price: 1234,
-      availableMonths: ['ENE','FEB','MAR','ABR','MAY','JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DEC']
+      availableMonths: ['ENE','FEB','MAR','ABR','MAY','JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DEC'],
+      isByDr: false
     }
     // ... rest of the tours data
   ];

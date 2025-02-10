@@ -1,5 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, Inject, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { BlogListContent } from '../../../../core/models/blocks/blog-list-content.model';
+import { BlogsService } from '../../../../core/services/blogs.service'; // Import BlogsService
+import { PressService } from '../../../../core/services/press.service'; // Import PressService
+import { catchError, map } from 'rxjs/operators';
+import { BlockType } from '../../../../core/models/blocks/block.model';
+import { PressListContent } from '../../../../core/models/blocks/press-list-content.model';
 
 interface ContentData {
   id: string;
@@ -11,159 +17,129 @@ interface ContentData {
     btntext: string;
     linkTravels: string;
   };
-  type: 'blog' | 'press'; // Campo para identificar el tipo de contenido
+  type: 'blog' | 'press';
 }
 
 @Component({
   selector: 'app-content-list',
   standalone: false,
   templateUrl: './content-list-section.component.html',
-  styleUrls: ['./content-list-section.component.scss']
+  styleUrls: ['./content-list-section.component.scss'],
 })
-export class ContentListComponent {
-  blogList: ContentData[] = []; // Lista de artículos del blog
-  pressList: ContentData[] = []; // Lista de artículos de prensa
-  showMoreButtonBlog: boolean = false; // Habilitar el botón "Ver más" para blog
-  showMoreButtonPress: boolean = false; // Habilitar el botón "Ver más" para prensa
-  blogTitle: string = ''; // Título dinámico para la sección de blog
-  pressTitle: string = ''; // Título dinámico para la sección de prensa
+export class ContentListComponent implements OnInit {
+  @Input() content!: BlogListContent | PressListContent;
+  @Input() type!: BlockType;
+  @Input() title!: string;
 
-  constructor(private router: Router) {}
+  contentList: ContentData[] = [];
+  showMoreButton: boolean = false;
+
+  constructor(
+    private readonly router: Router,
+    private readonly blogsService: BlogsService,
+    private readonly pressService: PressService // Inject PressService
+  ) {}
 
   ngOnInit() {
+    console.log('Content List', this.content);
     this.loadContent();
   }
 
-  loadContent() {
-    // Lista de artículos del blog
-    this.blogList = [
-      {
-        id: '1',
-        subtitle: 'Jordania',
-        title: '¿Por qué ha bajado la tasa de turismo en Jordania?',
-        slug: 'jordania',
-        image: [{ url: 'https://picsum.photos/800/600?random=1', alt: 'Jordania' }],
-        travels: {
-          btntext: 'Ver viajes relacionados',
-          linkTravels: '#'
-        },
-        type: 'blog'
-      },
-      {
-        id: '2',
-        subtitle: 'Cornejos',
-        title: 'Los 10 imprescindibles de tu maleta para viajar donde sea',
-        slug: 'cornejos',
-        image: [{ url: 'https://picsum.photos/800/600?random=2', alt: 'Cornejos' }],
-        travels: {
-          btntext: 'Ver viajes relacionados',
-          linkTravels: '#'
-        },
-        type: 'blog'
-      },
-      {
-        id: '3',
-        subtitle: 'Cornejos',
-        title: 'Los 10 imprescindibles de tu maleta para viajar donde sea',
-        slug: 'cornejos',
-        image: [{ url: 'https://picsum.photos/800/600?random=3', alt: 'Cornejos' }],
-        travels: {
-          btntext: 'Ver viajes relacionados',
-          linkTravels: '#'
-        },
-        type: 'blog'
-      },
-      {
-        id: '4',
-        subtitle: 'Cornejos',
-        title: 'Los 10 imprescindibles de tu maleta para viajar donde sea',
-        slug: 'cornejos',
-        image: [{ url: 'https://picsum.photos/800/600?random=4', alt: 'Cornejos' }],
-        travels: {
-          btntext: 'Ver viajes relacionados',
-          linkTravels: '#'
-        },
-        type: 'blog'
-      },
-      {
-        id: '5',
-        subtitle: 'Cornejos',
-        title: 'Los 10 imprescindibles de tu maleta para viajar donde sea',
-        slug: 'cornejos',
-        image: [{ url: 'https://picsum.photos/800/600?random=5', alt: 'Cornejos' }],
-        travels: {
-          btntext: 'Ver viajes relacionados',
-          linkTravels: '#'
-        },
-        type: 'blog'
-      },
-    ];
-
-    // Lista de artículos de prensa
-    this.pressList = [
-      {
-        id: '1',
-        subtitle: 'La Vanguardia Magazine',
-        title: 'Circuito por el Loira para pasar fin de año.',
-        slug: 'jordania',
-        image: [{ url: 'https://picsum.photos/800/600?random=3', alt: 'Jordania' }],
-        type: 'press'
-      },
-      {
-        id: '2',
-        subtitle: 'El País',
-        title: 'Los mejores destinos para viajar en 2025 con tu familia',
-        slug: 'el-pais',
-        image: [{ url: 'https://picsum.photos/800/600?random=4', alt: 'El País' }],
-        type: 'press'
-      },
-      {
-        id: '3',
-        subtitle: 'La Vanguardia Magazine',
-        title: 'Circuito por el Loira para pasar fin de año.',
-        slug: 'jordania',
-        image: [{ url: 'https://picsum.photos/800/600?random=5', alt: 'Jordania' }],
-        type: 'press'
-      },
-      {
-        id: '4',
-        subtitle: 'La Vanguardia Magazine',
-        title: 'Circuito por el Loira para pasar fin de año.',
-        slug: 'jordania',
-        image: [{ url: 'https://picsum.photos/800/600?random=6', alt: 'Jordania' }],
-        type: 'press'
-      },
-      {
-        id: '5',
-        subtitle: 'La Vanguardia Magazine',
-        title: 'Circuito por el Loira para pasar fin de año.',
-        slug: 'jordania',
-        image: [{ url: 'https://picsum.photos/800/600?random=7', alt: 'Jordania' }],
-        type: 'press'
-      },
-    ];
-
-    // Títulos dinámicos
-    this.blogTitle = 'No te pierdas nuestro blog';
-    this.pressTitle = 'Lo que dicen sobre nosotros';
-
-    // Mostrar el botón "Ver más" si hay más de 4 elementos
-    this.showMoreButtonBlog = this.blogList.length > 4;
-    this.showMoreButtonPress = this.pressList.length > 4;
+  loadContent(): void {
+    if (this.type === BlockType.BlogList) {
+      this.loadBlogs();
+    } else if (this.type === BlockType.PressList) {
+      this.loadPress();
+    }
   }
 
-  // Navegar a un contenido específico
-  navigateToContent(slug: string, type: 'blog' | 'press') {
+  private loadBlogs(): void {
+    const blogIds: Array<string> = (this.content as BlogListContent)?.[
+      'blog-list'
+    ].map((blog: { id: string }): string => blog.id);
+
+    if (blogIds.length === 0) {
+      this.contentList = [];
+      this.showMoreButton = false;
+      return;
+    }
+
+    this.contentList = []; // Reset the list
+    this.showMoreButton = blogIds.length > 4;
+
+    blogIds.forEach((id: string): void => {
+      this.blogsService
+        .getBlogThumbnailById(id)
+        .pipe(
+          catchError((error: Error) => {
+            console.error(`Error loading blog with ID ${id}:`, error);
+            return [];
+          })
+        )
+        .subscribe((blog: any): void => {
+          if (blog) {
+            const blogContent: ContentData = {
+              id: blog.id,
+              title: blog.title,
+              subtitle: blog.subtitle,
+              slug: blog.slug,
+              image: blog.image,
+              type: 'blog',
+            };
+            this.contentList = [...this.contentList, blogContent];
+          }
+        });
+    });
+  }
+
+  private loadPress(): void {
+    const pressIds: Array<string> = (this.content as PressListContent)?.[
+      'press-list'
+    ].map((press: { id: string }): string => press.id);
+
+    if (pressIds.length === 0) {
+      this.contentList = [];
+      this.showMoreButton = false;
+      return;
+    }
+
+    this.contentList = []; // Reset the list
+    this.showMoreButton = pressIds.length > 4;
+
+    pressIds.forEach((id: string): void => {
+      this.pressService
+        .getPressThumbnailById(id)
+        .pipe(
+          catchError((error: Error) => {
+            console.error(`Error loading press with ID ${id}:`, error);
+            return [];
+          })
+        )
+        .subscribe((press: any): void => {
+          if (press) {
+            const pressContent: ContentData = {
+              id: press.id,
+              title: press.title,
+              subtitle: press.subtitle,
+              slug: press.slug,
+              image: press.image,
+              type: 'press',
+            };
+            this.contentList = [...this.contentList, pressContent];
+          }
+        });
+    });
+  }
+
+  navigateToContent(slug: string, type: 'blog' | 'press'): void {
     this.router.navigate([`/${type}`, slug]);
   }
 
-  // Navegar a la página de viajes
-  navigateToTravels(link: string) {
+  navigateToTravels(link: string): void {
     window.location.href = link;
   }
 
-  // Navegar a la lista completa de contenidos
-  navigateToAllContents(type: 'blog' | 'press') {
-    this.router.navigate(['#']); // Redirigir a otra página (por ahora '#')
+  navigateToAllContents(type: BlockType): void {
+    this.router.navigate(['#']);
   }
 }

@@ -60,6 +60,8 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { RippleModule } from 'primeng/ripple';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DynamicComponentsComponent } from './pages/home/components/dynamic-components/dynamic-components.component';
+import { NotFoundComponent } from './pages/not-found/not-found.component';
+import { CommonModule, NgComponentOutlet } from '@angular/common';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -90,7 +92,10 @@ export function HttpLoaderFactory(http: HttpClient) {
     CommunityReviewsComponent,
 
     // Content List
-    ContentListComponent
+    ContentListComponent,
+    NotFoundComponent,
+
+    DynamicComponentsComponent
   ],
   imports: [
     // Angular Modules
@@ -98,6 +103,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     BrowserAnimationsModule,
     AppRoutingModule,
     FormsModule,
+    CommonModule,
+    NgComponentOutlet,
 
     // PrimeNG Modules
     MenubarModule,

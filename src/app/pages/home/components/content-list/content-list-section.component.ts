@@ -2,7 +2,6 @@ import { Component, Inject, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { BlogListContent } from '../../../../core/models/blocks/blog-list-content.model';
 import { BlogsService } from '../../../../core/services/blogs.service'; // Import BlogsService
-import { forkJoin } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { BlockType } from '../../../../core/models/blocks/block.model';
 

@@ -1,11 +1,16 @@
 <div class="header-wrapper">
-    <div class="top-section">
-        <p-menubar styleClass="top-menu">
-            <ng-template #start>
-                <!-- <img src="white-logo.svg" alt="Different Roads Logo" class="logo" /> -->
-                <img src="logo-different-color.webp" alt="Different Roads Logo" class="logo" height="50px" />
-            </ng-template>
-            <ng-template #end>
+  <div class="top-section">
+    <p-menubar styleClass="top-menu">
+      <ng-template #start>
+        <!-- <img src="white-logo.svg" alt="Different Roads Logo" class="logo" /> -->
+        <img
+          src="logo-different-color.webp"
+          alt="Different Roads Logo"
+          class="logo"
+          height="50px"
+        />
+      </ng-template>
+      <!-- <ng-template #end>
                 <div class="flex items-center gap-4">
                     <div class="search-container">
                         <span class="p-input-icon-right">
@@ -15,14 +20,14 @@
                     </div>
                     <span class="currency">€</span>
                 </div>
-            </ng-template>
-        </p-menubar>
-    </div>
+            </ng-template> -->
+    </p-menubar>
+  </div>
 
-    <div class="bottom-section">
-        <p-menubar styleClass="nav-menu">
-            <ng-template #start>
-                <!-- <p-autocomplete
+  <div class="bottom-section">
+    <p-menubar styleClass="nav-menu">
+      <ng-template #start>
+        <!-- <p-autocomplete
                     [(ngModel)]="selectedLanguage"
                     [suggestions]="filteredLanguages"
                     (completeMethod)="filterLanguages($event)"
@@ -30,13 +35,12 @@
                     [style]="{'width': '100px'}"
                     (onSelect)="onLanguageChange($event)">
                 </p-autocomplete> -->
-                
-                <p-menubar [model]="leftMenuItems"></p-menubar>
-            </ng-template>
-            <ng-template #end>
-                <p-menubar [model]="rightMenuItems" styleClass="right-menu"></p-menubar>
-            </ng-template>
-        </p-menubar>
-    </div>
-</div>
 
+        <p-menubar [model]="leftMenuItems"></p-menubar>
+      </ng-template>
+      <ng-template #end>
+        <p-menubar [model]="rightMenuItems" styleClass="right-menu"></p-menubar>
+      </ng-template>
+    </p-menubar>
+  </div>
+</div>

@@ -6,6 +6,7 @@ import { SingleFeaturedContent } from '../../../../core/models/blocks/single-fea
 import { BlogListContent } from '../../../../core/models/blocks/blog-list-content.model';
 import { CommonModule } from '@angular/common';
 import { ContentListComponent } from '../content-list/content-list-section.component';
+import {ToursSectionComponent} from '../tours-section/tours-section.component'
 
 @Component({
   selector: 'app-dynamic-components',
@@ -40,6 +41,8 @@ export class DynamicComponentsComponent implements OnInit {
         return ContentListComponent;
       case BlockType.PressList:
         return ContentListComponent;
+      case BlockType.TourList:
+        return ToursSectionComponent;
       /* 
       case BlockType.BlogList:
         return BlogSectionComponent;

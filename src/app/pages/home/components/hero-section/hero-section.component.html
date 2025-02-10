@@ -29,57 +29,59 @@
   </ng-template>
   <div class="search-container">
     <div class="search-form">
-      <p-floatlabel variant="on">
-        <p-autoComplete
-          [suggestions]="filteredDestinations"
-          (completeMethod)="filterDestinations($event)"
-          [dropdown]="true"
-          [(ngModel)]="selectedDestination"
-          id="destinationInput"
+      <p-iftalabel>
+        <input
+          pInputText
+          id="destionationInput"
+          autocomplete="off"
+          placeholder="Pais, ciudad, Ofertas, destinos, todo lo que se te ocurra..."
+          class="input-text"
+        />
+        <label for="destionationInput" class="float-label"
+          >¿Cuál es tu próximo destino?</label
         >
-        </p-autoComplete>
-        <label for="destinationInput">¿Donde quieres ir?</label>
-      </p-floatlabel>
+      </p-iftalabel>
 
-      <p-floatlabel variant="on">
+      <p-iftaLabel>
         <p-datepicker
           [(ngModel)]="departureDate"
-          [showIcon]="true"
+          [showIcon]="false"
           id="departureDateInput"
           fluid="true"
+          placeholder="DD/MM/AAAA"
         >
         </p-datepicker>
-        <label for="departureDateInput">Ida</label>
-      </p-floatlabel>
+        <label for="departureDateInput" class="float-label">Ida</label>
+      </p-iftaLabel>
 
-      <p-floatlabel variant="on">
+      <p-iftaLabel>
         <p-datepicker
           [(ngModel)]="returnDate"
-          [showIcon]="true"
+          [showIcon]="false"
           id="returnDateInput"
           fluid="true"
+          placeholder="DD/MM/AAAA"
         >
         </p-datepicker>
-        <label for="returnDateInput">Vuelta</label>
-      </p-floatlabel>
+        <label for="returnDateInput" class="float-label">Vuelta</label>
+      </p-iftaLabel>
 
-      <p-floatlabel variant="on">
+      <p-iftaLabel>
         <p-autoComplete
           [suggestions]="filteredTripTypes"
           (completeMethod)="filterTripTypes($event)"
           [dropdown]="true"
           [(ngModel)]="selectedTripType"
           id="tripTypeInput"
+          placeholder="Seleccionar tipo"
         >
         </p-autoComplete>
-        <label for="tripTypeInput">Tipo de viaje</label>
-      </p-floatlabel>
+        <label for="tripTypeInput" class="float-label">Tipo de viaje</label>
+      </p-iftaLabel>
 
       <p-button
         type="button"
-        label="Buscar"
         icon="pi pi-search"
-        [rounded]="true"
         fluid="true"
         (click)="searchTrips()"
       ></p-button>

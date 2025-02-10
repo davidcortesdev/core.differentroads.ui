@@ -14,7 +14,6 @@
 
   @media screen and (max-width: 480px) {
     grid-template-columns: repeat(2, 1fr);
-
   }
 
   &-card {
@@ -44,8 +43,10 @@
     }
 
     &-img {
+      aspect-ratio: 1/1;
       border-radius: .75rem;
       height: 100%;
+      object-fit: cover;
       width: 100%;
     }
 

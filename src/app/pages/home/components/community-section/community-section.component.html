@@ -1,6 +1,8 @@
 <section class="community-section">
   <app-community-hero></app-community-hero>
-  <app-community-gallery></app-community-gallery>
-  <app-community-reviews></app-community-reviews>
+  <app-community-gallery
+    [communityImages]="communityImages"
+  ></app-community-gallery>
+  <app-community-reviews [reviews]="reviews!"></app-community-reviews>
   <app-newsletter-section></app-newsletter-section>
 </section>

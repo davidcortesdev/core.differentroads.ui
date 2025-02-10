@@ -1,28 +1,36 @@
 <section class="content">
   <!-- Componente reutilizable para las tarjetas -->
   <ng-template #cardTemplate let-item let-type="type">
-    <p-card [style]="{'width': '100%'}" [styleClass]="type + 'Card'">
+    <p-card [style]="{ width: '100%' }" [styleClass]="type + 'Card'">
       <ng-template pTemplate="header">
         <div class="contentCardImage">
-          <img [src]="item.image[0].url" [alt]="item.image[0].alt" [class]="type + 'Image'" />
+          <img
+            [src]="item.image[0].url"
+            [alt]="item.image[0].alt"
+            [class]="type + 'Image'"
+          />
         </div>
       </ng-template>
       <div class="contentCardContent">
         <span class="contentCardLocation">{{ item.subtitle }}</span>
         <h3 class="contentCardTitle">{{ item.title }}</h3>
         <div class="contentCardButtons">
-          <p-button *ngIf="item.travels?.btntext"
+          <p-button
+            *ngIf="item.travels?.btntext"
             [rounded]="true"
             [label]="item.travels?.btntext"
             icon="pi pi-arrow-circle-right"
             styleClass="p-button-outlined blog-card-buttons-travel"
             iconPos="left"
-            (onClick)="navigateToTravels(item.travels?.linkTravels || '')">
+            (onClick)="navigateToTravels(item.travels?.linkTravels || '')"
+          >
           </p-button>
-          <p-button label="Leer más"
+          <p-button
+            label="Leer más"
             [rounded]="true"
             [styleClass]="type + 'CardButtonsMore'"
-            (onClick)="navigateToContent(item.slug, type)">
+            (onClick)="navigateToContent(item.slug, type)"
+          >
           </p-button>
         </div>
       </div>
@@ -33,13 +41,23 @@
   <h2 class="contentTitle">{{ title }}</h2>
   <div class="contentGrid">
     <ng-container *ngFor="let item of contentList.slice(0, 4)">
-      <ng-container *ngTemplateOutlet="cardTemplate; context: {$implicit: item, type: type}"></ng-container>
+      <ng-container
+        *ngTemplateOutlet="
+          cardTemplate;
+          context: {
+            $implicit: item,
+            type: type === 'press-list' ? 'press' : 'blog'
+          }
+        "
+      ></ng-container>
     </ng-container>
   </div>
   <div *ngIf="showMoreButton" class="contentMore">
-    <p-button label="Ver más"
+    <p-button
+      label="Ver más"
       styleClass="p-button-rounded main-btn-circle"
-      (onClick)="navigateToAllContents(type)">
+      (onClick)="navigateToAllContents(type)"
+    >
     </p-button>
   </div>
 </section>

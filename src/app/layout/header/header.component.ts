@@ -42,6 +42,7 @@ export class HeaderComponent implements OnInit {
       .getMenuConfig()
       .subscribe((menuConfig: MenuConfig) => {
         // Mapear menu-list-left a leftMenuItems
+        console.log('menuconfig', menuConfig);
         this.leftMenuItems = this.mapMenuListToItems(
           menuConfig['menu-list-left']
         );

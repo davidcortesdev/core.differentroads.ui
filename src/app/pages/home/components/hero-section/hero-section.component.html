@@ -2,7 +2,11 @@
   <ng-container *ngIf="bannerSection; else loadingState">
     <ng-container *ngIf="!bannerSection.bType; else videoContent">
       <ng-container *ngFor="let image of bannerSection['banner-image']">
-        <img [src]="image.url" [alt]="image.alt || ''" class="background-video" />
+        <img
+          [src]="image.url"
+          [alt]="image.alt || ''"
+          class="background-video"
+        />
       </ng-container>
     </ng-container>
     <ng-template #videoContent>
@@ -77,6 +81,7 @@
         icon="pi pi-search"
         [rounded]="true"
         fluid="true"
+        (click)="searchTrips()"
       ></p-button>
     </div>
   </div>

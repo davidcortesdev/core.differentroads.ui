@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, Injector, Type } from '@angular/core';
+import { Component, OnInit, Injector, Type } from '@angular/core';
 import { HomeService } from '../../../../core/services/home.service';
 import { Block, BlockType } from '../../../../core/models/blocks/block.model';
 import { HighlightSectionComponent } from '../highlight-section/highlight-section.component';

@@ -60,6 +60,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { RippleModule } from 'primeng/ripple';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DynamicComponentsComponent } from './pages/home/components/dynamic-components/dynamic-components.component';
+import { PartnersSectionComponent } from './pages/home/components/partners-section/partners-section.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -90,7 +91,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     CommunityReviewsComponent,
 
     // Content List
-    ContentListComponent
+    ContentListComponent,
+    PartnersSectionComponent,
   ],
   imports: [
     // Angular Modules

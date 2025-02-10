@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { HomeService } from '../../core/services/home.service';
-import { Block } from '../../core/models/blocks/block.model';
+import { Block, BlockType } from '../../core/models/blocks/block.model';
+import { FeaturedToursSection } from '../../core/models/home/featured-tours/featured-tour.model';
 
 @Component({
   selector: 'app-home',
@@ -10,6 +11,8 @@ import { Block } from '../../core/models/blocks/block.model';
 })
 export class HomeComponent {
   blocks: Block[] = [];
+  featuredTours!: FeaturedToursSection;
+ 
 
   constructor(private homeService: HomeService) {}
 
@@ -18,10 +21,13 @@ export class HomeComponent {
       next: (data) => {
         console.log('Home data:', data);
         this.blocks = data.blocks;
+        this.featuredTours = data['featured-tours'];
+        console.log("featured:", this.featuredTours)
       },
       error: (error) => {
         console.error('Error fetching home data:', error);
       },
     });
+
   }
 }

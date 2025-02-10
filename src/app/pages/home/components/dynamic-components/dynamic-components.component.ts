@@ -3,7 +3,7 @@ import { HomeService } from '../../../../core/services/home.service';
 import { Block, BlockType } from '../../../../core/models/blocks/block.model';
 import { HighlightSectionComponent } from '../highlight-section/highlight-section.component';
 import { ContentListComponent } from '../content-list/content-list-section.component';
-
+import { ToursSectionComponent } from '../tours-section/tours-section.component';
 @Component({
   selector: 'app-dynamic-components',
   standalone: false,
@@ -36,6 +36,8 @@ export class DynamicComponentsComponent implements OnInit {
         return ContentListComponent;
       case BlockType.PressList:
         return ContentListComponent;
+      case BlockType.TourList:
+        return ToursSectionComponent;
       /* 
       case BlockType.BlogList:
         return BlogSectionComponent;

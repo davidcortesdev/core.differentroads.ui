@@ -1,11 +1,6 @@
 import { Component, Input, OnInit, Injector, Type } from '@angular/core';
 import { HomeService } from '../../../../core/services/home.service';
-import {
-  Block,
-  BlockContent,
-  BlockType,
-} from '../../../../core/models/blocks/block.model';
-import { BlogSectionComponent } from '../blog-section/blog-section.component';
+import { Block, BlockType } from '../../../../core/models/blocks/block.model';
 import { HighlightSectionComponent } from '../highlight-section/highlight-section.component';
 import { SingleFeaturedContent } from '../../../../core/models/blocks/single-featured-content.model';
 import { BlogListContent } from '../../../../core/models/blocks/blog-list-content.model';

@@ -30,6 +30,7 @@ import { CommunitySectionComponent } from './pages/home/components/community-sec
 import { CommunityHeroComponent } from './pages/home/components/community-section/components/community-hero/community-hero.component';
 import { CommunityGalleryComponent } from './pages/home/components/community-section/components/community-gallery/community-gallery.component';
 import { CommunityReviewsComponent } from './pages/home/components/community-section/components/community-reviews/community-reviews.component';
+import { NewsLetterSectionComponent } from './pages/home/components/community-section/components/newsletter-section/newsletter-section.component';
 
 // Content List
 import { ContentListComponent } from './pages/home/components/content-list/content-list-section.component';
@@ -94,7 +95,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     ContentListComponent,
     NotFoundComponent,
 
-    DynamicComponentsComponent
+    DynamicComponentsComponent,
   ],
   imports: [
     // Angular Modules
@@ -104,7 +105,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     FormsModule,
     CommonModule,
     NgComponentOutlet,
-
+    NewsLetterSectionComponent,
     // PrimeNG Modules
     MenubarModule,
     RippleModule,

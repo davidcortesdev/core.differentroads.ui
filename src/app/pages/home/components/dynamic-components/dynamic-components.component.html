@@ -1,3 +1,6 @@
 <div *ngFor="let block of blocks">
-  <ng-container *ngComponentOutlet="getComponent(block); injector: createInjector(block)"></ng-container>
+  <ng-container
+    *ngComponentOutlet="getComponent(block); inputs: { content: block.content }"
+  >
+  </ng-container>
 </div>

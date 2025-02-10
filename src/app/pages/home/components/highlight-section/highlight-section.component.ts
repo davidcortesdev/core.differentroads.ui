@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { SingleFeaturedContent } from '../../../../core/models/blocks/single-featured-content.model';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
@@ -9,15 +9,13 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
   styleUrls: ['./highlight-section.component.scss'],
 })
 export class HighlightSectionComponent implements OnInit {
+  @Input() content!: SingleFeaturedContent;
   public imageUrl!: string;
   public imageAlt!: string;
   public description!: string;
   public buttonUrl!: string;
 
-  constructor(
-    @Inject('content') public content: SingleFeaturedContent,
-    private sanitizer: DomSanitizer
-  ) {}
+  constructor(private sanitizer: DomSanitizer) {}
 
   ngOnInit(): void {
     if (this.content) {

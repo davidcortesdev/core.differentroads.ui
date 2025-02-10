@@ -4,17 +4,19 @@ import { Block, BlockType } from '../../../../core/models/blocks/block.model';
 import { HighlightSectionComponent } from '../highlight-section/highlight-section.component';
 import { SingleFeaturedContent } from '../../../../core/models/blocks/single-featured-content.model';
 import { BlogListContent } from '../../../../core/models/blocks/blog-list-content.model';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-dynamic-components',
   standalone: false,
+  
   templateUrl: './dynamic-components.component.html',
   styleUrls: ['./dynamic-components.component.scss'],
 })
 export class DynamicComponentsComponent implements OnInit {
   blocks: Block[] = [];
 
-  constructor(private homeService: HomeService, private injector: Injector) {}
+  constructor(private homeService: HomeService) {} // Removed injector since we won't use it
 
   ngOnInit(): void {
     this.homeService.getDynamicSections().subscribe({
@@ -48,20 +50,5 @@ export class DynamicComponentsComponent implements OnInit {
       default:
         return null;
     }
-  }
-
-  createInjector(block: Block): Injector {
-    if (!block.content) {
-      console.error('Block content is undefined for block:', block);
-    }
-    return Injector.create({
-      providers: [
-        {
-          provide: 'content',
-          useValue: block.content as BlogListContent | SingleFeaturedContent,
-        },
-      ],
-      parent: this.injector,
-    });
   }
 }

@@ -1,9 +1,10 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { BlogListContent } from '../../../../core/models/blocks/blog-list-content.model';
 import { BlogsService } from '../../../../core/services/blogs.service'; // Import BlogsService
 import { forkJoin } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { BlockType } from '../../../../core/models/blocks/block.model';
 
 interface ContentData {
   id: string;
@@ -25,40 +26,34 @@ interface ContentData {
   styleUrls: ['./content-list-section.component.scss'],
 })
 export class ContentListComponent implements OnInit {
-  type!: 'blog' | 'press';
-  title!: string;
-  content: BlogListContent;
+  @Input() content!: BlogListContent;
+  @Input() type!: BlockType;
+  @Input() title!: string;
 
   contentList: ContentData[] = [];
   showMoreButton: boolean = false;
 
   constructor(
-    private router: Router,
-    private blogsService: BlogsService, // Inject BlogsService
-    @Inject('content') content: BlogListContent,
-    @Inject('type') type: 'blog' | 'press',
-    @Inject('title') title: string
-  ) {
-    this.type = type;
-    this.title = title;
-    this.content = content;
-  }
+    private readonly router: Router,
+    private readonly blogsService: BlogsService
+  ) {}
 
   ngOnInit() {
+    console.log('Content List', this.content);
     this.loadContent();
   }
 
-  loadContent() {
-    if (this.type === 'blog') {
+  loadContent(): void {
+    if (this.type === BlockType.BlogList) {
       this.loadBlogs();
-    } else if (this.type === 'press') {
+    } else if (this.type === BlockType.PressList) {
       this.loadPress();
     }
   }
 
-  private loadBlogs() {
-    const blogIds = this.content['blog-list'].map(
-      (blog: { id: string }) => blog.id
+  private loadBlogs(): void {
+    const blogIds: Array<string> = this.content['blog-list'].map(
+      (blog: { id: string }): string => blog.id
     );
 
     if (blogIds.length === 0) {
@@ -67,31 +62,35 @@ export class ContentListComponent implements OnInit {
       return;
     }
 
-    const blogObservables = blogIds.map((id) =>
-      this.blogsService.getBlogThumbnailById(id).pipe(
-        catchError(() => {
-          console.error(`Error cargando blog con ID ${id}`);
-          return []; // Devolver un array vacío para que no interrumpa forkJoin
-        })
-      )
-    );
+    this.contentList = []; // Reset the list
+    this.showMoreButton = blogIds.length > 4;
 
-    forkJoin(blogObservables).subscribe((blogs) => {
-      this.contentList = blogs
-        .flat()
-        .filter((blog) => blog)
-        .map((blog) => ({
-          id: blog.id,
-          title: blog.title,
-          subtitle: blog.subtitle,
-          slug: blog.slug,
-          image: blog.image,
-          type: 'blog',
-        }));
+    blogIds.forEach((id: string): void => {
+      this.blogsService
+        .getBlogThumbnailById(id)
+        .pipe(
+          catchError((error: Error) => {
+            console.error(`Error loading blog with ID ${id}:`, error);
+            return [];
+          })
+        )
+        .subscribe((blog: any): void => {
+          if (blog) {
+            const blogContent: ContentData = {
+              id: blog.id,
+              title: blog.title,
+              subtitle: blog.subtitle,
+              slug: blog.slug,
+              image: blog.image,
+              type: 'blog',
+            };
+            this.contentList = [...this.contentList, blogContent];
+          }
+        });
     });
   }
 
-  private loadPress() {
+  private loadPress(): void {
     this.contentList = [
       {
         id: '1',
@@ -148,18 +147,15 @@ export class ContentListComponent implements OnInit {
     this.showMoreButton = this.contentList.length > 4;
   }
 
-  // Navegar a un contenido específico
-  navigateToContent(slug: string, type: 'blog' | 'press') {
+  navigateToContent(slug: string, type: 'blog' | 'press'): void {
     this.router.navigate([`/${type}`, slug]);
   }
 
-  // Navegar a la página de viajes
-  navigateToTravels(link: string) {
+  navigateToTravels(link: string): void {
     window.location.href = link;
   }
 
-  // Navegar a la lista completa de contenidos
-  navigateToAllContents(type: 'blog' | 'press') {
-    this.router.navigate(['#']); // Redirigir a otra página (por ahora '#')
+  navigateToAllContents(type: BlockType): void {
+    this.router.navigate(['#']);
   }
 }

@@ -56,7 +56,7 @@ export class DynamicComponentsComponent implements OnInit {
         return null;
     }
   }
-
+/*
   createInjector(block: Block): Injector {
     if (!block.content) {
       console.error('Block content is undefined for block:', block);
@@ -82,4 +82,5 @@ export class DynamicComponentsComponent implements OnInit {
       parent: this.injector,
     });
   }
+    */
 }

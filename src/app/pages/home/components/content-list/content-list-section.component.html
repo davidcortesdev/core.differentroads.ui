@@ -29,31 +29,17 @@
     </p-card>
   </ng-template>
 
-  <!-- Sección del Blog -->
-  <h2 class="contentTitle">{{ blogTitle }}</h2>
+  <!-- Sección del contenido -->
+  <h2 class="contentTitle">{{ title }}</h2>
   <div class="contentGrid">
-    <ng-container *ngFor="let item of blogList.slice(0, 4)">
-      <ng-container *ngTemplateOutlet="cardTemplate; context: {$implicit: item, type: 'blog'}"></ng-container>
+    <ng-container *ngFor="let item of contentList.slice(0, 4)">
+      <ng-container *ngTemplateOutlet="cardTemplate; context: {$implicit: item, type: type}"></ng-container>
     </ng-container>
   </div>
-  <div *ngIf="showMoreButtonBlog" class="contentMore">
+  <div *ngIf="showMoreButton" class="contentMore">
     <p-button label="Ver más"
       styleClass="p-button-rounded main-btn-circle"
-      (onClick)="navigateToAllContents('blog')">
-    </p-button>
-  </div>
-
-  <!-- Sección de la Prensa -->
-  <h2 class="contentTitle">{{ pressTitle }}</h2>
-  <div class="contentGrid">
-    <ng-container *ngFor="let item of pressList.slice(0, 4)">
-      <ng-container *ngTemplateOutlet="cardTemplate; context: {$implicit: item, type: 'press'}"></ng-container>
-    </ng-container>
-  </div>
-  <div *ngIf="showMoreButtonPress" class="contentMore">
-    <p-button label="Ver más"
-      styleClass="p-button-rounded main-btn-circle"
-      (onClick)="navigateToAllContents('press')">
+      (onClick)="navigateToAllContents(type)">
     </p-button>
   </div>
 </section>

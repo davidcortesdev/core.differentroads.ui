@@ -1,11 +1,10 @@
 <section class="highlight-section">
   <div class="highlight-section-image-container">
-    <img [src]="highlight.imageUrl" [alt]="highlight.title" />
+    <img [src]="imageUrl" [alt]="imageAlt" />
   </div>
 
   <div class="highlight-section-content">
-    <span class="highlight-section-title">{{ highlight.title }}</span>
-    <p class="highlight-section-descripcion">{{ highlight.description }}</p>
+    <div class="highlight-section-descripcion formated-content" [innerHTML]="sanitizedDescription"></div>
     <p-button
       type="button"
       label="Ver tour"

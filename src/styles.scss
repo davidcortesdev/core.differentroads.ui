@@ -3,40 +3,40 @@
 @import "primeicons/primeicons.css";
 
 * {
-    font-family: "General Sans", sans-serif;
+  font-family: "General Sans", sans-serif;
 }
 
 :root {
-    --primary-color-50: #fdfffb;
-    --primary-color-100: #faded8;
-    --primary-color-200: #f8bdb5;
-    --primary-color-300: #f59c92;
-    --primary-color-400: #f27b6f;
-    --primary-color-500: #f05a4c;
-    --primary-color-600: #d84a3d;
-    --primary-color-700: #c03a2e;
-    --primary-color-800: #a82a1f;
-    --primary-color-900: #901a10;
-    --primary-color-950: #780a01;
+  --primary-color-50: #fdfffb;
+  --primary-color-100: #faded8;
+  --primary-color-200: #f8bdb5;
+  --primary-color-300: #f59c92;
+  --primary-color-400: #f27b6f;
+  --primary-color-500: #f05a4c;
+  --primary-color-600: #d84a3d;
+  --primary-color-700: #c03a2e;
+  --primary-color-800: #a82a1f;
+  --primary-color-900: #901a10;
+  --primary-color-950: #780a01;
 
-    --background-azul: #002b57;
-    --background-azul-color-letra: white;
+  --background-azul: #002b57;
+  --background-azul-color-letra: white;
 
-    --accent-white: #F7F6F2;
+  --accent-white: #f7f6f2;
 
-    --p-primary-50: var(--primary-color-50);
-    --p-primary-100: var(--primary-color-100);
-    --p-primary-200: var(--primary-color-200);
-    --p-primary-300: var(--primary-color-300);
-    --p-primary-400: var(--primary-color-400);
-    --p-primary-500: var(--primary-color-500);
-    --p-primary-600: var(--primary-color-600);
-    --p-primary-700: var(--primary-color-700);
-    --p-primary-800: var(--primary-color-800);
-    --p-primary-900: var(--primary-color-900);
-    --p-primary-950: var(--primary-color-950);
+  --p-primary-50: var(--primary-color-50);
+  --p-primary-100: var(--primary-color-100);
+  --p-primary-200: var(--primary-color-200);
+  --p-primary-300: var(--primary-color-300);
+  --p-primary-400: var(--primary-color-400);
+  --p-primary-500: var(--primary-color-500);
+  --p-primary-600: var(--primary-color-600);
+  --p-primary-700: var(--primary-color-700);
+  --p-primary-800: var(--primary-color-800);
+  --p-primary-900: var(--primary-color-900);
+  --p-primary-950: var(--primary-color-950);
 
-    --p-primary-color: var(--p-primary-500);
+  --p-primary-color: var(--p-primary-500);
 
   /*
     --p-menubar-background:var(--p-primary-800);
@@ -44,5 +44,157 @@
     --p-menubar-item-color:var(--p-primary-50);
     --p-menubar-border-color:var(--p-primary-50);
     */
-    --p-menubar-border-color: var(--p-menubar-background);
+  --p-menubar-border-color: var(--p-menubar-background);
+}
+
+/* Estilos temporales que formatean los textos que llegan desde el quill js */
+
+.formated-content {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  text-align: start;
+
+  .ql-snow {
+    .ql-picker {
+      &.ql-size {
+        .ql-picker-label,
+        .ql-picker-item {
+          &::before {
+            content: attr(data-value) !important;
+          }
+        }
+        .ql-picker-label[data-value="0.75em"]::before,
+        .ql-picker-item[data-value="0.75em"]::before {
+          font-size: 0.75em !important;
+          content: "XS" !important;
+        }
+        .ql-picker-label[data-value="0.875rem"]::before,
+        .ql-picker-item[data-value="0.875rem"]::before {
+          font-size: 0.875rem !important;
+          content: "SM" !important;
+        }
+
+        .ql-picker-label[data-value="1rem"]::before,
+        .ql-picker-item[data-value="1rem"]::before {
+          font-size: 1rem !important;
+          content: "Normal" !important;
+        }
+
+        .ql-picker-label[data-value="1.125rem"]::before,
+        .ql-picker-item[data-value="1.125rem"]::before {
+          font-size: 1.125rem !important;
+          content: "LG" !important;
+        }
+
+        .ql-picker-label[data-value="1.25rem"]::before,
+        .ql-picker-item[data-value="1.25rem"]::before {
+          font-size: 1.25rem !important;
+          content: "XL" !important;
+        }
+
+        .ql-picker-label[data-value="1.5rem"]::before,
+        .ql-picker-item[data-value="1.5rem"]::before {
+          font-size: 1.5rem !important;
+          content: "2XL" !important;
+        }
+
+        .ql-picker-label[data-value="1.875rem"]::before,
+        .ql-picker-item[data-value="1.875rem"]::before {
+          font-size: 1.875rem !important;
+          content: "3XL" !important;
+        }
+      }
+    }
+  }
+
+  .ql-align-center {
+    text-align: center;
+  }
+
+  .ql-centered-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4rem;
+    flex-wrap: wrap;
+  }
+
+  .ql-align-justify {
+    text-align: justify;
+  }
+  .ql-align-right {
+    text-align: right;
+  }
+  .ql-align-left {
+    text-align: left;
+  }
+
+  .ql-editor.ql-size-huge,
+  .ql-size-huge {
+    font-size: 1.5rem !important;
+    content: "2XL" !important;
+  }
+
+  .ql-size-large {
+    font-size: 1.25rem !important;
+    content: "XL" !important;
+  }
+
+  .ql-size-small {
+    font-size: 0.875rem !important;
+    content: "SM" !important;
+  }
+
+  .ql-size-normal {
+    font-size: 1rem !important;
+    content: "Normal" !important;
+  }
+
+  p {
+    font-size: 1rem !important;
+    content: "Normal" !important;
+    padding-top: 0.5em;
+    line-height: 1.1em;
+  }
+
+  &.is-inline {
+    p {
+      padding-top: 0;
+    }
+  }
+
+  & h1 {
+    font-size: 1.5rem;
+    content: "2XL" !important;
+    font-weight: 600;
+  }
+
+  strong,
+  b {
+    line-height: 1.1em;
+    font-weight: 600;
+  }
+
+  & em {
+    line-height: 1.1em;
+    font-style: italic;
+  }
+
+  li {
+    font-size: 1rem;
+    content: "Normal" !important;
+    position: relative;
+    line-height: 1.3em;
+    padding-left: 1.5rem;
+
+    &::before {
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-size: 1rem;
+      padding-top: 1.1rem;
+    }
+  }
 }

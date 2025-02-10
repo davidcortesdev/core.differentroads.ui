@@ -1,11 +1,7 @@
-import { Component } from '@angular/core';
-
-interface Highlight {
-  imageUrl: string;
-  title: string;
-  description: string;
-  buttonUrl: string;
-}
+import { Component, OnInit, Input } from '@angular/core';
+import { SingleFeaturedContent } from '../../../../core/models/blocks/single-featured-content.model';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { BlockType } from '../../../../core/models/blocks/block.model';
 
 @Component({
   selector: 'app-highlight-section',
@@ -13,12 +9,28 @@ interface Highlight {
   templateUrl: './highlight-section.component.html',
   styleUrls: ['./highlight-section.component.scss'],
 })
-export class HighlightSectionComponent {
-  highlight: Highlight = {
-    imageUrl: '/image-highligths.jpg',
-    title: 'Descubriendo los misterios de África',
-    description:
-      'Lorem ipsum dolor sit amet consectetur. Arcu odio et sagittis mattis id et porttitor orci. Elementum amet venenatis nec ac vulputate nullam. Ut pellentesque non a laoreet. Congue risus erat at tortor interdum ipsum massa.',
-    buttonUrl: 'tour/view',
-  };
+export class HighlightSectionComponent implements OnInit {
+  @Input() content!: SingleFeaturedContent;
+  @Input() type!: BlockType;
+  public imageUrl!: string;
+  public imageAlt!: string;
+  public description!: string;
+  public buttonUrl!: string;
+
+  constructor(private sanitizer: DomSanitizer) {}
+
+  ngOnInit(): void {
+    if (this.content) {
+      this.imageUrl = this.content.image[0]?.url || '/image-highligths.jpg';
+      this.imageAlt = this.content.image[0]?.alt;
+      this.description = this.content.content;
+      this.buttonUrl = this.content.link;
+    } else {
+      console.error('Content is undefined');
+    }
+  }
+
+  get sanitizedDescription(): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(this.description);
+  }
 }

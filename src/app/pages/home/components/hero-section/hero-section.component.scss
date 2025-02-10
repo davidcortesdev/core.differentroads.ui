@@ -32,6 +32,10 @@
 
       p-iftaLabel {
         border: none;
+
+        .input-text {
+          width: 270px;
+        }
       }
 
       p-floatlabel {
@@ -46,7 +50,7 @@
         .input-text {
           border: none;
           font-size: 16px;
-          width: 100%;
+          width: 270px;
         }
 
         p-autoComplete,
@@ -66,6 +70,7 @@
 
   ::ng-deep .p-inputtext {
     border: transparent;
+    font-size: 16px;
   }
 
   ::ng-deep .p-autocomplete-dropdown {
@@ -94,5 +99,25 @@
     align-items: center;
     justify-content: center;
     background-color: rgba(255, 255, 255, 0.8);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .search-form {
+    justify-content: center;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .search-form {
+    justify-content: center;
+
+    p-iftaLabel {
+      width: 100%;
+    }
+
+    ::ng-deep .p-autocomplete {
+      width: 100%;
+    }
   }
 }

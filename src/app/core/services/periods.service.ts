@@ -7,12 +7,14 @@ import { Insurance } from '../models/tours/insurance.model';
 import { Period } from '../models/tours/period.model';
 import { ReservationMode } from '../models/tours/reservation-mode.model';
 import { Flight } from '../models/tours/flight.model';
+import { PriceData } from '../models/commons/price-data.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class PeriodsService {
   private readonly API_URL = `${environment.apiUrl}/data/cms/collections/es/periods`;
+  private readonly DATA_API_URL = `${environment.dataApiUrl}/periods`;
 
   constructor(private http: HttpClient) {}
 
@@ -75,5 +77,21 @@ export class PeriodsService {
     return this.getPeriodDetail(id, ['flights']).pipe(
       map((period: Period) => period.flights || [])
     );
+  }
+
+  /**
+   * Fetches the prices of a period by its external ID.
+   * @param id - The external ID of the period.
+   * @returns Observable of PriceData array. List of prices for activities, tour,
+   * period and flights. the key is the external ID of each component.
+   */
+  getPeriodPrices(id: string): Observable<{
+    [key: string]: { priceData: PriceData[]; availability?: number };
+  }> {
+    return this.http
+      .get<{
+        [key: string]: { priceData: PriceData[]; availability?: number };
+      }>(`${this.DATA_API_URL}/${id}/prices`)
+      .pipe(map((response) => response || []));
   }
 }

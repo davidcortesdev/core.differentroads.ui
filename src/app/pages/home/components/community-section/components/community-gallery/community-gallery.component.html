@@ -1,20 +1,18 @@
 <div class="community-gallery">
-  <div *ngFor="let image of communityImages" class="community-gallery-card">
+  <div *ngFor="let card of communityImages" class="community-gallery-card">
     <img
-      [src]="image.url"
-      [alt]="'Image from ' + image.location"
+      [src]="card.image[0].url"
+      [alt]="card.image[0].alt"
       class="community-gallery-card-img"
     />
     <div class="community-gallery-card-info">
       <span class="community-gallery-card-info-location">
-        <span>{{ image.location }}</span>
+        <span>{{ card.location }}</span>
         <i class="pi pi-map-marker"></i>
       </span>
       <span class="community-gallery-card-info-username">
         <i class="pi pi-instagram"></i>
-        <span>
-          {{ image.username }}
-        </span>
+        <span>{{ card.account }}</span>
       </span>
     </div>
   </div>

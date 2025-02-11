@@ -1,0 +1,76 @@
+<section class="tours-section">
+  <h2 class="title">Planea tu viaje de este verano</h2>
+  <p-dataView #dv [value]="displayedTours" [layout]="layout">
+    <ng-template let-tours #grid>
+      <div class="grid">
+        <div
+          *ngFor="let tour of displayedTours"
+          class="col-12 sm:col-6 lg:col-3"
+        >
+          <div class="tour-card">
+            <p-card
+              [style]="{
+                'border-radius': '1rem',
+                overflow: 'hidden',
+                border: 'none',
+                boxShadow: 'none'
+              }"
+              [styleClass]="'tour-card-wrapper'"
+            >
+              <ng-template pTemplate="header">
+                <div class="image-container">
+                  <img [src]="tour.imageUrl" [alt]="tour.title" />
+                  <div class="overlay">
+                    <span class="rating p-button-primary"
+                      >{{ tour.rating }} ★</span
+                    >
+                    <span class="indicator" *ngIf="tour.isByDr">By DR</span>
+                    <span class="tag">{{ tour.tag }}</span>
+                    <div class="title-overlay">
+                      <p>{{ tour.description }}</p>
+                      <h3>{{ tour.title }}</h3>
+                    </div>
+                  </div>
+                </div>
+              </ng-template>
+
+              <ng-template pTemplate="footer">
+                <div class="card-footer">
+                  <div class="price-section">
+                    <span class="desde">desde</span>
+                    <span class="price">{{ tour.price }}€</span>
+                    <div class="months">
+                      <span
+                        *ngFor="let month of tour.availableMonths"
+                        class="month"
+                        [class.active]="true"
+                      >
+                        {{ month }}
+                      </span>
+                    </div>
+                  </div>
+                  <p-button
+                    type="button"
+                    label="Ver tour"
+                    class="p-button-rounded buttonVertour"
+                    [rounded]="true"
+                    [fluid]="true"
+                  ></p-button>
+                </div>
+              </ng-template>
+            </p-card>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+  </p-dataView>
+
+  <div *ngIf="showMoreButton" class="contentMore">
+    <p-button
+      label="Ver más"
+      styleClass="p-button-rounded main-btn-circle"
+      (onClick)="showMoreTours()"
+    >
+    </p-button>
+  </div>
+</section>

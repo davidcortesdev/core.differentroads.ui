@@ -60,6 +60,8 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { RippleModule } from 'primeng/ripple';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DynamicComponentsComponent } from './pages/home/components/dynamic-components/dynamic-components.component';
+import { NotFoundComponent } from './pages/not-found/not-found.component';
+import { CommonModule, NgComponentOutlet } from '@angular/common';
 import { PartnersSectionComponent } from './pages/home/components/partners-section/partners-section.component';
 
 // Add this function outside the class
@@ -92,6 +94,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 
     // Content List
     ContentListComponent,
+    NotFoundComponent,
+
+    DynamicComponentsComponent,
     PartnersSectionComponent,
   ],
   imports: [
@@ -100,6 +105,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     BrowserAnimationsModule,
     AppRoutingModule,
     FormsModule,
+    CommonModule,
+    NgComponentOutlet,
 
     // PrimeNG Modules
     MenubarModule,

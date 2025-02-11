@@ -7,6 +7,11 @@
     font-size: 2rem;
     color: var(--background-azul);
     font-weight: 400;
+
+    @media screen and (max-width: 768px) {
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
   }
 
   ::ng-deep {
@@ -164,7 +169,6 @@
             font-weight: 500;
             font-size: 12px;
             text-align: start;
-            margin-left: 5px;
             color: var(--p-primary-color);
 
             @media screen and (max-width: 1024px) {

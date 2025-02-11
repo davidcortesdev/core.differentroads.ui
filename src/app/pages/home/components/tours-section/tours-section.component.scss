@@ -85,8 +85,8 @@
 
           .indicator {
             font-weight: 500;
+            font-size: 12px;
             text-align: start;
-            margin-left: 5px;
             color: var(--p-primary-color);
 
             @media screen and (max-width: 1024px) {

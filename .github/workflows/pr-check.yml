@@ -3,6 +3,12 @@ name: Pull Request Check
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - '*'
+      - '!main'
+  check_suite:
+    types: [requested]
 
 jobs:
   check-branch:

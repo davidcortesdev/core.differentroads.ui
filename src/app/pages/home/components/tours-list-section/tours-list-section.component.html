@@ -3,17 +3,27 @@
   <p-dataView #dv [value]="displayedTours" [layout]="layout">
     <ng-template let-tours #grid>
       <div class="grid">
-        <div *ngFor="let tour of tours" class="col-12 sm:col-6 lg:col-3">
+        <div
+          *ngFor="let tour of displayedTours"
+          class="col-12 sm:col-6 lg:col-3"
+        >
           <div class="tour-card">
             <p-card
-              [style]="{ 'border-radius': '1rem', overflow: 'hidden', border: 'none', boxShadow: 'none' }"
+              [style]="{
+                'border-radius': '1rem',
+                overflow: 'hidden',
+                border: 'none',
+                boxShadow: 'none'
+              }"
               [styleClass]="'tour-card-wrapper'"
             >
               <ng-template pTemplate="header">
                 <div class="image-container">
                   <img [src]="tour.imageUrl" [alt]="tour.title" />
                   <div class="overlay">
-                    <span class="rating p-button-primary">{{ tour.rating }} ★</span>
+                    <span class="rating p-button-primary"
+                      >{{ tour.rating }} ★</span
+                    >
                     <span class="indicator" *ngIf="tour.isByDr">By DR</span>
                     <span class="tag">{{ tour.tag }}</span>
                     <div class="title-overlay">
@@ -62,7 +72,7 @@
     <p-button
       label="Ver más"
       styleClass="p-button-rounded main-btn-circle"
-      (onClick)="navigateToAllContents('tours')"
+      (onClick)="showMoreTours()"
     >
     </p-button>
   </div>

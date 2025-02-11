@@ -1,8 +1,10 @@
+import { IImage } from '../../general/image.model';
+
 /**
  * Represents a traveler card with their social media information
  */
 export interface TravelerCard {
-  image: string;
+  image: IImage[];
   location: string;
   account: string;
   'c-link': string;

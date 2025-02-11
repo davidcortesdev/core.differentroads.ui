@@ -10,6 +10,7 @@ import { FooterSection } from '../models/general/footer.model';
 import { CheckoutSection } from '../models/general/confirmation-texts.model';
 import { FiltersSection } from '../models/general/filters.model';
 import { PointsSection } from '../models/general/points-sections.model';
+import { PartnersSection } from '../models/general/partners-section.model';
 
 @Injectable({
   providedIn: 'root',
@@ -62,6 +63,12 @@ export class GeneralConfigService {
   getFiltersSection(): Observable<FiltersSection> {
     return this.getGeneralConfigData(['filters-section']).pipe(
       map((configData: GeneralConfigSchema) => configData['filters-section'])
+    );
+  }
+
+  getPartnersSection(): Observable<PartnersSection> {
+    return this.getGeneralConfigData(['partners-section']).pipe(
+      map((configData: GeneralConfigSchema) => configData['partners-section'])
     );
   }
 }

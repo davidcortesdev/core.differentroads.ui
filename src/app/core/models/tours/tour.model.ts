@@ -7,6 +7,7 @@ export interface Tour extends CMSCollections {
   externalID: string;
   name: string;
   subtitle: string;
+  country: string;
   webSlug: string;
   tags: string[];
   vtags: string[];

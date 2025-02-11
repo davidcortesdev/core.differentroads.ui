@@ -13,8 +13,30 @@ import { GeneralConfigService } from '../../../../core/services/general-config.s
 })
 export class PartnersSectionComponent implements OnInit {
   partners!: ImageList[];
-  numVisible = 6; // Adjust this value as needed
+  numVisible = 4;
   title!: string;
+  responsiveOptions = [
+    {
+      breakpoint: '1800px',
+      numVisible: 4,
+      numScroll: 1
+    },
+    {
+      breakpoint: '1300px',
+      numVisible: 3,
+      numScroll: 1
+    },
+    {
+      breakpoint: '1000px',
+      numVisible: 2,
+      numScroll: 1
+    },
+    {
+      breakpoint: '700px',
+      numVisible: 1,
+      numScroll: 1
+    }
+  ];
 
   constructor(private generalConfigService: GeneralConfigService) {}
 

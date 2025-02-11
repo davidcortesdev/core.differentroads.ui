@@ -24,11 +24,21 @@
                 </div>
               </ng-template>
 
-              <ng-template pTemplate="footer">
+              <ng-template pTemplate="content">
                 <div class="card-footer">
-                  <div class="price-section">
-                    <span class="desde">desde</span>
-                    <span class="price">{{ tour.price }}€</span>
+                  <div class="price-content">
+                    <div class="price-section">
+                      <div class="price-info">
+                        <span class="desde">desde</span>
+                        <span class="price">{{ tour.price }}€</span>
+                      </div>
+                      <p-button
+                        type="button"
+                        label="Ver tour"
+                        class="p-button-rounded buttonVertour"
+                        [rounded]="true"
+                      ></p-button>
+                    </div>
                     <div class="months">
                       <span
                         *ngFor="let month of tour.availableMonths"
@@ -39,13 +49,6 @@
                       </span>
                     </div>
                   </div>
-                  <p-button
-                    type="button"
-                    label="Ver tour"
-                    class="p-button-rounded buttonVertour"
-                    [rounded]="true"
-                    [fluid]="true"
-                  ></p-button>
                 </div>
               </ng-template>
             </p-card>
@@ -54,8 +57,8 @@
       </div>
     </ng-template>
   </p-dataView>
-  
-  <div *ngIf="showMoreButton" class="contentMore">
+    
+  <div *ngIf="showMoreButton" class="tours-sectionMore">
     <p-button
       label="Ver más"
       styleClass="p-button-rounded main-btn-circle"

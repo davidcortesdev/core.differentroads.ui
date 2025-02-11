@@ -30,26 +30,63 @@
       align-items: center;
       flex-wrap: wrap;
 
+      p-iftaLabel {
+        border: none;
+
+        .input-text {
+          width: 270px;
+        }
+      }
+
       p-floatlabel {
         flex: 1;
         display: flex;
         min-width: 200px;
+        height: 50px;
+        width: 100%;
+        font-size: 14px;
+        font-weight: 500;
+
+        .input-text {
+          border: none;
+          font-size: 16px;
+          width: 270px;
+        }
+
         p-autoComplete,
         p-datepicker {
+          border: none;
           flex: 1;
           width: 100%;
+
           ::ng-deep .p-autocomplete,
           ::ng-deep .p-calendar {
             width: 100%;
-          }          
+          }
         }
       }
-
-      p-button {
-        min-width: 120px;
-        width: 7rem;
-      }
     }
+  }
+
+  ::ng-deep .p-inputtext {
+    border: transparent;
+    font-size: 16px;
+  }
+
+  ::ng-deep .p-autocomplete-dropdown {
+    background-color: var(--background-azul-color-letra);
+    border: none;
+  }
+
+  ::ng-deep .button-search {
+    border-radius: 3rem;
+    height: 3.125rem;
+    width: 7rem;
+  }
+
+  .float-label {
+    color: var(--background-azul);
+    font-weight: 500;
   }
 
   .spinner-container {
@@ -62,5 +99,25 @@
     align-items: center;
     justify-content: center;
     background-color: rgba(255, 255, 255, 0.8);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .search-form {
+    justify-content: center;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .search-form {
+    justify-content: center;
+
+    p-iftaLabel {
+      width: 100%;
+    }
+
+    ::ng-deep .p-autocomplete {
+      width: 100%;
+    }
   }
 }

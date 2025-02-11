@@ -36,8 +36,8 @@ export class DynamicComponentsComponent implements OnInit {
         return ContentListComponent;
       case BlockType.PressList:
         return ContentListComponent;
-      case BlockType.TourList:
-        return ToursSectionComponent;
+      // case BlockType.TourList:
+      //   return ToursSectionComponent;
       /* 
       case BlockType.BlogList:
         return BlogSectionComponent;

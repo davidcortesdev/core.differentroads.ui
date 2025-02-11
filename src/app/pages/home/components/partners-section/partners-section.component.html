@@ -1,0 +1,20 @@
+<section class="partners-section">
+  <h3>Colaboradores</h3>
+  <p-carousel
+    [value]="partners"
+    [numVisible]="numVisible"
+    [numScroll]="1"
+    [circular]="true"
+    [autoplayInterval]="3000"
+  >
+    <ng-template let-image pTemplate="item">
+      <div class="partner-figure">
+        <img
+          [src]="image.partnerImage[0].url"
+          [alt]="image.partnerImage[0].alt"
+          class="partner-img"
+        />
+      </div>
+    </ng-template>
+  </p-carousel>
+</section>

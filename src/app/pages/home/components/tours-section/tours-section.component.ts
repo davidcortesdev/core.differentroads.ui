@@ -3,19 +3,8 @@ import { Router } from '@angular/router';
 import { ToursService } from '../../../../core/services/tours.service';
 import { Tour } from '../../../../core/models/tours/tour.model';
 import { catchError } from 'rxjs';
-import { FeaturedToursSection } from '../../../../core/models/home/featured-tours/featured-tour.model';
-import { BlockType } from '../../../../core/models/blocks/block.model'; // Asegúrate de importar BlockType
 
-interface ProcessedTour {
-  imageUrl: string;
-  title: string;
-  description: string;
-  rating: number;
-  tag: string;
-  price: number;
-  availableMonths: string[];
-  isByDr: boolean;
-}
+import { ProcessedTour } from '../../../../core/models/tours/processed-tour.model';
 
 @Component({
   selector: 'app-tours-section',
@@ -25,8 +14,6 @@ interface ProcessedTour {
 })
 export class ToursSectionComponent implements OnInit {
   @Input() content!: any;
-  @Input() type!: BlockType;
-
   tours: ProcessedTour[] = [];
 
   responsiveOptions = [
@@ -53,18 +40,16 @@ export class ToursSectionComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    console.log('Tour List Content:', this.content);
-    console.log('Featured Tours:', this.content['tour-list']);
     this.loadTours();
   }
 
   private loadTours(): void {
-    if (!this.content || !this.content['tour-list']) {
+    if (!this.content || !this.content['featured-tours']) {
       this.tours = [];
       return;
     }
 
-    const tourIds: Array<string> = this.content['tour-list'].map(
+    const tourIds: Array<string> = this.content['featured-tours'].map(
       (tour: { id: string }): string => tour.id
     );
 
@@ -90,16 +75,16 @@ export class ToursSectionComponent implements OnInit {
             const processedTour: ProcessedTour = {
               imageUrl: tour.image?.[0]?.url || '',
               title: tour.name || '',
+              //TODO: cambiar descripcion por la duracion del tour
               description: tour.description || '',
               rating: 5,
+              //TODO: cambiar nmbre completo del mes por los cortos
               tag: tour.marketingSection?.marketingSeasonTag || '',
               price: tour.basePrice || 0,
               availableMonths: tour.monthTags || [],
               isByDr: true,
             };
             this.tours = [...this.tours, processedTour];
-
-            console.log('pruebaaaaa', this.tours);
           }
         });
     });

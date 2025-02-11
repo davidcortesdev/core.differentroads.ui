@@ -1,0 +1,134 @@
+.auth-card {
+  position: relative;
+  z-index: 2;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  min-width: 400px;
+  margin: auto;
+  border-radius: 10px;
+  padding: 20px;
+
+  @media (max-width: 575.98px) {
+    min-width: 90%;
+    margin: 1rem;
+  }
+
+  @media (max-width: 767.98px) {
+    min-width: 350px;
+  }
+
+  &-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 65vh;
+    position: relative;
+    background-position: 50%;
+    background-size: cover;
+    background-repeat: no-repeat;
+    padding: 2rem;
+
+    @media (max-width: 575.98px) {
+      padding: 0.5rem;
+    }
+  }
+
+  &-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.7);
+    z-index: 1;
+  }
+}
+
+.auth-layout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  z-index: 2;
+  position: relative;
+}
+
+.sign-up-form {
+  &-title {
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+  }
+
+  &-text {
+    font-size: 0.875rem;
+    color: #666;
+  }
+
+  &-btngoogle {
+    background-color: #4285f4;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 1rem;
+
+    &:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+  }
+
+  &-btnsingup {
+    background-color: #007bff;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+
+    &:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+  }
+
+  &-link {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 0.875rem;
+
+    &-span {
+      text-decoration: underline;
+    }
+  }
+}
+
+.error-underline {
+  color: #dc3545;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.password {
+  position: relative;
+
+  &-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+}

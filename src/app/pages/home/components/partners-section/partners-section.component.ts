@@ -14,6 +14,7 @@ import { GeneralConfigService } from '../../../../core/services/general-config.s
 export class PartnersSectionComponent implements OnInit {
   partners!: ImageList[];
   numVisible = 6; // Adjust this value as needed
+  title!: string;
 
   constructor(private generalConfigService: GeneralConfigService) {}
 
@@ -22,6 +23,7 @@ export class PartnersSectionComponent implements OnInit {
       .getPartnersSection()
       .subscribe((data: PartnersSection) => {
         this.partners = data.imageList;
+        this.title = data.title;
       });
   }
 }

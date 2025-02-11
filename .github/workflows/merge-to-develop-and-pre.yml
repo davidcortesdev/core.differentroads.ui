@@ -6,9 +6,8 @@ on:
       - main
 
 jobs:
-  merge:
+  merge-to-develop:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
@@ -32,6 +31,19 @@ jobs:
           workflow: Build and Deploy Develop
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: develop
+
+  merge-to-pre:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
       - name: Merge main into pre
         run: |

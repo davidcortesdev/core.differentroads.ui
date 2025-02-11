@@ -4,7 +4,6 @@ import { ToursService } from '../../../../core/services/tours.service';
 import { catchError } from 'rxjs';
 import { TourListContent } from '../../../../core/models/blocks/tour-list-content.model';
 import { Tour } from '../../../../core/models/tours/tour.model';
-
 interface ITour {
   imageUrl: string;
   title: string;
@@ -27,7 +26,6 @@ export class ToursListComponent implements OnInit {
   @Input() type!: string;
 
   tours: ITour[] = [];
-
   layout: 'grid' | 'list' = 'grid';
   showMoreButton: boolean = false;
   displayedTours: ITour[] = [];
@@ -42,12 +40,15 @@ export class ToursListComponent implements OnInit {
 
   ngOnInit() {
     console.log('Tours content', this.content);
-
     this.loadTours();
   }
 
+  getTagDisplay(tour: ITour): string {
+    if (!tour.tag) return ''; // Return empty string if no tag
+    return tour.isByDr ? 'ByDR' : 'Beyond Different';
+  }
+
   private loadTours(): void {
-    // Assuming `content` is available and contains 'featured-tours'
     const tourIds: Array<string> = this.content['tour-list'].map(
       (tour: { id: string }): string => tour.id
     );
@@ -57,7 +58,7 @@ export class ToursListComponent implements OnInit {
       return;
     }
 
-    this.tours = []; // Reset the list
+    this.tours = [];
 
     tourIds.forEach((id: string): void => {
       console.log('Loading tour with ID', id);
@@ -85,7 +86,7 @@ export class ToursListComponent implements OnInit {
                 tour.monthTags?.map((month) =>
                   month.substring(0, 3).toUpperCase()
                 ) || [],
-              isByDr: true,
+              isByDr: false,
             };
             this.tours = [...this.tours, processedTour];
             this.displayedTours = this.tours.slice(

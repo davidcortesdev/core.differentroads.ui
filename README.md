@@ -25,9 +25,10 @@ src/
 - **Pages**: Contiene los componentes específicos de cada página
 - **Shared**: Elementos reutilizables en toda la aplicación
 
-## Flujo de Trabajo con Git
+## Guías y Documentación
 
-Seguimos un flujo de trabajo basado en GIT, aquí tienes [guía detallada de flujo de ramas](https://github.com/Different-Roads/core.differentroads.help/blob/main/git/flujo_ramas.md).
+- [Comunicación Padre-Hijo](./readme/info_padre_hijo.md): Guía sobre cómo pasar información entre componentes padre e hijo
+- [Flujo de trabajo con Git](https://github.com/Different-Roads/core.differentroads.help/blob/main/git/flujo_ramas.md)
 
 ## Configuración del Entorno de Desarrollo
 

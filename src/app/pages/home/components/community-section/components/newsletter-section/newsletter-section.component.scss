@@ -1,0 +1,170 @@
+.section {
+  background-color: #002b57; /* Fondo del section */
+  padding: 2rem 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  color: #002b57; /* Texto */
+  padding: 2rem;
+  border-radius: 0.7rem;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.mlformaligncenter {
+  text-align: center;
+}
+
+.mlformembedWrapper {
+  display: flex;
+  padding: 2rem 4.48675rem;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  flex: 1 0 0;
+  align-self: stretch;
+  border-radius: 0.71788rem;
+  border: 1px solid #000;
+  background: #e5f2ff;
+}
+
+.mlformembedBodyHorizontal {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  align-self: stretch;
+  flex-wrap: wrap;
+}
+
+.formWrapper,
+.successWrapper {
+  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  align-self: stretch;
+  flex-wrap: wrap;
+}
+
+.content {
+  display: flex;
+  width: 34.09913rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.19644rem;
+  text-align: left;
+}
+
+.content h4 {
+  color: #002b57; /* Color del título */
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin:0;
+}
+
+.content p {
+  color: #002b57; /* Color del párrafo */
+  font-size: 0.95rem;
+  margin:0;
+}
+
+.form {
+  margin: 1rem 0 0 0;
+  width: 33rem;
+}
+
+.formContent {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.inputWrapper {
+  flex: 1;
+}
+
+.mlfieldemail input {
+  width: 100%;
+  font-size: 0.95rem;
+  color: #aaa;
+  border: none;
+}
+
+.mlfieldemail input:focus-visible {
+  border: none;
+}
+
+.buttonWrapper {
+  flex-shrink: 0;
+}
+
+.button:hover {
+  background-color: #093642; /* Color del botón al pasar el ratón */
+}
+
+.successWrapper h4 {
+  font-size: 1.8rem;
+  color: #002b57; /* Color del título de éxito */
+}
+
+.successWrapper p {
+  font-size: 1rem;
+  color: #002b57; /* Color del texto de éxito */
+}
+
+.horozintalForm {
+  margin: 0;
+  padding: 0 0 0 0;
+  width: 100%;
+  height: auto;
+  float: left;
+}
+
+.mlformhorizontalRow {
+  height: auto;
+  width: 100%;
+  display: flex;
+  background-color: #fff;
+  border-color: #002b57;
+  border: 1px solid #002b57;
+  border-radius: 25px;
+  padding: 0.5rem;
+  justify-content: space-between;
+}
+
+.mlimputhorizontal {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.horizontalFields {
+  box-sizing: border-box;
+  float: left;
+  padding-right: 10px;
+  width: 100%;
+}
+
+.mlfieldemail {
+  text-align: left !important;
+}
+
+.mlbuttonhorizontal button {
+  background-color: #ea685c !important;
+  border-color: #ea685c;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 25px;
+  box-shadow: none;
+  color: #fff !important;
+  cursor: pointer;
+  font-family: 'General Sans', sans-serif;
+  font-weight: 700;
+  padding: 7px !important;
+  width: 7.5rem;
+  height: auto;
+}

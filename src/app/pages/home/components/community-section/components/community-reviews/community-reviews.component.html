@@ -1,7 +1,7 @@
 <div class="reviews-section">
-  <h3>Déjate inspirar por otros viajeros</h3>
+  <h3>{{ reviews?.title }}</h3>
   <p-carousel
-    [value]="reviews"
+    [value]="reviewsCards"
     [numVisible]="4"
     [numScroll]="1"
     [circular]="true"
@@ -11,16 +11,16 @@
     <ng-template let-review pTemplate="item" class="reviews-carousel-item">
       <div class="reviews-carousel-item-card">
         <div class="reviews-carousel-item-card-wrap">
-          <h4>{{ review.name }}</h4>
+          <h4>{{ review.traveler }}</h4>
           <div class="reviews-carousel-item-card-wrap-content">
-            <span>{{ review.destination }}</span>
-            <p>{{ review.description }}</p>
+            <span>{{ review.tour }}</span>
+            <p>{{ review.review }}</p>
           </div>
           <span class="reviews-carousel-item-card-wrap-date">{{
             review.date
           }}</span>
           <p-rating
-            [ngModel]="review.rating"
+            [ngModel]="review.score"
             [readonly]="true"
             [stars]="5"
           ></p-rating>

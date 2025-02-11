@@ -1,5 +1,5 @@
 <section class="tours-section">
-  <h2>Descubre lo mejor de Europa</h2>
+  <h2 class="title">Descubre lo mejor de Europa</h2>
   <p-carousel
     [value]="tours"
     [numVisible]="3"
@@ -7,11 +7,12 @@
     [circular]="true"
     [responsiveOptions]="responsiveOptions"
     [autoplayInterval]="5000"
+    [showNavigators]="false"
   >
     <ng-template let-tour pTemplate="item">
       <div class="tour-card">
         <p-card
-          [style]="{ 'border-radius': '1rem', overflow: 'hidden' }"
+          [style]="{ 'border-radius': '1rem', overflow: 'hidden', border: 'none', boxShadow: 'none' }"
           [styleClass]="'tour-card-wrapper'"
         >
           <ng-template pTemplate="header">
@@ -19,10 +20,11 @@
               <img [src]="tour.imageUrl" [alt]="tour.title" />
               <div class="overlay">
                 <span class="rating p-button-primary">{{ tour.rating }} ★</span>
+                <span class="indicator" *ngIf="tour.isByDr">By DR</span>
                 <span class="tag">{{ tour.tag }}</span>
                 <div class="title-overlay">
-                  <h3>{{ tour.title }}</h3>
                   <p>{{ tour.description }}</p>
+                  <h3>{{ tour.title }}</h3>
                 </div>
               </div>
             </div>
@@ -44,9 +46,9 @@
               <p-button
                 type="button"
                 label="Ver tour"
-                class="p-button-rounded, buttonVertour"
+                class="p-button-rounded buttonVertour"
                 [rounded]="true"
-                fluid="true"
+                [fluid]="true"
               ></p-button>
             </div>
           </ng-template>

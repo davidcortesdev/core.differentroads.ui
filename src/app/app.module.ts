@@ -30,6 +30,7 @@ import { CommunitySectionComponent } from './pages/home/components/community-sec
 import { CommunityHeroComponent } from './pages/home/components/community-section/components/community-hero/community-hero.component';
 import { CommunityGalleryComponent } from './pages/home/components/community-section/components/community-gallery/community-gallery.component';
 import { CommunityReviewsComponent } from './pages/home/components/community-section/components/community-reviews/community-reviews.component';
+import { NewsLetterSectionComponent } from './pages/home/components/community-section/components/newsletter-section/newsletter-section.component';
 
 // Content List
 import { ContentListComponent } from './pages/home/components/content-list/content-list-section.component';
@@ -43,6 +44,7 @@ import { MenubarModule } from 'primeng/menubar';
 import { TabsModule } from 'primeng/tabs';
 import { EditorModule } from 'primeng/editor';
 import { FloatLabelModule } from 'primeng/floatlabel';
+import { IftaLabelModule } from 'primeng/iftalabel';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { FileUploadModule } from 'primeng/fileupload';
@@ -61,6 +63,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DynamicComponentsComponent } from './pages/home/components/dynamic-components/dynamic-components.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { CommonModule, NgComponentOutlet } from '@angular/common';
+import { PartnersSectionComponent } from './pages/home/components/partners-section/partners-section.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -94,7 +97,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     ContentListComponent,
     NotFoundComponent,
 
-    DynamicComponentsComponent
+    DynamicComponentsComponent,
+    PartnersSectionComponent,
   ],
   imports: [
     // Angular Modules
@@ -104,7 +108,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     FormsModule,
     CommonModule,
     NgComponentOutlet,
-
+    NewsLetterSectionComponent,
     // PrimeNG Modules
     MenubarModule,
     RippleModule,
@@ -120,6 +124,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     ImageModule,
     RatingModule,
     FloatLabelModule,
+    IftaLabelModule,
     ProgressSpinnerModule,
     TranslateModule.forRoot({
       loader: {

@@ -1,0 +1,8 @@
+<section class="partners-section">
+  <h3>Colaboradores</h3>
+  <div class="partners-wrap">
+    <div *ngFor="let image of partners" class="partner-figure">
+      <img [src]="image.url" [alt]="image.alt" class="parthner-img" />
+    </div>
+  </div>
+</section>

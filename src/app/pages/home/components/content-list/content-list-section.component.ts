@@ -2,9 +2,10 @@ import { Component, Inject, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { BlogListContent } from '../../../../core/models/blocks/blog-list-content.model';
 import { BlogsService } from '../../../../core/services/blogs.service'; // Import BlogsService
-import { forkJoin } from 'rxjs';
+import { PressService } from '../../../../core/services/press.service'; // Import PressService
 import { catchError, map } from 'rxjs/operators';
 import { BlockType } from '../../../../core/models/blocks/block.model';
+import { PressListContent } from '../../../../core/models/blocks/press-list-content.model';
 
 interface ContentData {
   id: string;
@@ -26,7 +27,7 @@ interface ContentData {
   styleUrls: ['./content-list-section.component.scss'],
 })
 export class ContentListComponent implements OnInit {
-  @Input() content!: BlogListContent;
+  @Input() content!: BlogListContent | PressListContent;
   @Input() type!: BlockType;
   @Input() title!: string;
 
@@ -35,7 +36,8 @@ export class ContentListComponent implements OnInit {
 
   constructor(
     private readonly router: Router,
-    private readonly blogsService: BlogsService
+    private readonly blogsService: BlogsService,
+    private readonly pressService: PressService // Inject PressService
   ) {}
 
   ngOnInit() {
@@ -52,9 +54,9 @@ export class ContentListComponent implements OnInit {
   }
 
   private loadBlogs(): void {
-    const blogIds: Array<string> = this.content['blog-list'].map(
-      (blog: { id: string }): string => blog.id
-    );
+    const blogIds: Array<string> = (this.content as BlogListContent)?.[
+      'blog-list'
+    ].map((blog: { id: string }): string => blog.id);
 
     if (blogIds.length === 0) {
       this.contentList = [];
@@ -91,60 +93,42 @@ export class ContentListComponent implements OnInit {
   }
 
   private loadPress(): void {
-    this.contentList = [
-      {
-        id: '1',
-        subtitle: 'La Vanguardia Magazine',
-        title: 'Circuito por el Loira para pasar fin de año.',
-        slug: 'jordania',
-        image: [
-          { url: 'https://picsum.photos/800/600?random=3', alt: 'Jordania' },
-        ],
-        type: 'press',
-      },
-      {
-        id: '2',
-        subtitle: 'El País',
-        title: 'Los mejores destinos para viajar en 2025 con tu familia',
-        slug: 'el-pais',
-        image: [
-          { url: 'https://picsum.photos/800/600?random=4', alt: 'El País' },
-        ],
-        type: 'press',
-      },
-      {
-        id: '3',
-        subtitle: 'La Vanguardia Magazine',
-        title: 'Circuito por el Loira para pasar fin de año.',
-        slug: 'jordania',
-        image: [
-          { url: 'https://picsum.photos/800/600?random=5', alt: 'Jordania' },
-        ],
-        type: 'press',
-      },
-      {
-        id: '4',
-        subtitle: 'La Vanguardia Magazine',
-        title: 'Circuito por el Loira para pasar fin de año.',
-        slug: 'jordania',
-        image: [
-          { url: 'https://picsum.photos/800/600?random=6', alt: 'Jordania' },
-        ],
-        type: 'press',
-      },
-      {
-        id: '5',
-        subtitle: 'La Vanguardia Magazine',
-        title: 'Circuito por el Loira para pasar fin de año.',
-        slug: 'jordania',
-        image: [
-          { url: 'https://picsum.photos/800/600?random=7', alt: 'Jordania' },
-        ],
-        type: 'press',
-      },
-    ];
+    const pressIds: Array<string> = (this.content as PressListContent)?.[
+      'press-list'
+    ].map((press: { id: string }): string => press.id);
 
-    this.showMoreButton = this.contentList.length > 4;
+    if (pressIds.length === 0) {
+      this.contentList = [];
+      this.showMoreButton = false;
+      return;
+    }
+
+    this.contentList = []; // Reset the list
+    this.showMoreButton = pressIds.length > 4;
+
+    pressIds.forEach((id: string): void => {
+      this.pressService
+        .getPressThumbnailById(id)
+        .pipe(
+          catchError((error: Error) => {
+            console.error(`Error loading press with ID ${id}:`, error);
+            return [];
+          })
+        )
+        .subscribe((press: any): void => {
+          if (press) {
+            const pressContent: ContentData = {
+              id: press.id,
+              title: press.title,
+              subtitle: press.subtitle,
+              slug: press.slug,
+              image: press.image,
+              type: 'press',
+            };
+            this.contentList = [...this.contentList, pressContent];
+          }
+        });
+    });
   }
 
   navigateToContent(slug: string, type: 'blog' | 'press'): void {

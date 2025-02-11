@@ -1,7 +1,9 @@
 <div *ngFor="let block of blocks">
-  block.Type: {{block.type}}
   <ng-container
-    *ngComponentOutlet="getComponent(block); inputs: { content: block.content, type: block.type }"
+    *ngComponentOutlet="
+      getComponent(block);
+      inputs: { content: block.content, type: block.type }
+    "
   >
   </ng-container>
 </div>

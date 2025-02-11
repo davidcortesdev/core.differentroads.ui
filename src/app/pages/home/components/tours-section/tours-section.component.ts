@@ -29,6 +29,40 @@ export class ToursSectionComponent implements OnInit {
 
   tours: ProcessedTour[] = [];
 
+  // Mock data for testing
+  private mockTours: ProcessedTour[] = [
+    {
+      imageUrl: 'assets/images/tours/iceland.jpg',
+      title: 'Recorriendo la tierra del hielo y fuego',
+      description: 'Islandia: en 8 días',
+      rating: 5,
+      tag: 'Destacado',
+      price: 2545,
+      availableMonths: ['JUN', 'JUL', 'AGO', 'SEP'],
+      isByDr: true
+    },
+    {
+      imageUrl: 'assets/images/tours/tuscany.jpg',
+      title: 'Travesía por la Toscana',
+      description: 'Italia: en 8 días',
+      rating: 5,
+      tag: 'Nuevo',
+      price: 1895,
+      availableMonths: ['MAY', 'JUN', 'JUL', 'AGO', 'SEP'],
+      isByDr: true
+    },
+    {
+      imageUrl: 'assets/images/tours/switzerland.jpg',
+      title: 'Alpes Suizos',
+      description: 'Suiza: en 7 días',
+      rating: 5,
+      tag: 'Popular',
+      price: 2195,
+      availableMonths: ['JUN', 'JUL', 'AGO', 'SEP', 'OCT'],
+      isByDr: true
+    }
+  ];
+
   responsiveOptions = [
     {
       breakpoint: '1400px',
@@ -53,11 +87,13 @@ export class ToursSectionComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    console.log('Tour List Content:', this.content);
-    console.log('Featured Tours:', this.content['tour-list']);
-    this.loadTours();
+    // Comment out the API calls and use mock data instead
+    // this.loadTours();
+    this.tours = this.mockTours;
   }
 
+  // Comment out or remove the loadTours method since we're using mock data
+  /*
   private loadTours(): void {
     if (!this.content || !this.content['tour-list']) {
       this.tours = [];
@@ -104,6 +140,7 @@ export class ToursSectionComponent implements OnInit {
         });
     });
   }
+  */
 
   navigateToTour(tour: ProcessedTour): void {
     this.router.navigate([

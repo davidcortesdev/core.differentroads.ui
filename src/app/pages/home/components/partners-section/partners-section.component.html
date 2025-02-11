@@ -1,11 +1,14 @@
 <section class="partners-section">
-  <h3>{{ title }}</h3>
+  <h2 class="title">{{ title }}</h2>
   <p-carousel
     [value]="partners"
     [numVisible]="numVisible"
     [numScroll]="1"
     [circular]="true"
     [autoplayInterval]="3000"
+    [responsiveOptions]="responsiveOptions"
+    showIndicators="false"
+    showNavigators="false"
   >
     <ng-template let-image pTemplate="item">
       <div class="partner-figure">

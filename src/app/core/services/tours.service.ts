@@ -51,6 +51,7 @@ export class ToursService {
       'basePrice',
       'name',
       'image',
+      'country',
     ]).pipe(map((tourData: Tour) => tourData));
   }
 
@@ -73,13 +74,13 @@ export class ToursService {
               isByDr: true,
             });
             completed++;
-            
+
             if (completed === ids.length) {
               subscriber.next(tourCards);
               subscriber.complete();
             }
           },
-          error: (error) => subscriber.error(error)
+          error: (error) => subscriber.error(error),
         });
       });
     });

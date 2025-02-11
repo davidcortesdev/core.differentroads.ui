@@ -75,11 +75,9 @@ export class ToursSectionComponent implements OnInit {
             const processedTour: ProcessedTour = {
               imageUrl: tour.image?.[0]?.url || '',
               title: tour.name || '',
-              //TODO: cambiar descripcion por la duracion del tour
               description:
                 tour.country && days ? `${tour.country} en: ${days} dias` : '',
               rating: 5,
-              //TODO: cambiar nmbre completo del mes por los cortos
               tag: tour.marketingSection?.marketingSeasonTag || '',
               price: tour.basePrice || 0,
               availableMonths: (tour.monthTags || []).map(

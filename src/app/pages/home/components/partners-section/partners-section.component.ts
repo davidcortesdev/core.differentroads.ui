@@ -1,4 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import {
+  ImageList,
+  PartnersSection,
+} from '../../../../core/models/general/partners-section.model';
+import { GeneralConfigService } from '../../../../core/services/general-config.service';
 
 @Component({
   selector: 'app-partners-section',
@@ -6,23 +11,17 @@ import { Component } from '@angular/core';
   templateUrl: './partners-section.component.html',
   styleUrl: './partners-section.component.scss',
 })
-export class PartnersSectionComponent {
-  partners = [
-    {
-      alt: 'Ethan',
-      url: 'https://picsum.photos/280/70?random=1',
-    },
-    {
-      alt: '∏Essie',
-      url: 'https://picsum.photos/280/70?random=2',
-    },
-    {
-      alt: 'Bertie',
-      url: 'https://picsum.photos/280/70?random=3',
-    },
-    {
-      alt: 'LeonEthan',
-      url: 'https://picsum.photos/280/70?random=4',
-    },
-  ];
+export class PartnersSectionComponent implements OnInit {
+  partners!: ImageList[];
+  numVisible = 6; // Adjust this value as needed
+
+  constructor(private generalConfigService: GeneralConfigService) {}
+
+  ngOnInit(): void {
+    this.generalConfigService
+      .getPartnersSection()
+      .subscribe((data: PartnersSection) => {
+        this.partners = data.imageList;
+      });
+  }
 }

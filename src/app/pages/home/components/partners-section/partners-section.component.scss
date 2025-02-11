@@ -9,20 +9,18 @@
     text-align: center;
   }
 
-  &>.partners-wrap {
-    display: grid;
-    gap: 2.5rem;
-    grid-template-rows: 1fr;
-    grid-template-columns: repeat(4, 1fr);
+  .partner-figure {
+    width: 100%;
+    margin: auto 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 
-    &>.partner-figure {
-      width: 100%;
-
-      &>.parthner-img {
-        height: 100%;
-        max-width: 100%;
-        width: 100%;
-      }
+    & > .partner-img {
+      max-width: 10rem;
+      max-height: 3rem;
+      width: auto;
+      height: auto;
     }
   }
 }

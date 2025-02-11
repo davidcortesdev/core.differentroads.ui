@@ -62,6 +62,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DynamicComponentsComponent } from './pages/home/components/dynamic-components/dynamic-components.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { CommonModule, NgComponentOutlet } from '@angular/common';
+import { PartnersSectionComponent } from './pages/home/components/partners-section/partners-section.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -95,7 +96,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     ContentListComponent,
     NotFoundComponent,
 
-    DynamicComponentsComponent
+    DynamicComponentsComponent,
+    PartnersSectionComponent,
   ],
   imports: [
     // Angular Modules

@@ -11,8 +11,7 @@ import { FeaturedToursSection } from '../../core/models/home/featured-tours/feat
 })
 export class HomeComponent {
   blocks: Block[] = [];
-  featuredTours!: FeaturedToursSection;
- 
+  featuredTours?: FeaturedToursSection;
 
   constructor(private homeService: HomeService) {}
 
@@ -22,12 +21,10 @@ export class HomeComponent {
         console.log('Home data:', data);
         this.blocks = data.blocks;
         this.featuredTours = data['featured-tours'];
-        console.log("featured:", this.featuredTours)
       },
       error: (error) => {
         console.error('Error fetching home data:', error);
       },
     });
-
   }
 }

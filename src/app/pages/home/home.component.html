@@ -1,4 +1,10 @@
 <div class="home-container">
+  <button (click)="testLogin()">Test Login</button>
+  <button (click)="testSignUp()">Test Sign Up</button>
+  <button (click)="testConfirmSignUp()">Confirm Sign Up</button>
+  <button (click)="testGetCurrentUser()">Get Current User</button>
+  <button (click)="testGetUserAttributes()">Get User Attributes</button>
+
   <app-hero-section></app-hero-section>
   <app-tours-section
     *ngIf="featuredTours"

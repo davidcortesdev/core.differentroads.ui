@@ -146,6 +146,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     BreadcrumbModule,
     DividerModule,
     MessageModule,
+
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

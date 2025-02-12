@@ -7,8 +7,8 @@
     <p>Lo sentimos, no se pudo cargar el tour.</p>
   </div>
 
-  <div *ngIf="!loading && !error && tour" class="tour-content">
-    <app-tour-header [tour]="tour"></app-tour-header>
-    <!-- Rest of the tour content will go here -->
+  <div *ngIf="!loading && !error" class="tour-content">
+    <app-tour-header></app-tour-header>
+    <app-tour-overview></app-tour-overview>
   </div>
 </div>

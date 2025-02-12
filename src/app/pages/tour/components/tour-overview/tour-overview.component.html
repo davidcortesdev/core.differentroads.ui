@@ -1,0 +1,56 @@
+<div class="tour-overview">
+  <p-breadcrumb
+    [model]="breadcrumbItems"
+    [home]="{ icon: 'pi pi-home' }"
+    styleClass="destinations-breadcrumb"
+  ></p-breadcrumb>
+
+  <div class="tour-content">
+    <div class="tour-image">
+      <p-image
+        [src]="tour.mainImage.src"
+        [alt]="tour.mainImage.alt"
+        [preview]="true"
+      ></p-image>
+    </div>
+
+    <div class="tour-details">
+      <div class="overview-header">
+        <h2>{{ tour.name }}</h2>
+        <p-button label="Leer más" link styleClass="p-button-link"></p-button>
+      </div>
+
+      <div class="main-features">
+        <div class="feature" *ngFor="let feature of tour.features">
+          <div [innerHTML]="sanitizeHtml(feature)"></div>
+        </div>
+      </div>
+
+      <div class="additional-features">
+        <h3>Además puedes añadir:</h3>
+        <div class="feature" *ngFor="let addon of tour.addons">
+          <div [innerHTML]="sanitizeHtml(addon)"></div>
+        </div>
+      </div>
+      <div class="expert-section">
+        <div class="expert-info">
+          <p-avatar
+            [image]="tour.expert.avatar"
+            shape="circle"
+            size="large"
+            [style]="{ width: '64px', height: '64px' }"
+          ></p-avatar>
+          <div class="expert-details">
+            <h4>{{ tour.expert.name }}</h4>
+            <span class="expert-role">{{ tour.expert.role }}</span>
+          </div>
+        </div>
+        <div class="expert-opinion">
+          <p-message severity="info" [styleClass]="'custom-message'">
+            {{ tour.expert.opinion }}
+          </p-message>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

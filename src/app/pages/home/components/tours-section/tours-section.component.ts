@@ -83,7 +83,7 @@ export class ToursSectionComponent implements OnInit {
               availableMonths: (tour.monthTags || []).map(
                 (month: string): string => month.toLocaleUpperCase().slice(0, 3)
               ),
-              isByDr: true,
+              isByDr: false,
             };
             this.tours = [...this.tours, processedTour];
           }

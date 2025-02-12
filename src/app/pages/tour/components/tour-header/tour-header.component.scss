@@ -1,0 +1,135 @@
+.tour-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .tour-info {
+    flex: 1;
+
+    .rating-reviews {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+
+      .rating-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        .rating-value {
+          color: var(--text-color);
+          font-weight: 600;
+        }
+
+        ::ng-deep .p-rating {
+          .p-rating-item.p-rating-item-active .p-rating-icon {
+            color: #FFA41C;
+          }
+        }
+      }
+
+      .review-count {
+        color: var(--primary-color);
+        text-decoration: underline;
+        font-size: 0.9rem;
+      }
+    }
+
+    h1 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.75rem;
+      color: var(--text-color);
+      font-weight: 600;
+    }
+
+    .tour-meta {
+      display: flex;
+      gap: 0.5rem;
+      color: var(--text-color);
+      font-size: 1rem;
+
+      .country, .duration {
+        &:not(:last-child)::after {
+          content: '•';
+          margin-left: 0.5rem;
+          color: var(--text-color-secondary);
+        }
+      }
+    }
+  }
+
+  .tour-actions {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 2rem;
+      background-color: var(--surface-ground);
+      font-size: 0.9rem;
+
+      i {
+        color: var(--primary-color);
+      }
+    }
+
+    .price-section {
+      text-align: right;
+
+      .price-info {
+        margin-bottom: 0.25rem;
+
+        .before-price {
+          color: var(--text-color-secondary);
+          text-decoration: line-through;
+          font-size: 0.9rem;
+          margin-bottom: 0.25rem;
+
+          .amount {
+            margin-left: 0.5rem;
+          }
+        }
+
+        .current-price {
+          font-size: 1rem;
+
+          .amount {
+            margin-left: 0.5rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+          }
+        }
+      }
+
+      .price-link {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-size: 0.9rem;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+
+    ::ng-deep .p-button {
+      background-color: #E85D4C;
+      border-color: #E85D4C;
+      padding: 0.75rem 2rem;
+      font-weight: 500;
+
+      &:hover {
+
+      }
+    }
+  }
+}

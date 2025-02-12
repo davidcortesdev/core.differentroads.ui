@@ -2,9 +2,6 @@
   padding: 4rem 2rem;
   background-color: var(--background-azul);
 
-  *{
-    border: 1px solid red;
-  }
   .header {
     display: flex;
     justify-content: space-between;
@@ -45,7 +42,8 @@
   .carousel-item {
     position: relative;
 
-    .location-tag, .username {
+    .location-tag,
+    .username {
       position: absolute;
       background: rgba(0, 0, 0, 0.6);
       color: white;
@@ -69,33 +67,10 @@
 
     .review-card {
       margin: 0 0.5rem;
-      
+
       ::ng-deep .p-card {
         background: var(--surface-card);
         border-radius: 1rem;
-      }
-    }
-  }
-
-  .newsletter-section {
-    background: var(--primary-color);
-    color: white;
-    padding: 3rem;
-    border-radius: 1rem;
-    text-align: center;
-
-    .newsletter-content {
-      max-width: 600px;
-      margin: 0 auto;
-
-      .input-group {
-        display: flex;
-        gap: 1rem;
-        margin-top: 2rem;
-
-        input {
-          flex: 1;
-        }
       }
     }
   }

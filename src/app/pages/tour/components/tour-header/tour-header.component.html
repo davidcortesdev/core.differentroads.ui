@@ -1,0 +1,36 @@
+<div class="tour-header">
+  <div class="tour-info">
+    <div class="rating-reviews">
+      <div class="rating-container">
+        <p-rating [ngModel]="4.7" [readonly]="true" [stars]="5"></p-rating>
+        <span class="rating-value">4.7</span>
+      </div>
+      <a href="#reviews" class="review-count">200 Reviews</a>
+    </div>
+    <h1>{{ tour.name }}</h1>
+    <div class="tour-meta">
+      <span class="country">{{ tour.country }}</span>
+      <span class="duration">{{ getDuration() }}</span>
+    </div>
+  </div>
+  <div class="tour-actions">
+    <div class="badge">
+      <i class="pi pi-user"></i>
+      <span>El mejor valorado por nuestros viajeros</span>
+    </div>
+    <div class="price-section">
+      <div class="price-info">
+        <div class="before-price">
+          <span>Antes</span>
+          <span class="amount">{{ tour.basePrice + 200 }}€</span>
+        </div>
+        <div class="current-price">
+          <span>Desde</span>
+          <span class="amount">{{ tour.basePrice }}€</span>
+        </div>
+      </div>
+      <a href="#prices" class="price-link">Ir a este precio</a>
+    </div>
+    <p-button label="Reservar mi tour" styleClass="p-button-rounded"></p-button>
+  </div>
+</div>

@@ -1,0 +1,27 @@
+.partners-section {
+  background-color: var(--accent-white);
+  padding: 2rem 4rem;
+  padding-bottom: 4rem;
+
+  .title {
+    color: var(--background-azul);
+    font-weight: 400;
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .partner-figure {
+    width: 100%;
+    margin: auto 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    & > .partner-img {
+      max-width: 10rem;
+      max-height: 3rem;
+      width: auto;
+      height: auto;
+    }
+  }
+}

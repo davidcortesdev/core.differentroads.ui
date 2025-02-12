@@ -12,6 +12,7 @@ import {
   Tour,
 } from '../models/tours/tour.model';
 import { map } from 'rxjs/operators';
+import { ProcessedTour } from '../models/tours/processed-tour.model';
 
 type SelectedFields = Partial<Array<keyof Tour | 'all'>>;
 
@@ -50,7 +51,40 @@ export class ToursService {
       'basePrice',
       'name',
       'image',
+      'country',
+      'webSlug',
     ]).pipe(map((tourData: Tour) => tourData));
+  }
+
+  getMultipleTourCardData(ids: string[]): Observable<ProcessedTour[]> {
+    return new Observable((subscriber) => {
+      const tourCards: ProcessedTour[] = [];
+      let completed = 0;
+
+      ids.forEach((id) => {
+        this.getTourCardData(id).subscribe({
+          next: (tour) => {
+            tourCards.push({
+              imageUrl: tour.image?.[0]?.url || '',
+              title: tour.name || '',
+              description: tour.description || '',
+              rating: 5,
+              tag: tour.marketingSection?.marketingSeasonTag || '',
+              price: tour.basePrice || 0,
+              availableMonths: tour.monthTags || [],
+              isByDr: true,
+            });
+            completed++;
+
+            if (completed === ids.length) {
+              subscriber.next(tourCards);
+              subscriber.complete();
+            }
+          },
+          error: (error) => subscriber.error(error),
+        });
+      });
+    });
   }
 
   getItinerarySection(id: string): Observable<Itinerary> {

@@ -1,3 +1,5 @@
+import { Pagination } from '../commons/pagination.model';
+
 export interface Order {
   id: string;
   periodID: string;
@@ -27,6 +29,7 @@ export interface OrderTraveler {
   insuranceID?: string;
   _id?: string;
 }
+
 export interface GetAllOrdersParams {
   page?: number;
   limit?: number;
@@ -44,4 +47,9 @@ export interface CreateBookingResult {
   bookingID: string;
   order: Partial<Order>;
   // ...otros campos según sea necesario...
+}
+
+export interface OrderListResponse {
+  data: Order[];
+  pagination: Pagination;
 }

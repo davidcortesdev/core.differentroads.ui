@@ -15,13 +15,13 @@
       display: flex;
       align-items: center;
       gap: 1rem;
-      padding: 0.5rem 1rem;
+      padding: 0.6rem 1rem;
       background: white;
       border-radius: 0.5rem;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
       img {
-        height: 24px;
+        height: 2.5rem;
       }
 
       .rating {
@@ -32,29 +32,28 @@
   }
 
   .featured-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+
     gap: 2rem;
-    margin-top: 2rem;
+    margin: 2rem 0rem;
+    display: grid;
+    grid-template-rows: 1fr;
+    grid-template-columns: repeat(3, 1fr);
+
+    @media screen and (max-width: 1024px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media screen and (max-width: 768px) {
+      grid-template-columns: repeat(1, 1fr);
+    }
 
     .featured-images {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      justify-content: space-around;
-
-      ::ng-deep .featured-image {
-        //flex: 0 0 calc(50% - 0.5rem);
-
-        img {
-          object-fit: cover;
-          border-radius: 1rem;
-        }
-
-        p-image {
-          width: 100%;
-          height: 100%;
-        }
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 8px;
+        aspect-ratio: 1/1;
       }
     }
   }
@@ -66,5 +65,71 @@
     justify-content: flex-end;
     gap: 1rem;
     color: var(--background-azul-color-letra);
+  }
+}
+
+
+
+
+
+
+.container {
+  width: 247px;
+  height: 94px;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  .content {
+    padding: 10px 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+
+    .svg-wrapper {
+      position: relative;
+    }
+
+    .text-content {
+      display: flex;
+      align-items: flex-end;
+      gap: 19px;
+
+      .text-block {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+
+        .rating-label {
+          color: #6a6a6a;
+          font-size: 11.5px;
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-weight: 700;
+        }
+
+        .rating-value {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+
+          .value {
+            color: #f05a4c;
+            font-size: 25px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+          }
+
+          .rating-stars {
+            display: flex;
+            align-items: center;
+          }
+        }
+      }
+    }
   }
 }

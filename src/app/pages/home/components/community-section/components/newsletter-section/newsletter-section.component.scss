@@ -8,7 +8,6 @@
 
 .section {
   background-color: var(--newsletter-primary);
-  padding: 2rem 2rem;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -35,7 +34,7 @@
   background: var(--newsletter-background);
 
   @media (max-width: 768px) {
-    padding: 2rem;
+    padding: 1rem;
   }
 }
 
@@ -68,7 +67,7 @@
 
   @media (max-width: 768px) {
     gap: var(--spacing-md);
-    
+
     .content {
       flex: 0 0 100%;
       width: 100%;
@@ -84,7 +83,7 @@
   align-items: flex-start;
   gap: 1.19644rem;
   text-align: left;
-  flex:60%;
+  flex: 60%;
 
   h4 {
     color: var(--newsletter-primary);
@@ -158,10 +157,10 @@
   box-shadow: none;
   color: #fff !important;
   cursor: pointer;
-  font-family: 'General Sans', sans-serif;
+  font-family: "General Sans", sans-serif;
   font-weight: 700;
   padding: 7px !important;
-  width: 7.5rem;
+  width: 5.5rem;
   height: auto;
 
   &:hover {
@@ -171,7 +170,7 @@
 
 .ml-form-successBody {
   text-align: center;
-  
+
   h4 {
     font-size: 1.8rem;
     color: var(--newsletter-primary);

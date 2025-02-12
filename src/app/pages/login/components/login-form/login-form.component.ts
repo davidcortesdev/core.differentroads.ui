@@ -4,13 +4,28 @@ import {
   FormGroup,
   Validators,
   ReactiveFormsModule,
-} from '@angular/forms'; // Add ReactiveFormsModule
-import { CommonModule } from '@angular/common'; // Add CommonModule
+} from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { IftaLabelModule } from 'primeng/iftalabel';
+import { InputTextModule } from 'primeng/inputtext';
+import { PasswordModule } from 'primeng/password';
+import { ButtonModule } from 'primeng/button';
+import { DividerModule } from 'primeng/divider';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @Component({
   selector: 'app-login-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule], // Import CommonModule and ReactiveFormsModule
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    IftaLabelModule,
+    InputTextModule,
+    PasswordModule,
+    ButtonModule,
+    DividerModule,
+    ProgressSpinnerModule,
+  ], // Import CommonModule and ReactiveFormsModule
   templateUrl: './login-form.component.html',
   styleUrls: ['./login-form.component.scss'],
 })
@@ -55,5 +70,12 @@ export class LoginFormComponent implements OnInit {
       this.isLoading = false;
       console.log('Inicio de sesión con Google simulado.');
     }, 2000);
+  }
+
+  get errors() {
+    return {
+      username: this.loginForm.get('username')?.errors,
+      password: this.loginForm.get('password')?.errors,
+    };
   }
 }

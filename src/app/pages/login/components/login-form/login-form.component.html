@@ -1,7 +1,4 @@
-<div
-  class="auth-card-container"
-  [ngStyle]="{ 'background-image': 'url(assets/images/fondo-auth.jpeg)' }"
->
+<div class="auth-card-container">
   <div class="auth-card-overlay"></div>
   <div class="auth-layout">
     <div class="sign-up-form">
@@ -9,96 +6,99 @@
         ¡Inicia sesión para continuar con tu compra y aprovecha al máximo tu
         experiencia!
       </h1>
+
       <div>
-        <button
-          type="button"
-          (click)="signInWithGoogle()"
-          [class.is-loading]="isLoading"
+        <p-button
+          label="Iniciar sesión con Google"
+          icon="pi pi-google"
+          [loading]="isLoading"
           [disabled]="isLoading"
-          class="sign-up-form-btngoogle"
-        >
-          <i class="icon icon-google-brands-solid font-lg mr-4"></i>
-          Iniciar sesión con Google
-        </button>
+          (onClick)="signInWithGoogle()"
+          variant="text"
+          size="large"
+          [rounded]="true"
+          styleClass="btn-google"
+        ></p-button>
       </div>
-      <div>
-        <p class="mt-6 sign-up-form-text">O iniciar sesión de forma manual</p>
-      </div>
-      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+
+      <!-- Separador -->
+      <p-divider align="center">
+        <span class="p-tag">O iniciar sesión de forma manual </span>
+      </p-divider>
+
+      <!-- Formulario de inicio de sesión manual -->
+      <form (ngSubmit)="onSubmit()" class="form-login">
+        <!-- Campo de usuario -->
         <div class="input-group mt-4">
-          <input
-            type="text"
-            id="sign-up-field-email"
-            placeholder="E-mail"
-            class="font-sm"
-            formControlName="username"
-          />
-          <p
-            *ngIf="loginForm.get('username')?.errors?.['required']"
-            class="font-xs error-underline"
-            role="alert"
-          >
-            El nombre de usuario es obligatorio.
-          </p>
+          <p-iftalabel>
+            <input
+              type="text"
+              id="username"
+              pInputText
+              formControlName="username"
+              [ngClass]="{ 'p-invalid': errors.username }"
+              class="input-field"
+            />
+            <label for="username">Usuario</label>
+          </p-iftalabel>
+          <small *ngIf="errors.username" class="p-error">
+            {{ errors.username["message"] }}
+          </small>
         </div>
 
-        <div class="input-group font-sm mt-4 password">
-          <input
-            [type]="showPassword ? 'text' : 'password'"
-            id="sign-up-field-password"
-            placeholder="Contraseña"
-            formControlName="password"
-            class="font-sm"
-          />
-          <button
-            type="button"
-            class="icon icon-remove_red_eye password-toggle"
-            (click)="togglePasswordVisibility()"
-            [attr.aria-label]="
-              showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
-            "
-            [title]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
-          >
-            <span class="sr-only">{{
-              showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
-            }}</span>
-          </button>
-          <p
-            *ngIf="loginForm.get('password')?.errors?.['required']"
-            class="font-xs error-underline"
-            role="alert"
-          >
-            La contraseña es obligatoria.
-          </p>
+        <!-- Campo de contraseña -->
+        <div class="input-group mt-4">
+          <p-iftalabel>
+            <p-password
+              id="password"
+              formControlName="password"
+              [ngClass]="{ 'p-invalid': errors.password }"
+              [toggleMask]="true"
+              [feedback]="false"
+              class="input-field"
+            ></p-password>
+            <label for="password">Contraseña</label>
+          </p-iftalabel>
+          <small *ngIf="errors.password" class="p-error">
+            {{ errors.password["message"] }}
+          </small>
         </div>
 
+        <!-- Mensaje de error -->
         <div class="input-group mt-4">
-          <p *ngIf="errorMessage" class="font-xs error-underline" role="alert">
+          <small *ngIf="errorMessage" class="p-error">
             {{ errorMessage }}
-          </p>
+          </small>
         </div>
+
+        <!-- Enlace para recuperar contraseña -->
         <a routerLink="/forget-password">
           <p class="sign-up-form-link">
-            <span class="sign-up-form-link-span"
-              >¿Has olvidado tu contraseña?</span
-            >
+            <span class="sign-up-form-link-span">
+              ¿Has olvidado tu contraseña?
+            </span>
           </p>
         </a>
-        <button
+
+        <!-- Botón de inicio de sesión -->
+        <p-button
           type="submit"
-          class="p-4 mt-4 btn btn-full-center sign-up-form-btnsingup"
-          [class.is-loading]="isLoading"
+          label="Iniciar sesión"
+          [loading]="isLoading"
           [disabled]="isLoading"
-        >
-          Iniciar sesión
-        </button>
-        <a routerLink="/sign-up">
-          <p class="sign-up-form-link">
-            ¿Aun no tienes cuenta?
-            <span class="sign-up-form-link-span">Registrate aquí</span>
-          </p>
-        </a>
+          [rounded]="true"
+          size="large"
+          class="p-button-primary p-button-block mt-4"
+        ></p-button>
       </form>
+
+      <!-- Enlace para registrarse -->
+      <a routerLink="/sign-up">
+        <p class="sign-up-form-link mt-4">
+          ¿Aún no tienes cuenta?
+          <span class="sign-up-form-link-span">Regístrate aquí</span>
+        </p>
+      </a>
     </div>
   </div>
 </div>

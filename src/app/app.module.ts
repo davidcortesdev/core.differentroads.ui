@@ -74,6 +74,7 @@ import { TourOverviewComponent } from './pages/tour/components/tour-overview/tou
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { DividerModule } from 'primeng/divider';
 import { MessageModule } from 'primeng/message';
+import { FluidModule } from 'primeng/fluid';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -146,6 +147,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     BreadcrumbModule,
     DividerModule,
     MessageModule,
+    FluidModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

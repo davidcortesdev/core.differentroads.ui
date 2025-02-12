@@ -70,6 +70,10 @@ import { CommonModule, NgComponentOutlet } from '@angular/common';
 import { PartnersSectionComponent } from './pages/home/components/partners-section/partners-section.component';
 import { TourComponent } from './pages/tour/tour.component';
 import { TourHeaderComponent } from './pages/tour/components/tour-header/tour-header.component';
+import { TourOverviewComponent } from './pages/tour/components/tour-overview/tour-overview.component';
+import { BreadcrumbModule } from 'primeng/breadcrumb';
+import { DividerModule } from 'primeng/divider';
+import { MessageModule } from 'primeng/message';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -110,6 +114,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     PartnersSectionComponent,
     TourComponent,
     TourHeaderComponent,
+    TourOverviewComponent,
   ],
   imports: [
     // Angular Modules
@@ -138,6 +143,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     IftaLabelModule,
     ProgressSpinnerModule,
     DataViewModule,
+    BreadcrumbModule,
+    DividerModule,
+    MessageModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

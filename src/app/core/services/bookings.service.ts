@@ -8,7 +8,7 @@ import {
   GetAllBookingsParams,
 } from '../models/bookings/booking.model';
 import { Order } from '../models/orders/order.model';
-import { Payment } from '../models/bookings/payment.model';
+import { IPaymentVoucher, Payment } from '../models/bookings/payment.model';
 
 @Injectable({
   providedIn: 'root',
@@ -159,7 +159,7 @@ export class BookingsService {
    * @param data - The payment data.
    * @returns Observable of any.
    */
-  createPayment(id: string, data: any): Observable<any> {
+  createPayment(id: string, data: Partial<Payment>): Observable<any> {
     return this.http.post<any>(`${this.API_URL}/${id}/payment`, data);
   }
 
@@ -170,7 +170,11 @@ export class BookingsService {
    * @param data - The payment completion data.
    * @returns Observable of any.
    */
-  completePayment(id: string, paymentId: string, data: any): Observable<any> {
+  completePayment(
+    id: string,
+    paymentId: string,
+    data: Payment
+  ): Observable<any> {
     return this.http.put<any>(
       `${this.API_URL}/${id}/payment/${paymentId}/complete`,
       data
@@ -183,7 +187,7 @@ export class BookingsService {
    * @param data - The payment data to update.
    * @returns Observable of any.
    */
-  updatePayment(paymentId: string, data: any): Observable<any> {
+  updatePayment(paymentId: string, data: Partial<Payment>): Observable<any> {
     return this.http.put<any>(
       `${environment.apiUrl}/payment/${paymentId}`,
       data
@@ -197,7 +201,11 @@ export class BookingsService {
    * @param data - The voucher data.
    * @returns Observable of any.
    */
-  uploadVoucher(id: string, paymentId: string, data: any): Observable<any> {
+  uploadVoucher(
+    id: string,
+    paymentId: string,
+    data: IPaymentVoucher
+  ): Observable<any> {
     return this.http.put<any>(
       `${this.API_URL}/${id}/payment/${paymentId}/upload-voucher`,
       data

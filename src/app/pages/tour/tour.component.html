@@ -1,0 +1,14 @@
+<div class="tour-detail-container">
+  <div *ngIf="loading" class="loading">
+    <p-progressSpinner></p-progressSpinner>
+  </div>
+
+  <div *ngIf="error" class="error">
+    <p>Lo sentimos, no se pudo cargar el tour.</p>
+  </div>
+
+  <div *ngIf="!loading && !error && tour" class="tour-content">
+    <app-tour-header [tour]="tour"></app-tour-header>
+    <!-- Rest of the tour content will go here -->
+  </div>
+</div>

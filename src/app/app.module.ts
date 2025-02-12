@@ -80,7 +80,6 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { DropdownModule } from 'primeng/dropdown';
-import { MessageService, ConfirmationService } from 'primeng/api';
 import { ProfileComponent } from './pages/profile/profile.component';
 import { PersonalInfoSectionComponent } from './pages/profile/components/personal-info-section/personal-info-section.component';
 import { UpdateProfileSectionComponent } from './pages/profile/components/update-profile-section/update-profile-section.component';
@@ -176,8 +175,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     }),
   ],
   providers: [
-    MessageService,
-    ConfirmationService,
     provideAnimationsAsync(),
     provideHttpClient(),
     providePrimeNG({

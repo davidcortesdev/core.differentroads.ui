@@ -74,6 +74,16 @@ import { TourOverviewComponent } from './pages/tour/components/tour-overview/tou
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { DividerModule } from 'primeng/divider';
 import { MessageModule } from 'primeng/message';
+import { PanelModule } from 'primeng/panel';
+import { SelectModule } from 'primeng/select';
+import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TooltipModule } from 'primeng/tooltip';
+import { DropdownModule } from 'primeng/dropdown';
+import { MessageService, ConfirmationService } from 'primeng/api';
+import { ProfileComponent } from './pages/profile/profile.component';
+import { PersonalInfoSectionComponent } from './pages/profile/components/personal-info-section/personal-info-section.component';
+import { UpdateProfileSectionComponent } from './pages/profile/components/update-profile-section/update-profile-section.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -115,6 +125,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     TourComponent,
     TourHeaderComponent,
     TourOverviewComponent,
+    ProfileComponent,
+    PersonalInfoSectionComponent,
+    UpdateProfileSectionComponent,
   ],
   imports: [
     // Angular Modules
@@ -146,6 +159,13 @@ export function HttpLoaderFactory(http: HttpClient) {
     BreadcrumbModule,
     DividerModule,
     MessageModule,
+    PanelModule,
+    FileUploadModule,
+    SelectModule,
+    ToastModule,
+    ConfirmDialogModule,
+    TooltipModule,
+    DropdownModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,
@@ -156,6 +176,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     }),
   ],
   providers: [
+    MessageService,
+    ConfirmationService,
     provideAnimationsAsync(),
     provideHttpClient(),
     providePrimeNG({

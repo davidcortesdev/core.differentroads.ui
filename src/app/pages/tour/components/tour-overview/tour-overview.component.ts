@@ -43,7 +43,7 @@ export class TourOverviewComponent {
     expert: {
       name: 'Francesca Serlenga',
       role: 'Travel Expert en Different Roads',
-      avatar: 'assets/images/experts/francesca.jpg',
+      avatar: 'https://picsum.photos/1000?random=7',
       opinion:
         'Este tour lo diseñé para que vivas lo mejor de Noruega: navegar por sus fiordos, dormir a sus orillas, subir al Púlpito y explorar un glaciar. Es uno de mis favoritos por esas experiencias que simplemente no se pueden olvidar.',
     },

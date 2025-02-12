@@ -75,6 +75,13 @@ import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { DividerModule } from 'primeng/divider';
 import { MessageModule } from 'primeng/message';
 import { TourHighlightsComponent } from './pages/tour/components/tour-highlights/tour-highlights.component';
+import { TourItineraryComponent } from './pages/tour/components/tour-itinerary/tour-itinerary.component';
+import { TourDeparturesComponent } from './pages/tour/components/tour-departures/tour-departures.component';
+import { TourAdditionalInfoComponent } from './pages/tour/components/tour-additional-info/tour-additional-info.component';
+import { TourReviewsComponent } from './pages/tour/components/tour-reviews/tour-reviews.component';
+import { TourGalleryComponent } from './pages/tour/components/tour-gallery/tour-gallery.component';
+import { TourFaqComponent } from './pages/tour/components/tour-faq/tour-faq.component';
+import { TourRelatedComponent } from './pages/tour/components/tour-related/tour-related.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -117,6 +124,13 @@ export function HttpLoaderFactory(http: HttpClient) {
     TourHeaderComponent,
     TourOverviewComponent,
     TourHighlightsComponent,
+    TourItineraryComponent,
+    TourDeparturesComponent,
+    TourAdditionalInfoComponent,
+    TourReviewsComponent,
+    TourGalleryComponent,
+    TourFaqComponent,
+    TourRelatedComponent,
   ],
   imports: [
     // Angular Modules

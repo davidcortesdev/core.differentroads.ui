@@ -23,7 +23,7 @@ export class TourHighlightsComponent {
     },
     {
       title: 'Bergen',
-      description: 'Exploraremos la mágica Bergen, con su muelle de Bryggen que nos transportará a la época hanseática. Sus casas de colores y su mercado de pescado nos ofrecerán un festín visual y gastronómico, mientras la ciudad nos envuelve con su calidez entre montañas y fiordos.',
+      description: 'Exploraremos la mágica Bergen, conentras la ciudad nos envuelve con su calidez entre montañas y fiordos.',
       image: 'https://picsum.photos/1000?random=10',
       included: true
     },

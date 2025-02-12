@@ -1,7 +1,7 @@
 <div class="community-hero">
   <div class="header">
     <h2>{{ data.title }}</h2>
-    <div class="container">
+    <div class="google-rating-container">
       <div class="content">
         <div class="svg-wrapper">
           <svg width="41" height="41" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -27,13 +27,11 @@
   </div>
 
   <div class="featured-content">
-      <div *ngFor="let card of data.featured.images" class="featured-images">
-        <img
-          [src]="card"
-          [alt]="card"
-        />
+    <div *ngFor="let card of data.featured.images" class="featured-images">
+      <img [src]="card" [alt]="card" />
     </div>
     <div class="featured-text">
       <div [innerHTML]="data.featured.content"></div>
     </div>
+  </div>
 </div>

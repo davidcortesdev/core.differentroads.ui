@@ -1,50 +1,103 @@
 .community-hero {
+  --rating-background: white;
+  --rating-text: #6a6a6a;
+  --rating-value: #f05a4c;
+  --border-radius-sm: 8px;
+  --border-radius-md: 12px;
+  --spacing-sm: 1rem;
+  --spacing-md: 2rem;
+
   .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
+    margin-bottom: var(--spacing-md);
+    
+    @media screen and (max-width: 768px) {
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
 
     h2 {
-      font-size: 3rem;
+      font-size: clamp(2rem, 5vw, 3rem);
       font-weight: 600;
       color: var(--background-azul-color-letra);
     }
 
-    .google-rating {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 0.6rem 1rem;
-      background: white;
-      border-radius: 0.5rem;
+    .google-rating-container {
+      width: 247px;
+      height: 94px;
+      background: var(--rating-background);
+      border-radius: var(--border-radius-md);
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
 
-      img {
-        height: 2.5rem;
-      }
+      .content {
+        padding: 10px 15px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
 
-      .rating {
-        font-weight: 600;
-        color: var(--text-color);
+        .svg-wrapper {
+          position: relative;
+        }
+
+        .text-content {
+          display: flex;
+          align-items: flex-end;
+          gap: 19px;
+
+          .text-block {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+
+            .rating-label {
+              color: var(--rating-text);
+              font-size: 11.5px;
+              font-family: 'Plus Jakarta Sans', sans-serif;
+              font-weight: 700;
+            }
+
+            .rating-value {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+
+              .value {
+                color: var(--rating-value);
+                font-size: 25px;
+                font-family: 'Plus Jakarta Sans', sans-serif;
+                font-weight: 800;
+              }
+
+              .rating-stars {
+                display: flex;
+                align-items: center;
+              }
+            }
+          }
+        }
       }
     }
   }
 
   .featured-content {
-
-    gap: 2rem;
-    margin: 2rem 0rem;
     display: grid;
-    grid-template-rows: 1fr;
     grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-md);
+    margin: var(--spacing-md) 0;
 
     @media screen and (max-width: 1024px) {
       grid-template-columns: repeat(2, 1fr);
     }
 
     @media screen and (max-width: 768px) {
-      grid-template-columns: repeat(1, 1fr);
+      grid-template-columns: 1fr;
     }
 
     .featured-images {
@@ -52,84 +105,18 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
-        border-radius: 8px;
+        border-radius: var(--border-radius-sm);
         aspect-ratio: 1/1;
       }
     }
-  }
 
-  .featured-text {
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    gap: 1rem;
-    color: var(--background-azul-color-letra);
-  }
-}
-
-
-
-
-
-
-.container {
-  width: 247px;
-  height: 94px;
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-
-  .content {
-    padding: 10px 15px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-
-    .svg-wrapper {
-      position: relative;
-    }
-
-    .text-content {
+    .featured-text {
+      padding: var(--spacing-md);
       display: flex;
-      align-items: flex-end;
-      gap: 19px;
-
-      .text-block {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-
-        .rating-label {
-          color: #6a6a6a;
-          font-size: 11.5px;
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          font-weight: 700;
-        }
-
-        .rating-value {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-
-          .value {
-            color: #f05a4c;
-            font-size: 25px;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-weight: 800;
-          }
-
-          .rating-stars {
-            display: flex;
-            align-items: center;
-          }
-        }
-      }
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: var(--spacing-sm);
+      color: var(--background-azul-color-letra);
     }
   }
 }

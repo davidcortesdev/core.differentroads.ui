@@ -2,8 +2,6 @@
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   padding: 1.5rem 2rem;
   display: flex;
   justify-content: space-between;
@@ -130,8 +128,7 @@
       font-weight: 500;
 
       &:hover {
-        background-color: darken(#E85D4C, 5%);
-        border-color: darken(#E85D4C, 5%);
+
       }
     }
   }

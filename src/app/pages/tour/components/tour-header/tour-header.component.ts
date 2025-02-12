@@ -20,7 +20,10 @@ export class TourHeaderComponent {
     }]
   };
 
-  getDuration(days: number | undefined): string {
+  getDuration(){
+    return '';
+  }
+  getDuration2(days: number | undefined): string {
     if (!days) return '';
     return `${days} días, ${days - 1} noches`;
   }

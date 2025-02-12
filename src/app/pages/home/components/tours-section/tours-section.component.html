@@ -20,8 +20,10 @@
               <img [src]="tour.imageUrl" [alt]="tour.title" />
               <div class="overlay">
                 <span class="rating p-button-primary">{{ tour.rating }} ★</span>
-                <span class="indicator" *ngIf="tour.isByDr">By DR</span>
-                <span class="tag">{{ tour.tag }}</span>
+                <span class="indicator" *ngIf="tour.isByDr !== undefined">
+                  {{ tour.isByDr ? 'By DR' : 'Beyond Different' }}
+                </span>
+                <span class="tag" *ngIf="tour.tag">{{ tour.tag }}</span>
                 <div class="title-overlay">
                   <p>{{ tour.description }}</p>
                   <h3>{{ tour.title }}</h3>

@@ -32,6 +32,9 @@ import { CommunityGalleryComponent } from './pages/home/components/community-sec
 import { CommunityReviewsComponent } from './pages/home/components/community-section/components/community-reviews/community-reviews.component';
 import { NewsLetterSectionComponent } from './pages/home/components/community-section/components/newsletter-section/newsletter-section.component';
 
+// Tour List Component
+import { ToursListComponent } from './pages/home/components/tours-list-section/tours-list-section.component';
+
 // Content List
 import { ContentListComponent } from './pages/home/components/content-list/content-list-section.component';
 
@@ -60,10 +63,17 @@ import { CardModule } from 'primeng/card';
 import { DatePickerModule } from 'primeng/datepicker';
 import { RippleModule } from 'primeng/ripple';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { DataViewModule } from 'primeng/dataview';
 import { DynamicComponentsComponent } from './pages/home/components/dynamic-components/dynamic-components.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { CommonModule, NgComponentOutlet } from '@angular/common';
 import { PartnersSectionComponent } from './pages/home/components/partners-section/partners-section.component';
+import { TourComponent } from './pages/tour/tour.component';
+import { TourHeaderComponent } from './pages/tour/components/tour-header/tour-header.component';
+import { TourOverviewComponent } from './pages/tour/components/tour-overview/tour-overview.component';
+import { BreadcrumbModule } from 'primeng/breadcrumb';
+import { DividerModule } from 'primeng/divider';
+import { MessageModule } from 'primeng/message';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -93,12 +103,18 @@ export function HttpLoaderFactory(http: HttpClient) {
     CommunityGalleryComponent,
     CommunityReviewsComponent,
 
+    // Tours List
+    ToursListComponent,
+
     // Content List
     ContentListComponent,
     NotFoundComponent,
 
     DynamicComponentsComponent,
     PartnersSectionComponent,
+    TourComponent,
+    TourHeaderComponent,
+    TourOverviewComponent,
   ],
   imports: [
     // Angular Modules
@@ -126,6 +142,10 @@ export function HttpLoaderFactory(http: HttpClient) {
     FloatLabelModule,
     IftaLabelModule,
     ProgressSpinnerModule,
+    DataViewModule,
+    BreadcrumbModule,
+    DividerModule,
+    MessageModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

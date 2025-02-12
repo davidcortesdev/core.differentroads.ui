@@ -70,19 +70,21 @@ export class ToursSectionComponent implements OnInit {
           })
         )
         .subscribe((tour: Partial<Tour>): void => {
-          console.log('tourssss:', tour);
           if (tour) {
+            const days = tour.activePeriods?.[0]?.days || 0;
             const processedTour: ProcessedTour = {
               imageUrl: tour.image?.[0]?.url || '',
               title: tour.name || '',
-              //TODO: cambiar descripcion por la duracion del tour
-              description: tour.description || '',
+              description:
+                tour.country && days ? `${tour.country} en: ${days} dias` : '',
               rating: 5,
-              //TODO: cambiar nmbre completo del mes por los cortos
               tag: tour.marketingSection?.marketingSeasonTag || '',
               price: tour.basePrice || 0,
-              availableMonths: tour.monthTags || [],
-              isByDr: true,
+              availableMonths: (tour.monthTags || []).map(
+                (month: string): string => month.toLocaleUpperCase().slice(0, 3)
+              ),
+              isByDr: false,
+              webSlug: tour.webSlug || tour.name?.toLowerCase().replace(/\s+/g, '-') || '',
             };
             this.tours = [...this.tours, processedTour];
           }
@@ -92,9 +94,10 @@ export class ToursSectionComponent implements OnInit {
 
   navigateToTour(tour: ProcessedTour): void {
     this.router.navigate([
-      '/tours',
-      tour.title.toLowerCase().replace(/\s+/g, '-'),
+      '/tour',
+      tour.title.toLowerCase().replace(/\s+/g, '-')
     ]);
+    //    this.router.navigate(['/tour', tour.slug]);
   }
 
   onTourClick(tour: ProcessedTour): void {

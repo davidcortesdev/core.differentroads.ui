@@ -68,6 +68,8 @@ import { DynamicComponentsComponent } from './pages/home/components/dynamic-comp
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { CommonModule, NgComponentOutlet } from '@angular/common';
 import { PartnersSectionComponent } from './pages/home/components/partners-section/partners-section.component';
+import { TourComponent } from './pages/tour/tour.component';
+import { TourHeaderComponent } from './pages/tour/components/tour-header/tour-header.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -106,6 +108,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 
     DynamicComponentsComponent,
     PartnersSectionComponent,
+    TourComponent,
+    TourHeaderComponent,
   ],
   imports: [
     // Angular Modules

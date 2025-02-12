@@ -52,6 +52,7 @@ export class ToursService {
       'name',
       'image',
       'country',
+      'webSlug',
     ]).pipe(map((tourData: Tour) => tourData));
   }
 

@@ -7,4 +7,5 @@ export interface ProcessedTour {
   price: number;
   availableMonths: string[];
   isByDr: boolean;
+  webSlug?: string;
 }

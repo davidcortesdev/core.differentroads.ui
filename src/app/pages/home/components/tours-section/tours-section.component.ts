@@ -84,6 +84,7 @@ export class ToursSectionComponent implements OnInit {
                 (month: string): string => month.toLocaleUpperCase().slice(0, 3)
               ),
               isByDr: false,
+              webSlug: tour.webSlug || tour.name?.toLowerCase().replace(/\s+/g, '-') || '',
             };
             this.tours = [...this.tours, processedTour];
           }
@@ -93,9 +94,10 @@ export class ToursSectionComponent implements OnInit {
 
   navigateToTour(tour: ProcessedTour): void {
     this.router.navigate([
-      '/tours',
-      tour.title.toLowerCase().replace(/\s+/g, '-'),
+      '/tour',
+      tour.title.toLowerCase().replace(/\s+/g, '-')
     ]);
+    //    this.router.navigate(['/tour', tour.slug]);
   }
 
   onTourClick(tour: ProcessedTour): void {

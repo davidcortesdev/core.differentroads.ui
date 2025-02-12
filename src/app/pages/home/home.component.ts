@@ -31,24 +31,4 @@ export class HomeComponent {
       },
     });
   }
-
-  testLogin() {
-    this.authService.login('beraf83373@intady.com', 'Ernesto-0011');
-  }
-
-  testSignUp() {
-    this.authService.signUp('beraf83373@intady.com', 'Ernesto-0011');
-  }
-
-  testConfirmSignUp() {
-    this.authService.confirmSignUp('beraf83373@intady.com', '839854');
-  }
-
-  testGetCurrentUser() {
-    this.authService.getCurrentUser();
-  }
-
-  testGetUserAttributes() {
-    this.authService.getUserAttributes();
-  }
 }

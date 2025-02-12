@@ -82,6 +82,7 @@ import { TourReviewsComponent } from './pages/tour/components/tour-reviews/tour-
 import { TourGalleryComponent } from './pages/tour/components/tour-gallery/tour-gallery.component';
 import { TourFaqComponent } from './pages/tour/components/tour-faq/tour-faq.component';
 import { TourRelatedComponent } from './pages/tour/components/tour-related/tour-related.component';
+import { FluidModule } from 'primeng/fluid';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -162,6 +163,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     BreadcrumbModule,
     DividerModule,
     MessageModule,
+    FluidModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

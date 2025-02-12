@@ -74,6 +74,15 @@ import { TourOverviewComponent } from './pages/tour/components/tour-overview/tou
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { DividerModule } from 'primeng/divider';
 import { MessageModule } from 'primeng/message';
+import { PanelModule } from 'primeng/panel';
+import { SelectModule } from 'primeng/select';
+import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TooltipModule } from 'primeng/tooltip';
+import { DropdownModule } from 'primeng/dropdown';
+import { ProfileComponent } from './pages/profile/profile.component';
+import { PersonalInfoSectionComponent } from './pages/profile/components/personal-info-section/personal-info-section.component';
+import { UpdateProfileSectionComponent } from './pages/profile/components/update-profile-section/update-profile-section.component';
 import { TourHighlightsComponent } from './pages/tour/components/tour-highlights/tour-highlights.component';
 import { TourItineraryComponent } from './pages/tour/components/tour-itinerary/tour-itinerary.component';
 import { TourDeparturesComponent } from './pages/tour/components/tour-departures/tour-departures.component';
@@ -125,6 +134,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     TourComponent,
     TourHeaderComponent,
     TourOverviewComponent,
+    ProfileComponent,
+    PersonalInfoSectionComponent,
+    UpdateProfileSectionComponent,
     TourHighlightsComponent,
     TourItineraryComponent,
     TourDeparturesComponent,
@@ -165,6 +177,13 @@ export function HttpLoaderFactory(http: HttpClient) {
     BreadcrumbModule,
     DividerModule,
     MessageModule,
+    PanelModule,
+    FileUploadModule,
+    SelectModule,
+    ToastModule,
+    ConfirmDialogModule,
+    TooltipModule,
+    DropdownModule,
     FluidModule,
     TranslateModule.forRoot({
       loader: {

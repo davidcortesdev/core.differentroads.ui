@@ -5,7 +5,6 @@
   align-items: flex-end;
   justify-content: center;
 
-
   .background-video {
     position: absolute;
     top: 0;
@@ -30,15 +29,25 @@
       align-items: center;
       flex-wrap: wrap;
 
-      p-iftaLabel {
-        border: none;
-
-        .input-text {
-          width: 270px;
-        }
+      .flex-30 {
+        flex: 20%;
+        min-width: 15rem;
       }
 
-      p-floatlabel {
+      .flex-20 {
+        flex: 16%;
+        min-width: 13rem;
+      }
+
+      .flex-10 {
+        flex: 8%;
+        min-width: 11rem;
+      }
+      div p-iftaLabel {
+        border: none;
+      }
+
+      div p-floatlabel {
         flex: 1;
         display: flex;
         min-width: 200px;
@@ -99,25 +108,5 @@
     align-items: center;
     justify-content: center;
     background-color: rgba(255, 255, 255, 0.8);
-  }
-}
-
-@media screen and (max-width: 768px) {
-  .search-form {
-    justify-content: center;
-  }
-}
-
-@media screen and (max-width: 480px) {
-  .search-form {
-    justify-content: center;
-
-    p-iftaLabel {
-      width: 100%;
-    }
-
-    ::ng-deep .p-autocomplete {
-      width: 100%;
-    }
   }
 }

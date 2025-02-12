@@ -83,6 +83,16 @@ import { DropdownModule } from 'primeng/dropdown';
 import { ProfileComponent } from './pages/profile/profile.component';
 import { PersonalInfoSectionComponent } from './pages/profile/components/personal-info-section/personal-info-section.component';
 import { UpdateProfileSectionComponent } from './pages/profile/components/update-profile-section/update-profile-section.component';
+import { TourHighlightsComponent } from './pages/tour/components/tour-highlights/tour-highlights.component';
+import { TourItineraryComponent } from './pages/tour/components/tour-itinerary/tour-itinerary.component';
+import { TourDeparturesComponent } from './pages/tour/components/tour-departures/tour-departures.component';
+import { TourAdditionalInfoComponent } from './pages/tour/components/tour-additional-info/tour-additional-info.component';
+import { TourReviewsComponent } from './pages/tour/components/tour-reviews/tour-reviews.component';
+import { TourGalleryComponent } from './pages/tour/components/tour-gallery/tour-gallery.component';
+import { TourFaqComponent } from './pages/tour/components/tour-faq/tour-faq.component';
+import { TourRelatedComponent } from './pages/tour/components/tour-related/tour-related.component';
+import { FluidModule } from 'primeng/fluid';
+import { SignUpComponent } from './pages/sign-up/sign-up.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -127,6 +137,14 @@ export function HttpLoaderFactory(http: HttpClient) {
     ProfileComponent,
     PersonalInfoSectionComponent,
     UpdateProfileSectionComponent,
+    TourHighlightsComponent,
+    TourItineraryComponent,
+    TourDeparturesComponent,
+    TourAdditionalInfoComponent,
+    TourReviewsComponent,
+    TourGalleryComponent,
+    TourFaqComponent,
+    TourRelatedComponent,
   ],
   imports: [
     // Angular Modules
@@ -137,7 +155,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     CommonModule,
     NgComponentOutlet,
     NewsLetterSectionComponent,
-    // PrimeNG Modules
+    NewsLetterSectionComponent,
+    SignUpComponent,
     MenubarModule,
     RippleModule,
     AvatarModule,
@@ -165,6 +184,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     ConfirmDialogModule,
     TooltipModule,
     DropdownModule,
+    FluidModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

@@ -37,7 +37,7 @@ export class TourComponent implements OnInit {
       .pipe(
         catchError(error => {
           console.error('Error loading tour:', error);
-          this.error = true;
+          this.error = false;
           this.loading = false;
           return [];
         })

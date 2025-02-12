@@ -1,0 +1,70 @@
+.highlights-section {
+  padding: 2rem 0;
+
+  h2 {
+    text-align: center;
+    color: var(--text-color);
+    margin-bottom: 2rem;
+    font-size: 2rem;
+  }
+
+  ::ng-deep {
+    .p-carousel {
+      .p-carousel-content {
+        padding: 0 2rem;
+      }
+
+      .highlight-card {
+        margin: 0.5rem;
+
+        .p-card-body {
+          padding: 1rem;
+        }
+
+        .card-header {
+          position: relative;
+
+          img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 6px 6px 0 0;
+          }
+
+          .status-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--primary-color);
+            color: var(--primary-color-text);
+            padding: 0.3rem 0.8rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+
+            &.optional {
+              background: var(--surface-500);
+            }
+          }
+        }
+
+        h3 {
+          margin: 0.5rem 0;
+          color: var(--text-color);
+          font-size: 1.25rem;
+        }
+
+        p {
+          margin: 0;
+          color: var(--text-color-secondary);
+          line-height: 1.5;
+          font-size: 0.875rem;
+        }
+      }
+
+      .p-carousel-prev,
+      .p-carousel-next {
+        color: var(--primary-color);
+      }
+    }
+  }
+}

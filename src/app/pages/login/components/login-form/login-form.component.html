@@ -72,7 +72,7 @@
         </div>
 
         <!-- Enlace para recuperar contraseña -->
-        <a routerLink="/forget-password">
+        <a (click)="redirectToForgetPassword()">
           <p class="sign-up-form-link">
             <span class="sign-up-form-link-span">
               ¿Has olvidado tu contraseña?
@@ -93,11 +93,11 @@
       </form>
 
       <!-- Enlace para registrarse -->
-      <a routerLink="/sign-up">
-        <p class="sign-up-form-link mt-4">
+      <a (click)="redirectToSignUp()">
+        <span class="sign-up-form-link mt-4">
           ¿Aún no tienes cuenta?
           <span class="sign-up-form-link-span">Regístrate aquí</span>
-        </p>
+        </span>
       </a>
     </div>
   </div>

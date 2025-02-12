@@ -74,6 +74,7 @@ import { TourOverviewComponent } from './pages/tour/components/tour-overview/tou
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { DividerModule } from 'primeng/divider';
 import { MessageModule } from 'primeng/message';
+import { TourHighlightsComponent } from './pages/tour/components/tour-highlights/tour-highlights.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -115,6 +116,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     TourComponent,
     TourHeaderComponent,
     TourOverviewComponent,
+    TourHighlightsComponent,
   ],
   imports: [
     // Angular Modules

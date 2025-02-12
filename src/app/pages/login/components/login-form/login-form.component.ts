@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import {
   FormBuilder,
   FormGroup,
@@ -35,7 +36,7 @@ export class LoginFormComponent implements OnInit {
   isLoading: boolean = false;
   showPassword: boolean = false;
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder, private router: Router) {
     this.loginForm = this.fb.group({
       username: ['', Validators.required],
       password: ['', Validators.required],
@@ -70,6 +71,14 @@ export class LoginFormComponent implements OnInit {
       this.isLoading = false;
       console.log('Inicio de sesión con Google simulado.');
     }, 2000);
+  }
+
+  redirectToSignUp(): void {
+    this.router.navigate(['/sign-up']);
+  }
+
+  redirectToForgetPassword(): void {
+    this.router.navigate(['/forget-password']);
   }
 
   get errors() {

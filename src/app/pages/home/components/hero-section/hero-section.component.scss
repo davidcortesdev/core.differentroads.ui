@@ -32,17 +32,27 @@
       .flex-30 {
         flex: 20%;
         min-width: 15rem;
+        @media screen and (max-width: 400px) {
+          min-width: 7rem;
+        }
       }
 
       .flex-20 {
         flex: 16%;
         min-width: 13rem;
+        @media screen and (max-width: 400px) {
+          min-width: 7rem;
+        }
       }
 
       .flex-10 {
         flex: 8%;
         min-width: 11rem;
+        @media screen and (max-width: 400px) {
+          min-width: 7rem;
+        }
       }
+
       div p-iftaLabel {
         border: none;
       }

@@ -100,6 +100,8 @@ import { ActiveBookingsSectionComponent } from './pages/profile/components/activ
 import { TravelHistorySectionComponent } from './pages/profile/components/travel-history-section/travel-history-section.component';
 import { RecentBudgetSectionComponent } from './pages/profile/components/recent-budget-section/recent-budget-section.component';
 import { ReviewSectionComponent } from './pages/profile/components/review-section/review-section.component';
+import { ForgetPasswordComponent } from './pages/forget-password/forget-password.component';
+
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -199,6 +201,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     FluidModule,
     ToolbarModule,
     TableModule,
+    ForgetPasswordComponent,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

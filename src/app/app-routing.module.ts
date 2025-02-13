@@ -20,11 +20,7 @@ const routes: Routes = [
       {
         path: 'profile',
         component: ProfileComponent,
-        children: [
-          { path: '', component: PersonalInfoSectionComponent }, // ruta por defecto
-          { path: 'update', component: UpdateProfileSectionComponent },
-        ],
-      }, // Añadimos esta ruta
+      },
       { path: 'login', component: LoginComponent },
       { path: 'sign-up', component: SignUpComponent },
       { path: 'tour/:slug', component: TourComponent },

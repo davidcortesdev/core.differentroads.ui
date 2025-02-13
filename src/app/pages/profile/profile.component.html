@@ -1,6 +1,15 @@
 <div class="container">
   <div class="column left-column">
-      <router-outlet></router-outlet>
+    <app-personal-info-section
+      *ngIf="personalInfo && !isEditing"
+      [personalInfo]="personalInfo"
+      [toggleEdit]="toggleEdit.bind(this)"
+    ></app-personal-info-section>
+    <app-update-profile-section
+      *ngIf="personalInfo && isEditing"
+      [personalInfo]="personalInfo"
+      [toggleEdit]="toggleEdit.bind(this)"
+    ></app-update-profile-section>
   </div>
   <div class="column right-column">
     <!-- Contenido de la columna derecha -->

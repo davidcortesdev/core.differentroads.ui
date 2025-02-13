@@ -145,7 +145,7 @@ export class AuthenticateService {
 
   // Get Current User Attributes
   getUserAttributes() {
-    this.cognitoUser.getUserAttributes((err: any, result: any) => {
+    this.cognitoUser.getUserAttributes((err: any, result) => {
       if (err) {
         console.log(err);
         return;

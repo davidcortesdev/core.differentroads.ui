@@ -2,29 +2,30 @@
   <h3>{{ reviews?.title }}</h3>
   <p-carousel
     [value]="reviewsCards"
-    [numVisible]="4"
+    [numVisible]="3"
     [numScroll]="1"
     [circular]="true"
     [responsiveOptions]="responsiveOptions"
-    class="reviews-carousel"
   >
-    <ng-template let-review pTemplate="item" class="reviews-carousel-item">
-      <div class="reviews-carousel-item-card">
-        <div class="reviews-carousel-item-card-wrap">
-          <h4>{{ review.traveler }}</h4>
-          <div class="reviews-carousel-item-card-wrap-content">
-            <span>{{ review.tour }}</span>
-            <p>{{ review.review }}</p>
-          </div>
-          <span class="reviews-carousel-item-card-wrap-date">{{
-            review.date
-          }}</span>
-          <p-rating
-            [ngModel]="review.score"
-            [readonly]="true"
-            [stars]="5"
-          ></p-rating>
-        </div>
+    <ng-template let-review pTemplate="item">
+      <div class="padre">
+        <p-card class="review-card">
+          <ng-template #title> {{ review.traveler }} </ng-template>
+          <ng-template #subtitle> {{ review.tour }} </ng-template>
+          <ng-template #content>
+            <div class="review-text-container">
+              {{ review.review }}
+            </div>
+          </ng-template>
+          <ng-template #footer>
+            <span class="date">{{ review.date }}</span>
+            <p-rating
+              [ngModel]="review.score"
+              [readonly]="true"
+              [stars]="5"
+            ></p-rating>
+          </ng-template>
+        </p-card>
       </div>
     </ng-template>
   </p-carousel>

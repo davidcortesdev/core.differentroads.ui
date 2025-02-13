@@ -1,5 +1,19 @@
+:host {
+  --hero-height: 65vh;
+  --container-width: 80%;
+  --container-max-width: 1200px;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 2rem;
+  --min-width-mobile: 7rem;
+  --min-width-desktop: 13rem;
+  --input-height: 50px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+}
+
 .hero-section {
-  height: 65vh;
+  height: var(--hero-height);
   position: relative;
   display: flex;
   align-items: flex-end;
@@ -7,8 +21,7 @@
 
   .background-video {
     position: absolute;
-    top: 0;
-    left: 0;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -19,88 +32,91 @@
   .search-container {
     position: relative;
     z-index: 1;
-    padding: 2rem;
-    width: 80%;
-    max-width: 1200px;
+    padding: var(--spacing-lg);
+    width: var(--container-width);
+    max-width: var(--container-max-width);
 
     .search-form {
       display: flex;
-      gap: 1rem;
+      gap: var(--spacing-md);
       align-items: center;
       flex-wrap: wrap;
 
       .flex-30 {
         flex: 20%;
-        min-width: 15rem;
-        @media screen and (max-width: 400px) {
-          min-width: 7rem;
-        }
+        min-width: var(--min-width-desktop);
       }
 
       .flex-20 {
         flex: 16%;
-        min-width: 13rem;
-        @media screen and (max-width: 400px) {
-          min-width: 7rem;
-        }
+        min-width: var(--min-width-desktop);
       }
 
       .flex-10 {
         flex: 8%;
         min-width: 11rem;
-        @media screen and (max-width: 400px) {
-          min-width: 7rem;
+      }
+
+      @media screen and (max-width: 400px) {
+        .flex-30,
+        .flex-20,
+        .flex-10 {
+          min-width: var(--min-width-mobile);
         }
       }
 
-      div p-iftaLabel {
-        border: none;
-      }
-
-      div p-floatlabel {
-        flex: 1;
-        display: flex;
-        min-width: 200px;
-        height: 50px;
-        width: 100%;
-        font-size: 14px;
-        font-weight: 500;
-
-        .input-text {
+      div {
+        p-iftaLabel {
           border: none;
-          font-size: 16px;
-          width: 270px;
         }
 
-        p-autoComplete,
-        p-datepicker {
-          border: none;
+        p-floatlabel {
           flex: 1;
+          display: flex;
+          min-width: 200px;
+          height: var(--input-height);
           width: 100%;
+          font-size: var(--font-size-sm);
+          font-weight: 500;
 
-          ::ng-deep .p-autocomplete,
-          ::ng-deep .p-calendar {
+          .input-text {
+            border: none;
+            font-size: var(--font-size-md);
+            width: 270px;
+          }
+
+          p-autoComplete,
+          p-datepicker {
+            border: none;
+            flex: 1;
             width: 100%;
+
+            ::ng-deep .p-autocomplete,
+            ::ng-deep .p-calendar {
+              width: 100%;
+            }
           }
         }
       }
     }
   }
 
-  ::ng-deep .p-inputtext {
-    border: transparent;
-    font-size: 16px;
-  }
+  ::ng-deep {
+    .p-inputtext {
+      border: transparent;
+      font-size: var(--font-size-md);
+    }
 
-  ::ng-deep .p-autocomplete-dropdown {
-    background-color: var(--background-azul-color-letra);
-    border: none;
-  }
+    .p-autocomplete-dropdown {
+      background-color: var(--background-azul-color-letra);
+      border: none;
+    }
 
-  ::ng-deep .button-search {
-    border-radius: 3rem;
-    height: 3.125rem;
-    width: 7rem;
+    .button-search {
+      border-radius: 3rem;
+      height: 3.125rem;
+      width: 7rem;
+    }
   }
 
   .float-label {
@@ -110,10 +126,7 @@
 
   .spinner-container {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;

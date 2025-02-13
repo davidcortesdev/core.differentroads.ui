@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { HomeService } from '../../core/services/home.service';
 import { Block, BlockType } from '../../core/models/blocks/block.model';
 import { FeaturedToursSection } from '../../core/models/home/featured-tours/featured-tour.model';
+import { AuthenticateService } from '../../core/services/auth-service.service';
 
 @Component({
   selector: 'app-home',
@@ -13,7 +14,10 @@ export class HomeComponent {
   blocks: Block[] = [];
   featuredTours?: FeaturedToursSection;
 
-  constructor(private homeService: HomeService) {}
+  constructor(
+    private homeService: HomeService,
+    private authService: AuthenticateService
+  ) {}
 
   ngOnInit() {
     this.homeService.getHomeData().subscribe({

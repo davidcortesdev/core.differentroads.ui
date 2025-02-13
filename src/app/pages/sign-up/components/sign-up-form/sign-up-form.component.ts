@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 import {
-  FormsModule,
-  ReactiveFormsModule,
   FormBuilder,
   FormGroup,
   Validators,
+  ReactiveFormsModule,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common'; // Importa CommonModule
 import { ButtonModule } from 'primeng/button';
@@ -12,19 +12,20 @@ import { DividerModule } from 'primeng/divider';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { IftaLabelModule } from 'primeng/iftalabel';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @Component({
   selector: 'app-sign-up-form',
   standalone: true,
   imports: [
-    CommonModule, // Agrega CommonModule aquí
-    FormsModule,
+    CommonModule,
     ReactiveFormsModule,
     IftaLabelModule,
-    ButtonModule,
-    DividerModule,
     InputTextModule,
     PasswordModule,
+    ButtonModule,
+    DividerModule,
+    ProgressSpinnerModule,
   ],
   templateUrl: './sign-up-form.component.html',
   styleUrls: ['./sign-up-form.component.scss'],
@@ -35,7 +36,7 @@ export class SignUpFormComponent {
   errors: { [key: string]: any } = {};
   errorMessage: string = '';
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder, private router: Router) {
     this.signUpForm = this.fb.group(
       {
         firstName: ['', [Validators.required]],
@@ -92,5 +93,9 @@ export class SignUpFormComponent {
       }
     });
     return errors;
+  }
+
+  redirectToLogin(): void {
+    this.router.navigate(['/login']);
   }
 }

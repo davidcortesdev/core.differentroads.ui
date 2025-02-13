@@ -1,48 +1,80 @@
 .reviews-section {
-  &>h3 {
+  h3 {
     color: var(--background-azul-color-letra);
     font-size: 3rem;
     font-weight: 400;
+    margin-bottom: 2rem;
   }
 
-  .reviews-carousel-item {
-    border: 1px solid red;
+  ::ng-deep {
+    .p-carousel {
+      .padre {
+        padding: 0.5rem;
+        height: 100%;
+        background-color: transparent;
+        .p-card {
+          padding: 0.5rem;
 
-    &-card {
-      background: var(--accent-white);
-      border-radius: .75rem;
-      margin: .5rem;
-      padding: 1rem;
-
-      &-wrap {
-        &>h4 {
-          color: var(--background-azul);
-          font-size: 1.5rem;
-          font-weight: 700;
-          margin: 0;
-        }
-
-        &-content {
-          margin-bottom: 1.5rem;
-
-          &>span {
-            color: var(--p-primary-color);
-            font-size: .75rem;
-            font-weight: 700;
-          }
-
-          &>p {
+          .p-card-title {
             color: var(--background-azul);
-            font-size: 1rem;
-            font-weight: 500;
-            margin: 0;
+            font-size: 1.79469rem;
+            font-style: normal;
+            font-weight: 700;
+            line-height: 1.8545rem;
           }
-        }
 
-        &-date {
-          color: var(--p-primary-color);
-          font-size: 1rem;
-          font-weight: 500;
+          .p-card-subtitle {
+            color: var(--p-primary-color);
+            font-size: 0.95719rem;
+            font-style: normal;
+            font-weight: 700;
+            line-height: 0.95719rem;
+          }
+
+          .p-card-content {
+            color: var(--background-azul);
+            font-size: 0.95719rem;
+            font-style: normal;
+            font-weight: 500;
+            line-height: 100%;
+            height: 4rem;
+            width: 250px;
+
+            .review-text-container {
+              color: var(--background-azul);
+              display: -webkit-box;
+              -webkit-line-clamp: 4;
+              -webkit-box-orient: vertical;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              max-height: 4rem; // ajusta esto según necesites
+            }
+          }
+          .p-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: none;
+
+            .date {
+              color: var(--p-primary-color);
+              font-size: 0.95719rem;
+              font-style: normal;
+              font-weight: 500;
+              line-height: 100%;
+            }
+
+            .p-rating {
+              .p-rating-icon {
+                color: var(--p-primary-color);
+                font-size: 1rem;
+
+                &.p-rating-icon-active {
+                  color: var(--p-primary-color);
+                }
+              }
+            }
+          }
         }
       }
     }

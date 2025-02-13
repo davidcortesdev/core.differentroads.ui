@@ -1,0 +1,87 @@
+<!-- HTML -->
+<div class="points-section">
+    <p-toolbar styleClass="toolbar-custom mb-4">
+        <div class="p-toolbar-group-start">
+            <h1 class="program-title">Programa de puntos</h1>
+        </div>
+        
+        <div class="p-toolbar-group-end">
+            <div class="points-display">
+                <span class="points-value">{{totalPoints}}</span>
+                <span class="points-label"> puntos</span>
+            </div>
+            <button 
+                pButton
+                class="p-button-rounded search-button"
+                (click)="toggleTable()">
+                <i class="pi pi-search"></i>
+            </button>
+        </div>
+    </p-toolbar>
+
+    <!-- Tabla que aparecerá sobre las cards -->
+    <div class="table-container" *ngIf="showTable">
+        <p-table
+            [value]="points"
+            [paginator]="true"
+            [rows]="5"
+            [showCurrentPageReport]="true"
+            [tableStyle]="{ 'min-width': '50rem' }"
+            styleClass="p-datatable-striped"
+            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th>Reserva</th>
+                    <th>Categoría</th>
+                    <th>Concepto</th>
+                    <th>Tour</th>
+                    <th>Puntos</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-point>
+                <tr>
+                    <td class="booking-column">{{ point.booking }}</td>
+                    <td>{{ point.category }}</td>
+                    <td>{{ point.concept }}</td>
+                    <td>{{ point.tour }}</td>
+                    <td class="points-column">{{ point.points }}</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <!-- Cards Container -->
+    <div class="cards-container">
+        <div class="cards-grid">
+            <p-card *ngFor="let card of membershipCards"
+                    [styleClass]="card.unlocked ? 'unlocked-card' : 'locked-card'"
+                    [style]="{ width: '100%' }">
+                <ng-template pTemplate="header">
+                    <div class="card-image-container">
+                        <div class="card-image-wrapper">
+                            <img [alt]="card.title" [src]="card.image" class="card-image"/>
+                        </div>
+                    </div>
+                </ng-template>
+                <ng-template pTemplate="title">
+                    <div class="card-header">
+                        <span class="card-type">{{card.type}}</span>
+                        <h2 class="card-title">{{card.title}}</h2>
+                    </div>
+                </ng-template>
+                <div class="card-content">
+                    <ul class="benefits-list">
+                        <li *ngFor="let benefit of card.benefits">{{benefit}}</li>
+                    </ul>
+                </div>
+                <ng-template pTemplate="footer">
+                    <div class="card-status">
+                        <span [class.unlocked]="card.unlocked">
+                            {{card.unlocked ? 'Desbloqueado' : card.requirement}}
+                        </span>
+                    </div>
+                </ng-template>
+            </p-card>
+        </div>
+    </div>
+</div>

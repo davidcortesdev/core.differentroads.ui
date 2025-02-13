@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { GeneralConfigService } from '../../core/services/general-config.service';
+import { FooterSection, Link } from '../../core/models/general/footer.model';
 
 interface FooterData {
   newsletterTitle: string;
@@ -27,47 +29,59 @@ interface FooterData {
 
 @Component({
   selector: 'app-footer',
-  standalone: false,
   templateUrl: './footer.component.html',
-  styleUrl: './footer.component.scss'
+  styleUrls: ['./footer.component.scss'],
+  standalone: false,
 })
 export class FooterComponent implements OnInit {
   footerData: FooterData = {
-    newsletterTitle: 'Regístrate para recibir ofertas exclusivas, eventos y más',
+    newsletterTitle: '',
     contactInfo: {
-      phone: '+34 965 02 71 04',
-      email: 'info@differentroads.es'
+      phone: '',
+      email: '',
     },
-    aboutUsLinks: [
-      { label: 'Somos diferentes', url: '#' },
-      { label: 'Programa de puntos', url: '#' },
-      { label: 'Preguntas frecuentes', url: '#' },
-      { label: 'Políticas de privacidad', url: '#' },
-      { label: 'Condiciones generales', url: '#' },
-      { label: 'Aviso legal', url: '#' }
-    ],
-    ourTripsLinks: [
-      { label: 'Europa', url: '#' },
-      { label: 'Asia', url: '#' },
-      { label: 'America', url: '#' },
-      { label: 'África', url: '#' },
-      { label: 'Grupos', url: '#' },
-      { label: 'Temporadas', url: '#' }
-    ],
-    travelTypesLinks: [
-      { label: 'DR Tours', url: '#' },
-      { label: 'DMC', url: '#' },
-      { label: 'Fly & Drive', url: '#' },
-      { label: 'Vuelo + Hotel', url: '#' }
-    ],
-    tourOperatorLinks: [
-      { label: '¿Quienes somos?', url: '#' },
-      { label: '¿Por que Different?', url: '#' }
-    ],
-    copyrightText: '© Different Roads 2024'
+    aboutUsLinks: [],
+    ourTripsLinks: [],
+    travelTypesLinks: [],
+    tourOperatorLinks: [],
+    copyrightText: '',
   };
 
+  constructor(private generalConfigService: GeneralConfigService) {}
+
   ngOnInit() {
-    // Lógica de inicialización si es necesaria
+    this.fetchFooterConfig();
+  }
+
+  fetchFooterConfig() {
+    this.generalConfigService
+      .getFooterSection()
+      .subscribe((footerSection: FooterSection) => {
+        this.footerData = this.mapFooterSectionToFooterData(footerSection);
+      });
+  }
+
+  private mapFooterSectionToFooterData(
+    footerSection: FooterSection
+  ): FooterData {
+    return {
+      newsletterTitle: footerSection.info.text,
+      contactInfo: {
+        phone: footerSection['contact-info'].phone,
+        email: footerSection['contact-info'].email,
+      },
+      aboutUsLinks: this.mapLinks(footerSection['section-1'].links),
+      ourTripsLinks: this.mapLinks(footerSection['section-2'].links),
+      travelTypesLinks: this.mapLinks(footerSection['section-3'].links),
+      tourOperatorLinks: this.mapLinks(footerSection['section-4'].links),
+      copyrightText: `${footerSection.copyright.text} ${footerSection.copyright.year}`,
+    };
+  }
+
+  private mapLinks(links: Link[]): { label: string; url: string }[] {
+    return links.map((link: Link) => ({
+      label: link.text,
+      url: link.url,
+    }));
   }
 }

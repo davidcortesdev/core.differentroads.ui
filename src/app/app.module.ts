@@ -80,6 +80,8 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { DropdownModule } from 'primeng/dropdown';
+import { ToolbarModule } from 'primeng/toolbar';
+import { TableModule } from 'primeng/table';
 import { ProfileComponent } from './pages/profile/profile.component';
 import { PersonalInfoSectionComponent } from './pages/profile/components/personal-info-section/personal-info-section.component';
 import { UpdateProfileSectionComponent } from './pages/profile/components/update-profile-section/update-profile-section.component';
@@ -93,7 +95,13 @@ import { TourFaqComponent } from './pages/tour/components/tour-faq/tour-faq.comp
 import { TourRelatedComponent } from './pages/tour/components/tour-related/tour-related.component';
 import { FluidModule } from 'primeng/fluid';
 import { SignUpComponent } from './pages/sign-up/sign-up.component';
+import { PointsSectionComponent } from './pages/profile/components/points-section/points-section.component';
+import { ActiveBookingsSectionComponent } from './pages/profile/components/active-bookings-section/active-bookings-section.component';
+import { TravelHistorySectionComponent } from './pages/profile/components/travel-history-section/travel-history-section.component';
+import { RecentBudgetSectionComponent } from './pages/profile/components/recent-budget-section/recent-budget-section.component';
+import { ReviewSectionComponent } from './pages/profile/components/review-section/review-section.component';
 import { ForgetPasswordComponent } from './pages/forget-password/forget-password.component';
+
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -146,6 +154,11 @@ export function HttpLoaderFactory(http: HttpClient) {
     TourGalleryComponent,
     TourFaqComponent,
     TourRelatedComponent,
+    PointsSectionComponent,
+    ActiveBookingsSectionComponent,
+    TravelHistorySectionComponent,
+    RecentBudgetSectionComponent,
+    ReviewSectionComponent,
   ],
   imports: [
     // Angular Modules
@@ -186,6 +199,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     TooltipModule,
     DropdownModule,
     FluidModule,
+    ToolbarModule,
+    TableModule,
     ForgetPasswordComponent,
     TranslateModule.forRoot({
       loader: {

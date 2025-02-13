@@ -27,7 +27,11 @@
       </p-divider>
 
       <!-- Formulario de inicio de sesión manual -->
-      <form (ngSubmit)="onSubmit()" class="form-login">
+      <form
+        [formGroup]="loginForm"
+        (ngSubmit)="onSubmit($event)"
+        class="form-login"
+      >
         <!-- Campo de usuario -->
         <div class="input-group mt-4">
           <input
@@ -92,7 +96,6 @@
           <a (click)="redirectToSignUp()">Regístrate aquí</a>
         </p>
       </form>
-
     </div>
   </div>
 </div>

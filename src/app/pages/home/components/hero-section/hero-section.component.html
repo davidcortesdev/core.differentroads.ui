@@ -29,63 +29,71 @@
   </ng-template>
   <div class="search-container">
     <div class="search-form">
-      <p-iftalabel>
-        <input
-          pInputText
-          id="destionationInput"
-          autocomplete="off"
-          placeholder="Pais, ciudad, Ofertas, destinos, todo lo que se te ocurra..."
-          class="input-text"
-        />
-        <label for="destionationInput" class="float-label"
-          >¿Cuál es tu próximo destino?</label
-        >
-      </p-iftalabel>
-
-      <p-iftaLabel>
-        <p-datepicker
-          [(ngModel)]="departureDate"
-          [showIcon]="false"
-          id="departureDateInput"
+      <div class="flex-30">
+        <p-iftalabel>
+          <input
+            pInputText
+            id="destionationInput"
+            autocomplete="off"
+            placeholder="Pais, Ciudad, Ofertas, Destinos, todo lo que se te ocurra..."
+            class="input-text"
+            fluid="true"
+          />
+          <label for="destionationInput" class="float-label"
+            >¿Cuál es tu próximo destino?</label
+          >
+        </p-iftalabel>
+      </div>
+      <div class="flex-20">
+        <p-iftaLabel>
+          <p-datepicker
+            [(ngModel)]="departureDate"
+            [showIcon]="false"
+            id="departureDateInput"
+            fluid="true"
+            placeholder="DD/MM/AAAA"
+          >
+          </p-datepicker>
+          <label for="departureDateInput" class="float-label">Ida</label>
+        </p-iftaLabel>
+      </div>
+      <div class="flex-20">
+        <p-iftaLabel>
+          <p-datepicker
+            [(ngModel)]="returnDate"
+            [showIcon]="false"
+            id="returnDateInput"
+            fluid="true"
+            placeholder="DD/MM/AAAA"
+          >
+          </p-datepicker>
+          <label for="returnDateInput" class="float-label">Vuelta</label>
+        </p-iftaLabel>
+      </div>
+      <div class="flex-30">
+        <p-iftaLabel>
+          <p-autoComplete
+            [suggestions]="filteredTripTypes"
+            (completeMethod)="filterTripTypes($event)"
+            [dropdown]="true"
+            [(ngModel)]="selectedTripType"
+            id="tripTypeInput"
+            placeholder="Seleccionar tipo"
+            fluid="true"
+          >
+          </p-autoComplete>
+          <label for="tripTypeInput" class="float-label">Tipo de viaje</label>
+        </p-iftaLabel>
+      </div>
+      <div class="flex-10">
+        <p-button
+          type="button"
+          icon="pi pi-search"
           fluid="true"
-          placeholder="DD/MM/AAAA"
-        >
-        </p-datepicker>
-        <label for="departureDateInput" class="float-label">Ida</label>
-      </p-iftaLabel>
-
-      <p-iftaLabel>
-        <p-datepicker
-          [(ngModel)]="returnDate"
-          [showIcon]="false"
-          id="returnDateInput"
-          fluid="true"
-          placeholder="DD/MM/AAAA"
-        >
-        </p-datepicker>
-        <label for="returnDateInput" class="float-label">Vuelta</label>
-      </p-iftaLabel>
-
-      <p-iftaLabel>
-        <p-autoComplete
-          [suggestions]="filteredTripTypes"
-          (completeMethod)="filterTripTypes($event)"
-          [dropdown]="true"
-          [(ngModel)]="selectedTripType"
-          id="tripTypeInput"
-          placeholder="Seleccionar tipo"
-        >
-        </p-autoComplete>
-        <label for="tripTypeInput" class="float-label">Tipo de viaje</label>
-      </p-iftaLabel>
-
-      <p-button
-        type="button"
-        icon="pi pi-search"
-        fluid="true"
-        styleClass="button-search"
-        (click)="searchTrips()"
-      ></p-button>
+          styleClass="button-search"
+          (click)="searchTrips()"
+        ></p-button>
+      </div>
     </div>
   </div>
 </section>

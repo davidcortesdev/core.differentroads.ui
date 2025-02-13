@@ -17,27 +17,27 @@ export class CommunityReviewsComponent {
 
   responsiveOptions = [
     {
-      breakpoint: '1200px',
+      breakpoint: '2500px',
+      numVisible: 5,
+      numScroll: 1,
+    },
+    {
+      breakpoint: '2000px',
       numVisible: 4,
       numScroll: 1,
     },
     {
-      breakpoint: '992px',
+      breakpoint: '1500px',
       numVisible: 3,
       numScroll: 1,
     },
     {
-      breakpoint: '768px',
-      numVisible: 3,
-      numScroll: 1,
-    },
-    {
-      breakpoint: '576px',
+      breakpoint: '1200px',
       numVisible: 2,
       numScroll: 1,
     },
     {
-      breakpoint: '425px',
+      breakpoint: '850px',
       numVisible: 1,
       numScroll: 1,
     },

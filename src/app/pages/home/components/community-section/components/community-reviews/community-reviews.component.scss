@@ -1,77 +1,81 @@
+:host {
+  --review-title-size: 3rem;
+  --review-heading-size: 1.79469rem;
+  --review-text-size: 0.95719rem;
+  --card-padding: 0.5rem;
+  --content-height: 4rem;
+}
+
 .reviews-section {
   h3 {
     color: var(--background-azul-color-letra);
-    font-size: 3rem;
+    font-size: var(--review-title-size);
     font-weight: 400;
-    margin-bottom: 2rem;
+    margin-bottom: calc(var(--card-padding) * 4);
   }
 
   ::ng-deep {
     .p-carousel {
       .padre {
-        padding: 0.5rem;
+        padding: var(--card-padding);
         height: 100%;
         background-color: transparent;
+
         .p-card {
-          padding: 0.5rem;
+          padding: var(--card-padding);
 
           .p-card-title {
             color: var(--background-azul);
-            font-size: 1.79469rem;
-            font-style: normal;
+            font-size: var(--review-heading-size);
             font-weight: 700;
-            line-height: 1.8545rem;
+            line-height: calc(var(--review-heading-size) * 1.034);
           }
 
           .p-card-subtitle {
             color: var(--p-primary-color);
-            font-size: 0.95719rem;
-            font-style: normal;
+            font-size: var(--review-text-size);
             font-weight: 700;
-            line-height: 0.95719rem;
+            line-height: 1;
           }
 
           .p-card-content {
             color: var(--background-azul);
-            font-size: 0.95719rem;
-            font-style: normal;
+            font-size: var(--review-text-size);
             font-weight: 500;
-            line-height: 100%;
-            height: 4rem;
-            width: 250px;
+            line-height: 1;
+            height: var(--content-height);
 
             .review-text-container {
-              color: var(--background-azul);
+              color: inherit;
               display: -webkit-box;
               -webkit-line-clamp: 4;
               -webkit-box-orient: vertical;
               overflow: hidden;
               text-overflow: ellipsis;
-              max-height: 4rem; // ajusta esto según necesites
+              max-height: var(--content-height);
             }
           }
+
           .p-card-footer {
             display: flex;
             justify-content: space-between;
+            flex-wrap: wrap;
             align-items: center;
             border: none;
 
             .date {
               color: var(--p-primary-color);
-              font-size: 0.95719rem;
-              font-style: normal;
+              font-size: var(--review-text-size);
               font-weight: 500;
-              line-height: 100%;
+              line-height: 1;
             }
 
-            .p-rating {
-              .p-rating-icon {
-                color: var(--p-primary-color);
-                font-size: 1rem;
+            .p-rating .p-rating-icon {
+              color: var(--p-primary-color);
+              font-size: var(--review-text-size);
 
-                &.p-rating-icon-active {
-                  color: var(--p-primary-color);
-                }
+              &.p-rating-icon-active {
+                color: var(--p-primary-color);
               }
             }
           }

@@ -32,12 +32,12 @@ export class CommunityReviewsComponent {
       numScroll: 1,
     },
     {
-      breakpoint: '1000px',
+      breakpoint: '1200px',
       numVisible: 2,
       numScroll: 1,
     },
     {
-      breakpoint: '500px',
+      breakpoint: '850px',
       numVisible: 1,
       numScroll: 1,
     },

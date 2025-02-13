@@ -12,8 +12,6 @@
         .p-paginator-page.p-paginator-page-selected {
             background: var(--p-primary-color);
             color: #fff;
-            width: 30px;
-            height: 35px;
         }
         .p-toolbar {
             border-radius: 0.875rem;
@@ -177,6 +175,7 @@
                         .p-paginator-pages {
                             display: flex;
                             gap: 0.25rem;
+                            padding: 0.8rem;
                         }
                     }
                 }

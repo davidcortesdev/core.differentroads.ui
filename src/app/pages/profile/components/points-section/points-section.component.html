@@ -1,4 +1,4 @@
-<!-- HTML -->
+
 <div class="points-section">
     <p-toolbar styleClass="toolbar-custom mb-4">
         <div class="p-toolbar-group-start">
@@ -19,7 +19,6 @@
         </div>
     </p-toolbar>
 
-    <!-- Tabla que aparecerá sobre las cards -->
     <div class="table-container" *ngIf="showTable">
         <p-table
             [value]="points"
@@ -50,7 +49,6 @@
         </p-table>
     </div>
 
-    <!-- Cards Container -->
     <div class="cards-container">
         <div class="cards-grid">
             <p-card *ngFor="let card of membershipCards"

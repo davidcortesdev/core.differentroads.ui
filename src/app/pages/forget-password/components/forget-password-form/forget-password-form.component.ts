@@ -8,12 +8,21 @@ import {
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { PasswordModule } from 'primeng/password';
 import { CommonModule } from '@angular/common'; // Import CommonModule
 
 @Component({
-  selector: 'app-password-recovery-form',
+  selector: 'app-forget-password-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ButtonModule, InputTextModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    ButtonModule,
+    InputTextModule,
+    PasswordModule,
+    InputNumberModule,
+  ],
   templateUrl: './forget-password-form.component.html',
   styleUrls: ['./forget-password-form.component.scss'],
 })

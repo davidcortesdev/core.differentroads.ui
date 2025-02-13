@@ -41,6 +41,29 @@ export class ToursService {
     return this.http.get<Tour>(`${this.API_URL}/${id}`, { params });
   }
 
+  getTourDetailBySlug(
+    slug: string,
+    selectedFields: SelectedFields = ['all']
+  ): Observable<Tour> {
+    let params = new HttpParams();
+
+    if (selectedFields && selectedFields.length) {
+      params = params.set('selectedFields', selectedFields.join(','));
+    }
+
+    return this.http
+      .get<Tour[]>(`${this.API_URL}/filter-by/webSlug/${slug}`, { params })
+      .pipe(
+        map((tours: Tour[]) => {
+          if (tours.length > 0) {
+            return tours[0];
+          } else {
+            throw new Error('No tour found with the given slug');
+          }
+        })
+      );
+  }
+
   getTourCardData(id: string): Observable<Partial<Tour>> {
     return this.getTourDetail(id, [
       'activePeriods',

@@ -16,8 +16,6 @@ export class CommunitySectionComponent implements OnInit {
   ngOnInit() {
     this.homeService.getTravelersSection().subscribe({
       next: (data) => {
-        console.log('Travelers section data:', data);
-
         this.travelersSection = data;
       },
       error: (error) => {

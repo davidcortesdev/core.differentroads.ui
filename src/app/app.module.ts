@@ -93,6 +93,7 @@ import { TourFaqComponent } from './pages/tour/components/tour-faq/tour-faq.comp
 import { TourRelatedComponent } from './pages/tour/components/tour-related/tour-related.component';
 import { FluidModule } from 'primeng/fluid';
 import { SignUpComponent } from './pages/sign-up/sign-up.component';
+import { ForgetPasswordComponent } from './pages/forget-password/forget-password.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -185,6 +186,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     TooltipModule,
     DropdownModule,
     FluidModule,
+    ForgetPasswordComponent,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

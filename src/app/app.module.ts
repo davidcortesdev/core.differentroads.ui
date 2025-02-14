@@ -102,7 +102,7 @@ import { RecentBudgetSectionComponent } from './pages/profile/components/recent-
 import { ReviewSectionComponent } from './pages/profile/components/review-section/review-section.component';
 import { ForgetPasswordComponent } from './pages/forget-password/forget-password.component';
 import { ReviewsComponent } from './shared/components/reviews/reviews.component';
-
+import { AccordionModule } from 'primeng/accordion';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -203,6 +203,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     FluidModule,
     ToolbarModule,
     TableModule,
+    AccordionModule,
     ForgetPasswordComponent,
     TranslateModule.forRoot({
       loader: {

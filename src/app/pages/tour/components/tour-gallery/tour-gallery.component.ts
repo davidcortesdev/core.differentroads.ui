@@ -1,77 +1,95 @@
-import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component } from '@angular/core';
+import { ToursService } from '../../../../core/services/tours.service';
+import { ActivatedRoute } from '@angular/router';
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-tour-gallery',
   standalone: false,
   templateUrl: './tour-gallery.component.html',
-  styleUrl: './tour-gallery.component.scss'
+  styleUrl: './tour-gallery.component.scss',
 })
-export class TourGalleryComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('galleryGrid') galleryGrid!: ElementRef;
-
-  images = [
-    { id: 1, width: 400, height: 300 },
-    { id: 2, width: 300, height: 400 },
-    { id: 3, width: 600, height: 400 },
-    { id: 4, width: 400, height: 300 },
-    { id: 5, width: 500, height: 300 },
-    { id: 6, width: 400, height: 500 },
-    { id: 7, width: 600, height: 400 },
-    { id: 8, width: 400, height: 300 },
-    { id: 9, width: 300, height: 400 },
-    { id: 10, width: 500, height: 300 },
-    { id: 11, width: 400, height: 400 },
-    { id: 12, width: 400, height: 300 },
-    { id: 21, width: 400, height: 300 },
-    { id: 22, width: 300, height: 400 },
-    { id: 23, width: 600, height: 400 },
-    { id: 24, width: 400, height: 300 },
-    { id: 25, width: 500, height: 300 },
-    { id: 26, width: 400, height: 500 },
-    { id: 27, width: 600, height: 400 },
-    { id: 28, width: 400, height: 300 },
-    { id: 29, width: 300, height: 400 },
-    { id: 210, width: 500, height: 300 },
-    { id: 211, width: 400, height: 400 },
-    { id: 212, width: 400, height: 300 }
-  ];
-  
+export class TourGalleryComponent {
+  title: string = '';
+  images: any[] = [];
   showAll = false;
-  itemsPerRow = 4; // Set default value
-  private resizeObserver?: ResizeObserver;
-  
-  constructor(private cdr: ChangeDetectorRef) {}
+  itemsPerRow = 4;
+
+  constructor(
+    private toursService: ToursService,
+    private route: ActivatedRoute
+  ) {}
+
+  ngOnInit() {
+    this.route.params.pipe(take(1)).subscribe((params) => {
+      const slug = params['slug'];
+
+      // Asegúrate de incluir 'travelers-section' en los campos seleccionados
+      this.toursService
+        .getTourDetailBySlug(slug, ['travelers-section'])
+        .subscribe({
+          next: (tourData) => {
+            console.log('Datos completos recibidos:', tourData); // Depuración
+
+            if (tourData && tourData['travelers-section']) {
+              // Obtener el título
+              this.title = tourData['travelers-section'].title;
+              console.log('Título obtenido:', this.title); // Depuración
+
+              // Verificar si travelersCards existe y es un array
+              if (Array.isArray(tourData['travelers-section'].travelersCards)) {
+                console.log(
+                  'travelers-cards:',
+                  tourData['travelers-section'].travelersCards
+                ); // Depuración
+
+                this.images = tourData['travelers-section'].travelersCards
+                  .map((card: any) => {
+                    // Verificar si timage es un array y tiene al menos un elemento con URL
+                    if (
+                      Array.isArray(card.timage) &&
+                      card.timage.length > 0 &&
+                      card.timage[0].url
+                    ) {
+                      console.log('URL de la imagen:', card.timage[0].url); // Depuración
+                      return {
+                        id: Math.random(),
+                        url: card.timage[0].url,
+                        width: 400,
+                        height: 300,
+                      };
+                    } else {
+                      console.warn('Tarjeta sin URL de imagen válida:', card); // Depuración
+                      return null;
+                    }
+                  })
+                  .filter((image: any) => image !== null); // Filtrar solo imágenes válidas
+
+                console.log('Imágenes procesadas:', this.images); // Depuración
+              } else {
+                console.error(
+                  'travelers-cards no es un array o no existe:',
+                  tourData['travelers-section'].travelersCards
+                ); // Depuración
+              }
+            } else {
+              console.error(
+                'La sección travelers-section no existe en los datos:',
+                tourData
+              ); // Depuración
+            }
+          },
+          error: (error) => {
+            console.error('Error al obtener datos:', error);
+          },
+        });
+    });
+  }
 
   get visibleImages() {
-    return this.showAll ? this.images : this.images.slice(0, this.itemsPerRow * 2);
-  }
-
-  ngAfterViewInit() {
-    setTimeout(() => {
-      this.setupResizeObserver();
-      this.cdr.detectChanges();
-    });
-  }
-
-  private setupResizeObserver() {
-    this.resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const items = entry.target.querySelectorAll('.gallery-item');
-        if (items.length > 0) {
-          const firstItemRect = items[0].getBoundingClientRect();
-          const containerWidth = entry.contentRect.width;
-          const calculatedItems = Math.floor(containerWidth / (firstItemRect.width + 20));
-          this.itemsPerRow = calculatedItems > 0 ? calculatedItems : this.itemsPerRow;
-          this.cdr.detectChanges();
-        }
-      }
-    });
-
-    this.resizeObserver.observe(this.galleryGrid.nativeElement);
-  }
-
-  ngOnDestroy() {
-    this.resizeObserver?.disconnect();
+    return this.showAll
+      ? this.images
+      : this.images.slice(0, this.itemsPerRow * 2);
   }
 
   toggleShowMore() {

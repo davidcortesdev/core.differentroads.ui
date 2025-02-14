@@ -11,7 +11,6 @@ import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
-import { IftaLabelModule } from 'primeng/iftalabel';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @Component({
@@ -20,7 +19,6 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    IftaLabelModule,
     InputTextModule,
     PasswordModule,
     ButtonModule,

@@ -9,6 +9,7 @@ import { PersonalInfoSectionComponent } from './pages/profile/components/persona
 import { UpdateProfileSectionComponent } from './pages/profile/components/update-profile-section/update-profile-section.component';
 import { LoginComponent } from './pages/login/login.component';
 import { SignUpComponent } from './pages/sign-up/sign-up.component';
+import { ForgetPasswordComponent } from './pages/forget-password/forget-password.component';
 
 const routes: Routes = [
   {
@@ -27,6 +28,7 @@ const routes: Routes = [
       }, // Añadimos esta ruta
       { path: 'login', component: LoginComponent },
       { path: 'sign-up', component: SignUpComponent },
+      { path: 'forget-password', component: ForgetPasswordComponent },
       { path: 'tour/:slug', component: TourComponent },
       { path: '**', component: NotFoundComponent }, // This will catch all unmatched routes
     ],

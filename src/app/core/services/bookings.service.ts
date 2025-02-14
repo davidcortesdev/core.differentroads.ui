@@ -9,12 +9,13 @@ import {
 } from '../models/bookings/booking.model';
 import { Order } from '../models/orders/order.model';
 import { IPaymentVoucher, Payment } from '../models/bookings/payment.model';
+import { Pagination } from '../models/commons/pagination.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class BookingsService {
-  private readonly API_URL = `${environment.apiUrl}/bookings`;
+  private readonly API_URL = `${environment.dataApiUrl}/bookings`;
 
   constructor(private http: HttpClient) {}
 
@@ -104,8 +105,28 @@ export class BookingsService {
    * @param email - The email address.
    * @returns Observable of Booking array.
    */
-  getBookingsByEmail(email: string): Observable<Booking[]> {
-    return this.http.get<Booking[]>(`${this.API_URL}/by-email/${email}`);
+  getBookingsByEmail(
+    email: string,
+    status: string,
+    page: number = 1,
+    limit: number = 5
+  ): Observable<{ data: Partial<Booking[]>; pagination: Pagination }> {
+    let params = new HttpParams();
+    if (status !== undefined) {
+      params = params.set('status', status.toString());
+    }
+    if (page !== undefined) {
+      params = params.set('page', page.toString());
+    }
+    if (limit !== undefined) {
+      params = params.set('limit', limit.toString());
+    }
+    return this.http.get<{ data: Partial<Booking[]>; pagination: Pagination }>(
+      `${this.API_URL}/by-email/${email}`,
+      {
+        params,
+      }
+    );
   }
 
   /**

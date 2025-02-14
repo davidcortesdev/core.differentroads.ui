@@ -1,0 +1,38 @@
+<div class="reviews-section" role="region" aria-label="Customer Reviews">
+  <p-carousel
+    [value]="reviews"
+    [numVisible]="3"
+    [numScroll]="1"
+    [circular]="true"
+    [responsiveOptions]="responsiveOptions"
+    [autoplayInterval]="5000"
+    [showNavigators]="true"
+    [showIndicators]="true"
+  >
+    <ng-template let-review pTemplate="item">
+      <div class="padre">
+        <p-card class="review-card">
+          <ng-template #title>
+            <span class="traveler-name">{{ review.traveler }}</span>
+          </ng-template>
+          <ng-template #subtitle>
+            <span class="tour-name">{{ review.tour }}</span>
+          </ng-template>
+          <ng-template #content>
+            <div class="review-text-container" [attr.aria-label]="'Review by ' + review.traveler">
+              {{ review.review }}
+            </div>
+          </ng-template>
+          <ng-template #footer>
+            <span class="date" [attr.aria-label]="'Review date: ' + review.date">{{ review.date }}</span>
+            <p-rating
+              [ngModel]="review.score"
+              [readonly]="true"
+              [stars]="5"
+            ></p-rating>
+          </ng-template>
+        </p-card>
+      </div>
+    </ng-template>
+  </p-carousel>
+</div>

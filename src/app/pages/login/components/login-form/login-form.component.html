@@ -27,20 +27,23 @@
       </p-divider>
 
       <!-- Formulario de inicio de sesión manual -->
-      <form (ngSubmit)="onSubmit()" class="form-login">
+      <form
+        [formGroup]="loginForm"
+        (ngSubmit)="onSubmit($event)"
+        class="form-login"
+      >
         <!-- Campo de usuario -->
         <div class="input-group mt-4">
-          <p-iftalabel>
-            <input
-              type="text"
-              id="username"
-              pInputText
-              formControlName="username"
-              [ngClass]="{ 'p-invalid': errors.username }"
-              class="input-field"
-            />
-            <label for="username">Usuario</label>
-          </p-iftalabel>
+          <input
+            type="text"
+            id="username"
+            pInputText
+            formControlName="username"
+            [ngClass]="{ 'p-invalid': errors.username }"
+            placeholder="Email"
+            class="input-field"
+          />
+
           <small *ngIf="errors.username" class="p-error">
             {{ errors.username["message"] }}
           </small>
@@ -48,17 +51,15 @@
 
         <!-- Campo de contraseña -->
         <div class="input-group mt-4">
-          <p-iftalabel>
-            <p-password
-              id="password"
-              formControlName="password"
-              [ngClass]="{ 'p-invalid': errors.password }"
-              [toggleMask]="true"
-              [feedback]="false"
-              class="input-field"
-            ></p-password>
-            <label for="password">Contraseña</label>
-          </p-iftalabel>
+          <p-password
+            id="password"
+            formControlName="password"
+            [ngClass]="{ 'p-invalid': errors.password }"
+            [toggleMask]="true"
+            [feedback]="false"
+            placeholder="Contraseña"
+            class="input-field"
+          ></p-password>
           <small *ngIf="errors.password" class="p-error">
             {{ errors.password["message"] }}
           </small>
@@ -72,13 +73,11 @@
         </div>
 
         <!-- Enlace para recuperar contraseña -->
-        <a routerLink="/forget-password">
-          <p class="sign-up-form-link">
-            <span class="sign-up-form-link-span">
-              ¿Has olvidado tu contraseña?
-            </span>
-          </p>
-        </a>
+        <p class="sign-up-form-link">
+          <a (click)="redirectToForgetPassword()">
+            ¿Has olvidado tu contraseña?
+          </a>
+        </p>
 
         <!-- Botón de inicio de sesión -->
         <p-button
@@ -90,15 +89,13 @@
           size="large"
           class="p-button-primary p-button-block mt-4"
         ></p-button>
-      </form>
 
-      <!-- Enlace para registrarse -->
-      <a routerLink="/sign-up">
+        <!-- Enlace para registrarse -->
         <p class="sign-up-form-link mt-4">
-          ¿Aún no tienes cuenta?
-          <span class="sign-up-form-link-span">Regístrate aquí</span>
+          <span class="sign-up-form-link-span"> ¿Aún no tienes cuenta?</span>
+          <a (click)="redirectToSignUp()">Regístrate aquí</a>
         </p>
-      </a>
+      </form>
     </div>
   </div>
 </div>

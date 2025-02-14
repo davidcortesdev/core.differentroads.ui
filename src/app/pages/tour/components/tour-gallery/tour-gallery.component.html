@@ -1,4 +1,6 @@
 <div class="gallery-container">
+  <h2 class="gallery-title">#DELVIAJE</h2>
+  
   <div class="gallery-grid" #galleryGrid>
     <div *ngFor="let image of visibleImages" class="gallery-item">
       <img
@@ -11,7 +13,7 @@
   
   <div class="show-more-container" *ngIf="images.length > (itemsPerRow * 2)">
     <button class="show-more-button" (click)="toggleShowMore()">
-      {{ showAll ? 'Show Less' : 'Show More' }}
+      {{ showAll ? 'Ver menos' : 'Ver más' }}
     </button>
   </div>
 </div>

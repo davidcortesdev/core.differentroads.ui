@@ -4,6 +4,7 @@ import { LanguageService } from '../../core/services/language.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 import { GeneralConfigService } from '../../core/services/general-config.service';
+import { AuthenticateService } from '../../core/services/auth-service.service';
 import {
   MenuConfig,
   MenuList,
@@ -22,11 +23,13 @@ export class HeaderComponent implements OnInit {
   filteredLanguages: string[] = [];
   leftMenuItems: MenuItem[] | undefined;
   rightMenuItems: MenuItem[] | undefined;
+  userMenuItems: MenuItem[] | undefined;
 
   constructor(
     private languageService: LanguageService,
     private translate: TranslateService,
-    private generalConfigService: GeneralConfigService
+    private generalConfigService: GeneralConfigService,
+    private authService: AuthenticateService
   ) {}
 
   ngOnInit() {
@@ -35,6 +38,13 @@ export class HeaderComponent implements OnInit {
     });
 
     this.fetchMenuConfig();
+    this.populateUserMenu();
+
+    this.authService.userAttributesChanged.subscribe(() => {
+      if (!this.userMenuItems) {
+        this.populateUserMenu();
+      }
+    });
   }
 
   fetchMenuConfig() {
@@ -83,5 +93,35 @@ export class HeaderComponent implements OnInit {
 
   onLanguageChange(lang: any) {
     this.languageService.setLanguage(lang.toLowerCase());
+  }
+
+  populateUserMenu() {
+    if (this.authService.getCurrentUser()) {
+      const username = this.authService.getCurrentUsername();
+      const subscription = this.authService
+        .getUserAttributes()
+        .subscribe((userAttributes) => {
+          const { email } = userAttributes;
+
+          this.userMenuItems = [
+            {
+              label: email,
+              items: [
+                {
+                  label: 'Ver Perfil',
+                  icon: 'pi pi-user',
+                  command: () => this.authService.navigateToProfile(),
+                },
+                {
+                  label: 'Logout',
+                  icon: 'pi pi-sign-out',
+                  command: () => this.authService.logOut(),
+                },
+              ],
+            },
+          ];
+          subscription.unsubscribe();
+        });
+    }
   }
 }

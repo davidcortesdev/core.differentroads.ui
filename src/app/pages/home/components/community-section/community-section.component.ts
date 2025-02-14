@@ -29,7 +29,22 @@ export class CommunitySectionComponent implements OnInit {
   }
 
   get communityImages() {
-    return this.travelersSection?.['travelers-cards'] || [];
+    const images = this.travelersSection?.['travelers-cards'] || [];
+    return images.slice(2); // Rest the first two images
+  }
+
+  get communityHeroData() {
+    return {
+      title: this.travelersSection?.title || 'Titular para sección comunidad',
+      googleRating: 4.5,
+      featured: {
+        images:
+          this.travelersSection?.['travelers-cards']
+            .slice(0, 2)
+            .map((img) => img.image?.[0].url) || [],
+        content: this.travelersSection?.featured.description || '',
+      },
+    };
   }
 
   responsiveOptions = [

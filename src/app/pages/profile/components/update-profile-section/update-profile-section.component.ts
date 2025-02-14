@@ -114,14 +114,28 @@ export class UpdateProfileSectionComponent implements OnInit {
   }
 
   onSubmit() {
+    const transformedPersonalInfo = {
+      id: this.personalInfo.id,
+      email: this.personalInfo.email,
+      names: this.personalInfo.nombre,
+      phone: this.personalInfo.telefono
+        ? parseInt(this.personalInfo.telefono, 10)
+        : undefined,
+      sex: this.personalInfo.sexo,
+      birthdate: this.personalInfo.fechaNacimiento,
+      dni: this.personalInfo.dni,
+      nationality: this.personalInfo.nacionalidad,
+      passportIssueDate: this.personalInfo.fechaExpedicionPasaporte,
+      passportExpirationDate: this.personalInfo.fechaVencimientoPasaporte,
+      profileImage:
+        this.uploadedFiles?.length === 0
+          ? this.uploadedFiles[0]
+          : this.personalInfo.avatarUrl,
+      passportID: this.personalInfo.pasaporte,
+    };
+
     this.usersService
-      .updateUser(this.personalInfo.id!, {
-        ...this.personalInfo,
-        profileImage:
-          this.uploadedFiles?.length === 0
-            ? this.uploadedFiles[0]
-            : this.personalInfo.avatarUrl,
-      })
+      .updateUser(this.personalInfo.id!, transformedPersonalInfo)
       .subscribe(
         (updatedUser) => {
           console.log('Información actualizada:', updatedUser);

@@ -29,7 +29,7 @@ export class ActiveBookingsSectionComponent implements OnInit {
         creationDate: new Date('2024-02-03'),
         status: 'Reservada',
         departureDate: new Date('2024-06-03'),
-        image: 'https://picsum.photos/400/300',
+        image: 'https://picsum.photos/id/1/200/300',
       },
       {
         id: 2,
@@ -38,7 +38,7 @@ export class ActiveBookingsSectionComponent implements OnInit {
         creationDate: new Date('2024-02-03'),
         status: 'Reservada',
         departureDate: new Date('2024-06-03'),
-        image: 'https://picsum.photos/400/300',
+        image: 'https://picsum.photos/id/2/200/300',
       },
       // Puedes agregar más reservas aquí
     ];

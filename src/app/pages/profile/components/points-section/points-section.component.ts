@@ -30,7 +30,7 @@ export class PointsSectionComponent implements OnInit {
   showTable: boolean = false;
   totalPoints: number = 140;
   membershipCards: MembershipCard[] = [];
-  currentTrips: number = 6; // Ejemplo de viajes actuales
+  currentTrips: number = 6;
 
   constructor() {
     this.points = [
@@ -103,7 +103,6 @@ export class PointsSectionComponent implements OnInit {
       },
     ];
 
-    // Actualizar el estado de desbloqueo basado en los viajes actuales
     this.membershipCards = cards.map((card) => ({
       ...card,
       unlocked: this.isCardUnlocked(card),

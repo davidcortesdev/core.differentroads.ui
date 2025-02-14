@@ -1,32 +1,4 @@
-<div class="reviews-section">
+<div class="community-reviews">
   <h3>{{ reviews?.title }}</h3>
-  <p-carousel
-    [value]="reviewsCards"
-    [numVisible]="3"
-    [numScroll]="1"
-    [circular]="true"
-    [responsiveOptions]="responsiveOptions"
-  >
-    <ng-template let-review pTemplate="item">
-      <div class="padre">
-        <p-card class="review-card">
-          <ng-template #title> {{ review.traveler }} </ng-template>
-          <ng-template #subtitle> {{ review.tour }} </ng-template>
-          <ng-template #content>
-            <div class="review-text-container">
-              {{ review.review }}
-            </div>
-          </ng-template>
-          <ng-template #footer>
-            <span class="date">{{ review.date }}</span>
-            <p-rating
-              [ngModel]="review.score"
-              [readonly]="true"
-              [stars]="5"
-            ></p-rating>
-          </ng-template>
-        </p-card>
-      </div>
-    </ng-template>
-  </p-carousel>
+  <app-reviews [reviews]="reviewsCards"></app-reviews>
 </div>

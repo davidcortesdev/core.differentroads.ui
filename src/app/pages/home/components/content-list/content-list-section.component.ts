@@ -41,7 +41,6 @@ export class ContentListComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    console.log('Content List', this.content);
     this.loadContent();
   }
 

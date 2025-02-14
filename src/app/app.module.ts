@@ -98,6 +98,11 @@ import { SignUpComponent } from './pages/sign-up/sign-up.component';
 import { PointsSectionComponent } from './pages/profile/components/points-section/points-section.component';
 import { ActiveBookingsSectionComponent } from './pages/profile/components/active-bookings-section/active-bookings-section.component';
 import { TravelHistorySectionComponent } from './pages/profile/components/travel-history-section/travel-history-section.component';
+import { RecentBudgetSectionComponent } from './pages/profile/components/recent-budget-section/recent-budget-section.component';
+import { ReviewSectionComponent } from './pages/profile/components/review-section/review-section.component';
+import { ForgetPasswordComponent } from './pages/forget-password/forget-password.component';
+import { ReviewsComponent } from './shared/components/reviews/reviews.component';
+import { AccordionModule } from 'primeng/accordion';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -153,6 +158,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     PointsSectionComponent,
     ActiveBookingsSectionComponent,
     TravelHistorySectionComponent,
+    RecentBudgetSectionComponent,
+    ReviewSectionComponent,
+    ReviewsComponent,
   ],
   imports: [
     // Angular Modules
@@ -195,6 +203,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     FluidModule,
     ToolbarModule,
     TableModule,
+    AccordionModule,
+    ForgetPasswordComponent,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

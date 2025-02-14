@@ -2,7 +2,6 @@ import { Component, Input } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { UsersService } from '../../../../core/services/users.service';
 
-// Definimos una interfaz para el objeto personalInfo
 interface PersonalInfo {
   nombre: string;
   telefono: string;

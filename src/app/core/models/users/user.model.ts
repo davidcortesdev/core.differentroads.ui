@@ -1,17 +1,20 @@
+import { CldImage } from '../commons/cld-image.model';
+
 export interface User {
+  _id?: string;
   email: string;
   names?: string;
   password?: string;
   lastname?: string;
   phone?: number;
   sex?: string;
-  birthdate?: Date;
+  birthdate?: string;
   dni?: string;
   rol?: string;
   nationality?: string;
-  passportIssueDate?: Date;
-  passportExpirationDate?: Date;
-  profileImage?: Object;
+  passportIssueDate?: string;
+  passportExpirationDate?: string;
+  profileImage?: string;
   passportID?: string;
 }
 

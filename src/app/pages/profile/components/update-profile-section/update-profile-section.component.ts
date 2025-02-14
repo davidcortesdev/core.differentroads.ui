@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
+import { PersonalInfo } from '../../profile.component';
+import { UsersService } from '../../../../core/services/users.service';
 
 @Component({
   selector: 'app-update-profile-section',
@@ -9,19 +11,8 @@ import { DomSanitizer } from '@angular/platform-browser';
   styleUrls: ['./update-profile-section.component.scss'],
 })
 export class UpdateProfileSectionComponent implements OnInit {
-  personalInfo = {
-    nombre: '',
-    telefono: '',
-    email: '',
-    dni: '',
-    pasaporte: '',
-    fechaExpedicionPasaporte: '',
-    fechaVencimientoPasaporte: '',
-    nacionalidad: '',
-    sexo: '',
-    fechaNacimiento: '',
-    avatarUrl: '',
-  };
+  @Input() personalInfo!: Partial<PersonalInfo>;
+  @Input() toggleEdit!: () => void;
 
   uploadedFiles: any[] = [];
   previewImageUrl: string | null = null;
@@ -34,22 +25,34 @@ export class UpdateProfileSectionComponent implements OnInit {
 
   filteredSexoOptions: any[] = [];
 
-  constructor(private router: Router, private sanitizer: DomSanitizer) {}
+  constructor(private usersService: UsersService) {}
 
   ngOnInit() {
-    this.personalInfo = {
-      nombre: 'Orlando Granados',
-      telefono: '9638524242',
-      email: 'himiyok566@pixdd.com',
-      dni: '951753654F',
-      pasaporte: 'AB142537',
-      fechaExpedicionPasaporte: '04/10/2024',
-      fechaVencimientoPasaporte: '13/02/2025',
-      nacionalidad: 'Español',
-      sexo: 'Hombre',
-      fechaNacimiento: '07/06/2024',
-      avatarUrl: 'https://picsum.photos/200',
-    };
+    console.log('Personal info:', this.personalInfo);
+
+    if (!this.personalInfo) {
+      this.personalInfo = {
+        nombre: '',
+        avatarUrl: 'https://picsum.photos/200',
+        telefono: '',
+        dni: '',
+        nacionalidad: '',
+        pasaporte: '',
+        fechaExpedicionPasaporte: '',
+        fechaVencimientoPasaporte: '',
+        sexo: '',
+        fechaNacimiento: '',
+      };
+    }
+  }
+
+  formatDate(dateString: string): string {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   }
 
   filterSexo(event: any) {
@@ -111,9 +114,23 @@ export class UpdateProfileSectionComponent implements OnInit {
   }
 
   onSubmit() {
-    console.log('Información actualizada:', this.personalInfo);
-    console.log('Archivos subidos:', this.uploadedFiles);
-    this.router.navigate(['/profile']);
+    this.usersService
+      .updateUser(this.personalInfo.id!, {
+        ...this.personalInfo,
+        profileImage:
+          this.uploadedFiles?.length === 0
+            ? this.uploadedFiles[0]
+            : this.personalInfo.avatarUrl,
+      })
+      .subscribe(
+        (updatedUser) => {
+          console.log('Información actualizada:', updatedUser);
+          this.toggleEdit();
+        },
+        (error) => {
+          console.error('Error al actualizar la información:', error);
+        }
+      );
   }
 
   clearFiles() {
@@ -125,6 +142,6 @@ export class UpdateProfileSectionComponent implements OnInit {
   onCancel() {
     this.uploadedFiles = [];
     this.previewImageUrl = null;
-    this.router.navigate(['/profile']);
+    this.toggleEdit();
   }
 }

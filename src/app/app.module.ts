@@ -101,6 +101,7 @@ import { TravelHistorySectionComponent } from './pages/profile/components/travel
 import { RecentBudgetSectionComponent } from './pages/profile/components/recent-budget-section/recent-budget-section.component';
 import { ReviewSectionComponent } from './pages/profile/components/review-section/review-section.component';
 import { ForgetPasswordComponent } from './pages/forget-password/forget-password.component';
+import { ReviewsComponent } from './shared/components/reviews/reviews.component';
 
 
 // Add this function outside the class
@@ -159,6 +160,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     TravelHistorySectionComponent,
     RecentBudgetSectionComponent,
     ReviewSectionComponent,
+    ReviewsComponent,
   ],
   imports: [
     // Angular Modules

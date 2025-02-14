@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 
-interface Departure {
+export interface Departure {
   departureDate: Date;
   returnDate: Date;
   destination: string;
@@ -10,8 +10,10 @@ interface Departure {
   discount: number;
   group: boolean;
   waitingList: boolean;
-  status: 'available' | 'complete';
+  status: DepartureStatus;
 }
+
+export type DepartureStatus = 'available' | 'complete';
 
 @Component({
   selector: 'app-tour-departures',
@@ -22,11 +24,30 @@ interface Departure {
 export class TourDeparturesComponent implements OnInit {
   departures: Departure[] = [];
   selectedCity: string = 'Todos los vuelos';
-  priceFrom: number = 1500;
-  travelers: { adults: number; children: number } = {
+  readonly priceFrom: number = 1500;
+  readonly travelers = {
     adults: 1,
     children: 2,
-  };
+  } as const;
+
+  private readonly cities: string[] = ['Todos los vuelos', 'Madrid', 'Barcelona', 'Valencia'];
+  filteredCities: string[] = [];
+
+  filterCities(event: { query: string }): void {
+    const query = event.query.toLowerCase();
+    this.filteredCities = this.cities.filter((city) =>
+      city.toLowerCase().includes(query)
+    );
+  }
+
+  formatPrice(price?: number): string {
+    return price ? `${price.toFixed(0)}€` : '0€';
+  }
+
+  addToCart(departure: Departure): void {
+    // TODO: Implement cart service
+    console.log('Adding to cart:', departure);
+  }
 
   ngOnInit() {
     // Mock data - Replace with actual API call
@@ -92,26 +113,5 @@ export class TourDeparturesComponent implements OnInit {
         status: 'complete',
       },
     ];
-  }
-
-  formatPrice(price: number | undefined): string {
-    if (price === undefined || price === null) {
-      return '0€';
-    }
-    return `${price.toFixed(0)}€`;
-  }
-
-  addToCart(departure: Departure): void {
-    console.log('Adding to cart:', departure);
-  }
-
-  filteredCities: string[] = [];
-  cities: string[] = ['Todos los vuelos', 'Madrid', 'Barcelona', 'Valencia'];
-
-  filterCities(event: any) {
-    const query = event.query.toLowerCase();
-    this.filteredCities = this.cities.filter((city) =>
-      city.toLowerCase().includes(query)
-    );
   }
 }

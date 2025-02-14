@@ -7,7 +7,7 @@
         [suggestions]="filteredCities"
         [(ngModel)]="selectedCity"
         [dropdown]="true"
-        [placeholder]="'Todos los vuelos'"
+        placeholder="Todos los vuelos"
         (completeMethod)="filterCities($event)"
       ></p-autocomplete>
       <span class="price-from">Desde {{ priceFrom }}€</span>
@@ -15,7 +15,7 @@
 
     <div class="travelers">
       <span>{{ travelers.adults }} Adulto</span>
-      <span>{{ travelers.children }} Niños</span>
+      <span>{{ travelers.children }} Niño</span>
     </div>
   </div>
 

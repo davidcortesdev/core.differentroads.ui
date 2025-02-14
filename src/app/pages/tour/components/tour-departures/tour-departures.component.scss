@@ -1,0 +1,104 @@
+.tour-departures {
+  padding: 2rem;
+
+  h1 {
+    color: #2f4b7c;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .filters {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+
+    .city-filter {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .travelers {
+      display: flex;
+      gap: 1rem;
+    }
+  }
+
+  ::ng-deep .p-dataview {
+    .departure-header {
+      .header-columns {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+        padding: 1rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+      }
+    }
+
+    .departure-item {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+      align-items: center;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+  }
+}
+
+.dates {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  .departure-date,
+  .return-date {
+    display: flex;
+    flex-direction: column;
+
+    .day-name {
+      color: #6c757d;
+      font-size: 0.875rem;
+    }
+
+    .day {
+      font-weight: bold;
+    }
+  }
+}
+
+.price-info {
+  .discount {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    .original-price {
+      text-decoration: line-through;
+      color: #6c757d;
+    }
+
+    .discount-badge {
+      background-color: #e9ecef;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+    }
+  }
+}
+
+.final-price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+
+  .amount {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #2f4b7c;
+  }
+}

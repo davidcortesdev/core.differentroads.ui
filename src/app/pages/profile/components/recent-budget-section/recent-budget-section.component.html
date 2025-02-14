@@ -1,63 +1,80 @@
 <div class="active-bookings">
-    <div class="booking-header" (click)="toggleContent()">
-        <span>Presupuestos recientes</span>
-        <i class="pi" [ngClass]="{'pi-chevron-down': !isExpanded, 'pi-chevron-up': isExpanded}"></i>
-    </div>
+  <div class="booking-header" (click)="toggleContent()">
+    <span>Presupuestos recientes</span>
+    <i
+      class="pi"
+      [ngClass]="{
+        'pi-chevron-down': !isExpanded,
+        'pi-chevron-up': isExpanded
+      }"
+    ></i>
+  </div>
 
-    <div class="booking-content" [ngClass]="{'hidden': !isExpanded}">
-        <p-dataView
-            #dv
-            [value]="budgets"
-            [rows]="5"
-            [paginator]="true"
-            styleClass="transparent-dataview">
-            <ng-template #list let-budgets>
-                <div class="booking-list">
-                    <div class="booking-item" *ngFor="let budget of budgets">
-                        <div class="booking-item-content">
-                            <div class="image-container">
-                                <img [src]="budget.image" alt="Budget image"/>
-                            </div>
+  <div class="booking-content" [ngClass]="{ hidden: !isExpanded }">
+    <p-dataView
+      #dv
+      [value]="budgets"
+      [rows]="5"
+      [paginator]="true"
+      styleClass="transparent-dataview"
+    >
+      <ng-template #list let-budgets>
+        <div class="booking-list">
+          <div class="booking-item" *ngFor="let budget of budgets">
+            <div class="booking-item-content">
+              <div class="image-container">
+                <img [src]="budget.image" alt="Budget image" />
+              </div>
 
-                            <div class="info-sections">
-                                <div class="title-section">
-                                    <h2>{{ budget.title }}</h2>
-                                </div>
-                                <div class="info-content">
-                                    <div class="info-row">
-                                        <span class="label">Nº Presupuesto:</span>
-                                        <span class="value">{{ budget.budgetNumber }}</span>
-                                    </div>
-                                    <div class="info-row">
-                                        <span class="label">Fecha de creación:</span>
-                                        <span class="value">{{ budget.creationDate | date:'dd/MM/yyyy' }}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="info-right">
-                                <div class="departure-info">
-                                    <span>Salida: </span>
-                                    <strong>{{ budget.departureDate | date:'d MMM' }}</strong>
-                                </div>
-                                <div class="passenger-price">
-                                    <span>{{ budget.passengers }}</span>
-                                    <i class="pi pi-users"></i>
-                                    <strong>{{ budget.price | currency:'EUR' }}</strong>
-                                </div>
-                            </div>
-
-                            <div class="buttons">
-                                <div class="top-buttons">
-                                    <button pButton label="Descargar" class="p-button-outlined"></button>
-                                    <button pButton label="Enviar" class="p-button"></button>
-                                </div>
-                                <button pButton label="Reservar" class="p-button-rounded"></button>
-                            </div>
-                        </div>
-                    </div>
+              <div class="info-sections">
+                <div class="title-section">
+                  <h2>{{ budget.title }}</h2>
                 </div>
-            </ng-template>
-        </p-dataView>
-    </div>
+                <div class="info-content">
+                  <div class="info-row">
+                    <span class="label">Nº Presupuesto:</span>
+                    <span class="value">{{ budget.budgetNumber }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">Fecha de creación:</span>
+                    <span class="value">{{
+                      budget.creationDate | date : "dd/MM/yyyy"
+                    }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="info-right">
+                <div class="departure-info">
+                  <span>Salida: </span>
+                  <strong>{{ budget.departureDate | date : "d MMM" }}</strong>
+                </div>
+                <div class="passenger-price">
+                  <span>{{ budget.passengers }}</span>
+                  <i class="pi pi-users"></i>
+                  <strong>{{ budget.price | currency : "EUR" }}</strong>
+                </div>
+              </div>
+
+              <div class="buttons">
+                <div class="top-buttons">
+                  <button
+                    pButton
+                    label="Descargar"
+                    class="p-button-outlined"
+                  ></button>
+                  <button pButton label="Enviar" class="p-button"></button>
+                </div>
+                <button
+                  pButton
+                  label="Reservar"
+                  class="p-button-rounded"
+                ></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-template>
+    </p-dataView>
+  </div>
 </div>

@@ -21,7 +21,6 @@ export class DynamicComponentsComponent implements OnInit {
   ngOnInit(): void {
     this.homeService.getDynamicSections().subscribe({
       next: (data: Block[]) => {
-        console.log('Blocks', data);
         this.blocks = data;
       },
       error: (error: any) => {

@@ -1,5 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { Reviews } from '../../../core/models/home/travelers/reviews.model';
+import { Component, Input } from '@angular/core';
 import { ReviewCard } from '../../models/reviews/review-card.model';
 
 @Component({
@@ -9,11 +8,8 @@ import { ReviewCard } from '../../models/reviews/review-card.model';
   templateUrl: './reviews.component.html',
   styleUrls: ['./reviews.component.scss']
 })
-export class ReviewsComponent implements OnInit {
+export class ReviewsComponent {
   @Input() reviews: ReviewCard[] = [];
-  ngOnInit() {
-    console.log('ReviewsCard', this.reviews);
-  }
 
   responsiveOptions = [
     {

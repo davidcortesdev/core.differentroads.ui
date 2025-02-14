@@ -39,7 +39,6 @@ export class ToursListComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    console.log('Tours content', this.content);
     this.loadTours();
   }
 
@@ -61,7 +60,6 @@ export class ToursListComponent implements OnInit {
     this.tours = [];
 
     tourIds.forEach((id: string): void => {
-      console.log('Loading tour with ID', id);
 
       this.toursService
         .getTourCardData(id)
@@ -95,7 +93,6 @@ export class ToursListComponent implements OnInit {
             );
             this.showMoreButton =
               this.tours.length > this.currentDisplayedTours;
-            console.log('Processed tour:', this.tours);
           }
         });
     });

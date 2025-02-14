@@ -12,7 +12,6 @@ import { Reviews } from '../../../../core/models/home/travelers/reviews.model';
 export class TourReviewsComponent {
   @Input() reviews: Reviews | null = null;
 
-  asd: ReviewCard[] = [];
   get reviewsCards(): ReviewCard[] {
     return this.reviews ? this.reviews['reviews-cards'] : [];
   }

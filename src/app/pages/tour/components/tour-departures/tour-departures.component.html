@@ -32,49 +32,51 @@
       </div>
     </ng-template>
 
-    <ng-template #list let-departure>
+    <ng-template #list let-departures>
+        <div *ngFor="let item of departures; let first = first">
       <div class="departure-item">
         <div class="dates">
           <div class="departure-date">
-            <span class="day-name">{{ departure.departureDate | date:'EEEE' }}</span>
-            <span class="day">{{ departure.departureDate | date:'dd MMM' }}</span>
+            <span class="day-name">{{ item.departureDate | date:'EEEE' }}</span>
+            <span class="day">{{ item.departureDate | date:'dd MMM' }}</span>
           </div>
           <i class="pi pi-arrow-right"></i>
           <div class="return-date">
-            <span class="day-name">{{ departure.returnDate | date:'EEEE' }}</span>
-            <span class="day">{{ departure.returnDate | date:'dd MMM' }}</span>
+            <span class="day-name">{{ item.returnDate | date:'EEEE' }}</span>
+            <span class="day">{{ item.returnDate | date:'dd MMM' }}</span>
           </div>
         </div>
 
         <div class="info">
-          <p-tag severity="info" value="Grupo" *ngIf="departure.group"></p-tag>
+          <p-tag severity="info" value="Grupo" *ngIf="item.group"></p-tag>
           <p-tag
             severity="warn"
             value="Lista de espera"
-            *ngIf="departure.waitingList"
+            *ngIf="item.waitingList"
           ></p-tag>
         </div>
 
         <div class="price-info">
-          <div class="discount" *ngIf="departure.discount">
-            <span class="original-price">Antes {{ formatPrice(departure.originalPrice) }}</span>
-            <span class="discount-badge">-{{ departure.discount }}%</span>
+          <div class="discount" *ngIf="item.discount">
+            <span class="original-price">Antes {{ formatPrice(item.originalPrice) }}</span>
+            <span class="discount-badge">-{{ item.discount }}%</span>
           </div>
         </div>
 
         <div class="final-price">
           <span>desde</span>
-          <span class="amount">{{ formatPrice(departure.price) }}</span>
+          <span class="amount">{{ formatPrice(item.price) }}</span>
         </div>
 
         <p-button
-          [label]="departure.status === 'complete' ? 'COMPLETO' : 'Añadir'"
-          [disabled]="departure.status === 'complete'"
-          (onClick)="addToCart(departure)"
-          [severity]="departure.status === 'complete' ? 'secondary' : 'primary'"
+          [label]="item.status === 'complete' ? 'COMPLETO' : 'Añadir'"
+          [disabled]="item.status === 'complete'"
+          (onClick)="addToCart(item)"
+          [severity]="item.status === 'complete' ? 'secondary' : 'primary'"
           [raised]="true"
         ></p-button>
       </div>
+    </div>
     </ng-template>
   </p-dataView>
 </div>

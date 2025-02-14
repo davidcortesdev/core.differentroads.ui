@@ -14,15 +14,27 @@
           padding: var(--card-padding);
           height: 100%;
           background-color: transparent;
+          transition: transform var(--transition-duration) ease;
+  
+          &:hover {
+            transform: translateY(-5px);
+          }
   
           .p-card {
             padding: var(--card-padding);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: box-shadow var(--transition-duration) ease;
+  
+            &:hover {
+              box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+            }
   
             .p-card-title {
               color: var(--background-azul);
               font-size: var(--review-heading-size);
               font-weight: 700;
               line-height: calc(var(--review-heading-size) * 1.034);
+              margin-bottom: 0.5rem;
             }
   
             .p-card-subtitle {
@@ -30,6 +42,7 @@
               font-size: var(--review-text-size);
               font-weight: 700;
               line-height: 1;
+              margin-bottom: 1rem;
             }
   
             .p-card-content {
@@ -56,6 +69,7 @@
               flex-wrap: wrap;
               align-items: center;
               border: none;
+              margin-top: 1rem;
   
               .date {
                 color: var(--p-primary-color);
@@ -67,6 +81,7 @@
               .p-rating .p-rating-icon {
                 color: var(--p-primary-color);
                 font-size: var(--review-text-size);
+                transition: color var(--transition-duration) ease;
   
                 &.p-rating-icon-active {
                   color: var(--p-primary-color);

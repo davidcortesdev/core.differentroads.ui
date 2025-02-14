@@ -1,17 +1,17 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ReviewCard } from '../../models/reviews/review-card.model';
 
 @Component({
   selector: 'app-reviews',
   standalone: false,
-  
   templateUrl: './reviews.component.html',
-  styleUrls: ['./reviews.component.scss']
+  styleUrls: ['./reviews.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ReviewsComponent {
+export class ReviewsComponent implements OnInit {
   @Input() reviews: ReviewCard[] = [];
 
-  responsiveOptions = [
+  readonly responsiveOptions = [
     {
       breakpoint: '2500px',
       numVisible: 5,
@@ -38,4 +38,10 @@ export class ReviewsComponent {
       numScroll: 1,
     },
   ];
+
+  ngOnInit(): void {
+    if (!this.reviews?.length) {
+      console.warn('No reviews provided to ReviewsComponent');
+    }
+  }
 }

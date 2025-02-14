@@ -1,1 +1,17 @@
-<p>tour-gallery works!</p>
+<div class="gallery-container">
+  <div class="gallery-grid" #galleryGrid>
+    <div *ngFor="let image of visibleImages" class="gallery-item">
+      <img
+        [src]="'https://picsum.photos' + '/' + image.width + '/' + image.height + '?random=' + image.id"
+        [alt]="'Gallery image ' + image.id"
+        loading="lazy"
+      />
+    </div>
+  </div>
+  
+  <div class="show-more-container" *ngIf="images.length > (itemsPerRow * 2)">
+    <button class="show-more-button" (click)="toggleShowMore()">
+      {{ showAll ? 'Show Less' : 'Show More' }}
+    </button>
+  </div>
+</div>

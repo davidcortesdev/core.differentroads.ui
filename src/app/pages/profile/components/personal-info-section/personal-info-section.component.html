@@ -1,62 +1,71 @@
-
 <p-panel class="avatar-panel">
-    <div class="avatar-name-section">
-      <p-avatar [image]="personalInfo.avatarUrl" size="xlarge" shape="circle" [style]="{'width': '100px', 'height': '100px'}"></p-avatar>
-      <h3>{{ personalInfo.nombre }}</h3>
-    </div>
-  </p-panel>
-  
+  <div class="avatar-name-section">
+    <p-avatar
+      *ngIf="personalInfo"
+      [image]="personalInfo.avatarUrl || ''"
+      size="xlarge"
+      shape="circle"
+      [style]="{ width: '100px', height: '100px' }"
+    ></p-avatar>
+    <h3 *ngIf="personalInfo">{{ personalInfo.nombre }}</h3>
+  </div>
+</p-panel>
 
-  <p-panel class="datos-panel">
-    <ng-template pTemplate="header">
-      <div class="panel-header">
-        <span>Datos personales</span>
-        <button class="edit-button" (click)="onEdit()">
-          <i class="pi pi-pen-to-square"></i>
-        </button>
-      </div>
-    </ng-template>
+<!-- Panel 2: Datos Personales -->
+<p-panel class="datos-panel">
+  <ng-template pTemplate="header">
+    <div class="panel-header">
+      <span>Datos personales</span>
+      <button class="edit-button" (click)="onEdit()">
+        <i class="pi pi-pen-to-square"></i>
+      </button>
+    </div>
+  </ng-template>
+  <p-divider></p-divider>
+  <div class="info-grid">
+    <div class="info-item" *ngIf="personalInfo">
+      <span class="label">Teléfono:</span>
+      <span class="value">{{ personalInfo.telefono }}</span>
+    </div>
+    <div class="info-item" *ngIf="personalInfo">
+      <span class="label">Email:</span>
+      <span class="value">{{ personalInfo.email }}</span>
+    </div>
+    <div class="info-item" *ngIf="personalInfo">
+      <span class="label">DNI:</span>
+      <span class="value">{{ personalInfo.dni }}</span>
+    </div>
+    <div class="info-item" *ngIf="personalInfo">
+      <span class="label">Pasaporte:</span>
+      <span class="value">{{ personalInfo.pasaporte || "PENDIENTE" }}</span>
+    </div>
+    <div class="info-item" *ngIf="personalInfo">
+      <span class="label">Fecha de expedición (Pasaporte):</span>
+      <span class="value">{{
+        personalInfo.fechaExpedicionPasaporte || "PENDIENTE"
+      }}</span>
+    </div>
+
+    <div class="info-item" *ngIf="personalInfo">
+      <span class="label">Fecha de vencimiento (Pasaporte):</span>
+      <span class="value">{{
+        personalInfo.fechaVencimientoPasaporte || "PENDIENTE"
+      }}</span>
+    </div>
+
     <p-divider></p-divider>
-    <div class="info-grid">
-      <div class="info-item">
-        <span class="label">Teléfono:</span>
-        <span class="value">{{ personalInfo.telefono }}</span>
-      </div>
-      <div class="info-item">
-        <span class="label">Email:</span>
-        <span class="value">{{ personalInfo.email }}</span>
-      </div>
-      <div class="info-item">
-        <span class="label">DNI:</span>
-        <span class="value">{{ personalInfo.dni }}</span>
-      </div>
-      <div class="info-item">
-        <span class="label">Pasaporte:</span>
-        <span class="value">{{ personalInfo.pasaporte }}</span>
-      </div>
-      <div class="info-item">
-        <span class="label">Fecha de expedición (Pasaporte):</span>
-        <span class="value">{{ personalInfo.fechaExpedicionPasaporte }}</span>
-      </div>
-  
-      <div class="info-item">
-        <span class="label">Fecha de vencimiento (Pasaporte):</span>
-        <span class="value">{{ personalInfo.fechaVencimientoPasaporte }}</span>
-      </div>
 
-      <p-divider></p-divider>
-      
-      <div class="info-item">
-        <span class="label">Nacionalidad:</span>
-        <span class="value">{{ personalInfo.nacionalidad }}</span>
-      </div>
-      <div class="info-item">
-        <span class="label">Sexo:</span>
-        <span class="value">{{ personalInfo.sexo }}</span>
-      </div>
-      <div class="info-item">
-        <span class="label">Fecha de nacimiento:</span>
-        <span class="value">{{ personalInfo.fechaNacimiento }}</span>
-      </div>
+    <div class="info-item" *ngIf="personalInfo">
+      <span class="label">Nacionalidad:</span>
+      <span class="value">{{ personalInfo.nacionalidad }}</span>
     </div>
-  </p-panel>
+    <div class="info-item" *ngIf="personalInfo">
+      <span class="label">Sexo:</span>
+      <span class="value">{{ personalInfo.sexo }}</span>
+    </div>
+    <div class="info-item" *ngIf="personalInfo">
+      <span class="label">Fecha de nacimiento:</span>
+      <span class="value">{{ personalInfo.fechaNacimiento }}</span>
+    </div>
+  </div>
+</p-panel>

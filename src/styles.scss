@@ -24,6 +24,8 @@
 
   --accent-white: #f7f6f2;
 
+  --gray: #a4a4a4;
+
   --p-primary-50: var(--primary-color-50);
   --p-primary-100: var(--primary-color-100);
   --p-primary-200: var(--primary-color-200);
@@ -59,17 +61,20 @@
   .ql-snow {
     .ql-picker {
       &.ql-size {
+
         .ql-picker-label,
         .ql-picker-item {
           &::before {
             content: attr(data-value) !important;
           }
         }
+
         .ql-picker-label[data-value="0.75em"]::before,
         .ql-picker-item[data-value="0.75em"]::before {
           font-size: 0.75em !important;
           content: "XS" !important;
         }
+
         .ql-picker-label[data-value="0.875rem"]::before,
         .ql-picker-item[data-value="0.875rem"]::before {
           font-size: 0.875rem !important;
@@ -124,9 +129,11 @@
   .ql-align-justify {
     text-align: justify;
   }
+
   .ql-align-right {
     text-align: right;
   }
+
   .ql-align-left {
     text-align: left;
   }
@@ -152,11 +159,16 @@
     content: "Normal" !important;
   }
 
+  ul {
+    margin: 0;
+  }
+
   p {
     font-size: 1rem !important;
     content: "Normal" !important;
     padding-top: 0.5em;
     line-height: 1.1em;
+    margin: 0;
   }
 
   &.is-inline {

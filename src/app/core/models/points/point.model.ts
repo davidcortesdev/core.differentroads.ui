@@ -19,6 +19,7 @@ export interface GetAllPointsParams {
 
 export interface PointListResponse {
   data: Point[];
+  totalpoints: number;
   pagination: {
     totalDocuments: number;
     totalPages: number;

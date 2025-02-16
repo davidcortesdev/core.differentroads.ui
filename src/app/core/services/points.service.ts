@@ -13,20 +13,15 @@ import {
 })
 export class PointsService {
   private readonly API_URL = `${environment.dataApiUrl}/points`;
-  private readonly httpOptions = {
-    headers: new HttpHeaders({
-      'Content-Type': 'application/json',
-    }),
-  };
 
   constructor(private http: HttpClient) {}
 
   createPoints(point: Point): Observable<Point> {
-    return this.http.post<Point>(this.API_URL, point, this.httpOptions);
+    return this.http.post<Point>(this.API_URL, point);
   }
 
   getPoints(id: string): Observable<Point> {
-    return this.http.get<Point>(`${this.API_URL}/${id}`, this.httpOptions);
+    return this.http.get<Point>(`${this.API_URL}/${id}`);
   }
 
   getAllPoints(params?: GetAllPointsParams): Observable<PointListResponse> {
@@ -35,7 +30,6 @@ export class PointsService {
       : undefined;
     return this.http.get<PointListResponse>(this.API_URL, {
       params: httpParams,
-      ...this.httpOptions,
     });
   }
 
@@ -48,14 +42,10 @@ export class PointsService {
       : undefined;
     return this.http.get<PointListResponse>(`${this.API_URL}/by-user/${dni}`, {
       params: httpParams,
-      ...this.httpOptions,
     });
   }
 
   getTotalPointsByDni(dni: string): Observable<number> {
-    return this.http.get<number>(
-      `${this.API_URL}/by-user/${dni}/total-points`,
-      this.httpOptions
-    );
+    return this.http.get<number>(`${this.API_URL}/by-user/${dni}/total-points`);
   }
 }

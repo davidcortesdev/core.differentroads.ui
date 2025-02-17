@@ -31,9 +31,12 @@ export class TourOverviewComponent implements OnInit {
         'description',
         'highlights-title',
         'subtitle',
+        'continent',
+        'country',
       ]; // Add selected fields here
       this.toursService
-        .getTourDetailBySlug(slug, selectedFields)
+        .getTourDetailBySlug(slug,selectedFields)
+        //.getTourDetailBySlug(slug)
         .subscribe((tour) => {
           console.log('Fetched tour data:', tour);
           this.tour = tour;

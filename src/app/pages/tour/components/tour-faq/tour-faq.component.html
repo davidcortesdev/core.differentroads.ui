@@ -1,14 +1,13 @@
 <div class="faq-container">
-    <h2 class="faq-title">FAQ GENERALES</h2>
-    <p-accordion [multiple]="false">
-        <p-accordionTab *ngFor="let faq of faqs">
-            <ng-template pTemplate="header">
-                <div class="faq-header">
-                    <i class="pi pi-plus"></i>
-                    <span>{{faq.question}}</span>
-                </div>
-            </ng-template>
-            <p>{{faq.answer}}</p>
-        </p-accordionTab>
-    </p-accordion>
+  <h2 class="faq-title">{{ title }}</h2>
+  <p-accordion [multiple]="false">
+    <p-accordionTab *ngFor="let faq of faqs">
+      <ng-template pTemplate="header">
+        <div class="faq-header">
+          <div [innerHTML]="sanitizeHtml(faq.question)"></div>
+        </div>
+      </ng-template>
+      <div [innerHTML]="sanitizeHtml(faq.answer)"></div>
+    </p-accordionTab>
+  </p-accordion>
 </div>

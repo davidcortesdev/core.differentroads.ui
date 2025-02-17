@@ -1,0 +1,127 @@
+.full-card-section {
+  display: flex;
+  justify-content: space-between;
+
+  .card {
+    flex: 1;
+    position: relative;
+    overflow: hidden; 
+
+    .card-image {
+      position: relative;
+
+      img {
+        height: 528px;
+        object-fit: cover;
+        width: 100%;
+      }
+
+
+      &::after {
+        content: "";
+        position: absolute;
+        bottom: 5px;
+        left: 0;
+        width: 100%;
+        height: 40%; 
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+        pointer-events: none; 
+      }
+
+      .card-info {
+        position: absolute;
+        bottom: -6.5px;
+        left: 40px;
+        right: 40px;
+        color: white;
+        padding: 10px;
+        z-index: 2; 
+
+        .card-title {
+          font-size: 24px;
+          font-weight: bold;
+          line-height: 27px;
+        }
+
+        .card-description {
+          font-size: 14px;
+          line-height: 0.1px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 1200px) {
+  .full-card-section {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+
+    .card {
+      width: 100%;
+
+      .card-image {
+        img {
+          height: auto;
+        }
+
+        .card-info {
+          left: 20px;
+          right: 20px;
+          bottom: 10px;
+
+          .card-title {
+            font-size: 22px;
+          }
+
+          .card-description {
+            font-size: 13px;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .full-card-section {
+    .card {
+      .card-image {
+        .card-info {
+          left: 10px;
+          right: 10px;
+
+          .card-title {
+            font-size: 20px;
+          }
+
+          .card-description {
+            font-size: 12px;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .full-card-section {
+    .card {
+      .card-image {
+        .card-info {
+          left: 5px;
+          right: 5px;
+
+          .card-title {
+            font-size: 18px;
+          }
+
+          .card-description {
+            font-size: 11px;
+          }
+        }
+      }
+    }
+  }
+}

@@ -159,7 +159,7 @@
         margin: -15px;
         display: flex;
         justify-content: space-between;
-        align-items: flex-end;
+        align-items: center;
 
         @media screen and (max-width: 768px) {
           flex-direction: row !important;
@@ -192,10 +192,11 @@
           }
 
           .price {
-            font-size: 1.5rem;
+            font-size: 2rem;
             font-weight: bold;
             color: var(--background-azul);
-
+            line-height: 1.2rem;
+            margin-bottom: 0.5rem;;
             @media screen and (max-width: 1024px) {
               font-size: 1.4rem;
             }
@@ -205,10 +206,15 @@
             }
           }
 
+          .priceScalapay{
+            color: var(--p-primary-color);
+            font-size:0.9rem;
+          }
+
           .months {
             display: flex;
             gap: 0.5rem;
-            margin-top: 0.5rem;
+            //margin-top: 0.5rem;
             flex-wrap: wrap;
             width: 15rem;
             height: 2.5rem;
@@ -228,19 +234,24 @@
             }
 
             .month {
-              display: flex;
+              font-size:0.7rem;
+              //width: 2.4rem;
+              //text-align: center;
+            //  color: #fff;
+             // background: var(--background-azul);
+            /*  font-size: 0.67869rem;
+              font-style: normal;
+              font-weight: 500;*/
+              
+            /*  display: flex;
               width: 1.90038rem;
               height: 0.81444rem;
               padding: 0.13575rem 0.33938rem;
               justify-content: center;
               align-items: center;
               gap: 0.67869rem;
-              color: #fff;
               leading-trim: both;
               text-edge: cap;
-              font-size: 0.67869rem;
-              font-style: normal;
-              font-weight: 500;
               line-height: 0.67869rem;
 
               @media screen and (max-width: 1024px) {
@@ -257,10 +268,9 @@
                 padding: 0.1rem 0.25rem;
               }
 
-              &.active {
-                background: var(--background-azul);
-                color: white;
-              }
+*/
+             //   background: var(--background-azul);
+
             }
           }
         }

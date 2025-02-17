@@ -7,8 +7,9 @@
         [suggestions]="filteredCities"
         [(ngModel)]="selectedCity"
         [dropdown]="true"
-        placeholder="Todos los vuelos"
+        placeholder="Sin vuelos"
         (completeMethod)="filterCities($event)"
+        (onSelect)="filterDeparturesByCity()"
       ></p-autocomplete>
       <span class="price-from">Desde {{ priceFrom }}€</span>
     </div>
@@ -19,7 +20,7 @@
     </div>
   </div>
 
-  <p-dataView #dv [value]="departures" layout="list">
+  <p-dataView #dv [value]="filteredDepartures" layout="list">
     <ng-template #header>
       <div class="departure-header">
         <div class="header-columns">
@@ -54,12 +55,15 @@
           </div>
 
           <div class="info">
-            <p-tag severity="info" value="Grupo" *ngIf="item.group"></p-tag>
+            <p-tag severity="info" value="Grupo" *ngIf="item.group">
+              <i class="pi pi-users" style="font-size: 0.7rem"></i>
+            </p-tag>
             <p-tag
               severity="warn"
               value="Lista de espera"
               *ngIf="item.waitingList"
-            ></p-tag>
+              ><i class="pi pi-clock" style="font-size: 0.7rem"></i>
+            </p-tag>
           </div>
 
           <div class="price-info">

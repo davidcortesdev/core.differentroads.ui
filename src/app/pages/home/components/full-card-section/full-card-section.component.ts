@@ -17,42 +17,58 @@ type Card = {
   styleUrls: ['./full-card-section.component.scss'],
 })
 export class FullCardSectionComponent implements OnInit {
-  @Input() content!: Card[];
+  @Input() content!: FullSliderContent;
   @Input() type!: BlockType;
   @Input() title!: string;
-  cards: Card[] = [
-    {
-      id: 1,
-      title: 'aaaDescubriendo monasterios en la cima del mundo',
-      description: 'Armenia y Georgia en: 12 noches',
-      image: { url: 'https://picsum.photos/1000?random=20', alt: 'Image 1' },
-    },
-    {
-      id: 2,
-      title: 'aaaaSiguiendo el legado de la ruta de la seda',
-      description: 'Uzbekistán en: 10 días ',
-      image: { url: 'https://picsum.photos/1000?random=15', alt: 'Image 2' },
-    },
-    {
-      id: 3,
-      title: 'aaaaaPrimavera sakura en la ciudad del sol naciente',
-      description: 'Japón en: 11 días ',
-      image: { url: 'https://picsum.photos/1000?random=16', alt: 'Image 3' },
-    },
-  ];
+  cards: Card[] = []; 
 
   constructor(private sanitizer: DomSanitizer) {}
+
   ngOnInit(): void {
-    console.log('this.content', this.content);
+    console.log('Received content:', this.content);
+    console.log('Received title:', this.title);
+    console.log('Received type:', this.type);
 
-    if (!this.cards || this.cards.length !== 3) {
-      console.error(
-        'Cards input is undefined or does not contain exactly 3 cards'
-      );
-    }
-  }
+  
+  if (this.content && this.content['card-list']) {
+    
+    this.cards = this.content['card-list'].map((card: any, index: number) => {
+      
+      const { title, description } = this.extractTitleAndDescriptionFromHtml(card.subtitle);
 
-  getSanitizedDescription(description: string): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(description);
+      return {
+        id: index + 1, 
+        title: title, 
+        description: description, 
+        image: {
+          url: card.image[0].url, 
+          alt: `Image ${index + 1}`, 
+        },
+      };
+    });
+  } else {
+    console.error('No cards received or cards array is empty');
   }
+}
+
+
+extractTitleAndDescriptionFromHtml(html: string): { title: string, description: string } {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+
+  
+  const strongElements = div.querySelectorAll('strong');
+
+  
+  const title = strongElements[0]?.textContent || '';
+
+  
+  const description = strongElements[1]?.textContent || '';
+
+  return { title, description };
+}
+
+getSanitizedDescription(description: string): SafeHtml {
+  return this.sanitizer.bypassSecurityTrustHtml(description);
+}
 }

@@ -6,13 +6,17 @@
     [numScroll]="1"
     [circular]="true"
     [responsiveOptions]="responsiveOptions"
-    [autoplayInterval]="5000"
     [showNavigators]="false"
   >
     <ng-template let-tour pTemplate="item">
       <div class="tour-card">
         <p-card
-          [style]="{ 'border-radius': '1rem', overflow: 'hidden', border: 'none', boxShadow: 'none' }"
+          [style]="{
+            'border-radius': '1rem',
+            overflow: 'hidden',
+            border: 'none',
+            boxShadow: 'none'
+          }"
           [styleClass]="'tour-card-wrapper'"
         >
           <ng-template pTemplate="header">
@@ -21,7 +25,7 @@
               <div class="overlay">
                 <span class="rating p-button-primary">{{ tour.rating }} ★</span>
                 <span class="indicator" *ngIf="tour.isByDr !== undefined">
-                  {{ tour.isByDr ? 'By DR' : 'Beyond Different' }}
+                  {{ tour.isByDr ? "By DR" : "Beyond Different" }}
                 </span>
                 <span class="tag" *ngIf="tour.tag">{{ tour.tag }}</span>
                 <div class="title-overlay">
@@ -34,15 +38,19 @@
           <ng-template pTemplate="footer">
             <div class="card-footer">
               <div class="price-section">
-                <span class="desde">desde</span>
+                <span class="desde">Desde</span>
                 <span class="price">{{ tour.price }}€</span>
+                <span class="priceScalapay"
+                  >o desde {{ tour.price / 4 }}/mes
+                </span>
                 <div class="months">
-                  <span 
-                    *ngFor="let month of tour.availableMonths" 
-                    class="month" 
-                    [class.active]="true">
+                  <p-tag
+                    *ngFor="let month of tour.availableMonths"
+                    class="month"
+                    severity="info"
+                  >
                     {{ month }}
-                  </span>
+                  </p-tag>
                 </div>
               </div>
               <p-button

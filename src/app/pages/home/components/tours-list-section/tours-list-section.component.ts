@@ -13,6 +13,7 @@ interface ITour {
   price: number;
   availableMonths: string[];
   isByDr: boolean;
+  webSlug: string;
 }
 
 @Component({
@@ -85,6 +86,10 @@ export class ToursListComponent implements OnInit {
                   month.substring(0, 3).toUpperCase()
                 ) || [],
               isByDr: false,
+              webSlug:
+                tour.webSlug ||
+                tour.name?.toLowerCase().replace(/\s+/g, '-') ||
+                '',
             };
             this.tours = [...this.tours, processedTour];
             this.displayedTours = this.tours.slice(
@@ -102,6 +107,14 @@ export class ToursListComponent implements OnInit {
     this.currentDisplayedTours += this.maxDisplayedTours;
     this.displayedTours = this.tours.slice(0, this.currentDisplayedTours);
     this.showMoreButton = this.tours.length > this.currentDisplayedTours;
+  }
+
+  navigateToTour(tour: ITour): void {
+    this.router.navigate(['/tour', tour.webSlug]);
+  }
+
+  onTourClick(tour: ITour): void {
+    this.navigateToTour(tour);
   }
 
   navigateToAllContents(type: string) {

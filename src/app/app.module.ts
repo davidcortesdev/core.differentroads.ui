@@ -24,7 +24,7 @@ import { HomeComponent } from './pages/home/home.component';
 import { HeroSectionComponent } from './pages/home/components/hero-section/hero-section.component';
 import { ToursSectionComponent } from './pages/home/components/tours-section/tours-section.component';
 import { HighlightSectionComponent } from './pages/home/components/highlight-section/highlight-section.component';
-
+import { FullCardSectionComponent } from './pages/home/components/full-card-section/full-card-section.component';
 // Community Components
 import { CommunitySectionComponent } from './pages/home/components/community-section/community-section.component';
 import { CommunityHeroComponent } from './pages/home/components/community-section/components/community-hero/community-hero.component';
@@ -103,6 +103,8 @@ import { ReviewSectionComponent } from './pages/profile/components/review-sectio
 import { ForgetPasswordComponent } from './pages/forget-password/forget-password.component';
 import { ReviewsComponent } from './shared/components/reviews/reviews.component';
 import { AccordionModule } from 'primeng/accordion';
+import { ChipModule } from 'primeng/chip';
+import { TagModule } from 'primeng/tag';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -125,6 +127,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     HeroSectionComponent,
     ToursSectionComponent,
     HighlightSectionComponent,
+    FullCardSectionComponent,
 
     // Community Components
     CommunitySectionComponent,
@@ -204,6 +207,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     ToolbarModule,
     TableModule,
     AccordionModule,
+    ChipModule,
+    TagModule,
     ForgetPasswordComponent,
     TranslateModule.forRoot({
       loader: {

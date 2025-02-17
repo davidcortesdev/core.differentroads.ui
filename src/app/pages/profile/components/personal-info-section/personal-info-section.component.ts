@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
+import { UsersService } from '../../../../core/services/users.service';
 
 interface PersonalInfo {
   nombre: string;
@@ -22,23 +23,12 @@ interface PersonalInfo {
   styleUrl: './personal-info-section.component.scss',
 })
 export class PersonalInfoSectionComponent {
-  personalInfo: PersonalInfo = {
-    nombre: 'Orlando Granados',
-    telefono: '9638524242',
-    email: 'himiyok566@pixdd.com',
-    dni: '951753654F',
-    pasaporte: 'AB142537',
-    fechaExpedicionPasaporte: '04/10/2024',
-    fechaVencimientoPasaporte: '13/02/2025',
-    nacionalidad: 'Español',
-    sexo: 'Hombre',
-    fechaNacimiento: '07/06/2024',
-    avatarUrl: 'https://picsum.photos/200',
-  };
+  @Input() personalInfo!: PersonalInfo;
+  @Input() toggleEdit!: () => void;
 
   constructor(private router: Router, private route: ActivatedRoute) {}
 
   onEdit() {
-    this.router.navigate(['update'], { relativeTo: this.route });
+    this.toggleEdit();
   }
 }

@@ -20,7 +20,7 @@
           [styleClass]="'tour-card-wrapper'"
         >
           <ng-template pTemplate="header">
-            <div class="image-container">
+            <div class="image-container" (click)="onTourClick(tour)" style="cursor: pointer;">
               <img [src]="tour.imageUrl" [alt]="tour.title" />
               <div class="overlay">
                 <span class="rating p-button-primary">{{ tour.rating }} ★</span>

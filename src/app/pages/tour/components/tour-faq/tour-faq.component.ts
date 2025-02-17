@@ -1,4 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { GeneralConfigService } from '../../../../core/services/general-config.service';
+import { FaqConfig } from '../../../../core/models/general/faq.model';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 interface FaqItem {
   question: string;
@@ -9,33 +13,38 @@ interface FaqItem {
   selector: 'app-tour-faq',
   standalone: false,
   templateUrl: './tour-faq.component.html',
-  styleUrl: './tour-faq.component.scss'
+  styleUrl: './tour-faq.component.scss',
 })
-export class TourFaqComponent {
-  faqs: FaqItem[] = [
-    {
-      question: 'Info',
-      answer: 'Información general sobre nuestros servicios y tours.'
-    },
-    {
-      question: 'Como funciona',
-      answer: 'Explicación detallada del proceso de reserva y participación en nuestros tours.'
-    },
-    {
-      question: 'Necesito un seguro',
-      answer: 'Información sobre los seguros de viaje y coberturas disponibles.'
-    },
-    {
-      question: 'Cuantos viajeros forman un grupo',
-      answer: 'Detalles sobre el tamaño de los grupos y las opciones disponibles.'
-    },
-    {
-      question: 'Puedo reservar en agencia',
-      answer: 'Información sobre el proceso de reserva a través de agencias asociadas.'
-    },
-    {
-      question: '¿A que grupos me puedo unir?',
-      answer: 'Explicación sobre los diferentes tipos de grupos y opciones de unión disponibles.'
-    }
-  ];
+export class TourFaqComponent implements OnInit {
+  title: string | undefined;
+  faqs: FaqItem[] | undefined;
+
+  constructor(
+    private sanitizer: DomSanitizer,
+    private route: ActivatedRoute,
+    private generalConfigService: GeneralConfigService
+  ) {}
+
+  ngOnInit() {
+    this.route.params.subscribe((params) => {
+      const slug = params['slug'];
+      if (slug) {
+        this.loadFaqData(slug);
+      }
+    });
+  }
+
+  private loadFaqData(slug: string) {
+    console.log(slug);
+    this.generalConfigService
+      .getFaqConfig()
+      .subscribe((faqSection: FaqConfig) => {
+        this.title = faqSection['section-title'];
+        this.faqs = faqSection['faq-cards'] || [];
+      });
+  }
+
+  sanitizeHtml(html: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
 }

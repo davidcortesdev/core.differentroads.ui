@@ -7,9 +7,8 @@ import { catchError } from 'rxjs';
 @Component({
   selector: 'app-tour',
   standalone: false,
-  
   templateUrl: './tour.component.html',
-  styleUrls: ['./tour.component.scss']
+  styleUrls: ['./tour.component.scss'],
 })
 export class TourComponent implements OnInit {
   tourSlug: string = '';
@@ -23,7 +22,7 @@ export class TourComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.route.params.subscribe(params => {
+    this.route.params.subscribe((params) => {
       this.tourSlug = params['slug'];
       this.loadTourDetails();
     });
@@ -33,9 +32,10 @@ export class TourComponent implements OnInit {
     this.loading = true;
     this.error = false;
 
-    this.toursService.getTourDetail(this.tourSlug)
+    this.toursService
+      .getTourDetail(this.tourSlug)
       .pipe(
-        catchError(error => {
+        catchError((error) => {
           console.error('Error loading tour:', error);
           this.error = false;
           this.loading = false;
@@ -44,6 +44,7 @@ export class TourComponent implements OnInit {
       )
       .subscribe((tourData: Tour) => {
         this.tour = tourData;
+        console.log(tourData);
         this.loading = false;
       });
   }

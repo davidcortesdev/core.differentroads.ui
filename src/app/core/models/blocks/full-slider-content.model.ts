@@ -3,7 +3,11 @@ import { CldImage } from '../commons/cld-image.model';
 export interface FullSliderContent {
   title: string;
   visible: boolean;
-  'card-list': Card[];
+  'card-list': Array<{
+    image: Array<{ url: string }>;
+    subtitle: string;
+    link?: string;
+  }>;
 }
 
 interface Card {

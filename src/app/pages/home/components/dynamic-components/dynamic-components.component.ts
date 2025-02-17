@@ -5,6 +5,7 @@ import { HighlightSectionComponent } from '../highlight-section/highlight-sectio
 import { ContentListComponent } from '../content-list/content-list-section.component';
 import { ToursSectionComponent } from '../tours-section/tours-section.component';
 import { ToursListComponent } from '../tours-list-section/tours-list-section.component';
+import { FullCardSectionComponent } from '../full-card-section/full-card-section.component';
 
 @Component({
   selector: 'app-dynamic-components',
@@ -21,7 +22,6 @@ export class DynamicComponentsComponent implements OnInit {
   ngOnInit(): void {
     this.homeService.getDynamicSections().subscribe({
       next: (data: Block[]) => {
-        console.log('Blocks', data);
         this.blocks = data;
       },
       error: (error: any) => {
@@ -40,6 +40,8 @@ export class DynamicComponentsComponent implements OnInit {
         return ContentListComponent;
       case BlockType.TourList:
         return ToursListComponent;
+      case BlockType.FullSlider:
+        return FullCardSectionComponent;
       /* 
       case BlockType.BlogList:
         return BlogSectionComponent;

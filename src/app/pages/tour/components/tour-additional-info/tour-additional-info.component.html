@@ -1,1 +1,39 @@
-<p>tour-additional-info works!</p>
+<div class="">
+  <p-card styleClass="">
+    <div class="" (click)="handleSaveTrip()">
+      <span class="bg-pink-100">
+        <i class="pi pi-bookmark"></i>
+      </span>
+      <span class="">Guarda tu viaje</span>
+    </div>
+  </p-card>
+
+  <p-card styleClass="claseBord">
+    <div class="" (click)="handleDownloadTrip()">
+      <span class="bg-pink-100">
+        <i class="pi pi-download"></i>
+      </span>
+      <span class="">Descargar tu viaje</span>
+    </div>
+  </p-card>
+
+  <p-card styleClass="">
+    <div class="" (click)="handleInviteFriend()">
+      <span class="bg-pink-100">
+        <i class="pi pi-user-plus"></i>
+      </span>
+      <span class="">Invita a un amigo a tu viaje</span>
+    </div>
+  </p-card>
+</div>
+
+<div class="mt-4">
+  <p-accordion>
+    <p-accordionTab header="Ver más información">
+      <!-- Add more information content here -->
+    </p-accordionTab>
+    <p-accordionTab header="Información útil destino">
+      <!-- Add destination information content here -->
+    </p-accordionTab>
+  </p-accordion>
+</div>

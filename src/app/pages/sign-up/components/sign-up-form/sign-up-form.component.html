@@ -1,0 +1,150 @@
+<div class="auth-card-container">
+  <div class="auth-card-overlay"></div>
+  <div class="auth-layout">
+    <div class="sign-up-form">
+      <h1 class="font-base font-medium sign-up-form-title">
+        ¡Regístrate para continuar con tu compra y aprovecha al máximo tu
+        experiencia!
+      </h1>
+
+      <div>
+        <p-button
+          label="Iniciar sesión con Google"
+          icon="pi pi-google"
+          [loading]="isLoading"
+          [disabled]="isLoading"
+          (onClick)="signInWithGoogle()"
+          variant="text"
+          size="large"
+          [rounded]="true"
+          styleClass="btn-google"
+        ></p-button>
+      </div>
+
+      <!-- Separador -->
+      <p-divider align="center">
+        <span class="p-tag">O iniciar sesión de forma manual </span>
+      </p-divider>
+
+      <form (ngSubmit)="onSubmit()" class="form-login">
+        <!-- Campo de nombre -->
+        <div class="input-group mt-4">
+          <input
+            type="text"
+            id="firstName"
+            pInputText
+            formControlName="firstName"
+            placeholder="Nombre"
+            class="input-field"
+          />
+          <small *ngIf="errors['firstName']" class="p-error">
+            {{ errors["firstName"]["message"] }}
+          </small>
+        </div>
+
+        <!-- Campo de apellido -->
+        <div class="input-group mt-4">
+          <input
+            type="text"
+            id="lastName"
+            pInputText
+            formControlName="lastName"
+            [ngClass]="{ 'p-invalid': errors['lastName'] }"
+            placeholder="Apellido"
+            class="input-field"
+          />
+          <small *ngIf="errors['lastName']" class="p-error">
+            {{ errors["lastName"]["message"] }}
+          </small>
+        </div>
+
+        <!-- Campo de email -->
+        <div class="input-group mt-4 col-span-2">
+          <input
+            type="email"
+            id="email"
+            pInputText
+            formControlName="email"
+            [ngClass]="{ 'p-invalid': errors['email'] }"
+            placeholder="Email"
+            class="input-field"
+          />
+          <small *ngIf="errors['email']" class="p-error">
+            {{ errors["email"]["message"] }}
+          </small>
+        </div>
+
+        <!-- Campo de teléfono -->
+        <div class="input-group mt-4 col-span-2">
+          <input
+            type="tel"
+            id="phone"
+            pInputText
+            formControlName="phone"
+            [ngClass]="{ 'p-invalid': errors['phone'] }"
+            placeholder="Teléfono"
+            class="input-field"
+          />
+          <small *ngIf="errors['phone']" class="p-error">
+            {{ errors["phone"]["message"] }}
+          </small>
+        </div>
+
+        <!-- Campo de contraseña -->
+        <div class="input-group mt-4">
+          <p-password
+            id="password"
+            formControlName="password"
+            [ngClass]="{ 'p-invalid': errors['password'] }"
+            [toggleMask]="true"
+            [feedback]="false"
+            placeholder="Contraseña"
+            class="input-field"
+          ></p-password>
+          <small *ngIf="errors['password']" class="p-error">
+            {{ errors["password"]["message"] }}
+          </small>
+        </div>
+
+        <!-- Campo de confirmar contraseña -->
+        <div class="input-group mt-4">
+          <p-password
+            id="confirmPassword"
+            formControlName="confirmPassword"
+            [ngClass]="{ 'p-invalid': errors['confirmPassword'] }"
+            [toggleMask]="true"
+            [feedback]="false"
+            placeholder="Confirmar Contraseña"
+            class="input-field"
+          ></p-password>
+          <small *ngIf="errors['confirmPassword']" class="p-error">
+            {{ errors["confirmPassword"]["message"] }}
+          </small>
+        </div>
+
+        <!-- Mensaje de error general -->
+        <div class="input-group mt-4 col-span-2">
+          <small *ngIf="errorMessage" class="p-error">
+            {{ errorMessage }}
+          </small>
+        </div>
+
+        <!-- Botón de registro -->
+        <p-button
+          type="submit"
+          label="Registrarse"
+          [loading]="isLoading"
+          [disabled]="isLoading"
+          [rounded]="true"
+          size="large"
+          class="p-button-primary p-button-block mt-4 col-span-2"
+        ></p-button>
+
+        <p class="sign-up-form-link mt-4 col-span-2">
+          <span class="sign-up-form-link-span"> ¿Ya tienes una cuenta?</span>
+          <a (click)="redirectToLogin()">Inicia sesión aquí</a>
+        </p>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,4 +1,11 @@
 import { Component, OnInit } from '@angular/core';
+import { PointsService } from '../../../../core/services/points.service';
+import { GeneralConfigService } from '../../../../core/services/general-config.service';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import {
+  PointsSection,
+  PointsCard,
+} from '../../../../core/models/general/points-sections.model';
 
 interface PointsRecord {
   booking: string;
@@ -12,7 +19,7 @@ interface MembershipCard {
   type: string;
   title: string;
   image: string;
-  benefits: string[];
+  benefits: any;
   unlocked: boolean;
   requirement: string;
   minTrips: number;
@@ -32,81 +39,58 @@ export class PointsSectionComponent implements OnInit {
   membershipCards: MembershipCard[] = [];
   currentTrips: number = 6;
 
-  constructor() {
-    this.points = [
-      {
-        booking: 'RES001',
-        category: 'Premium',
-        concept: 'Tour Básico',
-        tour: 'City Tour',
-        points: 50,
-      },
-      {
-        booking: 'RES002',
-        category: 'Gold',
-        concept: 'Tour Premium',
-        tour: 'Adventure Tour',
-        points: 90,
-      },
-    ];
-
-    this.initializeMembershipCards();
+  constructor(
+    private pointsService: PointsService,
+    private generalConfigService: GeneralConfigService,
+    private sanitizer: DomSanitizer
+  ) {
+    // Inject PointsService
+    this.points = [];
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.pointsService
+      .getPointsByDni('12345678A', { page: 1, limit: 1000 })
+      .subscribe((response: any) => {
+        this.points = response.data.map((point: any) => ({
+          booking: point.extraData.bookingID,
+          category: point.type === 'income' ? 'Acumulación' : 'Redención',
+          concept: point.extraData?.concept || point.subType,
+          tour: point.extraData.tourName,
+          points: point.points,
+        }));
+        this.totalPoints = response.totalpoints;
+      });
+    this.loadMembershipCards();
+  }
 
-  private initializeMembershipCards(): void {
-    const cards: MembershipCard[] = [
-      {
-        type: 'Viajero',
-        title: 'Globetrotter',
-        image: 'https://picsum.photos/400/200',
-        benefits: [
-          'Acceso previo a la publicación de los tours',
-          'Newsletters exclusivas',
-          'Personalización del perfil',
-          'Más beneficios especificados',
-        ],
-        unlocked: false,
-        requirement: '0-4 viajes',
-        minTrips: 0,
-        maxTrips: 4,
-      },
-      {
-        type: 'Viajero',
-        title: 'Voyager',
-        image: 'https://picsum.photos/400/200?random=1',
-        benefits: [
-          'Acceso previo a la publicación de los tours',
-          'Newsletters exclusivas',
-          'Personalización del perfil',
-          'Más beneficios especificados',
-        ],
-        unlocked: false,
-        requirement: '5-9 viajes',
-        minTrips: 5,
-        maxTrips: 9,
-      },
-      {
-        type: 'Viajero',
-        title: 'Nomad',
-        image: 'https://picsum.photos/400/200?random=2',
-        benefits: [
-          'Acceso previo a la publicación de los tours',
-          'Newsletters exclusivas',
-          'Personalización del perfil',
-          'Más beneficios especificados',
-        ],
-        unlocked: false,
-        requirement: '10 viajes o más',
-        minTrips: 10,
-      },
-    ];
+  private loadMembershipCards(): void {
+    this.generalConfigService
+      .getPointsSection()
+      .subscribe((response: PointsSection) => {
+        this.membershipCards = response['points-cards']
+          .map((card: PointsCard) => ({
+            type: 'Viajero',
+            title: card.name,
+            image: card['point-image'][0].url,
+            benefits: this.sanitizeHtml(card.content),
+            unlocked: false,
+            requirement: `${card.minTravels} - ${card.maxTravels} viajes`,
+            minTrips: parseInt(card.minTravels, 10),
+            maxTrips:
+              card.maxTravels === 'N/A'
+                ? undefined
+                : parseInt(card.maxTravels as string, 10),
+          }))
+          .map((card) => ({
+            ...card,
+            unlocked: this.isCardUnlocked(card),
+          }));
+      });
+  }
 
-    this.membershipCards = cards.map((card) => ({
-      ...card,
-      unlocked: this.isCardUnlocked(card),
-    }));
+  private sanitizeHtml(content: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(content);
   }
 
   private isCardUnlocked(card: MembershipCard): boolean {

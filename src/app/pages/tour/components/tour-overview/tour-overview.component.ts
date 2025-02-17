@@ -38,7 +38,6 @@ export class TourOverviewComponent implements OnInit {
         .getTourDetailBySlug(slug,selectedFields)
         //.getTourDetailBySlug(slug)
         .subscribe((tour) => {
-          console.log('Fetched tour data:', tour);
           this.tour = tour;
         });
     }

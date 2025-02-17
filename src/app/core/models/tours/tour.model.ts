@@ -94,9 +94,14 @@ export interface Flight {
   activityID: number;
 }
 
-export interface TravelersSection {
+/* export interface TravelersSection {
   title: string;
   travelersCards: TravelersCard[];
+} */
+
+export interface TravelersSection {
+  title: string;
+  'travelers-cards': TravelersCard[];
 }
 
 export interface TravelersCard {

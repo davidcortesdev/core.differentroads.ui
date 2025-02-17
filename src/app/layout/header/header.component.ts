@@ -122,6 +122,13 @@ export class HeaderComponent implements OnInit {
           ];
           subscription.unsubscribe();
         });
+    } else {
+      this.userMenuItems = [
+        {
+          label: 'Inicia sesión',
+          command: () => this.authService.navigateToLogin(),
+        },
+      ];
     }
   }
 }

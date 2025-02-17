@@ -106,6 +106,7 @@ import { ReviewsComponent } from './shared/components/reviews/reviews.component'
 import { AccordionModule } from 'primeng/accordion';
 import { ChipModule } from 'primeng/chip';
 import { TagModule } from 'primeng/tag';
+import { TimelineModule } from 'primeng/timeline';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -211,6 +212,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     AccordionModule,
     ChipModule,
     TagModule,
+    TimelineModule,
     ForgetPasswordComponent,
     TranslateModule.forRoot({
       loader: {

@@ -27,6 +27,7 @@ export interface Tour extends CMSCollections {
   marketingSection: MarketingSection;
   'travelers-section': TravelersSection;
   supportSection: SupportSection;
+  continent: string;
 }
 
 export interface Expert {

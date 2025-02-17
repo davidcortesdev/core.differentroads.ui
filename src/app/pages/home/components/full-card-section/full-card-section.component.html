@@ -1,0 +1,11 @@
+<div class="full-card-section">
+  <div class="card" *ngFor="let card of cards">
+    <div class="card-image">
+      <img [src]="card.image.url" [alt]="card.image.alt" />
+      <div class="card-info">
+        <p class="card-description">{{ card.description }}</p>
+        <p class="card-title">{{ card.title }}</p>
+      </div>
+    </div>
+  </div>
+</div>

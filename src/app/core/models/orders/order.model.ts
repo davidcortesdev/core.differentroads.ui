@@ -7,8 +7,8 @@ export interface Order {
   status: 'AB' | 'Budget';
   owner: string;
   travelers?: OrderTraveler[];
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt?: string;
+  updatedAt?: string;
   optionalActivitiesRef?: OptionalActivityRef[];
   insurancesRef?: OptionalActivityRef[];
   extraData?: any;

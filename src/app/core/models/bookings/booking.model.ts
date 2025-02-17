@@ -15,6 +15,7 @@ export interface Booking {
   extraData?: any;
   deadlines?: any[];
   flights?: any;
+  createdAt?: string;
 }
 
 export interface BookingCreateInput {

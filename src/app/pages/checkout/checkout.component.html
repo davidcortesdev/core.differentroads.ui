@@ -1,0 +1,98 @@
+<div class="checkout-container">
+  <!-- Left and Center columns with steps -->
+  <div class="main-content">
+    <div class="steps-container">
+      <p-steps [model]="steps" [activeIndex]="currentStep"></p-steps>
+    </div>
+
+    <div class="steps-content">
+      <!-- Step 1: Customize your trip -->
+      <div *ngIf="currentStep === 0">
+        <app-customize-trip
+          *ngIf="currentStep === 0"
+          (updateCart)="updateOrderSummary($event)"
+        ></app-customize-trip>
+      </div>
+
+      <!-- Step 2: Flights -->
+      <div *ngIf="currentStep === 1">
+        <app-flights
+          *ngIf="currentStep === 1"
+          (updateCart)="updateOrderSummary($event)"
+        ></app-flights>
+      </div>
+
+      <!-- Step 3: Travelers -->
+      <div *ngIf="currentStep === 2">
+        <app-travelers
+          *ngIf="currentStep === 2"
+          (updateCart)="updateOrderSummary($event)"
+        ></app-travelers>
+      </div>
+
+      <!-- Step 4: Payment -->
+      <div *ngIf="currentStep === 3">
+        <app-payment
+          *ngIf="currentStep === 3"
+          (updateCart)="updateOrderSummary($event)"
+        ></app-payment>
+      </div>
+
+      <!-- Navigation buttons -->
+      <div class="step-navigation">
+        <p-button
+          *ngIf="currentStep > 0"
+          label="Anterior"
+          (onClick)="previousStep()"
+          styleClass="p-button-outlined"
+        ></p-button>
+        <p-button
+          *ngIf="currentStep < 3"
+          label="Siguiente"
+          (onClick)="nextStep()"
+        ></p-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right column - Order Summary -->
+  <div class="order-summary">
+    <h3>Resumen del pedido</h3>
+    <div class="summary-content">
+      <!-- Tour base info -->
+      <div class="tour-base-info">
+        <h4>{{ tourName }}</h4>
+        <p>{{ tourDates }}</p>
+        <p>{{ travelers }} viajeros</p>
+      </div>
+
+      <!-- Selected items list -->
+      <div class="selected-items">
+        <div *ngFor="let item of selectedItems" class="item">
+          <span>{{ item.name }}</span>
+          <span>{{ item.price | currency:'EUR' }}</span>
+        </div>
+      </div>
+
+      <!-- Flights info if selected -->
+      <div class="flights-info" *ngIf="hasFlights">
+        <h4>Vuelos</h4>
+        <div class="flight-details">
+          <!-- Flight details here -->
+        </div>
+      </div>
+
+      <!-- Total section -->
+      <div class="total-section">
+        <div class="subtotal">
+          <span>Subtotal</span>
+          <span>{{ subtotal | currency:'EUR' }}</span>
+        </div>
+        <div class="total">
+          <span>Total</span>
+          <span>{{ total | currency:'EUR' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { BlogList } from '../models/blogs/blog-list.model';
 import { Blog } from '../models/blogs/blog.model';
+import { map } from 'rxjs/operators';
 
 type SelectedFields = Partial<Array<keyof Blog | 'all'>>;
 
@@ -42,5 +43,28 @@ export class BlogsService {
       'travels',
     ];
     return this.getBlogById(id, selectedFields);
+  }
+
+  getBlogBySlug(
+    slug: string,
+    selectedFields: SelectedFields = ['all']
+  ): Observable<Blog> {
+    let params = new HttpParams();
+
+    if (selectedFields && selectedFields.length) {
+      params = params.set('selectedFields', selectedFields.join(','));
+    }
+
+    return this.http
+      .get<Blog[]>(`${this.API_URL}/filter-by/slug/${slug}`, { params })
+      .pipe(
+        map((blogs: Blog[]) => {
+          if (blogs.length > 0) {
+            return blogs[0];
+          } else {
+            throw new Error('No blog found with the given slug');
+          }
+        })
+      );
   }
 }

@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
+import { BookingsService } from '../../../../core/services/bookings.service';
 
 interface Booking {
-  id: number;
+  id: string;
   title: string;
   reservationNumber: string;
   creationDate: Date;
@@ -19,29 +20,28 @@ interface Booking {
 export class ActiveBookingsSectionComponent implements OnInit {
   bookings: Booking[] = [];
   isExpanded: boolean = true;
+  @Input() userEmail!: string;
+
+  constructor(private bookingsService: BookingsService) {}
 
   ngOnInit() {
-    this.bookings = [
-      {
-        id: 1,
-        title: 'VIVE EL CARNAVAL DE VENECIA',
-        reservationNumber: '907622P',
-        creationDate: new Date('2024-02-03'),
-        status: 'Reservada',
-        departureDate: new Date('2024-06-03'),
-        image: 'https://picsum.photos/id/1/200/300',
-      },
-      {
-        id: 2,
-        title: 'VIVE EL CARNAVAL DE ESPAÑA',
-        reservationNumber: '907622P',
-        creationDate: new Date('2024-02-03'),
-        status: 'Reservada',
-        departureDate: new Date('2024-06-03'),
-        image: 'https://picsum.photos/id/2/200/300',
-      },
-      // Puedes agregar más reservas aquí
-    ];
+    this.fetchBookingsByEmail(this.userEmail);
+  }
+
+  fetchBookingsByEmail(email: string, page: number = 1) {
+    this.bookingsService
+      .getBookingsByEmail(email, 'Booked', page, 1000)
+      .subscribe((response) => {
+        this.bookings = response?.data?.map((booking) => ({
+          id: booking?.id ?? '',
+          title: booking?.periodData?.['tour']?.name || '',
+          reservationNumber: booking?.ID ?? '',
+          creationDate: new Date(booking?.createdAt ?? ''),
+          status: booking?.status ?? '',
+          departureDate: new Date(booking?.periodData?.['dayOne'] ?? ''),
+          image: 'https://picsum.photos/200',
+        }));
+      });
   }
 
   toggleContent() {

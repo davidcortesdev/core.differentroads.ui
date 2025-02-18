@@ -1,49 +1,87 @@
-import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  ViewChild,
+  AfterViewInit,
+  OnDestroy,
+  ChangeDetectorRef,
+} from '@angular/core';
+import { ToursService } from '../../../../core/services/tours.service';
+import { ActivatedRoute } from '@angular/router';
+import { TravelersCard } from '../../../../core/models/tours/tour.model';
+
+interface GalleryImage extends TravelersCard {
+  width: number;
+  height: number;
+}
 
 @Component({
   selector: 'app-tour-gallery',
   standalone: false,
   templateUrl: './tour-gallery.component.html',
-  styleUrl: './tour-gallery.component.scss'
+  styleUrl: './tour-gallery.component.scss',
 })
 export class TourGalleryComponent implements AfterViewInit, OnDestroy {
   @ViewChild('galleryGrid') galleryGrid!: ElementRef;
 
-  images = [
-    { id: 1, width: 400, height: 300 },
-    { id: 2, width: 300, height: 400 },
-    { id: 3, width: 600, height: 400 },
-    { id: 4, width: 400, height: 300 },
-    { id: 5, width: 500, height: 300 },
-    { id: 6, width: 400, height: 500 },
-    { id: 7, width: 600, height: 400 },
-    { id: 8, width: 400, height: 300 },
-    { id: 9, width: 300, height: 400 },
-    { id: 10, width: 500, height: 300 },
-    { id: 11, width: 400, height: 400 },
-    { id: 12, width: 400, height: 300 },
-    { id: 21, width: 400, height: 300 },
-    { id: 22, width: 300, height: 400 },
-    { id: 23, width: 600, height: 400 },
-    { id: 24, width: 400, height: 300 },
-    { id: 25, width: 500, height: 300 },
-    { id: 26, width: 400, height: 500 },
-    { id: 27, width: 600, height: 400 },
-    { id: 28, width: 400, height: 300 },
-    { id: 29, width: 300, height: 400 },
-    { id: 210, width: 500, height: 300 },
-    { id: 211, width: 400, height: 400 },
-    { id: 212, width: 400, height: 300 }
-  ];
-  
+  title: string = '';
+  images: GalleryImage[] = [];
   showAll = false;
-  itemsPerRow = 4; // Set default value
+  itemsPerRow = 4;
   private resizeObserver?: ResizeObserver;
-  
-  constructor(private cdr: ChangeDetectorRef) {}
+
+  // Configuración de tamaños para el grid
+  private imageSizes = [
+    { width: 400, height: 300 },
+    { width: 300, height: 400 },
+    { width: 600, height: 400 },
+    { width: 400, height: 500 },
+    { width: 500, height: 300 },
+    { width: 400, height: 400 },
+  ];
+
+  constructor(
+    private toursService: ToursService,
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   get visibleImages() {
-    return this.showAll ? this.images : this.images.slice(0, this.itemsPerRow * 2);
+    return this.showAll
+      ? this.images
+      : this.images.slice(0, this.itemsPerRow * 2);
+  }
+
+  ngOnInit() {
+    const slug = this.route.snapshot.paramMap.get('slug');
+
+    if (slug) {
+      this.toursService.getTourDetailBySlug(slug).subscribe({
+        next: (tour) => {
+          if (tour['travelers-section']) {
+            // Obtenemos el título de la sección
+            this.title = tour['travelers-section'].title;
+
+            // Mapeamos los travelers-cards con dimensiones dinámicas
+            const travelersCards =
+              tour['travelers-section']['travelers-cards'] || [];
+            this.images = travelersCards.map((card, index) => {
+              const size = this.imageSizes[index % this.imageSizes.length];
+              return {
+                ...card,
+                width: size.width,
+                height: size.height,
+              };
+            });
+
+            this.cdr.detectChanges();
+          }
+        },
+        error: (error) => {
+          console.error('Error al obtener los detalles del tour:', error);
+        },
+      });
+    }
   }
 
   ngAfterViewInit() {
@@ -60,14 +98,19 @@ export class TourGalleryComponent implements AfterViewInit, OnDestroy {
         if (items.length > 0) {
           const firstItemRect = items[0].getBoundingClientRect();
           const containerWidth = entry.contentRect.width;
-          const calculatedItems = Math.floor(containerWidth / (firstItemRect.width + 20));
-          this.itemsPerRow = calculatedItems > 0 ? calculatedItems : this.itemsPerRow;
+          const calculatedItems = Math.floor(
+            containerWidth / (firstItemRect.width + 20)
+          );
+          this.itemsPerRow =
+            calculatedItems > 0 ? calculatedItems : this.itemsPerRow;
           this.cdr.detectChanges();
         }
       }
     });
 
-    this.resizeObserver.observe(this.galleryGrid.nativeElement);
+    if (this.galleryGrid) {
+      this.resizeObserver.observe(this.galleryGrid.nativeElement);
+    }
   }
 
   ngOnDestroy() {

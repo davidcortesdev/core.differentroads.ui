@@ -1,52 +1,112 @@
 .gallery-container {
   padding: 20px;
   margin: 0 auto;
+  max-width: 1200px;
+  overflow: hidden;
 }
 
 .gallery-title {
   text-align: center;
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: bold;
-  margin-bottom: 2rem;
-  color: #333;
+  margin-bottom: 1.5rem;
+  color: var(--background-azul);
 }
 
 .gallery-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 15px;
+  will-change: transform;
+  transform: translateZ(0);
+
+  &:has(.gallery-item:only-child) {
+    .gallery-item {
+      flex-basis: 100%;
+      max-width: 400px;
+      margin: 0 auto;
+      height: 300px;
+    }
+  }
+
+  &:has(.gallery-item:first-child:nth-last-child(2)) {
+    justify-content: center;
+    .gallery-item {
+      flex-basis: calc(50% - 8px);
+      max-width: 300px;
+      height: 200px;
+    }
+  }
+
+  &:has(.gallery-item:first-child:nth-last-child(3)) {
+    justify-content: center;
+    .gallery-item {
+      flex-basis: calc(33.333% - 10px);
+      max-width: 250px;
+      height: 180px;
+
+      &:first-child {
+        flex-basis: 100%;
+        max-width: 400px;
+        height: 300px;
+      }
+    }
+  }
 }
 
 .gallery-item {
   position: relative;
-  height: 10rem;
-  flex-grow: 1;
+  height: 200px;
+  flex: 1 1 200px;
+  min-width: 180px;
+  max-width: 400px;
   overflow: hidden;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+
+  &:nth-child(3n + 1) {
+    flex-basis: 300px;
+    height: 220px;
+  }
+
+  &:nth-child(4n + 2) {
+    flex-basis: 250px;
+    height: 280px;
+  }
+
+  &:nth-child(5n) {
+    flex-basis: 350px;
+    height: 200px;
+  }
 
   &:hover {
-    transform: scale(1.02);
+    transform: scale(1.02) translateZ(0);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
   img {
+    width: 100%;
     height: 100%;
-    width: auto;
-    min-width: 100%;
     object-fit: cover;
+    transition: transform 0.3s ease;
+    transform: translateZ(0);
+    backface-visibility: hidden;
   }
 }
 
 .show-more-container {
   display: flex;
   justify-content: center;
-  margin-top: 2rem;
+  margin-top: 1.5rem;
+  transform: translateZ(0);
 }
 
 .show-more-button {
   padding: 0.75rem 2.5rem;
-  background-color: #e74c3c;
+  background-color: var(--p-primary-color);
   color: white;
   border: none;
   border-radius: 25px;
@@ -56,20 +116,99 @@
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  transform: translateZ(0);
 
   &:hover {
     background-color: #c0392b;
-    transform: translateY(-2px);
+    transform: translateY(-2px) translateZ(0);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   }
 
   &:active {
-    transform: translateY(0);
+    transform: translateY(0) translateZ(0);
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
+  .gallery-grid {
+    gap: 12px;
+    justify-content: space-between;
+  }
+
   .gallery-item {
-    flex-basis: calc(50% - 10px);
+    flex: 0 0 calc(50% - 6px);
+    height: 180px;
+    min-width: 0;
+    max-width: none;
+
+    &:nth-child(n) {
+      height: 180px;
+      flex-basis: calc(50% - 6px);
+    }
+
+    &:only-child {
+      flex-basis: 100%;
+      height: 250px;
+      max-width: 500px;
+    }
+  }
+}
+
+@media (max-width: 767px) {
+  .gallery-container {
+    padding: 15px;
+  }
+
+  .gallery-grid {
+    gap: 10px;
+    justify-content: space-between;
+  }
+
+  .gallery-item {
+    flex: 0 0 calc(50% - 5px);
+    height: 150px;
+
+    &:nth-child(n) {
+      height: 150px;
+      flex-basis: calc(50% - 5px);
+    }
+
+    &:only-child {
+      flex-basis: 100%;
+      height: 200px;
+    }
+  }
+
+  .gallery-title {
+    font-size: 1.25rem;
+  }
+
+  .show-more-button {
+    padding: 0.5rem 2rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .gallery-container {
+    padding: 10px;
+  }
+
+  .gallery-grid {
+    gap: 8px;
+  }
+
+  .gallery-item {
+    flex: 0 0 calc(50% - 4px);
+    height: 130px;
+
+    &:nth-child(n) {
+      height: 130px;
+      flex-basis: calc(50% - 4px);
+    }
+
+    &:only-child {
+      height: 180px;
+    }
   }
 }

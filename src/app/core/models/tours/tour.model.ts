@@ -86,17 +86,24 @@ export interface ActivePeriod {
   flights: Flight[];
   name: string;
   externalID: number;
+  tripType: string;
 }
 
 export interface Flight {
   name: string;
   serviceCombinationID: number;
   activityID: number;
+  prices: number;
 }
+
+/* export interface TravelersSection {
+  title: string;
+  travelersCards: TravelersCard[];
+} */
 
 export interface TravelersSection {
   title: string;
-  travelersCards: TravelersCard[];
+  'travelers-cards': TravelersCard[];
 }
 
 export interface TravelersCard {

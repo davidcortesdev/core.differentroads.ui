@@ -181,7 +181,13 @@ export class AuthenticateService {
     return currentUser ? currentUser.getUsername() : '';
   }
 
+  // Navegar al perfil del usuario
   navigateToProfile() {
     this.router.navigate(['/profile']);
+  }
+
+  // Navegar a la página de login
+  navigateToLogin() {
+    this.router.navigate(['/login']); // Ajusta la ruta según tu configuración
   }
 }

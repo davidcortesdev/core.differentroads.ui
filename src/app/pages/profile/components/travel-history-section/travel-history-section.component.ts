@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
+import { BookingsService } from '../../../../core/services/bookings.service';
 
 interface TravelHistory {
   bookingNumber: string;
@@ -18,34 +19,31 @@ interface TravelHistory {
 export class TravelHistorySectionComponent implements OnInit {
   travels: TravelHistory[] = [];
   isExpanded: boolean = true;
+  @Input() userEmail!: string;
+
+  constructor(private bookingsService: BookingsService) {}
 
   ngOnInit() {
-    this.travels = [
-      {
-        bookingNumber: '64592',
-        date: '03/01/2023',
-        destination: '4 Perlas Bálticas',
-        departure: '10 MAY',
-        origin: 'MAD',
-        passengers: 2,
-      },
-      {
-        bookingNumber: '60182',
-        date: '12/04/2022',
-        destination: 'Nepal, namasté desde el techo del mundo',
-        departure: '12 AGO',
-        origin: 'VLC',
-        passengers: 1,
-      },
-      {
-        bookingNumber: '43911',
-        date: '06/08/2021',
-        destination: 'Bellezas de Japón',
-        departure: '21 AGO',
-        origin: 'MAD',
-        passengers: 2,
-      },
-    ];
+    this.fetchTravelHistory(this.userEmail);
+  }
+
+  fetchTravelHistory(email: string) {
+    this.bookingsService
+      .getBookingsByEmail(email, 'Pending,Canceled', 1, 1000)
+      .subscribe((response) => {
+        console.log(response);
+
+        this.travels = response?.data?.map((booking) => ({
+          bookingNumber: booking?.ID ?? '',
+          date: new Date(booking?.createdAt ?? '').toLocaleDateString(),
+          destination: booking?.periodData?.['tour']?.name || '',
+          departure: new Date(
+            booking?.periodData?.['dayOne'] ?? ''
+          ).toLocaleDateString(),
+          origin: booking?.flights ?? 'MAD',
+          passengers: booking?.travelersNumber ?? 0,
+        }));
+      });
   }
 
   toggleContent() {

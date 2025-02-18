@@ -1,7 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { DataViewModule } from 'primeng/dataview';
+import { ButtonModule } from 'primeng/button';
+import { OrdersService } from '../../../../core/services/orders.service';
 
 interface Budget {
-  id: number;
+  id: string;
   title: string;
   budgetNumber: string;
   creationDate: Date;
@@ -21,6 +25,9 @@ interface Budget {
 export class RecentBudgetSectionComponent implements OnInit {
   budgets: Budget[] = [];
   isExpanded: boolean = true;
+  @Input() userEmail!: string;
+
+  constructor(private ordersService: OrdersService) {}
 
   private getRandomPicsumUrl(): string {
     const randomId = Math.floor(Math.random() * 1000);
@@ -28,19 +35,25 @@ export class RecentBudgetSectionComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.budgets = [
-      {
-        id: 1,
-        title: '4 PERLAS BÁLTICAS',
-        budgetNumber: '78560',
-        creationDate: new Date('2025-03-28'),
-        status: 'Budget',
-        departureDate: new Date('2025-04-06'),
-        passengers: 2,
-        price: 3145,
-        image: this.getRandomPicsumUrl(),
-      },
-    ];
+    this.fetchBudgets();
+  }
+
+  fetchBudgets() {
+    this.ordersService
+      .getOrders({ status: ['Budget'], keyword: this.userEmail })
+      .subscribe((response) => {
+        this.budgets = response.data.map((order) => ({
+          id: order.periodID,
+          title: '4 PERLAS BALTICAS',
+          budgetNumber: order.id,
+          creationDate: new Date(order.createdAt || Date.now()),
+          status: order.status,
+          departureDate: new Date(order.updatedAt || Date.now()),
+          passengers: order.travelers?.length || 0,
+          price: 1100,
+          image: this.getRandomPicsumUrl(),
+        }));
+      });
   }
 
   toggleContent() {

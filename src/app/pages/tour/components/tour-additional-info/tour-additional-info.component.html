@@ -27,13 +27,25 @@
   </p-card>
 </div>
 
-<div class="mt-4">
+<div class="mt-4 additional-info">
   <p-accordion>
-    <p-accordionTab header="Ver más información">
-      <!-- Add more information content here -->
-    </p-accordionTab>
-    <p-accordionTab header="Información útil destino">
-      <!-- Add destination information content here -->
-    </p-accordionTab>
+    <p-accordion-panel
+      *ngFor="let card of tour?.['extra-info-section']?.['info-card']; let i = index"
+      [value]="i"
+    >
+      <p-accordion-header>
+        <ng-template #toggleicon let-active="active">
+          @if (active) {
+          <i class="pi pi-minus-circle"></i>
+          } @else {
+          <i class="pi pi-plus-circle"></i>
+          }
+        </ng-template>
+        <div [innerHTML]="sanitizeHtml(card.title)"></div>
+      </p-accordion-header>
+      <p-accordion-content>
+        <div [innerHTML]="sanitizeHtml(card.content)"></div>
+      </p-accordion-content>
+    </p-accordion-panel>
   </p-accordion>
 </div>

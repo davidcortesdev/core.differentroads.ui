@@ -1,23 +1,32 @@
 <div class="active-bookings">
-    <div class="booking-header" (click)="toggleContent()">
-        <span>Mis reseñas</span>
-        <i class="pi" [ngClass]="{'pi-chevron-down': !isExpanded, 'pi-chevron-up': isExpanded}"></i>
-    </div>
+  <div class="booking-header" (click)="toggleContent()">
+    <span>Mis reseñas</span>
+    <i
+      class="pi"
+      [ngClass]="{
+        'pi-chevron-down': !isExpanded,
+        'pi-chevron-up': isExpanded
+      }"
+    ></i>
+  </div>
 
-    <div class="booking-content" [ngClass]="{'hidden': !isExpanded}">
-        <div class="reviews-grid">
-            <p-card *ngFor="let review of reviews" styleClass="review-card">
-                <div class="review-content">
-                    <h3>{{review.destination}}</h3>
-                    <p class="description">{{review.description}}</p>
-                    <div class="review-footer">
-                        <span class="date">{{review.date}}</span>
-                        <div class="rating">
-                            <i class="pi pi-star-fill" *ngFor="let star of getRatingArray(review.rating)"></i>
-                        </div>
-                    </div>
-                </div>
-            </p-card>
+  <div class="booking-content" [ngClass]="{ hidden: !isExpanded }">
+    <div class="reviews-grid">
+      <p-card *ngFor="let review of reviews" styleClass="review-card">
+        <div class="review-content">
+          <h3>{{ review.destination }}</h3>
+          <p class="description">{{ review.description }}</p>
+          <div class="review-footer">
+            <span class="date">{{ review.date }}</span>
+            <div class="rating">
+              <i
+                class="pi pi-star-fill"
+                *ngFor="let star of getRatingArray(review.rating)"
+              ></i>
+            </div>
+          </div>
         </div>
+      </p-card>
     </div>
+  </div>
 </div>

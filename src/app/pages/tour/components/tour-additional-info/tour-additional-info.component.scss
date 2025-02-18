@@ -53,8 +53,20 @@ div {
   max-width: 1200px;
   margin: 2rem auto;
   padding: 0 1rem;
+}
 
-  ::ng-deep .p-accordion {
+:host {
+  ::ng-deep p-accordion {
     width: 100%;
+
+    p-accordion-header {
+      flex-direction: row-reverse;
+      gap: 1rem;
+      justify-content: flex-end;
+
+      i {
+        color: #ff6b6b;
+      }
+    }
   }
 }

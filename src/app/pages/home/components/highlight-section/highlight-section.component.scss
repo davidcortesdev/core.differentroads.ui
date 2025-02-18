@@ -1,92 +1,68 @@
 .highlight-section {
+  --section-padding: clamp(1rem, 3vw, 4rem);
+  --section-gap: clamp(1rem, 2vw, 2rem);
+  --text-color: #002b57;
+  --bg-color: #f7f6f2;
+  --image-border-radius: 13px;
+  --title-font-size: clamp(24px, 3vw, 35px);
+  --description-font-size: clamp(8px, 1.2vw, 12px);
+  --content-padding: clamp(0px, 3vw, 6rem);
+
   display: flex;
   align-items: center;
-  padding: 4rem;
-  gap: 7rem;
-  position: relative;
-  color: #002b57;
-  background-color: #f7f6f2;
+  padding: var(--section-padding);
+  gap: var(--section-gap);
+  color: var(--text-color);
+  background-color: var(--bg-color);
 
   &-image-container {
     position: relative;
     overflow: hidden;
-    aspect-ratio: 15 / 16;
-    border-radius: 13px;
-    width: 558px;
-    height: 558px;
+    aspect-ratio: 15/16;
+    border-radius: var(--image-border-radius);
+    max-width: 558px;
+    width: 100%;
+    height: auto;
 
     img {
       position: absolute;
-      height: 100%;
+      inset: 0;
       width: 100%;
-      inset: 0px;
+      height: 100%;
       object-fit: cover;
-      color: transparent;
     }
   }
 
-  &-title {
-    line-height: 90%;
-    font-weight: 400;
-    font-size: 35px;
-  }
-  &-description {
-    line-height: 110%;
-    font-size: 12px;
-  }
-
   &-content {
-    position: relative;
-    flex: 1 1;
+    flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding-right: 3rem;
-    padding-left: 6rem;
+    gap: var(--section-gap);
+    padding-inline: var(--content-padding);
+  }
+
+  &-title {
+    line-height: 0.9;
+    font-weight: 400;
+    font-size: var(--title-font-size);
+  }
+
+  &-description {
+    line-height: 1.1;
+    font-size: var(--description-font-size);
   }
 
   @media (max-width: 1024px) {
     flex-direction: column;
-    padding: 2rem;
-    gap: 3rem;
-
-    &-image-container {
-      width: 100%;
-      height: auto;
-    }
 
     &-content {
       padding: 0;
-    }
-  }
-
-  @media (max-width: 768px) {
-    padding: 1rem;
-    gap: 2rem;
-
-    &-title {
-      font-size: 28px;
-    }
-
-    &-description {
-      font-size: 10px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    padding: 1rem;
-    gap: 1rem;
-
-    &-title {
-      font-size: 24px;
-    }
-
-    &-description {
-      font-size: 8px;
+      width: 100%;
     }
   }
 }
 
-.buttonVertour{
-  width: 7rem;
+.buttonVertour {
+  width: min(7rem, 100%);
 }

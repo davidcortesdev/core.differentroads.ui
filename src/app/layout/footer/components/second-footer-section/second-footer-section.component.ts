@@ -11,6 +11,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 })
 export class SecondFooterSectionComponent implements OnInit {
   safeInfoText: SafeHtml = '';
+  isVisible: boolean = true;
 
   constructor(
     private generalConfigService: GeneralConfigService,
@@ -18,7 +19,17 @@ export class SecondFooterSectionComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.checkVisibility();
     this.fetchFooterConfig();
+  }
+
+  checkVisibility() {
+    const currentDate = new Date();
+    const hideDate = new Date(currentDate.getFullYear(), 10, 1);
+
+    if (currentDate > hideDate) {
+      this.isVisible = false;
+    }
   }
 
   fetchFooterConfig() {
@@ -28,7 +39,6 @@ export class SecondFooterSectionComponent implements OnInit {
         this.safeInfoText = this.sanitizer.bypassSecurityTrustHtml(
           footerSection.info.text
         );
-        console.log('Info Text Raw:', footerSection.info.text);
       });
   }
 }

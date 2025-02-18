@@ -7,29 +7,28 @@
   </div>
 
   <div class="carousel-section-carousel">
-      <p-carousel [value]="cards" [numVisible]="3.5" [numScroll]="1" [responsiveOptions]="responsiveOptions" >
-        <ng-template let-card pTemplate="item">
-          <div class="border border-surface-200 dark:border-surface-700 rounded m-2 p-4">
-            <div class="mb-4">
-              <div class="relative mx-auto box-image">
-                <img [src]="card.image.url" [alt]="card.image.alt" class="w-full rounded-border" />
-                <div class="info-image">
-                  <span class="title-image">{{card.title}}</span>
-                   <p class="description-image">{{card.description}}</p>
-                   <p-button
-                   type="button"
-                   label="Ver tours"
-                   class="buttonVertour p-button-rounded"
-                   [rounded]="true"
-                   fluid="true"
-                   size="small"
-                    [style]="{ 'width': '45%' ,'height': '27px' }" 
-                 ></p-button>
-                </div>
+    <p-carousel [value]="cards" 
+    [numVisible]="3.5" 
+    [numScroll]="1" 
+    [responsiveOptions]="responsiveOptions" 
+    showNavigators="false"
+    [autoplayInterval]="3000"
+    >
+      <ng-template let-card pTemplate="item">
+        <div class="border border-surface-200 dark:border-surface-700 rounded m-2 p-4">
+          <div class="mb-4">
+            <div class="relative mx-auto box-image">
+              <img [src]="card.image.url" [alt]="card.image.alt" class="w-full rounded-border" />
+              <div class="info-image">
+                <span class="title-image">{{card.title}}</span>
+                <p class="description-image">{{card.description}}</p>
+                <p-button type="button" label="Ver tours" class="buttonVertour p-button-rounded" [rounded]="true"
+                  fluid="true" size="small" [style]="{ 'width': '45%' ,'height': '27px' }"></p-button>
               </div>
             </div>
           </div>
-        </ng-template>
-      </p-carousel>
+        </div>
+      </ng-template>
+    </p-carousel>
   </div>
 </section>

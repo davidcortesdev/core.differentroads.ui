@@ -1,11 +1,10 @@
 .community-hero {
-  --rating-background: white;
+  --rating-background: var(--p-content-background);
   --rating-text: #6a6a6a;
-  --rating-value: #f05a4c;
   --border-radius-sm: 8px;
   --border-radius-md: 12px;
   --spacing-sm: 1rem;
-  --spacing-md: 2rem;
+  --spacing-md: 1rem;
 
   .header {
     display: flex;
@@ -69,7 +68,6 @@
               gap: 10px;
 
               .value {
-                color: var(--rating-value);
                 font-size: 25px;
                 font-family: 'Plus Jakarta Sans', sans-serif;
                 font-weight: 800;
@@ -88,12 +86,12 @@
 
   .featured-content {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(12, 1fr);
     gap: var(--spacing-md);
     margin: var(--spacing-md) 0;
 
     @media screen and (max-width: 1024px) {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(12, 1fr);
     }
 
     @media screen and (max-width: 768px) {
@@ -101,6 +99,12 @@
     }
 
     .featured-images {
+      grid-column: span 3;
+
+      @media screen and (max-width: 768px) {
+        grid-column: span 12;
+      }
+
       img {
         width: 100%;
         height: 100%;
@@ -111,6 +115,12 @@
     }
 
     .featured-text {
+      grid-column: span 6;
+      
+      @media screen and (max-width: 768px) {
+        grid-column: span 12;
+      }
+
       padding: var(--spacing-md);
       display: flex;
       flex-direction: column;

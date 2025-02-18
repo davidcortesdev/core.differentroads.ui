@@ -111,6 +111,13 @@ import { SecondFooterSectionComponent } from './layout/footer/components/second-
 import { TimelineModule } from 'primeng/timeline';
 
 import MyPreset from './mytheme';
+import { CheckoutComponent } from './pages/checkout/checkout.component';
+import { CustomizeTripComponent } from './pages/checkout/components/customize-trip/customize-trip.component';
+import { FlightsComponent } from './pages/checkout/components/flights/flights.component';
+import { TravelersComponent } from './pages/checkout/components/travelers/travelers.component';
+import { PaymentComponent } from './pages/checkout/components/payment/payment.component';
+
+import { StepsModule } from 'primeng/steps';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -172,6 +179,11 @@ export function HttpLoaderFactory(http: HttpClient) {
     ReviewSectionComponent,
     ReviewsComponent,
     SecondFooterSectionComponent,
+    CheckoutComponent,
+    CustomizeTripComponent,
+    FlightsComponent,
+    TravelersComponent,
+    PaymentComponent,
   ],
   imports: [
     // Angular Modules
@@ -219,6 +231,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     TagModule,
     TimelineModule,
     ForgetPasswordComponent,
+    StepsModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

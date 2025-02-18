@@ -69,9 +69,9 @@
         justify-content: flex-end;
         margin: 0;
         position: relative;
-        margin-right: .5rem;
+        margin-right: 1rem;
         text-align: right;
-        top: .5rem;
+        top: 0.7rem;
 
         &>i {
           color: var(--p-primary-color);
@@ -81,13 +81,13 @@
 
       &-username {
         align-items: center;
-        bottom: .5rem;
+        bottom: 1rem;
         color: var(--background-azul-color-letra);
         display: flex;
         font-size: .6875rem;
         font-weight: 500;
         margin: 0;
-        margin-left: .5rem;
+        margin-left: 1rem;
         position: relative;
 
         &>span {

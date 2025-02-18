@@ -111,6 +111,8 @@ import { SecondFooterSectionComponent } from './layout/footer/components/second-
 import { TimelineModule } from 'primeng/timeline';
 
 import MyPreset from './mytheme';
+import { BasicPageComponent } from './pages/basic-page/basic-page.component';
+import { TitleAndQuillComponent } from './pages/basic-page/components/title-and-quill/title-and-quill.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -172,6 +174,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     ReviewSectionComponent,
     ReviewsComponent,
     SecondFooterSectionComponent,
+    BasicPageComponent,
+    TitleAndQuillComponent,
   ],
   imports: [
     // Angular Modules

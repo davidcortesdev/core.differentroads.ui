@@ -35,7 +35,7 @@ interface MembershipCard {
 export class PointsSectionComponent implements OnInit {
   points: PointsRecord[] = [];
   showTable: boolean = false;
-  totalPoints: number = 140;
+  totalPoints: number = 0;
   membershipCards: MembershipCard[] = [];
   currentTrips: number = 6;
 
@@ -75,7 +75,9 @@ export class PointsSectionComponent implements OnInit {
             image: card['point-image'][0].url,
             benefits: this.sanitizeHtml(card.content),
             unlocked: false,
-            requirement: `${card.minTravels} - ${card.maxTravels} viajes`,
+            requirement: !card.maxTravels
+              ? `${card.minTravels} viajes en adelante`
+              : `${card.minTravels} - ${card.maxTravels} viajes`,
             minTrips: parseInt(card.minTravels, 10),
             maxTrips:
               card.maxTravels === 'N/A'
@@ -94,11 +96,6 @@ export class PointsSectionComponent implements OnInit {
   }
 
   private isCardUnlocked(card: MembershipCard): boolean {
-    if (card.maxTrips) {
-      return (
-        this.currentTrips >= card.minTrips && this.currentTrips <= card.maxTrips
-      );
-    }
     return this.currentTrips >= card.minTrips;
   }
 

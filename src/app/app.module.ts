@@ -110,7 +110,7 @@ import { TagModule } from 'primeng/tag';
 import { SecondFooterSectionComponent } from './layout/footer/components/second-footer-section/second-footer-section.component';
 import { TimelineModule } from 'primeng/timeline';
 
-import MyPreset from '../mytheme';
+import MyPreset from './mytheme';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {

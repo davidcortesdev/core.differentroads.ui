@@ -49,6 +49,10 @@
   --p-menubar-border-color: var(--p-menubar-background);
 }
 
+body{
+  margin: 0;
+}
+
 /* Estilos temporales que formatean los textos que llegan desde el quill js */
 
 .formated-content {

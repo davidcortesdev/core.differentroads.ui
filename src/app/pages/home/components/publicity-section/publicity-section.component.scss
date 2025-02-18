@@ -1,0 +1,76 @@
+:host {
+  .publicitySection {
+    padding: 8rem 6rem;
+    background-color: var(--background-azul);
+
+    p-button {
+      justify-content: center;
+
+      ::ng-deep .p-button {
+        border-color: var(--background-azul-color-letra);
+        color: var(--background-azul-color-letra);
+        font-size: 1rem;
+
+        &:hover {
+          background-color: var(--background-azul);
+        }
+      }
+    }
+
+    &Title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--p-primary-color);
+      text-align: center;
+      font-size: 2.5rem;
+    }
+
+    &Description {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-white);
+      font-weight: 200;
+      text-align: center;
+
+    }
+
+    &Grid {
+      display: grid;
+      grid-template-rows: 1fr;
+      grid-template-columns: repeat(6, 1fr);
+      flex-wrap: wrap;
+      margin-top: 2rem;
+      justify-content: space-evenly;
+      gap: .625rem;
+
+      ::ng-deep .p-button {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 767px) {
+      &Grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 480px) {
+      &Grid {
+        grid-template-columns: repeat(1, 1fr);
+      }
+    }
+
+    &Buttons {
+      display: flex;
+    }
+
+    &Button {
+      display: flex;
+    }
+  }
+
+
+
+}

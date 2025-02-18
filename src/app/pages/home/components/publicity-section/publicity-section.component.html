@@ -1,0 +1,24 @@
+<section class="publicitySection">
+  <p-button class="publicitySectionButton" variant="outlined" [rounded]="true">
+    ¿Por qué somos realmente diferentes al resto?
+  </p-button>
+  <h2 class="publicitySectionTitle">
+    Porque llevamos más de 14 años creando <br />
+    tours desde cero, sin intermediarios.
+  </h2>
+  <span class="publicitySectionDescription">
+    Nuestro equipo de expertos en los destinos se encarga de encontrar lo mejor
+    para asegurarte siempre
+  </span>
+  <div class="publicitySectionGrid">
+    <p-button
+      *ngFor="let item of texto"
+      key="item.id"
+      type="button"
+      variant="outlined"
+      class="publicitySectionButtons"
+    >
+      {{ item.content }}
+    </p-button>
+  </div>
+</section>

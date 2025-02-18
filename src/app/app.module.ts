@@ -232,6 +232,7 @@ export function HttpLoaderFactory(http: HttpClient) {
       theme: {
         preset: Aura,
         options: {
+          darkModeSelector: false || 'none',
           cssLayer: {
             name: 'primeng',
             order: 'tailwind-base, primeng, tailwind-utilities',

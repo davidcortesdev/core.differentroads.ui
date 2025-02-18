@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DataViewModule } from 'primeng/dataview';
 import { ButtonModule } from 'primeng/button';
@@ -25,6 +25,7 @@ interface Budget {
 export class RecentBudgetSectionComponent implements OnInit {
   budgets: Budget[] = [];
   isExpanded: boolean = true;
+  @Input() userEmail!: string;
 
   constructor(private ordersService: OrdersService) {}
 
@@ -39,7 +40,7 @@ export class RecentBudgetSectionComponent implements OnInit {
 
   fetchBudgets() {
     this.ordersService
-      .getOrders({ status: ['Budget'], keyword: 'lmonsalve@different.tours' })
+      .getOrders({ status: ['Budget'], keyword: this.userEmail })
       .subscribe((response) => {
         this.budgets = response.data.map((order) => ({
           id: order.periodID,

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { BookingsService } from '../../../../core/services/bookings.service';
 
 interface TravelHistory {
@@ -19,11 +19,12 @@ interface TravelHistory {
 export class TravelHistorySectionComponent implements OnInit {
   travels: TravelHistory[] = [];
   isExpanded: boolean = true;
+  @Input() userEmail!: string;
 
   constructor(private bookingsService: BookingsService) {}
 
   ngOnInit() {
-    this.fetchTravelHistory('lmonsalve@different.tours');
+    this.fetchTravelHistory(this.userEmail);
   }
 
   fetchTravelHistory(email: string) {

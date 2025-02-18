@@ -26,14 +26,13 @@
     </div>
   </p-card>
 </div>
-
-<div class="mt-4">
+<div class="mt-4 additional-info">
   <p-accordion>
-    <p-accordionTab header="Ver más información">
-      <!-- Add more information content here -->
-    </p-accordionTab>
-    <p-accordionTab header="Información útil destino">
-      <!-- Add destination information content here -->
+    <p-accordionTab
+      *ngFor="let card of tour?.['extra-info-section']?.['info-card']; let i = index"
+      [header]="card.title"
+    >
+      <div [innerHTML]="sanitizeHtml(card.content)"></div>
     </p-accordionTab>
   </p-accordion>
 </div>

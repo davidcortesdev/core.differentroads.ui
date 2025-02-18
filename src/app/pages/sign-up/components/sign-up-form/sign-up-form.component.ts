@@ -12,6 +12,8 @@ import { DividerModule } from 'primeng/divider';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { AuthenticateService } from '../../../../core/services/auth-service.service';
+import { UsersService } from '../../../../core/services/users.service';
 
 @Component({
   selector: 'app-sign-up-form',
@@ -41,7 +43,12 @@ export class SignUpFormComponent {
   registeredUsername: string = '';
   userPassword: string = '';
 
-  constructor(private fb: FormBuilder, private router: Router) {
+  constructor(
+    private fb: FormBuilder,
+    private router: Router,
+    private authService: AuthenticateService,
+    private usersService: UsersService
+  ) {
     this.signUpForm = this.fb.group(
       {
         firstName: ['', [Validators.required]],
@@ -87,15 +94,37 @@ export class SignUpFormComponent {
     this.isLoading = true;
     console.log('Formulario enviado:', this.signUpForm.value);
 
-    // Simula una operación asíncrona (por ejemplo, una llamada a una API)
-    setTimeout(() => {
-      this.isLoading = false;
-      this.isConfirming = true;
-      this.registeredUsername = this.signUpForm.value.email;
-      this.userPassword = this.signUpForm.value.password;
-      this.confirmForm.patchValue({ username: this.registeredUsername });
-      console.log('Registro completado. Esperando confirmación.');
-    }, 2000);
+    this.authService
+      .signUp(this.signUpForm.value.email, this.signUpForm.value.password)
+      .then(() => {
+        this.usersService
+          .createUser({
+            email: this.signUpForm.value.email,
+            names: this.signUpForm.value.firstName,
+            lastname: this.signUpForm.value.lastName,
+            phone: this.signUpForm.value.phone,
+          })
+          .subscribe(
+            () => {
+              this.isLoading = false;
+              this.isConfirming = true;
+              this.registeredUsername = this.signUpForm.value.email;
+              this.userPassword = this.signUpForm.value.password;
+              this.confirmForm.patchValue({
+                username: this.registeredUsername,
+              });
+              console.log('Registro completado. Esperando confirmación.');
+            },
+            (error) => {
+              this.isLoading = false;
+              this.errorMessage = error.message || 'Registro fallido';
+            }
+          );
+      })
+      .catch((error) => {
+        this.isLoading = false;
+        this.errorMessage = error.message || 'Registro fallido';
+      });
   }
 
   onConfirm() {
@@ -108,18 +137,25 @@ export class SignUpFormComponent {
     this.isLoading = true;
     console.log('Código de confirmación enviado:', this.confirmForm.value);
 
-    // Simula una operación asíncrona (por ejemplo, una llamada a una API)
-    setTimeout(() => {
-      this.isLoading = false;
-      this.isRedirecting = true;
-      this.successMessage = 'Verificación exitosa. Iniciando sesión...';
-      console.log('Código de confirmación verificado.');
+    this.authService
+      .confirmSignUp(
+        this.confirmForm.value.username,
+        `${this.confirmForm.value.confirmationCode}`
+      )
+      .then(() => {
+        this.isLoading = false;
+        this.isRedirecting = true;
+        this.successMessage = 'Verificación exitosa. Iniciando sesión...';
+        console.log('Código de confirmación verificado.');
 
-      // Simula el inicio de sesión automático
-      setTimeout(() => {
-        this.router.navigate(['/']);
-      }, 2000);
-    }, 2000);
+        setTimeout(() => {
+          this.router.navigate(['/login']);
+        }, 2000);
+      })
+      .catch((error) => {
+        this.isLoading = false;
+        this.errorMessage = error.message || 'Confirmación fallida';
+      });
   }
 
   getFormErrors(form: FormGroup): { [key: string]: any } {

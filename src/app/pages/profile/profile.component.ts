@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { UsersService } from '../../core/services/users.service';
+import { AuthenticateService } from '../../core/services/auth-service.service'; // Import AuthenticateService
 
 export interface PersonalInfo {
   id?: string;
@@ -26,38 +27,43 @@ export class ProfileComponent implements OnInit {
   personalInfo!: PersonalInfo;
   isEditing: boolean = false;
   avatarUrl: string = 'https://picsum.photos/200';
+  userEmail: string = '';
 
-  constructor(private usersService: UsersService) {}
+  constructor(
+    private usersService: UsersService,
+    private authService: AuthenticateService // Inject AuthenticateService
+  ) {}
 
   ngOnInit() {
-    this.fetchUserData();
+    this.authService.getUserAttributes().subscribe((userAttributes) => {
+      this.userEmail = userAttributes.email;
+      this.fetchUserData(this.userEmail);
+    });
   }
 
-  fetchUserData() {
-    this.usersService
-      .getUserByEmail('lmonsalve@different.tours')
-      .subscribe((user) => {
-        this.personalInfo = {
-          id: user._id,
-          nombre: user.names || '',
-          telefono: user.phone?.toString() || '',
-          email: user.email,
-          dni: user.dni || '',
-          pasaporte: user.passportID || '',
-          fechaExpedicionPasaporte: user.passportIssueDate
-            ? this.formatDate(new Date(user.passportIssueDate))
-            : '',
-          fechaVencimientoPasaporte: user.passportExpirationDate
-            ? this.formatDate(new Date(user.passportExpirationDate))
-            : '',
-          nacionalidad: user?.nationality || '',
-          sexo: user.sex || '',
-          fechaNacimiento: user.birthdate
-            ? this.formatDate(new Date(user.birthdate))
-            : '',
-          avatarUrl: user?.profileImage || this.avatarUrl,
-        };
-      });
+  fetchUserData(email: string) {
+    this.usersService.getUserByEmail(email).subscribe((user) => {
+      this.personalInfo = {
+        id: user._id,
+        nombre: user.names || '',
+        telefono: user.phone?.toString() || '',
+        email: user.email,
+        dni: user.dni || '',
+        pasaporte: user.passportID || '',
+        fechaExpedicionPasaporte: user.passportIssueDate
+          ? this.formatDate(new Date(user.passportIssueDate))
+          : '',
+        fechaVencimientoPasaporte: user.passportExpirationDate
+          ? this.formatDate(new Date(user.passportExpirationDate))
+          : '',
+        nacionalidad: user?.nationality || '',
+        sexo: user.sex || '',
+        fechaNacimiento: user.birthdate
+          ? this.formatDate(new Date(user.birthdate))
+          : '',
+        avatarUrl: user?.profileImage || this.avatarUrl,
+      };
+    });
   }
 
   formatDate(date: Date): string {

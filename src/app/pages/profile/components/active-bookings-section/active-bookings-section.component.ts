@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { BookingsService } from '../../../../core/services/bookings.service';
 
 interface Booking {
@@ -20,11 +20,12 @@ interface Booking {
 export class ActiveBookingsSectionComponent implements OnInit {
   bookings: Booking[] = [];
   isExpanded: boolean = true;
+  @Input() userEmail!: string;
 
   constructor(private bookingsService: BookingsService) {}
 
   ngOnInit() {
-    this.fetchBookingsByEmail('lmonsalve@different.tours');
+    this.fetchBookingsByEmail(this.userEmail);
   }
 
   fetchBookingsByEmail(email: string, page: number = 1) {

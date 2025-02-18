@@ -13,9 +13,18 @@
   </div>
   <div class="column right-column">
     <app-points-section></app-points-section>
-    <app-active-bookings-section></app-active-bookings-section>
-    <app-travel-history-section></app-travel-history-section>
-    <app-recent-budget-section></app-recent-budget-section>
+    <app-active-bookings-section
+      [userEmail]="userEmail"
+      *ngIf="userEmail"
+    ></app-active-bookings-section>
+    <app-travel-history-section
+      [userEmail]="userEmail"
+      *ngIf="userEmail"
+    ></app-travel-history-section>
+    <app-recent-budget-section
+      [userEmail]="userEmail"
+      *ngIf="userEmail"
+    ></app-recent-budget-section>
     <app-review-section></app-review-section>
   </div>
 </div>

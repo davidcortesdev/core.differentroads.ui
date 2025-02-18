@@ -9,7 +9,7 @@
         [dropdown]="true"
         placeholder="Sin vuelos"
         (completeMethod)="filterCities($event)"
-        (onSelect)="filterDeparturesByCity()"
+        (onSelect)="filterDepartures()"
       ></p-autocomplete>
       <span class="price-from">Desde {{ priceFrom }}€</span>
     </div>
@@ -55,7 +55,7 @@
           </div>
 
           <div class="info">
-            <p-tag severity="info" value="Grupo" *ngIf="item.group">
+            <p-tag severity="info" [value]="item.group" *ngIf="item.group">
               <i class="pi pi-users" style="font-size: 0.7rem"></i>
             </p-tag>
             <p-tag

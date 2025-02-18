@@ -24,7 +24,8 @@ import { HomeComponent } from './pages/home/home.component';
 import { HeroSectionComponent } from './pages/home/components/hero-section/hero-section.component';
 import { ToursSectionComponent } from './pages/home/components/tours-section/tours-section.component';
 import { HighlightSectionComponent } from './pages/home/components/highlight-section/highlight-section.component';
-import { FullCardSectionComponent } from './pages/home/components/full-card-section/full-card-section.component';import { CarouselSectionComponent } from './pages/home/components/carousel-section/carousel-section.component';
+import { FullCardSectionComponent } from './pages/home/components/full-card-section/full-card-section.component';
+import { CarouselSectionComponent } from './pages/home/components/carousel-section/carousel-section.component';
 
 // Community Components
 import { CommunitySectionComponent } from './pages/home/components/community-section/community-section.component';
@@ -108,6 +109,8 @@ import { ChipModule } from 'primeng/chip';
 import { TagModule } from 'primeng/tag';
 import { SecondFooterSectionComponent } from './layout/footer/components/second-footer-section/second-footer-section.component';
 import { TimelineModule } from 'primeng/timeline';
+
+import MyPreset from '../mytheme';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -228,7 +231,7 @@ export function HttpLoaderFactory(http: HttpClient) {
   providers: [
     provideAnimationsAsync(),
     provideHttpClient(),
-    providePrimeNG({
+    /*providePrimeNG({
       theme: {
         preset: Aura,
         options: {
@@ -238,6 +241,11 @@ export function HttpLoaderFactory(http: HttpClient) {
             order: 'tailwind-base, primeng, tailwind-utilities',
           },
         },
+      },
+    }),*/
+    providePrimeNG({
+      theme: {
+        preset: MyPreset,
       },
     }),
   ],

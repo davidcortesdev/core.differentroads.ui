@@ -1,0 +1,64 @@
+<div class="tour-card" [ngClass]="{ isLarge: isLargeCard }">
+  <p-card
+    [style]="{
+      'border-radius': '1rem',
+      overflow: 'hidden',
+      border: 'none',
+      boxShadow: 'none'
+    }"
+    [styleClass]="'tour-card-wrapper'"
+  >
+    <ng-template pTemplate="header">
+      <div
+        class="image-container"
+        (click)="handleTourClick()"
+        style="cursor: pointer"
+      >
+        <img [src]="tourData.imageUrl" [alt]="tourData.title" />
+        <div class="overlay">
+          <span class="rating p-button-primary">{{ tourData.rating }} ★</span>
+          <span class="indicator" *ngIf="tourData.isByDr !== undefined">
+            {{ tourData.isByDr ? "By DR" : "Beyond Different" }}
+          </span>
+          <span class="tag" *ngIf="tourData.tag">{{ tourData.tag }}</span>
+          <div class="title-overlay">
+            <p>{{ tourData.description }}</p>
+            <h3>{{ tourData.title }}</h3>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="content">
+      <div class="card-footer">
+        <div class="price-content">
+          <div class="price-section">
+            <div class="price-info">
+              <span class="desde">desde</span>
+              <span class="price">{{ tourData.price }}€</span>
+              <span class="priceScalapay" *ngIf="showScalapayPrice">
+                o desde {{ tourData.price / 4 }}/mes
+              </span>
+            </div>
+            <p-button
+              type="button"
+              label="Ver tour"
+              class="p-button-rounded buttonVertour"
+              [rounded]="true"
+              (onClick)="handleTourClick()"
+            ></p-button>
+          </div>
+          <div class="months">
+            <p-tag
+              *ngFor="let month of tourData.availableMonths"
+              class="month"
+              severity="info"
+            >
+              {{ month }}
+            </p-tag>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+  </p-card>
+</div>

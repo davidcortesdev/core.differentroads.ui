@@ -7,70 +7,15 @@
           *ngFor="let tour of displayedTours"
           class="col-12 sm:col-6 lg:col-3"
         >
-          <div class="tour-card">
-            <p-card
-              [style]="{
-                'border-radius': '1rem',
-                overflow: 'hidden',
-                border: 'none',
-                boxShadow: 'none'
-              }"
-              [styleClass]="'tour-card-wrapper'"
-            >
-              <ng-template pTemplate="header">
-                <div class="image-container">
-                  <img [src]="tour.imageUrl" [alt]="tour.title" />
-                  <div class="overlay">
-                    <span class="rating p-button-primary">
-                      {{ tour.rating }} ★
-                    </span>
-                    <span class="indicator">
-                      {{ tour.isByDr ? 'By DR' : 'Beyond Different' }}
-                    </span>
-                    <span class="tag" *ngIf="tour.tag">{{ tour.tag }}</span>
-                    <div class="title-overlay">
-                      <p>{{ tour.description }}</p>
-                      <h3>{{ tour.title }}</h3>
-                    </div>
-                  </div>
-                </div>
-              </ng-template>
-
-              <ng-template pTemplate="content">
-                <div class="card-footer">
-                  <div class="price-content">
-                    <div class="price-section">
-                      <div class="price-info">
-                        <span class="desde">desde</span>
-                        <span class="price">{{ tour.price }}€</span>
-                      </div>
-                      <p-button
-                        type="button"
-                        label="Ver tour"
-                        class="p-button-rounded buttonVertour"
-                        [rounded]="true"
-                        (onClick)="onTourClick(tour)"
-                      ></p-button>
-                    </div>
-                    <div class="months">
-                      <span
-                        *ngFor="let month of tour.availableMonths"
-                        class="month"
-                        [class.active]="true"
-                      >
-                        {{ month }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </ng-template>
-            </p-card>
-          </div>
+          <app-tour-card
+            [tourData]="tour"
+            [onTourCardClick]="onTourClick"
+          ></app-tour-card>
         </div>
       </div>
     </ng-template>
   </p-dataView>
-    
+
   <div *ngIf="showMoreButton" class="tours-sectionMore">
     <p-button
       label="Ver más"

@@ -1,4 +1,7 @@
 .traveler-selector {
+  border-bottom: .0625rem solid var(--background-azul);
+  padding-bottom: 1rem;
+
   .step {
     display: flex;
     flex-direction: column;
@@ -28,7 +31,7 @@
     .traveler-selector-wrap-item {
       align-items: flex-start;
       display: flex;
-      flex-direction: column;
+      gap: .5rem;
       justify-content: space-between;
 
       ::ng-deep .p-inputtext {
@@ -44,7 +47,7 @@
         }
 
         .traveler-selector-wrap-item-description {
-          font-size: 12px;
+          font-size: .75rem;
           color: #666;
         }
       }

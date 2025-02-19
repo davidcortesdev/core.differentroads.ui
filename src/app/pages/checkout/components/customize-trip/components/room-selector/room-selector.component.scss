@@ -1,0 +1,54 @@
+.room-selector {
+  display: grid;
+  grid-template-rows: 1fr;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+
+  .room-item {
+    align-items: center;
+    display: flex;
+    padding: 2rem 1.5rem;
+    border: 1px solid #ddd;
+    border-radius: .5rem;
+    justify-content: space-between;
+
+    p {
+      margin: 0;
+      font-weight: bold;
+    }
+
+    ::ng-deep .p-inputtext {
+      width: 3.5rem;
+    }
+  }
+}
+
+.messages {
+  margin-top: 16px;
+
+  .info-message,
+  .error-message {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: .625rem;
+    font-size: .6875rem;
+    border-radius: 4px;
+    margin-bottom: 8px;
+
+    p {
+      margin: auto 0;
+    }
+  }
+
+  .info-message {
+    background-color: #e4e4e7;
+    color: var(--background-azul);
+  }
+
+  .error-message {
+    background-color: #ffebee;
+    border: 1px solid #ef9a9a;
+    color: #d32f2f;
+  }
+}

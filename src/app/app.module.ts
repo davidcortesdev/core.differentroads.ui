@@ -33,6 +33,7 @@ import { CommunityHeroComponent } from './pages/home/components/community-sectio
 import { CommunityGalleryComponent } from './pages/home/components/community-section/components/community-gallery/community-gallery.component';
 import { CommunityReviewsComponent } from './pages/home/components/community-section/components/community-reviews/community-reviews.component';
 import { NewsLetterSectionComponent } from './pages/home/components/community-section/components/newsletter-section/newsletter-section.component';
+import { PublicitySectionComponent } from './pages/home/components/publicity-section/publicity-section.component';
 
 // Tour List Component
 import { ToursListComponent } from './pages/home/components/tours-list-section/tours-list-section.component';
@@ -152,6 +153,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     CommunityHeroComponent,
     CommunityGalleryComponent,
     CommunityReviewsComponent,
+    PublicitySectionComponent,
 
     // Tours List
     ToursListComponent,

@@ -99,12 +99,4 @@ export class ToursSectionComponent implements OnInit {
         });
     });
   }
-
-  navigateToTour(tour: ProcessedTour): void {
-    this.router.navigate(['/tour', tour.webSlug]);
-  }
-
-  onTourClick(tour: ProcessedTour): void {
-    this.navigateToTour(tour);
-  }
 }

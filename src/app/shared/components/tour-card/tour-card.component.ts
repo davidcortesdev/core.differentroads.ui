@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-tour-card',
@@ -16,12 +17,14 @@ export class TourCardComponent {
     description: string;
     price: number;
     availableMonths: string[];
+    webSlug: string;
   };
-  @Input() onTourCardClick!: (tour: any) => void;
   @Input() isLargeCard: boolean = false;
   @Input() showScalapayPrice: boolean = false;
 
+  constructor(private router: Router) {}
+
   handleTourClick() {
-    this.onTourCardClick(this.tourData);
+    this.router.navigate(['/tour', this.tourData.webSlug]);
   }
 }

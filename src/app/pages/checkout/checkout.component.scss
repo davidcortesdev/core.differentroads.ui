@@ -1,0 +1,106 @@
+.checkout-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  padding: 2rem;
+  max-width: 1440px;
+  margin: 0 auto;
+
+  .main-content {
+    .steps-container {
+      margin-bottom: 2rem;
+
+      ::ng-deep .p-steps {
+        .p-steps-item {
+          .p-menuitem-link {
+            background: transparent;
+          }
+        }
+      }
+    }
+
+    .steps-content {
+      background: white;
+      border-radius: 8px;
+      padding: 2rem;
+      min-height: 400px;
+      position: relative;
+
+      .step-navigation {
+        position: absolute;
+        bottom: 2rem;
+        right: 2rem;
+        display: flex;
+        gap: 1rem;
+      }
+    }
+  }
+
+  .order-summary {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    height: fit-content;
+    position: sticky;
+    top: 2rem;
+
+    h3 {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #eee;
+    }
+
+    .summary-content {
+      .tour-base-info {
+        margin-bottom: 1.5rem;
+
+        h4 {
+          margin-bottom: 0.5rem;
+        }
+      }
+
+      .selected-items {
+        .item {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 0.5rem;
+        }
+      }
+
+      .flights-info {
+        margin: 1.5rem 0;
+        padding: 1rem 0;
+        border-top: 1px solid #eee;
+        border-bottom: 1px solid #eee;
+      }
+
+      .total-section {
+        margin-top: 1.5rem;
+
+        .subtotal, .total {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 0.5rem;
+        }
+
+        .total {
+          font-weight: bold;
+          font-size: 1.2rem;
+          margin-top: 1rem;
+          padding-top: 1rem;
+          border-top: 1px solid #eee;
+        }
+      }
+    }
+  }
+}
+
+@media screen and (max-width: 1024px) {
+  .checkout-container {
+    grid-template-columns: 1fr;
+    
+    .order-summary {
+      position: static;
+    }
+  }
+}

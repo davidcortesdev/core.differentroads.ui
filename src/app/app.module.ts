@@ -119,6 +119,8 @@ import { PaymentComponent } from './pages/checkout/components/payment/payment.co
 
 import { StepsModule } from 'primeng/steps';
 
+import { StepperModule } from 'primeng/stepper';
+
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -156,7 +158,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     ContentListComponent,
     NotFoundComponent,
 
-    DynamicComponentsComponent,
     PartnersSectionComponent,
     TourComponent,
     TourHeaderComponent,
@@ -193,7 +194,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     FormsModule,
     CommonModule,
     NgComponentOutlet,
-    NewsLetterSectionComponent,
     NewsLetterSectionComponent,
     SignUpComponent,
     MenubarModule,
@@ -232,6 +232,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     TimelineModule,
     ForgetPasswordComponent,
     StepsModule,
+    StepperModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

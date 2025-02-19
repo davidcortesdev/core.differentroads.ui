@@ -67,72 +67,89 @@ export class AuthenticateService {
   }
 
   // Signup
-  signUp(email: string, password: string) {
-    let attributeList = [];
+  signUp(email: string, password: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      let attributeList = [];
 
-    attributeList.push({
-      Name: 'email',
-      Value: email,
-    });
+      attributeList.push({
+        Name: 'email',
+        Value: email,
+      });
 
-    this.userPool.signUp(
-      email,
-      password,
-      attributeList as any,
-      [],
-      (err, result: any) => {
-        if (err) {
-          console.log(err);
-          return;
+      this.userPool.signUp(
+        email,
+        password,
+        attributeList as any,
+        [],
+        (err, result: any) => {
+          if (err) {
+            console.log(err);
+            reject(err);
+            return;
+          }
+          this.cognitoUser = result.user;
+          console.log('user name is ' + this.cognitoUser.getUsername());
+          resolve();
         }
-        this.cognitoUser = result.user;
-        console.log('user name is ' + this.cognitoUser.getUsername());
-      }
-    );
+      );
+    });
   }
 
   // Confirm Signup
-  confirmSignUp(username: string, code: string) {
-    this.cognitoUser = this.getUserData(username);
-    this.cognitoUser.confirmRegistration(
-      code,
-      true,
-      (err: any, result: string) => {
-        if (err) {
-          console.log(err);
-          return;
+  confirmSignUp(username: string, code: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.cognitoUser = this.getUserData(username);
+      this.cognitoUser.confirmRegistration(
+        code,
+        true,
+        (err: any, result: string) => {
+          if (err) {
+            console.log(err);
+            reject(err);
+            return;
+          }
+          console.log('call result: ' + result);
+          resolve();
         }
-        console.log('call result: ' + result);
-      }
-    );
+      );
+    });
   }
 
   // Forgot Password
-  forgotPassword(username: string) {
-    this.cognitoUser = this.getUserData(username);
-    this.cognitoUser.forgotPassword({
-      onSuccess: (result: any) => {
-        console.log('call result: ' + result);
-        return result;
-      },
-      onFailure: (err: any) => {
-        console.log(err);
-      },
+  forgotPassword(username: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.cognitoUser = this.getUserData(username);
+      this.cognitoUser.forgotPassword({
+        onSuccess: (result: any) => {
+          console.log('call result: ' + result);
+          resolve(result);
+        },
+        onFailure: (err: any) => {
+          console.log(err);
+          reject(err);
+        },
+      });
     });
   }
 
   // Confirm Forgot Password
-  confirmForgotPassword(username: string, code: string, newPassword: string) {
-    this.cognitoUser = this.getUserData(username);
-    this.cognitoUser.confirmPassword(code, newPassword, {
-      onSuccess: () => {
-        console.log('Password confirmed');
-        return true;
-      },
-      onFailure: (err: any) => {
-        console.log(err);
-        return false;
-      },
+  confirmForgotPassword(
+    username: string,
+    code: string,
+    newPassword: string
+  ): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      this.cognitoUser = this.getUserData(username);
+      this.cognitoUser.confirmPassword(code, newPassword, {
+        onSuccess: () => {
+          console.log('Password confirmed');
+          resolve(true);
+        },
+        onFailure: (err: any) => {
+          console.log(err);
+          reject(err);
+        },
+      });
     });
   }
 

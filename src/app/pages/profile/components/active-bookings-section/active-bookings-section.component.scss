@@ -1,66 +1,53 @@
-// Variables
-$primary: var(--p-primary-color);
-$bg-azul: var(--background-azul);
-
-// Mixins
-@mixin flex($dir: row, $just: flex-start, $align: stretch, $gap: 0) {
+$p: var(--p-primary-color);
+$a: var(--background-azul);
+@mixin f($d: row, $j: flex-start, $a: stretch, $g: 0) {
     display: flex;
-    flex-direction: $dir;
-    justify-content: $just;
-    align-items: $align;
-    @if $gap != 0 {
-        gap: $gap;
+    flex-direction: $d;
+    justify-content: $j;
+    align-items: $a;
+    @if $g!=0 {
+        gap: $g;
     }
 }
-
-@mixin button-base($fs: 12px, $pad: 6px 12px, $h: 30px) {
-    font-size: $fs;
-    padding: $pad;
+@mixin b($s: 12px, $p: 6px 12px, $h: 30px) {
+    font-size: $s;
+    padding: $p;
     border-radius: 20px;
     height: $h;
-    @include flex(row, center, center);
+    @include f(row, center, center);
 }
-
 .active-bookings {
     margin: 0 15px;
-
-    // Header
     .booking-header {
-        @include flex(row, space-between, center);
+        @include f(row, space-between, center);
         padding: 1rem 0;
         cursor: pointer;
-        background: transparent;
-        border: none;
-
+        background: 0;
+        border: 0;
         span {
             font-size: 18px;
             font-weight: 700;
-            color: $bg-azul;
+            color: $a;
         }
-
         .pi {
             font-size: 12px;
             font-weight: 700;
             &.arrow-down {
-                color: $primary;
+                color: $p;
             }
             &.arrow-up {
-                color: $bg-azul;
+                color: $a;
             }
         }
     }
-
     .booking-content.hidden {
         display: none;
     }
-
-    // Item Container
     .booking-item {
         background: #fff;
         border-radius: 10px;
         margin-bottom: 1rem;
         padding: 0.6rem;
-
         .booking-item-content {
             display: grid;
             grid-template-columns: 200px 1fr 150px 200px;
@@ -68,8 +55,6 @@ $bg-azul: var(--background-azul);
             align-items: start;
         }
     }
-
-    // Image
     .image-container {
         width: 100%;
         max-width: 200px;
@@ -77,7 +62,6 @@ $bg-azul: var(--background-azul);
         overflow: hidden;
         border-radius: 10px;
         background: #ccc;
-
         img {
             width: 100%;
             height: 100%;
@@ -85,47 +69,38 @@ $bg-azul: var(--background-azul);
             border-radius: 10px;
         }
     }
-
-    // Info Sections
     .info-sections {
         margin-top: 5px;
-        @include flex(column, center, stretch, 0.5rem);
-
+        @include f(column, center, stretch, 0.5rem);
         .title-section h2 {
             margin: 0;
             font-size: 16px;
             font-weight: 700;
-            color: $bg-azul;
+            color: $a;
         }
-
         .info-content {
             display: grid;
             gap: 0.25rem;
             margin-right: 80px;
-
             .info-row {
-                @include flex(row, space-between, center);
+                @include f(row, space-between, center);
                 font-size: 12px;
-
                 .label {
                     min-width: 80px;
-                    color: $bg-azul;
+                    color: $a;
                 }
-
                 .value {
                     flex: 0.2;
-                    color: $bg-azul;
+                    color: $a;
                     text-align: right;
                     padding-left: 10px;
                 }
-
                 .budget {
                     font-weight: 700;
                 }
             }
         }
     }
-
     .info-right[_ngcontent-ng-c4187379547] {
         display: flex;
         flex-direction: column;
@@ -134,141 +109,115 @@ $bg-azul: var(--background-azul);
         gap: 2.8rem;
         margin-left: -20px;
     }
-
-    // Right Info
     .info-right {
         margin-top: 5px;
-        @include flex(column, flex-start, stretch, 0.5rem);
-
+        @include f(column, flex-start, stretch, 0.5rem);
         .departure-info {
             span,
             strong {
                 font-size: 16px;
-                color: $bg-azul;
+                color: $a;
             }
             strong {
                 margin-left: 15px;
             }
-
             .state {
                 margin-left: 5px;
-                background-color: $bg-azul;
-                color: white !important;
+                background-color: $a;
+                color: #fff !important;
                 padding: 1px 5px;
                 border-radius: 5px;
                 font-size: 0.7rem !important;
             }
         }
-
         .passenger-price {
             margin-top: 5px;
-            @include flex(row, flex-start, center, 1rem);
-
+            @include f(row, flex-start, center, 1rem);
             i,
             span {
                 font-size: 16px;
-                color: $primary;
+                color: $p;
             }
-
             .num-users {
-                background-color: $primary;
-                color: white;
+                background-color: $p;
+                color: #fff;
                 padding: 1px 6px;
                 border-radius: 5px;
                 font-size: 0.7em;
             }
-
             strong {
                 font-size: 16px;
-                color: $primary;
+                color: $p;
             }
         }
     }
-
-    // Buttons
     .buttons {
         margin-top: -4px;
-        @include flex(column, space-between, stretch, 1.2rem);
+        @include f(column, space-between, stretch, 1.2rem);
         width: 100%;
         height: 100%;
-
         .top-buttons {
-            @include flex(row, flex-start, center, 0.5rem);
+            @include f(row, flex-start, center, 0.5rem);
             width: 100%;
             margin-top: auto;
-
             ::ng-deep .p-button-outlined {
-                border: 1.5px solid $bg-azul;
-                color: $bg-azul;
+                border: 1.5px solid $a;
+                color: $a;
             }
-
             .p-button {
                 flex: 1;
-                @include button-base;
+                @include b;
             }
-
             .sendbtn {
-                background-color: $bg-azul;
-                border: none;
+                background-color: $a;
+                border: 0;
             }
         }
-
         .p-button-rounded {
             width: 100%;
-            @include button-base;
+            @include b;
             margin-top: auto;
         }
     }
-
-    // PrimeNG Components
     ::ng-deep {
         .p-dataview .p-dataview-content {
-            background: transparent;
-            border: none;
+            background: 0;
+            border: 0;
             padding: 0;
             border-radius: 8px;
         }
-
         .p-paginator {
-            background: transparent;
-            border: none;
+            background: 0;
+            border: 0;
             padding: 1rem 0;
-
             .p-paginator-element {
-                color: $bg-azul;
-
+                color: $a;
                 &.p-paginator-page.p-highlight {
-                    background: $primary;
-                    color: white;
+                    background: $p;
+                    color: #fff;
                 }
             }
-        }
-
-        .p-paginator-page.p-paginator-page-selected {
-            background: $primary;
-            color: #fff;
+            .p-paginator-page.p-paginator-page-selected {
+                background: $p;
+                color: #fff;
+            }
         }
     }
 }
-
-// Responsive breakpoints
 @media screen and (max-width: 1366px) {
     .active-bookings .booking-item .booking-item-content {
         grid-template-columns: 150px 1fr 130px 160px;
         gap: 0.75rem;
-
         .image-container {
+            margin-top: 8px;
             max-width: 150px;
             height: 85px;
         }
-
         .info-content {
             margin-right: 20px;
         }
-
         .info-right {
             gap: 0.25rem;
-
             .departure-info span,
             .departure-info strong,
             .passenger-price i,
@@ -277,49 +226,40 @@ $bg-azul: var(--background-azul);
                 font-size: 14px;
             }
         }
-
         .buttons {
             gap: 0.7rem;
-
             .top-buttons {
                 gap: 0.25rem;
                 .p-button {
-                    @include button-base(11px, 4px 8px);
+                    @include b(11px, 4px 8px);
                 }
             }
-
             .p-button-rounded {
-                @include button-base(11px, 4px 8px);
+                @include b(11px, 4px 8px);
             }
         }
     }
 }
-
 @media screen and (max-width: 1024px) and (min-width: 769px) {
     .active-bookings .booking-item {
         padding: 0.75rem;
-
         .booking-item-content {
             grid-template-columns: 120px 1fr 1fr !important;
             grid-template-rows: auto auto;
             gap: 0.75rem !important;
-
             .image-container {
                 max-width: 120px !important;
                 height: 80px !important;
                 grid-row: 1;
                 grid-column: 1;
             }
-
             .info-sections {
                 grid-row: 1;
                 grid-column: 2;
                 padding-right: 0.5rem;
-
                 .title-section h2 {
                     font-size: 14px;
                 }
-
                 .info-content .info-row {
                     font-size: 11px;
                     .label {
@@ -327,12 +267,10 @@ $bg-azul: var(--background-azul);
                     }
                 }
             }
-
             .info-right {
                 grid-row: 1;
                 grid-column: 3;
                 font-size: 14px;
-
                 .departure-info span,
                 .departure-info strong,
                 .passenger-price i,
@@ -340,78 +278,65 @@ $bg-azul: var(--background-azul);
                 .passenger-price strong {
                     font-size: 14px;
                 }
-
                 .passenger-price {
                     margin-top: 10px;
                     gap: 0.5rem;
                 }
             }
-
             .buttons {
                 grid-row: 2;
-                grid-column: 1 / -1;
+                grid-column: 1/-1;
                 margin: 0;
                 flex-direction: column;
                 gap: 0.5rem;
                 padding-top: 0.5rem;
-
                 .top-buttons {
                     gap: 0.25rem;
                     .p-button {
-                        @include button-base(11px, 4px 8px, 28px);
+                        @include b(11px, 4px 8px, 28px);
                     }
                 }
-
                 .p-button-rounded {
-                    @include button-base(11px, 4px 8px, 28px);
+                    @include b(11px, 4px 8px, 28px);
                 }
             }
         }
     }
 }
-
 @media screen and (max-width: 768px) {
     .active-bookings .booking-item {
         padding: 1rem;
-
         .booking-item-content {
             grid-template-columns: 1fr !important;
             gap: 1rem !important;
-
             .image-container {
                 max-width: 100% !important;
                 height: 180px !important;
             }
-
             .info-sections,
             .buttons {
                 margin-top: 8px;
             }
-
             .info-right,
             .info-right[_ngcontent-ng-c3944280590] {
                 margin-top: -5px;
                 margin-left: 0;
                 gap: 1.5rem;
             }
-
             .buttons,
             .buttons[_ngcontent-ng-c3944280590] {
                 margin-top: -10px;
                 gap: 1rem;
             }
-
             .info-right .passenger-price {
                 margin-top: -20px;
                 height: 36px;
             }
-
             .info-sections .info-content .info-row {
                 &:not(.status) {
                     grid-template-columns: 1fr;
                     gap: 0.5rem;
                 }
-
                 &.status {
                     grid-template-columns: auto 1fr;
                     .label {
@@ -420,46 +345,12 @@ $bg-azul: var(--background-azul);
                 }
             }
         }
-
-        ::ng-deep .p-paginator {
-            @include flex(row, center, center, 0.5rem);
-            padding: 0.5rem;
-            flex-wrap: wrap;
-
-            .p-paginator-current {
-                font-size: 11px;
-                width: 100%;
-                text-align: center;
-                margin-bottom: 0.5rem;
-            }
-
-            .p-paginator-pages,
-            .p-paginator-first,
-            .p-paginator-prev,
-            .p-paginator-next,
-            .p-paginator-last,
-            .p-paginator-element {
-                min-width: 1.25rem !important;
-                height: 1.25rem !important;
-                font-size: 10px !important;
-                @include flex(row, center, center);
-                padding: 0.25rem;
-            }
-
-            .p-paginator-pages {
-                gap: 0.25rem;
-                padding: 0.8rem;
-            }
-        }
     }
 }
 @media screen and (max-width: 480px) {
-    .active-bookings .booking-item .booking-item-content {
-        /* Mantener todos los botones con la misma altura */
-        .p-button-rounded {
-            height: 40px !important;
-            line-height: 40px;
-            font-size: 13px;
-        }
+    .active-bookings .booking-item .booking-item-content .p-button-rounded {
+        height: 40px !important;
+        line-height: 40px;
+        font-size: 13px;
     }
 }

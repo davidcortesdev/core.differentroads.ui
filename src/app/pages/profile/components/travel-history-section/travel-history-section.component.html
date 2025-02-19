@@ -1,7 +1,7 @@
 <div class="active-bookings">
     <div class="booking-header" (click)="toggleContent()">
         <span>Historial de viajes</span>
-        <i class="pi" [ngClass]="{'pi-chevron-down arrow-down': !isExpanded, 'pi-chevron-up arrow-up': isExpanded}"></i>
+        <i class="pi" [ngClass]="{'pi-chevron-down down': !isExpanded, 'pi-chevron-up up': isExpanded}"></i>
     </div>
 
     <div class="booking-content" [ngClass]="{'hidden': !isExpanded}">

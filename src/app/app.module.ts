@@ -113,6 +113,10 @@ import { TimelineModule } from 'primeng/timeline';
 import MyPreset from './mytheme';
 import { TourCardComponent } from './shared/components/tour-card/tour-card.component';
 
+import { StepsModule } from 'primeng/steps';
+
+import { StepperModule } from 'primeng/stepper';
+
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -219,6 +223,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     TagModule,
     TimelineModule,
     ForgetPasswordComponent,
+    StepsModule,
+    StepperModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

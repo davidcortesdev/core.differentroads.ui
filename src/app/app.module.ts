@@ -111,6 +111,17 @@ import { SecondFooterSectionComponent } from './layout/footer/components/second-
 import { TimelineModule } from 'primeng/timeline';
 
 import MyPreset from './mytheme';
+import { BasicPageComponent } from './pages/basic-page/basic-page.component';
+import { TitleAndQuillComponent } from './pages/basic-page/components/title-and-quill/title-and-quill.component';
+import { CheckoutComponent } from './pages/checkout/checkout.component';
+import { CustomizeTripComponent } from './pages/checkout/components/customize-trip/customize-trip.component';
+import { FlightsComponent } from './pages/checkout/components/flights/flights.component';
+import { TravelersComponent } from './pages/checkout/components/travelers/travelers.component';
+import { PaymentComponent } from './pages/checkout/components/payment/payment.component';
+
+import { StepsModule } from 'primeng/steps';
+
+import { StepperModule } from 'primeng/stepper';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -149,7 +160,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     ContentListComponent,
     NotFoundComponent,
 
-    DynamicComponentsComponent,
     PartnersSectionComponent,
     TourComponent,
     TourHeaderComponent,
@@ -172,6 +182,13 @@ export function HttpLoaderFactory(http: HttpClient) {
     ReviewSectionComponent,
     ReviewsComponent,
     SecondFooterSectionComponent,
+    BasicPageComponent,
+    TitleAndQuillComponent,
+    CheckoutComponent,
+    CustomizeTripComponent,
+    FlightsComponent,
+    TravelersComponent,
+    PaymentComponent,
   ],
   imports: [
     // Angular Modules
@@ -181,7 +198,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     FormsModule,
     CommonModule,
     NgComponentOutlet,
-    NewsLetterSectionComponent,
     NewsLetterSectionComponent,
     SignUpComponent,
     MenubarModule,
@@ -219,6 +235,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     TagModule,
     TimelineModule,
     ForgetPasswordComponent,
+    StepsModule,
+    StepperModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

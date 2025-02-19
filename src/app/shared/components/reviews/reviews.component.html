@@ -1,7 +1,7 @@
 <div class="reviews-section" role="region" aria-label="Customer Reviews">
   <p-carousel
     [value]="reviews"
-    [numVisible]="3"
+    [numVisible]="6"
     [numScroll]="1"
     [circular]="true"
     [responsiveOptions]="responsiveOptions"
@@ -19,12 +19,19 @@
             <span class="tour-name">{{ review.tour }}</span>
           </ng-template>
           <ng-template #content>
-            <div class="review-text-container" [attr.aria-label]="'Review by ' + review.traveler">
+            <div
+              class="review-text-container"
+              [attr.aria-label]="'Review by ' + review.traveler"
+            >
               {{ review.review }}
             </div>
           </ng-template>
           <ng-template #footer>
-            <span class="date" [attr.aria-label]="'Review date: ' + review.date">{{ review.date }}</span>
+            <span
+              class="date"
+              [attr.aria-label]="'Review date: ' + review.date"
+              >{{ review.date }}</span
+            >
             <p-rating
               [ngModel]="review.score"
               [readonly]="true"

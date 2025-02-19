@@ -27,7 +27,10 @@ jobs:
         run: |
           git fetch origin main
           BEHIND_BY=$(git rev-list --count HEAD..origin/main)
+          echo "Debug - BEHIND_BY value: $BEHIND_BY"
           echo "behind_by=$BEHIND_BY" >> $GITHUB_ENV
+          echo "Debug - GITHUB_ENV content:"
+          cat $GITHUB_ENV
           if [ $BEHIND_BY -gt 0 ]; then
             echo "⚠️ This branch is behind main by $BEHIND_BY commits"
           else
@@ -35,7 +38,7 @@ jobs:
           fi
 
       - name: Add comment to PR if branch is not up to date
-        if: env.behind_by > 0
+        if: env.behind_by > 0 && github.event_name == 'pull_request'
         uses: actions/github-script@v7.0.1
         with:
           script: |
@@ -59,10 +62,9 @@ jobs:
         uses: actions/checkout@v4.2.2
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.2.0
         with:
           node-version: '22'
-          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
@@ -71,7 +73,7 @@ jobs:
         run: npm run build:prod
 
       - name: Add comment to PR if build fails
-        if: failure()
+        if: failure() && github.event_name == 'pull_request'
         uses: actions/github-script@v7.0.1
         with:
           script: |
@@ -83,7 +85,7 @@ jobs:
             })
 
       - name: Add comment to PR if build succeeds
-        if: success()
+        if: success() && github.event_name == 'pull_request'
         uses: actions/github-script@v7.0.1
         with:
           script: |

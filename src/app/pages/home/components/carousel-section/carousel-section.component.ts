@@ -1,11 +1,15 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectorRef } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { BlockType } from '../../../../core/models/blocks/block.model';
+import { FullSliderContent } from '../../../../core/models/blocks/full-slider-content.model';
 
 type Card = {
   id: number;
-  title: string;
+  titlegeneral: string;
+  descriptiongeneral: string;
+  title?: string;
   description: string;
-  image: any;
+  image: { url: string; alt: string };
   link: string;
 };
 
@@ -16,112 +20,105 @@ type Card = {
   styleUrls: ['./carousel-section.component.scss'],
 })
 export class CarouselSectionComponent implements OnInit {
-  @Input() cards: Card[] = [
-    {
-      id: 1,
-      title: 'Naturaleza Salvaje',
-      description: ' Lorem ipsum dolor sit amet consectetur. Tellus eu nisi facilisi elementum adipiscing sit. ',
-      image: { url: 'https://picsum.photos/1000?random=8', alt: 'Placeholder Image 1' },
-      
-      link: '#'
-    },
-    {
-      id: 2,
-      title: 'Card 2',
-      description: 'Naturaleza Salvaje',
-      image: { url: 'https://picsum.photos/1000?random=9', alt: 'Placeholder Image 2' },
-      
-      link: '#'
-    },
-    {
-      id: 3,
-      title: 'Card 3',
-      description: 'Description for card 3',
-      image: { url: 'https://picsum.photos/1000?random=10', alt: 'Placeholder Image 3' },
-      
-      link: '#'
-    },
-    {
-      id: 4,
-      title: 'Card 4',
-      description: 'Description for card 4',
-      image: { url: 'https://picsum.photos/1000?random=11', alt: 'Placeholder Image 4' },
-      
-      link: '#'
-    },
-    {
-      id: 5,
-      title: 'Card 5',
-      description: 'Description for card 5',
-      image: { url: 'https://picsum.photos/1000?random=12', alt: 'Placeholder Image 5' },
-      
-      link: '#'
-    },
-    {
-      id: 6,
-      title: 'Card 6',
-      description: 'Description for card 6',
-      image: { url: 'https://picsum.photos/1000?random=13', alt: 'Placeholder Image 6' },
-      link: '#'
-    },
-    {
-      id: 7,
-      title: 'Card 7',
-      description: 'Description for card 7',
-      image: { url: 'https://picsum.photos/1000?random=14', alt: 'Placeholder Image 7' },
-      link: '#'
-    },
-    {
-      id: 8,
-      title: 'Card 8',
-      description: 'Description for card 8',
-      image: { url: 'https://picsum.photos/1000?random=15', alt: 'Placeholder Image 8' },
-      
-      link: '#'
-    },
-    {
-      id: 9,
-      title: 'Card 9',
-      description: 'Description for card 9',
-      image: { url: 'https://picsum.photos/1000?random=16', alt: 'Placeholder Image 9' },
-      
-      link: '#'
-    },
-    {
-      id: 10,
-      title: 'Card 10',
-      description: 'Description for card 10',
-      image: { url: 'https://picsum.photos/1000?random=17', alt: 'Placeholder Image 10' },
-      link: '#'
-    }
-  ]
-  ;
+  @Input() content!: FullSliderContent;
+  @Input() type!: BlockType;
+  @Input() title!: string;
+  titlegeneral: string = ''; 
+  descriptiongeneral: string = ''; 
+  cards: Card[] = [];
 
   responsiveOptions: { breakpoint: string; numVisible: number; numScroll: number }[] = [];
 
-  constructor(private sanitizer: DomSanitizer) {}
+  constructor(private sanitizer: DomSanitizer, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
-    if (!this.cards) {
-      console.error('Cards input is undefined');
+    if (this.type === BlockType.CardSliderVertical && this.content && this.content['card-list']) {
+      const { titlegeneral, descriptiongeneral } = this.extractTitleAndDescriptionFromHtmlGeneral(this.content.content);
+      this.titlegeneral = titlegeneral; 
+      this.descriptiongeneral = descriptiongeneral; 
+
+      
+      this.cards = this.content['card-list'].map((card: any, index: number) => {
+        if (card.title === undefined) {
+          const { title, description } = this.extractTitleAndDescriptionFromHtml(card.description);
+          return {
+            id: index + 1,
+            titlegeneral: titlegeneral,
+            descriptiongeneral: descriptiongeneral,
+            title: title,
+            description: description,
+            image: {
+              url: card.image[0].url,
+              alt: `Image ${index + 1}`,
+            },
+            link: card.link || '#',
+          };
+        } else {
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = card.description || '';
+          const cleanDescription = tempDiv.textContent || tempDiv.innerText || '';
+          return {
+            id: index + 1,
+            titlegeneral: titlegeneral,
+            descriptiongeneral: descriptiongeneral,
+            title: card.title,
+            description: cleanDescription.trim(),
+            image: {
+              url: card.image[0].url,
+              alt: `Image ${index + 1}`,
+            },
+            link: card.link || '#',
+          };
+        }
+      });
+    } else {
+      console.error('No cards received or cards array is empty');
     }
+
     this.responsiveOptions = [
       {
         breakpoint: '1024px',
         numVisible: 3,
-        numScroll: 1
+        numScroll: 1,
       },
       {
         breakpoint: '768px',
         numVisible: 2,
-        numScroll: 1
+        numScroll: 1,
       },
       {
         breakpoint: '560px',
         numVisible: 1,
-        numScroll: 1
-      }
+        numScroll: 1,
+      },
     ];
+  }
+
+  extractTitleAndDescriptionFromHtml(html: string): { title: string, description: string } {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+
+    const titleElement = div.querySelector('em');
+    const descriptionElement = div.querySelector('span');
+
+    const title = titleElement?.textContent || '';
+    const description = descriptionElement?.textContent || '';
+
+    return { title, description };
+  }
+
+  extractTitleAndDescriptionFromHtmlGeneral(html: string): { titlegeneral: string, descriptiongeneral: string } {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+
+    const titleElement = div.querySelector('strong');
+    const titlegeneral = titleElement?.textContent || '';
+
+
+    const descriptionElement = div.querySelector('span');
+    const descriptiongeneral = descriptionElement?.textContent || '';
+
+    return { titlegeneral, descriptiongeneral };
   }
 
   getSanitizedDescription(description: string): SafeHtml {

@@ -33,7 +33,7 @@ export class ToursSectionComponent implements OnInit {
       numScroll: 1,
     },
     {
-      breakpoint: '768px',
+      breakpoint: '560px',
       numVisible: 1,
       numScroll: 1,
     },

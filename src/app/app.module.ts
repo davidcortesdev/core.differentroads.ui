@@ -156,7 +156,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     ContentListComponent,
     NotFoundComponent,
 
-    DynamicComponentsComponent,
     PartnersSectionComponent,
     TourComponent,
     TourHeaderComponent,
@@ -193,7 +192,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     FormsModule,
     CommonModule,
     NgComponentOutlet,
-    NewsLetterSectionComponent,
     NewsLetterSectionComponent,
     SignUpComponent,
     MenubarModule,

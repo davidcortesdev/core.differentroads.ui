@@ -28,7 +28,7 @@ const routes: Routes = [
       { path: 'sign-up', component: SignUpComponent },
       { path: 'forget-password', component: ForgetPasswordComponent },
       { path: 'tour/:slug', component: TourComponent },
-      { path: ':slug', component: BasicPageComponent },
+      { path: 'pages/:slug', component: BasicPageComponent },
       { path: 'checkout', component: CheckoutComponent },
       { path: '**', component: NotFoundComponent }, // This will catch all unmatched routes
     ],

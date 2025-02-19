@@ -122,6 +122,7 @@ import { PaymentComponent } from './pages/checkout/components/payment/payment.co
 import { StepsModule } from 'primeng/steps';
 
 import { StepperModule } from 'primeng/stepper';
+import { OptionalActivitiesComponent } from './pages/checkout/components/customize-trip/components/optional-activities/optional-activities.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -189,6 +190,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     FlightsComponent,
     TravelersComponent,
     PaymentComponent,
+    OptionalActivitiesComponent,
   ],
   imports: [
     // Angular Modules

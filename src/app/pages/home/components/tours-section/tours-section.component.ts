@@ -18,7 +18,12 @@ export class ToursSectionComponent implements OnInit {
 
   responsiveOptions = [
     {
-      breakpoint: '1400px',
+      breakpoint: '2100px',
+      numVisible: 4,
+      numScroll: 1,
+    },
+    {
+      breakpoint: '1700px',
       numVisible: 3,
       numScroll: 1,
     },

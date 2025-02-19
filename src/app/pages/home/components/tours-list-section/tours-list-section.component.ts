@@ -61,7 +61,6 @@ export class ToursListComponent implements OnInit {
     this.tours = [];
 
     tourIds.forEach((id: string): void => {
-
       this.toursService
         .getTourCardData(id)
         .pipe(
@@ -107,14 +106,6 @@ export class ToursListComponent implements OnInit {
     this.currentDisplayedTours += this.maxDisplayedTours;
     this.displayedTours = this.tours.slice(0, this.currentDisplayedTours);
     this.showMoreButton = this.tours.length > this.currentDisplayedTours;
-  }
-
-  navigateToTour(tour: ITour): void {
-    this.router.navigate(['/tour', tour.webSlug]);
-  }
-
-  onTourClick(tour: ITour): void {
-    this.navigateToTour(tour);
   }
 
   navigateToAllContents(type: string) {

@@ -9,7 +9,24 @@ import { MenuItem } from 'primeng/api';
   styleUrls: ['./checkout.component.scss'],
 })
 export class CheckoutComponent implements OnInit {
-  steps: MenuItem[] = [];
+  steps: MenuItem[] = [
+    {
+      label: 'Personaliza tu viaje',
+      routerLink: 'customize',
+    },
+    {
+      label: 'Vuelos',
+      routerLink: 'flights',
+    },
+    {
+      label: 'Viajeros',
+      routerLink: 'travelers',
+    },
+    {
+      label: 'Pago',
+      routerLink: 'payment',
+    },
+  ];
   currentStep: number = 0;
 
   // Tour information

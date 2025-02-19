@@ -1,0 +1,76 @@
+* {
+  color: var(--background-azul);
+}
+
+.title {
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--background-azul);
+  display: inline;
+}
+
+.traveler-form {
+  margin-top: 20px;
+  width: 100%;
+
+  .form-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+
+    .form-column {
+      flex: 1;
+      margin-right: 10px;
+
+      &:last-child {
+        margin-right: 0;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 5px;
+      }
+
+      input {
+        width: 100%;
+      }
+    }
+  }
+}
+::ng-deep {
+  
+.form-field {
+  margin-bottom: 10px;
+
+  label {
+      display: block;
+      color: var(--background-azul);
+  }
+
+  .p-inputtext,
+  .p-dropdown,
+  .p-calendar,
+  .p-autocomplete,
+  .p-inputmask {
+      width: 100%;
+      border: none;
+      border-bottom: 1px solid var(--background-azul);
+      border-radius: 0;
+      background: #f7f6f200;
+  }
+
+  /* .p-dropdown {
+      &:enabled:focus {
+          border-color: var(--background-azul); // Cambia el color del borde cuando se selecciona
+          box-shadow: none;
+      }
+
+      &:enabled:hover {
+          border-color: var(--background-azul);
+      }
+
+      &.p-dropdown-open {
+          border-color: #ced4da; // Cambia el color del borde cuando está abierto
+      }
+  } */
+}
+}

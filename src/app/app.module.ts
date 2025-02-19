@@ -111,6 +111,8 @@ import { SecondFooterSectionComponent } from './layout/footer/components/second-
 import { TimelineModule } from 'primeng/timeline';
 
 import MyPreset from './mytheme';
+import { BasicPageComponent } from './pages/basic-page/basic-page.component';
+import { TitleAndQuillComponent } from './pages/basic-page/components/title-and-quill/title-and-quill.component';
 import { CheckoutComponent } from './pages/checkout/checkout.component';
 import { CustomizeTripComponent } from './pages/checkout/components/customize-trip/customize-trip.component';
 import { FlightsComponent } from './pages/checkout/components/flights/flights.component';
@@ -185,6 +187,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     ReviewSectionComponent,
     ReviewsComponent,
     SecondFooterSectionComponent,
+    BasicPageComponent,
+    TitleAndQuillComponent,
     CheckoutComponent,
     CustomizeTripComponent,
     FlightsComponent,

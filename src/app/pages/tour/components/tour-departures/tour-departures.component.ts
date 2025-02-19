@@ -26,14 +26,14 @@ export type DepartureStatus = 'available' | 'complete';
 export class TourDeparturesComponent implements OnInit {
   departures: Departure[] = [];
   filteredDepartures: Departure[] = [];
-  selectedCity: string = 'Sin vuelos';
+  selectedCity: string = '';
   readonly priceFrom: number = 1500;
   readonly travelers = {
     adults: 1,
     children: 2,
   } as const;
 
-  private cities: string[] = ['Sin vuelos'];
+  private cities: string[] = [];
   filteredCities: string[] = [];
 
   constructor(
@@ -56,23 +56,15 @@ export class TourDeparturesComponent implements OnInit {
     console.log('Adding to cart:', departure);
   }
 
-  // Unified method to filter departures by city or flight
   filterDepartures(): void {
-    if (this.selectedCity === 'Sin vuelos') {
-      this.filteredDepartures = this.departures.filter(
-        (departure) => departure.flights === 'Sin vuelos'
-      );
-    } else {
-      this.filteredDepartures = this.departures.filter(
-        (departure) =>
-          departure.destination === this.selectedCity ||
-          departure.flights === this.selectedCity
-      );
-    }
+    this.filteredDepartures = this.departures.filter(
+      (departure) =>
+        departure.destination === this.selectedCity ||
+        departure.flights === this.selectedCity
+    );
     console.log('filteredDepartures', this.filteredDepartures);
   }
 
-  // Update ngOnInit with more mock data
   ngOnInit() {
     this.route.params.subscribe((params) => {
       const slug = params['slug'];
@@ -84,10 +76,9 @@ export class TourDeparturesComponent implements OnInit {
     // Mock data - Replace with actual API call
     this.departures = [];
 
-    // Initialize filtered departures with "Sin vuelos" options
-    this.filteredDepartures = this.departures.filter(
-      (departure) => departure.flights === 'Sin vuelos'
-    );
+    // Initialize filtered departures with the cheapest option
+    this.filteredDepartures = this.departures;
+    this.setCheapestCityAsDefault();
 
     this.route.params.subscribe((params) => {
       const slug = params['slug'];
@@ -127,21 +118,41 @@ export class TourDeparturesComponent implements OnInit {
         );
 
         this.cities = [
-          'Sin vuelos',
           ...new Set(
             this.departures
               .map((departure) => departure.destination)
-              .filter(
-                (destination): destination is string =>
-                  !!destination && destination !== 'Sin vuelos'
-              )
+              .filter((destination): destination is string => !!destination)
           ),
         ];
 
-        this.filteredDepartures = this.departures.filter(
-          (departure) => departure.flights === 'Sin vuelos'
-        );
+        console.log('departures', this.departures);
+        console.log('cities', this.cities);
+
+        this.setCheapestCityAsDefault();
+        this.filterDepartures();
       });
+  }
+
+  private setCheapestCityAsDefault() {
+    if (this.departures.length > 0) {
+      const cheapestDepartures = this.departures.filter(
+        (departure) =>
+          departure.price === Math.min(...this.departures.map((d) => d.price))
+      );
+      const preferredDeparture = cheapestDepartures.find((departure) =>
+        departure.destination?.toLowerCase().includes('sin')
+      );
+      this.selectedCity =
+        preferredDeparture?.destination ||
+        cheapestDepartures[0].destination ||
+        '';
+
+      // Ensure the cheapest city is the first in the list of cities
+      this.cities = [
+        this.selectedCity,
+        ...this.cities.filter((city) => city !== this.selectedCity),
+      ];
+    }
   }
 
   getUniqueFlights(): string[] {

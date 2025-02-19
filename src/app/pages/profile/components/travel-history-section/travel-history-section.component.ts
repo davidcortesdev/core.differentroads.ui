@@ -8,6 +8,7 @@ interface TravelHistory {
   departure: string;
   origin: string;
   passengers: number;
+  image: string; // Agregada la propiedad image
 }
 
 @Component({
@@ -22,6 +23,11 @@ export class TravelHistorySectionComponent implements OnInit {
   @Input() userEmail!: string;
 
   constructor(private bookingsService: BookingsService) {}
+
+  private getRandomPicsumUrl(): string {
+    const randomId = Math.floor(Math.random() * 1000);
+    return `https://picsum.photos/id/${randomId}/400/300`;
+  }
 
   ngOnInit() {
     this.fetchTravelHistory(this.userEmail);
@@ -42,6 +48,7 @@ export class TravelHistorySectionComponent implements OnInit {
           ).toLocaleDateString(),
           origin: booking?.flights ?? 'MAD',
           passengers: booking?.travelersNumber ?? 0,
+          image: this.getRandomPicsumUrl(), // Agregada la imagen
         }));
       });
   }

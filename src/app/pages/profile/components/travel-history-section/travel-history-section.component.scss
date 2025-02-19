@@ -1,10 +1,32 @@
-.active-bookings {
-    margin-left: 15px;
+// Variables
+$primary: var(--p-primary-color);
+$bg-azul: var(--background-azul);
 
+// Mixins
+@mixin flex($dir: row, $just: flex-start, $align: stretch, $gap: 0) {
+    display: flex;
+    flex-direction: $dir;
+    justify-content: $just;
+    align-items: $align;
+    @if $gap != 0 {
+        gap: $gap;
+    }
+}
+
+@mixin button-base($fs: 12px, $pad: 6px 12px, $h: 30px) {
+    font-size: $fs;
+    padding: $pad;
+    border-radius: 20px;
+    height: $h;
+    @include flex(row, center, center);
+}
+
+.active-bookings {
+    margin: 0 15px;
+
+    // Header
     .booking-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        @include flex(row, space-between, center);
         padding: 1rem 0;
         cursor: pointer;
         background: transparent;
@@ -13,159 +35,454 @@
         span {
             font-size: 18px;
             font-weight: 700;
-            color: var(--background-azul);
+            color: $bg-azul;
         }
 
         .pi {
             font-size: 12px;
             font-weight: 700;
-            color: var(--background-azul);
+            &.arrow-down {
+                color: $primary;
+            }
+            &.arrow-up {
+                color: $bg-azul;
+            }
         }
     }
 
-    .booking-content {
-        &.hidden {
-            display: none;
+    .booking-content.hidden {
+        display: none;
+    }
+
+    // Item Container
+    .booking-item {
+        background: #fff;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        padding: 0.6rem;
+
+        .booking-item-content {
+            display: grid;
+            grid-template-columns: 200px 1fr 150px 200px;
+            gap: 1rem;
+            align-items: start;
         }
     }
 
-    ::ng-deep {
-        .p-datatable {
-            font-size: 12px;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 1rem;
+    // Image
+    .image-container {
+        width: 100%;
+        max-width: 200px;
+        height: 100px;
+        overflow: hidden;
+        border-radius: 10px;
+        background: #ccc;
 
-            .p-datatable-thead > tr > th {
-                text-align: center;
-                background-color: var(--p-primary-color);
-                color: #fff;
-                padding: 0.5rem;
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+    }
+
+    // Info Sections
+    .info-sections {
+        margin-top: 5px;
+        @include flex(column, center, stretch, 0.5rem);
+
+        .title-section h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 700;
+            color: $bg-azul;
+        }
+
+        .info-content {
+            display: grid;
+            gap: 0.25rem;
+            margin-right: 80px;
+
+            .info-row {
+                @include flex(row, space-between, center);
                 font-size: 12px;
-                font-weight: 600;
-                border: none;
-                white-space: nowrap;
-                min-width: 60px;
 
-                &:last-child {
-                    width: 120px;
+                .label {
+                    min-width: 80px;
+                    color: $bg-azul;
+                }
+
+                .value {
+                    flex: 0.2;
+                    color: $bg-azul;
+                    text-align: right;
+                    padding-left: 10px;
+                }
+
+                .budget {
+                    font-weight: 700;
+                }
+            }
+        }
+    }
+
+    .info-right[_ngcontent-ng-c3944280590] {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: stretch;
+        gap: 2.8rem;
+        margin-left: -20px;
+    }
+
+    // Right Info
+    .info-right {
+        gap: 3rem;
+        margin-top: 5px;
+        @include flex(column, flex-start, stretch, 0.5rem);
+
+        .departure-info {
+            span,
+            strong {
+                font-size: 16px;
+                color: $bg-azul;
+            }
+            strong {
+                margin-left: 15px;
+            }
+
+            .state {
+                margin-left: 5px;
+                background-color: $bg-azul;
+                color: white !important;
+                padding: 1px 5px;
+                border-radius: 5px;
+                font-size: 0.7rem !important;
+            }
+        }
+
+        .passenger-price {
+            margin-top: 5px;
+            @include flex(row, flex-start, center, 1rem);
+
+            i,
+            span {
+                font-size: 16px;
+                color: $primary;
+            }
+
+            .num-users {
+                background-color: $primary;
+                color: white;
+                padding: 1px 6px;
+                border-radius: 5px;
+                font-size: 0.7em;
+            }
+
+            strong {
+                font-size: 16px;
+                color: $primary;
+            }
+        }
+    }
+
+    .buttons[_ngcontent-ng-c3944280590] {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: stretch;
+        gap: 1.8rem;
+        width: 100%;
+    }
+
+    // Buttons
+    .buttons {
+        margin-top: 5px;
+        @include flex(column, space-between, stretch, 0.5rem);
+        width: 100%;
+
+        .top-buttons {
+            @include flex(row, flex-start, center, 0.5rem);
+            width: 100%;
+
+            ::ng-deep .p-button-outlined {
+                border: 1.5px solid $bg-azul;
+                color: $bg-azul;
+            }
+
+            .p-button {
+                flex: 1;
+                @include button-base;
+            }
+
+            .sendbtn {
+                background-color: $bg-azul;
+                border: none;
+            }
+        }
+
+        .p-button-rounded {
+            width: 100%;
+            @include button-base;
+        }
+    }
+
+    // PrimeNG Components
+    ::ng-deep {
+        .p-dataview .p-dataview-content {
+            background: transparent;
+            border: none;
+            padding: 0;
+            border-radius: 8px;
+        }
+
+        .p-paginator {
+            background: transparent;
+            border: none;
+            padding: 1rem 0;
+
+            .p-paginator-element {
+                color: $bg-azul;
+
+                &.p-paginator-page.p-highlight {
+                    background: $primary;
+                    color: white;
+                }
+            }
+        }
+
+        .p-paginator-page.p-paginator-page-selected {
+            background: $primary;
+            color: #fff;
+        }
+    }
+}
+
+// Responsive breakpoints
+@media screen and (max-width: 1366px) {
+    .active-bookings .booking-item .booking-item-content {
+        grid-template-columns: 150px 1fr 130px 160px;
+        gap: 0.75rem;
+
+        .image-container {
+            max-width: 150px;
+            height: 85px;
+        }
+
+        .info-content {
+            margin-right: 20px;
+        }
+
+        .info-right,
+        .info-right[_ngcontent-ng-c3944280590] {
+            gap: 2.5rem;
+            margin-left: -20px;
+
+            .departure-info span,
+            .departure-info strong,
+            .passenger-price i,
+            .passenger-price span,
+            .passenger-price strong {
+                font-size: 14px;
+            }
+        }
+
+        .buttons,
+        .buttons[_ngcontent-ng-c3944280590] {
+            gap: 1.5rem;
+
+            .top-buttons {
+                gap: 0.25rem;
+                .p-button {
+                    @include button-base(11px, 4px 8px);
                 }
             }
 
-            .p-datatable-tbody > tr > td {
-                text-align: center;
-                padding: 0.5rem;
-                font-size: 12px;
-                border: none;
-                border-bottom: 1px solid var(--background-azul);
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
+            .p-button-rounded {
+                @include button-base(11px, 4px 8px);
+            }
+        }
+    }
+}
 
-                .p-button {
-                    font-size: 12px;
-                    padding: 0.5rem 1rem;
-                    background: var(--p-primary-color);
-                    border: none;
+@media screen and (max-width: 1024px) and (min-width: 769px) {
+    .active-bookings .booking-item {
+        padding: 0.75rem;
 
-                    &:hover {
-                        background: var(--p-primary-color);
-                        opacity: 0.9;
+        .booking-item-content {
+            grid-template-columns: 120px 1fr 1fr !important;
+            grid-template-rows: auto auto;
+            gap: 0.75rem !important;
+            align-items: center; /* Alineación vertical centrada */
+
+            .image-container {
+                max-width: 120px !important;
+                height: 80px !important;
+                grid-row: 1;
+                grid-column: 1;
+                margin: auto 0; /* Centrado vertical */
+            }
+
+            .info-sections {
+                grid-row: 1;
+                grid-column: 2;
+                padding-right: 0.5rem;
+
+                .title-section h2 {
+                    font-size: 14px;
+                }
+
+                .info-content .info-row {
+                    font-size: 11px;
+                    .label {
+                        min-width: 70px;
                     }
                 }
             }
 
-            .booking-column {
-                color: var(--background-azul);
-                font-weight: 600;
-            }
+            .info-right,
+            .info-right[_ngcontent-ng-c3944280590] {
+                gap: 2.4rem;
+                margin-left: -25px; /* Ajustado más a la izquierda */
+                grid-row: 1;
+                grid-column: 3;
+                font-size: 14px;
 
-            .p-paginator {
-                font-size: 12px;
-                padding: 0.5rem;
-                background: white;
-                border: none;
-
-                .p-paginator-current {
-                    color: var(--background-azul);
-                    font-weight: 600;
+                .departure-info span,
+                .departure-info strong,
+                .passenger-price i,
+                .passenger-price span,
+                .passenger-price strong {
+                    font-size: 14px;
                 }
 
-                .p-paginator-page.p-paginator-page-selected {
-                    background: var(--p-primary-color);
-                    color: #fff;
+                .passenger-price {
+                    margin-top: 10px;
+                    gap: 0.5rem;
+                    height: 30px;
+                }
+            }
+
+            .buttons,
+            .buttons[_ngcontent-ng-c3944280590] {
+                grid-row: 2;
+                grid-column: 1 / -1;
+                margin: 0;
+                flex-direction: column;
+                gap: 1.2rem;
+                padding-top: 0.5rem;
+
+                .top-buttons {
+                    gap: 0.25rem;
+                    .p-button {
+                        @include button-base(11px, 4px 8px, 28px);
+                    }
+                }
+
+                .p-button-rounded {
+                    @include button-base(11px, 4px 8px, 28px);
                 }
             }
         }
     }
 }
 
+/* Específico para tablets más pequeñas */
+@media screen and (max-width: 800px) and (min-width: 769px) {
+    .active-bookings .booking-item .booking-item-content {
+        .info-right,
+        .info-right[_ngcontent-ng-c3944280590] {
+            gap: 2rem;
+            margin-left: -30px; /* Ajustado aún más a la izquierda */
+        }
+
+        .image-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
+}
+
 @media screen and (max-width: 768px) {
-    .active-bookings {
-        margin-left: 0.5rem;
-        margin-right: 0.5rem;
+    .active-bookings .booking-item {
+        padding: 1rem;
 
-        ::ng-deep {
-            .p-datatable {
-                .p-datatable-thead > tr > th {
-                    min-width: 45px;
-                    padding: 0.5rem 0.15rem;
+        .booking-item-content {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
 
-                    &:last-child {
-                        width: 100px;
-                    }
-                }
+            .image-container {
+                max-width: 100% !important;
+                height: 180px !important;
+            }
 
-                .p-datatable-tbody > tr > td {
-                    padding: 0.5rem 0.15rem;
+            .info-sections,
+            .buttons {
+                margin-top: 8px;
+            }
 
-                    .p-button {
-                        padding: 0.4rem 0.8rem;
-                    }
-                }
+            .info-right,
+            .info-right[_ngcontent-ng-c3944280590] {
+                margin-top: -5px;
+                margin-left: 0;
+                gap: 1.5rem;
+            }
 
-                .p-paginator {
-                    display: flex;
-                    flex-direction: row;
-                    justify-content: center;
-                    align-items: center;
+            .buttons,
+            .buttons[_ngcontent-ng-c3944280590] {
+                margin-top: -10px;
+                gap: 1rem;
+            }
+
+            .info-right .passenger-price {
+                margin-top: -20px;
+                height: 36px;
+            }
+
+            .info-sections .info-content .info-row {
+                &:not(.status) {
+                    grid-template-columns: 1fr;
                     gap: 0.5rem;
-                    padding: 0.8rem;
-                    flex-wrap: wrap;
+                }
 
-                    .p-paginator-current {
-                        font-size: 11px;
-                        width: 100%;
-                        text-align: center;
-                        margin-bottom: 0.5rem;
-                    }
-
-                    .p-paginator-pages,
-                    .p-paginator-first,
-                    .p-paginator-prev,
-                    .p-paginator-next,
-                    .p-paginator-last {
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        padding: 0.25rem;
-                        min-width: 1.25rem;
-                        height: 1.25rem;
-                        font-size: 10px;
-                    }
-
-                    .p-paginator-element {
-                        min-width: 1.25rem !important;
-                        height: 1.25rem !important;
-                        font-size: 10px !important;
-                    }
-
-                    .p-paginator-pages {
-                        display: flex;
-                        gap: 0.25rem;
+                &.status {
+                    grid-template-columns: auto 1fr;
+                    .label {
+                        width: auto;
                     }
                 }
+            }
+        }
+
+        ::ng-deep .p-paginator {
+            @include flex(row, center, center, 0.5rem);
+            padding: 0.5rem;
+            flex-wrap: wrap;
+
+            .p-paginator-current {
+                font-size: 11px;
+                width: 100%;
+                text-align: center;
+                margin-bottom: 0.5rem;
+            }
+
+            .p-paginator-pages,
+            .p-paginator-first,
+            .p-paginator-prev,
+            .p-paginator-next,
+            .p-paginator-last,
+            .p-paginator-element {
+                min-width: 1.25rem !important;
+                height: 1.25rem !important;
+                font-size: 10px !important;
+                @include flex(row, center, center);
+                padding: 0.25rem;
+            }
+
+            .p-paginator-pages {
+                gap: 0.25rem;
+                padding: 0.8rem;
             }
         }
     }

@@ -1,8 +1,25 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { DomSanitizer } from '@angular/platform-browser';
-import { PersonalInfo } from '../../profile.component';
 import { UsersService } from '../../../../core/services/users.service';
+
+export interface PersonalInfo {
+  id?: string;
+  nombre?: string;
+  avatarUrl?: string;
+  email?: string;
+  telefono?: string;
+  dni?: string;
+  nacionalidad?: string;
+  pasaporte?: string;
+  fechaExpedicionPasaporte?: string;
+  fechaVencimientoPasaporte?: string;
+  sexo?: string;
+  fechaNacimiento?: string;
+  ciudad?: string;
+  codigoPostal?: string;
+  fechaExpedicionDni?: string;
+  fechaCaducidadDni?: string;
+  paisExpedicion?: string;
+}
 
 @Component({
   selector: 'app-update-profile-section',
@@ -34,6 +51,7 @@ export class UpdateProfileSectionComponent implements OnInit {
       this.personalInfo = {
         nombre: '',
         avatarUrl: 'https://picsum.photos/200',
+        email: '',
         telefono: '',
         dni: '',
         nacionalidad: '',
@@ -42,6 +60,11 @@ export class UpdateProfileSectionComponent implements OnInit {
         fechaVencimientoPasaporte: '',
         sexo: '',
         fechaNacimiento: '',
+        ciudad: '',
+        codigoPostal: '',
+        fechaExpedicionDni: '',
+        fechaCaducidadDni: '',
+        paisExpedicion: '',
       };
     }
   }
@@ -101,6 +124,12 @@ export class UpdateProfileSectionComponent implements OnInit {
     this.personalInfo.telefono = input.value;
   }
 
+  onDniInput(event: any) {
+    const input = event.target as HTMLInputElement;
+    input.value = input.value.toUpperCase().slice(0, 9);
+    this.personalInfo.dni = input.value;
+  }
+
   onNacionalidadInput(event: any) {
     const input = event.target as HTMLInputElement;
     input.value = input.value.slice(0, 50);
@@ -111,6 +140,24 @@ export class UpdateProfileSectionComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     input.value = input.value.toUpperCase().slice(0, 10);
     this.personalInfo.pasaporte = input.value;
+  }
+
+  onCiudadInput(event: any) {
+    const input = event.target as HTMLInputElement;
+    input.value = input.value.slice(0, 50);
+    this.personalInfo.ciudad = input.value;
+  }
+
+  onCodigoPostalInput(event: any) {
+    const input = event.target as HTMLInputElement;
+    input.value = input.value.replace(/\D/g, '').slice(0, 5);
+    this.personalInfo.codigoPostal = input.value;
+  }
+
+  onPaisExpedicionInput(event: any) {
+    const input = event.target as HTMLInputElement;
+    input.value = input.value.slice(0, 50);
+    this.personalInfo.paisExpedicion = input.value;
   }
 
   onSubmit() {
@@ -124,27 +171,32 @@ export class UpdateProfileSectionComponent implements OnInit {
       sex: this.personalInfo.sexo,
       birthdate: this.personalInfo.fechaNacimiento,
       dni: this.personalInfo.dni,
+      dniIssueDate: this.personalInfo.fechaExpedicionDni,
+      dniExpirationDate: this.personalInfo.fechaCaducidadDni,
       nationality: this.personalInfo.nacionalidad,
+      city: this.personalInfo.ciudad,
+      postalCode: this.personalInfo.codigoPostal,
+      passportID: this.personalInfo.pasaporte,
+      passportIssuingCountry: this.personalInfo.paisExpedicion,
       passportIssueDate: this.personalInfo.fechaExpedicionPasaporte,
       passportExpirationDate: this.personalInfo.fechaVencimientoPasaporte,
       profileImage:
-        this.uploadedFiles?.length === 0
+        this.uploadedFiles?.length > 0
           ? this.uploadedFiles[0]
           : this.personalInfo.avatarUrl,
-      passportID: this.personalInfo.pasaporte,
     };
 
     this.usersService
       .updateUser(this.personalInfo.id!, transformedPersonalInfo)
-      .subscribe(
-        (updatedUser) => {
+      .subscribe({
+        next: (updatedUser) => {
           console.log('Información actualizada:', updatedUser);
           this.toggleEdit();
         },
-        (error) => {
+        error: (error) => {
           console.error('Error al actualizar la información:', error);
-        }
-      );
+        },
+      });
   }
 
   clearFiles() {

@@ -21,9 +21,11 @@ interface MembershipCard {
   image: string;
   benefits: any;
   unlocked: boolean;
+  isCurrent: boolean;
   requirement: string;
   minTrips: number;
   maxTrips?: number;
+  remainingTrips?: number;
 }
 
 @Component({
@@ -37,18 +39,22 @@ export class PointsSectionComponent implements OnInit {
   showTable: boolean = false;
   totalPoints: number = 0;
   membershipCards: MembershipCard[] = [];
-  currentTrips: number = 6;
+  currentTrips: number = 4;
 
   constructor(
     private pointsService: PointsService,
     private generalConfigService: GeneralConfigService,
     private sanitizer: DomSanitizer
   ) {
-    // Inject PointsService
     this.points = [];
   }
 
   ngOnInit(): void {
+    this.loadPoints();
+    this.loadMembershipCards();
+  }
+
+  private loadPoints(): void {
     this.pointsService
       .getPointsByDni('12345678A', { page: 1, limit: 1000 })
       .subscribe((response: any) => {
@@ -61,33 +67,63 @@ export class PointsSectionComponent implements OnInit {
         }));
         this.totalPoints = response.totalpoints;
       });
-    this.loadMembershipCards();
   }
 
   private loadMembershipCards(): void {
+    const cardConfigs = [
+      {
+        title: 'Globetrotter',
+        minTrips: 1,
+        maxTrips: 3,
+        type: 'Viajero',
+      },
+      {
+        title: 'Voyager',
+        minTrips: 3,
+        maxTrips: 6,
+        type: 'Viajero',
+      },
+      {
+        title: 'Nomad',
+        minTrips: 6,
+        maxTrips: undefined,
+        type: 'Viajero',
+      },
+    ];
+
     this.generalConfigService
       .getPointsSection()
       .subscribe((response: PointsSection) => {
-        this.membershipCards = response['points-cards']
-          .map((card: PointsCard) => ({
-            type: 'Viajero',
-            title: card.name,
-            image: card['point-image'][0].url,
-            benefits: this.sanitizeHtml(card.content),
-            unlocked: false,
-            requirement: !card.maxTravels
-              ? `${card.minTravels} viajes en adelante`
-              : `${card.minTravels} - ${card.maxTravels} viajes`,
-            minTrips: parseInt(card.minTravels, 10),
-            maxTrips:
-              card.maxTravels === 'N/A'
-                ? undefined
-                : parseInt(card.maxTravels as string, 10),
-          }))
-          .map((card) => ({
-            ...card,
-            unlocked: this.isCardUnlocked(card),
-          }));
+        this.membershipCards = cardConfigs
+          .map((config) => {
+            const card = response['points-cards'].find(
+              (c) => c.name === config.title
+            );
+            if (!card) return null;
+
+            const unlocked = this.currentTrips >= config.minTrips;
+            const isCurrent =
+              unlocked &&
+              (config.maxTrips ? this.currentTrips < config.maxTrips : true);
+
+            return {
+              type: config.type,
+              title: config.title,
+              image: card['point-image'][0].url,
+              benefits: this.sanitizeHtml(card.content),
+              unlocked: unlocked,
+              isCurrent: isCurrent,
+              requirement: !config.maxTrips
+                ? `${config.minTrips} viajes en adelante`
+                : `${config.minTrips} - ${config.maxTrips} viajes`,
+              minTrips: config.minTrips,
+              maxTrips: config.maxTrips,
+              remainingTrips: unlocked
+                ? 0
+                : config.minTrips - this.currentTrips,
+            };
+          })
+          .filter((card) => card !== null);
       });
   }
 
@@ -95,8 +131,17 @@ export class PointsSectionComponent implements OnInit {
     return this.sanitizer.bypassSecurityTrustHtml(content);
   }
 
-  private isCardUnlocked(card: MembershipCard): boolean {
-    return this.currentTrips >= card.minTrips;
+  getCardClass(card: MembershipCard): string {
+    if (!card.unlocked) return 'locked-card';
+    return card.isCurrent ? 'current-card' : 'unlocked-card';
+  }
+
+  getRemainingTripsText(card: MembershipCard): string {
+    if (card.unlocked) {
+      return 'Desbloqueado';
+    }
+    const requiredTrips = card.minTrips;
+    return `${this.currentTrips} de ${requiredTrips} viajes completados`;
   }
 
   toggleTable(): void {

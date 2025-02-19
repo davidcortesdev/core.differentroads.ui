@@ -1,46 +1,75 @@
 <div class="active-bookings">
     <div class="booking-header" (click)="toggleContent()">
         <span>Historial de viajes</span>
-        <i class="pi" [ngClass]="{'pi-chevron-down': !isExpanded, 'pi-chevron-up': isExpanded}"></i>
+        <i class="pi" [ngClass]="{'pi-chevron-down arrow-down': !isExpanded, 'pi-chevron-up arrow-up': isExpanded}"></i>
     </div>
 
     <div class="booking-content" [ngClass]="{'hidden': !isExpanded}">
-        <p-table
+        <p-dataView
+            #dv
             [value]="travels"
-            [paginator]="true"
             [rows]="5"
-            [showCurrentPageReport]="true"
-            [tableStyle]="{ 'min-width': '50rem' }"
-            styleClass="p-datatable-striped"
-            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros">
-            <ng-template pTemplate="header">
-                <tr>
-                    <th>Reserva</th>
-                    <th>Fecha</th>
-                    <th>Destino</th>
-                    <th>Salida</th>
-                    <th>Origen</th>
-                    <th>Pax</th>
-                    <th></th>
-                </tr>
+            [paginator]="true"
+            styleClass="transparent-dataview"
+        >
+            <ng-template #list let-travels>
+                <div class="booking-list">
+                    <div class="booking-item" *ngFor="let travel of travels">
+                        <div class="booking-item-content">
+                            <div class="image-container">
+                                <img [src]="travel.image" alt="Travel image" />
+                            </div>
+
+                            <div class="info-sections">
+                                <div class="title-section">
+                                    <h2>{{ travel.destination }}</h2>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-row">
+                                        <span class="label">Nº Reserva:</span>
+                                        <span class="value budget">{{ travel.bookingNumber }}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="label">Fecha:</span>
+                                        <span class="value">{{ travel.date | date : "dd/MM/yyyy" }}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="label">Origen:</span>
+                                        <span class="value">{{ travel.origin }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="info-right">
+                                <div class="departure-info">
+                                    <span>Salida: </span>
+                                    <strong>{{ travel.departure }}</strong>
+                                </div>
+                                <div class="passenger-price">
+                                    <span class="num-users">{{ travel.passengers }}</span>
+                                    <i class="pi pi-users"></i>
+                                </div>
+                            </div>
+
+                            <div class="buttons">
+                                <div class="top-buttons">
+                                    <button
+                                        pButton
+                                        label="Descargar"
+                                        class="p-button-outlined"
+                                    ></button>
+                                    <button pButton label="Enviar" class="sendbtn"></button>
+                                </div>
+                                <button
+                                    pButton
+                                    label="Ver reserva"
+                                    class="p-button-rounded"
+                                ></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </ng-template>
-            <ng-template pTemplate="body" let-travel>
-                <tr>
-                    <td class="booking-column">{{ travel.bookingNumber }}</td>
-                    <td>{{ travel.date }}</td>
-                    <td>{{ travel.destination }}</td>
-                    <td>{{ travel.departure }}</td>
-                    <td>{{ travel.origin }}</td>
-                    <td>{{ travel.passengers }}</td>
-                    <td>
-                        <button 
-                            pButton 
-                            label="Ver reserva" 
-                            class="p-button-rounded">
-                        </button>
-                    </td>
-                </tr>
-            </ng-template>
-        </p-table>
+        </p-dataView>
     </div>
 </div>

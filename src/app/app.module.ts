@@ -51,6 +51,7 @@ import { EditorModule } from 'primeng/editor';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { IftaLabelModule } from 'primeng/iftalabel';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { FileUploadModule } from 'primeng/fileupload';
 import { ImageModule } from 'primeng/image';
@@ -123,6 +124,7 @@ import { StepsModule } from 'primeng/steps';
 
 import { StepperModule } from 'primeng/stepper';
 import { OptionalActivitiesComponent } from './pages/checkout/components/customize-trip/components/optional-activities/optional-activities.component';
+import { TravelerSelectorComponent } from './pages/checkout/components/customize-trip/components/traveler-selector/traveler-selector.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -191,6 +193,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     TravelersComponent,
     PaymentComponent,
     OptionalActivitiesComponent,
+    TravelerSelectorComponent,
   ],
   imports: [
     // Angular Modules
@@ -207,6 +210,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     AvatarModule,
     AvatarGroupModule,
     InputTextModule,
+    InputNumberModule,
     AutoCompleteModule,
     CalendarModule,
     ButtonModule,

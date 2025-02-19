@@ -1,0 +1,69 @@
+.traveler-selector {
+  .step {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+
+    .step-title {
+      width: fit-content;
+      height: fit-content;
+      border-bottom: 1px solid var(--background-azul);
+      font-size: 1rem;
+      font-weight: 500;
+      padding-bottom: 0.5rem;
+      padding-top: 0.5rem;
+    }
+  }
+
+  .traveler-selector-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 16px;
+  }
+
+  .traveler-selector-wrap {
+    display: flex;
+    gap: 1rem;
+
+    .traveler-selector-wrap-item {
+      align-items: flex-start;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+
+      ::ng-deep .p-inputtext {
+        width: 3.5rem;
+      }
+
+      .traveler-selector-wrap-item-group {
+        display: flex;
+        flex-direction: column;
+
+        .traveler-selector-wrap-item-name {
+          font-weight: bold;
+        }
+
+        .traveler-selector-wrap-item-description {
+          font-size: 12px;
+          color: #666;
+        }
+      }
+    }
+  }
+
+  .traveler-selector-cradle {
+    display: flex;
+    align-items: center;
+    margin-top: 16px;
+
+    .traveler-selector-cradle-label {
+      margin-left: 8px;
+    }
+  }
+
+  .booking-info-label {
+    margin-top: 16px;
+    color: #ff0000;
+    font-size: 14px;
+  }
+}

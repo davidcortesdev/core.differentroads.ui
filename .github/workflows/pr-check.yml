@@ -27,7 +27,10 @@ jobs:
         run: |
           git fetch origin main
           BEHIND_BY=$(git rev-list --count HEAD..origin/main)
+          echo "Debug - BEHIND_BY value: $BEHIND_BY"
           echo "behind_by=$BEHIND_BY" >> $GITHUB_ENV
+          echo "Debug - GITHUB_ENV content:"
+          cat $GITHUB_ENV
           if [ $BEHIND_BY -gt 0 ]; then
             echo "⚠️ This branch is behind main by $BEHIND_BY commits"
           else

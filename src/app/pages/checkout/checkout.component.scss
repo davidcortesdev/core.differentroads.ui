@@ -10,10 +10,16 @@
     .steps-container {
       margin-bottom: 2rem;
 
-      ::ng-deep .p-steps {
-        .p-steps-item {
-          .p-menuitem-link {
-            background: transparent;
+      ::ng-deep .p-stepper {
+        .p-stepper-header {
+          justify-content: space-between;
+          
+          .p-stepper-item {
+            flex: 1;
+            
+            &:before {
+              border-top: 2px solid #dee2e6;
+            }
           }
         }
       }

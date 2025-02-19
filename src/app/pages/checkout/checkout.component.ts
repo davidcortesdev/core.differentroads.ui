@@ -1,33 +1,13 @@
 import { Component, OnInit } from '@angular/core';
-import { MenuItem } from 'primeng/api';
 
 @Component({
   selector: 'app-checkout',
   standalone: false,
-
   templateUrl: './checkout.component.html',
   styleUrls: ['./checkout.component.scss'],
 })
 export class CheckoutComponent implements OnInit {
-  steps: MenuItem[] = [
-    {
-      label: 'Personaliza tu viaje',
-      routerLink: 'customize',
-    },
-    {
-      label: 'Vuelos',
-      routerLink: 'flights',
-    },
-    {
-      label: 'Viajeros',
-      routerLink: 'travelers',
-    },
-    {
-      label: 'Pago',
-      routerLink: 'payment',
-    },
-  ];
-  currentStep: number = 0;
+  currentStep: number = 1;
 
   // Tour information
   tourName: string = '';
@@ -42,44 +22,9 @@ export class CheckoutComponent implements OnInit {
 
   constructor() {}
 
-  ngOnInit() {
-    this.initializeSteps();
-  }
+  ngOnInit() {}
 
-  private initializeSteps() {
-    this.steps = [
-      {
-        label: 'Personaliza tu viaje',
-        routerLink: 'customize',
-      },
-      {
-        label: 'Vuelos',
-        routerLink: 'flights',
-      },
-      {
-        label: 'Viajeros',
-        routerLink: 'travelers',
-      },
-      {
-        label: 'Pago',
-        routerLink: 'payment',
-      },
-    ];
-  }
-
-  nextStep() {
-    if (this.currentStep < this.steps.length - 1) {
-      this.currentStep++;
-    }
-  }
-
-  previousStep() {
-    if (this.currentStep > 0) {
-      this.currentStep--;
-    }
-  }
-
-  updateOrderSummary(items: any) {
+  updateOrderSummary(items: any[]) {
     this.selectedItems = [...this.selectedItems, ...items];
     this.calculateTotals();
   }
@@ -89,7 +34,6 @@ export class CheckoutComponent implements OnInit {
       (acc, item) => acc + item.price,
       0
     );
-    // Add any additional calculations for total (taxes, fees, etc.)
     this.total = this.subtotal;
   }
 }

@@ -116,6 +116,7 @@ import { CustomizeTripComponent } from './pages/checkout/components/customize-tr
 import { FlightsComponent } from './pages/checkout/components/flights/flights.component';
 import { TravelersComponent } from './pages/checkout/components/travelers/travelers.component';
 import { PaymentComponent } from './pages/checkout/components/payment/payment.component';
+import { TourCardComponent } from './shared/components/tour-card/tour-card.component';
 
 import { StepsModule } from 'primeng/steps';
 
@@ -156,6 +157,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 
     // Tours List
     ToursListComponent,
+    TourCardComponent,
 
     // Content List
     ContentListComponent,

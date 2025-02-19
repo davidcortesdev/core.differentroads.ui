@@ -121,6 +121,9 @@ import { StepsModule } from 'primeng/steps';
 
 import { StepperModule } from 'primeng/stepper';
 
+import { MultiSelectModule } from 'primeng/multiselect';
+import { ToursComponent } from './pages/tours/tours.component';
+
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -185,6 +188,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     FlightsComponent,
     TravelersComponent,
     PaymentComponent,
+    ToursComponent,
   ],
   imports: [
     // Angular Modules
@@ -233,6 +237,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     ForgetPasswordComponent,
     StepsModule,
     StepperModule,
+    MultiSelectModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

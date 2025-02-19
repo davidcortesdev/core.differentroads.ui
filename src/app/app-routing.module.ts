@@ -11,6 +11,7 @@ import { LoginComponent } from './pages/login/login.component';
 import { SignUpComponent } from './pages/sign-up/sign-up.component';
 import { ForgetPasswordComponent } from './pages/forget-password/forget-password.component';
 import { CheckoutComponent } from './pages/checkout/checkout.component';
+import { ToursComponent } from './pages/tours/tours.component';
 
 const routes: Routes = [
   {
@@ -26,6 +27,7 @@ const routes: Routes = [
       { path: 'login', component: LoginComponent },
       { path: 'sign-up', component: SignUpComponent },
       { path: 'forget-password', component: ForgetPasswordComponent },
+      { path: 'tours', component: ToursComponent },
       { path: 'tour/:slug', component: TourComponent },
       { path: 'checkout', component: CheckoutComponent },
       { path: '**', component: NotFoundComponent }, // This will catch all unmatched routes

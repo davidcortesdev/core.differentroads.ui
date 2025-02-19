@@ -7,13 +7,13 @@ interface PersonalInfo {
   email: string;
   sexo: string;
   fechaNacimiento: string;
-  ciudad: string;
-  codigoPostal: string;
+  ciudad?: string;
+  codigoPostal?: string;
   dni: string;
-  fechaExpedicionDni: string;
-  fechaCaducidadDni: string;
+  fechaExpedicionDni?: string;
+  fechaCaducidadDni?: string;
   pasaporte: string;
-  paisExpedicion: string;
+  paisExpedicion?: string;
   fechaExpedicionPasaporte: string;
   fechaVencimientoPasaporte: string;
   nacionalidad: string;

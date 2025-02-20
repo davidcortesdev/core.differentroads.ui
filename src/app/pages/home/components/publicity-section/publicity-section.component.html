@@ -1,24 +1,37 @@
-<section class="publicitySection">
-  <p-button class="publicitySectionButton" variant="outlined" [rounded]="true">
-    ¿Por qué somos realmente diferentes al resto?
-  </p-button>
-  <h2 class="publicitySectionTitle">
-    Porque llevamos más de 14 años creando <br />
-    tours desde cero, sin intermediarios.
-  </h2>
-  <span class="publicitySectionDescription">
-    Nuestro equipo de expertos en los destinos se encarga de encontrar lo mejor
-    para asegurarte siempre
-  </span>
-  <div class="publicitySectionGrid">
-    <p-button
+<section class="publicity">
+  <div class="publicity-head">
+    <h3 class="publicity-head-subtitle">
+      ¿Por qué somos realmente diferentes al resto?
+    </h3>
+    <h2 class="publicity-head-title">
+      Porque llevamos más de 14 años creando <br />
+      tours desde cero, sin intermediarios.
+    </h2>
+    <span class="publicity-head-description">
+      Nuestro equipo de expertos en los destinos se encarga de encontrar lo
+      mejor para asegurarte siempre
+    </span>
+  </div>
+  <div class="publicity-grid">
+    <div
       *ngFor="let item of texto"
       key="item.id"
       type="button"
       variant="outlined"
-      class="publicitySectionButtons"
+      class="publicity-grid-item"
+      [ngClass]="{ 'active-item': item.showDescription }"
+      (click)="toggleDescription(item.id)"
+      (mouseleave)="hideReadMore(item.id)"
     >
-      {{ item.content }}
-    </p-button>
+      <div class="publicity-grid-item-wrap">
+        <span class="publicity-grid-item-name"> {{ item.content }}</span>
+        <p *ngIf="item.showDescription" class="publicity-grid-item-description">
+          {{ item.description }}
+        </p>
+        <span class="publicity-grid-item-more">
+          {{ item.showDescription ? "Ver menos" : "Ver más" }}
+        </span>
+      </div>
+    </div>
   </div>
 </section>

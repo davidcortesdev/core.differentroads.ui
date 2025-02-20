@@ -1,4 +1,9 @@
-import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  Input,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { ReviewCard } from '../../models/reviews/review-card.model';
 
 @Component({
@@ -6,12 +11,17 @@ import { ReviewCard } from '../../models/reviews/review-card.model';
   standalone: false,
   templateUrl: './reviews.component.html',
   styleUrls: ['./reviews.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReviewsComponent implements OnInit {
   @Input() reviews: ReviewCard[] = [];
 
   readonly responsiveOptions = [
+    {
+      breakpoint: '3500px',
+      numVisible: 6,
+      numScroll: 1,
+    },
     {
       breakpoint: '2500px',
       numVisible: 5,

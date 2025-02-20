@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-traveler-selector',
@@ -6,17 +6,34 @@ import { Component } from '@angular/core';
   templateUrl: './traveler-selector.component.html',
   styleUrls: ['./traveler-selector.component.scss'],
 })
-export class TravelerSelectorComponent {
-  // Estado local del componente
+export class TravelerSelectorComponent implements OnInit {
+  @Output() travelersChange = new EventEmitter<{
+    adults: number;
+    childs: number;
+    babies: number;
+  }>();
+
+  private _availableTravelers: string[] = [];
+
+  @Input()
+  set availableTravelers(value: string[]) {
+    this._availableTravelers = value;
+  }
+
+  get availableTravelers(): string[] {
+    return this._availableTravelers;
+  }
+
   travelersNumbers: { adults: number; childs: number; babies: number } = {
     adults: 1,
     childs: 0,
     babies: 0,
-  }; // Número de pasajeros
+  };
 
-  // Método para manejar el cambio en el número de pasajeros
+  ngOnInit() {}
+
   handlePassengers(value: number, type: 'adults' | 'childs' | 'babies'): void {
     this.travelersNumbers[type] = value;
-    console.log('Número de pasajeros actualizado:', this.travelersNumbers);
+    this.travelersChange.emit(this.travelersNumbers);
   }
 }

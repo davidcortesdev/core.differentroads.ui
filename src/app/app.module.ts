@@ -127,6 +127,8 @@ import { StepperModule } from 'primeng/stepper';
 import { OptionalActivitiesComponent } from './pages/checkout/components/customize-trip/components/optional-activities/optional-activities.component';
 import { TravelerSelectorComponent } from './pages/checkout/components/customize-trip/components/traveler-selector/traveler-selector.component';
 import { RoomSelectorComponent } from './pages/checkout/components/customize-trip/components/room-selector/room-selector.component';
+import { ContentPageComponent } from './pages/content-page/content-page.component';
+import { BannerComponent } from './shared/components/banner/banner.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -198,6 +200,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     OptionalActivitiesComponent,
     TravelerSelectorComponent,
     RoomSelectorComponent,
+    ContentPageComponent,
+    BannerComponent,
   ],
   imports: [
     // Angular Modules
@@ -274,6 +278,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     providePrimeNG({
       theme: {
         preset: MyPreset,
+        options: {
+          darkModeSelector: false || 'none',
+        },
       },
     }),
   ],

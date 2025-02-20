@@ -1,9 +1,15 @@
-<p>banner works!</p>
-
 <div class="banner">
     <img [src]="imageUrl" alt="Banner image" class="banner__image">
     <div class="banner__content">
       <h1 class="banner__title">{{title}}</h1>
-      <p *ngIf="subtitle" class="banner__subtitle">{{subtitle}}</p>
+      <p *ngIf="subtitle && !hideSubtitle" class="banner__subtitle">{{subtitle}}</p>
     </div>
   </div>
+
+
+
+
+
+
+
+

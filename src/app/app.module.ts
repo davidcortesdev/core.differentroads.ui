@@ -129,6 +129,7 @@ import { TravelerSelectorComponent } from './pages/checkout/components/customize
 import { RoomSelectorComponent } from './pages/checkout/components/customize-trip/components/room-selector/room-selector.component';
 import { ContentPageComponent } from './pages/content-page/content-page.component';
 import { BannerComponent } from './shared/components/banner/banner.component';
+import { FlightItineraryComponent } from './pages/checkout/components/flights/components/flight-itinerary/flight-itinerary.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -202,6 +203,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     RoomSelectorComponent,
     ContentPageComponent,
     BannerComponent,
+    FlightItineraryComponent,
   ],
   imports: [
     // Angular Modules

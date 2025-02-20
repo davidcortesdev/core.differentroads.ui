@@ -369,12 +369,6 @@
                 border-radius: 100px;
                 background-color: var(--p-primary-color);
                 border-color: #ff6b6b;
-
-                /*  &:hover:not(.p-disabled) {
-                    background-color: darken(#ff6b6b, 5%);
-                    border-color: darken(#ff6b6b, 5%);
-                } */
-
                 &.p-disabled,
                 &.payment-button-disabled {
                     opacity: 0.6;

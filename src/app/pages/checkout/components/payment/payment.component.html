@@ -1,5 +1,4 @@
 <div class="container">
-  <!-- Sección de método de pago -->
   <div class="header-container" (click)="toggleDropdown()">
     <div class="title-with-icon">
       <span class="title">Selecciona la forma de pago</span>
@@ -9,7 +8,6 @@
   </div>
 
   <div *ngIf="isOpen" class="payment-panels">
-    <!-- Opción de pago completo -->
     <p-panel styleClass="payment-panel">
       <div class="payment-option">
         <p-radioButton name="paymentType" value="complete" [(ngModel)]="paymentType" (onChange)="onPaymentTypeChange()"></p-radioButton>
@@ -18,7 +16,6 @@
       </div>
     </p-panel>
 
-    <!-- Opción de pago a plazos -->
     <p-panel styleClass="payment-panel">
       <div class="payment-option">
         <p-radioButton name="paymentType" value="installments" [(ngModel)]="paymentType" (onChange)="onPaymentTypeChange()"></p-radioButton>
@@ -28,7 +25,6 @@
     </p-panel>
   </div>
 
-  <!-- Sección de opciones de plazos -->
   <div *ngIf="paymentType === 'installments'" class="installments-section">
     <div class="header-container" (click)="toggleInstallmentsDropdown()">
       <div class="title-with-icon">
@@ -39,7 +35,6 @@
     </div>
 
     <div *ngIf="isInstallmentsOpen" class="installment-panels-row">
-      <!-- Opción de 3 plazos -->
       <div class="installment-panel-container">
         <p-panel styleClass="payment-panel installment-panel">
           <div class="payment-option installment-option">
@@ -62,7 +57,6 @@
         </p-panel>
       </div>
 
-      <!-- Opción de 4 plazos -->
       <div class="installment-panel-container">
         <p-panel styleClass="payment-panel installment-panel">
           <div class="payment-option installment-option">
@@ -87,7 +81,6 @@
     </div>
   </div>
 
-  <!-- Widget de Scalapay -->
   <div class="scalapay-widget-container mt-4" *ngIf="showScalapayInfo">
     <div id="price-container" style="display: none;">€ {{ formattedPrice }}</div>
     <scalapay-widget 
@@ -104,7 +97,6 @@
     </scalapay-widget>
   </div>
 
-  <!-- Sección "¿Cómo nos has conocido?" -->
   <div class="source-section">
     <div class="header-container">
       <div class="title-with-icon">
@@ -125,7 +117,6 @@
     </div>
   </div>
 
-  <!-- Aceptación de términos -->
   <div class="terms-container">
     <p-checkbox [(ngModel)]="termsAccepted" [binary]="true" inputId="terms"></p-checkbox>
     <label for="terms" class="terms-text">
@@ -136,7 +127,6 @@
     </label>
   </div>
 
-  <!-- Botón de pago -->
   <p-button 
     label="Realizar pago"
     styleClass="payment-button" 

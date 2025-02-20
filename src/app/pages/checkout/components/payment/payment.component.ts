@@ -92,12 +92,10 @@ export class PaymentComponent implements OnInit {
     if (this.paymentType === 'installments') {
       this.isInstallmentsOpen = true;
     } else {
-      // Si selecciona pago completo:
-      this.installmentOption = null; // Resetear la opción de plazos
-      this.showScalapayInfo = false; // Ocultar información de Scalapay
-      this.isInstallmentsOpen = false; // Ocultar sección de plazos
+      this.installmentOption = null;
+      this.showScalapayInfo = false;
+      this.isInstallmentsOpen = false;
 
-      // Resetear manualmente los radio buttons de plazos
       setTimeout(() => {
         const radioButtons = document.querySelectorAll(
           'input[name="installmentOption"]'
@@ -132,7 +130,7 @@ export class PaymentComponent implements OnInit {
   }
 
   onInstallmentOptionChange() {
-    this.showScalapayInfo = false; // Ocultar información de Scalapay al cambiar opción
+    this.showScalapayInfo = false;
     if (this.installmentOption === 'three') {
       this.formattedPrice = (this.totalPriceNumeric / 3).toFixed(2);
     } else if (this.installmentOption === 'four') {

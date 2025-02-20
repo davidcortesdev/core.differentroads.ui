@@ -8,3 +8,9 @@
     font-size: 2rem;
   }
 }
+
+.itinerary-content {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+}

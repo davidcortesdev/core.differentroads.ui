@@ -17,18 +17,17 @@
     </ng-template>
     <ng-template #content let-event>
       <p-card [header]="event.title" [subheader]="event.date">
-        <ng-template #content>
-          <img
-            *ngIf="event.image"
-            [src]="event.image"
-            [alt]="event.name"
-            width="200"
-            class="shadow"
-          />
-          <!-- Description -->
-          <div [innerHTML]="event.description"></div>
-          <!-- Bind sanitized description as inner HTML -->
-          <p-button label="Read more" [text]="true" />
+        <ng-template #content class="itinerary-content">
+          <div class="itinerary-content">
+            <div [innerHTML]="event.description"></div>
+            <img
+              *ngIf="event.image"
+              [src]="event.image"
+              [alt]="event.name"
+              width="200"
+              class="shadow"
+            />
+          </div>
         </ng-template>
       </p-card>
     </ng-template>

@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { FormsModule } from '@angular/forms'; // Importar FormsModule para usar ngModel
 
 @Component({
   selector: 'app-room-selector',
@@ -9,9 +10,9 @@ import { Component } from '@angular/core';
 export class RoomSelectorComponent {
   // Estado local
   roomsAvailabilityForTravelersNumber = [
-    { name: 'Habitación Individual', spaces: 1 },
-    { name: 'Habitación Doble', spaces: 2 },
-    { name: 'Habitación Familiar', spaces: 4 },
+    { name: 'Habitación Individual', spaces: 1, selectedSpaces: 0 },
+    { name: 'Habitación Doble', spaces: 2, selectedSpaces: 0 },
+    { name: 'Habitación Familiar', spaces: 4, selectedSpaces: 0 },
   ]; // Ejemplo de habitaciones disponibles
 
   travelers = [
@@ -22,7 +23,6 @@ export class RoomSelectorComponent {
 
   errorMsg: string | null = null; // Mensaje de error
 
-  // Método para verificar si hay bebés en la lista de viajeros
   hasBabies(): boolean {
     return this.travelers.some(
       (traveler) => traveler.travelerData?.ageGroup === 'Bebés'

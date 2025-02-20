@@ -29,7 +29,6 @@ interface ContentData {
 export class ContentListComponent implements OnInit {
   @Input() content!: BlogListContent | PressListContent;
   @Input() type!: BlockType;
-  @Input() title!: string;
 
   contentList: ContentData[] = [];
   showMoreButton: boolean = false;
@@ -49,7 +48,7 @@ export class ContentListComponent implements OnInit {
 
   private extractContentMetadata(): void {
     if (this.content) {
-      this.contentTitle = (this.content as any).title || this.title;
+      this.contentTitle = (this.content as any).title || '';
       this.contentButtonText = (this.content as any).textButton || 'Ver más';
     }
   }
@@ -152,7 +151,7 @@ export class ContentListComponent implements OnInit {
   }
 
   get contentTitleDisplay(): string {
-    return this.contentTitle || this.title;
+    return this.contentTitle || '';
   }
 
   get buttonTextDisplay(): string {

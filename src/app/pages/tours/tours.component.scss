@@ -35,6 +35,10 @@
   }
 }
 
+.filter-box {
+  min-width: 10rem;
+}
+
 @media (max-width: 600px) {
   .tours-filters {
     .space {

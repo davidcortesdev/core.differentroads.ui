@@ -6,7 +6,7 @@
     [initialTripType]="tourType"
   ></app-hero-section>
   <div class="tours-filters">
-    <p-floatlabel class="w-full md:w-56" variant="on">
+    <p-floatlabel class="w-full md:w-56 min-width" variant="on">
       <p-select
         id="order_label"
         [options]="orderOptions"
@@ -20,15 +20,15 @@
       <label for="order_label">Ordenar por</label>
     </p-floatlabel>
     <span class="space"></span>
-    <p-floatlabel class="w-full md:w-56" variant="on">
+    <p-floatlabel class="w-full md:w-56 min-width" variant="on">
       <p-multiselect
         id="season_label"
+        class="filter-box"
         [options]="seasonOptions"
         [(ngModel)]="selectedSeasonOption"
         (ngModelChange)="onFilterChange()"
         optionLabel="name"
         optionValue="value"
-        placeholder="Temporada"
         filter="false"
         [maxSelectedLabels]="1"
         [displaySelectedLabel]="true"
@@ -37,7 +37,7 @@
       />
       <label for="season_label">Temporada</label>
     </p-floatlabel>
-    <p-floatlabel class="w-full md:w-56" variant="on">
+    <p-floatlabel class="w-full md:w-56 min-width" variant="on">
       <p-multiselect
         id="month_label"
         [options]="monthOptions"
@@ -45,7 +45,6 @@
         (ngModelChange)="onFilterChange()"
         optionLabel="name"
         optionValue="value"
-        placeholder="Mes"
         filter="false"
         [maxSelectedLabels]="1"
         [displaySelectedLabel]="true"
@@ -54,7 +53,7 @@
       />
       <label for="month_label">Mes</label>
     </p-floatlabel>
-    <p-floatlabel class="w-full md:w-56" variant="on">
+    <p-floatlabel class="w-full md:w-56 min-width" variant="on">
       <p-multiselect
         id="price_label"
         [options]="priceOptions"
@@ -62,7 +61,6 @@
         (ngModelChange)="onFilterChange()"
         optionLabel="name"
         optionValue="value"
-        placeholder="Precio"
         filter="false"
         [maxSelectedLabels]="1"
         [displaySelectedLabel]="true"

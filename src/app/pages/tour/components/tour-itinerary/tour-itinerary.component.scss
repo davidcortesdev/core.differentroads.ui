@@ -24,6 +24,91 @@
   }
 }
 
+.itinerary-activities::ng-deep {
+  .p-carousel {
+    .p-card-body {
+      padding: 0px;
+    }
+
+    .p-carousel-content {
+      padding: 0;
+    }
+
+    .highlight-card {
+      border: none;
+      margin: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      max-width: 17rem;
+
+      .p-card-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .card-header {
+        position: relative;
+
+        img {
+          width: 100%;
+          height: 200px;
+          object-fit: cover;
+          border-radius: 12px;
+        }
+
+        .status-badge {
+          position: absolute;
+          top: 1rem;
+          right: 1rem;
+          background: var(--p-button-primary-color);
+          color: var(--background-azul);
+          padding: 0.3rem 0.6rem;
+          border-radius: 8px;
+          font-size: 0.9rem;
+
+          &.optional {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--p-primary-color);
+            color: #fff;
+            padding: 0.3rem 0.6rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+          }
+        }
+      }
+
+      h3 {
+        margin: 0.5rem 0;
+        color: var(--background-azul);
+        font-size: 1.25rem;
+      }
+
+      p {
+        margin: 0;
+        color: var(--background-azul);
+        line-height: 1.5;
+        font-size: 0.875rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
+      }
+    }
+
+    .p-carousel-prev,
+    .p-carousel-next {
+      color: var(--primary-color);
+    }
+  }
+}
+
 .hotel-card {
   display: flex;
   gap: 1rem;

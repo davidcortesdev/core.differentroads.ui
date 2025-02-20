@@ -21,6 +21,7 @@ interface EventItem {
 export class TourItineraryComponent implements OnInit {
   events: EventItem[];
   title: string = 'Itinerario';
+  highlights: any[]; // Add highlights property
 
   itinerary: {
     title: string;
@@ -28,6 +29,24 @@ export class TourItineraryComponent implements OnInit {
     image: string;
     hotel: any;
   }[] = [];
+
+  responsiveOptions = [
+    {
+      breakpoint: '1199px',
+      numVisible: 2,
+      numScroll: 2,
+    },
+    {
+      breakpoint: '991px',
+      numVisible: 2,
+      numScroll: 2,
+    },
+    {
+      breakpoint: '767px',
+      numVisible: 1,
+      numScroll: 1,
+    },
+  ];
 
   constructor(
     private toursService: ToursService,
@@ -60,6 +79,22 @@ export class TourItineraryComponent implements OnInit {
         icon: 'pi pi-check',
         color: '#607D8B',
       },
+    ];
+
+    this.highlights = [
+      /*  {
+        title: 'Highlight 1',
+        description: 'Description for highlight 1',
+        image: 'https://picsum.photos/200',
+        optional: false,
+      },
+      {
+        title: 'Highlight 2',
+        description: 'Description for highlight 2',
+        image: 'https://picsum.photos/200',
+
+        optional: true,
+      }, */
     ];
   }
 

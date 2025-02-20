@@ -17,7 +17,7 @@
     </ng-template>
     <ng-template #content let-event>
       <p-card [header]="event.title" [subheader]="event.date">
-        <ng-template #content class="itinerary-content">
+        <ng-template #content>
           <div class="itinerary-content">
             <div [innerHTML]="event.description"></div>
             <img
@@ -58,6 +58,47 @@
               />
               <p>8.9</p>
             </div>
+          </div>
+
+          <div class="itinerary-activities">
+            <p-carousel
+              autoplayInterval="3000"
+              [value]="highlights"
+              [numVisible]="2"
+              [numScroll]="1"
+              [circular]="true"
+              [showNavigators]="false"
+              [responsiveOptions]="responsiveOptions"
+              [showIndicators]="false"
+            >
+              <ng-template let-highlight pTemplate="item">
+                <p-card
+                  styleClass="highlight-card"
+                  [style]="{
+                    'border-radius': '1rem',
+                    overflow: 'hidden',
+                    border: 'none',
+                    boxShadow: 'none'
+                  }"
+                >
+                  <ng-template pTemplate="header">
+                    <div class="card-header">
+                      <img [src]="highlight.image" [alt]="highlight.title" />
+                      <span
+                        class="status-badge"
+                        [class.optional]="highlight.optional"
+                      >
+                        {{ highlight.optional ? "Opcional" : "Incluida" }}
+                      </span>
+                    </div>
+                  </ng-template>
+                  <ng-template pTemplate="content">
+                    <h3>{{ highlight.title }}</h3>
+                    <p>{{ highlight.description }}</p>
+                  </ng-template>
+                </p-card>
+              </ng-template>
+            </p-carousel>
           </div>
         </ng-template>
       </p-card>

@@ -125,6 +125,8 @@ import { TourCardComponent } from './shared/components/tour-card/tour-card.compo
 import { StepsModule } from 'primeng/steps';
 
 import { StepperModule } from 'primeng/stepper';
+import { ContentPageComponent } from './pages/content-page/content-page.component';
+import { BannerComponent } from './shared/components/banner/banner.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -193,6 +195,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     FlightsComponent,
     TravelersComponent,
     PaymentComponent,
+    ContentPageComponent,
+    BannerComponent,
   ],
   imports: [
     // Angular Modules
@@ -270,6 +274,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     providePrimeNG({
       theme: {
         preset: MyPreset,
+        options: {
+          darkModeSelector: false || 'none',
+        }
       },
     }),
   ],

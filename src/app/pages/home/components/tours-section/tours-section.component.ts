@@ -18,7 +18,12 @@ export class ToursSectionComponent implements OnInit {
 
   responsiveOptions = [
     {
-      breakpoint: '1400px',
+      breakpoint: '2100px',
+      numVisible: 4,
+      numScroll: 1,
+    },
+    {
+      breakpoint: '1700px',
       numVisible: 3,
       numScroll: 1,
     },
@@ -28,7 +33,7 @@ export class ToursSectionComponent implements OnInit {
       numScroll: 1,
     },
     {
-      breakpoint: '768px',
+      breakpoint: '560px',
       numVisible: 1,
       numScroll: 1,
     },
@@ -93,13 +98,5 @@ export class ToursSectionComponent implements OnInit {
           }
         });
     });
-  }
-
-  navigateToTour(tour: ProcessedTour): void {
-    this.router.navigate(['/tour', tour.webSlug]);
-  }
-
-  onTourClick(tour: ProcessedTour): void {
-    this.navigateToTour(tour);
   }
 }

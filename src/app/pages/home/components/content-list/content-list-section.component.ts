@@ -1,8 +1,8 @@
 import { Component, Inject, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { BlogListContent } from '../../../../core/models/blocks/blog-list-content.model';
-import { BlogsService } from '../../../../core/services/blogs.service'; // Import BlogsService
-import { PressService } from '../../../../core/services/press.service'; // Import PressService
+import { BlogsService } from '../../../../core/services/blogs.service';
+import { PressService } from '../../../../core/services/press.service';
 import { catchError, map } from 'rxjs/operators';
 import { BlockType } from '../../../../core/models/blocks/block.model';
 import { PressListContent } from '../../../../core/models/blocks/press-list-content.model';
@@ -29,19 +29,28 @@ interface ContentData {
 export class ContentListComponent implements OnInit {
   @Input() content!: BlogListContent | PressListContent;
   @Input() type!: BlockType;
-  @Input() title!: string;
 
   contentList: ContentData[] = [];
   showMoreButton: boolean = false;
+  contentTitle: string = '';
+  contentButtonText: string = '';
 
   constructor(
     private readonly router: Router,
     private readonly blogsService: BlogsService,
-    private readonly pressService: PressService // Inject PressService
+    private readonly pressService: PressService
   ) {}
 
   ngOnInit() {
+    this.extractContentMetadata();
     this.loadContent();
+  }
+
+  private extractContentMetadata(): void {
+    if (this.content) {
+      this.contentTitle = (this.content as any).title || '';
+      this.contentButtonText = (this.content as any).textButton || 'Ver más';
+    }
   }
 
   loadContent(): void {
@@ -63,7 +72,7 @@ export class ContentListComponent implements OnInit {
       return;
     }
 
-    this.contentList = []; // Reset the list
+    this.contentList = [];
     this.showMoreButton = blogIds.length > 4;
 
     blogIds.forEach((id: string): void => {
@@ -71,7 +80,6 @@ export class ContentListComponent implements OnInit {
         .getBlogThumbnailById(id)
         .pipe(
           catchError((error: Error) => {
-            console.error(`Error loading blog with ID ${id}:`, error);
             return [];
           })
         )
@@ -102,7 +110,7 @@ export class ContentListComponent implements OnInit {
       return;
     }
 
-    this.contentList = []; // Reset the list
+    this.contentList = [];
     this.showMoreButton = pressIds.length > 4;
 
     pressIds.forEach((id: string): void => {
@@ -110,7 +118,6 @@ export class ContentListComponent implements OnInit {
         .getPressThumbnailById(id)
         .pipe(
           catchError((error: Error) => {
-            console.error(`Error loading press with ID ${id}:`, error);
             return [];
           })
         )
@@ -139,6 +146,15 @@ export class ContentListComponent implements OnInit {
   }
 
   navigateToAllContents(type: BlockType): void {
-    this.router.navigate(['#']);
+    const link = (this.content as any)?.link || '#';
+    this.router.navigate([link]);
+  }
+
+  get contentTitleDisplay(): string {
+    return this.contentTitle || '';
+  }
+
+  get buttonTextDisplay(): string {
+    return this.contentButtonText;
   }
 }

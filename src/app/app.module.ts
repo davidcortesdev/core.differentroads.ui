@@ -266,6 +266,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     providePrimeNG({
       theme: {
         preset: MyPreset,
+        options: {
+          darkModeSelector: false || 'none',
+        }
       },
     }),
   ],

@@ -74,11 +74,13 @@ export class TourItineraryComponent implements OnInit {
               this.title = tourData['itinerary-section'].title;
               this.itinerary = tourData['itinerary-section']['day-card'].map(
                 (section) => {
+                  console.log(section);
+
                   return {
                     title: section.name,
                     description: this.sanitizer.bypassSecurityTrustHtml(
                       section.description
-                    ), // Sanitize description
+                    ),
                     image: section.itimage?.[0]?.url || '',
                     hotel: section.hotel,
                   };

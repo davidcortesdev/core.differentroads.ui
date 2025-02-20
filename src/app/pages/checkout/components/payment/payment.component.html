@@ -1,6 +1,5 @@
-<!-- payment.component.html -->
 <div class="container">
-  <!-- Payment method section -->
+  <!-- Sección de método de pago -->
   <div class="header-container" (click)="toggleDropdown()">
     <div class="title-with-icon">
       <span class="title">Selecciona la forma de pago</span>
@@ -10,6 +9,7 @@
   </div>
 
   <div *ngIf="isOpen" class="payment-panels">
+    <!-- Opción de pago completo -->
     <p-panel styleClass="payment-panel">
       <div class="payment-option">
         <p-radioButton name="paymentType" value="complete" [(ngModel)]="paymentType" (onChange)="onPaymentTypeChange()"></p-radioButton>
@@ -18,6 +18,7 @@
       </div>
     </p-panel>
 
+    <!-- Opción de pago a plazos -->
     <p-panel styleClass="payment-panel">
       <div class="payment-option">
         <p-radioButton name="paymentType" value="installments" [(ngModel)]="paymentType" (onChange)="onPaymentTypeChange()"></p-radioButton>
@@ -27,7 +28,7 @@
     </p-panel>
   </div>
 
-  <!-- Installment options section - only visible when "Paga a plazos" is selected -->
+  <!-- Sección de opciones de plazos -->
   <div *ngIf="paymentType === 'installments'" class="installments-section">
     <div class="header-container" (click)="toggleInstallmentsDropdown()">
       <div class="title-with-icon">
@@ -38,14 +39,20 @@
     </div>
 
     <div *ngIf="isInstallmentsOpen" class="installment-panels-row">
+      <!-- Opción de 3 plazos -->
       <div class="installment-panel-container">
         <p-panel styleClass="payment-panel installment-panel">
           <div class="payment-option installment-option">
-            <p-radioButton name="installmentOption" value="three" [(ngModel)]="installmentOption"></p-radioButton>
+            <p-radioButton 
+              name="installmentOption" 
+              value="three" 
+              [(ngModel)]="installmentOption" 
+              (onChange)="onInstallmentOptionChange()">
+            </p-radioButton>
             <div class="installment-content">
               <div class="installment-header">
-                <span>3 plazos de {{ threeInstallments }} sin intereses.</span>
-                <i class="pi pi-info-circle info-icon"></i>
+                <span>3 plazos de <strong>{{ threeInstallments }}</strong> sin intereses.</span>
+                <i class="pi pi-info-circle info-icon" (click)="toggleScalapayInfo($event)"></i>
               </div>
               <div class="installment-description">
                 Confirme tu reserva ahora y tómate tu tiempo para pagar las cuotas restantes
@@ -55,14 +62,20 @@
         </p-panel>
       </div>
 
+      <!-- Opción de 4 plazos -->
       <div class="installment-panel-container">
         <p-panel styleClass="payment-panel installment-panel">
           <div class="payment-option installment-option">
-            <p-radioButton name="installmentOption" value="six" [(ngModel)]="installmentOption"></p-radioButton>
+            <p-radioButton 
+              name="installmentOption" 
+              value="four" 
+              [(ngModel)]="installmentOption" 
+              (onChange)="onInstallmentOptionChange()">
+            </p-radioButton>
             <div class="installment-content">
               <div class="installment-header">
-                <span>6 plazos de {{ sixInstallments }} sin intereses.</span>
-                <i class="pi pi-info-circle info-icon"></i>
+                <span>4 plazos de <strong>{{ fourInstallments }}</strong> sin intereses.</span>
+                <i class="pi pi-info-circle info-icon" (click)="toggleScalapayInfo($event)"></i>
               </div>
               <div class="installment-description">
                 Confirme tu reserva ahora y tómate tu tiempo para pagar las cuotas restantes
@@ -74,7 +87,24 @@
     </div>
   </div>
 
-  <!-- How did you find us section -->
+  <!-- Widget de Scalapay -->
+  <div class="scalapay-widget-container mt-4" *ngIf="showScalapayInfo">
+    <div id="price-container" style="display: none;">€ {{ formattedPrice }}</div>
+    <scalapay-widget 
+      type="product" 
+      min="0.01"
+      max="999999"
+      frequency-number="30"
+      amount-selectors='["#price-container"]' 
+      currency-position="before" 
+      currency-display="symbol" 
+      locale="es" 
+      environment="integration" 
+      merchant-token="8KDS3SPEL">
+    </scalapay-widget>
+  </div>
+
+  <!-- Sección "¿Cómo nos has conocido?" -->
   <div class="source-section">
     <div class="header-container">
       <div class="title-with-icon">
@@ -82,20 +112,20 @@
       </div>
     </div>
 
-    <div class="dropdown-container" (click)="toggleSourceDropdown()">
+    <div class="dropdown-container" (click)="toggleSourceDropdown($event)">
       <div class="dropdown-select">
         <span>{{ selectedSource }}</span>
         <i class="pi" [ngClass]="isSourceDropdownOpen ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
       </div>
       <div class="dropdown-options" *ngIf="isSourceDropdownOpen">
-        <div *ngFor="let option of sourcesOptions" class="dropdown-option" (click)="selectSource(option)">
+        <div *ngFor="let option of sourcesOptions" class="dropdown-option" (click)="selectSource(option, $event)">
           {{ option }}
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Terms acceptance -->
+  <!-- Aceptación de términos -->
   <div class="terms-container">
     <p-checkbox [(ngModel)]="termsAccepted" [binary]="true" inputId="terms"></p-checkbox>
     <label for="terms" class="terms-text">
@@ -106,11 +136,11 @@
     </label>
   </div>
 
-  <!-- Payment button -->
-  <button 
-    class="payment-button" 
+  <!-- Botón de pago -->
+  <p-button 
+    label="Realizar pago"
+    styleClass="payment-button" 
     [disabled]="!termsAccepted"
     [ngClass]="{'payment-button-disabled': !termsAccepted}">
-    Realizar pago
-  </button>
+  </p-button>
 </div>

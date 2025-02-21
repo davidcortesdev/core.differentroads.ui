@@ -1,5 +1,5 @@
 .tour-departures {
-  padding: 2rem;
+  padding: 0rem 5rem 0rem 5rem;
 
   h1 {
     color: var(--background-azul);
@@ -83,22 +83,72 @@
   }
 
   ::ng-deep .p-dataview {
+    // Estilos para el header
+    .p-dataview-header {
+      margin-bottom: 10px;
+      background: transparent;
+      border: none;
+      padding: 0;
+    }
+
     .departure-header {
+      padding: 0;
+      margin: 0;
+
       .header-columns {
         display: grid;
-        grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-        background: transparent;
+        align-items: center;
+        grid-template-columns: 1fr 1fr 1fr 1fr; // Columnas de igual tamaño
+        padding: 0;
+        width: 100%;
+
+        .pi-arrow-right:before {
+          margin: 40px;
+        }
 
         span {
           color: var(--background-azul);
           font-weight: 500;
+
+          // Salida → Regreso - alineado exactamente como en la imagen
+          &:first-child {
+            text-align: center;
+          }
+
+          // Información - centrado en su espacio
+          &:nth-child(2) {
+            text-align: center;
+          }
+
+          // Precio - alineado exactamente con los precios
+          &:nth-child(3) {
+            text-align: center;
+          }
         }
       }
     }
-    .p-dataview-header {
-      background: transparent;
+
+    // Contenedor para el elemento recomendado
+    .recommended-container {
+      .recommendation-label {
+        text-align: center;
+        padding: 0.5rem;
+        background-color: #d9d9d9;
+        font-size: 14px;
+        font-weight: 400;
+        border-radius: 17.732px 17.732px 0 0;
+        border: 0.985px solid #d9d9d9;
+        border-bottom: none;
+      }
+
+      .departure-item {
+        margin-top: 0 !important;
+        border-top-left-radius: 0 !important;
+        border-top-right-radius: 0 !important;
+      }
     }
 
+    // Estilos para las filas
     .departure-list {
       display: flex;
       flex-direction: column;
@@ -107,16 +157,49 @@
 
     .departure-item {
       display: grid;
-      grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr 1fr; // Columnas de igual tamaño
       align-items: center;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      padding: 1.5rem;
+      border-radius: 17.732px;
+      border: 0.985px solid #d9d9d9;
       transition: transform 0.2s ease;
+      padding: 1rem 0;
+
+      // Fechas - alineado exactamente con el header
+      .dates {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+      }
+
+      // Información - centrada
+      .info {
+        display: flex;
+        justify-content: center;
+      }
+
+      // Precio - alineado a la derecha exactamente como en la imagen
+      .final-price {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+
+        span:first-child {
+          margin-right: 4px;
+        }
+      }
+
+      // Acciones - alineadas a la derecha
+      .actions {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+      }
 
       &:hover {
-        transform: translateY(-2px);
+        transform: translateY(-1px);
       }
     }
 
@@ -126,13 +209,19 @@
       width: 144.935px;
       height: 49.254px;
     }
+
+    .p-dataview-content {
+      background-color: transparent;
+    }
   }
+
   .load-more {
     display: flex;
     justify-content: center;
     padding: 1.5rem;
 
     ::ng-deep .view-more-button {
+      border-radius: 6rem;
       width: 300.452px;
       height: 49.254px;
     }
@@ -142,10 +231,12 @@
 .dates {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.5rem; // Aumentado para dar más espacio entre Salida → Regreso
 
   .pi-arrow-right {
-    color: #6c757d;
+    color: var(--background-azul);
+    width: 17.239px;
+    height: 9.851px;
   }
 
   .departure-date,
@@ -154,61 +245,56 @@
     flex-direction: column;
 
     .day-name {
-      color: #6c757d;
-      font-size: 0.875rem;
-      text-transform: capitalize;
+      color: var(--background-azul);
+      font-size: 15.761px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: 19.577px;
     }
 
     .day {
-      font-weight: bold;
-      color: #2f4b7c;
+      color: var(--background-azul);
+      font-size: 29.553px;
+      font-style: normal;
+      font-weight: 700;
+      line-height: 34.064px;
     }
   }
 }
-
-.info {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+.p-tag-info {
+  font-size: 13.778px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 19.558px;
 }
-
-.price-info {
-  .discount {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-
-    .original-price {
-      text-decoration: line-through;
-      color: #6c757d;
-      font-size: 0.875rem;
-    }
-
-    .discount-badge {
-      background-color: #ffeeba;
-      color: #856404;
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
-      font-weight: 500;
-      font-size: 0.875rem;
-    }
-  }
+.pi-users:before {
+  font-size: 13.778px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 19.558px;
 }
 
 .final-price {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   gap: 0.25rem;
 
   span:first-child {
-    color: #6c757d;
-    font-size: 0.875rem;
+    color: var(--background-azul);
+    font-size: 13.791px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 20.556px;
   }
 
   .amount {
-    font-size: 1.25rem;
-    font-weight: bold;
-    color: #2f4b7c;
+    margin-left: 5px;
+    color: var(--background-azul);
+    font-size: 29.553px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 29.366px;
   }
 }
 

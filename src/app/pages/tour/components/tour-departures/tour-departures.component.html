@@ -1,6 +1,6 @@
 <div class="tour-departures">
   <h1>Elige una fecha y comienza a personalizar tu viaje</h1>
-
+  
   <div class="filters">
     <div class="city-filter">
       <p-autocomplete
@@ -13,92 +13,143 @@
       ></p-autocomplete>
       <span class="price-from">Desde {{ priceFrom }}€</span>
     </div>
-
+    
     <div class="travelers">
       <span>{{ travelers.adults }} Adulto</span>
       <span>{{ travelers.children }} Niño</span>
     </div>
   </div>
-
+  
   <!-- Navegador de mes -->
   <div class="month-navigator">
-    <p-button label="Anterior" icon="pi pi-arrow-circle-left" styleClass="p-button-text" (onClick)="previousMonth()"></p-button>
+    <p-button 
+      label="Anterior" 
+      icon="pi pi-arrow-circle-left" 
+      styleClass="p-button-text" 
+      (onClick)="previousMonth()"
+    ></p-button>
     <h2 class="month-display">{{ monthName }}</h2>
-    <p-button label="Siguiente" icon="pi pi-arrow-circle-right" iconPos="right" styleClass="p-button-text" (onClick)="nextMonth()"></p-button>
+    <p-button 
+      label="Siguiente" 
+      icon="pi pi-arrow-circle-right" 
+      iconPos="right" 
+      styleClass="p-button-text" 
+      (onClick)="nextMonth()"
+    ></p-button>
   </div>
-
+  
+  <!-- DataView con PrimeNG -->
   <p-dataView #dv [value]="filteredDepartures" layout="list">
     <ng-template #header>
       <div class="departure-header">
         <div class="header-columns">
-          <span>Salida <i class="pi pi-arrow-right"></i> Regreso</span>
+          <span>Salida <i class="pi pi-arrow-right header"></i> Regreso</span>
           <span>Información</span>
           <span>Precio</span>
+          <span></span> <!-- Columna vacía para el botón -->
         </div>
       </div>
     </ng-template>
-
+    
     <ng-template #list let-departures>
       <div class="departure-list">
-        <div class="departure-item" *ngFor="let item of departures">
-          <div class="dates">
-            <div class="departure-date">
-              <span class="day-name">{{
-                item.departureDate | date : "EEEE"
-              }}</span>
-              <span class="day">{{
-                item.departureDate | date : "dd MMM"
-              }}</span>
+        <!-- Primer elemento con etiqueta recomendada -->
+        <div *ngIf="departures.length > 0" class="recommended-container">
+          <div class="recommendation-label">Salida recomendada</div>
+          <div class="departure-item first-item">
+            <div class="dates">
+              <div class="departure-date">
+                <span class="day-name">{{ departures[0].departureDate | date : "EEEE" }}</span>
+                <span class="day">{{ departures[0].departureDate | date : "dd MMM" }}</span>
+              </div>
+              <i class="pi pi-arrow-right"></i>
+              <div class="return-date">
+                <span class="day-name">{{ departures[0].returnDate | date : "EEEE" }}</span>
+                <span class="day">{{ departures[0].returnDate | date : "dd MMM" }}</span>
+              </div>
             </div>
-            <i class="pi pi-arrow-right"></i>
-            <div class="return-date">
-              <span class="day-name">{{
-                item.returnDate | date : "EEEE"
-              }}</span>
-              <span class="day">{{ item.returnDate | date : "dd MMM" }}</span>
-            </div>
-          </div>
-
-          <div class="info">
-            <p-tag severity="info" [value]="item.group" *ngIf="item.group">
-              <i class="pi pi-users" style="font-size: 0.7rem"></i>
-            </p-tag>
-            <p-tag
-              severity="warn"
-              value="Lista de espera"
-              *ngIf="item.waitingList"
+            
+            <div class="info">
+              <p-tag severity="info" [value]="departures[0].group" *ngIf="departures[0].group">
+                <i class="pi pi-users" style="font-size: 0.7rem"></i>
+              </p-tag>
+              <p-tag
+                severity="warn"
+                value="Lista de espera"
+                *ngIf="departures[0].waitingList"
               ><i class="pi pi-clock" style="font-size: 0.7rem"></i>
-            </p-tag>
-          </div>
-
-          <div class="price-info">
-            <div class="discount" *ngIf="item.discount">
-              <span class="original-price"
-                >Antes {{ formatPrice(item.originalPrice) }}</span
-              >
-              <span class="discount-badge">-{{ item.discount }}%</span>
+              </p-tag>
             </div>
-          </div>
-
-          <div class="final-price">
-            <span>desde</span>
-            <span class="amount">{{ formatPrice(item.price) }}</span>
-          </div>
-
-          <div class="actions">
-            <p-button
-              [label]="item.status === 'complete' ? 'COMPLETO' : 'Añadir'"
-              [disabled]="item.status === 'complete'"
-              (onClick)="addToCart(item)"
-              [severity]="item.status === 'complete' ? 'secondary' : 'primary'"
-              [raised]="true"
-            ></p-button>
+            
+            <div class="final-price">
+              <div class="price-container">
+                <span>desde</span>
+                <span class="amount">{{ formatPrice(departures[0].price) }}</span>
+              </div>
+            </div>
+            
+            <div class="actions">
+              <p-button
+                [label]="departures[0].status === 'complete' ? 'COMPLETO' : 'Añadir'"
+                [disabled]="departures[0].status === 'complete'"
+                (onClick)="addToCart(departures[0])"
+                [severity]="departures[0].status === 'complete' ? 'secondary' : 'primary'"
+                [raised]="true"
+              ></p-button>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="load-more">
-        <p-button label="VER MÁS" styleClass="view-more-button"></p-button>
+        
+        <!-- Resto de los elementos -->
+        <ng-container *ngFor="let item of departures; let i = index">
+          <div class="departure-item" *ngIf="i > 0">
+            <div class="dates">
+              <div class="departure-date">
+                <span class="day-name">{{ item.departureDate | date : "EEEE" }}</span>
+                <span class="day">{{ item.departureDate | date : "dd MMM" }}</span>
+              </div>
+              <i class="pi pi-arrow-right"></i>
+              <div class="return-date">
+                <span class="day-name">{{ item.returnDate | date : "EEEE" }}</span>
+                <span class="day">{{ item.returnDate | date : "dd MMM" }}</span>
+              </div>
+            </div>
+            
+            <div class="info">
+              <p-tag severity="info" [value]="item.group" *ngIf="item.group">
+                <i class="pi pi-users" style="font-size: 0.7rem"></i>
+              </p-tag>
+              <p-tag
+                severity="warn"
+                value="Lista de espera"
+                *ngIf="item.waitingList"
+              ><i class="pi pi-clock" style="font-size: 0.7rem"></i>
+              </p-tag>
+            </div>
+            
+            <div class="final-price">
+              <div class="price-container">
+                <span>desde</span>
+                <span class="amount">{{ formatPrice(item.price) }}</span>
+              </div>
+            </div>
+            
+            <div class="actions">
+              <p-button
+                [label]="item.status === 'complete' ? 'COMPLETO' : 'Añadir'"
+                [disabled]="item.status === 'complete'"
+                (onClick)="addToCart(item)"
+                [severity]="item.status === 'complete' ? 'secondary' : 'primary'"
+                [raised]="true"
+              ></p-button>
+            </div>
+          </div>
+        </ng-container>
       </div>
     </ng-template>
   </p-dataView>
+  
+  <div class="load-more">
+    <p-button label="VER MÁS" styleClass="view-more-button"></p-button>
+  </div>
 </div>

@@ -123,6 +123,8 @@ import { TourCardComponent } from './shared/components/tour-card/tour-card.compo
 import { StepsModule } from 'primeng/steps';
 
 import { StepperModule } from 'primeng/stepper';
+import { ContentPageComponent } from './pages/content-page/content-page.component';
+import { BannerComponent } from './shared/components/banner/banner.component';
 
 import { MultiSelectModule } from 'primeng/multiselect';
 import { ToursComponent } from './pages/tours/tours.component';
@@ -194,6 +196,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     FlightsComponent,
     TravelersComponent,
     PaymentComponent,
+    ContentPageComponent,
+    BannerComponent,
     ToursComponent,
   ],
   imports: [
@@ -271,6 +275,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     providePrimeNG({
       theme: {
         preset: MyPreset,
+        options: {
+          darkModeSelector: false || 'none',
+        }
       },
     }),
   ],

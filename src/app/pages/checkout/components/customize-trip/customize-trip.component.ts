@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { PeriodsService } from '../../../../core/services/periods.service';
 import { PriceData } from '../../../../core/models/commons/price-data.model';
+import { TravelersService } from '../../../../core/services/checkout/travelers.service';
 
 @Component({
   selector: 'app-customize-trip',
@@ -13,12 +13,14 @@ export class CustomizeTripComponent implements OnInit {
   @Input() availableTravelers: string[] = [];
   @Input() prices!: {
     [key: string]: { priceData: PriceData[]; availability?: number };
-  }; // Add this line
+  };
   travelersNumbers: { adults: number; childs: number; babies: number } = {
     adults: 1,
     childs: 0,
     babies: 0,
   };
+
+  constructor(private travelersService: TravelersService) {}
 
   ngOnInit(): void {
     if (this.orderDetails) {
@@ -47,6 +49,10 @@ export class CustomizeTripComponent implements OnInit {
         this.availableTravelers.push('Bebés');
       }
     }
+
+    this.travelersService.travelersNumbers$.subscribe((data) => {
+      this.travelersNumbers = data;
+    });
   }
 
   handleTravelersChange(event: {
@@ -57,5 +63,6 @@ export class CustomizeTripComponent implements OnInit {
     console.log('Travelers changed:', event);
 
     this.travelersNumbers = event;
+    this.travelersService.updateTravelersNumbers(this.travelersNumbers);
   }
 }

@@ -1,6 +1,10 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { PeriodsService } from '../../../../../../core/services/periods.service';
 import { TravelersService } from '../../../../../../core/services/checkout/travelers.service';
+import { SummaryService } from '../../../../../../core/services/checkout/summary.service';
+import { OrderTraveler } from '../../../../../../core/models/orders/order.model';
+import { RoomsService } from '../../../../../../core/services/checkout/rooms.service';
+import { ReservationMode } from '../../../../../../core/models/tours/reservation-mode.model';
 
 @Component({
   selector: 'app-room-selector',
@@ -11,8 +15,8 @@ import { TravelersService } from '../../../../../../core/services/checkout/trave
 export class RoomSelectorComponent implements OnChanges {
   @Input() periodId!: string;
 
-  roomsAvailabilityForTravelersNumber: { name: string; spaces: number }[] = [];
-  allRoomsAvailability: { name: string; spaces: number }[] = [];
+  roomsAvailabilityForTravelersNumber: ReservationMode[] = [];
+  allRoomsAvailability: ReservationMode[] = [];
 
   travelers = [
     { travelerData: { ageGroup: 'Adultos' } },
@@ -22,9 +26,13 @@ export class RoomSelectorComponent implements OnChanges {
 
   errorMsg: string | null = null; // Mensaje de error
 
+  selectedRooms: { [externalID: string]: number } = {};
+
   constructor(
     private periodsService: PeriodsService,
-    private travelersService: TravelersService
+    private travelersService: TravelersService,
+    private summaryService: SummaryService,
+    private roomsService: RoomsService
   ) {
     this.loadReservationModes();
 
@@ -47,11 +55,8 @@ export class RoomSelectorComponent implements OnChanges {
     if (this.periodId) {
       this.periodsService
         .getReservationModes(this.periodId)
-        .subscribe((rooms) => {
-          this.allRoomsAvailability = rooms.map((room) => ({
-            name: room.name,
-            spaces: room.places,
-          }));
+        .subscribe((rooms: ReservationMode[]) => {
+          this.allRoomsAvailability = rooms;
           // Ensure rooms are filtered after loading reservation modes
           const initialTravelers =
             this.travelersService.travelersNumbersSource.getValue();
@@ -73,8 +78,13 @@ export class RoomSelectorComponent implements OnChanges {
 
   filterRooms(totalTravelers: number): void {
     this.roomsAvailabilityForTravelersNumber = this.allRoomsAvailability.filter(
-      (room) => room.spaces <= totalTravelers
+      (room) => room.places <= totalTravelers
     );
+  }
+
+  onRoomSpacesChange(changedRoom: ReservationMode, newValue: number) {
+    this.selectedRooms[changedRoom.externalID] = newValue;
+    console.log('Room spaces changed:', changedRoom, 'New value:', newValue);
   }
 
   ngOnChanges(changes: SimpleChanges): void {

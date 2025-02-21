@@ -5,6 +5,8 @@
   >
     <p>{{ room.name }}</p>
     <p-inputNumber
+      [(ngModel)]="selectedRooms[room.externalID]"
+      (ngModelChange)="onRoomSpacesChange(room, $event)"
       [min]="0"
       [max]="8"
       [showButtons]="true"

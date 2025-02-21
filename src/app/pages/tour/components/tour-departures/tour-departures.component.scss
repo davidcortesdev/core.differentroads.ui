@@ -2,16 +2,17 @@
   padding: 2rem;
 
   h1 {
-    color: #2f4b7c;
-    font-size: 2rem;
-    margin-bottom: 2rem;
+    color: var(--background-azul);
+    text-align: center;
+    font-size: 39.404px;
+    font-style: normal;
+    font-weight: 400;
   }
 
   .filters {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
     background: white;
     padding: 1rem;
     border-radius: 8px;
@@ -42,22 +43,60 @@
     }
   }
 
+  // Estilos para el navegador de mes
+  .month-navigator {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: transparent;
+
+    .month-display {
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: var(--background-azul);
+      text-align: center;
+      flex: 1;
+    }
+
+    ::ng-deep .p-button.p-button-text {
+      min-width: 120px;
+      color: var(--background-azul);
+
+      &:hover {
+        background: transparent;
+      }
+
+      // Estilos para los íconos de flechas
+      .pi-arrow-circle-left,
+      .pi-arrow-circle-right {
+        background: var(--p-primary-color);
+        color: #fff;
+        border-radius: 50%;
+        width: 20px;
+        height: 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+      }
+    }
+  }
+
   ::ng-deep .p-dataview {
     .departure-header {
       .header-columns {
         display: grid;
         grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-        padding: 1rem;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        margin-bottom: 1rem;
+        background: transparent;
 
         span {
-          color: #6c757d;
+          color: var(--background-azul);
           font-weight: 500;
         }
       }
+    }
+    .p-dataview-header {
+      background: transparent;
     }
 
     .departure-list {
@@ -79,6 +118,23 @@
       &:hover {
         transform: translateY(-2px);
       }
+    }
+
+    .p-button {
+      background: var(--p-primary-color);
+      border-radius: 6rem;
+      width: 144.935px;
+      height: 49.254px;
+    }
+  }
+  .load-more {
+    display: flex;
+    justify-content: center;
+    padding: 1.5rem;
+
+    ::ng-deep .view-more-button {
+      width: 300.452px;
+      height: 49.254px;
     }
   }
 }

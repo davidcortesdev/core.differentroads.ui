@@ -33,6 +33,11 @@ export class TourDeparturesComponent implements OnInit {
     children: 2,
   } as const;
 
+  // Navegación de mes
+  currentMonth: Date = new Date();
+  monthName: string = '';
+  year: number = 0;
+
   private cities: string[] = [];
   filteredCities: string[] = [];
 
@@ -47,6 +52,7 @@ export class TourDeparturesComponent implements OnInit {
       city.toLowerCase().includes(query)
     );
   }
+
   formatPrice(price?: number): string {
     return price ? `${price.toFixed(0)}€` : '0€';
   }
@@ -65,7 +71,68 @@ export class TourDeparturesComponent implements OnInit {
     console.log('filteredDepartures', this.filteredDepartures);
   }
 
+  // Métodos para la navegación del mes
+  updateMonthDisplay(): void {
+    const months = [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
+    ];
+    this.monthName = months[this.currentMonth.getMonth()];
+    // Mantenemos el año en la propiedad pero no lo mostramos en la interfaz
+    this.year = this.currentMonth.getFullYear();
+  }
+
+  previousMonth(): void {
+    this.currentMonth = new Date(
+      this.currentMonth.getFullYear(),
+      this.currentMonth.getMonth() - 1,
+      1
+    );
+    this.updateMonthDisplay();
+    this.filterDeparturesByMonth();
+  }
+
+  nextMonth(): void {
+    this.currentMonth = new Date(
+      this.currentMonth.getFullYear(),
+      this.currentMonth.getMonth() + 1,
+      1
+    );
+    this.updateMonthDisplay();
+    this.filterDeparturesByMonth();
+  }
+
+  filterDeparturesByMonth(): void {
+    const startOfMonth = new Date(
+      this.currentMonth.getFullYear(),
+      this.currentMonth.getMonth(),
+      1
+    );
+    const endOfMonth = new Date(
+      this.currentMonth.getFullYear(),
+      this.currentMonth.getMonth() + 1,
+      0
+    );
+
+    this.filteredDepartures = this.departures.filter((departure) => {
+      const departureDate = new Date(departure.departureDate);
+      return departureDate >= startOfMonth && departureDate <= endOfMonth;
+    });
+  }
+
   ngOnInit() {
+    this.updateMonthDisplay();
+
     this.route.params.subscribe((params) => {
       const slug = params['slug'];
       if (slug) {
@@ -130,6 +197,7 @@ export class TourDeparturesComponent implements OnInit {
 
         this.setCheapestCityAsDefault();
         this.filterDepartures();
+        this.filterDeparturesByMonth(); // Filtrar por el mes actual
       });
   }
 

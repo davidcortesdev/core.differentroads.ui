@@ -20,15 +20,20 @@
     </div>
   </div>
 
+  <!-- Navegador de mes -->
+  <div class="month-navigator">
+    <p-button label="Anterior" icon="pi pi-arrow-circle-left" styleClass="p-button-text" (onClick)="previousMonth()"></p-button>
+    <h2 class="month-display">{{ monthName }}</h2>
+    <p-button label="Siguiente" icon="pi pi-arrow-circle-right" iconPos="right" styleClass="p-button-text" (onClick)="nextMonth()"></p-button>
+  </div>
+
   <p-dataView #dv [value]="filteredDepartures" layout="list">
     <ng-template #header>
       <div class="departure-header">
         <div class="header-columns">
           <span>Salida <i class="pi pi-arrow-right"></i> Regreso</span>
           <span>Información</span>
-          <span>Descuento</span>
           <span>Precio</span>
-          <span>Acciones</span>
         </div>
       </div>
     </ng-template>
@@ -90,6 +95,9 @@
             ></p-button>
           </div>
         </div>
+      </div>
+      <div class="load-more">
+        <p-button label="VER MÁS" styleClass="view-more-button"></p-button>
       </div>
     </ng-template>
   </p-dataView>

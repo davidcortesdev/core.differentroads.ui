@@ -31,6 +31,9 @@
     }
 
     .title-underline {
+        &.pay {
+            width: 25.5%;
+        }
         height: 1.5px;
         background-color: var(--background-azul);
         width: 24.2%;
@@ -79,6 +82,14 @@
                     background-color: var(--background-azul);
                     width: 10px;
                     height: 10px;
+                }
+            }
+
+            &.selected {
+                .p-panel-content {
+                    border: 0.0625rem solid var(--background-azul);
+                    border-width: 2px;
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
                 }
             }
         }
@@ -133,6 +144,52 @@
         }
     }
 
+    /* Estilos para métodos de pago en pago completo */
+    .payment-methods-section {
+        margin-top: 2rem;
+    }
+
+    .payment-methods-row {
+        display: flex;
+        flex-direction: row;
+        gap: 1rem;
+        margin-top: 1rem;
+
+        @media (max-width: 768px) {
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+    }
+
+    .payment-method-container {
+        flex: 1;
+
+        ::ng-deep .p-panel-content {
+            border: 0.0625rem solid #d4d4d8;
+            border-radius: 0.75rem;
+            padding: 1.5rem 1rem;
+            width: 100%;
+            height: 100%;
+
+            @media (min-width: 768px) {
+                padding: 2rem 1.5rem;
+            }
+        }
+    }
+
+    .payment-method-panel {
+        transition: all 0.2s ease;
+        cursor: pointer;
+
+        &.selected {
+            .p-panel-content {
+                border-color: var(--background-azul);
+                border-width: 2px;
+            }
+        }
+    }
+
+    /* Estilos para plazos en pago a plazos */
     .installments-section {
         margin-top: 2rem;
     }
@@ -165,15 +222,6 @@
         }
     }
 
-    .installment-option {
-        .installment-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-        }
-    }
-
     .installment-content {
         margin-left: 1rem;
         width: 100%;
@@ -181,35 +229,25 @@
         @media (max-width: 480px) {
             margin-left: 0.5rem;
         }
+    }
 
-        .installment-header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: wrap;
-            text-align: center;
+    .scalapay-widget-container {
+        width: 100%;
+        text-align: center;
+        font-size: 14px;
+    }
 
-            @media (max-width: 480px) {
-                font-size: 0.875rem;
+    ::ng-deep {
+        scalapay-widget {
+            .info-container {
+                p.installment-info {
+                    display: none !important;
+                }
             }
 
-            .info-icon {
-                margin-left: 0.5rem;
-                font-size: 0.875rem;
-                color: var(--background-azul);
-                opacity: 0.8;
-            }
-        }
-
-        .installment-description {
-            font-weight: 400;
-            font-size: 0.875rem;
-            color: var(--background-azul);
-            line-height: 1.25rem;
-            text-align: center;
-
-            @media (max-width: 480px) {
-                font-size: 0.8125rem;
+            img.logo {
+                max-width: 120px !important;
+                margin: 0 auto;
             }
         }
     }
@@ -218,56 +256,10 @@
         margin-top: 2rem;
     }
 
-    .dropdown-container,
-    .source-dropdown-container {
+    .dropdown-container {
         position: relative;
         width: 100%;
         cursor: pointer;
-    }
-
-    .source-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-        flex-wrap: wrap;
-
-        @media (max-width: 480px) {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-    }
-
-    .source-title {
-        color: var(--background-azul);
-        font-weight: 500;
-        font-size: 1rem;
-        margin-bottom: 0.25rem;
-    }
-
-    .source-select {
-        display: flex;
-        align-items: center;
-        color: var(--background-azul);
-
-        @media (max-width: 480px) {
-            width: 100%;
-            margin-top: 0.5rem;
-            justify-content: space-between;
-        }
-
-        .pi {
-            margin-left: 8px;
-            color: var(--background-azul);
-        }
-    }
-
-    .source-underline {
-        height: 1.5px;
-        background-color: var(--background-azul);
-        width: 100%;
-        margin-top: 5px;
-        margin-bottom: 15px;
     }
 
     .dropdown-select {
@@ -276,7 +268,7 @@
         border: none;
         border-bottom: 2px solid var(--background-azul);
         border-radius: 0px;
-        background: white;
+        background: transparent;
         color: var(--background-azul);
         width: 100%;
         display: flex;
@@ -285,16 +277,15 @@
     }
 
     .dropdown-options {
+        border-radius: 8px;
         position: absolute;
         top: 100%;
         left: 0;
-        width: 100%;
-        max-width: 300px;
+        width: 20%;
         background: white;
         z-index: 10;
         margin-top: 0.5rem;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border-radius: 0;
         overflow-y: auto;
         max-height: 15rem;
 

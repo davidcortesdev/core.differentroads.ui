@@ -14,24 +14,34 @@ export class PaymentComponent implements OnInit {
 
   isOpen: boolean = true;
   isInstallmentsOpen: boolean = true;
+  isPaymentMethodsOpen: boolean = true;
   paymentType: string | null = null;
   installmentOption: string | null = null;
-
-  threeInstallments: string = '';
-  fourInstallments: string = '';
+  paymentMethod: string | null = null;
 
   isSourceDropdownOpen: boolean = false;
   selectedSource: string = 'Selecciona';
   sourcesOptions: string[] = ['LinkedIn', 'Trivago', 'Booking', 'Otro'];
 
   termsAccepted: boolean = false;
-  showScalapayInfo: boolean = false;
 
   constructor(@Inject(DOCUMENT) private document: Document) {}
 
   ngOnInit() {
-    this.calculateInstallments();
+    this.processTotalPrice();
     this.loadScalapayScript();
+  }
+
+  processTotalPrice() {
+    if (typeof this.totalPrice === 'string') {
+      const priceMatch = this.totalPrice.match(/[\d.,]+/);
+      if (priceMatch) {
+        this.totalPriceNumeric = parseFloat(
+          priceMatch[0].replace('.', '').replace(',', '.')
+        );
+        this.formattedPrice = this.totalPriceNumeric.toFixed(2);
+      }
+    }
   }
 
   loadScalapayScript() {
@@ -40,8 +50,7 @@ export class PaymentComponent implements OnInit {
     ) {
       const script = this.document.createElement('script');
       script.type = 'module';
-      script.src =
-        'https://cdn.scalapay.com/widget/scalapay-widget-loader.js?version=V5';
+      script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js';
       this.document.head.appendChild(script);
     }
   }
@@ -50,15 +59,16 @@ export class PaymentComponent implements OnInit {
     this.isOpen = !this.isOpen;
     if (!this.isOpen) {
       this.isInstallmentsOpen = false;
-      this.showScalapayInfo = false;
+      this.isPaymentMethodsOpen = false;
     }
   }
 
   toggleInstallmentsDropdown() {
     this.isInstallmentsOpen = !this.isInstallmentsOpen;
-    if (!this.isInstallmentsOpen) {
-      this.showScalapayInfo = false;
-    }
+  }
+
+  togglePaymentMethodsDropdown() {
+    this.isPaymentMethodsOpen = !this.isPaymentMethodsOpen;
   }
 
   toggleSourceDropdown(event?: Event) {
@@ -89,12 +99,14 @@ export class PaymentComponent implements OnInit {
   }
 
   onPaymentTypeChange() {
-    if (this.paymentType === 'installments') {
-      this.isInstallmentsOpen = true;
-    } else {
+    if (this.paymentType === 'complete') {
       this.installmentOption = null;
-      this.showScalapayInfo = false;
       this.isInstallmentsOpen = false;
+      this.isPaymentMethodsOpen = true;
+
+      if (!this.paymentMethod) {
+        this.paymentMethod = 'creditCard';
+      }
 
       setTimeout(() => {
         const radioButtons = document.querySelectorAll(
@@ -104,44 +116,58 @@ export class PaymentComponent implements OnInit {
           radio.checked = false;
         });
       });
-    }
-  }
+    } else if (this.paymentType === 'installments') {
+      this.paymentMethod = null;
+      this.isInstallmentsOpen = true;
+      this.isPaymentMethodsOpen = false;
 
-  calculateInstallments() {
-    if (typeof this.totalPrice === 'string') {
-      const priceMatch = this.totalPrice.match(/[\d.,]+/);
-      if (priceMatch) {
-        this.totalPriceNumeric = parseFloat(
-          priceMatch[0].replace('.', '').replace(',', '.')
+      setTimeout(() => {
+        const radioButtons = document.querySelectorAll(
+          'input[name="paymentMethod"]'
         );
-        this.formattedPrice = this.totalPriceNumeric.toFixed(2);
-      }
+        radioButtons.forEach((radio: any) => {
+          radio.checked = false;
+        });
+      });
+
+      setTimeout(() => {
+        if (!this.installmentOption) {
+          this.installmentOption = 'three';
+          this.reloadScalapayWidgets();
+        }
+      }, 100);
     }
-
-    const threePaymentAmount = this.totalPriceNumeric / 3;
-    this.threeInstallments = `€ ${threePaymentAmount
-      .toFixed(2)
-      .replace('.', ',')}`;
-
-    const fourPaymentAmount = this.totalPriceNumeric / 4;
-    this.fourInstallments = `€ ${fourPaymentAmount
-      .toFixed(2)
-      .replace('.', ',')}`;
   }
+
+  onPaymentMethodChange() {}
 
   onInstallmentOptionChange() {
-    this.showScalapayInfo = false;
-    if (this.installmentOption === 'three') {
-      this.formattedPrice = (this.totalPriceNumeric / 3).toFixed(2);
-    } else if (this.installmentOption === 'four') {
-      this.formattedPrice = (this.totalPriceNumeric / 4).toFixed(2);
-    }
+    this.reloadScalapayWidgets();
   }
 
-  toggleScalapayInfo(event?: Event) {
-    if (event) {
-      event.stopPropagation();
-    }
-    this.showScalapayInfo = !this.showScalapayInfo;
+  reloadScalapayWidgets() {
+    setTimeout(() => {
+      const priceContainerThree = document.getElementById(
+        'price-container-three'
+      );
+      const priceContainerFour = document.getElementById(
+        'price-container-four'
+      );
+
+      if (priceContainerThree) {
+        priceContainerThree.textContent = `€ ${this.totalPriceNumeric.toFixed(
+          2
+        )}`;
+      }
+
+      if (priceContainerFour) {
+        priceContainerFour.textContent = `€ ${this.totalPriceNumeric.toFixed(
+          2
+        )}`;
+      }
+
+      const event = new CustomEvent('scalapay-widget-reload');
+      window.dispatchEvent(event);
+    }, 200);
   }
 }

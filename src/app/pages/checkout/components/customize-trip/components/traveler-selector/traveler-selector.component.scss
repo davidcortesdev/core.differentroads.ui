@@ -1,5 +1,6 @@
 .traveler-selector {
   border-bottom: .0625rem solid var(--background-azul);
+  color: var(--background-azul);
   padding-bottom: 1rem;
 
   .step {
@@ -11,7 +12,7 @@
       width: fit-content;
       height: fit-content;
       border-bottom: 1px solid var(--background-azul);
-      font-size: 1rem;
+      font-size: 1.25rem;
       font-weight: 500;
       padding-bottom: 0.5rem;
       padding-top: 0.5rem;
@@ -26,6 +27,7 @@
 
   .traveler-selector-wrap {
     display: flex;
+    flex-wrap: wrap;
     gap: 1rem;
 
     .traveler-selector-wrap-item {
@@ -34,8 +36,21 @@
       gap: .5rem;
       justify-content: space-between;
 
+      ::ng-deep .p-inputnumber {
+        background-color: var(--accent-white);
+      }
+
       ::ng-deep .p-inputtext {
+        border: 0;
+        box-shadow: none;
+        color: var(--background-azul);
+        text-align: center;
         width: 3.5rem;
+      }
+
+      ::ng-deep .p-inputnumber-button {
+        border: 0;
+        color: var(--background-azul);
       }
 
       .traveler-selector-wrap-item-group {
@@ -47,8 +62,8 @@
         }
 
         .traveler-selector-wrap-item-description {
+          color: var(--background-azul);
           font-size: .75rem;
-          color: #666;
         }
       }
     }

@@ -1,10 +1,11 @@
 <div class="room-selector">
   <div
-    *ngFor="let room of roomsAvailabilityForTravelersNumber"
+    *ngFor="let room of roomsAvailabilityForTravelersNumber; let i = index"
     class="room-item"
   >
     <p>{{ room.name }}</p>
     <p-inputNumber
+      [(ngModel)]="room.selectedSpaces"
       [min]="0"
       [max]="8"
       [showButtons]="true"
@@ -12,10 +13,10 @@
       spinnerMode="horizontal"
     >
       <ng-template #incrementbuttonicon>
-        <span class="pi pi-plus"></span>
+        <span class="pi pi-chevron-up"></span>
       </ng-template>
       <ng-template #decrementbuttonicon>
-        <span class="pi pi-minus"></span>
+        <span class="pi pi-chevron-down"></span>
       </ng-template>
     </p-inputNumber>
   </div>

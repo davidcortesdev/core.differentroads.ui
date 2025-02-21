@@ -4,21 +4,39 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
 
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(1, 1fr);
+  }
+
   .room-item {
     align-items: center;
+    color: var(--background-azul);
     display: flex;
     padding: 2rem 1.5rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--background-azul);
     border-radius: .5rem;
     justify-content: space-between;
 
     p {
       margin: 0;
-      font-weight: bold;
+      font-weight: 500;
+    }
+
+    ::ng-deep .p-inputnumber {
+      background-color: var(--accent-white);
     }
 
     ::ng-deep .p-inputtext {
+      border: 0;
+      box-shadow: none;
+      color: var(--background-azul);
+      text-align: center;
       width: 3.5rem;
+    }
+
+    ::ng-deep .p-inputnumber-button {
+      border: 0;
+      color: var(--background-azul);
     }
   }
 }

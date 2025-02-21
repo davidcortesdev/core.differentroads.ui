@@ -33,6 +33,7 @@ import { CommunityHeroComponent } from './pages/home/components/community-sectio
 import { CommunityGalleryComponent } from './pages/home/components/community-section/components/community-gallery/community-gallery.component';
 import { CommunityReviewsComponent } from './pages/home/components/community-section/components/community-reviews/community-reviews.component';
 import { NewsLetterSectionComponent } from './pages/home/components/community-section/components/newsletter-section/newsletter-section.component';
+import { PublicitySectionComponent } from './pages/home/components/publicity-section/publicity-section.component';
 
 // Tour List Component
 import { ToursListComponent } from './pages/home/components/tours-list-section/tours-list-section.component';
@@ -126,6 +127,9 @@ import { StepsModule } from 'primeng/steps';
 import { StepperModule } from 'primeng/stepper';
 import { ContentPageComponent } from './pages/content-page/content-page.component';
 import { BannerComponent } from './shared/components/banner/banner.component';
+
+import { MultiSelectModule } from 'primeng/multiselect';
+import { ToursComponent } from './pages/tours/tours.component';
 import { OptionalActivitiesComponent } from './pages/checkout/components/customize-trip/components/optional-activities/optional-activities.component';
 import { TravelerSelectorComponent } from './pages/checkout/components/customize-trip/components/traveler-selector/traveler-selector.component';
 import { RoomSelectorComponent } from './pages/checkout/components/customize-trip/components/room-selector/room-selector.component';
@@ -159,6 +163,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     CommunityHeroComponent,
     CommunityGalleryComponent,
     CommunityReviewsComponent,
+    PublicitySectionComponent,
 
     // Tours List
     ToursListComponent,
@@ -199,6 +204,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     PaymentComponent,
     ContentPageComponent,
     BannerComponent,
+    ToursComponent,
     OptionalActivitiesComponent,
     TravelerSelectorComponent,
     RoomSelectorComponent,
@@ -251,6 +257,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     ForgetPasswordComponent,
     StepsModule,
     StepperModule,
+    MultiSelectModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

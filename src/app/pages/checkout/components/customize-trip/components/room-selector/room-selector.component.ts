@@ -1,5 +1,6 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { PeriodsService } from '../../../../../../core/services/periods.service';
+import { TravelersService } from '../../../../../../core/services/checkout/travelers.service';
 
 @Component({
   selector: 'app-room-selector',
@@ -8,9 +9,6 @@ import { PeriodsService } from '../../../../../../core/services/periods.service'
   styleUrls: ['./room-selector.component.scss'],
 })
 export class RoomSelectorComponent implements OnChanges {
-  @Input() travelersNumbers:
-    | { adults: number; childs: number; babies: number }
-    | undefined;
   @Input() periodId!: string;
 
   roomsAvailabilityForTravelersNumber: { name: string; spaces: number }[] = [];
@@ -24,8 +22,25 @@ export class RoomSelectorComponent implements OnChanges {
 
   errorMsg: string | null = null; // Mensaje de error
 
-  constructor(private periodsService: PeriodsService) {
+  constructor(
+    private periodsService: PeriodsService,
+    private travelersService: TravelersService
+  ) {
     this.loadReservationModes();
+
+    // Initialize with the current travelers numbers
+    const initialTravelers =
+      this.travelersService.travelersNumbersSource.getValue();
+    const totalTravelers =
+      initialTravelers.adults +
+      initialTravelers.childs +
+      initialTravelers.babies;
+    this.filterRooms(totalTravelers);
+
+    this.travelersService.travelersNumbers$.subscribe((data) => {
+      const totalTravelers = data.adults + data.childs + data.babies;
+      this.filterRooms(totalTravelers);
+    });
   }
 
   loadReservationModes(): void {
@@ -37,10 +52,13 @@ export class RoomSelectorComponent implements OnChanges {
             name: room.name,
             spaces: room.places,
           }));
+          // Ensure rooms are filtered after loading reservation modes
+          const initialTravelers =
+            this.travelersService.travelersNumbersSource.getValue();
           const totalTravelers =
-            (this.travelersNumbers?.adults || 0) +
-            (this.travelersNumbers?.childs || 0) +
-            (this.travelersNumbers?.babies || 0);
+            initialTravelers.adults +
+            initialTravelers.childs +
+            initialTravelers.babies;
           this.filterRooms(totalTravelers);
         });
     }
@@ -60,15 +78,6 @@ export class RoomSelectorComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['travelersNumbers']) {
-      const totalTravelers =
-        (this.travelersNumbers?.adults || 0) +
-        (this.travelersNumbers?.childs || 0) +
-        (this.travelersNumbers?.babies || 0);
-      console.log('Total travelers:', totalTravelers);
-
-      this.filterRooms(totalTravelers);
-    }
     if (changes['periodId']) {
       this.loadReservationModes();
     }

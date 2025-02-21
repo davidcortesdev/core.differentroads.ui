@@ -47,6 +47,8 @@ export class CheckoutComponent implements OnInit {
 
       const periodId = order.periodID; // Assuming order has a periodId field
       this.periodsService.getPeriodPrices(periodId).subscribe((prices) => {
+        console.log('Prices:', prices);
+
         this.prices = prices;
       });
     });

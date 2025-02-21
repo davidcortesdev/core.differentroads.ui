@@ -1,4 +1,5 @@
-import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { TravelersService } from '../../../../../../core/services/checkout/travelers.service';
 
 @Component({
   selector: 'app-traveler-selector',
@@ -7,22 +8,7 @@ import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
   styleUrls: ['./traveler-selector.component.scss'],
 })
 export class TravelerSelectorComponent implements OnInit {
-  @Output() travelersChange = new EventEmitter<{
-    adults: number;
-    childs: number;
-    babies: number;
-  }>();
-
-  private _availableTravelers: string[] = [];
-
-  @Input()
-  set availableTravelers(value: string[]) {
-    this._availableTravelers = value;
-  }
-
-  get availableTravelers(): string[] {
-    return this._availableTravelers;
-  }
+  availableTravelers: string[] = ['Adultos', 'Niños', 'Bebés'];
 
   travelersNumbers: { adults: number; childs: number; babies: number } = {
     adults: 1,
@@ -30,10 +16,16 @@ export class TravelerSelectorComponent implements OnInit {
     babies: 0,
   };
 
-  ngOnInit() {}
+  constructor(private travelersService: TravelersService) {}
+
+  ngOnInit() {
+    this.travelersService.travelersNumbers$.subscribe((data) => {
+      this.travelersNumbers = data;
+    });
+  }
 
   handlePassengers(value: number, type: 'adults' | 'childs' | 'babies'): void {
     this.travelersNumbers[type] = value;
-    this.travelersChange.emit(this.travelersNumbers);
+    this.travelersService.updateTravelersNumbers(this.travelersNumbers);
   }
 }

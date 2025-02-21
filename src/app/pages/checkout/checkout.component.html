@@ -1,18 +1,19 @@
-<div class="checkout-container">
-  <!-- Left and Center columns with steps -->
-  <div class="main-content">
-    <div class="steps-container">
-      <p-stepper [value]="currentStep">
-        <p-step-list>
-          <p-step [value]="1">Personaliza tu viaje</p-step>
-          <p-step [value]="2">Vuelos</p-step>
-          <p-step [value]="3">Viajeros</p-step>
-          <p-step [value]="4">Pago</p-step>
-        </p-step-list>
+<div class="checkout">
+  <div class="checkout-container">
+    <!-- Left and Center columns with steps -->
+    <div class="main-content">
+      <div class="steps-container">
+        <p-stepper [value]="currentStep">
+          <p-step-list>
+            <p-step [value]="1">Personaliza tu viaje</p-step>
+            <p-step [value]="2">Vuelos</p-step>
+            <p-step [value]="3">Viajeros</p-step>
+            <p-step [value]="4">Pago</p-step>
+          </p-step-list>
 
-        <p-step-panels>
-          <p-step-panel [value]="1">
-            <ng-template #content let-activateCallback="activateCallback">
+          <p-step-panels>
+            <p-step-panel [value]="1">
+              <ng-template #content let-activateCallback="activateCallback">
                 <app-customize-trip></app-customize-trip>
                 <div class="flex pt-6 justify-end">
                   <p-button
@@ -22,28 +23,28 @@
                     (onClick)="activateCallback(2)"
                   />
                 </div>
-            </ng-template>
-          </p-step-panel>
-          <p-step-panel [value]="2">
-            <ng-template #content let-activateCallback="activateCallback">
-              <app-flights></app-flights>
-              <div class="flex pt-6 justify-between">
-                <p-button
-                  label="Back"
-                  severity="secondary"
-                  icon="pi pi-arrow-left"
-                  (onClick)="activateCallback(1)"
-                />
-                <p-button
-                  label="Next"
-                  icon="pi pi-arrow-right"
-                  iconPos="right"
-                  (onClick)="activateCallback(3)"
-                />
-              </div>
-            </ng-template>
-          </p-step-panel>
-          <p-step-panel [value]="3">
+              </ng-template>
+            </p-step-panel>
+            <p-step-panel [value]="2">
+              <ng-template #content let-activateCallback="activateCallback">
+                <app-flights></app-flights>
+                <div class="flex pt-6 justify-between">
+                  <p-button
+                    label="Back"
+                    severity="secondary"
+                    icon="pi pi-arrow-left"
+                    (onClick)="activateCallback(1)"
+                  />
+                  <p-button
+                    label="Next"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                    (onClick)="activateCallback(3)"
+                  />
+                </div>
+              </ng-template>
+            </p-step-panel>
+            <p-step-panel [value]="3">
               <ng-template #content let-activateCallback="activateCallback">
                 <app-travelers></app-travelers>
                 <div class="flex pt-6 justify-between">
@@ -61,61 +62,62 @@
                   />
                 </div>
               </ng-template>
-          </p-step-panel>
-          <p-step-panel [value]="4">
-            <ng-template #content let-activateCallback="activateCallback">
-              <app-payment></app-payment>
-              <div class="flex pt-6 justify-between">
-                <p-button
-                  label="Back"
-                  severity="secondary"
-                  icon="pi pi-arrow-left"
-                  (onClick)="activateCallback(3)"
-                />
-              </div>
-            </ng-template>
-          </p-step-panel>
-        </p-step-panels>
-      </p-stepper>
+            </p-step-panel>
+            <p-step-panel [value]="4">
+              <ng-template #content let-activateCallback="activateCallback">
+                <app-payment></app-payment>
+                <div class="flex pt-6 justify-between">
+                  <p-button
+                    label="Back"
+                    severity="secondary"
+                    icon="pi pi-arrow-left"
+                    (onClick)="activateCallback(3)"
+                  />
+                </div>
+              </ng-template>
+            </p-step-panel>
+          </p-step-panels>
+        </p-stepper>
+      </div>
     </div>
-  </div>
 
-  <!-- Right column - Order Summary -->
-  <div class="order-summary">
-    <h3>Resumen del pedido</h3>
-    <div class="summary-content">
-      <!-- Tour base info -->
-      <div class="tour-base-info">
-        <h4>{{ tourName }}</h4>
-        <p>{{ tourDates }}</p>
-        <p>{{ travelers }} viajeros</p>
-      </div>
-
-      <!-- Selected items list -->
-      <div class="selected-items">
-        <div *ngFor="let item of selectedItems" class="item">
-          <span>{{ item.name }}</span>
-          <span>{{ item.price | currency : "EUR" }}</span>
+    <!-- Right column - Order Summary -->
+    <div class="order-summary">
+      <h3>Resumen del pedido</h3>
+      <div class="summary-content">
+        <!-- Tour base info -->
+        <div class="tour-base-info">
+          <h4>{{ tourName }}</h4>
+          <p>{{ tourDates }}</p>
+          <p>{{ travelers }} viajeros</p>
         </div>
-      </div>
 
-      <!-- Flights info if selected -->
-      <div class="flights-info" *ngIf="hasFlights">
-        <h4>Vuelos</h4>
-        <div class="flight-details">
-          <!-- Flight details here -->
+        <!-- Selected items list -->
+        <div class="selected-items">
+          <div *ngFor="let item of selectedItems" class="item">
+            <span>{{ item.name }}</span>
+            <span>{{ item.price | currency : "EUR" }}</span>
+          </div>
         </div>
-      </div>
 
-      <!-- Total section -->
-      <div class="total-section">
-        <div class="subtotal">
-          <span>Subtotal</span>
-          <span>{{ subtotal | currency : "EUR" }}</span>
+        <!-- Flights info if selected -->
+        <div class="flights-info" *ngIf="hasFlights">
+          <h4>Vuelos</h4>
+          <div class="flight-details">
+            <!-- Flight details here -->
+          </div>
         </div>
-        <div class="total">
-          <span>Total</span>
-          <span>{{ total | currency : "EUR" }}</span>
+
+        <!-- Total section -->
+        <div class="total-section">
+          <div class="subtotal">
+            <span>Subtotal</span>
+            <span>{{ subtotal | currency : "EUR" }}</span>
+          </div>
+          <div class="total">
+            <span>Total</span>
+            <span>{{ total | currency : "EUR" }}</span>
+          </div>
         </div>
       </div>
     </div>

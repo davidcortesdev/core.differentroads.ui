@@ -1,0 +1,72 @@
+.room-selector {
+  display: grid;
+  grid-template-rows: 1fr;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(1, 1fr);
+  }
+
+  .room-item {
+    align-items: center;
+    color: var(--background-azul);
+    display: flex;
+    padding: 2rem 1.5rem;
+    border: 1px solid var(--background-azul);
+    border-radius: .5rem;
+    justify-content: space-between;
+
+    p {
+      margin: 0;
+      font-weight: 500;
+    }
+
+    ::ng-deep .p-inputnumber {
+      background-color: var(--accent-white);
+    }
+
+    ::ng-deep .p-inputtext {
+      border: 0;
+      box-shadow: none;
+      color: var(--background-azul);
+      text-align: center;
+      width: 3.5rem;
+    }
+
+    ::ng-deep .p-inputnumber-button {
+      border: 0;
+      color: var(--background-azul);
+    }
+  }
+}
+
+.messages {
+  margin-top: 16px;
+
+  .info-message,
+  .error-message {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: .625rem;
+    font-size: .6875rem;
+    border-radius: 4px;
+    margin-bottom: 8px;
+
+    p {
+      margin: auto 0;
+    }
+  }
+
+  .info-message {
+    background-color: #e4e4e7;
+    color: var(--background-azul);
+  }
+
+  .error-message {
+    background-color: #ffebee;
+    border: 1px solid #ef9a9a;
+    color: #d32f2f;
+  }
+}

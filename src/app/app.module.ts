@@ -51,6 +51,7 @@ import { EditorModule } from 'primeng/editor';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { IftaLabelModule } from 'primeng/iftalabel';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { FileUploadModule } from 'primeng/fileupload';
 import { ImageModule } from 'primeng/image';
@@ -128,6 +129,9 @@ import { BannerComponent } from './shared/components/banner/banner.component';
 
 import { MultiSelectModule } from 'primeng/multiselect';
 import { ToursComponent } from './pages/tours/tours.component';
+import { OptionalActivitiesComponent } from './pages/checkout/components/customize-trip/components/optional-activities/optional-activities.component';
+import { TravelerSelectorComponent } from './pages/checkout/components/customize-trip/components/traveler-selector/traveler-selector.component';
+import { RoomSelectorComponent } from './pages/checkout/components/customize-trip/components/room-selector/room-selector.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -199,6 +203,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     ContentPageComponent,
     BannerComponent,
     ToursComponent,
+    OptionalActivitiesComponent,
+    TravelerSelectorComponent,
+    RoomSelectorComponent,
   ],
   imports: [
     // Angular Modules
@@ -215,6 +222,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     AvatarModule,
     AvatarGroupModule,
     InputTextModule,
+    InputNumberModule,
     AutoCompleteModule,
     CalendarModule,
     ButtonModule,

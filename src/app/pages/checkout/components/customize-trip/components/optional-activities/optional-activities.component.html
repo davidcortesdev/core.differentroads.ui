@@ -1,0 +1,69 @@
+<div class="optional-activities">
+  <div class="step">
+    <div class="step-title">Agrega actividades</div>
+    <div class="step-description">
+      <i class="pi pi-info-circle"></i>Tambien puedes añadirlas despues desde tu
+      perfil
+    </div>
+  </div>
+  <p-dataview #dv [value]="optionalActivities">
+    <ng-template #list let-items>
+      <div class="dataview-grid">
+        <div
+          class="dataview-item"
+          *ngFor="let item of items; let first = first"
+        >
+          <div
+            class="dataview-card"
+            [ngClass]="{ 'dataview-card-border': !first }"
+          >
+            <div class="dataview-image">
+              <img
+                class="dataview-img"
+                src="https://picsum.photos/1000?random=8"
+                [alt]="item.name"
+              />
+            </div>
+
+            <div class="dataview-content">
+              <div class="dataview-info">
+                <div>
+                  <div class="dataview-name">
+                    {{ item.name }}
+                  </div>
+                  <p class="dataview-description">
+                    {{ item.description }}
+                  </p>
+                </div>
+              </div>
+
+              <div class="dataview-actions">
+                <div
+                  *ngFor="
+                    let price of getAdultPrices(item.priceData);
+                    let last = last
+                  "
+                  class="dataview-price"
+                >
+                  <span class="dataview-price-value">
+                    +{{ price.value }}€
+                  </span>
+                  <span class="dataview-per-person"> por persona </span>
+                </div>
+
+                <div class="dataview-buttons">
+                  <p-button
+                    class="dataview-buy-button"
+                    label="Añadir"
+                    [disabled]="item.availability === 0"
+                    [rounded]="true"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+  </p-dataview>
+</div>

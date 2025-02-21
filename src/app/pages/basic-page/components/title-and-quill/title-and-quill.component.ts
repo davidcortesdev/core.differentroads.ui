@@ -10,6 +10,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 export class TitleAndQuillComponent {
   @Input() title: string = '';
   @Input() description: string = '';
+  @Input() type: 'collection' | 'landing' = 'landing';
 
   constructor(private sanitizer: DomSanitizer) {}
 

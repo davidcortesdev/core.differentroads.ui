@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { HomeService } from '../../../../core/services/home.service';
 import { GeneralConfigService } from '../../../../core/services/general-config.service';
 import { BannerSection } from '../../../../core/models/home/banner/banner-section.model';
@@ -12,17 +12,24 @@ import { Router } from '@angular/router';
   styleUrls: ['./hero-section.component.scss'],
 })
 export class HeroSectionComponent {
+  @Input() initialDestination: string | null = null;
+  @Input() initialDepartureDate: Date | null = null;
+  @Input() initialReturnDate: Date | null = null;
+  @Input() initialTripType: string | null = null;
+
   bannerSection!: BannerSection;
 
   ngOnInit(): void {
     this.getBannerSection();
     this.getFiltersSection();
+    this.setInitialValues();
   }
 
   selectedDestination: string | null = null;
   departureDate: Date | null = null;
   returnDate: Date | null = null;
   selectedTripType: string | null = null;
+  destinationInput: string | null = null;
 
   filteredDestinations: string[] = [];
   filteredTripTypes: string[] = [];
@@ -50,8 +57,8 @@ export class HeroSectionComponent {
 
   searchTrips() {
     const queryParams: any = {};
-    if (this.selectedDestination) {
-      queryParams.destination = this.selectedDestination;
+    if (this.destinationInput) {
+      queryParams.destination = this.destinationInput;
     }
     if (this.departureDate) {
       queryParams.departureDate = this.departureDate
@@ -64,6 +71,8 @@ export class HeroSectionComponent {
     if (this.selectedTripType) {
       queryParams.tripType = this.selectedTripType;
     }
+    console.log('queryParams', queryParams);
+
     this.router.navigate(['/tours'], { queryParams });
   }
 
@@ -79,5 +88,21 @@ export class HeroSectionComponent {
     this.homeService.getBannerSection().subscribe((data: BannerSection) => {
       this.bannerSection = data;
     });
+  }
+
+  private setInitialValues(): void {
+    if (this.initialDestination) {
+      this.selectedDestination = this.initialDestination;
+      this.destinationInput = this.initialDestination;
+    }
+    if (this.initialDepartureDate) {
+      this.departureDate = new Date(this.initialDepartureDate);
+    }
+    if (this.initialReturnDate) {
+      this.returnDate = new Date(this.initialReturnDate);
+    }
+    if (this.initialTripType) {
+      this.selectedTripType = this.initialTripType;
+    }
   }
 }

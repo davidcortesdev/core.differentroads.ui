@@ -1,7 +1,17 @@
-
 # Core Different Roads UI
 
 Este proyecto fue generado con [Angular CLI](https://github.com/angular/angular-cli) versión 19.0.6.
+
+## Estado de las Pipelines
+
+### Develop
+[![Build and Deploy Develop](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/develop.yml/badge.svg)](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/develop.yml)
+
+### Pre
+[![Build and Deploy Pre](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/pre.yml/badge.svg?branch=pre)](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/pre.yml)
+
+### Main
+[![Build and Deploy Production](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/main.yml/badge.svg)](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/main.yml)
 
 ## Estructura del Proyecto
 

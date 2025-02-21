@@ -1,24 +1,107 @@
 <div class="itinerary-section">
-  <h2>Itinerario</h2>
+  <h2>{{ title }}</h2>
 </div>
 <div class="card">
-  <p-timeline [value]="events" align="alternate" styleClass="customized-timeline">
-      <ng-template #marker let-event>
-          <span class="flex w-8 h-8 items-center justify-center text-white rounded-full z-10 shadow-sm" [style]="{ 'background-color': event.color }">
-              <i [class]="event.icon"></i>
-          </span>
-      </ng-template>
-      <ng-template #content let-event>
-          <p-card [header]="event.status" [subheader]="event.date">
-            <ng-template #content>
-              <img *ngIf="event.image" [src]="'https://primefaces.org/cdn/primeng/images/demo/product/' + event.image" [alt]="event.name" width="200" class="shadow" />
-              <p>
-                  Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore sed consequuntur error repudiandae numquam deserunt quisquam repellat libero asperiores earum nam nobis, culpa ratione quam perferendis esse, cupiditate
-                  neque quas!
+  <p-timeline
+    [value]="itinerary"
+    align="alternate"
+    styleClass="customized-timeline"
+  >
+    <ng-template #marker let-event>
+      <span
+        class="flex w-8 h-8 items-center justify-center text-white rounded-full z-10 shadow-sm"
+        [style]="{ 'background-color': event.color }"
+      >
+        <i [class]="event.icon"></i>
+      </span>
+    </ng-template>
+    <ng-template #content let-event>
+      <p-card [header]="event.title" [subheader]="event.date">
+        <ng-template #content>
+          <div class="itinerary-content">
+            <div [innerHTML]="event.description"></div>
+            <img
+              *ngIf="event.image"
+              [src]="event.image"
+              [alt]="event.name"
+              width="100%"
+              class="shadow"
+            />
+          </div>
+          <div class="hotel-card" *ngIf="event.hotel.name">
+            <img
+              [src]="event.hotel.hotelimage?.[0]?.url||'https://picsum.photos/200'"
+              [alt]="event.hotel.hotelimage?.[0]?.alt"
+              class="hotel-card-image"
+            />
+            <div class="hotel-card-content">
+              <span>
+                <p-rating
+                  [ngModel]="event.hotel.category"
+                  [readonly]="true"
+                  [stars]="5"
+                ></p-rating>
+              </span>
+              <h4 class="hotel-card-name">
+                {{ event.hotel.name }}
+              </h4>
+              <p class="hotel-card-location">
+                <i class="pi pi-map-marker"></i> {{ event.hotel.address }}
               </p>
-              <p-button label="Read more" [text]="true" />
-            </ng-template>
-          </p-card>
-      </ng-template>
+            </div>
+            <div class="hotel-card-bookings-section">
+              <img
+                src="booking-logo.png"
+                alt="Different Roads Logo"
+                class="logo"
+                height="60px"
+              />
+              <p>8.9</p>
+            </div>
+          </div>
+
+          <div class="itinerary-activities">
+            <p-carousel
+              autoplayInterval="3000"
+              [value]="highlights"
+              [numVisible]="2"
+              [numScroll]="1"
+              [circular]="true"
+              [showNavigators]="false"
+              [responsiveOptions]="responsiveOptions"
+              [showIndicators]="false"
+            >
+              <ng-template let-highlight pTemplate="item">
+                <p-card
+                  styleClass="highlight-card"
+                  [style]="{
+                    'border-radius': '1rem',
+                    overflow: 'hidden',
+                    border: 'none',
+                    boxShadow: 'none'
+                  }"
+                >
+                  <ng-template pTemplate="header">
+                    <div class="card-header">
+                      <img [src]="highlight.image" [alt]="highlight.title" />
+                      <span
+                        class="status-badge"
+                        [class.optional]="highlight.optional"
+                      >
+                        {{ highlight.optional ? "Opcional" : "Incluida" }}
+                      </span>
+                    </div>
+                  </ng-template>
+                  <ng-template pTemplate="content">
+                    <h3>{{ highlight.title }}</h3>
+                    <p>{{ highlight.description }}</p>
+                  </ng-template>
+                </p-card>
+              </ng-template>
+            </p-carousel>
+          </div>
+        </ng-template>
+      </p-card>
+    </ng-template>
   </p-timeline>
 </div>

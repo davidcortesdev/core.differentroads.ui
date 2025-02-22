@@ -1,304 +1,512 @@
-.tour-departures {
-  padding: 0rem 5rem 0rem 5rem;
-
+$azul: var(--background-azul);
+$primary: var(--p-primary-color);
+@mixin flex($justify: center, $align: center) {
+  display: flex;
+  align-items: $align;
+  justify-content: $justify;
+}
+%txt-azul {
+  color: $azul;
+}
+%brd-rad {
+  border-radius: 11.82px;
+}
+%input-focus {
+  &:focus {
+    border-color: $primary;
+  }
+}
+%input-common {
+  width: 100%;
+  min-width: 250px;
+  padding: 0.53rem;
+  @extend %brd-rad;
+  border: 1px solid #ced4da;
+  @extend %txt-azul;
+  background: #fff;
+  @extend %input-focus;
+}
+.t-dep {
+  padding: 0 5rem;
   h1 {
-    color: var(--background-azul);
+    @extend %txt-azul;
     text-align: center;
-    font-size: 39.404px;
-    font-style: normal;
+    font-size: 39px;
     font-weight: 400;
   }
-
-  .filters {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: white;
-    padding: 1rem;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-
-    .city-filter {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-
-      .price-from {
-        color: #6c757d;
+  .f-hdr {
+    @include flex(space-between, flex-start);
+    flex-wrap: wrap;
+    .f-box {
+      min-width: 300px;
+      flex: 1;
+      margin: 0 0.5rem;
+      &:first-child {
+        margin-left: 0;
+      }
+      &:last-child {
+        margin-right: 0;
+      }
+      .f-lbl {
+        font-size: 0.875rem;
+        @extend %txt-azul;
+        margin-bottom: 0.5rem;
         font-weight: 500;
       }
-    }
-
-    .travelers {
-      display: flex;
-      gap: 1rem;
-
-      span {
-        padding: 0.5rem 1rem;
-        background: #f8f9fa;
-        border-radius: 4px;
-        color: #2f4b7c;
-        font-weight: 500;
+      .f-cnt {
+        position: relative;
+        width: 100%;
+        .p-inputtext,
+        .p-btn {
+          @extend %input-common;
+        }
+        .p-from {
+          position: absolute;
+          top: 50%;
+          left: 30%;
+          transform: translateY(-50%);
+          @extend %txt-azul;
+          font-weight: 500;
+          white-space: nowrap;
+          z-index: 1;
+          pointer-events: none;
+        }
+        .p-btn {
+          @include flex(null, center);
+          text-align: left;
+          cursor: pointer;
+          font-size: 1rem;
+          i {
+            margin-left: auto;
+          }
+        }
       }
     }
   }
-
-  // Estilos para el navegador de mes
-  .month-navigator {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  .m-nav {
+    margin: 10px -15px;
+    @include flex(space-between);
     background: transparent;
 
-    .month-display {
+    .m-display {
       font-size: 1.5rem;
       font-weight: 500;
-      color: var(--background-azul);
+      @extend %txt-azul;
       text-align: center;
       flex: 1;
     }
-
-    ::ng-deep .p-button.p-button-text {
+    ::ng-deep .p-button-text {
       min-width: 120px;
-      color: var(--background-azul);
-
-      &:hover {
-        background: transparent;
-      }
-
-      // Estilos para los íconos de flechas
-      .pi-arrow-circle-left,
-      .pi-arrow-circle-right {
-        background: var(--p-primary-color);
+      @extend %txt-azul;
+      .circle {
+        background: $primary;
         color: #fff;
         border-radius: 50%;
         width: 20px;
         height: 18px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+        @include flex;
         font-size: 1.5rem;
       }
     }
   }
-
+  ::ng-deep {
+    .p-icon {
+      @extend %txt-azul;
+    }
+    .p-autocomplete,
+    .p-btn {
+      position: relative;
+      width: 100%;
+    }
+    .p-autocomplete {
+      .p-autocomplete-input {
+        width: 100%;
+        @extend %brd-rad;
+        @extend %txt-azul;
+        background: #fff;
+        padding-right: 2.5rem;
+      }
+      .p-autocomplete-overlay {
+        @extend %brd-rad;
+        background: #fff;
+        box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
+        border: 1px solid #d9d9d9;
+        z-index: 1;
+      }
+      .p-autocomplete-dropdown {
+        position: absolute;
+        top: 50%;
+        right: 0.5rem;
+        transform: translateY(-50%);
+        background-color: transparent;
+        border: none;
+        z-index: 1;
+      }
+    }
+    .p-ovl .p-overlay-content {
+      @extend %brd-rad;
+      padding: 0;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+      background: #fff;
+    }
+  }
   ::ng-deep .p-dataview {
-    // Estilos para el header
     .p-dataview-header {
       margin-bottom: 10px;
       background: transparent;
       border: none;
       padding: 0;
     }
-
-    .departure-header {
-      padding: 0;
-      margin: 0;
-
-      .header-columns {
+    .dep-hdr {
+      margin-bottom: 10px;
+      .hdr-cols {
         display: grid;
         align-items: center;
-        grid-template-columns: 1fr 1fr 1fr 1fr; // Columnas de igual tamaño
+        grid-template-columns: repeat(4, 1fr);
         padding: 0;
         width: 100%;
-
         .pi-arrow-right:before {
           margin: 40px;
         }
-
         span {
-          color: var(--background-azul);
+          @extend %txt-azul;
           font-weight: 500;
-
-          // Salida → Regreso - alineado exactamente como en la imagen
-          &:first-child {
-            text-align: center;
-          }
-
-          // Información - centrado en su espacio
-          &:nth-child(2) {
-            text-align: center;
-          }
-
-          // Precio - alineado exactamente con los precios
-          &:nth-child(3) {
-            text-align: center;
-          }
+          text-align: center;
         }
       }
     }
-
-    // Contenedor para el elemento recomendado
-    .recommended-container {
-      .recommendation-label {
+    .rec-container {
+      .rec-label {
         text-align: center;
-        padding: 0.5rem;
         background-color: #d9d9d9;
         font-size: 14px;
-        font-weight: 400;
         border-radius: 17.732px 17.732px 0 0;
         border: 0.985px solid #d9d9d9;
-        border-bottom: none;
       }
-
-      .departure-item {
+      .dep-item {
         margin-top: 0 !important;
         border-top-left-radius: 0 !important;
         border-top-right-radius: 0 !important;
       }
     }
-
-    // Estilos para las filas
-    .departure-list {
+    .dep-list {
       display: flex;
       flex-direction: column;
       gap: 1rem;
     }
-
-    .departure-item {
+    .dep-item {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr 1fr; // Columnas de igual tamaño
+      grid-template-columns: repeat(4, 1fr);
       align-items: center;
       border-radius: 17.732px;
       border: 0.985px solid #d9d9d9;
       transition: transform 0.2s ease;
       padding: 1rem 0;
-
-      // Fechas - alineado exactamente con el header
-      .dates {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-      }
-
-      // Información - centrada
-      .info {
-        display: flex;
-        justify-content: center;
-      }
-
-      // Precio - alineado a la derecha exactamente como en la imagen
-      .final-price {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-
-        span:first-child {
-          margin-right: 4px;
-        }
-      }
-
-      // Acciones - alineadas a la derecha
+      .dates,
+      .info,
+      .f-price,
       .actions {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-      }
-
-      &:hover {
-        transform: translateY(-1px);
+        @include flex;
       }
     }
-
     .p-button {
-      background: var(--p-primary-color);
+      background: $primary;
       border-radius: 6rem;
       width: 144.935px;
       height: 49.254px;
     }
-
     .p-dataview-content {
       background-color: transparent;
     }
   }
-
-  .load-more {
-    display: flex;
-    justify-content: center;
+  .ld-more {
+    @include flex;
     padding: 1.5rem;
-
-    ::ng-deep .view-more-button {
+    ::ng-deep .view-more-btn {
       border-radius: 6rem;
       width: 300.452px;
       height: 49.254px;
     }
   }
 }
-
 .dates {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem; // Aumentado para dar más espacio entre Salida → Regreso
-
+  @include flex(null, center);
+  gap: 1.5rem;
   .pi-arrow-right {
-    color: var(--background-azul);
-    width: 17.239px;
-    height: 9.851px;
+    @extend %txt-azul;
+    width: 17px;
+    height: 9px;
   }
-
-  .departure-date,
-  .return-date {
+  .d-date {
     display: flex;
     flex-direction: column;
-
-    .day-name {
-      color: var(--background-azul);
-      font-size: 15.761px;
-      font-style: normal;
+    .d-name {
+      @extend %txt-azul;
+      font-size: 15px;
       font-weight: 500;
-      line-height: 19.577px;
     }
-
-    .day {
-      color: var(--background-azul);
-      font-size: 29.553px;
-      font-style: normal;
+    .d-day {
+      @extend %txt-azul;
+      font-size: 29px;
       font-weight: 700;
-      line-height: 34.064px;
     }
   }
 }
-.p-tag-info {
-  font-size: 13.778px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: 19.558px;
-}
+.p-tag-info,
 .pi-users:before {
-  font-size: 13.778px;
-  font-style: normal;
+  font-size: 13px;
   font-weight: 600;
-  line-height: 19.558px;
 }
-
-.final-price {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
+.f-price {
+  @include flex(null, center);
   gap: 0.25rem;
-
   span:first-child {
-    color: var(--background-azul);
-    font-size: 13.791px;
-    font-style: normal;
+    @extend %txt-azul;
+    font-size: 13px;
     font-weight: 400;
-    line-height: 20.556px;
   }
-
   .amount {
     margin-left: 5px;
-    color: var(--background-azul);
-    font-size: 29.553px;
-    font-style: normal;
+    @extend %txt-azul;
+    font-size: 29px;
     font-weight: 500;
-    line-height: 29.366px;
   }
 }
+.p-type {
+  @include flex(space-between);
+  padding: 1rem 5rem;
+  border-bottom: 1px solid #eee;
 
-.actions {
-  display: flex;
-  justify-content: flex-end;
+  &:last-of-type {
+    border-bottom: none;
+  }
+  .p-info {
+    .p-cat {
+      @include flex(null, center);
+      font-weight: 500;
+      @extend %txt-azul;
+    }
+    .p-age {
+      font-size: 0.8rem;
+      @extend %txt-azul;
+    }
+  }
+  .p-ctrl {
+    @include flex(null, center);
+    .p-count {
+      margin: 0 1rem;
+      min-width: 1.5rem;
+      text-align: center;
+      font-size: 1.2rem;
+      @extend %txt-azul;
+    }
+  }
+}
+.p-actions {
+  @include flex;
+  margin-top: 1rem;
+}
+.ml-2 {
+  margin-left: 0.5rem;
+}
+.ml-auto {
+  margin-left: auto;
+}
+.p-3 {
+  padding: 1rem;
+}
+
+@media screen and (max-width: 1023px) {
+  .t-dep {
+    padding: 0 2rem;
+
+    h1 {
+      font-size: 32px;
+    }
+
+    .f-hdr {
+      flex-wrap: wrap;
+      flex-direction: row;
+
+      .f-box {
+        min-width: 220px;
+        flex: 1;
+        margin: 0 0.5rem 1rem;
+        .f-lbl {
+          &.city {
+            margin-left: 6px;
+          }
+        }
+        .f-cnt {
+          &.city {
+            margin-left: 6px;
+          }
+          .p-from {
+            left: 60%;
+          }
+        }
+      }
+    }
+    ::ng-deep .p-dataview {
+      .dep-hdr .hdr-cols {
+        grid-template-columns: 30% 20% 25% 25%;
+        gap: 0;
+        span {
+          font-size: 0.9rem;
+          padding: 0 0.5rem;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+      .dep-item {
+        grid-template-columns: 30% 20% 25% 25%;
+        gap: 0;
+        padding: 1rem 0.5rem;
+        .dates {
+          justify-self: start;
+          padding-left: 0.5rem;
+        }
+        .info {
+          justify-self: center;
+        }
+        .f-price {
+          justify-self: center;
+        }
+        .actions {
+          justify-self: end;
+          padding-right: 0.5rem;
+        }
+      }
+      .p-button {
+        width: 130px;
+        height: 45px;
+        font-size: 0.9rem;
+      }
+      .p-dataview-content {
+        font-size: 0.95rem;
+      }
+    }
+    .ld-more ::ng-deep .view-more-btn {
+      width: 280px;
+      height: 45px;
+    }
+  }
+  .dates {
+    gap: 0.5rem;
+    .d-date {
+      .d-name {
+        font-size: 14px;
+      }
+      .d-day {
+        font-size: 24px;
+      }
+    }
+    .pi-arrow-right {
+      margin: 0 0.25rem;
+    }
+  }
+  .f-price .amount {
+    font-size: 24px;
+  }
+  .p-type {
+    padding: 1rem 3rem;
+  }
+}
+@media screen and (max-width: 767px) {
+  .t-dep {
+    padding: 0 1rem;
+    h1 {
+      font-size: 28px;
+    }
+    .m-nav {
+      .m-display {
+        font-size: 1.2rem;
+      }
+      ::ng-deep .p-button.p-button-text {
+        min-width: 80px;
+      }
+    }
+    ::ng-deep .p-dataview {
+      .dep-hdr {
+        display: none;
+      }
+      .dep-item {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 1.5rem;
+        padding: 1.5rem 1rem;
+        .dates,
+        .info,
+        .f-price,
+        .actions {
+          justify-content: center;
+          justify-self: center;
+        }
+        .dates {
+          flex-direction: row;
+          gap: 1rem;
+          .pi-arrow-right {
+            transform: none;
+            margin: 0 0.5rem;
+          }
+        }
+      }
+      .p-button {
+        width: 144.935px;
+        height: 49.254px;
+      }
+    }
+    .ld-more {
+      padding: 1rem 0.5rem;
+      ::ng-deep .view-more-btn {
+        width: 95%;
+        max-width: none;
+        height: 49px;
+        min-width: 270px;
+        font-size: 1rem;
+        font-weight: 500;
+      }
+    }
+  }
+  .p-type {
+    padding: 0.75rem 1.5rem;
+    flex-direction: row;
+    gap: 0;
+    margin-bottom: 0.5rem;
+    .p-info {
+      text-align: left;
+    }
+  }
+  .p-ovl .p-overlay-content {
+    max-width: 90% !important;
+    margin: 0 auto;
+  }
+}
+@media screen and (max-width: 380px) {
+  .t-dep {
+    h1 {
+      font-size: 24px;
+    }
+    .f-hdr .f-box .f-cnt {
+      .p-inputtext,
+      .p-btn {
+        min-width: auto;
+      }
+    }
+  }
+  .p-type {
+    padding: 0.5rem 1rem;
+    .p-info {
+      .p-cat {
+        font-size: 0.9rem;
+      }
+      .p-age {
+        font-size: 0.7rem;
+      }
+    }
+    .p-ctrl .p-count {
+      margin: 0 0.5rem;
+    }
+  }
 }

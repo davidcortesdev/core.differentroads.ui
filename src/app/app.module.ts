@@ -33,6 +33,7 @@ import { CommunityHeroComponent } from './pages/home/components/community-sectio
 import { CommunityGalleryComponent } from './pages/home/components/community-section/components/community-gallery/community-gallery.component';
 import { CommunityReviewsComponent } from './pages/home/components/community-section/components/community-reviews/community-reviews.component';
 import { NewsLetterSectionComponent } from './pages/home/components/community-section/components/newsletter-section/newsletter-section.component';
+import { PublicitySectionComponent } from './pages/home/components/publicity-section/publicity-section.component';
 
 // Tour List Component
 import { ToursListComponent } from './pages/home/components/tours-list-section/tours-list-section.component';
@@ -51,6 +52,7 @@ import { EditorModule } from 'primeng/editor';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { IftaLabelModule } from 'primeng/iftalabel';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { FileUploadModule } from 'primeng/fileupload';
 import { ImageModule } from 'primeng/image';
@@ -111,13 +113,26 @@ import { SecondFooterSectionComponent } from './layout/footer/components/second-
 import { TimelineModule } from 'primeng/timeline';
 
 import MyPreset from './mytheme';
+import { BasicPageComponent } from './pages/basic-page/basic-page.component';
+import { TitleAndQuillComponent } from './pages/basic-page/components/title-and-quill/title-and-quill.component';
 import { CheckoutComponent } from './pages/checkout/checkout.component';
 import { CustomizeTripComponent } from './pages/checkout/components/customize-trip/customize-trip.component';
 import { FlightsComponent } from './pages/checkout/components/flights/flights.component';
 import { TravelersComponent } from './pages/checkout/components/travelers/travelers.component';
 import { PaymentComponent } from './pages/checkout/components/payment/payment.component';
+import { TourCardComponent } from './shared/components/tour-card/tour-card.component';
 
 import { StepsModule } from 'primeng/steps';
+
+import { StepperModule } from 'primeng/stepper';
+import { ContentPageComponent } from './pages/content-page/content-page.component';
+import { BannerComponent } from './shared/components/banner/banner.component';
+
+import { MultiSelectModule } from 'primeng/multiselect';
+import { ToursComponent } from './pages/tours/tours.component';
+import { OptionalActivitiesComponent } from './pages/checkout/components/customize-trip/components/optional-activities/optional-activities.component';
+import { TravelerSelectorComponent } from './pages/checkout/components/customize-trip/components/traveler-selector/traveler-selector.component';
+import { RoomSelectorComponent } from './pages/checkout/components/customize-trip/components/room-selector/room-selector.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -148,9 +163,11 @@ export function HttpLoaderFactory(http: HttpClient) {
     CommunityHeroComponent,
     CommunityGalleryComponent,
     CommunityReviewsComponent,
+    PublicitySectionComponent,
 
     // Tours List
     ToursListComponent,
+    TourCardComponent,
 
     // Content List
     ContentListComponent,
@@ -178,11 +195,19 @@ export function HttpLoaderFactory(http: HttpClient) {
     ReviewSectionComponent,
     ReviewsComponent,
     SecondFooterSectionComponent,
+    BasicPageComponent,
+    TitleAndQuillComponent,
     CheckoutComponent,
     CustomizeTripComponent,
     FlightsComponent,
     TravelersComponent,
     PaymentComponent,
+    ContentPageComponent,
+    BannerComponent,
+    ToursComponent,
+    OptionalActivitiesComponent,
+    TravelerSelectorComponent,
+    RoomSelectorComponent,
   ],
   imports: [
     // Angular Modules
@@ -199,6 +224,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     AvatarModule,
     AvatarGroupModule,
     InputTextModule,
+    InputNumberModule,
     AutoCompleteModule,
     CalendarModule,
     ButtonModule,
@@ -230,6 +256,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     TimelineModule,
     ForgetPasswordComponent,
     StepsModule,
+    StepperModule,
+    MultiSelectModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,
@@ -257,6 +285,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     providePrimeNG({
       theme: {
         preset: MyPreset,
+        options: {
+          darkModeSelector: false || 'none',
+        }
       },
     }),
   ],

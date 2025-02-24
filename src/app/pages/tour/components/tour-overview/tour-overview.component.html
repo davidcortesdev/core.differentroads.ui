@@ -8,8 +8,8 @@
   <div class="tour-content">
     <div class="tour-image">
       <p-image
-        [src]="tour.image[0].url"
-        [alt]="tour.image[0].alt"
+        [src]="tour?.image?.[0]?.url"
+        [alt]="tour?.image?.[0]?.alt"
         [preview]="true"
       ></p-image>
 
@@ -47,7 +47,7 @@
       <div class="expert-section">
         <div class="expert-info">
           <p-avatar
-            [image]="tour.expert.ephoto[0].url"
+            [image]="tour.expert.ephoto?.[0]?.url"
             shape="circle"
             size="large"
             [style]="{ width: '64px', height: '64px' }"

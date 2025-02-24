@@ -1,0 +1,165 @@
+:host {
+  .optional-activities {
+    color: var(--background-azul);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    .step {
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+
+      .step-title {
+        width: fit-content;
+        height: fit-content;
+        border-bottom: 1px solid var(--background-azul);
+        font-size: 1.25rem;
+        font-weight: 500;
+        padding-bottom: 0.5rem;
+        padding-top: 0.5rem;
+      }
+
+      .step-description {
+        font-size: .875rem;
+        align-items: center;
+        display: flex;
+        gap: .5rem;
+      }
+    }
+
+    .dataview-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1rem;
+    }
+
+    .dataview-item {
+      grid-column: span 12;
+    }
+
+    .dataview-card {
+      display: flex;
+      align-items: center;
+      padding: 1.5rem;
+      gap: 1rem;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+      @media (max-width: 480px) {
+        flex-direction: column;
+      }
+    }
+
+    .dataview-card-border {
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .dataview-image {
+      width: 100%;
+      max-width: 160px;
+      position: relative;
+    }
+
+    .dataview-img {
+      width: 100%;
+      border-radius: 8px;
+    }
+
+    .dataview-tag {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+    }
+
+    .dataview-content {
+      color: var(--background-azul);
+      display: flex;
+      gap: 1.5rem;
+      width: 100%;
+    }
+
+    .dataview-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .dataview-name {
+      color: var(--background-azul);
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+
+    .dataview-description {
+      color: var(--background-azul);
+      font-size: 0.875rem;
+
+      @media (max-width: 480px) {
+        font-size: .75rem;
+      }
+    }
+
+    .dataview-rating {
+      background-color: #f3f4f6;
+      border-radius: 30px;
+      padding: 0.25rem;
+    }
+
+    .dataview-rating-content {
+      background-color: #ffffff;
+      border-radius: 30px;
+      padding: 0.25rem 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .dataview-rating-text {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #1f2937;
+    }
+
+    .dataview-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      width: 25%;
+      justify-content: space-between;
+    }
+
+    .dataview-price {
+      display: flex;
+      flex-direction: column;
+      text-align: right;
+    }
+
+    .dataview-price-value {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--background-azul);
+    }
+
+    .dataview-per-person {
+      font-size: .875rem;
+
+      @media (max-width: 768px) {
+        font-size: .75rem;
+      }
+    }
+
+    .dataview-buttons {
+      display: flex;
+      gap: 0.5rem;
+      text-align: right;
+    }
+
+    .dataview-buy-button {
+      flex: 1;
+      white-space: nowrap;
+    }
+  }
+}

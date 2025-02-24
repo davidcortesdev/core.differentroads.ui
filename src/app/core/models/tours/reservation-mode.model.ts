@@ -1,3 +1,5 @@
+import { PriceData } from '../checkout/booking';
+
 export interface ReservationMode {
   id: string;
   status: string;
@@ -5,4 +7,6 @@ export interface ReservationMode {
   externalID: string;
   name: string;
   places: number;
+  qty?: number;
+  price: PriceData;
 }

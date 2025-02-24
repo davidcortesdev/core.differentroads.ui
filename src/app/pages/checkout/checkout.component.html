@@ -91,34 +91,39 @@
         <div class="tour-base-info">
           <h4>{{ tourName }}</h4>
           <p>{{ tourDates }}</p>
-          <p>{{ travelers }} viajeros</p>
-        </div>
 
-        <!-- Selected items list -->
-        <div class="selected-items">
-          <div *ngFor="let item of selectedItems" class="item">
-            <span>{{ item.name }}</span>
-            <span>{{ item.price | currency : "EUR" }}</span>
+          <!-- Lista de rooms seleccionados y cantidad -->
+          <div *ngFor="let room of rooms" class="room">
+            <span>{{ room.name }}</span>
+            <span>{{ room.qty }}</span>
           </div>
-        </div>
 
-        <!-- Flights info if selected -->
-        <div class="flights-info" *ngIf="hasFlights">
-          <h4>Vuelos</h4>
-          <div class="flight-details">
-            <!-- Flight details here -->
+          <!-- Selected items list -->
+          <div class="selected-items">
+            <div *ngFor="let item of selectedItems" class="item">
+              <span>{{ item.name }}</span>
+              <span>{{ item.price | currency : "EUR" }}</span>
+            </div>
           </div>
-        </div>
 
-        <!-- Total section -->
-        <div class="total-section">
-          <div class="subtotal">
-            <span>Subtotal</span>
-            <span>{{ subtotal | currency : "EUR" }}</span>
+          <!-- Flights info if selected -->
+          <div class="flights-info" *ngIf="hasFlights">
+            <h4>Vuelos</h4>
+            <div class="flight-details">
+              <!-- Flight details here -->
+            </div>
           </div>
-          <div class="total">
-            <span>Total</span>
-            <span>{{ total | currency : "EUR" }}</span>
+
+          <!-- Total section -->
+          <div class="total-section">
+            <div class="subtotal">
+              <span>Subtotal</span>
+              <span>{{ subtotal | currency : "EUR" }}</span>
+            </div>
+            <div class="total">
+              <span>Total</span>
+              <span>{{ total | currency : "EUR" }}</span>
+            </div>
           </div>
         </div>
       </div>

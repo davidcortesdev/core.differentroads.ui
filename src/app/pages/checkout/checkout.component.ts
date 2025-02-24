@@ -40,6 +40,9 @@ export class CheckoutComponent implements OnInit {
 
   order: Order | null = null;
 
+  // summary
+  rooms: ReservationMode[] = [];
+
   constructor(
     private ordersService: OrdersService,
     private periodsService: PeriodsService,
@@ -99,12 +102,8 @@ export class CheckoutComponent implements OnInit {
   }
 
   private updateOrderSummaryWithRooms(rooms: ReservationMode[]) {
-    const roomSummary = rooms.map((room) => ({
-      name: room.name,
-      quantity: room.places,
-    }));
-    console.log('Room summary:', roomSummary);
-    // Assuming the summaryService has a method to update the order summary with rooms
-    this.summaryService.updateOrderSummaryWithRooms(roomSummary);
+    // Logic to update the order summary with the room summary
+    console.log('Updating order summary with rooms:', rooms);
+    this.rooms = rooms;
   }
 }

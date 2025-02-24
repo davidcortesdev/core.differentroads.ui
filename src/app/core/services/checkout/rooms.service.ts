@@ -33,6 +33,6 @@ export class RoomsService {
   selectedRooms$ = this.selectedRoomsSource.asObservable();
 
   updateSelectedRooms(selectedRooms: ReservationMode[]) {
-    this.selectedRoomsSource.next(selectedRooms);
+    this.selectedRoomsSource.next(selectedRooms.filter((room) => room.qty));
   }
 }

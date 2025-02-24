@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { TravelersService } from '../../../../../../core/services/checkout/travelers.service';
 
 @Component({
@@ -8,7 +8,7 @@ import { TravelersService } from '../../../../../../core/services/checkout/trave
   styleUrls: ['./traveler-selector.component.scss'],
 })
 export class TravelerSelectorComponent implements OnInit {
-  availableTravelers: string[] = ['Adultos', 'Niños', 'Bebés'];
+  @Input() availableTravelers: string[] = ['Adultos', 'Niños', 'Bebés'];
 
   travelersNumbers: { adults: number; childs: number; babies: number } = {
     adults: 1,

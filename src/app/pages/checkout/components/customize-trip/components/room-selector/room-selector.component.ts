@@ -85,6 +85,17 @@ export class RoomSelectorComponent implements OnChanges {
   onRoomSpacesChange(changedRoom: ReservationMode, newValue: number) {
     this.selectedRooms[changedRoom.externalID] = newValue;
     console.log('Room spaces changed:', changedRoom, 'New value:', newValue);
+
+    const updatedRooms = Object.keys(this.selectedRooms).map((externalID) => {
+      const room = this.allRoomsAvailability.find(
+        (r) => r.externalID === externalID
+      );
+      return {
+        ...room,
+        qty: newValue,
+      } as ReservationMode;
+    });
+    this.roomsService.updateSelectedRooms(updatedRooms);
   }
 
   ngOnChanges(changes: SimpleChanges): void {

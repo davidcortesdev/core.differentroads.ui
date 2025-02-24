@@ -77,6 +77,9 @@ export class CheckoutComponent implements OnInit {
 
       this.orderDetails = order;
 
+      this.initializeTravelers(order.travelers || []);
+      this.initializeActivities(order.optionalActivitiesRef || []);
+
       const periodID = order.periodID;
       this.periodID = periodID;
 
@@ -123,6 +126,71 @@ export class CheckoutComponent implements OnInit {
       this.selectedFlight = flight;
       this.updateOrderSummary();
     });
+  }
+
+  initializeTravelers(travelers: any[]) {
+    const travelersCount = {
+      adults: 0,
+      childs: 0,
+      babies: 0,
+    };
+
+    const rooms: ReservationMode[] = [];
+
+    travelers.forEach((traveler) => {
+      if (traveler.travelerData.ageGroup === 'Adultos') {
+        travelersCount.adults++;
+      } else if (traveler.travelerData.ageGroup === 'Niños') {
+        travelersCount.childs++;
+      } else if (traveler.travelerData.ageGroup === 'Bebes') {
+        travelersCount.babies++;
+      }
+
+      const roomExternalID = traveler.periodReservationModeID.split('.')[1];
+      const existingRoom = rooms.find(
+        (room) => room.externalID === roomExternalID
+      );
+
+      if (existingRoom) {
+        existingRoom.qty = (existingRoom.qty || 0) + 1;
+      } else {
+        rooms.push({
+          id: '',
+          status: '',
+          description: '',
+          externalID: roomExternalID,
+          name: '',
+          places: 0,
+          qty: 1,
+          price: 0,
+        });
+      }
+    });
+
+    console.log('initial rooms', rooms);
+
+    this.travelersService.updateTravelersNumbers(travelersCount);
+    this.roomsService.updateSelectedRooms(rooms);
+  }
+
+  initializeActivities(optionalActivitiesRef: any[]) {
+    const activities = optionalActivitiesRef.map((activityRef) => {
+      return {
+        id: activityRef.id,
+        externalID: activityRef.id,
+        name: '',
+        description: '',
+        price: 0,
+        status: '',
+        activityId: activityRef.id,
+        optional: true,
+        periodId: this.periodID,
+        productType: '',
+        travelersAssigned: activityRef.travelersAssigned,
+      };
+    });
+
+    this.activitiesService.updateActivities(activities);
   }
 
   updateOrderSummary() {

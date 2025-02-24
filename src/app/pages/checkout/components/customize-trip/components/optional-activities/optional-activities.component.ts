@@ -26,7 +26,14 @@ export class OptionalActivitiesComponent implements OnInit, OnChanges {
     private periodsService: PeriodsService,
     private pricesService: PricesService,
     private activitiesService: ActivitiesService // Inject the service
-  ) {}
+  ) {
+    this.activitiesService.activities$.subscribe((activities) => {
+      this.addedActivities = new Set(
+        activities.map((activity) => activity.activityId)
+      );
+      console.log('Added Activities:', this.addedActivities);
+    });
+  }
 
   ngOnInit(): void {
     this.loadActivities();
@@ -57,24 +64,27 @@ export class OptionalActivitiesComponent implements OnInit, OnChanges {
               ),
             };
           });
+          this.updateAddedActivities();
         });
     }
   }
 
   toggleActivity(activity: Activity): void {
-    if (this.addedActivities.has(activity.externalID)) {
-      this.addedActivities.delete(activity.externalID);
+    if (this.addedActivities.has(activity.activityId)) {
+      this.addedActivities.delete(activity.activityId);
       console.log('Activity removed:', activity);
     } else {
-      this.addedActivities.add(activity.externalID);
+      this.addedActivities.add(activity.activityId);
       console.log('Activity added:', activity);
     }
     this.updateAddedActivities();
   }
 
   updateAddedActivities(): void {
+    console.log('Updating added activities:', this.addedActivities);
+
     const activities = this.optionalActivities.filter((activity) =>
-      this.addedActivities.has(activity.externalID)
+      this.addedActivities.has(activity.activityId)
     );
     this.activitiesService.updateActivities(activities);
   }
@@ -84,6 +94,6 @@ export class OptionalActivitiesComponent implements OnInit, OnChanges {
   }
 
   isActivityAdded(activity: Activity): boolean {
-    return this.addedActivities.has(activity.externalID);
+    return this.addedActivities.has(activity.activityId);
   }
 }

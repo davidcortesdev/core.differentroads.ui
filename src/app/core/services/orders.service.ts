@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
@@ -13,11 +13,16 @@ import {
 })
 export class OrdersService {
   private readonly API_URL = `${environment.dataApiUrl}/orders`;
+  private readonly httpOptions = {
+    headers: new HttpHeaders({
+      'Content-Type': 'application/json',
+    }),
+  };
 
   constructor(private http: HttpClient) {}
 
   createOrder(order: Partial<Order>): Observable<Order> {
-    return this.http.post<Order>(this.API_URL, order);
+    return this.http.post<Order>(this.API_URL, order, this.httpOptions);
   }
 
   getOrderDetails(id: string): Observable<Order> {

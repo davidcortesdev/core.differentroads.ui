@@ -50,6 +50,13 @@ export class RoomSelectorComponent implements OnChanges {
       const totalTravelers = data.adults + data.childs + data.babies;
       this.filterRooms(totalTravelers);
     });
+
+    this.roomsService.selectedRooms$.subscribe((rooms) => {
+      this.selectedRooms = rooms.reduce((acc, room) => {
+        acc[room.externalID] = room.qty || 0;
+        return acc;
+      }, {} as { [externalID: string]: number });
+    });
   }
 
   loadReservationModes(): void {
@@ -63,7 +70,7 @@ export class RoomSelectorComponent implements OnChanges {
           }));
           // Initialize selectedRooms with 0 for each room
           this.selectedRooms = this.allRoomsAvailability.reduce((acc, room) => {
-            acc[room.externalID] = 0;
+            acc[room.externalID] = this.selectedRooms[room.externalID] || 0;
             return acc;
           }, {} as { [externalID: string]: number });
           // Ensure rooms are filtered after loading reservation modes
@@ -73,6 +80,8 @@ export class RoomSelectorComponent implements OnChanges {
             initialTravelers.adults +
             initialTravelers.childs +
             initialTravelers.babies;
+
+          this.updateRooms();
           this.filterRooms(totalTravelers);
         });
     }
@@ -97,8 +106,17 @@ export class RoomSelectorComponent implements OnChanges {
     } else {
       this.selectedRooms[changedRoom.externalID] = newValue;
     }
-    console.log('Room spaces changed:', changedRoom, 'New value:', newValue);
 
+    this.updateRooms();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['periodID']) {
+      this.loadReservationModes();
+    }
+  }
+
+  updateRooms() {
     const updatedRooms = Object.keys(this.selectedRooms).map((externalID) => {
       const room = this.allRoomsAvailability.find(
         (r) => r.externalID === externalID
@@ -110,11 +128,5 @@ export class RoomSelectorComponent implements OnChanges {
     });
 
     this.roomsService.updateSelectedRooms(updatedRooms);
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['periodID']) {
-      this.loadReservationModes();
-    }
   }
 }

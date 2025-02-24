@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ToursService } from '../../../../core/services/tours.service';
+import { TourComponent } from '../../tour.component';
 
 export interface Departure {
   departureDate: Date;
@@ -13,6 +14,7 @@ export interface Departure {
   group?: string;
   waitingList: boolean;
   status: DepartureStatus;
+  externalID: string;
 }
 
 export type DepartureStatus = 'available' | 'complete';
@@ -38,7 +40,8 @@ export class TourDeparturesComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private toursService: ToursService
+    private toursService: ToursService,
+    private tourComponent: TourComponent
   ) {}
 
   filterCities(event: { query: string }): void {
@@ -47,13 +50,13 @@ export class TourDeparturesComponent implements OnInit {
       city.toLowerCase().includes(query)
     );
   }
+
   formatPrice(price?: number): string {
     return price ? `${price.toFixed(0)}€` : '0€';
   }
 
   addToCart(departure: Departure): void {
-    // TODO: Implement cart service
-    console.log('Adding to cart:', departure);
+    this.tourComponent.createOrderAndRedirect(departure);
   }
 
   filterDepartures(): void {
@@ -112,6 +115,7 @@ export class TourDeparturesComponent implements OnInit {
                 group: period.tripType || 'Grupo',
                 waitingList: false,
                 status: 'available' as DepartureStatus,
+                externalID: `${period.externalID}`,
               };
             })
             .filter((departure) => departure !== null)

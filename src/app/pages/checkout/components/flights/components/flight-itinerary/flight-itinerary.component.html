@@ -70,10 +70,13 @@
   <!-- Bloque de precios y botón de selección -->
   <div class="flight-itinerary-price space-y-4">
     <div class="flight-itinerary-price-wrapper">
-      <span class="font-bold font-4xl">
+      <span class="flight-itinerary-price-wrapper-name">
+        {{ flight.name }}
+      </span>
+      <span class="flight-itinerary-price-wrapper-price">
         {{ flight.price || 0 | currencyFormat : "EUR" }}
       </span>
-      <span class="font-sm">Por persona</span>
+      <span class="flight-itinerary-price-wrapper-text">Por persona</span>
     </div>
     <p-button
       type="button"

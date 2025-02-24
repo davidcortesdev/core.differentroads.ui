@@ -11,6 +11,7 @@ export class CurrencyPipe implements PipeTransform {
       currency: currencyCode,
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
+      useGrouping: true,
     }).format(value);
   }
 }

@@ -1,0 +1,22 @@
+<p-panel styleClass="info-pan">
+    <ng-template pTemplate="header">
+        <div class="pan-hdr">Información de tu viaje</div>
+    </ng-template>
+    <div class="trip-det">
+        <div class="det-row">
+            <i class="pi pi-globe"></i>
+            <label class="trip">Viaje: </label>
+            <span>{{tripDetails.destination}}</span>
+        </div>
+        <div class="det-row">
+            <i class="pi pi-calendar"></i>
+            <label class="trip">Periodo:</label>
+            <span>{{tripDetails.period}}</span>
+        </div>
+        <div class="det-row">
+            <i class="pi pi-users"></i>
+            <label class="trip">Número de viajeros:</label>
+            <span>{{tripDetails.travelers}}</span>
+        </div>
+    </div>
+</p-panel>

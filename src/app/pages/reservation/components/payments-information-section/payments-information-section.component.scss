@@ -1,0 +1,145 @@
+$azul: var(--background-azul);
+$coral: #ea685c;
+$border: #f59188;
+
+:host {
+    display: block;
+    margin-bottom: 1.5rem;
+
+    ::ng-deep {
+        .p-panel,
+        .pay-pan {
+            margin-bottom: 1.5rem;
+            border-radius: 11.434px;
+            overflow: hidden;
+            border: 2px solid $border;
+        }
+
+        .p-panel {
+            .p-panel-header,
+            .p-panel-content {
+                color: $azul;
+                background: white;
+                border: 0;
+                padding: 1rem;
+            }
+
+            .pan-hdr {
+                font-weight: 600;
+                font-size: 1.1rem;
+            }
+        }
+
+        .pay-pan {
+            .pay-det {
+                .pay-amts {
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 2rem;
+                    margin-bottom: 2rem;
+                    text-align: center;
+
+                    .amt-box {
+                        flex: 1;
+
+                        .lbl {
+                            margin-bottom: 0.5rem;
+                        }
+
+                        .val {
+                            font-size: 1.5rem;
+                            font-weight: 600;
+
+                            &.rem {
+                                color: $coral;
+                            }
+
+                            &.pay {
+                                color: #55728f;
+                            }
+                        }
+                    }
+                }
+
+                .pay-sch {
+                    text-align: center;
+                    margin-bottom: 1rem;
+
+                    .pay-date,
+                    .next-pay {
+                        margin-bottom: 0.5rem;
+                    }
+                }
+
+                .pay-note {
+                    text-align: center;
+                    font-size: 0.9rem;
+                }
+            }
+        }
+    }
+}
+@media (max-width: 1024px) {
+    :host {
+        ::ng-deep {
+            .pay-pan {
+                .pay-amts {
+                    gap: 1.5rem;
+                }
+            }
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    :host {
+        ::ng-deep {
+            .pay-pan {
+                font-size: 12px;
+
+                .pay-det {
+                    .pay-amts {
+                        flex-direction: column;
+                        gap: 0.5rem;
+                        margin-bottom: 1rem;
+
+                        .amt-box {
+                            padding: 0.25rem 0;
+
+                            .val {
+                                font-size: 1.3rem;
+                            }
+
+                            .lbl {
+                                margin-bottom: 0.25rem;
+                            }
+                        }
+                    }
+
+                    .pay-sch {
+                        margin-bottom: 0.5rem;
+
+                        .pay-date,
+                        .next-pay {
+                            margin-bottom: 0.25rem;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    :host {
+        ::ng-deep {
+            .pay-pan {
+                .pay-note {
+                    padding: 0 0.25rem;
+                    font-size: 0.85rem;
+                    line-height: 1.2;
+                }
+            }
+        }
+    }
+}

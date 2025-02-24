@@ -1,0 +1,174 @@
+* {
+  color: var(--background-azul);
+}
+
+.content-form {
+  padding: 10px;
+  border-radius: 8px;
+  margin-top: 20px;
+  margin-left: 23px;
+
+  @media (max-width: 768px) {
+    margin-left: 0px;
+    padding: 5px;
+  }
+}
+
+.user {
+  display: inline-block;
+  margin: 0;
+  margin-left: 14px;
+  padding: 0px;
+}
+
+.user-button {
+  margin-top: 10px;
+  border: 1px solid rgb(218, 211, 211);
+  font-weight: 500;
+  display: inline-block;
+  padding: 5px 220px 5px 5px;
+  border-radius: 5px;
+
+  @media (max-width: 768px) {
+    padding: 5px 100px 5px 5px;
+  }
+}
+
+.user-description {
+  font-size: 12px;
+}
+
+.pasajero {
+  font-size: 12px;
+  margin-right: 15px;
+}
+
+.title {
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--background-azul);
+  display: inline-block;
+  margin: 0;
+  margin-bottom: 20px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.traveler-form {
+  margin-top: 20px;
+  width: 100%;
+
+  .form-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+
+      .form-column {
+        margin-right: 0;
+      }
+    }
+
+    .form-column {
+      flex: 1;
+      margin-right: 10px;
+
+      &:last-child {
+        margin-right: 0;
+      }
+
+      .form-field {
+        margin-bottom: 10px;
+        font-size: 14px;
+
+        label {
+          display: block;
+          margin-bottom: 5px;
+        }
+
+        input,
+        p-autocomplete,
+        p-calendar {
+          width: 100%;
+        }
+
+        &.half-width {
+          flex: 1;
+          margin-right: 10px;
+
+          &:last-child {
+            margin-right: 0;
+          }
+
+          @media (max-width: 768px) {
+            flex: 1 1 100%;
+            margin-right: 0;
+          }
+        }
+      }
+    }
+  }
+}
+
+::ng-deep {
+  .form-field {
+    margin-bottom: 10px;
+
+    label {
+      display: block;
+      color: var(--background-azul);
+    }
+
+    .p-inputtext,
+    .p-dropdown,
+    .p-calendar,
+    .p-autocomplete,
+    .p-inputmask {
+      width: 100%;
+      border: none;
+      border-bottom: 1px solid var(--background-azul);
+      border-radius: 0;
+      background: #f7f6f200;
+      font-size: 14px;
+    }
+
+    .p-datepicker {
+      width: 100%;
+
+      @media (max-width: 768px) {
+        width: 100%;
+      }
+    }
+
+    .p-select {
+      display: inline-flex;
+      cursor: pointer;
+      position: relative;
+      user-select: none;
+      background: #f7f6f200;
+      border: none;
+      border-bottom: 1px solid var(--background-azul);
+      transition: background var(--p-select-transition-duration), color var(--p-select-transition-duration), border-color var(--p-select-transition-duration), outline-color var(--p-select-transition-duration), box-shadow var(--p-select-transition-duration);
+      border-radius: var(--p-select-border-radius);
+      outline-color: transparent;
+      box-shadow: var(--p-select-shadow);
+      border-radius: 0px;
+      width: 100%;
+    }
+
+    .p-select-dropdown {
+      color: var(--background-azul);
+    }
+
+    .p-button-rounded {
+      border-radius: var(--p-button-rounded-border-radius);
+      width: 100%;
+    }
+  }
+
+  ::ng-deep .view-more-btn {
+    border-radius: 6rem;
+    width: 100%;
+  }
+}

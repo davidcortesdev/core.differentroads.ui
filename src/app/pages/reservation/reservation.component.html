@@ -102,10 +102,18 @@
         </p-panel>
 
         <!-- Botón de subir justificante -->
-        <p-button class="upload-button">
-            <i class="pi pi-upload"></i>
-            Subir justificante de transferencia
-        </p-button>
+        <p-fileUpload 
+            mode="basic" 
+            name="demo[]" 
+            chooseIcon="pi pi-upload" 
+            url="https://www.primefaces.org/cdn/api/upload.php" 
+            accept="image/*" 
+            maxFileSize="1000000" 
+            (onUpload)="onBasicUploadAuto($event)" 
+            [auto]="true" 
+            chooseLabel="Subir justificante de transferencia"
+            class="upload-button"
+        ></p-fileUpload>
         </ng-container>
     </div>
 

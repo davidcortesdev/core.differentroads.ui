@@ -160,6 +160,19 @@ $border: #f59188;
             margin-top: 1rem;
             display: block;
             text-align: center;
+
+            .p-fileupload {
+                .p-button {
+                    border-radius: 114.398px;
+                    background-color: $coral;
+                    border-color: $coral;
+                    color: white;
+
+                    .pi-upload {
+                        margin-right: 0.5rem;
+                    }
+                }
+            }
         }
     }
 }
@@ -252,6 +265,14 @@ $border: #f59188;
             .det-panel {
                 .p-panel-content {
                     padding: 0.5rem;
+                }
+            }
+
+            .upload-button {
+                .p-fileupload {
+                    .p-button {
+                        width: 100%; // Asegura que el botón ocupe todo el ancho en móviles
+                    }
                 }
             }
         }

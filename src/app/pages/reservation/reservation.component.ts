@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { MessageService } from 'primeng/api'; // Importa MessageService para notificaciones
 
 interface TravelerInfo {
   name: string;
@@ -70,6 +71,7 @@ interface ReservationInfo {
   standalone: false,
   templateUrl: './reservation.component.html',
   styleUrls: ['./reservation.component.scss'],
+  providers: [MessageService], // Provee MessageService para usar notificaciones
 })
 export class ReservationComponent implements OnInit {
   reservationInfo: ReservationInfo = {
@@ -192,11 +194,36 @@ export class ReservationComponent implements OnInit {
     nextPaymentDetails: 'Antes del 6/01/2025 de 725€',
   };
 
+  constructor(private messageService: MessageService) {} // Inyecta MessageService
+
+  ngOnInit() {}
+
+  // Método para manejar la subida automática de archivos
+  onBasicUploadAuto(event: any) {
+    // Verifica si se subieron archivos
+    if (event.files && event.files.length > 0) {
+      const file = event.files[0]; // Obtiene el primer archivo subido
+
+      // Muestra una notificación de éxito
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Archivo subido',
+        detail: `El archivo ${file.name} se ha subido correctamente.`,
+      });
+
+      // Aquí puedes agregar lógica adicional, como enviar el archivo a un servidor
+      console.log('Archivo subido:', file);
+    } else {
+      // Muestra una notificación de error si no se subió ningún archivo
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se ha seleccionado ningún archivo.',
+      });
+    }
+  }
+
   get totalPrice(): number {
     return this.priceDetails.reduce((sum, item) => sum + item.total, 0);
   }
-
-  constructor() {}
-
-  ngOnInit() {}
 }

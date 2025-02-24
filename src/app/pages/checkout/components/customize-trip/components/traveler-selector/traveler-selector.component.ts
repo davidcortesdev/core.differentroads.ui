@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
+import { TravelersService } from '../../../../../../core/services/checkout/travelers.service';
 
 @Component({
   selector: 'app-traveler-selector',
@@ -6,17 +7,25 @@ import { Component } from '@angular/core';
   templateUrl: './traveler-selector.component.html',
   styleUrls: ['./traveler-selector.component.scss'],
 })
-export class TravelerSelectorComponent {
-  // Estado local del componente
+export class TravelerSelectorComponent implements OnInit {
+  @Input() availableTravelers: string[] = ['Adultos', 'Niños', 'Bebés'];
+
   travelersNumbers: { adults: number; childs: number; babies: number } = {
     adults: 1,
     childs: 0,
     babies: 0,
-  }; // Número de pasajeros
+  };
 
-  // Método para manejar el cambio en el número de pasajeros
+  constructor(private travelersService: TravelersService) {}
+
+  ngOnInit() {
+    this.travelersService.travelersNumbers$.subscribe((data) => {
+      this.travelersNumbers = data;
+    });
+  }
+
   handlePassengers(value: number, type: 'adults' | 'childs' | 'babies'): void {
     this.travelersNumbers[type] = value;
-    console.log('Número de pasajeros actualizado:', this.travelersNumbers);
+    this.travelersService.updateTravelersNumbers(this.travelersNumbers);
   }
 }

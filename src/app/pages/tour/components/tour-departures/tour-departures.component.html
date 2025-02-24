@@ -1,11 +1,14 @@
 <div class="t-dep">
   <h1>Elige una fecha y comienza a personalizar tu viaje</h1>
   
-  <!-- Sección de filtros -->
+  <!-- Sección de filtros con labels dentro de inputs -->
   <div class="f-hdr">
     <div class="f-box">
+      <!-- Original label (will be hidden by CSS) -->
       <div class="f-lbl city">Ciudad de origen</div>
       <div class="f-cnt city">
+        <!-- New in-field label -->
+        <span class="input-label">Ciudad de origen</span>
         <p-autocomplete
           [suggestions]="filteredCities"
           [(ngModel)]="selectedCity"
@@ -19,8 +22,11 @@
     </div>
     
     <div class="f-box">
+      <!-- Original label (will be hidden by CSS) -->
       <div class="f-lbl">Pasajeros</div>
       <div class="f-cnt">
+        <!-- New in-field label -->
+        <span class="input-label">Pasajeros</span>
         <button 
           #passengerButton 
           type="button" 
@@ -118,6 +124,7 @@
     </div>
   </div>
   
+  <!-- The rest of the HTML remains unchanged -->
   <!-- Navegador de mes -->
   <div class="m-nav">
     <p-button 
@@ -136,11 +143,11 @@
     ></p-button>
   </div>
   
-  <!-- DataView con PrimeNG y paginación -->
+  <!-- DataView con PrimeNG sin paginación -->
   <p-dataView #dv 
     [value]="filteredDepartures" 
-    [rows]="5"
-    [paginator]="true"
+    [rows]="9999"
+    [paginator]="false"
     styleClass="paginator-transparent"
     layout="list">
     
@@ -252,16 +259,4 @@
       </div>
     </ng-template>
   </p-dataView>
-
-  <style>
-    ::ng-deep .paginator-transparent .p-paginator {
-      background: transparent;
-      border: none;
-    }
-  </style>
-
-<div class="ld-more">
-  <p-button label="VER MÁS" styleClass="view-more-btn"></p-button>
 </div>
-</div>
-  

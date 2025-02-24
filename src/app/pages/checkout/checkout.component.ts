@@ -12,6 +12,7 @@ import { ActivitiesService } from '../../core/services/checkout/activities.servi
 import { Activity } from '../../core/models/tours/activity.model';
 import { FlightsService } from '../../core/services/checkout/flights.service';
 import { Flight } from '../../core/models/tours/flight.model';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-checkout',
@@ -64,11 +65,13 @@ export class CheckoutComponent implements OnInit {
     private roomsService: RoomsService,
     private pricesService: PricesService,
     private activitiesService: ActivitiesService,
-    private flightsService: FlightsService
+    private flightsService: FlightsService,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
-    const orderId = '67b702314d0586617b90606b';
+    const orderId =
+      this.route.snapshot.paramMap.get('id') || '67b702314d0586617b90606b';
     this.ordersService.getOrderDetails(orderId).subscribe((order) => {
       console.log('Order details:', order);
 

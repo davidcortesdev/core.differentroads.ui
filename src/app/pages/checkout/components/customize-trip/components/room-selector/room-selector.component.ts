@@ -61,6 +61,11 @@ export class RoomSelectorComponent implements OnChanges {
             ...room,
             price: this.pricesService.getPriceById(room.externalID, 'Adultos'),
           }));
+          // Initialize selectedRooms with 0 for each room
+          this.selectedRooms = this.allRoomsAvailability.reduce((acc, room) => {
+            acc[room.externalID] = 0;
+            return acc;
+          }, {} as { [externalID: string]: number });
           // Ensure rooms are filtered after loading reservation modes
           const initialTravelers =
             this.travelersService.travelersNumbersSource.getValue();

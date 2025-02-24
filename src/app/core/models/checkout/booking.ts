@@ -8,16 +8,6 @@ export type Price = {
   amount: number;
 };
 
-export type PriceData = {
-  age_group_name: string;
-  id: string;
-  value: number;
-  value_with_campaign: number;
-  campaign?: string;
-  category_name: string;
-  product_id: number;
-};
-
 export type Room = {
   places: number;
   roomId: string;

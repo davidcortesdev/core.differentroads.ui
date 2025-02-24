@@ -1,3 +1,5 @@
+import { PriceData } from '../commons/price-data.model';
+
 export interface Airline {
   name: string;
   email: string;
@@ -28,6 +30,7 @@ export interface Flight {
     name: string;
     segments: FlightSegment[];
     serviceCombinationID: number;
+    prices?: PriceData[];
   };
   name: string;
   outbound: {
@@ -37,5 +40,8 @@ export interface Flight {
     name: string;
     segments: FlightSegment[];
     serviceCombinationID: number;
+    prices?: PriceData[];
   };
+  price?: number;
+  priceData?: PriceData;
 }

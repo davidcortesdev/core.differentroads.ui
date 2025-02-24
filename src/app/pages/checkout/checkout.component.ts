@@ -10,6 +10,8 @@ import { ReservationMode } from '../../core/models/tours/reservation-mode.model'
 import { PricesService } from '../../core/services/checkout/prices.service';
 import { ActivitiesService } from '../../core/services/checkout/activities.service';
 import { Activity } from '../../core/models/tours/activity.model';
+import { FlightsService } from '../../core/services/checkout/flights.service';
+import { Flight } from '../../core/models/tours/flight.model';
 
 @Component({
   selector: 'app-checkout',
@@ -34,7 +36,7 @@ export class CheckoutComponent implements OnInit {
 
   // Cart information
   activities: Activity[] = [];
-  hasFlights: boolean = false;
+  selectedFlight: Flight | null = null;
   summary: { qty: number; price: number; description: string }[] = [];
   subtotal: number = 0;
   total: number = 0;
@@ -61,7 +63,8 @@ export class CheckoutComponent implements OnInit {
     private summaryService: SummaryService,
     private roomsService: RoomsService,
     private pricesService: PricesService,
-    private activitiesService: ActivitiesService
+    private activitiesService: ActivitiesService,
+    private flightsService: FlightsService
   ) {}
 
   ngOnInit() {
@@ -112,6 +115,11 @@ export class CheckoutComponent implements OnInit {
       this.activities = activities;
       this.updateOrderSummary();
     });
+
+    this.flightsService.selectedFlight$.subscribe((flight) => {
+      this.selectedFlight = flight;
+      this.updateOrderSummary();
+    });
   }
 
   updateOrderSummary() {
@@ -159,6 +167,17 @@ export class CheckoutComponent implements OnInit {
         description: activity.name,
       });
     });
+
+    if (this.selectedFlight) {
+      this.summary.push({
+        qty:
+          this.travelersSelected.adults +
+          this.travelersSelected.childs +
+          this.travelersSelected.babies,
+        price: this.selectedFlight.price || 0,
+        description: this.selectedFlight.name,
+      });
+    }
 
     this.calculateTotals();
   }

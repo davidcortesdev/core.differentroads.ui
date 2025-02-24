@@ -1,107 +1,86 @@
-<div class="flights">
-  <div class="step">
-    <div class="step-title">Elige tus vuelos</div>
-    <div class="step-description">Vuelos disponibles</div>
+<div class="flight-itinerary">
+  <div class="flight-itinerary-journey">
+    <div *ngFor="let segment of flight.outbound.segments" class="journey-item">
+      <div class="journey-item-departure pr-2">
+        <div>
+          <span class="journey-item-departure-title">Salida:</span>
+          <span class="journey-item-departure-country">
+            {{ segment.departureIata }}
+          </span>
+        </div>
+        <span class="journey-item-departure-time">
+          {{ formatTime(segment.departureTime) | date : "HH:mm" }}
+        </span>
+      </div>
+      <div class="journey-item-flight-info space-y-2">
+        <span class="journey-item-flight-info-aeroline">
+          {{ segment.airline.name }}
+        </span>
+        <span class="journey-item-flight-info-flight-hours">
+          {{ calculateFlightDuration(segment) }}
+        </span>
+      </div>
+      <div class="journey-item-departure pl-2">
+        <div>
+          <span class="journey-item-departure-title">Llegada:</span>
+          <span class="journey-item-departure-country">
+            {{ segment.arrivalIata }}
+          </span>
+        </div>
+        <span class="journey-item-departure-time">
+          {{ formatTime(segment.arrivalTime) | date : "HH:mm" }}
+        </span>
+      </div>
+    </div>
+
+    <div *ngFor="let segment of flight.inbound.segments" class="journey-item">
+      <div class="journey-item-departure pr-2">
+        <div>
+          <span class="journey-item-departure-title">Salida:</span>
+          <span class="journey-item-departure-country">
+            {{ segment.departureIata }}
+          </span>
+        </div>
+        <span class="journey-item-departure-time">
+          {{ formatTime(segment.departureTime) | date : "HH:mm" }}
+        </span>
+      </div>
+      <div class="journey-item-flight-info space-y-2">
+        <span class="journey-item-flight-info-aeroline">
+          {{ segment.airline.name }}
+        </span>
+        <span class="journey-item-flight-info-flight-hours">
+          {{ calculateFlightDuration(segment) }}
+        </span>
+      </div>
+      <div class="journey-item-departure pl-2">
+        <div>
+          <span class="journey-item-departure-title">Llegada:</span>
+          <span class="journey-item-departure-country">
+            {{ segment.arrivalIata }}
+          </span>
+        </div>
+        <span class="journey-item-departure-time">
+          {{ formatTime(segment.arrivalTime) | date : "HH:mm" }}
+        </span>
+      </div>
+    </div>
   </div>
 
-  <div *ngFor="let flight of filteredFlights" class="flight-itinerary">
-    <div class="flight-itinerary-journey">
-      <!-- Segmento de salida (Outbound) -->
-      <div class="journey-item">
-        <div class="journey-item-departure pr-2">
-          <div>
-            <span class="journey-item-departure-title">Salida:</span>
-            <span class="journey-item-departure-country">
-              {{ flight.outbound.segments[0].departureIata }}
-            </span>
-          </div>
-          <span class="journey-item-departure-time">
-            {{
-              formatTime(flight.outbound.segments[0].departureTime)
-                | date : "HH:mm"
-            }}
-          </span>
-        </div>
-        <div class="journey-item-flight-info space-y-2">
-          <span class="journey-item-flight-info-aeroline">
-            {{ flight.outbound.segments[0].airline.name }}
-          </span>
-          <span class="journey-item-flight-info-flight-hours">
-            {{ calculateFlightDuration(flight.outbound.segments[0]) }}
-          </span>
-        </div>
-        <div class="journey-item-departure pl-2">
-          <div>
-            <span class="journey-item-departure-title">Llegada:</span>
-            <span class="journey-item-departure-country">
-              {{ flight.outbound.segments[0].arrivalIata }}
-            </span>
-          </div>
-          <span class="journey-item-departure-time">
-            {{
-              formatTime(flight.outbound.segments[0].arrivalTime)
-                | date : "HH:mm"
-            }}
-          </span>
-        </div>
-      </div>
-
-      <!-- Segmento de llegada (Inbound) -->
-      <div class="journey-item">
-        <div class="journey-item-departure pr-2">
-          <div>
-            <span class="journey-item-departure-title">Salida:</span>
-            <span class="journey-item-departure-country">
-              {{ flight.inbound.segments[0].departureIata }}
-            </span>
-          </div>
-          <span class="journey-item-departure-time">
-            {{
-              formatTime(flight.inbound.segments[0].departureTime)
-                | date : "HH:mm"
-            }}
-          </span>
-        </div>
-        <div class="journey-item-flight-info space-y-2">
-          <span class="journey-item-flight-info-aeroline">
-            {{ flight.inbound.segments[0].airline.name }}
-          </span>
-          <span class="journey-item-flight-info-flight-hours">
-            {{ calculateFlightDuration(flight.inbound.segments[0]) }}
-          </span>
-        </div>
-        <div class="journey-item-departure pl-2">
-          <div>
-            <span class="journey-item-departure-title">Llegada:</span>
-            <span class="journey-item-departure-country">
-              {{ flight.inbound.segments[0].arrivalIata }}
-            </span>
-          </div>
-          <span class="journey-item-departure-time">
-            {{
-              formatTime(flight.inbound.segments[0].arrivalTime)
-                | date : "HH:mm"
-            }}
-          </span>
-        </div>
-      </div>
+  <!-- Bloque de precios y botón de selección -->
+  <div class="flight-itinerary-price space-y-4">
+    <div class="flight-itinerary-price-wrapper">
+      <span class="font-bold font-4xl">
+        {{ flight.price | currency : "EUR" : "symbol" : "1.0-2" }}
+      </span>
+      <span class="font-sm">Por persona</span>
     </div>
-
-    <!-- Bloque de precios y botón de selección -->
-    <div class="flight-itinerary-price space-y-4">
-      <div class="flight-itinerary-price-wrapper">
-        <span class="font-bold font-4xl">
-          {{ calculateTotalPrice(flight) }}€
-        </span>
-        <span class="font-sm">Por persona</span>
-      </div>
-      <p-button
-        type="button"
-        class="button-rounded is-primary px-6 py-3"
-        (click)="selectFlight(flight)"
-      >
-        {{ isFlightSelected(flight) ? "Seleccionado" : "Seleccionar" }}
-      </p-button>
-    </div>
+    <p-button
+      type="button"
+      class="button-rounded is-primary px-6 py-3"
+      (click)="selectFlight(flight)"
+    >
+      {{ isFlightSelected(flight) ? "Seleccionado" : "Seleccionar" }}
+    </p-button>
   </div>
 </div>

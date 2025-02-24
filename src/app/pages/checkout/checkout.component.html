@@ -30,7 +30,10 @@
           </p-step-panel>
           <p-step-panel [value]="2">
             <ng-template #content let-activateCallback="activateCallback">
-              <app-flights></app-flights>
+              <app-flights
+                *ngIf="orderDetails && prices"
+                [orderDetails]="orderDetails"
+              ></app-flights>
               <div class="flex pt-6 justify-between">
                 <p-button
                   label="Back"
@@ -105,7 +108,7 @@
           </div>
 
           <!-- Flights info if selected -->
-          <div class="flights-info" *ngIf="hasFlights">
+          <div class="flights-info" *ngIf="selectedFlight">
             <h4>Vuelos</h4>
             <div class="flight-details">
               <!-- Flight details here -->

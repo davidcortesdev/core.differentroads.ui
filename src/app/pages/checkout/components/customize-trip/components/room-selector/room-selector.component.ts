@@ -14,7 +14,7 @@ import { PricesService } from '../../../../../../core/services/checkout/prices.s
   styleUrls: ['./room-selector.component.scss'],
 })
 export class RoomSelectorComponent implements OnChanges {
-  @Input() periodId!: string;
+  @Input() periodID!: string;
 
   roomsAvailabilityForTravelersNumber: ReservationMode[] = [];
   allRoomsAvailability: ReservationMode[] = [];
@@ -53,9 +53,9 @@ export class RoomSelectorComponent implements OnChanges {
   }
 
   loadReservationModes(): void {
-    if (this.periodId) {
+    if (this.periodID) {
       this.periodsService
-        .getReservationModes(this.periodId)
+        .getReservationModes(this.periodID)
         .subscribe((rooms: ReservationMode[]) => {
           this.allRoomsAvailability = rooms.map((room) => ({
             ...room,
@@ -108,7 +108,7 @@ export class RoomSelectorComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['periodId']) {
+    if (changes['periodID']) {
       this.loadReservationModes();
     }
   }

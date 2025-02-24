@@ -8,6 +8,8 @@ import { Order } from '../../core/models/orders/order.model';
 import { RoomsService } from '../../core/services/checkout/rooms.service';
 import { ReservationMode } from '../../core/models/tours/reservation-mode.model';
 import { PricesService } from '../../core/services/checkout/prices.service';
+import { ActivitiesService } from '../../core/services/checkout/activities.service';
+import { Activity } from '../../core/models/tours/activity.model';
 
 @Component({
   selector: 'app-checkout',
@@ -31,7 +33,7 @@ export class CheckoutComponent implements OnInit {
   };
 
   // Cart information
-  selectedItems: any[] = [];
+  activities: Activity[] = [];
   hasFlights: boolean = false;
   summary: { qty: number; price: number; description: string }[] = [];
   subtotal: number = 0;
@@ -58,7 +60,8 @@ export class CheckoutComponent implements OnInit {
     private travelersService: TravelersService,
     private summaryService: SummaryService,
     private roomsService: RoomsService,
-    private pricesService: PricesService
+    private pricesService: PricesService,
+    private activitiesService: ActivitiesService
   ) {}
 
   ngOnInit() {
@@ -68,18 +71,19 @@ export class CheckoutComponent implements OnInit {
 
       this.orderDetails = order;
 
-      const periodId = order.periodID;
-      this.periodsService.getPeriodDetail(periodId).subscribe((period) => {
+      const periodID = order.periodID;
+      this.periodID = periodID;
+
+      this.periodsService.getPeriodDetail(periodID).subscribe((period) => {
         console.log('Period details:', period);
 
         this.tourName = period.name;
 
         this.tourID = period.tourID;
-        this.periodID = periodId;
         this.tourDates = `${period.dayOne} - ${period.returnDate}`;
       });
 
-      this.periodsService.getPeriodPrices(periodId).subscribe((prices) => {
+      this.periodsService.getPeriodPrices(periodID).subscribe((prices) => {
         console.log('Prices:', prices);
 
         this.prices = prices;
@@ -101,6 +105,11 @@ export class CheckoutComponent implements OnInit {
     this.roomsService.selectedRooms$.subscribe((rooms) => {
       console.log('Selected rooms:', rooms);
       this.rooms = rooms;
+      this.updateOrderSummary();
+    });
+
+    this.activitiesService.activities$.subscribe((activities) => {
+      this.activities = activities;
       this.updateOrderSummary();
     });
   }
@@ -140,6 +149,14 @@ export class CheckoutComponent implements OnInit {
         qty: room.qty || 0,
         price: this.pricesService.getPriceById(room.externalID),
         description: room.name,
+      });
+    });
+
+    this.activities.forEach((activity) => {
+      this.summary.push({
+        qty: 1,
+        price: activity.price || 0,
+        description: activity.name,
       });
     });
 

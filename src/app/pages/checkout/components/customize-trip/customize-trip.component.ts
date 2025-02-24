@@ -24,10 +24,10 @@ export class CustomizeTripComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.orderDetails) {
-      const periodId = this.orderDetails.periodID;
+      const periodID = this.orderDetails.periodID;
       // Removed the getReservationModes service call from here
 
-      const priceData = this.prices[periodId].priceData;
+      const priceData = this.prices[periodID].priceData;
       const children = priceData.filter(
         (data: { age_group_name: string }) => data.age_group_name === 'Niños'
       );

@@ -39,7 +39,7 @@ export interface Expert {
 
 export interface Itinerary {
   title: string;
-  dayCard: DayCard[];
+  'day-card': DayCard[];
 }
 
 export interface DayCard {

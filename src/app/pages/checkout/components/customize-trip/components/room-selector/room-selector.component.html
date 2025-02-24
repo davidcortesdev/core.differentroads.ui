@@ -5,7 +5,8 @@
   >
     <p>
       {{ room.name }}
-      <span *ngIf="room.price">+{{ room.price }}</span>
+      <span *ngIf="room.price > 0">+{{ room.price }}</span>
+      <span *ngIf="room.price < 0">{{ room.price }}</span>
     </p>
 
     <p-inputNumber

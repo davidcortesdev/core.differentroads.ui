@@ -147,7 +147,7 @@ export class CheckoutComponent implements OnInit {
     this.rooms.forEach((room) => {
       this.summary.push({
         qty: room.qty || 0,
-        price: this.pricesService.getPriceById(room.externalID),
+        price: this.pricesService.getPriceById(room.externalID, 'Adultos'),
         description: room.name,
       });
     });

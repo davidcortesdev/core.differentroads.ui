@@ -89,20 +89,18 @@
       <div class="summary-content">
         <!-- Tour base info -->
         <div class="tour-base-info">
-          <h4>{{ tourName }}</h4>
-          <p>{{ tourDates }}</p>
-
-          <!-- Lista de rooms seleccionados y cantidad -->
-          <div *ngFor="let room of rooms" class="room">
-            <span>{{ room.name }}</span>
-            <span>{{ room.qty }}</span>
-          </div>
+          <!--   <h4>{{ tourName }}</h4>
+          <p>{{ tourDates }}</p> -->
 
           <!-- Selected items list -->
           <div class="selected-items">
-            <div *ngFor="let item of selectedItems" class="item">
-              <span>{{ item.name }}</span>
-              <span>{{ item.price | currency : "EUR" }}</span>
+            <div *ngFor="let item of summary" class="item">
+              <span>{{ item.description }}</span>
+
+              <span
+                >{{ item.qty }} x {{ item.price | currency : "EUR" }} =
+                {{ item.price * item.qty | currency : "EUR" }}</span
+              >
             </div>
           </div>
 

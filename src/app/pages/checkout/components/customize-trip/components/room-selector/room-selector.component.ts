@@ -5,6 +5,7 @@ import { SummaryService } from '../../../../../../core/services/checkout/summary
 import { OrderTraveler } from '../../../../../../core/models/orders/order.model';
 import { RoomsService } from '../../../../../../core/services/checkout/rooms.service';
 import { ReservationMode } from '../../../../../../core/models/tours/reservation-mode.model';
+import { PricesService } from '../../../../../../core/services/checkout/prices.service';
 
 @Component({
   selector: 'app-room-selector',
@@ -31,8 +32,8 @@ export class RoomSelectorComponent implements OnChanges {
   constructor(
     private periodsService: PeriodsService,
     private travelersService: TravelersService,
-    private summaryService: SummaryService,
-    private roomsService: RoomsService
+    private roomsService: RoomsService,
+    private pricesService: PricesService // Add PricesService to constructor
   ) {
     this.loadReservationModes();
 
@@ -56,7 +57,10 @@ export class RoomSelectorComponent implements OnChanges {
       this.periodsService
         .getReservationModes(this.periodId)
         .subscribe((rooms: ReservationMode[]) => {
-          this.allRoomsAvailability = rooms;
+          this.allRoomsAvailability = rooms.map((room) => ({
+            ...room,
+            price: this.pricesService.getPriceById(room.externalID, 'Adultos'),
+          }));
           // Ensure rooms are filtered after loading reservation modes
           const initialTravelers =
             this.travelersService.travelersNumbersSource.getValue();
@@ -83,7 +87,11 @@ export class RoomSelectorComponent implements OnChanges {
   }
 
   onRoomSpacesChange(changedRoom: ReservationMode, newValue: number) {
-    this.selectedRooms[changedRoom.externalID] = newValue;
+    if (newValue === 0) {
+      delete this.selectedRooms[changedRoom.externalID];
+    } else {
+      this.selectedRooms[changedRoom.externalID] = newValue;
+    }
     console.log('Room spaces changed:', changedRoom, 'New value:', newValue);
 
     const updatedRooms = Object.keys(this.selectedRooms).map((externalID) => {
@@ -92,9 +100,10 @@ export class RoomSelectorComponent implements OnChanges {
       );
       return {
         ...room,
-        qty: newValue,
+        qty: this.selectedRooms[externalID],
       } as ReservationMode;
     });
+
     this.roomsService.updateSelectedRooms(updatedRooms);
   }
 

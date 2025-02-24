@@ -1,4 +1,4 @@
-import { PriceData } from '../checkout/booking';
+import { PriceData } from '../commons/price-data.model';
 
 export interface ReservationMode {
   id: string;
@@ -8,5 +8,5 @@ export interface ReservationMode {
   name: string;
   places: number;
   qty?: number;
-  price: PriceData;
+  price: number;
 }

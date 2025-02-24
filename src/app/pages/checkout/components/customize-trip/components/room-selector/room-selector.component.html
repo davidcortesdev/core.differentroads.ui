@@ -3,7 +3,11 @@
     *ngFor="let room of roomsAvailabilityForTravelersNumber; let i = index"
     class="room-item"
   >
-    <p>{{ room.name }}</p>
+    <p>
+      {{ room.name }}
+      <span *ngIf="room.price">+{{ room.price }}</span>
+    </p>
+
     <p-inputNumber
       [(ngModel)]="selectedRooms[room.externalID]"
       (ngModelChange)="onRoomSpacesChange(room, $event)"

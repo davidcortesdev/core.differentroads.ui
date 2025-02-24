@@ -7,6 +7,7 @@ import { SummaryService } from '../../core/services/checkout/summary.service';
 import { Order } from '../../core/models/orders/order.model';
 import { RoomsService } from '../../core/services/checkout/rooms.service';
 import { ReservationMode } from '../../core/models/tours/reservation-mode.model';
+import { PricesService } from '../../core/services/checkout/prices.service';
 
 @Component({
   selector: 'app-checkout',
@@ -23,10 +24,16 @@ export class CheckoutComponent implements OnInit {
   tourName: string = '';
   tourDates: string = '';
   travelers: number = 0;
+  travelersSelected = {
+    adults: 0,
+    childs: 0,
+    babies: 0,
+  };
 
   // Cart information
   selectedItems: any[] = [];
   hasFlights: boolean = false;
+  summary: { qty: number; price: number; description: string }[] = [];
   subtotal: number = 0;
   total: number = 0;
   prices:
@@ -42,13 +49,16 @@ export class CheckoutComponent implements OnInit {
 
   // summary
   rooms: ReservationMode[] = [];
+  tourID: string = '';
+  periodID: string = '';
 
   constructor(
     private ordersService: OrdersService,
     private periodsService: PeriodsService,
     private travelersService: TravelersService,
     private summaryService: SummaryService,
-    private roomsService: RoomsService
+    private roomsService: RoomsService,
+    private pricesService: PricesService
   ) {}
 
   ngOnInit() {
@@ -58,16 +68,30 @@ export class CheckoutComponent implements OnInit {
 
       this.orderDetails = order;
 
-      const periodId = order.periodID; // Assuming order has a periodId field
+      const periodId = order.periodID;
+      this.periodsService.getPeriodDetail(periodId).subscribe((period) => {
+        console.log('Period details:', period);
+
+        this.tourName = period.name;
+
+        this.tourID = period.tourID;
+        this.periodID = periodId;
+        this.tourDates = `${period.dayOne} - ${period.returnDate}`;
+      });
+
       this.periodsService.getPeriodPrices(periodId).subscribe((prices) => {
         console.log('Prices:', prices);
 
         this.prices = prices;
+        this.pricesService.updatePrices(prices);
+        this.updateOrderSummary();
       });
     });
 
     this.travelersService.travelersNumbers$.subscribe((data) => {
       this.travelers = data.adults + data.childs + data.babies;
+      this.travelersSelected = data;
+      this.updateOrderSummary();
     });
 
     this.summaryService.order$.subscribe((order) => {
@@ -76,12 +100,49 @@ export class CheckoutComponent implements OnInit {
 
     this.roomsService.selectedRooms$.subscribe((rooms) => {
       console.log('Selected rooms:', rooms);
-      this.updateOrderSummaryWithRooms(rooms);
+      this.rooms = rooms;
+      this.updateOrderSummary();
     });
   }
 
-  updateOrderSummary(items: any[]) {
-    this.selectedItems = [...this.selectedItems, ...items];
+  updateOrderSummary() {
+    this.summary = [];
+
+    this.travelersSelected.adults > 0 &&
+      this.summary.push({
+        qty: this.travelersSelected.adults,
+        price:
+          this.pricesService.getPriceById(this.tourID, 'Adultos') +
+          this.pricesService.getPriceById(this.periodID, 'Adultos'),
+        description: 'Adultos',
+      });
+
+    this.travelersSelected.childs > 0 &&
+      this.summary.push({
+        qty: this.travelersSelected.childs,
+        price:
+          this.pricesService.getPriceById(this.tourID, 'Niños') +
+          this.pricesService.getPriceById(this.periodID, 'Niños'),
+        description: 'Niños',
+      });
+
+    this.travelersSelected.babies > 0 &&
+      this.summary.push({
+        qty: this.travelersSelected.babies,
+        price:
+          this.pricesService.getPriceById(this.tourID, 'B') +
+          this.pricesService.getPriceById(this.periodID, 'Niños'),
+        description: 'Bebes',
+      });
+
+    this.rooms.forEach((room) => {
+      this.summary.push({
+        qty: room.qty || 0,
+        price: this.pricesService.getPriceById(room.externalID),
+        description: room.name,
+      });
+    });
+
     this.calculateTotals();
   }
 
@@ -94,16 +155,10 @@ export class CheckoutComponent implements OnInit {
   }
 
   private calculateTotals() {
-    this.subtotal = this.selectedItems.reduce(
-      (acc, item) => acc + item.price,
+    this.subtotal = this.summary.reduce(
+      (acc, item) => acc + item.price * item.qty,
       0
     );
     this.total = this.subtotal;
-  }
-
-  private updateOrderSummaryWithRooms(rooms: ReservationMode[]) {
-    // Logic to update the order summary with the room summary
-    console.log('Updating order summary with rooms:', rooms);
-    this.rooms = rooms;
   }
 }

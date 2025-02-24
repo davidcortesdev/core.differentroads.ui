@@ -134,6 +134,8 @@ import { OptionalActivitiesComponent } from './pages/checkout/components/customi
 import { TravelerSelectorComponent } from './pages/checkout/components/customize-trip/components/traveler-selector/traveler-selector.component';
 import { RoomSelectorComponent } from './pages/checkout/components/customize-trip/components/room-selector/room-selector.component';
 
+import { FlightItineraryComponent } from './pages/checkout/components/flights/components/flight-itinerary/flight-itinerary.component';
+
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -208,6 +210,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     OptionalActivitiesComponent,
     TravelerSelectorComponent,
     RoomSelectorComponent,
+    FlightItineraryComponent,
   ],
   imports: [
     // Angular Modules
@@ -287,7 +290,7 @@ export function HttpLoaderFactory(http: HttpClient) {
         preset: MyPreset,
         options: {
           darkModeSelector: false || 'none',
-        }
+        },
       },
     }),
   ],

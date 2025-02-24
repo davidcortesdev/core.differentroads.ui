@@ -167,6 +167,10 @@ export class CheckoutComponent implements OnInit {
       }
     });
 
+    if (travelersCount.adults === 0) {
+      travelersCount.adults = 1;
+    }
+
     console.log('initial rooms', rooms);
 
     this.travelersService.updateTravelersNumbers(travelersCount);

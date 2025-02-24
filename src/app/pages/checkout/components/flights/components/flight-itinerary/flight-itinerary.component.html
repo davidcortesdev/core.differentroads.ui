@@ -71,7 +71,7 @@
   <div class="flight-itinerary-price space-y-4">
     <div class="flight-itinerary-price-wrapper">
       <span class="font-bold font-4xl">
-        {{ flight.price | currency : "EUR" : "symbol" : "1.0-2" }}
+        {{ flight.price || 0 | currencyFormat : "EUR" }}
       </span>
       <span class="font-sm">Por persona</span>
     </div>

@@ -135,6 +135,7 @@ import { TravelerSelectorComponent } from './pages/checkout/components/customize
 import { RoomSelectorComponent } from './pages/checkout/components/customize-trip/components/room-selector/room-selector.component';
 
 import { FlightItineraryComponent } from './pages/checkout/components/flights/components/flight-itinerary/flight-itinerary.component';
+import { CurrencyPipe } from './core/pipes/currency.pipe';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -269,6 +270,7 @@ export function HttpLoaderFactory(http: HttpClient) {
       },
       defaultLanguage: 'es',
     }),
+    CurrencyPipe,
   ],
   providers: [
     provideAnimationsAsync(),

@@ -97,3 +97,92 @@
     </div>
   </div>
 </div>
+
+
+<p-accordion [value]="0">
+  @for (tab of tabs; track tab.title) {
+      <p-accordion-panel [value]="tab.value">
+          <p-accordion-header> {{getTitlePasajero(tab.value)}} (Persona que hace la reserva)</p-accordion-header>
+          <p-accordion-content>
+            <p-panel class="user-button">
+              <i class="pi pi-user"></i>
+              <p class="user">Adulto</p>
+            </p-panel>
+            <form [formGroup]="travelerForm">
+              <div class="form-row">
+                <div class="form-column">
+                  <div class="form-field">
+                    <label>Nombre*</label>
+                    <input pInputText name="nombre" placeholder="Introduce tu nombre" formControlName="firstName" />
+                  </div>
+                </div>
+                <div class="form-column">
+                  <div class="form-field">
+                    <label>Apellido*</label>
+                    <input pInputText name="Apellido" placeholder="Introduce Apellido" formControlName="lastName" />
+                  </div>
+                </div>
+              </div>
+    
+              <div class="form-row">
+                <div class="form-column">
+                  <div class="form-field">
+                    <label>Teléfono</label>
+                    <input pInputText name="telefono" placeholder="Introduce telefono" formControlName="phone" />
+                  </div>
+                </div>
+                <div class="form-column">
+                  <div class="form-field">
+                    <label>E-mail*</label>
+                    <input pInputText name="email" placeholder="e-mail" formControlName="email" />
+                  </div>
+                </div>
+              </div>
+    
+              <div class="form-row">
+                <div class="form-column">
+                  <div class="form-field">
+                    <label>Nacionalidad</label>
+                    <input pInputText name="nacionalidad" formControlName="passport" />
+                  </div>
+                </div>
+                <div class="form-column">
+                  <div class="form-row">
+                    <div class="form-column half-width">
+                      <div class="form-field">
+                        <label>Sexo</label>
+                        <p-select #sexoSelect formControlName="sexo" [options]="sexoOptions" optionLabel="label" placeholder="Seleccione"></p-select>
+                      </div>
+                    </div>
+                    <div class="form-column half-width">
+                      <div class="form-field">
+                        <label>Fecha de nacimiento</label>
+                        <p-datepicker [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" placeholder="dd/mm/aaaa" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+    
+              <div class="form-row">
+                <div class="form-column">
+                  <div class="form-field">
+                    <label>Tipo documento</label>
+                    <p-select formControlName="documentType" [options]="documentOptions" optionLabel="label" placeholder="Seleccione"></p-select>
+                  </div>
+                </div>
+                <div class="form-column">
+                  <div class="form-field">
+                    <label>Codigo postal</label>
+                    <input pInputText name="cp" placeholder="Introduce C.P" formControlName="cp" />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <p-button label="Continuar" [rounded]="true" styleClass="view-more-btn" />
+              </div>
+            </form>
+          </p-accordion-content>
+      </p-accordion-panel>
+  }
+</p-accordion>

@@ -12,6 +12,12 @@ export class TravelersComponent implements OnInit {
   showForm = false;
   travelerForm: FormGroup;
 
+  tabs = [
+    { title: 'Title 1', content: 'Content 1', value: '1' },
+    { title: 'Title 2', content: 'Content 2222', value: '2' },
+    { title: 'Title 3', content: 'Content 3', value: '3' },
+  ];
+
   @ViewChild('sexoSelect') sexoSelect!: Select;
 
   sexoOptions = [
@@ -48,5 +54,9 @@ export class TravelersComponent implements OnInit {
         this.sexoSelect.focus();
       }, 0);
     }
+  }
+
+  getTitlePasajero( num: string ): string {
+    return 'Pasajero ' + num;
   }
 }

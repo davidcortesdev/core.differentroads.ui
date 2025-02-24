@@ -21,17 +21,17 @@
   padding: 0px;
 }
 
-.user-button {
-  margin-top: 10px;
-  border: 1px solid rgb(218, 211, 211);
-  font-weight: 500;
-  display: inline-block;
-  padding: 5px 220px 5px 5px;
-  border-radius: 5px;
-
+.user-button::ng-deep {
+  //margin-top: 10px;
+  //border: 1px solid rgb(218, 211, 211);
+  //font-weight: 500;
+  //display: inline-block;
+  //padding: 5px 220px 5px 5px;
+  //border-radius: 5px;
+/*
   @media (max-width: 768px) {
     padding: 5px 100px 5px 5px;
-  }
+  }*/
 }
 
 .user-description {

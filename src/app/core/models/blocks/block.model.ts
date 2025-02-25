@@ -3,6 +3,7 @@ import { CardSliderVerticalContent } from './card-slider-vertical-content.model'
 import { FullSliderContent } from './full-slider-content.model';
 import { PressListContent } from './press-list-content.model';
 import { SingleFeaturedContent } from './single-featured-content.model';
+import { TourCarouselContent } from './tour-carousel-content.model';
 import { TourListContent } from './tour-list-content.model';
 
 export interface Block {
@@ -23,6 +24,7 @@ export enum BlockType {
 
 export type BlockContent =
   | TourListContent
+  | TourCarouselContent
   | CardSliderVerticalContent
   | SingleFeaturedContent
   | FullSliderContent

@@ -3,6 +3,7 @@ export interface TourListContent {
   textButton: string;
   link: string;
   visible: boolean;
+  order?: number;
   'tour-list': Tour[];
   showMonthTags?: boolean;
   showMkTag?: boolean;

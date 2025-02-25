@@ -63,7 +63,7 @@ export class ToursSectionComponent implements OnInit {
       return;
     }
 
-    this.tours = []; // Reset the list
+    this.tours = [];
 
     tourIds.forEach((id: string): void => {
       this.toursService

@@ -11,7 +11,7 @@ import { CarouselSectionComponent } from '../carousel-section/carousel-section.c
   selector: 'app-dynamic-components',
   standalone: false,
   templateUrl: './dynamic-components.component.html',
-  styleUrls: ['./dynamic-components.component.scss']
+  styleUrls: ['./dynamic-components.component.scss'],
 })
 export class DynamicComponentsComponent {
   @Input() blocks: Block[] = [];
@@ -23,7 +23,7 @@ export class DynamicComponentsComponent {
     [BlockType.TourList]: ToursListComponent,
     [BlockType.CardSliderVertical]: CarouselSectionComponent,
     [BlockType.FullSlider]: FullCardSectionComponent,
-    [BlockType.TourSection]: ToursSectionComponent
+    [BlockType.TourSection]: ToursSectionComponent,
   };
 
   getComponent(block: Block): Type<any> | null {

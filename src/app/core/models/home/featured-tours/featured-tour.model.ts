@@ -12,6 +12,7 @@ export interface FeaturedToursSection {
   title: string;
   textButton: string;
   link: string;
+  order: number;
   showSubtitle: boolean;
   showMonthTags: boolean;
   showMkTag: boolean;

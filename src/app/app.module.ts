@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule } from '@angular/forms';
@@ -111,6 +111,8 @@ import { ChipModule } from 'primeng/chip';
 import { TagModule } from 'primeng/tag';
 import { SecondFooterSectionComponent } from './layout/footer/components/second-footer-section/second-footer-section.component';
 import { TimelineModule } from 'primeng/timeline';
+import { RadioButtonModule } from 'primeng/radiobutton';
+import { CheckboxModule } from 'primeng/checkbox';
 
 import MyPreset from './mytheme';
 import { BasicPageComponent } from './pages/basic-page/basic-page.component';
@@ -258,6 +260,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     ChipModule,
     TagModule,
     TimelineModule,
+    RadioButtonModule,
+    CheckboxModule,
     ForgetPasswordComponent,
     StepsModule,
     StepperModule,
@@ -297,5 +301,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     }),
   ],
   bootstrap: [AppComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class AppModule {}

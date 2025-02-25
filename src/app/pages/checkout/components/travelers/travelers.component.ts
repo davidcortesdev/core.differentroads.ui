@@ -1,6 +1,26 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Select } from 'primeng/select';
+import { TravelersService } from '../../../../core/services/checkout/travelers.service';
+import { formatDate } from '@angular/common';
+
+interface Traveler {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  passport: string;
+  birthdate: string;
+  sexo: string;
+  documentType: string;
+  cp: string;
+  nationality: string;
+  passportExpirationDate: string;
+  passportIssueDate: string;
+  ageGroup: string;
+  category: string;
+  dni: string;
+}
 
 @Component({
   selector: 'app-travelers',
@@ -11,27 +31,26 @@ import { Select } from 'primeng/select';
 export class TravelersComponent implements OnInit {
   showForm = false;
   travelerForm: FormGroup;
-
-  tabs = [
-    { title: 'Title 1', content: 'Content 1', value: '1' },
-    { title: 'Title 2', content: 'Content 2222', value: '2' },
-    { title: 'Title 3', content: 'Content 3', value: '3' },
-  ];
+  travelers: Traveler[] = [];
+  travelerForms: FormGroup[] = [];
 
   @ViewChild('sexoSelect') sexoSelect!: Select;
 
   sexoOptions = [
-    { label: 'Masculino', value: 'M' },
-    { label: 'Femenino', value: 'F' },
-    { label: 'Otro', value: 'O' }
+    { label: 'Masculino', value: 'Male' },
+    { label: 'Femenino', value: 'Female' },
+    /* { label: 'Otro', value: 'O' }, */
   ];
   documentOptions = [
     { label: 'Pasaporte', value: 'passport' },
     { label: 'DNI', value: 'dni' },
-    { label: 'Licencia de Conducir', value: 'driverLicense' }
+    { label: 'Licencia de Conducir', value: 'driverLicense' },
   ];
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private travelersService: TravelersService
+  ) {
     this.travelerForm = this.fb.group({
       firstName: [''],
       lastName: [''],
@@ -41,11 +60,78 @@ export class TravelersComponent implements OnInit {
       birthdate: [''],
       sexo: [''],
       documentType: [''],
-      cp: ['']
+      cp: [''],
+      nationality: [''],
+      passportExpirationDate: [''],
+      passportIssueDate: [''],
+      ageGroup: [''],
+      category: [''],
+      dni: [''],
     });
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.travelersService.travelersNumbers$.subscribe((data) => {
+      this.travelers = Array(data.adults + data.childs + data.babies).fill(
+        null
+      );
+      this.travelerForms = this.travelers.map(() => this.createTravelerForm());
+    });
+
+    this.travelersService.travelers$.subscribe((travelers) => {
+      this.travelers = travelers.map((traveler) => ({
+        firstName: traveler.travelerData?.name || '',
+        lastName: traveler.travelerData?.surname || '',
+        email: traveler.travelerData?.email || '',
+        phone: traveler.travelerData?.phone || '',
+        passport: traveler.travelerData?.passportID || '',
+        birthdate: traveler.travelerData?.birthdate || '',
+        sexo: traveler.travelerData?.sex || '',
+        documentType: traveler.travelerData?.documentType || '',
+        cp: traveler.travelerData?.postalCode || '',
+        nationality: traveler.travelerData?.nationality || '',
+        passportExpirationDate:
+          traveler.travelerData?.passportExpirationDate || '',
+        passportIssueDate: traveler.travelerData?.passportIssueDate || '',
+        ageGroup: traveler.travelerData?.ageGroup || '',
+        category: traveler.travelerData?.category || '',
+        dni: traveler.travelerData?.dni || '',
+      }));
+      this.travelerForms.forEach((form, index) => {
+        form.setValue(this.travelers[index], { emitEvent: false });
+        form.valueChanges.subscribe(() => {
+          this.onTravelerChange(index);
+        });
+      });
+    });
+  }
+
+  createTravelerForm(): FormGroup {
+    const form = this.fb.group({
+      firstName: [''],
+      lastName: [''],
+      email: [''],
+      phone: [''],
+      passport: [''],
+      birthdate: [''],
+      sexo: [''],
+      documentType: [''],
+      cp: [''],
+      nationality: [''],
+      passportExpirationDate: [''],
+      passportIssueDate: [''],
+      ageGroup: [''],
+      category: [''],
+      dni: [''],
+    });
+    form.valueChanges.subscribe(() => {
+      const index = this.travelerForms.indexOf(form);
+      if (index !== -1) {
+        this.onTravelerChange(index);
+      }
+    });
+    return form;
+  }
 
   toggleForm(): void {
     this.showForm = !this.showForm;
@@ -56,7 +142,47 @@ export class TravelersComponent implements OnInit {
     }
   }
 
-  getTitlePasajero( num: string ): string {
+  getTitlePasajero(num: string): string {
     return 'Pasajero ' + num;
+  }
+
+  onTravelerChange(index: number): void {
+    const traveler = this.travelerForms[index].value;
+    traveler.birthdate = traveler.birthdate
+      ? formatDate(traveler.birthdate, 'yyyy-MM-dd', 'en-US')
+      : '';
+    traveler.passportExpirationDate = traveler.passportExpirationDate
+      ? formatDate(traveler.passportExpirationDate, 'yyyy-MM-dd', 'en-US')
+      : '';
+    traveler.passportIssueDate = traveler.passportIssueDate
+      ? formatDate(traveler.passportIssueDate, 'yyyy-MM-dd', 'en-US')
+      : '';
+    this.travelers[index] = traveler;
+
+    this.travelersService.updateTravelers(
+      this.travelers.map((traveler) => ({
+        travelerData: {
+          name: traveler.firstName,
+          surname: traveler.lastName,
+          email: traveler.email,
+          phone: traveler.phone,
+          passportID: traveler.passport,
+          birthdate: traveler.birthdate,
+          nationality: traveler.nationality,
+          passportExpirationDate: traveler.passportExpirationDate,
+          passportIssueDate: traveler.passportIssueDate,
+          ageGroup: traveler.ageGroup,
+          category: traveler.category,
+          dni: traveler.dni,
+          postalCode: traveler.cp,
+          sex: traveler.sexo,
+          documentType: traveler.documentType,
+        },
+      }))
+    );
+  }
+
+  getOpenTravelers(): number[] {
+    return this.travelerForms.map((_, index) => index);
   }
 }

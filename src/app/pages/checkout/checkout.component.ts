@@ -106,6 +106,9 @@ export class CheckoutComponent implements OnInit {
       this.travelersSelected = data;
       this.updateOrderSummary();
     });
+    this.travelersService.travelers$.subscribe((travelers) => {
+      console.log('Travelers__:', travelers);
+    });
 
     this.summaryService.order$.subscribe((order) => {
       this.order = order;
@@ -174,6 +177,7 @@ export class CheckoutComponent implements OnInit {
     console.log('initial rooms', rooms);
 
     this.travelersService.updateTravelersNumbers(travelersCount);
+    this.travelersService.updateTravelers(travelers);
     this.roomsService.updateSelectedRooms(rooms);
   }
 

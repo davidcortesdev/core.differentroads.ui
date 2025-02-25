@@ -71,7 +71,7 @@
           </p-step-panel>
           <p-step-panel [value]="4">
             <ng-template #content let-activateCallback="activateCallback">
-              <app-payment></app-payment>
+              <app-payment [totalPrice]="total"></app-payment>
               <div class="flex pt-6 justify-between">
                 <p-button
                   label="Back"

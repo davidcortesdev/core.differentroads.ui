@@ -1,5 +1,6 @@
 import { Component, Input, OnInit, HostListener, Inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
+import { RedsysService } from '../../../../core/services/checkout/payment/redsys.service';
 
 @Component({
   selector: 'app-payment',
@@ -8,9 +9,7 @@ import { DOCUMENT } from '@angular/common';
   styleUrls: ['./payment.component.scss'],
 })
 export class PaymentComponent implements OnInit {
-  @Input() totalPrice: string = '1.395 €';
-  totalPriceNumeric: number = 1395;
-  formattedPrice: string = '1395.00';
+  @Input() totalPrice: number = 0;
 
   isOpen: boolean = true;
   isInstallmentsOpen: boolean = true;
@@ -24,24 +23,15 @@ export class PaymentComponent implements OnInit {
   sourcesOptions: string[] = ['LinkedIn', 'Trivago', 'Booking', 'Otro'];
 
   termsAccepted: boolean = false;
+  isLoading: boolean = false;
 
-  constructor(@Inject(DOCUMENT) private document: Document) {}
+  constructor(
+    @Inject(DOCUMENT) private document: Document,
+    private redsysService: RedsysService
+  ) {}
 
   ngOnInit() {
-    this.processTotalPrice();
     this.loadScalapayScript();
-  }
-
-  processTotalPrice() {
-    if (typeof this.totalPrice === 'string') {
-      const priceMatch = this.totalPrice.match(/[\d.,]+/);
-      if (priceMatch) {
-        this.totalPriceNumeric = parseFloat(
-          priceMatch[0].replace('.', '').replace(',', '.')
-        );
-        this.formattedPrice = this.totalPriceNumeric.toFixed(2);
-      }
-    }
   }
 
   loadScalapayScript() {
@@ -155,19 +145,58 @@ export class PaymentComponent implements OnInit {
       );
 
       if (priceContainerThree) {
-        priceContainerThree.textContent = `€ ${this.totalPriceNumeric.toFixed(
-          2
-        )}`;
+        priceContainerThree.textContent = `€ ${this.totalPrice.toFixed(2)}`;
       }
 
       if (priceContainerFour) {
-        priceContainerFour.textContent = `€ ${this.totalPriceNumeric.toFixed(
-          2
-        )}`;
+        priceContainerFour.textContent = `€ ${this.totalPrice.toFixed(2)}`;
       }
 
       const event = new CustomEvent('scalapay-widget-reload');
       window.dispatchEvent(event);
     }, 200);
+  }
+
+  redirectToRedSys(publicID: string, price: number, bookingID: string) {
+    const formData = this.redsysService.generateFormData(
+      bookingID,
+      publicID,
+      price
+    );
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'https://sis-t.redsys.es:25443/sis/realizarPago';
+
+    Object.entries(formData).forEach(([key, value]) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = value as string;
+      form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+  submitPayment() {
+    this.isLoading = true;
+    console.log('Payment Type:', this.paymentType);
+    console.log('Payment Method:', this.paymentMethod);
+    console.log('Installment Option:', this.installmentOption);
+    console.log('Total Price:', this.totalPrice);
+    console.log('Terms Accepted:', this.termsAccepted);
+
+    if (
+      this.paymentType === 'complete' &&
+      this.paymentMethod === 'creditCard'
+    ) {
+      this.redirectToRedSys('123456789', this.totalPrice, '987654321');
+
+      return;
+    }
+
+    this.isLoading = false;
   }
 }

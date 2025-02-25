@@ -2,7 +2,10 @@
   <div class="header-container" (click)="toggleDropdown()">
     <div class="title-with-icon">
       <span class="title">Selecciona la forma de pago</span>
-      <i class="pi" [ngClass]="isOpen ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+      <i
+        class="pi"
+        [ngClass]="isOpen ? 'pi-chevron-up' : 'pi-chevron-down'"
+      ></i>
     </div>
     <div class="title-underline"></div>
   </div>
@@ -10,17 +13,27 @@
   <div *ngIf="isOpen" class="payment-panels">
     <p-panel styleClass="payment-panel">
       <div class="payment-option">
-        <p-radioButton name="paymentType" value="complete" [(ngModel)]="paymentType" (onChange)="onPaymentTypeChange()"></p-radioButton>
+        <p-radioButton
+          name="paymentType"
+          value="complete"
+          [(ngModel)]="paymentType"
+          (onChange)="onPaymentTypeChange()"
+        ></p-radioButton>
         <span class="option-text">Paga tu viaje al completo</span>
-        <span class="option-price">{{ totalPrice }}</span>
+        <span class="option-price">{{ totalPrice | currencyFormat }}</span>
       </div>
     </p-panel>
 
     <p-panel styleClass="payment-panel">
       <div class="payment-option">
-        <p-radioButton name="paymentType" value="installments" [(ngModel)]="paymentType" (onChange)="onPaymentTypeChange()"></p-radioButton>
+        <p-radioButton
+          name="paymentType"
+          value="installments"
+          [(ngModel)]="paymentType"
+          (onChange)="onPaymentTypeChange()"
+        ></p-radioButton>
         <span class="option-text">Paga a plazos</span>
-        <img src="scalapay.svg" alt="ScalaPay" class="scalapay-logo"/>
+        <img src="scalapay.svg" alt="ScalaPay" class="scalapay-logo" />
       </div>
     </p-panel>
   </div>
@@ -30,20 +43,27 @@
     <div class="header-container" (click)="togglePaymentMethodsDropdown()">
       <div class="title-with-icon">
         <span class="title">Selecciona el método de pago</span>
-        <i class="pi" [ngClass]="isPaymentMethodsOpen ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+        <i
+          class="pi"
+          [ngClass]="isPaymentMethodsOpen ? 'pi-chevron-up' : 'pi-chevron-down'"
+        ></i>
       </div>
       <div class="title-underline pay"></div>
     </div>
 
     <div *ngIf="isPaymentMethodsOpen" class="payment-methods-row">
       <div class="payment-method-container">
-        <p-panel styleClass="payment-panel payment-method-panel" [ngClass]="{'selected': paymentMethod === 'creditCard'}">
+        <p-panel
+          styleClass="payment-panel payment-method-panel"
+          [ngClass]="{ selected: paymentMethod === 'creditCard' }"
+        >
           <div class="payment-option">
-            <p-radioButton 
-              name="paymentMethod" 
-              value="creditCard" 
-              [(ngModel)]="paymentMethod" 
-              (onChange)="onPaymentMethodChange()">
+            <p-radioButton
+              name="paymentMethod"
+              value="creditCard"
+              [(ngModel)]="paymentMethod"
+              (onChange)="onPaymentMethodChange()"
+            >
             </p-radioButton>
             <span class="option-text">Tarjeta bancaria</span>
           </div>
@@ -51,13 +71,17 @@
       </div>
 
       <div class="payment-method-container">
-        <p-panel styleClass="payment-panel payment-method-panel" [ngClass]="{'selected': paymentMethod === 'transfer'}">
+        <p-panel
+          styleClass="payment-panel payment-method-panel"
+          [ngClass]="{ selected: paymentMethod === 'transfer' }"
+        >
           <div class="payment-option">
-            <p-radioButton 
-              name="paymentMethod" 
-              value="transfer" 
-              [(ngModel)]="paymentMethod" 
-              (onChange)="onPaymentMethodChange()">
+            <p-radioButton
+              name="paymentMethod"
+              value="transfer"
+              [(ngModel)]="paymentMethod"
+              (onChange)="onPaymentMethodChange()"
+            >
             </p-radioButton>
             <span class="option-text">Transferencia bancaria</span>
           </div>
@@ -71,25 +95,34 @@
     <div class="header-container" (click)="toggleInstallmentsDropdown()">
       <div class="title-with-icon">
         <span class="title">Selecciona el plazo de pagos</span>
-        <i class="pi" [ngClass]="isInstallmentsOpen ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+        <i
+          class="pi"
+          [ngClass]="isInstallmentsOpen ? 'pi-chevron-up' : 'pi-chevron-down'"
+        ></i>
       </div>
       <div class="title-underline"></div>
     </div>
 
     <div *ngIf="isInstallmentsOpen" class="installment-panels-row">
       <div class="installment-panel-container">
-        <p-panel styleClass="payment-panel installment-panel" [ngClass]="{'selected': installmentOption === 'three'}">
+        <p-panel
+          styleClass="payment-panel installment-panel"
+          [ngClass]="{ selected: installmentOption === 'three' }"
+        >
           <div class="payment-option">
-            <p-radioButton 
-              name="installmentOption" 
-              value="three" 
-              [(ngModel)]="installmentOption" 
-              (onChange)="onInstallmentOptionChange()">
+            <p-radioButton
+              name="installmentOption"
+              value="three"
+              [(ngModel)]="installmentOption"
+              (onChange)="onInstallmentOptionChange()"
+            >
             </p-radioButton>
             <div class="installment-content">
               <div class="scalapay-widget-container">
-                <div id="price-container-three" style="display: none;">€ {{ totalPriceNumeric.toFixed(2) }}</div>
-                <scalapay-widget 
+                <div id="price-container-three" style="display: none">
+                  {{ totalPrice | currencyFormat }}
+                </div>
+                <scalapay-widget
                   channel="travel"
                   type="checkout"
                   show-title="true"
@@ -99,11 +132,12 @@
                   hide-price="false"
                   min="0.01"
                   max="999999"
-                  amount-selectors='["#price-container-three"]' 
+                  amount-selectors='["#price-container-three"]'
                   currency-position="before"
                   currency-display="symbol"
                   logo-size="100"
-                  locale="es">
+                  locale="es"
+                >
                 </scalapay-widget>
               </div>
             </div>
@@ -112,18 +146,24 @@
       </div>
 
       <div class="installment-panel-container">
-        <p-panel styleClass="payment-panel installment-panel" [ngClass]="{'selected': installmentOption === 'four'}">
+        <p-panel
+          styleClass="payment-panel installment-panel"
+          [ngClass]="{ selected: installmentOption === 'four' }"
+        >
           <div class="payment-option">
-            <p-radioButton 
-              name="installmentOption" 
-              value="four" 
-              [(ngModel)]="installmentOption" 
-              (onChange)="onInstallmentOptionChange()">
+            <p-radioButton
+              name="installmentOption"
+              value="four"
+              [(ngModel)]="installmentOption"
+              (onChange)="onInstallmentOptionChange()"
+            >
             </p-radioButton>
             <div class="installment-content">
               <div class="scalapay-widget-container">
-                <div id="price-container-four" style="display: none;">€ {{ totalPriceNumeric.toFixed(2) }}</div>
-                <scalapay-widget 
+                <div id="price-container-four" style="display: none">
+                  {{ totalPrice | currencyFormat }}
+                </div>
+                <scalapay-widget
                   channel="travel"
                   type="checkout"
                   show-title="true"
@@ -133,11 +173,12 @@
                   hide-price="false"
                   min="0.01"
                   max="999999"
-                  amount-selectors='["#price-container-four"]' 
+                  amount-selectors='["#price-container-four"]'
                   currency-position="before"
                   currency-display="symbol"
                   logo-size="100"
-                  locale="es">
+                  locale="es"
+                >
                 </scalapay-widget>
               </div>
             </div>
@@ -157,10 +198,17 @@
     <div class="dropdown-container" (click)="toggleSourceDropdown($event)">
       <div class="dropdown-select">
         <span>{{ selectedSource }}</span>
-        <i class="pi" [ngClass]="isSourceDropdownOpen ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+        <i
+          class="pi"
+          [ngClass]="isSourceDropdownOpen ? 'pi-chevron-up' : 'pi-chevron-down'"
+        ></i>
       </div>
       <div class="dropdown-options" *ngIf="isSourceDropdownOpen">
-        <div *ngFor="let option of sourcesOptions" class="dropdown-option" (click)="selectSource(option, $event)">
+        <div
+          *ngFor="let option of sourcesOptions"
+          class="dropdown-option"
+          (click)="selectSource(option, $event)"
+        >
           {{ option }}
         </div>
       </div>
@@ -168,19 +216,43 @@
   </div>
 
   <div class="terms-container">
-    <p-checkbox [(ngModel)]="termsAccepted" [binary]="true" inputId="terms"></p-checkbox>
+    <p-checkbox
+      [(ngModel)]="termsAccepted"
+      [binary]="true"
+      inputId="terms"
+    ></p-checkbox>
     <label for="terms" class="terms-text">
       Acepto términos de privacidad y compra
       <div class="terms-details">
-        He revisado los trayectos, itinerario y destinos de la reserva. Siendo estos correctos. He leído y acepto la política de privacidad, condiciones generales, condiciones de cancelación y las formas de pago.
+        He revisado los trayectos, itinerario y destinos de la reserva. Siendo
+        estos correctos. He leído y acepto la política de privacidad,
+        condiciones generales, condiciones de cancelación y las formas de pago.
       </div>
     </label>
   </div>
 
-  <p-button 
+  <p-button
     label="Realizar pago"
-    styleClass="payment-button" 
-    [disabled]="!termsAccepted || !paymentType || (paymentType === 'complete' && !paymentMethod) || (paymentType === 'installments' && !installmentOption)"
-    [ngClass]="{'payment-button-disabled': !termsAccepted || !paymentType || (paymentType === 'complete' && !paymentMethod) || (paymentType === 'installments' && !installmentOption)}">
+    styleClass="payment-button"
+    [disabled]="
+      isLoading ||
+      !termsAccepted ||
+      !paymentType ||
+      (paymentType === 'complete' && !paymentMethod) ||
+      (paymentType === 'installments' && !installmentOption)
+    "
+    [ngClass]="{
+      'payment-button-disabled':
+        isLoading ||
+        !termsAccepted ||
+        !paymentType ||
+        (paymentType === 'complete' && !paymentMethod) ||
+        (paymentType === 'installments' && !installmentOption)
+    }"
+    (click)="submitPayment()"
+  >
+    <ng-template pTemplate="icon">
+      <i *ngIf="isLoading" class="pi pi-spin pi-spinner"></i>
+    </ng-template>
   </p-button>
 </div>

@@ -20,10 +20,10 @@
               ></app-customize-trip>
               <div class="flex pt-6 justify-end">
                 <p-button
-                  label="Next"
+                  label="Siguiente"
                   icon="pi pi-arrow-right"
                   iconPos="right"
-                  (onClick)="activateCallback(2)"
+                  (onClick)="nextStep(2) && activateCallback(2)"
                 />
               </div>
             </ng-template>
@@ -45,7 +45,7 @@
                   label="Next"
                   icon="pi pi-arrow-right"
                   iconPos="right"
-                  (onClick)="activateCallback(3)"
+                  (onClick)="nextStep(3) && activateCallback(3)"
                 />
               </div>
             </ng-template>
@@ -64,7 +64,7 @@
                   label="Next"
                   icon="pi pi-arrow-right"
                   iconPos="right"
-                  (onClick)="activateCallback(4)"
+                  (onClick)="nextStep(4) && activateCallback(4)"
                 />
               </div>
             </ng-template>

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { OrderTraveler } from '../../models/orders/order.model';
+import { RoomsService } from './rooms.service';
 
 interface TravelersNumbers {
   adults: number;
@@ -22,6 +23,8 @@ export class TravelersService {
 
   travelersSource = new BehaviorSubject<OrderTraveler[]>([]);
   travelers$ = this.travelersSource.asObservable();
+
+  constructor(private roomsService: RoomsService) {}
 
   updateTravelersNumbers(travelersNumbers: TravelersNumbers) {
     this.travelersNumbersSource.next(travelersNumbers);
@@ -76,5 +79,26 @@ export class TravelersService {
       },
     }));
     this.travelersSource.next(updatedTravelers);
+  }
+
+  updateTravelersWithRooms() {
+    const travelers = this.travelersSource.getValue();
+    const rooms = this.roomsService.getSelectedRooms();
+
+    let travelerIndex = 0;
+    rooms.forEach((room) => {
+      for (let i = 0; i < (room?.places || 0); i++) {
+        if (travelerIndex < travelers.length) {
+          travelers[travelerIndex].periodReservationModeID = room.externalID;
+          travelerIndex++;
+        }
+      }
+    });
+
+    this.travelersSource.next(travelers);
+  }
+
+  getTravelers(): OrderTraveler[] {
+    return this.travelersSource.getValue();
   }
 }

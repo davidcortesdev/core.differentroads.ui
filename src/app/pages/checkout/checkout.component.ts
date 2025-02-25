@@ -22,7 +22,7 @@ import { ActivatedRoute } from '@angular/router';
 })
 export class CheckoutComponent implements OnInit {
   currentStep: number = 1;
-  orderDetails: any = null;
+  orderDetails: Order | null = null;
   availableTravelers: string[] = [];
 
   // Tour information
@@ -76,6 +76,7 @@ export class CheckoutComponent implements OnInit {
       console.log('Order details:', order);
 
       this.orderDetails = order;
+      this.summaryService.updateOrder(order);
 
       this.initializeTravelers(order.travelers || []);
       this.initializeActivities(order.optionalActivitiesRef || []);
@@ -131,6 +132,8 @@ export class CheckoutComponent implements OnInit {
     });
   }
 
+  /* Inicialization */
+
   initializeTravelers(travelers: any[]) {
     const travelersCount = {
       adults: 0,
@@ -149,10 +152,12 @@ export class CheckoutComponent implements OnInit {
         travelersCount.babies++;
       }
 
-      const roomExternalID = traveler.periodReservationModeID.split('.')[1];
+      const roomExternalID = traveler.periodReservationModeID;
       const existingRoom = rooms.find(
         (room) => room.externalID === roomExternalID
       );
+
+      console.log('existing room', existingRoom);
 
       if (existingRoom) {
         existingRoom.qty = (existingRoom.qty || 0) + 1;
@@ -201,8 +206,11 @@ export class CheckoutComponent implements OnInit {
     this.activitiesService.updateActivities(activities);
   }
 
+  /* Summary */
   updateOrderSummary() {
     this.summary = [];
+
+    this.travelersService.updateTravelersWithRooms();
 
     this.travelersSelected.adults > 0 &&
       this.summary.push({
@@ -247,6 +255,20 @@ export class CheckoutComponent implements OnInit {
       });
     });
 
+    let tempOrderData: Order = { ...this.summaryService.getOrderValue()! };
+    const travelersData = this.travelersService.getTravelers();
+
+    tempOrderData['travelers'] = travelersData;
+    tempOrderData['optionalActivitiesRef'] = this.activities.map(
+      (activity) => ({
+        id: activity.activityId,
+        _id: activity.id,
+        travelersAssigned: travelersData.map(
+          (traveler) => traveler._id || '123'
+        ),
+      })
+    );
+
     if (this.selectedFlight) {
       this.summary.push({
         qty:
@@ -256,7 +278,10 @@ export class CheckoutComponent implements OnInit {
         price: this.selectedFlight.price || 0,
         description: this.selectedFlight.name,
       });
+
+      tempOrderData['flights'] = [this.selectedFlight];
     }
+    this.summaryService.updateOrder(tempOrderData);
 
     this.calculateTotals();
   }
@@ -269,11 +294,49 @@ export class CheckoutComponent implements OnInit {
     this.travelers = event.adults + event.childs + event.babies;
   }
 
-  private calculateTotals() {
+  calculateTotals() {
     this.subtotal = this.summary.reduce(
       (acc, item) => acc + item.price * item.qty,
       0
     );
     this.total = this.subtotal;
+  }
+
+  /* Steps and validations */
+
+  nextStep(step: number): boolean {
+    switch (step) {
+      case 1:
+        break;
+      case 2:
+      case 3:
+      case 4:
+        this.updateOrder().subscribe({
+          next: (response) => {
+            console.log('Order updated');
+            return true;
+          },
+          error: (error) => {
+            console.error('Error updating order:', error);
+            return false;
+          },
+        });
+        break;
+      default:
+        return false;
+    }
+
+    return true;
+  }
+
+  /* Order update */
+
+  updateOrder() {
+    console.log('Updating order:', this.summaryService.getOrderValue());
+
+    return this.ordersService.updateOrder(
+      this.summaryService.getOrderValue()!._id,
+      this.summaryService.getOrderValue()!
+    );
   }
 }

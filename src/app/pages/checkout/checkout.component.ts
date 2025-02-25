@@ -80,6 +80,7 @@ export class CheckoutComponent implements OnInit {
 
       this.initializeTravelers(order.travelers || []);
       this.initializeActivities(order.optionalActivitiesRef || []);
+      this.initializeFlights(order.flights || []);
 
       const periodID = order.periodID;
       this.periodID = periodID;
@@ -204,6 +205,13 @@ export class CheckoutComponent implements OnInit {
     });
 
     this.activitiesService.updateActivities(activities);
+  }
+
+  initializeFlights(flights: Flight[]) {
+    if (flights.length > 0) {
+      this.selectedFlight = flights[0];
+      this.flightsService.updateSelectedFlight(this.selectedFlight);
+    }
   }
 
   /* Summary */

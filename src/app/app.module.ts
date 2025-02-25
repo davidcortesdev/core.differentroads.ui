@@ -111,6 +111,8 @@ import { ChipModule } from 'primeng/chip';
 import { TagModule } from 'primeng/tag';
 import { SecondFooterSectionComponent } from './layout/footer/components/second-footer-section/second-footer-section.component';
 import { TimelineModule } from 'primeng/timeline';
+import { BadgeModule } from 'primeng/badge';
+import { OverlayBadgeModule } from 'primeng/overlaybadge';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { CheckboxModule } from 'primeng/checkbox';
 
@@ -271,6 +273,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     ChipModule,
     TagModule,
     TimelineModule,
+    OverlayBadgeModule,
+    BadgeModule,
     RadioButtonModule,
     CheckboxModule,
     ForgetPasswordComponent,

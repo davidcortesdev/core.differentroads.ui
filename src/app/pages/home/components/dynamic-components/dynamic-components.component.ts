@@ -1,4 +1,4 @@
-import { Component, OnInit, Type } from '@angular/core';
+import { Component, OnInit, Input, Type } from '@angular/core';
 import { HomeService } from '../../../../core/services/home.service';
 import { Block, BlockType } from '../../../../core/models/blocks/block.model';
 import { HighlightSectionComponent } from '../highlight-section/highlight-section.component';
@@ -11,24 +11,26 @@ import { CarouselSectionComponent } from '../carousel-section/carousel-section.c
 @Component({
   selector: 'app-dynamic-components',
   standalone: false,
-
   templateUrl: './dynamic-components.component.html',
   styleUrls: ['./dynamic-components.component.scss'],
 })
 export class DynamicComponentsComponent implements OnInit {
-  blocks: Block[] = [];
+  @Input() blocks: Block[] = [];
 
   constructor(private homeService: HomeService) {} // Removed injector since we won't use it
 
   ngOnInit(): void {
-    this.homeService.getDynamicSections().subscribe({
-      next: (data: Block[]) => {
-        this.blocks = data;
-      },
-      error: (error: any) => {
-        console.error('Error fetching home data:', error);
-      },
-    });
+    if (this.blocks.length === 0) {
+      this.homeService.getDynamicSections().subscribe({
+        next: (data: Block[]) => {
+          this.blocks = data;
+        },
+        error: (error: any) => {
+          console.error('Error fetching home data:', error);
+        },
+      });
+    }
+   
   }
 
   getComponent(block: Block): Type<any> | null {
@@ -45,18 +47,8 @@ export class DynamicComponentsComponent implements OnInit {
         return CarouselSectionComponent;
       case BlockType.FullSlider:
         return FullCardSectionComponent;
-      /* 
-      case BlockType.BlogList:
-        return BlogSectionComponent;
-      case BlockType.PressList:
-        return PressListComponent;
-      case BlockType.TourList:
-        return TourListComponent;
-      case BlockType.CardSliderVertical:
-        return CardSliderVerticalComponent;
-      case BlockType.FullSlider:
-        return FullSliderComponent;
-      */
+      case BlockType.TourSection:
+        return ToursSectionComponent;
       default:
         return null;
     }

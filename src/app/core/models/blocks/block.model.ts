@@ -18,6 +18,7 @@ export enum BlockType {
   FullSlider = 'full-slider',
   PressList = 'press-list',
   BlogList = 'blog-list',
+  TourSection = 'tour-carousel',
 }
 
 export type BlockContent =

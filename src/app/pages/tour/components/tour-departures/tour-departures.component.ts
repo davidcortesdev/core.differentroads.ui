@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ToursService } from '../../../../core/services/tours.service';
 
@@ -21,17 +21,30 @@ export type DepartureStatus = 'available' | 'complete';
   selector: 'app-tour-departures',
   standalone: false,
   templateUrl: './tour-departures.component.html',
-  styleUrl: './tour-departures.component.scss',
+  styleUrls: ['./tour-departures.component.scss'],
 })
-export class TourDeparturesComponent implements OnInit {
+export class TourDeparturesComponent implements OnInit, OnDestroy {
   departures: Departure[] = [];
   filteredDepartures: Departure[] = [];
   selectedCity: string = '';
   readonly priceFrom: number = 1500;
-  readonly travelers = {
+
+  // Propiedades para pasajeros
+  travelers = {
     adults: 1,
     children: 2,
-  } as const;
+    babies: 0,
+  };
+
+  passengerText: string = '1 Adulto, 2 Niños'; // Valor inicial
+
+  // Nueva propiedad para el panel de pasajeros
+  showPassengersPanel: boolean = false;
+
+  // Navegación de mes
+  currentMonth: Date = new Date();
+  monthName: string = '';
+  year: number = 0;
 
   private cities: string[] = [];
   filteredCities: string[] = [];
@@ -47,6 +60,62 @@ export class TourDeparturesComponent implements OnInit {
       city.toLowerCase().includes(query)
     );
   }
+
+  // Nuevos métodos para el selector de pasajeros
+  togglePassengersPanel(event: Event): void {
+    this.showPassengersPanel = !this.showPassengersPanel;
+    event.stopPropagation();
+  }
+
+  updatePassengers(
+    type: 'adults' | 'children' | 'babies',
+    change: number
+  ): void {
+    if (type === 'adults') {
+      this.travelers.adults = Math.max(1, this.travelers.adults + change);
+    } else if (type === 'children') {
+      this.travelers.children = Math.max(0, this.travelers.children + change);
+    } else if (type === 'babies') {
+      this.travelers.babies = Math.max(0, this.travelers.babies + change);
+    }
+
+    this.updatePassengerText();
+  }
+
+  applyPassengers(): void {
+    this.showPassengersPanel = false;
+  }
+
+  updatePassengerText(): void {
+    const parts = [];
+
+    if (this.travelers.adults > 0) {
+      parts.push(
+        `${this.travelers.adults} ${
+          this.travelers.adults === 1 ? 'Adulto' : 'Adultos'
+        }`
+      );
+    }
+
+    if (this.travelers.children > 0) {
+      parts.push(
+        `${this.travelers.children} ${
+          this.travelers.children === 1 ? 'Niño' : 'Niños'
+        }`
+      );
+    }
+
+    if (this.travelers.babies > 0) {
+      parts.push(
+        `${this.travelers.babies} ${
+          this.travelers.babies === 1 ? 'Bebé' : 'Bebés'
+        }`
+      );
+    }
+
+    this.passengerText = parts.join(', ');
+  }
+
   formatPrice(price?: number): string {
     return price ? `${price.toFixed(0)}€` : '0€';
   }
@@ -65,20 +134,68 @@ export class TourDeparturesComponent implements OnInit {
     console.log('filteredDepartures', this.filteredDepartures);
   }
 
+  // Métodos para la navegación del mes
+  updateMonthDisplay(): void {
+    const months = [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
+    ];
+    this.monthName = months[this.currentMonth.getMonth()];
+    // Mantenemos el año en la propiedad pero no lo mostramos en la interfaz
+    this.year = this.currentMonth.getFullYear();
+  }
+
+  previousMonth(): void {
+    this.currentMonth = new Date(
+      this.currentMonth.getFullYear(),
+      this.currentMonth.getMonth() - 1,
+      1
+    );
+    this.updateMonthDisplay();
+    this.filterDeparturesByMonth();
+  }
+
+  nextMonth(): void {
+    this.currentMonth = new Date(
+      this.currentMonth.getFullYear(),
+      this.currentMonth.getMonth() + 1,
+      1
+    );
+    this.updateMonthDisplay();
+    this.filterDeparturesByMonth();
+  }
+
+  filterDeparturesByMonth(): void {
+    const startOfMonth = new Date(
+      this.currentMonth.getFullYear(),
+      this.currentMonth.getMonth(),
+      1
+    );
+    const endOfMonth = new Date(
+      this.currentMonth.getFullYear(),
+      this.currentMonth.getMonth() + 1,
+      0
+    );
+
+    this.filteredDepartures = this.departures.filter((departure) => {
+      const departureDate = new Date(departure.departureDate);
+      return departureDate >= startOfMonth && departureDate <= endOfMonth;
+    });
+  }
+
   ngOnInit() {
-    this.route.params.subscribe((params) => {
-      const slug = params['slug'];
-      if (slug) {
-        this.loadTourData(slug);
-      }
-    });
-
-    // Mock data - Replace with actual API call
-    this.departures = [];
-
-    // Initialize filtered departures with the cheapest option
-    this.filteredDepartures = this.departures;
-    this.setCheapestCityAsDefault();
+    this.updateMonthDisplay();
+    this.updatePassengerText(); // Inicializa el texto de pasajeros
 
     this.route.params.subscribe((params) => {
       const slug = params['slug'];
@@ -86,6 +203,10 @@ export class TourDeparturesComponent implements OnInit {
         this.loadTourData(slug);
       }
     });
+  }
+
+  ngOnDestroy() {
+    // Código de limpieza si es necesario
   }
 
   private loadTourData(slug: string) {
@@ -130,6 +251,7 @@ export class TourDeparturesComponent implements OnInit {
 
         this.setCheapestCityAsDefault();
         this.filterDepartures();
+        this.filterDeparturesByMonth(); // Filtrar por el mes actual
       });
   }
 
@@ -153,15 +275,5 @@ export class TourDeparturesComponent implements OnInit {
         ...this.cities.filter((city) => city !== this.selectedCity),
       ];
     }
-  }
-
-  getUniqueFlights(): string[] {
-    const flightSet = new Set<string>();
-    this.departures.forEach((departure) => {
-      if (departure.flights) {
-        flightSet.add(departure.flights);
-      }
-    });
-    return Array.from(flightSet);
   }
 }

@@ -4,9 +4,11 @@
     *ngIf="featuredTours"
     [content]="featuredTours"
   ></app-tours-section>
-  <!-- <app-tours-section content={featuredTours}></app-tours-section> -->
   <app-community-section></app-community-section>
-  <app-dynamic-components></app-dynamic-components>
+  <app-dynamic-components
+    *ngIf="blocks$ | async as blocks"
+    [blocks]="blocks"
+  ></app-dynamic-components>
   <app-content-list></app-content-list>
   <app-publicity-section></app-publicity-section>
   <app-partners-section></app-partners-section>

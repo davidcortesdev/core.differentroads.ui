@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { CollectionsService } from '../../core/services/collections.service';
+import { LandingsService } from '../../core/services/landings.service';
 
 @Component({
   selector: 'app-content-page',
@@ -10,25 +12,54 @@ import { ActivatedRoute } from '@angular/router';
 export class ContentPageComponent implements OnInit {
   isLanding: boolean = false;
   slug: string = '';
+  blocks: any[] = [];
 
-  // Propiedades del banner
   bannerImage: string = '';
   bannerTitle: string = '';
   bannerSubtitle?: string;
-  bannerDescription: string = ''; // <-- Agregado aquí
+  bannerDescription: string = '';
 
-  constructor(private route: ActivatedRoute) {}
+  constructor(
+    private route: ActivatedRoute,
+    private landingsService: LandingsService,
+    private collectionsService: CollectionsService
+  ) {}
 
   ngOnInit() {
-    this.isLanding = this.route.snapshot.url[0]?.path === 'landing';
+    const routePath = this.route.snapshot.routeConfig?.path;
+    this.isLanding = routePath === 'landing/:slug';
     this.slug = this.route.snapshot.paramMap.get('slug') || '';
-    console.log('ContentPageComponent-this.slug', this.slug);
+    this.fetchBlocks();
+  }
 
-    // Datos de prueba para el banner
-    this.bannerImage = 'https://picsum.photos/200/300';
-    this.bannerTitle = 'Your Title Here';
-    this.bannerSubtitle = 'Optional Subtitle';
-    this.bannerDescription = 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industrys standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum'; // <-- Agregando contenido
+  fetchBlocks() {
+    if (this.isLanding) {
+      this.landingsService.getLandingBySlug(this.slug).subscribe({
+        next: (data: any) => {
+          this.blocks = data.blocks || [];
+          this.bannerImage = data.banner[0]?.url || 'https://picsum.photos/200/300';
+          this.bannerTitle = data.title || 'Your Title Here';
+          this.bannerSubtitle = data.titleContent || 'Optional Subtitle';
+          this.bannerDescription = data.content || 'Lorem Ipsum is simply dummy text...';
+        },
+        error: (error: any) => {
+          console.error('Error fetching landing blocks:', error);
+        },
+      });
+    } else {
+      this.collectionsService.getCollectionBySlug(this.slug).subscribe({
+        next: (data: any) => {
+          console.log('fetchedcollection', data);
+          this.blocks = data.blocks || ['collection'];
+          this.bannerImage = data.banner[0]?.url || 'https://picsum.photos/200/300';
+          this.bannerTitle = data.title|| 'Your Title Here';
+          this.bannerSubtitle = data.bannerTitle || 'Optional Subtitle';
+          this.bannerDescription =data.content || 'Lorem Ipsum is simply dummy text...';
+        },
+        error: (error: any) => {
+          console.error('Error fetching collection blocks:', error);
+        },
+      });
+    }
   }
 }
-

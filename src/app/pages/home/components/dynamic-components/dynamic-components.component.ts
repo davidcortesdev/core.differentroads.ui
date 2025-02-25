@@ -11,29 +11,22 @@ import { CarouselSectionComponent } from '../carousel-section/carousel-section.c
   selector: 'app-dynamic-components',
   standalone: false,
   templateUrl: './dynamic-components.component.html',
-  styleUrls: ['./dynamic-components.component.scss'],
+  styleUrls: ['./dynamic-components.component.scss']
 })
 export class DynamicComponentsComponent {
   @Input() blocks: Block[] = [];
 
+  private readonly componentMap: Record<BlockType, Type<any>> = {
+    [BlockType.SingleFeatured]: HighlightSectionComponent,
+    [BlockType.BlogList]: ContentListComponent,
+    [BlockType.PressList]: ContentListComponent,
+    [BlockType.TourList]: ToursListComponent,
+    [BlockType.CardSliderVertical]: CarouselSectionComponent,
+    [BlockType.FullSlider]: FullCardSectionComponent,
+    [BlockType.TourSection]: ToursSectionComponent
+  };
+
   getComponent(block: Block): Type<any> | null {
-    switch (block.type) {
-      case BlockType.SingleFeatured:
-        return HighlightSectionComponent;
-      case BlockType.BlogList:
-        return ContentListComponent;
-      case BlockType.PressList:
-        return ContentListComponent;
-      case BlockType.TourList:
-        return ToursListComponent;
-      case BlockType.CardSliderVertical:
-        return CarouselSectionComponent;
-      case BlockType.FullSlider:
-        return FullCardSectionComponent;
-      case BlockType.TourSection:
-        return ToursSectionComponent;
-      default:
-        return null;
-    }
+    return this.componentMap[block.type] || null;
   }
 }

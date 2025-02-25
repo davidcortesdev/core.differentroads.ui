@@ -1,5 +1,7 @@
 <div class="itinerary-section">
   <h2>{{ title }}</h2>
+  <!-- <p>Resumen de tu itinerario - 7 julio - Single</p> -->
+  <!-- <p-button [rounded]="true">Camibar fecha</p-button> -->
 </div>
 <div class="itinerary-container">
   <div class="timeline-section">
@@ -15,19 +17,36 @@
             [style]="{ 'background-color': event.color }"
           >
             <i [class]="event.icon">ico</i>
+            <!--  <i class="pi pi-calendar-minus"></i> -->
           </span>
         </ng-template>
-        <ng-template #content let-event class="contentMargin">
-          <p-card [header]="event.title" [subheader]="event.date">
+        <ng-template #content let-event>
+          <p-panel [toggleable]="true" styleClass="custom-panel" [(collapsed)]="event.collapsed">
+            <ng-template #header>
+              <div class="panel-header-content">
+                <div class="day-info">
+                  <h3 class="day-title">{{ event.title }}</h3>
+                </div>
+                <div class="header-image">
+                  <img
+                    *ngIf="event.image"
+                    [src]="event.image"
+                    [alt]="event.title"
+                    class="day-thumbnail"
+                  />
+                </div>
+              </div>
+            </ng-template>
             <ng-template #content>
+              <h3 class="content-title">{{ event.title }}</h3>
               <div class="itinerary-content">
                 <div [innerHTML]="event.description"></div>
                 <img
                   *ngIf="event.image"
                   [src]="event.image"
-                  [alt]="event.name"
+                  [alt]="event.title"
                   width="100%"
-                  class="shadow"
+                  class="img"
                 />
               </div>
               <div class="hotel-card" *ngIf="event.hotel.name">
@@ -73,7 +92,7 @@
                   [responsiveOptions]="responsiveOptions"
                   [showIndicators]="false"
                 >
-                  <ng-template let-highlight pTemplate="item">
+                  <ng-template let-highlight #item>
                     <p-card
                       styleClass="highlight-card"
                       [style]="{
@@ -83,7 +102,7 @@
                         boxShadow: 'none'
                       }"
                     >
-                      <ng-template pTemplate="header">
+                      <ng-template #header>
                         <img [src]="highlight.image" [alt]="highlight.title" />
                         <span
                           class="status-badge"
@@ -92,7 +111,7 @@
                           {{ highlight.optional ? "Opcional" : "Incluida" }}
                         </span>
                       </ng-template>
-                      <ng-template pTemplate="content">
+                      <ng-template #content>
                         <h3>{{ highlight.title }}</h3>
                         <p>{{ highlight.description }}</p>
                       </ng-template>
@@ -101,7 +120,7 @@
                 </p-carousel>
               </div>
             </ng-template>
-          </p-card>
+          </p-panel>
         </ng-template>
       </p-timeline>
     </div>

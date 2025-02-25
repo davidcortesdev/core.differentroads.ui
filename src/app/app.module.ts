@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule } from '@angular/forms';
@@ -111,6 +111,10 @@ import { ChipModule } from 'primeng/chip';
 import { TagModule } from 'primeng/tag';
 import { SecondFooterSectionComponent } from './layout/footer/components/second-footer-section/second-footer-section.component';
 import { TimelineModule } from 'primeng/timeline';
+import { BadgeModule } from 'primeng/badge';
+import { OverlayBadgeModule } from 'primeng/overlaybadge';
+import { RadioButtonModule } from 'primeng/radiobutton';
+import { CheckboxModule } from 'primeng/checkbox';
 
 import MyPreset from './mytheme';
 import { BasicPageComponent } from './pages/basic-page/basic-page.component';
@@ -136,6 +140,12 @@ import { TravelerSelectorComponent } from './pages/checkout/components/customize
 import { RoomSelectorComponent } from './pages/checkout/components/customize-trip/components/room-selector/room-selector.component';
 
 import { FlightItineraryComponent } from './pages/checkout/components/flights/components/flight-itinerary/flight-itinerary.component';
+import { ReservationComponent } from './pages/reservation/reservation.component';
+import { TravelInformationSectionComponent } from './pages/reservation/components/travel-information-section/travel-information-section.component';
+import { TravelersInformationSectionComponent } from './pages/reservation/components/travelers-information-section/travelers-information-section.component';
+import { FlightsSectionComponent } from './pages/reservation/components/flights-section/flights-section.component';
+import { PricesSectionComponent } from './pages/reservation/components/prices-section/prices-section.component';
+import { PaymentsInformationSectionComponent } from './pages/reservation/components/payments-information-section/payments-information-section.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -212,6 +222,12 @@ export function HttpLoaderFactory(http: HttpClient) {
     TravelerSelectorComponent,
     RoomSelectorComponent,
     FlightItineraryComponent,
+    ReservationComponent,
+    TravelInformationSectionComponent,
+    TravelersInformationSectionComponent,
+    FlightsSectionComponent,
+    PricesSectionComponent,
+    PaymentsInformationSectionComponent,
   ],
   imports: [
     // Angular Modules
@@ -258,6 +274,10 @@ export function HttpLoaderFactory(http: HttpClient) {
     ChipModule,
     TagModule,
     TimelineModule,
+    OverlayBadgeModule,
+    BadgeModule,
+    RadioButtonModule,
+    CheckboxModule,
     ForgetPasswordComponent,
     StepsModule,
     ReactiveFormsModule,
@@ -297,5 +317,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     }),
   ],
   bootstrap: [AppComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class AppModule {}

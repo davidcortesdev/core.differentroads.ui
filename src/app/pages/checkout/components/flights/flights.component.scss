@@ -1,0 +1,28 @@
+.flights {
+  color: var(--background-azul);
+  display: grid;
+  gap: 1rem;
+
+  .step {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .step-title {
+      width: fit-content;
+      height: fit-content;
+      border-bottom: 1px solid var(--background-azul);
+      font-size: 1.25rem;
+      font-weight: 500;
+      padding-bottom: 0.5rem;
+      padding-top: 0.5rem;
+    }
+
+    .step-description {
+      font-size: 0.875rem;
+      align-items: center;
+      display: flex;
+      gap: 0.5rem;
+    }
+  }
+}

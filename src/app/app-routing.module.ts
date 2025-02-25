@@ -14,6 +14,7 @@ import { BasicPageComponent } from './pages/basic-page/basic-page.component';
 import { CheckoutComponent } from './pages/checkout/checkout.component';
 import { ContentPageComponent } from './pages/content-page/content-page.component';
 import { ToursComponent } from './pages/tours/tours.component';
+import { ReservationComponent } from './pages/reservation/reservation.component';
 
 const routes: Routes = [
   {
@@ -35,6 +36,7 @@ const routes: Routes = [
       { path: 'checkout/:id', component: CheckoutComponent },
       { path: 'landing/:slug', component: ContentPageComponent },
       { path: 'collection/:slug', component: ContentPageComponent },
+      { path: 'reservation/:id', component: ReservationComponent },
       { path: '**', component: NotFoundComponent },
     ],
   },

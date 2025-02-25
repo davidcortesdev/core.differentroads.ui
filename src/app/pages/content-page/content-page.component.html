@@ -6,11 +6,6 @@
   [subtitle]="bannerSubtitle">
 </app-banner>
 
-
-<!-- <ng-container *ngIf="isLanding">
-  <app-quill></app-quill>
-</ng-container> -->
-
 <!-- Componente Title and Quill debajo del banner -->
-<app-title-and-quill  *ngIf="isLanding" [title]="bannerTitle" [description]="bannerDescription"></app-title-and-quill>
-<!-- <app-dynamic-components></app-dynamic-components> falta ajsutar que reciba los datos -->
+<app-title-and-quill   [title]="bannerTitle" [description]="bannerDescription"></app-title-and-quill>
+<app-dynamic-components *ngIf="blocks" [blocks]="blocks"></app-dynamic-components>

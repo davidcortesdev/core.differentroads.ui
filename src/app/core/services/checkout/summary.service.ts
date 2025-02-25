@@ -1,0 +1,33 @@
+import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+import { Order, OrderTraveler } from '../../models/orders/order.model';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class SummaryService {
+  private orderSource = new BehaviorSubject<Order | null>(null);
+  order$ = this.orderSource.asObservable();
+
+  updateOrder(order: Order) {
+    this.orderSource.next(order);
+  }
+
+  addTravelers(travelers: OrderTraveler[]) {
+    const currentOrder = this.orderSource.getValue();
+    if (currentOrder) {
+      currentOrder.travelers = [
+        ...(currentOrder.travelers || []),
+        ...travelers,
+      ];
+      this.orderSource.next(currentOrder);
+    }
+  }
+
+  updateOrderSummaryWithRooms(
+    roomSummary: { name: string; quantity: number }[]
+  ) {
+    // Logic to update the order summary with the room summary
+    console.log('Updating order summary with rooms:', roomSummary);
+  }
+}

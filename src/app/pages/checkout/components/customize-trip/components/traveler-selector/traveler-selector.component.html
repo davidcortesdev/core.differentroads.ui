@@ -5,7 +5,10 @@
   <h3 class="traveler-selector-title">Número de pasajeros</h3>
   <div class="traveler-selector-wrap">
     <!-- Adultos -->
-    <div class="traveler-selector-wrap-item">
+    <div
+      class="traveler-selector-wrap-item"
+      *ngIf="availableTravelers.includes('Adultos')"
+    >
       <div class="traveler-selector-wrap-item-group">
         <span class="traveler-selector-wrap-item-name">Adultos</span>
         <span class="traveler-selector-wrap-item-description"
@@ -14,6 +17,7 @@
       </div>
       <p-inputNumber
         [(ngModel)]="travelersNumbers.adults"
+        (ngModelChange)="handlePassengers($event, 'adults')"
         [min]="1"
         [max]="8"
         [showButtons]="true"
@@ -30,7 +34,10 @@
     </div>
 
     <!-- Niños -->
-    <div class="traveler-selector-wrap-item">
+    <div
+      class="traveler-selector-wrap-item"
+      *ngIf="availableTravelers.includes('Niños')"
+    >
       <div class="traveler-selector-wrap-item-group">
         <span class="traveler-selector-wrap-item-name">Niños</span>
         <span class="traveler-selector-wrap-item-description"
@@ -39,6 +46,7 @@
       </div>
       <p-inputNumber
         [(ngModel)]="travelersNumbers.childs"
+        (ngModelChange)="handlePassengers($event, 'childs')"
         [min]="0"
         [max]="8"
         [showButtons]="true"
@@ -55,7 +63,10 @@
     </div>
 
     <!-- Bebés -->
-    <div class="traveler-selector-wrap-item">
+    <div
+      class="traveler-selector-wrap-item"
+      *ngIf="availableTravelers.includes('Bebés')"
+    >
       <div class="traveler-selector-wrap-item-group">
         <span class="traveler-selector-wrap-item-name">Bebés</span>
         <span class="traveler-selector-wrap-item-description"
@@ -64,6 +75,7 @@
       </div>
       <p-inputNumber
         [(ngModel)]="travelersNumbers.babies"
+        (ngModelChange)="handlePassengers($event, 'babies')"
         [min]="0"
         [max]="8"
         [showButtons]="true"

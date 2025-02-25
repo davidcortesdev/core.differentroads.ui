@@ -139,6 +139,7 @@ import { TravelerSelectorComponent } from './pages/checkout/components/customize
 import { RoomSelectorComponent } from './pages/checkout/components/customize-trip/components/room-selector/room-selector.component';
 
 import { FlightItineraryComponent } from './pages/checkout/components/flights/components/flight-itinerary/flight-itinerary.component';
+import { CurrencyPipe } from './core/pipes/currency.pipe';
 import { ReservationComponent } from './pages/reservation/reservation.component';
 import { TravelInformationSectionComponent } from './pages/reservation/components/travel-information-section/travel-information-section.component';
 import { TravelersInformationSectionComponent } from './pages/reservation/components/travelers-information-section/travelers-information-section.component';
@@ -289,6 +290,7 @@ export function HttpLoaderFactory(http: HttpClient) {
       },
       defaultLanguage: 'es',
     }),
+    CurrencyPipe,
   ],
   providers: [
     provideAnimationsAsync(),

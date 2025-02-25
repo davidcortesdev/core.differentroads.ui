@@ -10,6 +10,9 @@ import { ReservationMode } from '../../core/models/tours/reservation-mode.model'
 import { PricesService } from '../../core/services/checkout/prices.service';
 import { ActivitiesService } from '../../core/services/checkout/activities.service';
 import { Activity } from '../../core/models/tours/activity.model';
+import { FlightsService } from '../../core/services/checkout/flights.service';
+import { Flight } from '../../core/models/tours/flight.model';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-checkout',
@@ -34,7 +37,7 @@ export class CheckoutComponent implements OnInit {
 
   // Cart information
   activities: Activity[] = [];
-  hasFlights: boolean = false;
+  selectedFlight: Flight | null = null;
   summary: { qty: number; price: number; description: string }[] = [];
   subtotal: number = 0;
   total: number = 0;
@@ -61,15 +64,21 @@ export class CheckoutComponent implements OnInit {
     private summaryService: SummaryService,
     private roomsService: RoomsService,
     private pricesService: PricesService,
-    private activitiesService: ActivitiesService
+    private activitiesService: ActivitiesService,
+    private flightsService: FlightsService,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
-    const orderId = '67b702314d0586617b90606b';
+    const orderId =
+      this.route.snapshot.paramMap.get('id') || '67b702314d0586617b90606b';
     this.ordersService.getOrderDetails(orderId).subscribe((order) => {
       console.log('Order details:', order);
 
       this.orderDetails = order;
+
+      this.initializeTravelers(order.travelers || []);
+      this.initializeActivities(order.optionalActivitiesRef || []);
 
       const periodID = order.periodID;
       this.periodID = periodID;
@@ -112,6 +121,80 @@ export class CheckoutComponent implements OnInit {
       this.activities = activities;
       this.updateOrderSummary();
     });
+
+    this.flightsService.selectedFlight$.subscribe((flight) => {
+      this.selectedFlight = flight;
+      this.updateOrderSummary();
+    });
+  }
+
+  initializeTravelers(travelers: any[]) {
+    const travelersCount = {
+      adults: 0,
+      childs: 0,
+      babies: 0,
+    };
+
+    const rooms: ReservationMode[] = [];
+
+    travelers.forEach((traveler) => {
+      if (traveler.travelerData.ageGroup === 'Adultos') {
+        travelersCount.adults++;
+      } else if (traveler.travelerData.ageGroup === 'Niños') {
+        travelersCount.childs++;
+      } else if (traveler.travelerData.ageGroup === 'Bebes') {
+        travelersCount.babies++;
+      }
+
+      const roomExternalID = traveler.periodReservationModeID.split('.')[1];
+      const existingRoom = rooms.find(
+        (room) => room.externalID === roomExternalID
+      );
+
+      if (existingRoom) {
+        existingRoom.qty = (existingRoom.qty || 0) + 1;
+      } else {
+        rooms.push({
+          id: '',
+          status: '',
+          description: '',
+          externalID: roomExternalID,
+          name: '',
+          places: 0,
+          qty: 1,
+          price: 0,
+        });
+      }
+    });
+
+    if (travelersCount.adults === 0) {
+      travelersCount.adults = 1;
+    }
+
+    console.log('initial rooms', rooms);
+
+    this.travelersService.updateTravelersNumbers(travelersCount);
+    this.roomsService.updateSelectedRooms(rooms);
+  }
+
+  initializeActivities(optionalActivitiesRef: any[]) {
+    const activities = optionalActivitiesRef.map((activityRef) => {
+      return {
+        id: activityRef.id,
+        externalID: activityRef.id,
+        name: '',
+        description: '',
+        price: 0,
+        status: '',
+        activityId: activityRef.id,
+        optional: true,
+        periodId: this.periodID,
+        productType: '',
+        travelersAssigned: activityRef.travelersAssigned,
+      };
+    });
+
+    this.activitiesService.updateActivities(activities);
   }
 
   updateOrderSummary() {
@@ -159,6 +242,17 @@ export class CheckoutComponent implements OnInit {
         description: activity.name,
       });
     });
+
+    if (this.selectedFlight) {
+      this.summary.push({
+        qty:
+          this.travelersSelected.adults +
+          this.travelersSelected.childs +
+          this.travelersSelected.babies,
+        price: this.selectedFlight.price || 0,
+        description: this.selectedFlight.name,
+      });
+    }
 
     this.calculateTotals();
   }

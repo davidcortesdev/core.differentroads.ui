@@ -33,6 +33,7 @@ const routes: Routes = [
       { path: 'tour/:slug', component: TourComponent },
       { path: 'pages/:slug', component: BasicPageComponent },
       { path: 'checkout', component: CheckoutComponent },
+      { path: 'checkout/:id', component: CheckoutComponent },
       { path: 'landing/:slug', component: ContentPageComponent },
       { path: 'collection/:slug', component: ContentPageComponent },
       { path: 'reservation/:id', component: ReservationComponent },

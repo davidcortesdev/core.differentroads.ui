@@ -125,6 +125,7 @@ import { FlightsComponent } from './pages/checkout/components/flights/flights.co
 import { TravelersComponent } from './pages/checkout/components/travelers/travelers.component';
 import { PaymentComponent } from './pages/checkout/components/payment/payment.component';
 import { TourCardComponent } from './shared/components/tour-card/tour-card.component';
+import { ReactiveFormsModule } from '@angular/forms'; 
 
 import { StepsModule } from 'primeng/steps';
 
@@ -280,6 +281,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     CheckboxModule,
     ForgetPasswordComponent,
     StepsModule,
+    ReactiveFormsModule,
     StepperModule,
     MultiSelectModule,
     TranslateModule.forRoot({

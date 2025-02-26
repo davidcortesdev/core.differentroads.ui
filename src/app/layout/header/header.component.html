@@ -13,8 +13,20 @@
         />
       </ng-template>
       <ng-template #end>
+        <div class="busqPerfil">
+            <p-chip 
+              [label]="chipLabel" 
+              [icon]="chipIcon"
+              [image]="chipImage"
+              [alt]="chipAlt"
+              (click)="onChipClick()"
+              [style]="{ cursor: 'pointer' }">
+            </p-chip>
+        </div>
+    </ng-template>
+     <!-- <ng-template #end>
         <p-menubar [model]="userMenuItems"></p-menubar>
-      </ng-template>
+      </ng-template>-->
       <!-- <ng-template #end>
                 <div class="flex items-center gap-4">
                     <div class="search-container">

@@ -24,6 +24,13 @@ export class HeaderComponent implements OnInit {
   leftMenuItems: MenuItem[] | undefined;
   rightMenuItems: MenuItem[] | undefined;
   userMenuItems: MenuItem[] | undefined;
+  isLoggedIn: boolean = false;
+
+  // Add chip properties
+  chipLabel: string = 'Iniciar Sesión';
+  chipIcon: string = 'pi pi-user';
+  chipImage: string = '';
+  chipAlt: string = 'Avatar image';
 
   constructor(
     private languageService: LanguageService,
@@ -102,7 +109,7 @@ export class HeaderComponent implements OnInit {
         .getUserAttributes()
         .subscribe((userAttributes) => {
           const { email } = userAttributes;
-
+          this.chipLabel = email;
           this.userMenuItems = [
             {
               label: email,
@@ -126,9 +133,13 @@ export class HeaderComponent implements OnInit {
       this.userMenuItems = [
         {
           label: 'Inicia sesión',
-          command: () => this.authService.navigateToLogin(),
+          command: () => this.onChipClick(),
         },
       ];
     }
+  }
+
+  onChipClick() {
+    this.authService.navigateToLogin();
   }
 }

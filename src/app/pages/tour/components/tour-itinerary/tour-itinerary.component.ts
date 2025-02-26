@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ToursService } from '../../../../core/services/tours.service';
 import { ActivatedRoute } from '@angular/router';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser'; // Import DomSanitizer
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 interface EventItem {
   status?: string;
@@ -9,7 +9,7 @@ interface EventItem {
   icon?: string;
   color?: string;
   image?: string;
-  description?: SafeHtml; // Change type to SafeHtml
+  description?: SafeHtml;
 }
 
 @Component({
@@ -21,13 +21,14 @@ interface EventItem {
 export class TourItineraryComponent implements OnInit {
   events: EventItem[];
   title: string = 'Itinerario';
-  highlights: any[]; // Add highlights property
+  highlights: any[] = [];
 
   itinerary: {
     title: string;
-    description: SafeHtml; // Change type to SafeHtml
+    description: SafeHtml;
     image: string;
     hotel: any;
+    collapsed: boolean;
   }[] = [];
 
   responsiveOptions = [
@@ -51,7 +52,7 @@ export class TourItineraryComponent implements OnInit {
   constructor(
     private toursService: ToursService,
     private route: ActivatedRoute,
-    private sanitizer: DomSanitizer // Inject DomSanitizer
+    private sanitizer: DomSanitizer
   ) {
     this.events = [
       {
@@ -108,9 +109,7 @@ export class TourItineraryComponent implements OnInit {
             next: (tourData) => {
               this.title = tourData['itinerary-section'].title;
               this.itinerary = tourData['itinerary-section']['day-card'].map(
-                (section) => {
-                  console.log(section);
-
+                (section, index) => {
                   return {
                     title: section.name,
                     description: this.sanitizer.bypassSecurityTrustHtml(
@@ -118,6 +117,7 @@ export class TourItineraryComponent implements OnInit {
                     ),
                     image: section.itimage?.[0]?.url || '',
                     hotel: section.hotel,
+                    collapsed: index !== 0, // Solo el primer panel estará expandido
                   };
                 }
               );

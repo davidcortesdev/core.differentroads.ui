@@ -5,4 +5,6 @@ export const environment = {
 
   cognitoUserPoolId: 'us-east-2_KSSmf3Tt7',
   cognitoAppClientId: '216668bnnnnfvo2aq4ijs12mga',
+
+  googleMapsApiKey: 'AIzaSyB6sxlxeTVlRllpGPyDPbKmaZPQJsb8YAs',
 };

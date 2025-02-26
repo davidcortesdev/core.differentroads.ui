@@ -128,7 +128,26 @@
   <div class="map-section">
     <!-- Map will be added here later -->
     <div class="map-placeholder">
-      <p>Map coming soon</p>
+      <p *ngIf="!apiLoaded">Loading map...</p>
+      <div class="map-loaded" *ngIf="apiLoaded">
+        <google-map
+          [center]="center"
+          [zoom]="zoom"
+          [options]="mapOptions"
+          [width]="sizeMapaWidth"
+          [height]="sizeMapaHeight"
+          [mapTypeId]="mapTypeId"
+        >
+          <map-marker
+            #markerElem
+            *ngFor="let marker of markers"
+            [position]="marker.position"
+            [options]="marker.options"
+          >
+          </map-marker>
+          <map-info-window>Hello Google Maps</map-info-window>
+        </google-map>
+      </div>
     </div>
   </div>
 </div>

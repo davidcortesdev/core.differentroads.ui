@@ -9,4 +9,6 @@ export const environment = {
   redsysClaveComercio: 'sq7HjrUOBfKmC576ILgskD5srU870gJ7',
   redsysNotifyUrl:
     'https://qt4uw3rgx6.execute-api.us-east-2.amazonaws.com/prod/redsys/notify',
+
+  googleMapsApiKey: 'AIzaSyB6sxlxeTVlRllpGPyDPbKmaZPQJsb8YAs',
 };

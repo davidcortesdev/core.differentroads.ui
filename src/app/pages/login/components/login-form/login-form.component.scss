@@ -1,7 +1,6 @@
 :host {
   .auth-card {
     position: relative;
-    z-index: 2;
     background-color: #fff;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     min-width: 400px;
@@ -21,7 +20,7 @@
     &-container {
       display: flex;
       align-items: center;
-      background: url('../../../../../../public/fondo-auth.jpeg');
+      background: url("../../../../../../public/fondo-auth.jpeg");
       justify-content: center;
       min-height: 65vh;
       position: relative;
@@ -42,7 +41,6 @@
       right: 0;
       bottom: 0;
       background-color: rgba(255, 255, 255, 0.7);
-      z-index: 1;
     }
   }
 
@@ -50,7 +48,7 @@
     position: relative;
     z-index: 2;
     background-color: #fff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, .2);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     margin: auto;
     border-radius: 10px;
     padding: 2rem;
@@ -97,7 +95,8 @@
       width: 100%;
       margin-bottom: 1rem;
 
-      @media screen and (max-width: 480px) {}
+      @media screen and (max-width: 480px) {
+      }
 
       &:disabled {
         background-color: #ccc;
@@ -113,7 +112,7 @@
       color: var(--background-azul);
 
       @media screen and (max-width: 480px) {
-        font-size: .6875rem;
+        font-size: 0.6875rem;
       }
     }
 
@@ -133,13 +132,12 @@
 
       ::ng-deep .p-inputtext {
         border-color: transparent;
-        border-bottom-color: .0625rem solid var(--background-azul);
+        border-bottom-color: 0.0625rem solid var(--background-azul);
         box-shadow: none;
         border-radius: 0;
-        border-bottom: .0625rem solid var(--background-azul);
+        border-bottom: 0.0625rem solid var(--background-azul);
         width: 100%;
       }
-
 
       &-btnsingup {
         background-color: #007bff;
@@ -154,8 +152,6 @@
           background-color: #ccc;
           cursor: not-allowed;
         }
-
-
       }
 
       ::ng-deep .p-button {
@@ -163,17 +159,15 @@
       }
     }
 
-
     ::ng-deep .p-button {
-      border: .0625rem solid var(--p-primary-color);
+      border: 0.0625rem solid var(--p-primary-color);
       color: var(--background-azul);
       width: 100%;
 
       @media screen and (max-width: 480px) {
-        font-size: .75rem;
+        font-size: 0.75rem;
       }
     }
-
 
     &-link {
       display: inline-flex;
@@ -182,14 +176,14 @@
       justify-content: center;
       font-size: 0.875rem;
       margin: 0;
-      gap: .25rem;
+      gap: 0.25rem;
 
       &-span {
         text-decoration: none;
         color: var(--background-azul);
       }
 
-      &>a {
+      & > a {
         text-decoration: underline;
         color: var(--p-primary-color);
       }

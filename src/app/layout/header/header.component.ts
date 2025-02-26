@@ -5,6 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 import { GeneralConfigService } from '../../core/services/general-config.service';
 import { AuthenticateService } from '../../core/services/auth-service.service';
+import { UsersService } from '../../core/services/users.service';
 import {
   MenuConfig,
   MenuList,
@@ -36,7 +37,8 @@ export class HeaderComponent implements OnInit {
     private languageService: LanguageService,
     private translate: TranslateService,
     private generalConfigService: GeneralConfigService,
-    private authService: AuthenticateService
+    private authService: AuthenticateService,
+    private usersService: UsersService
   ) {}
 
   ngOnInit() {
@@ -109,33 +111,38 @@ export class HeaderComponent implements OnInit {
         .getUserAttributes()
         .subscribe((userAttributes) => {
           const { email } = userAttributes;
-          this.chipLabel = email;
-          this.isLoggedIn = true;
-          this.userMenuItems = [
-            {
-              label: 'Ver Perfil',
-              icon: 'pi pi-user',
-              command: () => this.authService.navigateToProfile()
-            },
-            {
-              label: 'Desconectar',
-              icon: 'pi pi-sign-out',
-              command: () => this.authService.logOut()
-            }
-          ];
+          // Get user data to display name and photo
+          this.usersService.getUserByEmail(email).subscribe((user) => {
+            this.chipLabel = `Hola, ${user.names || email}`;
+            this.chipImage = user.profileImage || '';
+            this.isLoggedIn = true;
+            this.userMenuItems = [
+              {
+                label: 'Ver Perfil',
+                icon: 'pi pi-user',
+                command: () => this.authService.navigateToProfile(),
+              },
+              {
+                label: 'Desconectar',
+                icon: 'pi pi-sign-out',
+                command: () => this.authService.logOut(),
+              },
+            ];
+          });
           subscription.unsubscribe();
         });
     } else {
       this.isLoggedIn = false;
       this.chipLabel = 'Iniciar Sesión';
+      this.chipImage = '';
       this.userMenuItems = [
         {
           label: 'Iniciar sesión',
-          command: () => this.onChipClick()
-        }
+          command: () => this.onChipClick(),
+        },
       ];
     }
-}
+  }
 
   onChipClick() {
     this.authService.navigateToLogin();

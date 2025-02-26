@@ -14,15 +14,16 @@
       </ng-template>
       <ng-template #end>
         <div class="busqPerfil">
-            <p-chip 
-                [label]="chipLabel" 
-                [icon]="chipIcon"
-                [image]="chipImage"
-                [alt]="chipAlt"
-                (click)="menu.toggle($event)"
-                [style]="{ cursor: 'pointer' }">
-            </p-chip>
-            <p-menu #menu [model]="userMenuItems" [popup]="true" />
+          <p-chip
+            [label]="chipLabel"
+            [icon]="chipIcon"
+            [image]="chipImage"
+            [alt]="chipAlt"
+            (click)="isLoggedIn ? menu.toggle($event) : onChipClick()"
+            [style]="{ cursor: 'pointer' }"
+          >
+          </p-chip>
+          <p-menu #menu [model]="userMenuItems" [popup]="true" />
         </div>
       </ng-template>
       <!-- <ng-template #end>

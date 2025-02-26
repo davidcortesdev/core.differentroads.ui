@@ -1,0 +1,15 @@
+<div class="flights">
+  <div class="step">
+    <div class="step-title">Elige tus vuelos</div>
+    <div class="step-description">Vuelos disponibles</div>
+  </div>
+
+  <div *ngFor="let flight of filteredFlights">
+    <app-flight-itinerary
+      [flight]="flight"
+      [selectFlight]="selectFlight.bind(this)"
+      [isFlightSelected]="isFlightSelected.bind(this)"
+    >
+    </app-flight-itinerary>
+  </div>
+</div>

@@ -1,1 +1,21 @@
-<p>tour-faq works!</p>
+<div class="faq-container">
+  <h2 class="faq-title">{{ title }}</h2>
+  <p-accordion [multiple]="false">
+    <p-accordion-panel *ngFor="let faq of faqs; let i = index" [value]="i">
+      <p-accordion-header>
+        <ng-template #toggleicon let-active="active">
+          @if (active) {
+          <i class="pi pi-minus-circle"></i>
+          } @else {
+          <i class="pi pi-plus-circle"></i>
+          }
+        </ng-template>
+
+        <div [innerHTML]="sanitizeHtml(faq.question)"></div>
+      </p-accordion-header>
+      <p-accordion-content>
+        <div [innerHTML]="sanitizeHtml(faq.answer)"></div>
+      </p-accordion-content>
+    </p-accordion-panel>
+  </p-accordion>
+</div>

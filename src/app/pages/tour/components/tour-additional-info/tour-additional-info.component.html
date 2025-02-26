@@ -1,1 +1,51 @@
-<p>tour-additional-info works!</p>
+<div class="">
+  <p-card styleClass="">
+    <div class="" (click)="handleSaveTrip()">
+      <span class="bg-pink-100">
+        <i class="pi pi-bookmark"></i>
+      </span>
+      <span class="">Guarda tu viaje</span>
+    </div>
+  </p-card>
+
+  <p-card styleClass="claseBord">
+    <div class="" (click)="handleDownloadTrip()">
+      <span class="bg-pink-100">
+        <i class="pi pi-download"></i>
+      </span>
+      <span class="">Descargar tu viaje</span>
+    </div>
+  </p-card>
+
+  <p-card styleClass="">
+    <div class="" (click)="handleInviteFriend()">
+      <span class="bg-pink-100">
+        <i class="pi pi-user-plus"></i>
+      </span>
+      <span class="">Invita a un amigo a tu viaje</span>
+    </div>
+  </p-card>
+</div>
+
+<div class="mt-4 additional-info">
+  <p-accordion>
+    <p-accordion-panel
+      *ngFor="let card of tour?.['extra-info-section']?.['info-card']; let i = index"
+      [value]="i"
+    >
+      <p-accordion-header>
+        <ng-template #toggleicon let-active="active">
+          @if (active) {
+          <i class="pi pi-minus-circle"></i>
+          } @else {
+          <i class="pi pi-plus-circle"></i>
+          }
+        </ng-template>
+        <div [innerHTML]="sanitizeHtml(card.title)"></div>
+      </p-accordion-header>
+      <p-accordion-content>
+        <div [innerHTML]="sanitizeHtml(card.content)"></div>
+      </p-accordion-content>
+    </p-accordion-panel>
+  </p-accordion>
+</div>

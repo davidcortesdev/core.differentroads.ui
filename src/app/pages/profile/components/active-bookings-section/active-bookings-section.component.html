@@ -1,0 +1,68 @@
+<div class="active-bookings">
+  <div class="booking-header" (click)="toggleContent()">
+    <span>Reservas activas</span>
+    <i
+      class="pi"
+      [ngClass]="{
+        'pi-chevron-down': !isExpanded,
+        'pi-chevron-up': isExpanded
+      }"
+    ></i>
+  </div>
+
+  <div class="booking-content" [ngClass]="{ hidden: !isExpanded }">
+    <p-dataView
+      #dv
+      [value]="bookings"
+      [rows]="5"
+      [paginator]="true"
+      styleClass="transparent-dataview"
+    >
+      <ng-template #list let-bookings>
+        <div class="booking-list">
+          <div class="booking-item" *ngFor="let booking of bookings">
+            <div class="booking-item-content">
+              <div class="image-container">
+                <img [src]="booking.image" alt="Booking image" />
+              </div>
+
+              <div class="info-sections">
+                <div class="title-section">
+                  <h2>{{ booking.title }}</h2>
+                </div>
+                <div class="info-content">
+                  <div class="info-row">
+                    <span class="label">Nº Reserva:</span>
+                    <span class="value">{{ booking.reservationNumber }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">Fecha de creación:</span>
+                    <span class="value">{{
+                      booking.creationDate | date : "dd/MM/yyyy"
+                    }}</span>
+                  </div>
+                  <div class="info-row status">
+                    <span class="label">Estado:</span>
+                    <span class="status-dot"></span>
+                    <span class="value">{{ booking.status }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="actions-section">
+                <div class="departure-info">
+                  <span>Salida</span>
+                  <strong>{{
+                    booking.departureDate | date : "dd/MM/yyyy"
+                  }}</strong>
+                </div>
+                <p-button label="Ver reserva" styleClass="p-button-rounded">
+                </p-button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-template>
+    </p-dataView>
+  </div>
+</div>

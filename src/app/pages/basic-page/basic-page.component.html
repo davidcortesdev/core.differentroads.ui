@@ -1,0 +1,16 @@
+<ng-container *ngIf="isLoading; else content">
+  <p>Loading...</p>
+</ng-container>
+
+<ng-template #content>
+  <ng-container *ngIf="pageContent; else noData">
+    <app-title-and-quill
+      [title]="pageContent.title"
+      [description]="pageContent.description"
+    ></app-title-and-quill>
+  </ng-container>
+
+  <ng-template #noData>
+    <p>Error: No se encontró la página</p>
+  </ng-template>
+</ng-template>

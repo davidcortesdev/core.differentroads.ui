@@ -1,0 +1,30 @@
+<div class="container">
+  <div class="column left-column">
+    <app-personal-info-section
+      *ngIf="personalInfo && !isEditing"
+      [personalInfo]="personalInfo"
+      [toggleEdit]="toggleEdit.bind(this)"
+    ></app-personal-info-section>
+    <app-update-profile-section
+      *ngIf="personalInfo && isEditing"
+      [personalInfo]="personalInfo"
+      [toggleEdit]="toggleEdit.bind(this)"
+    ></app-update-profile-section>
+  </div>
+  <div class="column right-column">
+    <app-points-section></app-points-section>
+    <app-active-bookings-section
+      [userEmail]="userEmail"
+      *ngIf="userEmail"
+    ></app-active-bookings-section>
+    <app-travel-history-section
+      [userEmail]="userEmail"
+      *ngIf="userEmail"
+    ></app-travel-history-section>
+    <app-recent-budget-section
+      [userEmail]="userEmail"
+      *ngIf="userEmail"
+    ></app-recent-budget-section>
+    <app-review-section></app-review-section>
+  </div>
+</div>

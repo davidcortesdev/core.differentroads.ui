@@ -21,8 +21,25 @@
 
   --background-azul: #002b57;
   --background-azul-color-letra: white;
+  --background-white: #f7f6f2;
+
+  --surface-color-0: #f7f6f2;
+  --surface-color-50: #fafaf9;
+  --surface-color-100: #f5f5f4;
+  --surface-color-200: #e7e5e4;
+  --surface-color-300: #d6d3d1;
+  --surface-color-400: #a8a29e;
+  --surface-color-500: #78716c;
+  --surface-color-600: #57534e;
+  --surface-color-700: #44403c;
+  --surface-color-800: #292524;
+  --surface-color-900: #1c1917;
+  --surface-color-950: #0c0a09;
+
 
   --accent-white: #f7f6f2;
+
+  --gray: #a4a4a4;
 
   --p-primary-50: var(--primary-color-50);
   --p-primary-100: var(--primary-color-100);
@@ -47,6 +64,10 @@
   --p-menubar-border-color: var(--p-menubar-background);
 }
 
+body {
+  margin: 0;
+}
+
 /* Estilos temporales que formatean los textos que llegan desde el quill js */
 
 .formated-content {
@@ -59,17 +80,20 @@
   .ql-snow {
     .ql-picker {
       &.ql-size {
+
         .ql-picker-label,
         .ql-picker-item {
           &::before {
             content: attr(data-value) !important;
           }
         }
+
         .ql-picker-label[data-value="0.75em"]::before,
         .ql-picker-item[data-value="0.75em"]::before {
           font-size: 0.75em !important;
           content: "XS" !important;
         }
+
         .ql-picker-label[data-value="0.875rem"]::before,
         .ql-picker-item[data-value="0.875rem"]::before {
           font-size: 0.875rem !important;
@@ -124,9 +148,11 @@
   .ql-align-justify {
     text-align: justify;
   }
+
   .ql-align-right {
     text-align: right;
   }
+
   .ql-align-left {
     text-align: left;
   }
@@ -152,11 +178,16 @@
     content: "Normal" !important;
   }
 
+  ul {
+    margin: 0;
+  }
+
   p {
     font-size: 1rem !important;
     content: "Normal" !important;
     padding-top: 0.5em;
     line-height: 1.1em;
+    margin: 0;
   }
 
   &.is-inline {

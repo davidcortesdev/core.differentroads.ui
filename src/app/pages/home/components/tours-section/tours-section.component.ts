@@ -18,7 +18,12 @@ export class ToursSectionComponent implements OnInit {
 
   responsiveOptions = [
     {
-      breakpoint: '1400px',
+      breakpoint: '2100px',
+      numVisible: 4,
+      numScroll: 1,
+    },
+    {
+      breakpoint: '1700px',
       numVisible: 3,
       numScroll: 1,
     },
@@ -28,7 +33,7 @@ export class ToursSectionComponent implements OnInit {
       numScroll: 1,
     },
     {
-      breakpoint: '768px',
+      breakpoint: '560px',
       numVisible: 1,
       numScroll: 1,
     },
@@ -84,23 +89,14 @@ export class ToursSectionComponent implements OnInit {
                 (month: string): string => month.toLocaleUpperCase().slice(0, 3)
               ),
               isByDr: false,
-              webSlug: tour.webSlug || tour.name?.toLowerCase().replace(/\s+/g, '-') || '',
+              webSlug:
+                tour.webSlug ||
+                tour.name?.toLowerCase().replace(/\s+/g, '-') ||
+                '',
             };
             this.tours = [...this.tours, processedTour];
           }
         });
     });
-  }
-
-  navigateToTour(tour: ProcessedTour): void {
-    this.router.navigate([
-      '/tour',
-      tour.title.toLowerCase().replace(/\s+/g, '-')
-    ]);
-    //    this.router.navigate(['/tour', tour.slug]);
-  }
-
-  onTourClick(tour: ProcessedTour): void {
-    this.navigateToTour(tour);
   }
 }

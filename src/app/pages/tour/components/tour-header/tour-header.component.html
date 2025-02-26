@@ -16,17 +16,20 @@
   <div class="tour-actions">
     <div class="badge">
       <i class="pi pi-user"></i>
-      <span>El mejor valorado por nuestros viajeros</span>
+      <span>{{
+        tour.marketingSection?.marketingTag ||
+          "El mejor valorado por nuestros viajeros"
+      }}</span>
     </div>
     <div class="price-section">
       <div class="price-info">
         <div class="before-price">
-          <span>Antes</span>
-          <span class="amount">{{ tour.basePrice + 200 }}€</span>
+          <!-- <span>Antes</span>
+          <span class="amount">{{ tour.basePrice + 200 }}€</span> -->
         </div>
         <div class="current-price">
           <span>Desde</span>
-          <span class="amount">{{ tour.basePrice }}€</span>
+          <span class="amount">{{ tour.price }}€</span>
         </div>
       </div>
       <a href="#prices" class="price-link">Ir a este precio</a>

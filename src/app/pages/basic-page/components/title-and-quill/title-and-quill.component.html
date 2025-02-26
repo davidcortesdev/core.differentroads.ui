@@ -1,0 +1,8 @@
+<div class="main-container">
+  <h3 class="landingTitle">{{ title }}</h3>
+  <div
+    *ngIf="description"
+    [innerHTML]="sanitizeHtml(description)"
+    class="formated-content"
+  ></div>
+</div>

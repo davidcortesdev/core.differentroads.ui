@@ -1,1 +1,262 @@
-<p>tour-departures works!</p>
+<div class="t-dep">
+  <h1>Elige una fecha y comienza a personalizar tu viaje</h1>
+  
+  <!-- Sección de filtros con labels dentro de inputs -->
+  <div class="f-hdr">
+    <div class="f-box">
+      <!-- Original label (will be hidden by CSS) -->
+      <div class="f-lbl city">Ciudad de origen</div>
+      <div class="f-cnt city">
+        <!-- New in-field label -->
+        <span class="input-label">Ciudad de origen</span>
+        <p-autocomplete
+          [suggestions]="filteredCities"
+          [(ngModel)]="selectedCity"
+          [dropdown]="true"
+          placeholder="Sin vuelos"
+          (completeMethod)="filterCities($event)"
+          (onSelect)="filterDepartures()"
+        ></p-autocomplete>
+        <span class="p-from">Desde {{ priceFrom }}€</span>
+      </div>
+    </div>
+    
+    <div class="f-box">
+      <!-- Original label (will be hidden by CSS) -->
+      <div class="f-lbl">Pasajeros</div>
+      <div class="f-cnt">
+        <!-- New in-field label -->
+        <span class="input-label">Pasajeros</span>
+        <button 
+          #passengerButton 
+          type="button" 
+          class="p-autocomplete p-btn"
+          (click)="togglePassengersPanel($event)"
+        >
+          {{ passengerText }}
+          <i class="pi pi-chevron-down ml-auto"></i>
+        </button>
+        
+        <p-overlay 
+          [(visible)]="showPassengersPanel" 
+          styleClass="p-ovl"
+        >
+          <div class="p-panel p-3">
+            <div class="p-type">
+              <div class="p-info">
+                <div class="p-cat">Adultos</div>
+                <div class="p-age">+12 años</div>
+              </div>
+              <div class="p-ctrl">
+                <p-button 
+                  icon="pi pi-minus" 
+                  styleClass="p-button-rounded p-button-outlined"
+                  [disabled]="travelers.adults <= 1"
+                  (onClick)="updatePassengers('adults', -1)"
+                ></p-button>
+                <span class="p-count">{{ travelers.adults }}</span>
+                <p-button 
+                  icon="pi pi-plus" 
+                  styleClass="p-button-rounded p-button-outlined"
+                  (onClick)="updatePassengers('adults', 1)"
+                ></p-button>
+              </div>
+            </div>
+            
+            <div class="p-type">
+              <div class="p-info">
+                <div class="p-cat">
+                  Niños 
+                  <p-badge icon="pi pi-info-circle" severity="info" styleClass="ml-2"></p-badge>
+                </div>
+                <div class="p-age">2-12 años</div>
+              </div>
+              <div class="p-ctrl">
+                <p-button 
+                  icon="pi pi-minus" 
+                  styleClass="p-button-rounded p-button-outlined"
+                  [disabled]="travelers.children <= 0"
+                  (onClick)="updatePassengers('children', -1)"
+                ></p-button>
+                <span class="p-count">{{ travelers.children }}</span>
+                <p-button 
+                  icon="pi pi-plus" 
+                  styleClass="p-button-rounded p-button-outlined"
+                  (onClick)="updatePassengers('children', 1)"
+                ></p-button>
+              </div>
+            </div>
+            
+            <div class="p-type">
+              <div class="p-info">
+                <div class="p-cat">
+                  Bebés
+                  <p-badge icon="pi pi-info-circle" severity="info" styleClass="ml-2"></p-badge>
+                </div>
+                <div class="p-age">-2 años</div>
+              </div>
+              <div class="p-ctrl">
+                <p-button 
+                  icon="pi pi-minus" 
+                  styleClass="p-button-rounded p-button-outlined"
+                  [disabled]="travelers.babies <= 0"
+                  (onClick)="updatePassengers('babies', -1)"
+                ></p-button>
+                <span class="p-count">{{ travelers.babies }}</span>
+                <p-button 
+                  icon="pi pi-plus" 
+                  styleClass="p-button-rounded p-button-outlined"
+                  (onClick)="updatePassengers('babies', 1)"
+                ></p-button>
+              </div>
+            </div>
+            
+            <div class="p-actions">
+              <p-button 
+                label="Aplicar" 
+                styleClass="p-button-rounded" 
+                (onClick)="applyPassengers()"
+              ></p-button>
+            </div>
+          </div>
+        </p-overlay>
+      </div>
+    </div>
+  </div>
+  
+  <!-- The rest of the HTML remains unchanged -->
+  <!-- Navegador de mes -->
+  <div class="m-nav">
+    <p-button 
+      label="Anterior" 
+      icon="pi pi-arrow-circle-left circle" 
+      styleClass="p-button-text" 
+      (onClick)="previousMonth()"
+    ></p-button>
+    <h2 class="m-display">{{ monthName }}</h2>
+    <p-button 
+      label="Siguiente" 
+      icon="pi pi-arrow-circle-right circle" 
+      iconPos="right" 
+      styleClass="p-button-text" 
+      (onClick)="nextMonth()"
+    ></p-button>
+  </div>
+  
+  <!-- DataView con PrimeNG sin paginación -->
+  <p-dataView #dv 
+    [value]="filteredDepartures" 
+    [rows]="9999"
+    [paginator]="false"
+    styleClass="paginator-transparent"
+    layout="list">
+    
+    <ng-template #header>
+      <div class="dep-hdr">
+        <div class="hdr-cols">
+          <span>Salida <i class="pi pi-arrow-right header"></i> Regreso</span>
+          <span>Información</span>
+          <span>Precio</span>
+          <span></span>
+        </div>
+      </div>
+    </ng-template>
+    
+    <ng-template #list let-departures>
+      <div class="dep-list">
+        <!-- Primer elemento con etiqueta recomendada -->
+        <div *ngIf="departures.length > 0" class="rec-container">
+          <div class="rec-label">Salida recomendada</div>
+          <div class="dep-item first-item">
+            <div class="dates">
+              <div class="d-date">
+                <span class="d-name">{{ departures[0].departureDate | date : "EEEE" }}</span>
+                <span class="d-day">{{ departures[0].departureDate | date : "dd MMM" }}</span>
+              </div>
+              <i class="pi pi-arrow-right"></i>
+              <div class="d-date">
+                <span class="d-name">{{ departures[0].returnDate | date : "EEEE" }}</span>
+                <span class="d-day">{{ departures[0].returnDate | date : "dd MMM" }}</span>
+              </div>
+            </div>
+            
+            <div class="info">
+              <p-tag severity="info" [value]="departures[0].group" *ngIf="departures[0].group">
+                <i class="pi pi-users" style="font-size: 0.7rem"></i>
+              </p-tag>
+              <p-tag
+                severity="warn"
+                value="Lista de espera"
+                *ngIf="departures[0].waitingList"
+              ><i class="pi pi-clock" style="font-size: 0.7rem"></i>
+              </p-tag>
+            </div>
+            
+            <div class="f-price">
+              <div class="p-container">
+                <span>desde</span>
+                <span class="amount">{{ formatPrice(departures[0].price) }}</span>
+              </div>
+            </div>
+            
+            <div class="actions">
+              <p-button
+                [label]="departures[0].status === 'complete' ? 'COMPLETO' : 'Añadir'"
+                [disabled]="departures[0].status === 'complete'"
+                (onClick)="addToCart(departures[0])"
+                [severity]="departures[0].status === 'complete' ? 'secondary' : 'primary'"
+                [raised]="true"
+              ></p-button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Resto de los elementos -->
+        <ng-container *ngFor="let item of departures; let i = index">
+          <div class="dep-item" *ngIf="i > 0">
+            <div class="dates">
+              <div class="d-date">
+                <span class="d-name">{{ item.departureDate | date : "EEEE" }}</span>
+                <span class="d-day">{{ item.departureDate | date : "dd MMM" }}</span>
+              </div>
+              <i class="pi pi-arrow-right"></i>
+              <div class="d-date">
+                <span class="d-name">{{ item.returnDate | date : "EEEE" }}</span>
+                <span class="d-day">{{ item.returnDate | date : "dd MMM" }}</span>
+              </div>
+            </div>
+            
+            <div class="info">
+              <p-tag severity="info" [value]="item.group" *ngIf="item.group">
+                <i class="pi pi-users" style="font-size: 0.7rem"></i>
+              </p-tag>
+              <p-tag
+                severity="warn"
+                value="Lista de espera"
+                *ngIf="item.waitingList"
+              ><i class="pi pi-clock" style="font-size: 0.7rem"></i>
+              </p-tag>
+            </div>
+            
+            <div class="f-price">
+              <div class="p-container">
+                <span>desde</span>
+                <span class="amount">{{ formatPrice(item.price) }}</span>
+              </div>
+            </div>
+            
+            <div class="actions">
+              <p-button
+                [label]="item.status === 'complete' ? 'COMPLETO' : 'Añadir'"
+                [disabled]="item.status === 'complete'"
+                (onClick)="addToCart(item)"
+                [severity]="item.status === 'complete' ? 'secondary' : 'primary'"
+                [raised]="true"
+              ></p-button>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </ng-template>
+  </p-dataView>
+</div>

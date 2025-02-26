@@ -1,4 +1,4 @@
-import { ReviewCard } from './review-card.model';
+import { ReviewCard } from '../../../../shared/models/reviews/review-card.model';
 
 /**
  * Represents the reviews section structure

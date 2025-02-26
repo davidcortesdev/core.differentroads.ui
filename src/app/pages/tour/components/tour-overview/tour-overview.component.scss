@@ -2,9 +2,8 @@
 
   .overview-header {
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
 
     h2 {
       font-size: 1.5rem;
@@ -12,10 +11,20 @@
       margin: 0;
     }
 
-    .read-more {
-      color: #e74c3c;
-      text-decoration: none;
+    .tour-content-countries-section {
+      margin-top: 1rem;
+      display: flex;
+      flex-wrap: wrap;
       font-weight: 500;
+
+      .tag.is-ghost {
+        color: var(--background-azul);
+        padding: 0.3rem 1.6rem 0.3rem 0rem;
+
+        &>i {
+          color: var(--p-primary-color);
+        }
+      }
     }
   }
 
@@ -66,6 +75,7 @@
     }
   }
 }
+
 :host ::ng-deep {
   .destinations-breadcrumb {
     margin-bottom: 1.5rem;
@@ -85,6 +95,7 @@
     }
   }
 }
+
 .tour-overview {
   .tour-content {
     display: grid;
@@ -128,8 +139,6 @@
     .overview-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
 
       h2 {
         margin: 0;
@@ -138,28 +147,61 @@
     }
   }
 }
+
 .tour-image {
+  height: fit-content;
+  position: relative;
+
   ::ng-deep img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     border-radius: 8px;
   }
+
+  .tour-content-image-tags {
+    height: fit-content;
+    justify-content: center;
+    align-items: flex-end;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    background-color: transparent;
+    position: absolute;
+    bottom: 5%;
+    left: 0;
+    right: 0;
+
+    .tag.is-rounded {
+      color: var(--background-azul-color-letra);
+      background-color: var(--gray);
+      border-radius: 3rem;
+      font-size: .75rem;
+      padding: .5rem;
+    }
+  }
 }
 
 .tour-details {
+  color: var(--background-azul);
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  .expert-section {
+  gap: 1rem;
+
+  .tour-content-highlights {
     display: flex;
     flex-direction: column;
+    gap: .75rem;
+  }
+
+  .expert-section {
+    display: flex;
     gap: 1rem;
 
     .expert-info {
       display: flex;
-      align-items: center;
-      gap: 1rem;
+      gap: .5rem;
+      width: 70%;
 
       .expert-details {
         h4 {
@@ -170,7 +212,7 @@
 
         .expert-role {
           color: var(--text-color-secondary);
-          font-size: 0.9rem;
+          font-size: 0.75rem;
         }
       }
     }
@@ -180,7 +222,9 @@
         background: var(--surface-hover);
         border: none;
         border-radius: 1rem;
+        font-size: .75rem;
         padding: 1rem;
+        width: 100%;
 
         .p-message-wrapper {
           padding: 0;
@@ -194,6 +238,7 @@
     }
   }
 }
+
 .expert-section {
   margin-top: 2rem;
 

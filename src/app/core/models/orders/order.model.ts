@@ -1,14 +1,15 @@
 import { Pagination } from '../commons/pagination.model';
 
 export interface Order {
+  _id: string;
   id: string;
   periodID: string;
   retailerID: string;
   status: 'AB' | 'Budget';
   owner: string;
   travelers?: OrderTraveler[];
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt?: string;
+  updatedAt?: string;
   optionalActivitiesRef?: OptionalActivityRef[];
   insurancesRef?: OptionalActivityRef[];
   extraData?: any;

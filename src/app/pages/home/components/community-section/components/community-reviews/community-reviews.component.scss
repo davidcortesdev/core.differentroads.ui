@@ -6,81 +6,11 @@
   --content-height: 4rem;
 }
 
-.reviews-section {
+.community-reviews {
   h3 {
     color: var(--background-azul-color-letra);
     font-size: var(--review-title-size);
     font-weight: 400;
     margin-bottom: calc(var(--card-padding) * 4);
-  }
-
-  ::ng-deep {
-    .p-carousel {
-      .padre {
-        padding: var(--card-padding);
-        height: 100%;
-        background-color: transparent;
-
-        .p-card {
-          padding: var(--card-padding);
-
-          .p-card-title {
-            color: var(--background-azul);
-            font-size: var(--review-heading-size);
-            font-weight: 700;
-            line-height: calc(var(--review-heading-size) * 1.034);
-          }
-
-          .p-card-subtitle {
-            color: var(--p-primary-color);
-            font-size: var(--review-text-size);
-            font-weight: 700;
-            line-height: 1;
-          }
-
-          .p-card-content {
-            color: var(--background-azul);
-            font-size: var(--review-text-size);
-            font-weight: 500;
-            line-height: 1;
-            height: var(--content-height);
-
-            .review-text-container {
-              color: inherit;
-              display: -webkit-box;
-              -webkit-line-clamp: 4;
-              -webkit-box-orient: vertical;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              max-height: var(--content-height);
-            }
-          }
-
-          .p-card-footer {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            align-items: center;
-            border: none;
-
-            .date {
-              color: var(--p-primary-color);
-              font-size: var(--review-text-size);
-              font-weight: 500;
-              line-height: 1;
-            }
-
-            .p-rating .p-rating-icon {
-              color: var(--p-primary-color);
-              font-size: var(--review-text-size);
-
-              &.p-rating-icon-active {
-                color: var(--p-primary-color);
-              }
-            }
-          }
-        }
-      }
-    }
   }
 }

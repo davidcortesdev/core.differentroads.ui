@@ -6,6 +6,7 @@ import {
 } from 'amazon-cognito-identity-js';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import { Subject, Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -13,6 +14,7 @@ import { environment } from '../../../environments/environment';
 export class AuthenticateService {
   private userPool: CognitoUserPool;
   private cognitoUser!: CognitoUser;
+  userAttributesChanged: Subject<void> = new Subject<void>();
 
   constructor(private router: Router) {
     this.userPool = new CognitoUserPool({
@@ -36,14 +38,21 @@ export class AuthenticateService {
 
     this.cognitoUser.authenticateUser(authenticationDetails, {
       onSuccess: (result: any) => {
-        this.router.navigate(['/home']);
+        window.location.href = '/home';
         console.log('Success Results : ', result);
       },
       newPasswordRequired: () => {
-        this.router.navigate(['/newPasswordRequire']);
+        // this.router.navigate(['/newPasswordRequire']);
       },
       onFailure: (error: any) => {
         console.log('error', error);
+        // Update the error message and loading state in the login form component
+        const loginFormComponent = this.router.routerState.root.firstChild
+          ?.component as any;
+        if (loginFormComponent) {
+          loginFormComponent.isLoading = false;
+          loginFormComponent.errorMessage = error.message || 'Login failed';
+        }
       },
     });
   }
@@ -53,105 +62,149 @@ export class AuthenticateService {
     const currentUser = this.userPool.getCurrentUser();
     if (currentUser) {
       currentUser.signOut();
-      this.router.navigate(['home']);
+      window.location.href = '/home';
     }
   }
 
   // Signup
-  signUp(email: string, password: string) {
-    let attributeList = [];
+  signUp(email: string, password: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      let attributeList = [];
 
-    attributeList.push({
-      Name: 'email',
-      Value: email,
-    });
+      attributeList.push({
+        Name: 'email',
+        Value: email,
+      });
 
-    this.userPool.signUp(
-      email,
-      password,
-      attributeList as any,
-      [],
-      (err, result: any) => {
-        if (err) {
-          console.log(err);
-          return;
+      this.userPool.signUp(
+        email,
+        password,
+        attributeList as any,
+        [],
+        (err, result: any) => {
+          if (err) {
+            console.log(err);
+            reject(err);
+            return;
+          }
+          this.cognitoUser = result.user;
+          console.log('user name is ' + this.cognitoUser.getUsername());
+          resolve();
         }
-        this.cognitoUser = result.user;
-        console.log('user name is ' + this.cognitoUser.getUsername());
-      }
-    );
+      );
+    });
   }
 
   // Confirm Signup
-  confirmSignUp(username: string, code: string) {
-    this.cognitoUser = this.getUserData(username);
-    this.cognitoUser.confirmRegistration(
-      code,
-      true,
-      (err: any, result: string) => {
-        if (err) {
-          console.log(err);
-          return;
+  confirmSignUp(username: string, code: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.cognitoUser = this.getUserData(username);
+      this.cognitoUser.confirmRegistration(
+        code,
+        true,
+        (err: any, result: string) => {
+          if (err) {
+            console.log(err);
+            reject(err);
+            return;
+          }
+          console.log('call result: ' + result);
+          resolve();
         }
-        console.log('call result: ' + result);
-      }
-    );
+      );
+    });
   }
 
   // Forgot Password
-  forgotPassword(username: string) {
-    this.cognitoUser = this.getUserData(username);
-    this.cognitoUser.forgotPassword({
-      onSuccess: (result: any) => {
-        console.log('call result: ' + result);
-        return result;
-      },
-      onFailure: (err: any) => {
-        console.log(err);
-      },
+  forgotPassword(username: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.cognitoUser = this.getUserData(username);
+      this.cognitoUser.forgotPassword({
+        onSuccess: (result: any) => {
+          console.log('call result: ' + result);
+          resolve(result);
+        },
+        onFailure: (err: any) => {
+          console.log(err);
+          reject(err);
+        },
+      });
     });
   }
 
   // Confirm Forgot Password
-  confirmForgotPassword(username: string, code: string, newPassword: string) {
-    this.cognitoUser = this.getUserData(username);
-    this.cognitoUser.confirmPassword(code, newPassword, {
-      onSuccess: () => {
-        console.log('Password confirmed');
-        return true;
-      },
-      onFailure: (err: any) => {
-        console.log(err);
-        return false;
-      },
+  confirmForgotPassword(
+    username: string,
+    code: string,
+    newPassword: string
+  ): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      this.cognitoUser = this.getUserData(username);
+      this.cognitoUser.confirmPassword(code, newPassword, {
+        onSuccess: () => {
+          console.log('Password confirmed');
+          resolve(true);
+        },
+        onFailure: (err: any) => {
+          console.log(err);
+          reject(err);
+        },
+      });
     });
   }
 
   // Get Current User
-  getCurrentUser() {
+  getCurrentUser(): boolean {
     const currentUser = this.userPool.getCurrentUser();
     if (currentUser != null) {
       this.cognitoUser = currentUser;
       this.cognitoUser.getSession((err: any, session: any) => {
         if (err) {
           console.log(err);
-          return;
+          return false;
         }
-        console.log('session validity: ', session);
-        return session;
+        return true;
       });
+      return true;
     }
+    return false;
   }
 
   // Get Current User Attributes
-  getUserAttributes() {
-    this.cognitoUser.getUserAttributes((err: any, result: any) => {
-      if (err) {
-        console.log(err);
-        return;
-      }
-      console.log('User attributes: ', result);
-      return result;
+  getUserAttributes(): Observable<any> {
+    return new Observable((observer) => {
+      this.cognitoUser.getUserAttributes((err: any, result: any) => {
+        if (err) {
+          console.log(err);
+          observer.error(err);
+          return;
+        }
+        let formattedResult = result.map((item: any) => ({
+          [item.Name]: item.Value,
+        }));
+        formattedResult = Object.assign({}, ...formattedResult);
+        console.log('User attributes: ', formattedResult);
+        this.userAttributesChanged.next();
+        observer.next(formattedResult);
+        observer.complete();
+      });
     });
+  }
+
+  getCurrentUsername(): string {
+    const currentUser = this.userPool.getCurrentUser();
+    console.log('______Current user: ', currentUser);
+
+    return currentUser ? currentUser.getUsername() : '';
+  }
+
+  // Navegar al perfil del usuario
+  navigateToProfile() {
+    this.router.navigate(['/profile']);
+  }
+
+  // Navegar a la página de login
+  navigateToLogin() {
+    this.router.navigate(['/login']); // Ajusta la ruta según tu configuración
   }
 }

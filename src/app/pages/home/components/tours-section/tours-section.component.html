@@ -2,7 +2,7 @@
   <h2 class="title">Descubre lo mejor de Europa</h2>
   <p-carousel
     [value]="tours"
-    [numVisible]="3"
+    [numVisible]="5"
     [numScroll]="1"
     [circular]="true"
     [responsiveOptions]="responsiveOptions"
@@ -10,52 +10,11 @@
     [showNavigators]="false"
   >
     <ng-template let-tour pTemplate="item">
-      <div class="tour-card">
-        <p-card
-          [style]="{ 'border-radius': '1rem', overflow: 'hidden', border: 'none', boxShadow: 'none' }"
-          [styleClass]="'tour-card-wrapper'"
-        >
-          <ng-template pTemplate="header">
-            <div class="image-container">
-              <img [src]="tour.imageUrl" [alt]="tour.title" />
-              <div class="overlay">
-                <span class="rating p-button-primary">{{ tour.rating }} ★</span>
-                <span class="indicator" *ngIf="tour.isByDr !== undefined">
-                  {{ tour.isByDr ? 'By DR' : 'Beyond Different' }}
-                </span>
-                <span class="tag" *ngIf="tour.tag">{{ tour.tag }}</span>
-                <div class="title-overlay">
-                  <p>{{ tour.description }}</p>
-                  <h3>{{ tour.title }}</h3>
-                </div>
-              </div>
-            </div>
-          </ng-template>
-          <ng-template pTemplate="footer">
-            <div class="card-footer">
-              <div class="price-section">
-                <span class="desde">desde</span>
-                <span class="price">{{ tour.price }}€</span>
-                <div class="months">
-                  <span 
-                    *ngFor="let month of tour.availableMonths" 
-                    class="month" 
-                    [class.active]="true">
-                    {{ month }}
-                  </span>
-                </div>
-              </div>
-              <p-button
-                type="button"
-                label="Ver tour"
-                class="p-button-rounded buttonVertour"
-                [rounded]="true"
-                [fluid]="true"
-              ></p-button>
-            </div>
-          </ng-template>
-        </p-card>
-      </div>
+      <app-tour-card
+        [tourData]="tour"
+        [showScalapayPrice]="true"
+        [isLargeCard]="true"
+      ></app-tour-card>
     </ng-template>
   </p-carousel>
 </section>

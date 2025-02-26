@@ -1,101 +1,75 @@
 .community-gallery {
+  --card-border-radius: 0.75rem;
+  --card-text-size: 0.6875rem;
+  --card-spacing: 1rem;
+  
   display: grid;
-  grid-template-rows: 1fr;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 1rem;
-
-  @media screen and (max-width: 1024px) {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  @media screen and (max-width: 768px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  @media screen and (max-width: 480px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--card-spacing);
+  max-width: 100%;
 
   &-card {
     position: relative;
-    width: fit-content;
+    width: 100%;
+    aspect-ratio: 1/1;
 
     &::after {
-      background: var(--degrade-bg);
-      background: -webkit-linear-gradient(90deg,
-          rgba(0, 0, 0, .5) 0%,
-          rgba(0, 0, 0, 0) 15%,
-          rgba(0, 0, 0, 0) 85%,
-          rgba(0, 0, 0, .5) 100%);
-      background: -moz-linear-gradient(90deg,
-          rgba(0, 0, 0, .5) 0%,
-          rgba(0, 0, 0, 0) 15%,
-          rgba(0, 0, 0, 0) 85%,
-          rgba(0, 0, 0, .5) 100%);
-      border-radius: .75rem;
       content: '';
-      height: 100%;
-      left: 0;
       position: absolute;
-      top: 0;
-      width: 100%;
+      inset: 0;
+      border-radius: var(--card-border-radius);
+      background: linear-gradient(
+        90deg,
+        rgba(0, 0, 0, 0.5) 0%,
+        rgba(0, 0, 0, 0) 15%,
+        rgba(0, 0, 0, 0) 85%,
+        rgba(0, 0, 0, 0.5) 100%
+      );
       z-index: 0;
     }
 
     &-img {
-      aspect-ratio: 1/1;
-      border-radius: .75rem;
-      height: 100%;
-      object-fit: cover;
       width: 100%;
+      height: 100%;
+      border-radius: var(--card-border-radius);
+      object-fit: cover;
     }
 
     &-info {
+      position: absolute;
+      inset: 0;
       display: flex;
       flex-direction: column;
-      height: 100%;
       justify-content: space-between;
-      position: absolute;
-      top: 0;
-      width: 100%;
+      padding: var(--card-spacing);
       z-index: 1;
 
-      &-location {
+      &-location,
+      &-username {
+        display: flex;
         align-items: center;
         color: var(--background-azul-color-letra);
-        display: flex;
-        font-size: .6875rem;
+        font-size: var(--card-text-size);
         font-weight: 500;
-        justify-content: flex-end;
         margin: 0;
-        position: relative;
-        margin-right: .5rem;
-        text-align: right;
-        top: .5rem;
+      }
 
-        &>i {
+      &-location {
+        align-self: flex-end;
+
+        i {
           color: var(--p-primary-color);
-          margin-left: .25rem;
+          margin-left: 0.25rem;
         }
       }
 
       &-username {
-        align-items: center;
-        bottom: .5rem;
-        color: var(--background-azul-color-letra);
-        display: flex;
-        font-size: .6875rem;
-        font-weight: 500;
-        margin: 0;
-        margin-left: .5rem;
-        position: relative;
-
-        &>span {
-          text-decoration: underline;
+        i {
+          margin-right: 0.25rem;
         }
 
-        &>i {
-          margin-right: .25rem;
+        span {
+          text-decoration: underline;
         }
       }
     }

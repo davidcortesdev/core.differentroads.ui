@@ -27,6 +27,7 @@ export interface Tour extends CMSCollections {
   marketingSection: MarketingSection;
   'travelers-section': TravelersSection;
   supportSection: SupportSection;
+  continent: string;
 }
 
 export interface Expert {
@@ -38,7 +39,7 @@ export interface Expert {
 
 export interface Itinerary {
   title: string;
-  dayCard: DayCard[];
+  'day-card': DayCard[];
 }
 
 export interface DayCard {
@@ -85,17 +86,24 @@ export interface ActivePeriod {
   flights: Flight[];
   name: string;
   externalID: number;
+  tripType: string;
 }
 
 export interface Flight {
   name: string;
   serviceCombinationID: number;
   activityID: number;
+  prices: number;
 }
+
+/* export interface TravelersSection {
+  title: string;
+  travelersCards: TravelersCard[];
+} */
 
 export interface TravelersSection {
   title: string;
-  travelersCards: TravelersCard[];
+  'travelers-cards': TravelersCard[];
 }
 
 export interface TravelersCard {

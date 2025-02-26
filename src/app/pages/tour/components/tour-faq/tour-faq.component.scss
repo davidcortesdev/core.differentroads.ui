@@ -1,0 +1,48 @@
+.faq-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+
+    .faq-title {
+        color: #0066cc;
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        font-weight: bold;
+    }
+}
+
+:host ::ng-deep {
+    .p-accordion {
+        p-accordion-header {
+            flex-direction: row-reverse;
+            gap: 1rem;
+            justify-content: flex-end;
+
+            i {
+                color: #ff6b6b;
+            }
+
+            &:not(.p-disabled) .p-accordion-header-link {
+                background: transparent;
+                border: none;
+                border-bottom: 1px solid #dee2e6;
+                padding: 1.5rem 0;
+
+                &:hover {
+                    background: transparent;
+                    border-bottom: 1px solid #dee2e6;
+                }
+            }
+        }
+
+        .p-accordion-content {
+            border: none;
+            padding: 1.5rem 0;
+            margin-left: 2rem;
+        }
+
+        .p-accordion-tab {
+            margin-bottom: 0;
+        }
+    }
+}

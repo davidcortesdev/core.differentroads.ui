@@ -7,8 +7,13 @@
           src="logo-different-color.webp"
           alt="Different Roads Logo"
           class="logo"
-          height="50px"
+          height="40px"
+          [routerLink]="['/']"
+          style="cursor: pointer;"
         />
+      </ng-template>
+      <ng-template #end>
+        <p-menubar [model]="userMenuItems"></p-menubar>
       </ng-template>
       <!-- <ng-template #end>
                 <div class="flex items-center gap-4">

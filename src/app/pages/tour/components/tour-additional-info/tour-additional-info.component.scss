@@ -1,0 +1,72 @@
+div {
+  display: flex;
+  flex-direction: row;
+  gap: 2.5rem;
+  justify-content: space-evenly;
+  align-items: center;
+
+  .p-card {
+
+    div {
+      span {
+        background-color: #ff6f61;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+      }
+    }
+  }
+}
+
+.p-card {
+  div {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+
+    .p-card-content {
+      align-items: center;
+    }
+  }
+}
+
+.claseBord {
+  border-radius: 0.875rem;
+  border: 1px solid #002B57;
+}
+
+.bg-pink-100 {
+  background-color: #ff6f61;
+  border-radius: 25%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  i {
+    color: white;
+  }
+}
+
+.additional-info {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+:host {
+  ::ng-deep p-accordion {
+    width: 100%;
+
+    p-accordion-header {
+      flex-direction: row-reverse;
+      gap: 1rem;
+      justify-content: flex-end;
+
+      i {
+        color: #ff6b6b;
+      }
+    }
+  }
+}

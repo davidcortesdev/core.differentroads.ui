@@ -110,34 +110,32 @@ export class HeaderComponent implements OnInit {
         .subscribe((userAttributes) => {
           const { email } = userAttributes;
           this.chipLabel = email;
+          this.isLoggedIn = true;
           this.userMenuItems = [
             {
-              label: email,
-              items: [
-                {
-                  label: 'Ver Perfil',
-                  icon: 'pi pi-user',
-                  command: () => this.authService.navigateToProfile(),
-                },
-                {
-                  label: 'Logout',
-                  icon: 'pi pi-sign-out',
-                  command: () => this.authService.logOut(),
-                },
-              ],
+              label: 'Ver Perfil',
+              icon: 'pi pi-user',
+              command: () => this.authService.navigateToProfile()
             },
+            {
+              label: 'Desconectar',
+              icon: 'pi pi-sign-out',
+              command: () => this.authService.logOut()
+            }
           ];
           subscription.unsubscribe();
         });
     } else {
+      this.isLoggedIn = false;
+      this.chipLabel = 'Iniciar Sesión';
       this.userMenuItems = [
         {
-          label: 'Inicia sesión',
-          command: () => this.onChipClick(),
-        },
+          label: 'Iniciar sesión',
+          command: () => this.onChipClick()
+        }
       ];
     }
-  }
+}
 
   onChipClick() {
     this.authService.navigateToLogin();

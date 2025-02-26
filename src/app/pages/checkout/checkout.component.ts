@@ -13,6 +13,9 @@ import { Activity } from '../../core/models/tours/activity.model';
 import { FlightsService } from '../../core/services/checkout/flights.service';
 import { Flight } from '../../core/models/tours/flight.model';
 import { ActivatedRoute } from '@angular/router';
+import { BookingsService } from '../../core/services/bookings.service';
+import { BookingCreateInput } from '../../core/models/bookings/booking.model';
+import { Period } from '../../core/models/tours/period.model';
 
 @Component({
   selector: 'app-checkout',
@@ -38,7 +41,7 @@ export class CheckoutComponent implements OnInit {
   // Cart information
   activities: Activity[] = [];
   selectedFlight: Flight | null = null;
-  summary: { qty: number; price: number; description: string }[] = [];
+  summary: { qty: number; value: number; description: string }[] = [];
   subtotal: number = 0;
   total: number = 0;
   prices:
@@ -56,6 +59,7 @@ export class CheckoutComponent implements OnInit {
   rooms: ReservationMode[] = [];
   tourID: string = '';
   periodID: string = '';
+  periodData!: Period;
 
   constructor(
     private ordersService: OrdersService,
@@ -66,7 +70,8 @@ export class CheckoutComponent implements OnInit {
     private pricesService: PricesService,
     private activitiesService: ActivitiesService,
     private flightsService: FlightsService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private bookingsService: BookingsService
   ) {}
 
   ngOnInit() {
@@ -87,6 +92,7 @@ export class CheckoutComponent implements OnInit {
 
       this.periodsService.getPeriodDetail(periodID).subscribe((period) => {
         console.log('Period details:', period);
+        this.periodData = period;
 
         this.tourName = period.name;
 
@@ -108,9 +114,7 @@ export class CheckoutComponent implements OnInit {
       this.travelersSelected = data;
       this.updateOrderSummary();
     });
-    this.travelersService.travelers$.subscribe((travelers) => {
-      console.log('Travelers__:', travelers);
-    });
+    this.travelersService.travelers$.subscribe((travelers) => {});
 
     this.summaryService.order$.subscribe((order) => {
       this.order = order;
@@ -219,7 +223,7 @@ export class CheckoutComponent implements OnInit {
     this.travelersSelected.adults > 0 &&
       this.summary.push({
         qty: this.travelersSelected.adults,
-        price:
+        value:
           this.pricesService.getPriceById(this.tourID, 'Adultos') +
           this.pricesService.getPriceById(this.periodID, 'Adultos'),
         description: 'Adultos',
@@ -228,7 +232,7 @@ export class CheckoutComponent implements OnInit {
     this.travelersSelected.childs > 0 &&
       this.summary.push({
         qty: this.travelersSelected.childs,
-        price:
+        value:
           this.pricesService.getPriceById(this.tourID, 'Niños') +
           this.pricesService.getPriceById(this.periodID, 'Niños'),
         description: 'Niños',
@@ -237,16 +241,16 @@ export class CheckoutComponent implements OnInit {
     this.travelersSelected.babies > 0 &&
       this.summary.push({
         qty: this.travelersSelected.babies,
-        price:
-          this.pricesService.getPriceById(this.tourID, 'B') +
-          this.pricesService.getPriceById(this.periodID, 'Niños'),
+        value:
+          this.pricesService.getPriceById(this.tourID, 'Bebes') +
+          this.pricesService.getPriceById(this.periodID, 'Bebes'),
         description: 'Bebes',
       });
 
     this.rooms.forEach((room) => {
       this.summary.push({
         qty: room.qty || 0,
-        price: this.pricesService.getPriceById(room.externalID, 'Adultos'),
+        value: this.pricesService.getPriceById(room.externalID, 'Adultos'),
         description: room.name,
       });
     });
@@ -254,7 +258,7 @@ export class CheckoutComponent implements OnInit {
     this.activities.forEach((activity) => {
       this.summary.push({
         qty: 1,
-        price: activity.price || 0,
+        value: activity.price || 0,
         description: activity.name,
       });
     });
@@ -279,7 +283,7 @@ export class CheckoutComponent implements OnInit {
           this.travelersSelected.adults +
           this.travelersSelected.childs +
           this.travelersSelected.babies,
-        price: this.selectedFlight.price || 0,
+        value: this.selectedFlight.price || 0,
         description: this.selectedFlight.name,
       });
 
@@ -300,7 +304,7 @@ export class CheckoutComponent implements OnInit {
 
   calculateTotals() {
     this.subtotal = this.summary.reduce(
-      (acc, item) => acc + item.price * item.qty,
+      (acc, item) => acc + item.value * item.qty,
       0
     );
     this.total = this.subtotal;
@@ -342,5 +346,86 @@ export class CheckoutComponent implements OnInit {
       this.summaryService.getOrderValue()!._id,
       this.summaryService.getOrderValue()!
     );
+  }
+
+  /* Booking create */
+
+  processBooking(): Promise<{ bookingID: string; ID: string }> {
+    return new Promise((resolve, reject) => {
+      const bookingData: BookingCreateInput = {
+        tour: {
+          id: this.tourID,
+          name: this.tourName,
+          priceData: this.pricesService.getPriceDataById(this.tourID),
+        },
+        summary: '',
+        total: this.total,
+        priceData: this.pricesService.getPriceDataById(this.periodID),
+        id: this.orderDetails?._id || '',
+        extendedTotal: this.summary,
+        dayOne: this.periodData.dayOne,
+        numberOfDays: this.periodData.numberOfDays,
+        returnDate: this.periodData.returnDate,
+        tourID: this.tourID,
+        paymentTerms: '',
+        redeemPoints: 0,
+        usePoints: {},
+        name: this.periodData.name,
+        externalID: this.periodID,
+      };
+      let bookingID = '';
+      let bookingSID = '';
+      let order: Order | undefined;
+
+      this.bookingsService
+        .createBooking(this.orderDetails?._id!, bookingData)
+        .subscribe({
+          next: (response) => {
+            console.log('Booking created:', response);
+            bookingID = response.bookingID;
+            bookingSID = response.ID;
+            order = response.order;
+
+            this.bookingsService
+              .saveTravelers(response.bookingID, {
+                bookingSID: response.ID,
+                bookingID: this.orderDetails?._id!,
+                order: response.order as Order,
+              })
+              .subscribe({
+                next: (response) => {
+                  console.log('Travelers saved:', response);
+
+                  this.bookingsService
+                    .bookOrder(bookingID, {
+                      order: order,
+                      ID: bookingSID,
+                    })
+                    .subscribe({
+                      next: (response) => {
+                        console.log('Order booked:', response);
+                        resolve({
+                          bookingID: bookingID,
+                          ID: bookingSID,
+                        });
+                      },
+                      error: (error) => {
+                        console.error('Error booking order:', error);
+                        reject(error);
+                      },
+                    });
+                },
+                error: (error) => {
+                  console.error('Error saving travelers:', error);
+                  reject(error);
+                },
+              });
+          },
+          error: (error) => {
+            console.error('Error creating booking:', error);
+            reject(error);
+          },
+        });
+    });
   }
 }

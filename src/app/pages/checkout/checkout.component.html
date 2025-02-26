@@ -71,7 +71,10 @@
           </p-step-panel>
           <p-step-panel [value]="4">
             <ng-template #content let-activateCallback="activateCallback">
-              <app-payment [totalPrice]="total"></app-payment>
+              <app-payment
+                [totalPrice]="total"
+                [processBooking]="processBooking.bind(this)"
+              ></app-payment>
               <div class="flex pt-6 justify-between">
                 <p-button
                   label="Back"
@@ -101,8 +104,8 @@
               <span>{{ item.description }}</span>
 
               <span
-                >{{ item.qty }} x {{ item.price | currencyFormat : "EUR" }} =
-                {{ item.price * item.qty | currencyFormat : "EUR" }}</span
+                >{{ item.qty }} x {{ item.value | currencyFormat : "EUR" }} =
+                {{ item.value * item.qty | currencyFormat : "EUR" }}</span
               >
             </div>
           </div>

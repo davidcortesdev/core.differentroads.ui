@@ -69,7 +69,6 @@ export class TravelersService {
 
   updateTravelers(travelers: OrderTraveler[]) {
     const currentTravelers = this.travelersSource.getValue();
-    console.log('currentTravelers', currentTravelers);
 
     const updatedTravelers = travelers.map((traveler, index) => ({
       ...currentTravelers[index],
@@ -89,24 +88,44 @@ export class TravelersService {
       const travelersNumbers = this.travelersNumbersSource.getValue();
       for (let i = 0; i < travelersNumbers.adults; i++) {
         travelers.push({
+          bookingID: '',
+          flightID: '',
+          periodReservationModeID: '',
           lead: i === 0,
+          _id: this.generateHexID(),
+          optionalActivitiesIDs: [],
           travelerData: {
             ageGroup: 'Adultos',
+            category: 'Standart category',
           },
         });
       }
 
       for (let i = 0; i < travelersNumbers.childs; i++) {
         travelers.push({
+          bookingID: '',
+          flightID: '',
+          periodReservationModeID: '',
+          lead: i === 0,
+          _id: this.generateHexID(),
+          optionalActivitiesIDs: [],
           travelerData: {
             ageGroup: 'Niños',
+            category: 'Standart category',
           },
         });
       }
       for (let i = 0; i < travelersNumbers.babies; i++) {
         travelers.push({
+          bookingID: '',
+          flightID: '',
+          periodReservationModeID: '',
+          lead: i === 0,
+          _id: this.generateHexID(),
+          optionalActivitiesIDs: [],
           travelerData: {
             ageGroup: 'Bebés',
+            category: 'Standart category',
           },
         });
       }
@@ -123,10 +142,25 @@ export class TravelersService {
       }
     });
 
+    console.log('Travelers', travelers);
+
     this.travelersSource.next(travelers);
   }
 
   getTravelers(): OrderTraveler[] {
     return this.travelersSource.getValue();
+  }
+
+  generateHexID() {
+    // Obtener la marca de tiempo actual en milisegundos
+    const timestamp = Math.floor(Date.now() / 1000).toString(16);
+
+    // Generar 16 caracteres hexadecimales aleatorios
+    const randomHex = Array.from({ length: 16 }, () =>
+      Math.floor(Math.random() * 16).toString(16)
+    ).join('');
+
+    // Concatenar el timestamp y los caracteres aleatorios para formar el ID
+    return (timestamp + randomHex).slice(0, 24);
   }
 }

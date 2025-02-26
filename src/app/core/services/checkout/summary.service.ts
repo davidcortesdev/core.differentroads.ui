@@ -32,6 +32,6 @@ export class SummaryService {
   }
 
   getOrderValue(): Order | null {
-    return this.orderSource.getValue();
+    return this.orderSource?.getValue();
   }
 }

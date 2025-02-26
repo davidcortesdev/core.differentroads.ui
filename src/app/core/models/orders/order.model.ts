@@ -45,6 +45,7 @@ export interface OrderTraveler {
   flightID?: string;
   periodReservationModeID?: string;
   travelerData?: TravelerData;
+  optionalActivitiesIDs?: string[];
   insuranceID?: string;
   _id?: string;
 }

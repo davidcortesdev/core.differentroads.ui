@@ -10,6 +10,10 @@ import { RedsysService } from '../../../../core/services/checkout/payment/redsys
 })
 export class PaymentComponent implements OnInit {
   @Input() totalPrice: number = 0;
+  @Input() processBooking!: () => Promise<{
+    bookingID: string;
+    ID: string;
+  }>;
 
   isOpen: boolean = true;
   isInstallmentsOpen: boolean = true;
@@ -180,23 +184,29 @@ export class PaymentComponent implements OnInit {
     form.submit();
   }
 
-  submitPayment() {
+  async submitPayment() {
     this.isLoading = true;
     console.log('Payment Type:', this.paymentType);
     console.log('Payment Method:', this.paymentMethod);
     console.log('Installment Option:', this.installmentOption);
     console.log('Total Price:', this.totalPrice);
     console.log('Terms Accepted:', this.termsAccepted);
+    let bookingID: string, ID: string;
+    try {
+      const response = await this.processBooking();
+      bookingID = response.bookingID;
+      ID = response.ID;
+    } catch (error) {
+      console.error('Error processing booking:', error);
+    }
 
     if (
       this.paymentType === 'complete' &&
       this.paymentMethod === 'creditCard'
     ) {
-      this.redirectToRedSys('123456789', this.totalPrice, '987654321');
-
+      this.redirectToRedSys(ID!, this.totalPrice, bookingID!);
       return;
     }
-
     this.isLoading = false;
   }
 }

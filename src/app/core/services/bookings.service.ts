@@ -17,6 +17,12 @@ import { Pagination } from '../models/commons/pagination.model';
 export class BookingsService {
   private readonly API_URL = `${environment.dataApiUrl}/bookings`;
 
+  private readonly httpOptions = {
+    headers: new HttpHeaders({
+      'Content-Type': 'application/json',
+    }),
+  };
+
   constructor(private http: HttpClient) {}
 
   /**
@@ -24,16 +30,21 @@ export class BookingsService {
    * @param data - The booking creation input.
    * @returns Observable of Booking creation response.
    */
-  createBooking(data: BookingCreateInput): Observable<{
+  createBooking(
+    orderID: string,
+    data: BookingCreateInput
+  ): Observable<{
     bookingID: string;
     ID: string;
     order: Order;
   }> {
+    console.log('data', `${this.API_URL}/${orderID}/create`, data);
+
     return this.http.post<{
       bookingID: string;
       ID: string;
       order: Order;
-    }>(`${this.API_URL}/create`, data);
+    }>(`${this.API_URL}/${orderID}/create`, data, this.httpOptions);
   }
 
   /**
@@ -48,11 +59,15 @@ export class BookingsService {
   ): Observable<any> {
     const { bookingSID: ID, bookingID, order } = data;
 
-    return this.http.post<any>(`${this.API_URL}/${id}/save-travelers`, {
-      bookingSID: ID,
-      bookingID,
-      ...order,
-    });
+    return this.http.post<any>(
+      `${this.API_URL}/${id}/save-travelers`,
+      {
+        bookingSID: ID,
+        bookingID,
+        ...order,
+      },
+      this.httpOptions
+    );
   }
 
   /**
@@ -63,10 +78,14 @@ export class BookingsService {
    */
   bookOrder(id: string, data: { order: any; ID: any }): Observable<any> {
     const { order, ID } = data;
-    return this.http.post<any>(`${this.API_URL}/${id}/book`, {
-      ...order,
-      bookingSID: ID,
-    });
+    return this.http.post<any>(
+      `${this.API_URL}/${id}/book`,
+      {
+        ...order,
+        bookingSID: ID,
+      },
+      this.httpOptions
+    );
   }
 
   /**
@@ -75,7 +94,7 @@ export class BookingsService {
    * @returns Observable of Booking.
    */
   getBookingById(id: string): Observable<Booking> {
-    return this.http.get<Booking>(`${this.API_URL}/${id}`);
+    return this.http.get<Booking>(`${this.API_URL}/${id}`, this.httpOptions);
   }
 
   /**
@@ -85,7 +104,11 @@ export class BookingsService {
    * @returns Observable of Booking.
    */
   updateBooking(id: string, data: any): Observable<Booking> {
-    return this.http.put<Booking>(`${this.API_URL}/${id}`, data);
+    return this.http.put<Booking>(
+      `${this.API_URL}/${id}`,
+      data,
+      this.httpOptions
+    );
   }
 
   /**
@@ -97,7 +120,10 @@ export class BookingsService {
     const httpParams = params
       ? new HttpParams({ fromObject: params as any })
       : undefined;
-    return this.http.get<Booking[]>(this.API_URL, { params: httpParams });
+    return this.http.get<Booking[]>(this.API_URL, {
+      params: httpParams,
+      ...this.httpOptions,
+    });
   }
 
   /**
@@ -125,6 +151,7 @@ export class BookingsService {
       `${this.API_URL}/by-email/${email}`,
       {
         params,
+        ...this.httpOptions,
       }
     );
   }
@@ -141,6 +168,7 @@ export class BookingsService {
       : undefined;
     return this.http.get<any>(`${this.API_URL}/travelers/by-period/${id}`, {
       params: httpParams,
+      ...this.httpOptions,
     });
   }
 
@@ -151,7 +179,11 @@ export class BookingsService {
    * @returns Observable of any.
    */
   updateTravelers(id: string, data: any): Observable<any> {
-    return this.http.put<any>(`${this.API_URL}/travelers/${id}`, data);
+    return this.http.put<any>(
+      `${this.API_URL}/travelers/${id}`,
+      data,
+      this.httpOptions
+    );
   }
 
   /**
@@ -160,7 +192,10 @@ export class BookingsService {
    * @returns Observable of Payment array.
    */
   getPayments(id: string): Observable<Payment[]> {
-    return this.http.get<Payment[]>(`${this.API_URL}/${id}/payment`);
+    return this.http.get<Payment[]>(
+      `${this.API_URL}/${id}/payment`,
+      this.httpOptions
+    );
   }
 
   /**
@@ -170,7 +205,8 @@ export class BookingsService {
    */
   getPaymentsByPublicID(id: string): Observable<Payment[]> {
     return this.http.get<Payment[]>(
-      `${this.API_URL}/${id}/payment/by-public-id`
+      `${this.API_URL}/${id}/payment/by-public-id`,
+      this.httpOptions
     );
   }
 
@@ -181,7 +217,11 @@ export class BookingsService {
    * @returns Observable of any.
    */
   createPayment(id: string, data: Partial<Payment>): Observable<any> {
-    return this.http.post<any>(`${this.API_URL}/${id}/payment`, data);
+    return this.http.post<any>(
+      `${this.API_URL}/${id}/payment`,
+      data,
+      this.httpOptions
+    );
   }
 
   /**
@@ -198,7 +238,8 @@ export class BookingsService {
   ): Observable<any> {
     return this.http.put<any>(
       `${this.API_URL}/${id}/payment/${paymentId}/complete`,
-      data
+      data,
+      this.httpOptions
     );
   }
 
@@ -211,7 +252,8 @@ export class BookingsService {
   updatePayment(paymentId: string, data: Partial<Payment>): Observable<any> {
     return this.http.put<any>(
       `${environment.apiUrl}/payment/${paymentId}`,
-      data
+      data,
+      this.httpOptions
     );
   }
 
@@ -229,7 +271,8 @@ export class BookingsService {
   ): Observable<any> {
     return this.http.put<any>(
       `${this.API_URL}/${id}/payment/${paymentId}/upload-voucher`,
-      data
+      data,
+      this.httpOptions
     );
   }
 
@@ -249,7 +292,8 @@ export class BookingsService {
   ): Observable<any> {
     return this.http.put<any>(
       `${this.API_URL}/${id}/payment/${paymentId}/voucher/${voucherId}/review`,
-      data
+      data,
+      this.httpOptions
     );
   }
 
@@ -267,7 +311,8 @@ export class BookingsService {
   ): Observable<any> {
     return this.http.post<any>(
       `${this.API_URL}/${id}/optional-activity/${activityId}`,
-      { travelers }
+      { travelers },
+      this.httpOptions
     );
   }
 
@@ -277,7 +322,11 @@ export class BookingsService {
    * @returns Observable of any.
    */
   cancelBookingById(id: string): Observable<any> {
-    return this.http.put<any>(`${this.API_URL}/${id}/cancel`, {});
+    return this.http.put<any>(
+      `${this.API_URL}/${id}/cancel`,
+      {},
+      this.httpOptions
+    );
   }
 
   /**
@@ -286,6 +335,9 @@ export class BookingsService {
    * @returns Observable of any.
    */
   getBookingInconsistencies(id: string): Observable<any> {
-    return this.http.get<any>(`${this.API_URL}/${id}/inconsistencies`);
+    return this.http.get<any>(
+      `${this.API_URL}/${id}/inconsistencies`,
+      this.httpOptions
+    );
   }
 }

@@ -81,30 +81,32 @@ export class TravelersComponent implements OnInit {
     });
 
     this.travelersService.travelers$.subscribe((travelers) => {
-      this.travelers = travelers.map((traveler) => ({
-        firstName: traveler.travelerData?.name || '',
-        lastName: traveler.travelerData?.surname || '',
-        email: traveler.travelerData?.email || '',
-        phone: traveler.travelerData?.phone || '',
-        passport: traveler.travelerData?.passportID || '',
-        birthdate: traveler.travelerData?.birthdate || '',
-        sexo: traveler.travelerData?.sex || '',
-        documentType: traveler.travelerData?.documentType || '',
-        cp: traveler.travelerData?.postalCode || '',
-        nationality: traveler.travelerData?.nationality || '',
-        passportExpirationDate:
-          traveler.travelerData?.passportExpirationDate || '',
-        passportIssueDate: traveler.travelerData?.passportIssueDate || '',
-        ageGroup: traveler.travelerData?.ageGroup || '',
-        category: traveler.travelerData?.category || '',
-        dni: traveler.travelerData?.dni || '',
-      }));
-      this.travelerForms.forEach((form, index) => {
-        form.setValue(this.travelers[index], { emitEvent: false });
-        form.valueChanges.subscribe(() => {
-          this.onTravelerChange(index);
+      if (this.travelers.length === 0 || !this.travelers[0]) {
+        this.travelers = travelers.map((traveler) => ({
+          firstName: traveler.travelerData?.name || '',
+          lastName: traveler.travelerData?.surname || '',
+          email: traveler.travelerData?.email || '',
+          phone: traveler.travelerData?.phone || '',
+          passport: traveler.travelerData?.passportID || '',
+          birthdate: traveler.travelerData?.birthdate || '',
+          sexo: traveler.travelerData?.sex || '',
+          documentType: traveler.travelerData?.documentType || '',
+          cp: traveler.travelerData?.postalCode || '',
+          nationality: traveler.travelerData?.nationality || '',
+          passportExpirationDate:
+            traveler.travelerData?.passportExpirationDate || '',
+          passportIssueDate: traveler.travelerData?.passportIssueDate || '',
+          ageGroup: traveler.travelerData?.ageGroup || '',
+          category: traveler.travelerData?.category || '',
+          dni: traveler.travelerData?.dni || '',
+        }));
+        this.travelerForms.forEach((form, index) => {
+          form.setValue(this.travelers[index], { emitEvent: false });
+          form.valueChanges.subscribe(() => {
+            this.onTravelerChange(index);
+          });
         });
-      });
+      }
     });
   }
 

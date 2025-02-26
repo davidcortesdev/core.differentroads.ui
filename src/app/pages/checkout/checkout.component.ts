@@ -114,7 +114,9 @@ export class CheckoutComponent implements OnInit {
       this.travelersSelected = data;
       this.updateOrderSummary();
     });
-    this.travelersService.travelers$.subscribe((travelers) => {});
+    this.travelersService.travelers$.subscribe((travelers) => {
+      //this.updateOrderSummary();
+    });
 
     this.summaryService.order$.subscribe((order) => {
       this.order = order;
@@ -319,6 +321,8 @@ export class CheckoutComponent implements OnInit {
       case 2:
       case 3:
       case 4:
+        this.updateOrderSummary();
+
         this.updateOrder().subscribe({
           next: (response) => {
             console.log('Order updated');

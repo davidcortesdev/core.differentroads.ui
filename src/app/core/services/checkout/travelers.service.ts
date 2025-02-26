@@ -77,6 +77,7 @@ export class TravelersService {
         ...traveler.travelerData,
       },
     }));
+
     this.travelersSource.next(updatedTravelers);
   }
 
@@ -141,8 +142,6 @@ export class TravelersService {
         }
       }
     });
-
-    console.log('Travelers', travelers);
 
     this.travelersSource.next(travelers);
   }

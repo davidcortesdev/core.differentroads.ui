@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
-import RedSys, { CURRENCIES, TRANSACTION_TYPES } from './redsys';
+import RedSys from './redsys/redsys.class';
 import { environment } from '../../../../../environments/environment';
+import { CURRENCIES } from './redsys/constants/CURRENCIES';
+import { TRANSACTION_TYPES } from './redsys/constants/TRANSACTION_TYPES';
 
 @Injectable({
   providedIn: 'root',

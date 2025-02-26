@@ -148,6 +148,8 @@ import { FlightsSectionComponent } from './pages/reservation/components/flights-
 import { PricesSectionComponent } from './pages/reservation/components/prices-section/prices-section.component';
 import { PaymentsInformationSectionComponent } from './pages/reservation/components/payments-information-section/payments-information-section.component';
 
+import { GoogleMapsModule } from '@angular/google-maps';
+
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -284,6 +286,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     ReactiveFormsModule,
     StepperModule,
     MultiSelectModule,
+    GoogleMapsModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

@@ -1,7 +1,25 @@
+<!-- HTML template actualizado sin cambiar la funcionalidad -->
 <div class="itinerary-section">
   <h2>{{ title }}</h2>
-  <p class="date">Resumen de tu itinerario - 7 julio - Single</p>
-  <p-button [rounded]="true">Camibar fecha</p-button>
+  <p class="date">Resumen de tu itinerario - {{ selectedDate }} - {{ isSingle ? 'Single' : 'Group' }}</p>
+  <p-dropdown class="date"
+    [options]="dateOptions" 
+    [(ngModel)]="selectedOption"
+    optionLabel="label" 
+    (onChange)="onDateChange($event)"
+    placeholder="Cambiar fecha">
+    <ng-template pTemplate="selectedItem">
+      <div class="date-option-item">
+        <span>{{ showPlaceholder ? 'Cambiar fecha' : selectedDate }}</span>
+      </div>
+    </ng-template>
+    <ng-template let-option pTemplate="item">
+      <div class="date-option-item">
+        <span>{{ option.label }}</span>
+        <span class="date-price">{{ option.price }}</span>
+      </div>
+    </ng-template>
+  </p-dropdown>
 </div>
 <div class="itinerary-container">
   <div class="timeline-section">
@@ -11,19 +29,23 @@
         align="left"
         styleClass="customized-timeline"
       >
-        <ng-template #marker let-event>
+        <ng-template pTemplate="marker" let-event>
+          <!-- Marcador del timeline clickeable con indicador visual de activo -->
           <span
-            class="flex w-8 h-8 items-center justify-center text-white rounded-full z-10 shadow-sm"
-            [style]="{ 'background-color': event.color }"
+            class="p-timeline-event-marker clickable-marker"
+            [ngClass]="{'active-marker': !event.collapsed}"
+            [style.backgroundColor]="event.color"
+            [attr.data-index]="itinerary.indexOf(event)"
+            (click)="markerClicked($event)"
           >
-           <!--  <i [class]="event.icon">ico</i> -->
-             <i class="pi pi-circle-fill"></i>
           </span>
         </ng-template>
-        <ng-template #content let-event>
-          <p-panel [toggleable]="true" styleClass="custom-panel" [(collapsed)]="event.collapsed">
-            <ng-template #header>
-              <div class="panel-header-content">
+        <ng-template pTemplate="content" let-event>
+          <p-panel #itineraryPanel [toggleable]="true" styleClass="custom-panel" [(collapsed)]="event.collapsed">
+            <ng-template pTemplate="header">
+              <div class="panel-header-content" 
+                   [attr.data-index]="itinerary.indexOf(event)"
+                   (click)="markerClicked($event)">
                 <div class="day-info">
                   <h3 class="day-title">{{ event.title }}</h3>
                 </div>
@@ -37,7 +59,7 @@
                 </div>
               </div>
             </ng-template>
-            <ng-template #content>
+            <ng-template pTemplate="content">
               <h3 class="content-title">{{ event.title }}</h3>
               <div class="itinerary-content">
                 <div [innerHTML]="event.description"></div>
@@ -92,7 +114,7 @@
                   [responsiveOptions]="responsiveOptions"
                   [showIndicators]="false"
                 >
-                  <ng-template let-highlight #item>
+                  <ng-template let-highlight pTemplate="item">
                     <p-card
                       styleClass="highlight-card"
                       [style]="{
@@ -102,7 +124,7 @@
                         boxShadow: 'none'
                       }"
                     >
-                      <ng-template #header>
+                      <ng-template pTemplate="header">
                         <img [src]="highlight.image" [alt]="highlight.title" />
                         <span
                           class="status-badge"
@@ -111,7 +133,7 @@
                           {{ highlight.optional ? "Opcional" : "Incluida" }}
                         </span>
                       </ng-template>
-                      <ng-template #content>
+                      <ng-template pTemplate="content">
                         <h3>{{ highlight.title }}</h3>
                         <p>{{ highlight.description }}</p>
                       </ng-template>

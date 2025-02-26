@@ -2,15 +2,14 @@ $breakpoints: (
   sm: 576px,
   md: 768px,
   lg: 992px,
-  xl: 1366px,
+  xl: 1366px
 );
 $spaces: (
   xs: 0.5rem,
   sm: 0.75rem,
   base: 1rem,
-  lg: 1.5rem,
+  lg: 1.5rem
 );
-
 @mixin resp($bp) {
   @media (max-width: map-get($breakpoints, $bp)) {
     @content;
@@ -29,22 +28,30 @@ $spaces: (
   color: var(--background-azul);
   text-align: center;
   padding: map-get($spaces, lg) 0;
-  @include resp(xl) {
-    padding: map-get($spaces, base) 0;
-  }
+  margin-bottom: 20px;
   h2 {
     font-size: 2rem;
-    @include resp(xl) {
-      font-size: 1.75rem;
-    }
     @include resp(md) {
       font-size: 1.5rem;
     }
   }
   p {
+    margin-top: -20px;
     font-size: 15px;
   }
 }
+.date-option-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+
+  .date-price {
+    font-weight: bold;
+    color: var(--background-azul);
+  }
+}
+
 .itinerary-container {
   @include flex(row-reverse, flex-start, stretch, map-get($spaces, lg));
   padding: 0 map-get($spaces, lg);
@@ -63,10 +70,10 @@ $spaces: (
   }
 }
 .timeline-section {
-  flex: 1;
-  max-width: 50%;
+  flex: 3;
+  max-width: 60%;
   @include resp(xl) {
-    max-width: 55%;
+    max-width: 65%;
   }
   @include resp(lg) {
     max-width: 100%;
@@ -75,22 +82,14 @@ $spaces: (
   }
 }
 .map-section {
-  flex: 1;
+  flex: 2;
   position: sticky;
   top: 2rem;
   height: calc(100vh - 200px);
-  /*
-  @include resp(xl) {
-    top: 1.5rem;
-    height: calc(100vh - 180px);
-  }
-    */
   @include resp(lg) {
     flex: none;
     position: static;
-    // top: 0;
     height: 500px;
-    //order: 1;
   }
   @include resp(md) {
     height: 350px;
@@ -179,7 +178,7 @@ $spaces: (
 .itinerary-content {
   color: var(--background-azul);
   display: grid;
-  gap: 1rem;
+  gap: 0.5rem;
   grid-template-columns: 1fr 1fr;
   margin: 0.5rem 0;
   margin-top: -20px;
@@ -189,22 +188,34 @@ $spaces: (
     object-fit: cover;
     border-radius: 14px;
     margin-top: 20px;
+    justify-self: end;
     @include resp(md) {
       height: 180px;
+      width: 100%;
     }
     @include resp(sm) {
       width: 100%;
       height: 200px;
     }
   }
-  @include resp(lg) {
+  @include resp(sm) {
     grid-template-columns: 1fr;
+    gap: 0.75rem;
     grid-template-areas: "image" "description";
     img {
       grid-area: image;
+      justify-self: center;
     }
     div:not(:has(img)) {
       grid-area: description;
+    }
+  }
+  @include resp(md) {
+    &:not([class*="resp-sm"]) {
+      img {
+        width: 100%;
+        max-width: 280px; /* Limita el ancho máximo en tablets */
+      }
     }
   }
 }
@@ -286,11 +297,58 @@ $spaces: (
   }
 }
 :host ::ng-deep {
+  .pi {
+    color: var(--p-primary-color);
+  }
+  [style*="background-color: rgb(156, 39, 176)"],
+  [style*="#9C27B0"] {
+    background-color: transparent !important;
+  }
+  .itinerary-section {
+    .p-dropdown {
+      background-color: var(--background-azul);
+      color: #fff;
+      width: 280px;
+      margin: 0 auto;
+      margin-top: -10px;
+      border: 1px solid var(--background-azul);
+      border-radius: 50px;
+      .p-dropdown-label {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .p-dropdown-item {
+        padding: 0.75rem 1rem;
+
+        &.p-highlight {
+          background-color: rgba(var(--background-azul-rgb), 0.1);
+        }
+      }
+    }
+    .p-select-label {
+      color: #fff;
+      margin-left: 10px;
+    }
+    .p-icon {
+      color: #fff;
+      margin-right: 10px;
+    }
+    .p-dropdown-panel {
+      .p-dropdown-items {
+        padding: 0.5rem 0;
+      }
+    }
+  }
   .p-timeline {
     .p-timeline-event {
       position: relative;
       .p-timeline-event-connector {
         left: 0.65rem;
+      }
+      .p-timeline-event-marker {
+        cursor: pointer;
+        transform: translateY(3px); /* Ajuste sutil para alinear con el panel */
       }
     }
   }
@@ -309,15 +367,6 @@ $spaces: (
       padding-bottom: 0.75rem;
       padding-right: 1.5rem;
     }
-  }
-  .p-timeline-event-marker {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid var(--background-azul);
-    width: 1.5rem;
-    height: 1.5rem;
-    z-index: 1;
   }
   .custom-panel {
     border-radius: 18px;

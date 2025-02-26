@@ -71,6 +71,8 @@ export class TravelersComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.travelersService.updateTravelersWithRooms();
+
     this.travelersService.travelersNumbers$.subscribe((data) => {
       this.travelers = Array(data.adults + data.childs + data.babies).fill(
         null

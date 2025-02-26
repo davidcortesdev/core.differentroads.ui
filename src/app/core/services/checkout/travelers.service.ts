@@ -85,7 +85,35 @@ export class TravelersService {
     const travelers = this.travelersSource.getValue();
     const rooms = this.roomsService.getSelectedRooms();
 
+    if (travelers.length === 0) {
+      const travelersNumbers = this.travelersNumbersSource.getValue();
+      for (let i = 0; i < travelersNumbers.adults; i++) {
+        travelers.push({
+          lead: i === 0,
+          travelerData: {
+            ageGroup: 'Adultos',
+          },
+        });
+      }
+
+      for (let i = 0; i < travelersNumbers.childs; i++) {
+        travelers.push({
+          travelerData: {
+            ageGroup: 'Niños',
+          },
+        });
+      }
+      for (let i = 0; i < travelersNumbers.babies; i++) {
+        travelers.push({
+          travelerData: {
+            ageGroup: 'Bebés',
+          },
+        });
+      }
+    }
+
     let travelerIndex = 0;
+
     rooms.forEach((room) => {
       for (let i = 0; i < (room?.places || 0); i++) {
         if (travelerIndex < travelers.length) {

@@ -158,8 +158,6 @@ export class CheckoutComponent implements OnInit {
         (room) => room.externalID === roomExternalID
       );
 
-      console.log('existing room', existingRoom);
-
       if (existingRoom) {
         existingRoom.qty = (existingRoom.qty || 0) + 1;
       } else {
@@ -179,8 +177,6 @@ export class CheckoutComponent implements OnInit {
     if (travelersCount.adults === 0) {
       travelersCount.adults = 1;
     }
-
-    console.log('initial rooms', rooms);
 
     this.travelersService.updateTravelersNumbers(travelersCount);
     this.travelersService.updateTravelers(travelers);

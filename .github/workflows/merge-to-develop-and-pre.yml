@@ -25,13 +25,6 @@ jobs:
           git merge main --no-ff --commit -m "Merge branch 'main' into develop"
           git push origin develop
 
-      - name: Trigger develop workflow
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-          workflow: Build and Deploy Develop
-          token: ${{ secrets.GITHUB_TOKEN }}
-          ref: develop
-
   merge-to-pre:
     runs-on: ubuntu-latest
     steps:
@@ -50,10 +43,3 @@ jobs:
           git checkout pre
           git merge main --no-ff --commit -m "Merge branch 'main' into pre"
           git push origin pre
-
-      - name: Trigger pre workflow
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-          workflow: Build and Deploy Pre
-          token: ${{ secrets.GITHUB_TOKEN }}
-          ref: pre

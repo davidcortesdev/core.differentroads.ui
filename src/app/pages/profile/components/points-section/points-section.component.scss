@@ -1,11 +1,11 @@
-/* SCSS */
 .points-section {
     margin-left: 1rem;
+    margin-right: 1rem; // Agregado margen derecho
     font-size: 12px;
 
     @media screen and (max-width: 768px) {
         margin-left: 0.5rem;
-        margin-right: 0.5rem;
+        margin-right: 0.5rem; // Ya estaba presente en el media query
     }
 
     ::ng-deep {
@@ -14,12 +14,13 @@
             color: #fff;
         }
         .p-toolbar {
-            border-radius: 0.875rem;
-            margin-bottom: 1.5rem;
+            border: none;
             background-color: white;
-            padding: 1rem;
+            margin-left: -10px;
+            margin-right: -10px;
             color: var(--background-azul);
             font-weight: 700;
+            background-color: transparent;
 
             .p-toolbar-group-end {
                 display: flex;
@@ -43,8 +44,17 @@
             }
 
             .search-button {
-                width: 2.5rem;
-                height: 2.5rem;
+                width: 50px;
+                height: 30px;
+                background-color: transparent;
+                color: var(--p-primary-color);
+                border: 1px solid var(--p-primary-color);
+
+                &.active {
+                    background-color: transparent;
+                    color: var(--background-azul);
+                    border: 1px solid var(--background-azul);
+                }
             }
 
             @media screen and (max-width: 768px) {
@@ -75,8 +85,11 @@
                     }
 
                     .search-button {
-                        width: 2rem;
-                        height: 2rem;
+                        width: 50px;
+                        height: 30px;
+                        background-color: transparent;
+                        color: var(--p-primary-color);
+                        border: 1px solid var(--p-primary-color);
                     }
                 }
             }
@@ -183,7 +196,7 @@
         }
 
         .cards-container {
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
         }
 
         .cards-grid {
@@ -192,45 +205,49 @@
             gap: 1.5rem;
 
             @media screen and (max-width: 1200px) {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(2, 1fr); // 2 cards por fila en tablet
+                gap: 1rem;
 
                 .p-card {
-                    display: none !important;
+                    display: block !important;
                     max-height: 380px;
 
                     .card-image-wrapper {
                         height: 120px;
                     }
-
-                    .benefits-list li {
-                        display: none;
-
-                        &:nth-child(-n + 2) {
-                            display: block;
-                        }
-                    }
-                }
-
-                .p-card.unlocked-card:first-of-type {
-                    display: block !important;
-                    order: 2;
-                }
-
-                .p-card.locked-card:first-of-type {
-                    display: block !important;
-                    order: 1;
-                }
-
-                .p-card:nth-child(n + 3) {
-                    display: none !important;
                 }
             }
 
             @media screen and (max-width: 768px) {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr; // 1 card por fila en móvil
+                gap: 1rem;
 
                 .p-card {
-                    display: block;
+                    display: block !important;
+
+                    .card-image-container {
+                        padding: 0.5rem;
+
+                        .card-image-wrapper {
+                            height: 160px; // Aumentar altura de imagen en móvil
+                        }
+                    }
+
+                    .card-header {
+                        padding: 0.5rem 1rem;
+
+                        .card-title {
+                            font-size: 16px; // Mantener tamaño legible en móvil
+                        }
+                    }
+
+                    .card-content {
+                        padding: 0 1rem;
+                    }
+
+                    .card-status {
+                        padding: 0.75rem;
+                    }
                 }
             }
         }
@@ -240,7 +257,6 @@
             border-radius: 1rem;
             overflow: hidden;
             transition: all 0.3s ease;
-            background: white;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
             &:hover {
@@ -249,32 +265,48 @@
             }
 
             &.locked-card {
-                border: 2px solid var(--background-azul);
-                opacity: 0.85;
+                border: 1px solid var(--background-azul);
+                background: transparent;
+                position: relative;
+
+                &::after {
+                    content: "";
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(255, 255, 255, 0.6);
+                    pointer-events: none;
+                }
 
                 .card-image-container {
-                    opacity: 0.7;
+                    opacity: 0.6;
                 }
 
                 .card-status span {
-                    background-color: var(--background-azul);
-                    color: white;
-                    padding: 0.5rem 1rem;
-                    border-radius: 1rem;
+                    color: var(--background-azul);
                     font-size: 12px;
+                    display: block;
+                    margin-bottom: 0.25rem;
                 }
             }
 
             &.unlocked-card {
-                border: 2px solid var(--p-primary-color);
+                border: 1px solid var(--background-azul);
+                background: transparent;
 
                 .card-status span {
-                    background-color: var(--p-primary-color);
-                    color: white;
-                    padding: 0.5rem 1rem;
-                    border-radius: 1rem;
-                    font-size: 12px;
+                    color: var(--background-azul);
+                    font-size: 14px;
+                    font-weight: 600;
+                    margin-left: 4px;
                 }
+            }
+
+            &.current-card {
+                background: white;
+                border: 2px solid var(--background-azul);
             }
         }
 
@@ -321,44 +353,27 @@
         }
 
         .card-content {
-            padding: 0 1rem 0.75rem;
+            padding: 0rem 1rem;
+        }
 
-            .benefits-list {
-                list-style: none;
-                padding: 0;
-                margin: 0;
-
-                li {
-                    margin-bottom: 0.5rem;
-                    padding-left: 1.25rem;
-                    position: relative;
-                    line-height: 1.4;
-                    font-size: 12px;
-                    color: var(--background-azul);
-
-                    &:before {
-                        content: "•";
-                        position: absolute;
-                        left: 0.25rem;
-                        color: var(--p-primary-color);
-                    }
-
-                    &:last-child {
-                        margin-bottom: 0;
-                    }
-                }
-            }
+        .formated-content p {
+            font-size: 1rem !important;
+            content: "Normal" !important;
+            padding-top: 0.1em;
+            line-height: 1.1em;
+            margin: 0;
+            color: var(--background-azul);
         }
 
         .card-status {
-            text-align: center;
+            text-align: start;
             padding: 0.75rem;
-            border-top: 1px solid #e9ecef;
 
             span {
-                display: inline-block;
+                color: var(--background-azul);
+                font-size: 14px;
                 font-weight: 600;
-                transition: all 0.3s ease;
+                display: block;
             }
         }
 

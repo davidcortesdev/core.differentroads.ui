@@ -12,26 +12,20 @@
       mejor para asegurarte siempre
     </p>
   </div>
-  <div class="publicity-grid">
-    <div
+
+  <div class="publicity-items">
+    <p-panel
       *ngFor="let item of texto"
-      key="item.id"
-      type="button"
-      variant="outlined"
-      class="publicity-grid-item"
-      [ngClass]="{ 'active-item': item.showDescription }"
-      (click)="toggleDescription(item.id)"
-      (mouseleave)="hideReadMore(item.id)"
+      class="publicity-items-panel"
+      [toggleable]="true"
+      [collapsed]="true"
     >
-      <div class="publicity-grid-item-wrap">
-        <span class="publicity-grid-item-name"> {{ item.content }}</span>
-        <p *ngIf="item.showDescription" class="publicity-grid-item-description">
-          {{ item.description }}
-        </p>
-        <span class="publicity-grid-item-more">
-          {{ item.showDescription ? "Ver menos" : "Ver más" }}
-        </span>
-      </div>
-    </div>
+      <ng-template #header>
+        <h3 class="panel-header">{{ item.content }}</h3>
+      </ng-template>
+      <ng-template #content>
+        <p class="panel-content">{{ item.description }}</p>
+      </ng-template>
+    </p-panel>
   </div>
 </section>

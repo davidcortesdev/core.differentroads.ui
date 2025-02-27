@@ -36,21 +36,19 @@
           </div>
         </div>
       </div>
-
       <div class="formated-content">
         <div
           class="tour-content-highlights"
           [innerHTML]="sanitizeHtml(tour?.description || '')"
         ></div>
       </div>
-
       <div class="expert-section">
         <div class="expert-info">
           <p-avatar
             [image]="tour?.expert?.ephoto?.[0]?.url"
             shape="circle"
             size="large"
-            [style]="{ width: '64px', height: '64px' }"
+            [style]="{ width: '80px', height: '64px' }"
           ></p-avatar>
           <div class="expert-details">
             <h4>{{ tour?.expert?.name || '' }}</h4>
@@ -58,12 +56,11 @@
           </div>
         </div>
         <div class="expert-opinion">
-          <p-message
-            severity="info"
-            [styleClass]="'custom-message'"
-            [innerHTML]="sanitizeHtml(tour?.expert?.opinion || '')"
-          >
-          </p-message>
+          <p-panel styleClass="expert-panel">
+            <ng-template #content>
+              <div [innerHTML]="sanitizeHtml(tour?.expert?.opinion || '')"></div>
+            </ng-template>
+          </p-panel>
         </div>
       </div>
     </div>

@@ -15,6 +15,7 @@
   <p-panel class="datos-panel">
     <div class="update-profile-container">
       <form class="profile-form">
+        <!-- Sección de Avatar -->
         <div class="form-field">
           <label>Adjuntar foto</label>
           <p-fileUpload
@@ -40,6 +41,18 @@
           </p-fileUpload>
         </div>
 
+        <!-- Datos de Contacto -->
+        <div class="form-field">
+          <label>Email</label>
+          <input
+            pInputText
+            [(ngModel)]="personalInfo.email"
+            name="email"
+            placeholder="Ingrese su email"
+            disabled
+          />
+        </div>
+
         <div class="form-field">
           <label>Teléfono</label>
           <input
@@ -52,64 +65,7 @@
           />
         </div>
 
-        <div class="form-field">
-          <label>DNI</label>
-          <input
-            pInputText
-            [(ngModel)]="personalInfo.dni"
-            name="dni"
-            placeholder="Ingrese su DNI"
-          />
-        </div>
-
-        <div class="form-field">
-          <label>Nacionalidad</label>
-          <input
-            pInputText
-            [(ngModel)]="personalInfo.nacionalidad"
-            name="nacionalidad"
-            placeholder="Ingrese su nacionalidad"
-            (input)="onNacionalidadInput($event)"
-          />
-        </div>
-
-        <div class="form-field">
-          <label>Número de Pasaporte</label>
-          <input
-            pInputText
-            [(ngModel)]="personalInfo.pasaporte"
-            name="pasaporte"
-            placeholder="Ingrese su número de pasaporte"
-            (input)="onPasaporteInput($event)"
-          />
-        </div>
-
-        <div class="form-field">
-          <label>Fecha de expedición (Pasaporte)</label>
-          <p-calendar
-            [(ngModel)]="personalInfo.fechaExpedicionPasaporte"
-            name="fechaExpedicion"
-            dateFormat="dd/mm/yy"
-            placeholder="Seleccione una fecha"
-            styleClass="p-calendar-sm custom-calendar"
-            [showIcon]="true"
-          >
-          </p-calendar>
-        </div>
-
-        <div class="form-field">
-          <label>Fecha de vencimiento (Pasaporte)</label>
-          <p-calendar
-            [(ngModel)]="personalInfo.fechaVencimientoPasaporte"
-            name="fechaVencimiento"
-            dateFormat="dd/mm/yy"
-            placeholder="Seleccione una fecha"
-            styleClass="p-calendar-sm custom-calendar"
-            [showIcon]="true"
-          >
-          </p-calendar>
-        </div>
-
+        <!-- Datos Personales -->
         <div class="form-field">
           <label>Sexo</label>
           <p-autocomplete
@@ -140,6 +96,126 @@
           </p-calendar>
         </div>
 
+        <div class="form-field">
+          <label>Ciudad</label>
+          <input
+            pInputText
+            [(ngModel)]="personalInfo.ciudad"
+            name="ciudad"
+            placeholder="Ingrese su ciudad"
+            (input)="onCiudadInput($event)"
+          />
+        </div>
+
+        <div class="form-field">
+          <label>Código postal</label>
+          <input
+            pInputText
+            [(ngModel)]="personalInfo.codigoPostal"
+            name="codigoPostal"
+            placeholder="Ingrese su código postal"
+            (input)="onCodigoPostalInput($event)"
+          />
+        </div>
+
+        <div class="form-field">
+          <label>Nacionalidad</label>
+          <input
+            pInputText
+            [(ngModel)]="personalInfo.nacionalidad"
+            name="nacionalidad"
+            placeholder="Ingrese su nacionalidad"
+            (input)="onNacionalidadInput($event)"
+          />
+        </div>
+
+        <!-- Datos DNI -->
+        <div class="form-field">
+          <label>DNI</label>
+          <input
+            pInputText
+            [(ngModel)]="personalInfo.dni"
+            name="dni"
+            placeholder="Ingrese su DNI"
+          />
+        </div>
+
+        <div class="form-field">
+          <label>Fecha de expedición (DNI)</label>
+          <p-calendar
+            [(ngModel)]="personalInfo.fechaExpedicionDni"
+            name="fechaExpedicionDni"
+            dateFormat="dd/mm/yy"
+            placeholder="Seleccione una fecha"
+            styleClass="p-calendar-sm custom-calendar"
+            [showIcon]="true"
+          >
+          </p-calendar>
+        </div>
+
+        <div class="form-field">
+          <label>Fecha de caducidad (DNI)</label>
+          <p-calendar
+            [(ngModel)]="personalInfo.fechaCaducidadDni"
+            name="fechaCaducidadDni"
+            dateFormat="dd/mm/yy"
+            placeholder="Seleccione una fecha"
+            styleClass="p-calendar-sm custom-calendar"
+            [showIcon]="true"
+          >
+          </p-calendar>
+        </div>
+
+        <!-- Datos Pasaporte -->
+        <div class="form-field">
+          <label>Número de Pasaporte</label>
+          <input
+            pInputText
+            [(ngModel)]="personalInfo.pasaporte"
+            name="pasaporte"
+            placeholder="Ingrese su número de pasaporte"
+            (input)="onPasaporteInput($event)"
+          />
+        </div>
+
+        <div class="form-field">
+          <label>País de expedición (Pasaporte)</label>
+          <input
+            pInputText
+            [(ngModel)]="personalInfo.paisExpedicion"
+            name="paisExpedicion"
+            placeholder="Ingrese el país de expedición"
+            (input)="onPaisExpedicionInput($event)"
+          />
+        </div>
+
+        <div class="form-field">
+          <label>Fecha de expedición (Pasaporte)</label>
+          <p-calendar
+            [(ngModel)]="personalInfo.fechaExpedicionPasaporte"
+            name="fechaExpedicion"
+            dateFormat="dd/mm/yy"
+            placeholder="Seleccione una fecha"
+            styleClass="p-calendar-sm custom-calendar"
+            [showIcon]="true"
+          >
+          </p-calendar>
+        </div>
+
+        <div class="form-field">
+          <label>Fecha de vencimiento (Pasaporte)</label>
+          <p-calendar
+            [(ngModel)]="personalInfo.fechaVencimientoPasaporte"
+            name="fechaVencimiento"
+            dateFormat="dd/mm/yy"
+            placeholder="Seleccione una fecha"
+            styleClass="p-calendar-sm custom-calendar"
+            [showIcon]="true"
+          >
+          </p-calendar>
+        </div>
+
+        <!-- Botones -->
         <div class="button-container">
           <div class="btn-save">
             <p-button

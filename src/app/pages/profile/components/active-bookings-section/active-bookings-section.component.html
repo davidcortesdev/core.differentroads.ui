@@ -4,8 +4,8 @@
     <i
       class="pi"
       [ngClass]="{
-        'pi-chevron-down': !isExpanded,
-        'pi-chevron-up': isExpanded
+        'pi-chevron-down arrow-down': !isExpanded,
+        'pi-chevron-up arrow-up': isExpanded
       }"
     ></i>
   </div>
@@ -33,31 +33,47 @@
                 <div class="info-content">
                   <div class="info-row">
                     <span class="label">Nº Reserva:</span>
-                    <span class="value">{{ booking.reservationNumber }}</span>
+                    <span class="value budget">{{ booking.reservationNumber }}</span>
                   </div>
                   <div class="info-row">
                     <span class="label">Fecha de creación:</span>
-                    <span class="value">{{
-                      booking.creationDate | date : "dd/MM/yyyy"
-                    }}</span>
+                    <span class="value">{{ booking.creationDate | date : "dd/MM/yyyy" }}</span>
                   </div>
                   <div class="info-row status">
                     <span class="label">Estado:</span>
-                    <span class="status-dot"></span>
                     <span class="value">{{ booking.status }}</span>
                   </div>
                 </div>
               </div>
 
-              <div class="actions-section">
+              <div class="info-right">
                 <div class="departure-info">
-                  <span>Salida</span>
-                  <strong>{{
-                    booking.departureDate | date : "dd/MM/yyyy"
-                  }}</strong>
+                  <span>Salida: </span>
+                  <strong>{{ booking.departureDate | date : "d MMM" }}</strong>
+                  <span class="state">{{ booking.status.charAt(0) }}</span>
                 </div>
-                <p-button label="Ver reserva" styleClass="p-button-rounded">
-                </p-button>
+                <!-- Si tienes estos datos en tu objeto booking -->
+                <div class="passenger-price" *ngIf="booking.passengers && booking.price">
+                  <span class="num-users">{{ booking.passengers }}</span>
+                  <i class="pi pi-users"></i>
+                  <strong>{{ booking.price | currency : "EUR" }}</strong>
+                </div>
+              </div>
+
+              <div class="buttons">
+                <div class="top-buttons">
+                  <button
+                    pButton
+                    label="Descargar"
+                    class="p-button-outlined"
+                  ></button>
+                  <button pButton label="Enviar" class="sendbtn"></button>
+                </div>
+                <button
+                  pButton
+                  label="Ver reserva"
+                  class="p-button-rounded"
+                ></button>
               </div>
             </div>
           </div>

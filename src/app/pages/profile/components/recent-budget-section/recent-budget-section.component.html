@@ -4,8 +4,8 @@
     <i
       class="pi"
       [ngClass]="{
-        'pi-chevron-down': !isExpanded,
-        'pi-chevron-up': isExpanded
+        'pi-chevron-down arrow-down': !isExpanded,
+        'pi-chevron-up arrow-up': isExpanded
       }"
     ></i>
   </div>
@@ -33,7 +33,7 @@
                 <div class="info-content">
                   <div class="info-row">
                     <span class="label">Nº Presupuesto:</span>
-                    <span class="value">{{ budget.id }}</span>
+                    <span class="value budget">{{ budget.id }}</span>
                   </div>
                   <div class="info-row">
                     <span class="label">Fecha de creación:</span>
@@ -48,9 +48,10 @@
                 <div class="departure-info">
                   <span>Salida: </span>
                   <strong>{{ budget.departureDate | date : "d MMM" }}</strong>
+                  <span class="state">R</span>
                 </div>
                 <div class="passenger-price">
-                  <span>{{ budget.passengers }}</span>
+                  <span class="num-users">{{ budget.passengers }}</span>
                   <i class="pi pi-users"></i>
                   <strong>{{ budget.price | currencyFormat : "EUR" }}</strong>
                 </div>
@@ -63,7 +64,7 @@
                     label="Descargar"
                     class="p-button-outlined"
                   ></button>
-                  <button pButton label="Enviar" class="p-button"></button>
+                  <button pButton label="Enviar" class="p-button sendbtn"></button>
                 </div>
                 <button
                   pButton

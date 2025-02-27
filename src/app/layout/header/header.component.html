@@ -2,50 +2,60 @@
   <div class="top-section">
     <p-menubar styleClass="top-menu">
       <ng-template #start>
-        <!-- <img src="white-logo.svg" alt="Different Roads Logo" class="logo" /> -->
         <img
           src="logo-different-color.webp"
           alt="Different Roads Logo"
           class="logo"
-          height="40px"
+          height="40"
+          width="auto"
+          loading="lazy"
           [routerLink]="['/']"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         />
       </ng-template>
       <ng-template #end>
-        <p-menubar [model]="userMenuItems"></p-menubar>
+        <div class="busqPerfil">
+          <ng-container *ngIf="!isLoadingUser; else userSkeleton">
+            <p-chip
+              [label]="chipLabel"
+              [icon]="chipIcon"
+              [image]="chipImage"
+              [alt]="chipAlt"
+              (click)="isLoggedIn ? menu.toggle($event) : onChipClick()"
+              [style]="{ cursor: 'pointer' }"
+              styleClass="user-chip"
+            >
+            </p-chip>
+            <p-menu #menu [model]="userMenuItems" [popup]="true" />
+          </ng-container>
+          <ng-template #userSkeleton>
+            <p-skeleton width="150px" height="32px" styleClass="user-skeleton"></p-skeleton>
+          </ng-template>
+        </div>
       </ng-template>
-      <!-- <ng-template #end>
-                <div class="flex items-center gap-4">
-                    <div class="search-container">
-                        <span class="p-input-icon-right">
-                            <i class="pi pi-search"></i>
-                            <input type="text" pInputText class="search-input" />
-                        </span>
-                    </div>
-                    <span class="currency">€</span>
-                </div>
-            </ng-template> -->
     </p-menubar>
   </div>
 
   <div class="bottom-section">
     <p-menubar styleClass="nav-menu">
       <ng-template #start>
-        <!-- <p-autocomplete
-                    [(ngModel)]="selectedLanguage"
-                    [suggestions]="filteredLanguages"
-                    (completeMethod)="filterLanguages($event)"
-                    [dropdown]="true"
-                    [style]="{'width': '100px'}"
-                    (onSelect)="onLanguageChange($event)">
-                </p-autocomplete> -->
-
-        <p-menubar [model]="leftMenuItems"></p-menubar>
+        <ng-container *ngIf="!isLoadingMenu; else menuSkeleton">
+          <p-menubar [model]="leftMenuItems"></p-menubar>
+        </ng-container>
       </ng-template>
       <ng-template #end>
-        <p-menubar [model]="rightMenuItems" styleClass="right-menu"></p-menubar>
+        <ng-container *ngIf="!isLoadingMenu; else menuSkeleton">
+          <p-menubar [model]="rightMenuItems" styleClass="right-menu"></p-menubar>
+        </ng-container>
       </ng-template>
     </p-menubar>
   </div>
 </div>
+
+<ng-template #menuSkeleton>
+  <div class="menu-skeleton">
+    <p-skeleton width="80px" height="32px" styleClass="mr-2"></p-skeleton>
+    <p-skeleton width="80px" height="32px" styleClass="mr-2"></p-skeleton>
+    <p-skeleton width="80px" height="32px"></p-skeleton>
+  </div>
+</ng-template>

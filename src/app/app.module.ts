@@ -46,6 +46,7 @@ import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeng/themes/aura';
 
 // PrimeNG Modules
+import { MenuModule } from 'primeng/menu';
 import { MenubarModule } from 'primeng/menubar';
 import { TabsModule } from 'primeng/tabs';
 import { EditorModule } from 'primeng/editor';
@@ -125,7 +126,7 @@ import { FlightsComponent } from './pages/checkout/components/flights/flights.co
 import { TravelersComponent } from './pages/checkout/components/travelers/travelers.component';
 import { PaymentComponent } from './pages/checkout/components/payment/payment.component';
 import { TourCardComponent } from './shared/components/tour-card/tour-card.component';
-import { ReactiveFormsModule } from '@angular/forms'; 
+import { ReactiveFormsModule } from '@angular/forms';
 
 import { StepsModule } from 'primeng/steps';
 
@@ -149,6 +150,8 @@ import { PricesSectionComponent } from './pages/reservation/components/prices-se
 import { PaymentsInformationSectionComponent } from './pages/reservation/components/payments-information-section/payments-information-section.component';
 
 import { GoogleMapsModule } from '@angular/google-maps';
+
+import { SkeletonModule } from 'primeng/skeleton';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -287,6 +290,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     StepperModule,
     MultiSelectModule,
     GoogleMapsModule,
+    MenuModule,
+    SkeletonModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

@@ -511,7 +511,7 @@ const MyPreset = definePreset(Aura, {
                 },
                 navigation: {
                     item: {
-                        focusBackground: "{surface.500}",
+                        focusBackground: "{surface.300}",
                         activeBackground: "{surface.100}",
                         color: "{text.color}",
                         focusColor: "{text.hover.color}",

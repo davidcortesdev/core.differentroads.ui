@@ -1,0 +1,54 @@
+<div class="room-selector">
+  <div
+    *ngFor="let room of roomsAvailabilityForTravelersNumber; let i = index"
+    class="room-item"
+  >
+    <p>
+      {{ room.name }}
+      <span *ngIf="room.price > 0">+{{ room.price }}</span>
+      <span *ngIf="room.price < 0">{{ room.price }}</span>
+    </p>
+
+    <p-inputNumber
+      [(ngModel)]="selectedRooms[room.externalID]"
+      (ngModelChange)="onRoomSpacesChange(room, $event)"
+      [min]="0"
+      [max]="8"
+      [showButtons]="true"
+      buttonLayout="horizontal"
+      spinnerMode="horizontal"
+      placeholder="0"
+    >
+      <ng-template #incrementbuttonicon>
+        <span class="pi pi-chevron-up"></span>
+      </ng-template>
+      <ng-template #decrementbuttonicon>
+        <span class="pi pi-chevron-down"></span>
+      </ng-template>
+    </p-inputNumber>
+  </div>
+</div>
+
+<div class="messages">
+  <div class="info-message">
+    <i class="pi pi-info-circle"></i>
+    <p>
+      La asignación de compañero se realiza por orden de reserva. En caso de no
+      tener compañero una semana antes de la salida, deberás abonar el
+      suplemento individual.
+    </p>
+  </div>
+
+  <div *ngIf="hasBabies()" class="info-message">
+    <i class="pi pi-info-circle"></i>
+    <p>
+      Al tener al menos un bebé en la reserva se requiere agendar una habitación
+      con 2 espacios.
+    </p>
+  </div>
+
+  <div *ngIf="errorMsg" class="error-message">
+    <i class="pi pi-info-circle"></i>
+    <p>{{ errorMsg }}</p>
+  </div>
+</div>

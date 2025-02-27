@@ -2,7 +2,8 @@
   <p-panel class="avatar-panel">
     <div class="avatar-name-section">
       <p-avatar
-        [image]="personalInfo.avatarUrl"
+      [icon]="personalInfo.avatarUrl != '' ? '' : 'pi pi-user'"
+      [image]="personalInfo.avatarUrl || ''"
         size="xlarge"
         shape="circle"
         [style]="{ width: '100px', height: '100px' }"

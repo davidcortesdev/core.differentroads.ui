@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule } from '@angular/forms';
@@ -33,6 +33,7 @@ import { CommunityHeroComponent } from './pages/home/components/community-sectio
 import { CommunityGalleryComponent } from './pages/home/components/community-section/components/community-gallery/community-gallery.component';
 import { CommunityReviewsComponent } from './pages/home/components/community-section/components/community-reviews/community-reviews.component';
 import { NewsLetterSectionComponent } from './pages/home/components/community-section/components/newsletter-section/newsletter-section.component';
+import { PublicitySectionComponent } from './pages/home/components/publicity-section/publicity-section.component';
 
 // Tour List Component
 import { ToursListComponent } from './pages/home/components/tours-list-section/tours-list-section.component';
@@ -45,12 +46,14 @@ import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeng/themes/aura';
 
 // PrimeNG Modules
+import { MenuModule } from 'primeng/menu';
 import { MenubarModule } from 'primeng/menubar';
 import { TabsModule } from 'primeng/tabs';
 import { EditorModule } from 'primeng/editor';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { IftaLabelModule } from 'primeng/iftalabel';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { FileUploadModule } from 'primeng/fileupload';
 import { ImageModule } from 'primeng/image';
@@ -109,6 +112,10 @@ import { ChipModule } from 'primeng/chip';
 import { TagModule } from 'primeng/tag';
 import { SecondFooterSectionComponent } from './layout/footer/components/second-footer-section/second-footer-section.component';
 import { TimelineModule } from 'primeng/timeline';
+import { BadgeModule } from 'primeng/badge';
+import { OverlayBadgeModule } from 'primeng/overlaybadge';
+import { RadioButtonModule } from 'primeng/radiobutton';
+import { CheckboxModule } from 'primeng/checkbox';
 
 import MyPreset from './mytheme';
 import { BasicPageComponent } from './pages/basic-page/basic-page.component';
@@ -119,10 +126,32 @@ import { FlightsComponent } from './pages/checkout/components/flights/flights.co
 import { TravelersComponent } from './pages/checkout/components/travelers/travelers.component';
 import { PaymentComponent } from './pages/checkout/components/payment/payment.component';
 import { TourCardComponent } from './shared/components/tour-card/tour-card.component';
+import { ReactiveFormsModule } from '@angular/forms';
 
 import { StepsModule } from 'primeng/steps';
 
 import { StepperModule } from 'primeng/stepper';
+import { ContentPageComponent } from './pages/content-page/content-page.component';
+import { BannerComponent } from './shared/components/banner/banner.component';
+
+import { MultiSelectModule } from 'primeng/multiselect';
+import { ToursComponent } from './pages/tours/tours.component';
+import { OptionalActivitiesComponent } from './pages/checkout/components/customize-trip/components/optional-activities/optional-activities.component';
+import { TravelerSelectorComponent } from './pages/checkout/components/customize-trip/components/traveler-selector/traveler-selector.component';
+import { RoomSelectorComponent } from './pages/checkout/components/customize-trip/components/room-selector/room-selector.component';
+
+import { FlightItineraryComponent } from './pages/checkout/components/flights/components/flight-itinerary/flight-itinerary.component';
+import { CurrencyPipe } from './core/pipes/currency.pipe';
+import { ReservationComponent } from './pages/reservation/reservation.component';
+import { TravelInformationSectionComponent } from './pages/reservation/components/travel-information-section/travel-information-section.component';
+import { TravelersInformationSectionComponent } from './pages/reservation/components/travelers-information-section/travelers-information-section.component';
+import { FlightsSectionComponent } from './pages/reservation/components/flights-section/flights-section.component';
+import { PricesSectionComponent } from './pages/reservation/components/prices-section/prices-section.component';
+import { PaymentsInformationSectionComponent } from './pages/reservation/components/payments-information-section/payments-information-section.component';
+
+import { GoogleMapsModule } from '@angular/google-maps';
+
+import { SkeletonModule } from 'primeng/skeleton';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -153,6 +182,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     CommunityHeroComponent,
     CommunityGalleryComponent,
     CommunityReviewsComponent,
+    PublicitySectionComponent,
 
     // Tours List
     ToursListComponent,
@@ -191,6 +221,19 @@ export function HttpLoaderFactory(http: HttpClient) {
     FlightsComponent,
     TravelersComponent,
     PaymentComponent,
+    ContentPageComponent,
+    BannerComponent,
+    ToursComponent,
+    OptionalActivitiesComponent,
+    TravelerSelectorComponent,
+    RoomSelectorComponent,
+    FlightItineraryComponent,
+    ReservationComponent,
+    TravelInformationSectionComponent,
+    TravelersInformationSectionComponent,
+    FlightsSectionComponent,
+    PricesSectionComponent,
+    PaymentsInformationSectionComponent,
   ],
   imports: [
     // Angular Modules
@@ -207,6 +250,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     AvatarModule,
     AvatarGroupModule,
     InputTextModule,
+    InputNumberModule,
     AutoCompleteModule,
     CalendarModule,
     ButtonModule,
@@ -236,9 +280,18 @@ export function HttpLoaderFactory(http: HttpClient) {
     ChipModule,
     TagModule,
     TimelineModule,
+    OverlayBadgeModule,
+    BadgeModule,
+    RadioButtonModule,
+    CheckboxModule,
     ForgetPasswordComponent,
     StepsModule,
+    ReactiveFormsModule,
     StepperModule,
+    MultiSelectModule,
+    GoogleMapsModule,
+    MenuModule,
+    SkeletonModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,
@@ -247,6 +300,7 @@ export function HttpLoaderFactory(http: HttpClient) {
       },
       defaultLanguage: 'es',
     }),
+    CurrencyPipe,
   ],
   providers: [
     provideAnimationsAsync(),
@@ -266,9 +320,13 @@ export function HttpLoaderFactory(http: HttpClient) {
     providePrimeNG({
       theme: {
         preset: MyPreset,
+        options: {
+          darkModeSelector: false || 'none',
+        },
       },
     }),
   ],
   bootstrap: [AppComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class AppModule {}

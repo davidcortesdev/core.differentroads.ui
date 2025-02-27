@@ -1,0 +1,11 @@
+<!-- <app-banner></app-banner> Falta crear el componente-->
+
+<app-banner 
+  [imageUrl]="bannerImage" 
+  [title]="bannerTitle"
+  [subtitle]="bannerSubtitle">
+</app-banner>
+
+<!-- Componente Title and Quill debajo del banner -->
+<app-title-and-quill   [title]="bannerTitle" [description]="bannerDescription"></app-title-and-quill>
+<app-dynamic-components *ngIf="blocks" [blocks]="blocks"></app-dynamic-components>

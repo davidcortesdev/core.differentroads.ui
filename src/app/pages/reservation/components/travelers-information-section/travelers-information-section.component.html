@@ -1,0 +1,52 @@
+<p-panel styleClass="trav-pan">
+    <ng-template pTemplate="header">
+        <div class="pan-hdr">Información de los viajeros</div>
+    </ng-template>
+    <div class="trav-cont">
+        <div class="trav-note">
+            <i class="pi pi-info-circle"></i>
+            <p>Por favor, revisa que sus nombres y apellidos aparezcan tal y como se contempla en su documento de identidad</p>
+        </div>
+
+        <div class="trav-grid">
+            <div class="trav-info" *ngFor="let traveler of travelers; let i = index">
+                <div class="trav-box">
+                    <h3>Pasajero {{i + 1}}: {{traveler.name}}</h3>
+                    <div class="trav-det">
+                        <div class="det-row">
+                            <label>E-Mail:</label>
+                            <span>{{traveler.email}}</span>
+                        </div>
+                        <div class="det-row">
+                            <label>Teléfono:</label>
+                            <span>{{traveler.phone}}</span>
+                        </div>
+                        <div class="det-row">
+                            <label>Sexo:</label>
+                            <span>{{traveler.gender}}</span>
+                        </div>
+                        <div class="det-row">
+                            <label>Habitaciones:</label>
+                            <span>{{traveler.room}}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footnote">
+            <span>
+                *Los gastos de gestión/desistimiento del cambio o corrección de nombres puede conllevar 
+                costes desde 150€ de penalización, no incluidos en el bono. En ocasiones, 
+                las aerolíneas no permiten cambio/corrección de nombre.
+            </span>
+            <br>
+            <span>
+                <br>
+                En ocasiones, las aerolíneas no permiten cambios/correción de nombre. Por favor, revisa 
+                nuestras condiciones de cancelación en el apartado de "Condiciones Generales" de nuestra 
+                página web.
+            </span>
+        </div>
+    </div>
+</p-panel>

@@ -1,0 +1,97 @@
+<div class="traveler-selector">
+  <div class="step">
+    <div class="step-title">Agrega los viajeros y las habitaciones</div>
+  </div>
+  <h3 class="traveler-selector-title">Número de pasajeros</h3>
+  <div class="traveler-selector-wrap">
+    <!-- Adultos -->
+    <div
+      class="traveler-selector-wrap-item"
+      *ngIf="availableTravelers.includes('Adultos')"
+    >
+      <div class="traveler-selector-wrap-item-group">
+        <span class="traveler-selector-wrap-item-name">Adultos</span>
+        <span class="traveler-selector-wrap-item-description"
+          >(Desde 12 años)</span
+        >
+      </div>
+      <p-inputNumber
+        [(ngModel)]="travelersNumbers.adults"
+        (ngModelChange)="handlePassengers($event, 'adults')"
+        [min]="1"
+        [max]="8"
+        [showButtons]="true"
+        buttonLayout="horizontal"
+        spinnerMode="horizontal"
+        placeholder="0"
+      >
+        <ng-template #incrementbuttonicon>
+          <span class="pi pi-chevron-up"></span>
+        </ng-template>
+        <ng-template #decrementbuttonicon>
+          <span class="pi pi-chevron-down"></span>
+        </ng-template>
+      </p-inputNumber>
+    </div>
+
+    <!-- Niños -->
+    <div
+      class="traveler-selector-wrap-item"
+      *ngIf="availableTravelers.includes('Niños')"
+    >
+      <div class="traveler-selector-wrap-item-group">
+        <span class="traveler-selector-wrap-item-name">Niños</span>
+        <span class="traveler-selector-wrap-item-description"
+          >(3 a 11 años)</span
+        >
+      </div>
+      <p-inputNumber
+        [(ngModel)]="travelersNumbers.childs"
+        (ngModelChange)="handlePassengers($event, 'childs')"
+        [min]="0"
+        [max]="8"
+        [showButtons]="true"
+        buttonLayout="horizontal"
+        spinnerMode="horizontal"
+        placeholder="0"
+      >
+        <ng-template #incrementbuttonicon>
+          <span class="pi pi-chevron-up"></span>
+        </ng-template>
+        <ng-template #decrementbuttonicon>
+          <span class="pi pi-chevron-down"></span>
+        </ng-template>
+      </p-inputNumber>
+    </div>
+
+    <!-- Bebés -->
+    <div
+      class="traveler-selector-wrap-item"
+      *ngIf="availableTravelers.includes('Bebés')"
+    >
+      <div class="traveler-selector-wrap-item-group">
+        <span class="traveler-selector-wrap-item-name">Bebés</span>
+        <span class="traveler-selector-wrap-item-description"
+          >(0 a 2 años)</span
+        >
+      </div>
+      <p-inputNumber
+        [(ngModel)]="travelersNumbers.babies"
+        (ngModelChange)="handlePassengers($event, 'babies')"
+        [min]="0"
+        [max]="8"
+        [showButtons]="true"
+        buttonLayout="horizontal"
+        spinnerMode="horizontal"
+        placeholder="0"
+      >
+        <ng-template #incrementbuttonicon>
+          <span class="pi pi-chevron-up"></span>
+        </ng-template>
+        <ng-template #decrementbuttonicon>
+          <span class="pi pi-chevron-down"></span>
+        </ng-template>
+      </p-inputNumber>
+    </div>
+  </div>
+</div>

@@ -1,3 +1,4 @@
+import { PriceData } from '../commons/price-data.model';
 import { OrderTraveler } from '../orders/order.model';
 
 export interface Booking {
@@ -20,20 +21,29 @@ export interface Booking {
 
 export interface BookingCreateInput {
   externalID: string;
-  tour: string;
+  tour: {
+    id: string;
+    name: string;
+    priceData?: PriceData[];
+    _id?: string;
+  };
   summary: string;
   total: number;
   priceData: any;
   name: string;
   id: string;
-  extendedTotal: number;
+  extendedTotal: {
+    description: string;
+    value: number;
+    qty: number;
+  }[];
   dayOne: string;
   numberOfDays: number;
-  returnDate: Date;
+  returnDate: string;
   tourID: string;
   paymentTerms: any;
   redeemPoints: number;
-  usePoints: number;
+  usePoints: Record<string, number>;
 }
 
 export interface GetAllBookingsParams {
@@ -50,4 +60,18 @@ export interface GetAllBookingsParams {
 export interface OptionalActivityRef {
   id: string;
   travelersAssigned: string[];
+}
+
+interface OptionalActivity {
+  status: string;
+  activityId: string;
+  description: string;
+  externalID: string;
+  name: string;
+  optional: boolean;
+  periodId: string;
+  productType: string;
+  availability: number;
+  priceData: PriceData[];
+  _id: string;
 }

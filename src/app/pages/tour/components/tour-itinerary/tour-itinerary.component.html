@@ -1,24 +1,175 @@
+<!-- HTML template actualizado sin cambiar la funcionalidad -->
 <div class="itinerary-section">
-  <h2>Itinerario</h2>
+  <h2>{{ title }}</h2>
+  <p class="date">Resumen de tu itinerario - {{ selectedDate }} - {{ isSingle ? 'Single' : 'Group' }}</p>
+  <p-dropdown class="date"
+    [options]="dateOptions" 
+    [(ngModel)]="selectedOption"
+    optionLabel="label" 
+    (onChange)="onDateChange($event)"
+    placeholder="Cambiar fecha">
+    <ng-template pTemplate="selectedItem">
+      <div class="date-option-item">
+        <span>{{ showPlaceholder ? 'Cambiar fecha' : selectedDate }}</span>
+      </div>
+    </ng-template>
+    <ng-template let-option pTemplate="item">
+      <div class="date-option-item">
+        <span>{{ option.label }}</span>
+        <span class="date-price">{{ option.price }}</span>
+      </div>
+    </ng-template>
+  </p-dropdown>
 </div>
-<div class="card">
-  <p-timeline [value]="events" align="alternate" styleClass="customized-timeline">
-      <ng-template #marker let-event>
-          <span class="flex w-8 h-8 items-center justify-center text-white rounded-full z-10 shadow-sm" [style]="{ 'background-color': event.color }">
-              <i [class]="event.icon"></i>
+<div class="itinerary-container">
+  <div class="timeline-section">
+    <div class="card">
+      <p-timeline
+        [value]="itinerary"
+        align="left"
+        styleClass="customized-timeline"
+      >
+        <ng-template pTemplate="marker" let-event>
+          <!-- Marcador del timeline clickeable con indicador visual de activo -->
+          <span
+            class="p-timeline-event-marker clickable-marker"
+            [ngClass]="{'active-marker': !event.collapsed}"
+            [style.backgroundColor]="event.color"
+            [attr.data-index]="itinerary.indexOf(event)"
+            (click)="markerClicked($event)"
+          >
           </span>
-      </ng-template>
-      <ng-template #content let-event>
-          <p-card [header]="event.status" [subheader]="event.date">
-            <ng-template #content>
-              <img *ngIf="event.image" [src]="'https://primefaces.org/cdn/primeng/images/demo/product/' + event.image" [alt]="event.name" width="200" class="shadow" />
-              <p>
-                  Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore sed consequuntur error repudiandae numquam deserunt quisquam repellat libero asperiores earum nam nobis, culpa ratione quam perferendis esse, cupiditate
-                  neque quas!
-              </p>
-              <p-button label="Read more" [text]="true" />
+        </ng-template>
+        <ng-template pTemplate="content" let-event>
+          <p-panel #itineraryPanel [toggleable]="true" styleClass="custom-panel" [(collapsed)]="event.collapsed">
+            <ng-template pTemplate="header">
+              <div class="panel-header-content" 
+                   [attr.data-index]="itinerary.indexOf(event)"
+                   (click)="markerClicked($event)">
+                <div class="day-info">
+                  <h3 class="day-title">{{ event.title }}</h3>
+                </div>
+                <div class="header-image">
+                  <img
+                    *ngIf="event.image"
+                    [src]="event.image"
+                    [alt]="event.title"
+                    class="day-thumbnail"
+                  />
+                </div>
+              </div>
             </ng-template>
-          </p-card>
-      </ng-template>
-  </p-timeline>
+            <ng-template pTemplate="content">
+              <h3 class="content-title">{{ event.title }}</h3>
+              <div class="itinerary-content">
+                <div [innerHTML]="event.description"></div>
+                <img
+                  *ngIf="event.image"
+                  [src]="event.image"
+                  [alt]="event.title"
+                  width="100%"
+                  class="img"
+                />
+              </div>
+              <div class="hotel-card" *ngIf="event.hotel.name">
+                <img
+                  [src]="event.hotel.hotelimage?.[0]?.url||'https://picsum.photos/200'"
+                  [alt]="event.hotel.hotelimage?.[0]?.alt"
+                  class="hotel-card-image"
+                />
+                <div class="hotel-card-content">
+                  <span>
+                    <p-rating
+                      [ngModel]="event.hotel.category"
+                      [readonly]="true"
+                      [stars]="5"
+                    ></p-rating>
+                  </span>
+                  <h4 class="hotel-card-name">
+                    {{ event.hotel.name }}
+                  </h4>
+                  <p class="hotel-card-location">
+                    <i class="pi pi-map-marker"></i> {{ event.hotel.address }}
+                  </p>
+                </div>
+                <div class="hotel-card-bookings-section">
+                  <img
+                    src="booking-logo.png"
+                    alt="Different Roads Logo"
+                    class="logo"
+                    height="60px"
+                  />
+                  <p>8.9</p>
+                </div>
+              </div>
+
+              <div class="itinerary-activities">
+                <p-carousel
+                  autoplayInterval="3000"
+                  [value]="highlights"
+                  [numVisible]="2"
+                  [numScroll]="1"
+                  [circular]="true"
+                  [showNavigators]="false"
+                  [responsiveOptions]="responsiveOptions"
+                  [showIndicators]="false"
+                >
+                  <ng-template let-highlight pTemplate="item">
+                    <p-card
+                      styleClass="highlight-card"
+                      [style]="{
+                        'border-radius': '1rem',
+                        overflow: 'hidden',
+                        border: 'none',
+                        boxShadow: 'none'
+                      }"
+                    >
+                      <ng-template pTemplate="header">
+                        <img [src]="highlight.image" [alt]="highlight.title" />
+                        <span
+                          class="status-badge"
+                          [class.optional]="highlight.optional"
+                        >
+                          {{ highlight.optional ? "Opcional" : "Incluida" }}
+                        </span>
+                      </ng-template>
+                      <ng-template pTemplate="content">
+                        <h3>{{ highlight.title }}</h3>
+                        <p>{{ highlight.description }}</p>
+                      </ng-template>
+                    </p-card>
+                  </ng-template>
+                </p-carousel>
+              </div>
+            </ng-template>
+          </p-panel>
+        </ng-template>
+      </p-timeline>
+    </div>
+  </div>
+  <div class="map-section">
+    <!-- Map will be added here later -->
+    <div class="map-placeholder">
+      <p *ngIf="!apiLoaded">Loading map...</p>
+      <div class="map-loaded" *ngIf="apiLoaded">
+        <google-map
+          [center]="center"
+          [zoom]="zoom"
+          [options]="mapOptions"
+          [width]="sizeMapaWidth"
+          [height]="sizeMapaHeight"
+          [mapTypeId]="mapTypeId"
+        >
+          <map-marker
+            #markerElem
+            *ngFor="let marker of markers"
+            [position]="marker.position"
+            [options]="marker.options"
+          >
+          </map-marker>
+          <map-info-window>Hello Google Maps</map-info-window>
+        </google-map>
+      </div>
+    </div>
+  </div>
 </div>

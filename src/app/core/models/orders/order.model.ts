@@ -21,12 +21,31 @@ export interface OptionalActivityRef {
   travelersAssigned: string[];
 }
 
+export interface TravelerData {
+  ageGroup?: string;
+  birthdate?: string;
+  category?: string;
+  dni?: string;
+  documentType?: string;
+  email?: string;
+  name?: string;
+  nationality?: string;
+  passportExpirationDate?: string;
+  passportID?: string;
+  passportIssueDate?: string;
+  phone?: string;
+  postalCode?: string;
+  sex?: string;
+  surname?: string;
+}
+
 export interface OrderTraveler {
-  lead: boolean;
-  bookingID: string;
+  lead?: boolean;
+  bookingID?: string;
   flightID?: string;
   periodReservationModeID?: string;
-  travelerData?: Record<string, any>;
+  travelerData?: TravelerData;
+  optionalActivitiesIDs?: string[];
   insuranceID?: string;
   _id?: string;
 }

@@ -1,26 +1,23 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChildren, QueryList } from '@angular/core';
 import { ToursService } from '../../../../core/services/tours.service';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { environment } from '../../../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
-import { map, catchError } from 'rxjs/operators';
-import { of } from 'rxjs';
-import {
-  GoogleMap,
-  GoogleMapsModule,
-  MapInfoWindow,
-  MapMarker,
-} from '@angular/google-maps';
 import { GeoService } from '../../../../core/services/geo.service';
 import { Tour } from '../../../../core/models/tours/tour.model';
-
+import { Panel } from 'primeng/panel';
 interface City {
   nombre: string;
   lat: number;
   lng: number;
 }
-
+interface DateOption {
+  label: string;
+  value: string;
+  price: string;
+  isGroup: boolean;
+}
 interface EventItem {
   status?: string;
   date?: string;
@@ -29,7 +26,6 @@ interface EventItem {
   image?: string;
   description?: SafeHtml;
 }
-
 @Component({
   selector: 'app-tour-itinerary',
   standalone: false,
@@ -37,7 +33,7 @@ interface EventItem {
   styleUrl: './tour-itinerary.component.scss',
 })
 export class TourItineraryComponent implements OnInit {
-
+  @ViewChildren('itineraryPanel') itineraryPanels!: QueryList<Panel>;
   mapTypeId: google.maps.MapTypeId | undefined;
   mapId: string | undefined;
   getLatLog(
@@ -49,14 +45,10 @@ export class TourItineraryComponent implements OnInit {
     | google.maps.LatLngAltitudeLiteral {
     return { lat: city.lat, lng: city.lng };
   }
-
   markers: any = [];
   infoContent = '';
-
-
   cities: string[] = [];
   citiesData: City[] = [];
-
   center: google.maps.LatLngLiteral = { lat: 40.73061, lng: -73.935242 };
   zoom = 8;
   sizeMapaWidth = '100%';
@@ -65,7 +57,6 @@ export class TourItineraryComponent implements OnInit {
     gmpDraggable: false,
   };
   advancedMarkerPositions: google.maps.LatLngLiteral[] = [];
-
   apiLoaded: boolean = false;
   mapOptions: google.maps.MapOptions = {
     zoomControl: true,
@@ -77,19 +68,41 @@ export class TourItineraryComponent implements OnInit {
   markerOptions: google.maps.MarkerOptions = {
     draggable: false,
   };
-
   events: EventItem[];
   title: string = 'Itinerario';
   highlights: any[] = [];
-
+  dateOptions: DateOption[] = [
+    {
+      label: '08 de junio',
+      value: '08 de junio',
+      price: '2.995€',
+      isGroup: true,
+    },
+    {
+      label: '03 de julio',
+      value: '03 de julio',
+      price: '3.395€',
+      isGroup: true,
+    },
+    {
+      label: '19 de agosto (s)',
+      value: '19 de agosto',
+      price: '3.495€',
+      isGroup: false,
+    },
+  ];
+  selectedOption: DateOption = this.dateOptions[0];
+  selectedDate: string = this.dateOptions[0].label;
+  isSingle: boolean = !this.dateOptions[0].isGroup;
+  showPlaceholder: boolean = true;
   itinerary: {
     title: string;
     description: SafeHtml;
     image: string;
     hotel: any;
     collapsed: boolean;
+    color?: string;
   }[] = [];
-
   responsiveOptions = [
     {
       breakpoint: '1199px',
@@ -107,7 +120,6 @@ export class TourItineraryComponent implements OnInit {
       numScroll: 1,
     },
   ];
-
   constructor(
     private toursService: ToursService,
     private route: ActivatedRoute,
@@ -115,19 +127,16 @@ export class TourItineraryComponent implements OnInit {
     private httpClient: HttpClient,
     private geoService: GeoService
   ) {
-
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}`;
     script.async = true;
     script.defer = true;
     document.head.appendChild(script);
-
     script.addEventListener('load', () => {
       this.mapTypeId = google.maps.MapTypeId.ROADMAP;
       this.mapId = google.maps.Map.DEMO_MAP_ID;
       this.apiLoaded = true;
     });
-
     this.events = [
       {
         status: 'Ordered',
@@ -155,24 +164,8 @@ export class TourItineraryComponent implements OnInit {
         color: '#607D8B',
       },
     ];
-
-    this.highlights = [
-      /*  {
-        title: 'Highlight 1',
-        description: 'Description for highlight 1',
-        image: 'https://picsum.photos/200',
-        optional: false,
-      },
-      {
-        title: 'Highlight 2',
-        description: 'Description for highlight 2',
-        image: 'https://picsum.photos/200',
-
-        optional: true,
-      }, */
-    ];
+    this.highlights = [];
   }
-
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
       const slug = params['slug'];
@@ -191,101 +184,84 @@ export class TourItineraryComponent implements OnInit {
                     ),
                     image: section.itimage?.[0]?.url || '',
                     hotel: section.hotel,
-                    collapsed: index !== 0, // Solo el primer panel estará expandido
+                    collapsed: index !== 0,
+                    color: '#9C27B0',
                   };
                 }
               );
             },
-            error: (error) =>
-              console.error('Error fetching itinerary section:', error),
+            error: (error) => console.error('Error itinerary section:', error),
           });
-          const selectedFields: (keyof Tour | 'all' | undefined)[] = ['cities'];
-      this.toursService
-        .getTourDetailBySlug(slug, selectedFields)
-        .subscribe((tour) => {
-          this.cities = tour['cities'];
-          let loadedCities = 0;
-          const totalCities = this.cities.length;
-
-          this.cities.forEach((city) => {
-            this.geoService.getCoordinates(city).subscribe((coordinates) => {
-              if (coordinates) {
-                this.citiesData.push({
-                  nombre: city,
-                  lat: Number(coordinates.lat),
-                  lng: Number(coordinates.lon),
-                });
-                this.addMarker({
-                  nombre: city,
-                  lat: Number(coordinates.lat),
-                  lng: Number(coordinates.lon),
-                });
-                loadedCities++;
-                this.calculateMapCenter();
-              }
-              console.log('this.citiesData', this.citiesData);
-              console.log('this.markers', this.markers);
+        const selectedFields: (keyof Tour | 'all' | undefined)[] = ['cities'];
+        this.toursService
+          .getTourDetailBySlug(slug, selectedFields)
+          .subscribe((tour) => {
+            this.cities = tour['cities'];
+            let loadedCities = 0;
+            const totalCities = this.cities.length;
+            this.cities.forEach((city) => {
+              this.geoService.getCoordinates(city).subscribe((coordinates) => {
+                if (coordinates) {
+                  this.citiesData.push({
+                    nombre: city,
+                    lat: Number(coordinates.lat),
+                    lng: Number(coordinates.lon),
+                  });
+                  this.addMarker({
+                    nombre: city,
+                    lat: Number(coordinates.lat),
+                    lng: Number(coordinates.lon),
+                  });
+                  loadedCities++;
+                  this.calculateMapCenter();
+                }
+              });
             });
           });
-        });
       }
     });
   }
-
   private calculateMapCenter(): void {
     if (this.citiesData.length === 0) return;
-
     const bounds = new google.maps.LatLngBounds();
     this.citiesData.forEach((city) => {
       bounds.extend({ lat: city.lat, lng: city.lng });
     });
-
     this.center = {
       lat: bounds.getCenter().lat(),
       lng: bounds.getCenter().lng(),
     };
-
-    // Adjust zoom based on bounds
-    const PADDING = 10; // Padding in pixels
+    const PADDING = 10;
     if (this.mapOptions.maxZoom) {
       this.zoom = Math.min(
         this.getZoomLevel(bounds, PADDING),
         this.mapOptions.maxZoom
       );
-      console.log(this.zoom);
     }
   }
-
   private getZoomLevel(
     bounds: google.maps.LatLngBounds,
     padding: number
   ): number {
     const WORLD_DIM = { height: 256, width: 256 };
     const ZOOM_MAX = 21;
-
     function latRad(lat: number) {
       const sin = Math.sin((lat * Math.PI) / 180);
       const radX2 = Math.log((1 + sin) / (1 - sin)) / 2;
       return Math.max(Math.min(radX2, Math.PI), -Math.PI) / 2;
     }
-
     function zoom(mapPx: number, worldPx: number, fraction: number) {
       return Math.floor(Math.log(mapPx / worldPx / fraction) / Math.LN2);
     }
-
     const ne = bounds.getNorthEast();
     const sw = bounds.getSouthWest();
-
     const latFraction = (latRad(ne.lat()) - latRad(sw.lat())) / Math.PI;
     const lngDiff = ne.lng() - sw.lng();
     const lngFraction = (lngDiff < 0 ? lngDiff + 360 : lngDiff) / 360;
-
     const latZoom = zoom(400 - padding * 2, WORLD_DIM.height, latFraction);
     const lngZoom = zoom(800 - padding * 2, WORLD_DIM.width, lngFraction);
-
     return Math.min(latZoom, lngZoom, ZOOM_MAX);
   }
-
   addMarker(ciudad: City) {
     this.markers.push({
       position: {
@@ -298,9 +274,56 @@ export class TourItineraryComponent implements OnInit {
       },
       title: ciudad.nombre,
       info: ciudad.nombre,
-      options: {
-        //animation: google.maps.Animation.BOUNCE,
-      },
+      options: {},
     });
+  }
+  onDateChange(event: any): void {
+    this.selectedOption = event.value;
+    this.updateDateDisplay();
+    this.showPlaceholder = false;
+  }
+  updateDateDisplay(): void {
+    this.selectedDate = this.selectedOption.value;
+    this.isSingle = !this.selectedOption.isGroup;
+  }
+
+  markerClicked(event: MouseEvent): void {
+    const element = event.currentTarget as HTMLElement;
+    const index = element.getAttribute('data-index');
+    if (index !== null) {
+      const itemIndex = parseInt(index, 10);
+      this.itinerary[itemIndex].collapsed =
+        !this.itinerary[itemIndex].collapsed;
+      if (!this.itinerary[itemIndex].collapsed) {
+        setTimeout(() => {
+          this.scrollToPanel(itemIndex);
+        }, 100);
+      }
+    }
+  }
+  scrollToPanel(index: number): void {
+    if (this.itineraryPanels && this.itineraryPanels.length > index) {
+      const panelArray = this.itineraryPanels.toArray();
+      if (panelArray[index]) {
+        const el = panelArray[index].el.nativeElement;
+        let container = this.findScrollableParent(el);
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  }
+  private findScrollableParent(element: HTMLElement): HTMLElement | Window {
+    if (!element) {
+      return window;
+    }
+    const computedStyle = getComputedStyle(element);
+    const overflowY = computedStyle.getPropertyValue('overflow-y');
+    const isScrollable = overflowY !== 'visible' && overflowY !== 'hidden';
+    if (isScrollable && element.scrollHeight > element.clientHeight) {
+      return element;
+    }
+    if (element.parentElement) {
+      return this.findScrollableParent(element.parentElement);
+    }
+    return window;
   }
 }

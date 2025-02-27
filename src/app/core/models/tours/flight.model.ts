@@ -43,5 +43,5 @@ export interface Flight {
     prices?: PriceData[];
   };
   price?: number;
-  priceData?: PriceData;
+  priceData?: PriceData[];
 }

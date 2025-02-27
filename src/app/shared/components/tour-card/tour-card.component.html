@@ -37,8 +37,9 @@
               <span class="desde">Desde</span>
               <span class="price">{{ tourData.price | currencyFormat : "EUR" }}</span>
               <span class="priceScalapay" *ngIf="showScalapayPrice">
-                o desde {{ tourData.price / 4  | currencyFormat : "EUR"}}/mes
-              </span>
+                o desde {{ tourData.price / 4  | currencyFormat : "EUR"}}/mes con
+              </span> 
+              <img *ngIf="showScalapayPrice" src="scalapay.svg" alt="ScalaPay" class="scalapay-logo" />
             </div>
             <p-button
               type="button"

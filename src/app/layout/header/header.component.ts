@@ -10,7 +10,14 @@ import {
   MenuList,
   LinkMenu,
 } from '../../core/models/general/menu.model';
-import { Subject, takeUntil, finalize } from 'rxjs';
+import {
+  Subject,
+  takeUntil,
+  finalize,
+  filter,
+  Observable,
+  BehaviorSubject,
+} from 'rxjs';
 
 @Component({
   selector: 'app-header',
@@ -19,14 +26,12 @@ import { Subject, takeUntil, finalize } from 'rxjs';
   styleUrl: './header.component.scss',
 })
 export class HeaderComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
-
-  // Add loading states
+  private readonly destroy$ = new Subject<void>();
   isLoadingMenu = true;
   isLoadingUser = false;
-  
+
   selectedLanguage = 'ES';
-  readonly languages: string[] = ['ES', 'EN'];
+  readonly languages: readonly string[] = ['ES', 'EN'] as const;
   filteredLanguages: string[] = [];
   leftMenuItems?: MenuItem[];
   rightMenuItems?: MenuItem[];
@@ -46,21 +51,34 @@ export class HeaderComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.initializeLanguage();
+    this.initializeMenu();
+    this.initializeUserMenu();
+  }
+
+  private initializeLanguage(): void {
     this.languageService
       .getCurrentLang()
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntil(this.destroy$), filter(Boolean))
       .subscribe((lang) => (this.selectedLanguage = lang.toUpperCase()));
+  }
 
+  private initializeMenu(): void {
     this.fetchMenuConfig();
-    this.populateUserMenu();
+  }
 
+  private initializeUserMenu(): void {
+    this.populateUserMenu();
+    this.listenToUserChanges();
+  }
+
+  private listenToUserChanges(): void {
     this.authService.userAttributesChanged
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        if (!this.userMenuItems) {
-          this.populateUserMenu();
-        }
-      });
+      .pipe(
+        takeUntil(this.destroy$),
+        filter(() => !this.userMenuItems)
+      )
+      .subscribe(() => this.populateUserMenu());
   }
 
   ngOnDestroy(): void {
@@ -74,34 +92,35 @@ export class HeaderComponent implements OnInit, OnDestroy {
       .getMenuConfig()
       .pipe(
         takeUntil(this.destroy$),
-        finalize(() => this.isLoadingMenu = false)
+        finalize(() => (this.isLoadingMenu = false))
       )
       .subscribe((menuConfig: MenuConfig) => {
-        this.leftMenuItems = this.mapMenuListToItems(menuConfig['menu-list-left']);
-        this.rightMenuItems = this.mapMenuListToItems(menuConfig['menu-list-right']);
+        this.leftMenuItems = this.mapMenuListToItems(
+          menuConfig['menu-list-left']
+        );
+        this.rightMenuItems = this.mapMenuListToItems(
+          menuConfig['menu-list-right']
+        );
       });
   }
 
   private createLink(slug: string, type: string): string {
-    switch (type) {
-      case 'collections':
-        return `/collection/${slug}`;
-      case 'landings':
-        return `/landing/${slug}`;
-      case 'page':
-        return `pages/${slug}`;
-      case 'tours':
-        return `/tour/${slug}`;
-      default:
-        return `${slug}`;
-    }
+    const routes: Record<string, string> = {
+      collections: `/collection/${slug}`,
+      landings: `/landing/${slug}`,
+      page: `pages/${slug}`,
+      tours: `/tour/${slug}`,
+    };
+    return routes[type] || slug;
   }
 
   private mapMenuListToItems(menuList: MenuList[]): MenuItem[] {
     return menuList.map((item: MenuList) => {
       const menuItem: MenuItem = {
         label: item.text,
-        routerLink: item['custom-link'] ? this.createLink(item['custom-link'], item.subtype || '') : undefined,
+        routerLink: item['custom-link']
+          ? this.createLink(item['custom-link'], item.subtype || '')
+          : undefined,
         items: item['link-menu']
           ? this.mapLinkMenuToItems(item['link-menu'])
           : undefined,
@@ -117,15 +136,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
     }));
   }
 
-  filterLanguages(event: AutoCompleteCompleteEvent) {
+  filterLanguages(event: AutoCompleteCompleteEvent): void {
     const query = event.query.toUpperCase();
     this.filteredLanguages = this.languages.filter((lang) =>
       lang.includes(query)
     );
   }
 
-  onLanguageChange(lang: any) {
-    this.languageService.setLanguage(lang.toLowerCase());
+  onLanguageChange(lang: string): void {
+    if (typeof lang === 'string') {
+      this.languageService.setLanguage(lang.toLowerCase());
+    }
   }
 
   populateUserMenu(): void {
@@ -140,7 +161,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
             .getUserByEmail(email)
             .pipe(
               takeUntil(this.destroy$),
-              finalize(() => this.isLoadingUser = false)
+              finalize(() => (this.isLoadingUser = false))
             )
             .subscribe((user) => {
               this.chipLabel = `Hola, ${user.names || email}`;

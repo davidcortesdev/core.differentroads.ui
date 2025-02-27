@@ -1,36 +1,51 @@
-.menu-skeleton {
+// Layout variables
+$skeleton-gap: 1rem;
+$profile-gap: 1.4rem;
+$mobile-breakpoint: 768px;
+
+// Colors
+$skeleton-bg: rgba(255, 255, 255, 0.1);
+$skeleton-shine: rgba(255, 255, 255, 0.2);
+
+// Mixins
+@mixin flex-center {
   display: flex;
-  gap: 1rem;
   align-items: center;
+}
+
+// Skeleton styles
+.menu-skeleton {
+  @include flex-center;
+  gap: $skeleton-gap;
 }
 
 .user-skeleton {
   border-radius: 16px;
 }
 
+// Profile section
+.busqPerfil {
+  @include flex-center;
+  gap: $profile-gap;
+}
+
+// Deep styles for PrimeNG components
 :host ::ng-deep {
   .p-skeleton {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: $skeleton-bg;
     
     &::after {
       background: linear-gradient(
         90deg,
-        rgba(255, 255, 255, 0.1),
-        rgba(255, 255, 255, 0.2),
-        rgba(255, 255, 255, 0.1)
+        $skeleton-bg,
+        $skeleton-shine,
+        $skeleton-bg
       );
     }
   }
-}
 
-.busqPerfil{
-  display: flex;
-  align-items: center;
-  gap: 1.4rem;
-}
-@media screen and (max-width: 768px) {
-  ::ng-deep .user-chip {
-    .p-chip-label {
+  @media screen and (max-width: $mobile-breakpoint) {
+    .user-chip .p-chip-label {
       display: none;
     }
   }

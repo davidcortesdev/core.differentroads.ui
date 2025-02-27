@@ -26,5 +26,12 @@
 .busqPerfil{
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.4rem;
+}
+@media screen and (max-width: 768px) {
+  ::ng-deep .user-chip {
+    .p-chip-label {
+      display: none;
+    }
+  }
 }

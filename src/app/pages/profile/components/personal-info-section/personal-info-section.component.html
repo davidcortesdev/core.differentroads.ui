@@ -2,6 +2,7 @@
   <div class="avatar-name-section">
     <p-avatar
       *ngIf="personalInfo"
+      [icon]="personalInfo.avatarUrl != '' ? '' : 'pi pi-user'"
       [image]="personalInfo.avatarUrl || ''"
       size="xlarge"
       shape="circle"

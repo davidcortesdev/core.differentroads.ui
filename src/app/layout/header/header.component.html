@@ -23,6 +23,7 @@
               [alt]="chipAlt"
               (click)="isLoggedIn ? menu.toggle($event) : onChipClick()"
               [style]="{ cursor: 'pointer' }"
+              styleClass="user-chip"
             >
             </p-chip>
             <p-menu #menu [model]="userMenuItems" [popup]="true" />

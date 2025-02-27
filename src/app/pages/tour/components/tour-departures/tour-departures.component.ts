@@ -119,10 +119,6 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
     this.passengerText = parts.join(', ');
   }
 
-  formatPrice(price?: number): string {
-    return price ? `${price.toFixed(0)}€` : '0€';
-  }
-
   addToCart(departure: Departure): void {
     this.tourComponent.createOrderAndRedirect(departure);
   }

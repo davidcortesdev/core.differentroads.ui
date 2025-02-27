@@ -5,8 +5,8 @@
   >
     <p>
       {{ room.name }}
-      <span *ngIf="room.price > 0">+{{ room.price }}</span>
-      <span *ngIf="room.price < 0">{{ room.price }}</span>
+      <span *ngIf="room.price > 0">+{{ room.price | currencyFormat : "EUR"  }}</span>
+      <span *ngIf="room.price < 0">{{ room.price | currencyFormat : "EUR"  }}</span>
     </p>
 
     <p-inputNumber

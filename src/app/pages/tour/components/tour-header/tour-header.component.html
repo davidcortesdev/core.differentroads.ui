@@ -29,7 +29,7 @@
         </div>
         <div class="current-price">
           <span>Desde</span>
-          <span class="amount">{{ tour.price }}€</span>
+          <span class="amount">{{ tour.price || 0 | currencyFormat : "EUR"  }}</span>
         </div>
       </div>
       <a href="#prices" class="price-link">Ir a este precio</a>

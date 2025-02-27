@@ -151,6 +151,8 @@ import { PaymentsInformationSectionComponent } from './pages/reservation/compone
 
 import { GoogleMapsModule } from '@angular/google-maps';
 
+import { SkeletonModule } from 'primeng/skeleton';
+
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -289,6 +291,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     MultiSelectModule,
     GoogleMapsModule,
     MenuModule,
+    SkeletonModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

@@ -27,4 +27,8 @@ export class TourCardComponent {
   handleTourClick() {
     this.router.navigate(['/tour', this.tourData.webSlug]);
   }
+
+  get monthlyPrice(): number {
+    return this.tourData.price / 4;
+  }
 }

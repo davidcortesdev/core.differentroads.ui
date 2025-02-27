@@ -4,6 +4,7 @@ import { FlightsService } from '../../../../core/services/checkout/flights.servi
 import { PricesService } from '../../../../core/services/checkout/prices.service';
 import { Flight } from '../../../../core/models/tours/flight.model';
 import { PriceData } from '../../../../core/models/commons/price-data.model';
+import { Order } from '../../../../core/models/orders/order.model';
 
 @Component({
   selector: 'app-flights',
@@ -12,11 +13,11 @@ import { PriceData } from '../../../../core/models/commons/price-data.model';
   styleUrl: './flights.component.scss',
 })
 export class FlightsComponent implements OnInit {
-  @Input() orderDetails: any;
+  @Input() orderDetails: Order | null = null;
 
-  selectedFlight: any;
-  flights: any[] = [];
-  filteredFlights: any[] = [];
+  selectedFlight: Flight | null = null;
+  flights: Flight[] = [];
+  filteredFlights: Flight[] = [];
 
   constructor(
     private periodsService: PeriodsService,

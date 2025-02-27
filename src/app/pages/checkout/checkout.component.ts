@@ -13,6 +13,9 @@ import { Activity } from '../../core/models/tours/activity.model';
 import { FlightsService } from '../../core/services/checkout/flights.service';
 import { Flight } from '../../core/models/tours/flight.model';
 import { ActivatedRoute } from '@angular/router';
+import { BookingsService } from '../../core/services/bookings.service';
+import { BookingCreateInput } from '../../core/models/bookings/booking.model';
+import { Period } from '../../core/models/tours/period.model';
 
 @Component({
   selector: 'app-checkout',
@@ -22,7 +25,7 @@ import { ActivatedRoute } from '@angular/router';
 })
 export class CheckoutComponent implements OnInit {
   currentStep: number = 1;
-  orderDetails: any = null;
+  orderDetails: Order | null = null;
   availableTravelers: string[] = [];
 
   // Tour information
@@ -38,7 +41,7 @@ export class CheckoutComponent implements OnInit {
   // Cart information
   activities: Activity[] = [];
   selectedFlight: Flight | null = null;
-  summary: { qty: number; price: number; description: string }[] = [];
+  summary: { qty: number; value: number; description: string }[] = [];
   subtotal: number = 0;
   total: number = 0;
   prices:
@@ -56,6 +59,7 @@ export class CheckoutComponent implements OnInit {
   rooms: ReservationMode[] = [];
   tourID: string = '';
   periodID: string = '';
+  periodData!: Period;
 
   constructor(
     private ordersService: OrdersService,
@@ -66,7 +70,8 @@ export class CheckoutComponent implements OnInit {
     private pricesService: PricesService,
     private activitiesService: ActivitiesService,
     private flightsService: FlightsService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private bookingsService: BookingsService
   ) {}
 
   ngOnInit() {
@@ -76,15 +81,18 @@ export class CheckoutComponent implements OnInit {
       console.log('Order details:', order);
 
       this.orderDetails = order;
+      this.summaryService.updateOrder(order);
 
       this.initializeTravelers(order.travelers || []);
       this.initializeActivities(order.optionalActivitiesRef || []);
+      this.initializeFlights(order.flights || []);
 
       const periodID = order.periodID;
       this.periodID = periodID;
 
       this.periodsService.getPeriodDetail(periodID).subscribe((period) => {
         console.log('Period details:', period);
+        this.periodData = period;
 
         this.tourName = period.name;
 
@@ -105,6 +113,9 @@ export class CheckoutComponent implements OnInit {
       this.travelers = data.adults + data.childs + data.babies;
       this.travelersSelected = data;
       this.updateOrderSummary();
+    });
+    this.travelersService.travelers$.subscribe((travelers) => {
+      //this.updateOrderSummary();
     });
 
     this.summaryService.order$.subscribe((order) => {
@@ -128,6 +139,8 @@ export class CheckoutComponent implements OnInit {
     });
   }
 
+  /* Inicialization */
+
   initializeTravelers(travelers: any[]) {
     const travelersCount = {
       adults: 0,
@@ -146,7 +159,7 @@ export class CheckoutComponent implements OnInit {
         travelersCount.babies++;
       }
 
-      const roomExternalID = traveler.periodReservationModeID.split('.')[1];
+      const roomExternalID = traveler.periodReservationModeID;
       const existingRoom = rooms.find(
         (room) => room.externalID === roomExternalID
       );
@@ -171,9 +184,8 @@ export class CheckoutComponent implements OnInit {
       travelersCount.adults = 1;
     }
 
-    console.log('initial rooms', rooms);
-
     this.travelersService.updateTravelersNumbers(travelersCount);
+    this.travelersService.updateTravelers(travelers);
     this.roomsService.updateSelectedRooms(rooms);
   }
 
@@ -197,13 +209,23 @@ export class CheckoutComponent implements OnInit {
     this.activitiesService.updateActivities(activities);
   }
 
+  initializeFlights(flights: Flight[]) {
+    if (flights.length > 0) {
+      this.selectedFlight = flights[0];
+      this.flightsService.updateSelectedFlight(this.selectedFlight);
+    }
+  }
+
+  /* Summary */
   updateOrderSummary() {
     this.summary = [];
+
+    this.travelersService.updateTravelersWithRooms();
 
     this.travelersSelected.adults > 0 &&
       this.summary.push({
         qty: this.travelersSelected.adults,
-        price:
+        value:
           this.pricesService.getPriceById(this.tourID, 'Adultos') +
           this.pricesService.getPriceById(this.periodID, 'Adultos'),
         description: 'Adultos',
@@ -212,7 +234,7 @@ export class CheckoutComponent implements OnInit {
     this.travelersSelected.childs > 0 &&
       this.summary.push({
         qty: this.travelersSelected.childs,
-        price:
+        value:
           this.pricesService.getPriceById(this.tourID, 'Niños') +
           this.pricesService.getPriceById(this.periodID, 'Niños'),
         description: 'Niños',
@@ -221,16 +243,16 @@ export class CheckoutComponent implements OnInit {
     this.travelersSelected.babies > 0 &&
       this.summary.push({
         qty: this.travelersSelected.babies,
-        price:
-          this.pricesService.getPriceById(this.tourID, 'B') +
-          this.pricesService.getPriceById(this.periodID, 'Niños'),
+        value:
+          this.pricesService.getPriceById(this.tourID, 'Bebes') +
+          this.pricesService.getPriceById(this.periodID, 'Bebes'),
         description: 'Bebes',
       });
 
     this.rooms.forEach((room) => {
       this.summary.push({
         qty: room.qty || 0,
-        price: this.pricesService.getPriceById(room.externalID, 'Adultos'),
+        value: this.pricesService.getPriceById(room.externalID, 'Adultos'),
         description: room.name,
       });
     });
@@ -238,10 +260,24 @@ export class CheckoutComponent implements OnInit {
     this.activities.forEach((activity) => {
       this.summary.push({
         qty: 1,
-        price: activity.price || 0,
+        value: activity.price || 0,
         description: activity.name,
       });
     });
+
+    let tempOrderData: Order = { ...this.summaryService.getOrderValue()! };
+    const travelersData = this.travelersService.getTravelers();
+
+    tempOrderData['travelers'] = travelersData;
+    tempOrderData['optionalActivitiesRef'] = this.activities.map(
+      (activity) => ({
+        id: activity.activityId,
+        _id: activity.id,
+        travelersAssigned: travelersData.map(
+          (traveler) => traveler._id || '123'
+        ),
+      })
+    );
 
     if (this.selectedFlight) {
       this.summary.push({
@@ -249,10 +285,13 @@ export class CheckoutComponent implements OnInit {
           this.travelersSelected.adults +
           this.travelersSelected.childs +
           this.travelersSelected.babies,
-        price: this.selectedFlight.price || 0,
+        value: this.selectedFlight.price || 0,
         description: this.selectedFlight.name,
       });
+
+      tempOrderData['flights'] = [this.selectedFlight];
     }
+    this.summaryService.updateOrder(tempOrderData);
 
     this.calculateTotals();
   }
@@ -265,11 +304,132 @@ export class CheckoutComponent implements OnInit {
     this.travelers = event.adults + event.childs + event.babies;
   }
 
-  private calculateTotals() {
+  calculateTotals() {
     this.subtotal = this.summary.reduce(
-      (acc, item) => acc + item.price * item.qty,
+      (acc, item) => acc + item.value * item.qty,
       0
     );
     this.total = this.subtotal;
+  }
+
+  /* Steps and validations */
+
+  nextStep(step: number): boolean {
+    switch (step) {
+      case 1:
+        break;
+      case 2:
+      case 3:
+      case 4:
+        this.updateOrderSummary();
+
+        this.updateOrder().subscribe({
+          next: (response) => {
+            console.log('Order updated');
+            return true;
+          },
+          error: (error) => {
+            console.error('Error updating order:', error);
+            return false;
+          },
+        });
+        break;
+      default:
+        return false;
+    }
+
+    return true;
+  }
+
+  /* Order update */
+
+  updateOrder() {
+    console.log('Updating order:', this.summaryService.getOrderValue());
+
+    return this.ordersService.updateOrder(
+      this.summaryService.getOrderValue()!._id,
+      this.summaryService.getOrderValue()!
+    );
+  }
+
+  /* Booking create */
+
+  processBooking(): Promise<{ bookingID: string; ID: string }> {
+    return new Promise((resolve, reject) => {
+      const bookingData: BookingCreateInput = {
+        tour: {
+          id: this.tourID,
+          name: this.tourName,
+          priceData: this.pricesService.getPriceDataById(this.tourID),
+        },
+        summary: '',
+        total: this.total,
+        priceData: this.pricesService.getPriceDataById(this.periodID),
+        id: this.orderDetails?._id || '',
+        extendedTotal: this.summary,
+        dayOne: this.periodData.dayOne,
+        numberOfDays: this.periodData.numberOfDays,
+        returnDate: this.periodData.returnDate,
+        tourID: this.tourID,
+        paymentTerms: '',
+        redeemPoints: 0,
+        usePoints: {},
+        name: this.periodData.name,
+        externalID: this.periodID,
+      };
+      let bookingID = '';
+      let bookingSID = '';
+      let order: Order | undefined;
+
+      this.bookingsService
+        .createBooking(this.orderDetails?._id!, bookingData)
+        .subscribe({
+          next: (response) => {
+            console.log('Booking created:', response);
+            bookingID = response.bookingID;
+            bookingSID = response.ID;
+            order = response.order;
+
+            this.bookingsService
+              .saveTravelers(response.bookingID, {
+                bookingSID: response.ID,
+                bookingID: this.orderDetails?._id!,
+                order: response.order as Order,
+              })
+              .subscribe({
+                next: (response) => {
+                  console.log('Travelers saved:', response);
+
+                  this.bookingsService
+                    .bookOrder(bookingID, {
+                      order: order,
+                      ID: bookingSID,
+                    })
+                    .subscribe({
+                      next: (response) => {
+                        console.log('Order booked:', response);
+                        resolve({
+                          bookingID: bookingID,
+                          ID: bookingSID,
+                        });
+                      },
+                      error: (error) => {
+                        console.error('Error booking order:', error);
+                        reject(error);
+                      },
+                    });
+                },
+                error: (error) => {
+                  console.error('Error saving travelers:', error);
+                  reject(error);
+                },
+              });
+          },
+          error: (error) => {
+            console.error('Error creating booking:', error);
+            reject(error);
+          },
+        });
+    });
   }
 }

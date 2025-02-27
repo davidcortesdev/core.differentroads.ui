@@ -26,15 +26,19 @@ export class OrdersService {
   }
 
   getOrderDetails(id: string): Observable<Order> {
-    return this.http.get<Order>(`${this.API_URL}/${id}`);
+    return this.http.get<Order>(`${this.API_URL}/${id}`, this.httpOptions);
   }
 
   updateOrder(id: string, order: Order): Observable<Order> {
-    return this.http.put<Order>(`${this.API_URL}/${id}`, order);
+    return this.http.put<Order>(
+      `${this.API_URL}/${id}`,
+      order,
+      this.httpOptions
+    );
   }
 
   deleteOrder(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.API_URL}/${id}`);
+    return this.http.delete<void>(`${this.API_URL}/${id}`, this.httpOptions);
   }
 
   getOrders(params?: GetAllOrdersParams): Observable<OrderListResponse> {
@@ -43,6 +47,7 @@ export class OrdersService {
       : undefined;
     return this.http.get<OrderListResponse>(this.API_URL, {
       params: httpParams,
+      ...this.httpOptions,
     });
   }
 

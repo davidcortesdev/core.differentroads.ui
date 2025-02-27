@@ -20,10 +20,10 @@
               ></app-customize-trip>
               <div class="flex pt-6 justify-end">
                 <p-button
-                  label="Next"
+                  label="Siguiente"
                   icon="pi pi-arrow-right"
                   iconPos="right"
-                  (onClick)="activateCallback(2)"
+                  (onClick)="nextStep(2) && activateCallback(2)"
                 />
               </div>
             </ng-template>
@@ -45,7 +45,7 @@
                   label="Next"
                   icon="pi pi-arrow-right"
                   iconPos="right"
-                  (onClick)="activateCallback(3)"
+                  (onClick)="nextStep(3) && activateCallback(3)"
                 />
               </div>
             </ng-template>
@@ -64,14 +64,17 @@
                   label="Next"
                   icon="pi pi-arrow-right"
                   iconPos="right"
-                  (onClick)="activateCallback(4)"
+                  (onClick)="nextStep(4) && activateCallback(4)"
                 />
               </div>
             </ng-template>
           </p-step-panel>
           <p-step-panel [value]="4">
             <ng-template #content let-activateCallback="activateCallback">
-              <app-payment></app-payment>
+              <app-payment
+                [totalPrice]="total"
+                [processBooking]="processBooking.bind(this)"
+              ></app-payment>
               <div class="flex pt-6 justify-between">
                 <p-button
                   label="Back"
@@ -101,8 +104,8 @@
               <span>{{ item.description }}</span>
 
               <span
-                >{{ item.qty }} x {{ item.price | currencyFormat : "EUR" }} =
-                {{ item.price * item.qty | currencyFormat : "EUR" }}</span
+                >{{ item.qty }} x {{ item.value | currencyFormat : "EUR" }} =
+                {{ item.value * item.qty | currencyFormat : "EUR" }}</span
               >
             </div>
           </div>

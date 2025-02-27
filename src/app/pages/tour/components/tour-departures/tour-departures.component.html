@@ -17,7 +17,7 @@
           (completeMethod)="filterCities($event)"
           (onSelect)="filterDepartures()"
         ></p-autocomplete>
-        <span class="p-from">Desde {{ priceFrom }}€</span>
+        <span class="p-from">Desde {{ priceFrom | currencyFormat : "EUR" }}</span>
       </div>
     </div>
     
@@ -195,7 +195,7 @@
             <div class="f-price">
               <div class="p-container">
                 <span>desde</span>
-                <span class="amount">{{ formatPrice(departures[0].price) }}</span>
+                <span class="amount">{{ departures[0].price | currencyFormat : "EUR" }}</span>
               </div>
             </div>
             
@@ -241,7 +241,7 @@
             <div class="f-price">
               <div class="p-container">
                 <span>desde</span>
-                <span class="amount">{{ formatPrice(item.price) }}</span>
+                <span class="amount">{{ item.price | currencyFormat : "EUR"  }}</span>
               </div>
             </div>
             

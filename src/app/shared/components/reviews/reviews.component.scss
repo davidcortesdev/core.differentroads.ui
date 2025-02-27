@@ -35,6 +35,11 @@
               font-weight: 700;
               line-height: calc(var(--review-heading-size) * 1.034);
               margin-bottom: 0.5rem;
+              // Add these properties for multi-line ellipsis
+              display: -webkit-box;
+              -webkit-line-clamp: 1;
+              -webkit-box-orient: vertical;
+              overflow: hidden;
             }
   
             .p-card-subtitle {

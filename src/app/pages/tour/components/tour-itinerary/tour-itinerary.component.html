@@ -16,7 +16,7 @@
     <ng-template let-option pTemplate="item">
       <div class="date-option-item">
         <span>{{ option.label }}</span>
-        <span class="date-price">{{ option.price }}</span>
+        <span class="date-price">{{ option.price | currencyFormat : "EUR"  }}</span>
       </div>
     </ng-template>
   </p-dropdown>

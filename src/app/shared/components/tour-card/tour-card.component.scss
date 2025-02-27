@@ -26,6 +26,7 @@
     }
 
     .image-container {
+      cursor: pointer;
       position: relative;
       height: 230px;
 
@@ -188,6 +189,12 @@
           .priceScalapay {
             color: var(--p-primary-color);
             font-size: 0.9rem;
+
+          }
+          img {
+            height: 1.3rem;
+            filter: 
+            invert(59%) sepia(29%) saturate(7459%) hue-rotate(329deg) brightness(80%) contrast(95%);
           }
         }
       }

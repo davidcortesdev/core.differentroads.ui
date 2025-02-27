@@ -46,7 +46,7 @@
                   class="dataview-price"
                 >
                   <span class="dataview-price-value">
-                    +{{ price.value }}€
+                    +{{ price.value | currencyFormat : "EUR" }}
                   </span>
                   <span class="dataview-per-person"> por persona </span>
                 </div>

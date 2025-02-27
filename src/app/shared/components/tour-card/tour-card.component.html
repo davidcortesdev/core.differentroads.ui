@@ -12,9 +12,8 @@
       <div
         class="image-container"
         (click)="handleTourClick()"
-        style="cursor: pointer"
       >
-        <img [src]="tourData.imageUrl" [alt]="tourData.title" />
+        <img [src]="tourData.imageUrl" [alt]="tourData.title" loading="lazy" />
         <div class="overlay">
           <span class="rating p-button-primary">{{ tourData.rating }} ★</span>
           <span class="indicator" *ngIf="tourData.isByDr !== undefined">
@@ -35,10 +34,11 @@
           <div class="price-section">
             <div class="price-info">
               <span class="desde">Desde</span>
-              <span class="price">{{ tourData.price }}€</span>
+              <span class="price">{{ tourData.price | currencyFormat : "EUR" }}</span>
               <span class="priceScalapay" *ngIf="showScalapayPrice">
-                o desde {{ tourData.price / 4 }}/mes
+                o desde {{ monthlyPrice | currencyFormat : "EUR"}}/mes con
               </span>
+              <img *ngIf="showScalapayPrice" src="scalapay.svg" alt="ScalaPay" class="scalapay-logo" />
             </div>
             <p-button
               type="button"

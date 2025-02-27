@@ -82,14 +82,29 @@ export class HeaderComponent implements OnInit, OnDestroy {
       });
   }
 
+  private createLink(slug: string, type: string): string {
+    switch (type) {
+      case 'collections':
+        return `/collection/${slug}`;
+      case 'landings':
+        return `/landing/${slug}`;
+      case 'page':
+        return `pages/${slug}`;
+      case 'tours':
+        return `/tour/${slug}`;
+      default:
+        return `${slug}`;
+    }
+  }
+
   private mapMenuListToItems(menuList: MenuList[]): MenuItem[] {
     return menuList.map((item: MenuList) => {
       const menuItem: MenuItem = {
-        label: item.text, // Usar el campo 'text' como label
-        routerLink: item['custom-link'], // Usar 'custom-link' como routerLink si existe
+        label: item.text,
+        routerLink: item['custom-link'] ? this.createLink(item['custom-link'], item.subtype || '') : undefined,
         items: item['link-menu']
           ? this.mapLinkMenuToItems(item['link-menu'])
-          : undefined, // Mapear 'link-menu' si existe
+          : undefined,
       };
       return menuItem;
     });
@@ -97,8 +112,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   private mapLinkMenuToItems(linkMenu: LinkMenu[]): MenuItem[] {
     return linkMenu.map((link: LinkMenu) => ({
-      label: link.name, // Usar el campo 'name' como label
-      routerLink: link.slug, // Usar 'slug' como routerLink
+      label: link.name,
+      routerLink: this.createLink(link.slug, link.type || ''),
     }));
   }
 

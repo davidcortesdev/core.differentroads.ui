@@ -26,6 +26,7 @@ interface TourFilters {
   maxDate?: string;
   minDate?: string;
   destination?: string;
+  tags?: string[]; // Nuevo filtro para tags
 }
 
 @Injectable({
@@ -72,20 +73,31 @@ export class ToursService {
       map((toursData: TourListResponse) => {
         const tours = toursData.data ? toursData.data : (toursData as any);
 
-        // Collect possible months
+        // Collect possible months and tags
         const monthSet = new Set<string>();
+        const tagsSet = new Set<string>();
         tours.forEach((tour: any) => {
           tour.monthTags?.forEach((month: string) => {
             monthSet.add(month);
           });
+          tour.tags?.forEach((tag: string) => {
+            tagsSet.add(tag);
+          });
+          tour.vtags?.forEach((tag: string) => {
+            tagsSet.add(tag);
+          });
         });
-        const filtersOptions = { month: Array.from(monthSet) };
+        const filtersOptions = {
+          month: Array.from(monthSet),
+          tags: Array.from(tagsSet),
+        };
 
         // Apply filters to tours
         let filteredTours = tours.filter((tour: any) => {
           const { price } = tour;
           const priceFilters = filters.price || [];
           const tourSeasonFilters = filters.tourSeason || [];
+          const tagFilters = filters.tags || [];
 
           const priceMatch =
             !priceFilters.length ||
@@ -109,6 +121,13 @@ export class ToursService {
               (period: any) => period.returnDate <= filters.maxDate!
             );
 
+          const tagMatch =
+            !tagFilters.length ||
+            tagFilters.some(
+              (tag: string) =>
+                tour.tags.includes(tag) || tour.vtags.includes(tag)
+            );
+
           return (
             (!filters.tourType ||
               tour.tags.includes(filters.tourType) ||
@@ -126,7 +145,8 @@ export class ToursService {
             (!filters.periodTripType ||
               tour.periodTripType === filters.periodTripType) &&
             minDateMatch &&
-            maxDateMatch
+            maxDateMatch &&
+            tagMatch
           );
         });
 

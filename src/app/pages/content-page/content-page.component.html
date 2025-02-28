@@ -1,11 +1,100 @@
-<!-- <app-banner></app-banner> Falta crear el componente-->
+
+<div class="container">
+  <!-- <app-banner></app-banner> Falta crear el componente-->
 
 <app-banner 
-  [imageUrl]="bannerImage" 
-  [title]="bannerTitle"
-  [subtitle]="bannerSubtitle">
+[imageUrl]="bannerImage" 
+[title]="bannerTitle"
+[subtitle]="bannerSubtitle">
 </app-banner>
-
 <!-- Componente Title and Quill debajo del banner -->
-<app-title-and-quill   [title]="bannerTitle" [description]="bannerDescription"></app-title-and-quill>
+<app-title-and-quill [title]="bannerTitle" [description]="bannerDescription"></app-title-and-quill>
 <app-dynamic-components *ngIf="blocks" [blocks]="blocks"></app-dynamic-components>
+
+<!-- Sección de tours que aparece solo si es una colección de ofertas -->
+<div *ngIf="showTours && isOffersCollection" class="tours-section">
+  <div class="container">
+    <div class="tours-filters">
+      <p-floatlabel class="w-full md:w-56 min-width" variant="on">
+        <p-select
+          id="order_label"
+          [options]="orderOptions"
+          [(ngModel)]="selectedOrderOption"
+          (ngModelChange)="onFilterChange()"
+          optionLabel="name"
+          optionValue="value"
+          placeholder="Ordenar por"
+          class="w-full md:w-56"
+        />
+        <label for="order_label">Ordenar por</label>
+      </p-floatlabel>
+      <span class="space"></span>
+      <p-floatlabel class="w-full md:w-56 min-width" variant="on">
+        <p-multiselect
+          id="season_label"
+          class="filter-box"
+          [options]="seasonOptions"
+          [(ngModel)]="selectedSeasonOption"
+          (ngModelChange)="onFilterChange()"
+          optionLabel="name"
+          optionValue="value"
+          filter="false"
+          [maxSelectedLabels]="1"
+          [displaySelectedLabel]="true"
+          selectedItemsLabel="{0} items"
+          [showToggleAll]="false"
+        />
+        <label for="season_label">Temporada</label>
+      </p-floatlabel>
+      <p-floatlabel class="w-full md:w-56 min-width" variant="on">
+        <p-multiselect
+          id="month_label"
+          [options]="monthOptions"
+          [(ngModel)]="selectedMonthOption"
+          (ngModelChange)="onFilterChange()"
+          optionLabel="name"
+          optionValue="value"
+          filter="false"
+          [maxSelectedLabels]="1"
+          [displaySelectedLabel]="true"
+          selectedItemsLabel="{0} items"
+          [showToggleAll]="false"
+        />
+        <label for="month_label">Mes</label>
+      </p-floatlabel>
+      <p-floatlabel class="w-full md:w-56 min-width" variant="on">
+        <p-multiselect
+          id="price_label"
+          [options]="priceOptions"
+          [(ngModel)]="selectedPriceOption"
+          (ngModelChange)="onFilterChange()"
+          optionLabel="name"
+          optionValue="value"
+          filter="false"
+          [maxSelectedLabels]="1"
+          [displaySelectedLabel]="true"
+          selectedItemsLabel="{0} items"
+          [showToggleAll]="false"
+        />
+        <label for="price_label">Precio</label>
+      </p-floatlabel>
+    </div>
+    
+    <!-- Lista de tours -->
+    <div class="tours-list">
+      <p-dataView #dv [value]="displayedTours" [layout]="layout">
+        <ng-template let-tours #grid>
+          <div class="grid">
+            <div
+              *ngFor="let tour of displayedTours"
+              class="col-12 sm:col-6 lg:col-3"
+            >
+              <app-tour-card [tourData]="tour"></app-tour-card>
+            </div>
+          </div>
+        </ng-template>
+      </p-dataView>
+    </div>
+  </div>
+</div>
+</div>

@@ -40,9 +40,16 @@ export interface Expert {
 export interface Itinerary {
   title: string;
   'day-card': DayCard[];
+  itineraries: {
+    id: number;
+    title: string;
+    periods: (string | number)[];
+    days: DayCard[];
+  }[];
 }
 
 export interface DayCard {
+  id?: number;
   title: string;
   name: string;
   itimage: CldImage[];
@@ -51,6 +58,7 @@ export interface DayCard {
 }
 
 export interface Hotel {
+  id?: number;
   name: string;
   category: string;
   address: string;

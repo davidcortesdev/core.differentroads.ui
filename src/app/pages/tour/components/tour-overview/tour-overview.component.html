@@ -43,17 +43,16 @@
         ></div>
       </div>
       <div class="expert-section">
-        <div class="expert-info">
+        <div class="expert-avatar">
           <p-avatar
             [image]="tour?.expert?.ephoto?.[0]?.url"
             shape="circle"
-            size="large"
-            [style]="{ width: '80px', height: '64px' }"
+            size="xlarge"
           ></p-avatar>
-          <div class="expert-details">
-            <h4>{{ tour?.expert?.name || '' }}</h4>
-            <span class="expert-role">{{ tour?.expert?.charge || '' }}</span>
-          </div>
+        </div>
+        <div class="expert-details">
+          <h4>{{ tour?.expert?.name || '' }}</h4>
+          <span class="expert-role">{{ tour?.expert?.charge || '' }}</span>
         </div>
         <div class="expert-opinion">
           <p-panel styleClass="expert-panel">

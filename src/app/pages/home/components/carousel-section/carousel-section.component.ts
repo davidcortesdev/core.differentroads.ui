@@ -5,9 +5,6 @@ import { FullSliderContent } from '../../../../core/models/blocks/full-slider-co
 
 type Card = {
   id: number;
-  titlegeneral: string;
-  descriptiongeneral: string;
-  title?: string;
   description: string;
   image: { url: string; alt: string };
   link: string;
@@ -26,50 +23,30 @@ export class CarouselSectionComponent implements OnInit {
   titlegeneral: string = ''; 
   descriptiongeneral: string = ''; 
   cards: Card[] = [];
+  textoquill: string='';
 
   responsiveOptions: { breakpoint: string; numVisible: number; numScroll: number }[] = [];
 
   constructor(private sanitizer: DomSanitizer, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
+    console.log('this.content', this.content);
     if (this.type === BlockType.CardSliderVertical && this.content && this.content['card-list']) {
-      const { titlegeneral, descriptiongeneral } = this.extractTitleAndDescriptionFromHtmlGeneral(this.content.content);
-      this.titlegeneral = titlegeneral; 
-      this.descriptiongeneral = descriptiongeneral; 
+      this.textoquill = this.content.content;
 
       
       this.cards = this.content['card-list'].map((card: any, index: number) => {
-        if (card.title === undefined) {
-          const { title, description } = this.extractTitleAndDescriptionFromHtml(card.description);
+        
           return {
             id: index + 1,
-            titlegeneral: titlegeneral,
-            descriptiongeneral: descriptiongeneral,
-            title: title,
-            description: description,
+            description: card.description,
             image: {
               url: card.image[0].url,
               alt: `Image ${index + 1}`,
             },
             link: card.link || '#',
           };
-        } else {
-          const tempDiv = document.createElement('div');
-          tempDiv.innerHTML = card.description || '';
-          const cleanDescription = tempDiv.textContent || tempDiv.innerText || '';
-          return {
-            id: index + 1,
-            titlegeneral: titlegeneral,
-            descriptiongeneral: descriptiongeneral,
-            title: card.title,
-            description: cleanDescription.trim(),
-            image: {
-              url: card.image[0].url,
-              alt: `Image ${index + 1}`,
-            },
-            link: card.link || '#',
-          };
-        }
+        
       });
     } else {
       console.error('No cards received or cards array is empty');
@@ -123,5 +100,9 @@ export class CarouselSectionComponent implements OnInit {
 
   getSanitizedDescription(description: string): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(description);
+  }
+
+  sanitizeHtml(html: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(html);
   }
 }

@@ -37,9 +37,7 @@ export class HomeService {
   getTravelersSection(id?: string): Observable<TravelersSection> {
     return this.getHomeData().pipe(
       map((homeData: HomeSchema) => {
-        // Si se proporciona un ID y los datos contienen blocks
         if (id && homeData.blocks) {
-          // Buscar el bloque que coincide con el ID y tipo
           const block = homeData.blocks.find(
             (b) => b.name === id && b.type === BlockType.TravelersSection
           );
@@ -48,13 +46,9 @@ export class HomeService {
             return block.content as TravelersSection;
           }
         }
-
-        // Si homeData tiene la propiedad 'travelers-section'
         if ('travelers-section' in homeData) {
           return homeData['travelers-section'] as TravelersSection;
         }
-
-        // Si no se encuentra ninguna sección, devolver un objeto vacío
         console.warn('No se encontró ninguna sección de viajeros.');
         return {
           title: '',

@@ -16,6 +16,8 @@ import { ActivatedRoute } from '@angular/router';
 import { BookingsService } from '../../core/services/bookings.service';
 import { BookingCreateInput } from '../../core/models/bookings/booking.model';
 import { Period } from '../../core/models/tours/period.model';
+import { InsurancesService } from '../../core/services/checkout/insurances.service';
+import { Insurance } from '../../core/models/tours/insurance.model';
 
 @Component({
   selector: 'app-checkout',
@@ -41,6 +43,8 @@ export class CheckoutComponent implements OnInit {
   // Cart information
   activities: Activity[] = [];
   selectedFlight: Flight | null = null;
+  selectedInsurance: Insurance | null = null;
+  selectedInsurances: Insurance[] = [];
   summary: { qty: number; value: number; description: string }[] = [];
   subtotal: number = 0;
   total: number = 0;
@@ -71,7 +75,8 @@ export class CheckoutComponent implements OnInit {
     private activitiesService: ActivitiesService,
     private flightsService: FlightsService,
     private route: ActivatedRoute,
-    private bookingsService: BookingsService
+    private bookingsService: BookingsService,
+    private insurancesService: InsurancesService
   ) {}
 
   ngOnInit() {
@@ -135,6 +140,16 @@ export class CheckoutComponent implements OnInit {
 
     this.flightsService.selectedFlight$.subscribe((flight) => {
       this.selectedFlight = flight;
+      this.updateOrderSummary();
+    });
+
+    this.insurancesService.selectedInsurance$.subscribe((insurance) => {
+      this.selectedInsurance = insurance;
+      this.updateOrderSummary();
+    });
+
+    this.insurancesService.selectedInsurances$.subscribe((insurances) => {
+      this.selectedInsurances = insurances;
       this.updateOrderSummary();
     });
   }
@@ -291,6 +306,25 @@ export class CheckoutComponent implements OnInit {
 
       tempOrderData['flights'] = [this.selectedFlight];
     }
+
+    if (this.selectedInsurances.length > 0) {
+      this.selectedInsurances.forEach((insurance) => {
+        this.summary.push({
+          qty: 1,
+          value: insurance.price || 0,
+          description: insurance.name,
+        });
+      });
+      tempOrderData['insurancesRef'] = this.selectedInsurances.map(
+        (insurance) => ({
+          id: insurance.id,
+          travelersAssigned: travelersData.map(
+            (traveler) => traveler._id || '123'
+          ),
+        })
+      );
+    }
+
     this.summaryService.updateOrder(tempOrderData);
 
     this.calculateTotals();

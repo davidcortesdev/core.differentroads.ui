@@ -1,3 +1,5 @@
+import { PriceData } from '../commons/price-data.model';
+
 export interface Insurance {
   id: string;
   status: string;
@@ -8,4 +10,6 @@ export interface Insurance {
   optional: boolean;
   periodId: string;
   productType: string;
+  price?: number;
+  priceData?: PriceData[];
 }

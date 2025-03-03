@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { BlockType } from '../../../../core/models/blocks/block.model';
 import { FullSliderContent } from '../../../../core/models/blocks/full-slider-content.model';

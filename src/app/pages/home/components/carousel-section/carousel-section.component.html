@@ -10,19 +10,18 @@
       [numVisible]="3.5"
       [numScroll]="1"
       [responsiveOptions]="responsiveOptions"
-      showNavigators="false"
-      [autoplayInterval]="3000"
+
     >
       <ng-template let-card pTemplate="item">
         <div
           class="border border-surface-200 dark:border-surface-700 rounded m-2 p-4"
         >
           <div class="mb-4">
-            <div class="relative mx-auto box-image">
+            <div class="relative mx-auto">
+              <div class="image-shadow">
               <img
                 [src]="card.image.url"
                 [alt]="card.image.alt"
-                class="w-full rounded-border"
               />
               <div class="info-image">
                 <p
@@ -39,6 +38,8 @@
                   [style]="{ width: '45%', height: '27px' }"
                 ></p-button>
               </div>
+             </div>
+              
             </div>
           </div>
         </div>

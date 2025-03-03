@@ -14,7 +14,7 @@ on:
 
 jobs:
   check-branch:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted]
     
     steps:
       - name: Checkout repository
@@ -56,7 +56,7 @@ jobs:
         run: exit 1
 
   build-check:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted]
     needs: check-branch
     if: needs.check-branch.outputs.behind_by == '0'
     

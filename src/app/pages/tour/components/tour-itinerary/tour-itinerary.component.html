@@ -121,11 +121,11 @@
               <div class="itinerary-activities">
                 <p-carousel
                   [value]="event.highlights"
-                  [numVisible]="6"
+                  [numVisible]="3"
                   [circular]="true"
                   [showNavigators]="false"
                   [responsiveOptions]="responsiveOptions"
-                  [showIndicators]="false"
+                  [showIndicators]="true"
                 >
                   <ng-template let-highlight pTemplate="item">
                     <p-card

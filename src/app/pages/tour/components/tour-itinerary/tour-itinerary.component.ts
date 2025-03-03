@@ -116,7 +116,7 @@ export class TourItineraryComponent implements OnInit {
   responsiveOptions = [
     {
       breakpoint: '1199px',
-      numVisible: 3,
+      numVisible: 2,
       numScroll: 2,
     },
     {
@@ -292,7 +292,27 @@ export class TourItineraryComponent implements OnInit {
       this.dateOptions[0];
     this.updateDateDisplay();
     this.showPlaceholder = false;
-    this.updateItinerary();
+    this.periodsService
+      .getPeriodDetail(this.selectedOption.value, [
+        'tripType',
+        'hotels',
+        'activities',
+      ])
+      .subscribe({
+        next: (period) => {
+          this.currentPeriod = period;
+          this.tripType = period.tripType || '';
+          this.hotels = period.hotels as any[];
+          this.activities = [
+            ...(period.activities || []),
+            ...(period.includedActivities || []),
+          ];
+          console.log('Period itinerary 2:', period);
+
+          this.updateItinerary();
+        },
+        error: (error) => console.error('Error period:', error),
+      });
   }
 
   updateDateDisplay(): void {
@@ -320,7 +340,11 @@ export class TourItineraryComponent implements OnInit {
         title: day.name,
         description: this.sanitizer.bypassSecurityTrustHtml(day.description),
         image: day.itimage?.[0]?.url || '',
-        hotel: this.hotels.find((hotel) => `${hotel.id}` === `${day.id}`),
+        hotel: this.hotels.find(
+          (hotel) =>
+            `${hotel?.id}` === `${day.id}` ||
+            hotel?.days?.includes(`${index + 1}`)
+        ),
         collapsed: index !== 0,
         color: '#9C27B0',
         highlights:

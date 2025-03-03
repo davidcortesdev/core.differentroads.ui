@@ -9,6 +9,7 @@ import { Itinerary, Tour } from '../../../../core/models/tours/tour.model';
 import { Panel } from 'primeng/panel';
 import { PeriodsService } from '../../../../core/services/periods.service';
 import { Period } from '../../../../core/models/tours/period.model';
+import { Activity } from '../../../../core/models/tours/activity.model';
 interface City {
   nombre: string;
   lat: number;
@@ -28,6 +29,12 @@ interface EventItem {
   color?: string;
   image?: string;
   description?: SafeHtml;
+}
+interface Highlight {
+  title: string;
+  description: string;
+  image: string;
+  optional: boolean;
 }
 @Component({
   selector: 'app-tour-itinerary',
@@ -73,7 +80,6 @@ export class TourItineraryComponent implements OnInit {
   };
   events: EventItem[];
   title: string = 'Itinerario';
-  highlights: any[] = [];
   dateOptions: DateOption[] = [
     {
       label: 'Default Date',
@@ -103,11 +109,14 @@ export class TourItineraryComponent implements OnInit {
     hotel: any;
     collapsed: boolean;
     color?: string;
+    highlights?: Highlight[];
   }[] = [];
+
+  activities: Activity[] = [];
   responsiveOptions = [
     {
       breakpoint: '1199px',
-      numVisible: 2,
+      numVisible: 3,
       numScroll: 2,
     },
     {
@@ -139,34 +148,7 @@ export class TourItineraryComponent implements OnInit {
       this.mapId = google.maps.Map.DEMO_MAP_ID;
       this.apiLoaded = true;
     });
-    this.events = [
-      {
-        status: 'Ordered',
-        date: '15/10/2020 10:30',
-        icon: 'pi pi-shopping-cart',
-        color: '#9C27B0',
-        image: 'game-controller.jpg',
-      },
-      {
-        status: 'Processing',
-        date: '15/10/2020 14:00',
-        icon: 'pi pi-cog',
-        color: '#673AB7',
-      },
-      {
-        status: 'Shipped',
-        date: '15/10/2020 16:15',
-        icon: 'pi pi-shopping-cart',
-        color: '#FF9800',
-      },
-      {
-        status: 'Delivered',
-        date: '16/10/2020 10:00',
-        icon: 'pi pi-check',
-        color: '#607D8B',
-      },
-    ];
-    this.highlights = [];
+    this.events = [];
   }
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
@@ -199,13 +181,19 @@ export class TourItineraryComponent implements OnInit {
                 .getPeriodDetail(this.selectedOption.value, [
                   'tripType',
                   'hotels',
+                  'activities',
                 ])
                 .subscribe({
                   next: (period) => {
-                    console.log('Period:', period);
+                    console.log('Period itinerary:', period);
                     this.currentPeriod = period;
                     this.tripType = period.tripType || '';
                     this.hotels = period.hotels as any[];
+                    this.activities = [
+                      ...(period.activities || []),
+                      ...(period.includedActivities || []),
+                    ];
+                    this.updateItinerary();
                   },
                   error: (error) => console.error('Error period:', error),
                 });
@@ -320,19 +308,35 @@ export class TourItineraryComponent implements OnInit {
         itinerary.periods.includes(this.selectedOption.value) ||
         itinerary.periods.includes(parseInt(this.selectedOption.value))
     )[0];
+    console.log('Selected itinerary:', selectedItinerary, this.hotels);
 
-    this.itinerary = selectedItinerary!['days'].map((section, index) => {
+    this.itinerary = selectedItinerary!['days'].map((day, index) => {
+      console.log(
+        'itinerary activities',
+        this.activities.filter((activity) => index + 1 === activity.day)
+      );
+
       return {
-        title: section.name,
-        description: this.sanitizer.bypassSecurityTrustHtml(
-          section.description
-        ),
-        image: section.itimage?.[0]?.url || '',
-        hotel: this.hotels.find((hotel) => hotel.id === section.id),
+        title: day.name,
+        description: this.sanitizer.bypassSecurityTrustHtml(day.description),
+        image: day.itimage?.[0]?.url || '',
+        hotel: this.hotels.find((hotel) => `${hotel.id}` === `${day.id}`),
         collapsed: index !== 0,
         color: '#9C27B0',
+        highlights:
+          this.activities
+            .filter((activity) => index + 1 === activity.day)
+            .map((activity) => {
+              return {
+                title: activity.name,
+                description: activity.description || '',
+                image: activity.activityImage?.[0]?.url || '',
+                optional: activity.optional,
+              };
+            }) || [],
       };
     });
+    console.log('Itinerary:', this.itinerary);
   }
 
   markerClicked(event: MouseEvent): void {

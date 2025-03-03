@@ -19,4 +19,5 @@ export interface Period extends CMSCollections {
   insurances?: Insurance[];
   flights?: Flight[];
   hotels?: Hotel[];
+  includedActivities?: Activity[];
 }

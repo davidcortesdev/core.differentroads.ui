@@ -2,13 +2,13 @@ $breakpoints: (
   sm: 576px,
   md: 768px,
   lg: 992px,
-  xl: 1366px
+  xl: 1366px,
 );
 $spaces: (
   xs: 0.5rem,
   sm: 0.75rem,
   base: 1rem,
-  lg: 1.5rem
+  lg: 1.5rem,
 );
 @mixin resp($bp) {
   @media (max-width: map-get($breakpoints, $bp)) {
@@ -391,6 +391,7 @@ $spaces: (
       margin-top: 0.5rem;
     }
     .p-carousel {
+      width: 100%;
       .p-card-body,
       .p-carousel-content {
         padding: 0;
@@ -401,7 +402,8 @@ $spaces: (
         display: flex;
         flex-direction: column;
         height: 100%;
-        max-width: 17rem;
+        max-width: 20rem;
+        position: relative;
         @include resp(xl) {
           margin: 0.25rem;
           max-width: 15rem;
@@ -466,6 +468,30 @@ $spaces: (
             margin-top: 1rem;
             align-self: flex-start;
           }
+        }
+      }
+    }
+    .p-carousel-indicators {
+      display: none;
+    }
+    @include resp(md) {
+      .p-carousel {
+        .p-carousel-content {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+        }
+        .highlight-card {
+          flex: 1 1 calc(50% - 1rem);
+          max-width: calc(50% - 1rem);
+        }
+      }
+    }
+    @include resp(sm) {
+      .p-carousel {
+        .highlight-card {
+          flex: 1 1 100%;
+          max-width: 100%;
         }
       }
     }

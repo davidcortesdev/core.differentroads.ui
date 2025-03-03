@@ -120,10 +120,8 @@
 
               <div class="itinerary-activities">
                 <p-carousel
-                  autoplayInterval="3000"
-                  [value]="highlights"
-                  [numVisible]="2"
-                  [numScroll]="1"
+                  [value]="event.highlights"
+                  [numVisible]="6"
                   [circular]="true"
                   [showNavigators]="false"
                   [responsiveOptions]="responsiveOptions"
@@ -140,7 +138,10 @@
                       }"
                     >
                       <ng-template pTemplate="header">
-                        <img [src]="highlight.image" [alt]="highlight.title" />
+                        <img
+                          [src]="highlight.image || 'https://picsum.photos/200'"
+                          [alt]="highlight.title"
+                        />
                         <span
                           class="status-badge"
                           [class.optional]="highlight.optional"
@@ -150,7 +151,7 @@
                       </ng-template>
                       <ng-template pTemplate="content">
                         <h3>{{ highlight.title }}</h3>
-                        <p>{{ highlight.description }}</p>
+                        <div [innerHTML]="highlight.description"></div>
                       </ng-template>
                     </p-card>
                   </ng-template>

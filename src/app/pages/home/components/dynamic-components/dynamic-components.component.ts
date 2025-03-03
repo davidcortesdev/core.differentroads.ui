@@ -6,6 +6,7 @@ import { ToursSectionComponent } from '../tours-section/tours-section.component'
 import { ToursListComponent } from '../tours-list-section/tours-list-section.component';
 import { FullCardSectionComponent } from '../full-card-section/full-card-section.component';
 import { CarouselSectionComponent } from '../carousel-section/carousel-section.component';
+import { CommunitySectionComponent } from '../community-section/community-section.component';
 
 @Component({
   selector: 'app-dynamic-components',
@@ -24,6 +25,7 @@ export class DynamicComponentsComponent {
     [BlockType.CardSliderVertical]: CarouselSectionComponent,
     [BlockType.FullSlider]: FullCardSectionComponent,
     [BlockType.TourSection]: ToursSectionComponent,
+    [BlockType.TravelersSection]: CommunitySectionComponent,
   };
 
   getComponent(block: Block): Type<any> | null {

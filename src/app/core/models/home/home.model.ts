@@ -1,6 +1,6 @@
 import { CldImage } from '../commons/cld-image.model';
 import { FeaturedToursSection } from './featured-tours/featured-tours-section.model';
-import { TravelersSection } from './travelers/travelers-section.model';
+/* import { TravelersSection } from './travelers/travelers-section.model'; */
 import { BannerSection } from './banner/banner-section.model';
 import { Block } from '../blocks/block.model';
 import { SEO } from '../commons/seo.model';
@@ -12,7 +12,7 @@ export interface HomeSchema {
   id: string;
   status: string;
   'featured-tours': FeaturedToursSection;
-  'travelers-section': TravelersSection;
+  /*   'travelers-section': TravelersSection; */
   blocks: Block[];
   seo: SEO;
   'banner-section': BannerSection;

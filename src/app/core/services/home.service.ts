@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { HomeSchema } from '../models/home/home.model';
 import { environment } from '../../../environments/environment';
 import { FeaturedToursSection } from '../models/home/featured-tours/featured-tour.model';
-import { TravelersSection } from '../models/home/travelers/travelers-section.model';
-import { Block } from '../models/blocks/block.model';
+import { TravelersSection } from '../models/blocks/travelers/travelers-section.model';
+import { Block, BlockType } from '../models/blocks/block.model';
 import { SEO } from '../models/commons/seo.model';
 import { BannerSection } from '../models/home/banner/banner-section.model';
 
@@ -34,15 +34,56 @@ export class HomeService {
     );
   }
 
-  getTravelersSection(): Observable<TravelersSection> {
+  getTravelersSection(id?: string): Observable<TravelersSection> {
     return this.getHomeData().pipe(
-      map((homeData: HomeSchema) => homeData['travelers-section'])
+      map((homeData: HomeSchema) => {
+        // Si se proporciona un ID y los datos contienen blocks
+        if (id && homeData.blocks) {
+          // Buscar el bloque que coincide con el ID y tipo
+          const block = homeData.blocks.find(
+            (b) => b.name === id && b.type === BlockType.TravelersSection
+          );
+
+          if (block && block.content) {
+            return block.content as TravelersSection;
+          }
+        }
+
+        // Si homeData tiene la propiedad 'travelers-section'
+        if ('travelers-section' in homeData) {
+          return homeData['travelers-section'] as TravelersSection;
+        }
+
+        // Si no se encuentra ninguna sección, devolver un objeto vacío
+        console.warn('No se encontró ninguna sección de viajeros.');
+        return {
+          title: '',
+          reviews: {
+            title: '',
+            ['reviews-cards']: [],
+          },
+          ['travelers-cards']: [],
+          featured: { description: '' },
+        } as TravelersSection;
+      }),
+      catchError((error) => {
+        console.error('Error al obtener la sección de viajeros:', error);
+        return of({
+          title: '',
+          reviews: {
+            title: '',
+            ['reviews-cards']: [],
+          },
+          ['travelers-cards']: [],
+          featured: { description: '' },
+        } as TravelersSection);
+      })
     );
   }
 
   getDynamicSections(): Observable<Block[]> {
     return this.getHomeData().pipe(
-      map((homeData: HomeSchema) => homeData.blocks)
+      map((homeData: HomeSchema) => homeData.blocks || [])
     );
   }
 

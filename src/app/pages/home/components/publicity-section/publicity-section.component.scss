@@ -1,128 +1,61 @@
 .publicity {
-  padding: 8rem 6rem;
+  padding: 4rem 2rem;
   background-color: var(--background-azul);
+  color: var(--background-azul-color-letra);
+  --p-panel-background: var(--background-azul);
+  --p-panel-color: var(--background-azul-color-letra);
+  --p-panel-header-color: var(--background-azul-color-letra);
 
-  &-head {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  @media (min-width: 768px) {
+    padding: 8rem 6rem;
+  }
+}
 
-    &-title {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--p-primary-color);
-      text-align: center;
-      font-size: 2.5rem;
-    }
+.publicity-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2rem;
 
-    &-subtitle {
-      justify-content: center;
-      border: 0.0625rem solid var(--background-azul-color-letra);
-      border-radius: 3rem;
-      color: var(--background-azul-color-letra);
-      font-size: 1rem;
-      font-weight: 300;
-      display: inline-flex;
-      justify-content: center;
-      margin: auto;
-      text-align: center;
-    }
-
-    &-description {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--accent-white);
-      font-weight: 200;
-      text-align: center;
-    }
+  &-title {
+    color: var(--p-primary-color);
+    text-align: center;
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
   }
 
-  &-grid {
-    display: grid;
-    grid-template-rows: 1fr;
-    grid-template-columns: repeat(3, 1fr);
-    flex-wrap: wrap;
-    justify-content: space-evenly;
-    gap: .625rem;
-    max-width: 45rem;
-    margin: 2rem auto;
-
-    @media (max-width: 767px) {
-      grid-template-columns: repeat(3, 1fr);
-    }
-
-    @media (max-width: 480px) {
-      grid-template-columns: repeat(1, 1fr);
-    }
-
-    &-item {
-      position: relative;
-      border: .0625rem solid var(--accent-white);
-      color: var(--accent-white);
-      cursor: pointer;
-      border-radius: .375rem;
-      padding: .875rem;
-      height: fit-content;
-      transition: background-color 0.3s ease, color 0.3s ease;
-
-      &.active-item {
-        background-color: var(--accent-white);
-        color: var(--background-azul);
-
-        .publicity-grid-item-more {
-          opacity: 1;
-        }
-
-        .publicity-grid-item-description {
-          opacity: 1;
-          max-height: 500px;
-          /* Ajusta este valor según el contenido */
-        }
-      }
-
-      &-wrap {
-        display: flex;
-        margin-right: auto;
-        flex-direction: column;
-      }
-
-      &-name {
-        text-align: left;
-        font-size: 1.5rem;
-        width: 100%;
-      }
-
-      &-description {
-        font-size: 1rem;
-        opacity: 0;
-        max-height: 0;
-        overflow: hidden;
-        transition: opacity 0.5s ease, max-height 0.5s ease;
-      }
-
-      &-more {
-        font-size: .75rem;
-        display: inline-flex;
-        margin-right: auto;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-      }
-
-      &:hover {
-        background-color: var(--accent-white);
-        color: var(--background-azul);
-
-        .publicity-grid-item-more {
-          opacity: 1;
-        }
-
-        .publicity-grid-item-description {
-          opacity: 1;
-          max-height: 500px;
-        }
-      }
-    }
+  &-subtitle {
+    border: solid 1px var(--background-azul-color-letra);
+    padding: 0.3rem 2.5rem;
+    border-radius: 5rem;
+    margin-bottom: 1rem;
+    text-align: center;
   }
+
+  &-description {
+    font-size: 1.25rem;
+    text-align: center;
+    max-width: 800px;
+  }
+}
+
+.publicity-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.panel-header {
+  text-align: center;
+  margin: 0;
+  font-weight: normal;
+  min-height: 5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.panel-content {
+  margin: 0;
+  min-height: 5rem;
 }

@@ -511,7 +511,7 @@ const MyPreset = definePreset(Aura, {
                 },
                 navigation: {
                     item: {
-                        focusBackground: "{surface.500}",
+                        focusBackground: "{surface.300}",
                         activeBackground: "{surface.100}",
                         color: "{text.color}",
                         focusColor: "{text.hover.color}",
@@ -4536,12 +4536,12 @@ const MyPreset = definePreset(Aura, {
             },
             horizontal: {
                 eventContent: {
-                    padding: "1rem 0"
+                    padding: "1rem 1rem"
                 }
             },
             vertical: {
                 eventContent: {
-                    padding: "0 1rem"
+                    padding: "1rem 1rem"
                 }
             },
             eventMarker: {

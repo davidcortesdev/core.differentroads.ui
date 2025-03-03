@@ -2,6 +2,7 @@
   <div class="avatar-name-section">
     <p-avatar
       *ngIf="personalInfo"
+      [icon]="personalInfo.avatarUrl != '' ? '' : 'pi pi-user'"
       [image]="personalInfo.avatarUrl || ''"
       size="xlarge"
       shape="circle"
@@ -11,7 +12,6 @@
   </div>
 </p-panel>
 
-<!-- Panel 2: Datos Personales -->
 <p-panel class="datos-panel">
   <ng-template pTemplate="header">
     <div class="panel-header">
@@ -21,51 +21,109 @@
       </button>
     </div>
   </ng-template>
+
   <p-divider></p-divider>
-  <div class="info-grid">
-    <div class="info-item" *ngIf="personalInfo">
+
+  <div class="info-grid" *ngIf="personalInfo">
+    <!-- Datos de contacto -->
+    <div class="info-item">
       <span class="label">Teléfono:</span>
-      <span class="value">{{ personalInfo.telefono }}</span>
+      <span class="value" [class.pending]="!personalInfo.telefono">
+        {{ personalInfo.telefono || 'Pendiente' }}
+      </span>
     </div>
-    <div class="info-item" *ngIf="personalInfo">
+    <div class="info-item">
       <span class="label">Email:</span>
-      <span class="value">{{ personalInfo.email }}</span>
-    </div>
-    <div class="info-item" *ngIf="personalInfo">
-      <span class="label">DNI:</span>
-      <span class="value">{{ personalInfo.dni }}</span>
-    </div>
-    <div class="info-item" *ngIf="personalInfo">
-      <span class="label">Pasaporte:</span>
-      <span class="value">{{ personalInfo.pasaporte || "PENDIENTE" }}</span>
-    </div>
-    <div class="info-item" *ngIf="personalInfo">
-      <span class="label">Fecha de expedición (Pasaporte):</span>
-      <span class="value">{{
-        personalInfo.fechaExpedicionPasaporte || "PENDIENTE"
-      }}</span>
+      <span class="value" [class.pending]="!personalInfo.email">
+        {{ personalInfo.email || 'Pendiente' }}
+      </span>
     </div>
 
-    <div class="info-item" *ngIf="personalInfo">
-      <span class="label">Fecha de vencimiento (Pasaporte):</span>
-      <span class="value">{{
-        personalInfo.fechaVencimientoPasaporte || "PENDIENTE"
-      }}</span>
+    <!-- Datos personales -->
+    <div class="info-item">
+      <span class="label">Sexo:</span>
+      <span class="value" [class.pending]="!personalInfo.sexo">
+        {{ personalInfo.sexo || 'Pendiente' }}
+      </span>
+    </div>
+    <div class="info-item">
+      <span class="label">Fecha de nacimiento:</span>
+      <span class="value" [class.pending]="!personalInfo.fechaNacimiento">
+        {{ personalInfo.fechaNacimiento || 'Pendiente' }}
+      </span>
+    </div>
+    <div class="info-item">
+      <span class="label">Ciudad:</span>
+      <span class="value" [class.pending]="!personalInfo.ciudad">
+        {{ personalInfo.ciudad || 'Pendiente' }}
+      </span>
+    </div>
+    <div class="info-item">
+      <span class="label">Código postal:</span>
+      <span class="value" [class.pending]="!personalInfo.codigoPostal">
+        {{ personalInfo.codigoPostal || 'Pendiente' }}
+      </span>
+    </div>
+    <div class="info-item">
+      <span class="label">Nacionalidad:</span>
+      <span class="value" [class.pending]="!personalInfo.nacionalidad">
+        {{ personalInfo.nacionalidad || 'Pendiente' }}
+      </span>
     </div>
 
     <p-divider></p-divider>
 
-    <div class="info-item" *ngIf="personalInfo">
-      <span class="label">Nacionalidad:</span>
-      <span class="value">{{ personalInfo.nacionalidad }}</span>
+    <!-- Datos DNI -->
+    <div class="info-item">
+      <span class="label">DNI:</span>
+      <span class="value" [class.pending]="!personalInfo.dni">
+        {{ personalInfo.dni || 'Pendiente' }}
+      </span>
     </div>
-    <div class="info-item" *ngIf="personalInfo">
-      <span class="label">Sexo:</span>
-      <span class="value">{{ personalInfo.sexo }}</span>
+    <div class="info-item">
+      <span class="label">Fecha de expedición:</span>
+      <span class="value" [class.pending]="!personalInfo.fechaExpedicionDni">
+        {{ personalInfo.fechaExpedicionDni || 'Pendiente' }}
+      </span>
     </div>
-    <div class="info-item" *ngIf="personalInfo">
-      <span class="label">Fecha de nacimiento:</span>
-      <span class="value">{{ personalInfo.fechaNacimiento }}</span>
+    <div class="info-item">
+      <span class="label">Fecha de caducidad:</span>
+      <span class="value" [class.pending]="!personalInfo.fechaCaducidadDni">
+        {{ personalInfo.fechaCaducidadDni || 'Pendiente' }}
+      </span>
     </div>
+
+    <p-divider></p-divider>
+
+    <!-- Datos Pasaporte -->
+    <div class="info-item">
+      <span class="label">Pasaporte:</span>
+      <span class="value" [class.pending]="!personalInfo.pasaporte">
+        {{ personalInfo.pasaporte || 'Pendiente' }}
+      </span>
+    </div>
+    <div class="info-item">
+      <span class="label">País expedición:</span>
+      <span class="value" [class.pending]="!personalInfo.paisExpedicion">
+        {{ personalInfo.paisExpedicion || 'Pendiente' }}
+      </span>
+    </div>
+    <div class="info-item">
+      <span class="label">Fecha de expedición:</span>
+      <span class="value" [class.pending]="!personalInfo.fechaExpedicionPasaporte">
+        {{ personalInfo.fechaExpedicionPasaporte || 'Pendiente' }}
+      </span>
+    </div>
+    <div class="info-item">
+      <span class="label">Fecha de caducidad:</span>
+      <span class="value" [class.pending]="!personalInfo.fechaVencimientoPasaporte">
+        {{ personalInfo.fechaVencimientoPasaporte || 'Pendiente' }}
+      </span>
+    </div>
+  </div>
+
+  <div class="alert-message">
+    <i class="pi pi-info-circle"></i>
+    <span>Completa tus datos personales pendientes antes de tu viaje. Estos datos son necesarios para la emisión de tus billetes.</span>
   </div>
 </p-panel>

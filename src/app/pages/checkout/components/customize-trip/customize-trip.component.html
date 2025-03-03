@@ -1,5 +1,11 @@
 <div class="customize-trip">
-  <app-traveler-selector></app-traveler-selector>
-  <app-room-selector></app-room-selector>
-  <app-optional-activities></app-optional-activities>
+  <div>
+    <app-traveler-selector
+      [availableTravelers]="availableTravelers"
+    ></app-traveler-selector>
+    <app-room-selector [periodID]="orderDetails.periodID"></app-room-selector>
+  </div>
+  <app-optional-activities
+    [periodID]="orderDetails.periodID"
+  ></app-optional-activities>
 </div>

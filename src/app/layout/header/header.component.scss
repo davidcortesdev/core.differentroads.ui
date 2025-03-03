@@ -1,254 +1,52 @@
-/*:host ::ng-deep {
-  .header-container {
-    display: flex;
-    justify-content: space-between;
-    background-color: #E57373;
-    padding: 0 1rem;
-  }
+// Layout variables
+$skeleton-gap: 1rem;
+$profile-gap: 1.4rem;
+$mobile-breakpoint: 768px;
 
-  .header-menu {
-    background-color: transparent;
-    border: none;
-    border-radius: 0;
-    padding: 0.5rem 0;
+// Colors
+$skeleton-bg: rgba(255, 255, 255, 0.1);
+$skeleton-shine: rgba(255, 255, 255, 0.2);
 
-    .p-menubar-root-list {
-      > .p-menuitem {
-        > .p-menuitem-link {
-          .p-menuitem-text {
-            color: white;
-            font-weight: 500;
-          }
-
-          .p-submenu-icon {
-            color: white;
-          }
-        }
-
-        &:hover {
-          > .p-menuitem-link {
-            background-color: rgba(255, 255, 255, 0.1);
-          }
-        }
-      }
-    }
-  }
-
-  .left-menu {
-    margin-right: auto;
-  }
-
-  .right-menu {
-    margin-left: auto;
-  }
+// Mixins
+@mixin flex-center {
+  display: flex;
+  align-items: center;
 }
+
+// Skeleton styles
+.menu-skeleton {
+  @include flex-center;
+  gap: $skeleton-gap;
+}
+
+.user-skeleton {
+  border-radius: 16px;
+}
+
+// Profile section
+.busqPerfil {
+  @include flex-center;
+  gap: $profile-gap;
+}
+
+// Deep styles for PrimeNG components
 :host ::ng-deep {
-  .header-wrapper {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .top-section {
-    background-color: #0A1E3C;
-    padding: 0.5rem 2rem;
-
-    .top-menu {
-      background-color: transparent;
-      border: none;
-      
-      .logo {
-        height: 35px;
-      }
-
-      .search-input {
-        background: transparent;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 20px;
-        color: white;
-        width: 200px;
-      }
-
-      .currency {
-        color: white;
-      }
-    }
-  }
-
-  .bottom-section {
-    background-color: var(--p-primary-950);
-    padding: 0.5rem 2rem;
-
-    .nav-menu {
-      background-color: transparent;
-      border: none;
-
-      .p-menubar-root-list {
-        > .p-menuitem {
-          > .p-menuitem-link {
-            .p-menuitem-text {
-              color: var(--p-primary-50);
-              font-weight: 500;
-            }
-
-            .p-submenu-icon {
-              color: var(--p-primary-50);
-            }
-          }
-
-          &:hover {
-            > .p-menuitem-link {
-              background-color: var(--p-primary-800);
-              
-              .p-menuitem-text {
-                color: var(--p-primary-50);
-              }
-              
-              .p-submenu-icon {
-                color: var(--p-primary-50);
-              }
-            }
-          }
-        }
-      }
-    }
-
-    .left-menu, .right-menu {
-      background: transparent;
-      border: none;
-      padding: 0;
-
-      .p-menubar-root-list {
-        > .p-menuitem {
-          > .p-menuitem-link {
-            .p-menuitem-text {
-              color: var(--p-primary-50);
-              font-weight: 500;
-            }
-
-            &:hover {
-              background-color: var(--p-primary-800);
-            }
-          }
-        }
-      }
-    }
-  }
-}
-:host ::ng-deep {
-  .top-section {
-    background-color: #0A1E3C;
-    padding: 0.5rem 2rem;
-
-    .top-menu {
-      background-color: transparent;
-      border: none;
-      
-      .logo {
-        height: 35px;
-      }
-
-      .search-input {
-        background: transparent;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 20px;
-        color: white;
-      }
-
-      .currency {
-        color: white;
-      }
-
-      .language-selector input {
-        color: white;
-        background: transparent;
-      }
-
-      .sign-in-button {
-        background: transparent;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        color: white;
-      }
-    }
-  }
-
-  .bottom-section {
-    background-color: var(--p-primary-color);
-    padding: 0.5rem 2rem;
-
-    .bottom-menu {
-      background-color: transparent;
-      border: none;
-
-      .p-menubar-root-list {
-        > .p-menuitem {
-          > .p-menuitem-link {
-            color: white;
-            font-weight: 500;
-
-            .p-menuitem-text {
-              color: white;
-            }
-
-            .p-submenu-icon {
-              color: white;
-            }
-          }
-        }
-      }
-    }
-  }
-}
-.language-selector {
-  .p-autocomplete-input {
-    background: transparent;
-    border: none;
-    color: white;
-    width: 60px;
-    padding: 0.5rem;
-  }
-  
-  .p-autocomplete-dropdown {
-    background: transparent;
-    border: none;
-    color: white;
+  .p-skeleton {
+    background-color: $skeleton-bg;
     
-    &:hover {
-      background: rgba(255, 255, 255, 0.1);
-    }
-  }
-}
-:host ::ng-deep {
-  .top-section {
-    .sign-in-button {
-      background: transparent;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      color: white;
-      
-      &:hover {
-        background: rgba(255, 255, 255, 0.1);
-      }
+    &::after {
+      background: linear-gradient(
+        90deg,
+        $skeleton-bg,
+        $skeleton-shine,
+        $skeleton-bg
+      );
     }
   }
 
-  .bottom-section {
-    .nav-menu {
-      .left-menu, .right-menu {
-        background: transparent;
-        border: none;
-        padding: 0;
-
-        .p-menubar-root-list {
-          > .p-menuitem {
-            > .p-menuitem-link {
-              .p-menuitem-text {
-                color: white;
-                font-weight: 500;
-              }
-            }
-          }
-        }
-      }
+  @media screen and (max-width: $mobile-breakpoint) {
+    .user-chip .p-chip-label {
+      display: none;
     }
   }
 }
-  */

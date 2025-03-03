@@ -29,7 +29,7 @@
         </div>
         <div class="current-price">
           <span>Desde</span>
-          <span class="amount">{{ tour.price }}€</span>
+          <span class="amount">{{ tour.price || 0 | currencyFormat : "EUR"  }}</span>
         </div>
       </div>
       <a href="#prices" class="price-link">Ir a este precio</a>
@@ -37,3 +37,4 @@
     <p-button label="Reservar mi tour" styleClass="p-button-rounded"></p-button>
   </div>
 </div>
+<!-- El div spacer se creará dinámicamente desde el componente -->

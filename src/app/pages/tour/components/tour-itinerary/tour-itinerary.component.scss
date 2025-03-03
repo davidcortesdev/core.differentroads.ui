@@ -1,182 +1,473 @@
+$breakpoints: (
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1366px
+);
+$spaces: (
+  xs: 0.5rem,
+  sm: 0.75rem,
+  base: 1rem,
+  lg: 1.5rem
+);
+@mixin resp($bp) {
+  @media (max-width: map-get($breakpoints, $bp)) {
+    @content;
+  }
+}
+@mixin flex($dir: row, $just: flex-start, $align: stretch, $gap: 0) {
+  display: flex;
+  flex-direction: $dir;
+  justify-content: $just;
+  align-items: $align;
+  @if $gap > 0 {
+    gap: $gap;
+  }
+}
 .itinerary-section {
-  padding: 2rem 0;
-
+  color: var(--background-azul);
+  text-align: center;
+  padding: map-get($spaces, lg) 0;
+  margin-bottom: 20px;
   h2 {
-    text-align: center;
-    color: var(--text-color);
-    margin-bottom: 2rem;
     font-size: 2rem;
+    @include resp(md) {
+      font-size: 1.5rem;
+    }
+  }
+  p {
+    margin-top: -20px;
+    font-size: 15px;
+  }
+}
+.date-option-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+
+  .date-price {
+    font-weight: bold;
+    color: var(--background-azul);
   }
 }
 
-.itinerary-content {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto;
-  margin: 0.5rem 0;
-
-  img {
+.itinerary-container {
+  @include flex(row-reverse, flex-start, stretch, map-get($spaces, lg));
+  padding: 0 map-get($spaces, lg);
+  min-height: calc(100vh - 200px);
+  @include resp(xl) {
+    gap: map-get($spaces, base);
+    padding: 0 map-get($spaces, base);
+    min-height: calc(100vh - 180px);
+  }
+  @include resp(lg) {
+    flex-direction: column;
+    min-height: auto;
+  }
+  @include resp(sm) {
+    padding: 0 map-get($spaces, base);
+  }
+}
+.timeline-section {
+  flex: 3;
+  max-width: 60%;
+  @include resp(xl) {
+    max-width: 65%;
+  }
+  @include resp(lg) {
+    max-width: 100%;
+    margin-top: map-get($spaces, lg);
+    order: 2;
+  }
+}
+.map-section {
+  flex: 2;
+  position: sticky;
+  top: 2rem;
+  height: calc(100vh - 200px);
+  @include resp(lg) {
+    flex: none;
+    position: static;
+    height: 500px;
+  }
+  @include resp(md) {
+    height: 350px;
+  }
+  @include resp(sm) {
+    height: 250px;
+  }
+  .map-placeholder {
     width: 100%;
-    height: 200px;
+    height: 100%;
+    background-color: #f5f5f5;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+
+    .map-loaded {
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+.panel-header-content {
+  @include flex(row, space-between, center);
+  width: 100%;
+  @include resp(md) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .day-info {
+    flex: 1;
+    .day-title {
+      margin: 0;
+      font-weight: 700;
+      color: var(--background-azul);
+      font-size: 25px;
+      @include resp(md) {
+        font-size: 17px;
+      }
+    }
+  }
+  .header-image {
+    flex: 0 0 auto;
+    margin-left: 1rem;
+    @include resp(md) {
+      margin-left: 0;
+      margin-top: 0.5rem;
+      width: 100%;
+    }
+    .day-thumbnail {
+      margin-top: 5px;
+      width: 219px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+      @include resp(md) {
+        width: 100%;
+        height: 100px;
+      }
+      @include resp(sm) {
+        width: 100%;
+        height: 100px;
+      }
+    }
+  }
+}
+%title-shared {
+  font-size: 25px;
+  font-weight: 700;
+  margin: 0 0 1rem 0;
+  color: var(--background-azul);
+  @include resp(xl) {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+  }
+  @include resp(md) {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+}
+.content-title,
+.day {
+  @extend %title-shared;
+}
+.itinerary-content {
+  color: var(--background-azul);
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: 1fr 1fr;
+  margin: 0.5rem 0;
+  margin-top: -20px;
+  img {
+    width: 320px;
+    height: 250px;
     object-fit: cover;
     border-radius: 14px;
+    margin-top: 20px;
+    justify-self: end;
+    @include resp(md) {
+      height: 180px;
+      width: 100%;
+    }
+    @include resp(sm) {
+      width: 100%;
+      height: 200px;
+    }
   }
-}
-
-.itinerary-activities::ng-deep {
-  .p-carousel {
-    .p-card-body {
-      padding: 0px;
+  @include resp(sm) {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    grid-template-areas: "image" "description";
+    img {
+      grid-area: image;
+      justify-self: center;
     }
-
-    .p-carousel-content {
-      padding: 0;
+    div:not(:has(img)) {
+      grid-area: description;
     }
-
-    .highlight-card {
-      border: none;
-      margin: 0.5rem;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      max-width: 17rem;
-
-      .p-card-body {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
+  }
+  @include resp(md) {
+    &:not([class*="resp-sm"]) {
+      img {
+        width: 100%;
+        max-width: 280px; /* Limita el ancho máximo en tablets */
       }
-
-      .card-header {
-        position: relative;
-
-        img {
-          width: 100%;
-          height: 200px;
-          object-fit: cover;
-          border-radius: 12px;
-        }
-
-        .status-badge {
-          position: absolute;
-          top: 1rem;
-          right: 1rem;
-          background: var(--p-button-primary-color);
-          color: var(--background-azul);
-          padding: 0.3rem 0.6rem;
-          border-radius: 8px;
-          font-size: 0.9rem;
-
-          &.optional {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: var(--p-primary-color);
-            color: #fff;
-            padding: 0.3rem 0.6rem;
-            border-radius: 8px;
-            font-size: 0.9rem;
-          }
-        }
-      }
-
-      h3 {
-        margin: 0.5rem 0;
-        color: var(--background-azul);
-        font-size: 1.25rem;
-      }
-
-      p {
-        margin: 0;
-        color: var(--background-azul);
-        line-height: 1.5;
-        font-size: 0.875rem;
-        display: -webkit-box;
-        -webkit-line-clamp: 4;
-        line-clamp: 4;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        flex: 1;
-      }
-    }
-
-    .p-carousel-prev,
-    .p-carousel-next {
-      color: var(--primary-color);
     }
   }
 }
-
 .hotel-card {
-  display: flex;
-  gap: 1rem;
-  padding: 1rem;
+  color: var(--background-azul);
+  @include flex(row, flex-start, center, 1rem);
   border-radius: 18px;
   border: 1px solid #d9d9d9;
-  padding: 10px 20px 10px 10px;
-
-  &-content {
-    display: flex;
+  padding: 8px;
+  @include resp(xl) {
+    padding: 8px 15px 8px 8px;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+  @include resp(md) {
     flex-direction: column;
-    gap: 0.5rem;
-    flex-grow: 1;
-    align-items: flex-start;
-    padding: 1rem 0;
-    text-align: left;
 
-    h4 {
-      font-size: 18px;
-      font-style: normal;
-      font-weight: 500;
-      margin: 0;
+    &-image {
+      width: 100%;
+      margin-bottom: 0.5rem;
     }
 
-    p {
-      font-size: 14px;
-      font-style: normal;
-      font-weight: 500;
-      margin: 0;
-
-      & > i {
-        color: var(--p-primary-color);
-      }
+    &-content {
+      padding: 0.5rem 0;
     }
   }
-
   &-image {
-    //width: 200px;
-
-    //height: 105px;
     width: 40%;
     aspect-ratio: 16 / 9;
     object-fit: cover;
     border-radius: 14px;
+    @include resp(xl) {
+      border-radius: 10px;
+    }
+    @include resp(sm) {
+      width: 100%;
+    }
   }
-
+  &-content {
+    @include flex(column, flex-start, flex-start, 0.5rem);
+    flex-grow: 1;
+    padding: 0.75rem 0;
+    h4,
+    p {
+      margin: 0;
+    }
+    h4 {
+      font-size: 13px;
+      font-weight: 500;
+      @include resp(xl) {
+        font-size: 16px;
+      }
+    }
+    p {
+      font-size: 14px;
+      @include resp(xl) {
+        font-size: 13px;
+      }
+      i {
+        color: var(--p-primary-color);
+      }
+    }
+  }
   &-bookings-section {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    justify-content: center;
-    margin-top: 1rem;
-
+    @include flex(row, center, center, 1rem);
+    margin-top: 0.75rem;
     p {
       display: inline-flex;
       height: 29px;
       width: 29px;
       justify-content: center;
       align-items: center;
-      gap: 8.286px;
-      flex-shrink: 0;
       border-radius: 3.314px 3.314px 3.314px 0px;
       background: var(--background-azul);
       color: var(--background-azul-color-letra);
       font-size: 11.6px;
-      font-style: normal;
       font-weight: 600;
-      line-height: 110%; /* 12.76px */
+    }
+  }
+}
+:host ::ng-deep {
+  .pi {
+    color: var(--p-primary-color);
+  }
+  [style*="background-color: rgb(156, 39, 176)"],
+  [style*="#9C27B0"] {
+    background-color: transparent !important;
+  }
+  .itinerary-section {
+    .p-dropdown {
+      background-color: var(--background-azul);
+      color: #fff;
+      width: 280px;
+      margin: 0 auto;
+      margin-top: -10px;
+      border: 1px solid var(--background-azul);
+      border-radius: 50px;
+      .p-dropdown-label {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .p-dropdown-item {
+        padding: 0.75rem 1rem;
+
+        &.p-highlight {
+          background-color: rgba(var(--background-azul-rgb), 0.1);
+        }
+      }
+    }
+    .p-select-label {
+      color: #fff;
+      margin-left: 10px;
+    }
+    .p-icon {
+      color: #fff;
+      margin-right: 10px;
+    }
+    .p-dropdown-panel {
+      .p-dropdown-items {
+        padding: 0.5rem 0;
+      }
+    }
+  }
+  .p-timeline {
+    .p-timeline-event {
+      position: relative;
+      .p-timeline-event-connector {
+        left: 0.65rem;
+      }
+      .p-timeline-event-marker {
+        cursor: pointer;
+        transform: translateY(3px); /* Ajuste sutil para alinear con el panel */
+      }
+    }
+  }
+  .p-timeline-event-opposite {
+    flex: 0;
+    margin-left: -20px;
+  }
+  .p-timeline-event-content {
+    margin-left: 1rem;
+    background-color: transparent;
+    padding: 0 0 1.5rem 0.5rem;
+    @include resp(xl) {
+      padding-bottom: 1rem;
+    }
+    @include resp(sm) {
+      padding-bottom: 0.75rem;
+      padding-right: 1.5rem;
+    }
+  }
+  .custom-panel {
+    border-radius: 18px;
+    .p-panel-header,
+    .p-panel-content {
+      border-radius: 1rem;
+    }
+    &.p-panel-expanded {
+      .p-panel-header .panel-header-content {
+        display: none;
+      }
+      .p-panel-header {
+        min-height: 40px;
+        display: flex;
+        justify-content: flex-end;
+      }
+    }
+  }
+  .itinerary-activities {
+    margin-top: 0.75rem;
+    @include resp(xl) {
+      margin-top: 0.5rem;
+    }
+    .p-carousel {
+      .p-card-body,
+      .p-carousel-content {
+        padding: 0;
+      }
+      .highlight-card {
+        border: none;
+        margin: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        max-width: 17rem;
+        @include resp(xl) {
+          margin: 0.25rem;
+          max-width: 15rem;
+        }
+        .p-card-body {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .status-badge {
+          position: absolute;
+          top: 0.75rem;
+          right: 0.75rem;
+          background: var(--p-button-primary-color);
+          color: var(--background-azul);
+          padding: 0.3rem 0.6rem;
+          border-radius: 8px;
+          font-size: 0.9rem;
+          @include resp(md) {
+            top: 0.5rem;
+            right: 0.5rem;
+            padding: 0.2rem 0.4rem;
+            font-size: 0.8rem;
+          }
+          &.optional {
+            background: var(--p-primary-color);
+            color: #fff;
+          }
+        }
+        h3 {
+          margin: 0.5rem 0;
+          color: var(--background-azul);
+          font-size: 1.25rem;
+          @include resp(md) {
+            font-size: 1.1rem;
+            margin: 0.25rem 0;
+          }
+        }
+        p {
+          margin: 0;
+          color: var(--background-azul);
+          line-height: 1.5;
+          font-size: 0.875rem;
+          display: -webkit-box;
+          -webkit-line-clamp: 4;
+          line-clamp: 4;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          flex: 1;
+        }
+        img {
+          width: 100%;
+          height: 200px;
+          object-fit: cover;
+          border-radius: 14px;
+          @include resp(md) {
+            height: 180px;
+          }
+          .p-button {
+            margin-top: 1rem;
+            align-self: flex-start;
+          }
+        }
+      }
     }
   }
 }

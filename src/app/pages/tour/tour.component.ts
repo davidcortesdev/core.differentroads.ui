@@ -3,6 +3,10 @@ import { ActivatedRoute } from '@angular/router';
 import { ToursService } from '../../core/services/tours.service';
 import { Tour } from '../../core/models/tours/tour.model';
 import { catchError } from 'rxjs';
+import { OrdersService } from '../../core/services/orders.service';
+import { Router } from '@angular/router';
+import { Departure } from './components/tour-departures/tour-departures.component';
+import { Order } from '../../core/models/orders/order.model';
 
 @Component({
   selector: 'app-tour',
@@ -18,7 +22,9 @@ export class TourComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private toursService: ToursService
+    private toursService: ToursService,
+    private ordersService: OrdersService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -42,11 +48,38 @@ export class TourComponent implements OnInit {
           return [];
         })
       )
-      .subscribe((tourData: Tour) => {
-        this.tour = tourData;
-        console.log(tourData);
-        this.loading = false;
+      .subscribe({
+        next: (tourData: Tour) => {
+          this.tour = tourData;
+          console.log(tourData);
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error loading tour:', error);
+          this.error = true;
+          this.loading = false;
+        },
       });
+  }
+
+  createOrderAndRedirect(departure: Departure): void {
+    const order: Partial<Order> = {
+      periodID: departure.externalID,
+      retailerID: '1064',
+      status: 'AB',
+      owner: 'currentUserEmail',
+      travelers: [],
+    };
+
+    this.ordersService.createOrder(order).subscribe({
+      next: (createdOrder) => {
+        console.log('Order created:', createdOrder);
+        this.router.navigate(['/checkout', createdOrder._id]);
+      },
+      error: (error) => {
+        console.error('Error creating order:', error);
+      },
+    });
   }
 
   getDuration(days: number | undefined): string {

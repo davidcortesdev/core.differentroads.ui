@@ -1,5 +1,10 @@
 .active-bookings {
     margin-left: 15px;
+    margin-right: 16px;
+
+    @media screen and (min-width: 768px) and (max-width: 1024px) {
+        margin-right: 15px; // Solo para tablets
+    }
 
     .booking-header {
         display: flex;
@@ -19,7 +24,14 @@
         .pi {
             font-size: 12px;
             font-weight: 700;
-            color: var(--background-azul);
+
+            &.arrow-down {
+                color: var(--p-primary-color);
+            }
+
+            &.arrow-up {
+                color: var(--background-azul);
+            }
         }
     }
 
@@ -70,7 +82,7 @@
                     margin: 0 0 0.5rem 0;
                     font-size: 16px;
                     font-weight: 700;
-                    color: var(--background-azul);
+                    color: var(--p-primary-color);
                     flex-shrink: 0;
                 }
 

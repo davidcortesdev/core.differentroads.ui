@@ -26,7 +26,7 @@ export interface PersonalInfo {
 export class ProfileComponent implements OnInit {
   personalInfo!: PersonalInfo;
   isEditing: boolean = false;
-  avatarUrl: string = 'https://picsum.photos/200';
+  avatarUrl: string = '';
   userEmail: string = '';
 
   constructor(

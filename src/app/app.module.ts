@@ -46,6 +46,7 @@ import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeng/themes/aura';
 
 // PrimeNG Modules
+import { MenuModule } from 'primeng/menu';
 import { MenubarModule } from 'primeng/menubar';
 import { TabsModule } from 'primeng/tabs';
 import { EditorModule } from 'primeng/editor';
@@ -125,6 +126,7 @@ import { FlightsComponent } from './pages/checkout/components/flights/flights.co
 import { TravelersComponent } from './pages/checkout/components/travelers/travelers.component';
 import { PaymentComponent } from './pages/checkout/components/payment/payment.component';
 import { TourCardComponent } from './shared/components/tour-card/tour-card.component';
+import { ReactiveFormsModule } from '@angular/forms';
 
 import { StepsModule } from 'primeng/steps';
 
@@ -139,12 +141,17 @@ import { TravelerSelectorComponent } from './pages/checkout/components/customize
 import { RoomSelectorComponent } from './pages/checkout/components/customize-trip/components/room-selector/room-selector.component';
 
 import { FlightItineraryComponent } from './pages/checkout/components/flights/components/flight-itinerary/flight-itinerary.component';
+import { CurrencyPipe } from './core/pipes/currency.pipe';
 import { ReservationComponent } from './pages/reservation/reservation.component';
 import { TravelInformationSectionComponent } from './pages/reservation/components/travel-information-section/travel-information-section.component';
 import { TravelersInformationSectionComponent } from './pages/reservation/components/travelers-information-section/travelers-information-section.component';
 import { FlightsSectionComponent } from './pages/reservation/components/flights-section/flights-section.component';
 import { PricesSectionComponent } from './pages/reservation/components/prices-section/prices-section.component';
 import { PaymentsInformationSectionComponent } from './pages/reservation/components/payments-information-section/payments-information-section.component';
+
+import { GoogleMapsModule } from '@angular/google-maps';
+
+import { SkeletonModule } from 'primeng/skeleton';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -279,8 +286,12 @@ export function HttpLoaderFactory(http: HttpClient) {
     CheckboxModule,
     ForgetPasswordComponent,
     StepsModule,
+    ReactiveFormsModule,
     StepperModule,
     MultiSelectModule,
+    GoogleMapsModule,
+    MenuModule,
+    SkeletonModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,
@@ -289,6 +300,7 @@ export function HttpLoaderFactory(http: HttpClient) {
       },
       defaultLanguage: 'es',
     }),
+    CurrencyPipe,
   ],
   providers: [
     provideAnimationsAsync(),

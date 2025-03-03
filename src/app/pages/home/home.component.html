@@ -1,10 +1,5 @@
 <div class="home-container">
   <app-hero-section></app-hero-section>
-  <app-tours-section
-    *ngIf="featuredTours"
-    [content]="featuredTours"
-  ></app-tours-section>
-  <app-community-section></app-community-section>
   <app-dynamic-components
     *ngIf="blocks$ | async as blocks"
     [blocks]="blocks"

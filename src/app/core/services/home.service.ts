@@ -83,10 +83,23 @@ export class HomeService {
 
   getDynamicSections(): Observable<Block[]> {
     return this.getHomeData().pipe(
-      map((homeData: HomeSchema) => homeData.blocks || [])
+      map((homeData: HomeSchema) =>
+        [
+          ...(homeData.blocks || []),
+          {
+            type: BlockType.TourSection,
+            name: 'tours-section',
+            content: homeData['featured-tours'],
+          },
+          {
+            type: BlockType.TravelersSection,
+            name: 'travelers-section',
+            content: homeData['travelers-section'] as TravelersSection,
+          },
+        ].sort((a, b) => (a?.content?.order || 20) - (b?.content?.order || 20))
+      )
     );
   }
-
   getSEO(): Observable<SEO> {
     return this.getHomeData().pipe(map((homeData: HomeSchema) => homeData.seo));
   }

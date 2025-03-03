@@ -32,4 +32,5 @@ export type BlockContent =
   | FullSliderContent
   | PressListContent
   | BlogListContent
-  | TravelersSection;
+  | TravelersSection
+  | null;

@@ -21,6 +21,7 @@ export class InsurancesComponent implements OnInit, OnChanges {
   @Input() periodID!: string;
   insurances: Insurance[] = [];
   addedInsurances: Set<string> = new Set();
+  selectedInsurance: Insurance | null = null;
 
   constructor(
     private periodsService: PeriodsService,
@@ -74,11 +75,9 @@ export class InsurancesComponent implements OnInit, OnChanges {
   }
 
   toggleInsurance(insurance: Insurance): void {
-    if (this.addedInsurances.has(insurance.id)) {
-      this.addedInsurances.delete(insurance.id);
-    } else {
-      this.addedInsurances.add(insurance.id);
-    }
+    this.selectedInsurance = insurance;
+    this.addedInsurances.clear();
+    this.addedInsurances.add(insurance.id);
     this.updateAddedInsurances();
   }
 

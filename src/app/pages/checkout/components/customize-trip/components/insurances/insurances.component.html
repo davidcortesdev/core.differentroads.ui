@@ -37,13 +37,13 @@
             *ngIf="item.price"
           >
             <div class="dataview-selector">
-              <p-checkbox
+              <p-radioButton
                 [inputId]="item.id"
                 name="insurance"
                 [value]="item"
-                [checked]="isInsuranceAdded(item)"
-                (onChange)="toggleInsurance(item)"
-              ></p-checkbox>
+                [(ngModel)]="selectedInsurance"
+                (onClick)="toggleInsurance(item)"
+              ></p-radioButton>
             </div>
 
             <div class="dataview-content">

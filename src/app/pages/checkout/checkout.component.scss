@@ -110,13 +110,105 @@
   }
 }
 
-
 @media screen and (max-width: 1024px) {
   .checkout-container {
     grid-template-columns: 1fr;
 
     .order-summary {
       position: static;
+    }
+  }
+}
+
+.booking-flights {
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 1rem;
+
+  &-details {
+    border-top: 0.0625rem solid black;
+    margin-top: 0.5rem;
+
+    &-itinerary {
+      margin-top: 1rem;
+    }
+
+    &-note {
+      font-size: 0.75rem;
+      color: var(--text-gray);
+    }
+  }
+}
+
+.itinerary-flight {
+  & i {
+    color: var(--p-primary-color);
+  }
+
+  &-date {
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    font-weight: 700;
+    padding: 0.5rem 0;
+    font-size: 1rem;
+
+    &-line {
+      border-top: 1px solid var(--p-primary-color);
+      flex-grow: 1;
+      margin: 0 1rem !important;
+    }
+  }
+
+  &-scale {
+    font-size: 0.875rem;
+    margin: 0.3rem 0;
+  }
+
+  &-wrap {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin: 0.5rem 0;
+    font-size: 0.8rem;
+
+    & > .itinerary-flight-departure {
+      align-items: flex-start;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+
+      & span {
+        &:first-child {
+          font-weight: 700;
+        }
+
+        &:last-child {
+          font-weight: 500;
+        }
+      }
+    }
+
+    & > .itinerary-flight-arrival {
+      align-items: flex-end;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+
+      & span {
+        &:first-child {
+          font-weight: 700;
+        }
+
+        &:last-child {
+          font-weight: 500;
+        }
+      }
+    }
+
+    &-divide {
+      width: 1.5rem;
     }
   }
 }

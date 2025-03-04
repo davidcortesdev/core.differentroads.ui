@@ -132,7 +132,103 @@
           <div class="flights-info" *ngIf="selectedFlight">
             <h4>Vuelos</h4>
             <div class="flight-details">
-              <!-- Flight details here -->
+              <!-- outbound -->
+              <div
+                *ngFor="
+                  let segment of selectedFlight.outbound.segments;
+                  let idx = index
+                "
+                class="itinerary-flight"
+              >
+                <ng-container *ngIf="idx === 0">
+                  <div class="itinerary-flight-date">
+                    <span>IDA</span>
+                    <span class="itinerary-flight-date-line"></span>
+                    <i class="icon icon-navigate_next font-xl"></i>
+                    <span>{{
+                      selectedFlight.outbound.date | date : "dd/MM/yyyy"
+                    }}</span>
+                  </div>
+                  <div class="itinerary-flight-scale">
+                    <span>
+                      {{
+                        selectedFlight.outbound.segments.length > 1
+                          ? selectedFlight.outbound.segments.length -
+                            1 +
+                            " escala"
+                          : "Vuelo directo"
+                      }}
+                    </span>
+                  </div>
+                </ng-container>
+                <div class="itinerary-flight-wrap">
+                  <div class="itinerary-flight-departure">
+                    <span>{{ segment.departureTime }}</span>
+                    <span
+                      >{{ segment.departureCity }} ({{
+                        segment.departureIata
+                      }})</span
+                    >
+                  </div>
+                  <span><i class="icon icon-navigate_next"></i></span>
+                  <div class="itinerary-flight-arrival">
+                    <span>{{ segment.arrivalTime }}</span>
+                    <span
+                      >{{ segment.arrivalCity }} ({{
+                        segment.arrivalIata
+                      }})</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <!-- inbound -->
+              <div
+                *ngFor="
+                  let segment of selectedFlight.inbound.segments;
+                  let idx = index
+                "
+                class="itinerary-flight"
+              >
+                <ng-container *ngIf="idx === 0">
+                  <div class="itinerary-flight-date inbound">
+                    <span>VUELTA</span>
+                    <span class="itinerary-flight-date-line"></span>
+                    <span>{{
+                      selectedFlight.inbound.date | date : "dd/MM/yyyy"
+                    }}</span>
+                  </div>
+                  <div class="itinerary-flight-scale">
+                    <span>
+                      {{
+                        selectedFlight.inbound.segments.length > 1
+                          ? selectedFlight.inbound.segments.length -
+                            1 +
+                            " escala"
+                          : "Vuelo directo"
+                      }}
+                    </span>
+                  </div>
+                </ng-container>
+                <div class="itinerary-flight-wrap">
+                  <div class="itinerary-flight-departure">
+                    <span>{{ segment.departureTime }}</span>
+                    <span
+                      >{{ segment.departureCity }} ({{
+                        segment.departureIata
+                      }})</span
+                    >
+                  </div>
+                  <span><i class="icon icon-navigate_next"></i></span>
+                  <div class="itinerary-flight-arrival">
+                    <span>{{ segment.arrivalTime }}</span>
+                    <span
+                      >{{ segment.arrivalCity }} ({{
+                        segment.arrivalIata
+                      }})</span
+                    >
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

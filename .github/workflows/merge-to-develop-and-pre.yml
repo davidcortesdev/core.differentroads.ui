@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Set up permisos
         run: |
+          pwd
+          ls -l
           sudo chown -R runner:runner _work
 
       - name: Checkout repository

@@ -5,7 +5,6 @@ import { Tour } from '../../../../core/models/tours/tour.model';
 import { catchError } from 'rxjs';
 
 import { ProcessedTour } from '../../../../core/models/tours/processed-tour.model';
-import { BlockType } from '../../../../core/models/blocks/block.model';
 
 @Component({
   selector: 'app-tours-section',
@@ -15,8 +14,8 @@ import { BlockType } from '../../../../core/models/blocks/block.model';
 })
 export class ToursSectionComponent implements OnInit {
   @Input() content!: any;
-  @Input() type!: BlockType;
   tours: ProcessedTour[] = [];
+  title: string = '';
 
   responsiveOptions = [
     {
@@ -47,6 +46,9 @@ export class ToursSectionComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    if (this.content && this.content.title) {
+      this.title = this.content.title;
+    }
     this.loadTours();
   }
 
@@ -65,7 +67,7 @@ export class ToursSectionComponent implements OnInit {
       return;
     }
 
-    this.tours = [];
+    this.tours = []; // Reset the list
 
     tourIds.forEach((id: string): void => {
       this.toursService

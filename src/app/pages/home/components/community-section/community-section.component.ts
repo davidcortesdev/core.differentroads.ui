@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { HomeService } from '../../../../core/services/home.service';
 import { TravelersSection } from '../../../../core/models/blocks/travelers/travelers-section.model';
+import { BlockType } from '../../../../core/models/blocks/block.model';
 
 @Component({
   selector: 'app-community-section',
@@ -10,6 +11,7 @@ import { TravelersSection } from '../../../../core/models/blocks/travelers/trave
 })
 export class CommunitySectionComponent implements OnInit {
   @Input() content!: any;
+  @Input() type!: BlockType;
   travelersSection: TravelersSection | null = null;
 
   constructor(private homeService: HomeService) {}

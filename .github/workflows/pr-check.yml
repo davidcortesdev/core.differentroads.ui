@@ -17,9 +17,6 @@ jobs:
     runs-on: [ubuntu-latest]
     
     steps:
-      - name: Set up permisos
-        run: |
-          sudo chown -R runner:runner *
 
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
@@ -65,9 +62,6 @@ jobs:
     if: needs.check-branch.outputs.behind_by == '0'
     
     steps:
-      - name: Set up permisos
-        run: |
-          sudo chown -R runner:runner *
 
       - name: Checkout repository
         uses: actions/checkout@v4.2.2

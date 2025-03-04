@@ -16,9 +16,6 @@ jobs:
       id-token: write
 
     steps:
-      - name: Set up permisos
-        run: |
-          sudo chown -R runner:runner *
 
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
@@ -50,9 +47,6 @@ jobs:
     environment: pre
 
     steps:
-      - name: Set up permisos
-        run: |
-          sudo chown -R runner:runner *
 
       - name: Checkout repository
         uses: actions/checkout@v4.2.2

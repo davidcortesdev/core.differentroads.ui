@@ -14,7 +14,7 @@ on:
 
 jobs:
   check-branch:
-    runs-on: [self-hosted]
+    runs-on: [seld-hosted,ubuntu-latest]
     
     steps:
       - name: Set up permisos
@@ -60,7 +60,7 @@ jobs:
         run: exit 1
 
   build-check:
-    runs-on: [self-hosted]
+    runs-on: [seld-hosted,ubuntu-latest]
     needs: check-branch
     if: needs.check-branch.outputs.behind_by == '0'
     

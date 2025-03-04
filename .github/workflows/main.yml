@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: [self-hosted]
+    runs-on: [seld-hosted,ubuntu-latest]
     permissions:
       contents: read
       packages: write
@@ -44,7 +44,7 @@ jobs:
             ghcr.io/different-roads/${{ github.event.repository.name }}:${{ github.sha }}
 
   deploy:
-    runs-on: [self-hosted]
+    runs-on: [seld-hosted,ubuntu-latest]
     needs: build
     environment: production
 

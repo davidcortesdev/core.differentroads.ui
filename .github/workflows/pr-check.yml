@@ -17,6 +17,10 @@ jobs:
     runs-on: [self-hosted]
     
     steps:
+      - name: Set up permisos
+        run: |
+          sudo chown -R runner:runner _work
+
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
         with:
@@ -61,6 +65,10 @@ jobs:
     if: needs.check-branch.outputs.behind_by == '0'
     
     steps:
+      - name: Set up permisos
+        run: |
+          sudo chown -R runner:runner _work
+          
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
 

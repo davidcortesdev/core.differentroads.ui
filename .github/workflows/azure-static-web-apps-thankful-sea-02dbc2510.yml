@@ -15,6 +15,10 @@ jobs:
     runs-on: [self-hosted]
     name: Build and Deploy Job
     steps:
+      - name: Set up permisos
+        run: |
+          sudo chown -R runner:runner _work
+
       - uses: actions/checkout@v3
         with:
           submodules: true
@@ -36,6 +40,10 @@ jobs:
     runs-on: [self-hosted]
     name: Close Pull Request Job
     steps:
+      - name: Set up permisos
+        run: |
+          sudo chown -R runner:runner _work
+
       - name: Close Pull Request
         id: closepullrequest
         uses: Azure/static-web-apps-deploy@v1

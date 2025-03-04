@@ -9,6 +9,10 @@ jobs:
   merge-to-develop:
     runs-on: [self-hosted]
     steps:
+      - name: Set up permisos
+        run: |
+          sudo chown -R runner:runner _work
+
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
         with:
@@ -28,6 +32,10 @@ jobs:
   merge-to-pre:
     runs-on: [self-hosted]
     steps:
+      - name: Set up permisos
+        run: |
+          sudo chown -R runner:runner _work
+
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
         with:

@@ -22,6 +22,7 @@ export class InsurancesComponent implements OnInit, OnChanges {
   insurances: Insurance[] = [];
   addedInsurances: Set<string> = new Set();
   selectedInsurance: Insurance | null = null;
+  basicInsuranceSelected: boolean = true;
 
   constructor(
     private periodsService: PeriodsService,
@@ -55,13 +56,15 @@ export class InsurancesComponent implements OnInit, OnChanges {
         .getInsurances(this.periodID)
         .subscribe((insurances) => {
           this.insurancesService.updateInsurances(
-            insurances.map((insurance) => ({
-              ...insurance,
-              price: this.getPriceById(insurance.activityId),
-              priceData: this.pricesService.getPriceDataById(
-                insurance.activityId
-              ),
-            }))
+            insurances
+              .map((insurance) => ({
+                ...insurance,
+                price: this.getPriceById(insurance.activityId),
+                priceData: this.pricesService.getPriceDataById(
+                  insurance.activityId
+                ),
+              }))
+              .filter((insurance) => insurance.price > 0)
           );
           this.loadPrices();
         });
@@ -74,10 +77,12 @@ export class InsurancesComponent implements OnInit, OnChanges {
     });
   }
 
-  toggleInsurance(insurance: Insurance): void {
+  toggleInsurance(insurance: Insurance | null): void {
     this.selectedInsurance = insurance;
     this.addedInsurances.clear();
-    this.addedInsurances.add(insurance.id);
+    if (insurance) {
+      this.addedInsurances.add(insurance.id);
+    }
     this.updateAddedInsurances();
   }
 

@@ -95,15 +95,17 @@ export class CheckoutComponent implements OnInit {
       const periodID = order.periodID;
       this.periodID = periodID;
 
-      this.periodsService.getPeriodDetail(periodID).subscribe((period) => {
-        console.log('Period details:', period);
-        this.periodData = period;
+      this.periodsService
+        .getPeriodDetail(periodID, ['tourID', 'name', 'dayOne', 'returnDate'])
+        .subscribe((period) => {
+          console.log('Period details:', period);
+          this.periodData = period;
 
-        this.tourName = period.name;
+          this.tourName = period.name;
 
-        this.tourID = period.tourID;
-        this.tourDates = `${period.dayOne} - ${period.returnDate}`;
-      });
+          this.tourID = period.tourID;
+          this.tourDates = `${period.dayOne} - ${period.returnDate}`;
+        });
 
       this.periodsService.getPeriodPrices(periodID).subscribe((prices) => {
         console.log('Prices:', prices);
@@ -140,11 +142,6 @@ export class CheckoutComponent implements OnInit {
 
     this.flightsService.selectedFlight$.subscribe((flight) => {
       this.selectedFlight = flight;
-      this.updateOrderSummary();
-    });
-
-    this.insurancesService.selectedInsurance$.subscribe((insurance) => {
-      this.selectedInsurance = insurance;
       this.updateOrderSummary();
     });
 
@@ -279,6 +276,14 @@ export class CheckoutComponent implements OnInit {
         description: activity.name,
       });
     });
+
+    if (this.selectedInsurances.length === 0) {
+      this.summary.push({
+        qty: 1,
+        value: 0,
+        description: 'Seguro básico',
+      });
+    }
 
     let tempOrderData: Order = { ...this.summaryService.getOrderValue()! };
     const travelersData = this.travelersService.getTravelers();

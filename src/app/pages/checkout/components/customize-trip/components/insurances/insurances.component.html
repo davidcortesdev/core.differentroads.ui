@@ -11,7 +11,16 @@
       <div class="dataview-grid">
         <div class="dataview-item">
           <div class="dataview-card dataview-card-border">
-            <div class="dataview-selector"></div>
+            <div class="dataview-selector">
+              <p-radioButton
+                inputId="basicInsurance"
+                name="insurance"
+                [value]="null"
+                [(ngModel)]="selectedInsurance"
+                [checked]="basicInsuranceSelected"
+                (onClick)="toggleInsurance(null)"
+              ></p-radioButton>
+            </div>
             <div class="dataview-content">
               <div class="dataview-info">
                 <div>
@@ -27,15 +36,8 @@
             </div>
           </div>
         </div>
-        <div
-          class="dataview-item"
-          *ngFor="let item of items; let first = first"
-        >
-          <div
-            class="dataview-card"
-            [ngClass]="{ 'dataview-card-border': !first }"
-            *ngIf="item.price"
-          >
+        <div class="dataview-item" *ngFor="let item of items">
+          <div class="dataview-card dataview-card-border">
             <div class="dataview-selector">
               <p-radioButton
                 [inputId]="item.id"

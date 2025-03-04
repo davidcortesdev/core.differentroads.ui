@@ -102,19 +102,17 @@
           <div class="selected-items">
             <div *ngFor="let item of summary" class="item">
               <span>{{ item.description }}</span>
-
-              <span
-                >{{ item.qty }} x {{ item.value | currencyFormat : "EUR" }} =
-                {{ item.value * item.qty | currencyFormat : "EUR" }}</span
-              >
-            </div>
-          </div>
-
-          <!-- Flights info if selected -->
-          <div class="flights-info" *ngIf="selectedFlight">
-            <h4>Vuelos</h4>
-            <div class="flight-details">
-              <!-- Flight details here -->
+              <span>
+                {{
+                  item.value === 0
+                    ? "incluido"
+                    : item.qty +
+                      " x " +
+                      (item.value | currencyFormat : "EUR") +
+                      " = " +
+                      (item.value * item.qty | currencyFormat : "EUR")
+                }}
+              </span>
             </div>
           </div>
 
@@ -127,6 +125,14 @@
             <div class="total">
               <span>Total</span>
               <span>{{ total | currencyFormat : "EUR" }}</span>
+            </div>
+          </div>
+
+          <!-- Flights info if selected -->
+          <div class="flights-info" *ngIf="selectedFlight">
+            <h4>Vuelos</h4>
+            <div class="flight-details">
+              <!-- Flight details here -->
             </div>
           </div>
         </div>

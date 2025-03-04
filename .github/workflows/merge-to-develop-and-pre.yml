@@ -7,7 +7,7 @@ on:
 
 jobs:
   merge-to-develop:
-    runs-on: [seld-hosted,ubuntu-latest]
+    runs-on: [ubuntu-latest]
     steps:
       - name: Set up permisos
         run: |
@@ -30,7 +30,7 @@ jobs:
           git push origin develop
 
   merge-to-pre:
-    runs-on: [seld-hosted,ubuntu-latest]
+    runs-on: [ubuntu-latest]
     steps:
       - name: Set up permisos
         run: |

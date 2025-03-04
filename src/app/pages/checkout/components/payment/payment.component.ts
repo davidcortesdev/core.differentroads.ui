@@ -1,6 +1,12 @@
 import { Component, Input, OnInit, HostListener, Inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { RedsysService } from '../../../../core/services/checkout/payment/redsys.service';
+import { ScalapayOrderRequest } from '../../../../core/models/scalapay/ScalapayOrderRequest';
+import { ScalapayConsumer } from '../../../../core/models/scalapay/ScalapayConsumer';
+import { ScalapayExtensions } from '../../../../core/models/scalapay/ScalapayExtensions';
+import { ScalapayItem } from '../../../../core/models/scalapay/ScalapayItem';
+import { ScalapayOrderResponse } from '../../../../core/models/scalapay/ScalapayOrderResponse';
+import { ScalapayService } from '../../../../core/services/checkout/payment/scalapay.service';
 
 @Component({
   selector: 'app-payment',
@@ -31,7 +37,8 @@ export class PaymentComponent implements OnInit {
 
   constructor(
     @Inject(DOCUMENT) private document: Document,
-    private redsysService: RedsysService
+    private redsysService: RedsysService,
+    private scalapayService: ScalapayService
   ) {}
 
   ngOnInit() {
@@ -184,6 +191,60 @@ export class PaymentComponent implements OnInit {
     form.submit();
   }
 
+  async processScalapay(bookingID: string, publicID: string) {
+    const createItem = (): ScalapayItem => ({
+      price: { currency: 'EUR', amount: this.totalPrice.toString() },
+      name: `Tour - ${new Date().toLocaleDateString()}`,
+      category: 'travel',
+      brand: 'Different Roads',
+      sku: `SKU-${bookingID}`,
+      quantity: 1,
+    });
+
+    const createConsumer = (): ScalapayConsumer => ({
+      phoneNumber: '0400000001',
+      givenNames: 'Joe',
+      surname: 'Consumer',
+      email: 'test@scalapay.com',
+    });
+
+    const createMerchant = () => ({
+      redirectCancelUrl: `${window.location.origin}/confirmacion/${bookingID}/error/${publicID}`,
+      redirectConfirmUrl: `${window.location.origin}/confirmacion/${bookingID}/success/${publicID}`,
+    });
+
+    const createExtensions = (): ScalapayExtensions => ({
+      industry: {
+        travel: { startDate: '2023-11-30', endDate: '2023-12-18' },
+      },
+    });
+
+    const createOrderData = (): ScalapayOrderRequest => ({
+      product: 'payin',
+      type: 'online',
+      orderExpiryMilliseconds: 600000,
+      consumer: createConsumer(),
+      extensions: createExtensions(),
+      merchant: createMerchant(),
+      frequency: { number: 1, frequencyType: 'monthly' },
+      totalAmount: { currency: 'EUR', amount: this.totalPrice.toString() },
+      items: [createItem()],
+      merchantReference: bookingID,
+      taxAmount: { currency: 'EUR', amount: '0' },
+      shippingAmount: { currency: 'EUR', amount: '0' },
+      channel: 'online',
+    });
+
+    const orderDataWithTipo: ScalapayOrderRequest = createOrderData();
+
+    try {
+      const data = await this.scalapayService.createOrder(orderDataWithTipo);
+      window.location.href = data.checkoutUrl;
+    } catch (error) {
+      console.error('Error processing Scalapay payment:', error);
+    }
+  }
+
   async submitPayment() {
     this.isLoading = true;
     console.log('Payment Type:', this.paymentType);
@@ -205,6 +266,9 @@ export class PaymentComponent implements OnInit {
       this.paymentMethod === 'creditCard'
     ) {
       this.redirectToRedSys(ID!, this.totalPrice, bookingID!);
+      return;
+    } else if (this.paymentType === 'installments') {
+      await this.processScalapay(bookingID!, ID!);
       return;
     }
     this.isLoading = false;

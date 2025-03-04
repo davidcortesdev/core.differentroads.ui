@@ -11,4 +11,7 @@ export const environment = {
     'https://qt4uw3rgx6.execute-api.us-east-2.amazonaws.com/release/redsys/notify',
 
   googleMapsApiKey: 'AIzaSyB6sxlxeTVlRllpGPyDPbKmaZPQJsb8YAs',
+
+  scalapayApiUrl: 'https://integration.api.scalapay.com',
+  scalapayApiKey: 'sqhtfs87hjnc12kkos',
 };

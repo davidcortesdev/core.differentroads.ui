@@ -90,15 +90,17 @@ export class CheckoutComponent implements OnInit {
       const periodID = order.periodID;
       this.periodID = periodID;
 
-      this.periodsService.getPeriodDetail(periodID).subscribe((period) => {
-        console.log('Period details:', period);
-        this.periodData = period;
+      this.periodsService
+        .getPeriodDetail(periodID, ['tourID', 'name', 'dayOne', 'returnDate'])
+        .subscribe((period) => {
+          console.log('Period details ___:', period);
+          this.periodData = period;
 
-        this.tourName = period.name;
+          this.tourName = period.name;
 
-        this.tourID = period.tourID;
-        this.tourDates = `${period.dayOne} - ${period.returnDate}`;
-      });
+          this.tourID = period.tourID;
+          this.tourDates = `${period.dayOne} - ${period.returnDate}`;
+        });
 
       this.periodsService.getPeriodPrices(periodID).subscribe((prices) => {
         console.log('Prices:', prices);
@@ -228,7 +230,7 @@ export class CheckoutComponent implements OnInit {
         value:
           this.pricesService.getPriceById(this.tourID, 'Adultos') +
           this.pricesService.getPriceById(this.periodID, 'Adultos'),
-        description: 'Adultos',
+        description: 'Adultos ',
       });
 
     this.travelersSelected.childs > 0 &&

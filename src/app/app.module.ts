@@ -153,6 +153,8 @@ import { GoogleMapsModule } from '@angular/google-maps';
 
 import { SkeletonModule } from 'primeng/skeleton';
 
+import { ScalapayService } from './core/services/checkout/payment/scalapay.service';
+
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -325,6 +327,7 @@ export function HttpLoaderFactory(http: HttpClient) {
         },
       },
     }),
+    ScalapayService,
   ],
   bootstrap: [AppComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],

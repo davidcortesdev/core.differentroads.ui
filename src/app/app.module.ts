@@ -152,8 +152,7 @@ import { PaymentsInformationSectionComponent } from './pages/reservation/compone
 import { GoogleMapsModule } from '@angular/google-maps';
 
 import { SkeletonModule } from 'primeng/skeleton';
-/* import { ToursFilterComponent } from './shared/components/tours-filter/tours-filter.component';
- */
+
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -235,7 +234,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     FlightsSectionComponent,
     PricesSectionComponent,
     PaymentsInformationSectionComponent,
-    /* ToursFilterComponent, */
   ],
   imports: [
     // Angular Modules

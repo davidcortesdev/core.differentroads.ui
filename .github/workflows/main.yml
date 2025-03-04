@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Set up permisos
         run: |
-           sudo chown -R runner:runner _work
+           sudo chown -R runner:runner *
 
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
@@ -51,8 +51,8 @@ jobs:
     steps:
       - name: Set up permisos
         run: |
-          sudo chown -R runner:runner _work
-          
+          sudo chown -R runner:runner *
+
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
 

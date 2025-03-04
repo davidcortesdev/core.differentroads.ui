@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Set up permisos
         run: |
-          sudo chown -R runner:runner _work
+          sudo chown -R runner:runner *
 
       - uses: actions/checkout@v3
         with:
@@ -45,8 +45,8 @@ jobs:
     steps:
       - name: Set up permisos
         run: |
-          sudo chown -R runner:runner _work
-          
+          sudo chown -R runner:runner *
+
       - name: Close Pull Request
         id: closepullrequest
         uses: Azure/static-web-apps-deploy@v1

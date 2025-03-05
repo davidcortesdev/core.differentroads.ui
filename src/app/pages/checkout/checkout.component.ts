@@ -240,7 +240,7 @@ export class CheckoutComponent implements OnInit {
         value:
           this.pricesService.getPriceById(this.tourID, 'Adultos') +
           this.pricesService.getPriceById(this.periodID, 'Adultos'),
-        description: 'Adultos',
+        description: 'Paquete básico adultos',
       });
 
     this.travelersSelected.childs > 0 &&
@@ -249,7 +249,7 @@ export class CheckoutComponent implements OnInit {
         value:
           this.pricesService.getPriceById(this.tourID, 'Niños') +
           this.pricesService.getPriceById(this.periodID, 'Niños'),
-        description: 'Niños',
+        description: 'Paquete básico niños',
       });
 
     this.travelersSelected.babies > 0 &&
@@ -262,24 +262,67 @@ export class CheckoutComponent implements OnInit {
       });
 
     this.rooms.forEach((room) => {
+      const price =
+        this.pricesService.getPriceById(room.externalID, 'Adultos') || 0;
+      if (price === 0) return;
       this.summary.push({
         qty: room.qty || 0,
-        value: this.pricesService.getPriceById(room.externalID, 'Adultos'),
-        description: room.name,
+        value: price,
+        description: 'Suplemento hab. ' + room.name,
       });
     });
 
     this.activities.forEach((activity) => {
-      this.summary.push({
-        qty: 1,
-        value: activity.price || 0,
-        description: activity.name,
-      });
+      const adultsPrice = this.pricesService.getPriceById(
+        activity.activityId,
+        'Adultos'
+      );
+      const childsPrice = this.pricesService.getPriceById(
+        activity.activityId,
+        'Niños'
+      );
+
+      const babiesPrice = this.pricesService.getPriceById(
+        activity.activityId,
+        'Bebes'
+      );
+      if (adultsPrice === childsPrice) {
+        this.summary.push({
+          qty: this.travelersSelected.adults + this.travelersSelected.childs,
+          value: adultsPrice,
+          description: activity.name,
+        });
+      } else {
+        if (adultsPrice) {
+          this.summary.push({
+            qty: this.travelersSelected.adults,
+            value: adultsPrice,
+            description: activity.name + ' (adultos)',
+          });
+        }
+        if (childsPrice) {
+          this.summary.push({
+            qty: this.travelersSelected.childs,
+            value: childsPrice,
+            description: activity.name + ' (niños)',
+          });
+        }
+      }
+      if (babiesPrice) {
+        this.summary.push({
+          qty: this.travelersSelected.babies,
+          value: babiesPrice,
+          description: activity.name + ' (bebes)',
+        });
+      }
     });
 
     if (this.selectedInsurances.length === 0) {
       this.summary.push({
-        qty: 1,
+        qty:
+          this.travelersSelected.adults +
+          this.travelersSelected.childs +
+          this.travelersSelected.babies,
         value: 0,
         description: 'Seguro básico',
       });
@@ -315,7 +358,10 @@ export class CheckoutComponent implements OnInit {
     if (this.selectedInsurances.length > 0) {
       this.selectedInsurances.forEach((insurance) => {
         this.summary.push({
-          qty: 1,
+          qty:
+            this.travelersSelected.adults +
+            this.travelersSelected.childs +
+            this.travelersSelected.babies,
           value: insurance.price || 0,
           description: insurance.name,
         });

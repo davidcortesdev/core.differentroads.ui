@@ -39,7 +39,7 @@ export class TourComponent implements OnInit {
     this.error = false;
 
     this.toursService
-      .getTourDetail(this.tourSlug)
+      .getTourDetailBySlug(this.tourSlug)
       .pipe(
         catchError((error) => {
           console.error('Error loading tour:', error);

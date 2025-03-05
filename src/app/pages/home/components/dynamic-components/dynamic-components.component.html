@@ -1,4 +1,4 @@
-<ng-container *ngFor="let block of blocks;">
+<ng-container *ngFor="let block of blocks | sortBy:'content.order'">
   <ng-container
     *ngComponentOutlet="
       getComponent(block);

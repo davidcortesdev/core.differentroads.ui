@@ -80,14 +80,7 @@ export class TourItineraryComponent implements OnInit {
   };
   events: EventItem[];
   title: string = 'Itinerario';
-  dateOptions: DateOption[] = [
-    {
-      label: 'Default Date',
-      value: 'default',
-      price: 0,
-      isGroup: false,
-    },
-  ];
+  dateOptions: DateOption[] = [];
 
   selectedOption: DateOption = {
     label: '',
@@ -95,7 +88,7 @@ export class TourItineraryComponent implements OnInit {
     price: 0,
     isGroup: false,
   };
-  selectedDate: string = this.dateOptions[0].label;
+  selectedDate: string = '';
   tripType: string = '';
   hotels: any[] = [];
   showPlaceholder: boolean = true;
@@ -162,9 +155,12 @@ export class TourItineraryComponent implements OnInit {
           ])
           .subscribe({
             next: (tourData) => {
+              console.log('Tour data:', tourData);
               this.dateOptions = tourData.activePeriods.map((period) => {
+                console.log('Period:', period);
+
                 return {
-                  label: new Date(period.dayOne).toLocaleDateString(),
+                  label: period.name,
                   value: period.externalID + '',
                   price: (period.basePrice || 0) + (tourData.basePrice || 0),
                   isGroup: true,
@@ -297,6 +293,7 @@ export class TourItineraryComponent implements OnInit {
         'tripType',
         'hotels',
         'activities',
+        'name',
       ])
       .subscribe({
         next: (period) => {

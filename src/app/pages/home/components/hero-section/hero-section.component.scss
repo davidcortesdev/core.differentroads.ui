@@ -164,6 +164,7 @@
 
       &.radius {
         border-radius: 0px 50px 50px 0px;
+        height: 3.28rem;
       }
     }
   }
@@ -259,6 +260,7 @@
           .button-search {
             width: 50%;
             max-width: 200px;
+            height: var(--input-height) !important;
           }
         }
       }
@@ -280,7 +282,7 @@
 
       .button-search {
         border-radius: var(--border-radius-mobile);
-
+        height: var(--input-height) !important;
         &.radius {
           border-radius: var(--border-radius-mobile);
         }
@@ -335,7 +337,7 @@
       }
 
       .button-search {
-        height: var(--btn-mobile-height) !important;
+        height: var(--input-height-mobile) !important;
         width: var(--btn-mobile-width) !important;
         min-width: 180px;
         border-radius: 8px !important;
@@ -362,6 +364,40 @@
   }
 
   @media screen and (max-width: 992px) {
+    .flex-20:nth-child(4) {
+      p-iftaLabel {
+        p-autoComplete {
+          ::ng-deep .p-autocomplete {
+            display: flex !important;
+
+            .p-inputtext {
+              border-right: none !important;
+              border-top-right-radius: 0 !important;
+              border-bottom-right-radius: 0 !important;
+              flex: 1 !important;
+            }
+
+            .p-autocomplete-dropdown {
+              border-left: none !important;
+              margin-left: -1px !important;
+              padding: 0.5rem !important;
+              border-top: 1px solid var(--input-border-color) !important;
+              border-bottom: 1px solid var(--input-border-color) !important;
+              border-right: 1px solid var(--input-border-color) !important;
+              border-top-right-radius: var(--border-radius-mobile) !important;
+              border-bottom-right-radius: var(--border-radius-mobile) !important;
+              border-top-left-radius: 0 !important;
+              border-bottom-left-radius: 0 !important;
+              align-self: stretch !important;
+              display: flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+            }
+          }
+        }
+      }
+    }
+
     .search-form .flex-20 p-iftaLabel p-autoComplete.border {
       ::ng-deep .p-autocomplete {
         display: flex;
@@ -376,7 +412,7 @@
           border-left: none !important;
           border-top: 1px solid var(--input-border-color) !important;
           border-bottom: 1px solid var(--input-border-color) !important;
-          border-right: none !important;
+          border-right: 1px solid var(--input-border-color) !important;
         }
       }
     }

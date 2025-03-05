@@ -1,33 +1,36 @@
 :host {
-  --hero-height: 65vh;
-  --container-width: 80%;
-  --container-max-width: 1200px;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 2rem;
-  --min-width-mobile: 7rem;
-  --min-width-desktop: 11rem;
-  --input-height: 50px;
-  --input-height-mobile: 45px;
-  --font-size-xs: 12px;
-  --font-size-sm: 14px;
-  --font-size-md: 16px;
-  --font-size-label: 16px;
-  --font-size-label-mobile: 14px;
-  --border-radius-mobile: 10px;
-  --btn-desktop-width: 7rem;
-  --btn-mobile-width: 50%;
-  --first-input-flex: 35%;
-  --other-inputs-flex: 14%;
-  --input-border-color: #ced4da;
+  // Base variables
+  --hero-h: 65vh;
+  --container-w: 80%;
+  --container-max: 1200px;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 2rem;
+  --min-w-mob: 7rem;
+  --min-w-desk: 11rem;
+  --input-h: 50px;
+  --input-h-mob: 45px;
+  --font-xs: 12px;
+  --font-sm: 14px;
+  --font-md: 16px;
+  --font-label: 16px;
+  --font-mob: 14px;
+  --radius: 10px;
+  --btn-w-desk: 7rem;
+  --btn-w-mob: 50%;
+  --first-input: 35%;
+  --other-inputs: 14%;
+  --border-color: #ced4da;
 }
-.hero-section {
-  height: var(--hero-height);
+
+.hero {
+  height: var(--hero-h);
   position: relative;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  .background-video {
+
+  &-bg {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -36,120 +39,144 @@
     z-index: 0;
     overflow: hidden;
   }
-  .search-container {
+
+  &-search {
     position: relative;
     z-index: 1;
-    padding: var(--spacing-lg);
-    width: var(--container-width);
-    max-width: var(--container-max-width);
-    .search-form {
-      display: flex;
-      align-items: center;
-      flex-wrap: nowrap;
-      .flex-30 {
-        flex: var(--first-input-flex);
-        min-width: calc(var(--min-width-desktop) + 5rem);
-      }
-      .flex-20 {
-        flex: var(--other-inputs-flex);
-        min-width: var(--min-width-desktop);
-      }
-      .flex-10 {
-        flex: 8%;
-        min-width: 9rem;
-      }
-      div {
-        p-iftaLabel {
-          border: none;
-        }
-        p-floatlabel {
-          flex: 1;
-          display: flex;
-          min-width: 200px;
-          height: var(--input-height);
-          width: 100%;
-          font-size: var(--font-size-sm);
-          font-weight: 500;
+    padding: var(--space-lg);
+    width: var(--container-w);
+    max-width: var(--container-max);
+  }
 
-          ::ng-deep .p-float-label label {
-            font-weight: 500;
-            font-size: var(--font-size-label);
-          }
-          .input-text {
-            border: none;
-            font-size: var(--font-size-sm);
+  // Form elements
+  &-form {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+
+    .input-lg {
+      flex: var(--first-input);
+      min-width: calc(var(--min-w-desk) + 5rem);
+    }
+
+    .input-md {
+      flex: var(--other-inputs);
+      min-width: var(--min-w-desk);
+    }
+
+    .input-sm {
+      flex: 8%;
+      min-width: 9rem;
+    }
+
+    div {
+      p-iftaLabel {
+        border: none;
+      }
+
+      p-floatlabel {
+        flex: 1;
+        display: flex;
+        min-width: 200px;
+        height: var(--input-h);
+        width: 100%;
+        font-size: var(--font-sm);
+        font-weight: 500;
+
+        ::ng-deep .p-float-label label {
+          font-weight: 500;
+          font-size: var(--font-label);
+        }
+
+        .input-text {
+          border: none;
+          font-size: var(--font-sm);
+          width: 100%;
+        }
+
+        p-autoComplete,
+        p-datepicker,
+        p-dropdown {
+          border: none;
+          flex: 1;
+          width: 100%;
+
+          ::ng-deep .p-autocomplete,
+          ::ng-deep .p-calendar,
+          ::ng-deep .p-dropdown {
             width: 100%;
-          }
-          p-autoComplete,
-          p-datepicker,
-          p-dropdown {
-            border: none;
-            flex: 1;
-            width: 100%;
-            ::ng-deep .p-autocomplete,
-            ::ng-deep .p-calendar,
-            ::ng-deep .p-dropdown {
-              width: 100%;
-              .p-dropdown-trigger {
-                border-left: none;
-              }
+
+            .p-dropdown-trigger {
+              border-left: none;
             }
           }
         }
       }
     }
   }
+
+  // Global overrides
   ::ng-deep {
     .p-inputtext {
       border-radius: 0;
-      font-size: var(--font-size-sm);
+      font-size: var(--font-sm);
+
       &.radius {
         border-radius: 50px 0px 0px 50px;
       }
     }
-    .flex-20:nth-child(4) {
+
+    .input-md:nth-child(4) {
       p-iftaLabel {
         p-autoComplete {
           ::ng-deep .p-autocomplete {
             .p-inputtext {
               border-right: none !important;
             }
+
             .p-autocomplete-dropdown {
               border-left: none !important;
               margin-left: 0 !important;
-              border-top: 1px solid var(--input-border-color) !important;
-              border-bottom: 1px solid var(--input-border-color) !important;
-              border-right: 1px solid var(--input-border-color) !important;
+              border-top: 1px solid var(--border-color) !important;
+              border-bottom: 1px solid var(--border-color) !important;
+              border-right: 1px solid var(--border-color) !important;
             }
           }
         }
       }
     }
+
     .p-dropdown {
       border-right: none;
+
       .p-dropdown-trigger {
         border-left: none;
       }
     }
+
     .p-autocomplete-dropdown {
       border: transparent;
       border-radius: 0;
     }
-    .button-search {
+
+    .btn-search {
       border-radius: 0;
-      width: var(--btn-desktop-width);
+      width: var(--btn-w-desk);
+
       &.radius {
         border-radius: 0px 50px 50px 0px;
         height: 3.28rem;
       }
     }
   }
-  .float-label {
+
+  .label {
     color: var(--background-azul);
     font-weight: 500;
-    font-size: var(--font-size-label);
+    font-size: var(--font-label);
   }
-  .spinner-container {
+
+  .spinner {
     position: absolute;
     inset: 0;
     display: flex;
@@ -157,53 +184,67 @@
     justify-content: center;
     background-color: rgba(255, 255, 255, 0.8);
   }
+
+  // Responsive styles
   @media screen and (min-width: 993px) and (max-width: 1366px) {
-    .search-form {
-      .flex-30 {
+    &-form {
+      .input-lg {
         flex: 1.5;
         min-width: 12rem;
       }
-      .flex-20 {
+
+      .input-md {
         flex: 0.7;
         min-width: 9rem;
       }
-      .flex-10 {
+
+      .input-sm {
         flex: 0.6;
         min-width: 7rem;
       }
+
       div p-floatlabel {
         min-width: 150px;
+
         .input-text {
           width: 100%;
         }
       }
     }
   }
+
   @media screen and (max-width: 992px) and (min-width: 481px) {
-    .search-container {
+    &-search {
       width: 90%;
-      .search-form {
+
+      .hero-form {
         display: flex;
         flex-wrap: wrap;
         justify-content: space-between;
         background-color: transparent;
         padding: 15px;
-        .flex-30,
-        .flex-20 {
+
+        .input-lg,
+        .input-md {
           flex: 0 0 48%;
           margin-bottom: 10px;
         }
-        .flex-10 {
+
+        .input-sm {
           flex: 0 0 48%;
           margin-bottom: 10px;
+
           p-floatlabel {
             display: flex;
             align-items: center;
+
             p-dropdown {
               width: 100%;
+
               ::ng-deep .p-dropdown {
                 width: 100%;
                 display: flex;
+
                 .p-dropdown-trigger {
                   position: relative;
                   right: 0;
@@ -212,59 +253,72 @@
             }
           }
         }
+
         div:last-child {
           flex: 0 0 100%;
           display: flex;
           justify-content: center;
-          .button-search {
+
+          .btn-search {
             width: 50%;
             max-width: 200px;
-            height: var(--input-height) !important;
+            height: var(--input-h) !important;
           }
         }
       }
     }
+
     ::ng-deep {
       .p-inputtext {
-        border-radius: var(--border-radius-mobile);
-        font-size: var(--font-size-sm) !important;
+        border-radius: var(--radius);
+        font-size: var(--font-sm) !important;
+
         &.radius {
-          border-radius: var(--border-radius-mobile);
+          border-radius: var(--radius);
         }
       }
+
       .p-autocomplete-dropdown {
-        border-radius: var(--border-radius-mobile);
+        border-radius: var(--radius);
       }
-      .button-search {
-        border-radius: var(--border-radius-mobile);
-        height: var(--input-height) !important;
+
+      .btn-search {
+        border-radius: var(--radius);
+        height: var(--input-h) !important;
+
         &.radius {
-          border-radius: var(--border-radius-mobile);
+          border-radius: var(--radius);
         }
       }
     }
-    .float-label {
-      font-size: var(--font-size-label) !important;
+
+    .label {
+      font-size: var(--font-label) !important;
     }
   }
+
   @media screen and (max-width: 480px) {
-    .search-container {
+    &-search {
       width: 95%;
-      padding: var(--spacing-sm);
-      .search-form {
+      padding: var(--space-sm);
+
+      .hero-form {
         flex-direction: column;
         gap: 8px;
         background-color: transparent;
         padding: 0;
-        .flex-30,
-        .flex-20,
-        .flex-10 {
+
+        .input-lg,
+        .input-md,
+        .input-sm {
           flex: 0 0 100%;
           width: 100%;
         }
+
         div p-floatlabel {
-          height: var(--input-height-mobile);
+          height: var(--input-h-mob);
         }
+
         div:last-child {
           display: flex;
           justify-content: center;
@@ -273,18 +327,21 @@
         }
       }
     }
+
     ::ng-deep {
       .p-inputtext {
-        height: var(--input-height-mobile);
-        border-radius: var(--border-radius-mobile);
-        font-size: var(--font-size-xs) !important;
+        height: var(--input-h-mob);
+        border-radius: var(--radius);
+        font-size: var(--font-xs) !important;
+
         &.radius {
-          border-radius: var(--border-radius-mobile);
+          border-radius: var(--radius);
         }
       }
-      .button-search {
-        height: var(--input-height-mobile) !important;
-        width: var(--btn-mobile-width) !important;
+
+      .btn-search {
+        height: var(--input-h-mob) !important;
+        width: var(--btn-w-mob) !important;
         min-width: 180px;
         border-radius: 8px !important;
         display: block !important;
@@ -293,40 +350,45 @@
         font-size: 16px;
       }
     }
-    .float-label {
-      font-size: var(--font-size-label-mobile) !important;
+
+    .label {
+      font-size: var(--font-mob) !important;
     }
   }
+
   @media screen and (max-width: 400px) {
-    .search-form {
-      .flex-30,
-      .flex-20,
-      .flex-10 {
-        min-width: var(--min-width-mobile);
+    &-form {
+      .input-lg,
+      .input-md,
+      .input-sm {
+        min-width: var(--min-w-mob);
       }
     }
   }
+
   @media screen and (max-width: 992px) {
-    .flex-20:nth-child(4) {
+    .input-md:nth-child(4) {
       p-iftaLabel {
         p-autoComplete {
           ::ng-deep .p-autocomplete {
             display: flex !important;
+
             .p-inputtext {
               border-right: none !important;
               border-top-right-radius: 0 !important;
               border-bottom-right-radius: 0 !important;
               flex: 1 !important;
             }
+
             .p-autocomplete-dropdown {
               border-left: none !important;
               margin-left: -1px !important;
               padding: 0.5rem !important;
-              border-top: 1px solid var(--input-border-color) !important;
-              border-bottom: 1px solid var(--input-border-color) !important;
-              border-right: 1px solid var(--input-border-color) !important;
-              border-top-right-radius: var(--border-radius-mobile) !important;
-              border-bottom-right-radius: var(--border-radius-mobile) !important;
+              border-top: 1px solid var(--border-color) !important;
+              border-bottom: 1px solid var(--border-color) !important;
+              border-right: 1px solid var(--border-color) !important;
+              border-top-right-radius: var(--radius) !important;
+              border-bottom-right-radius: var(--radius) !important;
               border-top-left-radius: 0 !important;
               border-bottom-left-radius: 0 !important;
               align-self: stretch !important;
@@ -338,19 +400,22 @@
         }
       }
     }
-    .search-form .flex-20 p-iftaLabel p-autoComplete.border {
+
+    &-form .input-md p-iftaLabel p-autoComplete.border {
       ::ng-deep .p-autocomplete {
         display: flex;
+
         .p-inputtext {
-          border-radius: var(--border-radius-mobile) 0 0 var(--border-radius-mobile) !important;
+          border-radius: var(--radius) 0 0 var(--radius) !important;
           border-right: none !important;
         }
+
         .p-autocomplete-dropdown {
-          border-radius: 0 var(--border-radius-mobile) var(--border-radius-mobile) 0 !important;
+          border-radius: 0 var(--radius) var(--radius) 0 !important;
           border-left: none !important;
-          border-top: 1px solid var(--input-border-color) !important;
-          border-bottom: 1px solid var(--input-border-color) !important;
-          border-right: 1px solid var(--input-border-color) !important;
+          border-top: 1px solid var(--border-color) !important;
+          border-bottom: 1px solid var(--border-color) !important;
+          border-right: 1px solid var(--border-color) !important;
         }
       }
     }

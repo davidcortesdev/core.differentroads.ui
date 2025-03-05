@@ -1,18 +1,18 @@
-<section class="hero-section">
+<section class="hero">
   <ng-container *ngIf="bannerSection; else loadingState">
     <ng-container *ngIf="!bannerSection.bType; else videoContent">
       <ng-container *ngFor="let image of bannerSection['banner-image']">
         <img
           [src]="image.url"
           [alt]="image.alt || ''"
-          class="background-video"
+          class="hero-bg"
         />
       </ng-container>
     </ng-container>
     <ng-template #videoContent>
       <video
         *ngIf="bannerSection['banner-video']"
-        class="background-video"
+        class="hero-bg"
         autoplay
         loop
         muted
@@ -23,14 +23,14 @@
   </ng-container>
 
   <ng-template #loadingState>
-    <div class="spinner-container">
+    <div class="spinner">
       <p-progressSpinner></p-progressSpinner>
     </div>
   </ng-template>
   
-  <div class="search-container">
-    <div class="search-form">
-      <div class="flex-30">
+  <div class="hero-search">
+    <div class="hero-form">
+      <div class="input-lg">
         <p-iftalabel>
           <input
             pInputText
@@ -41,10 +41,10 @@
             fluid="true"
             [(ngModel)]="destinationInput"
           />
-          <label for="destionationInput" class="float-label">¿Cuál es tu próximo destino?</label>
+          <label for="destionationInput" class="label">¿Cuál es tu próximo destino?</label>
         </p-iftalabel>
       </div>
-      <div class="flex-20">
+      <div class="input-md">
         <p-iftaLabel>
           <p-datepicker
             [(ngModel)]="departureDate"
@@ -54,10 +54,10 @@
             placeholder="DD/MM/AAAA"
           >
           </p-datepicker>
-          <label for="departureDateInput" class="float-label">Ida</label>
+          <label for="departureDateInput" class="label">Ida</label>
         </p-iftaLabel>
       </div>
-      <div class="flex-20">
+      <div class="input-md">
         <p-iftaLabel>
           <p-datepicker
             [(ngModel)]="returnDate"
@@ -67,10 +67,10 @@
             placeholder="DD/MM/AAAA"
           >
           </p-datepicker>
-          <label for="returnDateInput" class="float-label">Vuelta</label>
+          <label for="returnDateInput" class="label">Vuelta</label>
         </p-iftaLabel>
       </div>
-      <div class="flex-20">
+      <div class="input-md">
         <p-iftaLabel>
           <p-autoComplete
             [suggestions]="filteredTripTypes"
@@ -83,15 +83,15 @@
             class="border"
           >
           </p-autoComplete>
-          <label for="tripTypeInput" class="float-label">Tipo de viaje</label>
+          <label for="tripTypeInput" class="label">Tipo de viaje</label>
         </p-iftaLabel>
       </div>
-      <div class="flex-10">
+      <div class="input-sm">
         <p-button
           type="button"
           icon="pi pi-search"
           fluid="true"
-          styleClass="button-search radius"
+          styleClass="btn-search radius"
           (click)="searchTrips()"
         ></p-button>
       </div>

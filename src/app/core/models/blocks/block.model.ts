@@ -3,7 +3,9 @@ import { CardSliderVerticalContent } from './card-slider-vertical-content.model'
 import { FullSliderContent } from './full-slider-content.model';
 import { PressListContent } from './press-list-content.model';
 import { SingleFeaturedContent } from './single-featured-content.model';
+import { TourCarouselContent } from './tour-carousel-content.model';
 import { TourListContent } from './tour-list-content.model';
+import { TravelersSection } from './travelers/travelers-section.model';
 
 export interface Block {
   type: BlockType;
@@ -19,12 +21,16 @@ export enum BlockType {
   PressList = 'press-list',
   BlogList = 'blog-list',
   TourSection = 'tour-carousel',
+  TravelersSection = 'travelers-section',
 }
 
 export type BlockContent =
   | TourListContent
+  | TourCarouselContent
   | CardSliderVerticalContent
   | SingleFeaturedContent
   | FullSliderContent
   | PressListContent
-  | BlogListContent;
+  | BlogListContent
+  | TravelersSection
+  | null;

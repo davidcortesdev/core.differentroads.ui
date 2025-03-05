@@ -5,15 +5,11 @@ import {
   AfterViewInit,
   OnDestroy,
   ChangeDetectorRef,
+  OnInit,
 } from '@angular/core';
 import { ToursService } from '../../../../core/services/tours.service';
 import { ActivatedRoute } from '@angular/router';
 import { TravelersCard } from '../../../../core/models/tours/tour.model';
-
-interface GalleryImage extends TravelersCard {
-  width: number;
-  height: number;
-}
 
 @Component({
   selector: 'app-tour-gallery',
@@ -21,24 +17,14 @@ interface GalleryImage extends TravelersCard {
   templateUrl: './tour-gallery.component.html',
   styleUrl: './tour-gallery.component.scss',
 })
-export class TourGalleryComponent implements AfterViewInit, OnDestroy {
+export class TourGalleryComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('galleryGrid') galleryGrid!: ElementRef;
 
   title: string = '';
-  images: GalleryImage[] = [];
+  images: TravelersCard[] = [];
   showAll = false;
   itemsPerRow = 4;
   private resizeObserver?: ResizeObserver;
-
-  // Configuración de tamaños para el grid
-  private imageSizes = [
-    { width: 400, height: 300 },
-    { width: 300, height: 400 },
-    { width: 600, height: 400 },
-    { width: 400, height: 500 },
-    { width: 500, height: 300 },
-    { width: 400, height: 400 },
-  ];
 
   constructor(
     private toursService: ToursService,
@@ -59,20 +45,11 @@ export class TourGalleryComponent implements AfterViewInit, OnDestroy {
       this.toursService.getTourDetailBySlug(slug).subscribe({
         next: (tour) => {
           if (tour['travelers-section']) {
-            // Obtenemos el título de la sección
             this.title = tour['travelers-section'].title;
 
-            // Mapeamos los travelers-cards con dimensiones dinámicas
             const travelersCards =
               tour['travelers-section']['travelers-cards'] || [];
-            this.images = travelersCards.map((card, index) => {
-              const size = this.imageSizes[index % this.imageSizes.length];
-              return {
-                ...card,
-                width: size.width,
-                height: size.height,
-              };
-            });
+            this.images = travelersCards;
 
             this.cdr.detectChanges();
           }
@@ -94,17 +71,12 @@ export class TourGalleryComponent implements AfterViewInit, OnDestroy {
   private setupResizeObserver() {
     this.resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        const items = entry.target.querySelectorAll('.gallery-item');
-        if (items.length > 0) {
-          const firstItemRect = items[0].getBoundingClientRect();
-          const containerWidth = entry.contentRect.width;
-          const calculatedItems = Math.floor(
-            containerWidth / (firstItemRect.width + 20)
-          );
-          this.itemsPerRow =
-            calculatedItems > 0 ? calculatedItems : this.itemsPerRow;
-          this.cdr.detectChanges();
-        }
+        const containerWidth = entry.contentRect.width;
+        const itemWidth = 200;
+        const calculatedItemsPerRow = Math.floor(containerWidth / itemWidth);
+        this.itemsPerRow = Math.max(2, calculatedItemsPerRow);
+
+        this.cdr.detectChanges();
       }
     });
 

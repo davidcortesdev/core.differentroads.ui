@@ -7,6 +7,7 @@ import { Featured } from './featured.model';
  */
 export interface TravelersSection {
   title: string;
+  order?: number;
 
   reviews: Reviews;
   'travelers-cards': TravelerCard[];

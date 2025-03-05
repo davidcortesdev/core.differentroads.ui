@@ -15,6 +15,7 @@ import { ProcessedTour } from '../../../../core/models/tours/processed-tour.mode
 export class ToursSectionComponent implements OnInit {
   @Input() content!: any;
   tours: ProcessedTour[] = [];
+  title: string = '';
 
   responsiveOptions = [
     {
@@ -45,6 +46,9 @@ export class ToursSectionComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    if (this.content && this.content.title) {
+      this.title = this.content.title;
+    }
     this.loadTours();
   }
 

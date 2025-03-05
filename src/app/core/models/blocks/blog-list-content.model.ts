@@ -2,6 +2,7 @@ export interface BlogListContent {
   title: string;
   textButton: string;
   link: string;
+  order: number;
   visible: boolean;
   'blog-list': Blog[];
 }

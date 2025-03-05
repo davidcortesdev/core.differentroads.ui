@@ -247,8 +247,6 @@ export class CheckoutComponent implements OnInit {
       };
     });
 
-    console.log('Insurances:', insurances);
-
     this.insurancesService.updateSelectedInsurances(insurances);
   }
 
@@ -378,8 +376,6 @@ export class CheckoutComponent implements OnInit {
 
       tempOrderData['flights'] = [this.selectedFlight];
     }
-
-    console.log('_____', this.selectedInsurances);
 
     if (this.selectedInsurances.length > 0) {
       this.selectedInsurances.forEach((insurance) => {

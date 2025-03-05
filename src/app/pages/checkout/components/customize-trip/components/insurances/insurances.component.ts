@@ -34,8 +34,6 @@ export class InsurancesComponent implements OnInit, OnChanges {
       this.insurances = insurances;
     });
     this.insurancesService.selectedInsurances$.subscribe((insurances) => {
-      console.log('Selected Insurances:_____', insurances);
-
       this.addedInsurances = new Set(
         insurances.map((insurance) => insurance.activityId)
       );
@@ -93,12 +91,9 @@ export class InsurancesComponent implements OnInit, OnChanges {
   }
 
   updateAddedInsurances(): void {
-    console.log('Updating added insurances:___', this.addedInsurances);
-
     const insurances = this.insurances.filter((insurance) =>
       this.addedInsurances.has(insurance.activityId)
     );
-    console.log('Updating added insurances:__', insurances);
 
     this.insurancesService.updateSelectedInsurances(insurances);
   }
@@ -116,8 +111,6 @@ export class InsurancesComponent implements OnInit, OnChanges {
   }
 
   initializeInsurances(): void {
-    this.insurancesService.insurances$.subscribe((insurances) => {
-      console.log('Insurances:', insurances);
-    });
+    this.insurancesService.insurances$.subscribe((insurances) => {});
   }
 }

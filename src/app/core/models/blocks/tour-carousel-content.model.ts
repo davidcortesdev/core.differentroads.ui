@@ -1,16 +1,18 @@
-import { FeaturedTour } from './featured-tour.model';
+export interface FeaturedTour {
+  id: string;
+  name: string;
+  slug: string;
+  type: string;
+}
 
-/**
- * Represents the featured tours section configuration
- */
-export interface FeaturedToursSection {
+export interface TourCarouselContent {
   title: string;
   textButton: string;
   link: string;
-  order: number;
   showSubtitle: boolean;
   showMonthTags: boolean;
   showMkTag: boolean;
   showMkText: boolean;
   'featured-tours': FeaturedTour[];
+  order: number;
 }

@@ -6,12 +6,13 @@ import { ToursSectionComponent } from '../tours-section/tours-section.component'
 import { ToursListComponent } from '../tours-list-section/tours-list-section.component';
 import { FullCardSectionComponent } from '../full-card-section/full-card-section.component';
 import { CarouselSectionComponent } from '../carousel-section/carousel-section.component';
+import { CommunitySectionComponent } from '../community-section/community-section.component';
 
 @Component({
   selector: 'app-dynamic-components',
   standalone: false,
   templateUrl: './dynamic-components.component.html',
-  styleUrls: ['./dynamic-components.component.scss']
+  styleUrls: ['./dynamic-components.component.scss'],
 })
 export class DynamicComponentsComponent {
   @Input() blocks: Block[] = [];
@@ -23,7 +24,8 @@ export class DynamicComponentsComponent {
     [BlockType.TourList]: ToursListComponent,
     [BlockType.CardSliderVertical]: CarouselSectionComponent,
     [BlockType.FullSlider]: FullCardSectionComponent,
-    [BlockType.TourSection]: ToursSectionComponent
+    [BlockType.TourSection]: ToursSectionComponent,
+    [BlockType.TravelersSection]: CommunitySectionComponent,
   };
 
   getComponent(block: Block): Type<any> | null {

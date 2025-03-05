@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { HomeService } from '../../../../core/services/home.service';
-import { TravelersSection } from '../../../../core/models/home/travelers/travelers-section.model';
+import { TravelersSection } from '../../../../core/models/blocks/travelers/travelers-section.model';
+import { BlockType } from '../../../../core/models/blocks/block.model';
 
 @Component({
   selector: 'app-community-section',
@@ -9,22 +10,58 @@ import { TravelersSection } from '../../../../core/models/home/travelers/travele
   styleUrls: ['./community-section.component.scss'],
 })
 export class CommunitySectionComponent implements OnInit {
+  @Input() content!: any;
+  @Input() type!: BlockType;
   travelersSection: TravelersSection | null = null;
 
   constructor(private homeService: HomeService) {}
 
   ngOnInit() {
-    this.homeService.getTravelersSection().subscribe({
-      next: (data) => {
-        this.travelersSection = data;
-      },
-      error: (error) => {
-        console.error('Error fetching travelers section data:', error);
-      },
-    });
+    // Si content ya es un TravelersSection válido, usarlo directamente
+    if (this.content && this.isValidTravelersSection(this.content)) {
+      this.travelersSection = this.content;
+    }
+    // Si content tiene un name que podría ser un ID
+    else if (this.content && this.content.name) {
+      this.homeService.getTravelersSection(this.content.name).subscribe({
+        next: (data) => {
+          this.travelersSection = data;
+        },
+        error: (error) => {
+          console.error(
+            `Error fetching travelers section with name ${this.content.name}:`,
+            error
+          );
+        },
+      });
+    }
+    // Fallback a obtener la sección de viajeros por defecto
+    else {
+      this.homeService.getTravelersSection().subscribe({
+        next: (data) => {
+          this.travelersSection = data;
+        },
+        error: (error) => {
+          console.error('Error fetching travelers section data:', error);
+        },
+      });
+    }
+  }
+
+  // Helper method to validate if the provided content has the expected structure
+  private isValidTravelersSection(content: any): content is TravelersSection {
+    return (
+      content &&
+      typeof content.title === 'string' &&
+      content['travelers-cards'] !== undefined &&
+      content.featured !== undefined &&
+      content.reviews !== undefined &&
+      content.reviews['reviews-cards'] !== undefined
+    );
   }
 
   get reviews() {
+    // Devuelve todo el objeto reviews, no solo el array
     return this.travelersSection?.reviews;
   }
 

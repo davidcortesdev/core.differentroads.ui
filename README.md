@@ -5,13 +5,13 @@ Este proyecto fue generado con [Angular CLI](https://github.com/angular/angular-
 ## Estado de las Pipelines
 
 ### Develop
-[![Build and Deploy Develop](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/develop.yml/badge.svg)](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/develop.yml)
+[![Azure Static Web Apps CI/CD - develop](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/azure-static-web-apps-thankful-sea-02dbc2510.yml/badge.svg)](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/azure-static-web-apps-thankful-sea-02dbc2510.yml)
 
 ### Pre
-[![Build and Deploy Pre](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/pre.yml/badge.svg?branch=pre)](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/pre.yml)
+[![Azure Static Web Apps CI/CD - pre](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/azure-static-web-apps-lemon-flower-089308810.yml/badge.svg)](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/azure-static-web-apps-lemon-flower-089308810.yml)
 
 ### Main
-[![Build and Deploy Production](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/main.yml/badge.svg)](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/main.yml)
+[![Azure Static Web Apps CI/CD - main](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/azure-static-web-apps-zealous-plant-0f9892a10.yml/badge.svg)](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/azure-static-web-apps-zealous-plant-0f9892a10.yml)
 
 ## Estructura del Proyecto
 

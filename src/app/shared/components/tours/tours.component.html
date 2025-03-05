@@ -1,10 +1,14 @@
-<div class="tours-container">
+<div class="tours-container" *ngIf="showTours">
+  <!-- Hero section only shown when not used within content-page -->
   <app-hero-section
+    *ngIf="!isOffersCollection"
     [initialDestination]="destination"
     [initialDepartureDate]="minDate"
     [initialReturnDate]="maxDate"
     [initialTripType]="tourType"
   ></app-hero-section>
+  
+  <!-- Combined filters section from both components -->
   <div class="tours-filters">
     <p-floatlabel class="w-full md:w-56 min-width" variant="on">
       <p-select
@@ -19,14 +23,35 @@
       />
       <label for="order_label">Ordenar por</label>
     </p-floatlabel>
+    
     <span class="space"></span>
+    
+    <!-- Tag filter, visible when tag options available but not selected by input -->
+    <p-floatlabel *ngIf="tagOptions.length > 0 && initialTags.length === 0" class="w-full md:w-56 min-width" variant="on">
+      <p-multiselect
+        id="tag_label"
+        class="filter-box"
+        [options]="tagOptions"
+        [(ngModel)]="selectedTagOption"
+        (ngModelChange)="onTagFilterChange()"
+        optionLabel="name"
+        optionValue="value"
+        filter="false"
+        [maxSelectedLabels]="1"
+        [displaySelectedLabel]="true"
+        selectedItemsLabel="{0} items"
+        [showToggleAll]="false"
+      />
+      <label for="tag_label">Categoría</label>
+    </p-floatlabel>
+    
     <p-floatlabel class="w-full md:w-56 min-width" variant="on">
       <p-multiselect
         id="season_label"
         class="filter-box"
         [options]="seasonOptions"
         [(ngModel)]="selectedSeasonOption"
-        (ngModelChange)="onFilterChange()"
+        (ngModelChange)="onSeasonFilterChange()"
         optionLabel="name"
         optionValue="value"
         filter="false"
@@ -37,12 +62,13 @@
       />
       <label for="season_label">Temporada</label>
     </p-floatlabel>
+    
     <p-floatlabel class="w-full md:w-56 min-width" variant="on">
       <p-multiselect
         id="month_label"
         [options]="monthOptions"
         [(ngModel)]="selectedMonthOption"
-        (ngModelChange)="onFilterChange()"
+        (ngModelChange)="onMonthFilterChange()"
         optionLabel="name"
         optionValue="value"
         filter="false"
@@ -53,12 +79,13 @@
       />
       <label for="month_label">Mes</label>
     </p-floatlabel>
+    
     <p-floatlabel class="w-full md:w-56 min-width" variant="on">
       <p-multiselect
         id="price_label"
         [options]="priceOptions"
         [(ngModel)]="selectedPriceOption"
-        (ngModelChange)="onFilterChange()"
+        (ngModelChange)="onPriceFilterChange()"
         optionLabel="name"
         optionValue="value"
         filter="false"
@@ -70,6 +97,8 @@
       <label for="price_label">Precio</label>
     </p-floatlabel>
   </div>
+  
+  <!-- Tours list section -->
   <div class="tours-list">
     <p-dataView #dv [value]="displayedTours" [layout]="layout">
       <ng-template let-tours #grid>

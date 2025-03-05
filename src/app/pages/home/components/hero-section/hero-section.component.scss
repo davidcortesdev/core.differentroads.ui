@@ -9,8 +9,6 @@
   --min-width-desktop: 11rem;
   --input-height: 50px;
   --input-height-mobile: 45px;
-  --btn-desktop-height: 3.46rem;
-  --btn-mobile-height: 50px;
   --font-size-xs: 12px;
   --font-size-sm: 14px;
   --font-size-md: 16px;
@@ -139,7 +137,6 @@
     }
     .button-search {
       border-radius: 0;
-      height: var(--btn-desktop-height);
       width: var(--btn-desktop-width);
       &.radius {
         border-radius: 0px 50px 50px 0px;

@@ -6,10 +6,22 @@
   --spacing-md: 1rem;
   --spacing-lg: 2rem;
   --min-width-mobile: 7rem;
-  --min-width-desktop: 13rem;
+  --min-width-desktop: 11rem;
   --input-height: 50px;
+  --input-height-mobile: 45px;
+  --btn-desktop-height: 3.46rem;
+  --btn-mobile-height: 50px;
+  --font-size-xs: 12px;
   --font-size-sm: 14px;
   --font-size-md: 16px;
+  --font-size-label: 16px;
+  --font-size-label-mobile: 14px;
+  --border-radius-mobile: 10px;
+  --btn-desktop-width: 7rem;
+  --btn-mobile-width: 50%;
+  --first-input-flex: 35%;
+  --other-inputs-flex: 14%;
+  --input-border-color: #ced4da;
 }
 
 .hero-section {
@@ -38,33 +50,23 @@
 
     .search-form {
       display: flex;
-      gap: var(--spacing-md);
       align-items: center;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
 
       .flex-30 {
-        flex: 20%;
-        min-width: var(--min-width-desktop);
+        flex: var(--first-input-flex);
+        min-width: calc(var(--min-width-desktop) + 5rem);
       }
 
       .flex-20 {
-        flex: 16%;
+        flex: var(--other-inputs-flex);
         min-width: var(--min-width-desktop);
       }
 
       .flex-10 {
         flex: 8%;
-        min-width: 11rem;
+        min-width: 9rem;
       }
-
-      @media screen and (max-width: 400px) {
-        .flex-30,
-        .flex-20,
-        .flex-10 {
-          min-width: var(--min-width-mobile);
-        }
-      }
-
       div {
         p-iftaLabel {
           border: none;
@@ -79,21 +81,32 @@
           font-size: var(--font-size-sm);
           font-weight: 500;
 
+          ::ng-deep .p-float-label label {
+            font-weight: 500;
+            font-size: var(--font-size-label);
+          }
+
           .input-text {
             border: none;
-            font-size: var(--font-size-md);
-            width: 270px;
+            font-size: var(--font-size-sm);
+            width: 100%;
           }
 
           p-autoComplete,
-          p-datepicker {
+          p-datepicker,
+          p-dropdown {
             border: none;
             flex: 1;
             width: 100%;
 
             ::ng-deep .p-autocomplete,
-            ::ng-deep .p-calendar {
+            ::ng-deep .p-calendar,
+            ::ng-deep .p-dropdown {
               width: 100%;
+
+              .p-dropdown-trigger {
+                border-left: none;
+              }
             }
           }
         }
@@ -103,25 +116,62 @@
 
   ::ng-deep {
     .p-inputtext {
-      border: transparent;
-      font-size: var(--font-size-md);
+      border-radius: 0;
+      font-size: var(--font-size-sm);
+
+      &.radius {
+        border-radius: 50px 0px 0px 50px;
+      }
+    }
+
+    .flex-20:nth-child(4) {
+      p-iftaLabel {
+        p-autoComplete {
+          ::ng-deep .p-autocomplete {
+            .p-inputtext {
+              border-right: none !important;
+            }
+
+            .p-autocomplete-dropdown {
+              border-left: none !important;
+              margin-left: 0 !important;
+              border-top: 1px solid var(--input-border-color) !important;
+              border-bottom: 1px solid var(--input-border-color) !important;
+              border-right: 1px solid var(--input-border-color) !important;
+            }
+          }
+        }
+      }
+    }
+
+    .p-dropdown {
+      border-right: none;
+
+      .p-dropdown-trigger {
+        border-left: none;
+      }
     }
 
     .p-autocomplete-dropdown {
-      background-color: var(--background-azul-color-letra);
-      border: none;
+      border: transparent;
+      border-radius: 0;
     }
 
     .button-search {
-      border-radius: 3rem;
-      height: 3.125rem;
-      width: 7rem;
+      border-radius: 0;
+      height: var(--btn-desktop-height);
+      width: var(--btn-desktop-width);
+
+      &.radius {
+        border-radius: 0px 50px 50px 0px;
+      }
     }
   }
 
   .float-label {
     color: var(--background-azul);
     font-weight: 500;
+    font-size: var(--font-size-label);
   }
 
   .spinner-container {
@@ -131,5 +181,204 @@
     align-items: center;
     justify-content: center;
     background-color: rgba(255, 255, 255, 0.8);
+  }
+
+  @media screen and (min-width: 993px) and (max-width: 1366px) {
+    .search-form {
+      .flex-30 {
+        flex: 1.5;
+        min-width: 12rem;
+      }
+
+      .flex-20 {
+        flex: 0.7;
+        min-width: 9rem;
+      }
+
+      .flex-10 {
+        flex: 0.6;
+        min-width: 7rem;
+      }
+
+      div p-floatlabel {
+        min-width: 150px;
+
+        .input-text {
+          width: 100%;
+        }
+      }
+    }
+  }
+
+  @media screen and (max-width: 992px) and (min-width: 481px) {
+    .search-container {
+      width: 90%;
+
+      .search-form {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        background-color: transparent;
+        padding: 15px;
+
+        .flex-30,
+        .flex-20 {
+          flex: 0 0 48%;
+          margin-bottom: 10px;
+        }
+
+        .flex-10 {
+          flex: 0 0 48%;
+          margin-bottom: 10px;
+
+          p-floatlabel {
+            display: flex;
+            align-items: center;
+
+            p-dropdown {
+              width: 100%;
+
+              ::ng-deep .p-dropdown {
+                width: 100%;
+                display: flex;
+
+                .p-dropdown-trigger {
+                  position: relative;
+                  right: 0;
+                }
+              }
+            }
+          }
+        }
+
+        div:last-child {
+          flex: 0 0 100%;
+          display: flex;
+          justify-content: center;
+
+          .button-search {
+            width: 50%;
+            max-width: 200px;
+          }
+        }
+      }
+    }
+
+    ::ng-deep {
+      .p-inputtext {
+        border-radius: var(--border-radius-mobile);
+        font-size: var(--font-size-sm) !important;
+
+        &.radius {
+          border-radius: var(--border-radius-mobile);
+        }
+      }
+
+      .p-autocomplete-dropdown {
+        border-radius: var(--border-radius-mobile);
+      }
+
+      .button-search {
+        border-radius: var(--border-radius-mobile);
+
+        &.radius {
+          border-radius: var(--border-radius-mobile);
+        }
+      }
+    }
+
+    .float-label {
+      font-size: var(--font-size-label) !important;
+    }
+  }
+
+  @media screen and (max-width: 480px) {
+    .search-container {
+      width: 95%;
+      padding: var(--spacing-sm);
+
+      .search-form {
+        flex-direction: column;
+        gap: 8px;
+        background-color: transparent;
+        padding: 0;
+
+        .flex-30,
+        .flex-20,
+        .flex-10 {
+          flex: 0 0 100%;
+          width: 100%;
+        }
+
+        div p-floatlabel {
+          height: var(--input-height-mobile);
+        }
+
+        div:last-child {
+          display: flex;
+          justify-content: center;
+          width: 100%;
+          margin-top: 10px;
+        }
+      }
+    }
+
+    ::ng-deep {
+      .p-inputtext {
+        height: var(--input-height-mobile);
+        border-radius: var(--border-radius-mobile);
+        font-size: var(--font-size-xs) !important;
+
+        &.radius {
+          border-radius: var(--border-radius-mobile);
+        }
+      }
+
+      .button-search {
+        height: var(--btn-mobile-height) !important;
+        width: var(--btn-mobile-width) !important;
+        min-width: 180px;
+        border-radius: 8px !important;
+        display: block !important;
+        margin: 0 auto !important;
+        font-weight: 600;
+        font-size: 16px;
+      }
+    }
+
+    .float-label {
+      font-size: var(--font-size-label-mobile) !important;
+    }
+  }
+
+  @media screen and (max-width: 400px) {
+    .search-form {
+      .flex-30,
+      .flex-20,
+      .flex-10 {
+        min-width: var(--min-width-mobile);
+      }
+    }
+  }
+
+  @media screen and (max-width: 992px) {
+    .search-form .flex-20 p-iftaLabel p-autoComplete.border {
+      ::ng-deep .p-autocomplete {
+        display: flex;
+
+        .p-inputtext {
+          border-radius: var(--border-radius-mobile) 0 0 var(--border-radius-mobile) !important;
+          border-right: none !important;
+        }
+
+        .p-autocomplete-dropdown {
+          border-radius: 0 var(--border-radius-mobile) var(--border-radius-mobile) 0 !important;
+          border-left: none !important;
+          border-top: 1px solid var(--input-border-color) !important;
+          border-bottom: 1px solid var(--input-border-color) !important;
+          border-right: none !important;
+        }
+      }
+    }
   }
 }

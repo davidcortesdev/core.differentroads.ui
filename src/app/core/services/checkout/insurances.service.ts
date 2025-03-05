@@ -13,6 +13,8 @@ export class InsurancesService {
   selectedInsurances$ = this.selectedInsurancesSource.asObservable();
 
   updateInsurances(insurances: Insurance[]) {
+    console.log('_____ recibed', insurances);
+
     this.insurancesSource.next(insurances);
   }
 

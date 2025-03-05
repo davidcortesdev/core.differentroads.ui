@@ -34,14 +34,17 @@ export class InsurancesComponent implements OnInit, OnChanges {
       this.insurances = insurances;
     });
     this.insurancesService.selectedInsurances$.subscribe((insurances) => {
+      console.log('Selected Insurances:_____', insurances);
+
       this.addedInsurances = new Set(
-        insurances.map((insurance) => insurance.id)
+        insurances.map((insurance) => insurance.activityId)
       );
     });
   }
 
   ngOnInit(): void {
     this.loadInsurances();
+    this.initializeInsurances();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -66,6 +69,8 @@ export class InsurancesComponent implements OnInit, OnChanges {
               }))
               .filter((insurance) => insurance.price > 0)
           );
+          this.updateAddedInsurances();
+
           this.loadPrices();
         });
     }
@@ -80,16 +85,21 @@ export class InsurancesComponent implements OnInit, OnChanges {
   toggleInsurance(insurance: Insurance | null): void {
     this.selectedInsurance = insurance;
     this.addedInsurances.clear();
+
     if (insurance) {
-      this.addedInsurances.add(insurance.id);
+      this.addedInsurances.add(insurance.activityId);
     }
     this.updateAddedInsurances();
   }
 
   updateAddedInsurances(): void {
+    console.log('Updating added insurances:___', this.addedInsurances);
+
     const insurances = this.insurances.filter((insurance) =>
-      this.addedInsurances.has(insurance.id)
+      this.addedInsurances.has(insurance.activityId)
     );
+    console.log('Updating added insurances:__', insurances);
+
     this.insurancesService.updateSelectedInsurances(insurances);
   }
 
@@ -102,6 +112,12 @@ export class InsurancesComponent implements OnInit, OnChanges {
   }
 
   isInsuranceAdded(insurance: Insurance): boolean {
-    return this.addedInsurances.has(insurance.id);
+    return this.addedInsurances.has(insurance.activityId);
+  }
+
+  initializeInsurances(): void {
+    this.insurancesService.insurances$.subscribe((insurances) => {
+      console.log('Insurances:', insurances);
+    });
   }
 }

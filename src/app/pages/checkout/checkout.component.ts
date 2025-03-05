@@ -43,7 +43,6 @@ export class CheckoutComponent implements OnInit {
   // Cart information
   activities: Activity[] = [];
   selectedFlight: Flight | null = null;
-  selectedInsurance: Insurance | null = null;
   selectedInsurances: Insurance[] = [];
   summary: { qty: number; value: number; description: string }[] = [];
   subtotal: number = 0;
@@ -91,6 +90,7 @@ export class CheckoutComponent implements OnInit {
       this.initializeTravelers(order.travelers || []);
       this.initializeActivities(order.optionalActivitiesRef || []);
       this.initializeFlights(order.flights || []);
+      this.initializeInsurances(order.insurancesRef || []);
 
       const periodID = order.periodID;
       this.periodID = periodID;
@@ -146,6 +146,8 @@ export class CheckoutComponent implements OnInit {
     });
 
     this.insurancesService.selectedInsurances$.subscribe((insurances) => {
+      console.log('Selected insurances:', insurances);
+
       this.selectedInsurances = insurances;
       this.updateOrderSummary();
     });
@@ -228,6 +230,28 @@ export class CheckoutComponent implements OnInit {
     }
   }
 
+  initializeInsurances(insurancesRef: any[]) {
+    const insurances: Insurance[] = insurancesRef.map((insuranceRef) => {
+      return {
+        id: insuranceRef.id,
+        externalID: insuranceRef.id,
+        name: '',
+        description: '',
+        price: 0,
+        activityId: insuranceRef.id,
+        status: '',
+        optional: true,
+        periodId: this.periodID,
+        productType: '',
+        travelersAssigned: insuranceRef.travelersAssigned,
+      };
+    });
+
+    console.log('Insurances:', insurances);
+
+    this.insurancesService.updateSelectedInsurances(insurances);
+  }
+
   /* Summary */
   updateOrderSummary() {
     this.summary = [];
@@ -300,7 +324,7 @@ export class CheckoutComponent implements OnInit {
             description: activity.name + ' (adultos)',
           });
         }
-        if (childsPrice) {
+        if (childsPrice && this.travelersSelected.childs) {
           this.summary.push({
             qty: this.travelersSelected.childs,
             value: childsPrice,
@@ -355,6 +379,8 @@ export class CheckoutComponent implements OnInit {
       tempOrderData['flights'] = [this.selectedFlight];
     }
 
+    console.log('_____', this.selectedInsurances);
+
     if (this.selectedInsurances.length > 0) {
       this.selectedInsurances.forEach((insurance) => {
         this.summary.push({
@@ -368,12 +394,14 @@ export class CheckoutComponent implements OnInit {
       });
       tempOrderData['insurancesRef'] = this.selectedInsurances.map(
         (insurance) => ({
-          id: insurance.id,
+          id: insurance.activityId,
           travelersAssigned: travelersData.map(
             (traveler) => traveler._id || '123'
           ),
         })
       );
+    } else {
+      tempOrderData['insurancesRef'] = [];
     }
 
     this.summaryService.updateOrder(tempOrderData);

@@ -51,7 +51,6 @@ export class TourComponent implements OnInit {
       .subscribe({
         next: (tourData: Tour) => {
           this.tour = tourData;
-          console.log(tourData);
           this.loading = false;
         },
         error: (error) => {

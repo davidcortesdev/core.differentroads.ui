@@ -1,8 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { catchError } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
-import { ToursService } from '../../core/services/tours.service';
 import { ActivatedRoute } from '@angular/router';
+import { ToursService } from '../../../core/services/tours.service';
 
 interface ITour {
   imageUrl: string;
@@ -19,12 +18,22 @@ interface ITour {
 @Component({
   selector: 'app-tours',
   standalone: false,
-
   templateUrl: './tours.component.html',
   styleUrl: './tours.component.scss',
 })
 export class ToursComponent implements OnInit {
+  // Inputs from ContentPageComponent
+  @Input() initialTags: string[] = [];
+  @Input() showTours: boolean = true;
+  @Input() isOffersCollection: boolean = false;
+
+  // Output to ContentPageComponent
+  @Output() toursLoaded = new EventEmitter<ITour[]>();
+
+  // Layout configuration
   layout: 'grid' | 'list' = 'grid';
+
+  // Filter options
   orderOptions = [
     { name: 'Próximas salidas', value: 'next-departures' },
     { name: 'Precio (de menor a mayor)', value: 'min-price' },
@@ -37,7 +46,6 @@ export class ToursComponent implements OnInit {
     { name: '$1000 - $3000', value: '1000-3000' },
     { name: '+ 3000', value: '3000+' },
   ];
-
   selectedPriceOption: string[] = [];
 
   seasonOptions: { name: string; value: string }[] = [
@@ -46,13 +54,16 @@ export class ToursComponent implements OnInit {
     { name: 'Primavera', value: 'Primavera' },
     { name: 'Otoño', value: 'otono' },
   ];
-
   selectedSeasonOption: string[] = [];
 
   monthOptions: { name: string; value: string }[] = [];
-
   selectedMonthOption: string[] = [];
 
+  // Tag options from filter component
+  tagOptions: { name: string; value: string }[] = [];
+  selectedTagOption: string[] = [];
+
+  // Core data
   displayedTours: ITour[] = [];
   destination: string = '';
   minDate: Date | null = null;
@@ -65,6 +76,12 @@ export class ToursComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    // Handle initialTags from parent component
+    if (this.initialTags && this.initialTags.length > 0) {
+      this.selectedTagOption = [...this.initialTags];
+    }
+
+    // Handle routing params (when used as standalone)
     this.route.queryParams.subscribe((params) => {
       this.destination = params['destination'] || '';
       this.minDate = params['departureDate']
@@ -74,10 +91,33 @@ export class ToursComponent implements OnInit {
         ? new Date(params['returnDate'])
         : null;
       this.tourType = params['tripType'] || '';
-      this.selectedOrderOption = params['order'] || 'next-departures'; // Ensure the default value is set
-      this.selectedPriceOption = params['price'] || '';
-      this.selectedSeasonOption = params['season'] || '';
-      this.selectedMonthOption = params['month'] || '';
+      this.selectedOrderOption = params['order'] || 'next-departures';
+
+      // Handle initialization of filter options from query params
+      if (params['price']) {
+        this.selectedPriceOption = Array.isArray(params['price'])
+          ? params['price']
+          : [params['price']];
+      }
+
+      if (params['season']) {
+        this.selectedSeasonOption = Array.isArray(params['season'])
+          ? params['season']
+          : [params['season']];
+      }
+
+      if (params['month']) {
+        this.selectedMonthOption = Array.isArray(params['month'])
+          ? params['month']
+          : [params['month']];
+      }
+
+      // Only use tags from URL if not already set from input
+      if (params['tags'] && this.selectedTagOption.length === 0) {
+        this.selectedTagOption = Array.isArray(params['tags'])
+          ? params['tags']
+          : [params['tags']];
+      }
 
       this.loadTours();
     });
@@ -93,26 +133,39 @@ export class ToursComponent implements OnInit {
       tourSeason: this.selectedSeasonOption,
       month: this.selectedMonthOption,
       sort: this.selectedOrderOption,
+      ...(this.selectedTagOption.length > 0 && {
+        tags: this.selectedTagOption,
+      }),
     };
 
     this.toursService
       .getFilteredToursList(filters)
       .pipe(
         catchError((error: Error) => {
-          console.error('Error loading tours:', error);
+          // Silent error handling
           return [];
         })
       )
       .subscribe((tours: any) => {
-        this.monthOptions = tours.filtersOptions?.month?.map(
-          (month: string) => {
+        // Process month options
+        this.monthOptions =
+          tours.filtersOptions?.month?.map((month: string) => {
             return {
               name: month.toUpperCase(),
               value: month,
             };
-          }
-        );
+          }) || [];
 
+        // Process tag options
+        this.tagOptions =
+          tours.filtersOptions?.tags?.map((tag: string) => {
+            return {
+              name: tag.toUpperCase(),
+              value: tag,
+            };
+          }) || [];
+
+        // Process tour data
         this.displayedTours = tours.data.map((tour: any) => {
           const days = tour.activePeriods?.[0]?.days || '';
 
@@ -132,10 +185,38 @@ export class ToursComponent implements OnInit {
             webSlug: tour.webSlug || '',
           };
         });
+
+        // Emit tours to parent component
+        this.toursLoaded.emit(this.displayedTours);
       });
   }
 
+  // Filter change methods
   onFilterChange() {
     this.loadTours();
+  }
+
+  onTagFilterChange() {
+    this.loadTours();
+  }
+
+  onPriceFilterChange() {
+    this.loadTours();
+  }
+
+  onSeasonFilterChange() {
+    this.loadTours();
+  }
+
+  onMonthFilterChange() {
+    this.loadTours();
+  }
+
+  onOrderChange() {
+    this.loadTours();
+  }
+
+  toggleLayout() {
+    this.layout = this.layout === 'grid' ? 'list' : 'grid';
   }
 }

@@ -1,6 +1,7 @@
 import { CldImage } from '../commons/cld-image.model';
 
 export interface CardSliderVerticalContent {
+  order: number;
   visible: boolean;
   'card-list': Card[];
   content: string;

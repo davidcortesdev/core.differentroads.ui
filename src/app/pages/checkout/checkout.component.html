@@ -102,16 +102,21 @@
           <div class="selected-items">
             <div *ngFor="let item of summary" class="item">
               <span>{{ item.description }}</span>
-              <span>
-                {{
-                  item.value === 0
-                    ? "incluido"
-                    : item.qty +
-                      " x " +
-                      (item.value | currencyFormat : "EUR") +
-                      " = " +
-                      (item.value * item.qty | currencyFormat : "EUR")
-                }}
+              <span *ngIf="item.value">
+                <span>{{ item.qty }}</span>
+                <span>x</span>
+                <span>{{ item.value | currencyFormat : "EUR" }}</span>
+                <span>=</span>
+                <span>{{
+                  item.value * item.qty | currencyFormat : "EUR"
+                }}</span>
+              </span>
+              <span *ngIf="!item.value">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span>incluido</span>
               </span>
             </div>
           </div>

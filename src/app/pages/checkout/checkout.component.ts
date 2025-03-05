@@ -146,8 +146,6 @@ export class CheckoutComponent implements OnInit {
     });
 
     this.insurancesService.selectedInsurances$.subscribe((insurances) => {
-      console.log('Selected insurances:', insurances);
-
       this.selectedInsurances = insurances;
       this.updateOrderSummary();
     });
@@ -339,17 +337,6 @@ export class CheckoutComponent implements OnInit {
       }
     });
 
-    if (this.selectedInsurances.length === 0) {
-      this.summary.push({
-        qty:
-          this.travelersSelected.adults +
-          this.travelersSelected.childs +
-          this.travelersSelected.babies,
-        value: 0,
-        description: 'Seguro básico',
-      });
-    }
-
     let tempOrderData: Order = { ...this.summaryService.getOrderValue()! };
     const travelersData = this.travelersService.getTravelers();
 
@@ -375,6 +362,17 @@ export class CheckoutComponent implements OnInit {
       });
 
       tempOrderData['flights'] = [this.selectedFlight];
+    }
+
+    if (this.selectedInsurances.length === 0) {
+      this.summary.push({
+        qty:
+          this.travelersSelected.adults +
+          this.travelersSelected.childs +
+          this.travelersSelected.babies,
+        value: 0,
+        description: 'Seguro básico',
+      });
     }
 
     if (this.selectedInsurances.length > 0) {

@@ -152,6 +152,7 @@ import { PaymentsInformationSectionComponent } from './pages/reservation/compone
 import { GoogleMapsModule } from '@angular/google-maps';
 
 import { SkeletonModule } from 'primeng/skeleton';
+import { SortByPipe } from './shared/pipes/sort-by.pipe';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -301,6 +302,7 @@ export function HttpLoaderFactory(http: HttpClient) {
       defaultLanguage: 'es',
     }),
     CurrencyPipe,
+    SortByPipe,
   ],
   providers: [
     provideAnimationsAsync(),

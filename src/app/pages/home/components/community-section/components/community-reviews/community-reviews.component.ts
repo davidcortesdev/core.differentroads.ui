@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Reviews } from '../../../../../../core/models/home/travelers/reviews.model';
+import { Reviews } from '../../../../../../core/models/blocks/travelers/reviews.model';
 import { ReviewCard } from '../../../../../../shared/models/reviews/review-card.model';
 
 @Component({
@@ -14,5 +14,4 @@ export class CommunityReviewsComponent {
   get reviewsCards(): ReviewCard[] {
     return this.reviews ? this.reviews['reviews-cards'] : [];
   }
-
 }

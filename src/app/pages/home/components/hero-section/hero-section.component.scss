@@ -23,14 +23,12 @@
   --other-inputs-flex: 14%;
   --input-border-color: #ced4da;
 }
-
 .hero-section {
   height: var(--hero-height);
   position: relative;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-
   .background-video {
     position: absolute;
     inset: 0;
@@ -40,29 +38,24 @@
     z-index: 0;
     overflow: hidden;
   }
-
   .search-container {
     position: relative;
     z-index: 1;
     padding: var(--spacing-lg);
     width: var(--container-width);
     max-width: var(--container-max-width);
-
     .search-form {
       display: flex;
       align-items: center;
       flex-wrap: nowrap;
-
       .flex-30 {
         flex: var(--first-input-flex);
         min-width: calc(var(--min-width-desktop) + 5rem);
       }
-
       .flex-20 {
         flex: var(--other-inputs-flex);
         min-width: var(--min-width-desktop);
       }
-
       .flex-10 {
         flex: 8%;
         min-width: 9rem;
@@ -71,7 +64,6 @@
         p-iftaLabel {
           border: none;
         }
-
         p-floatlabel {
           flex: 1;
           display: flex;
@@ -85,25 +77,21 @@
             font-weight: 500;
             font-size: var(--font-size-label);
           }
-
           .input-text {
             border: none;
             font-size: var(--font-size-sm);
             width: 100%;
           }
-
           p-autoComplete,
           p-datepicker,
           p-dropdown {
             border: none;
             flex: 1;
             width: 100%;
-
             ::ng-deep .p-autocomplete,
             ::ng-deep .p-calendar,
             ::ng-deep .p-dropdown {
               width: 100%;
-
               .p-dropdown-trigger {
                 border-left: none;
               }
@@ -113,17 +101,14 @@
       }
     }
   }
-
   ::ng-deep {
     .p-inputtext {
       border-radius: 0;
       font-size: var(--font-size-sm);
-
       &.radius {
         border-radius: 50px 0px 0px 50px;
       }
     }
-
     .flex-20:nth-child(4) {
       p-iftaLabel {
         p-autoComplete {
@@ -131,7 +116,6 @@
             .p-inputtext {
               border-right: none !important;
             }
-
             .p-autocomplete-dropdown {
               border-left: none !important;
               margin-left: 0 !important;
@@ -143,38 +127,31 @@
         }
       }
     }
-
     .p-dropdown {
       border-right: none;
-
       .p-dropdown-trigger {
         border-left: none;
       }
     }
-
     .p-autocomplete-dropdown {
       border: transparent;
       border-radius: 0;
     }
-
     .button-search {
       border-radius: 0;
       height: var(--btn-desktop-height);
       width: var(--btn-desktop-width);
-
       &.radius {
         border-radius: 0px 50px 50px 0px;
         height: 3.28rem;
       }
     }
   }
-
   .float-label {
     color: var(--background-azul);
     font-weight: 500;
     font-size: var(--font-size-label);
   }
-
   .spinner-container {
     position: absolute;
     inset: 0;
@@ -183,66 +160,53 @@
     justify-content: center;
     background-color: rgba(255, 255, 255, 0.8);
   }
-
   @media screen and (min-width: 993px) and (max-width: 1366px) {
     .search-form {
       .flex-30 {
         flex: 1.5;
         min-width: 12rem;
       }
-
       .flex-20 {
         flex: 0.7;
         min-width: 9rem;
       }
-
       .flex-10 {
         flex: 0.6;
         min-width: 7rem;
       }
-
       div p-floatlabel {
         min-width: 150px;
-
         .input-text {
           width: 100%;
         }
       }
     }
   }
-
   @media screen and (max-width: 992px) and (min-width: 481px) {
     .search-container {
       width: 90%;
-
       .search-form {
         display: flex;
         flex-wrap: wrap;
         justify-content: space-between;
         background-color: transparent;
         padding: 15px;
-
         .flex-30,
         .flex-20 {
           flex: 0 0 48%;
           margin-bottom: 10px;
         }
-
         .flex-10 {
           flex: 0 0 48%;
           margin-bottom: 10px;
-
           p-floatlabel {
             display: flex;
             align-items: center;
-
             p-dropdown {
               width: 100%;
-
               ::ng-deep .p-dropdown {
                 width: 100%;
                 display: flex;
-
                 .p-dropdown-trigger {
                   position: relative;
                   right: 0;
@@ -251,12 +215,10 @@
             }
           }
         }
-
         div:last-child {
           flex: 0 0 100%;
           display: flex;
           justify-content: center;
-
           .button-search {
             width: 50%;
             max-width: 200px;
@@ -265,21 +227,17 @@
         }
       }
     }
-
     ::ng-deep {
       .p-inputtext {
         border-radius: var(--border-radius-mobile);
         font-size: var(--font-size-sm) !important;
-
         &.radius {
           border-radius: var(--border-radius-mobile);
         }
       }
-
       .p-autocomplete-dropdown {
         border-radius: var(--border-radius-mobile);
       }
-
       .button-search {
         border-radius: var(--border-radius-mobile);
         height: var(--input-height) !important;
@@ -288,34 +246,28 @@
         }
       }
     }
-
     .float-label {
       font-size: var(--font-size-label) !important;
     }
   }
-
   @media screen and (max-width: 480px) {
     .search-container {
       width: 95%;
       padding: var(--spacing-sm);
-
       .search-form {
         flex-direction: column;
         gap: 8px;
         background-color: transparent;
         padding: 0;
-
         .flex-30,
         .flex-20,
         .flex-10 {
           flex: 0 0 100%;
           width: 100%;
         }
-
         div p-floatlabel {
           height: var(--input-height-mobile);
         }
-
         div:last-child {
           display: flex;
           justify-content: center;
@@ -324,18 +276,15 @@
         }
       }
     }
-
     ::ng-deep {
       .p-inputtext {
         height: var(--input-height-mobile);
         border-radius: var(--border-radius-mobile);
         font-size: var(--font-size-xs) !important;
-
         &.radius {
           border-radius: var(--border-radius-mobile);
         }
       }
-
       .button-search {
         height: var(--input-height-mobile) !important;
         width: var(--btn-mobile-width) !important;
@@ -347,12 +296,10 @@
         font-size: 16px;
       }
     }
-
     .float-label {
       font-size: var(--font-size-label-mobile) !important;
     }
   }
-
   @media screen and (max-width: 400px) {
     .search-form {
       .flex-30,
@@ -362,21 +309,18 @@
       }
     }
   }
-
   @media screen and (max-width: 992px) {
     .flex-20:nth-child(4) {
       p-iftaLabel {
         p-autoComplete {
           ::ng-deep .p-autocomplete {
             display: flex !important;
-
             .p-inputtext {
               border-right: none !important;
               border-top-right-radius: 0 !important;
               border-bottom-right-radius: 0 !important;
               flex: 1 !important;
             }
-
             .p-autocomplete-dropdown {
               border-left: none !important;
               margin-left: -1px !important;
@@ -397,16 +341,13 @@
         }
       }
     }
-
     .search-form .flex-20 p-iftaLabel p-autoComplete.border {
       ::ng-deep .p-autocomplete {
         display: flex;
-
         .p-inputtext {
           border-radius: var(--border-radius-mobile) 0 0 var(--border-radius-mobile) !important;
           border-right: none !important;
         }
-
         .p-autocomplete-dropdown {
           border-radius: 0 var(--border-radius-mobile) var(--border-radius-mobile) 0 !important;
           border-left: none !important;

@@ -1,24 +1,31 @@
 <div class="highlights-section">
   <h2>{{ highlightsTitle }}</h2>
-  
-  <p-carousel 
-    autoplayInterval="3000" 
-    [value]="highlights" 
-    [numVisible]="4" 
-    [numScroll]="1" 
+
+  <p-carousel
+    autoplayInterval="7000"
+    [value]="highlights"
+    [numVisible]="4"
+    [numScroll]="1"
     [circular]="true"
     [showNavigators]="false"
-    [responsiveOptions]="responsiveOptions" 
-    [showIndicators]="false">
+    [responsiveOptions]="responsiveOptions"
+    [showIndicators]="true"
+  >
     <ng-template let-highlight pTemplate="item">
-      <p-card 
+      <p-card
         styleClass="highlight-card"
-        [style]="{ 'border-radius': '1rem', overflow: 'hidden', border: 'none', boxShadow: 'none' }">
+        [style]="{
+          'border-radius': '1rem',
+          overflow: 'hidden',
+          border: 'none',
+          boxShadow: 'none'
+        }"
+      >
         <ng-template pTemplate="header">
           <div class="card-header">
-            <img [src]="highlight.image" [alt]="highlight.title">
+            <img [src]="highlight.image" [alt]="highlight.title" />
             <span class="status-badge" [class.optional]="highlight.optional">
-              {{ highlight.optional ? 'Opcional' : 'Incluida' }}
+              {{ highlight.optional ? "Opcional" : "Incluida" }}
             </span>
           </div>
         </ng-template>

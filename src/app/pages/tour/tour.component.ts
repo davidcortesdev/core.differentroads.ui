@@ -37,6 +37,28 @@ export class TourComponent implements OnInit {
   private loadTourDetails(): void {
     this.loading = false;
     this.error = false;
+
+    this.toursService
+      .getTourDetailBySlug(this.tourSlug)
+      .pipe(
+        catchError((error) => {
+          console.error('Error loading tour:', error);
+          this.error = false;
+          this.loading = false;
+          return [];
+        })
+      )
+      .subscribe({
+        next: (tourData: Tour) => {
+          this.tour = tourData;
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error loading tour:', error);
+          this.error = true;
+          this.loading = false;
+        },
+      });
   }
 
   createOrderAndRedirect(departure: Departure): void {

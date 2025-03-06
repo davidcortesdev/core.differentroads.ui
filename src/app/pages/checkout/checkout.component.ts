@@ -16,6 +16,8 @@ import { ActivatedRoute } from '@angular/router';
 import { BookingsService } from '../../core/services/bookings.service';
 import { BookingCreateInput } from '../../core/models/bookings/booking.model';
 import { Period } from '../../core/models/tours/period.model';
+import { InsurancesService } from '../../core/services/checkout/insurances.service';
+import { Insurance } from '../../core/models/tours/insurance.model';
 
 @Component({
   selector: 'app-checkout',
@@ -41,6 +43,7 @@ export class CheckoutComponent implements OnInit {
   // Cart information
   activities: Activity[] = [];
   selectedFlight: Flight | null = null;
+  selectedInsurances: Insurance[] = [];
   summary: { qty: number; value: number; description: string }[] = [];
   subtotal: number = 0;
   total: number = 0;
@@ -71,7 +74,8 @@ export class CheckoutComponent implements OnInit {
     private activitiesService: ActivitiesService,
     private flightsService: FlightsService,
     private route: ActivatedRoute,
-    private bookingsService: BookingsService
+    private bookingsService: BookingsService,
+    private insurancesService: InsurancesService
   ) {}
 
   ngOnInit() {
@@ -86,19 +90,22 @@ export class CheckoutComponent implements OnInit {
       this.initializeTravelers(order.travelers || []);
       this.initializeActivities(order.optionalActivitiesRef || []);
       this.initializeFlights(order.flights || []);
+      this.initializeInsurances(order.insurancesRef || []);
 
       const periodID = order.periodID;
       this.periodID = periodID;
 
-      this.periodsService.getPeriodDetail(periodID).subscribe((period) => {
-        console.log('Period details:', period);
-        this.periodData = period;
+      this.periodsService
+        .getPeriodDetail(periodID, ['tourID', 'name', 'dayOne', 'returnDate'])
+        .subscribe((period) => {
+          console.log('Period details:', period);
+          this.periodData = period;
 
-        this.tourName = period.name;
+          this.tourName = period.name;
 
-        this.tourID = period.tourID;
-        this.tourDates = `${period.dayOne} - ${period.returnDate}`;
-      });
+          this.tourID = period.tourID;
+          this.tourDates = `${period.dayOne} - ${period.returnDate}`;
+        });
 
       this.periodsService.getPeriodPrices(periodID).subscribe((prices) => {
         console.log('Prices:', prices);
@@ -135,6 +142,11 @@ export class CheckoutComponent implements OnInit {
 
     this.flightsService.selectedFlight$.subscribe((flight) => {
       this.selectedFlight = flight;
+      this.updateOrderSummary();
+    });
+
+    this.insurancesService.selectedInsurances$.subscribe((insurances) => {
+      this.selectedInsurances = insurances;
       this.updateOrderSummary();
     });
   }
@@ -216,6 +228,26 @@ export class CheckoutComponent implements OnInit {
     }
   }
 
+  initializeInsurances(insurancesRef: any[]) {
+    const insurances: Insurance[] = insurancesRef.map((insuranceRef) => {
+      return {
+        id: insuranceRef.id,
+        externalID: insuranceRef.id,
+        name: '',
+        description: '',
+        price: 0,
+        activityId: insuranceRef.id,
+        status: '',
+        optional: true,
+        periodId: this.periodID,
+        productType: '',
+        travelersAssigned: insuranceRef.travelersAssigned,
+      };
+    });
+
+    this.insurancesService.updateSelectedInsurances(insurances);
+  }
+
   /* Summary */
   updateOrderSummary() {
     this.summary = [];
@@ -228,7 +260,7 @@ export class CheckoutComponent implements OnInit {
         value:
           this.pricesService.getPriceById(this.tourID, 'Adultos') +
           this.pricesService.getPriceById(this.periodID, 'Adultos'),
-        description: 'Adultos',
+        description: 'Paquete básico adultos',
       });
 
     this.travelersSelected.childs > 0 &&
@@ -237,7 +269,7 @@ export class CheckoutComponent implements OnInit {
         value:
           this.pricesService.getPriceById(this.tourID, 'Niños') +
           this.pricesService.getPriceById(this.periodID, 'Niños'),
-        description: 'Niños',
+        description: 'Paquete básico niños',
       });
 
     this.travelersSelected.babies > 0 &&
@@ -250,19 +282,59 @@ export class CheckoutComponent implements OnInit {
       });
 
     this.rooms.forEach((room) => {
+      const price =
+        this.pricesService.getPriceById(room.externalID, 'Adultos') || 0;
+      if (price === 0) return;
       this.summary.push({
         qty: room.qty || 0,
-        value: this.pricesService.getPriceById(room.externalID, 'Adultos'),
-        description: room.name,
+        value: price,
+        description: 'Suplemento hab. ' + room.name,
       });
     });
 
     this.activities.forEach((activity) => {
-      this.summary.push({
-        qty: 1,
-        value: activity.price || 0,
-        description: activity.name,
-      });
+      const adultsPrice = this.pricesService.getPriceById(
+        activity.activityId,
+        'Adultos'
+      );
+      const childsPrice = this.pricesService.getPriceById(
+        activity.activityId,
+        'Niños'
+      );
+
+      const babiesPrice = this.pricesService.getPriceById(
+        activity.activityId,
+        'Bebes'
+      );
+      if (adultsPrice === childsPrice) {
+        this.summary.push({
+          qty: this.travelersSelected.adults + this.travelersSelected.childs,
+          value: adultsPrice,
+          description: activity.name,
+        });
+      } else {
+        if (adultsPrice) {
+          this.summary.push({
+            qty: this.travelersSelected.adults,
+            value: adultsPrice,
+            description: activity.name + ' (adultos)',
+          });
+        }
+        if (childsPrice && this.travelersSelected.childs) {
+          this.summary.push({
+            qty: this.travelersSelected.childs,
+            value: childsPrice,
+            description: activity.name + ' (niños)',
+          });
+        }
+      }
+      if (babiesPrice) {
+        this.summary.push({
+          qty: this.travelersSelected.babies,
+          value: babiesPrice,
+          description: activity.name + ' (bebes)',
+        });
+      }
     });
 
     let tempOrderData: Order = { ...this.summaryService.getOrderValue()! };
@@ -291,6 +363,41 @@ export class CheckoutComponent implements OnInit {
 
       tempOrderData['flights'] = [this.selectedFlight];
     }
+
+    if (this.selectedInsurances.length === 0) {
+      this.summary.push({
+        qty:
+          this.travelersSelected.adults +
+          this.travelersSelected.childs +
+          this.travelersSelected.babies,
+        value: 0,
+        description: 'Seguro básico',
+      });
+    }
+
+    if (this.selectedInsurances.length > 0) {
+      this.selectedInsurances.forEach((insurance) => {
+        this.summary.push({
+          qty:
+            this.travelersSelected.adults +
+            this.travelersSelected.childs +
+            this.travelersSelected.babies,
+          value: insurance.price || 0,
+          description: insurance.name,
+        });
+      });
+      tempOrderData['insurancesRef'] = this.selectedInsurances.map(
+        (insurance) => ({
+          id: insurance.activityId,
+          travelersAssigned: travelersData.map(
+            (traveler) => traveler._id || '123'
+          ),
+        })
+      );
+    } else {
+      tempOrderData['insurancesRef'] = [];
+    }
+
     this.summaryService.updateOrder(tempOrderData);
 
     this.calculateTotals();

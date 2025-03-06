@@ -2,6 +2,7 @@ import { Component, OnInit, Input } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { BlockType } from '../../../../core/models/blocks/block.model';
 import { FullSliderContent } from '../../../../core/models/blocks/full-slider-content.model';
+import { Router } from '@angular/router';
 
 interface Card {
   id: number;
@@ -10,6 +11,7 @@ interface Card {
     url: string;
     alt: string;
   };
+  buttonText: string;
   link: string;
 }
 
@@ -38,7 +40,9 @@ export class CarouselSectionComponent implements OnInit {
     { breakpoint: '560px', numVisible: 1, numScroll: 1 }
   ];
 
-  constructor(private sanitizer: DomSanitizer) {}
+  constructor(private sanitizer: DomSanitizer,
+    private readonly router: Router
+  ) {}
 
   ngOnInit(): void {
     if (this.isValidContent()) {
@@ -63,11 +67,26 @@ export class CarouselSectionComponent implements OnInit {
         url: card.image[0].url,
         alt: `Image ${index + 1}`
       },
+      buttonText: card.textButton,
       link: card.link || '#'
     }));
   }
 
   sanitizeHtml(html: string): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
+  onClick(link: string): void {
+    this.navigate(link);
+  }
+
+  private navigate(url: string): void {
+    this.isExternalUrl(url) 
+      ? window.location.href = url
+      : this.router.navigate([url]);
+  }
+
+  private isExternalUrl(url: string): boolean {
+    return /^https?:\/\//.test(url);
   }
 }

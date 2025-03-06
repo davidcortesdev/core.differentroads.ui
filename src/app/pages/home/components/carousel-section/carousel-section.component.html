@@ -30,12 +30,14 @@
                   [innerHTML]="sanitizeHtml(card.description)"
                 ></p>
                 <p-button
+                *ngIf="card.buttonText"
                   type="button"
-                  label="Ver tours"
+                  label="{{card.buttonText}}"
                   class="buttonVertour p-button-rounded"
                   [rounded]="true"
                   fluid="true"
                   size="small"
+                  (onClick)="onClick(card.link)"
                   [style]="{ width: '45%', height: '27px' }"
                 ></p-button>
               </div>

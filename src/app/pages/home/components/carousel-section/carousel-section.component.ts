@@ -1,62 +1,70 @@
-import { Component, OnInit, Input } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  Input,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { BlockType } from '../../../../core/models/blocks/block.model';
 import { FullSliderContent } from '../../../../core/models/blocks/full-slider-content.model';
-import { Router } from '@angular/router';
-
-interface Card {
-  id: number;
-  description: string;
-  image: {
-    url: string;
-    alt: string;
-  };
-  buttonText: string;
-  link: string;
-}
-
-interface ResponsiveOption {
-  breakpoint: string;
-  numVisible: number;
-  numScroll: number;
-}
+import {
+  CarouselCard,
+  ResponsiveOption,
+} from '../../../../core/models/carousel.model';
 
 @Component({
   selector: 'app-carousel-section',
   standalone: false,
   templateUrl: './carousel-section.component.html',
-  styleUrls: ['./carousel-section.component.scss']
+  styleUrls: ['./carousel-section.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CarouselSectionComponent implements OnInit {
   @Input() content!: FullSliderContent;
   @Input() type!: BlockType;
   @Input() title!: string;
 
-  cards: Card[] = [];
-  textoquill = '';
-  responsiveOptions: ResponsiveOption[] = [
+  protected cards: CarouselCard[] = [];
+  protected textoquill = '';
+  protected readonly responsiveOptions: ResponsiveOption[] = [
     { breakpoint: '1024px', numVisible: 3, numScroll: 1 },
     { breakpoint: '768px', numVisible: 2, numScroll: 1 },
-    { breakpoint: '560px', numVisible: 1, numScroll: 1 }
+    { breakpoint: '560px', numVisible: 1, numScroll: 1 },
   ];
 
-  constructor(private sanitizer: DomSanitizer,
+  constructor(
+    private readonly sanitizer: DomSanitizer,
     private readonly router: Router
   ) {}
 
   ngOnInit(): void {
     if (this.isValidContent()) {
-      this.textoquill = this.content.content;
-      this.initializeCards();
+      this.initializeCarousel();
     } else {
       console.error('No cards received or cards array is empty');
     }
   }
 
+  protected sanitizeHtml(html: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
+  protected onClick(link: string): void {
+    this.navigate(link);
+  }
+
+  private initializeCarousel(): void {
+    this.textoquill = this.content.content;
+    this.initializeCards();
+  }
+
   private isValidContent(): boolean {
-    return this.type === BlockType.CardSliderVertical 
-      && this.content 
-      && Array.isArray(this.content['card-list']);
+    return (
+      this.type === BlockType.CardSliderVertical &&
+      this.content &&
+      Array.isArray(this.content['card-list'])
+    );
   }
 
   private initializeCards(): void {
@@ -65,24 +73,16 @@ export class CarouselSectionComponent implements OnInit {
       description: card.description,
       image: {
         url: card.image[0].url,
-        alt: `Image ${index + 1}`
+        alt: `Image ${index + 1}`,
       },
       buttonText: card.textButton,
-      link: card.link || '#'
+      link: card.link || '',
     }));
   }
 
-  sanitizeHtml(html: string): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(html);
-  }
-
-  onClick(link: string): void {
-    this.navigate(link);
-  }
-
   private navigate(url: string): void {
-    this.isExternalUrl(url) 
-      ? window.location.href = url
+    this.isExternalUrl(url)
+      ? (window.location.href = url)
       : this.router.navigate([url]);
   }
 

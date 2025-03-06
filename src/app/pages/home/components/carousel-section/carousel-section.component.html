@@ -7,22 +7,20 @@
   <div class="carousel-section-carousel">
     <p-carousel
       [value]="cards"
-      [numVisible]="3.5"
-      [numScroll]="1"
+      [numVisible]="3.25"
+      [numScroll]="0.5"
       [responsiveOptions]="responsiveOptions"
-      showNavigators="false"
-      autoplayInterval="3000"
+      [showNavigators]="false"
+      [autoplayInterval]="3000"
     >
-      <ng-template let-card pTemplate="item">
-        <div
-          class="border border-surface-200 dark:border-surface-700 rounded m-2 p-4"
-        >
-          <div class="mb-4">
-            <div class="relative mx-auto">
-              <div class="image-shadow">
+      <ng-template let-card #item>
+        <div class="carousel-card">
+          <div class="image-container">
+            <div class="image-shadow">
               <img
                 [src]="card.image.url"
                 [alt]="card.image.alt"
+                loading="lazy"
               />
               <div class="info-image">
                 <p
@@ -30,9 +28,9 @@
                   [innerHTML]="sanitizeHtml(card.description)"
                 ></p>
                 <p-button
-                *ngIf="card.buttonText"
+                  *ngIf="card.buttonText"
                   type="button"
-                  label="{{card.buttonText}}"
+                  [label]="card.buttonText"
                   class="buttonVertour p-button-rounded"
                   [rounded]="true"
                   fluid="true"
@@ -41,8 +39,6 @@
                   [style]="{ width: '45%', height: '27px' }"
                 ></p-button>
               </div>
-             </div>
-              
             </div>
           </div>
         </div>

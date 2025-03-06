@@ -10,6 +10,7 @@ import { PeriodsService } from '../../../../../../core/services/periods.service'
 import { Activity } from '../../../../../../core/models/tours/activity.model';
 import { PricesService } from '../../../../../../core/services/checkout/prices.service';
 import { ActivitiesService } from '../../../../../../core/services/checkout/activities.service';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-optional-activities',
@@ -25,7 +26,8 @@ export class OptionalActivitiesComponent implements OnInit, OnChanges {
   constructor(
     private periodsService: PeriodsService,
     private pricesService: PricesService,
-    private activitiesService: ActivitiesService // Inject the service
+    private activitiesService: ActivitiesService, // Inject the service
+    private sanitizer: DomSanitizer // Inject DomSanitizer
   ) {
     this.activitiesService.activities$.subscribe((activities) => {
       this.addedActivities = new Set(
@@ -52,18 +54,24 @@ export class OptionalActivitiesComponent implements OnInit, OnChanges {
         .subscribe((activities) => {
           console.log('Activities Data: ', activities);
 
-          this.optionalActivities = activities.map((activity) => {
-            return {
-              ...activity,
-              price: this.pricesService.getPriceById(
+          this.optionalActivities = activities
+            .map((activity) => {
+              const price = this.pricesService.getPriceById(
                 activity.activityId,
                 'Adultos'
-              ),
-              priceData: this.pricesService.getPriceDataById(
-                activity.activityId
-              ),
-            };
-          });
+              );
+              return {
+                ...activity,
+                price,
+                priceData: this.pricesService.getPriceDataById(
+                  activity.activityId
+                ),
+                description: this.sanitizer.bypassSecurityTrustHtml(
+                  activity?.description || ''
+                ) as string,
+              };
+            })
+            .filter((activity) => activity.price > 0); // Filter out activities with price 0
           this.updateAddedActivities();
         });
     }

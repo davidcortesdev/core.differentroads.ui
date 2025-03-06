@@ -2,12 +2,14 @@ import { CldImage } from '../commons/cld-image.model';
 
 export interface FullSliderContent {
   title: string;
+  order: number;
   visible: boolean;
   content: string;
   'card-list': Array<{
     image: Array<{ url: string }>;
     subtitle: string;
     link?: string;
+    textButton: string;
   }>;
 }
 

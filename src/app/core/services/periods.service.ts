@@ -9,6 +9,8 @@ import { ReservationMode } from '../models/tours/reservation-mode.model';
 import { Flight } from '../models/tours/flight.model';
 import { PriceData } from '../models/commons/price-data.model';
 
+type SelectedFields = Partial<Array<keyof Period | 'all'>>;
+
 @Injectable({
   providedIn: 'root',
 })

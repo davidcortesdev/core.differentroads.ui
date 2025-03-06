@@ -2,6 +2,7 @@ export interface PressListContent {
   title: string;
   textButton: string;
   link: string;
+  order: number;
   visible: boolean;
   'press-list': Press[];
 }

@@ -35,11 +35,11 @@ export class TourComponent implements OnInit {
   }
 
   private loadTourDetails(): void {
-    this.loading = true;
+    this.loading = false;
     this.error = false;
 
     this.toursService
-      .getTourDetail(this.tourSlug)
+      .getTourDetailBySlug(this.tourSlug)
       .pipe(
         catchError((error) => {
           console.error('Error loading tour:', error);
@@ -51,7 +51,6 @@ export class TourComponent implements OnInit {
       .subscribe({
         next: (tourData: Tour) => {
           this.tour = tourData;
-          console.log(tourData);
           this.loading = false;
         },
         error: (error) => {

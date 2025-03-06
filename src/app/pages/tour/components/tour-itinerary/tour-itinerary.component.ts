@@ -5,8 +5,11 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { environment } from '../../../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { GeoService } from '../../../../core/services/geo.service';
-import { Tour } from '../../../../core/models/tours/tour.model';
+import { Itinerary, Tour } from '../../../../core/models/tours/tour.model';
 import { Panel } from 'primeng/panel';
+import { PeriodsService } from '../../../../core/services/periods.service';
+import { Period } from '../../../../core/models/tours/period.model';
+import { Activity } from '../../../../core/models/tours/activity.model';
 interface City {
   nombre: string;
   lat: number;
@@ -15,8 +18,9 @@ interface City {
 interface DateOption {
   label: string;
   value: string;
-  price: string;
+  price: number;
   isGroup: boolean;
+  externalID?: string;
 }
 interface EventItem {
   status?: string;
@@ -25,6 +29,12 @@ interface EventItem {
   color?: string;
   image?: string;
   description?: SafeHtml;
+}
+interface Highlight {
+  title: string;
+  description: string;
+  image: string;
+  optional: boolean;
 }
 @Component({
   selector: 'app-tour-itinerary',
@@ -70,31 +80,21 @@ export class TourItineraryComponent implements OnInit {
   };
   events: EventItem[];
   title: string = 'Itinerario';
-  highlights: any[] = [];
-  dateOptions: DateOption[] = [
-    {
-      label: '08 de junio',
-      value: '08 de junio',
-      price: '2.995€',
-      isGroup: true,
-    },
-    {
-      label: '03 de julio',
-      value: '03 de julio',
-      price: '3.395€',
-      isGroup: true,
-    },
-    {
-      label: '19 de agosto (s)',
-      value: '19 de agosto',
-      price: '3.495€',
-      isGroup: false,
-    },
-  ];
-  selectedOption: DateOption = this.dateOptions[0];
-  selectedDate: string = this.dateOptions[0].label;
-  isSingle: boolean = !this.dateOptions[0].isGroup;
+  dateOptions: DateOption[] = [];
+
+  selectedOption: DateOption = {
+    label: '',
+    value: '',
+    price: 0,
+    isGroup: false,
+  };
+  selectedDate: string = '';
+  tripType: string = '';
+  hotels: any[] = [];
   showPlaceholder: boolean = true;
+
+  currentPeriod: Period | undefined;
+  itinerariesData: Itinerary | undefined;
   itinerary: {
     title: string;
     description: SafeHtml;
@@ -102,7 +102,10 @@ export class TourItineraryComponent implements OnInit {
     hotel: any;
     collapsed: boolean;
     color?: string;
+    highlights?: Highlight[];
   }[] = [];
+
+  activities: Activity[] = [];
   responsiveOptions = [
     {
       breakpoint: '1199px',
@@ -122,6 +125,7 @@ export class TourItineraryComponent implements OnInit {
   ];
   constructor(
     private toursService: ToursService,
+    private periodsService: PeriodsService,
     private route: ActivatedRoute,
     private sanitizer: DomSanitizer,
     private httpClient: HttpClient,
@@ -137,64 +141,64 @@ export class TourItineraryComponent implements OnInit {
       this.mapId = google.maps.Map.DEMO_MAP_ID;
       this.apiLoaded = true;
     });
-    this.events = [
-      {
-        status: 'Ordered',
-        date: '15/10/2020 10:30',
-        icon: 'pi pi-shopping-cart',
-        color: '#9C27B0',
-        image: 'game-controller.jpg',
-      },
-      {
-        status: 'Processing',
-        date: '15/10/2020 14:00',
-        icon: 'pi pi-cog',
-        color: '#673AB7',
-      },
-      {
-        status: 'Shipped',
-        date: '15/10/2020 16:15',
-        icon: 'pi pi-shopping-cart',
-        color: '#FF9800',
-      },
-      {
-        status: 'Delivered',
-        date: '16/10/2020 10:00',
-        icon: 'pi pi-check',
-        color: '#607D8B',
-      },
-    ];
-    this.highlights = [];
+    this.events = [];
   }
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
       const slug = params['slug'];
       if (slug) {
         this.toursService
-          .getTourDetailBySlug(slug, ['itinerary-section'])
+          .getTourDetailBySlug(slug, [
+            'itinerary-section',
+            'activePeriods',
+            'basePrice',
+          ])
           .subscribe({
             next: (tourData) => {
+              console.log('Tour data:', tourData);
+              this.dateOptions = tourData.activePeriods.map((period) => {
+                console.log('Period:', period);
+
+                return {
+                  label: period.name,
+                  value: period.externalID + '',
+                  price: (period.basePrice || 0) + (tourData.basePrice || 0),
+                  isGroup: true,
+                };
+              });
+              this.selectedOption = this.dateOptions[0];
+              this.selectedDate = this.dateOptions[0].label;
+              this.itinerariesData = tourData['itinerary-section'];
+              this.updateItinerary();
+
               this.title = tourData['itinerary-section'].title;
-              this.itinerary = tourData['itinerary-section']['day-card'].map(
-                (section, index) => {
-                  return {
-                    title: section.name,
-                    description: this.sanitizer.bypassSecurityTrustHtml(
-                      section.description
-                    ),
-                    image: section.itimage?.[0]?.url || '',
-                    hotel: section.hotel,
-                    collapsed: index !== 0,
-                    color: '#9C27B0',
-                  };
-                }
-              );
+
+              this.periodsService
+                .getPeriodDetail(this.selectedOption.value, [
+                  'tripType',
+                  'hotels',
+                  'activities',
+                ])
+                .subscribe({
+                  next: (period) => {
+                    console.log('Period itinerary:', period);
+                    this.currentPeriod = period;
+                    this.tripType = period.tripType || '';
+                    this.hotels = period.hotels as any[];
+                    this.activities = [
+                      ...(period.activities || []),
+                      ...(period.includedActivities || []),
+                    ];
+                    this.updateItinerary();
+                  },
+                  error: (error) => console.error('Error period:', error),
+                });
             },
             error: (error) => console.error('Error itinerary section:', error),
           });
-        const selectedFields: (keyof Tour | 'all' | undefined)[] = ['cities'];
+
         this.toursService
-          .getTourDetailBySlug(slug, selectedFields)
+          .getTourDetailBySlug(slug, ['cities'])
           .subscribe((tour) => {
             this.cities = tour['cities'];
             let loadedCities = 0;
@@ -277,14 +281,89 @@ export class TourItineraryComponent implements OnInit {
       options: {},
     });
   }
+
   onDateChange(event: any): void {
-    this.selectedOption = event.value;
+    this.selectedOption =
+      this.dateOptions.find((option) => option.value === event.value) ||
+      this.dateOptions[0];
     this.updateDateDisplay();
     this.showPlaceholder = false;
+    this.periodsService
+      .getPeriodDetail(this.selectedOption.value, [
+        'tripType',
+        'hotels',
+        'activities',
+        'name',
+      ])
+      .subscribe({
+        next: (period) => {
+          this.currentPeriod = period;
+          this.tripType = period.tripType || '';
+          this.hotels = period.hotels as any[];
+          this.activities = [
+            ...(period.activities || []),
+            ...(period.includedActivities || []),
+          ];
+          console.log('Period itinerary 2:', period);
+
+          this.updateItinerary();
+        },
+        error: (error) => console.error('Error period:', error),
+      });
   }
+
   updateDateDisplay(): void {
-    this.selectedDate = this.selectedOption.value;
-    this.isSingle = !this.selectedOption.isGroup;
+    this.selectedDate = this.dateOptions.find(
+      (option) => option.value === this.selectedOption.value
+    )?.label!;
+    this.tripType = this.currentPeriod?.tripType || '';
+  }
+
+  updateItinerary(): void {
+    console.log(
+      this.itinerariesData?.['itineraries'],
+      this.selectedOption.value
+    );
+
+    const selectedItinerary = this.itinerariesData?.['itineraries'].filter(
+      (itinerary) =>
+        itinerary.periods
+          .map((period) => period.split('-')[1])
+          .includes(this.selectedOption.value)
+    )[0];
+    console.log('Selected itinerary:', selectedItinerary, this.hotels);
+
+    this.itinerary = selectedItinerary!['days'].map((day, index) => {
+      console.log(
+        'itinerary activities',
+        this.activities.filter((activity) => index + 1 === activity.day)
+      );
+
+      return {
+        title: day.name,
+        description: this.sanitizer.bypassSecurityTrustHtml(day.description),
+        image: day.itimage?.[0]?.url || '',
+        hotel: this.hotels.find(
+          (hotel) =>
+            `${hotel?.id}` === `${day.id}` ||
+            hotel?.days?.includes(`${index + 1}`)
+        ),
+        collapsed: index !== 0,
+        color: '#9C27B0',
+        highlights:
+          this.activities
+            .filter((activity) => index + 1 === activity.day)
+            .map((activity) => {
+              return {
+                title: activity.name,
+                description: activity.description || '',
+                image: activity.activityImage?.[0]?.url || '',
+                optional: activity.optional,
+              };
+            }) || [],
+      };
+    });
+    console.log('Itinerary:', this.itinerary);
   }
 
   markerClicked(event: MouseEvent): void {
@@ -301,6 +380,7 @@ export class TourItineraryComponent implements OnInit {
       }
     }
   }
+
   scrollToPanel(index: number): void {
     if (this.itineraryPanels && this.itineraryPanels.length > index) {
       const panelArray = this.itineraryPanels.toArray();
@@ -311,6 +391,7 @@ export class TourItineraryComponent implements OnInit {
       }
     }
   }
+
   private findScrollableParent(element: HTMLElement): HTMLElement | Window {
     if (!element) {
       return window;

@@ -102,7 +102,11 @@ export class CheckoutComponent implements OnInit {
           this.periodData = period;
 
           this.tourName = period.name;
+          this.tourName = period.name;
 
+          this.tourID = period.tourID;
+          this.tourDates = `${period.dayOne} - ${period.returnDate}`;
+        });
           this.tourID = period.tourID;
           this.tourDates = `${period.dayOne} - ${period.returnDate}`;
         });

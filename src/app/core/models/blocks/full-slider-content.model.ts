@@ -9,6 +9,7 @@ export interface FullSliderContent {
     image: Array<{ url: string }>;
     subtitle: string;
     link?: string;
+    textButton: string;
   }>;
 }
 

@@ -31,9 +31,10 @@
                   <div class="dataview-name">
                     {{ item.name }}
                   </div>
-                  <p class="dataview-description">
-                    {{ item.description }}
-                  </p>
+                  <div
+                    class="dataview-description"
+                    [innerHTML]="item.description"
+                  ></div>
                 </div>
               </div>
 

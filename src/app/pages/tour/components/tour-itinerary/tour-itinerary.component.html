@@ -1,22 +1,30 @@
 <!-- HTML template actualizado sin cambiar la funcionalidad -->
 <div class="itinerary-section">
   <h2>{{ title }}</h2>
-  <p class="date">Resumen de tu itinerario - {{ selectedDate }} - {{ isSingle ? 'Single' : 'Group' }}</p>
-  <p-dropdown class="date"
-    [options]="dateOptions" 
+  <p class="date">
+    Resumen de tu itinerario - {{ selectedDate }} -
+    {{ tripType }}
+  </p>
+  <p-dropdown
+    class="date"
+    [options]="dateOptions"
     [(ngModel)]="selectedOption"
-    optionLabel="label" 
+    optionLabel="label"
+    optionValue="value"
     (onChange)="onDateChange($event)"
-    placeholder="Cambiar fecha">
+    placeholder="Cambiar fecha"
+  >
     <ng-template pTemplate="selectedItem">
       <div class="date-option-item">
-        <span>{{ showPlaceholder ? 'Cambiar fecha' : selectedDate }}</span>
+        <span>{{ showPlaceholder ? "Cambiar fecha" : selectedDate }}</span>
       </div>
     </ng-template>
     <ng-template let-option pTemplate="item">
       <div class="date-option-item">
         <span>{{ option.label }}</span>
-        <span class="date-price">{{ option.price | currencyFormat : "EUR"  }}</span>
+        <span class="date-price">{{
+          option.price | currencyFormat : "EUR"
+        }}</span>
       </div>
     </ng-template>
   </p-dropdown>
@@ -33,7 +41,7 @@
           <!-- Marcador del timeline clickeable con indicador visual de activo -->
           <span
             class="p-timeline-event-marker clickable-marker"
-            [ngClass]="{'active-marker': !event.collapsed}"
+            [ngClass]="{ 'active-marker': !event.collapsed }"
             [style.backgroundColor]="event.color"
             [attr.data-index]="itinerary.indexOf(event)"
             (click)="markerClicked($event)"
@@ -41,11 +49,18 @@
           </span>
         </ng-template>
         <ng-template pTemplate="content" let-event>
-          <p-panel #itineraryPanel [toggleable]="true" styleClass="custom-panel" [(collapsed)]="event.collapsed">
+          <p-panel
+            #itineraryPanel
+            [toggleable]="true"
+            styleClass="custom-panel"
+            [(collapsed)]="event.collapsed"
+          >
             <ng-template pTemplate="header">
-              <div class="panel-header-content" 
-                   [attr.data-index]="itinerary.indexOf(event)"
-                   (click)="markerClicked($event)">
+              <div
+                class="panel-header-content"
+                [attr.data-index]="itinerary.indexOf(event)"
+                (click)="markerClicked($event)"
+              >
                 <div class="day-info">
                   <h3 class="day-title">{{ event.title }}</h3>
                 </div>
@@ -71,7 +86,7 @@
                   class="img"
                 />
               </div>
-              <div class="hotel-card" *ngIf="event.hotel.name">
+              <div class="hotel-card" *ngIf="event?.hotel?.name">
                 <img
                   [src]="event.hotel.hotelimage?.[0]?.url||'https://picsum.photos/200'"
                   [alt]="event.hotel.hotelimage?.[0]?.alt"
@@ -105,14 +120,12 @@
 
               <div class="itinerary-activities">
                 <p-carousel
-                  autoplayInterval="3000"
-                  [value]="highlights"
-                  [numVisible]="2"
-                  [numScroll]="1"
+                  [value]="event.highlights"
+                  [numVisible]="3"
                   [circular]="true"
                   [showNavigators]="false"
                   [responsiveOptions]="responsiveOptions"
-                  [showIndicators]="false"
+                  [showIndicators]="true"
                 >
                   <ng-template let-highlight pTemplate="item">
                     <p-card
@@ -125,7 +138,10 @@
                       }"
                     >
                       <ng-template pTemplate="header">
-                        <img [src]="highlight.image" [alt]="highlight.title" />
+                        <img
+                          [src]="highlight.image || 'https://picsum.photos/200'"
+                          [alt]="highlight.title"
+                        />
                         <span
                           class="status-badge"
                           [class.optional]="highlight.optional"
@@ -135,7 +151,7 @@
                       </ng-template>
                       <ng-template pTemplate="content">
                         <h3>{{ highlight.title }}</h3>
-                        <p>{{ highlight.description }}</p>
+                        <div [innerHTML]="highlight.description"></div>
                       </ng-template>
                     </p-card>
                   </ng-template>

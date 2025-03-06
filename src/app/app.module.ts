@@ -153,6 +153,7 @@ import { GoogleMapsModule } from '@angular/google-maps';
 
 import { SkeletonModule } from 'primeng/skeleton';
 import { SortByPipe } from './shared/pipes/sort-by.pipe';
+import { InsurancesComponent } from './pages/checkout/components/customize-trip/components/insurances/insurances.component';
 
 import { ScalapayService } from './core/services/checkout/payment/scalapay.service';
 
@@ -237,6 +238,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     FlightsSectionComponent,
     PricesSectionComponent,
     PaymentsInformationSectionComponent,
+    InsurancesComponent,
   ],
   imports: [
     // Angular Modules

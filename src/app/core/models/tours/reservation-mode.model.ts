@@ -1,5 +1,3 @@
-import { PriceData } from '../commons/price-data.model';
-
 export interface ReservationMode {
   id: string;
   status: string;

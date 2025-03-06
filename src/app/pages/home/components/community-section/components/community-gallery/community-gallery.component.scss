@@ -8,11 +8,26 @@
   gap: var(--card-spacing);
   max-width: 100%;
 
+  /* Para pantallas de portátil o más pequeñas, limitar a 12 fotos */
+  @media (max-width: 1200px) {
+    & > *:nth-child(n + 13) {
+      display: none;
+    }
+  }
+
+  /* Para pantallas grandes (más de 1200px), mostrar automáticamente hasta 2 filas */
+  @media (min-width: 1201px) {
+    grid-template-rows: auto auto;
+    grid-auto-rows: 0;
+    overflow: hidden;
+  }
+
   &-card {
     width: 100%;
     aspect-ratio: 1/1;
     position: relative;
     display: inline-block;
+    overflow: hidden; /* Para evitar el borde blanco */
 
     img {
       display: block;
@@ -29,14 +44,14 @@
       position: absolute;
       left: 0;
       right: 0;
-      height: 20%; // Ajusta la altura del degradado según tus necesidades
+      height: 20%;
       border-radius: var(--card-border-radius);
       padding: 0.9rem;
       display: flex;
-      align-items: center; /* Centra verticalmente el contenido */
+      align-items: center;
       font-size: var(--card-text-size);
       font-weight: 500;
-      color: var(--background-azul-color-letra);
+      color: white; /* Texto blanco */
       opacity: 0.7;
 
       &-location {
@@ -45,7 +60,7 @@
         background: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0) 100%);
 
         i {
-          color: var(--p-primary-color);
+          color: #f05a4c; /* Color coral para el icono */
           margin-left: 0.25rem;
         }
       }
@@ -56,6 +71,7 @@
         background: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0) 100%);
 
         i {
+          color: #f05a4c; /* Color coral para el icono */
           margin-right: 0.25rem;
         }
 

@@ -220,7 +220,7 @@ export class PaymentComponent implements OnInit {
     });
 
     const createOrderData = (): ScalapayOrderRequest => ({
-      product: 'payin',
+      product: 'pay-in-3',
       type: 'online',
       orderExpiryMilliseconds: 600000,
       consumer: createConsumer(),

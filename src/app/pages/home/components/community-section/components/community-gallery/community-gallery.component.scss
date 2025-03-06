@@ -2,30 +2,20 @@
   --card-border-radius: 0.75rem;
   --card-text-size: 0.6875rem;
   --card-spacing: 1rem;
-  
+
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--card-spacing);
   max-width: 100%;
 
   &-card {
-    position: relative;
     width: 100%;
     aspect-ratio: 1/1;
+    position: relative;
+    display: inline-block;
 
-    &::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: var(--card-border-radius);
-      background: linear-gradient(
-        0deg,
-        rgba(0, 0, 0, 0.5) 0%,
-        rgba(0, 0, 0, 0) 15%,
-        rgba(0, 0, 0, 0) 85%,
-        rgba(0, 0, 0, 0.5) 100%
-      );
-      z-index: 0;
+    img {
+      display: block;
     }
 
     &-img {
@@ -37,25 +27,22 @@
 
     &-info {
       position: absolute;
-      inset: 0;
+      left: 0;
+      right: 0;
+      height: 20%; // Ajusta la altura del degradado según tus necesidades
+      border-radius: var(--card-border-radius);
+      padding: 0.9rem;
       display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: var(--card-spacing);
-      z-index: 1;
-
-      &-location,
-      &-username {
-        display: flex;
-        align-items: center;
-        color: var(--background-azul-color-letra);
-        font-size: var(--card-text-size);
-        font-weight: 500;
-        margin: 0;
-      }
+      align-items: center; /* Centra verticalmente el contenido */
+      font-size: var(--card-text-size);
+      font-weight: 500;
+      color: var(--background-azul-color-letra);
+      opacity: 0.7;
 
       &-location {
-        align-self: flex-end;
+        justify-content: flex-end;
+        top: 0;
+        background: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0) 100%);
 
         i {
           color: var(--p-primary-color);
@@ -64,6 +51,10 @@
       }
 
       &-username {
+        justify-content: flex-start;
+        bottom: 0;
+        background: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0) 100%);
+
         i {
           margin-right: 0.25rem;
         }

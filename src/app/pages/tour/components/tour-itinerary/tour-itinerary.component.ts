@@ -10,6 +10,8 @@ import { Panel } from 'primeng/panel';
 import { PeriodsService } from '../../../../core/services/periods.service';
 import { Period } from '../../../../core/models/tours/period.model';
 import { Activity } from '../../../../core/models/tours/activity.model';
+import { TourDataService } from '../../../../core/services/tour-data.service';
+
 interface City {
   nombre: string;
   lat: number;
@@ -129,7 +131,8 @@ export class TourItineraryComponent implements OnInit {
     private route: ActivatedRoute,
     private sanitizer: DomSanitizer,
     private httpClient: HttpClient,
-    private geoService: GeoService
+    private geoService: GeoService,
+    private tourDataService: TourDataService
   ) {
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}`;
@@ -190,6 +193,12 @@ export class TourItineraryComponent implements OnInit {
                       ...(period.includedActivities || []),
                     ];
                     this.updateItinerary();
+
+                    // Share the selected date and trip type with the service
+                    this.tourDataService.updateSelectedDateInfo(
+                      this.selectedDate,
+                      this.tripType
+                    );
                   },
                   error: (error) => console.error('Error period:', error),
                 });
@@ -307,6 +316,12 @@ export class TourItineraryComponent implements OnInit {
           console.log('Period itinerary 2:', period);
 
           this.updateItinerary();
+
+          // Share the updated selected date and trip type with the service
+          this.tourDataService.updateSelectedDateInfo(
+            this.selectedDate,
+            this.tripType
+          );
         },
         error: (error) => console.error('Error period:', error),
       });

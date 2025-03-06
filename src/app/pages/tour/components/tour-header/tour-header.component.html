@@ -18,23 +18,50 @@
       <i class="pi pi-user"></i>
       <span>{{
         tour.marketingSection?.marketingTag ||
-          "El mejor valorado por nuestros viajeros"
+          "Plazas muy limitadas ¡Reserva ya!"
       }}</span>
     </div>
     <div class="price-section">
       <div class="price-info">
-        <div class="before-price">
-          <!-- <span>Antes</span>
-          <span class="amount">{{ tour.basePrice + 200 }}€</span> -->
-        </div>
         <div class="current-price">
           <span>Desde</span>
-          <span class="amount">{{ tour.price || 0 | currencyFormat : "EUR"  }}</span>
+          <span class="amount">{{ basePrice | currencyFormat : "EUR" }}</span>
+          
+          <!-- Contenedor normal para la información del itinerario (visible en desktop y tablet) -->
+          <div class="itinerary-info-container" *ngIf="selectedDate">
+            <div class="itinerary-date-info">
+              <span class="amount">{{ selectedDate }} - {{ tripType }}</span>
+            </div>
+            <div class="departure-city-info" *ngIf="departureCity">
+              <span class="amount value">{{ departureCity.toLowerCase().includes('sin') ? 'Sin vuelos incluidos' : 'Desde ' + departureCity }}</span>
+            </div>
+          </div>
         </div>
       </div>
-      <a href="#prices" class="price-link">Ir a este precio</a>
     </div>
-    <p-button label="Reservar mi tour" styleClass="p-button-rounded"></p-button>
+    
+    <!-- Contenedor específico para móvil (solo visible en móvil) -->
+    <div class="itinerary-mobile-container" *ngIf="selectedDate">
+      <div class="itinerary-date-info">
+        <span class="amount">{{ selectedDate }} - {{ tripType }}</span>
+      </div>
+      <div class="departure-city-info" *ngIf="departureCity">
+        <span class="amount">{{ departureCity.toLowerCase().includes('sin') ? 'Sin vuelos incluidos' : 'Desde ' + departureCity }}</span>
+      </div>
+    </div>
+    
+    <div class="booking-container">
+      <p-button label="Reservar mi tour" styleClass="p-button-rounded"></p-button>
+      
+      <!-- Precio total calculado -->
+      <div class="total-price-container" *ngIf="totalPrice > 0">
+        <div class="passengers-info">
+          <span>{{ getPassengersInfo() }}</span>
+        </div>
+        <div class="passengers-info">
+          <span>Total: {{ totalPrice | currencyFormat : "EUR" }}</span>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
-<!-- El div spacer se creará dinámicamente desde el componente -->

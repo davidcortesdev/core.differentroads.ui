@@ -1,5 +1,5 @@
 .tour-header {
-  position: relative; /* Comienza como relative */
+  position: relative;
   width: 100%;
   top: 0;
   z-index: 1000;
@@ -10,15 +10,13 @@
   background-color: white;
   transition: box-shadow 0.3s ease;
 
-  /* Clase que se agrega al hacer scroll */
   &.scrolled {
-    position: fixed; /* Cambia a fixed cuando se hace scroll */
+    position: fixed;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     left: 0;
     right: 0;
   }
 
-  /* El resto de tus estilos permanecen igual... */
   .tour-info {
     flex: 1;
 
@@ -118,7 +116,6 @@
           color: var(--text-color-secondary);
           text-decoration: line-through;
           font-size: 0.9rem;
-          margin-bottom: 0.25rem;
 
           .amount {
             margin-left: 0.5rem;
@@ -127,7 +124,24 @@
 
         .current-price {
           font-size: 1rem;
+          .itinerary-info-container {
+            margin-top: 0.75rem;
 
+            .itinerary-date-info {
+              margin-bottom: 0.5rem;
+
+              .amount {
+                display: block;
+                font-weight: 600;
+              }
+            }
+            .departure-city-info {
+              .amount.value {
+                display: block;
+                font-weight: 600;
+              }
+            }
+          }
           .amount {
             margin-left: 0.5rem;
             font-weight: 600;
@@ -135,16 +149,10 @@
           }
         }
       }
+    }
 
-      .price-link {
-        color: var(--primary-color);
-        text-decoration: none;
-        font-size: 0.9rem;
-
-        &:hover {
-          text-decoration: underline;
-        }
-      }
+    .itinerary-mobile-container {
+      display: none;
     }
 
     ::ng-deep .p-button {
@@ -153,9 +161,22 @@
       padding: 0.75rem 2rem;
       font-weight: 500;
     }
+
+    .booking-container {
+      .total-price-container {
+        text-align: center;
+        .passengers-info {
+          span {
+            font-weight: 600;
+            display: block;
+            text-align: center;
+            font-size: 1.1rem;
+          }
+        }
+      }
+    }
   }
 
-  /* Mobile Responsive Styles */
   @media (max-width: 767px) {
     padding: 1rem;
     flex-direction: column;
@@ -198,8 +219,8 @@
         margin-bottom: 0.75rem;
         display: flex;
         align-items: center;
-        padding-top: 3px; /* Added padding to align with price */
-        height: 40px; /* Set fixed height for better alignment */
+        padding-top: 3px;
+        height: 40px;
       }
 
       .price-section {
@@ -210,14 +231,46 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-        height: 40px; /* Set fixed height for better alignment */
+        height: 40px;
 
         .price-info {
           margin-bottom: 0;
+
+          .current-price {
+            .itinerary-info-container {
+              display: none;
+            }
+          }
         }
 
         .price-link {
           font-size: 0.8rem;
+        }
+      }
+      .itinerary-mobile-container {
+        display: flex;
+        justify-content: space-between;
+        clear: both;
+        width: 100%;
+        text-align: center;
+        margin-bottom: 0.75rem;
+
+        .itinerary-date-info {
+          margin-bottom: 0.25rem;
+
+          .amount {
+            display: block;
+            font-weight: 600;
+            font-size: 0.95rem;
+          }
+        }
+
+        .departure-city-info {
+          .amount {
+            display: block;
+            font-weight: 600;
+            font-size: 0.95rem;
+          }
         }
       }
 
@@ -226,11 +279,33 @@
         display: block;
         width: 100%;
         border-radius: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .booking-container {
+        .total-price-container {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: 0;
+
+          .passengers-info {
+            span {
+              font-weight: 600;
+              font-size: 0.9rem;
+              text-align: left;
+              display: inline;
+            }
+
+            &:last-child span {
+              text-align: right;
+            }
+          }
+        }
       }
     }
   }
 
-  /* Tablet Responsive Styles */
   @media (min-width: 768px) and (max-width: 1024px) {
     padding: 1.25rem;
     flex-wrap: wrap;
@@ -273,22 +348,73 @@
       align-items: flex-end;
 
       .badge {
-        display: none; /* Hide badge in tour-actions */
+        display: none;
       }
 
       .price-section {
         text-align: right;
-        margin-bottom: 0.75rem;
+        margin-bottom: 0;
         width: 100%;
+        .price-info {
+          margin-bottom: -1.6rem;
+          margin-top: 2rem;
+          margin-right: 5px;
+        }
+        .current-price {
+          .itinerary-info-container {
+            margin-top: 0.75rem;
+
+            .itinerary-date-info {
+              margin-bottom: 0.5rem;
+
+              .amount {
+                display: block;
+                font-weight: 600;
+                font-size: 0.95rem;
+              }
+            }
+
+            .departure-city-info {
+              .amount {
+                display: block;
+                font-weight: 600;
+                font-size: 0.95rem;
+              }
+            }
+          }
+        }
       }
 
       ::ng-deep .p-button {
         padding: 0.65rem 1.5rem;
         width: 100%;
+        margin-bottom: 0.5rem;
+      }
+
+      .booking-container {
+        width: 100%;
+
+        .total-price-container {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin: 5px;
+
+          .passengers-info {
+            span {
+              font-weight: 600;
+              font-size: 0.9rem;
+              display: inline;
+            }
+
+            &:last-child span {
+              text-align: right;
+            }
+          }
+        }
       }
     }
 
-    /* Clean up after floats */
     &::after {
       content: "";
       display: table;
@@ -297,7 +423,6 @@
   }
 }
 
-/* Añadir este estilo para crear un espaciador dinámico */
 app-tour-header {
   display: block;
 
@@ -308,7 +433,6 @@ app-tour-header {
     transition: height 0.1s ease;
   }
 
-  /* Cuando el encabezado está fijo, el espaciador toma su altura */
   &.header-fixed::after {
     height: var(--header-height, 0);
   }

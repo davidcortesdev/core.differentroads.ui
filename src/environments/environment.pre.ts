@@ -13,5 +13,5 @@ export const environment = {
   googleMapsApiKey: 'AIzaSyB6sxlxeTVlRllpGPyDPbKmaZPQJsb8YAs',
 
   scalapayApiUrl: 'https://integration.api.scalapay.com',
-  scalapayApiKey: 'sqhtfs87hjnc12kkos',
+  scalapayApiKey: 'qhtfs87hjnc12kkos',
 };

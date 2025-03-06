@@ -22,7 +22,11 @@
     <ng-template let-option pTemplate="item">
       <div class="date-option-item">
         <span class="date-option-item-text">{{ option.label }}</span>
-        <p-tag>G</p-tag>
+        <p-tag
+          *ngIf="getTagConfig(option.tripType)"
+          [severity]="getTagConfig(option.tripType)?.color"
+          >{{ getTagConfig(option.tripType)?.value }}
+        </p-tag>
         <span class="date-price">{{
           option.price | currencyFormat : "EUR"
         }}</span>

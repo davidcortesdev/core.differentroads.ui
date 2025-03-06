@@ -135,7 +135,7 @@ import { ContentPageComponent } from './pages/content-page/content-page.componen
 import { BannerComponent } from './shared/components/banner/banner.component';
 
 import { MultiSelectModule } from 'primeng/multiselect';
-import { ToursComponent } from './pages/tours/tours.component';
+import { ToursComponent } from './shared/components/tours/tours.component';
 import { OptionalActivitiesComponent } from './pages/checkout/components/customize-trip/components/optional-activities/optional-activities.component';
 import { TravelerSelectorComponent } from './pages/checkout/components/customize-trip/components/traveler-selector/traveler-selector.component';
 import { RoomSelectorComponent } from './pages/checkout/components/customize-trip/components/room-selector/room-selector.component';
@@ -152,6 +152,7 @@ import { PaymentsInformationSectionComponent } from './pages/reservation/compone
 import { GoogleMapsModule } from '@angular/google-maps';
 
 import { SkeletonModule } from 'primeng/skeleton';
+import { SortByPipe } from './shared/pipes/sort-by.pipe';
 import { InsurancesComponent } from './pages/checkout/components/customize-trip/components/insurances/insurances.component';
 
 // Add this function outside the class
@@ -303,6 +304,7 @@ export function HttpLoaderFactory(http: HttpClient) {
       defaultLanguage: 'es',
     }),
     CurrencyPipe,
+    SortByPipe,
   ],
   providers: [
     provideAnimationsAsync(),

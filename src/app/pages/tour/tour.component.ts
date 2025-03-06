@@ -35,7 +35,7 @@ export class TourComponent implements OnInit {
   }
 
   private loadTourDetails(): void {
-    this.loading = true;
+    this.loading = false;
     this.error = false;
 
     this.toursService

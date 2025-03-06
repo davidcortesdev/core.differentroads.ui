@@ -3,13 +3,14 @@
   <h2>{{ title }}</h2>
   <p class="date">
     Resumen de tu itinerario - {{ selectedDate }} -
-    {{ isSingle ? "Single" : "Group" }}
+    {{ tripType }}
   </p>
   <p-dropdown
     class="date"
     [options]="dateOptions"
     [(ngModel)]="selectedOption"
     optionLabel="label"
+    optionValue="value"
     (onChange)="onDateChange($event)"
     placeholder="Cambiar fecha"
   >
@@ -119,14 +120,12 @@
 
               <div class="itinerary-activities">
                 <p-carousel
-                  autoplayInterval="3000"
-                  [value]="highlights"
-                  [numVisible]="2"
-                  [numScroll]="1"
+                  [value]="event.highlights"
+                  [numVisible]="3"
                   [circular]="true"
                   [showNavigators]="false"
                   [responsiveOptions]="responsiveOptions"
-                  [showIndicators]="false"
+                  [showIndicators]="true"
                 >
                   <ng-template let-highlight pTemplate="item">
                     <p-card
@@ -139,7 +138,10 @@
                       }"
                     >
                       <ng-template pTemplate="header">
-                        <img [src]="highlight.image" [alt]="highlight.title" />
+                        <img
+                          [src]="highlight.image || 'https://picsum.photos/200'"
+                          [alt]="highlight.title"
+                        />
                         <span
                           class="status-badge"
                           [class.optional]="highlight.optional"
@@ -149,7 +151,7 @@
                       </ng-template>
                       <ng-template pTemplate="content">
                         <h3>{{ highlight.title }}</h3>
-                        <p>{{ highlight.description }}</p>
+                        <div [innerHTML]="highlight.description"></div>
                       </ng-template>
                     </p-card>
                   </ng-template>

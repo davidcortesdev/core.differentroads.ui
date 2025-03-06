@@ -5,10 +5,11 @@ export interface Activity {
   id: string;
   status: string;
   activityId: string;
-  activityImage?: CldImage;
+  activityImage?: CldImage[];
   description: string | null;
   externalID: string;
   name: string;
+  day?: number;
   optional: boolean;
   periodId: string;
   productType: string;

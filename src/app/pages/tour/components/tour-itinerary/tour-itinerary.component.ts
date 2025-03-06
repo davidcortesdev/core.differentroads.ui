@@ -320,10 +320,16 @@ export class TourItineraryComponent implements OnInit {
   }
 
   updateItinerary(): void {
+    console.log(
+      this.itinerariesData?.['itineraries'],
+      this.selectedOption.value
+    );
+
     const selectedItinerary = this.itinerariesData?.['itineraries'].filter(
       (itinerary) =>
-        itinerary.periods.includes(this.selectedOption.value) ||
-        itinerary.periods.includes(parseInt(this.selectedOption.value))
+        itinerary.periods
+          .map((period) => period.split('-')[1])
+          .includes(this.selectedOption.value)
     )[0];
     console.log('Selected itinerary:', selectedItinerary, this.hotels);
 

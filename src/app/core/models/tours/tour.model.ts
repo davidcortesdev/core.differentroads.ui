@@ -43,7 +43,7 @@ export interface Itinerary {
   itineraries: {
     id: number;
     title: string;
-    periods: (string | number)[];
+    periods: string[];
     days: DayCard[];
   }[];
 }

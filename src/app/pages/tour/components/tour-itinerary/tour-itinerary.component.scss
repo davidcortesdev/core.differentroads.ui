@@ -45,10 +45,17 @@ $spaces: (
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  gap: 0.5em;
+
+  &-text {
+    flex-grow: 1;
+    text-align: start;
+  }
 
   .date-price {
     font-weight: bold;
     color: var(--background-azul);
+    width: 3rem;
   }
 }
 
@@ -497,4 +504,7 @@ $spaces: (
       }
     }
   }
+}
+
+.is-purple {
 }

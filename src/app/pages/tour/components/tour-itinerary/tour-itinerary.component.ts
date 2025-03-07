@@ -10,6 +10,8 @@ import { Panel } from 'primeng/panel';
 import { PeriodsService } from '../../../../core/services/periods.service';
 import { Period } from '../../../../core/models/tours/period.model';
 import { Activity } from '../../../../core/models/tours/activity.model';
+import { TourDataService } from '../../../../core/services/tour-data.service';
+
 interface City {
   nombre: string;
   lat: number;
@@ -123,13 +125,44 @@ export class TourItineraryComponent implements OnInit {
       numScroll: 1,
     },
   ];
+
+  tagsOptions: {
+    type: string;
+    color:
+      | 'success'
+      | 'secondary'
+      | 'info'
+      | 'warn'
+      | 'danger'
+      | 'contrast'
+      | undefined;
+    value: string;
+  }[] = [
+    {
+      type: 'Grupo',
+      color: 'info',
+      value: 'G',
+    },
+    {
+      type: 'Single',
+      color: 'success',
+      value: 'S',
+    },
+    {
+      type: 'Propios',
+      color: 'warn',
+      value: 'P',
+    },
+  ];
+
   constructor(
     private toursService: ToursService,
     private periodsService: PeriodsService,
     private route: ActivatedRoute,
     private sanitizer: DomSanitizer,
     private httpClient: HttpClient,
-    private geoService: GeoService
+    private geoService: GeoService,
+    private tourDataService: TourDataService
   ) {
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}`;
@@ -157,13 +190,14 @@ export class TourItineraryComponent implements OnInit {
             next: (tourData) => {
               console.log('Tour data:', tourData);
               this.dateOptions = tourData.activePeriods.map((period) => {
-                console.log('Period:', period);
+                console.log('Period___:', period);
 
                 return {
                   label: period.name,
                   value: period.externalID + '',
                   price: (period.basePrice || 0) + (tourData.basePrice || 0),
                   isGroup: true,
+                  tripType: period.tripType,
                 };
               });
               this.selectedOption = this.dateOptions[0];
@@ -190,6 +224,12 @@ export class TourItineraryComponent implements OnInit {
                       ...(period.includedActivities || []),
                     ];
                     this.updateItinerary();
+
+                    // Share the selected date and trip type with the service
+                    this.tourDataService.updateSelectedDateInfo(
+                      this.selectedDate,
+                      this.tripType
+                    );
                   },
                   error: (error) => console.error('Error period:', error),
                 });
@@ -307,6 +347,12 @@ export class TourItineraryComponent implements OnInit {
           console.log('Period itinerary 2:', period);
 
           this.updateItinerary();
+
+          // Share the updated selected date and trip type with the service
+          this.tourDataService.updateSelectedDateInfo(
+            this.selectedDate,
+            this.tripType
+          );
         },
         error: (error) => console.error('Error period:', error),
       });
@@ -406,5 +452,9 @@ export class TourItineraryComponent implements OnInit {
       return this.findScrollableParent(element.parentElement);
     }
     return window;
+  }
+
+  getTagConfig(tripType: string) {
+    return this.tagsOptions.find((tag) => tag.type === tripType);
   }
 }

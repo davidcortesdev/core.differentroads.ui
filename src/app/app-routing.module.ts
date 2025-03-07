@@ -36,6 +36,8 @@ const routes: Routes = [
       { path: 'checkout/:id', component: CheckoutComponent },
       { path: 'landing/:slug', component: ContentPageComponent },
       { path: 'collection/:slug', component: ContentPageComponent },
+      { path: 'press/:slug', component: ContentPageComponent },
+      { path: 'blog/:slug', component: ContentPageComponent },
       { path: 'reservation/:id', component: ReservationComponent },
       { path: '**', component: NotFoundComponent },
     ],

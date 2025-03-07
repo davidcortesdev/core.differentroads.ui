@@ -1,7 +1,15 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  Output,
+  EventEmitter,
+} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ToursService } from '../../../../core/services/tours.service';
 import { TourComponent } from '../../tour.component';
+import { TourDataService } from '../../../../core/services/tour-data.service';
+import { Subscription } from 'rxjs';
 
 export interface Departure {
   departureDate: Date;
@@ -29,16 +37,21 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
   departures: Departure[] = [];
   filteredDepartures: Departure[] = [];
   selectedCity: string = '';
-  readonly priceFrom: number = 1500;
 
-  // Propiedades para pasajeros
+  // Propiedades para pasajeros (incluye bebés pero no se usarán para el precio)
   travelers = {
     adults: 1,
-    children: 2,
+    children: 0,
     babies: 0,
   };
 
-  passengerText: string = '1 Adulto, 2 Niños'; // Valor inicial
+  // Emitir cambios en la selección de pasajeros (solo adultos y niños)
+  @Output() passengerChange = new EventEmitter<{
+    adults: number;
+    children: number;
+  }>();
+
+  passengerText: string = '1 Adulto'; // Valor inicial
 
   // Nueva propiedad para el panel de pasajeros
   showPassengersPanel: boolean = false;
@@ -51,10 +64,14 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
   private cities: string[] = [];
   filteredCities: string[] = [];
 
+  // Para manejar las suscripciones
+  private subscriptions = new Subscription();
+
   constructor(
     private route: ActivatedRoute,
     private toursService: ToursService,
-    private tourComponent: TourComponent
+    private tourComponent: TourComponent,
+    private tourDataService: TourDataService
   ) {}
 
   filterCities(event: { query: string }): void {
@@ -64,7 +81,7 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
     );
   }
 
-  // Nuevos métodos para el selector de pasajeros
+  // Métodos para el selector de pasajeros
   togglePassengersPanel(event: Event): void {
     this.showPassengersPanel = !this.showPassengersPanel;
     event.stopPropagation();
@@ -87,6 +104,13 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
 
   applyPassengers(): void {
     this.showPassengersPanel = false;
+
+    // Emitir cambio de pasajeros al aplicar (solo adultos y niños)
+    this.passengerChange.emit({
+      adults: this.travelers.adults,
+      children: this.travelers.children,
+      // No enviamos los bebés para el cálculo del precio
+    });
   }
 
   updatePassengerText(): void {
@@ -120,6 +144,34 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
   }
 
   addToCart(departure: Departure): void {
+    // Antes de redirigir, actualizamos la información en el servicio compartido
+    const selectedDate = new Date(departure.departureDate);
+    const returnDate = new Date(departure.returnDate);
+
+    // Formatear las fechas para mostrar en el header
+    const dateString = `${selectedDate.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: 'short',
+    })} - ${returnDate.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: 'short',
+    })}`;
+
+    // Actualizar la información compartida
+    this.tourDataService.updateSelectedDateInfo(
+      dateString,
+      departure.group || 'Viaje Individual',
+      departure.destination || this.selectedCity,
+      departure.price // Pasar el precio base
+    );
+
+    // Emitir información de pasajeros (solo adultos y niños)
+    this.passengerChange.emit({
+      adults: this.travelers.adults,
+      children: this.travelers.children,
+    });
+
+    // Continuar con la redirección
     this.tourComponent.createOrderAndRedirect(departure);
   }
 
@@ -129,6 +181,15 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
         departure.destination === this.selectedCity ||
         departure.flights === this.selectedCity
     );
+
+    // Actualizar el servicio con la ciudad seleccionada
+    this.tourDataService.updateDepartureCity(this.selectedCity);
+
+    // Si hay salidas filtradas, actualizar el precio base
+    if (this.filteredDepartures.length > 0) {
+      this.tourDataService.updateBasePrice(this.filteredDepartures[0].price);
+    }
+
     console.log('filteredDepartures', this.filteredDepartures);
   }
 
@@ -189,6 +250,11 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
       const departureDate = new Date(departure.departureDate);
       return departureDate >= startOfMonth && departureDate <= endOfMonth;
     });
+
+    // Actualizar precios con la primera salida filtrada si existe
+    if (this.filteredDepartures.length > 0) {
+      this.tourDataService.updateBasePrice(this.filteredDepartures[0].price);
+    }
   }
 
   ngOnInit() {
@@ -201,10 +267,19 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
         this.loadTourData(slug);
       }
     });
+
+    // Emitir la información inicial de pasajeros
+    setTimeout(() => {
+      this.passengerChange.emit({
+        adults: this.travelers.adults,
+        children: this.travelers.children,
+      });
+    }, 0);
   }
 
   ngOnDestroy() {
-    // Código de limpieza si es necesario
+    // Limpieza de suscripciones
+    this.subscriptions.unsubscribe();
   }
 
   private loadTourData(slug: string) {
@@ -220,6 +295,7 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
                 return null;
               }
               uniquePeriods.add(periodKey);
+
               return {
                 departureDate: new Date(period.dayOne),
                 returnDate: new Date(period.returnDate),
@@ -251,6 +327,31 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
         this.setCheapestCityAsDefault();
         this.filterDepartures();
         this.filterDeparturesByMonth(); // Filtrar por el mes actual
+
+        // Si ya tenemos datos disponibles, actualizar el servicio compartido
+        // con la información de la primera salida recomendada
+        if (this.filteredDepartures.length > 0) {
+          const recommendedDeparture = this.filteredDepartures[0];
+          const departureDate = new Date(recommendedDeparture.departureDate);
+          const returnDate = new Date(recommendedDeparture.returnDate);
+
+          // Formatear las fechas para mostrar
+          const dateString = `${departureDate.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: 'short',
+          })} - ${returnDate.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: 'short',
+          })}`;
+
+          // Actualizar la información compartida con los datos iniciales
+          this.tourDataService.updateSelectedDateInfo(
+            dateString,
+            recommendedDeparture.group || 'Viaje Individual',
+            this.selectedCity,
+            recommendedDeparture.price
+          );
+        }
       });
   }
 

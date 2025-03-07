@@ -1,12 +1,12 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ToursService } from '../../core/services/tours.service';
 import { Tour } from '../../core/models/tours/tour.model';
-import { catchError } from 'rxjs';
+import { catchError, Subject, Subscription } from 'rxjs';
 import { OrdersService } from '../../core/services/orders.service';
-import { Router } from '@angular/router';
 import { Departure } from './components/tour-departures/tour-departures.component';
 import { Order } from '../../core/models/orders/order.model';
+import { TourDataService } from '../../core/services/tour-data.service';
 
 @Component({
   selector: 'app-tour',
@@ -14,17 +14,29 @@ import { Order } from '../../core/models/orders/order.model';
   templateUrl: './tour.component.html',
   styleUrls: ['./tour.component.scss'],
 })
-export class TourComponent implements OnInit {
+export class TourComponent implements OnInit, OnDestroy {
   tourSlug: string = '';
   tour?: Tour;
   loading: boolean = true;
   error: boolean = false;
 
+  // Subject para comunicar cambios en los pasajeros
+  passengerChanges = new Subject<{ adults: number; children: number }>();
+
+  // Información de itinerario que podemos compartir
+  selectedDate: string = '';
+  tripType: string = '';
+  departureCity: string = '';
+
+  // Suscripciones para limpiar al destruir el componente
+  private subscriptions: Subscription = new Subscription();
+
   constructor(
     private route: ActivatedRoute,
     private toursService: ToursService,
     private ordersService: OrdersService,
-    private router: Router
+    private router: Router,
+    private tourDataService: TourDataService
   ) {}
 
   ngOnInit(): void {
@@ -32,10 +44,32 @@ export class TourComponent implements OnInit {
       this.tourSlug = params['slug'];
       this.loadTourDetails();
     });
+
+    // Suscribirse a los cambios de fecha del servicio compartido
+    // para mantener sincronizado el componente principal también
+    this.subscriptions.add(
+      this.tourDataService.selectedDateInfo$.subscribe((dateInfo) => {
+        this.selectedDate = dateInfo.date;
+        this.tripType = dateInfo.tripType;
+        this.departureCity = dateInfo.departureCity || '';
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    // Limpiar todas las suscripciones al destruir el componente
+    this.subscriptions.unsubscribe();
+    this.passengerChanges.complete();
+  }
+
+  // Método para recibir actualizaciones de pasajeros desde tour-departures
+  onPassengerChange(data: { adults: number; children: number }): void {
+    console.log('Passenger change received:', data);
+    this.passengerChanges.next(data);
   }
 
   private loadTourDetails(): void {
-    this.loading = false;
+    this.loading = true;
     this.error = false;
 
     this.toursService
@@ -43,7 +77,7 @@ export class TourComponent implements OnInit {
       .pipe(
         catchError((error) => {
           console.error('Error loading tour:', error);
-          this.error = false;
+          this.error = true;
           this.loading = false;
           return [];
         })
@@ -52,6 +86,20 @@ export class TourComponent implements OnInit {
         next: (tourData: Tour) => {
           this.tour = tourData;
           this.loading = false;
+
+          // Podemos compartir datos iniciales a través del servicio si es necesario
+          if (tourData.activePeriods && tourData.activePeriods.length > 0) {
+            const firstPeriod = tourData.activePeriods[0];
+            // Si ya tenemos información inicial de fecha/tipo, podemos compartirla
+            if (firstPeriod.name && firstPeriod.tripType) {
+              this.tourDataService.updateSelectedDateInfo(
+                firstPeriod.name,
+                firstPeriod.tripType,
+                undefined,
+                tourData.price
+              );
+            }
+          }
         },
         error: (error) => {
           console.error('Error loading tour:', error);

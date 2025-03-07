@@ -3,7 +3,8 @@
     [imageUrl]="bannerImage" 
     [imageAlt]="bannerImageAlt"
     [title]="bannerTitle"
-    [subtitle]="bannerSubtitle">
+    [subtitle]="bannerSubtitle"
+    *ngIf="this.isLanding || this.isCollection">
   </app-banner>
   <app-title-and-quill [title]="bannerTitle" [description]="bannerDescription"></app-title-and-quill>
   <app-dynamic-components *ngIf="blocks" [blocks]="blocks"></app-dynamic-components>

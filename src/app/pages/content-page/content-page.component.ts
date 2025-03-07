@@ -110,8 +110,6 @@ export class ContentPageComponent implements OnInit {
           this.pressService.getPressBySlug(this.slug).subscribe({
             next: (data: Press) => {
               console.log('press', data);
-              this.bannerImage = data.image[0]?.url || 'URL_ADDRESS';
-              this.bannerImageAlt = data.image[0]?.alt || '';
               this.bannerTitle = data.title || '';
               this.bannerSubtitle = data.subtitle || '';
               this.bannerDescription = data.content || '';
@@ -123,8 +121,6 @@ export class ContentPageComponent implements OnInit {
             this.blogService.getBlogBySlug(this.slug).subscribe({
               next: (data: Blog) => {
                 console.log('blog', data);
-                this.bannerImage = data.image[0]?.url || 'URL_ADDRESS';
-                this.bannerImageAlt = data.image[0]?.alt || '';
                 this.bannerTitle = data.title || '';
                 this.bannerSubtitle = data.subtitle || '';
                 this.bannerDescription = data.content || '';

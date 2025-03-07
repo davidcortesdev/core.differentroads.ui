@@ -1,3 +1,4 @@
+import { Block } from '../blocks/block.model';
 import { CldImage } from '../commons/cld-image.model';
 import { CMSCollections } from '../commons/cms-collections.model';
 
@@ -11,6 +12,7 @@ export interface Collection extends CMSCollections {
   titleContent: string;
   content: string;
   seo: SEO;
+  blocks: Block[];
 }
 
 export interface SEO {

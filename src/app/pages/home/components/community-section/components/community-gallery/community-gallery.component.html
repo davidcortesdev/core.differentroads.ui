@@ -1,16 +1,24 @@
 <div class="community-gallery">
-  <div *ngFor="let card of communityImages" class="community-gallery-card">
+  <div
+    *ngFor="let card of communityImages"
+    class="community-gallery-card"
+    [attr.aria-label]="'Instagram post from ' + card.account"
+  >
     <img
       [src]="card.image[0].url"
       [alt]="card.image[0].alt"
       class="community-gallery-card-img"
+      loading="lazy"
     />
-    <div class="community-gallery-card-info-location">
+    <div class="community-gallery-card-info-location" aria-label="Location">
       <span>{{ card.location }}</span>
-      <i class="pi pi-map-marker"></i>
+      <i class="pi pi-map-marker" aria-hidden="true"></i>
     </div>
-    <div class="community-gallery-card-info-username">
-      <i class="pi pi-instagram"></i>
+    <div
+      class="community-gallery-card-info-username"
+      aria-label="Instagram account"
+    >
+      <i class="pi pi-instagram" aria-hidden="true"></i>
       <span>{{ card.account }}</span>
     </div>
   </div>

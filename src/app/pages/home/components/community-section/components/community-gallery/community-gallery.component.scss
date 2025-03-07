@@ -26,18 +26,21 @@
     }
 
     &-info {
-      position: absolute;
-      left: 0;
-      right: 0;
-      height: 20%; // Ajusta la altura del degradado según tus necesidades
-      border-radius: var(--card-border-radius);
-      padding: 0.9rem;
-      display: flex;
-      align-items: center; /* Centra verticalmente el contenido */
-      font-size: var(--card-text-size);
-      font-weight: 500;
-      color: var(--background-azul-color-letra);
-      opacity: 0.7;
+      &-location,
+      &-username {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 20%;
+        border-radius: var(--card-border-radius);
+        padding: 0.9rem;
+        display: flex;
+        align-items: center;
+        font-size: var(--card-text-size);
+        font-weight: 500;
+        color: var(--background-azul-color-letra);
+        opacity: 0.7;
+      }
 
       &-location {
         justify-content: flex-end;

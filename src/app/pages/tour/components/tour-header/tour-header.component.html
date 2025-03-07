@@ -1,4 +1,5 @@
 <div class="tour-header">
+  <!-- Tour Information Section -->
   <div class="tour-info">
     <div class="rating-reviews">
       <div class="rating-container">
@@ -13,28 +14,46 @@
       <span class="duration">{{ getDuration() }}</span>
     </div>
   </div>
+
+  <!-- Tour Actions Section -->
   <div class="tour-actions">
-    <div class="badge">
-      <i class="pi pi-user"></i>
-      <span>{{
-        tour.marketingSection?.marketingTag ||
-          "El mejor valorado por nuestros viajeros"
-      }}</span>
+    <!-- Marketing Badge -->
+    <div class="badge" *ngIf="tour.marketingSection?.marketingTag">
+      <i class="pi pi-trophy"></i>
+      <span>{{ tour.marketingSection?.marketingTag }}</span>
     </div>
+
+    <!-- Price Section -->
     <div class="price-section">
       <div class="price-info">
         <div class="before-price">
-          <!-- <span>Antes</span>
-          <span class="amount">{{ tour.basePrice + 200 }}€</span> -->
+          <span>Antes</span>
+          <span>{{ basePrice + 200 | currencyFormat : "EUR" }}</span>
         </div>
         <div class="current-price">
           <span>Desde</span>
-          <span class="amount">{{ tour.price || 0 | currencyFormat : "EUR"  }}</span>
+          <span class="amount">{{ basePrice | currencyFormat : "EUR" }}</span>
         </div>
       </div>
-      <a href="#prices" class="price-link">Ir a este precio</a>
     </div>
-    <p-button label="Reservar mi tour" styleClass="p-button-rounded"></p-button>
+    
+    <!-- Booking Container -->
+    <div class="booking-container">
+      <p-button label="Reservar mi tour" styleClass="p-button-rounded"></p-button>
+      
+      <!-- Total Price Information -->
+      <div class="total-price-container" *ngIf="totalPrice > 0">
+        <div class="passengers-info">
+          <span>{{ selectedDate }} - {{ tripType }}</span>
+          <span>{{ departureCity.toLowerCase().includes('sin') ? 'Sin vuelos incluidos' : 'Desde ' + departureCity }}</span>
+          <span>n actividades opcionales</span>
+        </div>
+        <div class="total">
+          <span class="pasajeros">{{ getPassengersInfo() }}</span>
+          <span class="total-total">Total: </span>
+          <span class="amount">{{ totalPrice | currencyFormat : "EUR" }}</span>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
-<!-- El div spacer se creará dinámicamente desde el componente -->

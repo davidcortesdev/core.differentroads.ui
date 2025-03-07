@@ -81,19 +81,6 @@ $tablet-breakpoint: 1024px;
         }
       }
     }
-
-    .tour-recommendation {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-top: 0.5rem;
-      font-size: 0.9rem;
-      color: var(--text-color);
-
-      i {
-        font-size: 1rem;
-      }
-    }
   }
 
   // Tour Actions Section
@@ -125,42 +112,22 @@ $tablet-breakpoint: 1024px;
 
         .before-price {
           color: var(--text-color-secondary);
-          text-decoration: line-through;
           font-size: 0.9rem;
-
-          .amount {
+          
+          span:last-child {
+            text-decoration: line-through;
             margin-left: 0.5rem;
           }
         }
 
         .current-price {
-          // font-size: 1rem;
-
           .amount {
             margin-left: 0.5rem;
             font-weight: 600;
             font-size: 1.1rem;
           }
-
-          .itinerary-info-container {
-            margin-top: 0.75rem;
-            font-size: 0.85rem;
-            .itinerary-date-info {
-              .amount {
-                display: block;
-              }
-            }
-
-            .departure-city-info .amount.value {
-              display: block;
-            }
-          }
         }
       }
-    }
-
-    .itinerary-mobile-container {
-      display: none;
     }
 
     ::ng-deep .p-button {
@@ -170,22 +137,27 @@ $tablet-breakpoint: 1024px;
       font-weight: 500;
     }
 
-    .booking-container .total-price-container {
-      margin-top: 0.5rem;
-      text-align: center;
-      .total {
-        .pasajeros{
-          font-size: 0.85rem;
-          margin-right: 0.2rem;;
-        }
-        .amount {
-          font-weight: 600;
-        }
-      }
-      .passengers-info span {
-        display: block;
+    .booking-container {
+      .total-price-container {
+        margin-top: 0.5rem;
         text-align: center;
-        font-size: 0.85rem;
+        
+        .total {
+          .pasajeros {
+            font-size: 0.85rem;
+            margin-right: 0.2rem;
+          }
+          
+          .amount {
+            font-weight: 600;
+          }
+        }
+        
+        .passengers-info span {
+          display: block;
+          text-align: center;
+          font-size: 0.85rem;
+        }
       }
     }
   }
@@ -200,10 +172,6 @@ $tablet-breakpoint: 1024px;
       width: 100%;
       margin-bottom: 1rem;
 
-      .rating-reviews {
-        margin-bottom: 0.25rem;
-      }
-
       h1 {
         font-size: 1.25rem;
         margin-bottom: 0.25rem;
@@ -211,11 +179,6 @@ $tablet-breakpoint: 1024px;
 
       .tour-meta {
         font-size: 0.9rem;
-      }
-
-      .tour-recommendation {
-        margin-top: 0.5rem;
-        font-size: 0.85rem;
       }
     }
 
@@ -245,43 +208,6 @@ $tablet-breakpoint: 1024px;
         flex-direction: column;
         justify-content: center;
         height: 40px;
-
-        .price-info {
-          margin-bottom: 0;
-
-          .current-price .itinerary-info-container {
-            display: none;
-          }
-        }
-
-        .price-link {
-          font-size: 0.8rem;
-        }
-      }
-
-      .itinerary-mobile-container {
-        display: flex;
-        justify-content: space-between;
-        clear: both;
-        width: 100%;
-        text-align: center;
-        margin-bottom: 0.75rem;
-
-        .itinerary-date-info {
-          margin-bottom: 0.25rem;
-
-          .amount {
-            display: block;
-            font-weight: 600;
-            font-size: 0.95rem;
-          }
-        }
-
-        .departure-city-info .amount {
-          display: block;
-          font-weight: 600;
-          font-size: 0.95rem;
-        }
       }
 
       ::ng-deep .p-button {
@@ -298,26 +224,11 @@ $tablet-breakpoint: 1024px;
         justify-content: space-between;
         align-items: center;
 
-        .total {
-          .pasajeros{
-            font-size: 0.85rem;
-            margin-right: 0.2rem;;
-          }
-          .amount {
-            font-weight: 600;
-          }
-        }
-        .passengers-info {
-          span {
-            font-weight: 600;
-            font-size: 0.9rem;
-            text-align: left;
-            display: inline;
-          }
-
-          &:last-child span {
-            text-align: right;
-          }
+        .passengers-info span {
+          font-weight: 600;
+          font-size: 0.9rem;
+          text-align: left;
+          display: inline;
         }
       }
     }
@@ -332,29 +243,9 @@ $tablet-breakpoint: 1024px;
       width: 70%;
       float: left;
 
-      .rating-reviews {
-        margin-bottom: 0.4rem;
-      }
-
       h1 {
         font-size: 1.5rem;
         margin-bottom: 0.4rem;
-      }
-
-      .tour-meta {
-        margin-bottom: 0.25rem;
-      }
-
-      .tour-recommendation {
-        margin-top: 0.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 0.9rem;
-        color: var(--text-color);
-        width: 100%;
-        background: none;
-        padding: 0;
       }
     }
 
@@ -379,26 +270,6 @@ $tablet-breakpoint: 1024px;
           margin-top: 2rem;
           margin-right: 5px;
         }
-
-        .current-price .itinerary-info-container {
-          margin-top: 0.75rem;
-
-          .itinerary-date-info {
-            margin-bottom: 0.5rem;
-
-            .amount {
-              display: block;
-              font-weight: 600;
-              font-size: 0.95rem;
-            }
-          }
-
-          .departure-city-info .amount {
-            display: block;
-            font-weight: 600;
-            font-size: 0.95rem;
-          }
-        }
       }
 
       ::ng-deep .p-button {
@@ -409,35 +280,8 @@ $tablet-breakpoint: 1024px;
 
       .booking-container {
         width: 100%;
-display: flex;
-text-align: center;
-        .total-price-container {
-          margin-top: 0.5rem;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin: 5px;
-          .total {
-            .pasajeros{
-              font-size: 0.85rem;
-              margin-right: 0.2rem;;
-            }
-            .amount {
-              font-weight: 600;
-            }
-          }
-          .passengers-info {
-            span {
-              font-weight: 600;
-              font-size: 0.9rem;
-              display: inline;
-            }
-
-            &:last-child span {
-              text-align: right;
-            }
-          }
-        }
+        display: flex;
+        text-align: center;
       }
     }
 

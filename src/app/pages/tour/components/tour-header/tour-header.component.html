@@ -1,4 +1,5 @@
 <div class="tour-header">
+  <!-- Tour Information Section -->
   <div class="tour-info">
     <div class="rating-reviews">
       <div class="rating-container">
@@ -13,57 +14,39 @@
       <span class="duration">{{ getDuration() }}</span>
     </div>
   </div>
+
+  <!-- Tour Actions Section -->
   <div class="tour-actions">
+    <!-- Marketing Badge -->
     <div class="badge" *ngIf="tour.marketingSection?.marketingTag">
       <i class="pi pi-trophy"></i>
-      <span>{{
-        tour.marketingSection?.marketingTag
-      }}</span>
+      <span>{{ tour.marketingSection?.marketingTag }}</span>
     </div>
+
+    <!-- Price Section -->
     <div class="price-section">
       <div class="price-info">
-        <div>
-          <span >Antes </span>
-          <span style="text-decoration: line-through;">{{ basePrice +200 | currencyFormat : "EUR" }}</span>
+        <div class="before-price">
+          <span>Antes</span>
+          <span>{{ basePrice + 200 | currencyFormat : "EUR" }}</span>
         </div>
         <div class="current-price">
-          
           <span>Desde</span>
           <span class="amount">{{ basePrice | currencyFormat : "EUR" }}</span>
-          
-          <!-- Contenedor normal para la información del itinerario (visible en desktop y tablet) -->
-    <!--       <div class="itinerary-info-container" *ngIf="selectedDate">
-            <div class="itinerary-date-info">
-              <span class="">{{ selectedDate }} - {{ tripType }}</span>
-            </div>
-            <div class="departure-city-info" *ngIf="departureCity">
-              <span class="value">{{ departureCity.toLowerCase().includes('sin') ? 'Sin vuelos incluidos' : 'Desde ' + departureCity }}</span>
-            </div>
-          </div> -->
         </div>
       </div>
     </div>
     
-    <!-- Contenedor específico para móvil (solo visible en móvil) -->
-    <!-- <div class="itinerary-mobile-container" *ngIf="selectedDate">
-      <div class="itinerary-date-info">
-        <span class="">{{ selectedDate }} - {{ tripType }}</span>
-      </div>
-      <div class="departure-city-info" *ngIf="departureCity">
-        <span class="">{{ departureCity.toLowerCase().includes('sin') ? 'Sin vuelos incluidos' : 'Desde ' + departureCity }}</span>
-      </div>
-    </div>
-  -->
+    <!-- Booking Container -->
     <div class="booking-container">
       <p-button label="Reservar mi tour" styleClass="p-button-rounded"></p-button>
       
-      <!-- Precio total calculado -->
+      <!-- Total Price Information -->
       <div class="total-price-container" *ngIf="totalPrice > 0">
         <div class="passengers-info">
-          <!--<span>{{ getPassengersInfo() }}</span>-->
           <span>{{ selectedDate }} - {{ tripType }}</span>
-          <span class="">{{ departureCity.toLowerCase().includes('sin') ? 'Sin vuelos incluidos' : 'Desde ' + departureCity }}</span>
-          <span class="">n actividades opcionales</span>
+          <span>{{ departureCity.toLowerCase().includes('sin') ? 'Sin vuelos incluidos' : 'Desde ' + departureCity }}</span>
+          <span>n actividades opcionales</span>
         </div>
         <div class="total">
           <span class="pasajeros">{{ getPassengersInfo() }}</span>

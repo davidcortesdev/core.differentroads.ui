@@ -1,10 +1,8 @@
-// Define variables at root level for better reusability
 :root {
   --gallery-card-border-radius: 0.75rem;
   --gallery-card-text-size: 0.6875rem;
   --gallery-card-spacing: 1rem;
 
-  // Responsive scaling for 2K and 4K displays using viewport width units
   @media (min-width: 2560px) {
     --gallery-card-text-size: calc(0.6875rem + 0.3vw);
     --gallery-card-spacing: 1.2rem;
@@ -201,9 +199,8 @@
   }
   .formated-content p {
     font-size: 5rem !important;
-    content: "Normal" !important;
-    padding-top: 0.5em;
-    line-height: 1.1em;
-    margin: 0;
+  }
+  .community-gallery-card-img {
+    border-radius: 1rem;
   }
 }

@@ -43,4 +43,17 @@ export class PressService {
     ];
     return this.getPressById(id, selectedFields);
   }
+
+  getPressBySlug(
+    slug: string,
+    selectedFields: SelectedFields = []
+  ): Observable<Press> {
+    let params = new HttpParams();
+
+    if (selectedFields && selectedFields.length) {
+      params = params.set('selectedFields', selectedFields.join(','));
+    }
+
+    return this.http.get<Press>(`${this.API_URL}/filter-by/slug/${slug}`, { params });
+  }
 }

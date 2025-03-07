@@ -3,6 +3,10 @@ import { ActivatedRoute } from '@angular/router';
 import { CollectionsService } from '../../core/services/collections.service';
 import { LandingsService } from '../../core/services/landings.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { BlogsService } from '../../core/services/blogs.service';
+import { PressService } from '../../core/services/press.service';
+import { Blog } from '../../core/models/blogs/blog.model';
+import { Observable } from 'rxjs';
 
 interface ITour {
   imageUrl: string;
@@ -24,6 +28,10 @@ interface ITour {
 })
 export class ContentPageComponent implements OnInit {
   isLanding: boolean = false;
+  isCollection: boolean = false;
+  isPress: boolean = false;
+  isBlog: boolean = false;
+
   slug: string = '';
   blocks: any[] = [];
 
@@ -44,12 +52,17 @@ export class ContentPageComponent implements OnInit {
     private route: ActivatedRoute,
     private landingsService: LandingsService,
     private collectionsService: CollectionsService,
+    private blogService: BlogsService,
+    private pressService: PressService,
     private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit() {
     const routePath = this.route.snapshot.routeConfig?.path;
     this.isLanding = routePath === 'landing/:slug';
+    this.isCollection = routePath === 'collection/:slug';
+    this.isPress = routePath === 'press/:slug';
+    this.isBlog = routePath === 'blog/:slug';
     this.slug = this.route.snapshot.paramMap.get('slug') || '';
     this.fetchBlocks();
   }
@@ -69,25 +82,50 @@ export class ContentPageComponent implements OnInit {
         error: (error: any) => {},
       });
     } else {
-      this.collectionsService.getCollectionBySlug(this.slug).subscribe({
-        next: (data: any) => {
-          this.blocks = data.blocks || ['collection'];
-          this.bannerImage =
-            data.banner[0]?.url || 'https://picsum.photos/200/300';
-          this.bannerTitle = data.title || 'Your Title Here';
-          this.bannerSubtitle = data.bannerTitle || 'Optional Subtitle';
-          this.bannerDescription =
-            data.content || 'Lorem Ipsum is simply dummy text...';
+      if (this.isCollection) {
+        this.collectionsService.getCollectionBySlug(this.slug).subscribe({
+          next: (data: any) => {
+            this.blocks = data.blocks || ['collection'];
+            this.bannerImage =
+              data.banner[0]?.url || 'https://picsum.photos/200/300';
+            this.bannerTitle = data.title || 'Your Title Here';
+            this.bannerSubtitle = data.bannerTitle || 'Optional Subtitle';
+            this.bannerDescription =
+              data.content || 'Lorem Ipsum is simply dummy text...';
 
-          this.extractCollectionTags(data);
+            this.extractCollectionTags(data);
 
-          if (this.collectionTags.length > 0) {
-            this.showTours = true;
-            this.isTagBasedCollection = true;
+            if (this.collectionTags.length > 0) {
+              this.showTours = true;
+              this.isTagBasedCollection = true;
+            }
+          },
+          error: (error: any) => {},
+        });
+      } else {
+        if (this.isPress) {
+          this.pressService.getPressBySlug(this.slug).subscribe({
+            next: (data:any) => {
+              console.log('press',data);
+            }
+          });
+        }
+         else {
+          if (this.isBlog) {
+            this.blogService.getBlogBySlug(this.slug).subscribe({
+              next: (data: Blog) => {
+                console.log('blog',data);
+                this.bannerImage = data.image[0]?.url || 'URL_ADDRESS';
+                this.bannerTitle = data.title || '';
+                this.bannerSubtitle = data.subtitle || '';
+                this.bannerDescription = data.content || '';
+                this.blocks = data.blocks || [];
+              },
+              error: (error: any) => {},
+            });
           }
-        },
-        error: (error: any) => {},
-      });
+        }
+      }
     }
   }
 

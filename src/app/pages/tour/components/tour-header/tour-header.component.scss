@@ -1,22 +1,31 @@
+// Variables
+$primary-button-color: #e85d4c;
+$rating-star-color: #ffa41c;
+$shadow-color: rgba(0, 0, 0, 0.1);
+$mobile-breakpoint: 767px;
+$tablet-breakpoint: 1024px;
+
 .tour-header {
   position: relative;
   width: 100%;
   top: 0;
   z-index: 1000;
-  padding: 1.5rem 2rem;
+  padding: 1rem 2rem;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   background-color: white;
   transition: box-shadow 0.3s ease;
+  border-bottom: 2px solid var(--p-menubar-background);
 
   &.scrolled {
     position: fixed;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px $shadow-color;
     left: 0;
     right: 0;
   }
 
+  // Tour Info Section
   .tour-info {
     flex: 1;
 
@@ -38,7 +47,7 @@
 
         ::ng-deep .p-rating {
           .p-rating-item.p-rating-item-active .p-rating-icon {
-            color: #ffa41c;
+            color: $rating-star-color;
           }
         }
       }
@@ -87,6 +96,7 @@
     }
   }
 
+  // Tour Actions Section
   .tour-actions {
     display: flex;
     align-items: center;
@@ -98,11 +108,12 @@
       gap: 0.5rem;
       padding: 0.5rem 1rem;
       border-radius: 2rem;
+      border: 1px solid var(--background-azul);
       background-color: var(--surface-ground);
       font-size: 0.9rem;
 
       i {
-        color: var(--primary-color);
+        color: var(--p-primary-color);
       }
     }
 
@@ -123,29 +134,26 @@
         }
 
         .current-price {
-          font-size: 1rem;
-          .itinerary-info-container {
-            margin-top: 0.75rem;
+          // font-size: 1rem;
 
-            .itinerary-date-info {
-              margin-bottom: 0.5rem;
-
-              .amount {
-                display: block;
-                font-weight: 600;
-              }
-            }
-            .departure-city-info {
-              .amount.value {
-                display: block;
-                font-weight: 600;
-              }
-            }
-          }
           .amount {
             margin-left: 0.5rem;
             font-weight: 600;
             font-size: 1.1rem;
+          }
+
+          .itinerary-info-container {
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            .itinerary-date-info {
+              .amount {
+                display: block;
+              }
+            }
+
+            .departure-city-info .amount.value {
+              display: block;
+            }
           }
         }
       }
@@ -156,28 +164,34 @@
     }
 
     ::ng-deep .p-button {
-      background-color: #e85d4c;
-      border-color: #e85d4c;
+      background-color: $primary-button-color;
+      border-color: $primary-button-color;
       padding: 0.75rem 2rem;
       font-weight: 500;
     }
 
-    .booking-container {
-      .total-price-container {
-        text-align: center;
-        .passengers-info {
-          span {
-            font-weight: 600;
-            display: block;
-            text-align: center;
-            font-size: 1.1rem;
-          }
+    .booking-container .total-price-container {
+      margin-top: 0.5rem;
+      text-align: center;
+      .total {
+        .pasajeros{
+          font-size: 0.85rem;
+          margin-right: 0.2rem;;
         }
+        .amount {
+          font-weight: 600;
+        }
+      }
+      .passengers-info span {
+        display: block;
+        text-align: center;
+        font-size: 0.85rem;
       }
     }
   }
 
-  @media (max-width: 767px) {
+  // Mobile Styles
+  @media (max-width: $mobile-breakpoint) {
     padding: 1rem;
     flex-direction: column;
     align-items: flex-start;
@@ -200,7 +214,6 @@
       }
 
       .tour-recommendation {
-        display: flex;
         margin-top: 0.5rem;
         font-size: 0.85rem;
       }
@@ -236,10 +249,8 @@
         .price-info {
           margin-bottom: 0;
 
-          .current-price {
-            .itinerary-info-container {
-              display: none;
-            }
+          .current-price .itinerary-info-container {
+            display: none;
           }
         }
 
@@ -247,6 +258,7 @@
           font-size: 0.8rem;
         }
       }
+
       .itinerary-mobile-container {
         display: flex;
         justify-content: space-between;
@@ -265,12 +277,10 @@
           }
         }
 
-        .departure-city-info {
-          .amount {
-            display: block;
-            font-weight: 600;
-            font-size: 0.95rem;
-          }
+        .departure-city-info .amount {
+          display: block;
+          font-weight: 600;
+          font-size: 0.95rem;
         }
       }
 
@@ -282,31 +292,39 @@
         margin-bottom: 0.5rem;
       }
 
-      .booking-container {
-        .total-price-container {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-top: 0;
+      .booking-container .total-price-container {
+        margin-top: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
 
-          .passengers-info {
-            span {
-              font-weight: 600;
-              font-size: 0.9rem;
-              text-align: left;
-              display: inline;
-            }
+        .total {
+          .pasajeros{
+            font-size: 0.85rem;
+            margin-right: 0.2rem;;
+          }
+          .amount {
+            font-weight: 600;
+          }
+        }
+        .passengers-info {
+          span {
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: left;
+            display: inline;
+          }
 
-            &:last-child span {
-              text-align: right;
-            }
+          &:last-child span {
+            text-align: right;
           }
         }
       }
     }
   }
 
-  @media (min-width: 768px) and (max-width: 1024px) {
+  // Tablet Styles
+  @media (min-width: #{$mobile-breakpoint + 1px}) and (max-width: $tablet-breakpoint) {
     padding: 1.25rem;
     flex-wrap: wrap;
 
@@ -355,32 +373,30 @@
         text-align: right;
         margin-bottom: 0;
         width: 100%;
+
         .price-info {
           margin-bottom: -1.6rem;
           margin-top: 2rem;
           margin-right: 5px;
         }
-        .current-price {
-          .itinerary-info-container {
-            margin-top: 0.75rem;
 
-            .itinerary-date-info {
-              margin-bottom: 0.5rem;
+        .current-price .itinerary-info-container {
+          margin-top: 0.75rem;
 
-              .amount {
-                display: block;
-                font-weight: 600;
-                font-size: 0.95rem;
-              }
+          .itinerary-date-info {
+            margin-bottom: 0.5rem;
+
+            .amount {
+              display: block;
+              font-weight: 600;
+              font-size: 0.95rem;
             }
+          }
 
-            .departure-city-info {
-              .amount {
-                display: block;
-                font-weight: 600;
-                font-size: 0.95rem;
-              }
-            }
+          .departure-city-info .amount {
+            display: block;
+            font-weight: 600;
+            font-size: 0.95rem;
           }
         }
       }
@@ -393,13 +409,23 @@
 
       .booking-container {
         width: 100%;
-
+display: flex;
+text-align: center;
         .total-price-container {
+          margin-top: 0.5rem;
           display: flex;
           justify-content: space-between;
           align-items: center;
           margin: 5px;
-
+          .total {
+            .pasajeros{
+              font-size: 0.85rem;
+              margin-right: 0.2rem;;
+            }
+            .amount {
+              font-weight: 600;
+            }
+          }
           .passengers-info {
             span {
               font-weight: 600;
@@ -423,6 +449,7 @@
   }
 }
 
+// Component wrapper styles
 app-tour-header {
   display: block;
 

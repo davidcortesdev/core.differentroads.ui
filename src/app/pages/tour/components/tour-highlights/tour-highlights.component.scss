@@ -9,9 +9,8 @@
   }
 
   ::ng-deep {
-
     .custom-carousel .p-carousel-content .p-carousel-item {
-      max-width: 30rem!important;  ;
+      max-width: 30rem !important;
     }
 
     .p-carousel {
@@ -75,7 +74,7 @@
           line-height: 1.5;
           font-size: 0.875rem;
           flex: 1;
-          
+
           // Truncate text after 4 lines
           display: -webkit-box;
           -webkit-line-clamp: 4;

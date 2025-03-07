@@ -1,12 +1,40 @@
+$azul: var(--background-azul);
+$primary: var(--p-primary-color);
+@mixin flex($justify: center, $align: center) {
+  display: flex;
+  align-items: $align;
+  justify-content: $justify;
+}
+%txt-azul {
+  color: $azul;
+}
+%brd-rad {
+  border-radius: 11.82px;
+}
+%input-focus {
+  &:focus {
+    border-color: $primary;
+  }
+}
+%input-common {
+  width: 100%;
+  min-width: 250px;
+  padding: 0.53rem;
+  @extend %brd-rad;
+  border: 1px solid #ced4da;
+  @extend %txt-azul;
+  background: #fff;
+  @extend %input-focus;
+}
+
 div {
   display: flex;
   flex-direction: row;
-  gap: 2.5rem;
+  gap: 0.5rem;
   justify-content: space-evenly;
   align-items: center;
 
   .p-card {
-
     div {
       span {
         background-color: #ff6f61;
@@ -32,7 +60,7 @@ div {
 
 .claseBord {
   border-radius: 0.875rem;
-  border: 1px solid #002B57;
+  border: 1px solid #002b57;
 }
 
 .bg-pink-100 {
@@ -67,6 +95,142 @@ div {
       i {
         color: #ff6b6b;
       }
+    }
+  }
+}
+
+.f-box {
+  min-width: 300px;
+  flex: 1;
+  margin: 0 0.5rem;
+  &:first-child {
+    margin-left: 0;
+  }
+  &:last-child {
+    margin-right: 0;
+  }
+  .f-lbl {
+    display: none;
+    font-size: 0.875rem;
+    @extend %txt-azul;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+  .f-cnt {
+    position: relative;
+    .input-label {
+      position: absolute;
+      top: 0.5rem;
+      left: 0.75rem;
+      font-size: 0.75rem;
+      z-index: 1;
+      @extend %txt-azul;
+    }
+
+    .p-inputtext,
+    .p-btn {
+      @extend %input-common;
+      padding-top: 1.5rem;
+      padding-bottom: 0.5rem;
+    }
+    .p-from {
+      position: absolute;
+      top: 60%;
+      left: 30%;
+      transform: translateY(-50%);
+      @extend %txt-azul;
+      font-weight: 500;
+      z-index: 1;
+    }
+    .p-btn {
+      @include flex(null, center);
+      text-align: left;
+      cursor: pointer;
+      font-size: 1rem;
+      i {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        margin-left: 0;
+      }
+    }
+  }
+}
+
+::ng-deep {
+  .p-icon {
+    @extend %txt-azul;
+  }
+  .p-autocomplete,
+  .p-btn {
+    position: relative;
+    width: 100%;
+  }
+  .p-autocomplete {
+    .p-autocomplete-input {
+      width: 100%;
+      @extend %brd-rad;
+      @extend %txt-azul;
+      background: #fff;
+      padding-right: 2.5rem;
+      padding-top: 1.5rem !important;
+      padding-bottom: 0.5rem !important;
+    }
+    .p-autocomplete-overlay {
+      @extend %brd-rad;
+      background: #fff;
+      box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
+      border: 1px solid #d9d9d9;
+      z-index: 1;
+    }
+    .p-autocomplete-dropdown {
+      position: absolute;
+      top: 50%;
+      right: 0.5rem;
+      transform: translateY(-50%);
+      background-color: transparent;
+      border: none;
+      z-index: 1;
+    }
+  }
+  .p-ovl .p-overlay-content {
+    @extend %brd-rad;
+    padding: 0;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    background: #fff;
+  }
+}
+.p-panel {
+  flex-wrap: wrap;
+}
+.p-type {
+  @include flex(space-between);
+  padding: 1rem 0.5rem;
+  border-bottom: 1px solid #eee;
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+  .p-info {
+    .p-cat {
+      @include flex(null, center);
+      font-weight: 500;
+      @extend %txt-azul;
+    }
+    .p-age {
+      font-size: 0.8rem;
+      @extend %txt-azul;
+    }
+  }
+  .p-ctrl {
+    @include flex(null, center);
+    .p-count {
+      margin: 0 1rem;
+      min-width: 1.5rem;
+      text-align: center;
+      font-size: 1.2rem;
+      @extend %txt-azul;
     }
   }
 }

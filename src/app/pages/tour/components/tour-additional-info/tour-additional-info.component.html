@@ -8,6 +8,176 @@
     </div>
   </p-card>
 
+  <div class="card flex justify-center">
+    <p-dialog
+      header="Header"
+      [(visible)]="visible"
+      [modal]="true"
+      [breakpoints]="{ '1199px': '80vw', '575px': '90vw' }"
+      [style]="{ width: '50vw', height: '80vh' }"
+      [draggable]="false"
+      [resizable]="false"
+    >
+      <div>
+        <h3>Guardar presupuesto</h3>
+        <p>
+          Sujeto a disponibilidad en el momento de la reserva y sólo para
+          salidas con stock
+        </p>
+      </div>
+      <div>
+        <p>La Venecia más auténtica entre góndolas y antifaces</p>
+      </div>
+
+      <div class="f-box">
+        <p-select
+          [options]="periods"
+          [(ngModel)]="selectedPeriod"
+          optionLabel="name"
+          optionValue="value"
+          placeholder="Selecciona un periodo"
+          class="w-full md:w-56"
+        />
+        <p-select
+          [options]="fligths"
+          [(ngModel)]="selectedFlight"
+          optionLabel="name"
+          optionValue="value"
+          placeholder="Vuelos"
+          class="w-full md:w-56"
+        />
+
+        <div class="f-cnt">
+          <span class="input-label">Pasajeros</span>
+          <button
+            #passengerButton
+            type="button"
+            class="p-autocomplete p-btn"
+            (click)="togglePassengersPanel($event)"
+          >
+            {{ passengerText }}
+            <i class="pi pi-chevron-down ml-auto"></i>
+          </button>
+
+          <p-overlay [(visible)]="showPassengersPanel" styleClass="p-ovl">
+            <div class="p-panel p-3">
+              <div class="p-type">
+                <div class="p-info">
+                  <div class="p-cat">Adultos</div>
+                  <div class="p-age">+12 años</div>
+                </div>
+                <div class="p-ctrl">
+                  <p-button
+                    icon="pi pi-minus"
+                    styleClass="p-button-rounded p-button-outlined"
+                    [disabled]="travelers.adults <= 1"
+                    (onClick)="updatePassengers('adults', -1)"
+                  ></p-button>
+                  <span class="p-count">{{ travelers.adults }}</span>
+                  <p-button
+                    icon="pi pi-plus"
+                    styleClass="p-button-rounded p-button-outlined"
+                    (onClick)="updatePassengers('adults', 1)"
+                  ></p-button>
+                </div>
+              </div>
+
+              <div class="p-type">
+                <div class="p-info">
+                  <div class="p-cat">Niños</div>
+                  <div class="p-age">2-12 años</div>
+                </div>
+                <div class="p-ctrl">
+                  <p-button
+                    icon="pi pi-minus"
+                    styleClass="p-button-rounded p-button-outlined"
+                    [disabled]="travelers.children <= 0"
+                    (onClick)="updatePassengers('children', -1)"
+                  ></p-button>
+                  <span class="p-count">{{ travelers.children }}</span>
+                  <p-button
+                    icon="pi pi-plus"
+                    styleClass="p-button-rounded p-button-outlined"
+                    (onClick)="updatePassengers('children', 1)"
+                  ></p-button>
+                </div>
+              </div>
+
+              <div class="p-type">
+                <div class="p-info">
+                  <div class="p-cat">Bebés</div>
+                  <div class="p-age">-2 años</div>
+                </div>
+                <div class="p-ctrl">
+                  <p-button
+                    icon="pi pi-minus"
+                    styleClass="p-button-rounded p-button-outlined"
+                    [disabled]="travelers.babies <= 0"
+                    (onClick)="updatePassengers('babies', -1)"
+                  ></p-button>
+                  <span class="p-count">{{ travelers.babies }}</span>
+                  <p-button
+                    icon="pi pi-plus"
+                    styleClass="p-button-rounded p-button-outlined"
+                    (onClick)="updatePassengers('babies', 1)"
+                  ></p-button>
+                </div>
+              </div>
+
+              <div class="p-actions">
+                <p-button
+                  label="Aplicar"
+                  styleClass="p-button-rounded"
+                  (onClick)="applyPassengers()"
+                ></p-button>
+              </div>
+            </div>
+          </p-overlay>
+        </div>
+      </div>
+      <div>
+        <p-iftalabel>
+          <input
+            pInputText
+            id="name"
+            [(ngModel)]="traveler.name"
+            autocomplete="off"
+          />
+          <label for="name">Nombre del viajero</label>
+        </p-iftalabel>
+        <p-iftalabel>
+          <input
+            pInputText
+            id="email"
+            [(ngModel)]="traveler.email"
+            autocomplete="off"
+          />
+          <label for="email">Email del viajero</label>
+        </p-iftalabel>
+        <p-iftalabel>
+          <input
+            pInputText
+            id="phone"
+            [(ngModel)]="traveler.phone"
+            autocomplete="off"
+          />
+          <label for="phone">Telefono del viajero</label>
+        </p-iftalabel>
+      </div>
+      <p>
+        <p-button
+          label="Enviar presupuesto"
+          (click)="saveTrip()"
+          class="p-button-rounded p-button-success"
+        ></p-button>
+      </p>
+      <p>
+        Se enviará automáticamente una copia del presupuesto a tu correo y lo
+        podrás consultar en tu perfil sección Mis presupuestos y favoritos
+      </p>
+    </p-dialog>
+  </div>
+
   <p-card styleClass="claseBord">
     <div class="" (click)="handleDownloadTrip()">
       <span class="bg-pink-100">

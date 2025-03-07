@@ -11,7 +11,28 @@ import { Tour } from '../../../../core/models/tours/tour.model';
   styleUrl: './tour-additional-info.component.scss',
 })
 export class TourAdditionalInfoComponent {
+  saveTrip() {
+    throw new Error('Method not implemented.');
+  }
+  passengerText: any;
+
   tour: any;
+  visible: boolean = false;
+  showPassengersPanel: boolean = true;
+  travelers = {
+    adults: 1,
+    children: 0,
+    babies: 0,
+  };
+  periods: any[] | undefined;
+  selectedPeriod: any;
+  fligths: any[] | undefined;
+  selectedFlight: any;
+  traveler: any = {
+    name: '',
+    email: '',
+    phone: '',
+  };
 
   constructor(
     private sanitizer: DomSanitizer,
@@ -38,10 +59,11 @@ export class TourAdditionalInfoComponent {
           this.tour = tour;
         });
     }
+    this.updatePassengerText();
   }
 
   handleSaveTrip(): void {
-    // Implement save trip logic
+    this.visible = true;
   }
 
   handleDownloadTrip(): void {
@@ -52,7 +74,61 @@ export class TourAdditionalInfoComponent {
     // Implement invite friend logic
   }
 
+  togglePassengersPanel(event: Event): void {
+    this.showPassengersPanel = !this.showPassengersPanel;
+    event.stopPropagation();
+  }
+
   sanitizeHtml(html: string): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
+  updatePassengers(
+    type: 'adults' | 'children' | 'babies',
+    change: number
+  ): void {
+    if (type === 'adults') {
+      this.travelers.adults = Math.max(1, this.travelers.adults + change);
+    } else if (type === 'children') {
+      this.travelers.children = Math.max(0, this.travelers.children + change);
+    } else if (type === 'babies') {
+      this.travelers.babies = Math.max(0, this.travelers.babies + change);
+    }
+
+    this.updatePassengerText();
+  }
+
+  applyPassengers(): void {
+    this.showPassengersPanel = false;
+  }
+
+  updatePassengerText(): void {
+    const parts = [];
+
+    if (this.travelers.adults > 0) {
+      parts.push(
+        `${this.travelers.adults} ${
+          this.travelers.adults === 1 ? 'Adulto' : 'Adultos'
+        }`
+      );
+    }
+
+    if (this.travelers.children > 0) {
+      parts.push(
+        `${this.travelers.children} ${
+          this.travelers.children === 1 ? 'Niño' : 'Niños'
+        }`
+      );
+    }
+
+    if (this.travelers.babies > 0) {
+      parts.push(
+        `${this.travelers.babies} ${
+          this.travelers.babies === 1 ? 'Bebé' : 'Bebés'
+        }`
+      );
+    }
+
+    this.passengerText = parts.join(', ');
   }
 }

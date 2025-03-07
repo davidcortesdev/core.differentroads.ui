@@ -125,6 +125,36 @@ export class TourItineraryComponent implements OnInit {
       numScroll: 1,
     },
   ];
+
+  tagsOptions: {
+    type: string;
+    color:
+      | 'success'
+      | 'secondary'
+      | 'info'
+      | 'warn'
+      | 'danger'
+      | 'contrast'
+      | undefined;
+    value: string;
+  }[] = [
+    {
+      type: 'Grupo',
+      color: 'info',
+      value: 'G',
+    },
+    {
+      type: 'Single',
+      color: 'success',
+      value: 'S',
+    },
+    {
+      type: 'Propios',
+      color: 'warn',
+      value: 'P',
+    },
+  ];
+
   constructor(
     private toursService: ToursService,
     private periodsService: PeriodsService,
@@ -160,13 +190,14 @@ export class TourItineraryComponent implements OnInit {
             next: (tourData) => {
               console.log('Tour data:', tourData);
               this.dateOptions = tourData.activePeriods.map((period) => {
-                console.log('Period:', period);
+                console.log('Period___:', period);
 
                 return {
                   label: period.name,
                   value: period.externalID + '',
                   price: (period.basePrice || 0) + (tourData.basePrice || 0),
                   isGroup: true,
+                  tripType: period.tripType,
                 };
               });
               this.selectedOption = this.dateOptions[0];
@@ -421,5 +452,9 @@ export class TourItineraryComponent implements OnInit {
       return this.findScrollableParent(element.parentElement);
     }
     return window;
+  }
+
+  getTagConfig(tripType: string) {
+    return this.tagsOptions.find((tag) => tag.type === tripType);
   }
 }

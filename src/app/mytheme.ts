@@ -4447,7 +4447,7 @@ const MyPreset = definePreset(Aura, {
                 fontSize: "0.875rem",
                 fontWeight: "700",
                 padding: "0.25rem 0.5rem",
-                gap: "0.25rem",
+                gap: "0rem",
                 borderRadius: "{content.border.radius}",
                 roundedBorderRadius: "{border.radius.xl}"
             },

@@ -7,6 +7,9 @@ import { BlogsService } from '../../core/services/blogs.service';
 import { PressService } from '../../core/services/press.service';
 import { Blog } from '../../core/models/blogs/blog.model';
 import { Observable } from 'rxjs';
+import { Press } from '../../core/models/press/press.model';
+import { Collection } from '../../core/models/collections/collection.model';
+import { Landing } from '../../core/models/landings/landing.model';
 
 interface ITour {
   imageUrl: string;
@@ -36,6 +39,7 @@ export class ContentPageComponent implements OnInit {
   blocks: any[] = [];
 
   bannerImage: string = '';
+  bannerImageAlt: string = '';
   bannerTitle: string = '';
   bannerSubtitle?: string;
   bannerDescription: string = '';
@@ -70,28 +74,27 @@ export class ContentPageComponent implements OnInit {
   fetchBlocks() {
     if (this.isLanding) {
       this.landingsService.getLandingBySlug(this.slug).subscribe({
-        next: (data: any) => {
+        next: (data: Landing) => {
           this.blocks = data.blocks || [];
-          this.bannerImage =
-            data.banner[0]?.url || 'https://picsum.photos/200/300';
-          this.bannerTitle = data.title || 'Your Title Here';
-          this.bannerSubtitle = data.titleContent || 'Optional Subtitle';
-          this.bannerDescription =
-            data.content || 'Lorem Ipsum is simply dummy text...';
+          this.bannerImage = data.banner[0]?.url || '';
+          this.bannerImageAlt = data.banner[0]?.alt || '';
+          this.bannerTitle = data.title || '';
+          this.bannerSubtitle = data.titleContent || '';
+          this.bannerDescription = data.content || '';
         },
         error: (error: any) => {},
       });
     } else {
       if (this.isCollection) {
         this.collectionsService.getCollectionBySlug(this.slug).subscribe({
-          next: (data: any) => {
+          next: (data: Collection) => {
+            console.log('collection', data);
             this.blocks = data.blocks || ['collection'];
-            this.bannerImage =
-              data.banner[0]?.url || 'https://picsum.photos/200/300';
-            this.bannerTitle = data.title || 'Your Title Here';
-            this.bannerSubtitle = data.bannerTitle || 'Optional Subtitle';
-            this.bannerDescription =
-              data.content || 'Lorem Ipsum is simply dummy text...';
+            this.bannerImage = data.banner[0]?.url || '';
+            this.bannerImageAlt = data.banner[0]?.alt || '';
+            this.bannerTitle = data.title || '';
+            this.bannerSubtitle = data.bannerTitle || '';
+            this.bannerDescription = data.content || '';
 
             this.extractCollectionTags(data);
 
@@ -105,17 +108,23 @@ export class ContentPageComponent implements OnInit {
       } else {
         if (this.isPress) {
           this.pressService.getPressBySlug(this.slug).subscribe({
-            next: (data:any) => {
-              console.log('press',data);
-            }
+            next: (data: Press) => {
+              console.log('press', data);
+              this.bannerImage = data.image[0]?.url || 'URL_ADDRESS';
+              this.bannerImageAlt = data.image[0]?.alt || '';
+              this.bannerTitle = data.title || '';
+              this.bannerSubtitle = data.subtitle || '';
+              this.bannerDescription = data.content || '';
+              this.blocks = data.blocks || [];
+            },
           });
-        }
-         else {
+        } else {
           if (this.isBlog) {
             this.blogService.getBlogBySlug(this.slug).subscribe({
               next: (data: Blog) => {
-                console.log('blog',data);
+                console.log('blog', data);
                 this.bannerImage = data.image[0]?.url || 'URL_ADDRESS';
+                this.bannerImageAlt = data.image[0]?.alt || '';
                 this.bannerTitle = data.title || '';
                 this.bannerSubtitle = data.subtitle || '';
                 this.bannerDescription = data.content || '';

@@ -1,3 +1,4 @@
+import { Block } from '../blocks/block.model';
 import { CldImage } from '../commons/cld-image.model';
 import { CMSCollections } from '../commons/cms-collections.model';
 import { SEO } from '../commons/seo.model';
@@ -17,4 +18,5 @@ export interface Blog {
     btntext: string;
     'link-travels': string;
   };
+  blocks: Block[];
 }

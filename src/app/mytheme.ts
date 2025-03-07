@@ -1657,7 +1657,10 @@ const MyPreset = definePreset(Aura, {
                 transitionDuration: "{transition.duration}"
             },
             content: {
-                gap: "0.25rem"
+                gap: "0.25rem",
+            },
+           item: {
+                maxWidth: "30rem"
             },
             indicatorList: {
                 padding: "1rem",

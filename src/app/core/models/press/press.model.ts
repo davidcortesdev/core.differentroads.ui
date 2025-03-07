@@ -1,3 +1,4 @@
+import { Block } from '../blocks/block.model';
 import { CldImage } from '../commons/cld-image.model';
 import { SEO } from '../commons/seo.model';
 
@@ -9,4 +10,5 @@ export interface Press {
   slug: string;
   image: CldImage[];
   seo: SEO;
+  blocks: Block[];
 }

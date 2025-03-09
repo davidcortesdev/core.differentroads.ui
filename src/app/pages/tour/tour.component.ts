@@ -7,6 +7,7 @@ import { OrdersService } from '../../core/services/orders.service';
 import { Departure } from './components/tour-departures/tour-departures.component';
 import { Order } from '../../core/models/orders/order.model';
 import { TourDataService } from '../../core/services/tour-data.service';
+import { TourDataService as TourDataService2 } from '../../core/services/tours/tour-data.service';
 
 @Component({
   selector: 'app-tour',
@@ -36,7 +37,8 @@ export class TourComponent implements OnInit, OnDestroy {
     private toursService: ToursService,
     private ordersService: OrdersService,
     private router: Router,
-    private tourDataService: TourDataService
+    private tourDataService: TourDataService,
+    private tourDataService2: TourDataService2
   ) {}
 
   ngOnInit(): void {
@@ -86,6 +88,7 @@ export class TourComponent implements OnInit, OnDestroy {
         next: (tourData: Tour) => {
           this.tour = tourData;
           this.loading = false;
+          this.tourDataService2.updateTour(tourData);
 
           // Podemos compartir datos iniciales a través del servicio si es necesario
           if (tourData.activePeriods && tourData.activePeriods.length > 0) {

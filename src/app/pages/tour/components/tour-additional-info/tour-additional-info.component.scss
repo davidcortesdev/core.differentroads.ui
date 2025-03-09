@@ -18,7 +18,6 @@ $primary: var(--p-primary-color);
 }
 %input-common {
   width: 100%;
-  min-width: 250px;
   padding: 0.53rem;
   @extend %brd-rad;
   border: 1px solid #ced4da;
@@ -163,9 +162,16 @@ div {
     @extend %txt-azul;
   }
   .p-autocomplete,
+  .p-btn,
+  .p-select,
+  p-select {
+    @extend %input-common;
+    padding-bottom: 0.5rem;
+    border-radius: 11.82px;
+  }
+  .p-autocomplete,
   .p-btn {
-    position: relative;
-    width: 100%;
+    min-width: 250px;
   }
   .p-autocomplete {
     .p-autocomplete-input {
@@ -200,6 +206,19 @@ div {
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
     background: #fff;
   }
+
+  .p-dialog {
+    overflow: hidden;
+  }
+  .p-dialog .p-dialog-header {
+    background-image: url("https://res.cloudinary.com/dxp2hxees/image/upload/v1733938229/j5a44cbk7mn3fawnt1kq.png");
+    background-size: cover;
+    background-position: bottom;
+    height: 9rem;
+  }
+  .p-dialog .p-dialog-content {
+    padding: 1rem 0;
+  }
 }
 .p-panel {
   flex-wrap: wrap;
@@ -232,5 +251,38 @@ div {
       font-size: 1.2rem;
       @extend %txt-azul;
     }
+  }
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  &-title {
+    color: var(--p-primary-color);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+    padding-top: 1rem;
+  }
+  &-subtitle {
+    margin: 0;
+    padding-bottom: 1rem;
+  }
+  &-tour-filters {
+    background-color: var(--surface-color-200);
+
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 1rem 0;
+  }
+  &-traveler-data {
+    padding: 0;
+  }
+  &-footer {
+    text-align: center;
   }
 }

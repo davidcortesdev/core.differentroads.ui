@@ -1,8 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { ToursService } from '../../../../core/services/tours.service';
-import { Tour } from '../../../../core/models/tours/tour.model';
+import {
+  ActivePeriod,
+  Flight,
+  Tour,
+} from '../../../../core/models/tours/tour.model';
+import { TourDataService } from '../../../../core/services/tours/tour-data.service';
 
 @Component({
   selector: 'app-tour-additional-info',
@@ -10,10 +15,7 @@ import { Tour } from '../../../../core/models/tours/tour.model';
   templateUrl: './tour-additional-info.component.html',
   styleUrl: './tour-additional-info.component.scss',
 })
-export class TourAdditionalInfoComponent {
-  saveTrip() {
-    throw new Error('Method not implemented.');
-  }
+export class TourAdditionalInfoComponent implements OnInit {
   passengerText: any;
 
   tour: any;
@@ -26,18 +28,19 @@ export class TourAdditionalInfoComponent {
   };
   periods: any[] | undefined;
   selectedPeriod: any;
-  fligths: any[] | undefined;
   selectedFlight: any;
   traveler: any = {
     name: '',
     email: '',
     phone: '',
   };
+  flights: Flight[] = [];
 
   constructor(
     private sanitizer: DomSanitizer,
     private route: ActivatedRoute,
-    private toursService: ToursService
+    private toursService: ToursService,
+    private tourDataService: TourDataService
   ) {}
 
   ngOnInit(): void {
@@ -60,6 +63,34 @@ export class TourAdditionalInfoComponent {
         });
     }
     this.updatePassengerText();
+    this.tourDataService.tour$.subscribe((tour: Tour | null) => {
+      if (tour) {
+        console.log('____Tour data:', tour);
+
+        this.periods = tour.activePeriods.map((period: ActivePeriod) => ({
+          name: period.name,
+          value: period.externalID,
+          flights: period.flights,
+        }));
+      }
+    });
+  }
+
+  onPeriodChange(): void {
+    const selectedPeriod = this.periods?.find(
+      (period) => period.value === this.selectedPeriod
+    );
+    this.selectedFlight = undefined;
+    if (selectedPeriod) {
+      this.flights = selectedPeriod.flights.filter(
+        (flight: { name: any }, index: any, self: any[]) =>
+          index === self.findIndex((f: { name: any }) => f.name === flight.name)
+      );
+    } else {
+      this.flights = [];
+    }
+    console.log('____Selected period:', selectedPeriod);
+    console.log('____Selected flights:', this.flights);
   }
 
   handleSaveTrip(): void {
@@ -130,5 +161,12 @@ export class TourAdditionalInfoComponent {
     }
 
     this.passengerText = parts.join(', ');
+  }
+
+  saveTrip() {
+    console.log('Selected Period:', this.selectedPeriod);
+    console.log('Selected Flight:', this.selectedFlight);
+    console.log('Travelers:', this.travelers);
+    console.log('Traveler Details:', this.traveler);
   }
 }

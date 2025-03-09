@@ -11,4 +11,5 @@ export const environment = {
     'https://qt4uw3rgx6.execute-api.us-east-2.amazonaws.com/dev/redsys/notify',
 
   googleMapsApiKey: 'AIzaSyB6sxlxeTVlRllpGPyDPbKmaZPQJsb8YAs',
+  notificationsApiUrl: 'https://api.differentroads.co/dev/v3/notification',
 };

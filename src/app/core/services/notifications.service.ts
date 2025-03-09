@@ -1,0 +1,61 @@
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+
+export interface SendBudgetNotificationEmailServiceProps {
+  id: string;
+  email: string;
+}
+
+export interface CancelBookingNotificationProps {
+  id: string;
+}
+
+@Injectable({
+  providedIn: 'root',
+})
+export class NotificationsService {
+  private readonly API_URL = `${environment.notificationsApiUrl}/trigger`;
+  private readonly httpOptions = {
+    headers: new HttpHeaders({
+      'Content-Type': 'application/json',
+    }),
+  };
+
+  constructor(private http: HttpClient) {}
+
+  sendBudgetNotificationEmail(
+    props: SendBudgetNotificationEmailServiceProps
+  ): Observable<any> {
+    const { id, email } = props;
+    const body = {
+      trigger: 'BUDGET',
+      data: {
+        id,
+        emailOverride: email,
+      },
+    };
+    return this.http.post<any>(this.API_URL, body, this.httpOptions);
+  }
+
+  cancelBookingNotification(
+    props: CancelBookingNotificationProps
+  ): Observable<any> {
+    if (!props || !props.id) {
+      throw new Error('The "id" property is missing in the props object.');
+    }
+
+    const { id } = props;
+    const body = {
+      trigger: 'BOOKING_CANCEL',
+      data: {
+        id,
+        filters: {
+          cancelState: 'user',
+        },
+      },
+    };
+    return this.http.post<any>(this.API_URL, body, this.httpOptions);
+  }
+}

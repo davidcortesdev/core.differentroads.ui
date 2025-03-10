@@ -8,153 +8,70 @@
     </div>
   </p-card>
 
-  <div class="card flex justify-center">
-    <p-dialog
-      [(visible)]="visible"
-      [modal]="true"
-      [breakpoints]="{ '1199px': '80vw', '575px': '90vw' }"
-      [style]="{ width: '50vw', height: '90vh' }"
-      [draggable]="false"
-      [resizable]="false"
-      class=""
-    >
-      <div class="content">
-        <h4 class="content-title">Guarda el presupuesto de este viaje</h4>
-        <p class="content-subtitle">
-          Sujeto a disponibilidad en el momento de la reserva y sólo para
-          salidas con stock
-        </p>
-        <div class="content-tour-filters">
-          <p>La Venecia más auténtica entre góndolas y antifaces</p>
+  <p-dialog
+    [(visible)]="visible"
+    [modal]="true"
+    [breakpoints]="{ '1199px': '80vw', '575px': '90vw' }"
+    [style]="{ width: '50vw' }"
+    [draggable]="false"
+    [resizable]="false"
+    class=""
+  >
+    <div class="content">
+      <h4 class="content-title">Guarda el presupuesto de este viaje</h4>
+      <p class="content-subtitle">
+        Sujeto a disponibilidad en el momento de la reserva y sólo para salidas
+        con stock
+      </p>
+      <div class="content-tour-selected">
+        <p><i class="pi pi-sparkles"></i> {{ tourData?.name }}</p>
 
-          <div class="f-box">
-            <p-select
-              [options]="periods"
-              [(ngModel)]="selectedPeriod"
-              optionLabel="name"
-              optionValue="value"
-              placeholder="Selecciona un periodo"
-              class="p-select"
-              (onChange)="onPeriodChange()"
-            />
-            <p-select
-              [options]="flights"
-              [(ngModel)]="selectedFlight"
-              optionLabel="name"
-              optionValue="activityID"
-              placeholder="Vuelos"
-              class="p-select"
-            />
-
-            <div class="f-cnt">
-              <span class="input-label">Pasajeros</span>
-              <button
-                #passengerButton
-                type="button"
-                class="p-autocomplete p-btn"
-                (click)="togglePassengersPanel($event)"
-              >
-                {{ passengerText }}
-                <i class="pi pi-chevron-down ml-auto"></i>
-              </button>
-
-              <p-overlay [(visible)]="showPassengersPanel" styleClass="p-ovl">
-                <div class="p-panel p-3">
-                  <div class="p-type">
-                    <div class="p-info">
-                      <div class="p-cat">Adultos</div>
-                      <div class="p-age">+12 años</div>
-                    </div>
-                    <div class="p-ctrl">
-                      <p-button
-                        icon="pi pi-minus"
-                        styleClass="p-button-rounded p-button-outlined"
-                        [disabled]="travelers.adults <= 1"
-                        (onClick)="updatePassengers('adults', -1)"
-                      ></p-button>
-                      <span class="p-count">{{ travelers.adults }}</span>
-                      <p-button
-                        icon="pi pi-plus"
-                        styleClass="p-button-rounded p-button-outlined"
-                        (onClick)="updatePassengers('adults', 1)"
-                      ></p-button>
-                    </div>
-                  </div>
-
-                  <div class="p-type">
-                    <div class="p-info">
-                      <div class="p-cat">Niños</div>
-                      <div class="p-age">2-12 años</div>
-                    </div>
-                    <div class="p-ctrl">
-                      <p-button
-                        icon="pi pi-minus"
-                        styleClass="p-button-rounded p-button-outlined"
-                        [disabled]="travelers.children <= 0"
-                        (onClick)="updatePassengers('children', -1)"
-                      ></p-button>
-                      <span class="p-count">{{ travelers.children }}</span>
-                      <p-button
-                        icon="pi pi-plus"
-                        styleClass="p-button-rounded p-button-outlined"
-                        (onClick)="updatePassengers('children', 1)"
-                      ></p-button>
-                    </div>
-                  </div>
-
-                  <div class="p-actions">
-                    <p-button
-                      label="Aplicar"
-                      styleClass="p-button-rounded"
-                      (onClick)="applyPassengers()"
-                    ></p-button>
-                  </div>
-                </div>
-              </p-overlay>
-            </div>
-          </div>
+        <div class="content-tour-selected-items">
+          <p>{{ selectedPeriod?.date }}</p>
+          -
+          <p>{{ selectedPeriod?.departureCity }}</p>
+          -
+          <p>{{ selectedPeriod?.tripType }}</p>
+          <br />
+          <p>{{ getTravelersText() }}</p>
         </div>
-        <div class="content-traveler-data">
-          <p-iftalabel>
-            <input
-              pInputText
-              id="name"
-              [(ngModel)]="traveler.name"
-              autocomplete="off"
-            />
-            <label for="name">Nombre del viajero</label>
-          </p-iftalabel>
-          <p-iftalabel>
-            <input
-              pInputText
-              id="email"
-              [(ngModel)]="traveler.email"
-              autocomplete="off"
-            />
-            <label for="email">Email del viajero</label>
-          </p-iftalabel>
-          <p-iftalabel>
-            <input
-              pInputText
-              id="phone"
-              [(ngModel)]="traveler.phone"
-              autocomplete="off"
-            />
-            <label for="phone">Telefono del viajero</label>
-          </p-iftalabel>
-        </div>
-        <p-button
-          label="Enviar presupuesto"
-          (click)="saveTrip()"
-          class="p-button-rounded"
-        ></p-button>
-        <p class="content-footer">
-          Se enviará automáticamente una copia del presupuesto a tu correo y lo
-          podrás consultar en tu perfil sección Mis presupuestos y favoritos
-        </p>
       </div>
-    </p-dialog>
-  </div>
+      <div class="content-traveler-data">
+        <p-iftalabel>
+          <input
+            pInputText
+            id="name"
+            [(ngModel)]="traveler.name"
+            autocomplete="off"
+          />
+          <label for="name">Nombre del viajero</label>
+        </p-iftalabel>
+        <p-iftalabel>
+          <input pInputText id="email" [(ngModel)]="traveler.email" />
+          <label for="email">Email del viajero</label>
+        </p-iftalabel>
+        <p-iftalabel>
+          <input
+            pInputText
+            id="phone"
+            [(ngModel)]="traveler.phone"
+            autocomplete="off"
+          />
+          <label for="phone">Telefono del viajero</label>
+        </p-iftalabel>
+      </div>
+      <p-button
+        label="Enviar presupuesto"
+        (click)="saveTrip()"
+        class="p-button-rounded"
+        [loading]="loading"
+      ></p-button>
+      <p class="content-footer">
+        Se enviará automáticamente una copia del presupuesto a tu correo y lo
+        podrás consultar en tu perfil sección Mis presupuestos y favoritos
+      </p>
+    </div>
+  </p-dialog>
 
   <p-card styleClass="claseBord">
     <div class="" (click)="handleDownloadTrip()">

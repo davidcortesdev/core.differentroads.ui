@@ -7,7 +7,6 @@ import { OrdersService } from '../../core/services/orders.service';
 import { Departure } from './components/tour-departures/tour-departures.component';
 import { Order } from '../../core/models/orders/order.model';
 import { TourDataService } from '../../core/services/tour-data.service';
-import { TourDataService as TourDataService2 } from '../../core/services/tours/tour-data.service';
 
 @Component({
   selector: 'app-tour',
@@ -37,8 +36,7 @@ export class TourComponent implements OnInit, OnDestroy {
     private toursService: ToursService,
     private ordersService: OrdersService,
     private router: Router,
-    private tourDataService: TourDataService,
-    private tourDataService2: TourDataService2
+    private tourDataService: TourDataService
   ) {}
 
   ngOnInit(): void {
@@ -75,7 +73,7 @@ export class TourComponent implements OnInit, OnDestroy {
     this.error = false;
 
     this.toursService
-      .getTourDetailBySlug(this.tourSlug)
+      .getTourDetailBySlug(this.tourSlug, ['activePeriods'])
       .pipe(
         catchError((error) => {
           console.error('Error loading tour:', error);
@@ -88,18 +86,20 @@ export class TourComponent implements OnInit, OnDestroy {
         next: (tourData: Tour) => {
           this.tour = tourData;
           this.loading = false;
-          this.tourDataService2.updateTour(tourData);
+          this.tourDataService.updateTour(tourData);
 
-          // Podemos compartir datos iniciales a través del servicio si es necesario
           if (tourData.activePeriods && tourData.activePeriods.length > 0) {
             const firstPeriod = tourData.activePeriods[0];
-            // Si ya tenemos información inicial de fecha/tipo, podemos compartirla
             if (firstPeriod.name && firstPeriod.tripType) {
               this.tourDataService.updateSelectedDateInfo(
                 firstPeriod.name,
                 firstPeriod.tripType,
                 undefined,
-                tourData.price
+                tourData.price,
+                `${firstPeriod.externalID}`,
+                firstPeriod.flights.length > 0
+                  ? `${firstPeriod.flights[0].activityID}`
+                  : ''
               );
             }
           }

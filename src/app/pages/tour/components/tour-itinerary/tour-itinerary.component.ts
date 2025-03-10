@@ -228,7 +228,11 @@ export class TourItineraryComponent implements OnInit {
                     // Share the selected date and trip type with the service
                     this.tourDataService.updateSelectedDateInfo(
                       this.selectedDate,
-                      this.tripType
+                      this.tripType,
+                      undefined,
+                      this.selectedOption.price,
+                      this.selectedOption.value,
+                      undefined
                     );
                   },
                   error: (error) => console.error('Error period:', error),
@@ -351,7 +355,11 @@ export class TourItineraryComponent implements OnInit {
           // Share the updated selected date and trip type with the service
           this.tourDataService.updateSelectedDateInfo(
             this.selectedDate,
-            this.tripType
+            this.tripType,
+            undefined,
+            this.selectedOption.price,
+            this.selectedOption.value,
+            undefined
           );
         },
         error: (error) => console.error('Error period:', error),

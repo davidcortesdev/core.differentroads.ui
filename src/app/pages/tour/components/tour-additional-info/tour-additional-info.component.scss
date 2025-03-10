@@ -83,6 +83,16 @@ div {
 }
 
 :host {
+  ::ng-deep .p-inputtext {
+    border-color: transparent;
+    border-bottom-color: 0.0625rem solid var(--background-azul);
+    box-shadow: none;
+    border-radius: 0;
+    border-bottom: 0.0625rem solid var(--background-azul);
+    width: 100%;
+    background-color: white;
+  }
+
   ::ng-deep p-accordion {
     width: 100%;
 
@@ -93,65 +103,6 @@ div {
 
       i {
         color: #ff6b6b;
-      }
-    }
-  }
-}
-
-.f-box {
-  min-width: 300px;
-  flex: 1;
-  margin: 0 0.5rem;
-  &:first-child {
-    margin-left: 0;
-  }
-  &:last-child {
-    margin-right: 0;
-  }
-  .f-lbl {
-    display: none;
-    font-size: 0.875rem;
-    @extend %txt-azul;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-  }
-  .f-cnt {
-    position: relative;
-    .input-label {
-      position: absolute;
-      top: 0.5rem;
-      left: 0.75rem;
-      font-size: 0.75rem;
-      z-index: 1;
-      @extend %txt-azul;
-    }
-
-    .p-inputtext,
-    .p-btn {
-      @extend %input-common;
-      padding-top: 1.5rem;
-      padding-bottom: 0.5rem;
-    }
-    .p-from {
-      position: absolute;
-      top: 60%;
-      left: 30%;
-      transform: translateY(-50%);
-      @extend %txt-azul;
-      font-weight: 500;
-      z-index: 1;
-    }
-    .p-btn {
-      @include flex(null, center);
-      text-align: left;
-      cursor: pointer;
-      font-size: 1rem;
-      i {
-        position: absolute;
-        right: 0.75rem;
-        top: 50%;
-        transform: translateY(-50%);
-        margin-left: 0;
       }
     }
   }
@@ -217,6 +168,7 @@ div {
   }
   .p-dialog .p-dialog-content {
     padding: 1rem 0;
+    background-color: #fff;
   }
 }
 .p-panel {
@@ -258,6 +210,7 @@ div {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  color: var(--background-azul);
 
   &-title {
     color: var(--p-primary-color);
@@ -270,13 +223,20 @@ div {
     margin: 0;
     padding-bottom: 1rem;
   }
-  &-tour-filters {
-    background-color: var(--surface-color-200);
-
+  &-tour-selected {
+    background-color: #e7ebed;
     display: flex;
     flex-direction: column;
     width: 100%;
     padding: 1rem 0;
+
+    & i {
+      color: var(--p-primary-color);
+    }
+    &-items {
+      font-weight: 600;
+      color: var(--p-primary-color);
+    }
   }
   &-traveler-data {
     padding: 0;

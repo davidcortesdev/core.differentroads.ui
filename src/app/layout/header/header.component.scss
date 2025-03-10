@@ -39,6 +39,11 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
     }
   }
 
+  @media screen and (max-width: $mobile-breakpoint) {
+    .user-chip .p-chip-label {
+      display: none;
+    }
+  }
   .top-menu.p-menubar {
     border: none;
     border-radius: 0;
@@ -50,15 +55,13 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
     border-top: 0px solid var(--background-azul);
     box-shadow: 0 2px 6px -1px var(--background-azul);
   }
-
-  @media screen and (max-width: $mobile-breakpoint) {
-    .user-chip .p-chip-label {
-      display: none;
-    }
-  }
 }
 
 .logo {
   padding-top: 0.7rem;
   padding-left: 1.25rem;
+}
+
+.top-menu {
+  height: 4rem;
 }

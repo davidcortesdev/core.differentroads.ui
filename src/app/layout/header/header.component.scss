@@ -31,10 +31,6 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
 
 // Deep styles for PrimeNG components
 :host ::ng-deep {
-  .p-chip {
-    border: none;
-    border: 1px solid var(--background-azul);
-  }
   .p-skeleton {
     background-color: $skeleton-bg;
 
@@ -47,6 +43,9 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
     .user-chip .p-chip-label {
       display: none;
     }
+  }
+  .p-chip {
+    border: 1px solid var(--background-azul);
   }
 }
 

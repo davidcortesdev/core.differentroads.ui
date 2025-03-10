@@ -1851,10 +1851,10 @@ const MyPreset = definePreset(Aura, {
                         color: "var(--background-azul)",
                     },
                     icon: {
-                        color: "{surface.800}"
+                        color: "var(--background-azul)",
                     },
                     removeIcon: {
-                        color: "{surface.800}"
+                        color: "var(--background-azul)",
                     }
                 },
                 dark: {

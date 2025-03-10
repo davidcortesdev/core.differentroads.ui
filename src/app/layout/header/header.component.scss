@@ -31,11 +31,7 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
 
 // Deep styles for PrimeNG components
 :host ::ng-deep {
-  .p-menubar-item-link,
-  .p-chip,
-  .p-menu-item-label {
-    color: var(--background-azul);
-  }
+
   .p-skeleton {
     background-color: $skeleton-bg;
 

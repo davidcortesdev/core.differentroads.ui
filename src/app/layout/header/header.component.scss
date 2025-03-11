@@ -29,7 +29,6 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
   gap: $profile-gap;
 }
 
-// Deep styles for PrimeNG components
 :host ::ng-deep {
   .p-skeleton {
     background-color: $skeleton-bg;

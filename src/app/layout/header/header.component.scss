@@ -45,7 +45,9 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
     }
   }
   .p-chip {
-    border: 1px solid var(--background-azul);
+    box-shadow: 0 0 0 0.5px var(--background-azul);
+    background: transparent;
+    font-size: 14px;
   }
   .top-menu.p-menubar {
     border: none;

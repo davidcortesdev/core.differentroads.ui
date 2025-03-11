@@ -53,17 +53,24 @@ export class LoginFormComponent implements OnInit {
 
   onSubmit(event: Event): void {
     event.preventDefault();
-    console.log('onSubmit called');
     if (this.loginForm.invalid) {
       return;
     }
-
+  
     this.isLoading = true;
     this.errorMessage = '';
-    console.log('Form values:', this.loginForm.value);
-
+  
     const { username, password } = this.loginForm.value;
-    this.authService.login(username, password);
+  
+    this.authService.login(username, password).subscribe({
+      next: () => {
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errorMessage = err.message || 'Error al iniciar sesión';
+      },
+    });
   }
 
   togglePasswordVisibility(): void {
@@ -71,12 +78,14 @@ export class LoginFormComponent implements OnInit {
   }
 
   signInWithGoogle(): void {
-    // Simulación de inicio de sesión con Google
     this.isLoading = true;
-    setTimeout(() => {
+    this.authService.handleGoogleSignIn().then(() => {
       this.isLoading = false;
-      console.log('Inicio de sesión con Google simulado.');
-    }, 2000);
+    }).catch((error) => {
+      this.isLoading = false;
+      this.errorMessage = 'Error al iniciar sesión con Google';
+      console.error(error);
+    });
   }
 
   redirectToSignUp(): void {

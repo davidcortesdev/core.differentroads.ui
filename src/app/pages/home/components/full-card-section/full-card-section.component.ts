@@ -25,9 +25,9 @@ export class FullCardSectionComponent implements OnInit {
   constructor(private sanitizer: DomSanitizer) {}
 
   ngOnInit(): void {
-    console.log('Received content:', this.content);
-    console.log('Received title:', this.title);
-    console.log('Received type:', this.type);
+    // console.log('Received content:', this.content);
+    // console.log('Received title:', this.title);
+    // console.log('Received type:', this.type);
 
   
   if (this.content && this.content['card-list']) {

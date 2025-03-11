@@ -17,6 +17,9 @@ import {
   filter,
   Observable,
   BehaviorSubject,
+  combineLatest,
+  debounceTime,
+  distinctUntilChanged,
 } from 'rxjs';
 
 @Component({
@@ -29,6 +32,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   isLoadingMenu = true;
   isLoadingUser = false;
+  
+  // Estado para controlar la visibilidad y transiciones
+  showUserInfo = false;
+  loadingAuthState = true;
 
   selectedLanguage = 'ES';
   readonly languages: readonly string[] = ['ES', 'EN'] as const;
@@ -51,9 +58,26 @@ export class HeaderComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.loadingAuthState = true;
     this.initializeLanguage();
     this.initializeMenu();
     this.initializeUserMenu();
+    
+    // Verificar si hay una redirección de autenticación (por ejemplo, de Google)
+    this.checkAuthRedirect().finally(() => {
+      setTimeout(() => {
+        this.loadingAuthState = false;
+      }, 500); 
+    });
+  }
+
+  // Nuevo método para verificar y manejar redirecciones OAuth
+  private async checkAuthRedirect(): Promise<void> {
+    try {
+      await this.authService.handleAuthRedirect();
+    } catch (error) {
+      console.error('Error al manejar la redirección de autenticación:', error);
+    }
   }
 
   private initializeLanguage(): void {
@@ -68,17 +92,45 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   private initializeUserMenu(): void {
-    this.populateUserMenu();
-    this.listenToUserChanges();
-  }
-
-  private listenToUserChanges(): void {
-    this.authService.userAttributesChanged
+    // Observa el estado de autenticación y actualiza la UI cuando cambie
+    this.authService.isLoggedIn()
       .pipe(
         takeUntil(this.destroy$),
-        filter(() => !this.userMenuItems)
+        debounceTime(300), // Evitar cambios demasiado rápidos
+        distinctUntilChanged() // Solo procesar cuando realmente cambie
       )
-      .subscribe(() => this.populateUserMenu());
+      .subscribe(isLoggedIn => {
+        this.isLoggedIn = isLoggedIn;
+        
+
+        if (isLoggedIn) {
+          this.populateUserMenu();
+        } else {
+          this.showUserInfo = false;
+          setTimeout(() => this.resetUserMenu(), 300);
+        }
+      });
+
+    // Escucha cambios en los atributos del usuario
+    this.authService.userAttributesChanged
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        if (this.isLoggedIn) {
+          this.populateUserMenu();
+        }
+      });
+  }
+
+
+  private resetUserMenu(): void {
+    this.chipLabel = 'Iniciar Sesión';
+    this.chipImage = '';
+    this.userMenuItems = [
+      {
+        label: 'Iniciar sesión',
+        command: () => this.onChipClick(),
+      },
+    ];
   }
 
   ngOnDestroy(): void {
@@ -150,23 +202,45 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   populateUserMenu(): void {
-    if (this.authService.getCurrentUser()) {
-      this.isLoadingUser = true;
-      this.authService
-        .getUserAttributes()
-        .pipe(takeUntil(this.destroy$))
-        .subscribe((userAttributes) => {
-          const { email } = userAttributes;
-          this.usersService
-            .getUserByEmail(email)
-            .pipe(
-              takeUntil(this.destroy$),
-              finalize(() => (this.isLoadingUser = false))
-            )
-            .subscribe((user) => {
-              this.chipLabel = `Hola, ${user.names || email}`;
+    if (this.isLoadingUser) {
+      return; // Evitar múltiples llamadas simultáneas
+    }
+    
+    
+    this.authService.getUserEmail()
+      .pipe(
+        takeUntil(this.destroy$),
+        filter(email => !!email), 
+        debounceTime(300) 
+      )
+      .subscribe(email => {
+        this.isLoadingUser = true;
+        
+        // Guardar una copia temporal mientras se carga
+        const tempLabel = this.chipLabel;
+        const tempImage = this.chipImage;
+        
+        
+        this.chipLabel = `Cargando...`;
+        
+        this.usersService
+          .getUserByEmail(email)
+          .pipe(
+            takeUntil(this.destroy$),
+            finalize(() => {
+              this.isLoadingUser = false;
+              
+              
+              setTimeout(() => {
+                this.showUserInfo = true;
+              }, 100);
+            })
+          )
+          .subscribe({
+            next: (user) => {
+              this.chipLabel = `Hola, ${user.names === 'pendiente' ? email : (user.names || email)}`;
               this.chipImage = user.profileImage || '';
-              this.isLoggedIn = true;
+              
               this.userMenuItems = [
                 {
                   label: 'Ver Perfil',
@@ -179,22 +253,43 @@ export class HeaderComponent implements OnInit, OnDestroy {
                   command: () => this.authService.logOut(),
                 },
               ];
-            });
-        });
-    } else {
-      this.isLoggedIn = false;
-      this.chipLabel = 'Iniciar Sesión';
-      this.chipImage = '';
-      this.userMenuItems = [
-        {
-          label: 'Iniciar sesión',
-          command: () => this.onChipClick(),
-        },
-      ];
-    }
+            },
+            error: async (err) => {
+              console.error('Error al obtener el usuario:', err);
+              
+              // Mantener los valores anteriores en caso de error
+              this.chipLabel = `Hola, ${email}`;
+              
+              // Si no existe el usuario, intentar crearlo
+              if (err.status === 404) {
+                try {
+                  await this.authService.createUserIfNotExists(email);
+                  this.populateUserMenu(); // Intentar obtener el usuario nuevamente
+                } catch (createError) {
+                  console.error('Error al crear el usuario:', createError);
+                }
+              }
+            },
+          });
+      });
   }
 
   onChipClick(): void {
-    this.authService.navigateToLogin();
+    if (this.isLoggedIn) {
+      // Si ya está autenticado, mostrar el menú de usuario
+      // (Esto dependerá de tu implementación de UI)
+    } else {
+      this.authService.navigateToLogin();
+    }
+  }
+
+  // Método auxiliar para el template para mostrar estado del chip
+  get userChipClass(): string {
+    // Clases CSS para diferentes estados
+    return this.loadingAuthState 
+      ? 'auth-loading' 
+      : this.showUserInfo 
+        ? 'user-info-visible' 
+        : 'user-info-hidden';
   }
 }

@@ -8,7 +8,7 @@
         shape="circle"
         [style]="{ width: '100px', height: '100px' }"
       ></p-avatar>
-      <h3>{{ personalInfo.nombre }}</h3>
+      <h3>{{ personalInfo.nombre}} {{personalInfo.apellido}}</h3>
     </div>
   </p-panel>
 
@@ -42,6 +42,26 @@
         </div>
 
         <!-- Datos de Contacto -->
+        <div class="form-field">
+          <label>Nombre</label>
+          <input
+            pInputText
+            [(ngModel)]="personalInfo.nombre"
+            name="name"
+            placeholder="Ingrese su nombre"
+          />
+        </div>
+
+        <div class="form-field">
+          <label>Apellido</label>
+          <input
+            pInputText
+            [(ngModel)]="personalInfo.apellido"
+            name="apellido"
+            placeholder="Ingrese su apellido"
+          />
+        </div>
+
         <div class="form-field">
           <label>Email</label>
           <input

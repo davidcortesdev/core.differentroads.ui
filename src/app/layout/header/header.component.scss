@@ -47,6 +47,17 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
   .p-chip {
     border: 1px solid var(--background-azul);
   }
+  .top-menu.p-menubar {
+    border: none;
+    border-radius: 0;
+  }
+
+  .nav-menu.p-menubar {
+    border: none;
+    border-radius: 0;
+    border-top: 0px solid var(--background-azul);
+    box-shadow: 0 2px 6px -1px var(--background-azul);
+  }
 }
 
 .logo {

@@ -33,14 +33,9 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
 :host ::ng-deep {
   .p-skeleton {
     background-color: $skeleton-bg;
-    
+
     &::after {
-      background: linear-gradient(
-        90deg,
-        $skeleton-bg,
-        $skeleton-shine,
-        $skeleton-bg
-      );
+      background: linear-gradient(90deg, $skeleton-bg, $skeleton-shine, $skeleton-bg);
     }
   }
 
@@ -49,9 +44,12 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
       display: none;
     }
   }
+  .p-chip {
+    border: 1px solid var(--background-azul);
+  }
 }
 
-.logo{
+.logo {
   padding-top: 0.7rem;
   padding-left: 1.25rem;
 }

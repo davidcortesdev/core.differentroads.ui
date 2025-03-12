@@ -105,7 +105,11 @@ export class TourAdditionalInfoComponent implements OnInit {
       status: 'Budget',
       owner: this.traveler.email,
       travelers: this.buildTravelers(),
-      flights: selectedPeriod?.flightID,
+      flights: [
+        {
+          id: selectedPeriod?.flightID || '',
+        },
+      ],
     };
 
     this.ordersService.createOrder(order).subscribe({

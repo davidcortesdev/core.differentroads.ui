@@ -297,6 +297,8 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
         this.departures = tour.activePeriods.flatMap((period) =>
           period.flights
             .map((flight) => {
+              console.log('flight______', flight);
+
               const periodKey = `${period.dayOne}-${flight.name}`;
               if (uniquePeriods.has(periodKey)) {
                 return null;

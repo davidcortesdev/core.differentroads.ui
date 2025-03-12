@@ -39,7 +39,7 @@ src/
 
 - [Comunicación Padre-Hijo](./readme/info_padre_hijo.md): Guía sobre cómo pasar información entre componentes padre e hijo
 - [Flujo de trabajo con Git](https://github.com/Different-Roads/core.differentroads.help/blob/main/git/flujo_ramas.md)
-- [Inicio de sesion con google](https://github.com/Different-Roads/core.differentroads.help/blob/main/git/login_google.md)
+- [Inicio de sesion con google](./readme/login_google.md)
 
 ## Configuración del Entorno de Desarrollo
 

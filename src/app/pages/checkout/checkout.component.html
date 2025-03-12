@@ -1,4 +1,10 @@
 <div class="checkout">
+  <h2 class="checkout-title">
+    {{ tourName }}
+  </h2>
+  <p class="checkout-subtitle">
+    {{ tourDates }}
+  </p>
   <div class="checkout-container">
     <!-- Left and Center columns with steps -->
     <div class="steps-container">
@@ -136,7 +142,7 @@
               <!-- outbound -->
               <div
                 *ngFor="
-                  let segment of selectedFlight.outbound.segments;
+                  let segment of selectedFlight?.outbound?.segments;
                   let idx = index
                 "
                 class="itinerary-flight"
@@ -151,7 +157,7 @@
                     }}</span>
                   </div>
                   <div class="itinerary-flight-scale">
-                    <span>
+                    <span *ngIf="selectedFlight?.outbound?.segments">
                       {{
                         selectedFlight.outbound.segments.length > 1
                           ? selectedFlight.outbound.segments.length -
@@ -185,7 +191,7 @@
               <!-- inbound -->
               <div
                 *ngFor="
-                  let segment of selectedFlight.inbound.segments;
+                  let segment of selectedFlight?.inbound?.segments;
                   let idx = index
                 "
                 class="itinerary-flight"
@@ -199,7 +205,7 @@
                     }}</span>
                   </div>
                   <div class="itinerary-flight-scale">
-                    <span>
+                    <span *ngIf="selectedFlight?.inbound?.segments">
                       {{
                         selectedFlight.inbound.segments.length > 1
                           ? selectedFlight.inbound.segments.length -

@@ -14,7 +14,7 @@ export interface Order {
   optionalActivitiesRef?: OptionalActivityRef[];
   insurancesRef?: OptionalActivityRef[];
   extraData?: any;
-  flights?: Flight[] | { id: string; name?: string }[];
+  flights?: Flight[] | { id: string; name?: string; externalID: string }[];
 }
 
 export interface OptionalActivityRef {

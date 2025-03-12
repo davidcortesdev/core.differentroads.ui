@@ -96,15 +96,29 @@ export class CheckoutComponent implements OnInit {
       this.periodID = periodID;
 
       this.periodsService
-        .getPeriodDetail(periodID, ['tourID', 'name', 'dayOne', 'returnDate'])
+        .getPeriodDetail(periodID, [
+          'tourID',
+          'tourName',
+          'name',
+          'dayOne',
+          'returnDate',
+        ])
         .subscribe((period) => {
           console.log('Period details:', period);
           this.periodData = period;
-
-          this.tourName = period.name;
+          this.tourName = period.tourName;
 
           this.tourID = period.tourID;
-          this.tourDates = `${period.dayOne} - ${period.returnDate}`;
+          this.tourDates = `${new Date(period.dayOne).toLocaleDateString(
+            'es-ES',
+            {
+              day: '2-digit',
+              month: 'long',
+            }
+          )} - ${new Date(period.returnDate).toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: 'long',
+          })}`;
         });
 
       this.periodsService.getPeriodPrices(periodID).subscribe((prices) => {

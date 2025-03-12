@@ -93,6 +93,6 @@ export class FlightsComponent implements OnInit {
 
   // Verifica si un vuelo está seleccionado
   isFlightSelected(flight: any): boolean {
-    return this.selectedFlight?.id === flight.id;
+    return this.selectedFlight?.externalID === flight.externalID;
   }
 }

@@ -110,6 +110,7 @@ export class BudgetDialogComponent implements OnInit {
       flights: [
         {
           id: selectedPeriod?.flightID || '',
+          externalID: selectedPeriod?.flightID || '',
           name: this.selectedPeriod?.departureCity
             ?.toLowerCase()
             ?.includes('sin ')

@@ -45,7 +45,7 @@ export class RecentBudgetSectionComponent implements OnInit {
         this.budgets = response.data.map((order) => ({
           id: order.periodID,
           title: '4 PERLAS BALTICAS',
-          budgetNumber: order.id,
+          budgetNumber: order.id || '',
           creationDate: new Date(order.createdAt || Date.now()),
           status: order.status,
           departureDate: new Date(order.updatedAt || Date.now()),

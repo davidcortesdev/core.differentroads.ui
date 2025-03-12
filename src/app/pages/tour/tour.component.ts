@@ -111,12 +111,22 @@ export class TourComponent implements OnInit, OnDestroy {
   }
 
   createOrderAndRedirect(periodID: string): void {
+    const selectedPeriod = this.tourDataService.getCurrentDateInfo();
     const order: Partial<Order> = {
       periodID: periodID,
       retailerID: '1064',
       status: 'AB',
       owner: 'currentUserEmail',
       travelers: [],
+      flights: [
+        {
+          id: selectedPeriod?.flightID || '',
+          externalID: selectedPeriod?.flightID || '',
+          name: selectedPeriod?.departureCity?.toLowerCase()?.includes('sin ')
+            ? selectedPeriod?.departureCity
+            : 'Vuelo desde ' + selectedPeriod?.departureCity,
+        },
+      ],
     };
 
     this.ordersService.createOrder(order).subscribe({

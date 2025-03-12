@@ -33,7 +33,6 @@ export class OptionalActivitiesComponent implements OnInit, OnChanges {
       this.addedActivities = new Set(
         activities.map((activity) => activity.activityId)
       );
-      console.log('Added Activities:', this.addedActivities);
     });
   }
 

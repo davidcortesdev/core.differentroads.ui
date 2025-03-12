@@ -190,8 +190,6 @@ export class TourItineraryComponent implements OnInit {
             next: (tourData) => {
               console.log('Tour data:', tourData);
               this.dateOptions = tourData.activePeriods.map((period) => {
-                console.log('Period___:', period);
-
                 return {
                   label: period.name,
                   value: period.externalID + '',
@@ -226,12 +224,9 @@ export class TourItineraryComponent implements OnInit {
                     this.updateItinerary();
 
                     // Share the selected date and trip type with the service
+
                     this.tourDataService.updateSelectedDateInfo(
-                      this.selectedDate,
-                      this.tripType,
-                      undefined,
-                      this.selectedOption.price,
-                      this.selectedOption.value,
+                      period.externalID,
                       undefined
                     );
                   },
@@ -353,12 +348,9 @@ export class TourItineraryComponent implements OnInit {
           this.updateItinerary();
 
           // Share the updated selected date and trip type with the service
+
           this.tourDataService.updateSelectedDateInfo(
-            this.selectedDate,
-            this.tripType,
-            undefined,
-            this.selectedOption.price,
-            this.selectedOption.value,
+            period.externalID,
             undefined
           );
         },

@@ -155,6 +155,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { SortByPipe } from './shared/pipes/sort-by.pipe';
 import { InsurancesComponent } from './pages/checkout/components/customize-trip/components/insurances/insurances.component';
 import { Dialog } from 'primeng/dialog';
+import { BudgetDialogComponent } from './pages/tour/components/budget-dialog/budget-dialog.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -238,6 +239,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     PricesSectionComponent,
     PaymentsInformationSectionComponent,
     InsurancesComponent,
+    BudgetDialogComponent,
   ],
   imports: [
     // Angular Modules

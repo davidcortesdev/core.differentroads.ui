@@ -73,7 +73,11 @@ export class TourComponent implements OnInit, OnDestroy {
     this.error = false;
 
     this.toursService
-      .getTourDetailBySlug(this.tourSlug, ['activePeriods'])
+      .getTourDetailBySlug(this.tourSlug, [
+        'activePeriods',
+        'basePrice',
+        'price',
+      ])
       .pipe(
         catchError((error) => {
           console.error('Error loading tour:', error);
@@ -92,11 +96,7 @@ export class TourComponent implements OnInit, OnDestroy {
             const firstPeriod = tourData.activePeriods[0];
             if (firstPeriod.name && firstPeriod.tripType) {
               this.tourDataService.updateSelectedDateInfo(
-                firstPeriod.name,
-                firstPeriod.tripType,
-                undefined,
-                tourData.price,
-                `${firstPeriod.externalID}`,
+                firstPeriod.externalID,
                 firstPeriod.flights.length > 0
                   ? `${firstPeriod.flights[0].activityID}`
                   : ''

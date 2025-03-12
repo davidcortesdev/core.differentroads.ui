@@ -160,13 +160,10 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
     })}`;
 
     // Actualizar la información compartida
+
     this.tourDataService.updateSelectedDateInfo(
-      dateString,
-      departure.group || 'Viaje Individual',
-      departure.destination || this.selectedCity,
-      departure.price,
-      `${departure.externalID}`,
-      `${departure.flightID}`
+      departure.externalID,
+      departure.flightID
     );
 
     this.tourDataService.updateSelectedTravelers(this.travelers);
@@ -297,8 +294,6 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
         this.departures = tour.activePeriods.flatMap((period) =>
           period.flights
             .map((flight) => {
-              console.log('flight______', flight);
-
               const periodKey = `${period.dayOne}-${flight.name}`;
               if (uniquePeriods.has(periodKey)) {
                 return null;
@@ -342,15 +337,10 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
         // con la información de la primera salida recomendada
         if (this.filteredDepartures.length > 0) {
           const recommendedDeparture = this.filteredDepartures[0];
-          const departureDate = new Date(recommendedDeparture.departureDate);
-          const returnDate = new Date(recommendedDeparture.returnDate);
 
           // Actualizar la información compartida con los datos iniciales
+
           this.tourDataService.updateSelectedDateInfo(
-            recommendedDeparture.name,
-            recommendedDeparture.group || 'Viaje Individual',
-            this.selectedCity,
-            recommendedDeparture.price,
             recommendedDeparture.externalID,
             recommendedDeparture.flightID
           );

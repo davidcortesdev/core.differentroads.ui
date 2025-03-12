@@ -51,32 +51,31 @@ export class TourDataService {
   constructor() {}
 
   // Método para actualizar la información
+
   updateSelectedDateInfo(
-    date: string,
-    tripType: string,
-    departureCity?: string,
-    basePrice?: number,
-    periodID?: string,
-    flightID?: string
+    periodID: number | string,
+    flightID: string | number | undefined
   ): void {
-    const currentInfo = this.selectedDateInfoSource.getValue();
+    const periodsData = this.getTour()?.activePeriods;
 
-    // Si no se proporcionan nuevos valores, mantener los actuales
-    const city =
-      departureCity !== undefined ? departureCity : currentInfo.departureCity;
-    const price = basePrice !== undefined ? basePrice : currentInfo.basePrice;
+    if (!periodID || !flightID || !periodsData) {
+      return;
+    }
 
-    console.log(
-      `Updating selected date info: ${date}, ${tripType}, ${city}, ${price}, ${periodID}, ${flightID}`
+    const selectedPeriod = periodsData?.find(
+      (period) => `${period.externalID}` === `${periodID}`
+    );
+    const selectedFlight = selectedPeriod?.flights.find(
+      (flight) => `${flight.activityID}` === `${flightID}`
     );
 
     this.selectedDateInfoSource.next({
-      date,
-      tripType,
-      departureCity: city,
-      basePrice: price,
-      periodID,
-      flightID,
+      date: selectedPeriod?.name || '',
+      tripType: selectedPeriod?.tripType || '',
+      departureCity: selectedFlight?.name || '',
+      basePrice: this.getTourBasePrice() + (selectedPeriod?.basePrice || 0),
+      periodID: `${selectedPeriod?.externalID}`,
+      flightID: `${selectedFlight?.activityID}`,
     });
   }
 
@@ -116,6 +115,43 @@ export class TourDataService {
 
   getTour(): Tour | null {
     return this.tourSource.getValue();
+  }
+
+  getTourBasePrice(): number {
+    return this.getTour()?.basePrice || 0;
+  }
+
+  getPeriodPrice(
+    periodID: string | number,
+    withTourPrice: boolean = false
+  ): number {
+    const periodsData = this.getTour()?.activePeriods;
+    if (!periodID || !periodsData) {
+      return 0;
+    }
+    const selectedPeriod = periodsData?.find(
+      (period) => `${period.externalID}` === `${periodID}`
+    );
+    if (selectedPeriod) {
+      return withTourPrice
+        ? this.getTourBasePrice() + (selectedPeriod.basePrice || 0)
+        : selectedPeriod.basePrice || 0;
+    }
+    return 0;
+  }
+
+  getFlightPrice(periodID: string | number, flightID: string | number): number {
+    const periodsData = this.getTour()?.activePeriods;
+    if (!periodID || !flightID || !periodsData) {
+      return 0;
+    }
+    const selectedPeriod = periodsData?.find(
+      (period) => `${period.externalID}` === `${periodID}`
+    );
+    const selectedFlight = selectedPeriod?.flights.find(
+      (flight) => `${flight.activityID}` === `${flightID}`
+    );
+    return selectedFlight?.prices || 0;
   }
 
   updateSelectedTravelers(travelers: Travelers): void {

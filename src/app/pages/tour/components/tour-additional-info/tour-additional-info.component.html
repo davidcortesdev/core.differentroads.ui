@@ -17,60 +17,11 @@
     [resizable]="false"
     class=""
   >
-    <div class="content">
-      <h4 class="content-title">Guarda el presupuesto de este viaje</h4>
-      <p class="content-subtitle">
-        Sujeto a disponibilidad en el momento de la reserva y sólo para salidas
-        con stock
-      </p>
-      <div class="content-tour-selected">
-        <p><i class="pi pi-sparkles"></i> {{ tourData?.name }}</p>
-
-        <div class="content-tour-selected-items">
-          <p>{{ selectedPeriod?.date }}</p>
-          -
-          <p>{{ selectedPeriod?.departureCity }}</p>
-          -
-          <p>{{ selectedPeriod?.tripType }}</p>
-          <br />
-          <p>{{ getTravelersText() }}</p>
-        </div>
-      </div>
-      <div class="content-traveler-data">
-        <p-iftalabel>
-          <input
-            pInputText
-            id="name"
-            [(ngModel)]="traveler.name"
-            autocomplete="off"
-          />
-          <label for="name">Nombre del viajero</label>
-        </p-iftalabel>
-        <p-iftalabel>
-          <input pInputText id="email" [(ngModel)]="traveler.email" />
-          <label for="email">Email del viajero</label>
-        </p-iftalabel>
-        <p-iftalabel>
-          <input
-            pInputText
-            id="phone"
-            [(ngModel)]="traveler.phone"
-            autocomplete="off"
-          />
-          <label for="phone">Telefono del viajero</label>
-        </p-iftalabel>
-      </div>
-      <p-button
-        label="Enviar presupuesto"
-        (click)="saveTrip()"
-        class="p-button-rounded"
-        [loading]="loading"
-      ></p-button>
-      <p class="content-footer">
-        Se enviará automáticamente una copia del presupuesto a tu correo y lo
-        podrás consultar en tu perfil sección Mis presupuestos y favoritos
-      </p>
-    </div>
+    <app-budget-dialog
+      [visible]="visible"
+      [handleCloseModal]="handleCloseModal"
+      (onHide)="handleCloseModal()"
+    ></app-budget-dialog>
   </p-dialog>
 
   <p-card styleClass="claseBord">

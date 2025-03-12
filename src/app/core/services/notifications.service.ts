@@ -6,6 +6,11 @@ import { environment } from '../../../environments/environment';
 export interface SendBudgetNotificationEmailServiceProps {
   id: string;
   email: string;
+  products?: {
+    name: string;
+    units: number;
+    singlePrice: number;
+  }[];
 }
 
 export interface CancelBookingNotificationProps {
@@ -28,12 +33,13 @@ export class NotificationsService {
   sendBudgetNotificationEmail(
     props: SendBudgetNotificationEmailServiceProps
   ): Observable<any> {
-    const { id, email } = props;
+    const { id, email, products } = props;
     const body = {
       trigger: 'BUDGET',
       data: {
         id,
         emailOverride: email,
+        products: products,
       },
     };
     return this.http.post<any>(this.API_URL, body, this.httpOptions);

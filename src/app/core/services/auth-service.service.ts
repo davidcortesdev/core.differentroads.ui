@@ -7,6 +7,7 @@ import {
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { Subject, Observable } from 'rxjs';
+import { HubspotService } from './hubspot.service';
 
 @Injectable({
   providedIn: 'root',
@@ -16,46 +17,66 @@ export class AuthenticateService {
   private cognitoUser!: CognitoUser;
   userAttributesChanged: Subject<void> = new Subject<void>();
 
-  constructor(private router: Router) {
+  constructor(
+    private router: Router,
+    private hubspotService: HubspotService // Inyectar el servicio de Hubspot
+  ) {
     this.userPool = new CognitoUserPool({
       UserPoolId: environment.cognitoUserPoolId,
       ClientId: environment.cognitoAppClientId,
     });
   }
 
+
+
   private getUserData(username: string): CognitoUser {
     return new CognitoUser({ Username: username, Pool: this.userPool });
   }
 
   // Login
-  login(emailaddress: string, password: string) {
-    const authenticationDetails = new AuthenticationDetails({
-      Username: emailaddress,
-      Password: password,
-    });
+// Login
+login(emailaddress: string, password: string) {
+  const authenticationDetails = new AuthenticationDetails({
+    Username: emailaddress,
+    Password: password,
+  });
 
-    this.cognitoUser = this.getUserData(emailaddress);
+  this.cognitoUser = this.getUserData(emailaddress);
 
-    this.cognitoUser.authenticateUser(authenticationDetails, {
-      onSuccess: (result: any) => {
-        window.location.href = '/home';
-        console.log('Success Results : ', result);
-      },
-      newPasswordRequired: () => {
-        // this.router.navigate(['/newPasswordRequire']);
-      },
-      onFailure: (error: any) => {
-        console.log('error', error);
-        // Update the error message and loading state in the login form component
-        const loginFormComponent = this.router.routerState.root.firstChild
-          ?.component as any;
-        if (loginFormComponent) {
-          loginFormComponent.isLoading = false;
-          loginFormComponent.errorMessage = error.message || 'Login failed';
+  this.cognitoUser.authenticateUser(authenticationDetails, {
+    onSuccess: (result: any) => {
+      console.log('Success Results : ', result);
+
+      const contactData = {
+        email: emailaddress,
+      };
+
+      this.hubspotService.createContact(contactData).subscribe({
+        next: (hubspotResponse) => {
+          console.log('Contacto creado en Hubspot exitosamente:', hubspotResponse);
+          window.location.href = '/home';
+        },
+        error: (hubspotError) => {
+          console.error('Error al crear contacto en Hubspot:', hubspotError);
+          window.location.href = '/home';
         }
-      },
-    });
-  }
+      });
+    },
+    newPasswordRequired: () => {
+      // this.router.navigate(['/newPasswordRequire']);
+    },
+    onFailure: (error: any) => {
+      console.log('error', error);
+      // Update the error message and loading state in the login form component
+      const loginFormComponent = this.router.routerState.root.firstChild
+        ?.component as any;
+      if (loginFormComponent) {
+        loginFormComponent.isLoading = false;
+        loginFormComponent.errorMessage = error.message || 'Login failed';
+      }
+    },
+  });
+}
 
   // Logout
   logOut() {

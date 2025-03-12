@@ -34,11 +34,13 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   // Precio base y total
   basePrice: number = 0;
   totalPrice: number = 0;
+  travelersText: string = '';
 
   private isScrolled = false;
   private headerHeight = 0;
   private subscriptions: Subscription = new Subscription();
   periodID: any;
+  flightID: string | number | undefined;
 
   constructor(
     private route: ActivatedRoute,
@@ -58,13 +60,13 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     // Suscribirse a cambios de pasajeros
-    this.subscriptions.add(
-      this.tourComponent.passengerChanges.subscribe((data) => {
-        this.adultsCount = data.adults;
-        this.childrenCount = data.children;
-        this.calculateTotalPrice();
-      })
-    );
+    this.tourDataService.selectedTravelers$.subscribe((travelers) => {
+      this.adultsCount = travelers.adults;
+      this.childrenCount = travelers.children;
+      this.calculateTotalPrice();
+      this.getPassengersInfo();
+      console.log('Travelers:', travelers);
+    });
 
     // Suscribirse a los cambios en la información de fechas y precios
     this.subscriptions.add(
@@ -73,6 +75,7 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
         this.periodID = dateInfo.periodID;
         this.tripType = dateInfo.tripType;
         this.departureCity = dateInfo.departureCity || '';
+        this.flightID = dateInfo.flightID;
 
         if (dateInfo.basePrice !== undefined) {
           this.basePrice = dateInfo.basePrice;
@@ -171,11 +174,17 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Calcular precio total basado en número de adultos y niños
   calculateTotalPrice(): void {
-    // Precio de niños suele ser 80% del precio de adultos
-    const childPrice = this.basePrice * 0.8;
+    const periodPrice = this.tourDataService.getPeriodPrice(
+      this.periodID,
+      true
+    );
+    const flightPrice = this.tourDataService.getFlightPrice(
+      this.periodID,
+      this.flightID
+    );
 
     this.totalPrice =
-      this.adultsCount * this.basePrice + this.childrenCount * childPrice;
+      (periodPrice + flightPrice) * (this.adultsCount + this.childrenCount);
   }
 
   // Obtener texto de pasajeros para mostrar
@@ -194,6 +203,7 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
       );
     }
 
+    this.travelersText = parts.length > 0 ? parts.join(', ') : '1 adulto';
     return parts.length > 0 ? parts.join(', ') : '1 adulto';
   }
 

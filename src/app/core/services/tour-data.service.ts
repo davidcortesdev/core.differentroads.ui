@@ -58,7 +58,7 @@ export class TourDataService {
   ): void {
     const periodsData = this.getTour()?.activePeriods;
 
-    if (!periodID || !flightID || !periodsData) {
+    if (!periodID || !periodsData) {
       return;
     }
 
@@ -140,9 +140,15 @@ export class TourDataService {
     return 0;
   }
 
-  getFlightPrice(periodID: string | number, flightID: string | number): number {
+  getFlightPrice(
+    periodID: string | number,
+    flightID: string | number | undefined
+  ): number {
+    if (!flightID || !periodID) {
+      return 0;
+    }
     const periodsData = this.getTour()?.activePeriods;
-    if (!periodID || !flightID || !periodsData) {
+    if (!periodsData) {
       return 0;
     }
     const selectedPeriod = periodsData?.find(
@@ -155,6 +161,8 @@ export class TourDataService {
   }
 
   updateSelectedTravelers(travelers: Travelers): void {
+    console.log('Updating travelers:', travelers);
+
     this.selectedTravelersSource.next(travelers);
   }
 }

@@ -21,9 +21,9 @@ import { Flight, Tour } from '../../../../core/models/tours/tour.model';
 export class BudgetDialogComponent implements OnInit {
   @Input() visible: boolean = false;
 
-  @Input() handleCloseModal: () => void = () => {
-    this.visible = false;
-  };
+  @Input() handleCloseModal: () => void = () => {};
+
+  @Output() close = new EventEmitter<void>();
 
   travelers: {
     adults: number;
@@ -82,8 +82,6 @@ export class BudgetDialogComponent implements OnInit {
       return;
     }
     this.loading = true;
-    console.log('Selected Period:', this.selectedPeriod);
-    console.log('Traveler Details:', this.traveler);
 
     this.createOrder();
   }
@@ -123,7 +121,6 @@ export class BudgetDialogComponent implements OnInit {
 
     this.ordersService.createOrder(order).subscribe({
       next: (createdOrder) => {
-        console.log('Order created:', createdOrder);
         const products = [];
         if (this.travelers.adults > 0) {
           products.push({
@@ -173,6 +170,12 @@ export class BudgetDialogComponent implements OnInit {
               console.log('Budget notification sent:', response);
               this.loading = false;
               this.handleCloseModal();
+              this.traveler = {
+                name: '',
+                email: '',
+                phone: '',
+              };
+              this.close.emit();
             },
             error: (error) => {
               console.error('Error sending budget notification:', error);

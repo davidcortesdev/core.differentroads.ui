@@ -101,6 +101,7 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
       this.travelers.babies = Math.max(0, this.travelers.babies + change);
     }
 
+    this.tourDataService.updateSelectedTravelers(this.travelers);
     this.updatePassengerText();
   }
 

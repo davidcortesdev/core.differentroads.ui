@@ -55,10 +55,9 @@
               ? "Sin vuelos "
               : "Desde " + departureCity
           }}</span>
-          <span>n actividades opcionales</span>
         </div>
         <div class="total">
-          <span class="pasajeros">{{ getPassengersInfo() }}</span>
+          <span class="pasajeros">{{ travelersText }}</span>
           <span class="total-total">Total: </span>
           <span class="amount">{{ totalPrice | currencyFormat : "EUR" }}</span>
         </div>

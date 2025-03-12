@@ -97,9 +97,7 @@ export class TourComponent implements OnInit, OnDestroy {
             if (firstPeriod.name && firstPeriod.tripType) {
               this.tourDataService.updateSelectedDateInfo(
                 firstPeriod.externalID,
-                firstPeriod.flights.length > 0
-                  ? `${firstPeriod.flights[0].activityID}`
-                  : ''
+                undefined
               );
             }
           }

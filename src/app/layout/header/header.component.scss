@@ -51,13 +51,17 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
   .top-menu.p-menubar {
     border: none;
     border-radius: 0;
+    position: relative;
+    z-index: 2;
+    border-top: 0px solid var(--background-azul);
+    box-shadow: 0 -2px 10px -3px var(--background-azul);
   }
 
   .nav-menu.p-menubar {
     border: none;
     border-radius: 0;
-    border-top: 0px solid var(--background-azul);
-    box-shadow: 0 2px 6px -1px var(--background-azul);
+    position: relative;
+    z-index: 1;
   }
 }
 

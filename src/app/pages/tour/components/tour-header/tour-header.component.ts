@@ -38,6 +38,7 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   private isScrolled = false;
   private headerHeight = 0;
   private subscriptions: Subscription = new Subscription();
+  periodID: any;
 
   constructor(
     private route: ActivatedRoute,
@@ -69,6 +70,7 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     this.subscriptions.add(
       this.tourDataService.selectedDateInfo$.subscribe((dateInfo) => {
         this.selectedDate = dateInfo.date;
+        this.periodID = dateInfo.periodID;
         this.tripType = dateInfo.tripType;
         this.departureCity = dateInfo.departureCity || '';
 
@@ -193,5 +195,9 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     return parts.length > 0 ? parts.join(', ') : '1 adulto';
+  }
+
+  bookTour() {
+    this.tourComponent.createOrderAndRedirect(this.periodID);
   }
 }

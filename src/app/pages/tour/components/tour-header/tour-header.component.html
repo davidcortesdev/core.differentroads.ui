@@ -36,16 +36,25 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Booking Container -->
     <div class="booking-container">
-      <p-button label="Reservar mi tour" styleClass="p-button-rounded"></p-button>
-      
+      <p-button
+        label="Reservar mi tour"
+        styleClass="p-button-rounded"
+        [disabled]="!selectedDate || !totalPrice"
+        (onClick)="bookTour()"
+      ></p-button>
+
       <!-- Total Price Information -->
       <div class="total-price-container" *ngIf="totalPrice > 0">
         <div class="passengers-info">
           <span>{{ selectedDate }} - {{ tripType }}</span>
-          <span>{{ departureCity.toLowerCase().includes('sin') ? 'Sin vuelos incluidos' : 'Desde ' + departureCity }}</span>
+          <span>{{
+            departureCity.toLowerCase().includes("sin")
+              ? "Sin vuelos incluidos"
+              : "Desde " + departureCity
+          }}</span>
           <span>n actividades opcionales</span>
         </div>
         <div class="total">

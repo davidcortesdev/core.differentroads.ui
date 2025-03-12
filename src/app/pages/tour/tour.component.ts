@@ -112,9 +112,9 @@ export class TourComponent implements OnInit, OnDestroy {
       });
   }
 
-  createOrderAndRedirect(departure: Departure): void {
+  createOrderAndRedirect(periodID: string): void {
     const order: Partial<Order> = {
-      periodID: departure.externalID,
+      periodID: periodID,
       retailerID: '1064',
       status: 'AB',
       owner: 'currentUserEmail',

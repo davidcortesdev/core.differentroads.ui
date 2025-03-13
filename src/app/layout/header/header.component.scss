@@ -2,6 +2,7 @@
 $skeleton-gap: 1rem;
 $profile-gap: 1.4rem;
 $mobile-breakpoint: 768px;
+$tablet-breakpoint: 992px;
 
 // Colors
 $skeleton-bg: rgba(255, 255, 255, 0.1);
@@ -29,6 +30,12 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
   gap: $profile-gap;
 }
 
+// Header layout structure
+.header-wrapper {
+  width: 100%;
+}
+
+// Deep styles for PrimeNG components
 :host ::ng-deep {
 
   .p-skeleton {
@@ -39,21 +46,80 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
     }
   }
 
-  @media screen and (max-width: $mobile-breakpoint) {
+  // Responsive styles for both tablet and mobile
+  @media screen and (max-width: #{$tablet-breakpoint}) {
+    // Hide chip label on tablet and mobile
     .user-chip .p-chip-label {
       display: none;
     }
+
+    // Ensure the hamburger menu displays the full menu
+    .p-menubar-button {
+      display: block !important;
+    }
+
+    // Make sure menu items display correctly when expanded
+    .p-menubar.p-menubar-mobile-active .p-menubar-root-list {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+
+      // Make all items full width in tablet/mobile
+      .p-menuitem {
+        width: 100%;
+
+        .p-menuitem-link {
+          width: 100%;
+          padding: 1rem;
+          justify-content: flex-start;
+        }
+      }
+
+      // Handle submenu styling
+      .p-menuitem-active > .p-submenu-list {
+        position: relative;
+        width: 100%;
+        box-shadow: none;
+        border: none;
+        margin-left: 1rem;
+      }
+    }
+
+    // Asegurar que el menú combinado aparezca correctamente en mobile/tablet
+    .bottom-section {
+      .nav-menu.p-menubar {
+        .p-menubar-button {
+          display: block !important;
+        }
+
+        .p-menubar-root-list {
+          display: none;
+        }
+
+        &.p-menubar-mobile-active .p-menubar-root-list {
+          display: flex;
+        }
+      }
+    }
   }
+
   .p-chip {
     box-shadow: 0 0 0 0.5px var(--background-azul);
     background: transparent;
     font-size: 14px;
   }
+
   .top-menu.p-menubar {
     border: none;
     border-radius: 0;
     position: relative;
-    z-index: 2;
+    z-index: 9999;
+    //height: 5rem;
     border-top: 0px solid var(--background-azul);
     box-shadow: 0 -2px 10px -3px var(--background-azul);
   }
@@ -61,6 +127,39 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
   .nav-menu.p-menubar {
     border: none;
     border-radius: 0;
+    border-top: 0px solid var(--background-azul);
+    box-shadow: 0 2px 6px -1px var(--background-azul);
+
+    // Make sure icons aren't shown twice
+    .p-menubar-button {
+      display: none; // Hidden by default, shown only on tablet/mobile
+    }
+
+    @media screen and (max-width: #{$tablet-breakpoint}) {
+      .p-menubar-button {
+        display: block; // Show on tablet/mobile
+        margin-left: 10px;
+        margin-bottom: -10px;
+      }
+    }
+  }
+
+  // Desktop menu styles - for nested structure
+  .nav-menu .p-menubar {
+    background: transparent;
+    border: none;
+    padding: 0;
+
+    .p-menubar-root-list {
+      .p-menuitem {
+        margin: 0;
+      }
+    }
+
+    // Hide the menubar buttons in nested menubars on desktop
+    .p-menubar-button {
+      display: none !important;
+    }
     position: relative;
     z-index: 1;
   }
@@ -69,8 +168,19 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
 .logo {
   padding-top: 0.7rem;
   padding-left: 1.25rem;
+  padding-bottom: 0.7rem;
 }
 
 .top-menu {
   height: 4rem;
+}
+
+// Additional tablet-specific adjustments
+@media screen and (min-width: #{$mobile-breakpoint + 1px}) and (max-width: #{$tablet-breakpoint}) {
+  :host ::ng-deep {
+    // Tablet-specific menu item styling
+    .nav-menu.p-menubar .p-menubar-root-list .p-menuitem .p-menuitem-link {
+      padding: 0.75rem 1rem;
+    }
+  }
 }

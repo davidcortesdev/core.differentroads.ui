@@ -354,8 +354,8 @@ $spaces: (
         left: 0.65rem;
       }
       .p-timeline-event-marker {
-        cursor: pointer;
-        transform: translateY(3px); /* Ajuste sutil para alinear con el panel */
+        //cursor: pointer;
+        //transform: translateY(3px); /* Ajuste sutil para alinear con el panel */
       }
     }
   }
@@ -507,4 +507,8 @@ $spaces: (
 }
 
 .is-purple {
+}
+
+.active-marker {
+
 }

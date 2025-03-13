@@ -128,7 +128,6 @@
       z-index: 1000 !important;
     }
 
-    /* Fix para el tamaño del dropdown */
     .p-dropdown {
       height: 52px;
       border-radius: 0px;
@@ -355,7 +354,6 @@
         }
       }
 
-      /* Fix para dropdown en móvil */
       .p-dropdown {
         height: var(--input-h-mob);
         border-radius: var(--radius);
@@ -460,7 +458,6 @@
   }
 }
 
-/* Para asegurar que el panel se posicione correctamente */
 ::ng-deep .custom-dropdown-panel {
   width: 100% !important;
   box-sizing: border-box !important;
@@ -469,12 +466,10 @@
   left: 0 !important;
 }
 
-/* Para asegurar que el panel se posicione correctamente en relación al input */
 ::ng-deep .p-dropdown {
   position: relative !important;
 }
 
-/* Esto asegura que los elementos de la lista utilicen todo el ancho */
 ::ng-deep .p-dropdown-items-wrapper {
   width: 100% !important;
 }

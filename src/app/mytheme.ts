@@ -4535,16 +4535,16 @@ const MyPreset = definePreset(Aura, {
         },
         timeline: {
             event: {
-                minHeight: "5rem"
+                minHeight: "5rem",
             },
             horizontal: {
                 eventContent: {
-                    padding: "1rem 1rem"
+                    padding: "1rem 0rem 1rem 0rem"
                 }
             },
             vertical: {
                 eventContent: {
-                    padding: "1rem 1rem"
+                    padding: "0rem 1rem 1rem 0rem"
                 }
             },
             eventMarker: {

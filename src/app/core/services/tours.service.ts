@@ -247,15 +247,32 @@ export class ToursService {
       ids.forEach((id) => {
         this.getTourCardData(id).subscribe({
           next: (tour) => {
+            const tripType = tour.activePeriods
+              ?.map((period) => period.tripType)
+              .filter((type): type is string => !!type)
+              .filter((value, index, self) => self.indexOf(value) === index);
+
+            const days = tour.activePeriods?.[0]?.days || 0;
+
             tourCards.push({
               imageUrl: tour.image?.[0]?.url || '',
               title: tour.name || '',
-              description: tour.description || '',
+              description:
+                tour.country && days
+                  ? `${tour.country} en: ${days} dias`
+                  : tour.description || '',
               rating: 5,
               tag: tour.marketingSection?.marketingSeasonTag || '',
               price: tour.basePrice || 0,
-              availableMonths: tour.monthTags || [],
+              availableMonths: (tour.monthTags || []).map(
+                (month: string): string => month.toLocaleUpperCase().slice(0, 3)
+              ),
               isByDr: true,
+              webSlug:
+                tour.webSlug ||
+                tour.name?.toLowerCase().replace(/\s+/g, '-') ||
+                '',
+              tripType: tripType || [],
             });
             completed++;
 

@@ -37,6 +37,7 @@ $primary: var(--p-primary-color);
   .f-hdr {
     @include flex(space-between, flex-start);
     flex-wrap: wrap;
+    padding-bottom: 1rem;
     .f-box {
       min-width: 300px;
       flex: 1;

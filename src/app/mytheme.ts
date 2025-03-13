@@ -513,21 +513,21 @@ const MyPreset = definePreset(Aura, {
                     item: {
                         focusBackground: "{surface.300}",
                         activeBackground: "{surface.100}",
-                        color: "{text.color}",
+                        color: "var(--background-azul)",
                         focusColor: "{text.hover.color}",
                         activeColor: "{text.hover.color}",
                         icon: {
-                            color: "{surface.400}",
+                            color: "var(--background-azul)",
                             focusColor: "{surface.500}",
                             activeColor: "{surface.500}"
                         }
                     },
                     submenuLabel: {
                         background: "transparent",
-                        color: "{text.muted.color}"
+                        color: "var(--background-azul)",
                     },
                     submenuIcon: {
-                        color: "{surface.400}",
+                        color: "var(--background-azul)",
                         focusColor: "{surface.500}",
                         activeColor: "{surface.500}"
                     }
@@ -1848,13 +1848,13 @@ const MyPreset = definePreset(Aura, {
                 light: {
                     root: {
                         background: "{surface.100}",
-                        color: "{surface.800}"
+                        color: "var(--background-azul)",
                     },
                     icon: {
-                        color: "{surface.800}"
+                        color: "var(--background-azul)",
                     },
                     removeIcon: {
-                        color: "{surface.800}"
+                        color: "var(--background-azul)",
                     }
                 },
                 dark: {
@@ -4535,16 +4535,16 @@ const MyPreset = definePreset(Aura, {
         },
         timeline: {
             event: {
-                minHeight: "5rem"
+                minHeight: "5rem",
             },
             horizontal: {
                 eventContent: {
-                    padding: "1rem 1rem"
+                    padding: "1rem 0rem 1rem 0rem"
                 }
             },
             vertical: {
                 eventContent: {
-                    padding: "1rem 1rem"
+                    padding: "0rem 1rem 1rem 0rem"
                 }
             },
             eventMarker: {

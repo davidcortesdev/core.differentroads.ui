@@ -1,5 +1,4 @@
 :host {
-  // Base variables
   --hero-h: 65vh;
   --container-w: 80%;
   --container-max: 1200px;
@@ -48,7 +47,6 @@
     max-width: var(--container-max);
   }
 
-  // Form elements
   &-form {
     display: flex;
     align-items: center;
@@ -57,6 +55,11 @@
     .input-lg {
       flex: var(--first-input);
       min-width: calc(var(--min-w-desk) + 5rem);
+      p-iftalabel {
+        .label {
+          padding-left: 0.9rem;
+        }
+      }
     }
 
     .input-md {
@@ -115,8 +118,12 @@
     }
   }
 
-  // Global overrides
   ::ng-deep {
+    .p-button-icon,
+    .p-button-icon:before,
+    .p-button-icon:after {
+      margin-right: 10px;
+    }
     .p-inputtext {
       border-radius: 0;
       font-size: var(--font-sm);
@@ -174,6 +181,7 @@
     color: var(--background-azul);
     font-weight: 500;
     font-size: var(--font-label);
+    margin-top: 2px;
   }
 
   .spinner {
@@ -185,7 +193,6 @@
     background-color: rgba(255, 255, 255, 0.8);
   }
 
-  // Responsive styles
   @media screen and (min-width: 993px) and (max-width: 1366px) {
     &-form {
       .input-lg {
@@ -422,6 +429,36 @@
   }
 }
 
-.firstElement{
-  padding-left: 0.7rem;
+@media screen and (min-width: 993px) {
+  .firstElement {
+    padding-left: 1.6rem;
+  }
+
+  .hero-form .input-lg p-iftalabel .label {
+    padding-left: 0.9rem;
+  }
+  .hero ::ng-deep {
+    .p-button-icon,
+    .p-button-icon:before,
+    .p-button-icon:after {
+      margin-right: 10px;
+    }
+  }
+}
+
+@media screen and (max-width: 992px) {
+  .firstElement {
+    padding-left: 0.75rem;
+  }
+
+  .hero-form .input-lg p-iftalabel .label {
+    padding-left: 0;
+  }
+  .hero ::ng-deep {
+    .p-button-icon,
+    .p-button-icon:before,
+    .p-button-icon:after {
+      margin-right: 0;
+    }
+  }
 }

@@ -28,7 +28,7 @@ import {
 export class HeaderComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   isLoadingMenu = true;
-  isLoadingUser = false;
+  isLoadingUser = true;
 
   selectedLanguage = 'ES';
   readonly languages: readonly string[] = ['ES', 'EN'] as const;
@@ -207,6 +207,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         });
     } else {
       this.isLoggedIn = false;
+      this.isLoadingUser = false
       this.chipLabel = 'Iniciar Sesión';
       this.chipImage = '';
       this.userMenuItems = [

@@ -157,6 +157,7 @@ import { GoogleMapsModule } from '@angular/google-maps';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SortByPipe } from './shared/pipes/sort-by.pipe';
 import { InsurancesComponent } from './pages/checkout/components/customize-trip/components/insurances/insurances.component';
+import { TripTypesSectionComponent } from './pages/home/components/trip-types-section/trip-types-section.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -243,6 +244,7 @@ registerLocaleData(localeEs);
     PricesSectionComponent,
     PaymentsInformationSectionComponent,
     InsurancesComponent,
+    TripTypesSectionComponent,
   ],
   imports: [
     // Angular Modules

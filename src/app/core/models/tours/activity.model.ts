@@ -11,6 +11,7 @@ export interface Activity {
   name: string;
   day?: number;
   optional: boolean;
+  recomended?: boolean;
   periodId: string;
   productType: string;
   price?: number;

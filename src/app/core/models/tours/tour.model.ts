@@ -79,7 +79,7 @@ export interface CardList {
 }
 
 export interface ExtraInfoSection {
-  infoCard: any[];
+  'info-card': any[];
 }
 
 export interface MarketingSection {

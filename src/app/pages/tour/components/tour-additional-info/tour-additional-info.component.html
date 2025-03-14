@@ -1,12 +1,27 @@
 <div class="">
-  <p-card styleClass="">
-    <div class="" (click)="handleSaveTrip()">
+  <p-card styleClass="" (click)="handleSaveTrip()">
+    <div class="">
       <span class="bg-pink-100">
         <i class="pi pi-bookmark"></i>
       </span>
       <span class="">Guarda tu viaje</span>
     </div>
   </p-card>
+
+  <p-dialog
+    [(visible)]="visible"
+    [modal]="true"
+    [breakpoints]="{ '1199px': '80vw', '575px': '90vw' }"
+    [style]="{ width: '50vw' }"
+    [draggable]="false"
+    [resizable]="false"
+    class=""
+  >
+    <app-budget-dialog
+      [visible]="visible"
+      (close)="handleCloseModal()"
+    ></app-budget-dialog>
+  </p-dialog>
 
   <p-card styleClass="claseBord">
     <div class="" (click)="handleDownloadTrip()">

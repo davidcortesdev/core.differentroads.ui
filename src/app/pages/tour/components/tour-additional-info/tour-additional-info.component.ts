@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { ToursService } from '../../../../core/services/tours.service';
@@ -10,8 +10,10 @@ import { Tour } from '../../../../core/models/tours/tour.model';
   templateUrl: './tour-additional-info.component.html',
   styleUrl: './tour-additional-info.component.scss',
 })
-export class TourAdditionalInfoComponent {
-  tour: any;
+export class TourAdditionalInfoComponent implements OnInit {
+  tour: Tour | null = null;
+  tourData: Tour | null = null;
+  visible: boolean = false;
 
   constructor(
     private sanitizer: DomSanitizer,
@@ -22,16 +24,11 @@ export class TourAdditionalInfoComponent {
   ngOnInit(): void {
     const slug = this.route.snapshot.paramMap.get('slug');
     if (slug) {
-      const selectedFields: (keyof Tour | 'all' | undefined)[] = [
-        'extra-info-section', // Asegúrate de incluir 'extra-info-section'
-      ];
       this.toursService
-        .getTourDetailBySlug(slug, selectedFields)
+        .getTourDetailBySlug(slug, ['extra-info-section'])
         .subscribe((tour) => {
-          console.log('Fetched tour data:', tour);
-          // Ordenar el array 'info-card' por la propiedad 'order'
-          if (tour && tour['extra-info-section']?.['infoCard']) {
-            tour['extra-info-section']['infoCard'].sort(
+          if (tour && tour['extra-info-section']?.['info-card']) {
+            tour['extra-info-section']['info-card'].sort(
               (a, b) => parseInt(a.order) - parseInt(b.order)
             );
           }
@@ -41,18 +38,21 @@ export class TourAdditionalInfoComponent {
   }
 
   handleSaveTrip(): void {
-    // Implement save trip logic
-  }
-
-  handleDownloadTrip(): void {
-    // Implement download trip logic
-  }
-
-  handleInviteFriend(): void {
-    // Implement invite friend logic
+    this.visible = true;
   }
 
   sanitizeHtml(html: string): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
+  handleCloseModal(): void {
+    this.visible = false;
+  }
+
+  handleDownloadTrip() {
+    throw new Error('Method not implemented.');
+  }
+  handleInviteFriend() {
+    throw new Error('Method not implemented.');
   }
 }

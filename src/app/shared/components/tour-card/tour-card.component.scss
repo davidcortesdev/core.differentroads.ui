@@ -352,7 +352,7 @@
 }
 
 .trip-type-s {
-  background-color: #2196f3 !important;
+  background-color: var(--color-singles) !important;
   color: white !important;
   font-weight: bold;
   width: 24px;
@@ -365,7 +365,7 @@
 }
 
 .trip-type-g {
-  background-color: #9c27b0 !important;
+  background-color: var(--color-group) !important;
   color: white !important;
   font-weight: bold;
   width: 24px;
@@ -378,7 +378,7 @@
 }
 
 .trip-type-p {
-  background-color: #4caf50 !important;
+  background-color: var(--color-private) !important;
   color: white !important;
   font-weight: bold;
   width: 24px;

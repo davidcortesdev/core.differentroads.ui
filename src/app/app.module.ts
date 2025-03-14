@@ -1,10 +1,13 @@
-import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA, LOCALE_ID } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule } from '@angular/forms';
 import { ApplicationConfig } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+
+import { registerLocaleData } from '@angular/common';
+import localeEs from '@angular/common/locales/es';
 
 import { HttpClient } from '@angular/common/http';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
@@ -158,11 +161,15 @@ import { Dialog } from 'primeng/dialog';
 import { BudgetDialogComponent } from './pages/tour/components/budget-dialog/budget-dialog.component';
 import { Amplify } from 'aws-amplify';
 import awsconfig from '../../src/aws-exports';
+import { TripTypesSectionComponent } from './pages/home/components/trip-types-section/trip-types-section.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
+
+// Register Spanish locale data
+registerLocaleData(localeEs);
 
 @NgModule({
   declarations: [
@@ -242,6 +249,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     PaymentsInformationSectionComponent,
     InsurancesComponent,
     BudgetDialogComponent,
+    TripTypesSectionComponent,
   ],
   imports: [
     // Angular Modules
@@ -315,6 +323,8 @@ export function HttpLoaderFactory(http: HttpClient) {
   providers: [
     provideAnimationsAsync(),
     provideHttpClient(),
+    // Add this provider to set Spanish as the default locale
+    { provide: LOCALE_ID, useValue: 'es-ES' },
     /*providePrimeNG({
       theme: {
         preset: Aura,

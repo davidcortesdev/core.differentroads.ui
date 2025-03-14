@@ -41,9 +41,10 @@
             formControlName="firstName"
             placeholder="Nombre"
             class="input-field"
+            [ngClass]="{ 'p-invalid': signUpForm.get('firstName')?.errors }"
           />
-          <small *ngIf="errors['firstName']" class="p-error">
-            {{ errors["firstName"]["message"] }}
+          <small *ngIf="signUpForm.get('firstName')?.errors" class="p-error">
+            {{ getErrorMessage('firstName', signUpForm.get('firstName')?.errors) }}
           </small>
         </div>
 
@@ -54,12 +55,12 @@
             id="lastName"
             pInputText
             formControlName="lastName"
-            [ngClass]="{ 'p-invalid': errors['lastName'] }"
             placeholder="Apellido"
             class="input-field"
+            [ngClass]="{ 'p-invalid': signUpForm.get('lastName')?.errors }"
           />
-          <small *ngIf="errors['lastName']" class="p-error">
-            {{ errors["lastName"]["message"] }}
+          <small *ngIf="signUpForm.get('lastName')?.errors" class="p-error">
+            {{ getErrorMessage('lastName', signUpForm.get('lastName')?.errors) }}
           </small>
         </div>
 
@@ -70,12 +71,12 @@
             id="email"
             pInputText
             formControlName="email"
-            [ngClass]="{ 'p-invalid': errors['email'] }"
             placeholder="Email"
             class="input-field"
+            [ngClass]="{ 'p-invalid': signUpForm.get('email')?.errors }"
           />
-          <small *ngIf="errors['email']" class="p-error">
-            {{ errors["email"]["message"] }}
+          <small *ngIf="signUpForm.get('email')?.errors" class="p-error">
+            {{ getErrorMessage('email', signUpForm.get('email')?.errors) }}
           </small>
         </div>
 
@@ -86,12 +87,12 @@
             id="phone"
             pInputText
             formControlName="phone"
-            [ngClass]="{ 'p-invalid': errors['phone'] }"
             placeholder="Teléfono"
             class="input-field"
+            [ngClass]="{ 'p-invalid': signUpForm.get('phone')?.errors }"
           />
-          <small *ngIf="errors['phone']" class="p-error">
-            {{ errors["phone"]["message"] }}
+          <small *ngIf="signUpForm.get('phone')?.errors" class="p-error">
+            {{ getErrorMessage('phone', signUpForm.get('phone')?.errors) }}
           </small>
         </div>
 
@@ -100,14 +101,14 @@
           <p-password
             id="password"
             formControlName="password"
-            [ngClass]="{ 'p-invalid': errors['password'] }"
             [toggleMask]="true"
             [feedback]="false"
             placeholder="Contraseña"
             class="input-field"
+            [ngClass]="{ 'p-invalid': signUpForm.get('password')?.errors }"
           ></p-password>
-          <small *ngIf="errors['password']" class="p-error">
-            {{ errors["password"]["message"] }}
+          <small *ngIf="signUpForm.get('password')?.errors" class="p-error">
+            {{ getErrorMessage('password', signUpForm.get('password')?.errors) }}
           </small>
         </div>
 
@@ -116,14 +117,14 @@
           <p-password
             id="confirmPassword"
             formControlName="confirmPassword"
-            [ngClass]="{ 'p-invalid': errors['confirmPassword'] }"
             [toggleMask]="true"
             [feedback]="false"
             placeholder="Confirmar Contraseña"
             class="input-field"
+            [ngClass]="{ 'p-invalid': signUpForm.get('confirmPassword')?.errors }"
           ></p-password>
-          <small *ngIf="errors['confirmPassword']" class="p-error">
-            {{ errors["confirmPassword"]["message"] }}
+          <small *ngIf="signUpForm.get('confirmPassword')?.errors" class="p-error">
+            {{ getErrorMessage('confirmPassword', signUpForm.get('confirmPassword')?.errors) }}
           </small>
         </div>
 
@@ -173,8 +174,8 @@
               class="input-field"
               readonly
             />
-            <small *ngIf="confirmErrors['username']" class="p-error">
-              {{ confirmErrors["username"]["message"] }}
+            <small *ngIf="confirmForm.get('username')?.errors" class="p-error">
+              {{ getErrorMessage('username', confirmForm.get('username')?.errors) }}
             </small>
           </div>
           <div class="input-group mt-4 col-span-2">
@@ -187,8 +188,8 @@
               class="input-field"
               [disabled]="isRedirecting"
             />
-            <small *ngIf="confirmErrors['confirmationCode']" class="p-error">
-              {{ confirmErrors["confirmationCode"]["message"] }}
+            <small *ngIf="confirmForm.get('confirmationCode')?.errors" class="p-error">
+              {{ getErrorMessage('confirmationCode', confirmForm.get('confirmationCode')?.errors) }}
             </small>
           </div>
 

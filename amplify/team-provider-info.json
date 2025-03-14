@@ -1,0 +1,20 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-dtourswebsite-dev-150351-authRole",
+      "UnauthRoleArn": "arn:aws:iam::318242395170:role/amplify-dtourswebsite-dev-150351-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::318242395170:role/amplify-dtourswebsite-dev-150351-authRole",
+      "Region": "us-east-2",
+      "DeploymentBucketName": "amplify-dtourswebsite-dev-150351-deployment",
+      "UnauthRoleName": "amplify-dtourswebsite-dev-150351-unauthRole",
+      "StackName": "amplify-dtourswebsite-dev-150351",
+      "StackId": "arn:aws:cloudformation:us-east-2:318242395170:stack/amplify-dtourswebsite-dev-150351/4a69adc0-8030-11ef-ac95-02fc624a8963",
+      "AmplifyAppId": "dmm4tsljz8sqh"
+    },
+    "categories": {
+      "auth": {
+        "dtourswebsite1b190f39": {}
+      }
+    }
+  }
+}

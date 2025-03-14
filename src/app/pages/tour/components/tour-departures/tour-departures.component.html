@@ -125,6 +125,7 @@
   
   <!-- The rest of the HTML remains unchanged -->
   <!-- Navegador de mes -->
+   <!--
   <div class="m-nav">
     <p-button 
       label="Anterior" 
@@ -141,12 +142,12 @@
       (onClick)="nextMonth()"
     ></p-button>
   </div>
-  
+  -->
   <!-- DataView con PrimeNG sin paginación -->
   <p-dataView #dv 
     [value]="filteredDepartures" 
-    [rows]="9999"
-    [paginator]="false"
+    [rows]="5"
+    [paginator]="true"
     styleClass="paginator-transparent"
     layout="list">
     

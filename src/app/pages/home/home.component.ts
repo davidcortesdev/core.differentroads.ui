@@ -25,7 +25,7 @@ export class HomeComponent {
   ngOnInit() {
     this.homeService.getHomeData().subscribe({
       next: (data) => {
-        console.log('Home data:', data);
+        // console.log('Home data:', data);
         this.featuredTours = data['featured-tours'];
       },
       error: (error) => {

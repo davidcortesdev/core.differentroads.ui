@@ -1,0 +1,62 @@
+{
+  "providers": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-dtourswebsite-dev-150351-authRole",
+      "UnauthRoleArn": "arn:aws:iam::318242395170:role/amplify-dtourswebsite-dev-150351-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::318242395170:role/amplify-dtourswebsite-dev-150351-authRole",
+      "Region": "us-east-2",
+      "DeploymentBucketName": "amplify-dtourswebsite-dev-150351-deployment",
+      "UnauthRoleName": "amplify-dtourswebsite-dev-150351-unauthRole",
+      "StackName": "amplify-dtourswebsite-dev-150351",
+      "StackId": "arn:aws:cloudformation:us-east-2:318242395170:stack/amplify-dtourswebsite-dev-150351/4a69adc0-8030-11ef-ac95-02fc624a8963",
+      "AmplifyAppId": "dmm4tsljz8sqh"
+    }
+  },
+  "auth": {
+    "dtourswebsite1b190f39": {
+      "service": "Cognito",
+      "providerPlugin": "awscloudformation",
+      "dependsOn": [],
+      "customAuth": false,
+      "frontendAuthConfig": {
+        "socialProviders": [
+          "GOOGLE"
+        ],
+        "usernameAttributes": [
+          "EMAIL"
+        ],
+        "signupAttributes": [
+          "EMAIL"
+        ],
+        "passwordProtectionSettings": {
+          "passwordPolicyMinLength": 8,
+          "passwordPolicyCharacters": []
+        },
+        "mfaConfiguration": "OFF",
+        "mfaTypes": [
+          "SMS"
+        ],
+        "verificationMechanisms": [
+          "EMAIL"
+        ]
+      },
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-dtourswebsite-dev-150351-deployment/amplify-cfn-templates/auth/dtourswebsite1b190f39-cloudformation-template.json",
+        "logicalId": "authdtourswebsite1b190f39"
+      },
+      "lastPushTimeStamp": "2024-12-03T00:27:16.315Z",
+      "output": {
+        "UserPoolId": "us-east-2_KSSmf3Tt7",
+        "AppClientIDWeb": "216668bnnnnfvo2aq4ijs12mga",
+        "AppClientID": "7lntam4687i1l0d2src8jcpod8",
+        "HostedUIDomain": "dtourswebsite1b190f39-1b190f39-dev",
+        "IdentityPoolId": "us-east-2:946d8e29-41c0-459f-afa1-b3e2d2777ae6",
+        "UserPoolArn": "arn:aws:cognito-idp:us-east-2:318242395170:userpool/us-east-2_KSSmf3Tt7",
+        "IdentityPoolName": "dtourswebsite1b190f39_identitypool_1b190f39__dev",
+        "OAuthMetadata": "{\"AllowedOAuthFlows\":[\"code\"],\"AllowedOAuthScopes\":[\"phone\",\"email\",\"openid\",\"profile\",\"aws.cognito.signin.user.admin\"],\"CallbackURLs\":[\"http://localhost:3000/es/\",\"https://new.staging.differentroads.es/es/\",\"http://localhost:3000/es/\"],\"LogoutURLs\":[\"https://new.staging.differentroads.es/\",\"http://localhost:3000/es/\"]}",
+        "UserPoolName": "dtourswebsite1b190f39_userpool_1b190f39"
+      },
+      "lastPushDirHash": "nMVXYxRaSEByy3/8bG22CzrMXlo="
+    }
+  }
+}

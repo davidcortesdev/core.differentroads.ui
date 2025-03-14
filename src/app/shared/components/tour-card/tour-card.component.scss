@@ -1,10 +1,45 @@
+// Variables for reusability
+$breakpoint-tablet: 1024px;
+$breakpoint-mobile: 768px;
+$border-radius-sm: 4px;
+$border-radius-md: 9.586px;
+$border-radius-lg: 1rem;
+$spacing-xs: 0.2rem;
+$spacing-sm: 0.5rem;
+$spacing-md: 1rem;
+
+// Mixins for reusability
+@mixin trip-type-badge {
+  color: white !important;
+  font-weight: bold;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $border-radius-sm;
+  padding: 0;
+}
+
+@mixin responsive-font($mobile, $tablet, $desktop) {
+  font-size: $desktop;
+  
+  @media screen and (max-width: $breakpoint-tablet) {
+    font-size: $tablet;
+  }
+  
+  @media screen and (max-width: $breakpoint-mobile) {
+    font-size: $mobile;
+  }
+}
+
 .tour-card {
-  padding: 0.5rem;
+  padding: $spacing-sm;
   height: 100%;
 
   ::ng-deep .tour-card-wrapper {
     .p-card {
-      border-radius: 1rem;
+      border-radius: $border-radius-lg;
       height: 100%;
       display: flex;
       flex-direction: column;
@@ -18,7 +53,7 @@
       }
 
       .p-card-content {
-        padding: 1rem;
+        padding: $spacing-md;
         flex: 1;
         display: flex;
         flex-direction: column;
@@ -30,11 +65,11 @@
       position: relative;
       height: 230px;
 
-      @media screen and (max-width: 1024px) {
+      @media screen and (max-width: $breakpoint-tablet) {
         height: 220px;
       }
 
-      @media screen and (max-width: 768px) {
+      @media screen and (max-width: $breakpoint-mobile) {
         height: 240px;
       }
 
@@ -42,7 +77,7 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
-        border-radius: 9.586px;
+        border-radius: $border-radius-md;
       }
 
       .overlay {
@@ -52,64 +87,36 @@
         right: 0;
         bottom: 0;
         background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.7));
-        padding: 1rem;
+        padding: $spacing-md;
         display: flex;
         flex-direction: column;
-        border-radius: 1rem;
+        border-radius: $border-radius-lg;
 
         .rating {
           align-self: flex-start;
           background: var(--p-primary-color);
           color: var(--p-button-primary-color);
-          padding: 0.2rem 0.4rem;
-          border-radius: 4px;
-          font-size: 0.7rem;
-
-          @media screen and (max-width: 1024px) {
-            font-size: 0.85rem;
-            padding: 0.25rem 0.5rem;
-          }
-
-          @media screen and (max-width: 768px) {
-            font-size: 0.8rem;
-            padding: 0.2rem 0.4rem;
-          }
+          padding: $spacing-xs $spacing-xs * 2;
+          border-radius: $border-radius-sm;
+          @include responsive-font(0.8rem, 0.85rem, 0.7rem);
         }
 
         .indicator {
           font-weight: 500;
-          font-size: 12px;
           text-align: start;
           color: var(--p-primary-color);
-
-          @media screen and (max-width: 1024px) {
-            font-size: 0.8rem;
-          }
-
-          @media screen and (max-width: 768px) {
-            font-size: 0.7rem;
-          }
+          @include responsive-font(0.7rem, 0.8rem, 0.75rem);
         }
 
         .tag {
           position: absolute;
-          top: 1rem;
-          right: 1rem;
+          top: $spacing-md;
+          right: $spacing-md;
           background: var(--p-button-primary-color);
           color: var(--background-azul);
-          padding: 0.2rem 0.4rem;
-          border-radius: 4px;
-          font-size: 0.7rem;
-
-          @media screen and (max-width: 1024px) {
-            font-size: 0.85rem;
-            padding: 0.25rem 0.5rem;
-          }
-
-          @media screen and (max-width: 768px) {
-            font-size: 0.8rem;
-            padding: 0.2rem 0.4rem;
-          }
+          padding: $spacing-xs $spacing-xs * 2;
+          border-radius: $border-radius-sm;
+          @include responsive-font(0.8rem, 0.85rem, 0.7rem);
         }
 
         .title-overlay {
@@ -118,41 +125,23 @@
 
           p {
             margin-bottom: 0;
-            font-size: 0.8rem;
-
-            @media screen and (max-width: 1024px) {
-              font-size: 0.95rem;
-            }
-
-            @media screen and (max-width: 768px) {
-              font-size: 0.9rem;
-            }
+            @include responsive-font(0.9rem, 0.95rem, 0.8rem);
           }
 
           h3 {
-            font-size: 1.2rem;
             margin-top: 1px;
             margin-bottom: 0.3rem;
-
-            @media screen and (max-width: 1024px) {
-              font-size: 1.3rem;
-              margin-bottom: 0.4rem;
-            }
-
-            @media screen and (max-width: 768px) {
-              font-size: 1.2rem;
-              margin-bottom: 0.3rem;
-            }
+            @include responsive-font(1.2rem, 1.3rem, 1.2rem);
           }
         }
       }
     }
 
     .card-footer {
-      margin: 0 -1rem;
+      margin: 0 -#{$spacing-md};
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: $spacing-md;
 
       .price-content {
         display: flex;
@@ -173,7 +162,7 @@
           .desde {
             font-size: 0.9rem;
             color: var(--background-azul);
-            margin-bottom: 0.2rem;
+            margin-bottom: $spacing-xs;
           }
 
           .price {
@@ -186,15 +175,17 @@
             color: var(--p-primary-color);
             font-size: 0.9rem;
           }
+          
           img {
             height: 1.3rem;
             filter: invert(59%) sepia(29%) saturate(7459%) hue-rotate(329deg) brightness(80%) contrast(95%);
           }
         }
+        
         .button-container {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: $spacing-sm;
         }
       }
 
@@ -203,16 +194,12 @@
           border-radius: 1.5rem;
           min-width: 7rem;
           margin-top: 13px;
-        }
-
-        @media screen and (max-width: 1024px) {
-          ::ng-deep .p-button {
+          
+          @media screen and (max-width: $breakpoint-tablet) {
             min-width: 6rem;
           }
-        }
-
-        @media screen and (max-width: 768px) {
-          ::ng-deep .p-button {
+          
+          @media screen and (max-width: $breakpoint-mobile) {
             min-width: 6rem;
             height: 2.5rem;
             font-size: 0.9rem;
@@ -229,19 +216,19 @@
 
       .months {
         display: flex;
-        gap: 0.5rem;
+        gap: $spacing-sm;
         flex-wrap: wrap;
         width: 15rem;
         height: 2.5rem;
         align-items: center;
         justify-content: flex-start;
 
-        @media screen and (max-width: 1024px) {
+        @media screen and (max-width: $breakpoint-tablet) {
           width: 12rem;
           height: 2.2rem;
         }
 
-        @media screen and (max-width: 768px) {
+        @media screen and (max-width: $breakpoint-mobile) {
           width: 100%;
           height: auto;
           max-height: 3.5rem;
@@ -272,25 +259,20 @@
       .image-container {
         height: 280px;
 
-        @media screen and (max-width: 1024px) {
+        @media screen and (max-width: $breakpoint-tablet) {
           height: 220px;
         }
 
-        @media screen and (max-width: 768px) {
+        @media screen and (max-width: $breakpoint-mobile) {
           height: 240px;
         }
 
         img {
-          border-radius: 1rem;
+          border-radius: $border-radius-lg;
         }
 
         .overlay {
-          .rating {
-            padding: 0.3rem 0.6rem;
-            font-size: 0.9rem;
-          }
-
-          .tag {
+          .rating, .tag {
             padding: 0.3rem 0.6rem;
             font-size: 0.9rem;
           }
@@ -314,12 +296,12 @@
               font-size: 0.9rem;
               color: var(--background-azul);
 
-              @media screen and (max-width: 1024px) {
+              @media screen and (max-width: $breakpoint-tablet) {
                 font-size: 0.85rem;
                 margin-top: 0.4rem;
               }
 
-              @media screen and (max-width: 768px) {
+              @media screen and (max-width: $breakpoint-mobile) {
                 font-size: 0.8rem;
                 margin-top: 0.3rem;
               }
@@ -330,12 +312,13 @@
               font-weight: bold;
               color: var(--background-azul);
               line-height: 1.2rem;
-              margin-bottom: 0.5rem;
-              @media screen and (max-width: 1024px) {
+              margin-bottom: $spacing-sm;
+              
+              @media screen and (max-width: $breakpoint-tablet) {
                 font-size: 1.4rem;
               }
 
-              @media screen and (max-width: 768px) {
+              @media screen and (max-width: $breakpoint-mobile) {
                 font-size: 1.3rem;
               }
             }
@@ -351,41 +334,18 @@
   }
 }
 
+// Trip type badges
 .trip-type-s {
-  background-color: #2196f3 !important;
-  color: white !important;
-  font-weight: bold;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  padding: 0;
+  @include trip-type-badge;
+  background-color: var(--color-singles) !important;
 }
 
 .trip-type-g {
-  background-color: #9c27b0 !important;
-  color: white !important;
-  font-weight: bold;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  padding: 0;
+  @include trip-type-badge;
+  background-color: var(--color-group) !important;
 }
 
 .trip-type-p {
-  background-color: #4caf50 !important;
-  color: white !important;
-  font-weight: bold;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  padding: 0;
+  @include trip-type-badge;
+  background-color: var(--color-private) !important;
 }

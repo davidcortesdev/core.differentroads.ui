@@ -6,8 +6,8 @@ import { Pipe, PipeTransform } from '@angular/core';
 })
 export class SortByPipe implements PipeTransform {
   transform(array: any[], path: string): any[] {
-    console.log('Entrada del pipe:', array);
-    console.log('Path a ordenar:', path);
+    // console.log('Entrada del pipe:', array);
+    // console.log('Path a ordenar:', path);
     
     if (!Array.isArray(array) || !path) {
       return array;
@@ -17,9 +17,9 @@ export class SortByPipe implements PipeTransform {
       const aValue = path.split('.').reduce((obj, key) => obj?.[key], a);
       const bValue = path.split('.').reduce((obj, key) => obj?.[key], b);
       
-      console.log('Comparando valores:');
-      console.log('A:', aValue, 'Type:', a.type);
-      console.log('B:', bValue, 'Type:', b.type);
+      // console.log('Comparando valores:');
+      // console.log('A:', aValue, 'Type:', a.type);
+      // console.log('B:', bValue, 'Type:', b.type);
       
       if (aValue === bValue) return 0;
       if (aValue === undefined) return 1;
@@ -31,7 +31,7 @@ export class SortByPipe implements PipeTransform {
       return result;
     });
 
-    console.log('Lista ordenada:', sortedArray);
+    // console.log('Lista ordenada:', sortedArray);
     return sortedArray;
   }
 }

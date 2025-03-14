@@ -15,7 +15,7 @@ import { BlockType } from '../../../../core/models/blocks/block.model';
 })
 export class ToursSectionComponent implements OnInit {
   @Input() content!: any;
-  @Input() type!: BlockType;
+  @Input() type!: string;
   tours: ProcessedTour[] = [];
   title: string = '';
 

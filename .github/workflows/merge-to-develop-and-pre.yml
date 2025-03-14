@@ -9,7 +9,6 @@ jobs:
   merge-to-develop:
     runs-on: [ubuntu-latest]
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
         with:
@@ -23,13 +22,13 @@ jobs:
       - name: Merge main into develop
         run: |
           git checkout develop
-          git merge main --no-ff --commit -m "Merge branch 'main' into develop"
+          git merge --no-ff origin/main -m "Merge branch 'main' into develop"
           git push origin develop
+          # El push a develop activará automáticamente el workflow de despliegue
 
   merge-to-pre:
     runs-on: [ubuntu-latest]
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
         with:
@@ -43,5 +42,6 @@ jobs:
       - name: Merge main into pre
         run: |
           git checkout pre
-          git merge main --no-ff --commit -m "Merge branch 'main' into pre"
+          git merge --no-ff origin/main -m "Merge branch 'main' into pre"
           git push origin pre
+          # El push a pre activará automáticamente el workflow de despliegue

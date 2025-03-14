@@ -1,4 +1,5 @@
 import { Pagination } from '../commons/pagination.model';
+import { Flight } from '../tours/flight.model';
 
 export interface Order {
   _id: string;
@@ -13,7 +14,7 @@ export interface Order {
   optionalActivitiesRef?: OptionalActivityRef[];
   insurancesRef?: OptionalActivityRef[];
   extraData?: any;
-  flights?: any;
+  flights?: Flight[] | { id: string; name?: string }[];
 }
 
 export interface OptionalActivityRef {

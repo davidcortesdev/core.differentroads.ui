@@ -12,10 +12,12 @@ import { TourDataService } from '../../../../core/services/tour-data.service';
 import { Subscription } from 'rxjs';
 
 export interface Departure {
+  name: string;
   departureDate: Date;
   returnDate: Date;
   destination?: string;
   flights?: string;
+  flightID: string;
   price: number;
   originalPrice: number;
   discount: number;
@@ -99,6 +101,7 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
       this.travelers.babies = Math.max(0, this.travelers.babies + change);
     }
 
+    this.tourDataService.updateSelectedTravelers(this.travelers);
     this.updatePassengerText();
   }
 
@@ -158,12 +161,13 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
     })}`;
 
     // Actualizar la información compartida
+
     this.tourDataService.updateSelectedDateInfo(
-      dateString,
-      departure.group || 'Viaje Individual',
-      departure.destination || this.selectedCity,
-      departure.price // Pasar el precio base
+      departure.externalID,
+      departure.flightID
     );
+
+    this.tourDataService.updateSelectedTravelers(this.travelers);
 
     // Emitir información de pasajeros (solo adultos y niños)
     this.passengerChange.emit({
@@ -172,7 +176,7 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
     });
 
     // Continuar con la redirección
-    this.tourComponent.createOrderAndRedirect(departure);
+    //this.tourComponent.createOrderAndRedirect(departure);
   }
 
   filterDepartures(): void {
@@ -275,6 +279,7 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
         adults: this.travelers.adults,
         children: this.travelers.children,
       });
+      this.tourDataService.updateSelectedTravelers(this.travelers);
     }, 0);
   }
 
@@ -298,11 +303,16 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
               uniquePeriods.add(periodKey);
 
               return {
+                name: period.name,
                 departureDate: new Date(period.dayOne),
                 returnDate: new Date(period.returnDate),
                 destination: flight.name,
+                flightID: `${flight.activityID}`,
                 flights: flight.name,
-                price: tour.basePrice + (flight.prices || 0),
+                price:
+                  tour.basePrice +
+                  (period.basePrice || 0) +
+                  (flight.prices || 0),
                 originalPrice: tour.basePrice + 200,
                 discount: 10,
                 group: period.tripType || 'Grupo',
@@ -321,10 +331,6 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
               .filter((destination): destination is string => !!destination)
           ),
         ];
-
-        console.log('departures', this.departures);
-        console.log('cities', this.cities);
-
         this.setCheapestCityAsDefault();
         this.filterDepartures();
         this.filterDeparturesByMonth(); // Filtrar por el mes actual
@@ -333,24 +339,12 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
         // con la información de la primera salida recomendada
         if (this.filteredDepartures.length > 0) {
           const recommendedDeparture = this.filteredDepartures[0];
-          const departureDate = new Date(recommendedDeparture.departureDate);
-          const returnDate = new Date(recommendedDeparture.returnDate);
-
-          // Formatear las fechas para mostrar
-          const dateString = `${departureDate.toLocaleDateString('es-ES', {
-            day: '2-digit',
-            month: 'short',
-          })} - ${returnDate.toLocaleDateString('es-ES', {
-            day: '2-digit',
-            month: 'short',
-          })}`;
 
           // Actualizar la información compartida con los datos iniciales
+
           this.tourDataService.updateSelectedDateInfo(
-            dateString,
-            recommendedDeparture.group || 'Viaje Individual',
-            this.selectedCity,
-            recommendedDeparture.price
+            recommendedDeparture.externalID,
+            recommendedDeparture.flightID
           );
         }
       });

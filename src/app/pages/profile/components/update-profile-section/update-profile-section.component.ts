@@ -4,6 +4,7 @@ import { UsersService } from '../../../../core/services/users.service';
 export interface PersonalInfo {
   id?: string;
   nombre?: string;
+  apellido?: string;
   avatarUrl?: string;
   email?: string;
   telefono?: string;
@@ -50,6 +51,7 @@ export class UpdateProfileSectionComponent implements OnInit {
     if (!this.personalInfo) {
       this.personalInfo = {
         nombre: '',
+        apellido: '',
         avatarUrl: 'https://picsum.photos/200',
         email: '',
         telefono: '',
@@ -69,13 +71,11 @@ export class UpdateProfileSectionComponent implements OnInit {
     }
   }
 
-  formatDate(dateString: string): string {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
+  formatDate(dateString: string | undefined): string {
+    if (!dateString) return ''; 
+    const [day, month, year] = dateString.split('/');
+    if (!day || !month || !year) return '';
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   }
 
   filterSexo(event: any) {
@@ -165,21 +165,22 @@ export class UpdateProfileSectionComponent implements OnInit {
       id: this.personalInfo.id,
       email: this.personalInfo.email,
       names: this.personalInfo.nombre,
+      lastname: this.personalInfo.apellido,
       phone: this.personalInfo.telefono
         ? parseInt(this.personalInfo.telefono, 10)
         : undefined,
       sex: this.personalInfo.sexo,
-      birthdate: this.personalInfo.fechaNacimiento,
+      birthdate: this.formatDate(this.personalInfo.fechaNacimiento),
       dni: this.personalInfo.dni,
-      dniIssueDate: this.personalInfo.fechaExpedicionDni,
-      dniExpirationDate: this.personalInfo.fechaCaducidadDni,
+      dniIssueDate: this.formatDate(this.personalInfo.fechaExpedicionDni),
+      dniExpirationDate: this.formatDate(this.personalInfo.fechaCaducidadDni),
       nationality: this.personalInfo.nacionalidad,
       city: this.personalInfo.ciudad,
       postalCode: this.personalInfo.codigoPostal,
       passportID: this.personalInfo.pasaporte,
       passportIssuingCountry: this.personalInfo.paisExpedicion,
-      passportIssueDate: this.personalInfo.fechaExpedicionPasaporte,
-      passportExpirationDate: this.personalInfo.fechaVencimientoPasaporte,
+      passportIssueDate: this.formatDate(this.personalInfo.fechaExpedicionPasaporte),
+      passportExpirationDate: this.formatDate(this.personalInfo.fechaVencimientoPasaporte),
       profileImage:
         this.uploadedFiles?.length > 0
           ? this.uploadedFiles[0]

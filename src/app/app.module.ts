@@ -157,6 +157,10 @@ import { GoogleMapsModule } from '@angular/google-maps';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SortByPipe } from './shared/pipes/sort-by.pipe';
 import { InsurancesComponent } from './pages/checkout/components/customize-trip/components/insurances/insurances.component';
+import { Dialog } from 'primeng/dialog';
+import { BudgetDialogComponent } from './pages/tour/components/budget-dialog/budget-dialog.component';
+import { Amplify } from 'aws-amplify';
+import awsconfig from '../../src/aws-exports';
 import { TripTypesSectionComponent } from './pages/home/components/trip-types-section/trip-types-section.component';
 
 // Add this function outside the class
@@ -244,6 +248,7 @@ registerLocaleData(localeEs);
     PricesSectionComponent,
     PaymentsInformationSectionComponent,
     InsurancesComponent,
+    BudgetDialogComponent,
     TripTypesSectionComponent,
   ],
   imports: [
@@ -303,6 +308,7 @@ registerLocaleData(localeEs);
     GoogleMapsModule,
     MenuModule,
     SkeletonModule,
+    Dialog,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,
@@ -343,4 +349,8 @@ registerLocaleData(localeEs);
   bootstrap: [AppComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class AppModule {}
+export class AppModule {
+  constructor() {
+    Amplify.configure(awsconfig);
+  }
+}

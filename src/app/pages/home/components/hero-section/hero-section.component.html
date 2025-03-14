@@ -72,17 +72,18 @@
       </div>
       <div class="input-md">
         <p-iftaLabel>
-          <p-autoComplete
-            [suggestions]="filteredTripTypes"
-            (completeMethod)="filterTripTypes($event)"
-            [dropdown]="true"
+          <p-dropdown
+            [options]="tripTypes"
             [(ngModel)]="selectedTripType"
             id="tripTypeInput"
             placeholder="Seleccionar tipo"
             fluid="true"
             class="border"
+            [appendTo]="'body'"
+            [showClear]="true"
+            [panelStyleClass]="'custom-dropdown-panel'"
           >
-          </p-autoComplete>
+          </p-dropdown>
           <label for="tripTypeInput" class="label">Tipo de viaje</label>
         </p-iftaLabel>
       </div>

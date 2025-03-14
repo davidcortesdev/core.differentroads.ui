@@ -73,7 +73,11 @@ export class TourComponent implements OnInit, OnDestroy {
     this.error = false;
 
     this.toursService
-      .getTourDetailBySlug(this.tourSlug)
+      .getTourDetailBySlug(this.tourSlug, [
+        'activePeriods',
+        'basePrice',
+        'price',
+      ])
       .pipe(
         catchError((error) => {
           console.error('Error loading tour:', error);
@@ -86,17 +90,14 @@ export class TourComponent implements OnInit, OnDestroy {
         next: (tourData: Tour) => {
           this.tour = tourData;
           this.loading = false;
+          this.tourDataService.updateTour(tourData);
 
-          // Podemos compartir datos iniciales a través del servicio si es necesario
           if (tourData.activePeriods && tourData.activePeriods.length > 0) {
             const firstPeriod = tourData.activePeriods[0];
-            // Si ya tenemos información inicial de fecha/tipo, podemos compartirla
             if (firstPeriod.name && firstPeriod.tripType) {
               this.tourDataService.updateSelectedDateInfo(
-                firstPeriod.name,
-                firstPeriod.tripType,
-                undefined,
-                tourData.price
+                firstPeriod.externalID,
+                undefined
               );
             }
           }
@@ -109,9 +110,9 @@ export class TourComponent implements OnInit, OnDestroy {
       });
   }
 
-  createOrderAndRedirect(departure: Departure): void {
+  createOrderAndRedirect(periodID: string): void {
     const order: Partial<Order> = {
-      periodID: departure.externalID,
+      periodID: periodID,
       retailerID: '1064',
       status: 'AB',
       owner: 'currentUserEmail',

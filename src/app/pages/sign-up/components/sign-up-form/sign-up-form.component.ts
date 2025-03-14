@@ -36,12 +36,40 @@ export class SignUpFormComponent {
   isLoading: boolean = false;
   isConfirming: boolean = false;
   isRedirecting: boolean = false;
-  errors: { [key: string]: any } = {};
-  confirmErrors: { [key: string]: any } = {};
   errorMessage: string = '';
   successMessage: string = '';
   registeredUsername: string = '';
   userPassword: string = '';
+
+  // Mensajes de error personalizados
+  errorMessages: { [key: string]: { [key: string]: string } } = {
+    firstName: {
+      required: 'El nombre es requerido.',
+    },
+    lastName: {
+      required: 'El apellido es requerido.',
+    },
+    email: {
+      required: 'El correo electrónico es requerido.',
+      email: 'Ingresa un correo electrónico válido.',
+    },
+    phone: {
+      required: 'El teléfono es requerido.',
+      pattern: 'El teléfono debe tener 10 dígitos.',
+    },
+    password: {
+      required: 'La contraseña es requerida.',
+      minlength: 'La contraseña debe tener al menos 8 caracteres.',
+    },
+    confirmPassword: {
+      required: 'Confirma tu contraseña.',
+      mismatch: 'Las contraseñas no coinciden.',
+    },
+    confirmationCode: {
+      required: 'El código de confirmación es requerido.',
+      pattern: 'El código debe contener solo números.',
+    },
+  };
 
   constructor(
     private fb: FormBuilder,
@@ -72,10 +100,13 @@ export class SignUpFormComponent {
 
   signInWithGoogle(): void {
     this.isLoading = true;
-    setTimeout(() => {
+    this.authService.handleGoogleSignIn().then(() => {
       this.isLoading = false;
-      console.log('Inicio de sesión con Google simulado.');
-    }, 2000);
+    }).catch((error) => {
+      this.isLoading = false;
+      this.errorMessage = 'Error al iniciar sesión con Google';
+      console.error(error);
+    });
   }
 
   passwordMatchValidator(form: FormGroup) {
@@ -86,7 +117,6 @@ export class SignUpFormComponent {
 
   onSubmit() {
     if (this.signUpForm.invalid) {
-      this.errors = this.getFormErrors(this.signUpForm);
       this.errorMessage = 'Por favor, corrige los errores en el formulario.';
       return;
     }
@@ -129,7 +159,6 @@ export class SignUpFormComponent {
 
   onConfirm() {
     if (this.confirmForm.invalid) {
-      this.confirmErrors = this.getFormErrors(this.confirmForm);
       this.errorMessage = 'Por favor, corrige los errores en el formulario.';
       return;
     }
@@ -158,15 +187,12 @@ export class SignUpFormComponent {
       });
   }
 
-  getFormErrors(form: FormGroup): { [key: string]: any } {
-    const errors: { [key: string]: any } = {};
-    Object.keys(form.controls).forEach((key) => {
-      const control = form.get(key);
-      if (control?.errors) {
-        errors[key] = control.errors;
-      }
-    });
-    return errors;
+  getErrorMessage(controlName: string, errors: any): string {
+    if (errors) {
+      const errorKey = Object.keys(errors)[0];
+      return this.errorMessages[controlName][errorKey] || 'Error desconocido.';
+    }
+    return '';
   }
 
   redirectToLogin(): void {

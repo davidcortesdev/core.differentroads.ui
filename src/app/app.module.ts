@@ -154,6 +154,8 @@ import { GoogleMapsModule } from '@angular/google-maps';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SortByPipe } from './shared/pipes/sort-by.pipe';
 import { InsurancesComponent } from './pages/checkout/components/customize-trip/components/insurances/insurances.component';
+import { Dialog } from 'primeng/dialog';
+import { BudgetDialogComponent } from './pages/tour/components/budget-dialog/budget-dialog.component';
 import { Amplify } from 'aws-amplify';
 import awsconfig from '../../src/aws-exports';
 
@@ -239,6 +241,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     PricesSectionComponent,
     PaymentsInformationSectionComponent,
     InsurancesComponent,
+    BudgetDialogComponent,
   ],
   imports: [
     // Angular Modules
@@ -297,6 +300,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     GoogleMapsModule,
     MenuModule,
     SkeletonModule,
+    Dialog,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

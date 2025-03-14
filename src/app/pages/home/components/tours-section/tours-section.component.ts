@@ -82,7 +82,15 @@ export class ToursSectionComponent implements OnInit {
         )
         .subscribe((tour: Partial<Tour>): void => {
           if (tour) {
+            const tripType = tour.activePeriods
+              ?.map((period) => period.tripType)
+              .filter((type): type is string => !!type) // Filtrar valores nulos o vacíos
+              .filter((value, index, self) => self.indexOf(value) === index); // Eliminar duplicados
+
+            console.log(`Tour ID ${id} - Trip Types:`, tripType);
+
             const days = tour.activePeriods?.[0]?.days || 0;
+
             const processedTour: ProcessedTour = {
               imageUrl: tour.image?.[0]?.url || '',
               title: tour.name || '',
@@ -99,6 +107,7 @@ export class ToursSectionComponent implements OnInit {
                 tour.webSlug ||
                 tour.name?.toLowerCase().replace(/\s+/g, '-') ||
                 '',
+              tripType: tripType || [], // Asignamos el array de tipos de viaje
             };
             this.tours = [...this.tours, processedTour];
           }

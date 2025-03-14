@@ -27,7 +27,7 @@
         </div>
       </div>
     </ng-template>
-
+    
     <ng-template pTemplate="content">
       <div class="card-footer">
         <div class="price-content">
@@ -40,13 +40,22 @@
               </span>
               <img *ngIf="showScalapayPrice" src="scalapay.svg" alt="ScalaPay" class="scalapay-logo" />
             </div>
-            <p-button
-              type="button"
-              label="Ver tour"
-              class="p-button-rounded buttonVertour"
-              [rounded]="true"
-              (onClick)="handleTourClick()"
-            ></p-button>
+            <div class="button-container">
+              <div class="trip-type-container">
+                <p-tag *ngFor="let type of tourData.tripType"
+                       class="trip-type"
+                       [styleClass]="getTripTypeClass(type)">
+                  {{ getTripTypeLabel(type) }}
+                </p-tag>
+              </div>
+              <p-button
+                type="button"
+                label="Ver tour"
+                class="p-button-rounded buttonVertour"
+                [rounded]="true"
+                (onClick)="handleTourClick()"
+              ></p-button>
+            </div>
           </div>
           <div class="months">
             <p-tag

@@ -55,6 +55,11 @@ export interface DayCard {
   itimage: CldImage[];
   hotel: Hotel;
   description: string;
+  longDescription?: string;
+  extraInfo?: {
+    title: string;
+    content: string;
+  };
 }
 
 export interface Hotel {
@@ -74,7 +79,7 @@ export interface CardList {
 }
 
 export interface ExtraInfoSection {
-  infoCard: any[];
+  'info-card': any[];
 }
 
 export interface MarketingSection {
@@ -103,11 +108,6 @@ export interface Flight {
   activityID: number;
   prices: number;
 }
-
-/* export interface TravelersSection {
-  title: string;
-  travelersCards: TravelersCard[];
-} */
 
 export interface TravelersSection {
   title: string;

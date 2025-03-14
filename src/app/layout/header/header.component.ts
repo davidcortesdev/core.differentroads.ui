@@ -43,7 +43,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
   leftMenuItems?: MenuItem[];
   rightMenuItems?: MenuItem[];
   userMenuItems?: MenuItem[];
+  combinedMenuItems?: MenuItem[];
   isLoggedIn = false;
+  isMobileView = false;
 
   chipLabel = 'Iniciar Sesión';
   readonly chipIcon = 'pi pi-user';
@@ -62,6 +64,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.initializeLanguage();
     this.initializeMenu();
     this.initializeUserMenu();
+    this.handleResponsiveMenus();
     
     // Verificar si hay una redirección de autenticación (por ejemplo, de Google)
     this.checkAuthRedirect().finally(() => {
@@ -153,7 +156,28 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.rightMenuItems = this.mapMenuListToItems(
           menuConfig['menu-list-right']
         );
+
+        // Create combined menu items for mobile view
+        this.combinedMenuItems = [
+          ...(this.leftMenuItems || []),
+          ...(this.rightMenuItems || []),
+        ];
       });
+  }
+
+  private handleResponsiveMenus(): void {
+    // Initial check on component initialization
+    this.checkScreenSize();
+
+    // Add window resize listener
+    window.addEventListener('resize', () => {
+      this.checkScreenSize();
+    });
+  }
+
+  private checkScreenSize(): void {
+    // Set mobile view flag based on screen width (tablet breakpoint)
+    this.isMobileView = window.innerWidth <= 992; // Same as $tablet-breakpoint
   }
 
   private createLink(slug: string, type: string): string {

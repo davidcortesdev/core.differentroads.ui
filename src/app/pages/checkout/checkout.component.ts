@@ -221,9 +221,13 @@ export class CheckoutComponent implements OnInit {
     this.activitiesService.updateActivities(activities);
   }
 
-  initializeFlights(flights: Flight[]) {
+  initializeFlights(flights: Flight[] | { id: string }[]) {
     if (flights.length > 0) {
-      this.selectedFlight = flights[0];
+      if ('externalID' in flights[0]) {
+        this.selectedFlight = flights[0] as Flight;
+      } else {
+        this.selectedFlight = null;
+      }
       this.flightsService.updateSelectedFlight(this.selectedFlight);
     }
   }

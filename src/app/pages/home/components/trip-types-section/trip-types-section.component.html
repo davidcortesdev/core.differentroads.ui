@@ -1,30 +1,14 @@
 <section class="trip-types-section">
   <div class="trip-types-container">
-    <div class="trip-type-item group" (click)="navigateToTripType('Grupo')">
-      <div class="trip-type-content">
-        <div class="title-container">
-          <h3>En grupo</h3>
+    <ng-container *ngFor="let tripType of tripTypes">
+      <div class="trip-type-item {{tripType.class}}" (click)="navigateToTripType(tripType.value)">
+        <div class="trip-type-content">
+          <div class="title-container">
+            <h3>{{tripType.title}}</h3>
+          </div>
+          <p>{{tripType.description}}</p>
         </div>
-        <p>Viajes para todos: solos, con amigos o en pareja</p>
       </div>
-    </div>
-
-    <div class="trip-type-item singles" (click)="navigateToTripType('Singles')">
-      <div class="trip-type-content">
-        <div class="title-container">
-          <h3>Singles</h3>
-        </div>
-        <p>Viaja solo y conoce a gente nueva</p>
-      </div>
-    </div>
-
-    <div class="trip-type-item private" (click)="navigateToTripType('private')">
-      <div class="trip-type-content">
-        <div class="title-container">
-          <h3>Privados</h3>
-        </div>
-        <p>Viajes a medida para ti y los tuyos</p>
-      </div>
-    </div>
+    </ng-container>
   </div>
 </section>

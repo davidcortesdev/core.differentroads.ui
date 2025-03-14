@@ -1,7 +1,20 @@
+// Variables for reusability
+$breakpoint-mobile: 768px;
+$border-radius-sm: 0.5rem;
+$border-radius-md: 8px;
+$spacing-sm: 0.4rem;
+$spacing-md: 1rem;
+$spacing-lg: 1.5rem;
+
+// Trip type colors
+$color-group: #3aa0ff;
+$color-singles: #8e00fd;
+$color-private: #00b27a;
+
+// Base styles
 .trip-types-section {
   width: 100%;
-  padding: 1rem 0;
-  box-shadow: none; // Remove shadow to match image
+  padding: $spacing-md 0;
   margin-bottom: 2rem;
 }
 
@@ -9,50 +22,48 @@
   max-width: 1200px;
   margin: 0 auto;
   display: flex;
-  justify-content: space-between; // Changed from space-around to match image
+  justify-content: space-between;
   align-items: center;
-  padding: 1rem;
+  padding: $spacing-md;
 
-  @media (max-width: 768px) {
+  @media (max-width: $breakpoint-mobile) {
     flex-direction: column;
-    gap: 1.5rem;
+    gap: $spacing-lg;
   }
 }
 
 .trip-type-item {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
+  gap: $spacing-md;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-sm;
   transition: transform 0.3s ease;
   cursor: pointer;
-  flex: 1; // Make items take equal space
-  max-width: 32%; // Limit width to create spacing between items
+  flex: 1;
+  max-width: 32%;
 
   &:hover {
     transform: translateY(-5px);
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: $breakpoint-mobile) {
     width: 100%;
     max-width: 100%;
     justify-content: flex-start;
   }
 }
 
-// Add this to your existing CSS file
-
 .trip-type-content {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: $spacing-md;
+  width: 100%;
   
   .title-container {
     display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 8px;
-    //background-color: white;
+    padding: $spacing-sm 0.75rem;
+    border-radius: $border-radius-md;
     border: 1px solid;
     
     h3 {
@@ -69,44 +80,34 @@
     color: #666;
     line-height: 1.2;
   }
+
+  @media (max-width: $breakpoint-mobile) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-sm;
+  }
 }
 
-// Trip type specific styles
-.group {
+// Trip type specific styles using a mixin for DRY code
+@mixin trip-type-colors($color) {
   .title-container {
-    border-color: #3498db;
+    border-color: $color;
     
     h3 {
-      color: #3498db;
+      color: $color;
     }
   }
+}
+
+.group {
+  @include trip-type-colors($color-group);
 }
 
 .singles {
-  .title-container {
-    border-color: #9b59b6;
-    
-    h3 {
-      color: #9b59b6;
-    }
-  }
+  @include trip-type-colors($color-singles);
 }
 
 .private {
-  .title-container {
-    border-color: #2ecc71;
-    
-    h3 {
-      color: #2ecc71;
-    }
-  }
-}
-
-@media (max-width: 768px) {
-  .trip-type-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
+  @include trip-type-colors($color-private);
 }
 

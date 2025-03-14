@@ -5,6 +5,7 @@ import { AuthenticateService } from '../../core/services/auth-service.service'; 
 export interface PersonalInfo {
   id?: string;
   nombre: string;
+  apellido: string;
   telefono: string;
   email: string;
   dni: string;
@@ -46,6 +47,7 @@ export class ProfileComponent implements OnInit {
       this.personalInfo = {
         id: user._id,
         nombre: user.names || '',
+        apellido: user.lastname || '',
         telefono: user.phone?.toString() || '',
         email: user.email,
         dni: user.dni || '',

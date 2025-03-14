@@ -156,6 +156,8 @@ import { SortByPipe } from './shared/pipes/sort-by.pipe';
 import { InsurancesComponent } from './pages/checkout/components/customize-trip/components/insurances/insurances.component';
 import { Dialog } from 'primeng/dialog';
 import { BudgetDialogComponent } from './pages/tour/components/budget-dialog/budget-dialog.component';
+import { Amplify } from 'aws-amplify';
+import awsconfig from '../../src/aws-exports';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -337,4 +339,8 @@ export function HttpLoaderFactory(http: HttpClient) {
   bootstrap: [AppComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class AppModule {}
+export class AppModule {
+  constructor() {
+    Amplify.configure(awsconfig);
+  }
+}

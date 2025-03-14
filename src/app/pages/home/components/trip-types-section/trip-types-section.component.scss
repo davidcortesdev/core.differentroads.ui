@@ -6,11 +6,6 @@ $spacing-sm: 0.4rem;
 $spacing-md: 1rem;
 $spacing-lg: 1.5rem;
 
-// Trip type colors
-$color-group: #3aa0ff;
-$color-singles: #8e00fd;
-$color-private: #00b27a;
-
 // Base styles
 .trip-types-section {
   width: 100%;
@@ -64,13 +59,14 @@ $color-private: #00b27a;
     display: inline-block;
     padding: $spacing-sm 0.75rem;
     border-radius: $border-radius-md;
-    border: 1px solid;
+    border: none;
 
     h3 {
       margin: 0;
       font-size: 1rem;
       font-weight: 400;
       white-space: nowrap;
+      color: white;
     }
   }
 
@@ -91,11 +87,7 @@ $color-private: #00b27a;
 // Trip type specific styles using a mixin for DRY code
 @mixin trip-type-colors($color) {
   .title-container {
-    border-color: $color;
-
-    h3 {
-      color: $color;
-    }
+    background-color: $color;
   }
 }
 

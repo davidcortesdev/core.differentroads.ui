@@ -6,6 +6,7 @@ import {
 } from 'amazon-cognito-identity-js';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import { HubspotService } from './hubspot.service';
 import { Subject, Observable, BehaviorSubject, from, of } from 'rxjs';
 import {
   signInWithRedirect,
@@ -30,7 +31,11 @@ export class AuthenticateService {
 
   userAttributesChanged: Subject<void> = new Subject<void>();
 
-  constructor(private router: Router, private usersService: UsersService) {
+  constructor(
+    private router: Router, 
+    private usersService: UsersService,
+    private hubspotService: HubspotService
+  ) {
     this.userPool = new CognitoUserPool({
       UserPoolId: environment.cognitoUserPoolId,
       ClientId: environment.cognitoAppClientId,
@@ -75,48 +80,68 @@ export class AuthenticateService {
     return this.currentUserEmail.asObservable();
   }
 
+
+
   private getUserData(username: string): CognitoUser {
     return new CognitoUser({ Username: username, Pool: this.userPool });
   }
 
   // Login
-  login(emailaddress: string, password: string): Observable<void> {
-    return new Observable((observer) => {
-      const authenticationDetails = new AuthenticationDetails({
-        Username: emailaddress,
-        Password: password,
-      });
-
-      this.cognitoUser = this.getUserData(emailaddress);
-
-      this.cognitoUser.authenticateUser(authenticationDetails, {
-        onSuccess: (result: any) => {
-          this.isAuthenticated.next(true);
-          this.currentUserEmail.next(emailaddress);
-          this.userAttributesChanged.next();
-          this.router.navigate(['/home']); // Redirigir usando Angular Router
-          observer.next();
-          observer.complete();
-        },
-        newPasswordRequired: () => {
-          observer.error('Se requiere una nueva contraseña');
-        },
-        onFailure: (error: any) => {
-          let errorMessage = 'Error al iniciar sesión';
-          if (error.code === 'UserNotFoundException') {
-            errorMessage = 'El usuario no existe';
-          } else if (error.code === 'NotAuthorizedException') {
-            errorMessage = 'La contraseña es incorrecta';
-          } else if (error.code === 'UserNotConfirmedException') {
-            errorMessage = 'El usuario no ha sido confirmado. Por favor, verifica tu correo electrónico';
-          } else if (error.code === 'TooManyFailedAttemptsException') {
-            errorMessage = 'Demasiados intentos fallidos. Intenta de nuevo más tarde';
-          }
-          observer.error({ message: errorMessage });
-        },
-      });
+// Login
+login(emailaddress: string, password: string): Observable<void> {
+  return new Observable((observer) => {
+    const authenticationDetails = new AuthenticationDetails({
+      Username: emailaddress,
+      Password: password,
     });
-  }
+
+    this.cognitoUser = this.getUserData(emailaddress);
+
+    this.cognitoUser.authenticateUser(authenticationDetails, {
+      onSuccess: (result: any) => {
+        this.isAuthenticated.next(true);
+        this.currentUserEmail.next(emailaddress);
+        this.userAttributesChanged.next();
+        
+        // Agregar la integración con Hubspot
+        const contactData = {
+          email: emailaddress,
+        };
+
+        this.hubspotService.createContact(contactData).subscribe({
+          next: (hubspotResponse) => {
+            console.log('Contacto creado en Hubspot exitosamente:', hubspotResponse);
+            this.router.navigate(['/home']); // Usar Router en lugar de window.location
+          },
+          error: (hubspotError) => {
+            console.error('Error al crear contacto en Hubspot:', hubspotError);
+            this.router.navigate(['/home']); // Continuar con la navegación aunque falle Hubspot
+          },
+          complete: () => {
+            observer.next();
+            observer.complete();
+          }
+        });
+      },
+      newPasswordRequired: () => {
+        observer.error('Se requiere una nueva contraseña');
+      },
+      onFailure: (error: any) => {
+        let errorMessage = 'Error al iniciar sesión';
+        if (error.code === 'UserNotFoundException') {
+          errorMessage = 'El usuario no existe';
+        } else if (error.code === 'NotAuthorizedException') {
+          errorMessage = 'La contraseña es incorrecta';
+        } else if (error.code === 'UserNotConfirmedException') {
+          errorMessage = 'El usuario no ha sido confirmado. Por favor, verifica tu correo electrónico';
+        } else if (error.code === 'TooManyFailedAttemptsException') {
+          errorMessage = 'Demasiados intentos fallidos. Intenta de nuevo más tarde';
+        }
+        observer.error({ message: errorMessage });
+      },
+    });
+  });
+}
 
   // Logout
   logOut() {

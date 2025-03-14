@@ -59,13 +59,13 @@ $color-private: #00b27a;
   align-items: center;
   gap: $spacing-md;
   width: 100%;
-  
+
   .title-container {
     display: inline-block;
     padding: $spacing-sm 0.75rem;
     border-radius: $border-radius-md;
     border: 1px solid;
-    
+
     h3 {
       margin: 0;
       font-size: 1rem;
@@ -92,7 +92,7 @@ $color-private: #00b27a;
 @mixin trip-type-colors($color) {
   .title-container {
     border-color: $color;
-    
+
     h3 {
       color: $color;
     }
@@ -100,14 +100,13 @@ $color-private: #00b27a;
 }
 
 .group {
-  @include trip-type-colors($color-group);
+  @include trip-type-colors(var(--color-group));
 }
 
 .singles {
-  @include trip-type-colors($color-singles);
+  @include trip-type-colors(var(--color-singles));
 }
 
 .private {
-  @include trip-type-colors($color-private);
+  @include trip-type-colors(var(--color-private));
 }
-

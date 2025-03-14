@@ -103,9 +103,9 @@ $spacing-md: 1rem;
 
         .indicator {
           font-weight: 500;
-          @include responsive-font(0.7rem, 0.8rem, 0.75rem);
           text-align: start;
           color: var(--p-primary-color);
+          @include responsive-font(0.7rem, 0.8rem, 0.75rem);
         }
 
         .tag {
@@ -129,9 +129,9 @@ $spacing-md: 1rem;
           }
 
           h3 {
-            @include responsive-font(1.2rem, 1.3rem, 1.2rem);
             margin-top: 1px;
             margin-bottom: 0.3rem;
+            @include responsive-font(1.2rem, 1.3rem, 1.2rem);
           }
         }
       }

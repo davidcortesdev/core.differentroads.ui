@@ -74,7 +74,7 @@
         {{ flight.name }}
       </span>
       <span class="flight-itinerary-price-wrapper-price">
-        {{ flight.price || 0 | currencyFormat : "EUR" }}
+        {{ getPrice() || flight.price || 0 | currencyFormat : "EUR" }}
       </span>
       <span class="flight-itinerary-price-wrapper-text">Por persona</span>
     </div>

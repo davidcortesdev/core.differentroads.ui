@@ -236,8 +236,17 @@ export class CheckoutComponent implements OnInit {
   }
 
   initializeFlights(flights: Flight[] | { id: string }[]) {
+    console.log('Flights__:', flights);
+
     if (flights.length > 0) {
       if ('externalID' in flights[0]) {
+        console.log('Flights:', flights[0].price);
+        if (!flights[0].price) {
+          flights[0].price = this.pricesService.getPriceById(
+            flights[0].externalID,
+            'Adultos'
+          );
+        }
         this.selectedFlight = flights[0] as Flight;
       } else {
         this.selectedFlight = null;
@@ -375,7 +384,13 @@ export class CheckoutComponent implements OnInit {
           this.travelersSelected.adults +
           this.travelersSelected.childs +
           this.travelersSelected.babies,
-        value: this.selectedFlight.price || 0,
+        value:
+          this.selectedFlight.price ||
+          this.pricesService.getPriceById(
+            this.selectedFlight.externalID,
+            'Adultos'
+          ) ||
+          0,
         description: this.selectedFlight.name,
       });
 

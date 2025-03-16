@@ -156,7 +156,18 @@
                       </ng-template>
                       <ng-template pTemplate="content">
                         <h3>{{ highlight.title }}</h3>
-                        <div [innerHTML]="highlight.description"></div>
+                        <div
+                          [innerHTML]="highlight.description"
+                          class="highlight-card-description"
+                        ></div>
+                      </ng-template>
+                      <ng-template pTemplate="footer">
+                        <p-button
+                          (click)="onAddActivity(highlight)"
+                          label="{{ highlight.added ? 'Añadida' : 'Añadir' }}"
+                          styleClass="p-button-rounded"
+                        ></p-button>
+                        <div>+{{ highlight.price }}</div>
                       </ng-template>
                     </p-card>
                   </ng-template>

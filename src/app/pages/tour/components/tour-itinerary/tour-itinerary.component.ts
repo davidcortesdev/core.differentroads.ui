@@ -11,6 +11,8 @@ import { PeriodsService } from '../../../../core/services/periods.service';
 import { Period } from '../../../../core/models/tours/period.model';
 import { Activity } from '../../../../core/models/tours/activity.model';
 import { TourDataService } from '../../../../core/services/tour-data/tour-data.service';
+import { PeriodPricesService } from '../../../../core/services/tour-data/period-prices.service';
+import { OptionalActivityRef } from '../../../../core/models/orders/order.model';
 
 interface City {
   nombre: string;
@@ -160,9 +162,9 @@ export class TourItineraryComponent implements OnInit {
     private periodsService: PeriodsService,
     private route: ActivatedRoute,
     private sanitizer: DomSanitizer,
-    private httpClient: HttpClient,
     private geoService: GeoService,
-    private tourDataService: TourDataService
+    private tourDataService: TourDataService,
+    private periodPricesService: PeriodPricesService
   ) {
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}`;
@@ -218,7 +220,16 @@ export class TourItineraryComponent implements OnInit {
                     this.activities = [
                       ...(period.activities || []),
                       ...(period.includedActivities || []),
-                    ];
+                    ].map((activity) => {
+                      return {
+                        ...activity,
+                        price:
+                          this.periodPricesService.getCachedPeriodActivityPrice(
+                            this.selectedOption.value,
+                            activity.activityId
+                          ) || 0,
+                      };
+                    });
                     this.updateItinerary();
 
                     // Share the selected date and trip type with the service
@@ -340,7 +351,16 @@ export class TourItineraryComponent implements OnInit {
           this.activities = [
             ...(period.activities || []),
             ...(period.includedActivities || []),
-          ];
+          ].map((activity) => {
+            return {
+              ...activity,
+              price:
+                this.periodPricesService.getCachedPeriodActivityPrice(
+                  this.selectedOption.value,
+                  activity.activityId
+                ) || 0,
+            };
+          });
 
           this.updateItinerary();
 
@@ -396,6 +416,8 @@ export class TourItineraryComponent implements OnInit {
                 description: activity.description || '',
                 image: activity.activityImage?.[0]?.url || '',
                 optional: activity.optional,
+                recommended: activity.recommended,
+                price: activity.price,
               };
             }) || [],
       };
@@ -446,5 +468,16 @@ export class TourItineraryComponent implements OnInit {
 
   getTagConfig(tripType: string) {
     return this.tagsOptions.find((tag) => tag.type === tripType);
+  }
+
+  // Método para manejar el toggle de actividad
+  onAddActivity(highlight: any): void {
+    // Toggle del estado de la actividad
+    highlight.added = !highlight.added;
+    const activityToToggle: OptionalActivityRef = {
+      id: highlight.id,
+      travelersAssigned: [],
+    };
+    this.tourDataService.toggleActivity(activityToToggle);
   }
 }

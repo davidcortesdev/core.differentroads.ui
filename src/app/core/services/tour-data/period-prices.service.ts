@@ -47,7 +47,30 @@ export class PeriodPricesService {
     );
   }
 
+  getCachedPeriodActivityPrice(
+    periodId: string,
+    activityId: string,
+    ageGroupName: string = 'Adultos'
+  ): number {
+    console.log(
+      'getCachedPeriodActivityPrice',
+      periodId,
+      activityId,
+      ageGroupName
+    );
+
+    const priceData = this.getPeriodPriceDataById(periodId, activityId);
+    if (priceData) {
+      return (
+        priceData.find((price) => price.age_group_name === ageGroupName)
+          ?.value || 0
+      );
+    }
+    return 0;
+  }
   getPeriodPriceDataById(periodId: string, activityId: string): PriceData[] {
+    console.log(this.periodPricesSource.value);
+
     const priceData =
       this.periodPricesSource.value[periodId]?.[activityId]?.priceData;
     if (!priceData) return [];

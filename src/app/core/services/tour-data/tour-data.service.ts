@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Tour } from '../../models/tours/tour.model';
 import { PeriodPricesService } from './period-prices.service';
+import { OptionalActivityRef } from '../../models/orders/order.model';
 
 export interface DateInfo {
   date: string;
@@ -48,6 +49,12 @@ export class TourDataService {
 
   selectedTravelers$: Observable<Travelers> =
     this.selectedTravelersSource.asObservable();
+
+  // Nuevo BehaviorSubject para las actividades añadidas
+  private selectedActivitiesSource = new BehaviorSubject<OptionalActivityRef[]>(
+    []
+  );
+  selectedActivities$ = this.selectedActivitiesSource.asObservable();
 
   constructor(private periodPricesService: PeriodPricesService) {}
 
@@ -179,5 +186,32 @@ export class TourDataService {
     console.log('Updating travelers:', travelers);
 
     this.selectedTravelersSource.next(travelers);
+  }
+
+  // Nuevo método para agregar actividad
+  addActivity(activity: OptionalActivityRef): void {
+    const currentActivities = this.selectedActivitiesSource.getValue();
+    // Evitar duplicados (puede ajustarse según criterio)
+    if (!currentActivities.find((a) => a.id === activity.id)) {
+      this.selectedActivitiesSource.next([...currentActivities, activity]);
+    }
+  }
+
+  // Nuevo método para alternar la actividad
+  toggleActivity(activity: OptionalActivityRef): void {
+    const currentActivities = this.selectedActivitiesSource.getValue();
+    if (currentActivities.find((a) => a.id === activity.id)) {
+      // Si la actividad existe, se elimina
+      const updated = currentActivities.filter((a) => a.id !== activity.id);
+      this.selectedActivitiesSource.next(updated);
+    } else {
+      // Si no existe, se añade
+      this.selectedActivitiesSource.next([...currentActivities, activity]);
+    }
+  }
+
+  // Nuevo método para obtener las actividades añadidas
+  getSelectedActivities(): OptionalActivityRef[] {
+    return this.selectedActivitiesSource.getValue();
   }
 }

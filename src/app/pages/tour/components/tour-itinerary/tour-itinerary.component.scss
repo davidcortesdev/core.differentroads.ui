@@ -416,11 +416,34 @@ $spaces: (
           margin: 0.25rem;
           max-width: 15rem;
         }
+
+        &-description {
+          height: 8em;
+          max-height: 8em;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
         .p-card-body {
           flex: 1;
           display: flex;
           flex-direction: column;
-          padding: 1rem;
+          padding: 0.5rem;
+          font-size: 0.9rem;
+        }
+        .p-card-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0.5rem;
+          border-top: 1px solid #f0f0f0;
+          font-size: 1.2rem;
+          color: var(--p-primary-color);
+          font-weight: 600;
+          .p-button {
+            padding: 0.5em 1.5em;
+            font-weight: 300;
+          }
         }
         .status-badge {
           position: absolute;
@@ -445,7 +468,8 @@ $spaces: (
         h3 {
           margin: 0.5rem 0;
           color: var(--background-azul);
-          font-size: 1.25rem;
+          font-size: 1rem;
+          font-weight: 600;
           @include resp(md) {
             font-size: 1.1rem;
             margin: 0.25rem 0;

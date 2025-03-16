@@ -129,6 +129,8 @@ export class TourComponent implements OnInit, OnDestroy {
             : 'Vuelo desde ' + selectedPeriod?.departureCity,
         },
       ],
+      // Se agregan las actividades añadidas desde el tourDataService
+      optionalActivitiesRef: this.tourDataService.getSelectedActivities(),
     };
 
     this.ordersService.createOrder(order).subscribe({

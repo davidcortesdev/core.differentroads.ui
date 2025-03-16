@@ -1,7 +1,8 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Select } from 'primeng/select';
 import { TravelersService } from '../../../../core/services/checkout/travelers.service';
+import { MessageService } from 'primeng/api';
 import { formatDate } from '@angular/common';
 
 interface Traveler {
@@ -49,12 +50,13 @@ export class TravelersComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private travelersService: TravelersService
+    private travelersService: TravelersService,
+    private messageService: MessageService
   ) {
     this.travelerForm = this.fb.group({
-      firstName: [''],
-      lastName: [''],
-      email: [''],
+      firstName: ['', Validators.required],
+      lastName: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
       phone: [''],
       passport: [''],
       birthdate: [''],
@@ -71,6 +73,9 @@ export class TravelersComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Registrar instancia para validaciones desde otros componentes
+    this.travelersService.setTravelersComponent(this);
+
     this.travelersService.updateTravelersWithRooms();
 
     this.travelersService.travelersNumbers$.subscribe((data) => {
@@ -112,9 +117,9 @@ export class TravelersComponent implements OnInit {
 
   createTravelerForm(): FormGroup {
     const form = this.fb.group({
-      firstName: [''],
-      lastName: [''],
-      email: [''],
+      firstName: ['', Validators.required],
+      lastName: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
       phone: [''],
       passport: [''],
       birthdate: [''],
@@ -188,5 +193,33 @@ export class TravelersComponent implements OnInit {
 
   getOpenTravelers(): number[] {
     return this.travelerForms.map((_, index) => index);
+  }
+
+  areAllTravelersValid(): boolean {
+    const valid = this.travelerForms.every((form) => form.valid);
+    if (!valid) {
+      this.notifyMissingTravelers();
+    }
+    return valid;
+  }
+
+  notifyMissingTravelers(): void {
+    this.travelerForms.forEach((form, index) => {
+      if (form.invalid) {
+        const missingFields: string[] = [];
+        Object.keys(form.controls).forEach((field) => {
+          if (form.controls[field].errors?.['required']) {
+            missingFields.push(field);
+          }
+        });
+        if (missingFields.length > 0) {
+          this.messageService.add({
+            severity: 'error',
+            summary: `Faltan datos para viajero ${index + 1}`,
+            detail: 'Debes llenar todos los campos obligatorios',
+          });
+        }
+      }
+    });
   }
 }

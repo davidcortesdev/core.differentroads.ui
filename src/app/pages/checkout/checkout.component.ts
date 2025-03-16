@@ -485,8 +485,6 @@ export class CheckoutComponent implements OnInit {
     switch (step) {
       case 2:
         const { adults, childs, babies } = this.travelersSelected;
-        console.log('Travelers:', childs + babies > adults);
-
         if (childs + babies > adults) {
           this.messageService.add({
             severity: 'error',
@@ -494,10 +492,6 @@ export class CheckoutComponent implements OnInit {
             detail:
               'La cantidad de niños y bebés debe ser menor o igual a la de adultos.',
           });
-          console.log(
-            'The number of childs and babies must be less or equal to the number of adults.'
-          );
-
           return false;
         }
         const totalTravelers = adults + childs + babies;
@@ -505,8 +499,6 @@ export class CheckoutComponent implements OnInit {
           (acc, room) => acc + room.places * (room.qty || 1),
           0
         );
-        console.log('Total travelers:', totalTravelers > totalCapacity);
-
         if (totalTravelers > totalCapacity) {
           this.messageService.add({
             severity: 'error',
@@ -514,34 +506,25 @@ export class CheckoutComponent implements OnInit {
             detail:
               'Las habitaciones seleccionadas no corresponden a la cantidad de viajeros.',
           });
-          console.log(
-            'The total capacity of rooms is not enough for all travelers.'
-          );
-
           return false;
         }
         break;
       case 3:
         break;
       case 4:
+        const travelersComponent =
+          this.travelersService.getTravelersComponent();
+        if (!travelersComponent.areAllTravelersValid()) {
+          return false;
+        }
         break;
       default:
         return false;
     }
 
     this.updateOrderSummary();
-
-    this.updateOrder().subscribe({
-      next: (response) => {
-        console.log('Order updated');
-        return true;
-      },
-      error: (error) => {
-        console.error('Error updating order:', error);
-        return false;
-      },
-    });
-
+    // Llamada a updateOrder sin suscribirse para evitar retraso en la validación de navigation.
+    this.updateOrder();
     return true;
   }
 

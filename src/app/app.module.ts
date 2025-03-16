@@ -156,6 +156,7 @@ import { SortByPipe } from './shared/pipes/sort-by.pipe';
 import { InsurancesComponent } from './pages/checkout/components/customize-trip/components/insurances/insurances.component';
 import { Dialog } from 'primeng/dialog';
 import { BudgetDialogComponent } from './pages/tour/components/budget-dialog/budget-dialog.component';
+import { OverlayPanelModule } from 'primeng/overlaypanel';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -301,6 +302,7 @@ import { MessageService } from 'primeng/api';
     MenuModule,
     SkeletonModule,
     Dialog,
+    OverlayPanelModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

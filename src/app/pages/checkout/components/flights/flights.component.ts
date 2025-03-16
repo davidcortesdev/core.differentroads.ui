@@ -1,7 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { PeriodsService } from '../../../../core/services/periods.service';
 import { FlightsService } from '../../../../core/services/checkout/flights.service';
-import { PricesService } from '../../../../core/services/checkout/prices.service';
 import { Flight } from '../../../../core/models/tours/flight.model';
 import { PriceData } from '../../../../core/models/commons/price-data.model';
 import { Order } from '../../../../core/models/orders/order.model';
@@ -18,6 +17,7 @@ export class FlightsComponent implements OnInit {
   selectedFlight: Flight | null = null;
   flights: Flight[] = [];
   filteredFlights: Flight[] = [];
+  flightlessOption: Flight | null = null;
 
   constructor(
     private periodsService: PeriodsService,
@@ -29,19 +29,14 @@ export class FlightsComponent implements OnInit {
       const periodID = this.orderDetails.periodID;
       this.periodsService.getFlights(periodID).subscribe((flights) => {
         this.flights = flights;
+        console.log('Flights:', this.flights);
 
         this.filteredFlights = this.flights
           .filter(
-            (flight) => flight.name && !flight.name.includes('Sin vuelos')
+            (flight) =>
+              flight.name && !flight.name.toLowerCase().includes('sin ')
           )
           .map((flight) => {
-            /*
-              const activityID = flight.outbound.activityID;
-               return {
-              ...flight,
-              price: this.pricesService.getPriceById(activityID, 'Adultos'),
-              priceData: this.pricesService.getPriceDataById(activityID),
-            }; */
             return {
               ...flight,
               price: this.calculateTotalPrice(flight),
@@ -49,7 +44,14 @@ export class FlightsComponent implements OnInit {
             };
           });
 
-        console.log('Flights: ', this.filteredFlights);
+        const flightless = this.flights.find(
+          (flight) => flight.name && flight.name.toLowerCase().includes('sin ')
+        );
+        this.flightlessOption = flightless || null;
+
+        if (!this.selectedFlight) {
+          this.selectFlight(this.flightlessOption);
+        }
       });
     }
 
@@ -86,7 +88,10 @@ export class FlightsComponent implements OnInit {
   }
 
   // Selecciona un vuelo
-  selectFlight(flight: any): void {
+  selectFlight(flight: Flight | null): void {
+    if (!flight) {
+      flight = this.flightlessOption;
+    }
     this.selectedFlight = flight;
     this.flightsService.updateSelectedFlight(flight); // Update selected flight in FlightsService
   }

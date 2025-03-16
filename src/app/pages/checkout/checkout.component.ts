@@ -111,16 +111,18 @@ export class CheckoutComponent implements OnInit {
           this.tourName = period.tourName;
 
           this.tourID = period.tourID;
-          this.tourDates = `${new Date(period.dayOne).toLocaleDateString(
-            'es-ES',
-            {
+          this.tourDates = `
+            ${new Date(period.dayOne).toLocaleDateString('es-ES', {
               day: '2-digit',
               month: 'long',
-            }
-          )} - ${new Date(period.returnDate).toLocaleDateString('es-ES', {
-            day: '2-digit',
-            month: 'long',
-          })}`;
+              timeZone: 'UTC',
+            })} - 
+            ${new Date(period.returnDate).toLocaleDateString('es-ES', {
+              day: '2-digit',
+              month: 'long',
+              timeZone: 'UTC',
+            })}
+          `;
         });
 
       this.periodsService.getPeriodPrices(periodID).subscribe((prices) => {
@@ -402,20 +404,22 @@ export class CheckoutComponent implements OnInit {
       this.selectedFlight &&
       this.selectedFlight.externalID! !== 'undefined'
     ) {
-      this.summary.push({
-        qty:
-          this.travelersSelected.adults +
-          this.travelersSelected.childs +
-          this.travelersSelected.babies,
-        value:
-          this.selectedFlight.price ||
-          this.pricesService.getPriceById(
-            this.selectedFlight.externalID,
-            'Adultos'
-          ) ||
-          0,
-        description: this.selectedFlight.name,
-      });
+      if (!this.selectedFlight.name.toLowerCase().includes('sin ')) {
+        this.summary.push({
+          qty:
+            this.travelersSelected.adults +
+            this.travelersSelected.childs +
+            this.travelersSelected.babies,
+          value:
+            this.selectedFlight.price ||
+            this.pricesService.getPriceById(
+              this.selectedFlight.externalID,
+              'Adultos'
+            ) ||
+            0,
+          description: this.selectedFlight.name,
+        });
+      }
 
       tempOrderData['flights'] = [this.selectedFlight];
     }
@@ -478,12 +482,7 @@ export class CheckoutComponent implements OnInit {
   /* Steps and validations */
 
   nextStep(step: number): boolean {
-    console.log('Next step:', step);
-
     switch (step) {
-      case 1:
-        break;
-
       case 2:
         const { adults, childs, babies } = this.travelersSelected;
         console.log('Travelers:', childs + babies > adults);
@@ -511,9 +510,9 @@ export class CheckoutComponent implements OnInit {
         if (totalTravelers > totalCapacity) {
           this.messageService.add({
             severity: 'error',
-            summary: 'Error',
+            summary: 'Habitaciones inválidas',
             detail:
-              'La capacidad total de habitaciones no es suficiente para todos los viajeros.',
+              'Las habitaciones seleccionadas no corresponden a la cantidad de viajeros.',
           });
           console.log(
             'The total capacity of rooms is not enough for all travelers.'
@@ -523,23 +522,25 @@ export class CheckoutComponent implements OnInit {
         }
         break;
       case 3:
+        break;
       case 4:
-        this.updateOrderSummary();
-
-        this.updateOrder().subscribe({
-          next: (response) => {
-            console.log('Order updated');
-            return true;
-          },
-          error: (error) => {
-            console.error('Error updating order:', error);
-            return false;
-          },
-        });
         break;
       default:
         return false;
     }
+
+    this.updateOrderSummary();
+
+    this.updateOrder().subscribe({
+      next: (response) => {
+        console.log('Order updated');
+        return true;
+      },
+      error: (error) => {
+        console.error('Error updating order:', error);
+        return false;
+      },
+    });
 
     return true;
   }

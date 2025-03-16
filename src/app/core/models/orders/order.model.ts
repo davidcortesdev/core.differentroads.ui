@@ -38,6 +38,10 @@ export interface TravelerData {
   postalCode?: string;
   sex?: string;
   surname?: string;
+
+  minorIdExpirationDate?: string;
+  minorIdIssueDate?: string;
+  associatedAdult?: string;
 }
 
 export interface OrderTraveler {

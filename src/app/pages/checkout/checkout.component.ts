@@ -87,13 +87,13 @@ export class CheckoutComponent implements OnInit {
       this.orderDetails = order;
       this.summaryService.updateOrder(order);
 
+      const periodID = order.periodID;
+      this.periodID = periodID;
+
       this.initializeTravelers(order.travelers || []);
       this.initializeActivities(order.optionalActivitiesRef || []);
       this.initializeFlights(order.flights || []);
       this.initializeInsurances(order.insurancesRef || []);
-
-      const periodID = order.periodID;
-      this.periodID = periodID;
 
       this.periodsService
         .getPeriodDetail(periodID, [
@@ -235,19 +235,44 @@ export class CheckoutComponent implements OnInit {
     this.activitiesService.updateActivities(activities);
   }
 
-  initializeFlights(flights: Flight[] | { id: string }[]) {
-    console.log('Flights__:', flights);
-
+  initializeFlights(flights: Flight[] | { id: string; externalID: string }[]) {
     if (flights.length > 0) {
       if ('externalID' in flights[0]) {
-        console.log('Flights:', flights[0].price);
-        if (!flights[0].price) {
-          flights[0].price = this.pricesService.getPriceById(
-            flights[0].externalID,
-            'Adultos'
-          );
-        }
-        this.selectedFlight = flights[0] as Flight;
+        console.log('Flights:___', flights[0]);
+
+        this.periodsService.getFlights(this.periodID).subscribe({
+          next: (flightsData) => {
+            console.log('Flights_____:', flightsData);
+
+            const filteredFlights = flightsData
+              .filter(
+                (flight) => flight.name && !flight.name.includes('Sin vuelos')
+              )
+              .map((flight) => {
+                return {
+                  ...flight,
+                  price:
+                    this.pricesService.getPriceById(
+                      `${flight.outbound.activityID}`,
+                      'Adultos'
+                    ) +
+                    this.pricesService.getPriceById(
+                      `${flight.inbound.activityID}`,
+                      'Adultos'
+                    ),
+                };
+              });
+            const selectedFlight = filteredFlights.find(
+              (flight) => flight.externalID === flights[0].externalID
+            );
+            console.log('Selected flight:___', selectedFlight);
+
+            this.flightsService.updateSelectedFlight(selectedFlight as Flight);
+          },
+          error: (error) => {
+            console.error('Error fetching flights:', error);
+          },
+        });
       } else {
         this.selectedFlight = null;
       }
@@ -378,7 +403,10 @@ export class CheckoutComponent implements OnInit {
       })
     );
 
-    if (this.selectedFlight) {
+    if (
+      this.selectedFlight &&
+      this.selectedFlight.externalID! !== 'undefined'
+    ) {
       this.summary.push({
         qty:
           this.travelersSelected.adults +

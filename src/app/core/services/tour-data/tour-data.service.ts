@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Tour } from '../models/tours/tour.model';
+import { Tour } from '../../models/tours/tour.model';
+import { PeriodPricesService } from './period-prices.service';
 
 export interface DateInfo {
   date: string;
@@ -48,7 +49,7 @@ export class TourDataService {
   selectedTravelers$: Observable<Travelers> =
     this.selectedTravelersSource.asObservable();
 
-  constructor() {}
+  constructor(private periodPricesService: PeriodPricesService) {}
 
   // Método para actualizar la información
 
@@ -71,7 +72,7 @@ export class TourDataService {
 
     this.selectedDateInfoSource.next({
       date: selectedPeriod?.name || '',
-      tripType: selectedPeriod?.tripType || '',
+      tripType: selectedPeriod?.tripType || 'Grupo',
       departureCity: selectedFlight?.name || '',
       basePrice: this.getTourBasePrice() + (selectedPeriod?.basePrice || 0),
       periodID: `${selectedPeriod?.externalID}`,
@@ -121,23 +122,37 @@ export class TourDataService {
     return this.getTour()?.basePrice || 0;
   }
 
+  getTourBasePriceP(periodID: string): number {
+    let price = 0;
+    this.periodPricesService
+      .getPeriodPriceById(`${periodID}`, this.getTour()?.externalID || '')
+      .subscribe((value) => (price = value || 0));
+    return price;
+  }
+
   getPeriodPrice(
     periodID: string | number,
     withTourPrice: boolean = false
   ): number {
-    const periodsData = this.getTour()?.activePeriods;
-    if (!periodID || !periodsData) {
+    if (!periodID) {
       return 0;
     }
-    const selectedPeriod = periodsData?.find(
-      (period) => `${period.externalID}` === `${periodID}`
-    );
-    if (selectedPeriod) {
-      return withTourPrice
-        ? this.getTourBasePrice() + (selectedPeriod.basePrice || 0)
-        : selectedPeriod.basePrice || 0;
+
+    console.log('Getting period price for:', periodID);
+
+    if (withTourPrice) {
+      let price = 0;
+      this.periodPricesService
+        .getPeriodPriceById(`${periodID}`, `${periodID}`, 'Adultos')
+        .subscribe((value) => (price = value || 0));
+      return this.getTourBasePriceP(`${periodID}`) + price;
+    } else {
+      let price = 0;
+      this.periodPricesService
+        .getPeriodPriceById(`${periodID}`, `${periodID}`, 'Adultos')
+        .subscribe((value) => (price = value || 0));
+      return price;
     }
-    return 0;
   }
 
   getFlightPrice(

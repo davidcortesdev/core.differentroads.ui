@@ -11,8 +11,9 @@ import { ActivatedRoute } from '@angular/router';
 import { ToursService } from '../../../../core/services/tours.service';
 import { TourComponent } from '../../tour.component';
 import { Tour } from '../../../../core/models/tours/tour.model';
-import { TourDataService } from '../../../../core/services/tour-data.service';
+import { TourDataService } from '../../../../core/services/tour-data/tour-data.service';
 import { Subscription } from 'rxjs';
+import { PeriodPricesService } from '../../../../core/services/tour-data/period-prices.service';
 
 @Component({
   selector: 'app-tour-header',
@@ -48,7 +49,8 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     private tourComponent: TourComponent,
     private el: ElementRef,
     private renderer: Renderer2,
-    private tourDataService: TourDataService
+    private tourDataService: TourDataService,
+    private periodPricesService: PeriodPricesService
   ) {}
 
   ngOnInit() {
@@ -76,11 +78,6 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
         this.tripType = dateInfo.tripType;
         this.departureCity = dateInfo.departureCity || '';
         this.flightID = dateInfo.flightID;
-
-        if (dateInfo.basePrice !== undefined) {
-          this.basePrice = dateInfo.basePrice;
-          this.calculateTotalPrice();
-        }
       })
     );
   }
@@ -162,7 +159,7 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
 
   getDuration(): string {
     if (this.tour.activePeriods && this.tour.activePeriods.length > 0) {
-      return this.getDuration2(this.tour.activePeriods[0].days);
+      return this.getDuration2(this.tour.activePeriods[0]?.days);
     }
     return '';
   }
@@ -178,6 +175,9 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
       this.periodID,
       true
     );
+
+    console.log('Period Price:', this.periodID, periodPrice);
+
     const flightPrice = this.tourDataService.getFlightPrice(
       this.periodID,
       this.flightID

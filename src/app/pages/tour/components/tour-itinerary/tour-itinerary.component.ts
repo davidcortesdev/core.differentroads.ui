@@ -10,7 +10,7 @@ import { Panel } from 'primeng/panel';
 import { PeriodsService } from '../../../../core/services/periods.service';
 import { Period } from '../../../../core/models/tours/period.model';
 import { Activity } from '../../../../core/models/tours/activity.model';
-import { TourDataService } from '../../../../core/services/tour-data.service';
+import { TourDataService } from '../../../../core/services/tour-data/tour-data.service';
 
 interface City {
   nombre: string;
@@ -188,7 +188,6 @@ export class TourItineraryComponent implements OnInit {
           ])
           .subscribe({
             next: (tourData) => {
-              console.log('Tour data:', tourData);
               this.dateOptions = tourData.activePeriods.map((period) => {
                 return {
                   label: period.name,
@@ -213,7 +212,6 @@ export class TourItineraryComponent implements OnInit {
                 ])
                 .subscribe({
                   next: (period) => {
-                    console.log('Period itinerary:', period);
                     this.currentPeriod = period;
                     this.tripType = period.tripType || '';
                     this.hotels = period.hotels as any[];
@@ -241,7 +239,7 @@ export class TourItineraryComponent implements OnInit {
           .subscribe((tour) => {
             this.cities = tour['cities'];
             let loadedCities = 0;
-            const totalCities = this.cities.length;
+            const totalCities = this.cities?.length;
             this.cities.forEach((city) => {
               this.geoService.getCoordinates(city).subscribe((coordinates) => {
                 if (coordinates) {
@@ -265,7 +263,7 @@ export class TourItineraryComponent implements OnInit {
     });
   }
   private calculateMapCenter(): void {
-    if (this.citiesData.length === 0) return;
+    if (this.citiesData?.length === 0) return;
     const bounds = new google.maps.LatLngBounds();
     this.citiesData.forEach((city) => {
       bounds.extend({ lat: city.lat, lng: city.lng });
@@ -343,7 +341,6 @@ export class TourItineraryComponent implements OnInit {
             ...(period.activities || []),
             ...(period.includedActivities || []),
           ];
-          console.log('Period itinerary 2:', period);
 
           this.updateItinerary();
 
@@ -366,25 +363,19 @@ export class TourItineraryComponent implements OnInit {
   }
 
   updateItinerary(): void {
-    console.log(
-      this.itinerariesData?.['itineraries'],
-      this.selectedOption.value
-    );
-
     const selectedItinerary = this.itinerariesData?.['itineraries'].filter(
       (itinerary) =>
         itinerary.periods
           .map((period) => period.split('-')[1])
           .includes(this.selectedOption.value)
     )[0];
-    console.log('Selected itinerary:', selectedItinerary, this.hotels);
 
-    this.itinerary = selectedItinerary!['days'].map((day, index) => {
-      console.log(
-        'itinerary activities',
-        this.activities.filter((activity) => index + 1 === activity.day)
-      );
+    if (!selectedItinerary) {
+      console.error('No itinerary found for the selected option.');
+      return;
+    }
 
+    this.itinerary = selectedItinerary['days'].map((day, index) => {
       return {
         title: day.name,
         description: this.sanitizer.bypassSecurityTrustHtml(day.description),
@@ -409,7 +400,6 @@ export class TourItineraryComponent implements OnInit {
             }) || [],
       };
     });
-    console.log('Itinerary:', this.itinerary);
   }
 
   markerClicked(event: MouseEvent): void {
@@ -428,7 +418,7 @@ export class TourItineraryComponent implements OnInit {
   }
 
   scrollToPanel(index: number): void {
-    if (this.itineraryPanels && this.itineraryPanels.length > index) {
+    if (this.itineraryPanels && this.itineraryPanels?.length > index) {
       const panelArray = this.itineraryPanels.toArray();
       if (panelArray[index]) {
         const el = panelArray[index].el.nativeElement;

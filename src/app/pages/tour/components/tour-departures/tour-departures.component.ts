@@ -8,7 +8,7 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import { ToursService } from '../../../../core/services/tours.service';
 import { TourComponent } from '../../tour.component';
-import { TourDataService } from '../../../../core/services/tour-data.service';
+import { TourDataService } from '../../../../core/services/tour-data/tour-data.service';
 import { Subscription } from 'rxjs';
 
 export interface Departure {

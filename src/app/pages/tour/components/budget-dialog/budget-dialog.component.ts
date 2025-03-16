@@ -3,7 +3,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
   TourDataService,
   DateInfo,
-} from '../../../../core/services/tour-data.service';
+} from '../../../../core/services/tour-data/tour-data.service';
 import { OrdersService } from '../../../../core/services/orders.service';
 import { NotificationsService } from '../../../../core/services/notifications.service';
 import {

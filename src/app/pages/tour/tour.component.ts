@@ -6,7 +6,7 @@ import { catchError, Subject, Subscription } from 'rxjs';
 import { OrdersService } from '../../core/services/orders.service';
 import { Departure } from './components/tour-departures/tour-departures.component';
 import { Order } from '../../core/models/orders/order.model';
-import { TourDataService } from '../../core/services/tour-data.service';
+import { TourDataService } from '../../core/services/tour-data/tour-data.service';
 
 @Component({
   selector: 'app-tour',
@@ -94,7 +94,9 @@ export class TourComponent implements OnInit, OnDestroy {
 
           if (tourData.activePeriods && tourData.activePeriods.length > 0) {
             const firstPeriod = tourData.activePeriods[0];
-            if (firstPeriod.name && firstPeriod.tripType) {
+            this.tourDataService.getPeriodPrice(firstPeriod.externalID);
+
+            if (firstPeriod.name) {
               this.tourDataService.updateSelectedDateInfo(
                 firstPeriod.externalID,
                 undefined

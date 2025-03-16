@@ -8,13 +8,15 @@ import { TravelersService } from '../../../../../../core/services/checkout/trave
   styleUrls: ['./traveler-selector.component.scss'],
 })
 export class TravelerSelectorComponent implements OnInit {
-  @Input() availableTravelers: string[] = ['Adultos', 'Niños', 'Bebés'];
+  @Input() availableTravelers: string[] = [];
 
   travelersNumbers: { adults: number; childs: number; babies: number } = {
     adults: 1,
     childs: 0,
     babies: 0,
   };
+
+  adultsErrorMsg = '';
 
   constructor(private travelersService: TravelersService) {}
 
@@ -26,6 +28,15 @@ export class TravelerSelectorComponent implements OnInit {
 
   handlePassengers(value: number, type: 'adults' | 'childs' | 'babies'): void {
     this.travelersNumbers[type] = value;
+    if (
+      this.travelersNumbers.adults <
+      this.travelersNumbers.childs + this.travelersNumbers.babies
+    ) {
+      this.adultsErrorMsg =
+        'Se requieren al menos 2 adultos por cada niño o bebé.';
+    } else {
+      this.adultsErrorMsg = '';
+    }
     this.travelersService.updateTravelersNumbers(this.travelersNumbers);
   }
 }

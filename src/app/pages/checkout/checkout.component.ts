@@ -18,6 +18,7 @@ import { BookingCreateInput } from '../../core/models/bookings/booking.model';
 import { Period } from '../../core/models/tours/period.model';
 import { InsurancesService } from '../../core/services/checkout/insurances.service';
 import { Insurance } from '../../core/models/tours/insurance.model';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-checkout',
@@ -75,7 +76,8 @@ export class CheckoutComponent implements OnInit {
     private flightsService: FlightsService,
     private route: ActivatedRoute,
     private bookingsService: BookingsService,
-    private insurancesService: InsurancesService
+    private insurancesService: InsurancesService,
+    private messageService: MessageService
   ) {}
 
   ngOnInit() {
@@ -122,8 +124,6 @@ export class CheckoutComponent implements OnInit {
         });
 
       this.periodsService.getPeriodPrices(periodID).subscribe((prices) => {
-        console.log('Prices:', prices);
-
         this.prices = prices;
         this.pricesService.updatePrices(prices);
         this.updateOrderSummary();
@@ -238,12 +238,8 @@ export class CheckoutComponent implements OnInit {
   initializeFlights(flights: Flight[] | { id: string; externalID: string }[]) {
     if (flights.length > 0) {
       if ('externalID' in flights[0]) {
-        console.log('Flights:___', flights[0]);
-
         this.periodsService.getFlights(this.periodID).subscribe({
           next: (flightsData) => {
-            console.log('Flights_____:', flightsData);
-
             const filteredFlights = flightsData
               .filter(
                 (flight) => flight.name && !flight.name.includes('Sin vuelos')
@@ -265,7 +261,6 @@ export class CheckoutComponent implements OnInit {
             const selectedFlight = filteredFlights.find(
               (flight) => flight.externalID === flights[0].externalID
             );
-            console.log('Selected flight:___', selectedFlight);
 
             this.flightsService.updateSelectedFlight(selectedFlight as Flight);
           },
@@ -483,10 +478,50 @@ export class CheckoutComponent implements OnInit {
   /* Steps and validations */
 
   nextStep(step: number): boolean {
+    console.log('Next step:', step);
+
     switch (step) {
       case 1:
         break;
+
       case 2:
+        const { adults, childs, babies } = this.travelersSelected;
+        console.log('Travelers:', childs + babies > adults);
+
+        if (childs + babies > adults) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail:
+              'La cantidad de niños y bebés debe ser menor o igual a la de adultos.',
+          });
+          console.log(
+            'The number of childs and babies must be less or equal to the number of adults.'
+          );
+
+          return false;
+        }
+        const totalTravelers = adults + childs + babies;
+        const totalCapacity = this.rooms.reduce(
+          (acc, room) => acc + room.places * (room.qty || 1),
+          0
+        );
+        console.log('Total travelers:', totalTravelers > totalCapacity);
+
+        if (totalTravelers > totalCapacity) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail:
+              'La capacidad total de habitaciones no es suficiente para todos los viajeros.',
+          });
+          console.log(
+            'The total capacity of rooms is not enough for all travelers.'
+          );
+
+          return false;
+        }
+        break;
       case 3:
       case 4:
         this.updateOrderSummary();

@@ -162,6 +162,8 @@ export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
+import { MessageService } from 'primeng/api';
+
 @NgModule({
   declarations: [
     // App Components
@@ -333,6 +335,7 @@ export function HttpLoaderFactory(http: HttpClient) {
         },
       },
     }),
+    MessageService,
   ],
   bootstrap: [AppComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],

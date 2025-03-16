@@ -19,11 +19,11 @@ export class RoomSelectorComponent implements OnChanges {
   roomsAvailabilityForTravelersNumber: ReservationMode[] = [];
   allRoomsAvailability: ReservationMode[] = [];
 
-  travelers = [
-    { travelerData: { ageGroup: 'Adultos' } },
-    { travelerData: { ageGroup: 'Niños' } },
-    { travelerData: { ageGroup: 'Bebés' } },
-  ]; // Ejemplo de viajeros
+  travelers: {
+    adults?: number;
+    childs?: number;
+    babies?: number;
+  } = {};
 
   errorMsg: string | null = null; // Mensaje de error
 
@@ -40,6 +40,8 @@ export class RoomSelectorComponent implements OnChanges {
     // Initialize with the current travelers numbers
     const initialTravelers =
       this.travelersService.travelersNumbersSource.getValue();
+    this.travelers = initialTravelers;
+
     const totalTravelers =
       initialTravelers.adults +
       initialTravelers.childs +
@@ -47,8 +49,10 @@ export class RoomSelectorComponent implements OnChanges {
     this.filterRooms(totalTravelers);
 
     this.travelersService.travelersNumbers$.subscribe((data) => {
+      this.selectedRooms = {};
       const totalTravelers = data.adults + data.childs + data.babies;
       this.filterRooms(totalTravelers);
+      this.updateRooms();
     });
 
     this.roomsService.selectedRooms$.subscribe((rooms) => {
@@ -89,9 +93,7 @@ export class RoomSelectorComponent implements OnChanges {
 
   // Método para verificar si hay bebés en la lista de viajeros
   hasBabies(): boolean {
-    return this.travelers.some(
-      (traveler) => traveler.travelerData?.ageGroup === 'Bebés'
-    );
+    return this.travelers.babies ? this.travelers?.babies > 0 : false;
   }
 
   filterRooms(totalTravelers: number): void {
@@ -127,6 +129,27 @@ export class RoomSelectorComponent implements OnChanges {
       } as ReservationMode;
     });
 
+    const travelerNumbers =
+      this.travelersService.travelersNumbersSource.getValue();
+    const totalTravelers =
+      travelerNumbers.adults + travelerNumbers.childs + travelerNumbers.babies;
+    const selectedPlaces = updatedRooms.reduce(
+      (sum, room) => sum + (room.places || 0) * (room.qty || 0),
+      0
+    );
+    if (selectedPlaces > totalTravelers) {
+      this.errorMsg =
+        'Las habitaciones seleccionadas no se corresponden con la cantidad de viajeros.';
+    } else {
+      this.errorMsg = null;
+    }
+
     this.roomsService.updateSelectedRooms(updatedRooms);
+  }
+
+  get hasSharedRoomsOption(): boolean {
+    return this.allRoomsAvailability.some(
+      (room) => room.name?.toLowerCase().includes('doble') && room.places === 1
+    );
   }
 }

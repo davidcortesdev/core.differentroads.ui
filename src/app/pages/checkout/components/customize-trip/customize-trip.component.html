@@ -1,6 +1,7 @@
 <div class="customize-trip">
   <div>
     <app-traveler-selector
+      *ngIf="availableTravelers.length"
       [availableTravelers]="availableTravelers"
     ></app-traveler-selector>
     <app-room-selector [periodID]="orderDetails.periodID"></app-room-selector>

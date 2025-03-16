@@ -1,4 +1,7 @@
-<div class="optional-activities">
+<div
+  class="optional-activities"
+  *ngIf="optionalActivities && optionalActivities.length > 0"
+>
   <div class="step">
     <div class="step-title">Agrega actividades</div>
     <div class="step-description">

@@ -53,6 +53,8 @@
           <span>{{
             departureCity.toLowerCase().includes("sin")
               ? "Sin vuelos "
+              : departureCity.toLowerCase().includes("vuelo")
+              ? departureCity
               : "Desde " + departureCity
           }}</span>
         </div>

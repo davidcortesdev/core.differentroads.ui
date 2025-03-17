@@ -1,9 +1,6 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import {
-  TourDataService,
-  DateInfo,
-} from '../../../../core/services/tour-data/tour-data.service';
+import { TourDataService } from '../../../../core/services/tour-data/tour-data.service';
 import { OrdersService } from '../../../../core/services/orders.service';
 import { NotificationsService } from '../../../../core/services/notifications.service';
 import {
@@ -11,6 +8,10 @@ import {
   OrderTraveler,
 } from '../../../../core/models/orders/order.model';
 import { Flight, Tour } from '../../../../core/models/tours/tour.model';
+import {
+  DateInfo,
+  TourOrderService,
+} from '../../../../core/services/tour-data/tour-order.service';
 
 @Component({
   selector: 'app-budget-dialog',
@@ -55,12 +56,13 @@ export class BudgetDialogComponent implements OnInit {
   constructor(
     private sanitizer: DomSanitizer,
     private tourDataService: TourDataService,
+    private tourOrderService: TourOrderService,
     private ordersService: OrdersService,
     private notificationsService: NotificationsService
   ) {}
 
   ngOnInit(): void {
-    this.tourDataService.selectedDateInfo$.subscribe((dateInfo) => {
+    this.tourOrderService.selectedDateInfo$.subscribe((dateInfo) => {
       this.selectedPeriod = dateInfo;
     });
 
@@ -68,7 +70,7 @@ export class BudgetDialogComponent implements OnInit {
       this.tourData = tour;
     });
 
-    this.tourDataService.selectedTravelers$.subscribe((travelers) => {
+    this.tourOrderService.selectedTravelers$.subscribe((travelers) => {
       this.travelers = travelers;
     });
   }

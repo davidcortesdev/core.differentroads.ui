@@ -4,9 +4,9 @@ import { ToursService } from '../../core/services/tours.service';
 import { Tour } from '../../core/models/tours/tour.model';
 import { catchError, Subject, Subscription } from 'rxjs';
 import { OrdersService } from '../../core/services/orders.service';
-import { Departure } from './components/tour-departures/tour-departures.component';
 import { Order } from '../../core/models/orders/order.model';
 import { TourDataService } from '../../core/services/tour-data/tour-data.service';
+import { TourOrderService } from '../../core/services/tour-data/tour-order.service';
 
 @Component({
   selector: 'app-tour',
@@ -36,6 +36,7 @@ export class TourComponent implements OnInit, OnDestroy {
     private toursService: ToursService,
     private ordersService: OrdersService,
     private router: Router,
+    private tourOrderService: TourOrderService,
     private tourDataService: TourDataService
   ) {}
 
@@ -48,7 +49,7 @@ export class TourComponent implements OnInit, OnDestroy {
     // Suscribirse a los cambios de fecha del servicio compartido
     // para mantener sincronizado el componente principal también
     this.subscriptions.add(
-      this.tourDataService.selectedDateInfo$.subscribe((dateInfo) => {
+      this.tourOrderService.selectedDateInfo$.subscribe((dateInfo) => {
         this.selectedDate = dateInfo.date;
         this.tripType = dateInfo.tripType;
         this.departureCity = dateInfo.departureCity || '';
@@ -97,7 +98,7 @@ export class TourComponent implements OnInit, OnDestroy {
             this.tourDataService.getPeriodPrice(firstPeriod.externalID);
 
             if (firstPeriod.name) {
-              this.tourDataService.updateSelectedDateInfo(
+              this.tourOrderService.updateSelectedDateInfo(
                 firstPeriod.externalID,
                 undefined
               );
@@ -113,7 +114,7 @@ export class TourComponent implements OnInit, OnDestroy {
   }
 
   createOrderAndRedirect(periodID: string): void {
-    const selectedPeriod = this.tourDataService.getCurrentDateInfo();
+    const selectedPeriod = this.tourOrderService.getCurrentDateInfo();
     const order: Partial<Order> = {
       periodID: periodID,
       retailerID: '1064',
@@ -130,7 +131,7 @@ export class TourComponent implements OnInit, OnDestroy {
         },
       ],
       // Se agregan las actividades añadidas desde el tourDataService
-      optionalActivitiesRef: this.tourDataService.getSelectedActivities(),
+      optionalActivitiesRef: this.tourOrderService.getSelectedActivities(),
     };
 
     this.ordersService.createOrder(order).subscribe({

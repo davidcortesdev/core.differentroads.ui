@@ -14,6 +14,7 @@ import { TourDataService } from '../../../../core/services/tour-data/tour-data.s
 import { CAROUSEL_CONFIG } from '../../../../shared/constants/carousel.constants';
 import { PeriodPricesService } from '../../../../core/services/tour-data/period-prices.service';
 import { OptionalActivityRef } from '../../../../core/models/orders/order.model';
+import { TourOrderService } from '../../../../core/services/tour-data/tour-order.service';
 
 interface City {
   nombre: string;
@@ -165,6 +166,7 @@ export class TourItineraryComponent implements OnInit {
     private route: ActivatedRoute,
     private sanitizer: DomSanitizer,
     private geoService: GeoService,
+    private tourOrderService: TourOrderService,
     private tourDataService: TourDataService,
     private periodPricesService: PeriodPricesService
   ) {
@@ -236,7 +238,7 @@ export class TourItineraryComponent implements OnInit {
 
                     // Share the selected date and trip type with the service
 
-                    this.tourDataService.updateSelectedDateInfo(
+                    this.tourOrderService.updateSelectedDateInfo(
                       period.externalID,
                       undefined
                     );
@@ -368,7 +370,7 @@ export class TourItineraryComponent implements OnInit {
 
           // Share the updated selected date and trip type with the service
 
-          this.tourDataService.updateSelectedDateInfo(
+          this.tourOrderService.updateSelectedDateInfo(
             period.externalID,
             undefined
           );
@@ -480,6 +482,6 @@ export class TourItineraryComponent implements OnInit {
       id: highlight.id,
       travelersAssigned: [],
     };
-    this.tourDataService.toggleActivity(activityToToggle);
+    this.tourOrderService.toggleActivity(activityToToggle);
   }
 }

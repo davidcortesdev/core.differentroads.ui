@@ -14,6 +14,7 @@ import { Tour } from '../../../../core/models/tours/tour.model';
 import { TourDataService } from '../../../../core/services/tour-data/tour-data.service';
 import { Subscription } from 'rxjs';
 import { PeriodPricesService } from '../../../../core/services/tour-data/period-prices.service';
+import { TourOrderService } from '../../../../core/services/tour-data/tour-order.service';
 
 @Component({
   selector: 'app-tour-header',
@@ -49,8 +50,8 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     private tourComponent: TourComponent,
     private el: ElementRef,
     private renderer: Renderer2,
-    private tourDataService: TourDataService,
-    private periodPricesService: PeriodPricesService
+    private tourOrderService: TourOrderService,
+    private tourDataService: TourDataService
   ) {}
 
   ngOnInit() {
@@ -62,7 +63,7 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     // Suscribirse a cambios de pasajeros
-    this.tourDataService.selectedTravelers$.subscribe((travelers) => {
+    this.tourOrderService.selectedTravelers$.subscribe((travelers) => {
       this.adultsCount = travelers.adults;
       this.childrenCount = travelers.children;
       this.calculateTotalPrice();
@@ -72,7 +73,7 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Suscribirse a los cambios en la información de fechas y precios
     this.subscriptions.add(
-      this.tourDataService.selectedDateInfo$.subscribe((dateInfo) => {
+      this.tourOrderService.selectedDateInfo$.subscribe((dateInfo) => {
         this.selectedDate = dateInfo.date;
         this.periodID = dateInfo.periodID;
         this.tripType = dateInfo.tripType;

@@ -10,6 +10,7 @@ import { ToursService } from '../../../../core/services/tours.service';
 import { TourComponent } from '../../tour.component';
 import { TourDataService } from '../../../../core/services/tour-data/tour-data.service';
 import { Subscription } from 'rxjs';
+import { TourOrderService } from '../../../../core/services/tour-data/tour-order.service';
 
 export interface Departure {
   name: string;
@@ -72,8 +73,8 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private toursService: ToursService,
-    private tourComponent: TourComponent,
-    private tourDataService: TourDataService
+    private tourDataService: TourDataService,
+    private tourOrderService: TourOrderService
   ) {}
 
   filterCities(event: { query: string }): void {
@@ -101,7 +102,7 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
       this.travelers.babies = Math.max(0, this.travelers.babies + change);
     }
 
-    this.tourDataService.updateSelectedTravelers(this.travelers);
+    this.tourOrderService.updateSelectedTravelers(this.travelers);
     this.updatePassengerText();
   }
 
@@ -162,12 +163,12 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
 
     // Actualizar la información compartida
 
-    this.tourDataService.updateSelectedDateInfo(
+    this.tourOrderService.updateSelectedDateInfo(
       departure.externalID,
       departure.flightID
     );
 
-    this.tourDataService.updateSelectedTravelers(this.travelers);
+    this.tourOrderService.updateSelectedTravelers(this.travelers);
 
     // Emitir información de pasajeros (solo adultos y niños)
     this.passengerChange.emit({
@@ -186,12 +187,13 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
         departure.flights === this.selectedCity
     );
 
-    // Actualizar el servicio con la ciudad seleccionada
-    this.tourDataService.updateDepartureCity(this.selectedCity);
+    console.log('filteredDepartures', this.filteredDepartures);
+
+    this.addToCart(this.filteredDepartures[0]);
 
     // Si hay salidas filtradas, actualizar el precio base
     if (this.filteredDepartures.length > 0) {
-      this.tourDataService.updateBasePrice(this.filteredDepartures[0].price);
+      this.tourOrderService.updateBasePrice(this.filteredDepartures[0].price);
     }
 
     console.log('filteredDepartures', this.filteredDepartures);
@@ -217,7 +219,7 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
     // Mantenemos el año en la propiedad pero no lo mostramos en la interfaz
     this.year = this.currentMonth.getFullYear();
   }
-/*
+  /*
   previousMonth(): void {
     this.currentMonth = new Date(
       this.currentMonth.getFullYear(),
@@ -228,7 +230,7 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
     this.filterDeparturesByMonth();
   }
     */
-/*
+  /*
   nextMonth(): void {
     this.currentMonth = new Date(
       this.currentMonth.getFullYear(),
@@ -240,7 +242,7 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
   }
 */
   filterDeparturesByMonth(): void {
-   /* const startOfMonth = new Date(
+    /* const startOfMonth = new Date(
       this.currentMonth.getFullYear(),
       this.currentMonth.getMonth(),
       1
@@ -250,7 +252,7 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
       this.currentMonth.getMonth() + 1,
       0
     );*/
-/*
+    /*
     this.filteredDepartures = this.departures.filter((departure) => {
       const departureDate = new Date(departure.departureDate);
       return departureDate >= startOfMonth && departureDate <= endOfMonth;
@@ -258,7 +260,7 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
 
     // Actualizar precios con la primera salida filtrada si existe
     if (this.filteredDepartures.length > 0) {
-      this.tourDataService.updateBasePrice(this.filteredDepartures[0].price);
+      this.tourOrderService.updateBasePrice(this.filteredDepartures[0].price);
     }
   }
 
@@ -279,7 +281,7 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
         adults: this.travelers.adults,
         children: this.travelers.children,
       });
-      this.tourDataService.updateSelectedTravelers(this.travelers);
+      this.tourOrderService.updateSelectedTravelers(this.travelers);
     }, 0);
   }
 
@@ -341,8 +343,7 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
           const recommendedDeparture = this.filteredDepartures[0];
 
           // Actualizar la información compartida con los datos iniciales
-
-          this.tourDataService.updateSelectedDateInfo(
+          this.tourOrderService.updateSelectedDateInfo(
             recommendedDeparture.externalID,
             recommendedDeparture.flightID
           );

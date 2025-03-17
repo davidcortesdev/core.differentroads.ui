@@ -1,20 +1,44 @@
+// Variables
 $breakpoints: (
   sm: 576px,
   md: 768px,
   lg: 992px,
   xl: 1366px,
 );
+
 $spaces: (
   xs: 0.5rem,
   sm: 0.75rem,
   base: 1rem,
   lg: 1.5rem,
 );
+
+$border-radius: (
+  sm: 8px,
+  md: 14px,
+  lg: 18px,
+);
+
+$colors: (
+  primary: var(--p-primary-color),
+  secondary: var(--p-button-primary-color),
+  background: var(--background-azul),
+  text: var(--background-azul),
+  text-light: var(--background-azul-color-letra),
+  border: #d9d9d9,
+  border-light: #f0f0f0,
+);
+
+// Import Sass modules
+@use "sass:map";
+
+// Mixins
 @mixin resp($bp) {
-  @media (max-width: map-get($breakpoints, $bp)) {
+  @media (max-width: map.get($breakpoints, $bp)) {
     @content;
   }
 }
+
 @mixin flex($dir: row, $just: flex-start, $align: stretch, $gap: 0) {
   display: flex;
   flex-direction: $dir;
@@ -24,100 +48,71 @@ $spaces: (
     gap: $gap;
   }
 }
-.itinerary-section {
-  color: var(--background-azul);
-  text-align: center;
-  padding: map-get($spaces, lg) 0;
-  margin-bottom: 20px;
-  h2 {
-    font-size: 2rem;
-    @include resp(md) {
-      font-size: 1.5rem;
-    }
-  }
-  p {
-    margin-top: -20px;
-    font-size: 15px;
-  }
-}
-.date-option-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  gap: 0.5em;
 
-  &-text {
-    flex-grow: 1;
-    text-align: start;
-  }
-
-  .date-price {
-    font-weight: bold;
-    color: var(--background-azul);
-    width: 3rem;
-  }
-}
-
-
-
+// Main container
 .itinerary-container {
-  display: flex;
-  flex-wrap: wrap;
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-  }
-
-  @include flex(row-reverse, flex-start, stretch, map-get($spaces, lg));
-  padding: 0 map-get($spaces, lg);
+  @include flex(row-reverse, flex-start, stretch, map.get($spaces, lg));
+  padding: 0 map.get($spaces, lg);
   min-height: calc(100vh - 200px);
+  
   @include resp(xl) {
-    gap: map-get($spaces, base);
-    padding: 0 map-get($spaces, base);
+    gap: map.get($spaces, base);
+    padding: 0 map.get($spaces, base);
     min-height: calc(100vh - 180px);
   }
+  
   @include resp(lg) {
     flex-direction: column;
     min-height: auto;
   }
+  
   @include resp(sm) {
-    padding: 0 map-get($spaces, base);
+    padding: 0 map.get($spaces, base);
   }
 }
+
+// Timeline section
 .timeline-section {
   flex: 3;
   max-width: 60%;
+  
   @include resp(xl) {
     max-width: 65%;
   }
+  
   @include resp(lg) {
     max-width: 100%;
-    margin-top: map-get($spaces, lg);
+    margin-top: map.get($spaces, lg);
     order: 2;
   }
 }
+
+// Map section
 .map-section {
   flex: 2;
   position: sticky;
   top: 2rem;
   height: calc(100vh - 200px);
+  
   @include resp(lg) {
     flex: none;
     position: static;
     height: 500px;
   }
+  
   @include resp(md) {
     height: 350px;
   }
+  
   @include resp(sm) {
     height: 250px;
   }
+  
   .map-placeholder {
     width: 100%;
     height: 100%;
     background-color: #f5f5f5;
-    border-radius: 1rem;
+    border-radius: map.get($border-radius, lg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -129,123 +124,115 @@ $spaces: (
     }
   }
 }
+
+// Panel header content
 .panel-header-content {
   @include flex(row, space-between, center);
   width: 100%;
+  
   @include resp(md) {
     flex-direction: column;
     align-items: flex-start;
   }
+  
   .day-info {
     flex: 1;
+    
     .day-title {
       margin: 0;
       font-weight: 700;
-      color: var(--background-azul);
+      color: map.get($colors, text);
       font-size: 25px;
+      
       @include resp(md) {
         font-size: 17px;
       }
     }
   }
-  .header-image {
-    flex: 0 0 auto;
-    margin-left: 1rem;
-    @include resp(md) {
-      margin-left: 0;
-      margin-top: 0.5rem;
-      width: 100%;
-    }
-    .day-thumbnail {
-      margin-top: 5px;
-      width: 219px;
-      height: 100px;
-      object-fit: cover;
-      border-radius: 8px;
-      @include resp(md) {
-        width: 100%;
-        height: 100px;
-      }
-      @include resp(sm) {
-        width: 100%;
-        height: 100px;
-      }
-    }
-  }
 }
+
+// Title shared styles
 %title-shared {
   font-size: 25px;
   font-weight: 700;
   margin: 0 0 1rem 0;
-  color: var(--background-azul);
+  color: map.get($colors, text);
+  
   @include resp(xl) {
     font-size: 1.1rem;
     margin-bottom: 0.75rem;
   }
+  
   @include resp(md) {
     font-size: 1rem;
     margin-bottom: 0.5rem;
   }
 }
+
 .content-title,
 .day {
   @extend %title-shared;
 }
+
+// Itinerary content
 .itinerary-content {
-  color: var(--background-azul);
+  color: map.get($colors, text);
   display: grid;
   gap: 0.5rem;
   grid-template-columns: 1fr 1fr;
   margin: 0.5rem 0;
   margin-top: -20px;
+  
   img {
     width: 320px;
     height: 250px;
     object-fit: cover;
-    border-radius: 14px;
+    border-radius: map.get($border-radius, md);
     margin-top: 20px;
     justify-self: end;
+    
     @include resp(md) {
       height: 180px;
       width: 100%;
     }
+    
     @include resp(sm) {
       width: 100%;
       height: 200px;
     }
   }
+  
   @include resp(sm) {
     grid-template-columns: 1fr;
     gap: 0.75rem;
     grid-template-areas: "image" "description";
+    
     img {
       grid-area: image;
       justify-self: center;
     }
+    
     div:not(:has(img)) {
       grid-area: description;
     }
   }
-  @include resp(md) {
-    &:not([class*="resp-sm"]) {
-      img {
-        width: 100%;
-        max-width: 280px; /* Limita el ancho máximo en tablets */
-      }
-    }
-  }
 }
+
+// Hotel card
 .hotel-card {
-  color: var(--background-azul);
+  color: map.get($colors, text);
   @include flex(row, flex-start, center, 1rem);
-  border-radius: 18px;
-  border: 1px solid #d9d9d9;
+  border-radius: map.get($border-radius, lg);
+  border: 1px solid map.get($colors, border);
   padding: 8px;
+  margin-top: 1rem;
+  
   @include resp(xl) {
     padding: 8px 15px 8px 8px;
     gap: 0.75rem;
     margin-top: 0.75rem;
   }
+  
   @include resp(md) {
     flex-direction: column;
 
@@ -258,46 +245,57 @@ $spaces: (
       padding: 0.5rem 0;
     }
   }
+  
   &-image {
     width: 40%;
     aspect-ratio: 16 / 9;
     object-fit: cover;
-    border-radius: 14px;
+    border-radius: map.get($border-radius, md);
+    
     @include resp(xl) {
       border-radius: 10px;
     }
+    
     @include resp(sm) {
       width: 100%;
     }
   }
+  
   &-content {
     @include flex(column, flex-start, flex-start, 0.5rem);
     flex-grow: 1;
     padding: 0.75rem 0;
-    h4,
-    p {
+    
+    h4, p {
       margin: 0;
     }
+    
     h4 {
       font-size: 13px;
       font-weight: 500;
+      
       @include resp(xl) {
         font-size: 16px;
       }
     }
+    
     p {
       font-size: 14px;
+      
       @include resp(xl) {
         font-size: 13px;
       }
+      
       i {
-        color: var(--p-primary-color);
+        color: map.get($colors, primary);
       }
     }
   }
+  
   &-bookings-section {
     @include flex(row, center, center, 1rem);
     margin-top: 0.75rem;
+    
     p {
       display: inline-flex;
       height: 29px;
@@ -305,96 +303,74 @@ $spaces: (
       justify-content: center;
       align-items: center;
       border-radius: 3.314px 3.314px 3.314px 0px;
-      background: var(--background-azul);
-      color: var(--background-azul-color-letra);
+      background: map.get($colors, background);
+      color: map.get($colors, text-light);
       font-size: 11.6px;
       font-weight: 600;
     }
   }
 }
+
+// Active marker styling
+.active-marker {
+  color: map.get($colors, primary);
+  font-weight: bold;
+  transform: scale(1.2);
+}
+
+// Deep component styling
 :host ::ng-deep {
   .pi {
-    color: var(--p-primary-color);
+    color: map.get($colors, primary);
   }
+  
   [style*="background-color: rgb(156, 39, 176)"],
   [style*="#9C27B0"] {
     background-color: transparent !important;
   }
-  .itinerary-section {
-    .p-dropdown {
-      background-color: var(--background-azul);
-      color: #fff;
-      width: 280px;
-      margin: 0 auto;
-      margin-top: -10px;
-      border: 1px solid var(--background-azul);
-      border-radius: 50px;
-      .p-dropdown-label {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      .p-dropdown-item {
-        padding: 0.75rem 1rem;
-
-        &.p-highlight {
-          background-color: rgba(var(--background-azul-rgb), 0.1);
-        }
-      }
-    }
-    .p-select-label {
-      color: #fff;
-      margin-left: 10px;
-    }
-    .p-icon {
-      color: #fff;
-      margin-right: 10px;
-    }
-    .p-dropdown-panel {
-      .p-dropdown-items {
-        padding: 0.5rem 0;
-      }
-    }
-  }
+  
+  // Timeline customization
   .p-timeline {
     .p-timeline-event {
       position: relative;
+      
       .p-timeline-event-connector {
         left: 0.65rem;
       }
-      .p-timeline-event-marker {
-        //cursor: pointer;
-        //transform: translateY(3px); /* Ajuste sutil para alinear con el panel */
-      }
     }
   }
+  
   .p-timeline-event-opposite {
     flex: 0;
     margin-left: -20px;
   }
+  
   .p-timeline-event-content {
     margin-left: 1rem;
     background-color: transparent;
     padding: 0 0 1.5rem 0.5rem;
     width: 90%;
+    
     @include resp(xl) {
       padding-bottom: 1rem;
     }
+    
     @include resp(sm) {
       padding-bottom: 0.75rem;
       padding-right: 1.5rem;
     }
   }
+  
+  // Panel customization
   .custom-panel {
-    border-radius: 18px;
+    border-radius: map.get($border-radius, lg);
+    
     .p-panel-header,
     .p-panel-content {
       border-radius: 1rem;
     }
+    
     &.p-panel-expanded {
-      .p-panel-header .panel-header-content {
-        //display: none;
-      }
       .p-panel-header {
         min-height: 40px;
         display: flex;
@@ -402,17 +378,23 @@ $spaces: (
       }
     }
   }
+  
+  // Activities carousel
   .itinerary-activities {
     margin-top: 0.75rem;
+    
     @include resp(xl) {
       margin-top: 0.5rem;
     }
+    
     .p-carousel {
       width: 100%;
+      
       .p-card-body,
       .p-carousel-content {
         padding: 0;
       }
+      
       .highlight-card {
         border: none;
         margin: 0.5rem;
@@ -421,6 +403,7 @@ $spaces: (
         height: 100%;
         max-width: 20rem;
         position: relative;
+        
         @include resp(xl) {
           margin: 0.25rem;
           max-width: 15rem;
@@ -440,53 +423,61 @@ $spaces: (
           padding: 0.5rem;
           font-size: 0.9rem;
         }
+        
         .p-card-footer {
           display: flex;
           justify-content: space-between;
           align-items: center;
           padding: 0.5rem;
-          border-top: 1px solid #f0f0f0;
+          border-top: 1px solid map.get($colors, border-light);
           font-size: 1.2rem;
-          color: var(--p-primary-color);
+          color: map.get($colors, primary);
           font-weight: 600;
+          
           .p-button {
             padding: 0.5em 1.5em;
             font-weight: 300;
           }
         }
+        
         .status-badge {
           position: absolute;
           top: 0.75rem;
           right: 0.75rem;
-          background: var(--p-button-primary-color);
-          color: var(--background-azul);
+          background: map.get($colors, secondary);
+          color: map.get($colors, background);
           padding: 0.3rem 0.6rem;
-          border-radius: 8px;
+          border-radius: map.get($border-radius, sm);
           font-size: 0.9rem;
+          
           @include resp(md) {
             top: 0.5rem;
             right: 0.5rem;
             padding: 0.2rem 0.4rem;
             font-size: 0.8rem;
           }
+          
           &.optional {
-            background: var(--p-primary-color);
+            background: map.get($colors, primary);
             color: #fff;
           }
         }
+        
         h3 {
           margin: 0.5rem 0;
-          color: var(--background-azul);
+          color: map.get($colors, text);
           font-size: 1rem;
           font-weight: 600;
+          
           @include resp(md) {
             font-size: 1.1rem;
             margin: 0.25rem 0;
           }
         }
+        
         p {
           margin: 0;
-          color: var(--background-azul);
+          color: map.get($colors, text);
           line-height: 1.5;
           font-size: 0.875rem;
           display: -webkit-box;
@@ -497,24 +488,25 @@ $spaces: (
           text-overflow: ellipsis;
           flex: 1;
         }
+        
         img {
           width: 100%;
           height: 200px;
           object-fit: cover;
-          border-radius: 14px;
+          border-radius: map.get($border-radius, md);
+          
           @include resp(md) {
             height: 180px;
-          }
-          .p-button {
-            margin-top: 1rem;
-            align-self: flex-start;
           }
         }
       }
     }
+    
     .p-carousel-indicators {
       display: none;
     }
+    
+    // Responsive carousel adjustments
     @include resp(md) {
       .p-carousel {
         .p-carousel-content {
@@ -522,12 +514,14 @@ $spaces: (
           flex-wrap: wrap;
           justify-content: center;
         }
+        
         .highlight-card {
           flex: 1 1 calc(50% - 1rem);
           max-width: calc(50% - 1rem);
         }
       }
     }
+    
     @include resp(sm) {
       .p-carousel {
         .highlight-card {
@@ -540,8 +534,9 @@ $spaces: (
 }
 
 .is-purple {
+  // Empty class - consider removing if not used
 }
 
 .active-marker {
-
+  // This is already defined above - consider removing this duplicate
 }

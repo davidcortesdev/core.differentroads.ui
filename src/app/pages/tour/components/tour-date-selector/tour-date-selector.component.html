@@ -1,8 +1,9 @@
 <div class="itinerary-section">
   <h2>{{ title }}</h2>
-  <p class="date" *ngIf="selectedDate && tripType">
-    Resumen de tu itinerario - {{ selectedDate }} -
-    {{ tripType }}
+  <p class="date" *ngIf="selectedOption && tripType">
+    Resumen de tu itinerario -
+    {{ selectedOption.dayOne | date : "dd/MM/yyyy" }} -
+    {{ selectedOption.itineraryName }} - {{ tripType }}
   </p>
   <p-dropdown
     class="date"
@@ -21,11 +22,17 @@
     </ng-template>
     <ng-template let-option pTemplate="item">
       <div class="date-option-item">
-        <span class="date-option-item-text">{{ option.label }}</span>
+        <span class="date-option-item-text">{{
+          option.dayOne | date : "dd/MM/yyyy"
+        }}</span>
+        <span class="date-option-item-text" *ngIf="hasMultipleItineraries">{{
+          option.itineraryName
+        }}</span>
         <p-tag
-          *ngIf="option.tripType"
+          *ngIf="isSingleTripType(option.tripType)"
           class="trip-type"
           [styleClass]="getTripTypeClass(option.tripType)"
+          [title]="getTripTypeFullName(option.tripType)"
         >
           {{ getTripTypeLabel(option.tripType) }}
         </p-tag>

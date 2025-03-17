@@ -42,7 +42,7 @@ export interface Itinerary {
   'day-card': DayCard[];
   itineraries: {
     id: number;
-    title: string;
+    iname: string;
     periods: string[];
     days: DayCard[];
   }[];

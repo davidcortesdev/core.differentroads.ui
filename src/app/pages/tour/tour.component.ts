@@ -7,6 +7,7 @@ import { OrdersService } from '../../core/services/orders.service';
 import { Order } from '../../core/models/orders/order.model';
 import { TourDataService } from '../../core/services/tour-data/tour-data.service';
 import { TourOrderService } from '../../core/services/tour-data/tour-order.service';
+import { AuthenticateService } from '../../core/services/auth-service.service';
 
 @Component({
   selector: 'app-tour',
@@ -19,6 +20,7 @@ export class TourComponent implements OnInit, OnDestroy {
   tour?: Tour;
   loading: boolean = true;
   error: boolean = false;
+  currentUserEmail: string = '';
 
   // Subject para comunicar cambios en los pasajeros
   passengerChanges = new Subject<{ adults: number; children: number }>();
@@ -37,7 +39,8 @@ export class TourComponent implements OnInit, OnDestroy {
     private ordersService: OrdersService,
     private router: Router,
     private tourOrderService: TourOrderService,
-    private tourDataService: TourDataService
+    private tourDataService: TourDataService,
+    private authenticateService: AuthenticateService
   ) {}
 
   ngOnInit(): void {
@@ -53,6 +56,13 @@ export class TourComponent implements OnInit, OnDestroy {
         this.selectedDate = dateInfo.date;
         this.tripType = dateInfo.tripType;
         this.departureCity = dateInfo.departureCity || '';
+      })
+    );
+
+    // Suscribirse al email del usuario autenticado
+    this.subscriptions.add(
+      this.authenticateService.getUserEmail().subscribe((email) => {
+        this.currentUserEmail = email;
       })
     );
   }
@@ -114,35 +124,24 @@ export class TourComponent implements OnInit, OnDestroy {
   }
 
   createOrderAndRedirect(periodID: string): void {
-    const selectedPeriod = this.tourOrderService.getCurrentDateInfo();
-    const order: Partial<Order> = {
-      periodID: periodID,
-      retailerID: '1064',
-      status: 'AB',
-      owner: 'currentUserEmail',
-      travelers: [],
-      flights: [
-        {
-          id: selectedPeriod?.flightID || '',
-          externalID: selectedPeriod?.flightID || '',
-          name: selectedPeriod?.departureCity?.toLowerCase()?.includes('sin ')
-            ? selectedPeriod?.departureCity
-            : 'Vuelo desde ' + selectedPeriod?.departureCity,
+    const ownerEmail = this.currentUserEmail
+      ? this.currentUserEmail
+      : 'anonymous';
+    this.tourOrderService
+      .createOrder({
+        periodID: periodID,
+        status: 'AB',
+        owner: ownerEmail,
+      })
+      .subscribe({
+        next: (createdOrder) => {
+          console.log('Order created:', createdOrder);
+          this.router.navigate(['/checkout', createdOrder._id]);
         },
-      ],
-      // Se agregan las actividades añadidas desde el tourDataService
-      optionalActivitiesRef: this.tourOrderService.getSelectedActivities(),
-    };
-
-    this.ordersService.createOrder(order).subscribe({
-      next: (createdOrder) => {
-        console.log('Order created:', createdOrder);
-        this.router.navigate(['/checkout', createdOrder._id]);
-      },
-      error: (error) => {
-        console.error('Error creating order:', error);
-      },
-    });
+        error: (error) => {
+          console.error('Error creating order:', error);
+        },
+      });
   }
 
   getDuration(days: number | undefined): string {

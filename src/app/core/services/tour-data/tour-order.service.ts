@@ -2,8 +2,15 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Tour } from '../../models/tours/tour.model';
 import { PeriodPricesService } from './period-prices.service';
-import { OptionalActivityRef } from '../../models/orders/order.model';
+import {
+  OptionalActivityRef,
+  Order,
+  OrderTraveler,
+} from '../../models/orders/order.model';
 import { TourDataService } from './tour-data.service';
+import { OrdersService } from '../orders.service';
+import { Router } from '@angular/router';
+import { NotificationsService } from '../notifications.service';
 
 export interface DateInfo {
   date: string;
@@ -53,7 +60,12 @@ export class TourOrderService {
   );
   selectedActivities$ = this.selectedActivitiesSource.asObservable();
 
-  constructor(private tourDataService: TourDataService) {}
+  constructor(
+    private tourDataService: TourDataService,
+    private ordersService: OrdersService,
+    private router: Router,
+    private notificationsService: NotificationsService
+  ) {}
 
   // Método para actualizar la información
 
@@ -144,5 +156,101 @@ export class TourOrderService {
   // Nuevo método para obtener las actividades añadidas
   getSelectedActivities(): OptionalActivityRef[] {
     return this.selectedActivitiesSource.getValue();
+  }
+
+  /**
+   * Creates an order and returns the Observable for the created order
+   */
+  createOrder(options: {
+    periodID: string;
+    status: 'Budget' | 'AB';
+    owner: string;
+    traveler?: { name: string; email: string; phone: string };
+  }): Observable<Order> {
+    const selectedPeriod = this.getCurrentDateInfo();
+    if (!selectedPeriod.periodID) {
+      throw new Error('No period selected');
+    }
+
+    const order: Partial<Order> = {
+      periodID: selectedPeriod.periodID,
+      retailerID: '1064',
+      status: options.status,
+      owner: options.owner,
+      travelers: this.buildTravelers(
+        this.selectedTravelersSource.getValue(),
+        options.traveler
+      ),
+      flights: [
+        {
+          id: selectedPeriod?.flightID || '',
+          externalID: selectedPeriod?.flightID || '',
+          name: selectedPeriod?.departureCity?.toLowerCase()?.includes('sin ')
+            ? selectedPeriod?.departureCity
+            : 'Vuelo desde ' + selectedPeriod?.departureCity,
+        },
+      ],
+      optionalActivitiesRef: this.getSelectedActivities(),
+    };
+
+    // Return the observable directly so components can subscribe to it
+    return this.ordersService.createOrder(order);
+  }
+
+  /**
+   * Builds traveler objects from traveler counts and lead traveler data
+   */
+  buildTravelers(
+    travelers: Travelers,
+    leadTraveler?: { name: string; email: string; phone: string }
+  ): OrderTraveler[] {
+    const travelersArray: OrderTraveler[] = [];
+
+    const createTraveler = (type: string, i: number): OrderTraveler => ({
+      lead: i === 0,
+      travelerData: {
+        name:
+          i === 0
+            ? leadTraveler?.name || 'Pasajero ' + (i + 1)
+            : 'Pasajero ' + (i + 1),
+        email: i === 0 && leadTraveler?.email ? leadTraveler.email : '',
+        phone: i === 0 && leadTraveler?.phone ? leadTraveler.phone : '',
+        ageGroup: type,
+      },
+    });
+
+    for (let i = 0; i < travelers.adults; i++) {
+      travelersArray.push(createTraveler('Adultos', i));
+    }
+
+    for (let i = 0; i < travelers.children; i++) {
+      travelersArray.push(createTraveler('Niños', i + travelers.adults));
+    }
+
+    for (let i = 0; i < travelers.babies; i++) {
+      travelersArray.push(
+        createTraveler('Bebes', i + travelers.adults + travelers.children)
+      );
+    }
+
+    return travelersArray;
+  }
+
+  /**
+   * Creates a formatted text representation of travelers
+   */
+  getTravelersText(travelers: Travelers): string {
+    const { adults, children, babies } = travelers;
+
+    const adultsText =
+      adults > 0 ? `${adults} Adulto${adults > 1 ? 's' : ''}` : '';
+    const childrenText =
+      children > 0 ? `${children} Niño${children > 1 ? 's' : ''}` : '';
+    const babiesText =
+      babies > 0 ? `${babies} Bebé${babies > 1 ? 's' : ''}` : '';
+
+    return [adultsText, childrenText, babiesText]
+      .filter((text) => text)
+      .join(', ');
   }
 }

@@ -101,143 +101,96 @@ export class BudgetDialogComponent implements OnInit {
   }
 
   createOrder(): void {
-    const { selectedPeriod } = this;
+    if (!this.validateForm()) {
+      return;
+    }
+    this.loading = true;
 
-    const order: Partial<Order> = {
-      periodID: selectedPeriod?.periodID,
-      retailerID: '1064',
-      status: 'Budget',
-      owner: this.traveler.email,
-      travelers: this.buildTravelers(),
-      flights: [
-        {
-          id: selectedPeriod?.flightID || '',
-          externalID: selectedPeriod?.flightID || '',
-          name: this.selectedPeriod?.departureCity
-            ?.toLowerCase()
-            ?.includes('sin ')
-            ? this.selectedPeriod?.departureCity
-            : 'Vuelo desde ' + this.selectedPeriod?.departureCity,
+    this.tourOrderService
+      .createOrder({
+        periodID: this.selectedPeriod?.periodID || '',
+        status: 'Budget',
+        owner: this.traveler.email,
+        traveler: this.traveler,
+      })
+      .subscribe({
+        next: (createdOrder) => {
+          console.log('Order created:', createdOrder);
+
+          const travelers = this.travelers;
+          const selectedPeriod = this.selectedPeriod;
+
+          const products = [];
+
+          if (travelers.adults > 0) {
+            products.push({
+              name: 'Paquete básico Adultos',
+              units: travelers.adults,
+              singlePrice: this.tourDataService.getPeriodPrice(
+                selectedPeriod?.periodID!,
+                true
+              ),
+            });
+          }
+
+          if (travelers.children > 0) {
+            products.push({
+              name: 'Paquete básico Niños',
+              units: travelers.children,
+              singlePrice: this.tourDataService.getPeriodPrice(
+                selectedPeriod?.periodID!,
+                true
+              ),
+            });
+          }
+
+          if (
+            selectedPeriod?.flightID &&
+            !selectedPeriod?.departureCity?.toLowerCase()?.includes('sin ')
+          ) {
+            products.push({
+              name: !selectedPeriod?.departureCity
+                ?.toLowerCase()
+                ?.includes('vuelo')
+                ? 'Vuelo desde ' + selectedPeriod?.departureCity
+                : selectedPeriod?.departureCity,
+              units: travelers.adults + travelers.children,
+              singlePrice: this.tourDataService.getFlightPrice(
+                selectedPeriod?.periodID!,
+                selectedPeriod?.flightID!
+              ),
+            });
+          }
+
+          // Send budget notification email
+          this.notificationsService
+            .sendBudgetNotificationEmail({
+              id: createdOrder._id,
+              email: this.traveler.email,
+              products,
+            })
+            .subscribe({
+              next: (response) => {
+                console.log('Budget notification sent:', response);
+                this.loading = false;
+                this.handleCloseModal();
+                this.traveler = { name: '', email: '', phone: '' };
+                this.close.emit();
+              },
+              error: (error) => {
+                console.error('Error sending budget notification:', error);
+                this.loading = false;
+              },
+            });
         },
-      ],
-    };
-
-    this.ordersService.createOrder(order).subscribe({
-      next: (createdOrder) => {
-        const products = [];
-        if (this.travelers.adults > 0) {
-          products.push({
-            name: 'Paquete básico Adultos',
-            units: this.travelers.adults,
-            singlePrice: this.tourDataService.getPeriodPrice(
-              this.selectedPeriod?.periodID!,
-              true
-            ),
-          });
-        }
-        if (this.travelers.children > 0) {
-          products.push({
-            name: 'Paquete básico Niños',
-            units: this.travelers.children,
-            singlePrice: this.tourDataService.getPeriodPrice(
-              this.selectedPeriod?.periodID!,
-              true
-            ),
-          });
-        }
-        if (
-          this.selectedPeriod?.flightID &&
-          !this.selectedPeriod?.departureCity?.toLowerCase()?.includes('sin ')
-        ) {
-          products.push({
-            name: this.selectedPeriod?.departureCity
-              ?.toLowerCase()
-              ?.includes('sin ')
-              ? this.selectedPeriod?.departureCity
-              : 'Vuelo desde ' + this.selectedPeriod?.departureCity,
-            units: this.travelers.adults + this.travelers.children,
-            singlePrice: this.tourDataService.getFlightPrice(
-              this.selectedPeriod?.periodID!,
-              this.selectedPeriod?.flightID!
-            ),
-          });
-        }
-        this.notificationsService
-          .sendBudgetNotificationEmail({
-            id: createdOrder._id,
-            email: this.traveler.email,
-            products,
-          })
-          .subscribe({
-            next: (response) => {
-              console.log('Budget notification sent:', response);
-              this.loading = false;
-              this.handleCloseModal();
-              this.traveler = {
-                name: '',
-                email: '',
-                phone: '',
-              };
-              this.close.emit();
-            },
-            error: (error) => {
-              console.error('Error sending budget notification:', error);
-              this.loading = false;
-            },
-          });
-      },
-      error: (error) => {
-        console.error('Error creating order:', error);
-        this.loading = false;
-      },
-    });
-  }
-
-  buildTravelers(): OrderTraveler[] {
-    const travelers: OrderTraveler[] = [];
-
-    const createTraveler = (type: string, i: number): OrderTraveler => ({
-      lead: i === 0,
-      travelerData: {
-        name: i === 0 ? this.traveler.name : 'Pasajero ' + i,
-        email: i === 0 ? this.traveler.email : '',
-        phone: i === 0 ? this.traveler.phone : '',
-        ageGroup: type,
-      },
-    });
-
-    for (let i = 0; i < this.travelers.adults; i++) {
-      travelers.push(createTraveler('Adultos', i));
-    }
-
-    for (let i = 0; i < this.travelers.children; i++) {
-      travelers.push(createTraveler('Niños', i + this.travelers.adults));
-    }
-
-    for (let i = 0; i < this.travelers.babies; i++) {
-      travelers.push(
-        createTraveler(
-          'Bebes',
-          i + this.travelers.adults + this.travelers.children
-        )
-      );
-    }
-
-    return travelers;
+        error: (error) => {
+          console.error('Error creating order:', error);
+          this.loading = false;
+        },
+      });
   }
 
   getTravelersText() {
-    const { adults, children, babies } = this.travelers;
-
-    const adultsText =
-      adults > 0 ? `${adults} Adulto` : '' + (adults > 1 ? 's' : '');
-    const childrenText =
-      children > 0 ? `${children} Niño` : '' + (children > 1 ? 's' : '');
-    const babiesText =
-      babies > 0 ? `${babies} Bebé` : '' + (babies > 1 ? 's' : '');
-
-    return [adultsText, childrenText, babiesText]
-      .filter((text) => text)
-      .join(', ');
+    return this.tourOrderService.getTravelersText(this.travelers);
   }
 }

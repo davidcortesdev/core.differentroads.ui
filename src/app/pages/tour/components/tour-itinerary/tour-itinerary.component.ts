@@ -14,19 +14,14 @@ import { TourDataService } from '../../../../core/services/tour-data/tour-data.s
 import { CAROUSEL_CONFIG } from '../../../../shared/constants/carousel.constants';
 import { PeriodPricesService } from '../../../../core/services/tour-data/period-prices.service';
 import { OptionalActivityRef } from '../../../../core/models/orders/order.model';
+import { DateOption } from '../tour-date-selector/tour-date-selector.component';
 
 interface City {
   nombre: string;
   lat: number;
   lng: number;
 }
-interface DateOption {
-  label: string;
-  value: string;
-  price: number;
-  isGroup: boolean;
-  externalID?: string;
-}
+
 interface EventItem {
   status?: string;
   date?: string;
@@ -89,6 +84,7 @@ export class TourItineraryComponent implements OnInit {
   protected carouselConfig = CAROUSEL_CONFIG;
 
   selectedOption: DateOption = {
+    id:0,
     label: '',
     value: '',
     price: 0,
@@ -193,12 +189,19 @@ export class TourItineraryComponent implements OnInit {
           .subscribe({
             next: (tourData) => {
               this.dateOptions = tourData.activePeriods.map((period) => {
+                let iti =
+                  tourData['itinerary-section'].itineraries;
+                  console.log('iti',iti);
                 return {
+                  id: period.id,
                   label: period.name,
                   value: period.externalID + '',
                   price: (period.basePrice || 0) + (tourData.basePrice || 0),
                   isGroup: true,
                   tripType: period.tripType,
+                  itineraryId: iti.filter(f => f.periods.some(p => p.includes(period.id+'')))[0]?.id,
+                  itineraryName: iti.filter(f => f.periods.some(p => p.includes(period.id+'')))[0]?.iname,
+                  dayOne: period.dayOne,
                 };
               });
               this.selectedOption = this.dateOptions[0];

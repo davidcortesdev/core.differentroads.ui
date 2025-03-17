@@ -1,6 +1,6 @@
 <div class="itinerary-section">
   <h2>{{ title }}</h2>
-  <p class="date">
+  <p class="date" *ngIf="selectedDate && tripType">
     Resumen de tu itinerario - {{ selectedDate }} -
     {{ tripType }}
   </p>
@@ -12,6 +12,7 @@
     optionValue="value"
     (onChange)="onDateChange($event)"
     placeholder="Cambiar fecha"
+    [disabled]="dateOptions.length === 0"
   >
     <ng-template pTemplate="selectedItem">
       <div class="date-option-item">
@@ -24,8 +25,7 @@
         <p-tag
           *ngIf="getTagConfig(option.tripType)"
           [severity]="getTagConfig(option.tripType)?.color"
-          >{{ getTagConfig(option.tripType)?.value }}
-        </p-tag>
+        >{{ getTagConfig(option.tripType)?.value }}</p-tag>
         <span class="date-price">{{
           option.price | currencyFormat : "EUR"
         }}</span>

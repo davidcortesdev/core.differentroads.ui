@@ -1,6 +1,6 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 
-interface DateOption {
+export interface DateOption {
   label: string;
   value: string;
   price: number;
@@ -9,12 +9,18 @@ interface DateOption {
   externalID?: string;
 }
 
+export interface TagConfig {
+  type: string;
+  color: 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' | undefined;
+  value: string;
+}
+
 @Component({
   selector: 'app-tour-date-selector',
   standalone: false,
-  
   templateUrl: './tour-date-selector.component.html',
-  styleUrls: ['./tour-date-selector.component.scss']
+  styleUrls: ['./tour-date-selector.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TourDateSelectorComponent {
   @Input() title: string = '';
@@ -28,19 +34,16 @@ export class TourDateSelectorComponent {
     isGroup: false
   };
   @Input() showPlaceholder: boolean = true;
-  @Input() tagsOptions: {
-    type: string;
-    color: 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' | undefined;
-    value: string;
-  }[] = [];
+  @Input() tagsOptions: TagConfig[] = [];
 
-  @Output() dateChange = new EventEmitter<any>();
+  @Output() dateChange = new EventEmitter<{value: string}>();
 
-  onDateChange(event: any): void {
+  onDateChange(event: {value: string}): void {
     this.dateChange.emit(event);
   }
 
-  getTagConfig(tripType: string) {
+  getTagConfig(tripType?: string): TagConfig | undefined {
+    if (!tripType) return undefined;
     return this.tagsOptions.find((tag) => tag.type === tripType);
   }
 }

@@ -58,20 +58,20 @@ export class TourDateSelectorComponent implements OnInit {
   @Output() dateChange = new EventEmitter<{ value: string }>();
 
   readonly tripTypeMap: Record<TripTypeKey, TripTypeInfo> = {
-    [TripType.Single]: { 
-      label: 'S', 
+    [TripType.Single]: {
+      label: 'S',
       class: 'trip-type-s',
-      fullName: 'Single'
+      fullName: 'Single',
     },
-    [TripType.Grupo]: { 
-      label: 'G', 
+    [TripType.Grupo]: {
+      label: 'G',
       class: 'trip-type-g',
-      fullName: 'Grupo'
+      fullName: 'Grupo',
     },
-    [TripType.Private]: { 
-      label: 'P', 
+    [TripType.Private]: {
+      label: 'P',
       class: 'trip-type-p',
-      fullName: 'Privado'
+      fullName: 'Privado',
     },
   };
 
@@ -113,5 +113,15 @@ export class TourDateSelectorComponent implements OnInit {
     );
 
     return uniqueItineraryIds.size > 1;
+  }
+
+  /**
+   * Checks if the provided trip type is 'single'
+   * @param type The trip type to check
+   * @returns True if the trip type is 'single', false otherwise
+   */
+  isSingleTripType(type: string | undefined): boolean {
+    if (!type) return false;
+    return type.toLowerCase() === TripType.Single;
   }
 }

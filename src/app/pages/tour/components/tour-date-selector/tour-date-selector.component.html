@@ -29,7 +29,7 @@
           option.itineraryName
         }}</span>
         <p-tag
-          *ngIf="option.tripType && option.tripType.toLowerCase() === 'single'"
+          *ngIf="isSingleTripType(option.tripType)"
           class="trip-type"
           [styleClass]="getTripTypeClass(option.tripType)"
           [title]="getTripTypeFullName(option.tripType)"

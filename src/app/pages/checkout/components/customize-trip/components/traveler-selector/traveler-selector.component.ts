@@ -33,7 +33,7 @@ export class TravelerSelectorComponent implements OnInit {
       this.travelersNumbers.childs + this.travelersNumbers.babies
     ) {
       this.adultsErrorMsg =
-        'Se requieren al menos 2 adultos por cada niño o bebé.';
+        'La cantidad de niños y bebés debe ser menor o igual a la de adultos.';
     } else {
       this.adultsErrorMsg = '';
     }

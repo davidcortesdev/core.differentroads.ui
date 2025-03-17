@@ -74,7 +74,7 @@ export class FlightItineraryComponent implements OnChanges {
 
   getSegmentsArrivalDate(baseDate: string | undefined, segments: any[]): Date {
     if (!segments || segments.length === 0) {
-      return new Date(Date.UTC(1970, 0, 1));
+      return new Date(Date.now());
     }
     const finalDate = baseDate ? new Date(baseDate + 'T00:00:00Z') : new Date();
     finalDate.setUTCHours(0, 0, 0, 0);

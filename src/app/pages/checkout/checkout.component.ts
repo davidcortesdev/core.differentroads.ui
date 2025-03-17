@@ -488,10 +488,11 @@ export class CheckoutComponent implements OnInit {
         if (childs + babies > adults) {
           this.messageService.add({
             severity: 'error',
-            summary: 'Error',
+            summary: 'Número incorrecto de viajeros',
             detail:
-              'La cantidad de niños y bebés debe ser menor o igual a la de adultos.',
+              'La cantidad de niños y bebés no puede superar el número de adultos. Por favor, ajusta la selección.',
           });
+
           return false;
         }
         const totalTravelers = adults + childs + babies;
@@ -502,10 +503,11 @@ export class CheckoutComponent implements OnInit {
         if (totalTravelers > totalCapacity) {
           this.messageService.add({
             severity: 'error',
-            summary: 'Habitaciones inválidas',
+            summary: 'Selección de habitaciones incorrecta',
             detail:
-              'Las habitaciones seleccionadas no corresponden a la cantidad de viajeros.',
+              'La cantidad de habitaciones seleccionadas no coincide con el número de viajeros.',
           });
+
           return false;
         }
         break;

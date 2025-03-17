@@ -10,10 +10,10 @@
           </span>
         </div>
         <span class="journey-item-departure-time">
-          {{ journey.departure.time | date : "HH:mm" }}
+          {{ journey.departure.time | date : "HH:mm" : "UTC" }}
         </span>
         <span class="journey-item-departure-date">
-          {{ journey.departure.date | date : "dd-MM-yyyy" }}
+          {{ journey.departure.date | date : "dd-MM-yyyy" : "UTC" }}
         </span>
       </div>
 
@@ -30,13 +30,13 @@
                 <strong>Salida:</strong> {{ item.departureCity }} ({{
                   item.departureIata
                 }}) -
-                {{ item.departureDateTime | date : "dd-MM-yyyy HH:mm" }}
+                {{ item.departureDateTime | date : "dd-MM-yyyy HH:mm" : "UTC" }}
               </p>
               <p>
                 <strong>Llegada:</strong> {{ item.arrivalCity }} ({{
                   item.arrivalIata
                 }}) -
-                {{ item.arrivalDateTime | date : "dd-MM-yyyy HH:mm" }}
+                {{ item.arrivalDateTime | date : "dd-MM-yyyy HH:mm" : "UTC" }}
               </p>
             </ng-template>
           </p-timeline>
@@ -69,10 +69,10 @@
           </span>
         </div>
         <span class="journey-item-departure-time">
-          {{ journey.arrival.time | date : "HH:mm" }}
+          {{ journey.arrival.time | date : "HH:mm" : "UTC" }}
         </span>
         <span class="journey-item-departure-date">
-          {{ journey.arrival.date | date : "dd-MM-yyyy" }}
+          {{ journey.arrival.date | date : "dd-MM-yyyy" : "UTC" }}
         </span>
       </div>
     </div>

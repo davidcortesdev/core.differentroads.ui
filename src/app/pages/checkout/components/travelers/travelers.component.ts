@@ -243,7 +243,7 @@ export class TravelersComponent implements OnInit {
         if (missingFields.length > 0) {
           this.messageService.add({
             severity: 'error',
-            summary: `Faltan datos para viajero ${index + 1}`,
+            summary: `Faltan datos para pasajero ${index + 1}`,
             detail: 'Debes llenar todos los campos obligatorios',
           });
         }

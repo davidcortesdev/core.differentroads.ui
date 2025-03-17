@@ -2,7 +2,7 @@
   <h2>{{ highlightsTitle }}</h2>
 
   <p-carousel
-    autoplayInterval="7000"
+    [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
     [value]="highlights"
     [numVisible]="5"
     [numScroll]="1"

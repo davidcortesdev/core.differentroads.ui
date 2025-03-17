@@ -12,7 +12,7 @@ import {
   CarouselCard,
   ResponsiveOption,
 } from '../../../../core/models/carousel.model';
-
+import { CAROUSEL_CONFIG } from '../../../../shared/constants/carousel.constants';
 @Component({
   selector: 'app-carousel-section',
   standalone: false,
@@ -24,6 +24,7 @@ export class CarouselSectionComponent implements OnInit {
   @Input() content!: FullSliderContent;
   @Input() type!: BlockType;
   @Input() title!: string;
+  protected carouselConfig = CAROUSEL_CONFIG;
 
   protected cards: CarouselCard[] = [];
   protected textoquill = '';

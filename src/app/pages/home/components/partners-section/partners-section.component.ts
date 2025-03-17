@@ -4,6 +4,7 @@ import {
   PartnersSection,
 } from '../../../../core/models/general/partners-section.model';
 import { GeneralConfigService } from '../../../../core/services/general-config.service';
+import { CAROUSEL_CONFIG } from '../../../../shared/constants/carousel.constants';
 
 @Component({
   selector: 'app-partners-section',
@@ -19,24 +20,25 @@ export class PartnersSectionComponent implements OnInit {
     {
       breakpoint: '1800px',
       numVisible: 4,
-      numScroll: 1
+      numScroll: 1,
     },
     {
       breakpoint: '1300px',
       numVisible: 3,
-      numScroll: 1
+      numScroll: 1,
     },
     {
       breakpoint: '1000px',
       numVisible: 2,
-      numScroll: 1
+      numScroll: 1,
     },
     {
       breakpoint: '700px',
       numVisible: 1,
-      numScroll: 1
-    }
+      numScroll: 1,
+    },
   ];
+  protected carouselConfig = CAROUSEL_CONFIG;
 
   constructor(private generalConfigService: GeneralConfigService) {}
 

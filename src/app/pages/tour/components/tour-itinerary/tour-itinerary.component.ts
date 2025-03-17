@@ -11,6 +11,7 @@ import { PeriodsService } from '../../../../core/services/periods.service';
 import { Period } from '../../../../core/models/tours/period.model';
 import { Activity } from '../../../../core/models/tours/activity.model';
 import { TourDataService } from '../../../../core/services/tour-data/tour-data.service';
+import { CAROUSEL_CONFIG } from '../../../../shared/constants/carousel.constants';
 import { PeriodPricesService } from '../../../../core/services/tour-data/period-prices.service';
 import { OptionalActivityRef } from '../../../../core/models/orders/order.model';
 
@@ -85,6 +86,7 @@ export class TourItineraryComponent implements OnInit {
   events: EventItem[];
   title: string = 'Itinerario';
   dateOptions: DateOption[] = [];
+  protected carouselConfig = CAROUSEL_CONFIG;
 
   selectedOption: DateOption = {
     label: '',

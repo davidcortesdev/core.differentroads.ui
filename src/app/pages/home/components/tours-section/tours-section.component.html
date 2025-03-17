@@ -1,5 +1,5 @@
 <section class="tours-section">
-  <h2 class="title">{{title}}</h2>
+  <h2 class="title">{{ title }}</h2>
   <p-carousel
     [value]="tours"
     [numVisible]="5"
@@ -7,7 +7,7 @@
     [circular]="true"
     [responsiveOptions]="responsiveOptions"
     [showNavigators]="false"
-    [autoplayInterval]="5000"
+    [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
   >
     <ng-template let-tour pTemplate="item">
       <app-tour-card

@@ -11,6 +11,7 @@ import { PeriodsService } from '../../../../core/services/periods.service';
 import { Period } from '../../../../core/models/tours/period.model';
 import { Activity } from '../../../../core/models/tours/activity.model';
 import { TourDataService } from '../../../../core/services/tour-data.service';
+import { CAROUSEL_CONFIG } from '../../../../shared/constants/carousel.constants';
 
 interface City {
   nombre: string;
@@ -83,6 +84,7 @@ export class TourItineraryComponent implements OnInit {
   events: EventItem[];
   title: string = 'Itinerario';
   dateOptions: DateOption[] = [];
+  protected carouselConfig = CAROUSEL_CONFIG;
 
   selectedOption: DateOption = {
     label: '',

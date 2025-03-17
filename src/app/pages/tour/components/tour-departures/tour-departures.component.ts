@@ -217,7 +217,7 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
     // Mantenemos el año en la propiedad pero no lo mostramos en la interfaz
     this.year = this.currentMonth.getFullYear();
   }
-
+/*
   previousMonth(): void {
     this.currentMonth = new Date(
       this.currentMonth.getFullYear(),
@@ -227,7 +227,8 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
     this.updateMonthDisplay();
     this.filterDeparturesByMonth();
   }
-
+    */
+/*
   nextMonth(): void {
     this.currentMonth = new Date(
       this.currentMonth.getFullYear(),
@@ -237,9 +238,9 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
     this.updateMonthDisplay();
     this.filterDeparturesByMonth();
   }
-
+*/
   filterDeparturesByMonth(): void {
-    const startOfMonth = new Date(
+   /* const startOfMonth = new Date(
       this.currentMonth.getFullYear(),
       this.currentMonth.getMonth(),
       1
@@ -248,12 +249,12 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
       this.currentMonth.getFullYear(),
       this.currentMonth.getMonth() + 1,
       0
-    );
-
+    );*/
+/*
     this.filteredDepartures = this.departures.filter((departure) => {
       const departureDate = new Date(departure.departureDate);
       return departureDate >= startOfMonth && departureDate <= endOfMonth;
-    });
+    });*/
 
     // Actualizar precios con la primera salida filtrada si existe
     if (this.filteredDepartures.length > 0) {

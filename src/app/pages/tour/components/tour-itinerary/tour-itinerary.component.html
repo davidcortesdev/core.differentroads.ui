@@ -44,14 +44,21 @@
       >
         <ng-template pTemplate="marker" let-event>
           <!-- Marcador del timeline clickeable con indicador visual de activo -->
-          <span
+          <span class="pi pi-map-marker" style="padding-top: 1rem; font-size: larger; cursor: pointer;"
+          [ngClass]="{ 'active-marker': !event.collapsed }"
+          [attr.data-index]="itinerary.indexOf(event)"
+            (click)="markerClicked($event)"
+          ></span>
+        <!--  <span
             class="p-timeline-event-marker clickable-marker"
             [ngClass]="{ 'active-marker': !event.collapsed }"
             [style.backgroundColor]="event.color"
             [attr.data-index]="itinerary.indexOf(event)"
             (click)="markerClicked($event)"
           >
+          
           </span>
+          -->
         </ng-template>
         <ng-template pTemplate="content" let-event>
           <p-panel
@@ -69,18 +76,18 @@
                 <div class="day-info">
                   <h3 class="day-title">{{ event.title }}</h3>
                 </div>
-                <div class="header-image">
+                <!--<div class="header-image">
                   <img
                     *ngIf="event.image"
                     [src]="event.image"
                     [alt]="event.title"
                     class="day-thumbnail"
                   />
-                </div>
+                </div>-->
               </div>
             </ng-template>
             <ng-template pTemplate="content">
-              <h3 class="content-title">{{ event.title }}</h3>
+              <!-- <h3 class="content-title">{{ event.title }}</h3> -->
               <div class="itinerary-content">
                 <div [innerHTML]="event.description"></div>
                 <img

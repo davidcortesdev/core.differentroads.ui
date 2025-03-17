@@ -1,10 +1,13 @@
-import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA, LOCALE_ID } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule } from '@angular/forms';
 import { ApplicationConfig } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+
+import { registerLocaleData } from '@angular/common';
+import localeEs from '@angular/common/locales/es';
 
 import { HttpClient } from '@angular/common/http';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
@@ -157,6 +160,9 @@ import { InsurancesComponent } from './pages/checkout/components/customize-trip/
 import { Dialog } from 'primeng/dialog';
 import { BudgetDialogComponent } from './pages/tour/components/budget-dialog/budget-dialog.component';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
+import { Amplify } from 'aws-amplify';
+import awsconfig from '../../src/aws-exports';
+import { TripTypesSectionComponent } from './pages/home/components/trip-types-section/trip-types-section.component';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
@@ -164,6 +170,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 }
 
 import { MessageService } from 'primeng/api';
+// Register Spanish locale data
+registerLocaleData(localeEs);
 
 @NgModule({
   declarations: [
@@ -243,6 +251,7 @@ import { MessageService } from 'primeng/api';
     PaymentsInformationSectionComponent,
     InsurancesComponent,
     BudgetDialogComponent,
+    TripTypesSectionComponent,
   ],
   imports: [
     // Angular Modules
@@ -317,6 +326,8 @@ import { MessageService } from 'primeng/api';
   providers: [
     provideAnimationsAsync(),
     provideHttpClient(),
+    // Add this provider to set Spanish as the default locale
+    { provide: LOCALE_ID, useValue: 'es-ES' },
     /*providePrimeNG({
       theme: {
         preset: Aura,
@@ -342,4 +353,8 @@ import { MessageService } from 'primeng/api';
   bootstrap: [AppComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class AppModule {}
+export class AppModule {
+  constructor() {
+    Amplify.configure(awsconfig);
+  }
+}

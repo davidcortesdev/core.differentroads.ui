@@ -14,6 +14,7 @@ import { PasswordModule } from 'primeng/password';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
 import { UsersService } from '../../../../core/services/users.service';
+import { HubspotService } from '../../../../core/services/hubspot.service'; // Importar el servicio de Hubspot
 
 @Component({
   selector: 'app-sign-up-form',
@@ -36,18 +37,47 @@ export class SignUpFormComponent {
   isLoading: boolean = false;
   isConfirming: boolean = false;
   isRedirecting: boolean = false;
-  errors: { [key: string]: any } = {};
-  confirmErrors: { [key: string]: any } = {};
   errorMessage: string = '';
   successMessage: string = '';
   registeredUsername: string = '';
   userPassword: string = '';
 
+  // Mensajes de error personalizados
+  errorMessages: { [key: string]: { [key: string]: string } } = {
+    firstName: {
+      required: 'El nombre es requerido.',
+    },
+    lastName: {
+      required: 'El apellido es requerido.',
+    },
+    email: {
+      required: 'El correo electrónico es requerido.',
+      email: 'Ingresa un correo electrónico válido.',
+    },
+    phone: {
+      required: 'El teléfono es requerido.',
+      pattern: 'El teléfono debe tener 10 dígitos.',
+    },
+    password: {
+      required: 'La contraseña es requerida.',
+      minlength: 'La contraseña debe tener al menos 8 caracteres.',
+    },
+    confirmPassword: {
+      required: 'Confirma tu contraseña.',
+      mismatch: 'Las contraseñas no coinciden.',
+    },
+    confirmationCode: {
+      required: 'El código de confirmación es requerido.',
+      pattern: 'El código debe contener solo números.',
+    },
+  };
+
   constructor(
     private fb: FormBuilder,
     private router: Router,
     private authService: AuthenticateService,
-    private usersService: UsersService
+    private usersService: UsersService,
+    private hubspotService: HubspotService // Inyectar el servicio de Hubspot
   ) {
     this.signUpForm = this.fb.group(
       {
@@ -72,10 +102,13 @@ export class SignUpFormComponent {
 
   signInWithGoogle(): void {
     this.isLoading = true;
-    setTimeout(() => {
+    this.authService.handleGoogleSignIn().then(() => {
       this.isLoading = false;
-      console.log('Inicio de sesión con Google simulado.');
-    }, 2000);
+    }).catch((error) => {
+      this.isLoading = false;
+      this.errorMessage = 'Error al iniciar sesión con Google';
+      console.error(error);
+    });
   }
 
   passwordMatchValidator(form: FormGroup) {
@@ -86,7 +119,6 @@ export class SignUpFormComponent {
 
   onSubmit() {
     if (this.signUpForm.invalid) {
-      this.errors = this.getFormErrors(this.signUpForm);
       this.errorMessage = 'Por favor, corrige los errores en el formulario.';
       return;
     }
@@ -94,42 +126,62 @@ export class SignUpFormComponent {
     this.isLoading = true;
     console.log('Formulario enviado:', this.signUpForm.value);
 
-    this.authService
-      .signUp(this.signUpForm.value.email, this.signUpForm.value.password)
-      .then(() => {
-        this.usersService
-          .createUser({
-            email: this.signUpForm.value.email,
-            names: this.signUpForm.value.firstName,
-            lastname: this.signUpForm.value.lastName,
-            phone: this.signUpForm.value.phone,
-          })
-          .subscribe(
-            () => {
-              this.isLoading = false;
-              this.isConfirming = true;
-              this.registeredUsername = this.signUpForm.value.email;
-              this.userPassword = this.signUpForm.value.password;
-              this.confirmForm.patchValue({
-                username: this.registeredUsername,
-              });
-              console.log('Registro completado. Esperando confirmación.');
-            },
-            (error) => {
+    // Crear el contacto en Hubspot primero
+    const contactData = {
+      email: this.signUpForm.value.email,
+      firstname: this.signUpForm.value.firstName,
+      lastname: this.signUpForm.value.lastName,
+      phone: this.signUpForm.value.phone,
+    };
+
+    this.hubspotService.createContact(contactData)
+      .subscribe({
+        next: (hubspotResponse) => {
+          console.log('Contacto creado en Hubspot exitosamente:', hubspotResponse);
+
+          // Si Hubspot responde correctamente, proceder con el registro del usuario
+          this.authService
+            .signUp(this.signUpForm.value.email, this.signUpForm.value.password)
+            .then(() => {
+              this.usersService
+                .createUser({
+                  email: this.signUpForm.value.email,
+                  names: this.signUpForm.value.firstName,
+                  lastname: this.signUpForm.value.lastName,
+                  phone: this.signUpForm.value.phone,
+                })
+                .subscribe(
+                  () => {
+                    this.isLoading = false;
+                    this.isConfirming = true;
+                    this.registeredUsername = this.signUpForm.value.email;
+                    this.userPassword = this.signUpForm.value.password;
+                    this.confirmForm.patchValue({
+                      username: this.registeredUsername,
+                    });
+                    console.log('Registro completado. Esperando confirmación.');
+                  },
+                  (error) => {
+                    this.isLoading = false;
+                    this.errorMessage = error.message || 'Registro fallido';
+                  }
+                );
+            })
+            .catch((error) => {
               this.isLoading = false;
               this.errorMessage = error.message || 'Registro fallido';
-            }
-          );
-      })
-      .catch((error) => {
-        this.isLoading = false;
-        this.errorMessage = error.message || 'Registro fallido';
+            });
+        },
+        error: (hubspotError) => {
+          this.isLoading = false;
+          this.errorMessage = 'Error al crear el contacto en Hubspot';
+          console.error('Error al crear contacto en Hubspot:', hubspotError);
+        }
       });
   }
 
   onConfirm() {
     if (this.confirmForm.invalid) {
-      this.confirmErrors = this.getFormErrors(this.confirmForm);
       this.errorMessage = 'Por favor, corrige los errores en el formulario.';
       return;
     }
@@ -158,15 +210,12 @@ export class SignUpFormComponent {
       });
   }
 
-  getFormErrors(form: FormGroup): { [key: string]: any } {
-    const errors: { [key: string]: any } = {};
-    Object.keys(form.controls).forEach((key) => {
-      const control = form.get(key);
-      if (control?.errors) {
-        errors[key] = control.errors;
-      }
-    });
-    return errors;
+  getErrorMessage(controlName: string, errors: any): string {
+    if (errors) {
+      const errorKey = Object.keys(errors)[0];
+      return this.errorMessages[controlName][errorKey] || 'Error desconocido.';
+    }
+    return '';
   }
 
   redirectToLogin(): void {

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { HomeService } from '../../../../core/services/home.service';
 import { GeneralConfigService } from '../../../../core/services/general-config.service';
 import { BannerSection } from '../../../../core/models/home/banner/banner-section.model';
@@ -11,19 +11,13 @@ import { Router } from '@angular/router';
   templateUrl: './hero-section.component.html',
   styleUrls: ['./hero-section.component.scss'],
 })
-export class HeroSectionComponent {
+export class HeroSectionComponent implements OnInit {
   @Input() initialDestination: string | null = null;
   @Input() initialDepartureDate: Date | null = null;
   @Input() initialReturnDate: Date | null = null;
   @Input() initialTripType: string | null = null;
 
   bannerSection!: BannerSection;
-
-  ngOnInit(): void {
-    this.getBannerSection();
-    this.getFiltersSection();
-    this.setInitialValues();
-  }
 
   selectedDestination: string | null = null;
   departureDate: Date | null = null;
@@ -42,6 +36,12 @@ export class HeroSectionComponent {
     private generalConfigService: GeneralConfigService,
     private router: Router
   ) {}
+
+  ngOnInit(): void {
+    this.getBannerSection();
+    this.getFiltersSection();
+    this.setInitialValues();
+  }
 
   filterDestinations(event: { query: string }) {
     this.filteredDestinations = this.destinations.filter((destination) =>
@@ -103,6 +103,9 @@ export class HeroSectionComponent {
     }
     if (this.initialTripType) {
       this.selectedTripType = this.initialTripType;
+    } else {
+      // Asegurarse de que selectedTripType sea null para que muestre el placeholder
+      this.selectedTripType = null;
     }
   }
 }

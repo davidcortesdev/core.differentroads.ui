@@ -354,8 +354,8 @@ $spaces: (
         left: 0.65rem;
       }
       .p-timeline-event-marker {
-        cursor: pointer;
-        transform: translateY(3px); /* Ajuste sutil para alinear con el panel */
+        //cursor: pointer;
+        //transform: translateY(3px); /* Ajuste sutil para alinear con el panel */
       }
     }
   }
@@ -384,7 +384,7 @@ $spaces: (
     }
     &.p-panel-expanded {
       .p-panel-header .panel-header-content {
-        display: none;
+        //display: none;
       }
       .p-panel-header {
         min-height: 40px;
@@ -531,4 +531,8 @@ $spaces: (
 }
 
 .is-purple {
+}
+
+.active-marker {
+
 }

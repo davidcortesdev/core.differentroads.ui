@@ -29,9 +29,12 @@ $colors: (
   border-light: #f0f0f0,
 );
 
+// Import Sass modules
+@use "sass:map";
+
 // Mixins
 @mixin resp($bp) {
-  @media (max-width: map-get($breakpoints, $bp)) {
+  @media (max-width: map.get($breakpoints, $bp)) {
     @content;
   }
 }
@@ -48,13 +51,13 @@ $colors: (
 
 // Main container
 .itinerary-container {
-  @include flex(row-reverse, flex-start, stretch, map-get($spaces, lg));
-  padding: 0 map-get($spaces, lg);
+  @include flex(row-reverse, flex-start, stretch, map.get($spaces, lg));
+  padding: 0 map.get($spaces, lg);
   min-height: calc(100vh - 200px);
   
   @include resp(xl) {
-    gap: map-get($spaces, base);
-    padding: 0 map-get($spaces, base);
+    gap: map.get($spaces, base);
+    padding: 0 map.get($spaces, base);
     min-height: calc(100vh - 180px);
   }
   
@@ -64,7 +67,7 @@ $colors: (
   }
   
   @include resp(sm) {
-    padding: 0 map-get($spaces, base);
+    padding: 0 map.get($spaces, base);
   }
 }
 
@@ -79,7 +82,7 @@ $colors: (
   
   @include resp(lg) {
     max-width: 100%;
-    margin-top: map-get($spaces, lg);
+    margin-top: map.get($spaces, lg);
     order: 2;
   }
 }
@@ -109,7 +112,7 @@ $colors: (
     width: 100%;
     height: 100%;
     background-color: #f5f5f5;
-    border-radius: map-get($border-radius, lg);
+    border-radius: map.get($border-radius, lg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -138,7 +141,7 @@ $colors: (
     .day-title {
       margin: 0;
       font-weight: 700;
-      color: map-get($colors, text);
+      color: map.get($colors, text);
       font-size: 25px;
       
       @include resp(md) {
@@ -153,7 +156,7 @@ $colors: (
   font-size: 25px;
   font-weight: 700;
   margin: 0 0 1rem 0;
-  color: map-get($colors, text);
+  color: map.get($colors, text);
   
   @include resp(xl) {
     font-size: 1.1rem;
@@ -173,7 +176,7 @@ $colors: (
 
 // Itinerary content
 .itinerary-content {
-  color: map-get($colors, text);
+  color: map.get($colors, text);
   display: grid;
   gap: 0.5rem;
   grid-template-columns: 1fr 1fr;
@@ -184,7 +187,7 @@ $colors: (
     width: 320px;
     height: 250px;
     object-fit: cover;
-    border-radius: map-get($border-radius, md);
+    border-radius: map.get($border-radius, md);
     margin-top: 20px;
     justify-self: end;
     
@@ -217,10 +220,10 @@ $colors: (
 
 // Hotel card
 .hotel-card {
-  color: map-get($colors, text);
+  color: map.get($colors, text);
   @include flex(row, flex-start, center, 1rem);
-  border-radius: map-get($border-radius, lg);
-  border: 1px solid map-get($colors, border);
+  border-radius: map.get($border-radius, lg);
+  border: 1px solid map.get($colors, border);
   padding: 8px;
   margin-top: 1rem;
   
@@ -247,7 +250,7 @@ $colors: (
     width: 40%;
     aspect-ratio: 16 / 9;
     object-fit: cover;
-    border-radius: map-get($border-radius, md);
+    border-radius: map.get($border-radius, md);
     
     @include resp(xl) {
       border-radius: 10px;
@@ -284,7 +287,7 @@ $colors: (
       }
       
       i {
-        color: map-get($colors, primary);
+        color: map.get($colors, primary);
       }
     }
   }
@@ -300,8 +303,8 @@ $colors: (
       justify-content: center;
       align-items: center;
       border-radius: 3.314px 3.314px 3.314px 0px;
-      background: map-get($colors, background);
-      color: map-get($colors, text-light);
+      background: map.get($colors, background);
+      color: map.get($colors, text-light);
       font-size: 11.6px;
       font-weight: 600;
     }
@@ -310,7 +313,7 @@ $colors: (
 
 // Active marker styling
 .active-marker {
-  color: map-get($colors, primary);
+  color: map.get($colors, primary);
   font-weight: bold;
   transform: scale(1.2);
 }
@@ -318,7 +321,7 @@ $colors: (
 // Deep component styling
 :host ::ng-deep {
   .pi {
-    color: map-get($colors, primary);
+    color: map.get($colors, primary);
   }
   
   [style*="background-color: rgb(156, 39, 176)"],
@@ -360,7 +363,7 @@ $colors: (
   
   // Panel customization
   .custom-panel {
-    border-radius: map-get($border-radius, lg);
+    border-radius: map.get($border-radius, lg);
     
     .p-panel-header,
     .p-panel-content {
@@ -426,9 +429,9 @@ $colors: (
           justify-content: space-between;
           align-items: center;
           padding: 0.5rem;
-          border-top: 1px solid map-get($colors, border-light);
+          border-top: 1px solid map.get($colors, border-light);
           font-size: 1.2rem;
-          color: map-get($colors, primary);
+          color: map.get($colors, primary);
           font-weight: 600;
           
           .p-button {
@@ -441,10 +444,10 @@ $colors: (
           position: absolute;
           top: 0.75rem;
           right: 0.75rem;
-          background: map-get($colors, secondary);
-          color: map-get($colors, background);
+          background: map.get($colors, secondary);
+          color: map.get($colors, background);
           padding: 0.3rem 0.6rem;
-          border-radius: map-get($border-radius, sm);
+          border-radius: map.get($border-radius, sm);
           font-size: 0.9rem;
           
           @include resp(md) {
@@ -455,14 +458,14 @@ $colors: (
           }
           
           &.optional {
-            background: map-get($colors, primary);
+            background: map.get($colors, primary);
             color: #fff;
           }
         }
         
         h3 {
           margin: 0.5rem 0;
-          color: map-get($colors, text);
+          color: map.get($colors, text);
           font-size: 1rem;
           font-weight: 600;
           
@@ -474,7 +477,7 @@ $colors: (
         
         p {
           margin: 0;
-          color: map-get($colors, text);
+          color: map.get($colors, text);
           line-height: 1.5;
           font-size: 0.875rem;
           display: -webkit-box;
@@ -490,7 +493,7 @@ $colors: (
           width: 100%;
           height: 200px;
           object-fit: cover;
-          border-radius: map-get($border-radius, md);
+          border-radius: map.get($border-radius, md);
           
           @include resp(md) {
             height: 180px;
@@ -531,8 +534,9 @@ $colors: (
 }
 
 .is-purple {
+  // Empty class - consider removing if not used
 }
 
 .active-marker {
-
+  // This is already defined above - consider removing this duplicate
 }

@@ -31,6 +31,7 @@ type TripTypeKey = (typeof TripType)[keyof typeof TripType];
 export interface TripTypeInfo {
   label: string;
   class: string;
+  fullName: string;
 }
 
 @Component({
@@ -57,14 +58,25 @@ export class TourDateSelectorComponent implements OnInit {
   @Output() dateChange = new EventEmitter<{ value: string }>();
 
   readonly tripTypeMap: Record<TripTypeKey, TripTypeInfo> = {
-    [TripType.Single]: { label: 'S', class: 'trip-type-s' },
-    [TripType.Grupo]: { label: 'G', class: 'trip-type-g' },
-    [TripType.Private]: { label: 'P', class: 'trip-type-p' },
+    [TripType.Single]: { 
+      label: 'S', 
+      class: 'trip-type-s',
+      fullName: 'Single'
+    },
+    [TripType.Grupo]: { 
+      label: 'G', 
+      class: 'trip-type-g',
+      fullName: 'Grupo'
+    },
+    [TripType.Private]: { 
+      label: 'P', 
+      class: 'trip-type-p',
+      fullName: 'Privado'
+    },
   };
 
   ngOnInit(): void {
-    console.log('this.dateOptions', this.dateOptions);
-    // Inicialización si es necesaria
+    // Removed console.log for production
   }
 
   onDateChange(event: { value: string }): void {
@@ -82,20 +94,24 @@ export class TourDateSelectorComponent implements OnInit {
     const lowerType = type.toLowerCase() as TripTypeKey;
     return this.tripTypeMap[lowerType]?.class || '';
   }
-  // Add this getter to your component class
+
+  getTripTypeFullName(type: string): string {
+    if (!type) return '';
+    const lowerType = type.toLowerCase() as TripTypeKey;
+    return this.tripTypeMap[lowerType]?.fullName || type;
+  }
+
   get hasMultipleItineraries(): boolean {
     if (!this.dateOptions || this.dateOptions.length === 0) {
       return false;
     }
 
-    // Get unique itinerary IDs
     const uniqueItineraryIds = new Set(
       this.dateOptions
         .filter((option) => option.itineraryId)
         .map((option) => option.itineraryId)
     );
 
-    // Return true if there are more than one unique itinerary IDs
     return uniqueItineraryIds.size > 1;
   }
 }

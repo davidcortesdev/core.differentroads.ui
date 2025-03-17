@@ -98,3 +98,32 @@ $spaces: (
     }
   }
 }
+
+
+// Trip type badges
+@mixin trip-type-badge {
+  color: white !important;
+  font-weight: bold;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  padding: 0;
+}
+
+.trip-type-s {
+  @include trip-type-badge;
+  background-color: var(--color-singles) !important;
+}
+
+.trip-type-g {
+  @include trip-type-badge;
+  background-color: var(--color-group) !important;
+}
+
+.trip-type-p {
+  @include trip-type-badge;
+  background-color: var(--color-private) !important;
+}

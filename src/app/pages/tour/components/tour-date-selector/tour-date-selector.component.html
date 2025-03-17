@@ -23,9 +23,12 @@
       <div class="date-option-item">
         <span class="date-option-item-text">{{ option.label }}</span>
         <p-tag
-          *ngIf="getTagConfig(option.tripType)"
-          [severity]="getTagConfig(option.tripType)?.color"
-        >{{ getTagConfig(option.tripType)?.value }}</p-tag>
+          *ngIf="option.tripType"
+          class="trip-type"
+          [styleClass]="getTripTypeClass(option.tripType)"
+        >
+          {{ getTripTypeLabel(option.tripType) }}
+        </p-tag>
         <span class="date-price">{{
           option.price | currencyFormat : "EUR"
         }}</span>

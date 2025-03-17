@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, OnInit } from '@angular/core';
 
 export interface DateOption {
   label: string;
@@ -9,10 +9,17 @@ export interface DateOption {
   externalID?: string;
 }
 
-export interface TagConfig {
-  type: string;
-  color: 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' | undefined;
-  value: string;
+export enum TripType {
+  Single = 'single',
+  Grupo = 'grupo',
+  Private = 'private'
+}
+
+type TripTypeKey = typeof TripType[keyof typeof TripType];
+
+export interface TripTypeInfo {
+  label: string;
+  class: string;
 }
 
 @Component({
@@ -22,7 +29,7 @@ export interface TagConfig {
   styleUrls: ['./tour-date-selector.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TourDateSelectorComponent {
+export class TourDateSelectorComponent implements OnInit {
   @Input() title: string = '';
   @Input() selectedDate: string = '';
   @Input() tripType: string = '';
@@ -34,16 +41,32 @@ export class TourDateSelectorComponent {
     isGroup: false
   };
   @Input() showPlaceholder: boolean = true;
-  @Input() tagsOptions: TagConfig[] = [];
 
   @Output() dateChange = new EventEmitter<{value: string}>();
+
+  readonly tripTypeMap: Record<TripTypeKey, TripTypeInfo> = {
+    [TripType.Single]: { label: 'S', class: 'trip-type-s' },
+    [TripType.Grupo]: { label: 'G', class: 'trip-type-g' },
+    [TripType.Private]: { label: 'P', class: 'trip-type-p' }
+  };
+
+  ngOnInit(): void {
+    // Inicialización si es necesaria
+  }
 
   onDateChange(event: {value: string}): void {
     this.dateChange.emit(event);
   }
 
-  getTagConfig(tripType?: string): TagConfig | undefined {
-    if (!tripType) return undefined;
-    return this.tagsOptions.find((tag) => tag.type === tripType);
+  getTripTypeLabel(type: string): string {
+    if (!type) return '';
+    const lowerType = type.toLowerCase() as TripTypeKey;
+    return this.tripTypeMap[lowerType]?.label || type.charAt(0).toUpperCase();
+  }
+
+  getTripTypeClass(type: string): string {
+    if (!type) return '';
+    const lowerType = type.toLowerCase() as TripTypeKey;
+    return this.tripTypeMap[lowerType]?.class || '';
   }
 }

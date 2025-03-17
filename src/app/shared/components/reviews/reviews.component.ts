@@ -5,6 +5,7 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { ReviewCard } from '../../models/reviews/review-card.model';
+import { CAROUSEL_CONFIG } from '../../constants/carousel.constants';
 
 @Component({
   selector: 'app-reviews',
@@ -48,6 +49,8 @@ export class ReviewsComponent implements OnInit {
       numScroll: 1,
     },
   ];
+
+  protected carouselConfig = CAROUSEL_CONFIG;
 
   ngOnInit(): void {
     if (!this.reviews?.length) {

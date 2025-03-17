@@ -1,47 +1,61 @@
+// Variables
+$desktop-padding: 4rem;
+$tablet-padding: 3rem 1.5rem;
+$mobile-padding: 2rem 1rem;
+
+$title-desktop-size: 2rem;
+$title-tablet-size: 1.75rem;
+$title-mobile-size: 1.25rem;
+
+// Breakpoints
+$breakpoint-large: 1366px;
+$breakpoint-medium: 1024px;
+$breakpoint-small: 768px;
+
 .tours-section {
-  padding: 4rem 4rem;
+  padding: $desktop-padding;
 
   .title {
     color: var(--background-azul);
     font-weight: 400;
   }
 
-  @media screen and (max-width: 1366px) {
-    padding: 4rem 1.2rem;
-  }
-
-  @media screen and (max-width: 1024px) {
-    padding: 3rem 1.5rem;
-  }
-
-  @media screen and (max-width: 768px) {
-    padding: 2rem 1rem;
-  }
-
   h2 {
     text-align: center;
     margin-bottom: 2rem;
-    font-size: 2rem;
-    color: #333;
-
-    @media screen and (max-width: 1024px) {
-      font-size: 1.75rem;
-    }
-
-    @media screen and (max-width: 768px) {
-      font-size: 1.25rem;
-      margin-bottom: 1.5rem;
-    }
+    font-size: $title-desktop-size;
   }
 
   .buttonVertour {
     width: 7rem;
+  }
 
-    @media screen and (max-width: 1024px) {
-      width: 6rem;
+  // Media queries
+  @media screen and (max-width: $breakpoint-large) {
+    padding: $desktop-padding 1.2rem;
+  }
+
+  @media screen and (max-width: $breakpoint-medium) {
+    padding: $tablet-padding;
+
+    h2 {
+      font-size: $title-tablet-size;
     }
 
-    @media screen and (max-width: 768px) {
+    .buttonVertour {
+      width: 6rem;
+    }
+  }
+
+  @media screen and (max-width: $breakpoint-small) {
+    padding: $mobile-padding;
+
+    h2 {
+      font-size: $title-mobile-size;
+      margin-bottom: 1.5rem;
+    }
+
+    .buttonVertour {
       width: auto !important;
       min-width: 6rem;
       height: 2.5rem;

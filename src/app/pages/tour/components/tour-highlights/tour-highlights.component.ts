@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ToursService } from '../../../../core/services/tours.service';
 import { ActivatedRoute } from '@angular/router';
 import { take } from 'rxjs/operators';
+import { CAROUSEL_CONFIG } from '../../../../shared/constants/carousel.constants';
 
 @Component({
   selector: 'app-tour-highlights',
@@ -12,6 +13,7 @@ import { take } from 'rxjs/operators';
 export class TourHighlightsComponent implements OnInit {
   highlights: any[] = [];
   highlightsTitle: string = 'Highlights';
+  protected carouselConfig = CAROUSEL_CONFIG;
 
   responsiveOptions = [
     {

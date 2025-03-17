@@ -50,6 +50,11 @@
       <div class="total-price-container" *ngIf="totalPrice > 0">
         <div class="passengers-info">
           <span>{{ selectedDate }} - {{ tripType }}</span>
+          <!-- for in selected activities array name  -->
+          <span *ngFor="let activity of selectedActivities">{{
+            activity.name
+          }}</span>
+
           <span>{{
             departureCity.toLowerCase().includes("sin")
               ? "Sin vuelos "

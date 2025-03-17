@@ -20,6 +20,7 @@ export interface Order {
 export interface OptionalActivityRef {
   id: string;
   travelersAssigned: string[];
+  name?: string;
 }
 
 export interface TravelerData {

@@ -117,70 +117,30 @@ export class BudgetDialogComponent implements OnInit {
         next: (createdOrder) => {
           console.log('Order created:', createdOrder);
 
-          const travelers = this.travelers;
-          const selectedPeriod = this.selectedPeriod;
-
-          const products = [];
-
-          if (travelers.adults > 0) {
-            products.push({
-              name: 'Paquete básico Adultos',
-              units: travelers.adults,
-              singlePrice: this.tourDataService.getPeriodPrice(
-                selectedPeriod?.periodID!,
-                true
-              ),
-            });
-          }
-
-          if (travelers.children > 0) {
-            products.push({
-              name: 'Paquete básico Niños',
-              units: travelers.children,
-              singlePrice: this.tourDataService.getPeriodPrice(
-                selectedPeriod?.periodID!,
-                true
-              ),
-            });
-          }
-
-          if (
-            selectedPeriod?.flightID &&
-            !selectedPeriod?.departureCity?.toLowerCase()?.includes('sin ')
-          ) {
-            products.push({
-              name: !selectedPeriod?.departureCity
-                ?.toLowerCase()
-                ?.includes('vuelo')
-                ? 'Vuelo desde ' + selectedPeriod?.departureCity
-                : selectedPeriod?.departureCity,
-              units: travelers.adults + travelers.children,
-              singlePrice: this.tourDataService.getFlightPrice(
-                selectedPeriod?.periodID!,
-                selectedPeriod?.flightID!
-              ),
-            });
-          }
-
-          // Send budget notification email
-          this.notificationsService
-            .sendBudgetNotificationEmail({
-              id: createdOrder._id,
-              email: this.traveler.email,
-              products,
-            })
-            .subscribe({
-              next: (response) => {
-                console.log('Budget notification sent:', response);
-                this.loading = false;
-                this.handleCloseModal();
-                this.traveler = { name: '', email: '', phone: '' };
-                this.close.emit();
-              },
-              error: (error) => {
-                console.error('Error sending budget notification:', error);
-                this.loading = false;
-              },
+          // Use the new method to build products
+          this.tourOrderService
+            .buildOrderProducts(this.travelers, this.selectedPeriod)
+            .subscribe((products) => {
+              // Send budget notification email
+              this.notificationsService
+                .sendBudgetNotificationEmail({
+                  id: createdOrder._id,
+                  email: this.traveler.email,
+                  products,
+                })
+                .subscribe({
+                  next: (response) => {
+                    console.log('Budget notification sent:', response);
+                    this.loading = false;
+                    this.handleCloseModal();
+                    this.traveler = { name: '', email: '', phone: '' };
+                    this.close.emit();
+                  },
+                  error: (error) => {
+                    console.error('Error sending budget notification:', error);
+                    this.loading = false;
+                  },
+                });
             });
         },
         error: (error) => {
@@ -191,6 +151,6 @@ export class BudgetDialogComponent implements OnInit {
   }
 
   getTravelersText() {
-    return this.tourOrderService.getTravelersText(this.travelers);
+    return this.tourOrderService.getTravelersText();
   }
 }

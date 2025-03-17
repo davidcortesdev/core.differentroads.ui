@@ -535,10 +535,21 @@ export class CheckoutComponent implements OnInit {
   updateOrder() {
     console.log('Updating order:', this.summaryService.getOrderValue());
 
-    return this.ordersService.updateOrder(
-      this.summaryService.getOrderValue()!._id,
-      this.summaryService.getOrderValue()!
-    );
+    this.ordersService
+      .updateOrder(
+        this.summaryService.getOrderValue()!._id,
+        this.summaryService.getOrderValue()!
+      )
+      .subscribe({
+        next: (response) => {
+          console.log('Order updated:', response);
+          return response;
+        },
+        error: (error) => {
+          console.error('Error updating order:', error);
+          return error;
+        },
+      });
   }
 
   /* Booking create */

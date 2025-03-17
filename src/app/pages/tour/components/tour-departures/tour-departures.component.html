@@ -222,13 +222,15 @@
             <div class="actions">
               <p-button
                 [label]="
-                  departures[0].status === 'complete' ? 'COMPLETO' : 'Añadir'
+                  departures[0].status === 'complete'
+                    ? 'COMPLETO'
+                    : isDepartureSelected(departures[0])
+                    ? 'Añadido'
+                    : 'Añadir'
                 "
                 [disabled]="departures[0].status === 'complete'"
                 (onClick)="addToCart(departures[0])"
-                [severity]="
-                  departures[0].status === 'complete' ? 'secondary' : 'primary'
-                "
+                [severity]="'primary'"
                 [raised]="true"
               ></p-button>
             </div>
@@ -281,11 +283,21 @@
 
             <div class="actions">
               <p-button
-                [label]="item.status === 'complete' ? 'COMPLETO' : 'Añadir'"
+                [label]="
+                  item.status === 'complete'
+                    ? 'COMPLETO'
+                    : isDepartureSelected(item)
+                    ? 'Añadido'
+                    : 'Añadir'
+                "
                 [disabled]="item.status === 'complete'"
                 (onClick)="addToCart(item)"
                 [severity]="
-                  item.status === 'complete' ? 'secondary' : 'primary'
+                  item.status === 'complete'
+                    ? 'secondary'
+                    : isDepartureSelected(item)
+                    ? 'success'
+                    : 'primary'
                 "
                 [raised]="true"
               ></p-button>

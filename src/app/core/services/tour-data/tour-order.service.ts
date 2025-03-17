@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { Tour } from '../../models/tours/tour.model';
 import { PeriodPricesService } from './period-prices.service';
 import {
@@ -9,8 +9,8 @@ import {
 } from '../../models/orders/order.model';
 import { TourDataService } from './tour-data.service';
 import { OrdersService } from '../orders.service';
-import { Router } from '@angular/router';
-import { NotificationsService } from '../notifications.service';
+import { TravelersService } from '../checkout/travelers.service';
+import { map, switchMap } from 'rxjs/operators';
 
 export interface DateInfo {
   date: string;
@@ -25,6 +25,12 @@ export interface Travelers {
   adults: number;
   children: number;
   babies: number;
+}
+
+export interface OrderProduct {
+  name: string;
+  units: number;
+  singlePrice: number;
 }
 
 @Injectable({
@@ -63,8 +69,8 @@ export class TourOrderService {
   constructor(
     private tourDataService: TourDataService,
     private ordersService: OrdersService,
-    private router: Router,
-    private notificationsService: NotificationsService
+    private travelersService: TravelersService,
+    private periodPricesService: PeriodPricesService
   ) {}
 
   // Método para actualizar la información
@@ -140,16 +146,48 @@ export class TourOrderService {
     }
   }
 
-  // Nuevo método para alternar la actividad
-  toggleActivity(activity: OptionalActivityRef): void {
+  // Método para alternar la actividad
+  toggleActivity(activity: string, activityName: string): void {
     const currentActivities = this.selectedActivitiesSource.getValue();
-    if (currentActivities.find((a) => a.id === activity.id)) {
+    if (currentActivities.find((a) => a.id === activity)) {
       // Si la actividad existe, se elimina
-      const updated = currentActivities.filter((a) => a.id !== activity.id);
+      const updated = currentActivities.filter((a) => a.id !== activity);
       this.selectedActivitiesSource.next(updated);
     } else {
+      // Obtener el ID del período actual
+      const currentPeriod = this.getCurrentDateInfo();
+      const periodId = currentPeriod.periodID;
+
+      // Obtener los viajeros actuales
+      const travelers = this.selectedTravelersSource.getValue();
+      const travelersArray = this.buildTravelers(travelers);
+
+      // Asignar viajeros según el precio correspondiente a su grupo de edad
+      const travelersAssigned: string[] = [];
+
+      if (periodId) {
+        travelersArray.forEach((traveler) => {
+          const ageGroup = traveler.travelerData?.ageGroup;
+          const price = this.periodPricesService.getCachedPeriodActivityPrice(
+            periodId,
+            activity,
+            ageGroup
+          );
+
+          if (price > 0 && traveler._id) {
+            travelersAssigned.push(traveler._id);
+          }
+        });
+      }
+
+      const activityRef: OptionalActivityRef = {
+        id: activity,
+        name: activityName,
+        travelersAssigned: travelersAssigned,
+      };
+
       // Si no existe, se añade
-      this.selectedActivitiesSource.next([...currentActivities, activity]);
+      this.selectedActivitiesSource.next([...currentActivities, activityRef]);
     }
   }
 
@@ -187,7 +225,9 @@ export class TourOrderService {
           externalID: selectedPeriod?.flightID || '',
           name: selectedPeriod?.departureCity?.toLowerCase()?.includes('sin ')
             ? selectedPeriod?.departureCity
-            : 'Vuelo desde ' + selectedPeriod?.departureCity,
+            : !selectedPeriod?.departureCity?.toLowerCase()?.includes('vuelo')
+            ? 'Vuelo desde ' + selectedPeriod?.departureCity
+            : selectedPeriod?.departureCity,
         },
       ],
       optionalActivitiesRef: this.getSelectedActivities(),
@@ -208,6 +248,7 @@ export class TourOrderService {
 
     const createTraveler = (type: string, i: number): OrderTraveler => ({
       lead: i === 0,
+      _id: this.travelersService.generateHexID(),
       travelerData: {
         name:
           i === 0
@@ -237,10 +278,132 @@ export class TourOrderService {
   }
 
   /**
+   * Builds an array of order products based on travelers and selected period
+   */
+  buildOrderProducts(
+    travelers: Travelers,
+    selectedPeriod: DateInfo | null
+  ): Observable<OrderProduct[]> {
+    if (!selectedPeriod || !selectedPeriod.periodID) {
+      return of([]);
+    }
+
+    // First get period price data
+    return this.periodPricesService
+      .getPeriodPriceById(selectedPeriod.periodID, selectedPeriod.periodID)
+      .pipe(
+        map((periodPriceData) => {
+          const products: OrderProduct[] = [];
+
+          if (travelers.adults > 0) {
+            products.push({
+              name: 'Paquete básico Adultos',
+              units: travelers.adults,
+              singlePrice: this.tourDataService.getPeriodPrice(
+                selectedPeriod.periodID!,
+                true
+              ),
+            });
+          }
+
+          if (travelers.children > 0) {
+            products.push({
+              name: 'Paquete básico Niños',
+              units: travelers.children,
+              singlePrice: this.tourDataService.getPeriodPrice(
+                selectedPeriod.periodID!,
+                true
+              ),
+            });
+          }
+
+          if (
+            selectedPeriod.flightID &&
+            !selectedPeriod.departureCity?.toLowerCase()?.includes('sin ')
+          ) {
+            products.push({
+              name: !selectedPeriod.departureCity
+                ?.toLowerCase()
+                ?.includes('vuelo')
+                ? 'Vuelo desde ' + selectedPeriod.departureCity
+                : selectedPeriod.departureCity!,
+              units: travelers.adults + travelers.children,
+              singlePrice: this.tourDataService.getFlightPrice(
+                selectedPeriod.periodID!,
+                selectedPeriod.flightID!
+              ),
+            });
+          }
+
+          // Add optional activities
+          const activities = this.getSelectedActivities();
+          if (activities.length > 0 && selectedPeriod.periodID) {
+            // Get all tour activities to find their names
+            const tour = this.tourDataService.getTour();
+            const periodId = selectedPeriod.periodID;
+
+            activities.forEach((activity) => {
+              // Get the activity details
+
+              // Check if there are adults assigned
+              const adultPrice =
+                this.periodPricesService.getCachedPeriodActivityPrice(
+                  periodId,
+                  activity.id,
+                  'Adultos'
+                );
+
+              if (adultPrice > 0 && travelers.adults > 0) {
+                products.push({
+                  name: `${activity.name} (Adultos)`,
+                  units: travelers.adults,
+                  singlePrice: adultPrice,
+                });
+              }
+
+              // Check if there are children assigned
+              const childPrice =
+                this.periodPricesService.getCachedPeriodActivityPrice(
+                  periodId,
+                  activity.id,
+                  'Niños'
+                );
+
+              if (childPrice > 0 && travelers.children > 0) {
+                products.push({
+                  name: `${activity.name} (Niños)`,
+                  units: travelers.children,
+                  singlePrice: childPrice,
+                });
+              }
+            });
+          }
+
+          return products;
+        })
+      );
+  }
+
+  getTotalPrice(): Observable<number> {
+    const selectedPeriod = this.getCurrentDateInfo();
+    const travelers = this.selectedTravelersSource.getValue();
+
+    return this.buildOrderProducts(travelers, selectedPeriod).pipe(
+      map((products) =>
+        products.reduce(
+          (total, product) => total + product.units * product.singlePrice,
+          0
+        )
+      )
+    );
+  }
+
+  /**
    * Creates a formatted text representation of travelers
    */
-  getTravelersText(travelers: Travelers): string {
-    const { adults, children, babies } = travelers;
+  getTravelersText(): string {
+    const { adults, children, babies } =
+      this.selectedTravelersSource.getValue();
 
     const adultsText =
       adults > 0 ? `${adults} Adulto${adults > 1 ? 's' : ''}` : '';

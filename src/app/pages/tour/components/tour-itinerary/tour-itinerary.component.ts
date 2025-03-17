@@ -32,10 +32,12 @@ interface EventItem {
   description?: SafeHtml;
 }
 interface Highlight {
+  id: string;
   title: string;
   description: string;
   image: string;
   optional: boolean;
+  added?: boolean;
 }
 @Component({
   selector: 'app-tour-itinerary',
@@ -405,16 +407,19 @@ export class TourItineraryComponent implements OnInit {
       return;
     }
 
+    console.log('Selected itinerary____:', this.activities);
+
     this.itinerary = selectedItinerary['days'].map((day, index) => {
       return {
         title: day.name,
         description: this.sanitizer.bypassSecurityTrustHtml(day.description),
         image: day.itimage?.[0]?.url || '',
-        hotel: this.hotels.find(
-          (hotel) =>
-            `${hotel?.id}` === `${day.id}` ||
-            hotel?.days?.includes(`${index + 1}`)
-        ),
+        hotel:
+          this.hotels?.find(
+            (hotel) =>
+              `${hotel?.id}` === `${day.id}` ||
+              hotel?.days?.includes(`${index + 1}`)
+          ) || null,
         collapsed: index !== 0,
         color: '#9C27B0',
         highlights:
@@ -422,6 +427,7 @@ export class TourItineraryComponent implements OnInit {
             .filter((activity) => index + 1 === activity.day)
             .map((activity) => {
               return {
+                id: `${activity.activityId}`,
                 title: activity.name,
                 description: activity.description || '',
                 image: activity.activityImage?.[0]?.url || '',
@@ -480,14 +486,10 @@ export class TourItineraryComponent implements OnInit {
     return this.tagsOptions.find((tag) => tag.type === tripType);
   }
 
-  // Método para manejar el toggle de actividad
-  onAddActivity(highlight: any): void {
+  onAddActivity(highlight: Highlight): void {
     // Toggle del estado de la actividad
     highlight.added = !highlight.added;
-    const activityToToggle: OptionalActivityRef = {
-      id: highlight.id,
-      travelersAssigned: [],
-    };
-    this.tourOrderService.toggleActivity(activityToToggle);
+
+    this.tourOrderService.toggleActivity(highlight.id, highlight.title);
   }
 }

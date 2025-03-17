@@ -70,6 +70,10 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
   // Para manejar las suscripciones
   private subscriptions = new Subscription();
 
+  // Add properties to track selected departure
+  selectedDepartureId: string | null = null;
+  selectedFlightId: string | null = null;
+
   constructor(
     private route: ActivatedRoute,
     private toursService: ToursService,
@@ -168,6 +172,10 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
       departure.flightID
     );
 
+    // Update our local tracking properties
+    this.selectedDepartureId = departure.externalID;
+    this.selectedFlightId = departure.flightID;
+
     this.tourOrderService.updateSelectedTravelers(this.travelers);
 
     // Emitir información de pasajeros (solo adultos y niños)
@@ -178,6 +186,14 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
 
     // Continuar con la redirección
     //this.tourComponent.createOrderAndRedirect(departure);
+  }
+
+  // Add a helper method to check if a departure is currently selected
+  isDepartureSelected(departure: Departure): boolean {
+    return (
+      this.selectedDepartureId === departure.externalID &&
+      this.selectedFlightId === departure.flightID
+    );
   }
 
   filterDepartures(): void {

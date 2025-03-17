@@ -78,4 +78,18 @@ export class TourDataService {
     );
     return selectedFlight?.prices || 0;
   }
+
+  getActivityPrice(
+    periodID: string | number,
+    activityID: string | number
+  ): number {
+    if (!periodID || !activityID) {
+      return 0;
+    }
+    let price = 0;
+    this.periodPricesService
+      .getPeriodPriceById(`${periodID}`, `${activityID}`)
+      .subscribe((value) => (price = value || 0));
+    return price;
+  }
 }

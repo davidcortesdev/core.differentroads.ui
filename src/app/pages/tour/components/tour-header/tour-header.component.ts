@@ -15,6 +15,7 @@ import { TourDataService } from '../../../../core/services/tour-data/tour-data.s
 import { Subscription } from 'rxjs';
 import { PeriodPricesService } from '../../../../core/services/tour-data/period-prices.service';
 import { TourOrderService } from '../../../../core/services/tour-data/tour-order.service';
+import { OptionalActivityRef } from '../../../../core/models/orders/order.model';
 
 @Component({
   selector: 'app-tour-header',
@@ -28,6 +29,7 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   selectedDate: string = '';
   tripType: string = '';
   departureCity: string = '';
+  selectedActivities: OptionalActivityRef[] = [];
 
   // Información de pasajeros
   adultsCount: number = 1;
@@ -50,8 +52,7 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     private tourComponent: TourComponent,
     private el: ElementRef,
     private renderer: Renderer2,
-    private tourOrderService: TourOrderService,
-    private tourDataService: TourDataService
+    private tourOrderService: TourOrderService
   ) {}
 
   ngOnInit() {
@@ -69,6 +70,11 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
       this.calculateTotalPrice();
       this.getPassengersInfo();
       console.log('Travelers:', travelers);
+    });
+
+    this.tourOrderService.selectedActivities$.subscribe((activities) => {
+      this.selectedActivities = activities;
+      this.calculateTotalPrice();
     });
 
     // Suscribirse a los cambios en la información de fechas y precios
@@ -159,53 +165,20 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getDuration(): string {
-    if (this.tour.activePeriods && this.tour.activePeriods.length > 0) {
-      return this.getDuration2(this.tour.activePeriods[0]?.days);
-    }
-    return '';
-  }
-
-  getDuration2(days: number | undefined): string {
-    if (!days) return '';
-    return `${days} días, ${days - 1} noches`;
+    const days = this.tour.activePeriods?.[0]?.days;
+    return days ? `${days} días, ${days - 1} noches` : '';
   }
 
   // Calcular precio total basado en número de adultos y niños
   calculateTotalPrice(): void {
-    const periodPrice = this.tourDataService.getPeriodPrice(
-      this.periodID,
-      true
-    );
-
-    console.log('Period Price:', this.periodID, periodPrice);
-
-    const flightPrice = this.tourDataService.getFlightPrice(
-      this.periodID,
-      this.flightID
-    );
-
-    this.totalPrice =
-      (periodPrice + flightPrice) * (this.adultsCount + this.childrenCount);
+    this.tourOrderService.getTotalPrice().subscribe((totalPrice) => {
+      this.totalPrice = totalPrice;
+    });
   }
 
   // Obtener texto de pasajeros para mostrar
-  getPassengersInfo(): string {
-    const parts = [];
-
-    if (this.adultsCount > 0) {
-      parts.push(
-        `${this.adultsCount} ${this.adultsCount === 1 ? 'adulto' : 'adultos'}`
-      );
-    }
-
-    if (this.childrenCount > 0) {
-      parts.push(
-        `${this.childrenCount} ${this.childrenCount === 1 ? 'niño' : 'niños'}`
-      );
-    }
-
-    this.travelersText = parts.length > 0 ? parts.join(', ') : '1 adulto';
-    return parts.length > 0 ? parts.join(', ') : '1 adulto';
+  getPassengersInfo() {
+    this.travelersText = this.tourOrderService.getTravelersText();
   }
 
   bookTour() {

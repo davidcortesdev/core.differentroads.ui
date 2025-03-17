@@ -15,6 +15,7 @@ import {
 
 import { ProcessedTour } from '../../../../core/models/tours/processed-tour.model';
 import { BlockType } from '../../../../core/models/blocks/block.model';
+import { CAROUSEL_CONFIG } from '../../../../shared/constants/carousel.constants';
 
 interface TourSectionContent {
   title?: string;
@@ -34,6 +35,7 @@ export class ToursSectionComponent implements OnInit, OnDestroy {
   tours: ProcessedTour[] = [];
   title: string = '';
   private destroy$ = new Subject<void>();
+  protected carouselConfig = CAROUSEL_CONFIG;
 
   responsiveOptions = [
     {

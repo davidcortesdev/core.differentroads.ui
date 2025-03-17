@@ -1,39 +1,14 @@
-<!-- HTML template actualizado sin cambiar la funcionalidad -->
-<div class="itinerary-section">
-  <h2>{{ title }}</h2>
-  <p class="date">
-    Resumen de tu itinerario - {{ selectedDate }} -
-    {{ tripType }}
-  </p>
-  <p-dropdown
-    class="date"
-    [options]="dateOptions"
-    [(ngModel)]="selectedOption"
-    optionLabel="label"
-    optionValue="value"
-    (onChange)="onDateChange($event)"
-    placeholder="Cambiar fecha"
-  >
-    <ng-template pTemplate="selectedItem">
-      <div class="date-option-item">
-        <span>{{ showPlaceholder ? "Cambiar fecha" : selectedDate }}</span>
-      </div>
-    </ng-template>
-    <ng-template let-option pTemplate="item">
-      <div class="date-option-item">
-        <span class="date-option-item-text">{{ option.label }}</span>
-        <p-tag
-          *ngIf="getTagConfig(option.tripType)"
-          [severity]="getTagConfig(option.tripType)?.color"
-          >{{ getTagConfig(option.tripType)?.value }}
-        </p-tag>
-        <span class="date-price">{{
-          option.price | currencyFormat : "EUR"
-        }}</span>
-      </div>
-    </ng-template>
-  </p-dropdown>
-</div>
+<app-tour-date-selector
+  [title]="title"
+  [selectedDate]="selectedDate"
+  [tripType]="tripType"
+  [dateOptions]="dateOptions"
+  [selectedOption]="selectedOption"
+  [showPlaceholder]="showPlaceholder"
+  [tagsOptions]="tagsOptions"
+  (dateChange)="onDateChange($event)"
+></app-tour-date-selector>
+
 <div class="itinerary-container">
   <div class="timeline-section">
     <div class="card">
@@ -49,16 +24,6 @@
           [attr.data-index]="itinerary.indexOf(event)"
             (click)="markerClicked($event)"
           ></span>
-        <!--  <span
-            class="p-timeline-event-marker clickable-marker"
-            [ngClass]="{ 'active-marker': !event.collapsed }"
-            [style.backgroundColor]="event.color"
-            [attr.data-index]="itinerary.indexOf(event)"
-            (click)="markerClicked($event)"
-          >
-          
-          </span>
-          -->
         </ng-template>
         <ng-template pTemplate="content" let-event>
           <p-panel

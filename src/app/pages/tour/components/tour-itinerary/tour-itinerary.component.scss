@@ -59,7 +59,16 @@ $spaces: (
   }
 }
 
+
+
 .itinerary-container {
+  display: flex;
+  flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+
   @include flex(row-reverse, flex-start, stretch, map-get($spaces, lg));
   padding: 0 map-get($spaces, lg);
   min-height: calc(100vh - 200px);

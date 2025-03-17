@@ -1,0 +1,100 @@
+$breakpoints: (
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1366px,
+);
+$spaces: (
+  xs: 0.5rem,
+  sm: 0.75rem,
+  base: 1rem,
+  lg: 1.5rem,
+);
+@mixin resp($bp) {
+    @media (max-width: map-get($breakpoints, $bp)) {
+      @content;
+    }
+  }
+  @mixin flex($dir: row, $just: flex-start, $align: stretch, $gap: 0) {
+    display: flex;
+    flex-direction: $dir;
+    justify-content: $just;
+    align-items: $align;
+    @if $gap > 0 {
+      gap: $gap;
+    }
+  }
+.itinerary-section {
+  color: var(--background-azul);
+  text-align: center;
+  padding: map-get($spaces, lg) 0;
+  margin-bottom: 20px;
+  h2 {
+    font-size: 2rem;
+    @include resp(md) {
+      font-size: 1.5rem;
+    }
+  }
+  p {
+    margin-top: -20px;
+    font-size: 15px;
+  }
+}
+
+.date-option-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 0.5em;
+
+  &-text {
+    flex-grow: 1;
+    text-align: start;
+  }
+
+  .date-price {
+    font-weight: bold;
+    color: var(--background-azul);
+    width: 3rem;
+  }
+}
+
+:host ::ng-deep {
+  .itinerary-section {
+    .p-dropdown {
+      background-color: var(--background-azul);
+      color: #fff;
+      width: 280px;
+      margin: 0 auto;
+      margin-top: -10px;
+      border: 1px solid var(--background-azul);
+      border-radius: 50px;
+      .p-dropdown-label {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .p-dropdown-item {
+        padding: 0.75rem 1rem;
+
+        &.p-highlight {
+          background-color: rgba(var(--background-azul-rgb), 0.1);
+        }
+      }
+    }
+    .p-select-label {
+      color: #fff;
+      margin-left: 10px;
+    }
+    .p-icon {
+      color: #fff;
+      margin-right: 10px;
+    }
+    .p-dropdown-panel {
+      .p-dropdown-items {
+        padding: 0.5rem 0;
+      }
+    }
+  }
+}

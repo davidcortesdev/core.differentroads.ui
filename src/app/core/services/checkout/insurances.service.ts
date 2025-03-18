@@ -23,4 +23,8 @@ export class InsurancesService {
   getInsurances(): Insurance[] {
     return this.insurancesSource.getValue();
   }
+
+  getSelectedInsurances(): Insurance[] {
+    return this.selectedInsurancesSource.getValue();
+  }
 }

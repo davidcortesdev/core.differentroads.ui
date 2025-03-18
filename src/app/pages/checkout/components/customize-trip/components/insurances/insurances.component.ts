@@ -37,6 +37,22 @@ export class InsurancesComponent implements OnInit, OnChanges {
       this.addedInsurances = new Set(
         insurances.map((insurance) => insurance.activityId)
       );
+
+      // Update selected insurance based on the selectedInsurances service data
+      if (insurances.length > 0) {
+        // Find the insurance in our insurances array that matches the selected one
+        const foundInsurance = this.insurances.find(
+          (ins) => ins.activityId === insurances[0].activityId
+        );
+
+        if (foundInsurance) {
+          this.selectedInsurance = foundInsurance;
+          this.basicInsuranceSelected = false;
+        }
+      } else {
+        this.selectedInsurance = null;
+        this.basicInsuranceSelected = true;
+      }
     });
   }
 
@@ -82,6 +98,7 @@ export class InsurancesComponent implements OnInit, OnChanges {
 
   toggleInsurance(insurance: Insurance | null): void {
     this.selectedInsurance = insurance;
+    this.basicInsuranceSelected = !insurance;
     this.addedInsurances.clear();
 
     if (insurance) {
@@ -111,6 +128,24 @@ export class InsurancesComponent implements OnInit, OnChanges {
   }
 
   initializeInsurances(): void {
-    this.insurancesService.insurances$.subscribe((insurances) => {});
+    // Updated to properly handle initialization
+    this.insurancesService.insurances$.subscribe((insurances) => {
+      if (insurances.length > 0) {
+        // Check if we already have a selected insurance from selectedInsurances$
+        const selectedInsurances =
+          this.insurancesService.getSelectedInsurances();
+
+        if (selectedInsurances.length > 0) {
+          const foundInsurance = insurances.find(
+            (ins) => ins.activityId === selectedInsurances[0].activityId
+          );
+
+          if (foundInsurance) {
+            this.selectedInsurance = foundInsurance;
+            this.basicInsuranceSelected = false;
+          }
+        }
+      }
+    });
   }
 }

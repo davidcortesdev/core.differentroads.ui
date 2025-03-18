@@ -161,7 +161,6 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
       display: none !important;
     }
     position: relative;
-    z-index: 1;
   }
 }
 
@@ -181,6 +180,45 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
     // Tablet-specific menu item styling
     .nav-menu.p-menubar .p-menubar-root-list .p-menuitem .p-menuitem-link {
       padding: 0.75rem 1rem;
+    }
+  }
+}
+
+// Add these styles at the end of your file
+
+:host ::ng-deep {
+  // Ensure popup menus are always on top
+  .p-menu.p-component {
+    z-index: 9999 !important;
+  }
+  .p-menubar-submenu{
+    z-index: 9999!important;
+  }
+  
+  // User popup menu specific styling
+  .user-popup-menu {
+    z-index: 10000 !important;
+  }
+  
+  // Ensure dropdown menus are always on top
+  .p-menubar .p-menubar-root-list > .p-menuitem > .p-submenu-list {
+    z-index: 9999 !important;
+  }
+  
+  // Ensure all submenu lists are on top
+  .p-submenu-list {
+    z-index: 9999 !important;
+  }
+  
+  // Ensure the overlay container is on top
+  .p-component-overlay {
+    z-index: 9998 !important;
+  }
+  
+  // Left and right menu specific styling
+  .left-menu, .right-menu {
+    .p-submenu-list {
+      z-index: 9999 !important;
     }
   }
 }

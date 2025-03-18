@@ -15,9 +15,6 @@ import {
   takeUntil,
   finalize,
   filter,
-  Observable,
-  BehaviorSubject,
-  combineLatest,
   debounceTime,
   distinctUntilChanged,
 } from 'rxjs';
@@ -32,7 +29,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   isLoadingMenu = true;
   isLoadingUser = false;
-  
+
   // Estado para controlar la visibilidad y transiciones
   showUserInfo = false;
   loadingAuthState = true;
@@ -61,20 +58,56 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadingAuthState = true;
+
+    // Inicializar componentes en paralelo
     this.initializeLanguage();
     this.initializeMenu();
     this.initializeUserMenu();
     this.handleResponsiveMenus();
-    
+
     // Verificar si hay una redirección de autenticación (por ejemplo, de Google)
     this.checkAuthRedirect().finally(() => {
-      setTimeout(() => {
-        this.loadingAuthState = false;
-      }, 500); 
+      setTimeout(() => (this.loadingAuthState = false), 300);
     });
   }
 
-  // Nuevo método para verificar y manejar redirecciones OAuth
+  ngOnDestroy(): void {
+    // Limpiar el listener de resize
+    window.removeEventListener('resize', this.checkScreenSize.bind(this));
+
+    // Limpiar todas las suscripciones
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // Métodos públicos
+  filterLanguages(event: AutoCompleteCompleteEvent): void {
+    const query = event.query.toUpperCase();
+    this.filteredLanguages = this.languages.filter((lang) =>
+      lang.includes(query)
+    );
+  }
+
+  onLanguageChange(lang: string): void {
+    if (typeof lang === 'string') {
+      this.languageService.setLanguage(lang.toLowerCase());
+    }
+  }
+
+  onChipClick(): void {
+    if (!this.isLoggedIn) {
+      this.authService.navigateToLogin();
+    }
+    // Si está autenticado, la lógica para mostrar el menú se maneja en el template
+  }
+
+  // Getter para clases CSS condicionales
+  get userChipClass(): string {
+    if (this.loadingAuthState) return 'auth-loading';
+    return this.showUserInfo ? 'user-info-visible' : 'user-info-hidden';
+  }
+
+  // Métodos privados
   private async checkAuthRedirect(): Promise<void> {
     try {
       await this.authService.handleAuthRedirect();
@@ -96,15 +129,15 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   private initializeUserMenu(): void {
     // Observa el estado de autenticación y actualiza la UI cuando cambie
-    this.authService.isLoggedIn()
+    this.authService
+      .isLoggedIn()
       .pipe(
         takeUntil(this.destroy$),
         debounceTime(300), // Evitar cambios demasiado rápidos
         distinctUntilChanged() // Solo procesar cuando realmente cambie
       )
-      .subscribe(isLoggedIn => {
+      .subscribe((isLoggedIn) => {
         this.isLoggedIn = isLoggedIn;
-        
 
         if (isLoggedIn) {
           this.populateUserMenu();
@@ -114,7 +147,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         }
       });
 
-    // Escucha cambios en los atributos del usuario
+    // Observar cambios en atributos del usuario
     this.authService.userAttributesChanged
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
@@ -123,7 +156,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
         }
       });
   }
-
 
   private resetUserMenu(): void {
     this.chipLabel = 'Iniciar Sesión';
@@ -134,11 +166,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
         command: () => this.onChipClick(),
       },
     ];
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   private fetchMenuConfig(): void {
@@ -157,7 +184,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
           menuConfig['menu-list-right']
         );
 
-        // Create combined menu items for mobile view
+        // Combinar menús para vista móvil
         this.combinedMenuItems = [
           ...(this.leftMenuItems || []),
           ...(this.rightMenuItems || []),
@@ -169,10 +196,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
     // Initial check on component initialization
     this.checkScreenSize();
 
-    // Add window resize listener
-    window.addEventListener('resize', () => {
-      this.checkScreenSize();
-    });
+    // Usar bind para mantener el contexto this
+    const boundCheckScreenSize = this.checkScreenSize.bind(this);
+
+    // Agregar listener con referencia a función vinculada
+    window.addEventListener('resize', boundCheckScreenSize);
   }
 
   private checkScreenSize(): void {
@@ -191,80 +219,54 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   private mapMenuListToItems(menuList: MenuList[]): MenuItem[] {
-    return menuList.map((item: MenuList) => {
-      const menuItem: MenuItem = {
-        label: item.text,
-        routerLink: item['custom-link']
-          ? this.createLink(item['custom-link'], item.subtype || '')
-          : undefined,
-        items: item['link-menu']
-          ? this.mapLinkMenuToItems(item['link-menu'])
-          : undefined,
-      };
-      return menuItem;
-    });
+    return menuList.map((item) => ({
+      label: item.text,
+      routerLink: item['custom-link']
+        ? this.createLink(item['custom-link'], item.subtype || '')
+        : undefined,
+      items: item['link-menu']
+        ? this.mapLinkMenuToItems(item['link-menu'])
+        : undefined,
+    }));
   }
 
   private mapLinkMenuToItems(linkMenu: LinkMenu[]): MenuItem[] {
-    return linkMenu.map((link: LinkMenu) => ({
+    return linkMenu.map((link) => ({
       label: link.name,
       routerLink: this.createLink(link.slug, link.type || ''),
     }));
   }
 
-  filterLanguages(event: AutoCompleteCompleteEvent): void {
-    const query = event.query.toUpperCase();
-    this.filteredLanguages = this.languages.filter((lang) =>
-      lang.includes(query)
-    );
-  }
-
-  onLanguageChange(lang: string): void {
-    if (typeof lang === 'string') {
-      this.languageService.setLanguage(lang.toLowerCase());
-    }
-  }
-
   populateUserMenu(): void {
-    if (this.isLoadingUser) {
-      return; // Evitar múltiples llamadas simultáneas
-    }
-    
-    
-    this.authService.getUserEmail()
+    if (this.isLoadingUser) return;
+
+    this.authService
+      .getUserEmail()
       .pipe(
         takeUntil(this.destroy$),
-        filter(email => !!email), 
-        debounceTime(300) 
+        filter((email) => !!email),
+        debounceTime(300)
       )
-      .subscribe(email => {
+      .subscribe((email) => {
         this.isLoadingUser = true;
-        
-        // Guardar una copia temporal mientras se carga
-        const tempLabel = this.chipLabel;
-        const tempImage = this.chipImage;
-        
-        
-        this.chipLabel = `Cargando...`;
-        
+        this.chipLabel = 'Cargando...';
+
         this.usersService
           .getUserByEmail(email)
           .pipe(
             takeUntil(this.destroy$),
             finalize(() => {
               this.isLoadingUser = false;
-              
-              
-              setTimeout(() => {
-                this.showUserInfo = true;
-              }, 100);
+              setTimeout(() => (this.showUserInfo = true), 100);
             })
           )
           .subscribe({
             next: (user) => {
-              this.chipLabel = `Hola, ${user.names === 'pendiente' ? email : (user.names || email)}`;
+              this.chipLabel = `Hola, ${
+                user.names === 'pendiente' ? email : user.names || email
+              }`;
               this.chipImage = user.profileImage || '';
-              
+
               this.userMenuItems = [
                 {
                   label: 'Ver Perfil',
@@ -280,15 +282,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
             },
             error: async (err) => {
               console.error('Error al obtener el usuario:', err);
-              
-              // Mantener los valores anteriores en caso de error
               this.chipLabel = `Hola, ${email}`;
-              
-              // Si no existe el usuario, intentar crearlo
+
               if (err.status === 404) {
                 try {
                   await this.authService.createUserIfNotExists(email);
-                  this.populateUserMenu(); // Intentar obtener el usuario nuevamente
+                  this.populateUserMenu();
                 } catch (createError) {
                   console.error('Error al crear el usuario:', createError);
                 }
@@ -296,24 +295,5 @@ export class HeaderComponent implements OnInit, OnDestroy {
             },
           });
       });
-  }
-
-  onChipClick(): void {
-    if (this.isLoggedIn) {
-      // Si ya está autenticado, mostrar el menú de usuario
-      // (Esto dependerá de tu implementación de UI)
-    } else {
-      this.authService.navigateToLogin();
-    }
-  }
-
-  // Método auxiliar para el template para mostrar estado del chip
-  get userChipClass(): string {
-    // Clases CSS para diferentes estados
-    return this.loadingAuthState 
-      ? 'auth-loading' 
-      : this.showUserInfo 
-        ? 'user-info-visible' 
-        : 'user-info-hidden';
   }
 }

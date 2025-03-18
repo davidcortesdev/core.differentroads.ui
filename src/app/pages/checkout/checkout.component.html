@@ -100,150 +100,153 @@
       </p-stepper>
     </div>
 
-    <!-- Right column - Order Summary -->
-    <div class="order-summary">
-      <h3>Resumen del pedido</h3>
-      <div class="summary-content">
-        <!-- Tour base info -->
-        <div class="tour-base-info">
-          <!--   <h4>{{ tourName }}</h4>
-          <p>{{ tourDates }}</p> -->
+    <!-- Right column - Order Summary and Discount Code -->
+    <div class="right-column">
+      <!-- Order Summary Section -->
+      <div class="order-summary">
+        <h3>Resumen del pedido</h3>
+        <div class="summary-content">
+          <!-- Tour base info -->
+          <div class="tour-base-info">
+            <!--   <h4>{{ tourName }}</h4>
+            <p>{{ tourDates }}</p> -->
 
-          <!-- Selected items list -->
-          <div class="selected-items">
-            <div *ngFor="let item of summary" class="item">
-              <span>{{ item.description }}</span>
-              <span *ngIf="item.value">
-                <span>{{ item.qty }}</span>
-                <span>x</span>
-                <span>{{ item.value | currencyFormat : "EUR" }}</span>
-                <span>=</span>
-                <span>{{
-                  item.value * item.qty | currencyFormat : "EUR"
-                }}</span>
-              </span>
-              <span *ngIf="!item.value">
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-                <span>incluido</span>
-              </span>
+            <!-- Selected items list -->
+            <div class="selected-items">
+              <div *ngFor="let item of summary" class="item">
+                <span>{{ item.description }}</span>
+                <span *ngIf="item.value">
+                  <span>{{ item.qty }}</span>
+                  <span>x</span>
+                  <span>{{ item.value | currencyFormat : "EUR" }}</span>
+                  <span>=</span>
+                  <span>{{
+                    item.value * item.qty | currencyFormat : "EUR"
+                  }}</span>
+                </span>
+                <span *ngIf="!item.value">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                  <span>incluido</span>
+                </span>
+              </div>
             </div>
-          </div>
 
-          <!-- Total section -->
-          <div class="total-section">
-            <div class="total">
-              <span>Total</span>
-              <span>{{ total | currencyFormat : "EUR" }}</span>
+            <!-- Total section -->
+            <div class="total-section">
+              <div class="total">
+                <span>Total</span>
+                <span>{{ total | currencyFormat : "EUR" }}</span>
+              </div>
             </div>
-          </div>
 
-          <!-- Flights info if selected -->
-          <div
-            class="flights-info"
-            *ngIf="
-              selectedFlight &&
-              !selectedFlight?.name?.toLowerCase()?.includes('sin ')
-            "
-          >
-            <h4>Vuelos</h4>
-            <div class="flight-details">
-              <!-- outbound -->
-              <div
-                *ngFor="
-                  let segment of selectedFlight?.outbound?.segments;
-                  let idx = index
-                "
-                class="itinerary-flight"
-              >
-                <ng-container *ngIf="idx === 0">
-                  <div class="itinerary-flight-date">
-                    <span>IDA</span>
-                    <span class="itinerary-flight-date-line"></span>
-                    <i class="icon icon-navigate_next font-xl"></i>
-                    <span>{{
-                      selectedFlight.outbound.date | date : "dd/MM/yyyy"
-                    }}</span>
-                  </div>
-                  <div class="itinerary-flight-scale">
-                    <span *ngIf="selectedFlight?.outbound?.segments">
-                      {{
-                        selectedFlight.outbound.segments.length > 1
-                          ? selectedFlight.outbound.segments.length -
-                            1 +
-                            " escala"
-                          : "Vuelo directo"
-                      }}
-                    </span>
-                  </div>
-                </ng-container>
-                <div class="itinerary-flight-wrap">
-                  <div class="itinerary-flight-departure">
-                    <span>{{ segment.departureTime }}</span>
-                    <span
-                      >{{ segment.departureCity }} ({{
-                        segment.departureIata
-                      }})</span
-                    >
-                  </div>
-                  <span><i class="icon icon-navigate_next"></i></span>
-                  <div class="itinerary-flight-arrival">
-                    <span>{{ segment.arrivalTime }}</span>
-                    <span
-                      >{{ segment.arrivalCity }} ({{
-                        segment.arrivalIata
-                      }})</span
-                    >
+            <!-- Flights info if selected -->
+            <div
+              class="flights-info"
+              *ngIf="
+                selectedFlight &&
+                !selectedFlight?.name?.toLowerCase()?.includes('sin ')
+              "
+            >
+              <h4>Vuelos</h4>
+              <div class="flight-details">
+                <!-- outbound -->
+                <div
+                  *ngFor="
+                    let segment of selectedFlight?.outbound?.segments;
+                    let idx = index
+                  "
+                  class="itinerary-flight"
+                >
+                  <ng-container *ngIf="idx === 0">
+                    <div class="itinerary-flight-date">
+                      <span>IDA</span>
+                      <span class="itinerary-flight-date-line"></span>
+                      <i class="icon icon-navigate_next font-xl"></i>
+                      <span>{{
+                        selectedFlight.outbound.date | date : "dd/MM/yyyy"
+                      }}</span>
+                    </div>
+                    <div class="itinerary-flight-scale">
+                      <span *ngIf="selectedFlight?.outbound?.segments">
+                        {{
+                          selectedFlight.outbound.segments.length > 1
+                            ? selectedFlight.outbound.segments.length -
+                              1 +
+                              " escala"
+                            : "Vuelo directo"
+                        }}
+                      </span>
+                    </div>
+                  </ng-container>
+                  <div class="itinerary-flight-wrap">
+                    <div class="itinerary-flight-departure">
+                      <span>{{ segment.departureTime }}</span>
+                      <span
+                        >{{ segment.departureCity }} ({{
+                          segment.departureIata
+                        }})</span
+                      >
+                    </div>
+                    <span><i class="icon icon-navigate_next"></i></span>
+                    <div class="itinerary-flight-arrival">
+                      <span>{{ segment.arrivalTime }}</span>
+                      <span
+                        >{{ segment.arrivalCity }} ({{
+                          segment.arrivalIata
+                        }})</span
+                      >
+                    </div>
                   </div>
                 </div>
-              </div>
-              <!-- inbound -->
-              <div
-                *ngFor="
-                  let segment of selectedFlight?.inbound?.segments;
-                  let idx = index
-                "
-                class="itinerary-flight"
-              >
-                <ng-container *ngIf="idx === 0">
-                  <div class="itinerary-flight-date inbound">
-                    <span>VUELTA</span>
-                    <span class="itinerary-flight-date-line"></span>
-                    <span>{{
-                      selectedFlight.inbound.date | date : "dd/MM/yyyy"
-                    }}</span>
-                  </div>
-                  <div class="itinerary-flight-scale">
-                    <span *ngIf="selectedFlight?.inbound?.segments">
-                      {{
-                        selectedFlight.inbound.segments.length > 1
-                          ? selectedFlight.inbound.segments.length -
-                            1 +
-                            " escala"
-                          : "Vuelo directo"
-                      }}
-                    </span>
-                  </div>
-                </ng-container>
-                <div class="itinerary-flight-wrap">
-                  <div class="itinerary-flight-departure">
-                    <span>{{ segment.departureTime }}</span>
-                    <span
-                      >{{ segment.departureCity }} ({{
-                        segment.departureIata
-                      }})</span
-                    >
-                  </div>
-                  <span><i class="icon icon-navigate_next"></i></span>
-                  <div class="itinerary-flight-arrival">
-                    <span>{{ segment.arrivalTime }}</span>
-                    <span
-                      >{{ segment.arrivalCity }} ({{
-                        segment.arrivalIata
-                      }})</span
-                    >
+                <!-- inbound -->
+                <div
+                  *ngFor="
+                    let segment of selectedFlight?.inbound?.segments;
+                    let idx = index
+                  "
+                  class="itinerary-flight"
+                >
+                  <ng-container *ngIf="idx === 0">
+                    <div class="itinerary-flight-date inbound">
+                      <span>VUELTA</span>
+                      <span class="itinerary-flight-date-line"></span>
+                      <span>{{
+                        selectedFlight.inbound.date | date : "dd/MM/yyyy"
+                      }}</span>
+                    </div>
+                    <div class="itinerary-flight-scale">
+                      <span *ngIf="selectedFlight?.inbound?.segments">
+                        {{
+                          selectedFlight.inbound.segments.length > 1
+                            ? selectedFlight.inbound.segments.length -
+                              1 +
+                              " escala"
+                            : "Vuelo directo"
+                        }}
+                      </span>
+                    </div>
+                  </ng-container>
+                  <div class="itinerary-flight-wrap">
+                    <div class="itinerary-flight-departure">
+                      <span>{{ segment.departureTime }}</span>
+                      <span
+                        >{{ segment.departureCity }} ({{
+                          segment.departureIata
+                        }})</span
+                      >
+                    </div>
+                    <span><i class="icon icon-navigate_next"></i></span>
+                    <div class="itinerary-flight-arrival">
+                      <span>{{ segment.arrivalTime }}</span>
+                      <span
+                        >{{ segment.arrivalCity }} ({{
+                          segment.arrivalIata
+                        }})</span
+                      >
+                    </div>
                   </div>
                 </div>
               </div>
@@ -251,6 +254,7 @@
           </div>
         </div>
       </div>
+       <app-discount-code ></app-discount-code>
     </div>
   </div>
 </div>

@@ -64,13 +64,21 @@
       }
     }
 
+    /* Aplicar posición sticky al contenedor derecho en lugar de solo al resumen */
+    .right-column {
+      position: sticky;
+      top: 2rem;
+      height: fit-content;
+      align-self: start;
+    }
+
     .order-summary {
       background: white;
       border-radius: 8px;
       padding: 1.5rem;
       height: fit-content;
-      position: sticky;
-      top: 2rem;
+      /* Quitar position: sticky de aquí */
+      position: relative;
       font-size: 0.9rem;
 
       h3 {
@@ -147,13 +155,19 @@
 }
 
 @media screen and (max-width: 1024px) {
-  .checkout-container {
+  .checkout .checkout-container {
     grid-template-columns: 1fr;
 
-    .order-summary {
+    .right-column {
       position: static;
     }
   }
+}
+
+/* Asegúrate que los toasts aparezcan por encima de todo */
+::ng-deep .p-toast {
+  position: fixed !important;
+  z-index: 9999 !important;
 }
 
 .booking-flights {

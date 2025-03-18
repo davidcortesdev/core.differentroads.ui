@@ -1,0 +1,48 @@
+<div class="discount-container">
+    <h3>Código de descuento</h3>
+    <div class="discount-content">
+      <div class="p-fluid" [formGroup]="discountForm">
+        <div class="p-field">
+          <input 
+            pInputText 
+            id="code" 
+            type="text" 
+            formControlName="code" 
+            [disabled]="appliedDiscount !== null"
+            placeholder="Ingrese código de descuento"
+          />
+        </div>
+        <div class="button-container">
+          <p-button 
+            *ngIf="!appliedDiscount" 
+            label="Aplicar" 
+            icon="pi pi-check" 
+            (onClick)="validateDiscountCode()" 
+            [disabled]="discountForm.invalid"
+          ></p-button>
+          <p-button 
+            *ngIf="appliedDiscount" 
+            label="Eliminar" 
+            icon="pi pi-times" 
+            styleClass="p-button-danger" 
+            (onClick)="clearDiscount()"
+          ></p-button>
+        </div>
+      </div>
+  
+      <div *ngIf="appliedDiscount" class="discount-info">
+        <h3>Descuento aplicado</h3>
+        <p><strong>Código:</strong> {{ appliedDiscount.code }}</p>
+        <p><strong>Descripción:</strong> {{ appliedDiscount.description }}</p>
+        <p><strong>Importe:</strong> 
+          <ng-container [ngSwitch]="appliedDiscount.type">
+            <ng-container *ngSwitchCase="'percentage'">{{ appliedDiscount.amount }}%</ng-container>
+            <ng-container *ngSwitchCase="'fixed'">{{ appliedDiscount.amount | currency:'EUR' }}</ng-container>
+            <ng-container *ngSwitchCase="'shipping'">Envío gratuito</ng-container>
+          </ng-container>
+        </p>
+      </div>
+    </div>
+  </div>
+  
+  <p-toast position="top-right"></p-toast>

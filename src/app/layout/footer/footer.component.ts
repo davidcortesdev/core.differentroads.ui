@@ -94,12 +94,43 @@ export class FooterComponent implements OnInit {
       'https://static.mailerlite.com/js/w/webforms.min.js?vd4de52e171e8eb9c47c0c20caf367ddf';
     script.type = 'text/javascript';
     document.body.appendChild(script);
+    
+    // Add event listener for form submission
+    setTimeout(() => {
+      const form = document.querySelector('.ml-block-form');
+      if (form) {
+        form.addEventListener('submit', this.handleFormSubmit.bind(this));
+      }
+    }, 1000); // Give time for the script to load
   }
 
-  ml_webform_success_6075553(): void {
-    console.log('asd');
-    const r = (window as any)['ml_jQuery'] || (window as any)['jQuery'];
-    r('.ml-subscribe-form-6075553 .row-success').show();
-    r('.ml-subscribe-form-6075553 .row-form').hide();
+  handleFormSubmit(event: Event): void {
+    // Show loading button, hide submit button
+    const submitBtn = document.querySelector('.ml-subscribe-form-6075553 button[type="submit"]');
+    const loadingBtn = document.querySelector('.ml-subscribe-form-6075553 button.loading');
+    
+    if (submitBtn && loadingBtn) {
+      submitBtn.setAttribute('style', 'display: none');
+      loadingBtn.setAttribute('style', 'display: inline-block');
+    }
+    
+    // Set a timeout to simulate form submission and show success message
+    setTimeout(() => {
+      const successElement = document.querySelector('.ml-subscribe-form-6075553 .row-success');
+      const formElement = document.querySelector('.ml-subscribe-form-6075553 .row-form');
+      const titleElement = document.querySelector('.newsletter .title');
+      
+      if (successElement) {
+        successElement.setAttribute('style', 'display: block');
+      }
+      
+      if (formElement) {
+        formElement.setAttribute('style', 'display: none');
+      }
+      
+      if (titleElement) {
+        titleElement.setAttribute('style', 'display: none');
+      }
+    }, 2000); // Show success message after 2 seconds
   }
 }

@@ -40,6 +40,7 @@
             class="input-text radius firstElement"
             fluid="true"
             [(ngModel)]="destinationInput"
+            (keyup.enter)="searchTrips()"
           />
           <label for="destionationInput" class="label">¿Cuál es tu próximo destino?</label>
         </p-iftalabel>

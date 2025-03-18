@@ -58,7 +58,7 @@ export class HeroSectionComponent implements OnInit {
   searchTrips() {
     const queryParams: any = {};
     if (this.destinationInput) {
-      queryParams.destination = this.destinationInput;
+      queryParams.destination = this.destinationInput.trim();
     }
     if (this.departureDate) {
       queryParams.departureDate = this.departureDate

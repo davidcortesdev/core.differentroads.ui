@@ -1,12 +1,12 @@
-// Layout variables
+// Variables
 $skeleton-gap: 1rem;
 $profile-gap: 1.4rem;
 $mobile-breakpoint: 768px;
 $tablet-breakpoint: 992px;
-
-// Colors
 $skeleton-bg: rgba(255, 255, 255, 0.1);
 $skeleton-shine: rgba(255, 255, 255, 0.2);
+$z-index-menu: 9999;
+$z-index-overlay: 9998;
 
 // Mixins
 @mixin flex-center {
@@ -14,7 +14,31 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
   align-items: center;
 }
 
-// Skeleton styles
+@mixin reset-menubar {
+  border: none;
+  border-radius: 0;
+  border-top: 0px solid var(--background-azul);
+}
+
+@mixin responsive-menu {
+  .p-menubar-button {
+    display: block !important;
+  }
+
+  .p-menubar-root-list {
+    display: none;
+
+    &.p-menubar-mobile-active {
+      display: flex;
+    }
+  }
+}
+
+// Base styles
+.header-wrapper {
+  width: 100%;
+}
+
 .menu-skeleton {
   @include flex-center;
   gap: $skeleton-gap;
@@ -24,20 +48,22 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
   border-radius: 16px;
 }
 
-// Profile section
 .busqPerfil {
   @include flex-center;
   gap: $profile-gap;
 }
 
-// Header layout structure
-.header-wrapper {
-  width: 100%;
+.logo {
+  padding: 0.7rem 0 0.7rem 1.25rem;
+}
+
+.top-menu {
+  height: 4rem;
 }
 
 // Deep styles for PrimeNG components
 :host ::ng-deep {
-
+  // Skeleton animation
   .p-skeleton {
     background-color: $skeleton-bg;
 
@@ -46,19 +72,81 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
     }
   }
 
-  // Responsive styles for both tablet and mobile
+  // Chip styling
+  .p-chip {
+    box-shadow: 0 0 0 0.5px var(--background-azul);
+    background: transparent;
+    font-size: 14px;
+  }
+
+  // Top menu styling
+  .top-menu.p-menubar {
+    @include reset-menubar;
+    position: relative;
+    z-index: $z-index-menu;
+    box-shadow: 0 -2px 10px -3px var(--background-azul);
+  }
+
+  // Navigation menu styling
+  .nav-menu.p-menubar {
+    @include reset-menubar;
+    box-shadow: 0 2px 6px -1px var(--background-azul);
+    position: relative;
+
+    // Hide hamburger by default
+    .p-menubar-button {
+      display: none;
+    }
+  }
+
+  // Desktop nested menu styles
+  .nav-menu .p-menubar {
+    background: transparent;
+    border: none;
+    padding: 0;
+    position: relative;
+
+    .p-menubar-root-list .p-menuitem {
+      margin: 0;
+    }
+
+    // Always hide nested menubar buttons on desktop
+    .p-menubar-button {
+      display: none !important;
+    }
+  }
+
+  // Z-index management for menus
+  .p-menu.p-component,
+  .p-menubar-submenu,
+  .p-menubar .p-menubar-root-list > .p-menuitem > .p-submenu-list,
+  .p-submenu-list,
+  .left-menu .p-submenu-list,
+  .right-menu .p-submenu-list {
+    z-index: $z-index-menu !important;
+  }
+
+  .user-popup-menu {
+    z-index: $z-index-menu + 1 !important;
+  }
+
+  .p-component-overlay {
+    z-index: $z-index-overlay !important;
+  }
+
+  // Responsive styles
   @media screen and (max-width: #{$tablet-breakpoint}) {
-    // Hide chip label on tablet and mobile
+    // Hide chip label
     .user-chip .p-chip-label {
       display: none;
     }
 
-    // Ensure the hamburger menu displays the full menu
+    // Show hamburger menu
     .p-menubar-button {
       display: block !important;
     }
 
-    // Make sure menu items display correctly when expanded
+    // Mobile menu expanded state
     .p-menubar.p-menubar-mobile-active .p-menubar-root-list {
       display: flex;
       flex-direction: column;
@@ -66,10 +154,10 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
       position: absolute;
       top: 100%;
       left: 0;
-      z-index: 1000;
+      z-index: $z-index-menu;
       box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 
-      // Make all items full width in tablet/mobile
+      // Full width items
       .p-menuitem {
         width: 100%;
 
@@ -80,7 +168,7 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
         }
       }
 
-      // Handle submenu styling
+      // Submenu styling
       .p-menuitem-active > .p-submenu-list {
         position: relative;
         width: 100%;
@@ -90,95 +178,33 @@ $skeleton-shine: rgba(255, 255, 255, 0.2);
       }
     }
 
-    // Asegurar que el menú combinado aparezca correctamente en mobile/tablet
-    .bottom-section {
-      .nav-menu.p-menubar {
-        .p-menubar-button {
-          display: block !important;
-        }
-
-        .p-menubar-root-list {
-          display: none;
-        }
-
-        &.p-menubar-mobile-active .p-menubar-root-list {
-          display: flex;
-        }
-      }
-    }
-  }
-
-  .p-chip {
-    box-shadow: 0 0 0 0.5px var(--background-azul);
-    background: transparent;
-    font-size: 14px;
-  }
-
-  .top-menu.p-menubar {
-    border: none;
-    border-radius: 0;
-    position: relative;
-    z-index: 9999;
-    //height: 5rem;
-    border-top: 0px solid var(--background-azul);
-    box-shadow: 0 -2px 10px -3px var(--background-azul);
-  }
-
-  .nav-menu.p-menubar {
-    border: none;
-    border-radius: 0;
-    border-top: 0px solid var(--background-azul);
-    box-shadow: 0 2px 6px -1px var(--background-azul);
-
-    // Make sure icons aren't shown twice
-    .p-menubar-button {
-      display: none; // Hidden by default, shown only on tablet/mobile
-    }
-
-    @media screen and (max-width: #{$tablet-breakpoint}) {
+    // Bottom section menu
+    .bottom-section .nav-menu.p-menubar {
       .p-menubar-button {
-        display: block; // Show on tablet/mobile
-        margin-left: 10px;
-        margin-bottom: -10px;
+        display: block !important;
       }
-    }
-  }
 
-  // Desktop menu styles - for nested structure
-  .nav-menu .p-menubar {
-    background: transparent;
-    border: none;
-    padding: 0;
+      .p-menubar-root-list {
+        display: none;
+      }
 
-    .p-menubar-root-list {
-      .p-menuitem {
-        margin: 0;
+      &.p-menubar-mobile-active .p-menubar-root-list {
+        display: flex;
       }
     }
 
-    // Hide the menubar buttons in nested menubars on desktop
-    .p-menubar-button {
-      display: none !important;
+    // Show hamburger in nav menu
+    .nav-menu.p-menubar .p-menubar-button {
+      display: block;
+      margin-left: 10px;
+      margin-bottom: -10px;
     }
-    position: relative;
-    z-index: 1;
   }
 }
 
-.logo {
-  padding-top: 0.7rem;
-  padding-left: 1.25rem;
-  padding-bottom: 0.7rem;
-}
-
-.top-menu {
-  height: 4rem;
-}
-
-// Additional tablet-specific adjustments
+// Tablet-specific adjustments
 @media screen and (min-width: #{$mobile-breakpoint + 1px}) and (max-width: #{$tablet-breakpoint}) {
   :host ::ng-deep {
-    // Tablet-specific menu item styling
     .nav-menu.p-menubar .p-menubar-root-list .p-menuitem .p-menuitem-link {
       padding: 0.75rem 1rem;
     }

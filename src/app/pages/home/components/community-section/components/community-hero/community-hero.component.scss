@@ -1,3 +1,5 @@
+@use "sass:math";
+
 .community-hero {
   --rating-background: var(--p-content-background);
   --rating-text: #6a6a6a;
@@ -254,6 +256,13 @@
       align-self: end;
       max-height: 100%;
       overflow: hidden;
+      padding: 0 var(--spacing-md);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: flex-start;
+      gap: 0.5rem;
+      color: var(--background-azul-color-letra);
 
       @media screen and (max-width: 1024px) {
         align-self: stretch;
@@ -269,14 +278,6 @@
         align-self: start;
         text-align: left;
       }
-
-      padding: 0 var(--spacing-md);
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      align-items: flex-start;
-      gap: 0.5rem;
-      color: var(--background-azul-color-letra);
 
       @media screen and (min-width: 2560px) {
         font-size: 1.5rem;

@@ -73,7 +73,9 @@ export class CarouselSectionComponent implements OnInit {
       id: index + 1,
       description: card.description,
       image: {
-        url: card.image[0].url,
+        url: card.image && Array.isArray(card.image) && card.image.length > 0 
+          ? card.image[0].url 
+          : '',
         alt: `Image ${index + 1}`,
       },
       buttonText: card.textButton,

@@ -1,3 +1,5 @@
+@use "sass:map";
+
 $breakpoints: (
   sm: 576px,
   md: 768px,
@@ -13,7 +15,7 @@ $spaces: (
 );
 
 @mixin resp($bp) {
-  @media (max-width: map-get($breakpoints, $bp)) {
+  @media (max-width: map.get($breakpoints, $bp)) {
     @content;
   }
 }
@@ -31,7 +33,7 @@ $spaces: (
 .itinerary-section {
   color: var(--background-azul);
   text-align: center;
-  padding: map-get($spaces, lg) 0;
+  padding: map.get($spaces, lg) 0;
   margin-bottom: 20px;
   
   h2 {

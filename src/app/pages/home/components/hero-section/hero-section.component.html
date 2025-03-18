@@ -40,6 +40,7 @@
             class="input-text radius firstElement"
             fluid="true"
             [(ngModel)]="destinationInput"
+            (keyup.enter)="searchTrips()"
           />
           <label for="destionationInput" class="label">¿Cuál es tu próximo destino?</label>
         </p-iftalabel>
@@ -72,18 +73,20 @@
       </div>
       <div class="input-md">
         <p-iftaLabel>
-          <p-dropdown
+          <p-select
             [options]="tripTypes"
             [(ngModel)]="selectedTripType"
             id="tripTypeInput"
             placeholder="Seleccionar tipo"
-            fluid="true"
+            [style]="{'width': '100%'}"
             class="border"
             [appendTo]="'body'"
             [showClear]="true"
-            [panelStyleClass]="'custom-dropdown-panel'"
+            styleClass="custom-select-panel"
+            [inputId]="'tripTypeInput'"
+            fluid="true"
           >
-          </p-dropdown>
+          </p-select>
           <label for="tripTypeInput" class="label">Tipo de viaje</label>
         </p-iftaLabel>
       </div>

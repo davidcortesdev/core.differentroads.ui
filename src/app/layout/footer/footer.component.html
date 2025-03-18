@@ -29,33 +29,33 @@
                     <div class="ml-input-horizontal">
                       <div class="horizontal-fields">
                         <div
-                          class="ml-field-email ml-validate-email ml-validate-required mlfieldemail"
+                          class="inputGroup ml-validate-email ml-validate-required mlfieldemail"
                         >
                           <input
-                          type="email"
-                          class="form-control"
-                          data-inputmask=""
-                          name="fields[email]"
-                          placeholder="Escribe tu email"
-                          autocomplete="email"
+                            type="email"
+                            class="form-control"
+                            data-inputmask=""
+                            name="fields[email]"
+                            placeholder="Escribe tu email"
+                            autocomplete="email"
                           />
+                          <button type="submit">
+                            <i class="pi pi-arrow-right"></i>
+                          </button>
+                          <button
+                            disabled="disabled"
+                            style="display: none"
+                            type="button"
+                            class="loading"
+                          >
+                            <div class="ml-form-embedSubmitLoad"></div>
+                            <span class="sr-only">Loading...</span>
+                          </button>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-                <button type="submit">
-                  <i class="pi pi-arrow-right"></i>
-                </button>
-                <button
-                  disabled="disabled"
-                  style="display: none"
-                  type="button"
-                  class="loading"
-                >
-                  <div class="ml-form-embedSubmitLoad"></div>
-                  <span class="sr-only">Loading...</span>
-                </button>
 
                 <input type="hidden" name="ml-submit" value="1" />
                 <input type="hidden" name="anticsrf" value="true" />

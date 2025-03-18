@@ -47,6 +47,8 @@ export class FooterComponent implements OnInit {
     copyrightText: '',
   };
 
+  isSubscribed = false;
+
   constructor(private generalConfigService: GeneralConfigService) {}
 
   ngOnInit() {
@@ -95,6 +97,7 @@ export class FooterComponent implements OnInit {
   }
 
   ml_webform_success_6075553(): void {
+    console.log('asd');
     const r = (window as any)['ml_jQuery'] || (window as any)['jQuery'];
     r('.ml-subscribe-form-6075553 .row-success').show();
     r('.ml-subscribe-form-6075553 .row-form').hide();

@@ -1,0 +1,142 @@
+$breakpoints: (
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1366px,
+);
+
+$spaces: (
+  xs: 0.5rem,
+  sm: 0.75rem,
+  base: 1rem,
+  lg: 1.5rem,
+);
+
+@mixin resp($bp) {
+  @media (max-width: map-get($breakpoints, $bp)) {
+    @content;
+  }
+}
+
+@mixin flex($dir: row, $just: flex-start, $align: stretch, $gap: 0) {
+  display: flex;
+  flex-direction: $dir;
+  justify-content: $just;
+  align-items: $align;
+  @if $gap > 0 {
+    gap: $gap;
+  }
+}
+
+.itinerary-section {
+  color: var(--background-azul);
+  text-align: center;
+  padding: map-get($spaces, lg) 0;
+  margin-bottom: 20px;
+  
+  h2 {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    
+    @include resp(md) {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+  }
+  
+  p {
+    margin-top: -20px;
+    font-size: 15px;
+  }
+}
+
+.date-option-item {
+  @include flex(row, space-between, center, 0.5em);
+  width: 100%;
+  
+  &-text {
+    flex-grow: 1;
+    text-align: start;
+  }
+  
+  .date-price {
+    font-weight: bold;
+    color: var(--background-azul);
+    width: 3rem;
+    text-align: right;
+  }
+}
+
+:host ::ng-deep {
+  .itinerary-section {
+    .p-dropdown {
+      background-color: var(--background-azul);
+      color: #fff;
+      width: 280px;
+      margin: 0 auto;
+      margin-top: -10px;
+      border: 1px solid var(--background-azul);
+      border-radius: 50px;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      }
+      
+      .p-dropdown-label {
+        @include flex(row, center, center);
+      }
+      
+      .p-dropdown-item {
+        padding: 0.75rem 1rem;
+        
+        &.p-highlight {
+          background-color: rgba(var(--background-azul-rgb), 0.1);
+        }
+      }
+    }
+    
+    .p-select-label {
+      color: #fff;
+      margin-left: 10px;
+    }
+    
+    .p-icon {
+      color: #fff;
+      margin-right: 10px;
+    }
+    
+    .p-dropdown-panel {
+      .p-dropdown-items {
+        padding: 0.5rem 0;
+      }
+    }
+  }
+}
+
+// Trip type badges
+@mixin trip-type-badge {
+  color: white !important;
+  font-weight: bold;
+  width: 24px;
+  height: 24px;
+  @include flex(row, center, center);
+  border-radius: 4px;
+  padding: 0;
+  cursor: help;
+}
+
+.trip-type-s {
+  @include trip-type-badge;
+  background-color: var(--color-singles) !important;
+}
+
+.trip-type-g {
+  @include trip-type-badge;
+  background-color: var(--color-group) !important;
+}
+
+.trip-type-p {
+  @include trip-type-badge;
+  background-color: var(--color-private) !important;
+}

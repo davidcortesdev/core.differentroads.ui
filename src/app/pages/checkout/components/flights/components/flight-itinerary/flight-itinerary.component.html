@@ -1,67 +1,78 @@
 <div class="flight-itinerary">
   <div class="flight-itinerary-journey">
-    <div *ngFor="let segment of flight.outbound.segments" class="journey-item">
+    <!-- Iteramos sobre cada journey (outbound e inbound) -->
+    <div class="journey-item" *ngFor="let journey of journeys; let i = index">
       <div class="journey-item-departure pr-2">
         <div>
           <span class="journey-item-departure-title">Salida:</span>
           <span class="journey-item-departure-country">
-            {{ segment.departureIata }}
+            {{ journey.departure.iata }}
           </span>
         </div>
         <span class="journey-item-departure-time">
-          {{ formatTime(segment.departureTime) | date : "HH:mm" }}
+          {{ journey.departure.time | date : "HH:mm" : "UTC" }}
+        </span>
+        <span class="journey-item-departure-date">
+          {{ journey.departure.date | date : "dd-MM-yyyy" : "UTC" }}
         </span>
       </div>
-      <div class="journey-item-flight-info space-y-2">
-        <span class="journey-item-flight-info-aeroline">
-          {{ segment.airline.name }}
-        </span>
-        <span class="journey-item-flight-info-flight-hours">
-          {{ calculateFlightDuration(segment) }}
-        </span>
-      </div>
-      <div class="journey-item-departure pl-2">
-        <div>
-          <span class="journey-item-departure-title">Llegada:</span>
-          <span class="journey-item-departure-country">
-            {{ segment.arrivalIata }}
-          </span>
-        </div>
-        <span class="journey-item-departure-time">
-          {{ formatTime(segment.arrivalTime) | date : "HH:mm" }}
-        </span>
-      </div>
-    </div>
 
-    <div *ngFor="let segment of flight.inbound.segments" class="journey-item">
-      <div class="journey-item-departure pr-2">
-        <div>
-          <span class="journey-item-departure-title">Salida:</span>
-          <span class="journey-item-departure-country">
-            {{ segment.departureIata }}
-          </span>
-        </div>
-        <span class="journey-item-departure-time">
-          {{ formatTime(segment.departureTime) | date : "HH:mm" }}
-        </span>
-      </div>
       <div class="journey-item-flight-info space-y-2">
+        <!-- Cada journey tiene su overlay panel para mostrar el timeline -->
+        <p-overlayPanel #op>
+          <p-timeline
+            [value]="journey.timelineData"
+            layout="vertical"
+            align="center"
+          >
+            <ng-template let-item pTemplate="content">
+              <p>
+                <strong>Salida:</strong> {{ item.departureCity }} ({{
+                  item.departureIata
+                }}) -
+                {{ item.departureDateTime | date : "dd-MM-yyyy HH:mm" : "UTC" }}
+              </p>
+              <p>
+                <strong>Llegada:</strong> {{ item.arrivalCity }} ({{
+                  item.arrivalIata
+                }}) -
+                {{ item.arrivalDateTime | date : "dd-MM-yyyy HH:mm" : "UTC" }}
+              </p>
+            </ng-template>
+          </p-timeline>
+        </p-overlayPanel>
+
+        <span
+          class="journey-item-flight-info-segments"
+          (click)="op.toggle($event)"
+          style="
+            cursor: pointer;
+            text-decoration: underline;
+            color: var(--p-primary-color);
+          "
+        >
+          {{ journey.stopsText }}
+        </span>
         <span class="journey-item-flight-info-aeroline">
-          {{ segment.airline.name }}
+          {{ journey.airlineName }}
         </span>
         <span class="journey-item-flight-info-flight-hours">
-          {{ calculateFlightDuration(segment) }}
+          {{ journey.totalDuration }}
         </span>
       </div>
+
       <div class="journey-item-departure pl-2">
         <div>
           <span class="journey-item-departure-title">Llegada:</span>
           <span class="journey-item-departure-country">
-            {{ segment.arrivalIata }}
+            {{ journey.arrival.iata }}
           </span>
         </div>
         <span class="journey-item-departure-time">
-          {{ formatTime(segment.arrivalTime) | date : "HH:mm" }}
+          {{ journey.arrival.time | date : "HH:mm" : "UTC" }}
+        </span>
+        <span class="journey-item-departure-date">
+          {{ journey.arrival.date | date : "dd-MM-yyyy" : "UTC" }}
         </span>
       </div>
     </div>
@@ -74,7 +85,7 @@
         {{ flight.name }}
       </span>
       <span class="flight-itinerary-price-wrapper-price">
-        {{ flight.price || 0 | currencyFormat : "EUR" }}
+        {{ getPrice() || flight.price || 0 | currencyFormat : "EUR" }}
       </span>
       <span class="flight-itinerary-price-wrapper-text">Por persona</span>
     </div>

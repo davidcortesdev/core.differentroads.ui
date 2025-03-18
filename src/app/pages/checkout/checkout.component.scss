@@ -1,11 +1,26 @@
 .checkout {
   background-color: var(--accent-white);
 
+  &-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    padding: 0 2rem;
+    padding-top: 2rem;
+    margin: 0;
+  }
+  &-subtitle {
+    font-size: 1.2rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    padding: 0 2rem;
+  }
+
   .checkout-container {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 2rem;
-    padding: 2rem;
+    padding: 0 2rem;
     max-width: 1440px;
     margin: 0 auto;
 

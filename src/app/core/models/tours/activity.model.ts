@@ -16,4 +16,5 @@ export interface Activity {
   productType: string;
   price?: number;
   priceData?: PriceData[];
+  recommended?: boolean;
 }

@@ -10,21 +10,19 @@ import { Panel } from 'primeng/panel';
 import { PeriodsService } from '../../../../core/services/periods.service';
 import { Period } from '../../../../core/models/tours/period.model';
 import { Activity } from '../../../../core/models/tours/activity.model';
-import { TourDataService } from '../../../../core/services/tour-data.service';
+import { TourDataService } from '../../../../core/services/tour-data/tour-data.service';
 import { CAROUSEL_CONFIG } from '../../../../shared/constants/carousel.constants';
+import { PeriodPricesService } from '../../../../core/services/tour-data/period-prices.service';
+import { OptionalActivityRef } from '../../../../core/models/orders/order.model';
+import { TourOrderService } from '../../../../core/services/tour-data/tour-order.service';
+import { DateOption } from '../tour-date-selector/tour-date-selector.component';
 
 interface City {
   nombre: string;
   lat: number;
   lng: number;
 }
-interface DateOption {
-  label: string;
-  value: string;
-  price: number;
-  isGroup: boolean;
-  externalID?: string;
-}
+
 interface EventItem {
   status?: string;
   date?: string;
@@ -34,10 +32,12 @@ interface EventItem {
   description?: SafeHtml;
 }
 interface Highlight {
+  id: string;
   title: string;
   description: string;
   image: string;
   optional: boolean;
+  added?: boolean;
 }
 @Component({
   selector: 'app-tour-itinerary',
@@ -87,6 +87,7 @@ export class TourItineraryComponent implements OnInit {
   protected carouselConfig = CAROUSEL_CONFIG;
 
   selectedOption: DateOption = {
+    id: 0,
     label: '',
     value: '',
     price: 0,
@@ -162,9 +163,10 @@ export class TourItineraryComponent implements OnInit {
     private periodsService: PeriodsService,
     private route: ActivatedRoute,
     private sanitizer: DomSanitizer,
-    private httpClient: HttpClient,
     private geoService: GeoService,
-    private tourDataService: TourDataService
+    private tourOrderService: TourOrderService,
+    private tourDataService: TourDataService,
+    private periodPricesService: PeriodPricesService
   ) {
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}`;
@@ -190,14 +192,23 @@ export class TourItineraryComponent implements OnInit {
           ])
           .subscribe({
             next: (tourData) => {
-              console.log('Tour data:', tourData);
               this.dateOptions = tourData.activePeriods.map((period) => {
+                let iti = tourData['itinerary-section'].itineraries;
+                console.log('iti', iti);
                 return {
+                  id: period.id,
                   label: period.name,
                   value: period.externalID + '',
                   price: (period.basePrice || 0) + (tourData.basePrice || 0),
                   isGroup: true,
                   tripType: period.tripType,
+                  itineraryId: iti.filter((f) =>
+                    f.periods.some((p) => p.includes(period.id + ''))
+                  )[0]?.id,
+                  itineraryName: iti.filter((f) =>
+                    f.periods.some((p) => p.includes(period.id + ''))
+                  )[0]?.iname,
+                  dayOne: period.dayOne,
                 };
               });
               this.selectedOption = this.dateOptions[0];
@@ -215,19 +226,27 @@ export class TourItineraryComponent implements OnInit {
                 ])
                 .subscribe({
                   next: (period) => {
-                    console.log('Period itinerary:', period);
                     this.currentPeriod = period;
                     this.tripType = period.tripType || '';
                     this.hotels = period.hotels as any[];
                     this.activities = [
                       ...(period.activities || []),
                       ...(period.includedActivities || []),
-                    ];
+                    ].map((activity) => {
+                      return {
+                        ...activity,
+                        price:
+                          this.periodPricesService.getCachedPeriodActivityPrice(
+                            this.selectedOption.value,
+                            activity.activityId
+                          ) || 0,
+                      };
+                    });
                     this.updateItinerary();
 
                     // Share the selected date and trip type with the service
 
-                    this.tourDataService.updateSelectedDateInfo(
+                    this.tourOrderService.updateSelectedDateInfo(
                       period.externalID,
                       undefined
                     );
@@ -243,7 +262,7 @@ export class TourItineraryComponent implements OnInit {
           .subscribe((tour) => {
             this.cities = tour['cities'];
             let loadedCities = 0;
-            const totalCities = this.cities.length;
+            const totalCities = this.cities?.length;
             this.cities.forEach((city) => {
               this.geoService.getCoordinates(city).subscribe((coordinates) => {
                 if (coordinates) {
@@ -267,7 +286,7 @@ export class TourItineraryComponent implements OnInit {
     });
   }
   private calculateMapCenter(): void {
-    if (this.citiesData.length === 0) return;
+    if (this.citiesData?.length === 0) return;
     const bounds = new google.maps.LatLngBounds();
     this.citiesData.forEach((city) => {
       bounds.extend({ lat: city.lat, lng: city.lng });
@@ -344,14 +363,22 @@ export class TourItineraryComponent implements OnInit {
           this.activities = [
             ...(period.activities || []),
             ...(period.includedActivities || []),
-          ];
-          console.log('Period itinerary 2:', period);
+          ].map((activity) => {
+            return {
+              ...activity,
+              price:
+                this.periodPricesService.getCachedPeriodActivityPrice(
+                  this.selectedOption.value,
+                  activity.activityId
+                ) || 0,
+            };
+          });
 
           this.updateItinerary();
 
           // Share the updated selected date and trip type with the service
 
-          this.tourDataService.updateSelectedDateInfo(
+          this.tourOrderService.updateSelectedDateInfo(
             period.externalID,
             undefined
           );
@@ -368,34 +395,31 @@ export class TourItineraryComponent implements OnInit {
   }
 
   updateItinerary(): void {
-    console.log(
-      this.itinerariesData?.['itineraries'],
-      this.selectedOption.value
-    );
-
     const selectedItinerary = this.itinerariesData?.['itineraries'].filter(
       (itinerary) =>
         itinerary.periods
           .map((period) => period.split('-')[1])
           .includes(this.selectedOption.value)
     )[0];
-    console.log('Selected itinerary:', selectedItinerary, this.hotels);
 
-    this.itinerary = selectedItinerary!['days'].map((day, index) => {
-      console.log(
-        'itinerary activities',
-        this.activities.filter((activity) => index + 1 === activity.day)
-      );
+    if (!selectedItinerary) {
+      console.error('No itinerary found for the selected option.');
+      return;
+    }
 
+    console.log('Selected itinerary____:', this.activities);
+
+    this.itinerary = selectedItinerary['days'].map((day, index) => {
       return {
         title: day.name,
         description: this.sanitizer.bypassSecurityTrustHtml(day.description),
         image: day.itimage?.[0]?.url || '',
-        hotel: this.hotels.find(
-          (hotel) =>
-            `${hotel?.id}` === `${day.id}` ||
-            hotel?.days?.includes(`${index + 1}`)
-        ),
+        hotel:
+          this.hotels?.find(
+            (hotel) =>
+              `${hotel?.id}` === `${day.id}` ||
+              hotel?.days?.includes(`${index + 1}`)
+          ) || null,
         collapsed: index !== 0,
         color: '#9C27B0',
         highlights:
@@ -403,15 +427,17 @@ export class TourItineraryComponent implements OnInit {
             .filter((activity) => index + 1 === activity.day)
             .map((activity) => {
               return {
+                id: `${activity.activityId}`,
                 title: activity.name,
                 description: activity.description || '',
                 image: activity.activityImage?.[0]?.url || '',
                 optional: activity.optional,
+                recommended: activity.recommended,
+                price: activity.price,
               };
             }) || [],
       };
     });
-    console.log('Itinerary:', this.itinerary);
   }
 
   markerClicked(event: MouseEvent): void {
@@ -430,7 +456,7 @@ export class TourItineraryComponent implements OnInit {
   }
 
   scrollToPanel(index: number): void {
-    if (this.itineraryPanels && this.itineraryPanels.length > index) {
+    if (this.itineraryPanels && this.itineraryPanels?.length > index) {
       const panelArray = this.itineraryPanels.toArray();
       if (panelArray[index]) {
         const el = panelArray[index].el.nativeElement;
@@ -458,5 +484,12 @@ export class TourItineraryComponent implements OnInit {
 
   getTagConfig(tripType: string) {
     return this.tagsOptions.find((tag) => tag.type === tripType);
+  }
+
+  onAddActivity(highlight: Highlight): void {
+    // Toggle del estado de la actividad
+    highlight.added = !highlight.added;
+
+    this.tourOrderService.toggleActivity(highlight.id, highlight.title);
   }
 }

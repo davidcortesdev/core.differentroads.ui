@@ -94,4 +94,10 @@
       </p-inputNumber>
     </div>
   </div>
+  <div class="messages">
+    <div *ngIf="adultsErrorMsg" class="error-message">
+      <i class="pi pi-info-circle"></i>
+      <p>{{ adultsErrorMsg }}</p>
+    </div>
+  </div>
 </div>

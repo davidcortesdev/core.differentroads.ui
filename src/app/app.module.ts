@@ -159,6 +159,7 @@ import { SortByPipe } from './shared/pipes/sort-by.pipe';
 import { InsurancesComponent } from './pages/checkout/components/customize-trip/components/insurances/insurances.component';
 import { Dialog } from 'primeng/dialog';
 import { BudgetDialogComponent } from './pages/tour/components/budget-dialog/budget-dialog.component';
+import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { Amplify } from 'aws-amplify';
 import awsconfig from '../../src/aws-exports';
 import { TripTypesSectionComponent } from './pages/home/components/trip-types-section/trip-types-section.component';
@@ -168,6 +169,8 @@ export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
+import { MessageService } from 'primeng/api';
+import { TourDateSelectorComponent } from './pages/tour/components/tour-date-selector/tour-date-selector.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -249,6 +252,7 @@ registerLocaleData(localeEs);
     InsurancesComponent,
     BudgetDialogComponent,
     TripTypesSectionComponent,
+    TourDateSelectorComponent,
   ],
   imports: [
     // Angular Modules
@@ -308,6 +312,7 @@ registerLocaleData(localeEs);
     MenuModule,
     SkeletonModule,
     Dialog,
+    OverlayPanelModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,
@@ -344,6 +349,7 @@ registerLocaleData(localeEs);
         },
       },
     }),
+    MessageService,
   ],
   bootstrap: [AppComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],

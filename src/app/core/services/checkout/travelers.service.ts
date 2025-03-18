@@ -24,6 +24,9 @@ export class TravelersService {
   travelersSource = new BehaviorSubject<OrderTraveler[]>([]);
   travelers$ = this.travelersSource.asObservable();
 
+  // Agregar propiedad para almacenar la instancia del componente
+  private travelersComponent: any;
+
   constructor(private roomsService: RoomsService) {}
 
   updateTravelersNumbers(travelersNumbers: TravelersNumbers) {
@@ -161,5 +164,15 @@ export class TravelersService {
 
     // Concatenar el timestamp y los caracteres aleatorios para formar el ID
     return (timestamp + randomHex).slice(0, 24);
+  }
+
+  // Registrar la instancia del componente
+  setTravelersComponent(component: any) {
+    this.travelersComponent = component;
+  }
+
+  // Recuperar la instancia del componente
+  getTravelersComponent() {
+    return this.travelersComponent;
   }
 }

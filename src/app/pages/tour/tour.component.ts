@@ -4,9 +4,10 @@ import { ToursService } from '../../core/services/tours.service';
 import { Tour } from '../../core/models/tours/tour.model';
 import { catchError, Subject, Subscription } from 'rxjs';
 import { OrdersService } from '../../core/services/orders.service';
-import { Departure } from './components/tour-departures/tour-departures.component';
 import { Order } from '../../core/models/orders/order.model';
-import { TourDataService } from '../../core/services/tour-data.service';
+import { TourDataService } from '../../core/services/tour-data/tour-data.service';
+import { TourOrderService } from '../../core/services/tour-data/tour-order.service';
+import { AuthenticateService } from '../../core/services/auth-service.service';
 
 @Component({
   selector: 'app-tour',
@@ -19,6 +20,7 @@ export class TourComponent implements OnInit, OnDestroy {
   tour?: Tour;
   loading: boolean = true;
   error: boolean = false;
+  currentUserEmail: string = '';
 
   // Subject para comunicar cambios en los pasajeros
   passengerChanges = new Subject<{ adults: number; children: number }>();
@@ -36,7 +38,9 @@ export class TourComponent implements OnInit, OnDestroy {
     private toursService: ToursService,
     private ordersService: OrdersService,
     private router: Router,
-    private tourDataService: TourDataService
+    private tourOrderService: TourOrderService,
+    private tourDataService: TourDataService,
+    private authenticateService: AuthenticateService
   ) {}
 
   ngOnInit(): void {
@@ -48,10 +52,17 @@ export class TourComponent implements OnInit, OnDestroy {
     // Suscribirse a los cambios de fecha del servicio compartido
     // para mantener sincronizado el componente principal también
     this.subscriptions.add(
-      this.tourDataService.selectedDateInfo$.subscribe((dateInfo) => {
+      this.tourOrderService.selectedDateInfo$.subscribe((dateInfo) => {
         this.selectedDate = dateInfo.date;
         this.tripType = dateInfo.tripType;
         this.departureCity = dateInfo.departureCity || '';
+      })
+    );
+
+    // Suscribirse al email del usuario autenticado
+    this.subscriptions.add(
+      this.authenticateService.getUserEmail().subscribe((email) => {
+        this.currentUserEmail = email;
       })
     );
   }
@@ -94,8 +105,10 @@ export class TourComponent implements OnInit, OnDestroy {
 
           if (tourData.activePeriods && tourData.activePeriods.length > 0) {
             const firstPeriod = tourData.activePeriods[0];
-            if (firstPeriod.name && firstPeriod.tripType) {
-              this.tourDataService.updateSelectedDateInfo(
+            this.tourDataService.getPeriodPrice(firstPeriod.externalID);
+
+            if (firstPeriod.name) {
+              this.tourOrderService.updateSelectedDateInfo(
                 firstPeriod.externalID,
                 undefined
               );
@@ -111,23 +124,24 @@ export class TourComponent implements OnInit, OnDestroy {
   }
 
   createOrderAndRedirect(periodID: string): void {
-    const order: Partial<Order> = {
-      periodID: periodID,
-      retailerID: '1064',
-      status: 'AB',
-      owner: 'currentUserEmail',
-      travelers: [],
-    };
-
-    this.ordersService.createOrder(order).subscribe({
-      next: (createdOrder) => {
-        console.log('Order created:', createdOrder);
-        this.router.navigate(['/checkout', createdOrder._id]);
-      },
-      error: (error) => {
-        console.error('Error creating order:', error);
-      },
-    });
+    const ownerEmail = this.currentUserEmail
+      ? this.currentUserEmail
+      : 'anonymous';
+    this.tourOrderService
+      .createOrder({
+        periodID: periodID,
+        status: 'AB',
+        owner: ownerEmail,
+      })
+      .subscribe({
+        next: (createdOrder) => {
+          console.log('Order created:', createdOrder);
+          this.router.navigate(['/checkout', createdOrder._id]);
+        },
+        error: (error) => {
+          console.error('Error creating order:', error);
+        },
+      });
   }
 
   getDuration(days: number | undefined): string {

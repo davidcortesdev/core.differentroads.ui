@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { GeneralConfigService } from '../../core/services/general-config.service';
 import { FooterSection, Link } from '../../core/models/general/footer.model';
 
@@ -33,7 +33,7 @@ interface FooterData {
   styleUrls: ['./footer.component.scss'],
   standalone: false,
 })
-export class FooterComponent implements OnInit {
+export class FooterComponent implements OnInit, AfterViewInit {
   footerData: FooterData = {
     newsletterTitle: '',
     contactInfo: {
@@ -48,19 +48,26 @@ export class FooterComponent implements OnInit {
   };
 
   isSubscribed = false;
+  formLoaded = false;
 
   constructor(private generalConfigService: GeneralConfigService) {}
 
   ngOnInit() {
     this.fetchFooterConfig();
+  }
+
+  ngAfterViewInit() {
     this.loadMailerLiteScript();
   }
 
   fetchFooterConfig() {
     this.generalConfigService
       .getFooterSection()
-      .subscribe((footerSection: FooterSection) => {
-        this.footerData = this.mapFooterSectionToFooterData(footerSection);
+      .subscribe({
+        next: (footerSection: FooterSection) => {
+          this.footerData = this.mapFooterSectionToFooterData(footerSection);
+        },
+        error: (error) => console.error('Error fetching footer config:', error)
       });
   }
 
@@ -89,19 +96,25 @@ export class FooterComponent implements OnInit {
   }
 
   loadMailerLiteScript(): void {
+    if (document.getElementById('mailer-lite-script')) {
+      this.setupFormListener();
+      return;
+    }
+
     const script = document.createElement('script');
-    script.src =
-      'https://static.mailerlite.com/js/w/webforms.min.js?vd4de52e171e8eb9c47c0c20caf367ddf';
+    script.id = 'mailer-lite-script';
+    script.src = 'https://static.mailerlite.com/js/w/webforms.min.js?vd4de52e171e8eb9c47c0c20caf367ddf';
     script.type = 'text/javascript';
+    script.onload = () => this.setupFormListener();
     document.body.appendChild(script);
-    
-    // Add event listener for form submission
-    setTimeout(() => {
-      const form = document.querySelector('.ml-block-form');
-      if (form) {
-        form.addEventListener('submit', this.handleFormSubmit.bind(this));
-      }
-    }, 1000); // Give time for the script to load
+  }
+
+  private setupFormListener(): void {
+    const form = document.querySelector('.ml-block-form');
+    if (form) {
+      form.addEventListener('submit', this.handleFormSubmit.bind(this));
+      this.formLoaded = true;
+    }
   }
 
   handleFormSubmit(event: Event): void {
@@ -116,21 +129,15 @@ export class FooterComponent implements OnInit {
     
     // Set a timeout to simulate form submission and show success message
     setTimeout(() => {
-      const successElement = document.querySelector('.ml-subscribe-form-6075553 .row-success');
       const formElement = document.querySelector('.ml-subscribe-form-6075553 .row-form');
-      const titleElement = document.querySelector('.newsletter .title');
+      const successElement = document.querySelector('.ml-subscribe-form-6075553 .row-success');
+      const titleElement = document.querySelector('.newsletter .title.inicial');
       
-      if (successElement) {
-        successElement.setAttribute('style', 'display: block');
-      }
+      if (formElement) formElement.setAttribute('style', 'display: none');
+      if (successElement) successElement.setAttribute('style', 'display: block');
+      if (titleElement) titleElement.setAttribute('style', 'display: none');
       
-      if (formElement) {
-        formElement.setAttribute('style', 'display: none');
-      }
-      
-      if (titleElement) {
-        titleElement.setAttribute('style', 'display: none');
-      }
-    }, 2000); // Show success message after 2 seconds
+      this.isSubscribed = true;
+    }, 2000);
   }
 }

@@ -1,13 +1,15 @@
 <footer class="footer">
   <div class="container">
+    <!-- Logo Section -->
     <div class="section logo-section">
       <div class="logo">
         <img src="white-logo.svg" alt="Different Roads" />
       </div>
     </div>
-    <!-- In the newsletter section of your footer -->
+    
+    <!-- Newsletter Section -->
     <div class="section newsletter">
-      <h2 class="title inicial">
+      <h2 class="title inicial" [class.hidden]="isSubscribed">
         Regístrate para recibir ofertas exclusivas, eventos y más
       </h2>
       <div
@@ -29,9 +31,7 @@
                   <div class="ml-form-horizontalRow mlformhorizontalRow">
                     <div class="ml-input-horizontal">
                       <div class="horizontal-fields">
-                        <div
-                          class="inputGroup ml-validate-email ml-validate-required mlfieldemail"
-                        >
+                        <div class="inputGroup ml-validate-email ml-validate-required mlfieldemail">
                           <input
                             type="email"
                             class="form-control"
@@ -40,7 +40,7 @@
                             placeholder="Escribe tu email"
                             autocomplete="email"
                           />
-                          <button type="submit">
+                          <button type="submit" aria-label="Enviar">
                             <i class="pi pi-arrow-right"></i>
                           </button>
                           <button
@@ -48,6 +48,7 @@
                             style="display: none"
                             type="button"
                             class="loading"
+                            aria-label="Cargando"
                           >
                             <div class="ml-form-embedSubmitLoad"></div>
                             <span class="sr-only">Loading...</span>
@@ -57,7 +58,6 @@
                     </div>
                   </div>
                 </div>
-
                 <input type="hidden" name="ml-submit" value="1" />
                 <input type="hidden" name="anticsrf" value="true" />
               </form>
@@ -84,6 +84,7 @@
       </div>
     </div>
 
+    <!-- About Us Section -->
     <div class="section">
       <h3>Sobre Nosotros</h3>
       <ul class="links">
@@ -93,6 +94,7 @@
       </ul>
     </div>
 
+    <!-- Our Trips Section -->
     <div class="section">
       <h3>Nuestros Viajes</h3>
       <ul class="links">
@@ -102,6 +104,7 @@
       </ul>
     </div>
 
+    <!-- Travel Types Section -->
     <div class="section">
       <h3>Tipos de viaje</h3>
       <ul class="links">
@@ -111,6 +114,7 @@
       </ul>
     </div>
 
+    <!-- Tour Operator Section -->
     <div class="section">
       <h3>Touroperador</h3>
       <ul class="links">
@@ -121,6 +125,7 @@
     </div>
   </div>
 
+  <!-- Bottom Section -->
   <div class="bottom">
     <div class="copyright">
       {{ footerData.copyrightText }}

@@ -167,7 +167,7 @@ export class ToursComponent implements OnInit {
 
         // Process tour data
         this.displayedTours = tours.data.map((tour: any) => {
-          const days = tour.activePeriods?.[0]?.days || '';
+          const days = tour?.activePeriods?.[0]?.days || '';
 
           return {
             imageUrl: tour.image?.[0]?.url || '',

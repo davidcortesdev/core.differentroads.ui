@@ -14,12 +14,13 @@ export interface Order {
   optionalActivitiesRef?: OptionalActivityRef[];
   insurancesRef?: OptionalActivityRef[];
   extraData?: any;
-  flights?: Flight[] | { id: string; name?: string }[];
+  flights?: Flight[] | { id: string; name?: string; externalID: string }[];
 }
 
 export interface OptionalActivityRef {
   id: string;
   travelersAssigned: string[];
+  name?: string;
 }
 
 export interface TravelerData {
@@ -38,6 +39,10 @@ export interface TravelerData {
   postalCode?: string;
   sex?: string;
   surname?: string;
+
+  minorIdExpirationDate?: string;
+  minorIdIssueDate?: string;
+  associatedAdult?: string;
 }
 
 export interface OrderTraveler {

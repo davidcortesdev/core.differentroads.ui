@@ -1,39 +1,14 @@
-<!-- HTML template actualizado sin cambiar la funcionalidad -->
-<div class="itinerary-section">
-  <h2>{{ title }}</h2>
-  <p class="date">
-    Resumen de tu itinerario - {{ selectedDate }} -
-    {{ tripType }}
-  </p>
-  <p-dropdown
-    class="date"
-    [options]="dateOptions"
-    [(ngModel)]="selectedOption"
-    optionLabel="label"
-    optionValue="value"
-    (onChange)="onDateChange($event)"
-    placeholder="Cambiar fecha"
-  >
-    <ng-template pTemplate="selectedItem">
-      <div class="date-option-item">
-        <span>{{ showPlaceholder ? "Cambiar fecha" : selectedDate }}</span>
-      </div>
-    </ng-template>
-    <ng-template let-option pTemplate="item">
-      <div class="date-option-item">
-        <span class="date-option-item-text">{{ option.label }}</span>
-        <p-tag
-          *ngIf="getTagConfig(option.tripType)"
-          [severity]="getTagConfig(option.tripType)?.color"
-          >{{ getTagConfig(option.tripType)?.value }}
-        </p-tag>
-        <span class="date-price">{{
-          option.price | currencyFormat : "EUR"
-        }}</span>
-      </div>
-    </ng-template>
-  </p-dropdown>
-</div>
+<app-tour-date-selector
+  [title]="title"
+  [selectedDate]="selectedDate"
+  [tripType]="tripType"
+  [dateOptions]="dateOptions"
+  [selectedOption]="selectedOption"
+  [showPlaceholder]="showPlaceholder"
+  [tagsOptions]="tagsOptions"
+  (dateChange)="onDateChange($event)"
+></app-tour-date-selector>
+
 <div class="itinerary-container">
   <div class="timeline-section">
     <div class="card">
@@ -166,7 +141,18 @@
                       </ng-template>
                       <ng-template pTemplate="content">
                         <h3>{{ highlight.title }}</h3>
-                        <div [innerHTML]="highlight.description"></div>
+                        <div
+                          [innerHTML]="highlight.description"
+                          class="highlight-card-description"
+                        ></div>
+                      </ng-template>
+                      <ng-template pTemplate="footer">
+                        <p-button
+                          (click)="onAddActivity(highlight)"
+                          label="{{ highlight.added ? 'Añadida' : 'Añadir' }}"
+                          styleClass="p-button-rounded"
+                        ></p-button>
+                        <div>+{{ highlight.price }}</div>
                       </ng-template>
                     </p-card>
                   </ng-template>

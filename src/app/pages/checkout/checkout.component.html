@@ -1,8 +1,15 @@
 <div class="checkout">
+  <p-toast></p-toast>
+  <h2 class="checkout-title">
+    {{ tourName }}
+  </h2>
+  <p class="checkout-subtitle">
+    {{ tourDates }}
+  </p>
   <div class="checkout-container">
     <!-- Left and Center columns with steps -->
     <div class="steps-container">
-      <p-stepper [value]="currentStep">
+      <p-stepper [value]="currentStep" [linear]="false">
         <p-step-list>
           <p-step [value]="1">Personaliza tu viaje</p-step>
           <p-step [value]="2">Vuelos</p-step>
@@ -42,11 +49,15 @@
                   (onClick)="activateCallback(1)"
                 />
                 <p-button
-                  label="Next"
+                  [label]="
+                    selectedFlight?.name?.toLowerCase()?.includes('sin ')
+                      ? 'Continuar sin vuelos'
+                      : 'Continuar'
+                  "
                   icon="pi pi-arrow-right"
                   iconPos="right"
                   (onClick)="nextStep(3) && activateCallback(3)"
-                />
+                ></p-button>
               </div>
             </ng-template>
           </p-step-panel>
@@ -130,13 +141,19 @@
           </div>
 
           <!-- Flights info if selected -->
-          <div class="flights-info" *ngIf="selectedFlight">
+          <div
+            class="flights-info"
+            *ngIf="
+              selectedFlight &&
+              !selectedFlight?.name?.toLowerCase()?.includes('sin ')
+            "
+          >
             <h4>Vuelos</h4>
             <div class="flight-details">
               <!-- outbound -->
               <div
                 *ngFor="
-                  let segment of selectedFlight.outbound.segments;
+                  let segment of selectedFlight?.outbound?.segments;
                   let idx = index
                 "
                 class="itinerary-flight"
@@ -151,7 +168,7 @@
                     }}</span>
                   </div>
                   <div class="itinerary-flight-scale">
-                    <span>
+                    <span *ngIf="selectedFlight?.outbound?.segments">
                       {{
                         selectedFlight.outbound.segments.length > 1
                           ? selectedFlight.outbound.segments.length -
@@ -185,7 +202,7 @@
               <!-- inbound -->
               <div
                 *ngFor="
-                  let segment of selectedFlight.inbound.segments;
+                  let segment of selectedFlight?.inbound?.segments;
                   let idx = index
                 "
                 class="itinerary-flight"
@@ -199,7 +216,7 @@
                     }}</span>
                   </div>
                   <div class="itinerary-flight-scale">
-                    <span>
+                    <span *ngIf="selectedFlight?.inbound?.segments">
                       {{
                         selectedFlight.inbound.segments.length > 1
                           ? selectedFlight.inbound.segments.length -

@@ -10,10 +10,12 @@ import { TravelersService } from '../../../../core/services/checkout/travelers.s
 })
 export class CustomizeTripComponent implements OnInit {
   @Input() orderDetails: any;
-  @Input() availableTravelers: string[] = [];
   @Input() prices!: {
     [key: string]: { priceData: PriceData[]; availability?: number };
   };
+
+  availableTravelers: string[] = [];
+
   travelersNumbers: { adults: number; childs: number; babies: number } = {
     adults: 1,
     childs: 0,

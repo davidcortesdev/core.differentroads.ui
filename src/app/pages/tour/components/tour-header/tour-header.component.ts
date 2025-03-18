@@ -11,8 +11,11 @@ import { ActivatedRoute } from '@angular/router';
 import { ToursService } from '../../../../core/services/tours.service';
 import { TourComponent } from '../../tour.component';
 import { Tour } from '../../../../core/models/tours/tour.model';
-import { TourDataService } from '../../../../core/services/tour-data.service';
+import { TourDataService } from '../../../../core/services/tour-data/tour-data.service';
 import { Subscription } from 'rxjs';
+import { PeriodPricesService } from '../../../../core/services/tour-data/period-prices.service';
+import { TourOrderService } from '../../../../core/services/tour-data/tour-order.service';
+import { OptionalActivityRef } from '../../../../core/models/orders/order.model';
 
 @Component({
   selector: 'app-tour-header',
@@ -26,6 +29,7 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   selectedDate: string = '';
   tripType: string = '';
   departureCity: string = '';
+  selectedActivities: OptionalActivityRef[] = [];
 
   // Información de pasajeros
   adultsCount: number = 1;
@@ -48,7 +52,7 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     private tourComponent: TourComponent,
     private el: ElementRef,
     private renderer: Renderer2,
-    private tourDataService: TourDataService
+    private tourOrderService: TourOrderService
   ) {}
 
   ngOnInit() {
@@ -60,7 +64,7 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     // Suscribirse a cambios de pasajeros
-    this.tourDataService.selectedTravelers$.subscribe((travelers) => {
+    this.tourOrderService.selectedTravelers$.subscribe((travelers) => {
       this.adultsCount = travelers.adults;
       this.childrenCount = travelers.children;
       this.calculateTotalPrice();
@@ -68,19 +72,19 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
       console.log('Travelers:', travelers);
     });
 
+    this.tourOrderService.selectedActivities$.subscribe((activities) => {
+      this.selectedActivities = activities;
+      this.calculateTotalPrice();
+    });
+
     // Suscribirse a los cambios en la información de fechas y precios
     this.subscriptions.add(
-      this.tourDataService.selectedDateInfo$.subscribe((dateInfo) => {
+      this.tourOrderService.selectedDateInfo$.subscribe((dateInfo) => {
         this.selectedDate = dateInfo.date;
         this.periodID = dateInfo.periodID;
         this.tripType = dateInfo.tripType;
         this.departureCity = dateInfo.departureCity || '';
         this.flightID = dateInfo.flightID;
-
-        if (dateInfo.basePrice !== undefined) {
-          this.basePrice = dateInfo.basePrice;
-          this.calculateTotalPrice();
-        }
       })
     );
   }
@@ -161,50 +165,20 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getDuration(): string {
-    if (this.tour.activePeriods && this.tour.activePeriods.length > 0) {
-      return this.getDuration2(this.tour.activePeriods[0].days);
-    }
-    return '';
-  }
-
-  getDuration2(days: number | undefined): string {
-    if (!days) return '';
-    return `${days} días, ${days - 1} noches`;
+    const days = this.tour.activePeriods?.[0]?.days;
+    return days ? `${days} días, ${days - 1} noches` : '';
   }
 
   // Calcular precio total basado en número de adultos y niños
   calculateTotalPrice(): void {
-    const periodPrice = this.tourDataService.getPeriodPrice(
-      this.periodID,
-      true
-    );
-    const flightPrice = this.tourDataService.getFlightPrice(
-      this.periodID,
-      this.flightID
-    );
-
-    this.totalPrice =
-      (periodPrice + flightPrice) * (this.adultsCount + this.childrenCount);
+    this.tourOrderService.getTotalPrice().subscribe((totalPrice) => {
+      this.totalPrice = totalPrice;
+    });
   }
 
   // Obtener texto de pasajeros para mostrar
-  getPassengersInfo(): string {
-    const parts = [];
-
-    if (this.adultsCount > 0) {
-      parts.push(
-        `${this.adultsCount} ${this.adultsCount === 1 ? 'adulto' : 'adultos'}`
-      );
-    }
-
-    if (this.childrenCount > 0) {
-      parts.push(
-        `${this.childrenCount} ${this.childrenCount === 1 ? 'niño' : 'niños'}`
-      );
-    }
-
-    this.travelersText = parts.length > 0 ? parts.join(', ') : '1 adulto';
-    return parts.length > 0 ? parts.join(', ') : '1 adulto';
+  getPassengersInfo() {
+    this.travelersText = this.tourOrderService.getTravelersText();
   }
 
   bookTour() {

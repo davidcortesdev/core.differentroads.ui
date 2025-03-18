@@ -18,6 +18,7 @@ import { BookingCreateInput } from '../../core/models/bookings/booking.model';
 import { Period } from '../../core/models/tours/period.model';
 import { InsurancesService } from '../../core/services/checkout/insurances.service';
 import { Insurance } from '../../core/models/tours/insurance.model';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-checkout',
@@ -75,7 +76,8 @@ export class CheckoutComponent implements OnInit {
     private flightsService: FlightsService,
     private route: ActivatedRoute,
     private bookingsService: BookingsService,
-    private insurancesService: InsurancesService
+    private insurancesService: InsurancesService,
+    private messageService: MessageService
   ) {}
 
   ngOnInit() {
@@ -87,29 +89,43 @@ export class CheckoutComponent implements OnInit {
       this.orderDetails = order;
       this.summaryService.updateOrder(order);
 
+      const periodID = order.periodID;
+      this.periodID = periodID;
+
       this.initializeTravelers(order.travelers || []);
       this.initializeActivities(order.optionalActivitiesRef || []);
       this.initializeFlights(order.flights || []);
       this.initializeInsurances(order.insurancesRef || []);
 
-      const periodID = order.periodID;
-      this.periodID = periodID;
-
       this.periodsService
-        .getPeriodDetail(periodID, ['tourID', 'name', 'dayOne', 'returnDate'])
+        .getPeriodDetail(periodID, [
+          'tourID',
+          'tourName',
+          'name',
+          'dayOne',
+          'returnDate',
+        ])
         .subscribe((period) => {
           console.log('Period details:', period);
           this.periodData = period;
-
-          this.tourName = period.name;
+          this.tourName = period.tourName;
 
           this.tourID = period.tourID;
-          this.tourDates = `${period.dayOne} - ${period.returnDate}`;
+          this.tourDates = `
+            ${new Date(period.dayOne).toLocaleDateString('es-ES', {
+              day: '2-digit',
+              month: 'long',
+              timeZone: 'UTC',
+            })} - 
+            ${new Date(period.returnDate).toLocaleDateString('es-ES', {
+              day: '2-digit',
+              month: 'long',
+              timeZone: 'UTC',
+            })}
+          `;
         });
 
       this.periodsService.getPeriodPrices(periodID).subscribe((prices) => {
-        console.log('Prices:', prices);
-
         this.prices = prices;
         this.pricesService.updatePrices(prices);
         this.updateOrderSummary();
@@ -221,10 +237,39 @@ export class CheckoutComponent implements OnInit {
     this.activitiesService.updateActivities(activities);
   }
 
-  initializeFlights(flights: Flight[] | { id: string }[]) {
+  initializeFlights(flights: Flight[] | { id: string; externalID: string }[]) {
     if (flights.length > 0) {
       if ('externalID' in flights[0]) {
-        this.selectedFlight = flights[0] as Flight;
+        this.periodsService.getFlights(this.periodID).subscribe({
+          next: (flightsData) => {
+            const filteredFlights = flightsData
+              .filter(
+                (flight) => flight.name && !flight.name.includes('Sin vuelos')
+              )
+              .map((flight) => {
+                return {
+                  ...flight,
+                  price:
+                    this.pricesService.getPriceById(
+                      `${flight.outbound.activityID}`,
+                      'Adultos'
+                    ) +
+                    this.pricesService.getPriceById(
+                      `${flight.inbound.activityID}`,
+                      'Adultos'
+                    ),
+                };
+              });
+            const selectedFlight = filteredFlights.find(
+              (flight) => flight.externalID === flights[0].externalID
+            );
+
+            this.flightsService.updateSelectedFlight(selectedFlight as Flight);
+          },
+          error: (error) => {
+            console.error('Error fetching flights:', error);
+          },
+        });
       } else {
         this.selectedFlight = null;
       }
@@ -355,15 +400,26 @@ export class CheckoutComponent implements OnInit {
       })
     );
 
-    if (this.selectedFlight) {
-      this.summary.push({
-        qty:
-          this.travelersSelected.adults +
-          this.travelersSelected.childs +
-          this.travelersSelected.babies,
-        value: this.selectedFlight.price || 0,
-        description: this.selectedFlight.name,
-      });
+    if (
+      this.selectedFlight &&
+      this.selectedFlight.externalID! !== 'undefined'
+    ) {
+      if (!this.selectedFlight.name.toLowerCase().includes('sin ')) {
+        this.summary.push({
+          qty:
+            this.travelersSelected.adults +
+            this.travelersSelected.childs +
+            this.travelersSelected.babies,
+          value:
+            this.selectedFlight.price ||
+            this.pricesService.getPriceById(
+              this.selectedFlight.externalID,
+              'Adultos'
+            ) ||
+            0,
+          description: this.selectedFlight.name,
+        });
+      }
 
       tempOrderData['flights'] = [this.selectedFlight];
     }
@@ -427,28 +483,50 @@ export class CheckoutComponent implements OnInit {
 
   nextStep(step: number): boolean {
     switch (step) {
-      case 1:
-        break;
       case 2:
-      case 3:
-      case 4:
-        this.updateOrderSummary();
+        const { adults, childs, babies } = this.travelersSelected;
+        if (childs + babies > adults) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Número incorrecto de viajeros',
+            detail:
+              'La cantidad de niños y bebés no puede superar el número de adultos. Por favor, ajusta la selección.',
+          });
 
-        this.updateOrder().subscribe({
-          next: (response) => {
-            console.log('Order updated');
-            return true;
-          },
-          error: (error) => {
-            console.error('Error updating order:', error);
-            return false;
-          },
-        });
+          return false;
+        }
+        const totalTravelers = adults + childs + babies;
+        const totalCapacity = this.rooms.reduce(
+          (acc, room) => acc + room.places * (room.qty || 1),
+          0
+        );
+        if (totalTravelers > totalCapacity) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Selección de habitaciones incorrecta',
+            detail:
+              'La cantidad de habitaciones seleccionadas no coincide con el número de viajeros.',
+          });
+
+          return false;
+        }
+        break;
+      case 3:
+        break;
+      case 4:
+        const travelersComponent =
+          this.travelersService.getTravelersComponent();
+        if (!travelersComponent.areAllTravelersValid()) {
+          return false;
+        }
         break;
       default:
         return false;
     }
 
+    this.updateOrderSummary();
+    // Llamada a updateOrder sin suscribirse para evitar retraso en la validación de navigation.
+    this.updateOrder();
     return true;
   }
 
@@ -457,10 +535,21 @@ export class CheckoutComponent implements OnInit {
   updateOrder() {
     console.log('Updating order:', this.summaryService.getOrderValue());
 
-    return this.ordersService.updateOrder(
-      this.summaryService.getOrderValue()!._id,
-      this.summaryService.getOrderValue()!
-    );
+    this.ordersService
+      .updateOrder(
+        this.summaryService.getOrderValue()!._id,
+        this.summaryService.getOrderValue()!
+      )
+      .subscribe({
+        next: (response) => {
+          console.log('Order updated:', response);
+          return response;
+        },
+        error: (error) => {
+          console.error('Error updating order:', error);
+          return error;
+        },
+      });
   }
 
   /* Booking create */

@@ -15,7 +15,7 @@ import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
-
+import { ConfirmationCodeComponent } from '../../../../shared/components/confirmation-code/confirmation-code.component';
 @Component({
   selector: 'app-login-form',
   standalone: true,
@@ -23,20 +23,35 @@ import { AuthenticateService } from '../../../../core/services/auth-service.serv
     CommonModule,
     ReactiveFormsModule,
     IftaLabelModule,
+    ConfirmationCodeComponent,
     InputTextModule,
     PasswordModule,
     ButtonModule,
     DividerModule,
-    ProgressSpinnerModule,
-  ], // Import CommonModule and ReactiveFormsModule
+    ProgressSpinnerModule
+  ],
   templateUrl: './login-form.component.html',
   styleUrls: ['./login-form.component.scss'],
 })
 export class LoginFormComponent implements OnInit {
   loginForm: FormGroup;
   errorMessage: string = '';
+  successMessage: string = '';
   isLoading: boolean = false;
+  isConfirming: boolean = false;
+  isRedirecting: boolean = false;
   showPassword: boolean = false;
+  userPassword: string = '';
+
+  // Mensajes de error personalizados
+  errorMessages: { [key: string]: { [key: string]: string } } = {
+    username: {
+      required: 'El correo electrónico es requerido.',
+    },
+    password: {
+      required: 'La contraseña es requerida.',
+    }
+  };
 
   constructor(
     private fb: FormBuilder,
@@ -56,21 +71,65 @@ export class LoginFormComponent implements OnInit {
     if (this.loginForm.invalid) {
       return;
     }
-  
+
     this.isLoading = true;
     this.errorMessage = '';
-  
+
     const { username, password } = this.loginForm.value;
-  
+    this.userPassword = password; // Guardar contraseña para uso posterior
+
     this.authService.login(username, password).subscribe({
       next: () => {
         this.isLoading = false;
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = err.message || 'Error al iniciar sesión';
+        
+        // Comprobar si el error es de usuario no confirmado
+        if (err.message && err.message.includes('no ha sido confirmado')) {
+          this.errorMessage = '';
+          this.handleUnconfirmedUser(username);
+        } else {
+          this.errorMessage = err.message || 'Error al iniciar sesión';
+        }
       },
     });
+  }
+
+  handleUnconfirmedUser(username: string): void {
+    this.isConfirming = true;
+  }
+
+  onConfirmSuccess(): void {
+    // El usuario ha confirmado exitosamente, ahora intentamos iniciar sesión
+    this.loginAfterConfirmation();
+  }
+
+  loginAfterConfirmation(): void {
+    this.isLoading = true;
+    
+    const username = this.loginForm.value.username;
+    const password = this.userPassword;
+    
+    this.authService.login(username, password).subscribe({
+      next: () => {
+        this.isLoading = false;
+        // La redirección la manejará el servicio de autenticación
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errorMessage = err.message || 'Error al iniciar sesión después de la confirmación';
+        this.isConfirming = false; // Volver al formulario de login en caso de error
+      },
+    });
+  }
+
+  getErrorMessage(controlName: string, errors: any): string {
+    if (errors) {
+      const errorKey = Object.keys(errors)[0];
+      return this.errorMessages[controlName][errorKey] || 'Error desconocido.';
+    }
+    return '';
   }
 
   togglePasswordVisibility(): void {

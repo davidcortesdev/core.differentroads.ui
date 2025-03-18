@@ -163,7 +163,7 @@ import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { Amplify } from 'aws-amplify';
 import awsconfig from '../../src/aws-exports';
 import { TripTypesSectionComponent } from './pages/home/components/trip-types-section/trip-types-section.component';
-
+import { ConfirmationCodeComponent } from './shared/components/confirmation-code/confirmation-code.component';
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -192,7 +192,6 @@ registerLocaleData(localeEs);
     HighlightSectionComponent,
     FullCardSectionComponent,
     CarouselSectionComponent,
-
     // Community Components
     CommunitySectionComponent,
     CommunityHeroComponent,
@@ -264,7 +263,7 @@ registerLocaleData(localeEs);
     CommonModule,
     NgComponentOutlet,
     NewsLetterSectionComponent,
-    SignUpComponent,
+    ConfirmationCodeComponent,
     MenubarModule,
     RippleModule,
     AvatarModule,

@@ -28,6 +28,7 @@
 
       <!-- Formulario de inicio de sesión manual -->
       <form
+        *ngIf="!isConfirming; else confirmTemplate"
         [formGroup]="loginForm"
         (ngSubmit)="onSubmit($event)"
         class="form-login"
@@ -96,6 +97,21 @@
           <a (click)="redirectToSignUp()">Regístrate aquí</a>
         </p>
       </form>
+
+      <!-- Template para confirmación de usuario usando el componente reutilizable -->
+      <ng-template #confirmTemplate>
+        <app-confirmation-code
+          [username]="loginForm.get('username')?.value"
+          [isLoading]="isLoading"
+          [isRedirecting]="isRedirecting"
+          [errorMessage]="errorMessage"
+          [successMessage]="successMessage"
+          (confirmSuccess)="onConfirmSuccess()"
+          (loadingChange)="isLoading = $event"
+          (errorMessageChange)="errorMessage = $event"
+          (successMessageChange)="successMessage = $event"
+        ></app-confirmation-code>
+      </ng-template>
     </div>
   </div>
 </div>

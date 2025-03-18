@@ -39,6 +39,7 @@ export class FooterComponent implements OnInit, AfterViewInit {
       });
   }
 
+  // Optimize script loading with better error handling and performance
   loadMailerLiteScript(): void {
     // Check if script is already loaded
     if (document.getElementById('mailer-lite-script')) {
@@ -46,11 +47,13 @@ export class FooterComponent implements OnInit, AfterViewInit {
       this.setupFormListener();
       return;
     }
-
+  
     const script = this.renderer.createElement('script');
     this.renderer.setAttribute(script, 'id', 'mailer-lite-script');
     this.renderer.setAttribute(script, 'src', 'https://static.mailerlite.com/js/w/webforms.min.js?vd4de52e171e8eb9c47c0c20caf367ddf');
     this.renderer.setAttribute(script, 'type', 'text/javascript');
+    this.renderer.setAttribute(script, 'async', 'true');
+    this.renderer.setAttribute(script, 'defer', 'true');
     
     // Add event listeners for script loading
     this.renderer.listen(script, 'load', () => {

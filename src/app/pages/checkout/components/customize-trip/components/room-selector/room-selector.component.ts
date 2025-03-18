@@ -49,9 +49,23 @@ export class RoomSelectorComponent implements OnChanges {
     this.filterRooms(totalTravelers);
 
     this.travelersService.travelersNumbers$.subscribe((data) => {
-      this.selectedRooms = {};
-      const totalTravelers = data.adults + data.childs + data.babies;
-      this.filterRooms(totalTravelers);
+      const newTotalTravelers = data.adults + data.childs + data.babies;
+
+      // Only check room capacities if the number of travelers has decreased
+      console.log('_____________');
+
+      // Find rooms to deselect: those with capacity larger than new total travelers
+      Object.entries(this.selectedRooms).forEach(([externalID, qty]) => {
+        const room = this.allRoomsAvailability.find(
+          (r) => r.externalID === externalID
+        );
+        if (room && room.places > newTotalTravelers && qty > 0) {
+          // Deselect this room as its capacity exceeds the new traveler count
+          delete this.selectedRooms[externalID];
+        }
+      });
+
+      this.filterRooms(newTotalTravelers);
       this.updateRooms();
     });
 
@@ -72,11 +86,20 @@ export class RoomSelectorComponent implements OnChanges {
             ...room,
             price: this.pricesService.getPriceById(room.externalID, 'Adultos'),
           }));
-          // Initialize selectedRooms with 0 for each room
+
+          // Get existing traveler room assignments first
+          const travelersRoomAssignments = this.initializeRoomsFromTravelers();
+
+          // Initialize selectedRooms with existing assignments and 0 for unassigned rooms
           this.selectedRooms = this.allRoomsAvailability.reduce((acc, room) => {
-            acc[room.externalID] = this.selectedRooms[room.externalID] || 0;
+            // Use existing assignment if available, or current selection, or 0
+            acc[room.externalID] =
+              travelersRoomAssignments[room.externalID] ||
+              this.selectedRooms[room.externalID] ||
+              0;
             return acc;
           }, {} as { [externalID: string]: number });
+
           // Ensure rooms are filtered after loading reservation modes
           const initialTravelers =
             this.travelersService.travelersNumbersSource.getValue();
@@ -89,6 +112,40 @@ export class RoomSelectorComponent implements OnChanges {
           this.filterRooms(totalTravelers);
         });
     }
+  }
+
+  /**
+   * Initialize room selections based on existing traveler assignments
+   * @returns Object with room counts based on traveler assignments
+   */
+  initializeRoomsFromTravelers(): { [externalID: string]: number } {
+    const roomCounts: { [externalID: string]: number } = {};
+    const travelers = this.travelersService.getTravelers();
+
+    // Count room assignments for each room type
+    travelers.forEach((traveler) => {
+      if (traveler.periodReservationModeID) {
+        if (!roomCounts[traveler.periodReservationModeID]) {
+          roomCounts[traveler.periodReservationModeID] = 1;
+        } else {
+          roomCounts[traveler.periodReservationModeID]++;
+        }
+      }
+    });
+
+    // Convert traveler counts to room quantities
+    const result: { [externalID: string]: number } = {};
+    Object.entries(roomCounts).forEach(([roomId, travelerCount]) => {
+      const room = this.allRoomsAvailability.find(
+        (r) => r.externalID === roomId
+      );
+      if (room && room.places) {
+        // Calculate how many rooms of this type are needed
+        result[roomId] = Math.ceil(travelerCount / room.places);
+      }
+    });
+
+    return result;
   }
 
   // Método para verificar si hay bebés en la lista de viajeros

@@ -39,6 +39,10 @@ const routes: Routes = [
       { path: 'press/:slug', component: ContentPageComponent },
       { path: 'blog/:slug', component: ContentPageComponent },
       { path: 'reservation/:id', component: ReservationComponent },
+      {
+        path: 'reservation/:id/:status/:paymentID',
+        component: ReservationComponent,
+      },
       { path: '**', component: NotFoundComponent },
     ],
   },

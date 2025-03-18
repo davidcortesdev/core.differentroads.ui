@@ -2,12 +2,12 @@
   <div class="auth-card-overlay"></div>
   <div class="auth-layout">
     <div class="sign-up-form">
-      <h1 class="font-base font-medium sign-up-form-title">
+      <h1 class="font-base font-medium sign-up-form-title" *ngIf="!isConfirming">
         ¡Regístrate para continuar con tu compra y aprovecha al máximo tu
         experiencia!
       </h1>
 
-      <div>
+      <div *ngIf="!isConfirming">
         <p-button
           label="Iniciar sesión con Google"
           icon="pi pi-google"
@@ -22,12 +22,12 @@
       </div>
 
       <!-- Separador -->
-      <p-divider align="center">
+      <p-divider align="center" *ngIf="!isConfirming">
         <span class="p-tag">O iniciar sesión de forma manual </span>
       </p-divider>
 
       <form
-        *ngIf="!isConfirming; else confirmTemplate"
+        *ngIf="!isConfirming"
         (ngSubmit)="onSubmit()"
         class="form-login"
         [formGroup]="signUpForm"
@@ -152,58 +152,19 @@
         </p>
       </form>
 
-      <ng-template #confirmTemplate>
-        <h1 class="sign-up-form-title mt-6">
-          Confirmación de correo electrónico
-        </h1>
-        <p class="error-underline">
-          Se ha enviado un código de confirmación a tu correo electrónico.
-        </p>
-        <form
-          (ngSubmit)="onConfirm()"
-          class="form-login"
-          [formGroup]="confirmForm"
-        >
-          <div class="input-group col-span-2">
-            <input
-              type="text"
-              id="username"
-              pInputText
-              formControlName="username"
-              placeholder="Nombre de usuario"
-              class="input-field"
-              readonly
-            />
-            <small *ngIf="confirmForm.get('username')?.errors" class="p-error">
-              {{ getErrorMessage('username', confirmForm.get('username')?.errors) }}
-            </small>
-          </div>
-          <div class="input-group mt-4 col-span-2">
-            <input
-              type="number"
-              id="confirmationCode"
-              pInputText
-              formControlName="confirmationCode"
-              placeholder="Código de confirmación"
-              class="input-field"
-              [disabled]="isRedirecting"
-            />
-            <small *ngIf="confirmForm.get('confirmationCode')?.errors" class="p-error">
-              {{ getErrorMessage('confirmationCode', confirmForm.get('confirmationCode')?.errors) }}
-            </small>
-          </div>
-
-          <p-button
-            type="submit"
-            label="Verificar código"
-            [loading]="isLoading"
-            [disabled]="isLoading || isRedirecting"
-            [rounded]="true"
-            size="large"
-            class="p-button-primary p-button-block mt-4 col-span-2"
-          ></p-button>
-        </form>
-      </ng-template>
+      <!-- Componente de Confirmación de Código -->
+      <app-confirmation-code
+        *ngIf="isConfirming"
+        [username]="registeredUsername"
+        [isLoading]="isLoading"
+        [isRedirecting]="isRedirecting"
+        [errorMessage]="errorMessage"
+        [successMessage]="successMessage"
+        (confirmSuccess)="onConfirmSuccess()"
+        (loadingChange)="onLoadingChange($event)"
+        (errorMessageChange)="onErrorMessageChange($event)"
+        (successMessageChange)="onSuccessMessageChange($event)"
+      ></app-confirmation-code>
     </div>
   </div>
 </div>

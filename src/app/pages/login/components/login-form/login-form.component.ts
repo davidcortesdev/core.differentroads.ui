@@ -15,7 +15,7 @@ import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
-
+import { ConfirmationCodeComponent } from '../../../../shared/components/confirmation-code/confirmation-code.component';
 @Component({
   selector: 'app-login-form',
   standalone: true,
@@ -23,18 +23,18 @@ import { AuthenticateService } from '../../../../core/services/auth-service.serv
     CommonModule,
     ReactiveFormsModule,
     IftaLabelModule,
+    ConfirmationCodeComponent,
     InputTextModule,
     PasswordModule,
     ButtonModule,
     DividerModule,
-    ProgressSpinnerModule,
+    ProgressSpinnerModule
   ],
   templateUrl: './login-form.component.html',
   styleUrls: ['./login-form.component.scss'],
 })
 export class LoginFormComponent implements OnInit {
   loginForm: FormGroup;
-  confirmForm: FormGroup;
   errorMessage: string = '';
   successMessage: string = '';
   isLoading: boolean = false;
@@ -50,11 +50,7 @@ export class LoginFormComponent implements OnInit {
     },
     password: {
       required: 'La contraseña es requerida.',
-    },
-    confirmationCode: {
-      required: 'El código de confirmación es requerido.',
-      pattern: 'El código debe contener solo números.',
-    },
+    }
   };
 
   constructor(
@@ -65,14 +61,6 @@ export class LoginFormComponent implements OnInit {
     this.loginForm = this.fb.group({
       username: ['', Validators.required],
       password: ['', Validators.required],
-    });
-
-    this.confirmForm = this.fb.group({
-      username: ['', [Validators.required]],
-      confirmationCode: [
-        '',
-        [Validators.required, Validators.pattern(/^[0-9]+$/)],
-      ],
     });
   }
 
@@ -110,46 +98,17 @@ export class LoginFormComponent implements OnInit {
 
   handleUnconfirmedUser(username: string): void {
     this.isConfirming = true;
-    this.confirmForm.patchValue({
-      username: username,
-    });
   }
 
-  onConfirm(): void {
-    if (this.confirmForm.invalid) {
-      this.errorMessage = 'Por favor, corrige los errores en el formulario.';
-      return;
-    }
-
-    this.isLoading = true;
-    this.errorMessage = '';
-    console.log('Código de confirmación enviado:', this.confirmForm.value);
-
-    this.authService
-      .confirmSignUp(
-        this.confirmForm.value.username,
-        `${this.confirmForm.value.confirmationCode}`
-      )
-      .then(() => {
-        this.isLoading = false;
-        this.successMessage = 'Verificación exitosa. Iniciando sesión...';
-        console.log('Código de confirmación verificado.');
-        
-        // Iniciar sesión automáticamente después de confirmar
-        setTimeout(() => {
-          this.loginAfterConfirmation();
-        }, 1000);
-      })
-      .catch((error) => {
-        this.isLoading = false;
-        this.errorMessage = error.message || 'Confirmación fallida';
-      });
+  onConfirmSuccess(): void {
+    // El usuario ha confirmado exitosamente, ahora intentamos iniciar sesión
+    this.loginAfterConfirmation();
   }
 
   loginAfterConfirmation(): void {
     this.isLoading = true;
     
-    const username = this.confirmForm.value.username;
+    const username = this.loginForm.value.username;
     const password = this.userPassword;
     
     this.authService.login(username, password).subscribe({

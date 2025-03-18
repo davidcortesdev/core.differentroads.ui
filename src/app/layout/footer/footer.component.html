@@ -6,7 +6,7 @@
         <img src="white-logo.svg" alt="Different Roads" />
       </div>
     </div>
-    
+
     <!-- Newsletter Section -->
     <div class="section newsletter">
       <h2 class="title inicial" [class.hidden]="isSubscribed">
@@ -31,7 +31,9 @@
                   <div class="ml-form-horizontalRow mlformhorizontalRow">
                     <div class="ml-input-horizontal">
                       <div class="horizontal-fields">
-                        <div class="inputGroup ml-validate-email ml-validate-required mlfieldemail">
+                        <div
+                          class="inputGroup ml-validate-email ml-validate-required mlfieldemail"
+                        >
                           <input
                             type="email"
                             class="form-control"
@@ -77,16 +79,22 @@
       </div>
 
       <div class="socialLinks">
-        <a href="https://www.instagram.com/different_roads/" class="socialLink" aria-label="Follow us on Instagram">
+        <a
+          href="https://www.instagram.com/different_roads/"
+          class="socialLink"
+          aria-label="Follow us on Instagram"
+        >
           <i class="pi pi-instagram"></i>
         </a>
-        <a aria-label="Follow us on Facebook"
+        <a
+          aria-label="Follow us on Facebook"
           href="https://www.facebook.com/DifferentRoadsViajes/"
           class="socialLink"
         >
           <i class="pi pi-facebook"></i>
         </a>
-        <a aria-label="Follow us on YouTube"
+        <a
+          aria-label="Follow us on YouTube"
           href="https://www.youtube.com/c/DifferentRoads_viajes"
           class="socialLink"
         >
@@ -94,47 +102,55 @@
         </a>
       </div>
       <div class="contactInfo">
-        <p>{{ footerData.contactInfo.phone }}</p>
-        <p>{{ footerData.contactInfo.email }}</p>
+        <p>{{ footerSection?.['contact-info']?.phone }}</p>
+        <p>{{ footerSection?.['contact-info']?.email }}</p>
       </div>
     </div>
 
     <!-- About Us Section -->
     <div class="section">
-      <h3>Sobre Nosotros</h3>
+      <h3>{{footerSection?.['section-1']?.['section-title']}}</h3>
       <ul class="links">
-        <li *ngFor="let link of footerData.aboutUsLinks">
-          <a [href]="link.url">{{ link.label }}</a>
+        <li
+          *ngFor="let link of (footerSection?.['section-1']?.links || []) | sortBy:'order'"
+        >
+          <a [href]="link.url" *ngIf="link">{{ link.text }}</a>
         </li>
       </ul>
     </div>
 
     <!-- Our Trips Section -->
     <div class="section">
-      <h3>Nuestros Viajes</h3>
+      <h3>{{footerSection?.['section-2']?.['section-title']}}</h3>
       <ul class="links">
-        <li *ngFor="let link of footerData.ourTripsLinks">
-          <a [href]="link.url">{{ link.label }}</a>
+        <li
+          *ngFor="let link of (footerSection?.['section-2']?.links || []) | sortBy:'order'"
+        >
+          <a [href]="link.url" *ngIf="link">{{ link.text }}</a>
         </li>
       </ul>
     </div>
 
     <!-- Travel Types Section -->
     <div class="section">
-      <h3>Tipos de viaje</h3>
+      <h3>{{footerSection?.['section-3']?.['section-title']}}</h3>
       <ul class="links">
-        <li *ngFor="let link of footerData.travelTypesLinks">
-          <a [href]="link.url">{{ link.label }}</a>
+        <li
+          *ngFor="let link of (footerSection?.['section-3']?.links || []) | sortBy:'order'"
+        >
+          <a [href]="link.url" *ngIf="link">{{ link.text }}</a>
         </li>
       </ul>
     </div>
 
     <!-- Tour Operator Section -->
     <div class="section">
-      <h3>Touroperador</h3>
+      <h3>{{footerSection?.['section-4']?.['section-title']}}</h3>
       <ul class="links">
-        <li *ngFor="let link of footerData.tourOperatorLinks">
-          <a [href]="link.url">{{ link.label }}</a>
+        <li
+          *ngFor="let link of (footerSection?.['section-4']?.links || []) | sortBy:'order'"
+        >
+          <a [href]="link.url" *ngIf="link">{{ link.text }}</a>
         </li>
       </ul>
     </div>
@@ -143,7 +159,7 @@
   <!-- Bottom Section -->
   <div class="bottom">
     <div class="copyright">
-      {{ footerData.copyrightText }}
+      {{ footerSection?.copyright?.text }} {{ footerSection?.copyright?.year }}
     </div>
     <div class="payment">
       <img src="scalapay.svg" alt="Scalapay" style="filter: invert(1)" />

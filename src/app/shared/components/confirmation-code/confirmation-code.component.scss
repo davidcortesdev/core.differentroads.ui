@@ -1,0 +1,224 @@
+:host {
+  .auth-card {
+    position: relative;
+    z-index: 2;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    min-width: 400px;
+    margin: auto;
+    border-radius: 10px;
+    padding: 20px;
+
+    @media (max-width: 575.98px) {
+      min-width: 90%;
+      margin: 1rem;
+    }
+
+    @media (max-width: 767.98px) {
+      min-width: 350px;
+    }
+
+    &-container {
+      display: flex;
+      align-items: center;
+      background: url('../../../../../public/fondo-auth.jpeg');
+      justify-content: center;
+      min-height: 65vh;
+      position: relative;
+      background-position: 50%;
+      background-size: cover;
+      background-repeat: no-repeat;
+      padding: 2rem;
+
+      @media screen and (max-width: 480px) {
+        padding: 2rem;
+      }
+    }
+
+    &-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.7);
+      z-index: 1;
+    }
+  }
+
+  .auth-layout {
+    position: relative;
+    z-index: 2;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, .2);
+    margin: auto;
+    border-radius: 10px;
+    padding: 2rem;
+    width: 35%;
+
+    @media screen and (max-width: 768px) {
+      width: 85%;
+    }
+
+    @media screen and (max-width: 480px) {
+      width: 100%;
+    }
+  }
+
+  .sign-up-form {
+    width: 100%;
+
+    &-title {
+      color: var(--background-azul);
+      font-size: 1.5rem;
+      font-weight: 500;
+      margin-bottom: 1rem;
+      text-align: center;
+
+      @media screen and (max-width: 480px) {
+        font-size: 1rem;
+        line-height: 1;
+      }
+    }
+
+    &-text {
+      font-size: 0.875rem;
+      color: #666;
+    }
+
+    &-btngoogle {
+      border: 1px solid var(--p-primary-color);
+      border-radius: 10rem;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      margin-bottom: 1rem;
+
+      @media screen and (max-width: 480px) {}
+
+      &:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+      }
+
+      .btn-full {
+        width: 100%;
+      }
+    }
+
+    .p-tag {
+      color: var(--background-azul);
+
+      @media screen and (max-width: 480px) {
+        font-size: .6875rem;
+      }
+    }
+
+    .form-login {
+      display: grid;
+      gap: 1rem;
+      grid-template-rows: 1fr;
+      grid-template-columns: repeat(2, 1fr);
+
+      .col-span-2 {
+        grid-column: span 2;
+      }
+
+      .p-inputtext {
+        width: 100%;
+      }
+
+      ::ng-deep .p-password {
+        width: 100%;
+      }
+
+      ::ng-deep .p-inputtext {
+        border-color: transparent;
+        border-bottom-color: .0625rem solid var(--background-azul);
+        box-shadow: none;
+        border-radius: 0;
+        border-bottom: .0625rem solid var(--background-azul);
+        width: 100%;
+      }
+
+      &-btnsingup {
+        background-color: #007bff;
+        color: #fff;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        border: none;
+        cursor: pointer;
+        width: 100%;
+
+        &:disabled {
+          background-color: #ccc;
+          cursor: not-allowed;
+        }
+      }
+
+      ::ng-deep .p-button {
+        color: var(--background-azul-color-letra);
+      }
+    }
+
+    ::ng-deep .p-button {
+      border: .0625rem solid var(--p-primary-color);
+      color: var(--background-azul);
+      width: 100%;
+
+      @media screen and (max-width: 480px) {
+        font-size: .75rem;
+      }
+    }
+
+
+    &-link {
+      display: inline-flex;
+      color: var(--p-primary-color);
+      cursor: pointer;
+      justify-content: center;
+      font-size: 0.875rem;
+      margin: 0;
+      gap: .25rem;
+
+      &-span {
+        text-decoration: none;
+        color: var(--background-azul);
+      }
+
+      &>a {
+        text-decoration: underline;
+        color: var(--p-primary-color);
+      }
+    }
+  }
+
+  .error-underline {
+    color: #dc3545;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+  }
+
+  .password {
+    position: relative;
+
+    &-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+  }
+
+  .p-button-primary {
+    color: var(--background-azul-color-letra);
+    display: flex;
+    justify-content: center;
+  }
+}

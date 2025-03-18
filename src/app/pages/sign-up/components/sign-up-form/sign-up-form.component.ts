@@ -14,7 +14,8 @@ import { PasswordModule } from 'primeng/password';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
 import { UsersService } from '../../../../core/services/users.service';
-import { HubspotService } from '../../../../core/services/hubspot.service'; // Importar el servicio de Hubspot
+import { HubspotService } from '../../../../core/services/hubspot.service';
+import { ConfirmationCodeComponent } from '../../../../shared/components/confirmation-code/confirmation-code.component';
 
 @Component({
   selector: 'app-sign-up-form',
@@ -22,18 +23,18 @@ import { HubspotService } from '../../../../core/services/hubspot.service'; // I
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    ConfirmationCodeComponent,
     InputTextModule,
     PasswordModule,
     ButtonModule,
     DividerModule,
-    ProgressSpinnerModule,
+    ProgressSpinnerModule
   ],
   templateUrl: './sign-up-form.component.html',
   styleUrls: ['./sign-up-form.component.scss'],
 })
 export class SignUpFormComponent {
   signUpForm: FormGroup;
-  confirmForm: FormGroup;
   isLoading: boolean = false;
   isConfirming: boolean = false;
   isRedirecting: boolean = false;
@@ -65,11 +66,7 @@ export class SignUpFormComponent {
     confirmPassword: {
       required: 'Confirma tu contraseña.',
       mismatch: 'Las contraseñas no coinciden.',
-    },
-    confirmationCode: {
-      required: 'El código de confirmación es requerido.',
-      pattern: 'El código debe contener solo números.',
-    },
+    }
   };
 
   constructor(
@@ -77,7 +74,7 @@ export class SignUpFormComponent {
     private router: Router,
     private authService: AuthenticateService,
     private usersService: UsersService,
-    private hubspotService: HubspotService // Inyectar el servicio de Hubspot
+    private hubspotService: HubspotService
   ) {
     this.signUpForm = this.fb.group(
       {
@@ -90,14 +87,6 @@ export class SignUpFormComponent {
       },
       { validators: this.passwordMatchValidator }
     );
-
-    this.confirmForm = this.fb.group({
-      username: ['', [Validators.required]],
-      confirmationCode: [
-        '',
-        [Validators.required, Validators.pattern(/^[0-9]+$/)],
-      ],
-    });
   }
 
   signInWithGoogle(): void {
@@ -156,9 +145,6 @@ export class SignUpFormComponent {
                     this.isConfirming = true;
                     this.registeredUsername = this.signUpForm.value.email;
                     this.userPassword = this.signUpForm.value.password;
-                    this.confirmForm.patchValue({
-                      username: this.registeredUsername,
-                    });
                     console.log('Registro completado. Esperando confirmación.');
                   },
                   (error) => {
@@ -180,34 +166,14 @@ export class SignUpFormComponent {
       });
   }
 
-  onConfirm() {
-    if (this.confirmForm.invalid) {
-      this.errorMessage = 'Por favor, corrige los errores en el formulario.';
-      return;
-    }
-
-    this.isLoading = true;
-    console.log('Código de confirmación enviado:', this.confirmForm.value);
-
-    this.authService
-      .confirmSignUp(
-        this.confirmForm.value.username,
-        `${this.confirmForm.value.confirmationCode}`
-      )
-      .then(() => {
-        this.isLoading = false;
-        this.isRedirecting = true;
-        this.successMessage = 'Verificación exitosa. Iniciando sesión...';
-        console.log('Código de confirmación verificado.');
-
-        setTimeout(() => {
-          this.router.navigate(['/login']);
-        }, 2000);
-      })
-      .catch((error) => {
-        this.isLoading = false;
-        this.errorMessage = error.message || 'Confirmación fallida';
-      });
+  onConfirmSuccess(): void {
+    this.isLoading = false;
+    this.isRedirecting = true;
+    this.successMessage = 'Verificación exitosa. Redirigiendo al inicio de sesión...';
+    
+    setTimeout(() => {
+      this.router.navigate(['/login']);
+    }, 2000);
   }
 
   getErrorMessage(controlName: string, errors: any): string {
@@ -220,5 +186,18 @@ export class SignUpFormComponent {
 
   redirectToLogin(): void {
     this.router.navigate(['/login']);
+  }
+  
+  // Métodos para manejar los eventos del componente ConfirmationCodeComponent
+  onLoadingChange(loading: boolean): void {
+    this.isLoading = loading;
+  }
+
+  onErrorMessageChange(message: string): void {
+    this.errorMessage = message;
+  }
+
+  onSuccessMessageChange(message: string): void {
+    this.successMessage = message;
   }
 }

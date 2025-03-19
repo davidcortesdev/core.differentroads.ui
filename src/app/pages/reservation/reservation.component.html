@@ -6,38 +6,38 @@
 <div
   *ngIf="!loading && !error"
   class="res-conf"
-  [ngClass]="reservationInfo.status"
+  [ngClass]="reservationInfo?.status"
 >
   <!-- Header con check y título -->
   <div class="hdr">
     <span
       class="status-icon"
-      *ngIf="reservationInfo.status !== 'transfer'"
+      *ngIf="reservationInfo?.status !== 'transfer'"
       [class]="
-        reservationInfo.status === 'confirm'
+        reservationInfo?.status === 'confirm'
           ? 'pi pi-check-circle'
           : 'pi pi-exclamation-circle'
       "
     ></span>
-    <h1 *ngIf="reservationInfo.status === 'confirm'">
-      ¡Tu reserva con número {{ reservationInfo.reservationNumber }} ha sido
+    <h1 *ngIf="reservationInfo?.status === 'confirm'">
+      ¡Tu reserva con número {{ reservationInfo?.reservationNumber }} ha sido
       confirmada!
     </h1>
-    <h1 *ngIf="reservationInfo.status === 'rq'">
-      ¡Tu reserva con número {{ reservationInfo.reservationNumber }} está en
+    <h1 *ngIf="reservationInfo?.status === 'rq'">
+      ¡Tu reserva con número {{ reservationInfo?.reservationNumber }} está en
       petición!
     </h1>
-    <h1 *ngIf="reservationInfo.status === 'transfer'">
+    <h1 *ngIf="reservationInfo?.status === 'transfer'">
       Confirma tu petición de reserva realizando el pago por transferencia
     </h1>
   </div>
 
   <!-- Mensaje de bienvenida -->
   <div class="wel">
-    <p class="greet">Hola {{ reservationInfo.customerName }},</p>
+    <p class="greet">Hola {{ reservationInfo?.customerName }},</p>
 
     <!-- Mensajes específicos por estado -->
-    <ng-container *ngIf="reservationInfo.status === 'confirm'">
+    <ng-container *ngIf="reservationInfo?.status === 'confirm'">
       <p class="hl">
         ¡Estamos emocionados de confirmarte que tu reserva ha sido realizada con
         éxito!
@@ -54,7 +54,7 @@
       </p>
     </ng-container>
 
-    <ng-container *ngIf="reservationInfo.status === 'rq'">
+    <ng-container *ngIf="reservationInfo?.status === 'rq'">
       <p class="hl">
         Hemos bloqueado tus plazas, ¡Esto significa que te tenemos en cuenta
         para la salida de este tour!
@@ -73,7 +73,7 @@
       </p>
     </ng-container>
 
-    <ng-container *ngIf="reservationInfo.status === 'transfer'">
+    <ng-container *ngIf="reservationInfo?.status === 'transfer'">
       <p class="hl">¡Hemos recibido tu petición de reserva del tour!</p>
       <p class="msg">
         Pero algunos de los servicios incluidos en tu viaje están aún pendientes
@@ -100,7 +100,7 @@
       <!-- Recuadro coral con información bancaria -->
       <p-panel
         styleClass="bank-panel"
-        *ngIf="reservationInfo.status === 'transfer'"
+        *ngIf="reservationInfo?.status === 'transfer'"
       >
         <ng-template pTemplate="header">
           <div class="pan-hdr">
@@ -150,15 +150,15 @@
   <p-panel styleClass="det-panel">
     <div class="det-item">
       <label class="val">Fecha de reserva:</label>
-      <span>{{ reservationInfo.date }}</span>
+      <span>{{ reservationInfo?.date }}</span>
     </div>
     <div class="det-item">
       <label class="val">Número de reserva:</label>
-      <span>{{ reservationInfo.reservationNumber }}</span>
+      <span>{{ reservationInfo?.reservationNumber }}</span>
     </div>
     <div class="det-item">
       <label class="val">Importe abonado:</label>
-      <span>{{ reservationInfo.amount }}</span>
+      <span>{{ reservationInfo?.amount }}</span>
     </div>
   </p-panel>
 
@@ -174,12 +174,14 @@
 
   <!-- Panel de información del viaje -->
   <app-travel-information-section
-    [tripDetails]="reservationInfo.tripDetails"
+    *ngIf="reservationInfo?.tripDetails"
+    [tripDetails]="reservationInfo!.tripDetails"
   ></app-travel-information-section>
 
   <!-- Panel de información de viajeros -->
   <app-travelers-information-section
-    [travelers]="reservationInfo.travelers"
+    *ngIf="reservationInfo?.travelers"
+    [travelers]="reservationInfo!.travelers"
   ></app-travelers-information-section>
 
   <!-- Panel de vuelos -->
@@ -190,7 +192,9 @@
 
   <!-- Panel de información de pago -->
   <app-payments-information-section
-    [paymentInfo]="paymentInfo"
+    *ngIf="paymentInfo?.totalAmount"
+    [totalAmount]="paymentInfo!.totalAmount"
+    [bookingID]="bookingId"
   ></app-payments-information-section>
 </div>
 

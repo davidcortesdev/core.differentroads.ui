@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, HostListener, Inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, HostListener, Inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { RedsysService } from '../../../../core/services/checkout/payment/redsys.service';
 
@@ -14,6 +14,7 @@ export class PaymentComponent implements OnInit {
     bookingID: string;
     ID: string;
   }>;
+  @Output() goBackEvent = new EventEmitter<void>();
 
   isOpen: boolean = true;
   isInstallmentsOpen: boolean = true;
@@ -208,5 +209,10 @@ export class PaymentComponent implements OnInit {
       return;
     }
     this.isLoading = false;
+  }
+  
+  // Add this method to handle the back button click
+  goBack(): void {
+    this.goBackEvent.emit();
   }
 }

@@ -70,7 +70,7 @@
                   (onClick)="nextStep(3) && activateCallback(3)"
                   [disabled]="
                     !selectedFlight ||
-                    selectedFlight?.name?.toLowerCase()?.includes('sin ')
+                    selectedFlight.name.toLowerCase().includes('sin ')
                   "
                 ></p-button>
               </div>

@@ -150,13 +150,7 @@
 
             <!-- Total section -->
             <div class="total-section">
-              <!-- Add discount row if discount is applied -->
-              <div class="discount" *ngIf="discountInfo && discountInfo.discountValue > 0">
-                <span>Descuento 
-                  <ng-container *ngIf="discountInfo.type === 'percentage'">({{ discountInfo.amount }}%)</ng-container>
-                </span>
-                <span>-{{ discountInfo.discountValue | currencyFormat : "EUR" }}</span>
-              </div>
+              <!-- Remove the separate discount row since it's now in the summary -->
               <div class="total">
                 <span>Total</span>
                 <span>{{ total | currencyFormat : "EUR" }}</span>
@@ -275,10 +269,12 @@
           </div>
         </div>
       </div>
-      <!-- Discount Code component -->
-      <app-discount-code 
-        [orderTotal]="subtotal" 
-        (discountApplied)="handleDiscountApplied($event)">
+      <!-- Update app-discount-code to handle the new event signature -->
+      <app-discount-code
+        [orderTotal]="subtotal"
+        [existingDiscount]="discountInfo"
+        (discountApplied)="handleDiscountApplied($event)"
+      >
       </app-discount-code>
     </div>
   </div>

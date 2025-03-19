@@ -93,6 +93,11 @@ export class CheckoutComponent implements OnInit {
       const periodID = order.periodID;
       this.periodID = periodID;
 
+      // Initialize discounts if present in the order
+      if (order.discounts && order.discounts.length > 0) {
+        this.discountInfo = order.discounts[0];
+      }
+
       this.initializeTravelers(order.travelers || []);
       this.initializeActivities(order.optionalActivitiesRef || []);
       this.initializeFlights(order.flights || []);
@@ -394,6 +399,8 @@ export class CheckoutComponent implements OnInit {
     let tempOrderData: Order = { ...this.summaryService.getOrderValue()! };
     const travelersData = this.travelersService.getTravelers();
 
+    // Save the entire summary to the order
+    tempOrderData['summary'] = this.summary;
     tempOrderData['travelers'] = travelersData;
     tempOrderData['optionalActivitiesRef'] = this.activities.map(
       (activity) => ({
@@ -463,6 +470,18 @@ export class CheckoutComponent implements OnInit {
       tempOrderData['insurancesRef'] = [];
     }
 
+    // Add discount to summary item if applied
+    if (this.discountInfo && this.discountInfo.discountValue > 0) {
+      this.summary.push({
+        qty: 1,
+        value: -this.discountInfo.discountValue, // Negative value to show it as a reduction
+        description: `Descuento cupón: ${this.discountInfo.code}`,
+      });
+
+      // Save discount info to order
+      tempOrderData['discounts'] = [this.discountInfo];
+    }
+
     this.summaryService.updateOrder(tempOrderData);
 
     this.calculateTotals();
@@ -480,35 +499,39 @@ export class CheckoutComponent implements OnInit {
   discountInfo: {
     code: string;
     amount: number;
-    type: string;
     discountValue: number;
+    type: string;
   } | null = null;
-  
+
   // Add this method to handle the discount
   handleDiscountApplied(discountInfo: {
     code: string;
     amount: number;
-    type: string;
     discountValue: number;
+    type: string;
   }): void {
     this.discountInfo = discountInfo;
-    this.calculateTotals();
+    this.updateOrderSummary(); // Re-run the summary calculation
   }
-  
+
   // Update your calculateTotals method to include discount
   calculateTotals(): void {
-    // Calculate subtotal from summary items
-    this.subtotal = this.summary.reduce(
-      (acc, item) => acc + (item.value || 0) * item.qty,
+    // Calculate subtotal from summary items, excluding discount items
+    this.subtotal = this.summary.reduce((acc, item) => {
+      // Only add positive values to subtotal (ignore discount items with negative values)
+      if (item.value >= 0) {
+        return acc + item.value * item.qty;
+      }
+      return acc;
+    }, 0);
+
+    // Calculate total including all items (both positive and negative values)
+    this.total = this.summary.reduce(
+      (acc, item) => acc + item.value * item.qty,
       0
     );
-    
-    // Apply discount if available
-    if (this.discountInfo && this.discountInfo.discountValue > 0) {
-      this.total = this.subtotal - this.discountInfo.discountValue;
-    } else {
-      this.total = this.subtotal;
-    }
+
+    // No need to separately subtract discount as it's already included in summary
   }
 
   /* Steps and validations */
@@ -678,7 +701,7 @@ export class CheckoutComponent implements OnInit {
     this.messageService.add({
       severity: 'success',
       summary: 'Viaje guardado',
-      detail: 'El viaje ha sido guardado correctamente'
+      detail: 'El viaje ha sido guardado correctamente',
     });
   }
 }

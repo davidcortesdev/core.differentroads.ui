@@ -6,9 +6,8 @@
         <input
           pInputText
           id="code"
-          type="text"
           formControlName="code"
-          [disabled]="appliedDiscount !== null"
+          [disabled]="appliedDiscount !== null || isLoading"
           placeholder="Ingrese código de descuento"
         />
       </div>
@@ -18,7 +17,8 @@
           label="Aplicar"
           icon="pi pi-check"
           (onClick)="validateDiscountCode()"
-          [disabled]="discountForm.invalid"
+          [disabled]="discountForm.invalid || isLoading"
+          [loading]="isLoading"
         ></p-button>
         <p-button
           *ngIf="appliedDiscount"
@@ -29,7 +29,7 @@
         ></p-button>
       </div>
     </div>
-    
+
     <div *ngIf="appliedDiscount" class="discount-info">
       <h3>Descuento aplicado</h3>
       <div class="discount-detail">
@@ -38,16 +38,16 @@
       </div>
       <div class="discount-detail">
         <div class="detail-label">Descripción:</div>
-        <div class="detail-value">{{ appliedDiscount.description }}</div>
+        <div
+          class="detail-value"
+          [innerHTML]="getSanitizedDescription(appliedDiscount.description)"
+        ></div>
       </div>
       <div class="discount-detail">
         <div class="detail-label">Importe:</div>
         <div class="detail-value">
-          <ng-container [ngSwitch]="appliedDiscount.type">
-            <ng-container *ngSwitchCase="'percentage'">{{ appliedDiscount.amount }}% de descuento en tu viaje</ng-container>
-            <ng-container *ngSwitchCase="'fixed'">{{ appliedDiscount.amount | currency:'EUR' }} de descuento en el total</ng-container>
-            <ng-container *ngSwitchCase="'shipping'">Traslados aeropuerto-hotel gratuitos</ng-container>
-          </ng-container>
+          {{ appliedDiscount.amount | currencyFormat : "EUR" }} de descuento en
+          el total
         </div>
       </div>
     </div>

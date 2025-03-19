@@ -476,12 +476,39 @@ export class CheckoutComponent implements OnInit {
     this.travelers = event.adults + event.childs + event.babies;
   }
 
-  calculateTotals() {
+  // Add these properties to your checkout component class
+  discountInfo: {
+    code: string;
+    amount: number;
+    type: string;
+    discountValue: number;
+  } | null = null;
+  
+  // Add this method to handle the discount
+  handleDiscountApplied(discountInfo: {
+    code: string;
+    amount: number;
+    type: string;
+    discountValue: number;
+  }): void {
+    this.discountInfo = discountInfo;
+    this.calculateTotals();
+  }
+  
+  // Update your calculateTotals method to include discount
+  calculateTotals(): void {
+    // Calculate subtotal from summary items
     this.subtotal = this.summary.reduce(
-      (acc, item) => acc + item.value * item.qty,
+      (acc, item) => acc + (item.value || 0) * item.qty,
       0
     );
-    this.total = this.subtotal;
+    
+    // Apply discount if available
+    if (this.discountInfo && this.discountInfo.discountValue > 0) {
+      this.total = this.subtotal - this.discountInfo.discountValue;
+    } else {
+      this.total = this.subtotal;
+    }
   }
 
   /* Steps and validations */
@@ -643,6 +670,15 @@ export class CheckoutComponent implements OnInit {
             reject(error);
           },
         });
+    });
+  }
+  // Add this method to your component class
+  saveTrip(): void {
+    // Implement the save trip functionality here
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Viaje guardado',
+      detail: 'El viaje ha sido guardado correctamente'
     });
   }
 }

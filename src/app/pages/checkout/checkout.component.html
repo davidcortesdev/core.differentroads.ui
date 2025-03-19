@@ -25,13 +25,18 @@
                 [orderDetails]="orderDetails"
                 [prices]="prices"
               ></app-customize-trip>
-              <div class="flex pt-6 justify-end">
+              <div class="flex pt-6 justify-end" style="flex-direction: column; width: 100%;">
                 <p-button
-                  label="Siguiente"
+                  label="Continuar"
                   icon="pi pi-arrow-right"
                   iconPos="right"
+                  styleClass="full-width-button"
                   (onClick)="nextStep(2) && activateCallback(2)"
                 />
+                <button class="availability-notice" (click)="saveTrip()">
+                  <p>Guarda este viaje</p>
+                  <p>Sujeto a disponibilidad en el momento de la reserva y sólo para salidas con stock</p>
+                </button>
               </div>
             </ng-template>
           </p-step-panel>
@@ -146,6 +151,13 @@
 
             <!-- Total section -->
             <div class="total-section">
+              <!-- Add discount row if discount is applied -->
+              <div class="total" *ngIf="discountInfo && discountInfo.discountValue > 0">
+                <span>Descuento 
+                  <ng-container *ngIf="discountInfo.type === 'percentage'">({{ discountInfo.amount }}%)</ng-container>
+                </span>
+                <span>-{{ discountInfo.discountValue | currencyFormat : "EUR" }}</span>
+              </div>
               <div class="total">
                 <span>Total</span>
                 <span>{{ total | currencyFormat : "EUR" }}</span>
@@ -264,7 +276,11 @@
           </div>
         </div>
       </div>
-       <app-discount-code ></app-discount-code>
+       <!-- Replace the existing app-discount-code line -->
+       <app-discount-code 
+         [orderTotal]="subtotal" 
+         (discountApplied)="handleDiscountApplied($event)">
+       </app-discount-code>
     </div>
   </div>
 </div>

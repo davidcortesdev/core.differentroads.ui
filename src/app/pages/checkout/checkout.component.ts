@@ -64,6 +64,7 @@ export class CheckoutComponent implements OnInit {
   tourID: string = '';
   periodID: string = '';
   periodData!: Period;
+  flightlessOption: Flight | null = null;
 
   constructor(
     private ordersService: OrdersService,
@@ -164,6 +165,10 @@ export class CheckoutComponent implements OnInit {
     this.insurancesService.selectedInsurances$.subscribe((insurances) => {
       this.selectedInsurances = insurances;
       this.updateOrderSummary();
+    });
+
+    this.flightsService.flightlessOption$.subscribe((option) => {
+      this.flightlessOption = option;
     });
   }
 
@@ -528,6 +533,14 @@ export class CheckoutComponent implements OnInit {
     // Llamada a updateOrder sin suscribirse para evitar retraso en la validación de navigation.
     this.updateOrder();
     return true;
+  }
+
+  selectFlightlessAndContinue(): boolean {
+    if (this.flightlessOption) {
+      this.flightsService.updateSelectedFlight(this.flightlessOption);
+      return true;
+    }
+    return false;
   }
 
   /* Order update */

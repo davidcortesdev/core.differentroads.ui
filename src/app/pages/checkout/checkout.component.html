@@ -49,14 +49,24 @@
                   (onClick)="activateCallback(1)"
                 />
                 <p-button
-                  [label]="
-                    selectedFlight?.name?.toLowerCase()?.includes('sin ')
-                      ? 'Continuar sin vuelos'
-                      : 'Continuar'
+                  *ngIf="flightlessOption"
+                  label="Continuar sin vuelos"
+                  severity="secondary"
+                  (onClick)="
+                    selectFlightlessAndContinue() &&
+                      nextStep(3) &&
+                      activateCallback(3)
                   "
+                ></p-button>
+                <p-button
+                  label="Continuar"
                   icon="pi pi-arrow-right"
                   iconPos="right"
                   (onClick)="nextStep(3) && activateCallback(3)"
+                  [disabled]="
+                    !selectedFlight ||
+                    selectedFlight?.name?.toLowerCase()?.includes('sin ')
+                  "
                 ></p-button>
               </div>
             </ng-template>

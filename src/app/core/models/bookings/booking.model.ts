@@ -61,17 +61,3 @@ export interface OptionalActivityRef {
   id: string;
   travelersAssigned: string[];
 }
-
-interface OptionalActivity {
-  status: string;
-  activityId: string;
-  description: string;
-  externalID: string;
-  name: string;
-  optional: boolean;
-  periodId: string;
-  productType: string;
-  availability: number;
-  priceData: PriceData[];
-  _id: string;
-}

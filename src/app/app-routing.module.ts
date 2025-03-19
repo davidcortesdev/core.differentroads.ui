@@ -40,7 +40,7 @@ const routes: Routes = [
       { path: 'blog/:slug', component: ContentPageComponent },
       { path: 'reservation/:id', component: ReservationComponent },
       {
-        path: 'reservation/:id/:state/:paymentID',
+        path: 'reservation/:id/:status/:paymentID',
         component: ReservationComponent,
       },
       { path: '**', component: NotFoundComponent },

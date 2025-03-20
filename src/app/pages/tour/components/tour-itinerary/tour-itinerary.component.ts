@@ -498,6 +498,7 @@ export class TourItineraryComponent implements OnInit {
     console.log('Selected itinerary____:', this.activities);
 
     this.itinerary = selectedItinerary['days'].map((day, index) => {
+      console.log('this.hotels',this.hotels);
       return {
         title: day.name,
         description: this.sanitizer.bypassSecurityTrustHtml(day.description),

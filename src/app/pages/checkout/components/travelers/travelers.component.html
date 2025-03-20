@@ -6,18 +6,16 @@
   >
     <div class="content-form">
       <h3 class="title">Viajeros</h3>
-      <p-accordion [value]="getOpenTravelers()" [multiple]="true" styleClass="travelers-accordion">
-        <ng-container *ngFor="let form of travelerForms; let i = index">
-          <!-- Update the app-traveler-item element -->
-          <app-traveler-item
-            [form]="form"
-            [index]="i"
-            [traveler]="travelers[i]"
-            [sexoOptions]="sexoOptions"
-            [isFirstTraveler]="i === 0"
-            [getAdultsOptionsFn]="getAdultsOptions.bind(this)"
-          ></app-traveler-item>
-        </ng-container>
+      <p-accordion [multiple]="true" [activeIndex]="getOpenTravelers()">
+        <app-traveler-item
+          *ngFor="let form of travelerForms; let i = index"
+          [form]="form"
+          [index]="i"
+          [traveler]="travelers[i]"
+          [sexoOptions]="sexoOptions"
+          [isFirstTraveler]="i === 0"
+          [getAdultsOptionsFn]="getAdultsOptions.bind(this)"
+        ></app-traveler-item>
       </p-accordion>
     </div>
   </div>

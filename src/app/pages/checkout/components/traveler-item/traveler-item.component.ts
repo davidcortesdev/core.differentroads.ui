@@ -39,6 +39,9 @@ export class TravelerItemComponent implements OnInit, OnDestroy {
 
   @ViewChild('sexoSelect') sexoSelect!: Select;
 
+  // Add showMoreFields flag to control visibility
+  showMoreFields: boolean = false;
+
   // Cache para opciones de documentos
   private documentOptionsCache: { [key: string]: SelectOption[] } = {};
   // Destructor de suscripciones
@@ -68,6 +71,11 @@ export class TravelerItemComponent implements OnInit, OnDestroy {
     // Limpiar suscripciones al destruir el componente
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  // Add toggle method for show more/less functionality
+  toggleMoreFields(): void {
+    this.showMoreFields = !this.showMoreFields;
   }
 
   /**

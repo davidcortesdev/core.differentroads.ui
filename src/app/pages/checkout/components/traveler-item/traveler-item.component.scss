@@ -125,3 +125,29 @@
     }
   }
 }
+
+.show-more-button {
+  margin-top: 10px;
+  color: var(--background-azul);
+  font-size: 0.9rem;
+  
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
+}
+
+.additional-fields {
+  margin-top: 15px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

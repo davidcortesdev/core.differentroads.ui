@@ -1,12 +1,5 @@
 import { Component, Input } from '@angular/core';
-
-interface TravelerInfo {
-  name: string;
-  email: string;
-  phone: string;
-  gender: string;
-  room: string;
-}
+import { TravelerInfo } from '../../../../core/models/reservation/reservation.model';
 
 @Component({
   selector: 'app-travelers-information-section',
@@ -15,5 +8,5 @@ interface TravelerInfo {
   styleUrls: ['./travelers-information-section.component.scss'],
 })
 export class TravelersInformationSectionComponent {
-  @Input() travelers!: TravelerInfo[];
+  @Input() travelers: TravelerInfo[] = [];
 }

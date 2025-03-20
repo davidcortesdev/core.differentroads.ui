@@ -71,6 +71,20 @@ body {
   margin: 0;
 }
 
+:root {
+  --toast-z-index: 9999;
+}
+
+.p-toast {
+  position: fixed !important;
+  z-index: var(--toast-z-index) !important;
+}
+
+.p-toast-top-right {
+  top: 20px !important;
+  right: 20px !important;
+}
+
 /* Estilos temporales que formatean los textos que llegan desde el quill js */
 
 .formated-content {

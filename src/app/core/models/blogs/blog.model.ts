@@ -3,7 +3,7 @@ import { CldImage } from '../commons/cld-image.model';
 import { CMSCollections } from '../commons/cms-collections.model';
 import { SEO } from '../commons/seo.model';
 
-export interface Blog {
+export interface Blog extends CMSCollections {
   id: string;
   title: string;
   content: string;

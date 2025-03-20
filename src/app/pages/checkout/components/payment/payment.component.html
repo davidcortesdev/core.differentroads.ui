@@ -231,28 +231,31 @@
     </label>
   </div>
 
-  <p-button
-    label="Realizar pago"
-    styleClass="payment-button"
-    [disabled]="
-      isLoading ||
-      !termsAccepted ||
-      !paymentType ||
-      (paymentType === 'complete' && !paymentMethod) ||
-      (paymentType === 'installments' && !installmentOption)
-    "
-    [ngClass]="{
-      'payment-button-disabled':
+  <div class="buttons-container">
+    <p-button
+      label="Regresar"
+      severity="secondary"
+      icon="pi pi-arrow-left"
+      styleClass="back-button"
+      (click)="goBack()"
+    ></p-button>
+
+    <p-button
+      label="Realizar pago"
+      styleClass="payment-button"
+      [disabled]="
         isLoading ||
         !termsAccepted ||
         !paymentType ||
         (paymentType === 'complete' && !paymentMethod) ||
         (paymentType === 'installments' && !installmentOption)
-    }"
-    (click)="submitPayment()"
-  >
-    <ng-template pTemplate="icon">
-      <i *ngIf="isLoading" class="pi pi-spin pi-spinner"></i>
-    </ng-template>
-  </p-button>
+      "
+      (click)="submitPayment()"
+    >
+      <ng-template pTemplate="content">
+        <span>Realizar pago</span>
+        <i *ngIf="isLoading" class="pi pi-spin pi-spinner"></i>
+      </ng-template>
+    </p-button>
+  </div>
 </div>

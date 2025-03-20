@@ -1,0 +1,194 @@
+import { Injectable } from '@angular/core';
+import { Booking } from '../models/bookings/booking.model';
+import {
+  ReservationInfo,
+  Flight,
+  PriceDetail,
+  PaymentInfo,
+  TravelerInfo,
+} from '../models/reservation/reservation.model';
+
+@Injectable()
+export class BookingMappingService {
+  mapToReservationInfo(booking: Booking): ReservationInfo {
+    // Determine the status based on booking.status
+    let status: 'confirm' | 'rq' | 'transfer' = 'transfer';
+
+    switch (booking.status?.toLowerCase()) {
+      case 'confirmed':
+        status = 'confirm';
+        break;
+      case 'on_request':
+      case 'rq':
+        status = 'rq';
+        break;
+      default:
+        status = 'transfer';
+    }
+
+    // Extract travelers information
+    const travelers: TravelerInfo[] =
+      booking.travelers?.map((t: any) => ({
+        name: `${t.travelerData.name} ${t.travelerData.surname}`,
+        email: t.travelerData.email || booking.owner || '',
+        phone: t.travelerData.phone || '',
+        gender: this.formatGender(t.travelerData.sex),
+        room: t.roomType || 'Individual',
+      })) || [];
+
+    return {
+      status: status,
+      reservationNumber: `#${booking.ID || booking.externalID}`,
+      date: new Date(booking.createdAt || Date.now()).toLocaleDateString(
+        'es-ES'
+      ),
+      amount: this.calculatePaidAmount(booking),
+      customerName: booking.extraData?.customerName || '',
+      tripDetails: {
+        destination:
+          booking.periodData?.['tour']?.name ||
+          booking.extraData?.destination ||
+          '',
+        period: this.formatTripPeriod(booking),
+        travelers: `${booking.travelersNumber || 0} ${
+          booking.travelersNumber === 1 ? 'Adulto' : 'Adultos'
+        }`,
+      },
+      travelers: travelers,
+    };
+  }
+
+  mapToFlights(booking: Booking): Flight[] {
+    const flights: Flight[] = [];
+
+    if (booking.flights && Array.isArray(booking.flights)) {
+      booking.flights.forEach((flight) => {
+        if (
+          flight.outbound &&
+          flight.outbound.segments &&
+          flight.outbound.segments.length > 0
+        ) {
+          this.addFlightFromSegments(flights, flight.outbound, 'outbound');
+        }
+        if (
+          flight.inbound &&
+          flight.inbound.segments &&
+          flight.inbound.segments.length > 0
+        ) {
+          this.addFlightFromSegments(flights, flight.inbound, 'inbound');
+        }
+      });
+    }
+
+    return flights;
+  }
+
+  mapToPriceDetails(booking: Booking): PriceDetail[] {
+    if (booking.periodData && booking.periodData['extendedTotal']) {
+      return booking.periodData['extendedTotal'].map((item: any) => ({
+        description: item.description || '',
+        amount: item.value || 0,
+        quantity: item.qty || 0,
+        total: item.value * item.qty || 0,
+      }));
+    }
+    return [];
+  }
+
+  mapToPaymentInfo(booking: Booking): PaymentInfo {
+    return {
+      totalAmount: booking.periodData?.['total'] || 0,
+    };
+  }
+
+  private formatGender(gender: string): string {
+    switch (gender?.toLowerCase()) {
+      case 'male':
+        return 'Hombre';
+      case 'female':
+        return 'Mujer';
+      default:
+        return 'Otro';
+    }
+  }
+
+  private formatTripPeriod(booking: any): string {
+    const startDate =
+      booking?.periodData?.dayOne || booking.extraData?.startDate;
+    const endDate =
+      booking?.periodData?.returnDate || booking.extraData?.endDate;
+
+    if (!startDate || !endDate) return '';
+
+    const formatDate = (dateString: string) => {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('es-ES', { timeZone: 'UTC' });
+    };
+
+    return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+  }
+
+  private calculatePaidAmount(booking: any): string {
+    let amount = 0;
+
+    if (
+      booking.extraData?.payments &&
+      Array.isArray(booking.extraData.payments)
+    ) {
+      booking.extraData.payments.forEach((payment: any) => {
+        if (payment.status === 'completed') {
+          amount += Number(payment.amount) || 0;
+        }
+      });
+    }
+
+    return `${amount}€`;
+  }
+
+  private addFlightFromSegments(
+    flights: Flight[],
+    journeyData: any,
+    direction: 'outbound' | 'inbound'
+  ) {
+    const segments = journeyData.segments;
+    if (!segments || segments.length === 0) return;
+
+    const firstSegment = segments[0];
+    const lastSegment = segments[segments.length - 1];
+
+    // Format date
+    const flightDate = journeyData.date
+      ? new Date(journeyData.date).toLocaleDateString('es-ES')
+      : new Date().toLocaleDateString('es-ES');
+
+    // Determine if it has layovers
+    const hasLayover = segments.length > 1;
+    let layoverCity = undefined;
+
+    if (hasLayover) {
+      layoverCity = segments
+        .slice(0, -1)
+        .map((seg: any) => seg.arrivalCity)
+        .join(', ');
+    }
+
+    flights.push({
+      date: flightDate,
+      airline: {
+        name: firstSegment.airline.name || '',
+        logo: firstSegment.airline.logo || 'https://picsum.photos/id/1/200/300',
+      },
+      departure: {
+        time: firstSegment.departureTime || '',
+        airport: firstSegment.departureIata || '',
+      },
+      arrival: {
+        time: lastSegment.arrivalTime || '',
+        airport: lastSegment.arrivalIata || '',
+      },
+      flightNumber: firstSegment.flightNumber || '',
+      type: hasLayover ? 'layover' : 'direct',
+      layoverCity: layoverCity,
+    });
+  }
+}

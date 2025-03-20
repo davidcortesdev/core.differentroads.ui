@@ -131,9 +131,9 @@ export class TravelersComponent implements OnInit {
 
   createTravelerForm(): FormGroup {
     const form = this.fb.group({
-      firstName: ['', Validators.required],
-      lastName: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
+      firstName: [''], // Validators will be set in the child component
+      lastName: [''], // based on isFirstTraveler
+      email: [''], // based on isFirstTraveler
       phone: [''],
       passport: [''],
       birthdate: [''],
@@ -225,7 +225,18 @@ export class TravelersComponent implements OnInit {
   }
 
   areAllTravelersValid(): boolean {
-    const valid = this.travelerForms.every((form) => form.valid);
+    // Solo verificamos que el primer viajero tenga los campos obligatorios
+    const firstTravelerForm = this.travelerForms[0];
+
+    // Check if form exists and all required fields are valid
+    const firstNameValid = firstTravelerForm?.get('firstName')?.valid ?? false;
+    const lastNameValid = firstTravelerForm?.get('lastName')?.valid ?? false;
+    const emailValid = firstTravelerForm?.get('email')?.valid ?? false;
+
+    const valid = firstTravelerForm
+      ? firstNameValid && lastNameValid && emailValid
+      : false;
+
     if (!valid) {
       this.notifyMissingTravelers();
     }
@@ -233,23 +244,31 @@ export class TravelersComponent implements OnInit {
   }
 
   notifyMissingTravelers(): void {
-    this.travelerForms.forEach((form, index) => {
-      if (form.invalid) {
-        const missingFields: string[] = [];
-        Object.keys(form.controls).forEach((field) => {
-          if (form.controls[field].errors?.['required']) {
-            missingFields.push(field);
-          }
-        });
-        if (missingFields.length > 0) {
-          this.messageService.add({
-            severity: 'error',
-            summary: `Faltan datos para pasajero ${index + 1}`,
-            detail: 'Debes llenar todos los campos obligatorios',
-          });
-        }
+    // Solo notificamos para el primer viajero
+    const form = this.travelerForms[0];
+    if (form && form.invalid) {
+      const missingFields: string[] = [];
+
+      if (form.get('firstName')?.errors?.['required']) {
+        missingFields.push('Nombre');
       }
-    });
+      if (form.get('lastName')?.errors?.['required']) {
+        missingFields.push('Apellido');
+      }
+      if (form.get('email')?.errors?.['required']) {
+        missingFields.push('Email');
+      }
+
+      if (missingFields.length > 0) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Faltan datos para pasajero 1',
+          detail: `Debes llenar los campos obligatorios: ${missingFields.join(
+            ', '
+          )}`,
+        });
+      }
+    }
   }
 
   /**

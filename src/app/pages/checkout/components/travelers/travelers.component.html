@@ -1,249 +1,28 @@
 <h3 class="title">Agrega los datos del viajero</h3>
 
-<div class="flex flex-col h-48">
+<div class="flex flex-col">
   <div
     class="border-2 border-dashed border-surface-200 dark:border-surface-700 rounded bg-surface-50 dark:bg-surface-950 flex-auto flex justify-center items-center font-medium"
   >
     <div class="content-form">
       <h3 class="title">Viajeros</h3>
-      <p-accordion [value]="getOpenTravelers()" [multiple]="true">
-        <ng-container *ngFor="let form of travelerForms; let i = index">
-          <p-accordion-panel [value]="i">
-            <p-accordion-header>
-              {{ getTitlePasajero((i + 1).toString()) }}
-              {{ i === 0 ? "(Persona que hace la reserva)" : "" }}
-            </p-accordion-header>
-            <p-accordion-content>
-              <p-panel class="user-button">
-                <i class="pi pi-user"></i>
-                <p class="user">{{ travelers[i].ageGroup.slice(0, -1) }}</p>
-              </p-panel>
-              <p class="user-description">
-                <i
-                  class="pi pi-exclamation-circle"
-                  style="font-size: 0.8rem; font-weight: bold"
-                ></i>
-                Introduce el nombre y el apellido tal y como aparecen en el DNI.
-                Podrás rellenar los datos no obligatorios más adelante.
-              </p>
-              <form [formGroup]="form" class="traveler-form">
-                <!-- Fila de nombre y apellido -->
-                <div class="form-row">
-                  <div class="form-column">
-                    <div class="form-field">
-                      <label>Nombre*</label>
-                      <input
-                        pInputText
-                        name="nombre"
-                        placeholder="Introduce tu nombre"
-                        formControlName="firstName"
-                      />
-                    </div>
-                  </div>
-                  <div class="form-column">
-                    <div class="form-field">
-                      <label>Apellido*</label>
-                      <input
-                        pInputText
-                        name="Apellido"
-                        placeholder="Introduce Apellido"
-                        formControlName="lastName"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Nueva fila de email y teléfono -->
-                <div class="form-row">
-                  <div class="form-column">
-                    <div class="form-field">
-                      <label>E-mail*</label>
-                      <input
-                        pInputText
-                        name="email"
-                        placeholder="e-mail"
-                        formControlName="email"
-                      />
-                    </div>
-                  </div>
-                  <div class="form-column">
-                    <div class="form-row">
-                      <div class="form-column half-width">
-                        <div class="form-field">
-                          <label>Sexo</label>
-                          <p-select
-                            #sexoSelect
-                            formControlName="sexo"
-                            [options]="sexoOptions"
-                            optionLabel="label"
-                            optionValue="value"
-                            placeholder="Seleccione"
-                          ></p-select>
-                        </div>
-                      </div>
-                      <div class="form-column half-width">
-                        <div class="form-field">
-                          <label>Fecha de nacimiento</label>
-                          <p-datepicker
-                            formControlName="birthdate"
-                            placeholder="dd/mm/aaaa"
-                            [iconDisplay]="'input'"
-                            [showIcon]="true"
-                            appendTo="body"
-                          ></p-datepicker>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Nueva fila de sexo y fecha de nacimiento -->
-
-                <!-- Nueva fila de nacionalidad -->
-                <div class="form-row">
-                  <div class="form-column">
-                    <div class="form-field">
-                      <label>Nacionalidad</label>
-                      <input
-                        pInputText
-                        name="nacionalidad"
-                        placeholder="Introduce tu nacionalidad"
-                        formControlName="nationality"
-                      />
-                    </div>
-                  </div>
-                  <div class="form-column">
-                    <div class="form-field">
-                      <label>Código postal</label>
-                      <input
-                        pInputText
-                        name="cp"
-                        placeholder="Introduce C.P"
-                        formControlName="cp"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Nueva fila de tipo de documento y código postal -->
-                <div class="form-row">
-                  <div class="form-column">
-                    <div class="form-field">
-                      <label>Teléfono</label>
-                      <input
-                        pInputText
-                        name="telefono"
-                        placeholder="Introduce teléfono"
-                        formControlName="phone"
-                      />
-                    </div>
-                  </div>
-                  <div class="form-column">
-                    <div class="form-field">
-                      <label>Tipo documento</label>
-                      <!-- Se generan las opciones dinámicamente según ageGroup y nationality -->
-                      <p-select
-                        appendTo="body"
-                        formControlName="documentType"
-                        [options]="getDocumentOptions(i)"
-                        optionLabel="label"
-                        optionValue="value"
-                        placeholder="Seleccione"
-                      ></p-select>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Campos condicionales para Pasaporte -->
-                <div *ngIf="form.get('documentType')?.value === 'passport'">
-                  <div class="form-row">
-                    <div class="form-column half-width">
-                      <div class="form-field">
-                        <label>Número de Pasaporte*</label>
-                        <input
-                          pInputText
-                          formControlName="passport"
-                          placeholder="Introduce el número del pasaporte"
-                        />
-                      </div>
-                    </div>
-                    <div class="form-column half-width">
-                      <div class="form-row">
-                        <div class="form-column half-width">
-                          <div class="form-field">
-                            <label>Fecha de caducidad*</label>
-                            <p-datepicker
-                              formControlName="passportExpirationDate"
-                              placeholder="dd/mm/aaaa"
-                              [iconDisplay]="'input'"
-                              [showIcon]="true"
-                              appendTo="body"
-                            ></p-datepicker>
-                          </div>
-                        </div>
-                        <div class="form-column half-width">
-                          <div class="form-field">
-                            <label>Fecha de expedición*</label>
-                            <p-datepicker
-                              formControlName="passportIssueDate"
-                              placeholder="dd/mm/aaaa"
-                              [iconDisplay]="'input'"
-                              [showIcon]="true"
-                              appendTo="body"
-                            ></p-datepicker>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Campos condicionales para DNI -->
-                <div *ngIf="form.get('documentType')?.value === 'dni'">
-                  <div class="form-field">
-                    <label>Número de identificación*</label>
-                    <input
-                      pInputText
-                      formControlName="dni"
-                      placeholder="Introduce el número de identificación"
-                    />
-                  </div>
-                  <!-- Si es bebé, se muestran campos adicionales -->
-                  <div *ngIf="form.get('ageGroup')?.value === 'Bebés'">
-                    <div class="form-row">
-                      <div class="form-column">
-                        <div class="form-field">
-                          <label>Fecha de caducidad (ID menor)*</label>
-                          <p-datepicker
-                            formControlName="minorIdExpirationDate"
-                            placeholder="dd/mm/aaaa"
-                          ></p-datepicker>
-                        </div>
-                      </div>
-                      <div class="form-column">
-                        <div class="form-field">
-                          <label>Fecha de expedición (ID menor)*</label>
-                          <p-datepicker
-                            formControlName="minorIdIssueDate"
-                            placeholder="dd/mm/aaaa"
-                          ></p-datepicker>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="form-field">
-                      <label>Asociar reserva del menor a</label>
-                      <p-select
-                        formControlName="associatedAdult"
-                        [options]="getAdultsOptions(i)"
-                        placeholder="Seleccione"
-                      ></p-select>
-                    </div>
-                  </div>
-                </div>
-              </form>
-            </p-accordion-content>
-          </p-accordion-panel>
-        </ng-container>
+      <p-accordion [multiple]="true" [value]="getAllTravelersIndices()" class="travelers-accordion">
+        <p-accordion-panel *ngFor="let form of travelerForms; let i = index" [value]="i">
+          <p-accordion-header>
+            {{ getTitlePasajero((i + 1).toString()) }}
+            {{ i === 0 ? "(Persona que hace la reserva)" : "" }}
+          </p-accordion-header>
+          <p-accordion-content>
+            <app-traveler-item
+              [form]="form"
+              [index]="i"
+              [traveler]="travelers[i]"
+              [sexoOptions]="sexoOptions"
+              [isFirstTraveler]="i === 0"
+              [getAdultsOptionsFn]="getAdultsOptions.bind(this)"
+            ></app-traveler-item>
+          </p-accordion-content>
+        </p-accordion-panel>
       </p-accordion>
     </div>
   </div>

@@ -172,6 +172,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 import { MessageService } from 'primeng/api';
 import { TourDateSelectorComponent } from './pages/tour/components/tour-date-selector/tour-date-selector.component';
 import { DiscountCodeComponent } from './pages/checkout/components/discount-code/discount-code.component';
+import { TravelerItemComponent } from './pages/checkout/components/traveler-item/traveler-item.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -255,6 +256,7 @@ registerLocaleData(localeEs);
     TripTypesSectionComponent,
     TourDateSelectorComponent,
     DiscountCodeComponent,
+    TravelerItemComponent,
   ],
   imports: [
     // Angular Modules

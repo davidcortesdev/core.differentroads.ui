@@ -60,6 +60,38 @@ export class FlightsComponent implements OnInit {
     });
   }
 
+  // Maneja los cambios en los vuelos filtrados desde el componente de búsqueda
+  onFilteredFlightsChange(mockFlights: any[]): void {
+    // Aquí adaptas los datos mockeados al formato de Flight que espera tu componente
+    // Esta es una implementación básica, deberás ajustarla según tus modelos
+    this.filteredFlights = mockFlights.map(mockFlight => {
+      // Convertir el MockFlight a Flight
+      const flight: any = {
+        externalID: mockFlight.id,
+        name: mockFlight.name,
+        outbound: {
+          ...mockFlight.outbound,
+          // Asegúrate de mapear correctamente a la estructura que espera el componente flight-itinerary
+          prices: mockFlight.outbound.prices
+        },
+        inbound: {
+          ...mockFlight.inbound,
+          // Asegúrate de mapear correctamente a la estructura que espera el componente flight-itinerary
+          prices: mockFlight.inbound.prices
+        },
+        price: mockFlight.price,
+        hasHandBaggage: mockFlight.hasHandBaggage,
+        hasCheckedBaggage: mockFlight.hasCheckedBaggage
+      };
+
+      return {
+        ...flight,
+        price: this.calculateTotalPrice(flight),
+        priceData: this.calculateTotalPriceData(flight),
+      };
+    });
+  }
+
   // Calcula el precio total para adultos
   calculateTotalPrice(flight: any): number {
     const outboundPrice =

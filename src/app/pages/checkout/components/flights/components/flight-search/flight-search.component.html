@@ -1,0 +1,228 @@
+<p-panel>
+    <ng-template pTemplate="header">
+      <div class="flight-header">
+        <h2>Mejor precio, reserva simple</h2>
+        <p>Fiordos Noruegos | 2 adultos - 1 niño</p>
+      </div>
+    </ng-template>
+  
+    <form [formGroup]="flightForm">
+      <div class="travel-type">
+        <div class="p-field-radiobutton">
+          <p-radioButton formControlName="tipoViaje" name="tipoViaje" value="idaVuelta" inputId="idaVuelta"></p-radioButton>
+          <label for="idaVuelta">Ida y vuelta</label>
+        </div>
+        <div class="p-field-radiobutton">
+          <p-radioButton formControlName="tipoViaje" name="tipoViaje" value="soloDia" inputId="soloDia"></p-radioButton>
+          <label for="soloDia">Solo ida</label>
+        </div>
+        <div class="separator"></div>
+        <div class="equipment-options">
+          <div class="p-field-checkbox">
+            <p-checkbox formControlName="equipajeMano" binary="true" inputId="equipajeMano"></p-checkbox>
+            <label for="equipajeMano">Equipaje de mano</label>
+          </div>
+          <div class="p-field-checkbox">
+            <p-checkbox formControlName="equipajeBodega" binary="true" inputId="equipajeBodega"></p-checkbox>
+            <label for="equipajeBodega">Equipaje de bodega</label>
+          </div>
+        </div>
+      </div>
+  
+      <div class="flight-details">
+        <!-- Ida -->
+        <div class="flight-row">
+          <div class="flight-label">
+            <label>Ida</label>
+            <div class="desde-label">Desde</div>
+          </div>
+          <div class="flight-input origin">
+            <i class="pi pi-plane"></i>
+            <p-dropdown formControlName="origen" [options]="ciudades" optionLabel="nombre" styleClass="w-full"></p-dropdown>
+            <a href="#" class="change-link">Cambiar</a>
+          </div>
+          <div class="flight-input destination">
+            <div class="destination-label">Llegada</div>
+            <p-dropdown formControlName="destino" [options]="ciudades" optionLabel="nombre" styleClass="w-full"></p-dropdown>
+          </div>
+          <div class="flight-date">
+            <div class="date-label">Fecha</div>
+            <p-calendar formControlName="fechaIda" dateFormat="dd/mm/yy" [showIcon]="true"></p-calendar>
+          </div>
+        </div>
+  
+        <!-- Regreso -->
+        <div class="flight-row" *ngIf="tipoViaje === 'idaVuelta'">
+          <div class="flight-label">
+            <label>Regreso</label>
+            <div class="desde-label">Desde</div>
+          </div>
+          <div class="flight-input origin">
+            <i class="pi pi-plane"></i>
+            <p-dropdown formControlName="destino" [options]="ciudades" optionLabel="nombre" styleClass="w-full" [disabled]="true"></p-dropdown>
+          </div>
+          <div class="flight-input destination">
+            <div class="destination-label">Llegada</div>
+            <p-dropdown formControlName="origen" [options]="ciudades" optionLabel="nombre" styleClass="w-full" [disabled]="true"></p-dropdown>
+          </div>
+          <div class="flight-date">
+            <div class="date-label">Fecha</div>
+            <p-calendar formControlName="fechaRegreso" dateFormat="dd/mm/yy" [showIcon]="true"></p-calendar>
+          </div>
+        </div>
+      </div>
+  
+      <div class="search-options">
+        <div class="sort-options">
+          <p-button label="Ordenar por precio" icon="pi pi-sort" styleClass="p-button-outlined"></p-button>
+        </div>
+        <div class="filter-options">
+          <p-dropdown [options]="escalaOptions" formControlName="escala" placeholder="Escala" styleClass="p-button-outlined"></p-dropdown>
+          <p-dropdown [options]="aerolineaOptions" formControlName="aerolinea" placeholder="Aerolínea" styleClass="p-button-outlined"></p-dropdown>
+        </div>
+        <div class="search-button">
+          <p-button label="Buscar" styleClass="p-button-danger" (click)="buscar()"></p-button>
+        </div>
+      </div>
+    </form>
+  </p-panel>
+  
+  <!-- Lista de resultados de vuelos -->
+  <div class="flight-results" *ngIf="!isLoading && filteredOffers.length > 0">
+    <p-panel styleClass="results-panel">
+      <ng-template pTemplate="header">
+        <div class="results-header">
+          <h3>Resultados de búsqueda</h3>
+          <div class="results-count">{{filteredOffers.length}} vuelos encontrados</div>
+        </div>
+      </ng-template>
+  
+      <!-- Lista de vuelos -->
+      <div class="flight-list">
+        <div *ngFor="let offer of filteredOffers" class="flight-item">
+          <div class="flight-card">
+            <!-- Información de la aerolínea -->
+            <div class="airline-info">
+              <div class="airline-logo">
+                <span class="carrier-code">{{offer.offerData.validatingAirlineCodes[0]}}</span>
+              </div>
+              <div class="airline-name">
+                {{getAirlineName(offer.offerData.validatingAirlineCodes[0])}}
+              </div>
+            </div>
+            
+            <!-- Información del vuelo de ida -->
+            <div class="flight-segment outbound">
+              <div class="segment-header">Ida</div>
+              <div class="segment-route" *ngIf="offer.offerData.itineraries[0]?.segments[0]">
+                <div class="departure">
+                  <div class="time">{{offer.offerData.itineraries[0].segments[0].departure.at | date:'HH:mm'}}</div>
+                  <div class="airport">{{offer.offerData.itineraries[0].segments[0].departure.iataCode}}</div>
+                </div>
+                
+                <div class="flight-path">
+                  <div class="duration">{{formatDuration(offer.offerData.itineraries[0].duration)}}</div>
+                  <div class="path-line">
+                    <div class="path-stops" *ngIf="offer.offerData.itineraries[0].segments.length > 1">
+                      <span class="stop-icon" *ngFor="let seg of offer.offerData.itineraries[0].segments; let i = index"></span>
+                    </div>
+                  </div>
+                  <div class="stops-info">
+                    <span *ngIf="offer.offerData.itineraries[0].segments.length === 1">Directo</span>
+                    <span *ngIf="offer.offerData.itineraries[0].segments.length > 1">
+                      {{offer.offerData.itineraries[0].segments.length - 1}} {{offer.offerData.itineraries[0].segments.length === 2 ? 'escala' : 'escalas'}}
+                    </span>
+                  </div>
+                </div>
+                
+                <div class="arrival">
+                  <div class="time">
+                    {{offer.offerData.itineraries[0].segments[offer.offerData.itineraries[0].segments.length - 1].arrival.at | date:'HH:mm'}}
+                  </div>
+                  <div class="airport">
+                    {{offer.offerData.itineraries[0].segments[offer.offerData.itineraries[0].segments.length - 1].arrival.iataCode}}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Información del vuelo de regreso (si es ida y vuelta) -->
+            <div class="flight-segment inbound" *ngIf="offer.offerData.itineraries.length > 1">
+              <div class="segment-header">Regreso</div>
+              <div class="segment-route" *ngIf="offer.offerData.itineraries[1]?.segments[0]">
+                <div class="departure">
+                  <div class="time">{{offer.offerData.itineraries[1].segments[0].departure.at | date:'HH:mm'}}</div>
+                  <div class="airport">{{offer.offerData.itineraries[1].segments[0].departure.iataCode}}</div>
+                </div>
+                
+                <div class="flight-path">
+                  <div class="duration">{{formatDuration(offer.offerData.itineraries[1].duration)}}</div>
+                  <div class="path-line">
+                    <div class="path-stops" *ngIf="offer.offerData.itineraries[1].segments.length > 1">
+                      <span class="stop-icon" *ngFor="let seg of offer.offerData.itineraries[1].segments; let i = index"></span>
+                    </div>
+                  </div>
+                  <div class="stops-info">
+                    <span *ngIf="offer.offerData.itineraries[1].segments.length === 1">Directo</span>
+                    <span *ngIf="offer.offerData.itineraries[1].segments.length > 1">
+                      {{offer.offerData.itineraries[1].segments.length - 1}} {{offer.offerData.itineraries[1].segments.length === 2 ? 'escala' : 'escalas'}}
+                    </span>
+                  </div>
+                </div>
+                
+                <div class="arrival">
+                  <div class="time">
+                    {{offer.offerData.itineraries[1].segments[offer.offerData.itineraries[1].segments.length - 1].arrival.at | date:'HH:mm'}}
+                  </div>
+                  <div class="airport">
+                    {{offer.offerData.itineraries[1].segments[offer.offerData.itineraries[1].segments.length - 1].arrival.iataCode}}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Información de equipaje -->
+            <div class="baggage-info">
+              <div class="baggage-item hand-baggage" [ngClass]="{'included': hasHandBaggage(offer)}">
+                <i class="pi pi-briefcase"></i>
+                <span>Equipaje de mano</span>
+              </div>
+              <div class="baggage-item checked-baggage" [ngClass]="{'included': hasCheckedBaggage(offer)}">
+                <i class="pi pi-inbox"></i>
+                <span>Equipaje de bodega</span>
+              </div>
+            </div>
+            
+            <!-- Precio y botón de selección -->
+            <div class="price-selection">
+              <div class="price">
+                <div class="amount">{{offer.offerData.price.total}} {{offer.offerData.price.currency}}</div>
+                <div class="price-detail">Precio por persona</div>
+              </div>
+              <!-- Update the selection button in the price-selection div -->
+              <div class="selection">
+                <p-button label="Seleccionar" styleClass="p-button-success" (click)="selectFlight(offer)"></p-button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </p-panel>
+  </div>
+  
+  <!-- Estado de carga -->
+  <div class="loading-state" *ngIf="isLoading">
+    <p-progressSpinner></p-progressSpinner>
+    <div class="loading-message">Buscando los mejores vuelos para ti...</div>
+  </div>
+  
+  <!-- Estado de error o sin resultados -->
+  <div class="no-results" *ngIf="!isLoading && filteredOffers.length === 0">
+    <p-panel>
+      <div class="no-results-message">
+        <i class="pi pi-info-circle"></i>
+        <h3>No se encontraron vuelos</h3>
+        <p>No hay vuelos disponibles con los criterios seleccionados. Por favor, intenta modificar tu búsqueda.</p>
+      </div>
+    </p-panel>
+  </div>

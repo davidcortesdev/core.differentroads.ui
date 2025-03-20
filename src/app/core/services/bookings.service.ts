@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   Booking,
@@ -38,8 +38,6 @@ export class BookingsService {
     ID: string;
     order: Order;
   }> {
-    console.log('data', `${this.API_URL}/${orderID}/create`, data);
-
     return this.http.post<{
       bookingID: string;
       ID: string;
@@ -216,12 +214,14 @@ export class BookingsService {
    * @param data - The payment data.
    * @returns Observable of any.
    */
-  createPayment(id: string, data: Partial<Payment>): Observable<any> {
-    return this.http.post<any>(
-      `${this.API_URL}/${id}/payment`,
-      data,
-      this.httpOptions
-    );
+  createPayment(id: string, data: Partial<Payment>): Observable<Payment> {
+    return this.http
+      .post<{ data: Payment }>(
+        `${this.API_URL}/${id}/payment`,
+        data,
+        this.httpOptions
+      )
+      .pipe(map((response) => response.data));
   }
 
   /**

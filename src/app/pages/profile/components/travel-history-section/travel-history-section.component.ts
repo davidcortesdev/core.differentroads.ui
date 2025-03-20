@@ -46,7 +46,7 @@ export class TravelHistorySectionComponent implements OnInit {
           departure: new Date(
             booking?.periodData?.['dayOne'] ?? ''
           ).toLocaleDateString(),
-          origin: booking?.flights ?? 'MAD',
+          origin: booking?.flights?.[0]?.name ?? 'MAD',
           passengers: booking?.travelersNumber ?? 0,
           image: this.getRandomPicsumUrl(), // Agregada la imagen
         }));

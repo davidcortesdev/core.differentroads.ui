@@ -1,6 +1,9 @@
 import { Component, Input, Output, EventEmitter, OnInit, HostListener, Inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { RedsysService } from '../../../../core/services/checkout/payment/redsys.service';
+import { Router } from '@angular/router';
+import { BookingsService } from '../../../../core/services/bookings.service';
+import { Payment } from '../../../../core/models/bookings/payment.model';
 
 @Component({
   selector: 'app-payment',
@@ -32,7 +35,9 @@ export class PaymentComponent implements OnInit {
 
   constructor(
     @Inject(DOCUMENT) private document: Document,
-    private redsysService: RedsysService
+    private redsysService: RedsysService,
+    private bookingsService: BookingsService,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -199,6 +204,23 @@ export class PaymentComponent implements OnInit {
       ID = response.ID;
     } catch (error) {
       console.error('Error processing booking:', error);
+      this.isLoading = false;
+      return;
+    }
+
+    let publicID = '';
+
+    try {
+      const payment = await this.createPayment(bookingID, {
+        amount: this.totalPrice,
+        registerBy: 'user',
+      });
+      publicID = payment.publicID;
+      console.log('Payment created:', payment);
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      this.isLoading = false;
+      return;
     }
 
     if (
@@ -207,6 +229,14 @@ export class PaymentComponent implements OnInit {
     ) {
       this.redirectToRedSys(ID!, this.totalPrice, bookingID!);
       return;
+    } else if (
+      this.paymentType === 'complete' &&
+      this.paymentMethod === 'transfer'
+    ) {
+      const baseUrl = window.location.origin;
+
+      this.router.navigate([`/reservation/${bookingID}/transfer/${publicID}`]);
+      return;
     }
     this.isLoading = false;
   }
@@ -214,5 +244,24 @@ export class PaymentComponent implements OnInit {
   // Add this method to handle the back button click
   goBack(): void {
     this.goBackEvent.emit();
+  }
+
+  createPayment(
+    bookingID: string,
+    payment: {
+      amount: number;
+      registerBy: string;
+    }
+  ): Promise<Payment> {
+    return new Promise((resolve, reject) => {
+      this.bookingsService.createPayment(bookingID, payment).subscribe({
+        next: (response) => {
+          resolve(response);
+        },
+        error: (error) => {
+          reject(error);
+        },
+      });
+    });
   }
 }

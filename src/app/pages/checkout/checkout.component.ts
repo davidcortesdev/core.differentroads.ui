@@ -659,7 +659,7 @@ export class CheckoutComponent implements OnInit {
             this.bookingsService
               .saveTravelers(response.bookingID, {
                 bookingSID: response.ID,
-                bookingID: this.orderDetails?._id!,
+                bookingID: response.bookingID,
                 order: response.order as Order,
               })
               .subscribe({

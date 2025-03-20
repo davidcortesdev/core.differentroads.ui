@@ -66,6 +66,9 @@ export class CheckoutComponent implements OnInit {
   periodData!: Period;
   flightlessOption: Flight | null = null;
 
+  // Add property to control budget dialog visibility
+  budgetDialogVisible: boolean = false;
+
   constructor(
     private ordersService: OrdersService,
     private periodsService: PeriodsService,
@@ -695,13 +698,13 @@ export class CheckoutComponent implements OnInit {
         });
     });
   }
-  // Add this method to your component class
+  // Replace the saveTrip method
   saveTrip(): void {
-    // Implement the save trip functionality here
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Viaje guardado',
-      detail: 'El viaje ha sido guardado correctamente',
-    });
+    this.budgetDialogVisible = true;
+  }
+
+  // Add method to handle closing the dialog
+  handleCloseBudgetDialog(): void {
+    this.budgetDialogVisible = false;
   }
 }

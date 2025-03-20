@@ -158,7 +158,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { SortByPipe } from './shared/pipes/sort-by.pipe';
 import { InsurancesComponent } from './pages/checkout/components/customize-trip/components/insurances/insurances.component';
 import { Dialog } from 'primeng/dialog';
-import { BudgetDialogComponent } from './pages/tour/components/budget-dialog/budget-dialog.component';
+import { BudgetDialogComponent } from './shared/components/budget-dialog/budget-dialog.component';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { Amplify } from 'aws-amplify';
 import awsconfig from '../../src/aws-exports';

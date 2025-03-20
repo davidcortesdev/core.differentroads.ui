@@ -27,21 +27,23 @@
                   [prices]="prices"
                 ></app-customize-trip>
                 <div class="flex pt-6 justify-end">
-                  <p-button class="next"
+                  <p-button
+                    class="next"
                     label="Continuar"
                     icon="pi pi-arrow-right"
                     iconPos="right"
                     (onClick)="nextStep(2) && activateCallback(2)"
-                  /> 
+                  />
                 </div>
                 <div class="flex pt-6 justify-end">
-                  <p-button class="file"
-                    iconPos="right"
-                    (onClick)="saveTrip()">
+                  <p-button class="file" iconPos="right" (onClick)="saveTrip()">
                     <ng-template pTemplate="content">
                       <div class="title">
-                        <div>Guarde este viaje</div>
-                        <div class="description">Sujeto a disponibilidad en el momento de la reserva y sólo para salidas con stock</div>
+                        <div>Guarda este viaje</div>
+                        <div class="description">
+                          Sujeto a disponibilidad en el momento de la reserva y
+                          sólo para salidas con stock
+                        </div>
                       </div>
                     </ng-template>
                   </p-button>
@@ -61,7 +63,8 @@
                     icon="pi pi-arrow-left"
                     (onClick)="activateCallback(1)"
                   />
-                  <p-button class="whith-flight"
+                  <p-button
+                    class="whith-flight"
                     *ngIf="flightlessOption"
                     label="Continuar sin vuelos"
                     (onClick)="
@@ -278,4 +281,33 @@
       </app-discount-code>
     </div>
   </div>
+
+  <!-- Update the budget dialog -->
+  <p-dialog
+    [(visible)]="budgetDialogVisible"
+    [modal]="true"
+    [breakpoints]="{ '1199px': '80vw', '575px': '90vw' }"
+    [style]="{ width: '50vw' }"
+    [draggable]="false"
+    [resizable]="false"
+    class=""
+  >
+    <app-budget-dialog
+      [visible]="budgetDialogVisible"
+      [handleCloseModal]="handleCloseBudgetDialog.bind(this)"
+      (close)="handleCloseBudgetDialog()"
+      [existingOrderId]="orderDetails?._id ?? null"
+      [tourName]="tourName"
+      [periodName]="periodData.name"
+      [periodDates]="tourDates"
+      [departureCity]="selectedFlight?.name || 'Sin vuelos'"
+      [tripType]="'Circuito'"
+      [travelersCount]="{
+        adults: travelersSelected.adults,
+        children: travelersSelected.childs,
+        babies: travelersSelected.babies
+      }"
+      [periodId]="periodID"
+    ></app-budget-dialog>
+  </p-dialog>
 </div>

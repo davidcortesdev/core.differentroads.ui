@@ -142,7 +142,7 @@ $colors: (
       margin: 0;
       font-weight: 700;
       color: map.get($colors, text);
-      font-size: 25px;
+      font-size: 1.4rem;
       
       @include resp(md) {
         font-size: 17px;
@@ -226,6 +226,7 @@ $colors: (
   border: 1px solid map.get($colors, border);
   padding: 8px;
   margin-top: 1rem;
+  max-height: 10rem;
   
   @include resp(xl) {
     padding: 8px 15px 8px 8px;
@@ -248,7 +249,7 @@ $colors: (
   
   &-image {
     width: 40%;
-    aspect-ratio: 16 / 9;
+    //aspect-ratio: 16 / 9;
     object-fit: cover;
     border-radius: map.get($border-radius, md);
     

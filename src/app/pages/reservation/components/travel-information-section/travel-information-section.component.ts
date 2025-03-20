@@ -1,10 +1,5 @@
 import { Component, Input } from '@angular/core';
-
-interface TripDetails {
-  destination: string;
-  period: string;
-  travelers: string;
-}
+import { TripDetails } from '../../../../core/models/reservation/reservation.model';
 
 @Component({
   selector: 'app-travel-information-section',

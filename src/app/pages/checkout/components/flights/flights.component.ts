@@ -49,7 +49,12 @@ export class FlightsComponent implements OnInit {
         );
         this.flightlessOption = flightless || null;
 
-        if (!this.selectedFlight) {
+        // Share the flightless option with the service
+        this.flightsService.updateFlightlessOption(this.flightlessOption);
+
+        // Automatically select the flightless option when initialized
+        // This makes it available for the stepper button
+        if (!this.selectedFlight && this.flightlessOption) {
           this.selectFlight(this.flightlessOption);
         }
       });

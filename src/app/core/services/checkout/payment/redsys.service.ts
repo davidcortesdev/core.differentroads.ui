@@ -27,7 +27,7 @@ export class RedsysService {
       currency: CURRENCIES['EUR'],
       transactionType: TRANSACTION_TYPES['AUTHORIZATION'],
       terminal: '1',
-      merchantURL: `${environment.redsysNotifyUrl}/${publicID}`,
+      merchantURL: `${environment.dataApiUrl}/${publicID}`,
       successURL: `${baseUrl}/reservation/${bookingID}/success/${publicID}`,
       errorURL: `${baseUrl}/reservation/${bookingID}/error/${publicID}`,
     };

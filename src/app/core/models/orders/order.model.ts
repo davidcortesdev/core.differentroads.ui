@@ -15,6 +15,10 @@ export interface Order {
   insurancesRef?: OptionalActivityRef[];
   extraData?: any;
   flights?: Flight[] | { id: string; name?: string; externalID: string }[];
+
+  // New fields
+  summary?: SummaryItem[];
+  discounts?: DiscountInfo[];
 }
 
 export interface OptionalActivityRef {
@@ -78,4 +82,19 @@ export interface CreateBookingResult {
 export interface OrderListResponse {
   data: Order[];
   pagination: Pagination;
+}
+
+// Add this interface for summary items
+export interface SummaryItem {
+  qty: number;
+  value: number;
+  description: string;
+}
+
+// Add this interface for discount information
+export interface DiscountInfo {
+  code: string;
+  amount: number;
+  discountValue: number;
+  type: string;
 }

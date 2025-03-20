@@ -1,39 +1,52 @@
 <p-panel styleClass="flts">
-    <ng-template pTemplate="header">
-        <div class="pan-hdr">Vuelos</div>
-    </ng-template>
-    
-    <div class="flt-info" *ngFor="let flight of flights">
-        <div class="flt-hdr">
-            <span class="flt-type">{{flight.type === 'direct' ? 'Vuelta' : 'Ida'}}</span>
-            <span class="flt-date">{{flight.date}}</span>
-        </div>
-        <div class="flt-det">
-            <div class="airl-info">
-                <img class="logo" [src]="flight.airline.logo" [alt]="flight.airline.name">
-                <span>{{flight.airline.name}}</span>
-            </div>
-            <div class="flt-route">
-                <div class="time">
-                    <span class="time">{{flight.departure.time}}</span><br>
-                    <span class="apt">{{flight.departure.airport}}</span>
-                </div>
-                <div class="duration">
-                    <!-- Circle added in the middle of the line -->
-                    <span>{{flight.duration}}</span>
-                    <div class="flt-ind">
-                        {{flight.type === 'direct' ? 'Directo' : '1 escala*'}}
-                    </div>
-                </div>
-                <div class="time">
-                    <span class="time">{{flight.arrival.time}}</span><br>
-                    <span class="apt">{{flight.arrival.airport}}</span>
-                </div>
-            </div>
-            <span class="num">Nº de vuelo {{flight.flightNumber}}</span>
-        </div>
-        <div class="flt-note" *ngIf="flight.type === 'layover'" style="font-style: italic">
-            *El vuelo realiza escala en la ciudad de {{flight.layoverCity}}
-        </div>
+  <ng-template pTemplate="header">
+    <div class="pan-hdr">Vuelos</div>
+  </ng-template>
+
+  <div class="flt-info" *ngFor="let flight of flights">
+    <div class="flt-hdr">
+      <span class="flt-type">{{
+        flight.type === "direct" ? "Vuelta" : "Ida"
+      }}</span>
+      <span class="flt-date">{{ flight.date }}</span>
     </div>
+    <div class="flt-det">
+      <div class="airl-info">
+        <img
+          class="logo"
+          [src]="flight.airline.logo"
+          [alt]="flight.airline.name"
+        />
+        <span>{{ flight.airline.name }}</span>
+      </div>
+      <div class="flt-route">
+        <div class="time">
+          <span class="time">{{ flight.departure.time }}</span
+          ><br />
+          <span class="apt">{{ flight.departure.airport }}</span>
+        </div>
+        <div class="duration">
+          <span>{{
+            calculateFlightDuration(flight.departure.time, flight.arrival.time)
+          }}</span>
+          <div class="flt-ind">
+            {{ flight.type === "direct" ? "Directo" : "1 escala*" }}
+          </div>
+        </div>
+        <div class="time">
+          <span class="time">{{ flight.arrival.time }}</span
+          ><br />
+          <span class="apt">{{ flight.arrival.airport }}</span>
+        </div>
+      </div>
+      <span class="num">Nº de vuelo {{ flight.flightNumber }}</span>
+    </div>
+    <div
+      class="flt-note"
+      *ngIf="flight.type === 'layover'"
+      style="font-style: italic"
+    >
+      *El vuelo realiza escala en la ciudad de {{ flight.layoverCity }}
+    </div>
+  </div>
 </p-panel>

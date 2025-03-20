@@ -1,108 +1,31 @@
-import { Component, OnInit } from '@angular/core';
-import { MessageService } from 'primeng/api'; // Importa MessageService para notificaciones
-
-interface TravelerInfo {
-  name: string;
-  email: string;
-  phone: string;
-  gender: string;
-  room: string;
-}
-
-interface Flight {
-  date: string;
-  airline: {
-    name: string;
-    logo: string;
-  };
-  departure: {
-    time: string;
-    airport: string;
-  };
-  arrival: {
-    time: string;
-    airport: string;
-  };
-  duration: string;
-  flightNumber: string;
-  type: 'direct' | 'layover';
-  layoverCity?: string;
-}
-
-interface PriceDetail {
-  description: string;
-  amount: number;
-  quantity: number;
-  total: number;
-}
-
-interface PaymentInfo {
-  totalAmount: number;
-  paidAmount: number;
-  remainingAmount: number;
-  lastPaymentDate: string;
-  lastPaymentDetails: string;
-  nextPaymentDetails: string;
-}
-
-interface BankInfo {
-  name: string;
-  account: string;
-  beneficiary: string;
-  concept: string;
-}
-
-interface ReservationInfo {
-  status: 'confirm' | 'rq' | 'transfer';
-  reservationNumber: string;
-  date: string;
-  amount: string;
-  customerName: string;
-  tripDetails: {
-    destination: string;
-    period: string;
-    travelers: string;
-  };
-  travelers: TravelerInfo[];
-}
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { MessageService } from 'primeng/api';
+import { Subject, takeUntil, catchError, EMPTY, finalize } from 'rxjs';
+import { BookingsService } from '../../core/services/bookings.service';
+import {
+  ReservationInfo,
+  BankInfo,
+  Flight,
+  PriceDetail,
+  PaymentInfo,
+} from '../../core/models/reservation/reservation.model';
+import { BookingMappingService } from '../../core/services/booking-mapping.service';
 
 @Component({
   selector: 'app-reservation',
   standalone: false,
   templateUrl: './reservation.component.html',
   styleUrls: ['./reservation.component.scss'],
-  providers: [MessageService], // Provee MessageService para usar notificaciones
+  providers: [MessageService, BookingMappingService],
 })
-export class ReservationComponent implements OnInit {
-  reservationInfo: ReservationInfo = {
-    status: 'transfer',
-    reservationNumber: '#80276',
-    date: '28/11/2024',
-    amount: '200€',
-    customerName: 'Laura Segarra',
-    tripDetails: {
-      destination: 'Nepal, namasté desde el techo del mundo',
-      period: '02/03/2025 - 12/03/2025',
-      travelers: '2 Adultos',
-    },
-    travelers: [
-      {
-        name: 'Laura Segarra Marín',
-        email: 'lsegarra@differentroads.es',
-        phone: '+34 638 815 010',
-        gender: 'Femenino (mujer)',
-        room: 'Individual',
-      },
-      {
-        name: 'Patricia Sanchis Alcaraz',
-        email: 'lsegarra@differentroads.es',
-        phone: '+34 638 815 010',
-        gender: 'Femenino (mujer)',
-        room: 'Individual',
-      },
-    ],
-  };
+export class ReservationComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  loading = true;
+  error = false;
+  bookingId: string = '';
 
+  reservationInfo: ReservationInfo | undefined;
   bankInfo: BankInfo[] = [
     {
       name: 'CaixaBank, S.A',
@@ -117,104 +40,100 @@ export class ReservationComponent implements OnInit {
       concept: '784932 Laura Segarra',
     },
   ];
+  flights: Flight[] = [];
+  priceDetails: PriceDetail[] = [];
+  paymentInfo: PaymentInfo | undefined;
 
-  flights: Flight[] = [
-    {
-      date: '02/03/2025',
-      airline: {
-        name: 'QATAR Airways',
-        logo: 'https://picsum.photos/id/1/200/300',
-      },
-      departure: {
-        time: '01:15',
-        airport: 'DOH',
-      },
-      arrival: {
-        time: '01:15',
-        airport: 'DOH',
-      },
-      duration: '14 h',
-      flightNumber: 'QR648',
-      type: 'layover',
-      layoverCity: 'Loremipsum',
-    },
-    {
-      date: '12/03/2025',
-      airline: {
-        name: 'QATAR Airways',
-        logo: 'https://picsum.photos/id/1/200/300',
-      },
-      departure: {
-        time: '01:15',
-        airport: 'DOH',
-      },
-      arrival: {
-        time: '01:15',
-        airport: 'DOH',
-      },
-      duration: '14 h',
-      flightNumber: 'QR648',
-      type: 'direct',
-    },
-  ];
+  constructor(
+    private messageService: MessageService,
+    private route: ActivatedRoute,
+    private bookingsService: BookingsService,
+    private bookingMapper: BookingMappingService
+  ) {}
 
-  priceDetails: PriceDetail[] = [
-    {
-      description: 'Precio base',
-      amount: 600,
-      quantity: 2,
-      total: 1200,
-    },
-    {
-      description: 'Suplemento individual',
-      amount: 250,
-      quantity: 2,
-      total: 500,
-    },
-    {
-      description: 'Paseo en lago kawaguchi',
-      amount: 250,
-      quantity: 2,
-      total: 345,
-    },
-    {
-      description: 'Suplemento ciudad salida',
-      amount: 1000,
-      quantity: 2,
-      total: 1345,
-    },
-  ];
+  ngOnInit() {
+    this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
+      this.bookingId = params['id'];
+      if (this.bookingId) {
+        this.getBookingData();
+      } else {
+        this.error = true;
+        this.loading = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo encontrar el ID de reserva en la URL.',
+        });
+      }
+    });
+  }
 
-  paymentInfo: PaymentInfo = {
-    totalAmount: 3595,
-    paidAmount: 1200,
-    remainingAmount: 2395,
-    lastPaymentDate: '16/12/2024',
-    lastPaymentDetails: 'Pago de 200€ a través de la web',
-    nextPaymentDetails: 'Antes del 6/01/2025 de 725€',
-  };
+  getBookingData() {
+    this.loading = true;
+    this.bookingsService
+      .getBookingById(this.bookingId)
+      .pipe(
+        takeUntil(this.destroy$),
+        catchError((err) => {
+          this.error = true;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al cargar los datos de la reserva.',
+          });
+          console.error('Error fetching booking:', err);
+          return EMPTY;
+        }),
+        finalize(() => {
+          this.loading = false;
+        })
+      )
+      .subscribe((booking) => {
+        // Use the mapping service to transform the booking data
+        this.reservationInfo = this.bookingMapper.mapToReservationInfo(booking);
+        this.flights = this.bookingMapper.mapToFlights(booking);
+        this.priceDetails = this.bookingMapper.mapToPriceDetails(booking);
+        this.paymentInfo = this.bookingMapper.mapToPaymentInfo(booking);
 
-  constructor(private messageService: MessageService) {} // Inyecta MessageService
+        // Update bank info with booking-specific data
+        if (booking.ID) {
+          this.bankInfo.forEach((bank) => {
+            bank.concept = `${booking.ID} ${
+              this.reservationInfo?.customerName || ''
+            }`;
+          });
+        }
 
-  ngOnInit() {}
+        console.log('Booking data:', booking);
+      });
+  }
 
-  // Método para manejar la subida automática de archivos
   onBasicUploadAuto(event: any) {
-    // Verifica si se subieron archivos
     if (event.files && event.files.length > 0) {
-      const file = event.files[0]; // Obtiene el primer archivo subido
+      const file = event.files[0];
 
-      // Muestra una notificación de éxito
       this.messageService.add({
         severity: 'success',
         summary: 'Archivo subido',
         detail: `El archivo ${file.name} se ha subido correctamente.`,
       });
 
-      // Aquí puedes agregar lógica adicional, como enviar el archivo a un servidor
-      console.log('Archivo subido:', file);
+      // Here you would upload the file to your server
+      // this.bookingsService.uploadVoucher(this.bookingId, file)
+      //   .pipe(takeUntil(this.destroy$))
+      //   .subscribe({
+      //     next: (response) => {
+      //       // Handle successful upload
+      //     },
+      //     error: (err) => {
+      //       this.messageService.add({
+      //         severity: 'error',
+      //         summary: 'Error',
+      //         detail: 'Error al subir el justificante.'
+      //       });
+      //     }
+      //   });
     } else {
-      // Muestra una notificación de error si no se subió ningún archivo
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
@@ -225,5 +144,10 @@ export class ReservationComponent implements OnInit {
 
   get totalPrice(): number {
     return this.priceDetails.reduce((sum, item) => sum + item.total, 0);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

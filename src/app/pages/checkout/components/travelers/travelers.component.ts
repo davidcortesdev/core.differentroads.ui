@@ -4,6 +4,7 @@ import { Select } from 'primeng/select';
 import { TravelersService } from '../../../../core/services/checkout/travelers.service';
 import { MessageService } from 'primeng/api';
 import { formatDate } from '@angular/common';
+import { TravelerItemComponent } from '../traveler-item/traveler-item.component';
 
 interface Traveler {
   firstName: string;
@@ -273,6 +274,7 @@ export class TravelersComponent implements OnInit {
   /**
    * Filtra y devuelve las opciones de viajeros adultos para asociar a un bebé.
    */
+  // Update the getAdultsOptions method to be accessible from the child component
   getAdultsOptions(currentIndex: number): any[] {
     return this.travelers
       .map((traveler, idx) => ({

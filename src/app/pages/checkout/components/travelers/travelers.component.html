@@ -6,7 +6,7 @@
   >
     <div class="content-form">
       <h3 class="title">Viajeros</h3>
-      <p-accordion [multiple]="true" [activeIndex]="getOpenTravelers()" class="travelers-accordion">
+      <p-accordion [multiple]="true" [value]="getAllTravelersIndices()" class="travelers-accordion">
         <p-accordion-panel *ngFor="let form of travelerForms; let i = index" [value]="i">
           <p-accordion-header>
             {{ getTitlePasajero((i + 1).toString()) }}

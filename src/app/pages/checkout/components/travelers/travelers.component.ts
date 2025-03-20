@@ -309,4 +309,11 @@ export class TravelersComponent implements OnInit {
         );
       });
   }
+
+  /**
+   * Returns an array with all traveler indices to keep all accordion panels open
+   */
+  getAllTravelersIndices(): number[] {
+    return this.travelerForms.map((_, index) => index);
+  }
 }

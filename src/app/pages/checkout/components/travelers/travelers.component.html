@@ -6,16 +6,23 @@
   >
     <div class="content-form">
       <h3 class="title">Viajeros</h3>
-      <p-accordion [multiple]="true" [activeIndex]="getOpenTravelers()">
-        <app-traveler-item
-          *ngFor="let form of travelerForms; let i = index"
-          [form]="form"
-          [index]="i"
-          [traveler]="travelers[i]"
-          [sexoOptions]="sexoOptions"
-          [isFirstTraveler]="i === 0"
-          [getAdultsOptionsFn]="getAdultsOptions.bind(this)"
-        ></app-traveler-item>
+      <p-accordion [multiple]="true" [activeIndex]="getOpenTravelers()" class="travelers-accordion">
+        <p-accordion-panel *ngFor="let form of travelerForms; let i = index" [value]="i">
+          <p-accordion-header>
+            {{ getTitlePasajero((i + 1).toString()) }}
+            {{ i === 0 ? "(Persona que hace la reserva)" : "" }}
+          </p-accordion-header>
+          <p-accordion-content>
+            <app-traveler-item
+              [form]="form"
+              [index]="i"
+              [traveler]="travelers[i]"
+              [sexoOptions]="sexoOptions"
+              [isFirstTraveler]="i === 0"
+              [getAdultsOptionsFn]="getAdultsOptions.bind(this)"
+            ></app-traveler-item>
+          </p-accordion-content>
+        </p-accordion-panel>
       </p-accordion>
     </div>
   </div>

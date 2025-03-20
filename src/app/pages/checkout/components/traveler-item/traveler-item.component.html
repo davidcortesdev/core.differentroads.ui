@@ -1,107 +1,203 @@
-<p-accordion-panel [value]="index">
-  <p-accordion-header>
-    {{ getTitlePasajero((index + 1).toString()) }}
-    {{ isFirstTraveler ? "(Persona que hace la reserva)" : "" }}
-  </p-accordion-header>
-  <p-accordion-content>
-    <!-- Encabezado del panel -->
-    <div class="traveler-header">
-      <p-panel class="user-button">
-        <i class="pi pi-user"></i>
-        <p class="user">{{ traveler.ageGroup.slice(0, -1) }}</p>
-      </p-panel>
-      <p class="user-description">
-        <i class="pi pi-exclamation-circle info-icon"></i>
-        Introduce el nombre y el apellido tal y como aparecen en el DNI. Podrás
-        rellenar los datos no obligatorios más adelante.
-      </p>
+<!-- Encabezado del panel -->
+<div class="traveler-header">
+  <p-panel class="user-button">
+    <i class="pi pi-user"></i>
+    <p class="user">{{ traveler.ageGroup.slice(0, -1) }}</p>
+  </p-panel>
+  <p class="user-description">
+    <i class="pi pi-exclamation-circle info-icon"></i>
+    Introduce el nombre y el apellido tal y como aparecen en el DNI. Podrás
+    rellenar los datos no obligatorios más adelante.
+  </p>
+</div>
+
+<!-- Formulario del viajero -->
+<form [formGroup]="form" class="traveler-form">
+  <!-- Datos personales básicos (siempre visibles) -->
+  <div class="form-section">
+    <!-- Nombre y Apellido -->
+    <div class="form-row">
+      <div class="form-column">
+        <div class="form-field">
+          <label>Nombre{{ isFirstTraveler ? "*" : "" }}</label>
+          <input
+            pInputText
+            name="nombre"
+            placeholder="Introduce tu nombre"
+            formControlName="firstName"
+          />
+        </div>
+      </div>
+      <div class="form-column">
+        <div class="form-field">
+          <label>Apellido{{ isFirstTraveler ? "*" : "" }}</label>
+          <input
+            pInputText
+            name="apellido"
+            placeholder="Introduce Apellido"
+            formControlName="lastName"
+          />
+        </div>
+      </div>
     </div>
 
-    <!-- Formulario del viajero -->
-    <form [formGroup]="form" class="traveler-form">
-      <!-- Datos personales básicos (siempre visibles) -->
-      <div class="form-section">
-        <!-- Nombre y Apellido -->
-        <div class="form-row">
-          <div class="form-column">
-            <div class="form-field">
-              <label>Nombre{{ isFirstTraveler ? "*" : "" }}</label>
-              <input
-                pInputText
-                name="nombre"
-                placeholder="Introduce tu nombre"
-                formControlName="firstName"
-              />
-            </div>
-          </div>
-          <div class="form-column">
-            <div class="form-field">
-              <label>Apellido{{ isFirstTraveler ? "*" : "" }}</label>
-              <input
-                pInputText
-                name="apellido"
-                placeholder="Introduce Apellido"
-                formControlName="lastName"
-              />
-            </div>
-          </div>
+    <!-- Email -->
+    <div class="form-row">
+      <div class="form-column">
+        <div class="form-field">
+          <label>E-mail{{ isFirstTraveler ? "*" : "" }}</label>
+          <input
+            pInputText
+            name="email"
+            placeholder="e-mail"
+            formControlName="email"
+          />
         </div>
+      </div>
+    </div>
 
-        <!-- Email -->
+    <!-- Botón Ver más/menos -->
+    <div class="form-row">
+      <div class="form-column">
+        <button 
+          pButton 
+          type="button" 
+          [label]="showMoreFields ? 'Ver menos' : 'Ver más'" 
+          [icon]="showMoreFields ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+          (click)="toggleMoreFields()"
+          class="p-button-text p-button-sm show-more-button"
+        ></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Campos adicionales (mostrados/ocultados con el botón) -->
+  <div class="additional-fields" *ngIf="showMoreFields">
+    <!-- Sexo y Fecha de nacimiento -->
+    <div class="form-row">
+      <div class="form-column">
         <div class="form-row">
-          <div class="form-column">
+          <div class="form-column half-width">
             <div class="form-field">
-              <label>E-mail{{ isFirstTraveler ? "*" : "" }}</label>
-              <input
-                pInputText
-                name="email"
-                placeholder="e-mail"
-                formControlName="email"
-              />
+              <label>Sexo</label>
+              <p-select
+                #sexoSelect
+                formControlName="sexo"
+                [options]="sexoOptions"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Seleccione"
+              >
+              </p-select>
             </div>
           </div>
-        </div>
-
-        <!-- Botón Ver más/menos -->
-        <div class="form-row">
-          <div class="form-column">
-            <button 
-              pButton 
-              type="button" 
-              [label]="showMoreFields ? 'Ver menos' : 'Ver más'" 
-              [icon]="showMoreFields ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
-              (click)="toggleMoreFields()"
-              class="p-button-text p-button-sm show-more-button"
-            ></button>
+          <div class="form-column half-width">
+            <div class="form-field">
+              <label>Fecha de nacimiento</label>
+              <p-datepicker
+                formControlName="birthdate"
+                placeholder="dd/mm/aaaa"
+                [iconDisplay]="'input'"
+                [showIcon]="true"
+                appendTo="body"
+              >
+              </p-datepicker>
+            </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Campos adicionales (mostrados/ocultados con el botón) -->
-      <div class="additional-fields" *ngIf="showMoreFields">
-        <!-- Sexo y Fecha de nacimiento -->
+    <!-- Nacionalidad y Código postal -->
+    <div class="form-row">
+      <div class="form-column">
+        <div class="form-field">
+          <label>Nacionalidad</label>
+          <input
+            pInputText
+            name="nacionalidad"
+            placeholder="Introduce tu nacionalidad"
+            formControlName="nationality"
+          />
+        </div>
+      </div>
+      <div class="form-column">
+        <div class="form-field">
+          <label>Código postal</label>
+          <input
+            pInputText
+            name="cp"
+            placeholder="Introduce C.P"
+            formControlName="cp"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Teléfono y Tipo documento -->
+    <div class="form-row">
+      <div class="form-column">
+        <div class="form-field">
+          <label>Teléfono</label>
+          <input
+            pInputText
+            name="telefono"
+            placeholder="Introduce teléfono"
+            formControlName="phone"
+          />
+        </div>
+      </div>
+      <div class="form-column">
+        <div class="form-field">
+          <label>Tipo documento</label>
+          <p-select
+            appendTo="body"
+            formControlName="documentType"
+            [options]="getDocumentOptions()"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Seleccione"
+          >
+          </p-select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Campos condicionales para documentos -->
+    <ng-container [ngSwitch]="form.get('documentType')?.value">
+      <!-- Pasaporte -->
+      <div *ngSwitchCase="'passport'" class="document-section">
         <div class="form-row">
-          <div class="form-column">
+          <div class="form-column half-width">
+            <div class="form-field">
+              <label>Número de Pasaporte*</label>
+              <input
+                pInputText
+                formControlName="passport"
+                placeholder="Introduce el número del pasaporte"
+              />
+            </div>
+          </div>
+          <div class="form-column half-width">
             <div class="form-row">
               <div class="form-column half-width">
                 <div class="form-field">
-                  <label>Sexo</label>
-                  <p-select
-                    #sexoSelect
-                    formControlName="sexo"
-                    [options]="sexoOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Seleccione"
+                  <label>Fecha de caducidad*</label>
+                  <p-datepicker
+                    formControlName="passportExpirationDate"
+                    placeholder="dd/mm/aaaa"
+                    [iconDisplay]="'input'"
+                    [showIcon]="true"
+                    appendTo="body"
                   >
-                  </p-select>
+                  </p-datepicker>
                 </div>
               </div>
               <div class="form-column half-width">
                 <div class="form-field">
-                  <label>Fecha de nacimiento</label>
+                  <label>Fecha de expedición*</label>
                   <p-datepicker
-                    formControlName="birthdate"
+                    formControlName="passportIssueDate"
                     placeholder="dd/mm/aaaa"
                     [iconDisplay]="'input'"
                     [showIcon]="true"
@@ -113,164 +209,60 @@
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Nacionalidad y Código postal -->
-        <div class="form-row">
-          <div class="form-column">
-            <div class="form-field">
-              <label>Nacionalidad</label>
-              <input
-                pInputText
-                name="nacionalidad"
-                placeholder="Introduce tu nacionalidad"
-                formControlName="nationality"
-              />
-            </div>
-          </div>
-          <div class="form-column">
-            <div class="form-field">
-              <label>Código postal</label>
-              <input
-                pInputText
-                name="cp"
-                placeholder="Introduce C.P"
-                formControlName="cp"
-              />
-            </div>
-          </div>
+      <!-- DNI -->
+      <div *ngSwitchCase="'dni'" class="document-section">
+        <div class="form-field">
+          <label>Número de identificación*</label>
+          <input
+            pInputText
+            formControlName="dni"
+            placeholder="Introduce el número de identificación"
+          />
         </div>
 
-        <!-- Teléfono y Tipo documento -->
-        <div class="form-row">
-          <div class="form-column">
-            <div class="form-field">
-              <label>Teléfono</label>
-              <input
-                pInputText
-                name="telefono"
-                placeholder="Introduce teléfono"
-                formControlName="phone"
-              />
-            </div>
-          </div>
-          <div class="form-column">
-            <div class="form-field">
-              <label>Tipo documento</label>
-              <p-select
-                appendTo="body"
-                formControlName="documentType"
-                [options]="getDocumentOptions()"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Seleccione"
-              >
-              </p-select>
-            </div>
-          </div>
-        </div>
-
-        <!-- Campos condicionales para documentos -->
-        <ng-container [ngSwitch]="form.get('documentType')?.value">
-          <!-- Pasaporte -->
-          <div *ngSwitchCase="'passport'" class="document-section">
-            <div class="form-row">
-              <div class="form-column half-width">
-                <div class="form-field">
-                  <label>Número de Pasaporte*</label>
-                  <input
-                    pInputText
-                    formControlName="passport"
-                    placeholder="Introduce el número del pasaporte"
-                  />
-                </div>
-              </div>
-              <div class="form-column half-width">
-                <div class="form-row">
-                  <div class="form-column half-width">
-                    <div class="form-field">
-                      <label>Fecha de caducidad*</label>
-                      <p-datepicker
-                        formControlName="passportExpirationDate"
-                        placeholder="dd/mm/aaaa"
-                        [iconDisplay]="'input'"
-                        [showIcon]="true"
-                        appendTo="body"
-                      >
-                      </p-datepicker>
-                    </div>
-                  </div>
-                  <div class="form-column half-width">
-                    <div class="form-field">
-                      <label>Fecha de expedición*</label>
-                      <p-datepicker
-                        formControlName="passportIssueDate"
-                        placeholder="dd/mm/aaaa"
-                        [iconDisplay]="'input'"
-                        [showIcon]="true"
-                        appendTo="body"
-                      >
-                      </p-datepicker>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- DNI -->
-          <div *ngSwitchCase="'dni'" class="document-section">
-            <div class="form-field">
-              <label>Número de identificación*</label>
-              <input
-                pInputText
-                formControlName="dni"
-                placeholder="Introduce el número de identificación"
-              />
-            </div>
-
-            <!-- Campos adicionales para bebés -->
-            <ng-container *ngIf="form.get('ageGroup')?.value === 'Bebés'">
-              <div class="form-row">
-                <div class="form-column">
-                  <div class="form-field">
-                    <label>Fecha de caducidad (ID menor)*</label>
-                    <p-datepicker
-                      formControlName="minorIdExpirationDate"
-                      placeholder="dd/mm/aaaa"
-                      [iconDisplay]="'input'"
-                      [showIcon]="true"
-                      appendTo="body"
-                    >
-                    </p-datepicker>
-                  </div>
-                </div>
-                <div class="form-column">
-                  <div class="form-field">
-                    <label>Fecha de expedición (ID menor)*</label>
-                    <p-datepicker
-                      formControlName="minorIdIssueDate"
-                      placeholder="dd/mm/aaaa"
-                      [iconDisplay]="'input'"
-                      [showIcon]="true"
-                      appendTo="body"
-                    >
-                    </p-datepicker>
-                  </div>
-                </div>
-              </div>
+        <!-- Campos adicionales para bebés -->
+        <ng-container *ngIf="form.get('ageGroup')?.value === 'Bebés'">
+          <div class="form-row">
+            <div class="form-column">
               <div class="form-field">
-                <label>Asociar reserva del menor a</label>
-                <p-select
-                  formControlName="associatedAdult"
-                  [options]="getAdultsOptions()"
-                  placeholder="Seleccione"
+                <label>Fecha de caducidad (ID menor)*</label>
+                <p-datepicker
+                  formControlName="minorIdExpirationDate"
+                  placeholder="dd/mm/aaaa"
+                  [iconDisplay]="'input'"
+                  [showIcon]="true"
+                  appendTo="body"
                 >
-                </p-select>
+                </p-datepicker>
               </div>
-            </ng-container>
+            </div>
+            <div class="form-column">
+              <div class="form-field">
+                <label>Fecha de expedición (ID menor)*</label>
+                <p-datepicker
+                  formControlName="minorIdIssueDate"
+                  placeholder="dd/mm/aaaa"
+                  [iconDisplay]="'input'"
+                  [showIcon]="true"
+                  appendTo="body"
+                >
+                </p-datepicker>
+              </div>
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Asociar reserva del menor a</label>
+            <p-select
+              formControlName="associatedAdult"
+              [options]="getAdultsOptions()"
+              placeholder="Seleccione"
+            >
+            </p-select>
           </div>
         </ng-container>
       </div>
-    </form>
-  </p-accordion-content>
-</p-accordion-panel>
+    </ng-container>
+  </div>
+</form>

@@ -415,6 +415,7 @@ $colors: (
           max-height: 8em;
           overflow: hidden;
           text-overflow: ellipsis;
+          font-size: 0.8rem;
         }
 
         .p-card-body {
@@ -435,6 +436,9 @@ $colors: (
           color: map.get($colors, primary);
           font-weight: 600;
           
+          div{
+            font-size: 1rem;
+          }
           .p-button {
             padding: 0.5em 1.5em;
             font-weight: 300;
@@ -469,6 +473,7 @@ $colors: (
           color: map.get($colors, text);
           font-size: 1rem;
           font-weight: 600;
+          height: 2.2rem;
           
           @include resp(md) {
             font-size: 1.1rem;

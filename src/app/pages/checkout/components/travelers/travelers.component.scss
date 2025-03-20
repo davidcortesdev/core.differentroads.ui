@@ -1,24 +1,32 @@
+// Variables globales
+:root {
+  --form-spacing: 10px;
+  --mobile-breakpoint: 768px;
+}
+
+// Estilos base
 * {
   color: var(--background-azul);
 }
 
+// Contenedor principal
 .content-form {
-  padding: 10px;
+  padding: var(--form-spacing);
   border-radius: 8px;
   margin-top: 20px;
   margin-left: 23px;
 
-  @media (max-width: 768px) {
-    margin-left: 0px;
+  @media (max-width: var(--mobile-breakpoint)) {
+    margin-left: 0;
     padding: 5px;
   }
 }
 
+// Elementos de usuario
 .user {
   display: inline-block;
-  margin: 0;
-  margin-left: 14px;
-  padding: 0px;
+  margin: 0 0 0 14px;
+  padding: 0;
 }
 
 .user-description {
@@ -30,16 +38,17 @@
   margin-right: 15px;
 }
 
+// Títulos
 .title {
   padding-bottom: 4px;
   border-bottom: 1px solid var(--background-azul);
   display: inline-block;
-  margin: 0;
-  margin-bottom: 20px;
+  margin: 0 0 20px 0;
   font-weight: 600;
   font-size: 15px;
 }
 
+// Formulario de viajeros
 .traveler-form {
   margin-top: 20px;
   width: 100%;
@@ -49,15 +58,24 @@
     justify-content: space-between;
     margin-bottom: 15px;
 
-    @media (max-width: 768px) {
+    @media (max-width: var(--mobile-breakpoint)) {
       flex-direction: column;
+    }
+  }
 
-      .form-column {
-        margin-right: 0;
-      }
+  .form-column {
+    flex: 1;
+    margin-right: 10px;
+
+    &:last-child {
+      margin-right: 0;
     }
 
-    .form-column {
+    @media (max-width: var(--mobile-breakpoint)) {
+      margin-right: 0;
+    }
+
+    &.half-width {
       flex: 1;
       margin-right: 10px;
 
@@ -65,40 +83,33 @@
         margin-right: 0;
       }
 
-      .form-field {
-        margin-bottom: 10px;
-        font-size: 14px;
-
-        label {
-          display: block;
-          margin-bottom: 5px;
-        }
-
-        input,
-        p-autocomplete,
-        p-calendar {
-          width: 100%;
-        }
-
-        &.half-width {
-          flex: 1;
-          margin-right: 10px;
-
-          &:last-child {
-            margin-right: 0;
-          }
-
-          @media (max-width: 768px) {
-            flex: 1 1 100%;
-            margin-right: 0;
-          }
-        }
+      @media (max-width: var(--mobile-breakpoint)) {
+        flex: 1 1 100%;
+        margin-right: 0;
       }
+    }
+  }
+
+  .form-field {
+    margin-bottom: 10px;
+    font-size: 14px;
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    input,
+    p-autocomplete,
+    p-calendar {
+      width: 100%;
     }
   }
 }
 
+// Estilos globales para componentes PrimeNG
 ::ng-deep {
+  // Campos de formulario
   .form-field {
     margin-bottom: 10px;
 
@@ -107,33 +118,27 @@
       color: var(--background-azul);
     }
 
+    // Estilos comunes para inputs
     .p-inputtext,
     .p-dropdown,
     .p-calendar,
     .p-autocomplete,
-    .p-inputmask {
+    .p-inputmask,
+    .p-select {
       width: 100%;
       border: none;
       border-bottom: 1px solid var(--background-azul);
       border-radius: 0;
-      background: #f7f6f200;
+      background: transparent;
       font-size: 14px;
     }
 
     .p-datepicker {
       width: 100%;
-
-      @media (max-width: 768px) {
-        width: 100%;
-      }
     }
 
     .p-select {
       cursor: pointer;
-      border: none;
-      border-bottom: 1px solid var(--background-azul);
-      border-radius: 0px;
-      width: 100%;
     }
 
     .p-select-dropdown {
@@ -144,36 +149,38 @@
       border-radius: var(--p-button-rounded-border-radius);
       width: 100%;
     }
-
-    
-
   }
 
-  ::ng-deep .view-more-btn {
+  // Botón "ver más"
+  .view-more-btn {
     border-radius: 6rem;
     width: 100%;
   }
 
-  ::ng-deep .p-panel .p-panel-content {
-    padding: 10px 300px 10px 10px;
-    border: 1px solid #d1c1c1;
-    display: inline-block;
-    border-radius: 9px;
-}
+  // Estilos de panel
+  .p-panel {
+    .p-panel-content {
+      padding: 10px 300px 10px 10px;
+      border: 1px solid #d1c1c1;
+      display: inline-block;
+      border-radius: 9px;
+    }
 
-::ng-deep .p-panel .p-panel-header {
-  padding: 0;
-}
+    .p-panel-header {
+      padding: 0;
+    }
+  }
 
-::ng-deep .p-accordionpanel:not(.p-disabled).p-accordionpanel-active > .p-accordionheader {
-  color: var(--background-azul);
-}
+  // Estilos de acordeón
+  .p-accordionpanel:not(.p-disabled).p-accordionpanel-active > .p-accordionheader {
+    color: var(--background-azul);
+  }
 
-::ng-deep .p-accordionheader {
-  font-size: 15px;
-}
+  .p-accordionheader {
+    font-size: 15px;
+  }
 
-::ng-deep {
+  // Acordeón de viajeros
   .travelers-accordion {
     width: 100%;
     
@@ -185,5 +192,4 @@
       overflow: visible;
     }
   }
-}
 }

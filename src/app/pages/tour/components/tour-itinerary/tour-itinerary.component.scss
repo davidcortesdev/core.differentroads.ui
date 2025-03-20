@@ -142,7 +142,7 @@ $colors: (
       margin: 0;
       font-weight: 700;
       color: map.get($colors, text);
-      font-size: 25px;
+      font-size: 1.4rem;
       
       @include resp(md) {
         font-size: 17px;
@@ -226,6 +226,7 @@ $colors: (
   border: 1px solid map.get($colors, border);
   padding: 8px;
   margin-top: 1rem;
+  max-height: 10rem;
   
   @include resp(xl) {
     padding: 8px 15px 8px 8px;
@@ -248,7 +249,7 @@ $colors: (
   
   &-image {
     width: 40%;
-    aspect-ratio: 16 / 9;
+    //aspect-ratio: 16 / 9;
     object-fit: cover;
     border-radius: map.get($border-radius, md);
     
@@ -414,6 +415,7 @@ $colors: (
           max-height: 8em;
           overflow: hidden;
           text-overflow: ellipsis;
+          font-size: 0.8rem;
         }
 
         .p-card-body {
@@ -434,6 +436,9 @@ $colors: (
           color: map.get($colors, primary);
           font-weight: 600;
           
+          div{
+            font-size: 1rem;
+          }
           .p-button {
             padding: 0.5em 1.5em;
             font-weight: 300;
@@ -468,6 +473,7 @@ $colors: (
           color: map.get($colors, text);
           font-size: 1rem;
           font-weight: 600;
+          height: 2.2rem;
           
           @include resp(md) {
             font-size: 1.1rem;

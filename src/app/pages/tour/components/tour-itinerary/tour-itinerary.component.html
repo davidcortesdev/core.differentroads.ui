@@ -77,8 +77,8 @@
               </div>
               <div class="hotel-card" *ngIf="event?.hotel?.name">
                 <img
-                  [src]="event.hotel.hotelimage?.[0]?.url||'https://picsum.photos/200'"
-                  [alt]="event.hotel.hotelimage?.[0]?.alt"
+                  [src]="event.hotel.hotelimage?.[0]?.url||''"
+                  [alt]="event.hotel.hotelimage?.[0]?.alt || event.hotel.name"
                   class="hotel-card-image"
                 />
                 <div class="hotel-card-content">
@@ -152,7 +152,7 @@
                           label="{{ highlight.added ? 'Añadida' : 'Añadir' }}"
                           styleClass="p-button-rounded"
                         ></p-button>
-                        <div>+{{ highlight.price }}</div>
+                        <div>+{{ highlight.price | currencyFormat : "EUR"}}</div>
                       </ng-template>
                     </p-card>
                   </ng-template>

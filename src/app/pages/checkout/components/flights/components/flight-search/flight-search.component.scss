@@ -1,69 +1,61 @@
-// Variables
-$primary-color: var(--background-azul);
-$accent-color: #f67362;
-$text-color: #666;
-$light-gray: #f5f5f5;
-$border-color: #ddd;
+$primary: var(--background-azul);
+$accent: #f67362;
+$text: #666;
+$light: #f5f5f5;
+$border: #ddd;
 
-// Common styles
-%flex-center {
+%flex-c {
   display: flex;
   align-items: center;
 }
 
-%small-text {
+%small {
   font-size: 0.8rem;
-  color: $text-color;
+  color: $text;
 }
 
-%card-shadow {
+%shadow {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
 }
 
-// Panel styles
 ::ng-deep .p-panel {
   font-family: Arial, sans-serif;
   margin: 0 0 20px 0;
-  background-color: #fff;
-  @extend %card-shadow;
+  background-color: #fff !important;
+  @extend %shadow;
 
   .p-panel-header {
-    background-color: #f8f9fa;
     border-bottom: 1px solid #e9ecef;
-    padding: 15px 20px;
   }
-
-  .p-panel-content { padding: 20px; }
+  .p-panel-content {
+    padding: 20px;
+  }
 }
 
-// Header styles
-.flight-header {
+.flt-hdr {
   margin-bottom: 20px;
-
   h2 {
     margin: 0 0 5px 0;
     font-size: 1.2rem;
     font-weight: 600;
-    color: $primary-color;
+    color: $primary;
   }
-
   p {
     margin: 0;
-    color: $text-color;
+    color: $text;
     font-size: 0.9rem;
   }
 }
 
-// Travel type section
 .travel-type {
-  @extend %flex-center;
+  @extend %flex-c;
   margin-bottom: 20px;
   padding-bottom: 15px;
   border-bottom: 1px solid #eee;
 
-  .p-field-radiobutton {
-    @extend %flex-center;
+  .radio {
+    @extend %flex-c;
     margin-right: 20px;
 
     label {
@@ -72,18 +64,18 @@ $border-color: #ddd;
     }
   }
 
-  .separator {
+  .sep {
     height: 24px;
     width: 1px;
-    background-color: $border-color;
+    background-color: $border;
     margin: 0 15px;
   }
 
-  .equipment-options {
+  .equip {
     display: flex;
 
-    .p-field-checkbox {
-      @extend %flex-center;
+    .check {
+      @extend %flex-c;
       margin-right: 20px;
 
       label {
@@ -94,35 +86,28 @@ $border-color: #ddd;
   }
 }
 
-// Flight details
-.flight-details {
+.flt-details {
   margin-bottom: 20px;
-
-  .flight-row {
-    @extend %flex-center;
+  .row {
+    @extend %flex-c;
     margin-bottom: 15px;
-
-    .flight-label {
+    .label {
       width: 80px;
-
       label {
         font-weight: 600;
         font-size: 0.9rem;
         margin-bottom: 5px;
         display: block;
       }
-
-      .desde-label { @extend %small-text; }
+      .from {
+        @extend %small;
+      }
     }
-
-    .flight-input {
+    .input {
       flex: 1;
       position: relative;
-      background-color: $light-gray;
-      border-radius: 4px;
       padding: 6px 8px;
       margin-right: 10px;
-
       &.origin {
         i {
           position: absolute;
@@ -132,109 +117,107 @@ $border-color: #ddd;
           color: #999;
           z-index: 1;
         }
-
         ::ng-deep .p-dropdown .p-dropdown-label {
           padding-left: 25px;
           font-size: 0.9rem;
         }
-
-        .change-link {
+        .change {
           position: absolute;
           right: 10px;
           top: 50%;
           transform: translateY(-50%);
           font-size: 0.8rem;
-          color: $accent-color;
+          color: $accent;
           text-decoration: none;
           z-index: 2;
         }
       }
-
-      .destination-label { @extend %small-text; margin-bottom: 5px; }
+      .dest-lbl {
+        @extend %small;
+        margin-bottom: 5px;
+      }
 
       ::ng-deep .p-dropdown {
         width: 100%;
         background: transparent;
         border: none;
 
-        .p-dropdown-label { font-size: 0.9rem; }
-        .p-dropdown-trigger { width: 2rem; }
+        .p-dropdown-label {
+          font-size: 0.9rem;
+        }
+        .p-dropdown-trigger {
+          width: 2rem;
+        }
       }
     }
 
-    .flight-date {
+    .date {
       width: 150px;
       margin-left: 10px;
 
-      .date-label { @extend %small-text; margin-bottom: 5px; }
+      .date-lbl {
+        @extend %small;
+        margin-bottom: 5px;
+      }
 
       ::ng-deep .p-calendar {
         width: 100%;
 
-        .p-inputtext { font-size: 0.9rem; }
+        .p-inputtext {
+          font-size: 0.9rem;
+        }
         .p-datepicker-trigger {
           background-color: transparent;
-          border-color: $border-color;
-          color: $text-color;
+          border-color: $border;
+          color: $text;
         }
       }
     }
   }
 }
 
-// Search options
-.search-options {
-  @extend %flex-center;
+.search-opts {
+  @extend %flex-c;
   justify-content: space-between;
   margin-top: 30px;
-
-  .sort-options, .filter-options {
-    @extend %flex-center;
+  .sort,
+  .filter {
+    @extend %flex-c;
     gap: 10px;
-
     ::ng-deep .p-button.p-button-outlined {
-      color: $text-color;
-      border-color: $border-color;
-
+      color: $text;
+      border-color: $border;
       &:hover {
         background: #f8f8f8;
         border-color: #ccc;
       }
-
       .p-button-label {
         font-weight: normal;
         font-size: 0.9rem;
       }
     }
-
     ::ng-deep .p-dropdown {
       min-width: 120px;
-
       .p-dropdown-label {
         font-size: 0.9rem;
         padding: 0.5rem 1rem;
       }
     }
   }
-
-  .search-button ::ng-deep .p-button.p-button-danger {
-    background: $accent-color;
-    border-color: $accent-color;
+  .btn-search ::ng-deep .p-button.p-button-danger {
+    background: $accent;
+    border-color: $accent;
     font-weight: 600;
     padding: 0.5rem 2rem;
     border-radius: 4px;
-
-    &:hover {
-      background: #e56352;
-      border-color: #e56352;
-    }
   }
 }
 
-// Flight results
-.flight-results { margin-top: 20px; }
+.flt-results {
+  margin-top: 20px;
+}
 
-.results-header {
+.res-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -242,53 +225,58 @@ $border-color: #ddd;
   h3 {
     margin: 0;
     font-size: 1.2rem;
-    color: $primary-color;
+    color: $primary;
   }
 
-  .results-count { @extend %small-text; }
+  .count {
+    @extend %small;
+  }
 }
 
-// Flight list
-.flight-list {
-  .flight-item {
+.flt-list {
+  .item {
     margin-bottom: 15px;
-    &:last-child { margin-bottom: 0; }
+    &:last-child {
+      margin-bottom: 0;
+    }
   }
 
-  .flight-card {
+  .card {
     display: grid;
     grid-template-columns: 100px 1fr 1fr 150px 150px;
     align-items: center;
     background: #fff;
-    @extend %card-shadow;
+    @extend %shadow;
     padding: 15px;
     transition: box-shadow 0.3s ease;
 
-    &:hover { box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); }
+    &:hover {
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
 
-    .airline-info {
+    .airline {
       display: flex;
       flex-direction: column;
       align-items: center;
 
-      .airline-logo {
-        background: $light-gray;
+      .logo {
+        background: $light;
         width: 50px;
         height: 50px;
         border-radius: 50%;
-        @extend %flex-center;
+        @extend %flex-c;
         justify-content: center;
         margin-bottom: 5px;
 
-        .carrier-code {
+        .code {
           font-weight: bold;
-          color: $primary-color;
+          color: $primary;
         }
       }
 
-      .airline-name {
+      .name {
         font-size: 0.8rem;
-        color: $text-color;
+        color: $text;
         text-align: center;
         max-width: 90px;
         white-space: nowrap;
@@ -297,10 +285,10 @@ $border-color: #ddd;
       }
     }
 
-    .flight-segment {
+    .segment {
       padding: 0 15px;
 
-      .segment-header {
+      .seg-hdr {
         font-size: 0.8rem;
         color: #999;
         margin-bottom: 10px;
@@ -308,42 +296,43 @@ $border-color: #ddd;
         letter-spacing: 0.5px;
       }
 
-      .segment-route {
-        @extend %flex-center;
+      .route {
+        @extend %flex-c;
 
-        .departure, .arrival {
+        .dep,
+        .arr {
           width: 70px;
 
           .time {
             font-size: 1.1rem;
             font-weight: bold;
-            color: $primary-color;
+            color: $primary;
           }
 
           .airport {
             font-size: 0.9rem;
-            color: $text-color;
+            color: $text;
           }
         }
 
-        .flight-path {
+        .path {
           flex: 1;
           padding: 0 15px;
           text-align: center;
 
           .duration {
             font-size: 0.9rem;
-            color: $text-color;
+            color: $text;
             margin-bottom: 5px;
           }
 
-          .path-line {
+          .line {
             position: relative;
             height: 2px;
-            background: $border-color;
+            background: $border;
             margin: 10px 0;
 
-            .path-stops {
+            .stops {
               position: absolute;
               top: -4px;
               left: 0;
@@ -351,7 +340,7 @@ $border-color: #ddd;
               display: flex;
               justify-content: space-evenly;
 
-              .stop-icon {
+              .stop {
                 width: 10px;
                 height: 10px;
                 background: #999;
@@ -360,26 +349,30 @@ $border-color: #ddd;
             }
           }
 
-          .stops-info {
+          .stop-info {
             font-size: 0.8rem;
             color: #999;
-            span.direct { color: red; }
+            span.direct {
+              color: red;
+            }
           }
         }
       }
     }
 
-    .baggage-info {
+    .baggage {
       display: flex;
       flex-direction: column;
       gap: 10px;
 
-      .baggage-item {
-        @extend %flex-center;
+      .bag-item {
+        @extend %flex-c;
         color: #999;
         font-size: 0.9rem;
 
-        i { margin-right: 5px; }
+        i {
+          margin-right: 5px;
+        }
         &.included {
           color: var(--p-primary-color);
           font-weight: 500;
@@ -387,7 +380,7 @@ $border-color: #ddd;
       }
     }
 
-    .price-selection {
+    .price-box {
       text-align: right;
 
       .price {
@@ -396,10 +389,10 @@ $border-color: #ddd;
         .amount {
           font-size: 1.3rem;
           font-weight: bold;
-          color: $primary-color;
+          color: $primary;
         }
 
-        .price-detail {
+        .detail {
           font-size: 0.8rem;
           color: #999;
         }
@@ -413,22 +406,20 @@ $border-color: #ddd;
   }
 }
 
-// Loading state
-.loading-state {
+.loading {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 40px 0;
 
-  .loading-message {
+  .msg {
     margin-top: 20px;
-    color: $text-color;
+    color: $text;
   }
 }
 
-// No results
-.no-results .no-results-message {
+.no-results .msg {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -438,40 +429,42 @@ $border-color: #ddd;
 
   i {
     font-size: 3rem;
-    color: $accent-color;
+    color: $accent;
     margin-bottom: 15px;
   }
 
   h3 {
     margin: 0 0 10px 0;
-    color: $primary-color;
+    color: $primary;
   }
 
   p {
-    color: $text-color;
+    color: $text;
     max-width: 400px;
     margin: 0;
   }
 }
 
-// Media queries
 @media (max-width: 992px) {
-  .flight-list .flight-card {
+  .flt-list .card {
     grid-template-columns: 80px 1fr 1fr;
     grid-template-rows: auto auto;
-
-    .airline-info { grid-row: 1 / 3; }
-    .flight-segment {
-      grid-column: 2 / 4;
-      &.inbound { margin-top: 15px; }
+    .airline {
+      grid-row: 1 / 3;
     }
-    .baggage-info {
+    .segment {
+      grid-column: 2 / 4;
+      &.inbound {
+        margin-top: 15px;
+      }
+    }
+    .baggage {
       grid-column: 1 / 3;
       grid-row: 3;
       margin-top: 15px;
       flex-direction: row;
     }
-    .price-selection {
+    .price-box {
       grid-column: 3;
       grid-row: 3;
       margin-top: 15px;
@@ -484,60 +477,71 @@ $border-color: #ddd;
     flex-direction: column;
     align-items: flex-start;
 
-    .separator { display: none; }
-    .equipment-options { margin-top: 15px; }
+    .sep {
+      display: none;
+    }
+    .equip {
+      margin-top: 15px;
+    }
   }
 
-  .flight-details .flight-row {
+  .flt-details .row {
     flex-direction: column;
     align-items: flex-start;
 
-    .flight-label {
+    .label {
       width: 100%;
       margin-bottom: 10px;
     }
-    .flight-input {
+    .input {
       width: 100%;
       margin-bottom: 10px;
       margin-right: 0;
     }
-    .flight-date {
+    .date {
       width: 100%;
       margin-left: 0;
     }
   }
 
-  .search-options {
+  .search-opts {
     flex-direction: column;
 
-    .sort-options, .filter-options {
+    .sort,
+    .filter {
       width: 100%;
       margin-bottom: 15px;
     }
-    .search-button {
+    .btn-search {
       width: 100%;
-      ::ng-deep .p-button { width: 100%; }
+      ::ng-deep .p-button {
+        width: 100%;
+      }
     }
   }
 
-  .flight-list .flight-card {
+  .flt-list .card {
     grid-template-columns: 1fr;
     grid-template-rows: auto;
 
-    .airline-info {
+    .airline {
       grid-row: 1;
       margin-bottom: 15px;
     }
-    .flight-segment {
+    .segment {
       grid-column: 1;
-      &.outbound { grid-row: 2; }
-      &.inbound { grid-row: 3; }
+      &.outbound {
+        grid-row: 2;
+      }
+      &.inbound {
+        grid-row: 3;
+      }
     }
-    .baggage-info {
+    .baggage {
       grid-column: 1;
       grid-row: 4;
     }
-    .price-selection {
+    .price-box {
       grid-column: 1;
       grid-row: 5;
       text-align: center;

@@ -64,6 +64,10 @@ export class CheckoutComponent implements OnInit {
   tourID: string = '';
   periodID: string = '';
   periodData!: Period;
+  flightlessOption: Flight | null = null;
+
+  // Add property to control budget dialog visibility
+  budgetDialogVisible: boolean = false;
 
   constructor(
     private ordersService: OrdersService,
@@ -91,6 +95,11 @@ export class CheckoutComponent implements OnInit {
 
       const periodID = order.periodID;
       this.periodID = periodID;
+
+      // Initialize discounts if present in the order
+      if (order.discounts && order.discounts.length > 0) {
+        this.discountInfo = order.discounts[0];
+      }
 
       this.initializeTravelers(order.travelers || []);
       this.initializeActivities(order.optionalActivitiesRef || []);
@@ -164,6 +173,10 @@ export class CheckoutComponent implements OnInit {
     this.insurancesService.selectedInsurances$.subscribe((insurances) => {
       this.selectedInsurances = insurances;
       this.updateOrderSummary();
+    });
+
+    this.flightsService.flightlessOption$.subscribe((option) => {
+      this.flightlessOption = option;
     });
   }
 
@@ -389,6 +402,8 @@ export class CheckoutComponent implements OnInit {
     let tempOrderData: Order = { ...this.summaryService.getOrderValue()! };
     const travelersData = this.travelersService.getTravelers();
 
+    // Save the entire summary to the order
+    tempOrderData['summary'] = this.summary;
     tempOrderData['travelers'] = travelersData;
     tempOrderData['optionalActivitiesRef'] = this.activities.map(
       (activity) => ({
@@ -458,6 +473,18 @@ export class CheckoutComponent implements OnInit {
       tempOrderData['insurancesRef'] = [];
     }
 
+    // Add discount to summary item if applied
+    if (this.discountInfo && this.discountInfo.discountValue > 0) {
+      this.summary.push({
+        qty: 1,
+        value: -this.discountInfo.discountValue, // Negative value to show it as a reduction
+        description: `Descuento cupón: ${this.discountInfo.code}`,
+      });
+
+      // Save discount info to order
+      tempOrderData['discounts'] = [this.discountInfo];
+    }
+
     this.summaryService.updateOrder(tempOrderData);
 
     this.calculateTotals();
@@ -471,12 +498,43 @@ export class CheckoutComponent implements OnInit {
     this.travelers = event.adults + event.childs + event.babies;
   }
 
-  calculateTotals() {
-    this.subtotal = this.summary.reduce(
+  // Add these properties to your checkout component class
+  discountInfo: {
+    code: string;
+    amount: number;
+    discountValue: number;
+    type: string;
+  } | null = null;
+
+  // Add this method to handle the discount
+  handleDiscountApplied(discountInfo: {
+    code: string;
+    amount: number;
+    discountValue: number;
+    type: string;
+  }): void {
+    this.discountInfo = discountInfo;
+    this.updateOrderSummary(); // Re-run the summary calculation
+  }
+
+  // Update your calculateTotals method to include discount
+  calculateTotals(): void {
+    // Calculate subtotal from summary items, excluding discount items
+    this.subtotal = this.summary.reduce((acc, item) => {
+      // Only add positive values to subtotal (ignore discount items with negative values)
+      if (item.value >= 0) {
+        return acc + item.value * item.qty;
+      }
+      return acc;
+    }, 0);
+
+    // Calculate total including all items (both positive and negative values)
+    this.total = this.summary.reduce(
       (acc, item) => acc + item.value * item.qty,
       0
     );
-    this.total = this.subtotal;
+
+    // No need to separately subtract discount as it's already included in summary
   }
 
   /* Steps and validations */
@@ -528,6 +586,14 @@ export class CheckoutComponent implements OnInit {
     // Llamada a updateOrder sin suscribirse para evitar retraso en la validación de navigation.
     this.updateOrder();
     return true;
+  }
+
+  selectFlightlessAndContinue(): boolean {
+    if (this.flightlessOption) {
+      this.flightsService.updateSelectedFlight(this.flightlessOption);
+      return true;
+    }
+    return false;
   }
 
   /* Order update */
@@ -631,5 +697,14 @@ export class CheckoutComponent implements OnInit {
           },
         });
     });
+  }
+  // Replace the saveTrip method
+  saveTrip(): void {
+    this.budgetDialogVisible = true;
+  }
+
+  // Add method to handle closing the dialog
+  handleCloseBudgetDialog(): void {
+    this.budgetDialogVisible = false;
   }
 }

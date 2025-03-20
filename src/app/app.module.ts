@@ -158,7 +158,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { SortByPipe } from './shared/pipes/sort-by.pipe';
 import { InsurancesComponent } from './pages/checkout/components/customize-trip/components/insurances/insurances.component';
 import { Dialog } from 'primeng/dialog';
-import { BudgetDialogComponent } from './pages/tour/components/budget-dialog/budget-dialog.component';
+import { BudgetDialogComponent } from './shared/components/budget-dialog/budget-dialog.component';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { Amplify } from 'aws-amplify';
 import awsconfig from '../../src/aws-exports';
@@ -171,6 +171,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 import { MessageService } from 'primeng/api';
 import { TourDateSelectorComponent } from './pages/tour/components/tour-date-selector/tour-date-selector.component';
+import { DiscountCodeComponent } from './pages/checkout/components/discount-code/discount-code.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -253,6 +254,7 @@ registerLocaleData(localeEs);
     BudgetDialogComponent,
     TripTypesSectionComponent,
     TourDateSelectorComponent,
+    DiscountCodeComponent,
   ],
   imports: [
     // Angular Modules

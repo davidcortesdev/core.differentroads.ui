@@ -37,7 +37,7 @@ $spaces: (
   margin-bottom: 20px;
   
   h2 {
-    font-size: 2rem;
+    font-size: 1.5rem;
     margin-bottom: 1.5rem;
     
     @include resp(md) {
@@ -48,7 +48,7 @@ $spaces: (
   
   p {
     margin-top: -20px;
-    font-size: 15px;
+    font-size: 1rem;
   }
 }
 

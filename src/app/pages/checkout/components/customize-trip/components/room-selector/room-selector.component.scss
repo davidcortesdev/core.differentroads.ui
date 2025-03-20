@@ -52,7 +52,8 @@
   }
 
   .room-item.selected {
-    border-color: var(--p-primary-color);
+    border-color: var(--background-azul);
+    background-color: white;
   }
 }
 

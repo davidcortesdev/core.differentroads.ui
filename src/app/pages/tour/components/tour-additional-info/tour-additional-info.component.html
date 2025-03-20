@@ -19,6 +19,7 @@
   >
     <app-budget-dialog
       [visible]="visible"
+      [handleCloseModal]="handleCloseModal.bind(this)"
       (close)="handleCloseModal()"
     ></app-budget-dialog>
   </p-dialog>

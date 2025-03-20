@@ -6,22 +6,14 @@
     stock
   </p>
   <div class="content-tour-selected">
-    <p><i class="pi pi-sparkles"></i> {{ tourData?.name }}</p>
+    <p><i class="pi pi-sparkles"></i> {{ getDisplayTourName() }}</p>
 
     <div class="content-tour-selected-items">
-      <p>{{ selectedPeriod?.date }}</p>
+      <p>{{ getDisplayPeriodDate() }}</p>
       -
-      <p>
-        {{
-          selectedPeriod?.departureCity?.toLowerCase()?.includes("sin")
-            ? "Sin vuelos "
-            : selectedPeriod?.departureCity?.toLowerCase()?.includes("vuelo")
-            ? selectedPeriod?.departureCity
-            : "Desde " + selectedPeriod?.departureCity
-        }}
-      </p>
+      <p>{{ getDisplayDepartureCity() }}</p>
       -
-      <p>{{ selectedPeriod?.tripType }}</p>
+      <p>{{ getDisplayTripType() }}</p>
       -
       <p>{{ getTravelersText() }}</p>
     </div>

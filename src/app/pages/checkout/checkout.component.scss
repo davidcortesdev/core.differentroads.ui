@@ -21,7 +21,6 @@
     grid-template-columns: 2fr 1fr;
     gap: 2rem;
     padding: 0 2rem;
-    max-width: 1440px;
     margin: 0 auto;
 
     @media (max-width: 480px) {
@@ -208,26 +207,33 @@ p-button.file ::ng-deep .p-button {
 }
 
 /* Estilo para los botones de navegación en el paso de vuelos */
-.flight {
+.flight-buttons {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
+  gap: 1rem;
   margin: 2rem 0;
   width: 100%;
 }
+p-button.without-flight ::ng-deep .p-button {
+  background-color: transparent;
+  border: 1px solid var(--p-primary-color);
+  color: var(--p-primary-color);
+  border-radius: 50px;
+  min-width: 250px;
+  &:hover {
+    background-color: var(--p-primary-color);
+    color: var(--background-azul-color-letra);
+  }
+}
 
+p-button.continue-button ::ng-deep .p-button {
+  background-color: var(--p-primary-color);
+  min-width: 150px;
+}
 :host ::ng-deep {
   .p-button {
     border-radius: 50px;
-  }
-  .p-button-secondary {
-    border: 1px solid var(--background-azul);
-    background-color: transparent !important;
-    color: var(--background-azul);
-    &:hover {
-      border-color: var(--p-primary-color);
-      color: var(--p-primary-color);
-    }
   }
 }
 
@@ -335,7 +341,7 @@ p-button.file ::ng-deep .p-button {
 /* Ajustes para el paso 3 - posicionamiento de botones */
 .checkout .checkout-container .main-content p-step-panel[ng-reflect-value="3"] .flex.pt-6.justify-between {
   display: flex;
-  justify-content: space-between !important;
+  justify-content: flex-end;
   width: 100%;
 }
 
@@ -358,19 +364,6 @@ p-button.file ::ng-deep .p-button {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-
-  /* Botón de regresar (back) con borde azul y texto/hover naranja */
-  & > p-button[severity="secondary"] ::ng-deep .p-button {
-    border: 1px solid var(--background-azul);
-    color: var(--background-azul);
-    background-color: transparent;
-
-    &:hover {
-      background-color: transparent;
-      border-color: var(--p-primary-color);
-      color: var(--p-primary-color);
-    }
-  }
 
   /* Botón de continuar sin vuelos - estilo naranja */
   & > p-button.whith-flight ::ng-deep .p-button {

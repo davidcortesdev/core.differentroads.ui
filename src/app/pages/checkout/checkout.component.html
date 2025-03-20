@@ -110,6 +110,7 @@
                 <app-payment
                   [totalPrice]="total"
                   [processBooking]="processBooking.bind(this)"
+                  [departureDate]="periodData.dayOne || null"
                   (goBackEvent)="activateCallback(3)"
                 ></app-payment>
                 <!-- Remove the separate button row since it's now in the payment component -->

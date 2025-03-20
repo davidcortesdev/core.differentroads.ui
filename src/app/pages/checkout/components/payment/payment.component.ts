@@ -1,4 +1,14 @@
-import { Component, Input, Output, EventEmitter, OnInit, HostListener, Inject } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnInit,
+  HostListener,
+  Inject,
+  OnChanges,
+  SimpleChanges,
+} from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { RedsysService } from '../../../../core/services/checkout/payment/redsys.service';
 import { Router } from '@angular/router';
@@ -11,12 +21,13 @@ import { Payment } from '../../../../core/models/bookings/payment.model';
   templateUrl: './payment.component.html',
   styleUrls: ['./payment.component.scss'],
 })
-export class PaymentComponent implements OnInit {
+export class PaymentComponent implements OnInit, OnChanges {
   @Input() totalPrice: number = 0;
   @Input() processBooking!: () => Promise<{
     bookingID: string;
     ID: string;
   }>;
+  @Input() departureDate: string | null = null;
   @Output() goBackEvent = new EventEmitter<void>();
 
   isOpen: boolean = true;
@@ -33,6 +44,12 @@ export class PaymentComponent implements OnInit {
   termsAccepted: boolean = false;
   isLoading: boolean = false;
 
+  // Deposit payment variables
+  depositAmount: number = 200;
+  daysBeforeReservation: number = 30;
+  remainingAmount: number = 0;
+  paymentDeadline: string = '';
+
   constructor(
     @Inject(DOCUMENT) private document: Document,
     private redsysService: RedsysService,
@@ -42,6 +59,17 @@ export class PaymentComponent implements OnInit {
 
   ngOnInit() {
     this.loadScalapayScript();
+    this.calculateRemainingAmount();
+    this.calculatePaymentDeadline();
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['departureDate'] && this.departureDate) {
+      this.calculatePaymentDeadline();
+    }
+    if (changes['totalPrice']) {
+      this.calculateRemainingAmount();
+    }
   }
 
   loadScalapayScript() {
@@ -99,7 +127,7 @@ export class PaymentComponent implements OnInit {
   }
 
   onPaymentTypeChange() {
-    if (this.paymentType === 'complete') {
+    if (this.paymentType === 'complete' || this.paymentType === 'deposit') {
       this.installmentOption = null;
       this.isInstallmentsOpen = false;
       this.isPaymentMethodsOpen = true;
@@ -191,56 +219,56 @@ export class PaymentComponent implements OnInit {
   }
 
   async submitPayment() {
+    if (this.isLoading) return; // Prevent multiple submissions
+
     this.isLoading = true;
+    console.log('Payment process started');
     console.log('Payment Type:', this.paymentType);
     console.log('Payment Method:', this.paymentMethod);
     console.log('Installment Option:', this.installmentOption);
     console.log('Total Price:', this.totalPrice);
-    console.log('Terms Accepted:', this.termsAccepted);
-    let bookingID: string, ID: string;
+
     try {
       const response = await this.processBooking();
-      bookingID = response.bookingID;
-      ID = response.ID;
-    } catch (error) {
-      console.error('Error processing booking:', error);
-      this.isLoading = false;
-      return;
-    }
+      const bookingID = response.bookingID;
+      const ID = response.ID;
 
-    let publicID = '';
+      console.log('Booking created successfully:', bookingID);
 
-    try {
+      // Determine the payment amount based on payment type
+      const paymentAmount =
+        this.paymentType === 'deposit' ? this.depositAmount : this.totalPrice;
+
+      console.log(`Processing payment of ${paymentAmount}`);
+
       const payment = await this.createPayment(bookingID, {
-        amount: this.totalPrice,
+        amount: paymentAmount,
         registerBy: 'user',
       });
-      publicID = payment.publicID;
+
+      const publicID = payment.publicID;
       console.log('Payment created:', payment);
+
+      // Handle payment method redirect
+      if (this.paymentMethod === 'creditCard') {
+        console.log('Redirecting to credit card payment');
+        this.redirectToRedSys(ID, paymentAmount, bookingID);
+        return;
+      } else if (this.paymentMethod === 'transfer') {
+        console.log('Redirecting to bank transfer page');
+        this.router.navigate([
+          `/reservation/${bookingID}/transfer/${publicID}`,
+        ]);
+        return;
+      }
     } catch (error) {
-      console.error('Error creating payment:', error);
+      console.error('Error in payment process:', error);
+    } finally {
+      // This will only run if we didn't redirect earlier
       this.isLoading = false;
-      return;
     }
-
-    if (
-      this.paymentType === 'complete' &&
-      this.paymentMethod === 'creditCard'
-    ) {
-      this.redirectToRedSys(ID!, this.totalPrice, bookingID!);
-      return;
-    } else if (
-      this.paymentType === 'complete' &&
-      this.paymentMethod === 'transfer'
-    ) {
-      const baseUrl = window.location.origin;
-
-      this.router.navigate([`/reservation/${bookingID}/transfer/${publicID}`]);
-      return;
-    }
-    this.isLoading = false;
   }
-  
+
   // Add this method to handle the back button click
   goBack(): void {
     this.goBackEvent.emit();
@@ -263,5 +291,34 @@ export class PaymentComponent implements OnInit {
         },
       });
     });
+  }
+
+  calculateRemainingAmount() {
+    this.remainingAmount = this.totalPrice - this.depositAmount;
+  }
+
+  calculatePaymentDeadline() {
+    if (this.departureDate) {
+      const departureDate = new Date(this.departureDate);
+      const deadline = new Date(departureDate);
+      deadline.setDate(deadline.getDate() - this.daysBeforeReservation);
+
+      this.paymentDeadline = deadline.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      });
+    } else {
+      // Default deadline if no departure date provided
+      const today = new Date();
+      const defaultDeadline = new Date(today);
+      defaultDeadline.setDate(defaultDeadline.getDate() + 30);
+
+      this.paymentDeadline = defaultDeadline.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      });
+    }
   }
 }

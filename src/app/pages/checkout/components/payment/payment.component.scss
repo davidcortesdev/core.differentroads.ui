@@ -1,396 +1,421 @@
 .container {
+  width: 100%;
+  padding: 0 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  @media (max-width: 768px) {
+    padding: 0 0.75rem;
+  }
+
+  .header-container {
+    cursor: pointer;
+  }
+
+  .title-with-icon {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 5px;
     width: 100%;
-    padding: 0 1rem;
-    max-width: 1200px;
-    margin: 0 auto;
+
+    .title {
+      color: var(--background-azul);
+      font-weight: 500;
+      font-size: 1rem;
+    }
+
+    .pi {
+      color: var(--background-azul);
+      margin-left: 8px;
+    }
+  }
+
+  .title-underline {
+    &.pay {
+      width: 25.5%;
+    }
+    height: 1.5px;
+    background-color: var(--background-azul);
+    width: 24.2%;
+    margin-bottom: 15px;
 
     @media (max-width: 768px) {
-        padding: 0 0.75rem;
+      width: 50%;
     }
 
-    .header-container {
-        cursor: pointer;
+    @media (max-width: 480px) {
+      width: 100%;
     }
+  }
 
-    .title-with-icon {
-        display: inline-flex;
-        align-items: center;
-        margin-bottom: 5px;
-        width: 100%;
+  ::ng-deep {
+    .payment-panel {
+      color: var(--background-azul);
+      font-weight: 500;
+      margin-bottom: 0.75rem;
+      width: 100%;
+      background: transparent;
 
-        .title {
-            color: var(--background-azul);
-            font-weight: 500;
-            font-size: 1rem;
-        }
+      .p-panel-header {
+        display: none;
+      }
 
-        .pi {
-            color: var(--background-azul);
-            margin-left: 8px;
-        }
-    }
-
-    .title-underline {
-        &.pay {
-            width: 25.5%;
-        }
-        height: 1.5px;
-        background-color: var(--background-azul);
-        width: 24.2%;
-        margin-bottom: 15px;
-
-        @media (max-width: 768px) {
-            width: 50%;
-        }
-
-        @media (max-width: 480px) {
-            width: 100%;
-        }
-    }
-
-    ::ng-deep {
-        .payment-panel {
-            color: var(--background-azul);
-            font-weight: 500;
-            margin-bottom: 0.75rem;
-            width: 100%;
-            background: transparent;
-
-            .p-panel-header {
-                display: none;
-            }
-
-            .p-panel-content {
-                border: 0.0625rem solid #d4d4d8;
-                border-radius: 0.75rem;
-                padding: 1.25rem 1rem;
-                background: transparent;
-
-                @media (min-width: 768px) {
-                    padding: 1.75rem 1.5rem;
-                }
-            }
-            .p-radiobutton .p-radiobutton-box {
-                border: 2px solid var(--background-azul);
-            }
-
-            .p-radiobutton .p-radiobutton-box.p-highlight {
-                border-color: var(--background-azul);
-                background: white;
-
-                .p-radiobutton-icon {
-                    background-color: var(--background-azul);
-                    width: 10px;
-                    height: 10px;
-                }
-            }
-
-            &.selected {
-                .p-panel-content {
-                    border: 0.0625rem solid var(--background-azul);
-                    border-width: 2px;
-                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-                }
-            }
-        }
-    }
-
-    .payment-panels {
-        margin-top: 1rem;
-    }
-
-    .payment-option {
-        display: flex;
-        align-items: center;
-        flex-wrap: nowrap;
-
-        @media (max-width: 480px) {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .option-text {
-            margin-left: 1rem;
-            flex-grow: 1;
-
-            @media (max-width: 480px) {
-                margin-left: 0;
-                margin-top: 0.5rem;
-                width: 100%;
-            }
-        }
-
-        .option-price {
-            font-weight: bold;
-            font-size: 1.125rem;
-            margin-left: auto;
-
-            @media (max-width: 480px) {
-                margin-left: 0;
-                margin-top: 0.5rem;
-                align-self: flex-end;
-            }
-        }
-
-        .scalapay-logo {
-            height: 24px;
-            margin-left: auto;
-
-            @media (max-width: 480px) {
-                margin-left: 0;
-                margin-top: 0.5rem;
-                align-self: flex-end;
-            }
-        }
-    }
-
-    /* Estilos para métodos de pago en pago completo */
-    .payment-methods-section {
-        margin-top: 2rem;
-    }
-
-    .payment-methods-row {
-        display: flex;
-        flex-direction: row;
-        gap: 1rem;
-        margin-top: 1rem;
-
-        @media (max-width: 768px) {
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-    }
-
-    .payment-method-container {
-        flex: 1;
-
-        ::ng-deep .p-panel-content {
-            border: 0.0625rem solid #d4d4d8;
-            border-radius: 0.75rem;
-            padding: 1.5rem 1rem;
-            width: 100%;
-            height: 100%;
-
-            @media (min-width: 768px) {
-                padding: 2rem 1.5rem;
-            }
-        }
-    }
-
-    .payment-method-panel {
-        transition: all 0.2s ease;
-        cursor: pointer;
-
-        &.selected {
-            .p-panel-content {
-                border-color: var(--background-azul);
-                border-width: 2px;
-            }
-        }
-    }
-
-    /* Estilos para plazos en pago a plazos */
-    .installments-section {
-        margin-top: 2rem;
-    }
-
-    .installment-panels-row {
-        display: flex;
-        flex-direction: row;
-        gap: 1rem;
-        margin-top: 1rem;
-
-        @media (max-width: 768px) {
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-    }
-
-    .installment-panel-container {
-        flex: 1;
-
-        ::ng-deep .p-panel-content {
-            border: 0.0625rem solid #d4d4d8;
-            border-radius: 0.75rem;
-            padding: 1.5rem 1rem;
-            width: 100%;
-            height: 100%;
-
-            @media (min-width: 768px) {
-                padding: 2rem 1.5rem;
-            }
-        }
-    }
-
-    .installment-content {
-        margin-left: 1rem;
-        width: 100%;
-
-        @media (max-width: 480px) {
-            margin-left: 0.5rem;
-        }
-    }
-
-    .scalapay-widget-container {
-        width: 100%;
-        text-align: center;
-        font-size: 14px;
-    }
-
-    ::ng-deep {
-        scalapay-widget {
-            .info-container {
-                p.installment-info {
-                    display: none !important;
-                }
-            }
-
-            img.logo {
-                max-width: 120px !important;
-                margin: 0 auto;
-            }
-        }
-    }
-
-    .source-section {
-        margin-top: 2rem;
-    }
-
-    .dropdown-container {
-        position: relative;
-        width: 100%;
-        cursor: pointer;
-    }
-
-    .dropdown-select {
-        font-size: 15px;
-        padding: 0px;
-        border: none;
-        border-bottom: 2px solid var(--background-azul);
-        border-radius: 0px;
+      .p-panel-content {
+        border: 0.0625rem solid #d4d4d8;
+        border-radius: 0.75rem;
+        padding: 1.25rem 1rem;
         background: transparent;
-        color: var(--background-azul);
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
 
-    .dropdown-options {
-        border-radius: 8px;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        width: 20%;
+        @media (min-width: 768px) {
+          padding: 1.75rem 1.5rem;
+        }
+      }
+      .p-radiobutton .p-radiobutton-box {
+        border: 2px solid var(--background-azul);
+      }
+
+      .p-radiobutton .p-radiobutton-box.p-highlight {
+        border-color: var(--background-azul);
         background: white;
-        z-index: 10;
+
+        .p-radiobutton-icon {
+          background-color: var(--background-azul);
+          width: 10px;
+          height: 10px;
+        }
+      }
+
+      &.selected {
+        .p-panel-content {
+          border: 0.0625rem solid var(--background-azul);
+          border-width: 2px;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+      }
+    }
+  }
+
+  .payment-panels {
+    margin-top: 1rem;
+  }
+
+  .payment-option {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+
+    @media (max-width: 480px) {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .option-text {
+      margin-left: 1rem;
+      flex-grow: 1;
+
+      @media (max-width: 480px) {
+        margin-left: 0;
         margin-top: 0.5rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        overflow-y: auto;
-        max-height: 15rem;
-
-        @media (max-width: 480px) {
-            max-width: 100%;
-        }
+        width: 100%;
+      }
     }
 
-    .dropdown-option {
-        padding: 0.75rem 1rem;
-        cursor: pointer;
-        color: var(--background-azul);
-        font-size: 14px;
+    .option-price {
+      font-weight: bold;
+      font-size: 1.125rem;
+      margin-left: auto;
 
-        &:hover {
-            background-color: #f8fafc;
-        }
-    }
-
-    .terms-container {
-        margin-top: 2rem;
-        display: flex;
-        align-items: flex-start;
-
-        @media (max-width: 480px) {
-            flex-direction: column;
-        }
-
-        ::ng-deep .p-checkbox {
-            margin-top: 0.125rem;
-            margin-right: 0.75rem;
-            flex-shrink: 0;
-
-            @media (max-width: 480px) {
-                margin-bottom: 0.5rem;
-            }
-
-            .p-checkbox-box {
-                border: 2px solid var(--background-azul);
-            }
-
-            .p-checkbox-box.p-highlight {
-                border-color: var(--background-azul);
-                background: var(--background-azul);
-            }
-        }
-    }
-
-    .terms-text {
-        color: var(--background-azul);
-        font-weight: 500;
-    }
-
-    .terms-details {
-        font-size: 0.875rem;
-        color: #64748b;
-        font-weight: 400;
+      @media (max-width: 480px) {
+        margin-left: 0;
         margin-top: 0.5rem;
-        line-height: 1.25rem;
-
-        @media (max-width: 768px) {
-            font-size: 0.8125rem;
-        }
+        align-self: flex-end;
+      }
     }
 
-    ::ng-deep {
-        .payment-button {
-            margin: 10px 0 10px 0;
-            &.p-button {
-                width: 100%;
-                border-radius: 100px;
-                background-color: var(--p-primary-color);
-                border-color: #ff6b6b;
-                margin-top: -20px;
-                &.p-disabled,
-                &.payment-button-disabled {
-                    opacity: 0.6;
-                    cursor: not-allowed;
-                }
+    .scalapay-logo {
+      height: 24px;
+      margin-left: auto;
 
-                .p-button-label {
-                    font-weight: 500;
-                    font-size: 1rem;
-                }
-            }
+      @media (max-width: 480px) {
+        margin-left: 0;
+        margin-top: 0.5rem;
+        align-self: flex-end;
+      }
+    }
+  }
+
+  /* Estilos para métodos de pago en pago completo */
+  .payment-methods-section {
+    margin-top: 2rem;
+  }
+
+  .payment-methods-row {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    margin-top: 1rem;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+  }
+
+  .payment-method-container {
+    flex: 1;
+
+    ::ng-deep .p-panel-content {
+      border: 0.0625rem solid #d4d4d8;
+      border-radius: 0.75rem;
+      padding: 1.5rem 1rem;
+      width: 100%;
+      height: 100%;
+
+      @media (min-width: 768px) {
+        padding: 2rem 1.5rem;
+      }
+    }
+  }
+
+  .payment-method-panel {
+    transition: all 0.2s ease;
+    cursor: pointer;
+
+    &.selected {
+      .p-panel-content {
+        border-color: var(--background-azul);
+        border-width: 2px;
+      }
+    }
+  }
+
+  /* Estilos para plazos en pago a plazos */
+  .installments-section {
+    margin-top: 2rem;
+  }
+
+  .installment-panels-row {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    margin-top: 1rem;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+  }
+
+  .installment-panel-container {
+    flex: 1;
+
+    ::ng-deep .p-panel-content {
+      border: 0.0625rem solid #d4d4d8;
+      border-radius: 0.75rem;
+      padding: 1.5rem 1rem;
+      width: 100%;
+      height: 100%;
+
+      @media (min-width: 768px) {
+        padding: 2rem 1.5rem;
+      }
+    }
+  }
+
+  .installment-content {
+    margin-left: 1rem;
+    width: 100%;
+
+    @media (max-width: 480px) {
+      margin-left: 0.5rem;
+    }
+  }
+
+  .scalapay-widget-container {
+    width: 100%;
+    text-align: center;
+    font-size: 14px;
+  }
+
+  ::ng-deep {
+    scalapay-widget {
+      .info-container {
+        p.installment-info {
+          display: none !important;
         }
+      }
+
+      img.logo {
+        max-width: 120px !important;
+        margin: 0 auto;
+      }
+    }
+  }
+
+  .source-section {
+    margin-top: 2rem;
+  }
+
+  .dropdown-container {
+    position: relative;
+    width: 100%;
+    cursor: pointer;
+  }
+
+  .dropdown-select {
+    font-size: 15px;
+    padding: 0px;
+    border: none;
+    border-bottom: 2px solid var(--background-azul);
+    border-radius: 0px;
+    background: transparent;
+    color: var(--background-azul);
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .dropdown-options {
+    border-radius: 8px;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 20%;
+    background: white;
+    z-index: 10;
+    margin-top: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    max-height: 15rem;
+
+    @media (max-width: 480px) {
+      max-width: 100%;
+    }
+  }
+
+  .dropdown-option {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    color: var(--background-azul);
+    font-size: 14px;
+
+    &:hover {
+      background-color: #f8fafc;
+    }
+  }
+
+  .terms-container {
+    margin-top: 2rem;
+    display: flex;
+    align-items: flex-start;
+
+    @media (max-width: 480px) {
+      flex-direction: column;
     }
 
-    .buttons-container {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 2rem;
+    ::ng-deep .p-checkbox {
+      margin-top: 0.125rem;
+      margin-right: 0.75rem;
+      flex-shrink: 0;
 
-        .back-button {
-            margin-right: 1rem;
-        }
+      @media (max-width: 480px) {
+        margin-bottom: 0.5rem;
+      }
 
-        .payment-button {
-            flex-grow: 1;
-            max-width: 300px;
+      .p-checkbox-box {
+        border: 2px solid var(--background-azul);
+      }
 
-            ::ng-deep .p-button {
-                border-radius: 50px;
-                height: 50px;
-            }
-        }
+      .p-checkbox-box.p-highlight {
+        border-color: var(--background-azul);
+        background: var(--background-azul);
+      }
     }
+  }
+
+  .terms-text {
+    color: var(--background-azul);
+    font-weight: 500;
+  }
+
+  .terms-details {
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 400;
+    margin-top: 0.5rem;
+    line-height: 1.25rem;
+
+    @media (max-width: 768px) {
+      font-size: 0.8125rem;
+    }
+  }
+
+  ::ng-deep {
+    .payment-button {
+      margin: 10px 0 10px 0;
+      &.p-button {
+        width: 100%;
+        border-radius: 100px;
+        background-color: var(--p-primary-color);
+        border-color: #ff6b6b;
+        margin-top: -20px;
+        &.p-disabled,
+        &.payment-button-disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .p-button-label {
+          font-weight: 500;
+          font-size: 1rem;
+        }
+      }
+    }
+  }
+
+  .buttons-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+
+    .back-button {
+      margin-right: 1rem;
+    }
+
+    .payment-button {
+      flex-grow: 1;
+      max-width: 300px;
+
+      ::ng-deep .p-button {
+        border-radius: 50px;
+        height: 50px;
+      }
+    }
+  }
+}
+
+// ...existing styles...
+
+.button-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.ml-2 {
+  margin-left: 0.5rem;
+}
+
+// Make sure the spinner is visible
+:host ::ng-deep .payment-button .p-button-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+:host ::ng-deep .payment-button.p-disabled {
+  opacity: 0.6;
 }

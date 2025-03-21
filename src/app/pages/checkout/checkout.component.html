@@ -140,22 +140,33 @@
                 </span>
               </div>
             </div>
+            <!-- Points section -->
+            <br /><br />
+            <p>Acumulas {{ points }} puntos con este viaje</p>
+            <p-message
+              severity="secondary"
+              size="small"
+              icon="pi pi-exclamation-circle"
+              >Se genera un abono del 3% del importe del viaje en puntos a
+              descontar en futuras compras para aquellos viajeros de los que se
+              indique el DNI.</p-message
+            >
 
             <!-- Total section -->
             <div class="total-section">
-              <!-- Remove the separate discount row since it's now in the summary -->
               <div class="total">
-                <span>Total</span>
-                <span>{{ total | currencyFormat : "EUR" }}</span>
+                <span>TOTAL</span>
+                <span class="price">{{ total | currencyFormat : "EUR" }}</span>
               </div>
             </div>
-
             <!-- Flights info if selected -->
-                <app-flight-section
-                *ngIf="selectedFlight &&
-                !selectedFlight?.name?.toLowerCase()?.includes('sin ')"
-                [flight]="selectedFlight"
-              ></app-flight-section>
+            <app-flight-section
+              *ngIf="
+                selectedFlight &&
+                !selectedFlight?.name?.toLowerCase()?.includes('sin ')
+              "
+              [flight]="selectedFlight"
+            ></app-flight-section>
           </div>
         </div>
       </div>

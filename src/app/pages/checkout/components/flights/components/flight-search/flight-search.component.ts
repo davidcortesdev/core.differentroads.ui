@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { AmadeusService } from '../../../../../../core/services/amadeus.service';
 import {
@@ -23,6 +23,8 @@ interface Ciudad {
 })
 export class FlightSearchComponent implements OnInit {
   @Output() filteredFlightsChange = new EventEmitter<any[]>();
+  @Input() flights: Flight[] = [];
+  @Input() tourDestination: Ciudad = { nombre: '', codigo: '' };
 
   flightForm: FormGroup;
 
@@ -30,11 +32,8 @@ export class FlightSearchComponent implements OnInit {
   equipajeMano: boolean = false;
   equipajeBodega: boolean = false;
 
-  // Tour constants for flight legs and dates
-  tourOrigenConstante: Ciudad = {
-    nombre: 'Noruega - Oslo Gardemoen',
-    codigo: 'OSL',
-  };
+  // Tour constants for flight legs and dates - will be updated with Input
+  tourOrigenConstante: Ciudad = { nombre: '', codigo: '' };
   tourDestinoConstante: Ciudad = { nombre: 'Madrid', codigo: 'MAD' };
 
   // Fixed dates
@@ -103,6 +102,11 @@ export class FlightSearchComponent implements OnInit {
   }
 
   ngOnInit() {
+    // Update the tour origin from input or use default
+    if (this.tourDestination && this.tourDestination.codigo) {
+      this.tourOrigenConstante = this.tourDestination;
+    }
+
     // Se elimina la búsqueda automática al iniciar
 
     // Actualizar el tipo de viaje al cambiar en el formulario

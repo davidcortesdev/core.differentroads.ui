@@ -30,6 +30,7 @@
   <div *ngIf="showFlightSearch">
     <app-flight-search
       [flights]="flights"
+      [tourDestination]="tourDestination"
       (filteredFlightsChange)="onFilteredFlightsChange($event)"
     >
     </app-flight-search>

@@ -112,6 +112,7 @@ export class FlightItineraryComponent implements OnChanges {
       baseDate,
       segments[0].departureTime
     );
+
     for (const [index, seg] of segments.entries()) {
       let departure: Date;
       if (index === 0) {
@@ -126,6 +127,7 @@ export class FlightItineraryComponent implements OnChanges {
           departure.setDate(departure.getDate() + 1);
         }
       }
+
       let arrival = this.parseLocalDateTime(
         this.formatDate(departure),
         seg.arrivalTime
@@ -202,56 +204,66 @@ export class FlightItineraryComponent implements OnChanges {
     }
 
     const timelineItems = [];
-    let effectiveDepartureDate: Date;
+    let currentArrival: Date;
+
     try {
-      effectiveDepartureDate = new Date(baseDate + 'T00:00:00Z');
-      if (!this.isValidDate(effectiveDepartureDate)) {
-        console.warn('Invalid base date for timeline:', baseDate);
-        effectiveDepartureDate = new Date();
-      }
+      currentArrival = this.parseLocalDateTime(
+        baseDate,
+        segments[0].departureTime
+      );
     } catch (e) {
       console.warn('Error creating date for timeline:', e);
-      effectiveDepartureDate = new Date();
+      currentArrival = new Date();
     }
 
-    effectiveDepartureDate.setUTCHours(0, 0, 0, 0);
+    for (const [index, seg] of segments.entries()) {
+      if (!seg) continue;
 
-    for (const segment of segments) {
-      if (!segment) continue;
-
-      let departureTime = this.formatTime(segment.departureTime);
-      departureTime.setUTCFullYear(
-        effectiveDepartureDate.getUTCFullYear(),
-        effectiveDepartureDate.getUTCMonth(),
-        effectiveDepartureDate.getUTCDate()
-      );
-
-      let arrivalTime = this.formatTime(segment.arrivalTime);
-      arrivalTime.setUTCFullYear(
-        effectiveDepartureDate.getUTCFullYear(),
-        effectiveDepartureDate.getUTCMonth(),
-        effectiveDepartureDate.getUTCDate()
-      );
-
-      if (arrivalTime.getTime() < departureTime.getTime()) {
-        arrivalTime.setUTCDate(arrivalTime.getUTCDate() + 1);
-      } else if (segment.numNights && segment.numNights > 0) {
-        arrivalTime.setUTCDate(arrivalTime.getUTCDate() + segment.numNights);
+      let departure: Date;
+      if (index === 0) {
+        departure = this.parseLocalDateTime(baseDate, seg.departureTime);
+      } else {
+        const baseForDeparture = this.formatDate(currentArrival);
+        departure = this.parseLocalDateTime(
+          baseForDeparture,
+          seg.departureTime
+        );
+        if (departure < currentArrival) {
+          departure.setDate(departure.getDate() + 1);
+        }
       }
 
+      let arrival = this.parseLocalDateTime(
+        this.formatDate(departure),
+        seg.arrivalTime
+      );
+      if (arrival < departure) {
+        arrival.setDate(arrival.getDate() + 1);
+      } else if (seg.numNights > 0) {
+        arrival.setDate(arrival.getDate() + seg.numNights);
+      }
+
+      // Añadir evento de salida
       timelineItems.push({
-        departureCity: segment.departureCity || '',
-        departureIata: segment.departureIata || '',
-        departureDateTime: departureTime,
-        arrivalCity: segment.arrivalCity || '',
-        arrivalIata: segment.arrivalIata || '',
-        arrivalDateTime: arrivalTime,
-        icon: 'pi pi-plane',
-        color: '#007ad9',
+        departureCity: seg.departureCity,
+        departureIata: seg.departureIata,
+        departureDateTime: departure,
+        type: 'departure',
+        flightNumber: seg.flightNumber,
       });
 
-      effectiveDepartureDate = new Date(arrivalTime);
+      // Añadir evento de llegada
+      timelineItems.push({
+        arrivalCity: seg.arrivalCity,
+        arrivalIata: seg.arrivalIata,
+        arrivalDateTime: arrival,
+        type: 'arrival',
+        flightNumber: seg.flightNumber,
+      });
+
+      currentArrival = arrival;
     }
+
     return timelineItems;
   }
 

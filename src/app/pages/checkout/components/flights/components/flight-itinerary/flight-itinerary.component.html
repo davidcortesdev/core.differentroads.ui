@@ -3,6 +3,18 @@
     <!-- Iteramos sobre cada journey (outbound e inbound) -->
     <div class="journey-item" *ngFor="let journey of journeys; let i = index">
       <div class="journey-item-departure pr-2">
+        <span class="journey-item-departure-text">
+          <span class="direction-text">{{ i === 0 ? "IDA" : "VUELTA" }}</span>
+          <span class="route-text">
+            <strong>
+              {{ journey.segments[0].departureCity }} ({{
+                journey.departure.iata
+              }}) - {{ journey.segments[0].arrivalCity }} ({{
+                journey.arrival.iata
+              }})
+            </strong>
+          </span>
+        </span>
         <div>
           <span class="journey-item-departure-title">Salida:</span>
           <span class="journey-item-departure-country">
@@ -28,33 +40,46 @@
       <div class="journey-item-flight-info space-y-2">
         <!-- Cada journey tiene su overlay panel para mostrar el timeline -->
         <p-overlayPanel #op>
-          <p-timeline
-            [value]="journey.timelineData"
-            layout="vertical"
-            align="center"
-          >
+          <p>Detalle del vuelo</p>
+          <p-timeline [value]="journey.timelineData" align="left">
+            <ng-template #opposite let-item>
+              <i
+                [class]="
+                  item.type === 'departure' ? 'pi pi-send' : 'pi pi-map-marker'
+                "
+              ></i>
+            </ng-template>
             <ng-template let-item pTemplate="content">
-              <p>
-                <strong>Salida:</strong> {{ item.departureCity }} ({{
-                  item.departureIata
-                }}) -
+              <span *ngIf="item.type === 'departure'">
                 {{
                   isValidDate(item.departureDateTime)
-                    ? (item.departureDateTime
-                      | date : "dd-MM-yyyy HH:mm" : "UTC")
-                    : "--/--/---- --:--"
+                    ? (item.departureDateTime | date : "HH:mm" : "UTC")
+                    : "--:--"
                 }}
-              </p>
-              <p>
-                <strong>Llegada:</strong> {{ item.arrivalCity }} ({{
-                  item.arrivalIata
-                }}) -
+                {{ item.departureCity }} ({{ item.departureIata }})
+                <br />
+                {{
+                  isValidDate(item.departureDateTime)
+                    ? (item.departureDateTime | date : "dd-MM-yyyy" : "UTC")
+                    : "--/--/----"
+                }}
+                {{ item.flightNumber }}
+              </span>
+              <span *ngIf="item.type === 'arrival'">
                 {{
                   isValidDate(item.arrivalDateTime)
-                    ? (item.arrivalDateTime | date : "dd-MM-yyyy HH:mm" : "UTC")
-                    : "--/--/---- --:--"
+                    ? (item.arrivalDateTime | date : "HH:mm" : "UTC")
+                    : "--:--"
                 }}
-              </p>
+                {{ item.arrivalCity }} ({{ item.arrivalIata }})
+                <br />
+                {{
+                  isValidDate(item.arrivalDateTime)
+                    ? (item.arrivalDateTime | date : "dd-MM-yyyy" : "UTC")
+                    : "--/--/----"
+                }}
+                {{ item.flightNumber }}
+              </span>
             </ng-template>
           </p-timeline>
         </p-overlayPanel>
@@ -79,6 +104,9 @@
       </div>
 
       <div class="journey-item-departure pl-2">
+        <span class="journey-item-departure-text-invisible">{{
+          i === 0 ? "IDA" : "VUELTA"
+        }}</span>
         <div>
           <span class="journey-item-departure-title">Llegada:</span>
           <span class="journey-item-departure-country">

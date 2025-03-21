@@ -1,7 +1,10 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { AmadeusService } from '../../../../../../core/services/amadeus.service';
-import { FlightOffersParams, ITempFlightOffer } from '../../../../../../core/types/flight.types';
+import {
+  FlightOffersParams,
+  ITempFlightOffer,
+} from '../../../../../../core/types/flight.types';
 
 interface Ciudad {
   nombre: string;
@@ -12,17 +15,34 @@ interface Ciudad {
   selector: 'app-flight-search',
   standalone: false,
   templateUrl: './flight-search.component.html',
-  styleUrls: ['./flight-search.component.scss']
+  styleUrls: ['./flight-search.component.scss'],
 })
 export class FlightSearchComponent implements OnInit {
   @Output() filteredFlightsChange = new EventEmitter<any[]>();
-  
+
   flightForm: FormGroup;
-  
+
   tipoViaje: string = 'idaVuelta';
   equipajeMano: boolean = false;
   equipajeBodega: boolean = false;
-  
+
+  // Tour constants for flight legs and dates
+  tourOrigenConstante: Ciudad = {
+    nombre: 'Noruega - Oslo Gardemoen',
+    codigo: 'OSL',
+  };
+  tourDestinoConstante: Ciudad = { nombre: 'Madrid', codigo: 'MAD' };
+
+  // Fixed dates
+  fechaIdaConstante: Date = new Date('2025-04-03');
+  fechaRegresoConstante: Date = new Date('2025-04-10');
+
+  // Format dates for display
+  fechaIdaFormateada: string = this.formatDisplayDate(this.fechaIdaConstante);
+  fechaRegresoFormateada: string = this.formatDisplayDate(
+    this.fechaRegresoConstante
+  );
+
   ciudades: Ciudad[] = [
     { nombre: 'Madrid', codigo: 'MAD' },
     { nombre: 'Nueva York', codigo: 'NYC' },
@@ -30,112 +50,108 @@ export class FlightSearchComponent implements OnInit {
     { nombre: 'Casablanca', codigo: 'CMN' },
     { nombre: 'Sevilla', codigo: 'SVQ' },
     { nombre: 'Noruega - Oslo Gardemoen', codigo: 'OSL' },
-    { nombre: 'Sevilla - San Pablo', codigo: 'SVQ' }
+    { nombre: 'Sevilla - San Pablo', codigo: 'SVQ' },
   ];
 
   aerolineas: Ciudad[] = [
     { nombre: 'Todas', codigo: 'ALL' },
     { nombre: 'Royal Air Maroc', codigo: 'AT' },
-    { nombre: 'TAP Air Portugal', codigo: 'TP' }
+    { nombre: 'TAP Air Portugal', codigo: 'TP' },
   ];
-  
+
   escalaOptions = [
     { label: 'Directos', value: 'directos' },
     { label: '1 Escala', value: 'unaEscala' },
-    { label: '2+ Escalas', value: 'multiples' }
+    { label: '2+ Escalas', value: 'multiples' },
   ];
-  
-  aerolineaOptions = this.aerolineas.map(a => ({
+
+  aerolineaOptions = this.aerolineas.map((a) => ({
     label: a.nombre,
-    value: a.codigo
+    value: a.codigo,
   }));
-  
-  fechaIda: Date = new Date('2025-04-03');
-  fechaRegreso: Date = new Date('2025-04-10');
-  
+
   flightOffers: ITempFlightOffer[] = [];
   filteredOffers: ITempFlightOffer[] = [];
   isLoading: boolean = false;
-  
-  constructor(
-    private fb: FormBuilder,
-    private amadeusService: AmadeusService
-  ) {
+  searchPerformed: boolean = false;
+
+  constructor(private fb: FormBuilder, private amadeusService: AmadeusService) {
     this.flightForm = this.fb.group({
       origen: ['Madrid'],
-      destino: ['Nueva York'],
-      fechaIda: [this.fechaIda],
-      fechaRegreso: [this.fechaRegreso],
+      // We remove date fields from the form since they're fixed
       tipoViaje: [this.tipoViaje],
       equipajeMano: [this.equipajeMano],
       equipajeBodega: [this.equipajeBodega],
       adults: [1],
       aerolinea: [null],
-      escala: [null]
+      escala: [null],
     });
   }
-  
+
   ngOnInit() {
-    // Al iniciar, buscar vuelos con los valores por defecto
-    this.getFlightOffers();
-    
+    // Remove the automatic search on initialization
+
     // Actualizar el tipo de viaje al cambiar en el formulario
-    this.flightForm.get('tipoViaje')?.valueChanges.subscribe(value => {
+    this.flightForm.get('tipoViaje')?.valueChanges.subscribe((value) => {
       this.tipoViaje = value;
     });
-    
+
     // Actualizar los checkboxes al cambiar en el formulario
-    this.flightForm.get('equipajeMano')?.valueChanges.subscribe(value => {
+    this.flightForm.get('equipajeMano')?.valueChanges.subscribe((value) => {
       this.equipajeMano = value;
     });
-    
-    this.flightForm.get('equipajeBodega')?.valueChanges.subscribe(value => {
+
+    this.flightForm.get('equipajeBodega')?.valueChanges.subscribe((value) => {
       this.equipajeBodega = value;
     });
   }
-  
+
   buscar() {
-    console.log('Búsqueda iniciada con los siguientes parámetros:', this.flightForm.value);
+    console.log(
+      'Búsqueda iniciada con los siguientes parámetros:',
+      this.flightForm.value
+    );
+    this.searchPerformed = true; // Set flag to true when search is performed
     this.getFlightOffers();
   }
-  
+
   getFlightOffers() {
     this.isLoading = true;
-    
-    // Obtener los códigos de origen y destino
+
+    // Obtener el código de origen
     const formValue = this.flightForm.value;
-    const originCode = typeof formValue.origen === 'string' 
-      ? this.getCityCode(formValue.origen) 
-      : formValue.origen.codigo;
-      
-    const destinationCode = typeof formValue.destino === 'string'
-      ? this.getCityCode(formValue.destino)
-      : formValue.destino.codigo;
-    
-    // Formatear la fecha como YYYY-MM-DD
-    const departureDate = this.formatDate(formValue.fechaIda);
-    
+    const originCode =
+      typeof formValue.origen === 'string'
+        ? this.getCityCode(formValue.origen)
+        : formValue.origen.codigo;
+
+    // Usar el código de destino fijo del tour
+    const destinationCode = this.tourOrigenConstante.codigo;
+
+    // Usar las fechas constantes
+    const departureDate = this.formatDate(this.fechaIdaConstante);
+
     // Parámetros para la búsqueda
     const searchParams: FlightOffersParams = {
       originLocationCode: originCode,
       destinationLocationCode: destinationCode,
       departureDate: departureDate,
       adults: formValue.adults || 1,
-      max: 10 // Número máximo de resultados
+      max: 5, // Número máximo de resultados
     };
-    
+
     // Si es ida y vuelta, añadir la fecha de regreso
     if (formValue.tipoViaje === 'idaVuelta') {
-      searchParams.returnDate = this.formatDate(formValue.fechaRegreso);
+      searchParams.returnDate = this.formatDate(this.fechaRegresoConstante);
     }
-    
+
     // Si se seleccionó una aerolínea específica
     if (formValue.aerolinea && formValue.aerolinea.codigo !== 'ALL') {
       searchParams.includedAirlineCodes = formValue.aerolinea.codigo;
     }
-    
+
     console.log('Buscando vuelos con parámetros:', searchParams);
-    
+
     this.amadeusService.getFlightOffers(searchParams).subscribe({
       next: (offers) => {
         this.isLoading = false;
@@ -149,63 +165,81 @@ export class FlightSearchComponent implements OnInit {
         this.flightOffers = [];
         this.filteredOffers = [];
         this.filteredFlightsChange.emit([]);
-      }
+      },
     });
   }
-  
+
   getCityCode(cityName: string): string {
-    const city = this.ciudades.find(c => c.nombre.toLowerCase() === cityName.toLowerCase());
+    const city = this.ciudades.find(
+      (c) => c.nombre.toLowerCase() === cityName.toLowerCase()
+    );
     return city ? city.codigo : 'MAD'; // Default to Madrid if not found
   }
-  
+
   formatDate(date: Date): string {
     const d = new Date(date);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+      2,
+      '0'
+    )}-${String(d.getDate()).padStart(2, '0')}`;
   }
-  
+
+  // Helper method to format dates for display
+  formatDisplayDate(date: Date): string {
+    return date.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  }
+
   filterOffers() {
     const formValue = this.flightForm.value;
-    
-    this.filteredOffers = this.flightOffers.filter(offer => {
+
+    this.filteredOffers = this.flightOffers.filter((offer) => {
       const offerData = offer.offerData;
-      
+
       // Filtro por equipaje
       let matchesHandBaggage = true;
       let matchesCheckedBaggage = true;
-      
+
       if (formValue.equipajeMano) {
         // Verificar si incluye equipaje de mano
-        const hasCabinBag = offerData.travelerPricings.some((pricing: any) => 
-          pricing.fareDetailsBySegment.some((segment: any) => 
-            segment.includedCabinBags && segment.includedCabinBags.quantity > 0
+        const hasCabinBag = offerData.travelerPricings.some((pricing: any) =>
+          pricing.fareDetailsBySegment.some(
+            (segment: any) =>
+              segment.includedCabinBags &&
+              segment.includedCabinBags.quantity > 0
           )
         );
         matchesHandBaggage = hasCabinBag;
       }
-      
+
       if (formValue.equipajeBodega) {
         // Verificar si incluye equipaje facturado
-        const hasCheckedBag = offerData.travelerPricings.some((pricing: any) => 
-          pricing.fareDetailsBySegment.some((segment: any) => 
-            segment.includedCheckedBags && segment.includedCheckedBags.quantity > 0
+        const hasCheckedBag = offerData.travelerPricings.some((pricing: any) =>
+          pricing.fareDetailsBySegment.some(
+            (segment: any) =>
+              segment.includedCheckedBags &&
+              segment.includedCheckedBags.quantity > 0
           )
         );
         matchesCheckedBaggage = hasCheckedBag;
       }
-      
+
       // Filtro por aerolínea (si se seleccionó una específica)
       let matchesAirline = true;
       if (formValue.aerolinea && formValue.aerolinea.codigo !== 'ALL') {
         const airlineCode = formValue.aerolinea.codigo;
         matchesAirline = offerData.validatingAirlineCodes.includes(airlineCode);
       }
-      
+
       // Filtro por número de escalas
       let matchesStops = true;
       if (formValue.escala) {
         const outboundStops = offerData.itineraries[0].segments.length - 1;
-        
-        switch(formValue.escala) {
+
+        switch (formValue.escala) {
           case 'directos':
             matchesStops = outboundStops === 0;
             break;
@@ -217,126 +251,155 @@ export class FlightSearchComponent implements OnInit {
             break;
         }
       }
-      
-      return matchesHandBaggage && matchesCheckedBaggage && matchesAirline && matchesStops;
+
+      return (
+        matchesHandBaggage &&
+        matchesCheckedBaggage &&
+        matchesAirline &&
+        matchesStops
+      );
     });
-    
+
     // Transformar datos para el componente padre
-    const transformedOffers = this.transformOffersForParent(this.filteredOffers);
+    const transformedOffers = this.transformOffersForParent(
+      this.filteredOffers
+    );
     this.filteredFlightsChange.emit(transformedOffers);
-    
+
     console.log('Ofertas filtradas:', this.filteredOffers);
   }
-  
+
   transformOffersForParent(offers: ITempFlightOffer[]): any[] {
-    return offers.map(offer => {
+    return offers.map((offer) => {
       const offerData = offer.offerData;
-      
+
       // Para simplificar, tomamos el primer itinerario y segmento
       const outbound = offerData.itineraries[0];
-      const inbound = offerData.itineraries.length > 1 ? offerData.itineraries[1] : null;
-      
+      const inbound =
+        offerData.itineraries.length > 1 ? offerData.itineraries[1] : null;
+
       // Adaptamos la estructura para que sea compatible con el componente padre
       return {
         externalID: offerData.id,
-        name: `${offerData.validatingAirlineCodes[0]} - ${outbound?.segments[0]?.departure?.iataCode} to ${outbound?.segments[outbound.segments.length-1]?.arrival?.iataCode}`,
+        name: `${offerData.validatingAirlineCodes[0]} - ${
+          outbound?.segments[0]?.departure?.iataCode
+        } to ${
+          outbound?.segments[outbound.segments.length - 1]?.arrival?.iataCode
+        }`,
         outbound: {
-          origin: { 
-            name: outbound?.segments[0]?.departure?.iataCode, 
-            code: outbound?.segments[0]?.departure?.iataCode 
+          origin: {
+            name: outbound?.segments[0]?.departure?.iataCode,
+            code: outbound?.segments[0]?.departure?.iataCode,
           },
-          destination: { 
-            name: outbound?.segments[outbound.segments.length-1]?.arrival?.iataCode, 
-            code: outbound?.segments[outbound.segments.length-1]?.arrival?.iataCode 
+          destination: {
+            name: outbound?.segments[outbound.segments.length - 1]?.arrival
+              ?.iataCode,
+            code: outbound?.segments[outbound.segments.length - 1]?.arrival
+              ?.iataCode,
           },
           departureDate: outbound?.segments[0]?.departure?.at,
-          arrivalDate: outbound?.segments[outbound.segments.length-1]?.arrival?.at,
+          arrivalDate:
+            outbound?.segments[outbound.segments.length - 1]?.arrival?.at,
           airline: outbound?.segments[0]?.carrierCode,
           flightNumber: outbound?.segments[0]?.number,
           duration: outbound?.duration,
           stops: outbound?.segments.length - 1,
           prices: offerData.travelerPricings.map((tp: any) => ({
             age_group_name: tp.travelerType === 'ADULT' ? 'Adultos' : 'Niños',
-            value: parseFloat(tp.price.total) / 2 // Dividir el precio total entre ida y vuelta
-          }))
+            value: parseFloat(tp.price.total) / 2, // Dividir el precio total entre ida y vuelta
+          })),
         },
-        inbound: inbound ? {
-          origin: { 
-            name: inbound.segments[0]?.departure?.iataCode, 
-            code: inbound.segments[0]?.departure?.iataCode 
-          },
-          destination: { 
-            name: inbound.segments[inbound.segments.length-1]?.arrival?.iataCode, 
-            code: inbound.segments[inbound.segments.length-1]?.arrival?.iataCode 
-          },
-          departureDate: inbound.segments[0]?.departure?.at,
-          arrivalDate: inbound.segments[inbound.segments.length-1]?.arrival?.at,
-          airline: inbound.segments[0]?.carrierCode,
-          flightNumber: inbound.segments[0]?.number,
-          duration: inbound.duration,
-          stops: inbound.segments.length - 1,
-          prices: offerData.travelerPricings.map((tp: any) => ({
-            age_group_name: tp.travelerType === 'ADULT' ? 'Adultos' : 'Niños',
-            value: parseFloat(tp.price.total) / 2 // Dividir el precio total entre ida y vuelta
-          }))
-        } : {
-          // Si es solo ida, crear datos vacíos para inbound
-          origin: { name: '', code: '' },
-          destination: { name: '', code: '' },
-          departureDate: '',
-          arrivalDate: '',
-          airline: '',
-          flightNumber: '',
-          duration: '',
-          stops: 0,
-          prices: []
-        },
+        inbound: inbound
+          ? {
+              origin: {
+                name: inbound.segments[0]?.departure?.iataCode,
+                code: inbound.segments[0]?.departure?.iataCode,
+              },
+              destination: {
+                name: inbound.segments[inbound.segments.length - 1]?.arrival
+                  ?.iataCode,
+                code: inbound.segments[inbound.segments.length - 1]?.arrival
+                  ?.iataCode,
+              },
+              departureDate: inbound.segments[0]?.departure?.at,
+              arrivalDate:
+                inbound.segments[inbound.segments.length - 1]?.arrival?.at,
+              airline: inbound.segments[0]?.carrierCode,
+              flightNumber: inbound.segments[0]?.number,
+              duration: inbound.duration,
+              stops: inbound.segments.length - 1,
+              prices: offerData.travelerPricings.map((tp: any) => ({
+                age_group_name:
+                  tp.travelerType === 'ADULT' ? 'Adultos' : 'Niños',
+                value: parseFloat(tp.price.total) / 2, // Dividir el precio total entre ida y vuelta
+              })),
+            }
+          : {
+              // Si es solo ida, crear datos vacíos para inbound
+              origin: { name: '', code: '' },
+              destination: { name: '', code: '' },
+              departureDate: '',
+              arrivalDate: '',
+              airline: '',
+              flightNumber: '',
+              duration: '',
+              stops: 0,
+              prices: [],
+            },
         price: parseFloat(offerData.price.total),
-        hasHandBaggage: offerData.travelerPricings.some((tp: any) => 
-          tp.fareDetailsBySegment.some((seg: any) => 
-            seg.includedCabinBags && seg.includedCabinBags.quantity > 0)
+        hasHandBaggage: offerData.travelerPricings.some((tp: any) =>
+          tp.fareDetailsBySegment.some(
+            (seg: any) =>
+              seg.includedCabinBags && seg.includedCabinBags.quantity > 0
+          )
         ),
-        hasCheckedBaggage: offerData.travelerPricings.some((tp: any) => 
-          tp.fareDetailsBySegment.some((seg: any) => 
-            seg.includedCheckedBags && seg.includedCheckedBags.quantity > 0)
-        )
+        hasCheckedBaggage: offerData.travelerPricings.some((tp: any) =>
+          tp.fareDetailsBySegment.some(
+            (seg: any) =>
+              seg.includedCheckedBags && seg.includedCheckedBags.quantity > 0
+          )
+        ),
       };
     });
   }
-  
+
   // Formatear la duración (convertir de formato PT2H30M a 2h 30m)
   formatDuration(duration: string): string {
     if (!duration) return '';
-    
+
     const hours = duration.match(/(\d+)H/);
     const minutes = duration.match(/(\d+)M/);
-    
+
     let formatted = '';
     if (hours) formatted += `${hours[1]}h `;
     if (minutes) formatted += `${minutes[1]}m`;
-    
+
     return formatted.trim();
   }
 
   // Obtener el nombre de la aerolínea a partir del código
   getAirlineName(code: string): string {
-    const airline = this.aerolineas.find(a => a.codigo === code);
+    const airline = this.aerolineas.find((a) => a.codigo === code);
     return airline ? airline.nombre : code;
   }
 
   // Verificar si un vuelo incluye equipaje de mano
   hasHandBaggage(offer: ITempFlightOffer): boolean {
-    return offer.offerData.travelerPricings.some((tp: any) => 
-      tp.fareDetailsBySegment.some((seg: any) => 
-        seg.includedCabinBags && seg.includedCabinBags.quantity > 0)
+    return offer.offerData.travelerPricings.some((tp: any) =>
+      tp.fareDetailsBySegment.some(
+        (seg: any) =>
+          seg.includedCabinBags && seg.includedCabinBags.quantity > 0
+      )
     );
   }
 
   // Verificar si un vuelo incluye equipaje facturado
   hasCheckedBaggage(offer: ITempFlightOffer): boolean {
-    return offer.offerData.travelerPricings.some((tp: any) => 
-      tp.fareDetailsBySegment.some((seg: any) => 
-        seg.includedCheckedBags && seg.includedCheckedBags.quantity > 0)
+    return offer.offerData.travelerPricings.some((tp: any) =>
+      tp.fareDetailsBySegment.some(
+        (seg: any) =>
+          seg.includedCheckedBags && seg.includedCheckedBags.quantity > 0
+      )
     );
   }
 

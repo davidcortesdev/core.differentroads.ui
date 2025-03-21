@@ -4,12 +4,7 @@
     <div class="step-description">Vuelos disponibles</div>
   </div>
 
-  <!-- Agregar componente de búsqueda -->
-  <app-flight-search 
-    [flights]="flights" 
-    (filteredFlightsChange)="onFilteredFlightsChange($event)">
-  </app-flight-search>
-
+  <!-- Display original flights -->
   <div *ngFor="let flight of filteredFlights">
     <app-flight-itinerary
       [flight]="flight"
@@ -17,5 +12,26 @@
       [isFlightSelected]="isFlightSelected.bind(this)"
     >
     </app-flight-itinerary>
+  </div>
+
+  <!-- Add the button to toggle flight search -->
+  <div class="flight-search-toggle">
+    <p-button
+      label="Ver otras opciones de vuelos"
+      styleClass="p-button-outlined p-button-secondary"
+      (click)="toggleFlightSearch()"
+      [icon]="showFlightSearch ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+      iconPos="right"
+    >
+    </p-button>
+  </div>
+
+  <!-- Conditionally display flight search -->
+  <div *ngIf="showFlightSearch">
+    <app-flight-search
+      [flights]="flights"
+      (filteredFlightsChange)="onFilteredFlightsChange($event)"
+    >
+    </app-flight-search>
   </div>
 </div>

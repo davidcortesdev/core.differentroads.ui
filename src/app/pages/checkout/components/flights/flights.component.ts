@@ -17,7 +17,9 @@ export class FlightsComponent implements OnInit {
   selectedFlight: Flight | null = null;
   flights: Flight[] = [];
   filteredFlights: Flight[] = [];
+  searchedFlights: Flight[] = []; // New property to store search results
   flightlessOption: Flight | null = null;
+  showFlightSearch: boolean = false; // Add this property
 
   constructor(
     private periodsService: PeriodsService,
@@ -68,8 +70,7 @@ export class FlightsComponent implements OnInit {
   // Maneja los cambios en los vuelos filtrados desde el componente de búsqueda
   onFilteredFlightsChange(mockFlights: any[]): void {
     // Aquí adaptas los datos mockeados al formato de Flight que espera tu componente
-    // Esta es una implementación básica, deberás ajustarla según tus modelos
-    this.filteredFlights = mockFlights.map(mockFlight => {
+    this.searchedFlights = mockFlights.map((mockFlight) => {
       // Convertir el MockFlight a Flight
       const flight: any = {
         externalID: mockFlight.id,
@@ -77,16 +78,16 @@ export class FlightsComponent implements OnInit {
         outbound: {
           ...mockFlight.outbound,
           // Asegúrate de mapear correctamente a la estructura que espera el componente flight-itinerary
-          prices: mockFlight.outbound.prices
+          prices: mockFlight.outbound.prices,
         },
         inbound: {
           ...mockFlight.inbound,
           // Asegúrate de mapear correctamente a la estructura que espera el componente flight-itinerary
-          prices: mockFlight.inbound.prices
+          prices: mockFlight.inbound.prices,
         },
         price: mockFlight.price,
         hasHandBaggage: mockFlight.hasHandBaggage,
-        hasCheckedBaggage: mockFlight.hasCheckedBaggage
+        hasCheckedBaggage: mockFlight.hasCheckedBaggage,
       };
 
       return {
@@ -136,5 +137,10 @@ export class FlightsComponent implements OnInit {
   // Verifica si un vuelo está seleccionado
   isFlightSelected(flight: any): boolean {
     return this.selectedFlight?.externalID === flight.externalID;
+  }
+
+  // Add this method to toggle flight search visibility
+  toggleFlightSearch(): void {
+    this.showFlightSearch = !this.showFlightSearch;
   }
 }

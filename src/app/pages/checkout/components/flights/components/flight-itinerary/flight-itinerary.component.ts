@@ -50,7 +50,7 @@ export class FlightItineraryComponent implements OnChanges {
     }
   }
 
-  // Formatea la hora para el pipe `date`
+  // Método de HEAD para formatear la hora para el pipe `date`
   formatTime(timeString: string): Date {
     if (!timeString) return new Date();
 
@@ -79,74 +79,71 @@ export class FlightItineraryComponent implements OnChanges {
     }
   }
 
-  // Calcula la duración del vuelo para un segmento
-  calculateFlightDuration(segment: any): string {
-    const departure = this.formatTime(segment.departureTime);
-    const arrival = this.formatTime(segment.arrivalTime);
-    if (arrival < departure) {
-      arrival.setDate(arrival.getDate() + 1); // Manejo de llegada al día siguiente
-    }
-    const duration = (arrival.getTime() - departure.getTime()) / (1000 * 60); // en minutos
-    const hours = Math.floor(duration / 60);
-    const minutes = Math.floor(duration % 60);
-    return `${hours}h ${minutes}m`;
+  // Agregamos este helper (tomado de origin/main) ya que se invoca en otros métodos.
+  private parseLocalDateTime(dateStr: string, timeStr: string): Date {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const [hour, minute, second] = timeStr.split(':').map(Number);
+    return new Date(year, month - 1, day, hour, minute, second);
   }
 
-  getSegmentsArrivalDate(baseDate: string | undefined, segments: any[]): Date {
-    if (!segments || segments.length === 0) {
-      return new Date();
-    }
+  /**
+   * Retorna la fecha en formato "YYYY-MM-DD" a partir de un objeto Date.
+   */
+  private formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = ('0' + (date.getMonth() + 1)).slice(-2);
+    const day = ('0' + date.getDate()).slice(-2);
+    return `${year}-${month}-${day}`;
+  }
 
-    let finalDate: Date;
-    try {
-      if (baseDate) {
-        finalDate = new Date(baseDate + 'T00:00:00Z');
-        // Check if date is valid
-        if (!this.isValidDate(finalDate)) {
-          console.warn('Invalid base date:', baseDate);
-          finalDate = new Date();
-        }
+  /**
+   * Para el primer segmento, combina la fecha base y la hora de salida.
+   */
+  private computeDepartureDate(baseDate: string, segment: any): Date {
+    return this.parseLocalDateTime(baseDate, segment.departureTime);
+  }
+
+  /**
+   * Recorre los segmentos y calcula la fecha/hora de llegada final.
+   * Implementación de HEAD
+   */
+  getSegmentsArrivalDate(baseDate: string, segments: any[]): Date {
+    let currentArrival = this.parseLocalDateTime(
+      baseDate,
+      segments[0].departureTime
+    );
+    for (const [index, seg] of segments.entries()) {
+      let departure: Date;
+      if (index === 0) {
+        departure = this.parseLocalDateTime(baseDate, seg.departureTime);
       } else {
-        finalDate = new Date();
+        const baseForDeparture = this.formatDate(currentArrival);
+        departure = this.parseLocalDateTime(
+          baseForDeparture,
+          seg.departureTime
+        );
+        if (departure < currentArrival) {
+          departure.setDate(departure.getDate() + 1);
+        }
       }
-    } catch (e) {
-      console.warn('Error parsing base date:', e);
-      finalDate = new Date();
-    }
-
-    finalDate.setUTCHours(0, 0, 0, 0);
-    let currentDate = new Date(finalDate);
-
-    for (const segment of segments) {
-      if (!segment) continue;
-
-      const departureTime = this.formatTime(segment.departureTime);
-      const arrivalTime = this.formatTime(segment.arrivalTime);
-
-      departureTime.setUTCFullYear(
-        currentDate.getUTCFullYear(),
-        currentDate.getUTCMonth(),
-        currentDate.getUTCDate()
+      let arrival = this.parseLocalDateTime(
+        this.formatDate(departure),
+        seg.arrivalTime
       );
-
-      arrivalTime.setUTCFullYear(
-        currentDate.getUTCFullYear(),
-        currentDate.getUTCMonth(),
-        currentDate.getUTCDate()
-      );
-
-      if (arrivalTime.getTime() < departureTime.getTime()) {
-        arrivalTime.setUTCDate(arrivalTime.getUTCDate() + 1);
-      } else if (segment.numNights && segment.numNights > 0) {
-        arrivalTime.setUTCDate(arrivalTime.getUTCDate() + segment.numNights);
+      if (arrival < departure) {
+        arrival.setDate(arrival.getDate() + 1);
+      } else if (seg.numNights > 0) {
+        arrival.setDate(arrival.getDate() + seg.numNights);
       }
-
-      currentDate = new Date(arrivalTime);
+      currentArrival = arrival;
     }
-
-    return currentDate;
+    return currentArrival;
   }
 
+  /**
+   * Calcula el tiempo total del viaje en formato "Xh Ym" usando la fecha/hora
+   * de salida del primer segmento y la fecha/hora de llegada final.
+   */
   getTotalDuration(isOutbound: boolean): string {
     const journey = isOutbound ? this.flight?.outbound : this.flight?.inbound;
     const segments = journey?.segments;
@@ -196,8 +193,8 @@ export class FlightItineraryComponent implements OnChanges {
   }
 
   /**
-   * Nuevo método para generar el timeline con fecha, hora y ciudades.
-   * Recorre los segmentos y calcula para cada uno la fecha/hora de salida y llegada.
+   * Genera los datos del timeline de cada segmento combinando fecha y hora,
+   * usando la misma lógica de getSegmentsArrivalDate.
    */
   getTimelineData(baseDate: string, segments: any[]): any[] {
     if (!baseDate || !segments || segments.length === 0) {
@@ -205,20 +202,15 @@ export class FlightItineraryComponent implements OnChanges {
     }
 
     const timelineItems = [];
-
-    // Create a valid date even if baseDate is problematic
     let effectiveDepartureDate: Date;
     try {
       effectiveDepartureDate = new Date(baseDate + 'T00:00:00Z');
-      // Check if date is valid
       if (!this.isValidDate(effectiveDepartureDate)) {
         console.warn('Invalid base date for timeline:', baseDate);
-        // Use current date as fallback
         effectiveDepartureDate = new Date();
       }
     } catch (e) {
       console.warn('Error creating date for timeline:', e);
-      // Use current date as fallback
       effectiveDepartureDate = new Date();
     }
 
@@ -227,7 +219,6 @@ export class FlightItineraryComponent implements OnChanges {
     for (const segment of segments) {
       if (!segment) continue;
 
-      // Calcular la hora de salida
       let departureTime = this.formatTime(segment.departureTime);
       departureTime.setUTCFullYear(
         effectiveDepartureDate.getUTCFullYear(),
@@ -235,7 +226,6 @@ export class FlightItineraryComponent implements OnChanges {
         effectiveDepartureDate.getUTCDate()
       );
 
-      // Calcular la hora de llegada
       let arrivalTime = this.formatTime(segment.arrivalTime);
       arrivalTime.setUTCFullYear(
         effectiveDepartureDate.getUTCFullYear(),
@@ -260,7 +250,6 @@ export class FlightItineraryComponent implements OnChanges {
         color: '#007ad9',
       });
 
-      // Para el siguiente segmento, la fecha de salida será la llegada actual
       effectiveDepartureDate = new Date(arrivalTime);
     }
     return timelineItems;
@@ -290,7 +279,6 @@ export class FlightItineraryComponent implements OnChanges {
 
     const journeyData = this.flight[type];
 
-    // Early return if journey doesn't exist or has no segments
     if (
       !journeyData ||
       !journeyData.segments ||
@@ -299,14 +287,10 @@ export class FlightItineraryComponent implements OnChanges {
       return null;
     }
 
-    // For inbound journey, make additional checks to ensure valid data
     if (type === 'inbound') {
-      // If date is empty or segments is empty, skip this journey
       if (!journeyData.date || journeyData.segments.length === 0) {
         return null;
       }
-
-      // Additional check to see if it's a "dummy" inbound (like our "No return flight")
       if (journeyData.name === 'No return flight') {
         return null;
       }
@@ -320,21 +304,18 @@ export class FlightItineraryComponent implements OnChanges {
 
     if (!departureSegment || !arrivalSegment) return null;
 
-    // Ensure we have a valid date string before creating Date objects
     let journeyDate: Date;
     try {
       journeyDate = new Date(journeyData.date);
-      // Check if date is valid
       if (!this.isValidDate(journeyDate)) {
         console.warn(`Invalid date for ${type} journey:`, journeyData.date);
-        journeyDate = new Date(); // Use current date as fallback
+        journeyDate = new Date();
       }
     } catch (e) {
       console.warn(`Error creating date for ${type} journey:`, e);
-      journeyDate = new Date(); // Use current date as fallback
+      journeyDate = new Date();
     }
 
-    // Datos de salida
     let departureTime: Date;
     try {
       departureTime = this.formatTime(departureSegment.departureTime);
@@ -343,11 +324,11 @@ export class FlightItineraryComponent implements OnChanges {
           `Invalid departure time for ${type} journey:`,
           departureSegment.departureTime
         );
-        departureTime = new Date(); // Use current time as fallback
+        departureTime = new Date();
       }
     } catch (e) {
       console.warn(`Error creating departure time for ${type} journey:`, e);
-      departureTime = new Date(); // Use current time as fallback
+      departureTime = new Date();
     }
 
     const departure = {
@@ -356,18 +337,16 @@ export class FlightItineraryComponent implements OnChanges {
       date: journeyDate,
     };
 
-    // Datos de llegada - handle potential errors
     let arrivalDate: Date;
     try {
       arrivalDate = this.getSegmentsArrivalDate(journeyData.date, segments);
-      // Check if date is valid
       if (!this.isValidDate(arrivalDate)) {
         console.warn(`Invalid arrival date for ${type} journey`);
-        arrivalDate = new Date(); // Use current date as fallback
+        arrivalDate = new Date();
       }
     } catch (e) {
       console.warn(`Error calculating arrival date for ${type} journey:`, e);
-      arrivalDate = new Date(); // Use current date as fallback
+      arrivalDate = new Date();
     }
 
     const arrival = {
@@ -385,7 +364,6 @@ export class FlightItineraryComponent implements OnChanges {
         : stops + ' escalas';
     const airlineName = departureSegment.airline?.name || '';
 
-    // Safely calculate duration
     let totalDuration: string;
     try {
       totalDuration = this.getTotalDuration(type === 'outbound');
@@ -397,7 +375,6 @@ export class FlightItineraryComponent implements OnChanges {
       totalDuration = '';
     }
 
-    // Safely generate timeline data
     let timelineData: any[];
     try {
       timelineData = journeyData.date
@@ -420,8 +397,10 @@ export class FlightItineraryComponent implements OnChanges {
     };
   }
 
-  // New helper method to validate dates
+  // Nuevo método helper para validar fechas
   isValidDate(date: any): boolean {
     return date instanceof Date && !isNaN(date.getTime());
   }
+
+  // ...existing code if any...
 }

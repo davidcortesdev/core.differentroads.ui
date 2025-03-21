@@ -20,7 +20,7 @@ export class RedsysService {
     const baseUrl = window.location.origin;
 
     const obj = {
-      amount: price,
+      amount: price * 100,
       orderReference: publicID,
       merchantName: 'Different Test',
       merchantCode: this.REDSYS_FUC,

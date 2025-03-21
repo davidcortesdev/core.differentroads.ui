@@ -56,17 +56,11 @@
                   *ngIf="orderDetails && prices"
                   [orderDetails]="orderDetails"
                 ></app-flights>
-                <div class="flight">
+                <div class="flight-buttons">
                   <p-button
-                    label="Regresar"
-                    severity="secondary"
-                    icon="pi pi-arrow-left"
-                    (onClick)="activateCallback(1)"
-                  />
-                  <p-button
-                    class="whith-flight"
+                    class="without-flight"
                     *ngIf="flightlessOption"
-                    label="Continuar sin vuelos"
+                    label="Lo quiero sin vuelos"
                     (onClick)="
                       selectFlightlessAndContinue() &&
                         nextStep(3) &&
@@ -74,6 +68,7 @@
                     "
                   ></p-button>
                   <p-button
+                    class="continue-button"
                     label="Continuar"
                     icon="pi pi-arrow-right"
                     iconPos="right"
@@ -91,12 +86,6 @@
                 <app-travelers></app-travelers>
                 <div class="flex pt-6 justify-between">
                   <p-button
-                    label="Regresar"
-                    severity="secondary"
-                    icon="pi pi-arrow-left"
-                    (onClick)="activateCallback(2)"
-                  />
-                  <p-button
                     label="Continuar"
                     icon="pi pi-arrow-right"
                     iconPos="right"
@@ -110,6 +99,7 @@
                 <app-payment
                   [totalPrice]="total"
                   [processBooking]="processBooking.bind(this)"
+                  [departureDate]="periodData.dayOne || null"
                   (goBackEvent)="activateCallback(3)"
                 ></app-payment>
                 <!-- Remove the separate button row since it's now in the payment component -->

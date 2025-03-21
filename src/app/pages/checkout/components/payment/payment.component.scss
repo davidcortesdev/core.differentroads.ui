@@ -393,192 +393,6 @@
       }
     }
   }
-
-  /* Styles for travelers points section */
-  .travelers-points-section {
-    margin: 1.5rem 0;
-    border: 1px solid #f0f0f0;
-    border-radius: 0.5rem;
-    overflow: hidden;
-
-    .travelers-list {
-      padding: 0.5rem 0;
-    }
-
-    .traveler-item {
-      padding: 0.75rem 1rem;
-      border-bottom: 1px solid #f0f0f0;
-      transition: background-color 0.2s;
-
-      &:hover {
-        background-color: #f9f9f9;
-      }
-
-      &:last-child {
-        border-bottom: none;
-      }
-    }
-
-    .traveler-row {
-      display: flex;
-      align-items: center;
-    }
-
-    .checkbox-container {
-      min-width: 2.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 0.75rem;
-    }
-
-    .checkbox-placeholder {
-      width: 1.25rem;
-      height: 1.25rem;
-    }
-
-    .traveler-info {
-      display: flex;
-      flex-wrap: wrap;
-      width: 100%;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .traveler-name {
-      font-weight: 500;
-      margin-right: 1rem;
-      color: var(--background-azul);
-    }
-
-    .points-badge {
-      display: inline-block;
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.875rem;
-    }
-
-    .points-label {
-      color: #2196f3;
-      font-weight: 500;
-    }
-
-    .points-redeemed-label {
-      color: #4caf50;
-      font-weight: 500;
-    }
-
-    .loading-points {
-      color: #999;
-      font-style: italic;
-      font-size: 0.9rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-  }
-
-  /* Ensure PrimeNG checkbox is visible and interactive */
-  :host ::ng-deep .p-checkbox {
-    display: block !important;
-    opacity: 1 !important;
-
-    .p-checkbox-box {
-      width: 1.25rem !important;
-      height: 1.25rem !important;
-      border: 2px solid var(--background-azul) !important;
-      transition: all 0.2s !important;
-    }
-
-    .p-checkbox-box.p-highlight {
-      background-color: var(--background-azul) !important;
-      border-color: var(--background-azul) !important;
-    }
-
-    .p-checkbox-icon {
-      color: white !important;
-      font-size: 0.75rem !important;
-    }
-
-    &.p-checkbox-disabled .p-checkbox-box {
-      opacity: 0.6 !important;
-      cursor: not-allowed !important;
-    }
-  }
-
-  /* Make the whole traveler row more interactive */
-  .traveler-item {
-    transition: background-color 0.2s;
-  }
-}
-
-/* Add these styles to make checkbox visible */
-.travelers-points-section {
-  margin: 1.5rem 0;
-
-  .traveler-item {
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #f0f0f0;
-
-    &:last-child {
-      border-bottom: none;
-    }
-  }
-
-  .traveler-row {
-    display: flex;
-    align-items: center;
-  }
-
-  .checkbox-container {
-    min-width: 2rem;
-    display: flex;
-    align-items: center;
-    margin-right: 0.75rem;
-  }
-
-  .checkbox-placeholder {
-    width: 1.25rem;
-    height: 1.25rem;
-  }
-
-  .traveler-info {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    align-items: center;
-  }
-
-  .traveler-name {
-    font-weight: 500;
-  }
-
-  .points-label {
-    color: #4caf50;
-    font-weight: 500;
-  }
-
-  .points-redeemed-label {
-    color: #ff9800;
-    font-weight: 500;
-  }
-
-  .loading-points {
-    color: #999;
-    font-style: italic;
-    font-size: 0.9rem;
-  }
-}
-
-/* Ensure PrimeNG checkbox is visible */
-:host ::ng-deep .p-checkbox {
-  display: block !important;
-
-  .p-checkbox-box {
-    width: 1.25rem !important;
-    height: 1.25rem !important;
-    border: 2px solid #ced4da !important;
-  }
 }
 
 // ...existing styles...
@@ -606,21 +420,12 @@
   opacity: 0.6;
 }
 
-/* Improve visibility of the travelers points section */
-.travelers-points-section {
-  margin: 1.5rem 0;
-
-  .travelers-list {
-    padding: 0.5rem 0;
-  }
+.travelers-list {
+  margin-top: 1rem;
 
   .traveler-item {
     padding: 0.75rem 0;
-    border-bottom: 1px solid #f0f0f0;
-
-    &:hover {
-      background-color: #f9f9f9;
-    }
+    border-bottom: 1px solid #e2e8f0;
 
     &:last-child {
       border-bottom: none;
@@ -630,70 +435,106 @@
   .traveler-row {
     display: flex;
     align-items: center;
-    cursor: pointer;
+    flex-wrap: nowrap;
   }
 
   .checkbox-container {
-    min-width: 2.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 0.75rem;
+    margin-right: 1rem;
+    flex-shrink: 0;
+    width: 1.5rem;
+
+    ::ng-deep .p-checkbox {
+      .p-checkbox-box {
+        border: 2px solid var(--background-azul);
+      }
+
+      .p-checkbox-box.p-highlight {
+        border-color: var(--background-azul);
+        background: var(--background-azul);
+      }
+    }
+  }
+
+  .checkbox-placeholder {
+    width: 1.5rem;
+    height: 1.5rem;
   }
 
   .traveler-info {
     display: flex;
-    flex-wrap: wrap;
-    width: 100%;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    flex-grow: 1;
+
+    @media (min-width: 768px) {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
   }
 
   .traveler-name {
     font-weight: 500;
-    margin-right: 1rem;
+    color: var(--background-azul);
+    margin-bottom: 0.25rem;
+
+    @media (min-width: 768px) {
+      margin-bottom: 0;
+    }
   }
 
   .points-badge {
-    display: inline-block;
+    display: inline-flex;
     padding: 0.25rem 0.5rem;
-    border-radius: 4px;
+    border-radius: 1rem;
     font-size: 0.875rem;
+    background-color: #f1f5f9;
+    align-self: flex-start;
+
+    @media (min-width: 768px) {
+      align-self: center;
+    }
   }
 
   .points-label {
-    color: #2196f3;
-    font-weight: 500;
+    color: #64748b;
   }
 
   .points-redeemed-label {
-    color: #4caf50;
+    color: var(--background-azul);
     font-weight: 500;
   }
 }
 
-/* Ensure PrimeNG checkbox is visible and interactive */
-:host ::ng-deep .p-checkbox {
-  display: block !important;
-  opacity: 1 !important;
+.travelers-points-section {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
 
-  .p-checkbox-box {
-    width: 1.25rem !important;
-    height: 1.25rem !important;
-    border: 2px solid var(--background-azul) !important;
-  }
+  ::ng-deep .p-accordion {
+    .p-accordion-header-link {
+      color: var(--background-azul);
+      font-weight: 500;
+      padding: 1rem 0;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #e2e8f0;
+    }
 
-  .p-checkbox-box.p-highlight {
-    background-color: var(--background-azul) !important;
-    border-color: var(--background-azul) !important;
-  }
+    .p-accordion-content {
+      border: none;
+      background: transparent;
+      padding: 1rem 0;
+    }
 
-  .p-checkbox-icon {
-    color: white !important;
+    .p-accordion-header-text {
+      font-size: 1rem;
+    }
+
+    .p-accordion-toggle-icon {
+      color: var(--background-azul);
+    }
   }
 }
 
-/* Make the whole traveler row more interactive */
-.traveler-item {
-  transition: background-color 0.2s;
+.travelers-list {
+  margin-top: 1rem;
 }

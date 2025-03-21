@@ -19,6 +19,7 @@ import { Period } from '../../core/models/tours/period.model';
 import { InsurancesService } from '../../core/services/checkout/insurances.service';
 import { Insurance } from '../../core/models/tours/insurance.model';
 import { MessageService } from 'primeng/api';
+import { DiscountsService } from '../../core/services/checkout/discounts.service';
 
 @Component({
   selector: 'app-checkout',
@@ -69,6 +70,13 @@ export class CheckoutComponent implements OnInit {
   // Add property to control budget dialog visibility
   budgetDialogVisible: boolean = false;
 
+  discountInfo: {
+    code?: string;
+    amount: number;
+    description: string;
+    type: string;
+  } | null = null;
+
   constructor(
     private ordersService: OrdersService,
     private periodsService: PeriodsService,
@@ -81,7 +89,8 @@ export class CheckoutComponent implements OnInit {
     private route: ActivatedRoute,
     private bookingsService: BookingsService,
     private insurancesService: InsurancesService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private discountsService: DiscountsService // injected DiscountsService
   ) {}
 
   ngOnInit() {
@@ -177,6 +186,12 @@ export class CheckoutComponent implements OnInit {
 
     this.flightsService.flightlessOption$.subscribe((option) => {
       this.flightlessOption = option;
+    });
+
+    this.discountsService.selectedDiscounts$.subscribe((discounts) => {
+      console.log('Discounts updated:', discounts);
+      // We DO need to call updateOrderSummary here to reflect discount changes
+      this.updateOrderSummary();
     });
   }
 
@@ -473,16 +488,26 @@ export class CheckoutComponent implements OnInit {
       tempOrderData['insurancesRef'] = [];
     }
 
-    // Add discount to summary item if applied
-    if (this.discountInfo && this.discountInfo.discountValue > 0) {
-      this.summary.push({
-        qty: 1,
-        value: -this.discountInfo.discountValue, // Negative value to show it as a reduction
-        description: `Descuento cupón: ${this.discountInfo.code}`,
-      });
+    // NEW: Append all discounts from DiscountsService
+    const discounts = this.discountsService.getSelectedDiscounts();
 
-      // Save discount info to order
-      tempOrderData['discounts'] = [this.discountInfo];
+    if (discounts && discounts.length > 0) {
+      discounts.forEach((discount) => {
+        if (discount.source === 'coupon') {
+          this.summary.push({
+            qty: 1,
+            value: -discount.amount,
+            description: `Descuento cupon: ${discount.description}`,
+          });
+        } else {
+          this.summary.push({
+            qty: 1,
+            value: -discount.amount,
+            description: `${discount.description}`,
+          });
+        }
+      });
+      tempOrderData['discounts'] = discounts;
     }
 
     this.summaryService.updateOrder(tempOrderData);
@@ -499,22 +524,38 @@ export class CheckoutComponent implements OnInit {
   }
 
   // Add these properties to your checkout component class
-  discountInfo: {
-    code: string;
-    amount: number;
-    discountValue: number;
-    type: string;
-  } | null = null;
-
   // Add this method to handle the discount
   handleDiscountApplied(discountInfo: {
-    code: string;
+    code?: string;
     amount: number;
-    discountValue: number;
+    description: string;
     type: string;
   }): void {
-    this.discountInfo = discountInfo;
-    this.updateOrderSummary(); // Re-run the summary calculation
+    // First check if we already have a coupon discount
+    const currentDiscounts = this.discountsService.getSelectedDiscounts();
+    const nonCouponDiscounts = currentDiscounts.filter(
+      (d) => d.source !== 'coupon'
+    );
+
+    // If amount is 0, it means we're removing the discount
+    if (discountInfo.amount === 0) {
+      this.discountsService.updateSelectedDiscounts(nonCouponDiscounts);
+    } else {
+      const couponDiscount = {
+        type: discountInfo.type,
+        amount: discountInfo.amount,
+        description: discountInfo.code || '',
+        source: 'coupon',
+      };
+
+      this.discountsService.updateSelectedDiscounts([
+        ...nonCouponDiscounts,
+        couponDiscount,
+      ]);
+    }
+
+    // Manually trigger update
+    this.updateOrderSummary();
   }
 
   // Update your calculateTotals method to include discount

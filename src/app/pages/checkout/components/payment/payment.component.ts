@@ -8,12 +8,32 @@ import {
   Inject,
   OnChanges,
   SimpleChanges,
+  OnDestroy,
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { RedsysService } from '../../../../core/services/checkout/payment/redsys.service';
 import { Router } from '@angular/router';
 import { BookingsService } from '../../../../core/services/bookings.service';
 import { Payment } from '../../../../core/models/bookings/payment.model';
+import { TravelersService } from '../../../../core/services/checkout/travelers.service';
+import { PointsService } from '../../../../core/services/points.service';
+import {
+  DiscountsService,
+  Discount,
+} from '../../../../core/services/checkout/discounts.service';
+import { MessageService } from 'primeng/api';
+import { Subscription } from 'rxjs';
+
+interface TravelerWithPoints {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  points?: number;
+  redeeming?: boolean;
+  pointsRedeemed?: number;
+  redeemCheckbox?: boolean; // Add this new property
+}
 
 @Component({
   selector: 'app-payment',
@@ -21,7 +41,7 @@ import { Payment } from '../../../../core/models/bookings/payment.model';
   templateUrl: './payment.component.html',
   styleUrls: ['./payment.component.scss'],
 })
-export class PaymentComponent implements OnInit, OnChanges {
+export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
   @Input() totalPrice: number = 0;
   @Input() processBooking!: () => Promise<{
     bookingID: string;
@@ -29,6 +49,8 @@ export class PaymentComponent implements OnInit, OnChanges {
   }>;
   @Input() departureDate: string | null = null;
   @Output() goBackEvent = new EventEmitter<void>();
+
+  selectedPointsDiscount: string[] = [];
 
   isOpen: boolean = true;
   isInstallmentsOpen: boolean = true;
@@ -50,17 +72,40 @@ export class PaymentComponent implements OnInit, OnChanges {
   remainingAmount: number = 0;
   paymentDeadline: string = '';
 
+  // Add properties for travelers accordion
+  uniqueTravelers: TravelerWithPoints[] = [];
+
+  // Track current discounts
+  private pointsDiscounts: Discount[] = [];
+
+  private discountSubscription: Subscription | null = null;
+
+  // Add a cache to store points data by email
+  private pointsCache: Map<string, number> = new Map();
+  private loadingPointsFor: Set<string> = new Set();
+
   constructor(
     @Inject(DOCUMENT) private document: Document,
     private redsysService: RedsysService,
     private bookingsService: BookingsService,
-    private router: Router
+    private router: Router,
+    private travelersService: TravelersService,
+    private pointsService: PointsService,
+    private discountsService: DiscountsService,
+    private messageService: MessageService
   ) {}
 
   ngOnInit() {
     this.loadScalapayScript();
     this.calculateRemainingAmount();
     this.calculatePaymentDeadline();
+    this.loadTravelersWithPoints();
+
+    // Subscribe to discounts changes
+    this.discountSubscription =
+      this.discountsService.selectedDiscounts$.subscribe((discounts) => {
+        this.updateCheckboxStates();
+      });
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -70,6 +115,38 @@ export class PaymentComponent implements OnInit, OnChanges {
     if (changes['totalPrice']) {
       this.calculateRemainingAmount();
     }
+  }
+
+  ngOnDestroy() {
+    if (this.discountSubscription) {
+      this.discountSubscription.unsubscribe();
+    }
+  }
+
+  updateCheckboxStates() {
+    const activeDiscounts = this.discountsService.getSelectedDiscounts();
+
+    // Find all active point discounts
+    const activePointsDiscounts = activeDiscounts.filter(
+      (d) => d.type === 'points'
+    );
+
+    // Update checkboxes based on active discounts
+    this.uniqueTravelers.forEach((traveler) => {
+      // Check if this traveler has an active discount
+      const hasActiveDiscount = activePointsDiscounts.some(
+        (d) => d.source === traveler.email
+      );
+      // Only update if different to avoid triggering change detection unnecessarily
+      if (traveler.redeemCheckbox !== hasActiveDiscount) {
+        traveler.redeemCheckbox = hasActiveDiscount;
+      }
+    });
+
+    // Update our tracking array
+    this.selectedPointsDiscount = activePointsDiscounts
+      .map((d) => d.source || '')
+      .filter((s) => s);
   }
 
   loadScalapayScript() {
@@ -97,33 +174,6 @@ export class PaymentComponent implements OnInit, OnChanges {
 
   togglePaymentMethodsDropdown() {
     this.isPaymentMethodsOpen = !this.isPaymentMethodsOpen;
-  }
-
-  toggleSourceDropdown(event?: Event) {
-    if (event) {
-      event.stopPropagation();
-    }
-    this.isSourceDropdownOpen = !this.isSourceDropdownOpen;
-  }
-
-  selectSource(source: string, event?: Event) {
-    if (event) {
-      event.stopPropagation();
-    }
-    this.selectedSource = source;
-    this.isSourceDropdownOpen = false;
-  }
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent) {
-    const dropdownElement = this.document.querySelector('.dropdown-container');
-    if (
-      dropdownElement &&
-      !dropdownElement.contains(event.target as Node) &&
-      this.isSourceDropdownOpen
-    ) {
-      this.isSourceDropdownOpen = false;
-    }
   }
 
   onPaymentTypeChange() {
@@ -228,6 +278,11 @@ export class PaymentComponent implements OnInit, OnChanges {
     console.log('Installment Option:', this.installmentOption);
     console.log('Total Price:', this.totalPrice);
 
+    // Log applied points discounts if any
+    if (this.pointsDiscounts.length > 0) {
+      console.log('Applied points discounts:', this.pointsDiscounts);
+    }
+
     try {
       const response = await this.processBooking();
       const bookingID = response.bookingID;
@@ -263,6 +318,12 @@ export class PaymentComponent implements OnInit, OnChanges {
       }
     } catch (error) {
       console.error('Error in payment process:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error en el proceso de pago',
+        detail:
+          'Ha ocurrido un error al procesar el pago. Por favor, inténtalo de nuevo.',
+      });
     } finally {
       // This will only run if we didn't redirect earlier
       this.isLoading = false;
@@ -320,5 +381,162 @@ export class PaymentComponent implements OnInit, OnChanges {
         year: 'numeric',
       });
     }
+  }
+
+  loadTravelersWithPoints() {
+    this.travelersService.travelers$.subscribe((travelers) => {
+      // Create a map to track unique emails
+      const emailMap = new Map<string, TravelerWithPoints>();
+      let needToUpdateTravelers = false;
+
+      // Process travelers and keep only first occurrence of each email
+      travelers.forEach((traveler) => {
+        const email = traveler.travelerData?.email || '';
+        if (email && !emailMap.has(email)) {
+          const existingTraveler = this.uniqueTravelers.find(
+            (t) => t.email === email
+          );
+
+          // If traveler already exists in our list, preserve its state
+          if (existingTraveler) {
+            emailMap.set(email, {
+              ...existingTraveler,
+              id: traveler._id || existingTraveler.id,
+              firstName:
+                traveler.travelerData?.name || existingTraveler.firstName,
+              lastName:
+                traveler.travelerData?.surname || existingTraveler.lastName,
+            });
+          } else {
+            // This is a new traveler
+            emailMap.set(email, {
+              id: traveler._id || '',
+              firstName: traveler.travelerData?.name || '',
+              lastName: traveler.travelerData?.surname || '',
+              email: email,
+              points: this.pointsCache.get(email) || 0,
+              redeemCheckbox: false,
+            });
+            needToUpdateTravelers = true;
+          }
+
+          // Only fetch points if we don't have them cached and aren't already loading them
+          if (
+            !this.pointsCache.has(email) &&
+            !this.loadingPointsFor.has(email)
+          ) {
+            this.fetchTravelerPoints(email, emailMap);
+          }
+        }
+      });
+
+      // Only update the array if necessary
+      if (
+        needToUpdateTravelers ||
+        this.uniqueTravelers.length !== emailMap.size
+      ) {
+        this.uniqueTravelers = Array.from(emailMap.values());
+        // Update checkbox states based on active discounts
+        this.updateCheckboxStates();
+      }
+    });
+  }
+
+  fetchTravelerPoints(
+    email: string,
+    emailMap: Map<string, TravelerWithPoints>
+  ) {
+    // Mark as loading to prevent duplicate requests
+    this.loadingPointsFor.add(email);
+
+    this.pointsService.getTravelerPoints(email).subscribe({
+      next: (response) => {
+        const points = response || 50;
+
+        // Update cache
+        this.pointsCache.set(email, points);
+
+        // Update traveler if it exists
+        const traveler = emailMap.get(email);
+        if (traveler) {
+          traveler.points = points;
+
+          // Check if we need to update the array
+          const existingIndex = this.uniqueTravelers.findIndex(
+            (t) => t.email === email
+          );
+          if (existingIndex >= 0) {
+            this.uniqueTravelers[existingIndex] = { ...traveler };
+          } else {
+            this.uniqueTravelers = [...this.uniqueTravelers, traveler];
+          }
+        }
+
+        // Remove from loading set
+        this.loadingPointsFor.delete(email);
+      },
+      error: (error) => {
+        console.error(`Error fetching points for ${email}:`, error);
+
+        // Update cache with default value
+        this.pointsCache.set(email, 50);
+
+        // Update traveler if it exists
+        const traveler = emailMap.get(email);
+        if (traveler) {
+          traveler.points = 50;
+
+          // Check if we need to update the array
+          const existingIndex = this.uniqueTravelers.findIndex(
+            (t) => t.email === email
+          );
+          if (existingIndex >= 0) {
+            this.uniqueTravelers[existingIndex] = { ...traveler };
+          } else {
+            this.uniqueTravelers = [...this.uniqueTravelers, traveler];
+          }
+        }
+
+        // Remove from loading set
+        this.loadingPointsFor.delete(email);
+      },
+    });
+  }
+
+  onRedeemCheckboxChange(traveler: TravelerWithPoints): void {
+    // First update our internal state
+    if (traveler.redeemCheckbox) {
+      if (!this.selectedPointsDiscount.includes(traveler.email)) {
+        this.selectedPointsDiscount.push(traveler.email);
+      }
+    } else {
+      this.selectedPointsDiscount = this.selectedPointsDiscount.filter(
+        (email) => email !== traveler.email
+      );
+    }
+
+    // Get current discounts that are not point-based
+    const otherDiscounts = this.discountsService
+      .getSelectedDiscounts()
+      .filter((d) => d.type !== 'points');
+
+    // Create new point discounts based on checked travelers
+    const pointDiscounts = this.uniqueTravelers
+      .filter((t) => t.redeemCheckbox)
+      .map((t) => ({
+        type: 'points',
+        amount: t.points || 0,
+        description: `Descuento por puntos de ${t.firstName}`,
+        source: t.email,
+        points: t.points,
+      }));
+
+    console.log('Applying point discounts:', pointDiscounts);
+
+    // Combine and update discounts - this should trigger an update in checkout
+    this.discountsService.updateSelectedDiscounts([
+      ...otherDiscounts,
+      ...pointDiscounts,
+    ]);
   }
 }

@@ -4,9 +4,11 @@
       <!-- IDA -->
       <div class="flight-direction" *ngIf="journeys[0]">
         <div class="direction-header">
-          <div class="direction-title">IDA</div>
+          <div class="direction-title">IDA  {{ journeys[0].departure.date | date : "dd/MM/yyyy" }}</div>
           <div class="direction-line"></div>
-          <div class="direction-date">{{ journeys[0].departure.date | date : "dd/MM/yyyy" }}</div>
+          <div class="direction-date">
+            {{ journeys[0].airlineName }}
+          </div>
         </div>
         <div class="stops-info">
           <i class="pi pi-info-circle"></i>
@@ -37,9 +39,9 @@
       <!-- VUELTA -->
       <div class="flight-direction" *ngIf="journeys[1]">
         <div class="direction-header">
-          <div class="direction-title">VUELTA</div>
+          <div class="direction-title">VUELTA {{ journeys[1].departure.date | date : "dd/MM/yyyy" }}</div>
           <div class="direction-line"></div>
-          <div class="direction-date">{{ journeys[1].departure.date | date : "dd/MM/yyyy" }}</div>
+          <div class="direction-date">{{ journeys[1].airlineName }}</div>
         </div>
         <div class="stops-info">
           <i class="pi pi-info-circle"></i>

@@ -351,48 +351,63 @@
     }
   }
 
-  ::ng-deep {
-    .payment-button {
-      margin: 10px 0 10px 0;
-      &.p-button {
-        width: 100%;
-        border-radius: 100px;
-        background-color: var(--p-primary-color);
-        border-color: #ff6b6b;
-        margin-top: -20px;
-        &.p-disabled,
-        &.payment-button-disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
+    ::ng-deep {
+        .payment-button {
+            margin: 10px 0 10px 0;
+            &.p-button {
+                width: 100%;
+                border-radius: 100px;
+                height: 50px;
+                background-color: var(--p-primary-color);
+                border-color: #ff6b6b;
+                margin-top: -20px;
+                &.p-disabled,
+                &.payment-button-disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                }
 
-        .p-button-label {
-          font-weight: 500;
-          font-size: 1rem;
+                .p-button-label {
+                    font-weight: 500;
+                    font-size: 1rem;
+                }
+            }
         }
-      }
     }
+    ::ng-deep {
+      .p-radiobutton .p-radiobutton-box {
+          border-color: var(--background-azul);
+      }
+
+      .p-radiobutton-checked .p-radiobutton-box {
+          border-color: var(--background-azul) !important;
+          background: var(--background-azul-color-letra) !important; // Fondo blanco
+      }
+
+      .p-radiobutton-checked .p-radiobutton-icon {
+          background-color: var(--background-azul) !important; // Círculo interior azul
+      }
   }
 
-  .buttons-container {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 2rem;
+    .buttons-container {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 2rem;
 
-    .back-button {
-      margin-right: 1rem;
+        .back-button {
+            margin-right: 1rem;
+        }
+
+        .payment-button {
+            flex-grow: 1;
+            max-width: 300px;
+
+            ::ng-deep .p-button {
+                border-radius: 50px;
+                height: 50px;
+            }
+        }
     }
-
-    .payment-button {
-      flex-grow: 1;
-      max-width: 300px;
-
-      ::ng-deep .p-button {
-        border-radius: 50px;
-        height: 50px;
-      }
-    }
-  }
 }
 
 // ...existing styles...

@@ -5,6 +5,7 @@ import {
   FlightOffersParams,
   ITempFlightOffer,
 } from '../../../../../../core/types/flight.types';
+import { Flight } from '../../../../../../core/models/tours/flight.model';
 
 interface Ciudad {
   nombre: string;
@@ -22,7 +23,7 @@ export class FlightSearchComponent implements OnInit {
 
   flightForm: FormGroup;
 
-  tipoViaje: string = 'idaVuelta';
+  tipoViaje: string = 'soloDia';
   equipajeMano: boolean = false;
   equipajeBodega: boolean = false;
 
@@ -75,9 +76,20 @@ export class FlightSearchComponent implements OnInit {
   isLoading: boolean = false;
   searchPerformed: boolean = false;
 
+  // Add property to track the selected flight
+  selectedFlightId: string | null = null;
+
+  // Add array to store transformed flights
+  transformedFlights: Flight[] = [];
+
   constructor(private fb: FormBuilder, private amadeusService: AmadeusService) {
+    // Find default city (Madrid) in the ciudades array
+    const defaultCity =
+      this.ciudades.find((city) => city.nombre === 'Madrid') ||
+      this.ciudades[0];
+
     this.flightForm = this.fb.group({
-      origen: ['Madrid'],
+      origen: [defaultCity], // Now using the full Ciudad object instead of just a string
       // We remove date fields from the form since they're fixed
       tipoViaje: [this.tipoViaje],
       equipajeMano: [this.equipajeMano],
@@ -260,13 +272,112 @@ export class FlightSearchComponent implements OnInit {
       );
     });
 
-    // Transformar datos para el componente padre
-    const transformedOffers = this.transformOffersForParent(
+    // Transform offers to Flight format for flight-itinerary component
+    this.transformedFlights = this.transformOffersToFlightFormat(
       this.filteredOffers
     );
-    this.filteredFlightsChange.emit(transformedOffers);
 
-    console.log('Ofertas filtradas:', this.filteredOffers);
+    // Also emit the transformed flights for the parent component
+    this.filteredFlightsChange.emit(this.transformedFlights);
+
+    console.log('Transformed flights:', this.transformedFlights);
+  }
+
+  transformOffersToFlightFormat(offers: ITempFlightOffer[]): Flight[] {
+    return offers.map((offer) => {
+      const offerData = offer.offerData;
+
+      // Get outbound data
+      const outbound = offerData.itineraries[0];
+
+      // Convert traveler pricing to proper PriceData format
+      const priceDataArray = offerData.travelerPricings.map((tp: any) => ({
+        id: offerData.id + '-' + tp.travelerId,
+        value: parseFloat(tp.price.total),
+        value_with_campaign: parseFloat(tp.price.total), // Same as value since no campaign
+        campaign: null,
+        age_group_name: tp.travelerType === 'ADULT' ? 'Adultos' : 'Niños',
+        category_name: 'Vuelo',
+        period_product: 'FLIGHT',
+        _id: offerData.id + '-' + tp.travelerId, // Using a combination as ID
+      }));
+
+      // Create YYYY-MM-DD formatted date string for the departure
+      // Always use our fixed date which we know is valid
+      const departureDateStr = this.formatDate(this.fechaIdaConstante);
+
+      // Create Flight object
+      const flight: Flight = {
+        id: offerData.id,
+        externalID: offerData.id,
+        name: `${offerData.validatingAirlineCodes[0]} - ${
+          outbound?.segments[0]?.departure?.iataCode
+        } to ${
+          outbound?.segments[outbound.segments.length - 1]?.arrival?.iataCode
+        }`,
+        outbound: {
+          activityID: 0,
+          availability: 1,
+          date: departureDateStr, // Use our known valid date string
+          name: `Flight to ${
+            outbound?.segments[outbound.segments.length - 1]?.arrival?.iataCode
+          }`,
+          segments:
+            outbound?.segments.map((segment: any, index: number) => {
+              // Safely extract time portions
+              let departureTime = '00:00';
+              let arrivalTime = '00:00';
+
+              if (segment.departure && segment.departure.at) {
+                const parts = segment.departure.at.split('T');
+                if (parts.length > 1) {
+                  departureTime = parts[1].substring(0, 5);
+                }
+              }
+
+              if (segment.arrival && segment.arrival.at) {
+                const parts = segment.arrival.at.split('T');
+                if (parts.length > 1) {
+                  arrivalTime = parts[1].substring(0, 5);
+                }
+              }
+
+              return {
+                departureCity: segment.departure.iataCode,
+                arrivalCity: segment.arrival.iataCode,
+                flightNumber: segment.number,
+                departureIata: segment.departure.iataCode,
+                departureTime: departureTime,
+                arrivalTime: arrivalTime,
+                arrivalIata: segment.arrival.iataCode,
+                numNights: 0,
+                differential: 0,
+                order: index,
+                airline: {
+                  name: this.getAirlineName(segment.carrierCode),
+                  email: '',
+                  logo: '',
+                },
+              };
+            }) || [],
+          serviceCombinationID: 0,
+          prices: priceDataArray,
+        },
+        inbound: {
+          activityID: 0,
+          availability: 0,
+          date: departureDateStr, // Use same date for inbound too
+          name: 'No return flight',
+          segments: [],
+          serviceCombinationID: 0,
+          prices: [],
+        },
+        price: parseFloat(offerData.price.total),
+        priceData: priceDataArray,
+      };
+
+      return flight;
+    });
   }
 
   transformOffersForParent(offers: ITempFlightOffer[]): any[] {
@@ -404,9 +515,13 @@ export class FlightSearchComponent implements OnInit {
   }
 
   // Método para seleccionar un vuelo
-  selectFlight(offer: ITempFlightOffer): void {
-    // Adaptamos la oferta al formato que espera el componente padre
-    const transformedOffer = this.transformOffersForParent([offer])[0];
-    this.filteredFlightsChange.emit([transformedOffer]);
+  selectFlight(flight: Flight): void {
+    this.selectedFlightId = flight.externalID; // Update the selected flight ID
+    this.filteredFlightsChange.emit([flight]); // Emit the selected flight
+  }
+
+  // Add method to check if a flight is selected
+  isFlightSelected(flight: Flight): boolean {
+    return flight.externalID === this.selectedFlightId;
   }
 }

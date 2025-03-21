@@ -160,5 +160,19 @@
       flex: 1;
       white-space: nowrap;
     }
+    ::ng-deep {
+      .p-radiobutton .p-radiobutton-box {
+        border-color: var(--background-azul);
+      }
+
+      .p-radiobutton-checked .p-radiobutton-box {
+        border-color: var(--background-azul) !important;
+        background: var(--background-azul-color-letra) !important;
+      }
+
+      .p-radiobutton-checked .p-radiobutton-icon {
+        background-color: var(--background-azul) !important;
+      }
+    }
   }
 }

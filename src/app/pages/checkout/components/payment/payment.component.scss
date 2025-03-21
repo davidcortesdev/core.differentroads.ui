@@ -371,4 +371,18 @@
             }
         }
     }
+    ::ng-deep {
+        .p-radiobutton .p-radiobutton-box {
+            border-color: var(--background-azul);
+        }
+
+        .p-radiobutton-checked .p-radiobutton-box {
+            border-color: var(--background-azul) !important;
+            background: var(--background-azul-color-letra) !important; // Fondo blanco
+        }
+
+        .p-radiobutton-checked .p-radiobutton-icon {
+            background-color: var(--background-azul) !important; // Círculo interior azul
+        }
+    }
 }

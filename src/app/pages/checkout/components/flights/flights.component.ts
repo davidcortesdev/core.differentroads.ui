@@ -4,6 +4,8 @@ import { FlightsService } from '../../../../core/services/checkout/flights.servi
 import { Flight } from '../../../../core/models/tours/flight.model';
 import { PriceData } from '../../../../core/models/commons/price-data.model';
 import { Order } from '../../../../core/models/orders/order.model';
+import { AuthenticateService } from '../../../../core/services/auth-service.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-flights',
@@ -24,9 +26,14 @@ export class FlightsComponent implements OnInit {
   // Add property to store tour destination
   tourDestination: any = { nombre: '', codigo: '' };
 
+  // Update property for login modal visibility to match PrimeNG dialog approach
+  loginDialogVisible: boolean = false;
+
   constructor(
     private periodsService: PeriodsService,
-    private flightsService: FlightsService
+    private flightsService: FlightsService,
+    private authService: AuthenticateService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -205,8 +212,39 @@ export class FlightsComponent implements OnInit {
     return this.selectedFlight?.externalID === flight.externalID;
   }
 
-  // Add this method to toggle flight search visibility
+  // Keep auth check for flight search toggle
   toggleFlightSearch(): void {
-    this.showFlightSearch = !this.showFlightSearch;
+    this.authService.isLoggedIn().subscribe((isLoggedIn) => {
+      if (isLoggedIn) {
+        this.showFlightSearch = !this.showFlightSearch;
+      } else {
+        // Save current URL in session storage for redirect after login
+        sessionStorage.setItem('redirectUrl', window.location.href);
+        this.loginDialogVisible = true;
+      }
+    });
+  }
+
+  // Remove the auth check from flight selection
+  selectFlightWithAuthCheck(flight: Flight | null): void {
+    // Just directly select the flight without auth check
+    this.selectFlight(flight);
+  }
+
+  // Update method to close the login modal
+  closeLoginModal(): void {
+    this.loginDialogVisible = false;
+  }
+
+  // Add method to navigate to login page
+  navigateToLogin(): void {
+    this.closeLoginModal();
+    this.router.navigate(['/login']);
+  }
+
+  // Add method to navigate to register page
+  navigateToRegister(): void {
+    this.closeLoginModal();
+    this.router.navigate(['/sign-up']); // Changed from '/register' to '/sign-up'
   }
 }

@@ -175,6 +175,7 @@ import { DiscountCodeComponent } from './pages/checkout/components/discount-code
 import { FlightSearchComponent } from './pages/checkout/components/flights/components/flight-search/flight-search.component';
 import { TravelerItemComponent } from './pages/checkout/components/traveler-item/traveler-item.component';
 import { FlightSectionComponent } from './pages/checkout/components/flight-section/flight-section.component';
+import { LoginModalComponent } from './pages/checkout/components/flights/components/login-modal/login-modal.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -260,7 +261,8 @@ registerLocaleData(localeEs);
     DiscountCodeComponent,
     FlightSearchComponent,
     TravelerItemComponent,
-    FlightSectionComponent
+    FlightSectionComponent,
+    LoginModalComponent
   ],
   imports: [
     // Angular Modules

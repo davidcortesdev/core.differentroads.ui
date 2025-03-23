@@ -1,5 +1,4 @@
 <div class="checkout">
-  <p-toast></p-toast>
   <h2 class="checkout-title">
     {{ tourName }}
   </h2>
@@ -9,104 +8,101 @@
   <div class="checkout-container">
     <!-- Left and Center columns with steps -->
     <div class="main-content">
-      <div class="steps-container">
-        <p-stepper
-          [value]="currentStep"
-          [linear]="false"
-          (activeStepChange)="updateStepInUrl($event)"
-        >
-          <p-step-list>
-            <p-step [value]="1">Personaliza tu viaje</p-step>
-            <p-step [value]="2">Vuelos</p-step>
-            <p-step [value]="3">Viajeros</p-step>
-            <p-step [value]="4">Pago</p-step>
-          </p-step-list>
+      <div class="steps-container full-width">
+        <!-- Ubicando el p-steps donde estaba originalmente pero con clase full-width -->
+        <p-steps
+          [model]="items"
+          [readonly]="false"
+          [activeIndex]="activeIndex"
+          (activeIndexChange)="onActiveIndexChange($event)"
+        ></p-steps>
 
-          <p-step-panels>
-            <p-step-panel [value]="1">
-              <ng-template #content let-activateCallback="activateCallback">
-                <app-customize-trip
-                  *ngIf="orderDetails && prices"
-                  [orderDetails]="orderDetails"
-                  [prices]="prices"
-                ></app-customize-trip>
-                <div class="flex pt-6 justify-end">
-                  <p-button
-                    class="next"
-                    label="Continuar"
-                    icon="pi pi-arrow-right"
-                    iconPos="right"
-                    (onClick)="nextStep(2) && activateCallback(2)"
-                  />
-                </div>
-                <div class="flex pt-6 justify-end">
-                  <p-button class="file" iconPos="right" (onClick)="saveTrip()">
-                    <ng-template pTemplate="content">
-                      <div class="title">
-                        <div>Guarda este viaje</div>
-                        <div class="description">
-                          Sujeto a disponibilidad en el momento de la reserva y
-                          sólo para salidas con stock
-                        </div>
-                      </div>
-                    </ng-template>
-                  </p-button>
-                </div>
-              </ng-template>
-            </p-step-panel>
-            <p-step-panel [value]="2">
-              <ng-template #content let-activateCallback="activateCallback">
-                <app-flights
-                  *ngIf="orderDetails && prices"
-                  [orderDetails]="orderDetails"
-                ></app-flights>
-                <div class="flight-buttons">
-                  <p-button
-                    class="without-flight"
-                    *ngIf="flightlessOption"
-                    label="Lo quiero sin vuelos"
-                    (onClick)="checkAuthAndContinue(3, activateCallback, true)"
-                  ></p-button>
-                  <p-button
-                    class="continue-button"
-                    label="Continuar"
-                    icon="pi pi-arrow-right"
-                    iconPos="right"
-                    (onClick)="checkAuthAndContinue(3, activateCallback, false)"
-                    [disabled]="
-                      !selectedFlight ||
-                      selectedFlight.name.toLowerCase().includes('sin ')
-                    "
-                  ></p-button>
-                </div>
-              </ng-template>
-            </p-step-panel>
-            <p-step-panel [value]="3">
-              <ng-template #content let-activateCallback="activateCallback">
-                <app-travelers></app-travelers>
-                <div class="flex pt-6 justify-between">
-                  <p-button
-                    label="Continuar"
-                    icon="pi pi-arrow-right"
-                    iconPos="right"
-                    (onClick)="nextStep(4) && activateCallback(4)"
-                  />
-                </div>
-              </ng-template>
-            </p-step-panel>
-            <p-step-panel [value]="4">
-              <ng-template #content let-activateCallback="activateCallback">
-                <app-payment
-                  [totalPrice]="total"
-                  [processBooking]="processBooking.bind(this)"
-                  [departureDate]="periodData.dayOne || null"
-                  (goBackEvent)="activateCallback(3)"
-                ></app-payment>
-                <!-- Remove the separate button row since it's now in the payment component -->
-              </ng-template>
-            </p-step-panel>
-          </p-step-panels>
-        </p-stepper>
+        <div [ngSwitch]="activeIndex">
+          <!-- Step 1: Customize Trip -->
+          <div *ngSwitchCase="0">
+            <app-customize-trip
+              *ngIf="orderDetails && prices"
+              [orderDetails]="orderDetails"
+              [prices]="prices"
+            ></app-customize-trip>
+            <div class="flex pt-6 justify-end">
+              <p-button
+                class="next"
+                label="Continuar"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                (onClick)="nextStepWithValidation(1)"
+              ></p-button>
+            </div>
+            <div class="flex pt-6 justify-end">
+              <p-button class="file" iconPos="right" (onClick)="saveTrip()">
+                <ng-template pTemplate="content">
+                  <div class="title">
+                    <div>Guarda este viaje</div>
+                    <div class="description">
+                      Sujeto a disponibilidad en el momento de la reserva y sólo
+                      para salidas con stock
+                    </div>
+                  </div>
+                </ng-template>
+              </p-button>
+            </div>
+          </div>
+
+          <!-- Step 2: Flights -->
+          <div *ngSwitchCase="1">
+            <app-flights
+              *ngIf="orderDetails && prices"
+              [orderDetails]="orderDetails"
+            ></app-flights>
+            <div class="flight-buttons">
+              <p-button
+                class="without-flight"
+                *ngIf="flightlessOption"
+                label="Lo quiero sin vuelos"
+                (onClick)="
+                  checkAuthAndContinue(2, onActiveIndexChange.bind(this), true)
+                "
+              ></p-button>
+              <p-button
+                class="continue-button"
+                label="Continuar"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                (onClick)="
+                  checkAuthAndContinue(2, onActiveIndexChange.bind(this), false)
+                "
+                [disabled]="
+                  !selectedFlight ||
+                  selectedFlight.name.toLowerCase().includes('sin ')
+                "
+              ></p-button>
+            </div>
+          </div>
+
+          <!-- Step 3: Travelers -->
+          <div *ngSwitchCase="2">
+            <app-travelers></app-travelers>
+            <div class="flex pt-6 justify-between">
+              <p-button
+                label="Continuar"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                (onClick)="nextStepWithValidation(3)"
+              ></p-button>
+            </div>
+          </div>
+
+          <!-- Step 4: Payment -->
+          <div *ngSwitchCase="3">
+            <app-payment
+              [totalPrice]="total"
+              [processBooking]="processBooking.bind(this)"
+              [departureDate]="periodData.dayOne || null"
+              (goBackEvent)="onActiveIndexChange(2)"
+            ></app-payment>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -170,7 +166,7 @@
           </div>
         </div>
       </div>
-      <!-- Update app-discount-code to handle the new event signature -->
+
       <app-discount-code
         [orderTotal]="subtotal"
         [existingDiscount]="discountInfo"
@@ -180,7 +176,7 @@
     </div>
   </div>
 
-  <!-- Update the budget dialog -->
+  <!-- Budget dialog remains the same -->
   <p-dialog
     [(visible)]="budgetDialogVisible"
     [modal]="true"

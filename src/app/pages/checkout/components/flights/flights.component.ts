@@ -225,10 +225,17 @@ export class FlightsComponent implements OnInit {
     });
   }
 
-  // Remove the auth check from flight selection
+  // Restore the auth check for flight selection
   selectFlightWithAuthCheck(flight: Flight | null): void {
-    // Just directly select the flight without auth check
-    this.selectFlight(flight);
+    this.authService.isLoggedIn().subscribe((isLoggedIn) => {
+      if (isLoggedIn) {
+        this.selectFlight(flight);
+      } else {
+        // Save current URL in session storage for redirect after login
+        sessionStorage.setItem('redirectUrl', window.location.pathname);
+        this.loginDialogVisible = true;
+      }
+    });
   }
 
   // Update method to close the login modal

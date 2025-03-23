@@ -16,6 +16,20 @@
     padding: 0 2rem;
   }
 
+  /* Solución específica para eliminar los márgenes del componente p-steps */
+  ::ng-deep .p-steps {
+    margin: 0 !important; // Elimina los márgenes laterales
+    padding: 0 !important; // Elimina el padding lateral
+
+    .p-steps-item:first-child {
+      padding-left: 0 !important;
+    }
+
+    .p-steps-item:last-child {
+      padding-right: 0 !important;
+    }
+  }
+
   .checkout-container {
     display: grid;
     grid-template-columns: 2fr 1fr;
@@ -31,39 +45,32 @@
       .steps-container {
         margin-bottom: 2rem;
 
-        ::ng-deep .p-stepper {
-          .p-stepper-header {
-            justify-content: space-between;
-
-            .p-stepper-item {
-              flex: 1;
-
-              &:before {
-                border-top: 2px solid #dee2e6;
-              }
+        ::ng-deep .p-steps {
+          font-size: 14px;
+          .p-steps-item {
+            &:before {
+              border-top: 2px solid var(--background-azul); // Línea azul
             }
           }
-        }
-      }
-
-      .steps-content {
-        background: white;
-        border-radius: 8px;
-        padding: 2rem;
-        min-height: 400px;
-        position: relative;
-
-        .step-navigation {
-          position: absolute;
-          bottom: 2rem;
-          right: 2rem;
-          display: flex;
-          gap: 1rem;
+          .p-steps-item-active .p-steps-item-label {
+            color: var(--background-azul);
+          }
+          .p-steps-item-label {
+            color: var(--background-azul);
+          }
+          .p-steps-item-active .p-steps-item-number {
+            border-color: var(--p-primary-color);
+            color: var(--p-steps-item-number-active-color);
+          }
+          .p-steps-item-number {
+            border-color: var(--background-azul);
+            color: var(--background-azul);
+          }
         }
       }
     }
 
-    /* Aplicar posición sticky al contenedor derecho en lugar de solo al resumen */
+    /* Apply sticky positioning to the right column */
     .right-column {
       position: sticky;
       top: 2rem;
@@ -76,7 +83,6 @@
       border-radius: 8px;
       padding: 1.5rem;
       height: fit-content;
-      /* Quitar position: sticky de aquí */
       position: relative;
       font-size: 0.9rem;
 
@@ -359,44 +365,37 @@ p-button.continue-button ::ng-deep .p-button {
   }
 }
 
-/* Ajustes para el paso 3 - posicionamiento de botones */
-.checkout .checkout-container .main-content p-step-panel[ng-reflect-value="3"] .flex.pt-6.justify-between {
-  display: flex;
-  justify-content: flex-end;
-  width: 100%;
-}
+/* Responsive adjustments for PrimeNG Steps */
+@media screen and (max-width: 768px) {
+  .checkout ::ng-deep .p-steps {
+    .p-steps-item {
+      flex: 1;
 
-/* Ajustes para el paso 4 - tamaño y altura de botones */
-.checkout .checkout-container .main-content p-step-panel[ng-reflect-value="4"] .flex.pt-6.justify-between {
-  display: flex;
-  justify-content: space-between !important;
-  width: 100%;
+      .p-menuitem-link {
+        .p-steps-title {
+          font-size: 0.8rem;
+        }
 
-  p-button[label="Back"] ::ng-deep .p-button {
-    height: 40px;
-    min-width: 120px;
-    padding: 0.5rem 1rem;
+        .p-steps-number {
+          width: 32px;
+          height: 32px;
+          font-size: 0.9rem;
+          min-width: 32px;
+        }
+      }
+    }
   }
 }
 
-/* Estilo para los botones específicos del paso de vuelos */
-.checkout .checkout-container .main-content p-step-panel[ng-reflect-value="2"] .flight {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
+@media screen and (max-width: 480px) {
+  .checkout ::ng-deep .p-steps {
+    .p-steps-item {
+      display: flex;
+      flex-direction: column;
 
-  /* Botón de continuar sin vuelos - estilo naranja */
-  & > p-button.whith-flight ::ng-deep .p-button {
-    background-color: var(--p-primary-color);
-    border-color: var(--p-primary-color);
-    color: white;
-    margin-right: 0.5rem;
-
-    &:hover {
-      background-color: var(--p-primary-color);
-      border-color: var(--p-primary-color);
-      opacity: 0.9;
+      &:before {
+        display: none;
+      }
     }
   }
 }

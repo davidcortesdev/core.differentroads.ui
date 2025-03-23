@@ -696,7 +696,7 @@ export class CheckoutComponent implements OnInit {
         }
       } else {
         // User is not logged in, save URL and show login dialog
-        sessionStorage.setItem('redirectUrl', window.location.href);
+        sessionStorage.setItem('redirectUrl', window.location.pathname);
         // Show the login modal instead of redirecting
         this.loginDialogVisible = true;
       }

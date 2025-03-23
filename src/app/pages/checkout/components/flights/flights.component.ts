@@ -219,7 +219,7 @@ export class FlightsComponent implements OnInit {
         this.showFlightSearch = !this.showFlightSearch;
       } else {
         // Save current URL in session storage for redirect after login
-        sessionStorage.setItem('redirectUrl', window.location.href);
+        sessionStorage.setItem('redirectUrl', window.location.pathname);
         this.loginDialogVisible = true;
       }
     });

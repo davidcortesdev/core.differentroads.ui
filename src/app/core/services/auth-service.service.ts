@@ -22,17 +22,17 @@ import { firstValueFrom, catchError, tap, switchMap } from 'rxjs';
 export class AuthenticateService {
   private userPool: CognitoUserPool;
   private cognitoUser!: CognitoUser;
-  
+
   // Nuevo BehaviorSubject para mantener el estado actual de autenticación
   private isAuthenticated = new BehaviorSubject<boolean>(false);
-  
+
   // Nuevo BehaviorSubject para mantener el email del usuario actual
   private currentUserEmail = new BehaviorSubject<string>('');
 
   userAttributesChanged: Subject<void> = new Subject<void>();
 
   constructor(
-    private router: Router, 
+    private router: Router,
     private usersService: UsersService,
     private hubspotService: HubspotService
   ) {
@@ -40,7 +40,7 @@ export class AuthenticateService {
       UserPoolId: environment.cognitoUserPoolId,
       ClientId: environment.cognitoAppClientId,
     });
-    
+
     // Comprobar el estado de autenticación al iniciar el servicio
     this.checkAuthStatus();
   }
@@ -80,68 +80,92 @@ export class AuthenticateService {
     return this.currentUserEmail.asObservable();
   }
 
-
-
   private getUserData(username: string): CognitoUser {
     return new CognitoUser({ Username: username, Pool: this.userPool });
   }
 
   // Login
-// Login
-login(emailaddress: string, password: string): Observable<void> {
-  return new Observable((observer) => {
-    const authenticationDetails = new AuthenticationDetails({
-      Username: emailaddress,
-      Password: password,
-    });
+  login(emailaddress: string, password: string): Observable<void> {
+    return new Observable((observer) => {
+      const authenticationDetails = new AuthenticationDetails({
+        Username: emailaddress,
+        Password: password,
+      });
 
-    this.cognitoUser = this.getUserData(emailaddress);
+      this.cognitoUser = this.getUserData(emailaddress);
 
-    this.cognitoUser.authenticateUser(authenticationDetails, {
-      onSuccess: (result: any) => {
-        this.isAuthenticated.next(true);
-        this.currentUserEmail.next(emailaddress);
-        this.userAttributesChanged.next();
-        
-        // Agregar la integración con Hubspot
-        const contactData = {
-          email: emailaddress,
-        };
+      this.cognitoUser.authenticateUser(authenticationDetails, {
+        onSuccess: (result: any) => {
+          this.isAuthenticated.next(true);
+          this.currentUserEmail.next(emailaddress);
+          this.userAttributesChanged.next();
 
-        this.hubspotService.createContact(contactData).subscribe({
-          next: (hubspotResponse) => {
-            console.log('Contacto creado en Hubspot exitosamente:', hubspotResponse);
-            this.router.navigate(['/home']); // Usar Router en lugar de window.location
-          },
-          error: (hubspotError) => {
-            console.error('Error al crear contacto en Hubspot:', hubspotError);
-            this.router.navigate(['/home']); // Continuar con la navegación aunque falle Hubspot
-          },
-          complete: () => {
-            observer.next();
-            observer.complete();
+          // Agregar la integración con Hubspot
+          const contactData = {
+            email: emailaddress,
+          };
+
+          this.hubspotService.createContact(contactData).subscribe({
+            next: (hubspotResponse) => {
+              console.log(
+                'Contacto creado en Hubspot exitosamente:',
+                hubspotResponse
+              );
+
+              // Check if redirectUrl exists in sessionStorage
+              const redirectUrl = sessionStorage.getItem('redirectUrl');
+              if (redirectUrl) {
+                // Navigate to the stored URL
+                this.router.navigate([redirectUrl]);
+                // Clear the redirectUrl from sessionStorage
+                sessionStorage.removeItem('redirectUrl');
+              } else {
+                // Default navigation to home
+                this.router.navigate(['/home']);
+              }
+            },
+            error: (hubspotError) => {
+              console.error(
+                'Error al crear contacto en Hubspot:',
+                hubspotError
+              );
+
+              // Even if Hubspot fails, check for redirectUrl
+              const redirectUrl = sessionStorage.getItem('redirectUrl');
+              if (redirectUrl) {
+                this.router.navigate([redirectUrl]);
+                sessionStorage.removeItem('redirectUrl');
+              } else {
+                this.router.navigate(['/home']);
+              }
+            },
+            complete: () => {
+              observer.next();
+              observer.complete();
+            },
+          });
+        },
+        newPasswordRequired: () => {
+          observer.error('Se requiere una nueva contraseña');
+        },
+        onFailure: (error: any) => {
+          let errorMessage = 'Error al iniciar sesión';
+          if (error.code === 'UserNotFoundException') {
+            errorMessage = 'El usuario no existe';
+          } else if (error.code === 'NotAuthorizedException') {
+            errorMessage = 'La contraseña es incorrecta';
+          } else if (error.code === 'UserNotConfirmedException') {
+            errorMessage =
+              'El usuario no ha sido confirmado. Por favor, verifica tu correo electrónico';
+          } else if (error.code === 'TooManyFailedAttemptsException') {
+            errorMessage =
+              'Demasiados intentos fallidos. Intenta de nuevo más tarde';
           }
-        });
-      },
-      newPasswordRequired: () => {
-        observer.error('Se requiere una nueva contraseña');
-      },
-      onFailure: (error: any) => {
-        let errorMessage = 'Error al iniciar sesión';
-        if (error.code === 'UserNotFoundException') {
-          errorMessage = 'El usuario no existe';
-        } else if (error.code === 'NotAuthorizedException') {
-          errorMessage = 'La contraseña es incorrecta';
-        } else if (error.code === 'UserNotConfirmedException') {
-          errorMessage = 'El usuario no ha sido confirmado. Por favor, verifica tu correo electrónico';
-        } else if (error.code === 'TooManyFailedAttemptsException') {
-          errorMessage = 'Demasiados intentos fallidos. Intenta de nuevo más tarde';
-        }
-        observer.error({ message: errorMessage });
-      },
+          observer.error({ message: errorMessage });
+        },
+      });
     });
-  });
-}
+  }
 
   // Logout
   logOut() {
@@ -266,14 +290,14 @@ login(emailaddress: string, password: string): Observable<void> {
         observer.error('No user is logged in');
         return;
       }
-      
+
       currentUser.getSession((err: any, session: any) => {
         if (err) {
           console.log(err);
           observer.error(err);
           return;
         }
-        
+
         currentUser.getUserAttributes((err: any, result: any) => {
           if (err) {
             console.log(err);
@@ -285,11 +309,11 @@ login(emailaddress: string, password: string): Observable<void> {
           }));
           formattedResult = Object.assign({}, ...formattedResult);
           console.log('User attributes: ', formattedResult);
-          
+
           if (formattedResult.email) {
             this.currentUserEmail.next(formattedResult.email);
           }
-          
+
           this.userAttributesChanged.next();
           observer.next(formattedResult);
           observer.complete();
@@ -344,12 +368,12 @@ login(emailaddress: string, password: string): Observable<void> {
 
   async createUserIfNotExists(email: string): Promise<void> {
     if (!email) return;
-    
+
     try {
       // Primero intentamos obtener el usuario
       const user = await firstValueFrom(
         this.usersService.getUserByEmail(email).pipe(
-          catchError(error => {
+          catchError((error) => {
             // Si el usuario no existe (404), creamos uno nuevo
             if (error.status === 404) {
               return from(
@@ -363,7 +387,7 @@ login(emailaddress: string, password: string): Observable<void> {
                 )
               ).pipe(
                 tap(() => console.log('Usuario creado en la base de datos.')),
-                catchError(createError => {
+                catchError((createError) => {
                   console.error('Error al crear el usuario:', createError);
                   return of(null);
                 })
@@ -375,7 +399,7 @@ login(emailaddress: string, password: string): Observable<void> {
           })
         )
       );
-      
+
       if (user) {
         console.log('Usuario existente:', user);
       }

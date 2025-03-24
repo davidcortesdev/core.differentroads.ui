@@ -10,6 +10,7 @@ import { Observable, Subject, takeUntil } from 'rxjs';
 import { Press } from '../../core/models/press/press.model';
 import { Collection } from '../../core/models/collections/collection.model';
 import { Landing } from '../../core/models/landings/landing.model';
+import { Title } from '@angular/platform-browser';
 
 export interface ITour {
   imageUrl: string;
@@ -75,7 +76,8 @@ export class ContentPageComponent implements OnInit, OnDestroy {
     private collectionsService: CollectionsService,
     private blogService: BlogsService,
     private pressService: PressService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private titleService: Title
   ) {}
 
   ngOnInit(): void {
@@ -121,6 +123,12 @@ export class ContentPageComponent implements OnInit, OnDestroy {
     }
   }
 
+  private updatePageTitle(title: string): void {
+    if (title) {
+      this.titleService.setTitle(`${title} - Different Roads`);
+    }
+  }
+
   private fetchLandingData(): void {
     this.landingsService
       .getLandingBySlug(this.slug)
@@ -135,6 +143,7 @@ export class ContentPageComponent implements OnInit, OnDestroy {
           this.bannerDescription = data.content || '';
           this.contentTitle = data.titleContent || '';
           this.contentDescription = data.content || '';
+          this.updatePageTitle(data.title);
         },
         error: (error: any) => {
           console.error('Error fetching landing data:', error);
@@ -156,6 +165,7 @@ export class ContentPageComponent implements OnInit, OnDestroy {
           this.bannerDescription = data.content || '';
           this.contentTitle = data.titleContent || '';
           this.contentDescription = data.description || '';
+          this.updatePageTitle(data.title);
 
           this.extractCollectionTags(data);
 
@@ -182,6 +192,7 @@ export class ContentPageComponent implements OnInit, OnDestroy {
           this.blocks = data.blocks || [];
           this.contentTitle = data.title || '';
           this.contentDescription = data.content || '';
+          this.updatePageTitle(data.title);
         },
         error: (error: any) => {
           console.error('Error fetching press data:', error);
@@ -201,6 +212,7 @@ export class ContentPageComponent implements OnInit, OnDestroy {
           this.blocks = data.blocks || [];
           this.contentTitle = data.title || '';
           this.contentDescription = data.content || '';
+          this.updatePageTitle(data.title);
         },
         error: (error: any) => {
           console.error('Error fetching blog data:', error);

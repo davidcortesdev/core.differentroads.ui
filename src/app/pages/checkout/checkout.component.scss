@@ -138,6 +138,14 @@
 
         .total-section {
           margin-top: 1.5rem;
+          color: var(--background-azul);
+          @media (max-width: 768px) {
+            margin-top: 1.2rem;
+          }
+          
+          @media (max-width: 425px) {
+            margin-top: 1rem;
+          }
 
           .subtotal,
           .total {
@@ -150,8 +158,21 @@
             font-weight: bold;
             font-size: 1.2rem;
             margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid #eee;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--background-azul);
+            border-bottom: 1px solid var(--background-azul);
+            
+            @media (max-width: 768px) {
+              font-size: 1rem;
+            }
+            
+            @media (max-width: 425px) {
+              font-size: 0.9rem;
+            }
+
+            .price {
+              color: var(--primary-color-500);
+            }
           }
         }
       }
@@ -377,4 +398,8 @@ p-button.continue-button ::ng-deep .p-button {
       }
     }
   }
+}
+
+::ng-deep   .p-message-sm .p-message-text {
+  font-size: 0.7rem;
 }

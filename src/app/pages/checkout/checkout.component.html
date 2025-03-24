@@ -127,60 +127,33 @@
                 </span>
               </div>
             </div>
+            <!-- Points section -->
+            <br /><br />
+            <p>Acumulas {{ points }} puntos con este viaje</p>
+            <p-message
+              severity="secondary"
+              size="small"
+              icon="pi pi-exclamation-circle"
+              >Se genera un abono del 3% del importe del viaje en puntos a
+              descontar en futuras compras para aquellos viajeros de los que se
+              indique el DNI.</p-message
+            >
 
             <!-- Total section -->
             <div class="total-section">
               <div class="total">
-                <span>Total</span>
-                <span>{{ total | currencyFormat : "EUR" }}</span>
+                <span>TOTAL</span>
+                <span class="price">{{ total | currencyFormat : "EUR" }}</span>
               </div>
             </div>
-
             <!-- Flights info if selected -->
-            <div
-              class="flights-info"
+            <app-flight-section
               *ngIf="
                 selectedFlight &&
                 !selectedFlight?.name?.toLowerCase()?.includes('sin ')
               "
-            >
-              <h4>Vuelos</h4>
-              <div class="flight-details">
-                <!-- outbound -->
-                <div
-                  *ngFor="
-                    let segment of selectedFlight?.outbound?.segments;
-                    let idx = index
-                  "
-                  class="itinerary-flight"
-                >
-                  <ng-container *ngIf="idx === 0">
-                    <div class="itinerary-flight-date">
-                      <span>IDA</span>
-                      <span class="itinerary-flight-date-line"></span>
-                      <i class="icon icon-navigate_next font-xl"></i>
-                      <span>{{
-                        selectedFlight.outbound.date | date : "dd/MM/yyyy"
-                      }}</span>
-                    </div>
-                    <div class="itinerary-flight-scale">
-                      <span *ngIf="selectedFlight?.outbound?.segments">
-                        {{
-                          selectedFlight.outbound.segments.length > 1
-                            ? selectedFlight.outbound.segments.length -
-                              1 +
-                              " escala"
-                            : "Vuelo directo"
-                        }}
-                      </span>
-                    </div>
-                  </ng-container>
-                  <!-- Rest of the flight details -->
-                </div>
-                <!-- inbound -->
-                <!-- Flight details content -->
-              </div>
-            </div>
+              [flight]="selectedFlight"
+            ></app-flight-section>
           </div>
         </div>
       </div>

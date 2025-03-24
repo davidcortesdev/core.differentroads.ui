@@ -18,7 +18,6 @@ interface TripQueryParams {
   standalone: false,
   templateUrl: './hero-section.component.html',
   styleUrls: ['./hero-section.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HeroSectionComponent implements OnInit, OnDestroy {
   @Input() initialDestination: string | null = null;

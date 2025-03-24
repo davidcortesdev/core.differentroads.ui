@@ -4,6 +4,7 @@ import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { Page } from '../../core/models/pages/page.model';
 import { PagesService } from '../../core/services/pages.service';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-basic-page',
@@ -18,7 +19,8 @@ export class BasicPageComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private pageService: PagesService // Inyecta el servicio
+    private pageService: PagesService, // Inyecta el servicio
+    private titleService: Title
   ) {}
 
   ngOnInit(): void {
@@ -43,7 +45,16 @@ export class BasicPageComponent implements OnInit {
       .subscribe((data) => {
         this.pageData = data;
         this.isLoading = false;
+        if (data && data.title) {
+          this.updatePageTitle(data.title);
+        }
       });
+  }
+
+  private updatePageTitle(title: string): void {
+    if (title) {
+      this.titleService.setTitle(`${title} - Different Roads`);
+    }
   }
 
   get pageContent(): Page | null {

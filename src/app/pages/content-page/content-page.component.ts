@@ -33,6 +33,8 @@ type ContentType = 'landing' | 'collection' | 'press' | 'blog' | 'none';
 })
 export class ContentPageComponent implements OnInit, OnDestroy {
   contentType: ContentType = 'none';
+  contentTitle: string = '';
+  contentDescription: string = '';
 
   get isLanding(): boolean {
     return this.contentType === 'landing';
@@ -131,6 +133,8 @@ export class ContentPageComponent implements OnInit, OnDestroy {
           this.bannerTitle = data.title || '';
           this.bannerSubtitle = data.titleContent || '';
           this.bannerDescription = data.content || '';
+          this.contentTitle = data.titleContent || '';
+          this.contentDescription = data.content || '';
         },
         error: (error: any) => {
           console.error('Error fetching landing data:', error);
@@ -147,9 +151,11 @@ export class ContentPageComponent implements OnInit, OnDestroy {
           this.blocks = data.blocks || ['collection'];
           this.bannerImage = data.banner[0]?.url || '';
           this.bannerImageAlt = data.banner[0]?.alt || '';
-          this.bannerTitle = data.title || '';
-          this.bannerSubtitle = data.bannerTitle || '';
+          this.bannerTitle = data.bannerTitle || '';
+          this.bannerSubtitle = '';
           this.bannerDescription = data.content || '';
+          this.contentTitle = data.titleContent || '';
+          this.contentDescription = data.description || '';
 
           this.extractCollectionTags(data);
 
@@ -174,6 +180,8 @@ export class ContentPageComponent implements OnInit, OnDestroy {
           this.bannerSubtitle = data.subtitle || '';
           this.bannerDescription = data.content || '';
           this.blocks = data.blocks || [];
+          this.contentTitle = data.title || '';
+          this.contentDescription = data.content || '';
         },
         error: (error: any) => {
           console.error('Error fetching press data:', error);
@@ -191,6 +199,8 @@ export class ContentPageComponent implements OnInit, OnDestroy {
           this.bannerSubtitle = data.subtitle || '';
           this.bannerDescription = data.content || '';
           this.blocks = data.blocks || [];
+          this.contentTitle = data.title || '';
+          this.contentDescription = data.content || '';
         },
         error: (error: any) => {
           console.error('Error fetching blog data:', error);

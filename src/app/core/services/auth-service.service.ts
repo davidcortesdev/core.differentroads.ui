@@ -401,7 +401,7 @@ export class AuthenticateService {
       );
 
       if (user) {
-        console.log('Usuario existente:', user);
+        // console.log('Usuario existente:', user);
       }
     } catch (error) {
       console.error('Error en createUserIfNotExists:', error);

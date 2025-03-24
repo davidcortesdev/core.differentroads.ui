@@ -14,7 +14,16 @@
       <span class="duration">{{ getDuration() }}</span>
     </div>
   </div>
-
+  <div class="tour-featured">
+    <p-message
+      severity="secondary"
+      variant="outlined"
+      icon="pi pi-star"
+      size="small"
+      >El mejor valorado por <br />
+      nuestros viajeros</p-message
+    >
+  </div>
   <!-- Tour Actions Section -->
   <div class="tour-actions">
     <!-- Marketing Badge -->
@@ -35,26 +44,12 @@
           <span class="amount">{{ basePrice | currencyFormat : "EUR" }}</span>
         </div>
       </div>
-    </div>
-
-    <!-- Booking Container -->
-    <div class="booking-container">
-      <p-button
-        label="Reservar mi tour"
-        styleClass="p-button-rounded"
-        [disabled]="!selectedDate || !totalPrice"
-        (onClick)="bookTour()"
-      ></p-button>
-
       <!-- Total Price Information -->
       <div class="total-price-container" *ngIf="totalPrice > 0">
         <div class="passengers-info">
           <span>{{ selectedDate }} - {{ tripType }}</span>
+          <br>
           <!-- for in selected activities array name  -->
-          <span *ngFor="let activity of selectedActivities">{{
-            activity.name
-          }}</span>
-
           <span>{{
             departureCity.toLowerCase().includes("sin")
               ? "Sin vuelos "
@@ -65,10 +60,24 @@
         </div>
         <div class="total">
           <span class="pasajeros">{{ travelersText }}</span>
+          <br>
           <span class="total-total">Total: </span>
           <span class="amount">{{ totalPrice | currencyFormat : "EUR" }}</span>
         </div>
+        <span *ngFor="let activity of selectedActivities">{{
+          activity.name
+        }}</span>
       </div>
+    </div>
+
+    <!-- Booking Container -->
+    <div class="booking-container">
+      <p-button
+        label="Reservar mi tour"
+        styleClass="p-button-rounded"
+        [disabled]="!selectedDate || !totalPrice"
+        (onClick)="bookTour()"
+      ></p-button>
     </div>
   </div>
 </div>

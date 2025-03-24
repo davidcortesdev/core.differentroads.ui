@@ -108,15 +108,70 @@ $spacing-md: 1rem;
           @include responsive-font(0.7rem, 0.8rem, 0.75rem);
         }
 
-        .tag {
+        .tags-container {
           position: absolute;
           top: $spacing-md;
           right: $spacing-md;
-          background: var(--p-button-primary-color);
-          color: var(--background-azul);
-          padding: $spacing-xs $spacing-xs * 2;
-          border-radius: $border-radius-sm;
-          @include responsive-font(0.8rem, 0.85rem, 0.7rem);
+          display: flex;
+          flex-direction: column;
+          gap: 0.1rem;
+          align-items: flex-end;
+      
+          .tag {
+            background: var(--p-button-primary-color);
+            color: var(--background-azul);
+            padding: $spacing-xs $spacing-xs * 2;
+            border-radius: $border-radius-sm;
+            @include responsive-font(0.8rem, 0.85rem, 0.7rem);
+          }
+          .tag.expandable-tag {
+            transition: all 0.3s ease;
+            max-width: 40px;
+            overflow: hidden;
+            white-space: nowrap;
+            cursor: pointer;
+            border-radius: 10px;
+            margin-bottom: 0.1rem;
+          }
+          
+          .tag.expandable-tag:hover {
+            max-width: none; 
+            width: auto; 
+            padding-right: $spacing-sm; 
+            
+          }
+          
+          .short-text {
+            display: inline-block;
+            transition: all 0.1s ease;
+            
+            img{
+              width: 1rem;
+              height: 1rem
+            }
+          }
+          
+          .tag.expandable-tag:hover .short-text {
+            opacity: 0;
+            width: 0;
+            position: absolute;
+            overflow: hidden;
+          }
+          
+          .expanded-content {
+            display: inline-block;
+            opacity: 0;
+            max-width: 0;
+            overflow: hidden;
+            transition: all 0.2s ease;
+          }
+          
+          .tag.expandable-tag:hover .expanded-content {
+            opacity: 1;
+            max-width: none;
+            width: auto;
+            margin-left: 0; /* Quité el margen para que no haya espacio */
+          }
         }
 
         .title-overlay {

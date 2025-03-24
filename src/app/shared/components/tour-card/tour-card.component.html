@@ -9,17 +9,29 @@
     [styleClass]="'tour-card-wrapper'"
   >
     <ng-template pTemplate="header">
-      <div
-        class="image-container"
-        (click)="handleTourClick()"
-      >
+      <div class="image-container" (click)="handleTourClick()">
         <img [src]="tourData.imageUrl" [alt]="tourData.title" loading="lazy" />
         <div class="overlay">
           <span class="rating p-button-primary">{{ tourData.rating }} ★</span>
           <span class="indicator" *ngIf="tourData.isByDr !== undefined">
             {{ tourData.isByDr ? "By DR" : "Beyond Different" }}
           </span>
-          <span class="tag" *ngIf="tourData.tag">{{ tourData.tag }}</span>
+          <div class="tags-container">
+            <span class="tag expandable-tag">
+              <span class="short-text">
+                <img
+                  alt="dropdown icon"
+                  src="favicon-different.png"
+                  class="logo"
+                  height="5px"
+                />
+              </span>
+              <span class="expanded-content"
+                >Tour creado por Different Roads</span
+              >
+            </span>
+            <span class="tag" *ngIf="tourData.tag">{{ tourData.tag }}</span>
+          </div>
           <div class="title-overlay">
             <p>{{ tourData.description }}</p>
             <h3>{{ tourData.title }}</h3>
@@ -27,24 +39,33 @@
         </div>
       </div>
     </ng-template>
-    
+
     <ng-template pTemplate="content">
       <div class="card-footer">
         <div class="price-content">
           <div class="price-section">
             <div class="price-info">
               <span class="desde">Desde</span>
-              <span class="price">{{ tourData.price | currencyFormat : "EUR" }}</span>
+              <span class="price">{{
+                tourData.price | currencyFormat : "EUR"
+              }}</span>
               <span class="priceScalapay" *ngIf="showScalapayPrice">
-                o desde {{ monthlyPrice | currencyFormat : "EUR"}}/mes con
+                o desde {{ monthlyPrice | currencyFormat : "EUR" }}/mes con
               </span>
-              <img *ngIf="showScalapayPrice" src="assets/images/scalapay.svg" alt="ScalaPay" class="scalapay-logo" />
+              <img
+                *ngIf="showScalapayPrice"
+                src="assets/images/scalapay.svg"
+                alt="ScalaPay"
+                class="scalapay-logo"
+              />
             </div>
             <div class="button-container">
               <div class="trip-type-container">
-                <p-tag *ngFor="let type of tourData.tripType"
-                       class="trip-type"
-                       [styleClass]="getTripTypeClass(type)">
+                <p-tag
+                  *ngFor="let type of tourData.tripType"
+                  class="trip-type"
+                  [styleClass]="getTripTypeClass(type)"
+                >
                   {{ getTripTypeLabel(type) }}
                 </p-tag>
               </div>

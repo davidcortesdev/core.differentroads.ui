@@ -71,6 +71,9 @@ export class TourComponent implements OnInit, OnDestroy {
     // Limpiar todas las suscripciones al destruir el componente
     this.subscriptions.unsubscribe();
     this.passengerChanges.complete();
+    
+    // Limpiar el estado del servicio
+    this.tourOrderService.resetState();
   }
 
   // Método para recibir actualizaciones de pasajeros desde tour-departures
@@ -103,17 +106,17 @@ export class TourComponent implements OnInit, OnDestroy {
           this.loading = false;
           this.tourDataService.updateTour(tourData);
 
-          if (tourData.activePeriods && tourData.activePeriods.length > 0) {
-            const firstPeriod = tourData.activePeriods[0];
-            this.tourDataService.getPeriodPrice(firstPeriod.externalID);
+          // if (tourData.activePeriods && tourData.activePeriods.length > 0) {
+          //   const firstPeriod = tourData.activePeriods[0];
+          //   this.tourDataService.getPeriodPrice(firstPeriod.externalID);
 
-            if (firstPeriod.name) {
-              this.tourOrderService.updateSelectedDateInfo(
-                firstPeriod.externalID,
-                undefined
-              );
-            }
-          }
+          //   if (firstPeriod.name) {
+          //     this.tourOrderService.updateSelectedDateInfo(
+          //       firstPeriod.externalID,
+          //       undefined
+          //     );
+          //   }
+          // }
         },
         error: (error) => {
           console.error('Error loading tour:', error);

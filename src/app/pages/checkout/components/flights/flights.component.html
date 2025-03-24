@@ -8,7 +8,7 @@
   <div *ngFor="let flight of filteredFlights">
     <app-flight-itinerary
       [flight]="flight"
-      [selectFlight]="selectFlight.bind(this)"
+      [selectFlight]="selectFlightWithAuthCheck.bind(this)"
       [isFlightSelected]="isFlightSelected.bind(this)"
     >
     </app-flight-itinerary>
@@ -35,4 +35,13 @@
     >
     </app-flight-search>
   </div>
+
+  <!-- Login Modal with PrimeNG dialog -->
+  <app-login-modal
+    [visible]="loginDialogVisible"
+    (close)="closeLoginModal()"
+    (login)="navigateToLogin()"
+    (register)="navigateToRegister()"
+  >
+  </app-login-modal>
 </div>

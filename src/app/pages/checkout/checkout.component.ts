@@ -12,7 +12,7 @@ import { ActivitiesService } from '../../core/services/checkout/activities.servi
 import { Activity } from '../../core/models/tours/activity.model';
 import { FlightsService } from '../../core/services/checkout/flights.service';
 import { Flight } from '../../core/models/tours/flight.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { BookingsService } from '../../core/services/bookings.service';
 import { BookingCreateInput } from '../../core/models/bookings/booking.model';
 import { Period } from '../../core/models/tours/period.model';
@@ -20,6 +20,7 @@ import { InsurancesService } from '../../core/services/checkout/insurances.servi
 import { Insurance } from '../../core/models/tours/insurance.model';
 import { MessageService, MenuItem } from 'primeng/api';
 import { DiscountsService } from '../../core/services/checkout/discounts.service';
+import { AuthenticateService } from '../../core/services/auth-service.service';
 
 @Component({
   selector: 'app-checkout',
@@ -39,26 +40,26 @@ export class CheckoutComponent implements OnInit {
       label: 'Personaliza tu viaje',
       command: (event) => {
         this.onActiveIndexChange(0);
-      }
+      },
     },
     {
       label: 'Vuelos',
       command: (event) => {
         this.onActiveIndexChange(1);
-      }
+      },
     },
     {
       label: 'Viajeros',
       command: (event) => {
         this.onActiveIndexChange(2);
-      }
+      },
     },
     {
       label: 'Pago',
       command: (event) => {
         this.onActiveIndexChange(3);
-      }
-    }
+      },
+    },
   ];
 
   // Tour information
@@ -108,6 +109,9 @@ export class CheckoutComponent implements OnInit {
 
   points: number = 0;
 
+  // Add a new property to control the login modal visibility in checkout
+  loginDialogVisible: boolean = false;
+
   constructor(
     private ordersService: OrdersService,
     private periodsService: PeriodsService,
@@ -117,7 +121,9 @@ export class CheckoutComponent implements OnInit {
     private pricesService: PricesService,
     private activitiesService: ActivitiesService,
     private flightsService: FlightsService,
+    private authService: AuthenticateService,
     private route: ActivatedRoute,
+    private router: Router,
     private bookingsService: BookingsService,
     private insurancesService: InsurancesService,
     private messageService: MessageService,
@@ -125,6 +131,18 @@ export class CheckoutComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    // Read step from URL if present
+    this.route.queryParams.subscribe((params) => {
+      if (params['step']) {
+        const stepParam = parseInt(params['step']);
+        if (!isNaN(stepParam) && stepParam >= 1 && stepParam <= 4) {
+          this.currentStep = stepParam;
+          // Also update the activeIndex (0-based) to match the currentStep (1-based)
+          this.activeIndex = stepParam - 1;
+        }
+      }
+    });
+
     const orderId =
       this.route.snapshot.paramMap.get('id') || '67b702314d0586617b90606b';
     this.ordersService.getOrderDetails(orderId).subscribe((order) => {
@@ -186,7 +204,7 @@ export class CheckoutComponent implements OnInit {
       this.travelersSelected = data;
       this.updateOrderSummary();
     });
-    
+
     this.travelersService.travelers$.subscribe((travelers) => {
       //this.updateOrderSummary();
     });
@@ -231,7 +249,10 @@ export class CheckoutComponent implements OnInit {
     // Sin validaciones: permitir el cambio de índice directamente
     this.activeIndex = index;
     this.currentStep = index + 1; // Actualizar currentStep (base 1) para que coincida con activeIndex (base 0)
-    
+
+    // Actualizar la URL para reflejar el paso actual
+    this.updateStepInUrl(this.currentStep);
+
     // Actualizar el resumen del pedido después de cambiar el paso
     this.updateOrderSummary();
     this.updateOrder();
@@ -242,6 +263,25 @@ export class CheckoutComponent implements OnInit {
     if (this.nextStep(targetIndex + 1)) {
       this.activeIndex = targetIndex;
       this.currentStep = targetIndex + 1;
+    }
+  }
+
+  // Method to update URL when step changes
+  updateStepInUrl(step: any): void {
+    // Extract the step number if it's an event object, otherwise use the value directly
+    const stepNumber =
+      typeof step === 'object' && step !== null ? step.value : step;
+
+    // Make sure we have a valid number
+    if (typeof stepNumber === 'number' && !isNaN(stepNumber)) {
+      this.currentStep = stepNumber;
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { step: stepNumber },
+        queryParamsHandling: 'merge',
+      });
+    } else {
+      console.error('Invalid step value:', step);
     }
   }
 
@@ -672,9 +712,65 @@ export class CheckoutComponent implements OnInit {
 
     this.updateOrderSummary();
     this.updateOrder();
+
+    // Update URL with new step if validations pass
+    if (step !== this.currentStep) {
+      this.updateStepInUrl(step);
+    }
+
     return true;
   }
 
+  // New method to check auth before continuing from flights step
+  checkAuthAndContinue(
+    nextStep: number,
+    activateCallback: any,
+    useFlightless: boolean = false
+  ): void {
+    this.authService.isLoggedIn().subscribe((isLoggedIn) => {
+      if (isLoggedIn) {
+        // User is logged in, proceed normally
+        if (useFlightless) {
+          // Handle "Lo quiero sin vuelos" button
+          if (this.flightlessOption) {
+            this.flightsService.updateSelectedFlight(this.flightlessOption);
+            if (this.nextStep(nextStep)) {
+              activateCallback(nextStep);
+            }
+          }
+        } else {
+          // Handle "Continuar" button
+          if (this.nextStep(nextStep)) {
+            activateCallback(nextStep);
+          }
+        }
+      } else {
+        // User is not logged in, save URL and show login dialog
+        sessionStorage.setItem('redirectUrl', window.location.pathname);
+        // Show the login modal instead of redirecting
+        this.loginDialogVisible = true;
+      }
+    });
+  }
+
+  // Add method to close the login modal
+  closeLoginModal(): void {
+    this.loginDialogVisible = false;
+  }
+
+  // Add method to navigate to login page
+  navigateToLogin(): void {
+    this.closeLoginModal();
+    this.router.navigate(['/login']);
+  }
+
+  // Add method to navigate to register page
+  navigateToRegister(): void {
+    this.closeLoginModal();
+    this.router.navigate(['/sign-up']); // Changed from '/register' to '/sign-up'
+  }
+
+  // Remove authentication check from here since it's now handled in checkAuthAndContinue
   selectFlightlessAndContinue(): boolean {
     if (this.flightlessOption) {
       this.flightsService.updateSelectedFlight(this.flightlessOption);
@@ -785,7 +881,7 @@ export class CheckoutComponent implements OnInit {
         });
     });
   }
-  
+
   // Método para guardar viaje
   saveTrip(): void {
     this.budgetDialogVisible = true;

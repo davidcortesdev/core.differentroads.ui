@@ -10,8 +10,13 @@
     <div class="main-content">
       <div class="steps-container full-width">
         <!-- Ubicando el p-steps donde estaba originalmente pero con clase full-width -->
-        <p-steps [model]="items" [readonly]="false" [activeIndex]="activeIndex" (activeIndexChange)="onActiveIndexChange($event)"></p-steps>
-        
+        <p-steps
+          [model]="items"
+          [readonly]="false"
+          [activeIndex]="activeIndex"
+          (activeIndexChange)="onActiveIndexChange($event)"
+        ></p-steps>
+
         <div [ngSwitch]="activeIndex">
           <!-- Step 1: Customize Trip -->
           <div *ngSwitchCase="0">
@@ -35,15 +40,15 @@
                   <div class="title">
                     <div>Guarda este viaje</div>
                     <div class="description">
-                      Sujeto a disponibilidad en el momento de la reserva y
-                      sólo para salidas con stock
+                      Sujeto a disponibilidad en el momento de la reserva y sólo
+                      para salidas con stock
                     </div>
                   </div>
                 </ng-template>
               </p-button>
             </div>
           </div>
-          
+
           <!-- Step 2: Flights -->
           <div *ngSwitchCase="1">
             <app-flights
@@ -55,14 +60,18 @@
                 class="without-flight"
                 *ngIf="flightlessOption"
                 label="Lo quiero sin vuelos"
-                (onClick)="selectFlightlessAndContinue() && nextStepWithValidation(2)"
+                (onClick)="
+                  checkAuthAndContinue(2, onActiveIndexChange.bind(this), true)
+                "
               ></p-button>
               <p-button
                 class="continue-button"
                 label="Continuar"
                 icon="pi pi-arrow-right"
                 iconPos="right"
-                (onClick)="nextStepWithValidation(2)"
+                (onClick)="
+                  checkAuthAndContinue(2, onActiveIndexChange.bind(this), false)
+                "
                 [disabled]="
                   !selectedFlight ||
                   selectedFlight.name.toLowerCase().includes('sin ')
@@ -70,7 +79,7 @@
               ></p-button>
             </div>
           </div>
-          
+
           <!-- Step 3: Travelers -->
           <div *ngSwitchCase="2">
             <app-travelers></app-travelers>
@@ -83,7 +92,7 @@
               ></p-button>
             </div>
           </div>
-          
+
           <!-- Step 4: Payment -->
           <div *ngSwitchCase="3">
             <app-payment
@@ -157,7 +166,7 @@
           </div>
         </div>
       </div>
-      
+
       <app-discount-code
         [orderTotal]="subtotal"
         [existingDiscount]="discountInfo"
@@ -178,6 +187,7 @@
     class=""
   >
     <app-budget-dialog
+      class="budget-dialog"
       [visible]="budgetDialogVisible"
       [handleCloseModal]="handleCloseBudgetDialog.bind(this)"
       (close)="handleCloseBudgetDialog()"
@@ -195,4 +205,13 @@
       [periodId]="periodID"
     ></app-budget-dialog>
   </p-dialog>
+
+  <!-- Add the login modal at the bottom of the template -->
+  <app-login-modal
+    [visible]="loginDialogVisible"
+    (close)="closeLoginModal()"
+    (login)="navigateToLogin()"
+    (register)="navigateToRegister()"
+  >
+  </app-login-modal>
 </div>

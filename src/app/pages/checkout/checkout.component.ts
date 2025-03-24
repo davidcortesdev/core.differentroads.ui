@@ -12,13 +12,15 @@ import { ActivitiesService } from '../../core/services/checkout/activities.servi
 import { Activity } from '../../core/models/tours/activity.model';
 import { FlightsService } from '../../core/services/checkout/flights.service';
 import { Flight } from '../../core/models/tours/flight.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { BookingsService } from '../../core/services/bookings.service';
 import { BookingCreateInput } from '../../core/models/bookings/booking.model';
 import { Period } from '../../core/models/tours/period.model';
 import { InsurancesService } from '../../core/services/checkout/insurances.service';
 import { Insurance } from '../../core/models/tours/insurance.model';
-import { MessageService } from 'primeng/api';
+import { MessageService, MenuItem } from 'primeng/api';
+import { DiscountsService } from '../../core/services/checkout/discounts.service';
+import { AuthenticateService } from '../../core/services/auth-service.service';
 
 @Component({
   selector: 'app-checkout',
@@ -30,6 +32,35 @@ export class CheckoutComponent implements OnInit {
   currentStep: number = 1;
   orderDetails: Order | null = null;
   availableTravelers: string[] = [];
+
+  // PrimeNG Steps
+  activeIndex: number = 0;
+  items: MenuItem[] = [
+    {
+      label: 'Personaliza tu viaje',
+      command: (event) => {
+        this.onActiveIndexChange(0);
+      },
+    },
+    {
+      label: 'Vuelos',
+      command: (event) => {
+        this.onActiveIndexChange(1);
+      },
+    },
+    {
+      label: 'Viajeros',
+      command: (event) => {
+        this.onActiveIndexChange(2);
+      },
+    },
+    {
+      label: 'Pago',
+      command: (event) => {
+        this.onActiveIndexChange(3);
+      },
+    },
+  ];
 
   // Tour information
   tourName: string = '';
@@ -69,6 +100,18 @@ export class CheckoutComponent implements OnInit {
   // Add property to control budget dialog visibility
   budgetDialogVisible: boolean = false;
 
+  discountInfo: {
+    code?: string;
+    amount: number;
+    description: string;
+    type: string;
+  } | null = null;
+
+  points: number = 0;
+
+  // Add a new property to control the login modal visibility in checkout
+  loginDialogVisible: boolean = false;
+
   constructor(
     private ordersService: OrdersService,
     private periodsService: PeriodsService,
@@ -78,13 +121,28 @@ export class CheckoutComponent implements OnInit {
     private pricesService: PricesService,
     private activitiesService: ActivitiesService,
     private flightsService: FlightsService,
+    private authService: AuthenticateService,
     private route: ActivatedRoute,
+    private router: Router,
     private bookingsService: BookingsService,
     private insurancesService: InsurancesService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private discountsService: DiscountsService
   ) {}
 
   ngOnInit() {
+    // Read step from URL if present
+    this.route.queryParams.subscribe((params) => {
+      if (params['step']) {
+        const stepParam = parseInt(params['step']);
+        if (!isNaN(stepParam) && stepParam >= 1 && stepParam <= 4) {
+          this.currentStep = stepParam;
+          // Also update the activeIndex (0-based) to match the currentStep (1-based)
+          this.activeIndex = stepParam - 1;
+        }
+      }
+    });
+
     const orderId =
       this.route.snapshot.paramMap.get('id') || '67b702314d0586617b90606b';
     this.ordersService.getOrderDetails(orderId).subscribe((order) => {
@@ -146,6 +204,7 @@ export class CheckoutComponent implements OnInit {
       this.travelersSelected = data;
       this.updateOrderSummary();
     });
+
     this.travelersService.travelers$.subscribe((travelers) => {
       //this.updateOrderSummary();
     });
@@ -178,6 +237,52 @@ export class CheckoutComponent implements OnInit {
     this.flightsService.flightlessOption$.subscribe((option) => {
       this.flightlessOption = option;
     });
+
+    this.discountsService.selectedDiscounts$.subscribe((discounts) => {
+      console.log('Discounts updated:', discounts);
+      this.updateOrderSummary();
+    });
+  }
+
+  /* Steps Navigation Methods */
+  onActiveIndexChange(index: number): void {
+    // Sin validaciones: permitir el cambio de índice directamente
+    this.activeIndex = index;
+    this.currentStep = index + 1; // Actualizar currentStep (base 1) para que coincida con activeIndex (base 0)
+
+    // Actualizar la URL para reflejar el paso actual
+    this.updateStepInUrl(this.currentStep);
+
+    // Actualizar el resumen del pedido después de cambiar el paso
+    this.updateOrderSummary();
+    this.updateOrder();
+  }
+
+  nextStepWithValidation(targetIndex: number): void {
+    // Usar nextStep para validar antes de cambiar el paso
+    if (this.nextStep(targetIndex + 1)) {
+      this.activeIndex = targetIndex;
+      this.currentStep = targetIndex + 1;
+    }
+  }
+
+  // Method to update URL when step changes
+  updateStepInUrl(step: any): void {
+    // Extract the step number if it's an event object, otherwise use the value directly
+    const stepNumber =
+      typeof step === 'object' && step !== null ? step.value : step;
+
+    // Make sure we have a valid number
+    if (typeof stepNumber === 'number' && !isNaN(stepNumber)) {
+      this.currentStep = stepNumber;
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { step: stepNumber },
+        queryParamsHandling: 'merge',
+      });
+    } else {
+      console.error('Invalid step value:', step);
+    }
   }
 
   /* Inicialization */
@@ -473,16 +578,26 @@ export class CheckoutComponent implements OnInit {
       tempOrderData['insurancesRef'] = [];
     }
 
-    // Add discount to summary item if applied
-    if (this.discountInfo && this.discountInfo.discountValue > 0) {
-      this.summary.push({
-        qty: 1,
-        value: -this.discountInfo.discountValue, // Negative value to show it as a reduction
-        description: `Descuento cupón: ${this.discountInfo.code}`,
-      });
+    // Append all discounts from DiscountsService
+    const discounts = this.discountsService.getSelectedDiscounts();
 
-      // Save discount info to order
-      tempOrderData['discounts'] = [this.discountInfo];
+    if (discounts && discounts.length > 0) {
+      discounts.forEach((discount) => {
+        if (discount.source === 'coupon') {
+          this.summary.push({
+            qty: 1,
+            value: -discount.amount,
+            description: `Descuento cupon: ${discount.description}`,
+          });
+        } else {
+          this.summary.push({
+            qty: 1,
+            value: -discount.amount,
+            description: `${discount.description}`,
+          });
+        }
+      });
+      tempOrderData['discounts'] = discounts;
     }
 
     this.summaryService.updateOrder(tempOrderData);
@@ -498,43 +613,56 @@ export class CheckoutComponent implements OnInit {
     this.travelers = event.adults + event.childs + event.babies;
   }
 
-  // Add these properties to your checkout component class
-  discountInfo: {
-    code: string;
-    amount: number;
-    discountValue: number;
-    type: string;
-  } | null = null;
-
-  // Add this method to handle the discount
+  // Método para manejar el descuento
   handleDiscountApplied(discountInfo: {
-    code: string;
+    code?: string;
     amount: number;
-    discountValue: number;
+    description: string;
     type: string;
   }): void {
-    this.discountInfo = discountInfo;
-    this.updateOrderSummary(); // Re-run the summary calculation
+    // Verificar si ya tenemos un descuento de cupón
+    const currentDiscounts = this.discountsService.getSelectedDiscounts();
+    const nonCouponDiscounts = currentDiscounts.filter(
+      (d) => d.source !== 'coupon'
+    );
+
+    // Si el monto es 0, significa que estamos eliminando el descuento
+    if (discountInfo.amount === 0) {
+      this.discountsService.updateSelectedDiscounts(nonCouponDiscounts);
+    } else {
+      const couponDiscount = {
+        type: discountInfo.type,
+        amount: discountInfo.amount,
+        description: discountInfo.code || '',
+        source: 'coupon',
+      };
+
+      this.discountsService.updateSelectedDiscounts([
+        ...nonCouponDiscounts,
+        couponDiscount,
+      ]);
+    }
+
+    // Actualizar manualmente el resumen
+    this.updateOrderSummary();
   }
 
-  // Update your calculateTotals method to include discount
+  // Método para calcular totales
   calculateTotals(): void {
-    // Calculate subtotal from summary items, excluding discount items
+    // Calcular subtotal a partir de elementos del resumen, excluyendo elementos de descuento
     this.subtotal = this.summary.reduce((acc, item) => {
-      // Only add positive values to subtotal (ignore discount items with negative values)
+      // Solo agregar valores positivos al subtotal (ignorar elementos de descuento con valores negativos)
       if (item.value >= 0) {
         return acc + item.value * item.qty;
       }
       return acc;
     }, 0);
 
-    // Calculate total including all items (both positive and negative values)
+    // Calcular total incluyendo todos los elementos (tanto valores positivos como negativos)
     this.total = this.summary.reduce(
       (acc, item) => acc + item.value * item.qty,
       0
     );
-
-    // No need to separately subtract discount as it's already included in summary
   }
 
   /* Steps and validations */
@@ -583,11 +711,66 @@ export class CheckoutComponent implements OnInit {
     }
 
     this.updateOrderSummary();
-    // Llamada a updateOrder sin suscribirse para evitar retraso en la validación de navigation.
     this.updateOrder();
+
+    // Update URL with new step if validations pass
+    if (step !== this.currentStep) {
+      this.updateStepInUrl(step);
+    }
+
     return true;
   }
 
+  // New method to check auth before continuing from flights step
+  checkAuthAndContinue(
+    nextStep: number,
+    activateCallback: any,
+    useFlightless: boolean = false
+  ): void {
+    this.authService.isLoggedIn().subscribe((isLoggedIn) => {
+      if (isLoggedIn) {
+        // User is logged in, proceed normally
+        if (useFlightless) {
+          // Handle "Lo quiero sin vuelos" button
+          if (this.flightlessOption) {
+            this.flightsService.updateSelectedFlight(this.flightlessOption);
+            if (this.nextStep(nextStep)) {
+              activateCallback(nextStep);
+            }
+          }
+        } else {
+          // Handle "Continuar" button
+          if (this.nextStep(nextStep)) {
+            activateCallback(nextStep);
+          }
+        }
+      } else {
+        // User is not logged in, save URL and show login dialog
+        sessionStorage.setItem('redirectUrl', window.location.pathname);
+        // Show the login modal instead of redirecting
+        this.loginDialogVisible = true;
+      }
+    });
+  }
+
+  // Add method to close the login modal
+  closeLoginModal(): void {
+    this.loginDialogVisible = false;
+  }
+
+  // Add method to navigate to login page
+  navigateToLogin(): void {
+    this.closeLoginModal();
+    this.router.navigate(['/login']);
+  }
+
+  // Add method to navigate to register page
+  navigateToRegister(): void {
+    this.closeLoginModal();
+    this.router.navigate(['/sign-up']); // Changed from '/register' to '/sign-up'
+  }
+
+  // Remove authentication check from here since it's now handled in checkAuthAndContinue
   selectFlightlessAndContinue(): boolean {
     if (this.flightlessOption) {
       this.flightsService.updateSelectedFlight(this.flightlessOption);
@@ -698,12 +881,13 @@ export class CheckoutComponent implements OnInit {
         });
     });
   }
-  // Replace the saveTrip method
+
+  // Método para guardar viaje
   saveTrip(): void {
     this.budgetDialogVisible = true;
   }
 
-  // Add method to handle closing the dialog
+  // Método para manejar el cierre del diálogo
   handleCloseBudgetDialog(): void {
     this.budgetDialogVisible = false;
   }

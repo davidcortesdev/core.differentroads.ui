@@ -77,6 +77,8 @@ export class CheckoutComponent implements OnInit {
     type: string;
   } | null = null;
 
+  points: number = 0;
+
   constructor(
     private ordersService: OrdersService,
     private periodsService: PeriodsService,

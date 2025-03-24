@@ -151,6 +151,7 @@ export class FlightItineraryComponent implements OnChanges {
       baseDate,
       segments[0].departureTime
     );
+    
     for (const [index, seg] of segments.entries()) {
       let departure: Date;
       if (index === 0) {
@@ -165,6 +166,7 @@ export class FlightItineraryComponent implements OnChanges {
           departure.setDate(departure.getDate() + 1);
         }
       }
+      
       let arrival = this.parseLocalDateTime(
         this.formatDate(departure),
         seg.arrivalTime
@@ -174,18 +176,26 @@ export class FlightItineraryComponent implements OnChanges {
       } else if (seg.numNights > 0) {
         arrival.setDate(arrival.getDate() + seg.numNights);
       }
+      
+      // Añadir evento de salida
       timelineItems.push({
         departureCity: seg.departureCity,
         departureIata: seg.departureIata,
         departureDateTime: departure,
+        type: 'departure'
+      });
+      
+      // Añadir evento de llegada
+      timelineItems.push({
         arrivalCity: seg.arrivalCity,
         arrivalIata: seg.arrivalIata,
         arrivalDateTime: arrival,
-        icon: 'pi pi-plane',
-        color: '#007ad9',
+        type: 'arrival'
       });
+      
       currentArrival = arrival;
     }
+    
     return timelineItems;
   }
 

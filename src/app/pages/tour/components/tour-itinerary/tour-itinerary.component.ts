@@ -282,7 +282,6 @@ export class TourItineraryComponent implements OnInit {
             next: (tourData) => {
               this.dateOptions = tourData.activePeriods.map((period) => {
                 let iti = tourData['itinerary-section'].itineraries;
-                console.log('iti', iti);
                 return {
                   id: period.id,
                   label: period.name,
@@ -306,41 +305,32 @@ export class TourItineraryComponent implements OnInit {
 
               this.title = tourData['itinerary-section'].title;
 
-              this.periodsService
-                .getPeriodDetail(this.selectedOption.value, [
-                  'tripType',
-                  'hotels',
-                  'activities',
-                ])
-                .subscribe({
-                  next: (period) => {
-                    this.currentPeriod = period;
-                    this.tripType = period.tripType || '';
-                    this.hotels = period.hotels as any[];
-                    this.activities = [
-                      ...(period.activities || []),
-                      ...(period.includedActivities || []),
-                    ].map((activity) => {
-                      return {
+              if (this.selectedOption) {
+                this.periodsService
+                  .getPeriodDetail(this.selectedOption.value, [
+                    'tripType',
+                    'hotels',
+                    'activities',
+                  ])
+                  .subscribe({
+                    next: (period) => {
+                      this.currentPeriod = period;
+                      this.tripType = period.tripType || '';
+                      this.hotels = period.hotels as any[];
+                      this.activities = [
+                        ...(period.activities || []),
+                        ...(period.includedActivities || []),
+                      ].map((activity) => ({
                         ...activity,
-                        price:
-                          this.periodPricesService.getCachedPeriodActivityPrice(
-                            this.selectedOption.value,
-                            activity.activityId
-                          ) || 0,
-                      };
-                    });
-                    this.updateItinerary();
-
-                    // Share the selected date and trip type with the service
-
-                    this.tourOrderService.updateSelectedDateInfo(
-                      period.externalID,
-                      undefined
-                    );
-                  },
-                  error: (error) => console.error('Error period:', error),
-                });
+                        price: this.periodPricesService.getCachedPeriodActivityPrice(
+                          this.selectedOption.value,
+                          activity.activityId
+                        ) || 0,
+                      }));
+                      this.updateItinerary();
+                    },
+                    error: (error) => console.error('Error period:', error),
+                  });}
             },
             error: (error) => console.error('Error itinerary section:', error),
           });
@@ -498,7 +488,7 @@ export class TourItineraryComponent implements OnInit {
     console.log('Selected itinerary____:', this.activities);
 
     this.itinerary = selectedItinerary['days'].map((day, index) => {
-      console.log('this.hotels',this.hotels);
+      // console.log('this.hotels',this.hotels);
       return {
         title: day.name,
         description: this.sanitizer.bypassSecurityTrustHtml(day.description),

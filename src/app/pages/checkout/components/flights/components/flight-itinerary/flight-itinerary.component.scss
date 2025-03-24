@@ -1,15 +1,42 @@
 .flight-itinerary {
   color: var(--background-azul);
-  align-items: center;
   display: flex;
   border-radius: 1rem;
   background-color: #fff;
   width: 100%;
 
+  /* Mantener el diseño en fila incluso en pantallas pequeñas */
+  @media (max-width: 425px) {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .header {
+    border: 1px solid red;
+  }
+
   &-journey {
     background-color: transparent;
     border-right: 0.0625rem solid var(--background-azul);
     width: 75%;
+
+    /* Mantener el borde derecho pero ajustar el ancho al 100% */
+    @media (max-width: 425px) {
+      width: 100%;
+      border-right: none;
+      border-bottom: 0.0625rem solid var(--background-azul);
+    }
+
+    /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
+    @media (max-width: 992px) and (min-width: 426px) {
+      width: 70%;
+      padding: 0.5rem;
+    }
+
+    /* Pantallas pequeñas pero no móviles (entre 426px y 576px) */
+    @media (max-width: 576px) and (min-width: 426px) {
+      width: 65%;
+    }
 
     .journey-item {
       align-items: center;
@@ -19,6 +46,23 @@
       padding: 1rem;
       position: relative;
       z-index: 1;
+
+      /* Mantener el diseño en fila incluso en pantallas pequeñas */
+      @media (max-width: 425px) {
+        flex-direction: row;
+        padding: 0.5rem;
+        gap: 0.25rem;
+      }
+
+      /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
+      @media (max-width: 992px) and (min-width: 426px) {
+        padding: 0.75rem 0.5rem;
+      }
+
+      /* Pantallas pequeñas pero no móviles */
+      @media (max-width: 576px) and (min-width: 426px) {
+        padding: 0.5rem 0.25rem;
+      }
 
       &::after {
         background-color: var(--background-azul);
@@ -32,6 +76,10 @@
         top: 0;
         width: 90%;
         z-index: -1;
+
+        @media (max-width: 425px) {
+          width: 80%;
+        }
       }
 
       &:last-child {
@@ -44,12 +92,79 @@
         flex-direction: column;
         font-size: 0.75rem;
 
+        @media (max-width: 425px) {
+          padding: 0 !important;
+          font-size: 0.65rem;
+        }
+
+        /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
+        @media (max-width: 992px) and (min-width: 426px) {
+          font-size: 0.7rem;
+        }
+
+        /* Pantallas pequeñas pero no móviles */
+        @media (max-width: 576px) and (min-width: 426px) {
+          font-size: 0.65rem;
+        }
+
+        &-text {
+          .direction-text {
+            color: red;
+            font-weight: 400;
+            font-size: small;
+            margin-right: 5px;
+          }
+
+          .route-text {
+            color: var(--background-azul);
+            font-weight: 400;
+            font-size: small;
+          }
+
+          /* Pantallas pequeñas reducen el tamaño del texto */
+          @media (max-width: 425px) {
+            font-size: x-small;
+          }
+
+          /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
+          @media (max-width: 992px) and (min-width: 426px) {
+            font-size: x-small;
+          }
+
+          &-invisible {
+            visibility: hidden;
+
+            @media (max-width: 425px) {
+              visibility: hidden;
+              height: 1rem;
+            }
+          }
+        }
+
         &:first-child {
           padding-right: 0.5rem;
+
+          @media (max-width: 425px) {
+            padding-right: 0.25rem;
+          }
+
+          /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
+          @media (max-width: 992px) and (min-width: 426px) {
+            padding-right: 0.25rem;
+          }
         }
 
         &:last-child {
           padding-left: 0.5rem;
+
+          @media (max-width: 425px) {
+            padding-left: 0.25rem;
+          }
+
+          /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
+          @media (max-width: 992px) and (min-width: 426px) {
+            padding-left: 0.25rem;
+          }
         }
 
         &-title {
@@ -65,11 +180,39 @@
         &-time {
           font-size: 2rem;
           font-weight: 600;
+
+          @media (max-width: 425px) {
+            font-size: 1.25rem;
+          }
+
+          /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
+          @media (max-width: 992px) and (min-width: 426px) {
+            font-size: 1.5rem;
+          }
+
+          /* Pantallas pequeñas pero no móviles */
+          @media (max-width: 576px) and (min-width: 426px) {
+            font-size: 1.25rem;
+          }
         }
 
         &-date {
           margin: 0 auto;
           font-size: 0.75rem;
+
+          @media (max-width: 425px) {
+            font-size: 0.6rem;
+          }
+
+          /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
+          @media (max-width: 992px) and (min-width: 426px) {
+            font-size: 0.7rem;
+          }
+
+          /* Pantallas pequeñas pero no móviles */
+          @media (max-width: 576px) and (min-width: 426px) {
+            font-size: 0.65rem;
+          }
         }
       }
 
@@ -80,24 +223,71 @@
         flex-direction: column;
         padding: 0 0.5rem;
 
-        ::ng-deep .p-timeline::before {
-          border-style: dotted;
+        @media (max-width: 425px) {
+          padding: 0 0.25rem;
+          font-size: 0.65rem;
         }
 
-        &-scale {
-          color: var(--p-primary-color);
-          font-size: 0.75rem;
-          text-decoration: underline;
+        /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
+        @media (max-width: 992px) and (min-width: 426px) {
+          padding: 0 0.25rem;
+        }
+
+        &-segments {
+          padding: 0.25rem 0;
+
+          @media (max-width: 425px) {
+            padding: 0.1rem 0;
+            font-size: 0.65rem;
+          }
+
+          /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
+          @media (max-width: 992px) and (min-width: 426px) {
+            font-size: 0.7rem;
+          }
+
+          /* Pantallas pequeñas pero no móviles */
+          @media (max-width: 576px) and (min-width: 426px) {
+            font-size: 0.65rem;
+          }
         }
 
         &-aeroline {
           color: var(--background-azul);
           font-size: 1.25rem;
           font-weight: 500;
+
+          @media (max-width: 425px) {
+            font-size: 0.85rem;
+          }
+
+          /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
+          @media (max-width: 992px) and (min-width: 426px) {
+            font-size: 1rem;
+          }
+
+          /* Pantallas pequeñas pero no móviles */
+          @media (max-width: 576px) and (min-width: 426px) {
+            font-size: 0.85rem;
+          }
         }
 
         &-flight-hours {
           font-size: 0.75rem;
+
+          @media (max-width: 425px) {
+            font-size: 0.65rem;
+          }
+
+          /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
+          @media (max-width: 992px) and (min-width: 426px) {
+            font-size: 0.7rem;
+          }
+
+          /* Pantallas pequeñas pero no móviles */
+          @media (max-width: 576px) and (min-width: 426px) {
+            font-size: 0.65rem;
+          }
         }
       }
     }
@@ -113,6 +303,28 @@
     width: 25%;
     gap: 0.5rem;
 
+    /* Cambio a layout horizontal en pantallas pequeñas pero no móviles */
+    @media (max-width: 576px) and (min-width: 426px) {
+      width: 35%;
+      padding: 0.5rem;
+      gap: 0.25rem;
+    }
+
+    /* Cambio a layout para pantallas medianas */
+    @media (max-width: 768px) and (min-width: 577px) {
+      width: 30%;
+      padding: 0.75rem;
+      gap: 0.25rem;
+    }
+
+    /* Solo el bloque de precios se muestra en columna en pantallas muy pequeñas */
+    @media (max-width: 425px) {
+      width: 100%;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 0.75rem;
+    }
+
     &-wrapper {
       align-items: center;
       display: flex;
@@ -120,11 +332,139 @@
       text-align: center;
       font-size: 0.875rem;
 
+      /* Cambio a layout horizontal solo en pantallas medianas y más pequeñas */
+      @media (max-width: 768px) and (min-width: 426px) {
+        font-size: 0.8rem;
+      }
+
+      /* Pantallas pequeñas pero no móviles */
+      @media (max-width: 576px) and (min-width: 426px) {
+        font-size: 0.75rem;
+      }
+
+      @media (max-width: 425px) {
+        align-items: center;
+        text-align: center;
+        width: 100%;
+        font-size: 0.7rem;
+      }
+
       &-price {
         font-size: 2.25rem;
         font-weight: 600;
         line-height: 1;
+
+        /* Tamaño reducido en pantallas medianas */
+        @media (max-width: 992px) and (min-width: 577px) {
+          font-size: 1.5rem;
+        }
+
+        /* Pantallas pequeñas pero no móviles */
+        @media (max-width: 576px) and (min-width: 426px) {
+          font-size: 1.25rem;
+        }
+
+        @media (max-width: 425px) {
+          font-size: 1.3rem;
+        }
       }
+    }
+
+    ::ng-deep .p-button {
+      @media (max-width: 992px) and (min-width: 577px) {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem !important;
+      }
+
+      /* Pantallas pequeñas pero no móviles */
+      @media (max-width: 576px) and (min-width: 426px) {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem !important;
+      }
+
+      @media (max-width: 425px) {
+        width: 100%;
+        font-size: 0.7rem;
+        padding: 0.3rem 0.6rem !important;
+      }
+    }
+  }
+}
+
+/* Overlay panel responsive adjustments */
+::ng-deep .p-overlaypanel {
+  width: 10rem !important; /* Default width for popover */
+  @media (max-width: 425px) {
+    width: 90vw !important;
+    max-width: 320px !important;
+
+    .p-timeline {
+      padding: 0.5rem !important;
+      font-size: 0.65rem;
+    }
+  }
+
+  @media (max-width: 992px) and (min-width: 426px) {
+    max-width: 400px !important;
+
+    .p-timeline {
+      padding: 0.5rem !important;
+      font-size: 0.8rem;
+    }
+  }
+}
+
+/* Estilos globales para el p-timeline dentro del p-overlayPanel */
+
+::ng-deep .p-popover-content .p-timeline .p-timeline-event-marker {
+  background-color: var(--primary-color-500);
+  border-color: var(--primary-color-500);
+  height: 12px;
+  width: 12px;
+  margin-top: 4px;
+  margin-right: 3px;
+}
+
+::ng-deep .p-popover-content .p-timeline .p-timeline-event-connector {
+  border-left: 2px dashed var(--background-azul);
+  background-color: transparent;
+}
+
+::ng-deep .p-popover-content .p-timeline .p-timeline-event-content {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+::ng-deep .p-popover-content .p-timeline .p-timeline-event-opposite {
+  font-size: 0.875rem;
+  color: var(--background-azul);
+}
+
+::ng-deep .p-popover-content .p-timeline .pi-send {
+  color: var(--background-azul);
+}
+::ng-deep .p-timeline-event-opposite {
+  flex: 0.1;
+}
+/* Overlay panel responsive adjustments */
+::ng-deep .p-overlaypanel {
+  width: 10rem !important; /* Default width for popover */
+  @media (max-width: 425px) {
+    width: 90vw !important;
+    max-width: 320px !important;
+
+    .p-timeline {
+      padding: 0.5rem !important;
+      font-size: 0.65rem;
+    }
+  }
+
+  @media (max-width: 992px) and (min-width: 426px) {
+    max-width: 400px !important;
+
+    .p-timeline {
+      padding: 0.5rem !important;
+      font-size: 0.8rem;
     }
   }
 }

@@ -37,6 +37,8 @@ export interface OrderProduct {
   providedIn: 'root',
 })
 export class TourOrderService {
+  private basePrice$ = new BehaviorSubject<number>(0);
+  private departureSelected$ = new BehaviorSubject<boolean>(false);
   // BehaviorSubject para almacenar y compartir la información
   private selectedDateInfoSource = new BehaviorSubject<DateInfo>({
     date: '',
@@ -415,5 +417,29 @@ export class TourOrderService {
     return [adultsText, childrenText, babiesText]
       .filter((text) => text)
       .join(', ');
+  }
+
+  resetState(): void {
+    this.selectedDateInfoSource.next({
+      date: '',
+      periodID: '',
+      tripType: '',
+      departureCity: '',
+      flightID: undefined
+    });
+    
+    // Reset travelers to default values
+    this.selectedTravelersSource.next({
+      adults: 1,
+      children: 0,
+      babies: 0
+    });
+
+    // Reset prices and activities
+    this.basePrice$.next(0);
+    this.selectedActivitiesSource.next([]);
+    
+    // Reset any other state variables you have in the service
+    this.departureSelected$.next(false);
   }
 }

@@ -18,7 +18,7 @@ import { BookingCreateInput } from '../../core/models/bookings/booking.model';
 import { Period } from '../../core/models/tours/period.model';
 import { InsurancesService } from '../../core/services/checkout/insurances.service';
 import { Insurance } from '../../core/models/tours/insurance.model';
-import { MessageService } from 'primeng/api';
+import { MessageService, MenuItem } from 'primeng/api';
 import { DiscountsService } from '../../core/services/checkout/discounts.service';
 
 @Component({
@@ -31,6 +31,35 @@ export class CheckoutComponent implements OnInit {
   currentStep: number = 1;
   orderDetails: Order | null = null;
   availableTravelers: string[] = [];
+
+  // PrimeNG Steps
+  activeIndex: number = 0;
+  items: MenuItem[] = [
+    {
+      label: 'Personaliza tu viaje',
+      command: (event) => {
+        this.onActiveIndexChange(0);
+      }
+    },
+    {
+      label: 'Vuelos',
+      command: (event) => {
+        this.onActiveIndexChange(1);
+      }
+    },
+    {
+      label: 'Viajeros',
+      command: (event) => {
+        this.onActiveIndexChange(2);
+      }
+    },
+    {
+      label: 'Pago',
+      command: (event) => {
+        this.onActiveIndexChange(3);
+      }
+    }
+  ];
 
   // Tour information
   tourName: string = '';
@@ -77,6 +106,8 @@ export class CheckoutComponent implements OnInit {
     type: string;
   } | null = null;
 
+  points: number = 0;
+
   constructor(
     private ordersService: OrdersService,
     private periodsService: PeriodsService,
@@ -90,7 +121,7 @@ export class CheckoutComponent implements OnInit {
     private bookingsService: BookingsService,
     private insurancesService: InsurancesService,
     private messageService: MessageService,
-    private discountsService: DiscountsService // injected DiscountsService
+    private discountsService: DiscountsService
   ) {}
 
   ngOnInit() {
@@ -155,6 +186,7 @@ export class CheckoutComponent implements OnInit {
       this.travelersSelected = data;
       this.updateOrderSummary();
     });
+    
     this.travelersService.travelers$.subscribe((travelers) => {
       //this.updateOrderSummary();
     });
@@ -190,9 +222,27 @@ export class CheckoutComponent implements OnInit {
 
     this.discountsService.selectedDiscounts$.subscribe((discounts) => {
       console.log('Discounts updated:', discounts);
-      // We DO need to call updateOrderSummary here to reflect discount changes
       this.updateOrderSummary();
     });
+  }
+
+  /* Steps Navigation Methods */
+  onActiveIndexChange(index: number): void {
+    // Sin validaciones: permitir el cambio de índice directamente
+    this.activeIndex = index;
+    this.currentStep = index + 1; // Actualizar currentStep (base 1) para que coincida con activeIndex (base 0)
+    
+    // Actualizar el resumen del pedido después de cambiar el paso
+    this.updateOrderSummary();
+    this.updateOrder();
+  }
+
+  nextStepWithValidation(targetIndex: number): void {
+    // Usar nextStep para validar antes de cambiar el paso
+    if (this.nextStep(targetIndex + 1)) {
+      this.activeIndex = targetIndex;
+      this.currentStep = targetIndex + 1;
+    }
   }
 
   /* Inicialization */
@@ -488,7 +538,7 @@ export class CheckoutComponent implements OnInit {
       tempOrderData['insurancesRef'] = [];
     }
 
-    // NEW: Append all discounts from DiscountsService
+    // Append all discounts from DiscountsService
     const discounts = this.discountsService.getSelectedDiscounts();
 
     if (discounts && discounts.length > 0) {
@@ -523,21 +573,20 @@ export class CheckoutComponent implements OnInit {
     this.travelers = event.adults + event.childs + event.babies;
   }
 
-  // Add these properties to your checkout component class
-  // Add this method to handle the discount
+  // Método para manejar el descuento
   handleDiscountApplied(discountInfo: {
     code?: string;
     amount: number;
     description: string;
     type: string;
   }): void {
-    // First check if we already have a coupon discount
+    // Verificar si ya tenemos un descuento de cupón
     const currentDiscounts = this.discountsService.getSelectedDiscounts();
     const nonCouponDiscounts = currentDiscounts.filter(
       (d) => d.source !== 'coupon'
     );
 
-    // If amount is 0, it means we're removing the discount
+    // Si el monto es 0, significa que estamos eliminando el descuento
     if (discountInfo.amount === 0) {
       this.discountsService.updateSelectedDiscounts(nonCouponDiscounts);
     } else {
@@ -554,28 +603,26 @@ export class CheckoutComponent implements OnInit {
       ]);
     }
 
-    // Manually trigger update
+    // Actualizar manualmente el resumen
     this.updateOrderSummary();
   }
 
-  // Update your calculateTotals method to include discount
+  // Método para calcular totales
   calculateTotals(): void {
-    // Calculate subtotal from summary items, excluding discount items
+    // Calcular subtotal a partir de elementos del resumen, excluyendo elementos de descuento
     this.subtotal = this.summary.reduce((acc, item) => {
-      // Only add positive values to subtotal (ignore discount items with negative values)
+      // Solo agregar valores positivos al subtotal (ignorar elementos de descuento con valores negativos)
       if (item.value >= 0) {
         return acc + item.value * item.qty;
       }
       return acc;
     }, 0);
 
-    // Calculate total including all items (both positive and negative values)
+    // Calcular total incluyendo todos los elementos (tanto valores positivos como negativos)
     this.total = this.summary.reduce(
       (acc, item) => acc + item.value * item.qty,
       0
     );
-
-    // No need to separately subtract discount as it's already included in summary
   }
 
   /* Steps and validations */
@@ -624,7 +671,6 @@ export class CheckoutComponent implements OnInit {
     }
 
     this.updateOrderSummary();
-    // Llamada a updateOrder sin suscribirse para evitar retraso en la validación de navigation.
     this.updateOrder();
     return true;
   }
@@ -739,12 +785,13 @@ export class CheckoutComponent implements OnInit {
         });
     });
   }
-  // Replace the saveTrip method
+  
+  // Método para guardar viaje
   saveTrip(): void {
     this.budgetDialogVisible = true;
   }
 
-  // Add method to handle closing the dialog
+  // Método para manejar el cierre del diálogo
   handleCloseBudgetDialog(): void {
     this.budgetDialogVisible = false;
   }

@@ -344,7 +344,7 @@
       }
 
       &-price {
-        font-size: 2.25rem;
+        font-size: 2rem;
         font-weight: 600;
         line-height: 1;
 
@@ -427,6 +427,7 @@
 ::ng-deep .p-popover-content .p-timeline .p-timeline-event-content {
   font-size: 0.875rem;
   line-height: 1.25rem;
+  min-width: 10rem;
 }
 
 ::ng-deep .p-popover-content .p-timeline .p-timeline-event-opposite {

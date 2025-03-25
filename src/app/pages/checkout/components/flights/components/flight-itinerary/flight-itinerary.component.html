@@ -33,7 +33,6 @@
       </div>
 
       <div class="journey-item-flight-info space-y-2">
-        <!-- Cada journey tiene su overlay panel para mostrar el timeline -->
         <p-overlayPanel #op>
           <p>Detalle del vuelo</p>
           <p-timeline [value]="journey.timelineData" align="left">
@@ -49,31 +48,39 @@
                 {{
                   isValidDate(item.departureDateTime)
                     ? (item.departureDateTime | date : "HH:mm" : "UTC")
+                    : item.departureDateTime
+                    ? (item.departureDateTime.toString() | slice : 16 : 21)
                     : "--:--"
                 }}
-                {{ item.departureCity }} ({{ item.departureIata }})
+                {{ item.departureCity || "Unknown City" }} ({{
+                  item.departureIata || "???"
+                }})
                 <br />
                 {{
                   isValidDate(item.departureDateTime)
                     ? (item.departureDateTime | date : "dd-MM-yyyy" : "UTC")
-                    : "--/--/----"
+                    : (journey.departure.date | date : "dd-MM-yyyy" : "UTC")
                 }}
-                {{ item.flightNumber }}
+                {{ item.flightNumber || "No flight number" }}
               </span>
               <span *ngIf="item.type === 'arrival'">
                 {{
                   isValidDate(item.arrivalDateTime)
                     ? (item.arrivalDateTime | date : "HH:mm" : "UTC")
+                    : item.arrivalDateTime
+                    ? (item.arrivalDateTime.toString() | slice : 16 : 21)
                     : "--:--"
                 }}
-                {{ item.arrivalCity }} ({{ item.arrivalIata }})
+                {{ item.arrivalCity || "Unknown City" }} ({{
+                  item.arrivalIata || "???"
+                }})
                 <br />
                 {{
                   isValidDate(item.arrivalDateTime)
                     ? (item.arrivalDateTime | date : "dd-MM-yyyy" : "UTC")
-                    : "--/--/----"
+                    : (journey.arrival.date | date : "dd-MM-yyyy" : "UTC")
                 }}
-                {{ item.flightNumber }}
+                {{ item.flightNumber || "No flight number" }}
               </span>
             </ng-template>
           </p-timeline>

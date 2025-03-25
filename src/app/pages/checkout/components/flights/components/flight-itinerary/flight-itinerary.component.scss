@@ -46,6 +46,7 @@
       padding: 1rem;
       position: relative;
       z-index: 1;
+      flex-wrap: wrap;
 
       /* Mantener el diseño en fila incluso en pantallas pequeñas */
       @media (max-width: 425px) {
@@ -108,27 +109,17 @@
         }
 
         &-text {
+          width: 100%;
+          font-size: 14px;
           .direction-text {
             color: red;
-            font-weight: 400;
-            font-size: small;
+            font-weight: 600;
             margin-right: 5px;
           }
 
           .route-text {
             color: var(--background-azul);
             font-weight: 400;
-            font-size: small;
-          }
-
-          /* Pantallas pequeñas reducen el tamaño del texto */
-          @media (max-width: 425px) {
-            font-size: x-small;
-          }
-
-          /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
-          @media (max-width: 992px) and (min-width: 426px) {
-            font-size: x-small;
           }
 
           &-invisible {
@@ -178,7 +169,7 @@
         }
 
         &-time {
-          font-size: 2rem;
+          font-size: 1.5rem;
           font-weight: 600;
 
           @media (max-width: 425px) {
@@ -223,6 +214,8 @@
         flex-direction: column;
         padding: 0 0.5rem;
 
+        padding-bottom: 1.55rem;
+
         @media (max-width: 425px) {
           padding: 0 0.25rem;
           font-size: 0.65rem;
@@ -235,6 +228,7 @@
 
         &-segments {
           padding: 0.25rem 0;
+          font-size: 0.8rem;
 
           @media (max-width: 425px) {
             padding: 0.1rem 0;
@@ -254,7 +248,7 @@
 
         &-aeroline {
           color: var(--background-azul);
-          font-size: 1.25rem;
+          font-size: 1rem;
           font-weight: 500;
 
           @media (max-width: 425px) {

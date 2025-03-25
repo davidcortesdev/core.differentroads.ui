@@ -2,25 +2,20 @@
   <div class="flight-itinerary-journey">
     <!-- Iteramos sobre cada journey (outbound e inbound) -->
     <div class="journey-item" *ngFor="let journey of journeys; let i = index">
-      <div class="journey-item-departure pr-2">
-        <span class="journey-item-departure-text">
-          <span class="direction-text">{{ i === 0 ? "IDA" : "VUELTA" }}</span>
-          <span class="route-text">
-            <strong>
-              {{ journey.segments[0].departureCity }} ({{
-                journey.departure.iata
-              }}) - {{ journey.segments[0].arrivalCity }} ({{
-                journey.arrival.iata
-              }})
-            </strong>
-          </span>
+      <span class="journey-item-departure-text">
+        <span class="direction-text">{{ i === 0 ? "IDA" : "VUELTA" }}</span>
+        <span class="route-text">
+          <strong>
+            {{ journey.segments[0].departureCity }} ({{
+              journey.departure.iata
+            }}) -
+            {{ journey.segments[journey.segments.length - 1].arrivalCity }}
+            ({{ journey.arrival.iata }})
+          </strong>
         </span>
-        <div>
-          <span class="journey-item-departure-title">Salida:</span>
-          <span class="journey-item-departure-country">
-            {{ journey.departure.iata }}
-          </span>
-        </div>
+      </span>
+
+      <div class="journey-item-departure pr-2">
         <span class="journey-item-departure-time">
           {{
             isValidDate(journey.departure.time)
@@ -104,15 +99,6 @@
       </div>
 
       <div class="journey-item-departure pl-2">
-        <span class="journey-item-departure-text-invisible">{{
-          i === 0 ? "IDA" : "VUELTA"
-        }}</span>
-        <div>
-          <span class="journey-item-departure-title">Llegada:</span>
-          <span class="journey-item-departure-country">
-            {{ journey.arrival.iata }}
-          </span>
-        </div>
         <span class="journey-item-departure-time">
           {{
             isValidDate(journey.arrival.time)
@@ -134,9 +120,6 @@
   <!-- Bloque de precios y botón de selección -->
   <div class="flight-itinerary-price space-y-4">
     <div class="flight-itinerary-price-wrapper">
-      <span class="flight-itinerary-price-wrapper-name">
-        {{ flight.name }}
-      </span>
       <span class="flight-itinerary-price-wrapper-price">
         {{ getPrice() || flight.price || 0 | currencyFormat : "EUR" }}
       </span>

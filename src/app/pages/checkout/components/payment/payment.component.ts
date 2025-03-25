@@ -1,9 +1,20 @@
-import { Component, Input, Output, EventEmitter, OnInit, HostListener, Inject } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnInit,
+  HostListener,
+  Inject,
+} from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { RedsysService } from '../../../../core/services/checkout/payment/redsys.service';
 import { Router } from '@angular/router';
 import { BookingsService } from '../../../../core/services/bookings.service';
 import { Payment } from '../../../../core/models/bookings/payment.model';
+import { PaymentOptionsService } from '../../../../core/services/checkout/paymentOptions.service';
+import { PaymentOption } from '../../../../core/models/orders/order.model';
+import { SummaryService } from '../../../../core/services/checkout/summary.service';
 
 @Component({
   selector: 'app-payment',
@@ -37,7 +48,9 @@ export class PaymentComponent implements OnInit {
     @Inject(DOCUMENT) private document: Document,
     private redsysService: RedsysService,
     private bookingsService: BookingsService,
-    private router: Router
+    private router: Router,
+    private paymentOptionsService: PaymentOptionsService,
+    private summaryService: SummaryService
   ) {}
 
   ngOnInit() {
@@ -84,6 +97,7 @@ export class PaymentComponent implements OnInit {
     }
     this.selectedSource = source;
     this.isSourceDropdownOpen = false;
+    this.updatePaymentOption();
   }
 
   @HostListener('document:click', ['$event'])
@@ -137,12 +151,17 @@ export class PaymentComponent implements OnInit {
         }
       }, 100);
     }
+
+    this.updatePaymentOption();
   }
 
-  onPaymentMethodChange() {}
+  onPaymentMethodChange() {
+    this.updatePaymentOption();
+  }
 
   onInstallmentOptionChange() {
     this.reloadScalapayWidgets();
+    this.updatePaymentOption();
   }
 
   reloadScalapayWidgets() {
@@ -197,6 +216,10 @@ export class PaymentComponent implements OnInit {
     console.log('Installment Option:', this.installmentOption);
     console.log('Total Price:', this.totalPrice);
     console.log('Terms Accepted:', this.termsAccepted);
+
+    // Update payment option before proceeding
+    this.updatePaymentOption();
+
     let bookingID: string, ID: string;
     try {
       const response = await this.processBooking();
@@ -240,7 +263,7 @@ export class PaymentComponent implements OnInit {
     }
     this.isLoading = false;
   }
-  
+
   // Add this method to handle the back button click
   goBack(): void {
     this.goBackEvent.emit();
@@ -263,5 +286,35 @@ export class PaymentComponent implements OnInit {
         },
       });
     });
+  }
+
+  // New method to update payment option
+  updatePaymentOption() {
+    if (!this.paymentType) return;
+
+    const paymentOption: PaymentOption = {
+      type: this.paymentType as 'complete' | 'installments',
+      source:
+        this.selectedSource !== 'Selecciona' ? this.selectedSource : undefined,
+    };
+
+    if (this.paymentType === 'complete' && this.paymentMethod) {
+      paymentOption.method = this.paymentMethod as 'creditCard' | 'transfer';
+    }
+
+    if (this.paymentType === 'installments' && this.installmentOption) {
+      paymentOption.installmentOption = this.installmentOption as
+        | 'three'
+        | 'four';
+    }
+
+    this.paymentOptionsService.updatePaymentOption(paymentOption);
+
+    // Update the order with payment information
+    const currentOrder = this.summaryService.getOrderValue();
+    if (currentOrder) {
+      currentOrder.payment = paymentOption;
+      this.summaryService.updateOrder(currentOrder);
+    }
   }
 }

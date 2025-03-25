@@ -19,6 +19,7 @@ import { Period } from '../../core/models/tours/period.model';
 import { InsurancesService } from '../../core/services/checkout/insurances.service';
 import { Insurance } from '../../core/models/tours/insurance.model';
 import { MessageService } from 'primeng/api';
+import { PaymentOptionsService } from '../../core/services/checkout/paymentOptions.service';
 
 @Component({
   selector: 'app-checkout',
@@ -81,6 +82,7 @@ export class CheckoutComponent implements OnInit {
     private route: ActivatedRoute,
     private bookingsService: BookingsService,
     private insurancesService: InsurancesService,
+    private paymentOptionsService: PaymentOptionsService,
     private messageService: MessageService
   ) {}
 
@@ -622,6 +624,17 @@ export class CheckoutComponent implements OnInit {
 
   processBooking(): Promise<{ bookingID: string; ID: string }> {
     return new Promise((resolve, reject) => {
+      // Ensure payment data is included in the order
+      const currentOrder = this.summaryService.getOrderValue();
+      if (currentOrder) {
+        // Update payment details from the payment options service
+        const paymentOption = this.paymentOptionsService.getPaymentOption();
+        if (paymentOption) {
+          currentOrder.payment = paymentOption;
+          this.summaryService.updateOrder(currentOrder);
+        }
+      }
+
       const bookingData: BookingCreateInput = {
         tour: {
           id: this.tourID,
@@ -642,6 +655,8 @@ export class CheckoutComponent implements OnInit {
         usePoints: {},
         name: this.periodData.name,
         externalID: this.periodID,
+        // Include payment information if available
+        payment: this.paymentOptionsService.getPaymentOption() || undefined,
       };
       let bookingID = '';
       let bookingSID = '';

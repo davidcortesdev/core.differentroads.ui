@@ -1,18 +1,6 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
-import { catchError } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { ToursService } from '../../../../core/services/tours.service';
-
-interface ITour {
-  imageUrl: string;
-  title: string;
-  description: string;
-  rating: number;
-  tag: string;
-  price: number;
-  availableMonths: string[];
-  isByDr: boolean;
-  webSlug: string;
-}
 
 @Component({
   selector: 'app-tour-related',
@@ -23,13 +11,12 @@ interface ITour {
 export class TourRelatedComponent implements OnInit, OnChanges {
   @Input() destinations: string[] | undefined = [];
   
-  displayedTours: ITour[] = [];
   isLoading: boolean = false;
+  sectionContent: any = null;
 
   constructor(private readonly toursService: ToursService) {}
 
   ngOnInit() {
-    console.log('Destinations in related component:', this.destinations);
     this.checkAndLoadTours();
   }
 
@@ -45,13 +32,12 @@ export class TourRelatedComponent implements OnInit, OnChanges {
       this.loadTours();
     } else {
       console.log('No destinations provided to tour-related component');
-      this.displayedTours = [];
+      this.sectionContent = null;
     }
   }
 
   loadTours() {
     this.isLoading = true;
-    this.displayedTours = [];
     
     // Trim each destination and filter out empty strings
     const trimmedDestinations = this.destinations
@@ -62,72 +48,46 @@ export class TourRelatedComponent implements OnInit, OnChanges {
     
     if (trimmedDestinations.length === 0) {
       this.isLoading = false;
+      this.sectionContent = null;
       return;
     }
     
-    // Process each destination individually
-    let completedRequests = 0;
-    const totalRequests = trimmedDestinations.length;
-    
-    trimmedDestinations.forEach(destination => {
+    // Create an array of observables for each destination
+    const requests = trimmedDestinations.map(destination => {
       const filters = {
         destination: destination,
-        sort: 'next-departures'
+        sort: 'next-departures',
+        limit: 5 // Limit to 5 tours per destination
       };
-
-      console.log(`Fetching related tours for destination: ${destination}`);
-
-      this.toursService
-        .getFilteredToursList(filters)
-        .pipe(
-          catchError((error: Error) => {
-            console.error(`Error loading related tours for ${destination}:`, error);
-            completedRequests++;
-            if (completedRequests === totalRequests) {
-              this.isLoading = false;
-            }
-            return [];
-          })
-        )
-        .subscribe((tours: any) => {
-          console.log(`Related tours response for ${destination}:`, tours);
-          
-          // Process tour data
-          if (tours && tours.data && tours.data.length > 0) {
-            const newTours = tours.data.map((tour: any) => {
-              const days = tour?.activePeriods?.[0]?.days || '';
-
-              return {
-                imageUrl: tour.image?.[0]?.url || '',
-                title: tour.name || '',
-                description:
-                  tour.country && days ? `${tour.country} en: ${days} dias` : '',
-                rating: 5,
-                tag: tour.marketingSection?.marketingSeasonTag || '',
-                price: tour.price || 0,
-                availableMonths:
-                  tour.monthTags?.map((month: string) =>
-                    month.substring(0, 3).toUpperCase()
-                  ) || [],
-                isByDr: true,
-                webSlug: tour.webSlug || '',
-              };
-            });
-            
-            // Add new tours to the displayed tours array, avoiding duplicates
-            newTours.forEach((newTour: ITour) => {
-              if (!this.displayedTours.some(existingTour => existingTour.webSlug === newTour.webSlug)) {
-                this.displayedTours.push(newTour);
-              }
-            });
-          }
-          
-          completedRequests++;
-          if (completedRequests === totalRequests) {
-            console.log('All requests completed. Final displayed tours:', this.displayedTours);
-            this.isLoading = false;
-          }
-        });
+      
+      return this.toursService.getFilteredToursList(filters).pipe(
+        catchError(error => {
+          console.error(`Error loading related tours for ${destination}:`, error);
+          return of({ data: [] });
+        })
+      );
+    });
+    
+    // Execute all requests in parallel
+    forkJoin(requests).subscribe(results => {
+      // Combine all tour IDs from all destinations
+      const tourIds = results.flatMap(result => 
+        (result.data || []).map((tour: any) => ({ id: tour.id }))
+      );
+      
+      // Remove duplicates by ID
+      const uniqueTourIds = tourIds.filter((tour, index, self) => 
+        index === self.findIndex(t => t.id === tour.id)
+      );
+      
+      // Create the section content object in the format expected by tours-section
+      this.sectionContent = {
+        title: 'Tours relacionados',
+        'featured-tours': uniqueTourIds.slice(0, 10) // Limit to 10 tours total
+      };
+      
+      console.log('Created section content:', this.sectionContent);
+      this.isLoading = false;
     });
   }
 }

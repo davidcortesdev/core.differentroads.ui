@@ -13,9 +13,9 @@
         <img [src]="tourData.imageUrl" [alt]="tourData.title" loading="lazy" />
         <div class="overlay">
           <span class="rating p-button-primary">{{ tourData.rating }} ★</span>
-          <span class="indicator" *ngIf="tourData.isByDr !== undefined">
+          <!-- <span class="indicator" *ngIf="tourData.isByDr !== undefined">
             {{ tourData.isByDr ? "By DR" : "Beyond Different" }}
-          </span>
+          </span> -->
           <div class="tags-container">
             <span class="tag expandable-tag">
               <span class="short-text">

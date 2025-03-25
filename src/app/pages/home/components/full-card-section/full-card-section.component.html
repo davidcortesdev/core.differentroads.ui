@@ -1,13 +1,13 @@
 <div class="full-card-section">
-  <div class="card" *ngFor="let card of cards">
+  <div class="card" *ngFor="let card of cards; trackBy: trackByCardId">
     <div class="card-image">
-      <img [src]="card.image.url" [alt]="card.image.alt" />
+      <img [src]="card.image.url" [alt]="card.image.alt" loading="lazy" />
       <div class="card-info">
         <p class="card-subtitle"
-        [innerHTML]="sanitizeHtml(card.subtitle)"
-        (click)="onClick(card.link)"
-        style="cursor: pointer;"
-        ></p>
+           [innerHTML]="sanitizeHtml(card.subtitle)"
+           (click)="onClick(card.link)"
+           class="clickable">
+        </p>
       </div>
     </div>
   </div>

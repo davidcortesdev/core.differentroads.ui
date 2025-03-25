@@ -53,12 +53,6 @@
               : " Vuelo Desde " + departureCity
           }}</span>
         </div>
-        <div class="total">
-          <!-- <span class="pasajeros">{{ travelersText }}</span> -->
-          <!-- <br> -->
-          <span class="total-total">Total: </span>
-          <span class="amount">{{ totalPrice | currencyFormat : "EUR" }}</span>
-        </div>
         <span *ngFor="let activity of selectedActivities">{{
           activity.name
         }}</span>

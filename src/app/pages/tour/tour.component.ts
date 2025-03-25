@@ -91,6 +91,7 @@ export class TourComponent implements OnInit, OnDestroy {
         'activePeriods',
         'basePrice',
         'price',
+        'tags', // Add this line to ensure tags are fetched
       ])
       .pipe(
         catchError((error) => {
@@ -105,6 +106,9 @@ export class TourComponent implements OnInit, OnDestroy {
           this.tour = tourData;
           this.loading = false;
           this.tourDataService.updateTour(tourData);
+  
+          // Add this line to debug
+          console.log('Tour tags:', tourData.tags);
 
           // if (tourData.activePeriods && tourData.activePeriods.length > 0) {
           //   const firstPeriod = tourData.activePeriods[0];

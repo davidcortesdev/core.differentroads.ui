@@ -14,34 +14,29 @@
       <span class="duration">{{ getDuration() }}</span>
     </div>
   </div>
-  <div class="tour-featured">
-    <p-message
-      severity="secondary"
-      variant="outlined"
-      icon="pi pi-star"
-      size="small"
-      >El mejor valorado por <br />
-      nuestros viajeros</p-message
-    >
-  </div>
   <!-- Tour Actions Section -->
   <div class="tour-actions">
     <!-- Marketing Badge -->
     <div class="badge" *ngIf="tour.marketingSection?.marketingTag">
-      <i class="pi pi-trophy"></i>
-      <span>{{ tour.marketingSection?.marketingTag }}</span>
+      <p-message
+      severity="secondary"
+      variant="outlined"
+      icon="pi pi-star"
+      size="small"
+      >{{ tour.marketingSection?.marketingTag }}</p-message
+    >
     </div>
 
     <!-- Price Section -->
     <div class="price-section">
       <div class="price-info">
-        <div class="before-price">
+        <div class="before-price" *ngIf="totalPrice <= 0">
           <span>Antes</span>
           <span>{{ basePrice + 200 | currencyFormat : "EUR" }}</span>
         </div>
         <div class="current-price">
-          <span>Desde</span>
-          <span class="amount">{{ basePrice | currencyFormat : "EUR" }}</span>
+          <span>{{ totalPrice > 0 ? 'Total' : 'Desde' }}</span>
+          <span class="amount">{{ (totalPrice > 0 ? totalPrice : basePrice) | currencyFormat : "EUR" }}</span>
         </div>
       </div>
       <!-- Total Price Information -->
@@ -55,12 +50,12 @@
               ? "Sin vuelos "
               : departureCity.toLowerCase().includes("vuelo")
               ? departureCity
-              : "Desde " + departureCity
+              : " Vuelo Desde " + departureCity
           }}</span>
         </div>
         <div class="total">
-          <span class="pasajeros">{{ travelersText }}</span>
-          <br>
+          <!-- <span class="pasajeros">{{ travelersText }}</span> -->
+          <!-- <br> -->
           <span class="total-total">Total: </span>
           <span class="amount">{{ totalPrice | currencyFormat : "EUR" }}</span>
         </div>

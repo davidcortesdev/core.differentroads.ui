@@ -355,15 +355,15 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
 
         // Si ya tenemos datos disponibles, actualizar el servicio compartido
         // con la información de la primera salida recomendada
-        if (this.filteredDepartures.length > 0) {
-          const recommendedDeparture = this.filteredDepartures[0];
+        // if (this.filteredDepartures.length > 0) {
+        //   const recommendedDeparture = this.filteredDepartures[0];
 
-          // Actualizar la información compartida con los datos iniciales
-          this.tourOrderService.updateSelectedDateInfo(
-            recommendedDeparture.externalID,
-            recommendedDeparture.flightID
-          );
-        }
+        //   // Actualizar la información compartida con los datos iniciales
+        //   this.tourOrderService.updateSelectedDateInfo(
+        //     recommendedDeparture.externalID,
+        //     recommendedDeparture.flightID
+        //   );
+        // }
       });
   }
 

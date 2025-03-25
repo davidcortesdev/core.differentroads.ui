@@ -17,6 +17,6 @@
     <app-tour-reviews></app-tour-reviews>
     <app-tour-gallery></app-tour-gallery>
     <app-tour-faq></app-tour-faq>
-    <app-tour-related></app-tour-related>
+    <app-tour-related *ngIf="tour?.tags" [destinations]="tour?.tags"></app-tour-related>
   </div>
 </div>

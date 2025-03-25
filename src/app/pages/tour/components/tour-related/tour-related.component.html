@@ -1,1 +1,33 @@
-<p>tour-related works!</p>
+<div class="related-tours-container">
+  <h2 class="section-title">Tours relacionados</h2>
+  
+  <div *ngIf="isLoading" class="loading-indicator">
+    <p>Cargando tours relacionados...</p>
+  </div>
+  
+  <div *ngIf="!isLoading && displayedTours.length === 0" class="no-tours-message">
+    <p>No se encontraron tours relacionados</p>
+  </div>
+  
+  <div *ngIf="!isLoading && displayedTours.length > 0" class="tours-grid">
+    <div *ngFor="let tour of displayedTours" class="tour-card">
+      <div class="tour-image">
+        <img [src]="tour.imageUrl" [alt]="tour.title" />
+        <span *ngIf="tour.tag" class="tour-tag">{{tour.tag}}</span>
+      </div>
+      <div class="tour-content">
+        <h3 class="tour-title">{{tour.title}}</h3>
+        <p class="tour-description">{{tour.description}}</p>
+        <div class="tour-footer">
+          <div class="tour-months">
+            <span *ngFor="let month of tour.availableMonths" class="month-tag">{{month}}</span>
+          </div>
+          <div class="tour-price">
+            <span class="price-value">${{tour.price | number:'1.0-0'}}</span>
+          </div>
+        </div>
+        <a [routerLink]="['/tour', tour.webSlug]" class="tour-link">Ver detalles</a>
+      </div>
+    </div>
+  </div>
+</div>

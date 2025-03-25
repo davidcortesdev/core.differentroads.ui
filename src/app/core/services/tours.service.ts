@@ -63,6 +63,7 @@ export class ToursService {
       'monthTags',
       'marketingSection',
       'activePeriods',
+      'tourType'
     ];
 
     const toursObservable = filters.destination
@@ -236,6 +237,7 @@ export class ToursService {
       'image',
       'country',
       'webSlug',
+      'tourType',
     ]).pipe(map((tourData: Tour) => tourData));
   }
 
@@ -267,7 +269,7 @@ export class ToursService {
               availableMonths: (tour.monthTags || []).map(
                 (month: string): string => month.toLocaleUpperCase().slice(0, 3)
               ),
-              isByDr: true,
+              isByDr: tour.tourType !== 'FIT',
               webSlug:
                 tour.webSlug ||
                 tour.name?.toLowerCase().replace(/\s+/g, '-') ||

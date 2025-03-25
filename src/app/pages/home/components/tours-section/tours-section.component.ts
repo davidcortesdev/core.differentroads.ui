@@ -126,7 +126,7 @@ export class ToursSectionComponent implements OnInit, OnDestroy {
                   (month: string): string =>
                     month.toLocaleUpperCase().slice(0, 3)
                 ),
-                isByDr: false,
+                isByDr: tour.tourType !== 'FIT',
                 webSlug:
                   tour.webSlug ||
                   tour.name?.toLowerCase().replace(/\s+/g, '-') ||

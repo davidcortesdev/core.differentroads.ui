@@ -181,7 +181,7 @@ export class ToursComponent implements OnInit {
               tour.monthTags?.map((month: string) =>
                 month.substring(0, 3).toUpperCase()
               ) || [],
-            isByDr: true,
+            isByDr: tour.tourType !== 'FIT',
             webSlug: tour.webSlug || '',
           };
         });

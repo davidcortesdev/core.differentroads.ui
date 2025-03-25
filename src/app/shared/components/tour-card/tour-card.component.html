@@ -17,7 +17,7 @@
             {{ tourData.isByDr ? "By DR" : "Beyond Different" }}
           </span> -->
           <div class="tags-container">
-            <span class="tag expandable-tag">
+            <span  *ngIf="tourData.isByDr" class="tag expandable-tag">
               <span class="short-text">
                 <img
                   alt="dropdown icon"

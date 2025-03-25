@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
 interface TourData {
@@ -17,7 +17,8 @@ interface TourData {
 enum TripType {
   Single = 'single',
   Grupo = 'grupo',
-  Propios = 'propios'
+  Propios = 'propios',
+  Fit = 'fit'
 }
 
 type TripTypeKey = typeof TripType[keyof typeof TripType];
@@ -33,7 +34,7 @@ interface TripTypeInfo {
   templateUrl: './tour-card.component.html',
   styleUrls: ['./tour-card.component.scss'],
 })
-export class TourCardComponent {
+export class TourCardComponent implements OnInit {
   @Input() tourData!: TourData;
   @Input() isLargeCard = false;
   @Input() showScalapayPrice = false;
@@ -41,10 +42,18 @@ export class TourCardComponent {
   readonly tripTypeMap: Record<TripTypeKey, TripTypeInfo> = {
     [TripType.Single]: { label: 'S', class: 'trip-type-s' },
     [TripType.Grupo]: { label: 'G', class: 'trip-type-g' },
-    [TripType.Propios]: { label: 'P', class: 'trip-type-p' }
+    [TripType.Propios]: { label: 'P', class: 'trip-type-p' },
+    [TripType.Fit]: { label: 'F', class: 'trip-type-f' }
   };
 
+  monthlyPrice = 0;
+
   constructor(private router: Router) {}
+
+  ngOnInit(): void {
+    // Pre-calculate monthly price to avoid recalculation in template
+    this.monthlyPrice = this.calculateMonthlyPrice();
+  }
 
   getTripTypeLabel(type: string): string {
     const lowerType = type.toLowerCase() as TripTypeKey;
@@ -60,7 +69,7 @@ export class TourCardComponent {
     this.router.navigate(['/tour', this.tourData.webSlug]);
   }
 
-  get monthlyPrice(): number {
+  private calculateMonthlyPrice(): number {
     return this.tourData.price / 4;
   }
 }

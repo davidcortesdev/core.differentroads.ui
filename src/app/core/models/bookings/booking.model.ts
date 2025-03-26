@@ -29,7 +29,7 @@ export interface BookingCreateInput {
     priceData?: PriceData[];
     _id?: string;
   };
-  summary: string;
+  textSummary: any;
   total: number;
   priceData: any;
   name: string;

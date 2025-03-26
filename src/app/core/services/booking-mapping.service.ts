@@ -7,6 +7,7 @@ import {
   PaymentInfo,
   TravelerInfo,
 } from '../models/reservation/reservation.model';
+import { BookingTraveler } from '../models/bookings/booking-traveler.model';
 
 @Injectable()
 export class BookingMappingService {
@@ -25,13 +26,32 @@ export class BookingMappingService {
 
     // Extract travelers information
     const travelers: TravelerInfo[] =
-      booking.travelers?.map((t: any) => ({
-        name: `${t.travelerData.name} ${t.travelerData.surname}`,
-        email: t.travelerData.email || booking.owner || '',
-        phone: t.travelerData.phone || '',
-        gender: this.formatGender(t.travelerData.sex),
-        room: t.roomType || 'Individual',
-      })) || [];
+      booking.travelers?.map((t: BookingTraveler) => {
+        // Get room name from periodData if available
+        let roomName = t.periodReservationModeID || 'Individual';
+
+        // Check if we have room information in periodData
+        if (
+          booking.periodData?.['textSummary']?.['rooms'] &&
+          t.periodReservationModeID
+        ) {
+          const roomInfo =
+            booking.periodData['textSummary']['rooms'][
+              t.periodReservationModeID
+            ];
+          if (roomInfo && roomInfo.name) {
+            roomName = roomInfo.name;
+          }
+        }
+
+        return {
+          name: `${t.travelerData?.['name']} ${t.travelerData?.['surname']}`,
+          email: t.travelerData?.['email'] || booking.owner || '',
+          phone: t.travelerData?.['phone'] || '',
+          gender: this.formatGender(t.travelerData?.['sex']),
+          room: roomName,
+        };
+      }) || [];
 
     return {
       status: status,

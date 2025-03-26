@@ -26,7 +26,7 @@ $primary: var(--p-primary-color);
   @extend %input-focus;
 }
 
-div {
+.tour-additional-info-container {
   display: flex;
   flex-direction: row;
   gap: 0.5rem;

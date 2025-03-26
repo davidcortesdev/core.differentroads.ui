@@ -14,17 +14,14 @@ export class BookingMappingService {
     // Determine the status based on booking.status
     let status: 'confirm' | 'rq' | 'transfer' = 'transfer';
 
-    switch (booking.status?.toLowerCase()) {
-      case 'confirmed':
-        status = 'confirm';
-        break;
-      case 'on_request':
-      case 'rq':
-        status = 'rq';
-        break;
-      default:
-        status = 'transfer';
-    }
+    status =
+      booking.periodData?.['payment'].method === 'transfer'
+        ? 'transfer'
+        : booking.status?.toLowerCase() === 'Booked'
+        ? 'confirm'
+        : ['on_request', 'rq'].includes(booking.status?.toLowerCase())
+        ? 'rq'
+        : 'confirm';
 
     // Extract travelers information
     const travelers: TravelerInfo[] =
@@ -108,7 +105,7 @@ export class BookingMappingService {
       case 'female':
         return 'Mujer';
       default:
-        return 'Otro';
+        return '';
     }
   }
 

@@ -1,10 +1,10 @@
-<div class="">
-  <p-card styleClass="" (click)="handleSaveTrip()">
-    <div class="">
+<div class="tour-additional-info-container">
+  <p-card styleClass="action-card" (click)="handleSaveTrip()">
+    <div class="card-content">
       <span class="bg-pink-100">
         <i class="pi pi-bookmark"></i>
       </span>
-      <span class="">Guarda tu viaje</span>
+      <span class="card-text">Guarda tu viaje</span>
     </div>
   </p-card>
 
@@ -15,7 +15,7 @@
     [style]="{ width: '50vw' }"
     [draggable]="false"
     [resizable]="false"
-    class=""
+    styleClass="budget-modal"
   >
     <app-budget-dialog
       class="budget-dialog"
@@ -25,43 +25,39 @@
     ></app-budget-dialog>
   </p-dialog>
 
-  <p-card styleClass="claseBord">
-    <div class="" (click)="handleDownloadTrip()">
+  <p-card styleClass="action-card claseBord">
+    <div class="card-content" (click)="handleDownloadTrip()">
       <span class="bg-pink-100">
         <i class="pi pi-download"></i>
       </span>
-      <span class="">Descargar tu viaje</span>
+      <span class="card-text">Descargar tu viaje</span>
     </div>
   </p-card>
 
-  <p-card styleClass="">
-    <div class="" (click)="handleInviteFriend()">
+  <p-card styleClass="action-card">
+    <div class="card-content" (click)="handleInviteFriend()">
       <span class="bg-pink-100">
         <i class="pi pi-user-plus"></i>
       </span>
-      <span class="">Invita a un amigo a tu viaje</span>
+      <span class="card-text">Invita a un amigo a tu viaje</span>
     </div>
   </p-card>
 </div>
 
 <div class="mt-4 additional-info">
-  <p-accordion>
+  <p-accordion *ngIf="tour?.['extra-info-section']?.['info-card']?.length">
     <p-accordion-panel
       *ngFor="let card of tour?.['extra-info-section']?.['info-card']; let i = index"
       [value]="i"
     >
       <p-accordion-header>
         <ng-template #toggleicon let-active="active">
-          @if (active) {
-          <i class="pi pi-minus-circle"></i>
-          } @else {
-          <i class="pi pi-plus-circle"></i>
-          }
+          <i class="pi" [ngClass]="active ? 'pi-minus-circle' : 'pi-plus-circle'"></i>
         </ng-template>
         <div [innerHTML]="sanitizeHtml(card.title)"></div>
       </p-accordion-header>
       <p-accordion-content>
-        <div [innerHTML]="sanitizeHtml(card.content)"></div>
+        <div class="paddingDiv" [innerHTML]="sanitizeHtml(card.content)"></div>
       </p-accordion-content>
     </p-accordion-panel>
   </p-accordion>

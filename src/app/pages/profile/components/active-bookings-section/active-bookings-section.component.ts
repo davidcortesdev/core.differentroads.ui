@@ -1,5 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { BookingsService } from '../../../../core/services/bookings.service';
+import { Router } from '@angular/router';
 
 interface Booking {
   id: string;
@@ -22,7 +23,10 @@ export class ActiveBookingsSectionComponent implements OnInit {
   isExpanded: boolean = true;
   @Input() userEmail!: string;
 
-  constructor(private bookingsService: BookingsService) {}
+  constructor(
+    private router: Router,
+    private bookingsService: BookingsService
+  ) {}
 
   ngOnInit() {
     this.fetchBookingsByEmail(this.userEmail);
@@ -50,5 +54,7 @@ export class ActiveBookingsSectionComponent implements OnInit {
 
   viewBooking(booking: Booking) {
     console.log('Ver reserva:', booking);
+
+    this.router.navigate(['bookings', booking.id]);
   }
 }

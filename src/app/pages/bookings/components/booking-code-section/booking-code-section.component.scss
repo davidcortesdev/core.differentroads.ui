@@ -1,0 +1,80 @@
+:host ::ng-deep {
+    /* Estilos para el panel de referencia de reserva */
+    .booking-reference {
+        border: 1px solid #eaeaea;
+        border-radius: 12px;
+        margin: 0.75rem;
+        margin-top: 18px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+
+        &:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .p-panel-content {
+            padding: 1rem;
+        }
+    }
+
+    /* Configuración para todos los paneles */
+    .p-panel-header {
+        padding: 0;
+    }
+}
+
+/* Estilos para el contenedor de referencia de reserva */
+.booking-reference-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    @media (min-width: 481px) and (max-width: 768px) {
+        padding: 0.5rem;
+    }
+
+    @media (max-width: 480px) {
+        align-items: flex-start;
+    }
+
+    .booking-code {
+        display: flex;
+        align-items: center;
+
+        .booking-number {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-right: 0.75rem;
+
+            @media (min-width: 481px) and (max-width: 768px) {
+                font-size: 1.1rem;
+            }
+
+            @media (max-width: 480px) {
+                font-size: 1rem;
+            }
+        }
+
+        /* Ajuste para pantallas pequeñas */
+        @media (max-width: 480px) {
+            flex-direction: column;
+            align-items: flex-start;
+
+            .p-tag {
+                margin-top: 0.5rem;
+                margin-left: 0;
+            }
+        }
+    }
+
+    .cancel-button {
+        @media (min-width: 481px) and (max-width: 768px) {
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 480px) {
+            margin-top: 1rem;
+            align-self: flex-end;
+        }
+    }
+}

@@ -199,6 +199,9 @@ export class ReservationComponent implements OnInit, OnDestroy {
             summary: 'Justificante subido',
             detail: 'El justificante se ha subido correctamente.',
           });
+          // Refetch the reservation state after uploading voucher
+          this.getBookingData();
+          this.getPaymentData();
         });
     }
   }

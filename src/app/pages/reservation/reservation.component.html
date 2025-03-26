@@ -118,35 +118,39 @@
       </div>
     </p-panel>
 
-    <!-- Botón de justificante: mostrar componente de subida o botón de ver voucher -->
-    <ng-container *ngIf="!uploadedVoucher; else voucherView">
-      <app-upload-button
-        label="Subir justificante de transferencia"
-        accept="image/*, .pdf"
-        [maxFileSize]="1000000"
-        folder="vouchers"
-        [auto]="false"
-        chooseIcon="pi pi-upload"
-        styleClass="upload-button"
-        (onUploadSuccess)="handleVoucherUpload($event)"
-        (onUploadError)="handleVoucherError($event)"
-      >
-      </app-upload-button>
-    </ng-container>
-    <ng-template #voucherView>
-      <p-button
-        label="Ver justificante"
-        (onClick)="viewVoucher()"
-        severity="info"
-      ></p-button>
-      <ng-container *ngIf="paymentInfo?.status === 'PENDING_REVIEW'">
-        <p class="voucher-status-text">
-          Hemos recibido tu comprobante de pago y nuestro equipo lo estará
-          validando. Recibirás una notificación en tu correo cuando la
-          transferencia sea verificada.
-        </p>
+    <ng-container
+      *ngIf="bookingData?.periodData?.['payment'].method === 'transfer'"
+    >
+      <!-- Botón de justificante: mostrar componente de subida o botón de ver voucher -->
+      <ng-container *ngIf="!uploadedVoucher; else voucherView">
+        <app-upload-button
+          label="Subir justificante de transferencia"
+          accept="image/*, .pdf"
+          [maxFileSize]="1000000"
+          folder="vouchers"
+          [auto]="false"
+          chooseIcon="pi pi-upload"
+          styleClass="upload-button"
+          (onUploadSuccess)="handleVoucherUpload($event)"
+          (onUploadError)="handleVoucherError($event)"
+        >
+        </app-upload-button>
       </ng-container>
-    </ng-template>
+      <ng-template #voucherView>
+        <p-button
+          label="Ver justificante"
+          (onClick)="viewVoucher()"
+          severity="info"
+        ></p-button>
+        <ng-container *ngIf="paymentInfo?.status === 'PENDING_REVIEW'">
+          <p class="voucher-status-text">
+            Hemos recibido tu comprobante de pago y nuestro equipo lo estará
+            validando. Recibirás una notificación en tu correo cuando la
+            transferencia sea verificada.
+          </p>
+        </ng-container>
+      </ng-template>
+    </ng-container>
   </div>
 
   <!-- Panel de detalles -->

@@ -142,33 +142,30 @@ export class FlightsComponent implements OnInit {
 
   // Maneja los cambios en los vuelos filtrados desde el componente de búsqueda
   onFilteredFlightsChange(mockFlights: any[]): void {
-    // Aquí adaptas los datos mockeados al formato de Flight que espera tu componente
-    this.searchedFlights = mockFlights.map((mockFlight) => {
-      // Convertir el MockFlight a Flight
-      const flight: any = {
-        externalID: mockFlight.id,
-        name: mockFlight.name,
-        outbound: {
-          ...mockFlight.outbound,
-          // Asegúrate de mapear correctamente a la estructura que espera el componente flight-itinerary
-          prices: mockFlight.outbound.prices,
-        },
-        inbound: {
-          ...mockFlight.inbound,
-          // Asegúrate de mapear correctamente a la estructura que espera el componente flight-itinerary
-          prices: mockFlight.inbound.prices,
-        },
-        price: mockFlight.price,
-        hasHandBaggage: mockFlight.hasHandBaggage,
-        hasCheckedBaggage: mockFlight.hasCheckedBaggage,
-      };
+    // Log received data for debugging
+    console.log('Received flights from search:', mockFlights);
 
-      return {
-        ...flight,
-        price: this.calculateTotalPrice(flight),
-        priceData: this.calculateTotalPriceData(flight),
-      };
-    });
+    if (!mockFlights || mockFlights.length === 0) {
+      this.searchedFlights = [];
+      return;
+    }
+
+    // Aquí adaptas los datos al formato de Flight que espera tu componente
+    this.searchedFlights = mockFlights
+      .map((flight) => {
+        if (!flight) return null;
+
+        // Ensure the flight object has the correct structure
+        return {
+          ...flight,
+          // Make sure price data is properly structured
+          price: this.calculateTotalPrice(flight),
+          priceData: this.calculateTotalPriceData(flight),
+        };
+      })
+      .filter((flight) => flight !== null); // Filter out any null values
+
+    console.log('Transformed flights for display:', this.searchedFlights);
   }
 
   // Calcula el precio total para adultos

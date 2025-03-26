@@ -305,7 +305,7 @@ export class FlightSearchComponent implements OnInit {
         _id: offerData.id + '-' + tp.travelerId,
       }));
 
-      // Creamos las fechas formateadas
+      // Creamos las fechas formateadas para los vuelos
       const departureDateStr = this.formatDate(this.fechaIdaConstante);
       const returnDateStr = inboundItinerary
         ? this.formatDate(this.fechaRegresoConstante)
@@ -314,32 +314,84 @@ export class FlightSearchComponent implements OnInit {
       // Transformar segmentos del vuelo de ida
       const outboundSegments: FlightSegment[] = outbound.segments.map(
         (segment: any, index: number) => {
+          // Ensure we have valid time formats (HH:MM)
           let departureTime = '00:00';
           let arrivalTime = '00:00';
 
           if (segment.departure && segment.departure.at) {
-            const parts = segment.departure.at.split('T');
-            if (parts.length > 1) {
-              departureTime = parts[1].substring(0, 5);
+            try {
+              const date = new Date(segment.departure.at);
+              if (date instanceof Date && !isNaN(date.getTime())) {
+                departureTime =
+                  date.getHours().toString().padStart(2, '0') +
+                  ':' +
+                  date.getMinutes().toString().padStart(2, '0');
+              } else {
+                const parts = segment.departure.at.split('T');
+                if (parts.length > 1) {
+                  departureTime = parts[1].substring(0, 5);
+                }
+              }
+            } catch (e) {
+              console.warn(
+                'Error parsing departure time:',
+                segment.departure.at
+              );
+              const parts = segment.departure.at.split('T');
+              if (parts.length > 1) {
+                departureTime = parts[1].substring(0, 5);
+              }
             }
           }
 
           if (segment.arrival && segment.arrival.at) {
-            const parts = segment.arrival.at.split('T');
-            if (parts.length > 1) {
-              arrivalTime = parts[1].substring(0, 5);
+            try {
+              const date = new Date(segment.arrival.at);
+              if (date instanceof Date && !isNaN(date.getTime())) {
+                arrivalTime =
+                  date.getHours().toString().padStart(2, '0') +
+                  ':' +
+                  date.getMinutes().toString().padStart(2, '0');
+              } else {
+                const parts = segment.arrival.at.split('T');
+                if (parts.length > 1) {
+                  arrivalTime = parts[1].substring(0, 5);
+                }
+              }
+            } catch (e) {
+              console.warn('Error parsing arrival time:', segment.arrival.at);
+              const parts = segment.arrival.at.split('T');
+              if (parts.length > 1) {
+                arrivalTime = parts[1].substring(0, 5);
+              }
             }
           }
 
+          // Log the times for debugging
+          console.log(`Segment ${index} parsed times:`, {
+            original: {
+              departure: segment.departure?.at,
+              arrival: segment.arrival?.at,
+            },
+            parsed: {
+              departureTime,
+              arrivalTime,
+            },
+          });
+
           return {
-            departureCity: segment.departure.iataCode,
-            arrivalCity: segment.arrival.iataCode,
-            flightNumber: segment.number,
+            departureCity:
+              this.getCityName(segment.departure.iataCode) ||
+              segment.departure.iataCode,
+            arrivalCity:
+              this.getCityName(segment.arrival.iataCode) ||
+              segment.arrival.iataCode,
+            flightNumber: segment.carrierCode + segment.number,
             departureIata: segment.departure.iataCode,
-            departureTime: departureTime,
-            arrivalTime: arrivalTime,
+            departureTime: departureTime, // HH:MM format
+            arrivalTime: arrivalTime, // HH:MM format
             arrivalIata: segment.arrival.iataCode,
-            numNights: 0,
+            numNights: 0, // Por defecto sin noches
             differential: 0,
             order: index,
             airline: {
@@ -351,35 +403,75 @@ export class FlightSearchComponent implements OnInit {
         }
       );
 
-      // Transformar segmentos del vuelo de regreso, si existen
+      // Similar fixes for inbound segments
       let inboundSegments: FlightSegment[] = [];
       if (inboundItinerary) {
         inboundSegments = inboundItinerary.segments.map(
           (segment: any, index: number) => {
+            // Ensure we have valid time formats (HH:MM)
             let departureTime = '00:00';
             let arrivalTime = '00:00';
 
             if (segment.departure && segment.departure.at) {
-              const parts = segment.departure.at.split('T');
-              if (parts.length > 1) {
-                departureTime = parts[1].substring(0, 5);
+              try {
+                const date = new Date(segment.departure.at);
+                if (date instanceof Date && !isNaN(date.getTime())) {
+                  departureTime =
+                    date.getHours().toString().padStart(2, '0') +
+                    ':' +
+                    date.getMinutes().toString().padStart(2, '0');
+                } else {
+                  const parts = segment.departure.at.split('T');
+                  if (parts.length > 1) {
+                    departureTime = parts[1].substring(0, 5);
+                  }
+                }
+              } catch (e) {
+                console.warn(
+                  'Error parsing departure time:',
+                  segment.departure.at
+                );
+                const parts = segment.departure.at.split('T');
+                if (parts.length > 1) {
+                  departureTime = parts[1].substring(0, 5);
+                }
               }
             }
 
             if (segment.arrival && segment.arrival.at) {
-              const parts = segment.arrival.at.split('T');
-              if (parts.length > 1) {
-                arrivalTime = parts[1].substring(0, 5);
+              try {
+                const date = new Date(segment.arrival.at);
+                if (date instanceof Date && !isNaN(date.getTime())) {
+                  arrivalTime =
+                    date.getHours().toString().padStart(2, '0') +
+                    ':' +
+                    date.getMinutes().toString().padStart(2, '0');
+                } else {
+                  const parts = segment.arrival.at.split('T');
+                  if (parts.length > 1) {
+                    arrivalTime = parts[1].substring(0, 5);
+                  }
+                }
+              } catch (e) {
+                console.warn('Error parsing arrival time:', segment.arrival.at);
+                const parts = segment.arrival.at.split('T');
+                if (parts.length > 1) {
+                  arrivalTime = parts[1].substring(0, 5);
+                }
               }
             }
 
             return {
-              departureCity: segment.departure.iataCode,
-              arrivalCity: segment.arrival.iataCode,
-              flightNumber: segment.number,
+              departureCity:
+                this.getCityName(segment.departure.iataCode) ||
+                segment.departure.iataCode,
+              arrivalCity:
+                this.getCityName(segment.arrival.iataCode) ||
+                segment.arrival.iataCode,
+              flightNumber: segment.carrierCode + segment.number,
               departureIata: segment.departure.iataCode,
-              departureTime: departureTime,
-              arrivalTime: arrivalTime,
+              departureTime: departureTime, // HH:MM format
+              arrivalTime: arrivalTime, // HH:MM format
               arrivalIata: segment.arrival.iataCode,
               numNights: 0,
               differential: 0,
@@ -399,24 +491,21 @@ export class FlightSearchComponent implements OnInit {
         id: offerData.id,
         externalID: offerData.id,
         name: inboundItinerary
-          ? `${offerData.validatingAirlineCodes[0]} - ${
+          ? `${this.getAirlineName(offerData.validatingAirlineCodes[0])} - ${
               outbound.segments[0]?.departure?.iataCode
-            } to ${
+            } a ${
               outbound.segments[outbound.segments.length - 1]?.arrival?.iataCode
-            } / ${inboundItinerary.segments[0]?.departure?.iataCode} to ${
-              inboundItinerary.segments[inboundItinerary.segments.length - 1]
-                ?.arrival?.iataCode
             }`
-          : `${offerData.validatingAirlineCodes[0]} - ${
+          : `${this.getAirlineName(offerData.validatingAirlineCodes[0])} - ${
               outbound.segments[0]?.departure?.iataCode
-            } to ${
+            } a ${
               outbound.segments[outbound.segments.length - 1]?.arrival?.iataCode
             }`,
         outbound: {
           activityID: 0,
           availability: 1,
           date: departureDateStr,
-          name: `Flight to ${
+          name: `Vuelo a ${
             outbound.segments[outbound.segments.length - 1]?.arrival?.iataCode
           }`,
           segments: outboundSegments,
@@ -428,9 +517,9 @@ export class FlightSearchComponent implements OnInit {
               activityID: 0,
               availability: 1,
               date: returnDateStr,
-              name: `Return flight from ${
+              name: `Vuelo de regreso desde ${
                 inboundItinerary.segments[0]?.departure?.iataCode
-              } to ${
+              } a ${
                 inboundItinerary.segments[inboundItinerary.segments.length - 1]
                   ?.arrival?.iataCode
               }`,
@@ -453,6 +542,15 @@ export class FlightSearchComponent implements OnInit {
 
       return flight;
     });
+  }
+
+  // Add a helper method to get city name from IATA code
+  getCityName(iataCode: string): string | null {
+    const city = this.ciudades.find((c) => c.codigo === iataCode);
+    if (city) {
+      return city.nombre.split(' - ')[0]; // Return just the city name part
+    }
+    return null;
   }
 
   transformOffersForParent(offers: ITempFlightOffer[]): any[] {

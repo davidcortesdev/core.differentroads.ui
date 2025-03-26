@@ -1,73 +1,90 @@
 <div class="flights-container">
-<P class="title">Vuelos</P>
-    <div class="flights-content">
-      <!-- IDA -->
-      <div class="flight-direction" *ngIf="journeys[0]">
-        <div class="direction-header">
-          <div class="direction-title">IDA  {{ journeys[0].departure.date | date : "dd/MM/yyyy" }}</div>
-          <div class="direction-line"></div>
-          <div class="direction-date">
-            {{ journeys[0].airlineName }}
-          </div>
-        </div>
-        <div class="stops-info">
-          <i class="pi pi-info-circle"></i>
-          <span>{{ journeys[0].stopsText }}</span>
-        </div>
-        <!-- Primer segmento IDA -->
-        <div class="flight-segment" *ngFor="let segment of journeys[0].segments; let i = index">
-          <div class="segment-time departure">
-            <div class="time">
-              <i class="pi pi-arrow-up flight-icon departure"></i>
-              {{ segment.departureTime }}
-            </div>
-            <div class="airport">{{ segment.departureCity }} ({{ segment.departureIata }})</div>
-          </div>
-          <div class="segment-connector">
-            <i class="pi pi-send flight-path-icon"></i>
-          </div>
-          <div class="segment-time arrival">
-            <div class="time">
-              {{ segment.arrivalTime }}
-              <i class="pi pi-arrow-down flight-icon arrival"></i>
-            </div>
-            <div class="airport">{{ segment.arrivalCity }} ({{ segment.arrivalIata }})</div>
-          </div>
+  <P class="title">Vuelos</P>
+  <div class="flights-content">
+    <!-- IDA -->
+    <div class="flight-direction" *ngIf="journeys[0]">
+      <div class="direction-header">
+        <div class="direction-title">IDA</div>
+        <div class="direction-line"></div>
+        <div class="direction-date">
+          {{ journeys[0].departure.date | date : "dd/MM/yyyy" }}
         </div>
       </div>
-
-      <!-- VUELTA -->
-      <div class="flight-direction" *ngIf="journeys[1]">
-        <div class="direction-header">
-          <div class="direction-title">VUELTA {{ journeys[1].departure.date | date : "dd/MM/yyyy" }}</div>
-          <div class="direction-line"></div>
-          <div class="direction-date">{{ journeys[1].airlineName }}</div>
-        </div>
-        <div class="stops-info">
-          <i class="pi pi-info-circle"></i>
-          <span>{{ journeys[1].stopsText }}</span>
-        </div>
-        <!-- Primer segmento VUELTA -->
-        <div class="flight-segment" *ngFor="let segment of journeys[1].segments; let i = index">
-          <div class="segment-time departure">
-            <div class="time">
-              <i class="pi pi-arrow-up flight-icon departure"></i>
-              {{ segment.departureTime }}
-            </div>
-            <div class="airport">{{ segment.departureCity }} ({{ segment.departureIata }})</div>
+      <div class="stops-info">
+        <i class="pi pi-info-circle"></i>
+        <span>{{ journeys[0].stopsText }}</span>
+      </div>
+      <!-- Primer segmento IDA -->
+      <div
+        class="flight-segment"
+        *ngFor="let segment of journeys[0].segments; let i = index"
+      >
+        <div class="segment-time departure">
+          <div class="time">
+            <i class="pi pi-arrow-up flight-icon departure"></i>
+            {{ segment.departureTime }}
           </div>
-          <div class="segment-connector">
-            <i class="pi pi-send flight-path-icon"></i>
+          <div class="airport">
+            {{ segment.departureCity }} ({{ segment.departureIata }})
           </div>
-          <div class="segment-time arrival">
-            <div class="time">
-              {{ segment.arrivalTime }}
-              <i class="pi pi-arrow-down flight-icon arrival"></i>
-            </div>
-            <div class="airport">{{ segment.arrivalCity }} ({{ segment.arrivalIata }})</div>
+        </div>
+        <div class="segment-connector">
+          <i class="pi pi-send flight-path-icon"></i>
+          <span> {{ segment.airline.name }}</span>
+        </div>
+        <div class="segment-time arrival">
+          <div class="time">
+            {{ segment.arrivalTime }}
+            <i class="pi pi-arrow-down flight-icon arrival"></i>
+          </div>
+          <div class="airport">
+            {{ segment.arrivalCity }} ({{ segment.arrivalIata }})
           </div>
         </div>
       </div>
     </div>
 
+    <!-- VUELTA -->
+    <div class="flight-direction" *ngIf="journeys[1]">
+      <div class="direction-header">
+        <div class="direction-title">VUELTA</div>
+        <div class="direction-line"></div>
+        <div class="direction-date">
+          {{ journeys[1].departure.date | date : "dd/MM/yyyy" }}
+        </div>
+      </div>
+      <div class="stops-info">
+        <i class="pi pi-info-circle"></i>
+        <span>{{ journeys[1].stopsText }}</span>
+      </div>
+      <!-- Primer segmento VUELTA -->
+      <div
+        class="flight-segment"
+        *ngFor="let segment of journeys[1].segments; let i = index"
+      >
+        <div class="segment-time departure">
+          <div class="time">
+            <i class="pi pi-arrow-up flight-icon departure"></i>
+            {{ segment.departureTime }}
+          </div>
+          <div class="airport">
+            {{ segment.departureCity }} ({{ segment.departureIata }})
+          </div>
+        </div>
+        <div class="segment-connector">
+          <i class="pi pi-send flight-path-icon"></i>
+          <span> {{ segment.airline.name }}</span>
+        </div>
+        <div class="segment-time arrival">
+          <div class="time">
+            {{ segment.arrivalTime }}
+            <i class="pi pi-arrow-down flight-icon arrival"></i>
+          </div>
+          <div class="airport">
+            {{ segment.arrivalCity }} ({{ segment.arrivalIata }})
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

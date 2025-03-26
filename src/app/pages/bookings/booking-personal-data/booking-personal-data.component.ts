@@ -1,12 +1,78 @@
-import { Component } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { PassengerData } from '../passengerData';
+
 
 @Component({
   selector: 'app-booking-personal-data',
-  standalone: false,
-  
   templateUrl: './booking-personal-data.component.html',
-  styleUrl: './booking-personal-data.component.scss'
+  styleUrls: ['./booking-personal-data.component.scss'],
+  standalone: false,
 })
-export class BookingPersonalDataComponent {
+export class BookingPersonalDataComponent implements OnInit {
+  @Input() passengers: PassengerData[] = [];
 
+  // Número máximo de pasajeros por fila
+  maxPassengersPerRow: number = 3;
+
+  constructor(private fb: FormBuilder) {}
+
+  ngOnInit(): void {}
+
+  /**
+   * Devuelve pasajeros agrupados en filas de 3
+   */
+  get passengersInRows(): PassengerData[][] {
+    const rows: PassengerData[][] = [];
+
+    for (let i = 0; i < this.passengers.length; i += this.maxPassengersPerRow) {
+      rows.push(this.passengers.slice(i, i + this.maxPassengersPerRow));
+    }
+
+    return rows;
+  }
+
+  /**
+   * Formatea la fecha de nacimiento al formato dd/mm/yyyy
+   */
+  formatDate(date: string): string {
+    if (!date) return '';
+
+    // Si la fecha ya está en formato dd/mm/yyyy
+    if (date.includes('/')) {
+      return date;
+    }
+
+    // Si la fecha está en formato yyyy-mm-dd
+    if (date.includes('-')) {
+      const parts = date.split('-');
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    return date;
+  }
+
+  /**
+   * Obtiene la etiqueta para el tipo de pasajero
+   */
+  getPassengerTypeLabel(type: string): string {
+    const types: Record<string, string> = {
+      adult: 'Adulto',
+      child: 'Niño',
+      infant: 'Bebé',
+      senior: 'Senior',
+    };
+
+    return types[type.toLowerCase()] || type;
+  }
+
+  /**
+   * Actualiza los datos del pasajero
+   */
+  updatePassenger(updatedPassenger: PassengerData): void {
+    const index = this.passengers.findIndex(p => p.id === updatedPassenger.id);
+    if (index !== -1) {
+      this.passengers[index] = updatedPassenger;
+    }
+  }
 }

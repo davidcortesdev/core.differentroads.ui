@@ -1,12 +1,22 @@
-import { Component } from '@angular/core';
+import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 
 @Component({
   selector: 'app-booking-code-section',
-  standalone: false,
-  
   templateUrl: './booking-code-section.component.html',
-  styleUrl: './booking-code-section.component.scss'
+  styleUrls: ['./booking-code-section.component.scss'],
+  standalone: false,
 })
-export class BookingCodeSectionComponent {
+export class BookingCodeSectionComponent implements OnInit {
+  @Input() bookingCode: string = '';
+  @Input() bookingReference: string = '';
+  @Input() status: string = '';
+  @Output() cancelBooking = new EventEmitter<void>();
 
+  constructor() {}
+
+  ngOnInit(): void {}
+
+  onCancelBooking(): void {
+    this.cancelBooking.emit();
+  }
 }

@@ -16,7 +16,7 @@ export interface Payment {
 
 export interface IPaymentVoucher {
   fileUrl: string;
-  metadata?: any;
+  metadata: any;
   uploadDate: Date;
   reviewStatus: VoucherReviewStatus;
   id: string;

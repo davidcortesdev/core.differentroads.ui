@@ -11,8 +11,12 @@ import {
   PaymentInfo,
 } from '../../core/models/reservation/reservation.model';
 import { BookingMappingService } from '../../core/services/booking-mapping.service';
-import { Payment } from '../../core/models/bookings/payment.model';
+import {
+  Payment,
+  VoucherReviewStatus,
+} from '../../core/models/bookings/payment.model';
 import { Booking } from '../../core/models/bookings/booking.model';
+import { CloudinaryResponse } from '../../core/services/file-upload.service';
 
 @Component({
   selector: 'app-reservation',
@@ -48,6 +52,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
   paymentInfo: Payment | undefined;
   paymentID: string = '';
   bookingData: Booking | undefined;
+  uploadedVoucher: CloudinaryResponse | null = null;
 
   constructor(
     private messageService: MessageService,
@@ -151,40 +156,56 @@ export class ReservationComponent implements OnInit, OnDestroy {
       .subscribe((payment) => {
         console.log('Payment data:', payment);
         this.paymentInfo = payment;
+        if (payment.vouchers && payment.vouchers.length > 0) {
+          this.uploadedVoucher = {
+            secure_url: payment.vouchers[0].fileUrl,
+            public_id: payment.vouchers[0].id,
+          } as CloudinaryResponse;
+        }
       });
   }
 
-  onBasicUploadAuto(event: any) {
-    if (event.files && event.files.length > 0) {
-      const file = event.files[0];
+  handleVoucherUpload(response: CloudinaryResponse) {
+    this.uploadedVoucher = response;
+    // Aquí se podría actualizar la reserva con la URL del voucher. Código de ejemplo comentado.
+    if (this.bookingId && response) {
+      this.bookingsService
+        .uploadVoucher(this.bookingId, this.paymentID, {
+          fileUrl: response.secure_url,
+          uploadDate: new Date(),
+          reviewStatus: VoucherReviewStatus.PENDING,
+          id: response.public_id,
+          metadata: response,
+        })
+        .pipe(
+          takeUntil(this.destroy$),
+          catchError((error) => {
+            this.handleVoucherError(error);
+            return EMPTY;
+          })
+        )
+        .subscribe(() => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Justificante subido',
+            detail: 'El justificante se ha subido correctamente.',
+          });
+        });
+    }
+  }
 
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Archivo subido',
-        detail: `El archivo ${file.name} se ha subido correctamente.`,
-      });
+  handleVoucherError(error: any) {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Error al subir el justificante.',
+    });
+  }
 
-      // Here you would upload the file to your server
-      // this.bookingsService.uploadVoucher(this.bookingId, file)
-      //   .pipe(takeUntil(this.destroy$))
-      //   .subscribe({
-      //     next: (response) => {
-      //       // Handle successful upload
-      //     },
-      //     error: (err) => {
-      //       this.messageService.add({
-      //         severity: 'error',
-      //         summary: 'Error',
-      //         detail: 'Error al subir el justificante.'
-      //       });
-      //     }
-      //   });
-    } else {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'No se ha seleccionado ningún archivo.',
-      });
+  // Nuevo método para visualizar el voucher subido
+  viewVoucher(): void {
+    if (this.uploadedVoucher && this.uploadedVoucher.secure_url) {
+      window.open(this.uploadedVoucher.secure_url, '_blank');
     }
   }
 

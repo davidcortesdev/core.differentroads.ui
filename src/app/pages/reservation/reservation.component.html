@@ -130,19 +130,32 @@
         </div>
       </p-panel>
 
-      <!-- Botón de subir justificante -->
-      <p-fileUpload
-        mode="basic"
-        name="demo[]"
-        chooseIcon="pi pi-upload"
-        url="https://www.primefaces.org/cdn/api/upload.php"
-        accept="image/*, .pdf"
-        maxFileSize="1000000"
-        (onUpload)="onBasicUploadAuto($event)"
-        [auto]="true"
-        chooseLabel="Subir justificante de transferencia"
-        class="upload-button"
-      ></p-fileUpload>
+      <!-- Botón de justificante: mostrar componente de subida o botón de ver voucher -->
+      <ng-container *ngIf="!uploadedVoucher; else voucherView">
+        <app-upload-button
+          label="Subir justificante de transferencia"
+          accept="image/*, .pdf"
+          [maxFileSize]="1000000"
+          folder="vouchers"
+          [auto]="false"
+          chooseIcon="pi pi-upload"
+          styleClass="upload-button"
+          (onUploadSuccess)="handleVoucherUpload($event)"
+          (onUploadError)="handleVoucherError($event)"
+        >
+        </app-upload-button>
+      </ng-container>
+      <ng-template #voucherView>
+        <p-button
+          label="Ver justificante"
+          (onClick)="viewVoucher()"
+          severity="info"
+        ></p-button>
+        <!-- Mostrar el estado pendiente de validación si corresponde -->
+        <ng-container *ngIf="paymentInfo?.status === 'PENDING'">
+          <p class="voucher-status-text">Pendiente de validar</p>
+        </ng-container>
+      </ng-template>
     </ng-container>
   </div>
 

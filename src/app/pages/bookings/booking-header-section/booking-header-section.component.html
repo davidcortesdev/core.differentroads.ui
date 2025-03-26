@@ -1,0 +1,32 @@
+<!-- Existing Panel -->
+<p-panel styleClass="booking" [showHeader]="false">
+  <div class="header-content">
+    <button pButton icon="pi pi-arrow-left" class="p-button-text p-button-rounded back-button" (click)="goBack()"></button>
+    <div class="title-container">
+      <h2 class="booking-title">{{ title }}</h2>
+      <p class="booking-date">{{ date }}</p>
+    </div>
+    <button pButton icon="pi pi-ellipsis-v" class="p-button-text p-button-rounded options-button"></button>
+  </div>
+</p-panel>
+
+<!-- Retailer Info Panel - Solo se muestra si showRetailerPanel es true -->
+<p-panel *ngIf="showRetailerPanel" styleClass="booking" [showHeader]="false">
+  <div class="retailer-info">
+    <h3 class="section-title">Retailer</h3>
+    <div class="retailer-content">
+      <div class="info-item">
+        <i class="pi pi-building"></i>
+        <span>{{ retailerInfo.name }}</span>
+      </div>
+      <div class="info-item">
+        <i class="pi pi-envelope"></i>
+        <span>{{ retailerInfo.email }}</span>
+      </div>
+      <div class="info-item">
+        <i class="pi pi-phone"></i>
+        <span>{{ retailerInfo.phone }}</span>
+      </div>
+    </div>
+  </div>
+</p-panel>

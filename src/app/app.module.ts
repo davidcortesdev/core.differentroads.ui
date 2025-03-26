@@ -176,6 +176,17 @@ import { FlightSearchComponent } from './pages/checkout/components/flights/compo
 import { TravelerItemComponent } from './pages/checkout/components/traveler-item/traveler-item.component';
 import { FlightSectionComponent } from './pages/checkout/components/flight-section/flight-section.component';
 import { LoginModalComponent } from './pages/checkout/components/flights/components/login-modal/login-modal.component';
+import { BookingsComponent } from './pages/bookings/bookings.component';
+import { BookingActivitiesComponent } from './pages/bookings/booking-activities/booking-activities.component';
+import { BookingCodeSectionComponent } from './pages/bookings/booking-code-section/booking-code-section.component';
+import { BookingDetailsViewComponent } from './pages/bookings/booking-details-view/booking-details-view.component';
+import { BookingDocumentActionsComponent } from './pages/bookings/booking-document-actions/booking-document-actions.component';
+import { BookingFlightsComponent } from './pages/bookings/booking-flights/booking-flights.component';
+import { BookingHeaderSectionComponent } from './pages/bookings/booking-header-section/booking-header-section.component';
+import { BookingPaymentHistoryComponent } from './pages/bookings/booking-payment-history/booking-payment-history.component';
+import { BookingPersonalDataComponent } from './pages/bookings/booking-personal-data/booking-personal-data.component';
+import { BookingUpdateTravelComponent } from './pages/bookings/booking-update-travel/booking-update-travel.component';
+import { PassengerCardComponent } from './pages/bookings/passenger-card/passenger-card.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -262,7 +273,18 @@ registerLocaleData(localeEs);
     FlightSearchComponent,
     TravelerItemComponent,
     FlightSectionComponent,
-    LoginModalComponent
+    LoginModalComponent,
+    BookingsComponent,
+    BookingActivitiesComponent,
+    BookingCodeSectionComponent,
+    BookingDetailsViewComponent,
+    BookingDocumentActionsComponent,
+    BookingFlightsComponent,
+    BookingHeaderSectionComponent,
+    BookingPaymentHistoryComponent,
+    BookingPersonalDataComponent,
+    BookingUpdateTravelComponent,
+    PassengerCardComponent
   ],
   imports: [
     // Angular Modules

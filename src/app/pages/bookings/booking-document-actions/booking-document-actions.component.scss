@@ -1,0 +1,256 @@
+/* app.component.scss */
+:host ::ng-deep {
+    /* Estilos para el panel de referencia de reserva */
+    .container {
+        border: 1px solid #eaeaea;
+        border-radius: 12px;
+        margin: 0.75rem;
+        margin-top: 18px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+
+        &:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .p-panel-content {
+            padding: 1rem;
+        }
+    }
+
+    /* Configuración para todos los paneles */
+    .p-panel-header {
+        padding: 0;
+    }
+}
+
+.custom-panel {
+    border: none !important;
+    background-color: #f9f9f9 !important;
+    box-shadow: none !important;
+
+    ::ng-deep .p-panel-content {
+        border: none !important;
+        background-color: #f9f9f9 !important;
+        padding: 15px 20px;
+    }
+
+    ::ng-deep .p-panel-header {
+        display: none !important;
+    }
+}
+
+/* Estilos base para el contenedor de botones */
+.buttons-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: nowrap;
+    width: 100%;
+}
+
+::ng-deep {
+    .buttons-container {
+        .p-button {
+            background-color: transparent !important;
+            border-radius: 25px !important;
+            padding: 0.6rem 1.2rem !important;
+            font-size: 0.9rem;
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            &:focus {
+                box-shadow: none !important;
+            }
+        }
+
+        .p-button-icon {
+            margin-right: 8px;
+        }
+    }
+
+    /* Colores específicos por posición */
+    .buttons-container {
+        p-button:nth-child(1) {
+            .p-button {
+                border-color: #ff6b6b !important;
+                color: #ff6b6b !important;
+
+                .p-button-icon {
+                    color: #ff6b6b !important;
+                }
+
+                &:hover {
+                    background-color: #fff0f0 !important;
+                }
+            }
+        }
+
+        p-button:nth-child(2) {
+            .p-button {
+                border-color: #4ecdc4 !important;
+                color: #4ecdc4 !important;
+
+                .p-button-icon {
+                    color: #4ecdc4 !important;
+                }
+
+                &:hover {
+                    background-color: #f0fffd !important;
+                }
+            }
+        }
+
+        p-button:nth-child(3) {
+            .p-button {
+                border-color: #8075ff !important;
+                color: #8075ff !important;
+
+                .p-button-icon {
+                    color: #8075ff !important;
+                }
+
+                &:hover {
+                    background-color: #b2ade55e !important;
+                }
+            }
+        }
+
+        p-button:nth-child(4) {
+            .p-button {
+                border-color: #f9a03f !important;
+                color: #f9a03f !important;
+
+                .p-button-icon {
+                    color: #f9a03f !important;
+                }
+
+                &:hover {
+                    background-color: #f1d9be5b !important;
+                }
+            }
+        }
+
+        p-button:nth-child(5) {
+            .p-button {
+                border-color: #45b7d8 !important;
+                color: #45b7d8 !important;
+
+                .p-button-icon {
+                    color: #45b7d8 !important;
+                }
+
+                &:hover {
+                    background-color: #f0f8fc !important;
+                }
+            }
+        }
+    }
+}
+
+/* Para dispositivos móviles */
+@media (max-width: 480px) {
+    .buttons-container {
+        flex-direction: column;
+        width: 100%;
+        gap: 1rem;
+    }
+
+    ::ng-deep p-button {
+        width: 100%;
+
+        .p-button {
+            width: 100%;
+        }
+    }
+}
+
+/* VERSIÓN CORREGIDA PARA TABLETS - solución radical con texto centrado */
+@media (min-width: 481px) and (max-width: 991px) {
+    /* Eliminamos cualquier display previo y usamos texto centrado */
+    .buttons-container {
+        display: block !important;
+        text-align: center !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Hacemos un grupo visual para la primera fila */
+    .first-row {
+        display: block !important;
+        text-align: center !important;
+        margin-bottom: 1.5rem !important; /* Aumentado de 1.5rem a 2.5rem */
+    }
+
+    /* Hacemos un grupo visual para la segunda fila */
+    .second-row {
+        display: block !important;
+        text-align: center !important;
+    }
+
+    /* Estilo para cada botón individual - primera fila */
+    .buttons-container p-button:nth-child(1),
+    .buttons-container p-button:nth-child(2),
+    .buttons-container p-button:nth-child(3) {
+        display: inline-block !important;
+        width: auto !important;
+        margin: 0 0.5rem 0 0.5rem !important;
+        float: none !important;
+        margin-bottom: 1.5rem !important; /* Espacio adicional después de la primera fila */
+    }
+
+    /* Estilo para cada botón individual - segunda fila */
+    .buttons-container p-button:nth-child(4),
+    .buttons-container p-button:nth-child(5) {
+        display: inline-block !important;
+        width: auto !important;
+        margin: 0 1.5rem !important;
+        float: none !important;
+    }
+
+    /* Aseguramos que los botones sean del tamaño correcto */
+    .buttons-container p-button .p-button {
+        width: auto !important;
+    }
+}
+
+/* Aseguramos que en pantallas de PC los botones estén en una sola fila */
+@media (min-width: 992px) {
+    .buttons-container {
+        flex-wrap: nowrap;
+        justify-content: space-around;
+
+        p-button {
+            /* Mantener botones de tamaño consistente */
+            flex: 0 1 auto;
+            min-width: auto;
+
+            .p-button {
+                white-space: nowrap;
+                font-size: 0.85rem; /* Ajustamos el tamaño del texto si es necesario */
+                padding: 0.6rem 1rem !important; /* Reduzco un poco el padding */
+            }
+        }
+    }
+}
+
+/* Para pantallas pequeñas de PC */
+@media (min-width: 992px) and (max-width: 1280px) {
+    .buttons-container {
+        gap: 0.8rem; /* Espacio reducido entre botones */
+
+        .p-button {
+            font-size: 0.8rem !important; /* Texto más pequeño */
+            padding: 0.5rem 0.9rem !important; /* Padding más pequeño */
+
+            .p-button-icon {
+                margin-right: 4px; /* Icono más cerca del texto */
+                font-size: 0.9rem; /* Icono más pequeño */
+            }
+        }
+    }
+}

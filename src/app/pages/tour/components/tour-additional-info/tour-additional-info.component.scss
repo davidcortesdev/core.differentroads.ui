@@ -1,31 +1,48 @@
+// Variables
 $azul: var(--background-azul);
 $primary: var(--p-primary-color);
+$coral: #ff6f61;
+$border-light: #ced4da;
+$border-dark: #002b57;
+$white: #fff;
+
+// Mixins
 @mixin flex($justify: center, $align: center) {
   display: flex;
   align-items: $align;
   justify-content: $justify;
 }
+
+// Placeholders
 %txt-azul {
   color: $azul;
 }
+
 %brd-rad {
   border-radius: 11.82px;
 }
+
 %input-focus {
   &:focus {
     border-color: $primary;
   }
 }
+
 %input-common {
   width: 100%;
   padding: 0.53rem;
   @extend %brd-rad;
-  border: 1px solid #ced4da;
+  border: 1px solid $border-light;
   @extend %txt-azul;
-  background: #fff;
+  background: $white;
   @extend %input-focus;
 }
 
+.paddingDiv {
+  padding: 1rem;
+}
+
+// Component styles
 .tour-additional-info-container {
   display: flex;
   flex-direction: row;
@@ -36,7 +53,7 @@ $primary: var(--p-primary-color);
   .p-card {
     div {
       span {
-        background-color: #ff6f61;
+        background-color: $coral;
         border-radius: 50%;
         width: 20px;
         height: 20px;
@@ -59,11 +76,11 @@ $primary: var(--p-primary-color);
 
 .claseBord {
   border-radius: 0.875rem;
-  border: 1px solid #002b57;
+  border: 1px solid $border-dark;
 }
 
 .bg-pink-100 {
-  background-color: #ff6f61;
+  background-color: $coral;
   border-radius: 25%;
   width: 40px;
   height: 40px;
@@ -72,7 +89,7 @@ $primary: var(--p-primary-color);
   justify-content: center;
 
   i {
-    color: white;
+    color: $white;
   }
 }
 
@@ -82,27 +99,68 @@ $primary: var(--p-primary-color);
   padding: 0 1rem;
 }
 
-:host {
-  ::ng-deep .p-inputtext {
-    border-color: transparent;
-    border-bottom-color: 0.0625rem solid var(--background-azul);
-    box-shadow: none;
-    border-radius: 0;
-    border-bottom: 0.0625rem solid var(--background-azul);
-    width: 100%;
-    background-color: white;
+.p-panel {
+  flex-wrap: wrap;
+}
+
+.p-type {
+  @include flex(space-between);
+  padding: 1rem 0.5rem;
+  border-bottom: 1px solid #eee;
+
+  &:last-of-type {
+    border-bottom: none;
   }
+  
+  .p-info {
+    .p-cat {
+      @include flex(null, center);
+      font-weight: 500;
+      @extend %txt-azul;
+    }
+    
+    .p-age {
+      font-size: 0.8rem;
+      @extend %txt-azul;
+    }
+  }
+  
+  .p-ctrl {
+    @include flex(null, center);
+    
+    .p-count {
+      margin: 0 1rem;
+      min-width: 1.5rem;
+      text-align: center;
+      font-size: 1.2rem;
+      @extend %txt-azul;
+    }
+  }
+}
 
-  ::ng-deep p-accordion {
-    width: 100%;
+// Angular host and deep styles
+:host {
+  ::ng-deep {
+    .p-inputtext {
+      border-color: transparent;
+      border-bottom: 0.0625rem solid $azul;
+      box-shadow: none;
+      border-radius: 0;
+      width: 100%;
+      background-color: $white;
+    }
 
-    p-accordion-header {
-      flex-direction: row-reverse;
-      gap: 1rem;
-      justify-content: flex-end;
+    p-accordion {
+      width: 100%;
 
-      i {
-        color: #ff6b6b;
+      p-accordion-header {
+        flex-direction: row-reverse;
+        gap: 1rem;
+        justify-content: flex-end;
+
+        i {
+          color: #ff6b6b;
+        }
       }
     }
   }
@@ -112,6 +170,7 @@ $primary: var(--p-primary-color);
   .p-icon {
     @extend %txt-azul;
   }
+  
   .p-btn,
   .p-select,
   p-select {
@@ -119,27 +178,31 @@ $primary: var(--p-primary-color);
     padding-bottom: 0.5rem;
     border-radius: 11.82px;
   }
+  
   .p-autocomplete,
   .p-btn {
     min-width: 250px;
   }
+  
   .p-autocomplete {
     .p-autocomplete-input {
       width: 100%;
       @extend %brd-rad;
       @extend %txt-azul;
-      background: #fff;
+      background: $white;
       padding-right: 2.5rem;
       padding-top: 1.5rem !important;
       padding-bottom: 0.5rem !important;
     }
+    
     .p-autocomplete-overlay {
       @extend %brd-rad;
-      background: #fff;
+      background: $white;
       box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
       border: 1px solid #d9d9d9;
       z-index: 1;
     }
+    
     .p-autocomplete-dropdown {
       position: absolute;
       top: 50%;
@@ -150,43 +213,11 @@ $primary: var(--p-primary-color);
       z-index: 1;
     }
   }
+  
   .p-ovl .p-overlay-content {
     @extend %brd-rad;
     padding: 0;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    background: #fff;
-  }
-}
-.p-panel {
-  flex-wrap: wrap;
-}
-.p-type {
-  @include flex(space-between);
-  padding: 1rem 0.5rem;
-  border-bottom: 1px solid #eee;
-
-  &:last-of-type {
-    border-bottom: none;
-  }
-  .p-info {
-    .p-cat {
-      @include flex(null, center);
-      font-weight: 500;
-      @extend %txt-azul;
-    }
-    .p-age {
-      font-size: 0.8rem;
-      @extend %txt-azul;
-    }
-  }
-  .p-ctrl {
-    @include flex(null, center);
-    .p-count {
-      margin: 0 1rem;
-      min-width: 1.5rem;
-      text-align: center;
-      font-size: 1.2rem;
-      @extend %txt-azul;
-    }
+    background: $white;
   }
 }

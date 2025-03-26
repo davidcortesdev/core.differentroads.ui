@@ -8,21 +8,36 @@ import {
   TravelerInfo,
 } from '../models/reservation/reservation.model';
 import { BookingTraveler } from '../models/bookings/booking-traveler.model';
+import { Payment, PaymentStatus } from '../models/bookings/payment.model';
 
 @Injectable()
 export class BookingMappingService {
-  mapToReservationInfo(booking: Booking): ReservationInfo {
-    // Determine the status based on booking.status
-    let status: 'confirm' | 'rq' | 'transfer' = 'transfer';
+  mapToReservationInfo(booking: Booking, payment?: Payment): ReservationInfo {
+    let status: 'confirm' | 'rq' | 'transfer';
 
-    status =
-      booking.periodData?.['payment'].method === 'transfer'
-        ? 'transfer'
-        : booking.status?.toLowerCase() === 'Booked'
-        ? 'confirm'
-        : ['on_request', 'rq'].includes(booking.status?.toLowerCase())
-        ? 'rq'
-        : 'confirm';
+    // Si se dispone de información del pago, se determina el estado basándose en él.
+    if (
+      payment &&
+      (payment.status === PaymentStatus.COMPLETED ||
+        payment.status === PaymentStatus.PENDING_REVIEW)
+    ) {
+      status =
+        booking.status?.toLowerCase() === 'booked'
+          ? 'confirm'
+          : ['on_request', 'rq'].includes(booking.status?.toLowerCase())
+          ? 'rq'
+          : 'confirm';
+    } else {
+      // Sin información de pago, se utiliza la lógica original.
+      status =
+        booking.periodData?.['payment'].method === 'transfer'
+          ? 'transfer'
+          : booking.status?.toLowerCase() === 'booked'
+          ? 'confirm'
+          : ['on_request', 'rq'].includes(booking.status?.toLowerCase())
+          ? 'rq'
+          : 'confirm';
+    }
 
     // Extract travelers information
     const travelers: TravelerInfo[] =

@@ -113,12 +113,15 @@ export class ReservationComponent implements OnInit, OnDestroy {
         })
       )
       .subscribe((booking) => {
-        // Use the mapping service to transform the booking data
-        this.reservationInfo = this.bookingMapper.mapToReservationInfo(booking);
+        // Mapear la reserva utilizando booking y, de estar disponible, paymentInfo.
+        this.reservationInfo = this.bookingMapper.mapToReservationInfo(
+          booking,
+          this.paymentInfo
+        );
         this.flights = this.bookingMapper.mapToFlights(booking);
         this.priceDetails = this.bookingMapper.mapToPriceDetails(booking);
 
-        // Update bank info with booking-specific data
+        // Actualizar bankInfo con datos específicos del booking.
         if (booking.ID) {
           this.bankInfo.forEach((bank) => {
             bank.concept = `${booking.ID} ${
@@ -128,7 +131,6 @@ export class ReservationComponent implements OnInit, OnDestroy {
         }
 
         this.bookingData = booking;
-
         console.log('Booking data:', booking);
       });
   }
@@ -161,6 +163,13 @@ export class ReservationComponent implements OnInit, OnDestroy {
             secure_url: payment.vouchers[0].fileUrl,
             public_id: payment.vouchers[0].id,
           } as CloudinaryResponse;
+        }
+        // Si ya se cargó el booking, actualiza la información de la reserva.
+        if (this.bookingData) {
+          this.reservationInfo = this.bookingMapper.mapToReservationInfo(
+            this.bookingData,
+            this.paymentInfo
+          );
         }
       });
   }

@@ -1,0 +1,126 @@
+<div class="payment-history-container">
+  <div class="payment-row">
+    <!-- Resumen del viaje (columna izquierda) -->
+    <div class="payment-column-left">
+      <p-panel header="Resumen del viaje">
+        <div class="trip-summary">
+          <div class="trip-item">
+            <span class="description">Adultos</span>
+            <span class="quantity">{{ formatQuantity(adultData) }}</span>
+            <span class="price">{{ formatPrice(calculateTotal(adultData)) }}</span>
+          </div>
+          <p-divider />
+          <div class="trip-item">
+            <span class="description">Individual</span>
+            <span class="quantity">{{ formatQuantity(individualData) }}</span>
+            <span class="price">{{ formatPrice(calculateTotal(individualData)) }}</span>
+          </div>
+          <p-divider />
+          <div class="trip-item">
+            <span class="description">Opcional: recorrido en góndola (Adultos)</span>
+            <span class="quantity">{{ formatQuantity(gondolaData) }}</span>
+            <span class="price">{{ formatPrice(calculateTotal(gondolaData)) }}</span>
+          </div>
+          <p-divider />
+          <div class="trip-item">
+            <span class="description">Comfort Plan (Adultos)</span>
+            <span class="quantity">{{ formatQuantity(comfortPlanData) }}</span>
+            <span class="price">{{ formatPrice(calculateTotal(comfortPlanData)) }}</span>
+          </div>
+          <p-divider />
+          <div class="trip-item">
+            <span class="description">Vuelo desde Barcelona</span>
+            <span class="quantity">{{ formatQuantity(flightData) }}</span>
+            <span class="price">{{ formatPrice(calculateTotal(flightData)) }}</span>
+          </div>
+          <p-divider />
+          <div class="trip-item">
+            <span class="description">Descuento por puntos</span>
+            <span class="quantity">{{ formatQuantity(discountData) }}</span>
+            <span class="price">-{{ formatPrice(calculateTotal(discountData)) }}</span>
+          </div>
+        </div>
+      </p-panel>
+    </div>
+    
+
+    <!-- Información de pagos (columna derecha) -->
+    <div class="payment-column-right">
+      <p-panel header="Pagos">
+        <div class="payment-info">
+          <!-- Fila unificada de información de pagos y botones (para desktop) -->
+          <div class="payment-unified-row">
+            <div class="payment-info-columns">
+              <div class="payment-column">
+                <span class="label">Precio total</span>
+                <span class="amount total">{{ formatCurrency(paymentInfo.totalPrice) }}</span>
+              </div>
+              <div class="payment-column">
+                <span class="label">Pendiente</span>
+                <span class="amount pending">{{ formatCurrency(paymentInfo.pendingAmount) }}</span>
+              </div>
+              <div class="payment-column">
+                <span class="label">Pagado</span>
+                <span class="amount paid">{{ formatCurrency(paymentInfo.paidAmount) }}</span>
+              </div>
+            </div>
+            <div class="payment-buttons">
+              <p-button icon="pi pi-download" label="Adjuntar comprobante" styleClass="p-button-outlined"
+                      (onClick)="fileUpload.click()"></p-button>
+              <p-button label="Realizar pago" icon="pi pi-dollar" styleClass="p-button-success"
+                      (onClick)="showPaymentModal()"></p-button>
+              <input #fileUpload type="file" (change)="onFileUpload($event)" style="display:none">
+            </div>
+          </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Contenedor de columnas para pagos y historial -->
+        <div class="payment-columns-container">
+          <!-- Próximos pagos -->
+          <div class="payment-column-half">
+            <h3>Próximo pago</h3>
+            <div *ngFor="let payment of upcomingPayments" class="upcoming-payment-item">
+              <span class="date">{{ formatDate(payment.date) }}</span>
+              <span class="amount">{{ formatPrice(payment.amount) }}</span>
+            </div>
+          </div>
+
+          <!-- Historial de pagos -->
+          <div class="payment-column-half">
+            <h3>Historial de pago</h3>
+            <div *ngFor="let item of paymentHistory" class="history-item">
+              <span class="date">{{ formatDate(item.date) }}</span>
+              <span class="status">{{ item.status }}</span>
+              <span class="amount">{{ formatCurrency(item.amount) }}</span>
+            </div>
+          </div>
+        </div>
+      </p-panel>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para registrar pago -->
+<p-dialog header="Registrar pago" [(visible)]="displayPaymentModal" 
+         [style]="{width: '450px'}" [modal]="true" 
+         [draggable]="false" [resizable]="false"
+         styleClass="payment-dialog">
+  <form [formGroup]="paymentForm" (ngSubmit)="onSubmitPayment()">
+    <div class="p-field">
+      <label for="amount">Monto del pago<span class="required">*</span></label>
+      <div class="p-inputgroup">
+        <input type="number" pInputText formControlName="amount" id="amount" class="p-inputtext">
+        <span class="p-inputgroup-addon">€</span>
+      </div>
+    </div>
+    
+    <div class="p-dialog-footer">
+      <p-button label="Cancelar" icon="pi pi-times" (onClick)="hidePaymentModal() " 
+               styleClass="p-button-outlined"></p-button>
+      <p-button label="Realizar pago" icon="pi pi-check" type="submit" 
+               styleClass="p-button-danger p-button-success" [disabled]="paymentForm.invalid"></p-button>
+    </div>
+  </form>
+</p-dialog>

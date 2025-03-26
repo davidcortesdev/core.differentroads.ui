@@ -1,0 +1,245 @@
+.activities-container {
+    margin: 0.75rem;
+
+    .activities-content {
+        display: flex;
+        flex-direction: column;
+        padding: 0.5rem;
+    }
+
+    .activity-item {
+        display: flex;
+        flex-direction: column;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        border: 1px solid #eaeaea;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+        transition: all 0.2s ease;
+
+        &:hover {
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    .activity-content {
+        display: flex;
+        flex-direction: row;
+
+        .activity-image {
+            flex: 0 0 auto;
+            width: 250px;
+            height: 150px;
+            margin-right: 1.5rem;
+            border-radius: 6px;
+            overflow: hidden;
+
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                border-radius: 10px;
+            }
+
+            @media (max-width: 991px) {
+                width: 200px;
+                height: 135px;
+            }
+
+            @media (max-width: 767px) {
+                width: 170px;
+                height: 120px;
+                margin-right: 1rem;
+            }
+
+            @media (max-width: 576px) {
+                width: 100%;
+                height: 160px;
+                margin-right: 0;
+                margin-bottom: 1rem;
+            }
+        }
+
+        .activity-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 150px;
+
+            @media (max-width: 991px) {
+                min-height: 135px;
+            }
+
+            @media (max-width: 767px) {
+                min-height: 120px;
+            }
+
+            .activity-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+
+                .activity-title-container {
+                    display: flex;
+                    align-items: center;
+                    flex-wrap: wrap;
+                    flex: 1;
+                    padding-right: 1rem;
+                }
+
+                .activity-title {
+                    font-size: 1.1rem;
+                    font-weight: 600;
+                    color: #333;
+                }
+
+                .optional-label {
+                    color: #4f97fb;
+                    font-weight: bold;
+                    margin-right: 0.5rem;
+                }
+
+                .activity-price {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-end;
+                    min-width: 90px;
+
+                    .price-value {
+                        font-size: 1.3rem;
+                        font-weight: 700;
+                        color: #333;
+                    }
+
+                    .per-person {
+                        font-size: 0.75rem;
+                        color: #666;
+                        margin-top: 2px;
+                    }
+                }
+            }
+
+            .activity-description {
+                font-size: 0.95rem;
+                color: #666;
+                line-height: 1.5;
+                margin: 0.75rem 0;
+                flex: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: -webkit-box;
+                -webkit-line-clamp: 3;
+                line-clamp: 3;
+                -webkit-box-orient: vertical;
+                max-height: 4.5em; /* 3 líneas de texto */
+            }
+
+            .activity-actions {
+                display: flex;
+                justify-content: flex-end;
+                margin-top: auto;
+
+                button {
+                    min-width: 120px;
+                }
+            }
+        }
+
+        @media (max-width: 576px) {
+            flex-direction: column;
+
+            .activity-details {
+                min-height: auto;
+
+                .activity-header {
+                    flex-direction: column;
+
+                    .activity-price {
+                        align-items: flex-start;
+                        margin-top: 0.5rem;
+                    }
+                }
+
+                .activity-description {
+                    max-height: none;
+                    -webkit-line-clamp: initial;
+                }
+            }
+        }
+    }
+
+    .no-activities {
+        text-align: center;
+        padding: 2rem;
+        color: #666;
+        font-style: italic;
+    }
+}
+
+:host ::ng-deep {
+    .p-panel {
+        border: 1px solid #eaeaea;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+
+        .p-panel-header {
+            border-bottom: 1px solid #eaeaea;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+
+            .p-panel-title {
+                font-weight: 600;
+                font-size: 1.1rem;
+                color: #333;
+            }
+        }
+
+        .p-panel-content {
+            padding: 0;
+        }
+    }
+
+    .p-dataview .p-dataview-content {
+        background: transparent;
+        color: #495057;
+        border: none;
+        padding: 0;
+    }
+
+    .p-button {
+        &.p-button-success {
+            background-color: transparent;
+            border-color: #4ecdc4 !important;
+            color: #4ecdc4 !important;
+            border-radius: 50px;
+
+            .p-button-icon {
+                color: #4ecdc4 !important;
+            }
+
+            &:hover {
+                background-color: #f0fffd !important;
+            }
+        }
+
+        &.p-button-outlined {
+            border-color: #ff6b6b !important;
+            color: #ff6b6b !important;
+            border-radius: 50px;
+
+            .p-button-icon {
+                color: #ff6b6b !important;
+            }
+
+            &:hover {
+                background-color: #fff0f0 !important;
+            }
+        }
+    }
+}

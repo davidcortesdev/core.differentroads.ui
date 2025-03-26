@@ -15,6 +15,7 @@ import { CheckoutComponent } from './pages/checkout/checkout.component';
 import { ContentPageComponent } from './pages/content-page/content-page.component';
 import { ToursComponent } from './shared/components/tours/tours.component';
 import { ReservationComponent } from './pages/reservation/reservation.component';
+import { BookingsComponent } from './pages/bookings/bookings.component';
 
 const routes: Routes = [
   {
@@ -43,6 +44,7 @@ const routes: Routes = [
         path: 'reservation/:id/:status/:paymentID',
         component: ReservationComponent,
       },
+      { path: 'bookings/:id', component: BookingsComponent },
       { path: '**', component: NotFoundComponent },
     ],
   },

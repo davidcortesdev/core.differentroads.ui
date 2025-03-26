@@ -157,8 +157,12 @@
       <span>{{ reservationInfo?.reservationNumber }}</span>
     </div>
     <div class="det-item">
-      <label class="val">Importe abonado:</label>
-      <span>{{ reservationInfo?.amount }}</span>
+      <label class="val">{{
+        paymentInfo?.status === "PENDING"
+          ? "Pendiente a abonar:"
+          : "Importe abonado:"
+      }}</label>
+      <span>{{ paymentInfo?.amount || 0 | currencyFormat : "EUR" }}</span>
     </div>
   </p-panel>
 
@@ -192,9 +196,11 @@
 
   <!-- Panel de información de pago -->
   <app-payments-information-section
-    *ngIf="paymentInfo?.totalAmount"
-    [totalAmount]="paymentInfo!.totalAmount"
+    *ngIf="reservationInfo?.totalAmount"
+    [totalAmount]="reservationInfo!.totalAmount"
     [bookingID]="bookingId"
+    [bookingData]="bookingData!"
+    [currentPayment]="paymentInfo!"
   ></app-payments-information-section>
 </div>
 

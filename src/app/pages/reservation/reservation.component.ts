@@ -11,6 +11,8 @@ import {
   PaymentInfo,
 } from '../../core/models/reservation/reservation.model';
 import { BookingMappingService } from '../../core/services/booking-mapping.service';
+import { Payment } from '../../core/models/bookings/payment.model';
+import { Booking } from '../../core/models/bookings/booking.model';
 
 @Component({
   selector: 'app-reservation',
@@ -43,7 +45,9 @@ export class ReservationComponent implements OnInit, OnDestroy {
   ];
   flights: Flight[] = [];
   priceDetails: PriceDetail[] = [];
-  paymentInfo: PaymentInfo | undefined;
+  paymentInfo: Payment | undefined;
+  paymentID: string = '';
+  bookingData: Booking | undefined;
 
   constructor(
     private messageService: MessageService,
@@ -75,6 +79,11 @@ export class ReservationComponent implements OnInit, OnDestroy {
           detail: 'No se pudo encontrar el ID de reserva en la URL.',
         });
       }
+
+      this.paymentID = params['paymentID'];
+      if (this.paymentID) {
+        this.getPaymentData();
+      }
     });
   }
 
@@ -103,7 +112,6 @@ export class ReservationComponent implements OnInit, OnDestroy {
         this.reservationInfo = this.bookingMapper.mapToReservationInfo(booking);
         this.flights = this.bookingMapper.mapToFlights(booking);
         this.priceDetails = this.bookingMapper.mapToPriceDetails(booking);
-        this.paymentInfo = this.bookingMapper.mapToPaymentInfo(booking);
 
         // Update bank info with booking-specific data
         if (booking.ID) {
@@ -114,7 +122,35 @@ export class ReservationComponent implements OnInit, OnDestroy {
           });
         }
 
+        this.bookingData = booking;
+
         console.log('Booking data:', booking);
+      });
+  }
+
+  getPaymentData() {
+    this.loading = true;
+    this.bookingsService
+      .getPaymentsByPublicID(this.paymentID)
+      .pipe(
+        takeUntil(this.destroy$),
+        catchError((err) => {
+          this.error = true;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al cargar los datos del pago.',
+          });
+          console.error('Error fetching payment:', err);
+          return EMPTY;
+        }),
+        finalize(() => {
+          this.loading = false;
+        })
+      )
+      .subscribe((payment) => {
+        console.log('Payment data:', payment);
+        this.paymentInfo = payment;
       });
   }
 

@@ -72,6 +72,7 @@ export class BookingMappingService {
         }`,
       },
       travelers: travelers,
+      totalAmount: booking.periodData?.['total'] || 0,
     };
   }
 

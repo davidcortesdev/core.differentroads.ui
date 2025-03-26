@@ -10,6 +10,8 @@ export interface Payment {
   status: PaymentStatus;
   registerBy?: string;
   vouchers?: IPaymentVoucher[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface IPaymentVoucher {

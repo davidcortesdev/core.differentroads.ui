@@ -85,6 +85,7 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
         this.tripType = dateInfo.tripType;
         this.departureCity = dateInfo.departureCity || '';
         this.flightID = dateInfo.flightID;
+        console.log('Date info:', dateInfo);
       })
     );
   }

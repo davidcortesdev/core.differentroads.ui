@@ -16,12 +16,25 @@
     padding: 0 2rem;
   }
 
+  /* Solución específica para eliminar los márgenes del componente p-steps */
+  ::ng-deep .p-steps {
+    margin: 0 !important; // Elimina los márgenes laterales
+    padding: 0 !important; // Elimina el padding lateral
+
+    .p-steps-item:first-child {
+      padding-left: 0 !important;
+    }
+
+    .p-steps-item:last-child {
+      padding-right: 0 !important;
+    }
+  }
+
   .checkout-container {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 2rem;
     padding: 0 2rem;
-    max-width: 1440px;
     margin: 0 auto;
 
     @media (max-width: 480px) {
@@ -32,39 +45,32 @@
       .steps-container {
         margin-bottom: 2rem;
 
-        ::ng-deep .p-stepper {
-          .p-stepper-header {
-            justify-content: space-between;
-
-            .p-stepper-item {
-              flex: 1;
-
-              &:before {
-                border-top: 2px solid #dee2e6;
-              }
+        ::ng-deep .p-steps {
+          font-size: 14px;
+          .p-steps-item {
+            &:before {
+              border-top: 2px solid var(--background-azul); // Línea azul
             }
           }
-        }
-      }
-
-      .steps-content {
-        background: white;
-        border-radius: 8px;
-        padding: 2rem;
-        min-height: 400px;
-        position: relative;
-
-        .step-navigation {
-          position: absolute;
-          bottom: 2rem;
-          right: 2rem;
-          display: flex;
-          gap: 1rem;
+          .p-steps-item-active .p-steps-item-label {
+            color: var(--background-azul);
+          }
+          .p-steps-item-label {
+            color: var(--background-azul);
+          }
+          .p-steps-item-active .p-steps-item-number {
+            border-color: var(--p-primary-color);
+            color: var(--p-steps-item-number-active-color);
+          }
+          .p-steps-item-number {
+            border-color: var(--background-azul);
+            color: var(--background-azul);
+          }
         }
       }
     }
 
-    /* Aplicar posición sticky al contenedor derecho en lugar de solo al resumen */
+    /* Apply sticky positioning to the right column */
     .right-column {
       position: sticky;
       top: 2rem;
@@ -77,7 +83,6 @@
       border-radius: 8px;
       padding: 1.5rem;
       height: fit-content;
-      /* Quitar position: sticky de aquí */
       position: relative;
       font-size: 0.9rem;
 
@@ -133,6 +138,14 @@
 
         .total-section {
           margin-top: 1.5rem;
+          color: var(--background-azul);
+          @media (max-width: 768px) {
+            margin-top: 1.2rem;
+          }
+          
+          @media (max-width: 425px) {
+            margin-top: 1rem;
+          }
 
           .subtotal,
           .total {
@@ -145,8 +158,21 @@
             font-weight: bold;
             font-size: 1.2rem;
             margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid #eee;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--background-azul);
+            border-bottom: 1px solid var(--background-azul);
+            
+            @media (max-width: 768px) {
+              font-size: 1rem;
+            }
+            
+            @media (max-width: 425px) {
+              font-size: 0.9rem;
+            }
+
+            .price {
+              color: var(--primary-color-500);
+            }
           }
         }
       }
@@ -208,26 +234,33 @@ p-button.file ::ng-deep .p-button {
 }
 
 /* Estilo para los botones de navegación en el paso de vuelos */
-.flight {
+.flight-buttons {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
+  gap: 1rem;
   margin: 2rem 0;
   width: 100%;
 }
+p-button.without-flight ::ng-deep .p-button {
+  background-color: transparent;
+  border: 1px solid var(--p-primary-color);
+  color: var(--p-primary-color);
+  border-radius: 50px;
+  min-width: 250px;
+  &:hover {
+    background-color: var(--p-primary-color);
+    color: var(--background-azul-color-letra);
+  }
+}
 
+p-button.continue-button ::ng-deep .p-button {
+  background-color: var(--p-primary-color);
+  min-width: 150px;
+}
 :host ::ng-deep {
   .p-button {
     border-radius: 50px;
-  }
-  .p-button-secondary {
-    border: 1px solid var(--background-azul);
-    background-color: transparent !important;
-    color: var(--background-azul);
-    &:hover {
-      border-color: var(--p-primary-color);
-      color: var(--p-primary-color);
-    }
   }
 }
 
@@ -332,57 +365,41 @@ p-button.file ::ng-deep .p-button {
   }
 }
 
-/* Ajustes para el paso 3 - posicionamiento de botones */
-.checkout .checkout-container .main-content p-step-panel[ng-reflect-value="3"] .flex.pt-6.justify-between {
-  display: flex;
-  justify-content: space-between !important;
-  width: 100%;
-}
+/* Responsive adjustments for PrimeNG Steps */
+@media screen and (max-width: 768px) {
+  .checkout ::ng-deep .p-steps {
+    .p-steps-item {
+      flex: 1;
 
-/* Ajustes para el paso 4 - tamaño y altura de botones */
-.checkout .checkout-container .main-content p-step-panel[ng-reflect-value="4"] .flex.pt-6.justify-between {
-  display: flex;
-  justify-content: space-between !important;
-  width: 100%;
+      .p-menuitem-link {
+        .p-steps-title {
+          font-size: 0.8rem;
+        }
 
-  p-button[label="Back"] ::ng-deep .p-button {
-    height: 40px;
-    min-width: 120px;
-    padding: 0.5rem 1rem;
-  }
-}
-
-/* Estilo para los botones específicos del paso de vuelos */
-.checkout .checkout-container .main-content p-step-panel[ng-reflect-value="2"] .flight {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-
-  /* Botón de regresar (back) con borde azul y texto/hover naranja */
-  & > p-button[severity="secondary"] ::ng-deep .p-button {
-    border: 1px solid var(--background-azul);
-    color: var(--background-azul);
-    background-color: transparent;
-
-    &:hover {
-      background-color: transparent;
-      border-color: var(--p-primary-color);
-      color: var(--p-primary-color);
+        .p-steps-number {
+          width: 32px;
+          height: 32px;
+          font-size: 0.9rem;
+          min-width: 32px;
+        }
+      }
     }
   }
+}
 
-  /* Botón de continuar sin vuelos - estilo naranja */
-  & > p-button.whith-flight ::ng-deep .p-button {
-    background-color: var(--p-primary-color);
-    border-color: var(--p-primary-color);
-    color: white;
-    margin-right: 0.5rem;
+@media screen and (max-width: 480px) {
+  .checkout ::ng-deep .p-steps {
+    .p-steps-item {
+      display: flex;
+      flex-direction: column;
 
-    &:hover {
-      background-color: var(--p-primary-color);
-      border-color: var(--p-primary-color);
-      opacity: 0.9;
+      &:before {
+        display: none;
+      }
     }
   }
+}
+
+::ng-deep   .p-message-sm .p-message-text {
+  font-size: 0.7rem;
 }

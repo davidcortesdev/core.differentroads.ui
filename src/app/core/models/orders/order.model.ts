@@ -92,9 +92,9 @@ export interface SummaryItem {
 
 // Add this interface for discount information
 export interface DiscountInfo {
-  code: string;
+  code?: string;
   amount: number;
-  discountValue: number;
+  description: string;
   type: string;
 }
 

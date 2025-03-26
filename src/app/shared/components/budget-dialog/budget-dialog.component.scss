@@ -1,22 +1,24 @@
-::ng-deep {
-  .p-dialog {
-    overflow: hidden;
-  }
-  .p-dialog .p-dialog-header {
-    background-image: url("https://res.cloudinary.com/dxp2hxees/image/upload/v1733938229/j5a44cbk7mn3fawnt1kq.png");
-    background-size: cover;
-    background-position: bottom;
-    height: 9rem;
-  }
-  .p-dialog .p-dialog-content {
-    padding: 1rem 0;
-    background-color: #fff;
+.budget-dialog {
+  ::ng-deep {
+    .p-dialog {
+      overflow: hidden;
+    }
+    .p-dialog .p-dialog-header {
+      background-image: url("https://res.cloudinary.com/dxp2hxees/image/upload/v1733938229/j5a44cbk7mn3fawnt1kq.png");
+      background-size: cover;
+      background-position: bottom;
+      height: 9rem;
+    }
+    .p-dialog .p-dialog-content {
+      padding: 1rem 0;
+      background-color: #fff;
 
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: var(--background-azul);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--background-azul);
+    }
   }
 }
 

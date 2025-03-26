@@ -205,7 +205,7 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
 
     console.log('filteredDepartures', this.filteredDepartures);
 
-    this.addToCart(this.filteredDepartures[0]);
+    // this.addToCart(this.filteredDepartures[0]);
 
     // Si hay salidas filtradas, actualizar el precio base
     if (this.filteredDepartures.length > 0) {

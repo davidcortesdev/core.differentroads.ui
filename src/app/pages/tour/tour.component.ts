@@ -71,6 +71,9 @@ export class TourComponent implements OnInit, OnDestroy {
     // Limpiar todas las suscripciones al destruir el componente
     this.subscriptions.unsubscribe();
     this.passengerChanges.complete();
+    
+    // Limpiar el estado del servicio
+    this.tourOrderService.resetState();
   }
 
   // Método para recibir actualizaciones de pasajeros desde tour-departures
@@ -88,6 +91,7 @@ export class TourComponent implements OnInit, OnDestroy {
         'activePeriods',
         'basePrice',
         'price',
+        'tags', // Add this line to ensure tags are fetched
       ])
       .pipe(
         catchError((error) => {
@@ -102,18 +106,21 @@ export class TourComponent implements OnInit, OnDestroy {
           this.tour = tourData;
           this.loading = false;
           this.tourDataService.updateTour(tourData);
+  
+          // Add this line to debug
+          console.log('Tour tags:', tourData.tags);
 
-          if (tourData.activePeriods && tourData.activePeriods.length > 0) {
-            const firstPeriod = tourData.activePeriods[0];
-            this.tourDataService.getPeriodPrice(firstPeriod.externalID);
+          // if (tourData.activePeriods && tourData.activePeriods.length > 0) {
+          //   const firstPeriod = tourData.activePeriods[0];
+          //   this.tourDataService.getPeriodPrice(firstPeriod.externalID);
 
-            if (firstPeriod.name) {
-              this.tourOrderService.updateSelectedDateInfo(
-                firstPeriod.externalID,
-                undefined
-              );
-            }
-          }
+          //   if (firstPeriod.name) {
+          //     this.tourOrderService.updateSelectedDateInfo(
+          //       firstPeriod.externalID,
+          //       undefined
+          //     );
+          //   }
+          // }
         },
         error: (error) => {
           console.error('Error loading tour:', error);

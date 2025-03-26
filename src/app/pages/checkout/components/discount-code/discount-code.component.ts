@@ -15,7 +15,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 interface DiscountCode {
   id: string;
-  code: string;
+  code?: string;
   description: string;
   amount: number;
   isActive: boolean;
@@ -30,15 +30,15 @@ interface DiscountCode {
 export class DiscountCodeComponent implements OnInit, OnChanges {
   @Input() orderTotal: number = 0;
   @Input() existingDiscount: {
-    code: string;
+    code?: string;
     amount: number;
-    discountValue: number;
+    description: string;
   } | null = null;
 
   @Output() discountApplied = new EventEmitter<{
-    code: string;
+    code?: string;
     amount: number;
-    discountValue: number;
+    description: string;
     type: string;
   }>();
 
@@ -114,7 +114,7 @@ export class DiscountCodeComponent implements OnInit, OnChanges {
             this.discountApplied.emit({
               code: this.appliedDiscount.code,
               amount: this.appliedDiscount.amount,
-              discountValue: discountValue,
+              description: this.appliedDiscount.description,
               type: 'coupon',
             });
 
@@ -137,7 +137,7 @@ export class DiscountCodeComponent implements OnInit, OnChanges {
     this.discountApplied.emit({
       code: '',
       amount: 0,
-      discountValue: 0,
+      description: '',
       type: 'coupon',
     });
   }

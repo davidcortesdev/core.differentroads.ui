@@ -13,10 +13,12 @@ $tablet-breakpoint: 1024px;
   padding: 1rem 2rem;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   background-color: white;
   transition: box-shadow 0.3s ease;
   border-bottom: 2px solid var(--p-menubar-background);
+  color: var(--background-azul);
+  gap: 38px;
 
   &.scrolled {
     position: fixed;
@@ -106,9 +108,33 @@ $tablet-breakpoint: 1024px;
 
     .price-section {
       text-align: right;
+      gap: 0;
+
+      .total-price-container {
+        text-align: right;
+        font-size: 0.7rem;
+        font-weight: 400;
+        
+        // .total {
+        //   .pasajeros {
+        //     font-size: 0.1rem;
+        //     margin-right: 0.2rem;
+        //   }
+          
+        //   .amount {
+        //     font-weight: 600;
+        //   }
+        // }
+        
+        // .passengers-info span {
+        //   display: block;
+        //   text-align: center;
+        //   font-size: 0.85rem;
+        // }
+      }
 
       .price-info {
-        margin-bottom: 0.25rem;
+        // margin-bottom: 0.25rem;
 
         .before-price {
           color: var(--text-color-secondary);
@@ -121,9 +147,9 @@ $tablet-breakpoint: 1024px;
         }
 
         .current-price {
+          font-weight: 700;
           .amount {
             margin-left: 0.5rem;
-            font-weight: 600;
             font-size: 1.1rem;
           }
         }
@@ -137,29 +163,6 @@ $tablet-breakpoint: 1024px;
       font-weight: 500;
     }
 
-    .booking-container {
-      .total-price-container {
-        margin-top: 0.5rem;
-        text-align: center;
-        
-        .total {
-          .pasajeros {
-            font-size: 0.85rem;
-            margin-right: 0.2rem;
-          }
-          
-          .amount {
-            font-weight: 600;
-          }
-        }
-        
-        .passengers-info span {
-          display: block;
-          text-align: center;
-          font-size: 0.85rem;
-        }
-      }
-    }
   }
 
   // Mobile Styles
@@ -307,4 +310,13 @@ app-tour-header {
   &.header-fixed::after {
     height: var(--header-height, 0);
   }
+}
+
+::ng-deep .p-message-secondary.p-message-outlined {
+  border-radius: 27px;
+  height: 2rem;
+}
+
+::ng-deep .p-message-sm .p-message-icon {
+  color: var(--primary-color-500);
 }

@@ -57,8 +57,16 @@ export class TourOverviewComponent implements OnInit {
 
   get breadcrumbItems(): MenuItem[] {
     return [
-      { label: this.tour?.continent },
-      { label: this.tour?.country },
+      { 
+        label: this.tour?.continent,
+        routerLink: ['/tours'],
+        queryParams: { destination: this.tour?.continent.trim() }
+      },
+      { 
+        label: this.tour?.country,
+        routerLink: ['/tours'],
+        queryParams: { destination: this.tour?.country.trim() }
+      },
       { label: this.tour?.name },
     ];
   }

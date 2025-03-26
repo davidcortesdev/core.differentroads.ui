@@ -15,6 +15,9 @@ import { RedsysService } from '../../../../core/services/checkout/payment/redsys
 import { Router } from '@angular/router';
 import { BookingsService } from '../../../../core/services/bookings.service';
 import { Payment } from '../../../../core/models/bookings/payment.model';
+import { PaymentOptionsService } from '../../../../core/services/checkout/paymentOptions.service';
+import { PaymentOption } from '../../../../core/models/orders/order.model';
+import { SummaryService } from '../../../../core/services/checkout/summary.service';
 import { TravelersService } from '../../../../core/services/checkout/travelers.service';
 import { PointsService } from '../../../../core/services/points.service';
 import {
@@ -89,6 +92,8 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     private redsysService: RedsysService,
     private bookingsService: BookingsService,
     private router: Router,
+    private paymentOptionsService: PaymentOptionsService,
+    private summaryService: SummaryService,
     private travelersService: TravelersService,
     private pointsService: PointsService,
     private discountsService: DiscountsService,
@@ -176,6 +181,34 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     this.isPaymentMethodsOpen = !this.isPaymentMethodsOpen;
   }
 
+  toggleSourceDropdown(event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.isSourceDropdownOpen = !this.isSourceDropdownOpen;
+  }
+
+  selectSource(source: string, event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.selectedSource = source;
+    this.isSourceDropdownOpen = false;
+    this.updatePaymentOption();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const dropdownElement = this.document.querySelector('.dropdown-container');
+    if (
+      dropdownElement &&
+      !dropdownElement.contains(event.target as Node) &&
+      this.isSourceDropdownOpen
+    ) {
+      this.isSourceDropdownOpen = false;
+    }
+  }
+
   onPaymentTypeChange() {
     if (this.paymentType === 'complete' || this.paymentType === 'deposit') {
       this.installmentOption = null;
@@ -215,12 +248,17 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         }
       }, 100);
     }
+
+    this.updatePaymentOption();
   }
 
-  onPaymentMethodChange() {}
+  onPaymentMethodChange() {
+    this.updatePaymentOption();
+  }
 
   onInstallmentOptionChange() {
     this.reloadScalapayWidgets();
+    this.updatePaymentOption();
   }
 
   reloadScalapayWidgets() {
@@ -277,6 +315,12 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     console.log('Payment Method:', this.paymentMethod);
     console.log('Installment Option:', this.installmentOption);
     console.log('Total Price:', this.totalPrice);
+    console.log('Terms Accepted:', this.termsAccepted);
+
+    // Update payment option before proceeding
+    this.updatePaymentOption();
+
+    let bookingID: string, ID: string;
 
     // Log applied points discounts if any
     if (this.pointsDiscounts.length > 0) {
@@ -354,6 +398,43 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
+  // New method to update payment option
+  updatePaymentOption() {
+    if (!this.paymentType) return;
+
+    const paymentOption: PaymentOption = {
+      type: this.paymentType as 'complete' | 'installments' | 'deposit',
+      source:
+        this.selectedSource !== 'Selecciona' ? this.selectedSource : undefined,
+    };
+
+    if (
+      (this.paymentType === 'complete' || this.paymentType === 'deposit') &&
+      this.paymentMethod
+    ) {
+      paymentOption.method = this.paymentMethod as 'creditCard' | 'transfer';
+
+      // Add deposit amount for deposit payment type
+      if (this.paymentType === 'deposit') {
+        paymentOption.depositAmount = this.depositAmount;
+      }
+    }
+
+    if (this.paymentType === 'installments' && this.installmentOption) {
+      paymentOption.installmentOption = this.installmentOption as
+        | 'three'
+        | 'four';
+    }
+
+    this.paymentOptionsService.updatePaymentOption(paymentOption);
+
+    // Update the order with payment information
+    const currentOrder = this.summaryService.getOrderValue();
+    if (currentOrder) {
+      currentOrder.payment = paymentOption;
+      this.summaryService.updateOrder(currentOrder);
+    }
+  }
   calculateRemainingAmount() {
     this.remainingAmount = this.totalPrice - this.depositAmount;
   }

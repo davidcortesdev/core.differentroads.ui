@@ -1,4 +1,5 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Router } from '@angular/router'; 
 import { BookingsService } from '../../../../core/services/bookings.service';
 
 interface Booking {
@@ -21,8 +22,14 @@ export class ActiveBookingsSectionComponent implements OnInit {
   bookings: Booking[] = [];
   isExpanded: boolean = true;
   @Input() userEmail!: string;
+  
+  // Agregamos un EventEmitter para avisar al componente padre cuando se selecciona una reserva
+  @Output() bookingSelected = new EventEmitter<string>();
 
-  constructor(private bookingsService: BookingsService) {}
+  constructor(
+    private bookingsService: BookingsService,
+    private router: Router
+  ) {}
 
   ngOnInit() {
     this.fetchBookingsByEmail(this.userEmail);
@@ -32,15 +39,23 @@ export class ActiveBookingsSectionComponent implements OnInit {
     this.bookingsService
       .getBookingsByEmail(email, 'Booked', page, 1000)
       .subscribe((response) => {
-        this.bookings = response?.data?.map((booking) => ({
-          id: booking?.id ?? '',
-          title: booking?.periodData?.['tour']?.name || '',
-          reservationNumber: booking?.ID ?? '',
-          creationDate: new Date(booking?.createdAt ?? ''),
-          status: booking?.status ?? '',
-          departureDate: new Date(booking?.periodData?.['dayOne'] ?? ''),
-          image: 'https://picsum.photos/200',
-        }));
+        console.log('Respuesta completa:', response);
+        
+        this.bookings = response?.data?.map((booking: any) => {
+          console.log('Booking original:', booking);
+          
+          return {
+            id: booking?._id ?? '',
+            title: booking?.periodData?.['tour']?.name || '',
+            reservationNumber: booking?.ID ?? '',
+            creationDate: new Date(booking?.createdAt ?? ''),
+            status: booking?.status ?? '',
+            departureDate: new Date(booking?.periodData?.['dayOne'] ?? ''),
+            image: 'https://picsum.photos/200',
+          };
+        });
+        
+        console.log('Bookings mapeados:', this.bookings);
       });
   }
 
@@ -49,6 +64,13 @@ export class ActiveBookingsSectionComponent implements OnInit {
   }
 
   viewBooking(booking: Booking) {
-    console.log('Ver reserva:', booking);
+    console.log('Navegando a booking con ID:', booking.id);
+    
+    // Opción 1: Navegar a una ruta con el ID
+    this.router.navigate(['bookings', booking.id]);
+    
+    // Opción 2: Emitir el evento para que el componente padre cargue los datos
+    // Descomentar esta línea si prefieres esta opción
+    // this.bookingSelected.emit(booking.id);
   }
 }

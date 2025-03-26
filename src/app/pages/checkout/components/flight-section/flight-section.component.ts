@@ -1,5 +1,18 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { Flight } from '../../../../core/models/tours/flight.model';
+import {
+  Flight,
+  FlightSegment,
+} from '../../../../core/models/tours/flight.model';
+
+interface TimelineItem {
+  departureCity?: string;
+  departureIata?: string;
+  departureDateTime?: Date;
+  arrivalCity?: string;
+  arrivalIata?: string;
+  arrivalDateTime?: Date;
+  type: 'departure' | 'arrival';
+}
 
 interface Journey {
   type: 'outbound' | 'inbound';
@@ -13,8 +26,8 @@ interface Journey {
     time: Date;
     date: Date;
   };
-  segments: any[];
-  timelineData: any[];
+  segments: FlightSegment[];
+  timelineData: TimelineItem[];
   stopsText: string;
   airlineName: string;
   totalDuration: string;
@@ -46,7 +59,11 @@ export class FlightSectionComponent implements OnChanges {
 
   private computeJourney(type: 'outbound' | 'inbound'): Journey | null {
     const journeyData = this.flight ? this.flight[type] : null;
-    if (!journeyData || !journeyData.segments || journeyData.segments.length === 0) {
+    if (
+      !journeyData ||
+      !journeyData.segments ||
+      journeyData.segments.length === 0
+    ) {
       return null;
     }
 
@@ -62,7 +79,9 @@ export class FlightSectionComponent implements OnChanges {
     };
 
     // Datos de llegada
-    const arrivalDate = new Date(journeyData.date + 'T' + arrivalSegment.arrivalTime);
+    const arrivalDate = new Date(
+      journeyData.date + 'T' + arrivalSegment.arrivalTime
+    );
     const arrival = {
       iata: arrivalSegment.arrivalIata,
       time: arrivalDate,
@@ -77,7 +96,10 @@ export class FlightSectionComponent implements OnChanges {
         ? '1 escala'
         : `${stops} escalas`;
     const airlineName = departureSegment.airline.name;
-    const totalDuration = this.getJourneyTotalDuration(segments, journeyData.date);
+    const totalDuration = this.getJourneyTotalDuration(
+      segments,
+      journeyData.date
+    );
 
     return {
       type,
@@ -91,16 +113,25 @@ export class FlightSectionComponent implements OnChanges {
     };
   }
 
-  private getJourneyTotalDuration(segments: any[], flightDate: string): string {
+  private getJourneyTotalDuration(
+    segments: FlightSegment[],
+    flightDate: string
+  ): string {
     const departure = new Date(flightDate + 'T' + segments[0].departureTime);
-    const arrival = new Date(flightDate + 'T' + segments[segments.length - 1].arrivalTime);
-    const durationMinutes = (arrival.getTime() - departure.getTime()) / (1000 * 60);
+    const arrival = new Date(
+      flightDate + 'T' + segments[segments.length - 1].arrivalTime
+    );
+    const durationMinutes =
+      (arrival.getTime() - departure.getTime()) / (1000 * 60);
     const hours = Math.floor(durationMinutes / 60);
     const minutes = Math.floor(durationMinutes % 60);
     return `${hours}h ${minutes}m`;
   }
 
-  private getTimelineData(baseDate: string, segments: any[]): any[] {
+  private getTimelineData(
+    baseDate: string,
+    segments: FlightSegment[]
+  ): TimelineItem[] {
     const timelineItems = [];
     for (const segment of segments) {
       timelineItems.push({
@@ -108,13 +139,13 @@ export class FlightSectionComponent implements OnChanges {
         departureIata: segment.departureIata,
         departureDateTime: new Date(baseDate + 'T' + segment.departureTime),
         type: 'departure',
-      });
+      } as TimelineItem);
       timelineItems.push({
         arrivalCity: segment.arrivalCity,
         arrivalIata: segment.arrivalIata,
         arrivalDateTime: new Date(baseDate + 'T' + segment.arrivalTime),
         type: 'arrival',
-      });
+      } as TimelineItem);
     }
     return timelineItems;
   }

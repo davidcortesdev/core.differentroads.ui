@@ -1,5 +1,5 @@
 import { PriceData } from '../commons/price-data.model';
-import { OrderTraveler } from '../orders/order.model';
+import { OrderTraveler, PaymentOption } from '../orders/order.model';
 import { Flight } from '../tours/flight.model';
 
 export interface Booking {
@@ -46,6 +46,7 @@ export interface BookingCreateInput {
   paymentTerms: any;
   redeemPoints: number;
   usePoints: Record<string, number>;
+  payment?: PaymentOption;
 }
 
 export interface GetAllBookingsParams {

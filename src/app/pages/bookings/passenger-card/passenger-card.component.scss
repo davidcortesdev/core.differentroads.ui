@@ -1,0 +1,314 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+/* Card styling with subtle shadows and rounded corners */
+:host ::ng-deep .passenger-card-panel {
+  height: auto;
+  margin-bottom: 1rem;
+
+  .p-card {
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    background-color: transparent;
+
+    &:hover {
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  .p-card-body {
+    display: flex;
+    flex-direction: column;
+    background-color: transparent;
+  }
+
+  .p-card-content {
+    padding: 0.75rem;
+    height: auto;
+    overflow: visible;
+    background-color: transparent;
+  }
+
+  .p-card-header {
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 8px 8px 0 0;
+    padding: 0.5rem 0.75rem;
+    background-color: transparent;
+  }
+
+  .p-card-footer {
+    border-top: 1px solid #e9ecef;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0 0 8px 8px;
+    background-color: transparent;
+  }
+}
+
+/* Header styling with icon and passenger type */
+.passenger-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  .pi-user {
+    font-size: 1rem;
+    color: #1976d2;
+    padding: 0.4rem;
+    border-radius: 50%;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(25, 118, 210, 0.1);
+  }
+}
+
+.passenger-type {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #495057;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  background-color: rgba(73, 80, 87, 0.1);
+}
+
+/* Content styling with reduced spacing */
+.passenger-content {
+  padding: 0.25rem 0;
+  height: auto;
+}
+
+.passenger-name h3 {
+  margin-top: 0.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.3rem;
+  color: #212529;
+  font-weight: 600;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 0.4rem;
+}
+
+/* Details styling with proper alignment and reduced spacing */
+.passenger-details {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0;
+  border-radius: 4px;
+  justify-content: space-between;
+}
+
+.detail-label {
+  font-weight: 500;
+  min-width: 140px;
+  width: 40%;
+  color: #6c757d;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+}
+
+.detail-value {
+  width: 60%;
+  color: #212529;
+  font-weight: 500;
+  padding: 0.15rem 0;
+  text-align: right;
+}
+
+/* Footer and buttons styling */
+.passenger-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.edit-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* Edit mode specific styles */
+.edit-mode {
+  .detail-row {
+    margin-bottom: 0.35rem;
+    padding: 0.25rem 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  input.detail-value {
+    width: 60%;
+    padding: 0.35rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+    text-align: right;
+
+    &:focus {
+      border-color: #80bdff;
+      outline: none;
+    }
+
+    &.ng-invalid.ng-touched {
+      border-color: #dc3545;
+    }
+  }
+
+  .passenger-name h3 input {
+    font-size: 1.3rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    width: 100%;
+  }
+}
+
+/* Add subtle transitions for interactive elements */
+:host ::ng-deep {
+  .p-button {
+    transition:
+      background-color 0.2s,
+      color 0.2s,
+      border-color 0.2s;
+
+    &.p-button-rounded {
+      width: 2.25rem;
+      height: 2.25rem;
+    }
+  }
+}
+
+/* Style for different passenger types */
+.passenger-type-adult {
+  background-color: rgba(21, 101, 192, 0.1);
+  color: #1565c0;
+}
+
+.passenger-type-child {
+  background-color: rgba(46, 125, 50, 0.1);
+  color: #2e7d32;
+}
+
+.passenger-type-infant {
+  background-color: rgba(123, 31, 162, 0.1);
+  color: #7b1fa2;
+}
+
+.passenger-type-senior {
+  background-color: rgba(230, 81, 0, 0.1);
+  color: #e65100;
+}
+
+/* Override any unwanted white backgrounds */
+:host ::ng-deep {
+  .p-card,
+  .p-card-body,
+  .p-card-content,
+  .p-card-header,
+  .p-card-footer {
+    background-color: transparent;
+  }
+}
+
+/* Ensure input fields behave correctly */
+input.p-inputtext {
+  max-width: 100%;
+  background-color: #fff;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 768px) {
+  .detail-row {
+    /* Mantener la disposición horizontal */
+    flex-direction: row;
+    align-items: center;
+    padding: 0.35rem 0;
+
+    .detail-label {
+      min-width: 95px; /* Reducir ligeramente el ancho mínimo */
+      width: 40%;
+      font-size: 0.75rem; /* Tamaño reducido para etiquetas */
+    }
+
+    .detail-value {
+      width: 60%;
+      text-align: right; /* Mantener alineación a la derecha */
+      font-size: 0.8rem; /* Tamaño reducido para valores */
+      white-space: normal; /* Permitir saltos de línea si es necesario */
+      overflow: visible; /* Quitar el truncamiento */
+      text-overflow: clip; /* Quitar elipsis */
+    }
+  }
+
+  /* Asegurar que el icono de edición permanezca a la derecha en todas las pantallas */
+  .passenger-footer {
+    display: flex;
+    justify-content: flex-end !important;
+    padding-right: 0.5rem;
+
+    .p-button {
+      margin-left: auto; /* Fuerza alineación a la derecha */
+    }
+  }
+
+  /* Mejorar padding y márgenes para móvil */
+  :host ::ng-deep .passenger-card-panel {
+    .p-card-content {
+      padding: 0.75rem 0.5rem;
+    }
+
+    .p-card-footer {
+      display: flex;
+      justify-content: flex-end;
+    }
+  }
+
+  /* Reducir el tamaño del nombre */
+  .passenger-name h3 {
+    font-size: 1rem;
+  }
+
+  /* Asegurar que los botones de acción sean más fáciles de tocar en móvil */
+  :host ::ng-deep .p-button.p-button-rounded {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  /* Mantener los botones de edición alineados a la derecha en móvil */
+  .edit-buttons {
+    display: flex;
+    justify-content: flex-end !important;
+    gap: 0.5rem;
+    width: auto;
+
+    .p-button {
+      min-width: unset;
+    }
+  }
+
+  /* Ajustar estilos para el modo de edición en móvil */
+  .edit-mode {
+    .detail-row {
+      input.detail-value {
+        width: 60%;
+        text-align: right;
+        font-size: 0.8rem;
+      }
+    }
+  }
+}

@@ -15,10 +15,9 @@ export interface Order {
   insurancesRef?: OptionalActivityRef[];
   extraData?: any;
   flights?: Flight[] | { id: string; name?: string; externalID: string }[];
-
-  // New fields
   summary?: SummaryItem[];
   discounts?: DiscountInfo[];
+  payment?: PaymentOption;
 }
 
 export interface OptionalActivityRef {
@@ -97,4 +96,14 @@ export interface DiscountInfo {
   amount: number;
   description: string;
   type: string;
+}
+
+// Payment option interface
+export interface PaymentOption {
+  type: 'complete' | 'installments' | 'deposit';
+  method?: 'creditCard' | 'transfer';
+  installmentOption?: 'three' | 'four';
+  source?: string;
+  // Add properties for deposit payment
+  depositAmount?: number;
 }

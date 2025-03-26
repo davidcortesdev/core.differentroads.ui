@@ -1,0 +1,92 @@
+<!-- Loading Indicator -->
+<div *ngIf="isLoading" class="loading-container">
+    <p-progressSpinner></p-progressSpinner>
+    <span>Cargando información de la reserva...</span>
+  </div>
+  
+  <!-- Contenido principal - solo se muestra cuando no está cargando -->
+  <div *ngIf="!isLoading">
+    <!-- Header booking section -->
+    <app-booking-header-section
+      [title]="bookingData.title"
+      [date]="bookingData.date"
+      [retailerInfo]="retailerInfo"
+      [showRetailerPanel]="isAdmin"
+      (backEvent)="goBack()">
+    </app-booking-header-section>
+  
+    <!-- Code booking section -->
+    <app-booking-code-section
+      [bookingCode]="bookingData.bookingCode"
+      [bookingReference]="bookingData.bookingReference"
+      [status]="bookingData.status"
+      (cancelBooking)="cancelBooking()">
+    </app-booking-code-section>
+  
+    <!-- Documents booking section -->
+    <app-booking-document-actions
+      [isVisible]="isTO && !isAdmin"
+      (sendReminder)="sendReminder()"
+      (reprintInfo)="reprintInfo()"
+      (reprintVoucher)="reprintVoucher()"
+      (reprintPaymentReminder)="reprintPaymentReminder()"
+      (reprintETickets)="reprintETickets()">
+    </app-booking-document-actions>
+  
+    <!-- Componente de vista de detalles -->
+    <app-booking-details-view
+      [bookingImages]="bookingImages">
+    </app-booking-details-view>
+  
+    <!-- Payment History -->
+    <app-booking-payment-history
+      [adultData]="adultData"
+      [individualData]="individualData"
+      [gondolaData]="gondolaData"
+      [comfortPlanData]="comfortPlanData"
+      [flightData]="flightData"
+      [discountData]="discountData"
+      [paymentInfo]="paymentInfo"
+      [upcomingPayments]="upcomingPayments"
+      [paymentHistory]="paymentHistory"
+      (registerPayment)="registerPayment($event)"
+      (fileUploaded)="handleFileUploaded($event)">
+    </app-booking-payment-history>
+  
+    <!-- Personal Data -->
+    <app-booking-personal-data
+      [passengers]="passengers">
+    </app-booking-personal-data>
+  
+    <!-- Flights -->
+    <app-booking-flights
+      [flightsData]="flightsData">
+    </app-booking-flights>
+  
+    <!-- Activities -->
+    <app-booking-activities
+      [activities]="bookingActivities"
+      (eliminateActivity)="eliminateActivity($event)"
+      (addActivity)="addActivity($event)">
+    </app-booking-activities>
+  </div>
+  
+  <!-- Toast para mostrar mensajes -->
+  <p-toast key="center" [baseZIndex]="9999" position="top-right"></p-toast>
+  
+  <!-- Modal de pago (mantenerlo fuera del div condicional) -->
+  <p-dialog header="Registrar pago" [(visible)]="displayPaymentModal" [modal]="true" [style]="{width: '450px'}" [draggable]="false" [resizable]="false">
+    <form [formGroup]="paymentForm" (ngSubmit)="onSubmitPayment()">
+      <div class="field">
+        <label for="amount">Cantidad (€)</label>
+        <input type="number" pInputText id="amount" formControlName="amount" class="w-full" />
+        <small *ngIf="paymentForm.get('amount')?.invalid && paymentForm.get('amount')?.touched" class="p-error">
+          Cantidad requerida, debe ser mayor que 0
+        </small>
+      </div>
+      <div class="flex justify-content-end mt-4">
+        <button pButton type="button" label="Cancelar" class="p-button-text" (click)="hidePaymentModal()"></button>
+        <button pButton type="submit" label="Registrar pago" [disabled]="paymentForm.invalid"></button>
+      </div>
+    </form>
+  </p-dialog>

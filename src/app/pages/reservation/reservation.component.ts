@@ -24,6 +24,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
   loading = true;
   error = false;
   bookingId: string = '';
+  nextDayDate: string;
 
   reservationInfo: ReservationInfo | undefined;
   bankInfo: BankInfo[] = [
@@ -49,7 +50,16 @@ export class ReservationComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private bookingsService: BookingsService,
     private bookingMapper: BookingMappingService
-  ) {}
+  ) {
+    // Calculate next day's date in the format dd/mm/yyyy
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    this.nextDayDate = tomorrow.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  }
 
   ngOnInit() {
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {

@@ -13,22 +13,17 @@
         <img [src]="tourData.imageUrl" [alt]="tourData.title" loading="lazy" />
         <div class="overlay">
           <span class="rating p-button-primary">{{ tourData.rating }} ★</span>
-          <!-- <span class="indicator" *ngIf="tourData.isByDr !== undefined">
-            {{ tourData.isByDr ? "By DR" : "Beyond Different" }}
-          </span> -->
           <div class="tags-container">
-            <span class="tag expandable-tag">
+            <span *ngIf="tourData.isByDr" class="tag expandable-tag">
               <span class="short-text">
                 <img
-                  alt="dropdown icon"
+                  alt="Different Roads logo"
                   src="favicon-different.png"
                   class="logo"
                   height="5px"
                 />
               </span>
-              <span class="expanded-content"
-                >Tour creado por Different Roads</span
-              >
+              <span class="expanded-content">Tour creado por Different Roads</span>
             </span>
             <span class="tag" *ngIf="tourData.tag">{{ tourData.tag }}</span>
           </div>
@@ -46,18 +41,17 @@
           <div class="price-section">
             <div class="price-info">
               <span class="desde">Desde</span>
-              <span class="price">{{
-                tourData.price | currencyFormat : "EUR"
-              }}</span>
-              <span class="priceScalapay" *ngIf="showScalapayPrice">
-                o desde {{ monthlyPrice | currencyFormat : "EUR" }}/mes con
-              </span>
-              <img
-                *ngIf="showScalapayPrice"
-                src="assets/images/scalapay.svg"
-                alt="ScalaPay"
-                class="scalapay-logo"
-              />
+              <span class="price">{{ tourData.price | currencyFormat : "EUR" }}</span>
+              <ng-container *ngIf="showScalapayPrice">
+                <span class="priceScalapay">
+                  o desde {{ monthlyPrice | currencyFormat : "EUR" }}/mes con
+                </span>
+                <img
+                  src="assets/images/scalapay.svg"
+                  alt="ScalaPay"
+                  class="scalapay-logo"
+                />
+              </ng-container>
             </div>
             <div class="button-container">
               <div class="trip-type-container">

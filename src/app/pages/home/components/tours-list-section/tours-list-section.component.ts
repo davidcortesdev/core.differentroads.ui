@@ -37,7 +37,7 @@ export class ToursListComponent implements OnInit {
   constructor(
     private router: Router,
     private readonly toursService: ToursService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.loadTours();
@@ -84,7 +84,7 @@ export class ToursListComponent implements OnInit {
                 tour.monthTags?.map((month) =>
                   month.substring(0, 3).toUpperCase()
                 ) || [],
-              isByDr: false,
+              isByDr: tour.tourType !== 'FIT',
               webSlug:
                 tour.webSlug ||
                 tour.name?.toLowerCase().replace(/\s+/g, '-') ||

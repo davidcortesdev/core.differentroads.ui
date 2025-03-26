@@ -403,13 +403,21 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     if (!this.paymentType) return;
 
     const paymentOption: PaymentOption = {
-      type: this.paymentType as 'complete' | 'installments',
+      type: this.paymentType as 'complete' | 'installments' | 'deposit',
       source:
         this.selectedSource !== 'Selecciona' ? this.selectedSource : undefined,
     };
 
-    if (this.paymentType === 'complete' && this.paymentMethod) {
+    if (
+      (this.paymentType === 'complete' || this.paymentType === 'deposit') &&
+      this.paymentMethod
+    ) {
       paymentOption.method = this.paymentMethod as 'creditCard' | 'transfer';
+
+      // Add deposit amount for deposit payment type
+      if (this.paymentType === 'deposit') {
+        paymentOption.depositAmount = this.depositAmount;
+      }
     }
 
     if (this.paymentType === 'installments' && this.installmentOption) {

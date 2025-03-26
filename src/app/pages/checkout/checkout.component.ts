@@ -838,7 +838,6 @@ export class CheckoutComponent implements OnInit {
         usePoints: {},
         name: this.periodData.name,
         externalID: this.periodID,
-        // Include payment information if available
         payment: this.paymentOptionsService.getPaymentOption() || undefined,
       };
       let bookingID = '';
@@ -852,7 +851,11 @@ export class CheckoutComponent implements OnInit {
             console.log('Booking created:', response);
             bookingID = response.bookingID;
             bookingSID = response.ID;
-            order = response.order;
+            order = {
+              ...response.order,
+              payment:
+                this.paymentOptionsService.getPaymentOption() || undefined,
+            };
 
             this.bookingsService
               .saveTravelers(response.bookingID, {

@@ -100,8 +100,10 @@ export interface DiscountInfo {
 
 // Payment option interface
 export interface PaymentOption {
-  type: 'complete' | 'installments';
+  type: 'complete' | 'installments' | 'deposit';
   method?: 'creditCard' | 'transfer';
   installmentOption?: 'three' | 'four';
   source?: string;
+  // Add properties for deposit payment
+  depositAmount?: number;
 }

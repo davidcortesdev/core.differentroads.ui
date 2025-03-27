@@ -1,4 +1,4 @@
-<div class="reviews-section" role="region" aria-label="Customer Reviews">
+<div *ngIf="reviews?.length" class="reviews-section" role="region" aria-label="Customer Reviews">
   <p-carousel
     [value]="reviews"
     [numVisible]="6"

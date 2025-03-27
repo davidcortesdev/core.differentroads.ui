@@ -1,41 +1,44 @@
-<div class="container">
-  <div class="payment-page-layout">
-    <!-- Left side: Payment options -->
-    <div class="payment-options-section">
-      <div class="header-container" (click)="toggleDropdown()">
-        <div class="title-with-icon">
-          <span class="title">Selecciona la forma de pago</span>
-          <i
-            class="pi"
-            [ngClass]="isOpen ? 'pi-chevron-up' : 'pi-chevron-down'"
-          ></i>
-        </div>
-        <div class="title-underline"></div>
+<div class="payment-standalone-container">
+  <!-- Payment Options Section -->
+  <div class="payment-section">
+    <div class="section-header" (click)="toggleDropdown()">
+      <div class="header-content">
+        <span class="section-title">Selecciona la forma de pago</span>
+        <i
+          class="pi"
+          [ngClass]="isOpen ? 'pi-chevron-up' : 'pi-chevron-down'"
+        ></i>
       </div>
+      <div class="section-underline"></div>
+    </div>
 
-      <div *ngIf="isOpen" class="payment-panels">
-        <p-panel styleClass="payment-panel">
-          <div class="payment-option">
-            <p-radioButton
-              name="paymentType"
-              value="complete"
-              [(ngModel)]="paymentType"
-              (onChange)="onPaymentTypeChange()"
-            ></p-radioButton>
+    <div *ngIf="isOpen" class="payment-options">
+      <!-- Complete Payment Option -->
+      <p-panel styleClass="payment-option-panel">
+        <div class="payment-option">
+          <p-radioButton
+            name="paymentType"
+            value="complete"
+            [(ngModel)]="paymentType"
+            (onChange)="onPaymentTypeChange()"
+          ></p-radioButton>
+          <div class="option-content">
             <span class="option-text">Paga tu viaje al completo</span>
             <span class="option-price">{{ totalPrice | currencyFormat }}</span>
           </div>
-        </p-panel>
+        </div>
+      </p-panel>
 
-        <!-- Deposit payment option -->
-        <p-panel styleClass="payment-panel">
-          <div class="payment-option">
-            <p-radioButton
-              name="paymentType"
-              value="deposit"
-              [(ngModel)]="paymentType"
-              (onChange)="onPaymentTypeChange()"
-            ></p-radioButton>
+      <!-- Deposit Payment Option -->
+      <p-panel styleClass="payment-option-panel">
+        <div class="payment-option">
+          <p-radioButton
+            name="paymentType"
+            value="deposit"
+            [(ngModel)]="paymentType"
+            (onChange)="onPaymentTypeChange()"
+          ></p-radioButton>
+          <div class="option-content">
             <span class="option-text">
               Paga ahora {{ depositAmount | currencyFormat }} y el resto antes
               del
@@ -45,16 +48,19 @@
               depositAmount | currencyFormat
             }}</span>
           </div>
-        </p-panel>
+        </div>
+      </p-panel>
 
-        <p-panel styleClass="payment-panel">
-          <div class="payment-option">
-            <p-radioButton
-              name="paymentType"
-              value="installments"
-              [(ngModel)]="paymentType"
-              (onChange)="onPaymentTypeChange()"
-            ></p-radioButton>
+      <!-- Installments Payment Option -->
+      <p-panel styleClass="payment-option-panel">
+        <div class="payment-option">
+          <p-radioButton
+            name="paymentType"
+            value="installments"
+            [(ngModel)]="paymentType"
+            (onChange)="onPaymentTypeChange()"
+          ></p-radioButton>
+          <div class="option-content">
             <span class="option-text">Paga a plazos</span>
             <img
               src="assets/images/scalapay.svg"
@@ -62,125 +68,128 @@
               class="scalapay-logo"
             />
           </div>
+        </div>
+      </p-panel>
+    </div>
+
+    <!-- Payment Methods Section -->
+    <div
+      *ngIf="paymentType === 'complete' || paymentType === 'deposit'"
+      class="payment-methods"
+    >
+      <div class="section-header" (click)="togglePaymentMethodsDropdown()">
+        <div class="header-content">
+          <span class="section-title">Selecciona el método de pago</span>
+          <i
+            class="pi"
+            [ngClass]="
+              isPaymentMethodsOpen ? 'pi-chevron-up' : 'pi-chevron-down'
+            "
+          ></i>
+        </div>
+        <div class="section-underline"></div>
+      </div>
+
+      <div *ngIf="isPaymentMethodsOpen" class="payment-methods-grid">
+        <p-panel
+          styleClass="payment-method-panel"
+          [ngClass]="{ selected: paymentMethod === 'creditCard' }"
+        >
+          <div class="payment-method">
+            <p-radioButton
+              name="paymentMethod"
+              value="creditCard"
+              [(ngModel)]="paymentMethod"
+              (onChange)="onPaymentMethodChange()"
+            ></p-radioButton>
+            <span class="method-text">Tarjeta bancaria</span>
+          </div>
+        </p-panel>
+
+        <p-panel
+          styleClass="payment-method-panel"
+          [ngClass]="{ selected: paymentMethod === 'transfer' }"
+        >
+          <div class="payment-method">
+            <p-radioButton
+              name="paymentMethod"
+              value="transfer"
+              [(ngModel)]="paymentMethod"
+              (onChange)="onPaymentMethodChange()"
+            ></p-radioButton>
+            <span class="method-text">Transferencia bancaria</span>
+          </div>
         </p-panel>
       </div>
+    </div>
 
-      <!-- Payment methods section for complete or deposit -->
-      <div
-        *ngIf="paymentType === 'complete' || paymentType === 'deposit'"
-        class="payment-methods-section"
-      >
-        <div class="header-container" (click)="togglePaymentMethodsDropdown()">
-          <div class="title-with-icon">
-            <span class="title">Selecciona el método de pago</span>
-            <i
-              class="pi"
-              [ngClass]="
-                isPaymentMethodsOpen ? 'pi-chevron-up' : 'pi-chevron-down'
-              "
-            ></i>
-          </div>
-          <div class="title-underline pay"></div>
+    <!-- Installments Options Section -->
+    <div *ngIf="paymentType === 'installments'" class="installments">
+      <div class="section-header" (click)="toggleInstallmentsDropdown()">
+        <div class="header-content">
+          <span class="section-title">Selecciona el plazo de pagos</span>
+          <i
+            class="pi"
+            [ngClass]="isInstallmentsOpen ? 'pi-chevron-up' : 'pi-chevron-down'"
+          ></i>
         </div>
-        <div *ngIf="isPaymentMethodsOpen" class="payment-methods-row">
-          <div class="payment-method-container">
-            <p-panel
-              styleClass="payment-panel payment-method-panel"
-              [ngClass]="{ selected: paymentMethod === 'creditCard' }"
-            >
-              <div class="payment-option">
-                <p-radioButton
-                  name="paymentMethod"
-                  value="creditCard"
-                  [(ngModel)]="paymentMethod"
-                  (onChange)="onPaymentMethodChange()"
-                ></p-radioButton>
-                <span class="option-text">Tarjeta bancaria</span>
-              </div>
-            </p-panel>
-          </div>
-          <div class="payment-method-container">
-            <p-panel
-              styleClass="payment-panel payment-method-panel"
-              [ngClass]="{ selected: paymentMethod === 'transfer' }"
-            >
-              <div class="payment-option">
-                <p-radioButton
-                  name="paymentMethod"
-                  value="transfer"
-                  [(ngModel)]="paymentMethod"
-                  (onChange)="onPaymentMethodChange()"
-                ></p-radioButton>
-                <span class="option-text">Transferencia bancaria</span>
-              </div>
-            </p-panel>
-          </div>
-        </div>
+        <div class="section-underline"></div>
       </div>
 
-      <!-- Installments section (pago a plazos) -->
-      <div *ngIf="paymentType === 'installments'" class="installments-section">
-        <div class="header-container" (click)="toggleInstallmentsDropdown()">
-          <div class="title-with-icon">
-            <span class="title">Selecciona el plazo de pagos</span>
-            <i
-              class="pi"
-              [ngClass]="
-                isInstallmentsOpen ? 'pi-chevron-up' : 'pi-chevron-down'
-              "
-            ></i>
+      <div *ngIf="isInstallmentsOpen" class="installments-grid">
+        <p-panel
+          styleClass="installment-panel"
+          [ngClass]="{ selected: installmentOption === 'three' }"
+        >
+          <div class="installment-option">
+            <p-radioButton
+              name="installmentOption"
+              value="three"
+              [(ngModel)]="installmentOption"
+              (onChange)="onInstallmentOptionChange()"
+            ></p-radioButton>
+            <span class="option-text">3 cuotas</span>
           </div>
-          <div class="title-underline"></div>
-        </div>
-        <div *ngIf="isInstallmentsOpen" class="installment-panels-row">
-          <div class="installment-panel-container">
-            <p-panel
-              styleClass="payment-panel installment-panel"
-              [ngClass]="{ selected: installmentOption === 'three' }"
-            >
-              <div class="payment-option">
-                <p-radioButton
-                  name="installmentOption"
-                  value="three"
-                  [(ngModel)]="installmentOption"
-                  (onChange)="onInstallmentOptionChange()"
-                ></p-radioButton>
-                <span class="option-text">3 cuotas</span>
-              </div>
-            </p-panel>
+        </p-panel>
+
+        <p-panel
+          styleClass="installment-panel"
+          [ngClass]="{ selected: installmentOption === 'four' }"
+        >
+          <div class="installment-option">
+            <p-radioButton
+              name="installmentOption"
+              value="four"
+              [(ngModel)]="installmentOption"
+              (onChange)="onInstallmentOptionChange()"
+            ></p-radioButton>
+            <span class="option-text">4 cuotas</span>
           </div>
-          <div class="installment-panel-container">
-            <p-panel
-              styleClass="payment-panel installment-panel"
-              [ngClass]="{ selected: installmentOption === 'four' }"
-            >
-              <div class="payment-option">
-                <p-radioButton
-                  name="installmentOption"
-                  value="four"
-                  [(ngModel)]="installmentOption"
-                  (onChange)="onInstallmentOptionChange()"
-                ></p-radioButton>
-                <span class="option-text">4 cuotas</span>
-              </div>
-            </p-panel>
-          </div>
+        </p-panel>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Summary Section -->
+  <div class="order-summary">
+    <h3 class="summary-title">Resumen del pedido</h3>
+    <div class="summary-content">
+      <div class="selected-items" *ngIf="summary && summary.length > 0">
+        <div *ngFor="let item of summary" class="item">
+          <span>{{ item.description }}</span>
+          <span *ngIf="item.value">
+            <span>{{ item.qty }}</span>
+            <span>x</span>
+            <span>{{ item.value | currencyFormat }}</span>
+            <span>=</span>
+            <span>{{ item.value * item.qty | currencyFormat }}</span>
+          </span>
+          <span *ngIf="!item.value">incluido</span>
         </div>
       </div>
-
-      <!-- Simple Order Summary Section -->
-      <div class="payment-summary-section">
-        <div class="order-summary">
-          <h3>Resumen del pedido</h3>
-          <div class="summary-content">
-            <div class="total-section">
-              <div class="total">
-                <span>TOTAL</span>
-                <span class="price">{{ total | currencyFormat }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div class="total-amount">
+        <span class="total-label">TOTAL</span>
+        <span class="total-value">{{ total | currencyFormat }}</span>
       </div>
     </div>
   </div>

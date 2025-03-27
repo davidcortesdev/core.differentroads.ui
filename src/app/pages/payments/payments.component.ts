@@ -18,18 +18,18 @@ import { OrdersService } from '../../core/services/orders.service';
 })
 export class PaymentsComponent implements OnInit {
   // Estado de la sección de opciones de pago
-  isOpen: boolean = false;
+  isOpen: boolean = true;
   paymentType: string = '';
   totalPrice: number = 1000; // Valor de ejemplo
   depositAmount: number = 200; // Valor de ejemplo
   paymentDeadline: string = '15/08/2023'; // Valor de ejemplo
 
   // Estado para métodos de pago
-  isPaymentMethodsOpen: boolean = false;
+  isPaymentMethodsOpen: boolean = true;
   paymentMethod: string = '';
 
   // Estado para pagos a plazos
-  isInstallmentsOpen: boolean = false;
+  isInstallmentsOpen: boolean = true;
   installmentOption: string = '';
 
   // Resumen final (total a pagar)

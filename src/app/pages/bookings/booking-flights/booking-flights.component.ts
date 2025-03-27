@@ -1,26 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { Flight } from '../../../core/models/tours/flight.model';
 
-// Interfaces para los datos de vuelos
-export interface FlightSegment {
-  departureDate: string;
-  departureTime: string;
-  departureAirport: string;
-  departureCode: string;
-  arrivalTime: string;
-  arrivalAirport: string;
-  arrivalCode: string;
-}
-
-export interface FlightDirection {
-  date: string;
-  segments: FlightSegment[];
-  stops: number;
-}
-
-export interface FlightsData {
-  outbound: FlightDirection;
-  inbound: FlightDirection;
-}
 
 @Component({
   selector: 'app-booking-flights',
@@ -29,9 +9,11 @@ export interface FlightsData {
   standalone: false,
 })
 export class BookingFlightsComponent implements OnInit {
-  @Input() flightsData!: FlightsData;
+  @Input() flight!: Flight; // Recibe el vuelo seleccionado
 
   constructor() {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    console.log("vuelos", this.flight);
+  }
 }

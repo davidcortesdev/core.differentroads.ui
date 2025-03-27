@@ -55,12 +55,15 @@
   
  <!-- Flights -->
   <div class="container-flight">
-    <app-flight-section
+    <app-booking-flights *ngIf="adaptedFlightData"
     [flight]="adaptedFlightData">
-  </app-flight-section>
+  </app-booking-flights>
+  Prueba
   </div>
 
-  
+
+
+
   <!-- Activities -->
   <app-booking-activities 
   [activities]="combinedActivities" 

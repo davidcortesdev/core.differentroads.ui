@@ -26,6 +26,7 @@ import {
 } from '../../../../core/services/checkout/discounts.service';
 import { MessageService } from 'primeng/api';
 import { Subscription } from 'rxjs';
+import { TextsService } from '../../../../core/services/checkout/texts.service';
 
 interface TravelerWithPoints {
   id: string;
@@ -97,7 +98,8 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     private travelersService: TravelersService,
     private pointsService: PointsService,
     private discountsService: DiscountsService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private textsService: TextsService
   ) {}
 
   ngOnInit() {
@@ -283,11 +285,17 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     }, 200);
   }
 
-  redirectToRedSys(publicID: string, price: number, bookingID: string) {
+  redirectToRedSys(
+    publicID: string,
+    price: number,
+    bookingID: string,
+    paymentID: string
+  ) {
     const formData = this.redsysService.generateFormData(
       bookingID,
       publicID,
-      price
+      price,
+      paymentID
     );
 
     const form = document.createElement('form');
@@ -351,7 +359,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       // Handle payment method redirect
       if (this.paymentMethod === 'creditCard') {
         console.log('Redirecting to credit card payment');
-        this.redirectToRedSys(ID, paymentAmount, bookingID);
+        this.redirectToRedSys(ID, paymentAmount, bookingID, publicID);
         return;
       } else if (this.paymentMethod === 'transfer') {
         console.log('Redirecting to bank transfer page');
@@ -611,6 +619,28 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         source: t.email,
         points: t.points,
       }));
+
+    // Store points information in TextsService
+    const pointsData = this.uniqueTravelers.reduce(
+      (acc: { [key: string]: any }, traveler) => {
+        if (traveler.email) {
+          acc[traveler.email] = {
+            points: traveler.points || 0,
+            redeemed: traveler.redeemCheckbox || false,
+            travelerInfo: {
+              firstName: traveler.firstName,
+              lastName: traveler.lastName,
+              email: traveler.email,
+              id: traveler.id,
+            },
+          };
+        }
+        return acc;
+      },
+      {}
+    );
+
+    this.textsService.updateTextsForCategory('points', pointsData);
 
     console.log('Applying point discounts:', pointDiscounts);
 

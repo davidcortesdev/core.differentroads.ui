@@ -458,7 +458,7 @@ export class TourItineraryComponent implements OnInit {
 
           this.tourOrderService.updateSelectedDateInfo(
             period.externalID,
-            undefined
+            ''
           );
         },
         error: (error) => console.error('Error period:', error),

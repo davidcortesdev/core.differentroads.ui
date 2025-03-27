@@ -1,0 +1,30 @@
+<p-fileUpload
+  mode="basic"
+  [chooseLabel]="label"
+  [chooseIcon]="chooseIcon"
+  [accept]="accept"
+  [maxFileSize]="maxFileSize"
+  [multiple]="multiple"
+  [auto]="true"
+  [styleClass]="styleClass"
+  (onSelect)="onUpload($event)"
+  [disabled]="uploading"
+>
+</p-fileUpload>
+
+<!-- Si auto es false y existe un archivo pendiente, mostrar su nombre y botón para confirmar -->
+<div *ngIf="!auto && pendingFile" class="pending-upload">
+  <p>{{ pendingFile.name }}</p>
+  <p-button
+    label="Confirmar"
+    (onClick)="confirmUpload()"
+    [disabled]="uploading"
+    severity="success"
+  ></p-button>
+</div>
+
+<p-progressSpinner
+  *ngIf="uploading"
+  [style]="{ width: '30px', height: '30px' }"
+  styleClass="custom-spinner"
+></p-progressSpinner>

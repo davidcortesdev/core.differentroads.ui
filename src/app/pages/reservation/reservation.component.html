@@ -76,73 +76,80 @@
     <ng-container *ngIf="reservationInfo?.status === 'transfer'">
       <p class="hl">¡Hemos recibido tu petición de reserva del tour!</p>
       <p class="msg">
-        Pero algunos de los servicios incluidos en tu viaje están aún pendientes
-        de configuración. Nuestro equipo de atención al cliente se pondrá en
-        contacto contigo en las próximas 24/48 horas vía email con toda la
-        información actualizada. Por favor, realiza el pago por transferencia
-        antes de las 23:59 del {{ nextDayDate }} a través de las entidades
-        bancarias que te indicamos a continuación.
+        Por favor, realiza el pago por transferencia antes de las 11:59 pm
+        {{ nextDayDate }} a través de las entidades bancarias que se indican.
       </p>
-      <p class="status-msg" style="color: #f05a4c">
-        IMPORTANTE: Sube el correspondiente justificante de pago dentro de este
-        plazo para evitar que tu viaje se cancele automáticamente.
+      <p class="status-msg" style="color: #f05a4c" *ngIf="!uploadedVoucher">
+        IMPORTANTE: Sube el justificante de pago dentro de este plazo para
+        evitar que tu viaje se cancele automáticamente.
       </p>
-      <p class="msg">
-        Nuestro equipo de atención al cliente se pondrá en contacto contigo vía
-        email en las próximas 24/48 horas con toda la información actualizada y
-        los detalles para realizar el pago del depósito de tu viaje.
-      </p>
-      <p class="msg">
-        Si el precio de tu viaje sufre alguna modificación, podrás cancelar la
-        reserva sin ningún compromiso y recibir su reembolso inmediato.
-      </p>
+    </ng-container>
 
-      <!-- Recuadro coral con información bancaria -->
-      <p-panel
-        styleClass="bank-panel"
-        *ngIf="reservationInfo?.status === 'transfer'"
-      >
-        <ng-template pTemplate="header">
-          <div class="pan-hdr">
-            Realiza el pago a través de una de estas entidades bancarias y
-            adjunta el justificante
+    <!-- Recuadro coral con información bancaria -->
+    <p-panel
+      styleClass="bank-panel"
+      *ngIf="bookingData?.periodData?.['payment'].method === 'transfer'"
+    >
+      <ng-template pTemplate="header">
+        <div class="pan-hdr">
+          Realiza el pago a través de una de estas entidades bancarias y adjunta
+          el justificante
+        </div>
+      </ng-template>
+      <div class="bank-info">
+        <div class="bank-column" *ngFor="let bank of bankInfo">
+          <div class="bank-row">
+            <span class="label">Banco:</span>
+            <span class="value">{{ bank.name }}</span>
           </div>
-        </ng-template>
-        <div class="bank-info">
-          <div class="bank-column" *ngFor="let bank of bankInfo">
-            <div class="bank-row">
-              <span class="label">Banco:</span>
-              <span class="value">{{ bank.name }}</span>
-            </div>
-            <div class="bank-row">
-              <span class="label">Cuenta:</span>
-              <span class="value">{{ bank.account }}</span>
-            </div>
-            <div class="bank-row">
-              <span class="label">Beneficiario:</span>
-              <span class="value">{{ bank.beneficiary }}</span>
-            </div>
-            <div class="bank-row">
-              <span class="label">Concepto:</span>
-              <span class="value">{{ bank.concept }}</span>
-            </div>
+          <div class="bank-row">
+            <span class="label">Cuenta:</span>
+            <span class="value">{{ bank.account }}</span>
+          </div>
+          <div class="bank-row">
+            <span class="label">Beneficiario:</span>
+            <span class="value">{{ bank.beneficiary }}</span>
+          </div>
+          <div class="bank-row">
+            <span class="label">Concepto:</span>
+            <span class="value">{{ bank.concept }}</span>
           </div>
         </div>
-      </p-panel>
+      </div>
+    </p-panel>
 
-      <!-- Botón de subir justificante -->
-      <p-fileUpload
-        mode="basic"
-        name="demo[]"
-        chooseIcon="pi pi-upload"
-        url="https://www.primefaces.org/cdn/api/upload.php"
-        accept="image/*, .pdf"
-        maxFileSize="1000000"
-        (onUpload)="onBasicUploadAuto($event)"
-        [auto]="true"
-        chooseLabel="Subir justificante de transferencia"
-        class="upload-button"
-      ></p-fileUpload>
+    <ng-container
+      *ngIf="bookingData?.periodData?.['payment'].method === 'transfer'"
+    >
+      <!-- Botón de justificante: mostrar componente de subida o botón de ver voucher -->
+      <ng-container *ngIf="!uploadedVoucher; else voucherView">
+        <app-upload-button
+          label="Subir justificante de transferencia"
+          accept="image/*, .pdf"
+          [maxFileSize]="1000000"
+          folder="vouchers"
+          [auto]="false"
+          chooseIcon="pi pi-upload"
+          styleClass="upload-button"
+          (onUploadSuccess)="handleVoucherUpload($event)"
+          (onUploadError)="handleVoucherError($event)"
+        >
+        </app-upload-button>
+      </ng-container>
+      <ng-template #voucherView>
+        <p-button
+          label="Ver justificante"
+          (onClick)="viewVoucher()"
+          severity="info"
+        ></p-button>
+        <ng-container *ngIf="paymentInfo?.status === 'PENDING_REVIEW'">
+          <p class="voucher-status-text">
+            Hemos recibido tu comprobante de pago y nuestro equipo lo estará
+            validando. Recibirás una notificación en tu correo cuando la
+            transferencia sea verificada.
+          </p>
+        </ng-container>
+      </ng-template>
     </ng-container>
   </div>
 
@@ -157,8 +164,12 @@
       <span>{{ reservationInfo?.reservationNumber }}</span>
     </div>
     <div class="det-item">
-      <label class="val">Importe abonado:</label>
-      <span>{{ reservationInfo?.amount }}</span>
+      <label class="val">{{
+        paymentInfo?.status === "PENDING"
+          ? "Pendiente a abonar:"
+          : "Importe abonado:"
+      }}</label>
+      <span>{{ paymentInfo?.amount || 0 | currencyFormat : "EUR" }}</span>
     </div>
   </p-panel>
 
@@ -192,9 +203,11 @@
 
   <!-- Panel de información de pago -->
   <app-payments-information-section
-    *ngIf="paymentInfo?.totalAmount"
-    [totalAmount]="paymentInfo!.totalAmount"
+    *ngIf="reservationInfo?.totalAmount"
+    [totalAmount]="reservationInfo!.totalAmount"
     [bookingID]="bookingId"
+    [bookingData]="bookingData!"
+    [currentPayment]="paymentInfo!"
   ></app-payments-information-section>
 </div>
 

@@ -16,6 +16,8 @@ import { ContentPageComponent } from './pages/content-page/content-page.componen
 import { ToursComponent } from './shared/components/tours/tours.component';
 import { ReservationComponent } from './pages/reservation/reservation.component';
 import { BookingsComponent } from './pages/bookings/bookings.component';
+import { P } from '../../dist/core.differentroads.ui/browser/chunk-LKGOHPSE';
+import { PaymentsComponent } from './pages/payments/payments.component';
 
 const routes: Routes = [
   {
@@ -35,6 +37,7 @@ const routes: Routes = [
       { path: 'pages/:slug', component: BasicPageComponent },
       { path: 'checkout', component: CheckoutComponent },
       { path: 'checkout/:id', component: CheckoutComponent },
+      { path: 'payment/:id', component: PaymentsComponent },
       { path: 'landing/:slug', component: ContentPageComponent },
       { path: 'collection/:slug', component: ContentPageComponent },
       { path: 'press/:slug', component: ContentPageComponent },
@@ -54,11 +57,11 @@ const routes: Routes = [
 const routerOptions: ExtraOptions = {
   scrollPositionRestoration: 'enabled',
   anchorScrolling: 'enabled',
-  scrollOffset: [0, 0]
+  scrollOffset: [0, 0],
 };
 
 @NgModule({
   imports: [RouterModule.forRoot(routes, routerOptions)],
-  exports: [RouterModule]
+  exports: [RouterModule],
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {}

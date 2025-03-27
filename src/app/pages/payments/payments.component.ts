@@ -1,0 +1,381 @@
+import { Component, HostListener, Inject, OnInit } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
+import { RedsysService } from '../../core/services/checkout/payment/redsys.service';
+import { BookingsService } from '../../core/services/bookings.service';
+import { Payment } from '../../core/models/bookings/payment.model';
+import { PaymentOptionsService } from '../../core/services/checkout/paymentOptions.service';
+import { PaymentOption } from '../../core/models/orders/order.model';
+import { SummaryService } from '../../core/services/checkout/summary.service';
+import { OrdersService } from '../../core/services/orders.service';
+
+@Component({
+  selector: 'app-payments',
+  templateUrl: './payments.component.html',
+  styleUrls: ['./payments.component.scss'],
+  standalone: false,
+})
+export class PaymentsComponent implements OnInit {
+  // Estado de la sección de opciones de pago
+  isOpen: boolean = false;
+  paymentType: string = '';
+  totalPrice: number = 1000; // Valor de ejemplo
+  depositAmount: number = 200; // Valor de ejemplo
+  paymentDeadline: string = '15/08/2023'; // Valor de ejemplo
+
+  // Estado para métodos de pago
+  isPaymentMethodsOpen: boolean = false;
+  paymentMethod: string = '';
+
+  // Estado para pagos a plazos
+  isInstallmentsOpen: boolean = false;
+  installmentOption: string = '';
+
+  // Resumen final (total a pagar)
+  total: number = 1000; // Valor de ejemplo
+
+  // Source tracking
+  isSourceDropdownOpen: boolean = false;
+  selectedSource: string = 'Selecciona';
+  sourcesOptions: string[] = ['LinkedIn', 'Trivago', 'Booking', 'Otro'];
+
+  // General state
+  termsAccepted: boolean = false;
+  isLoading: boolean = false;
+
+  // Payment info
+  bookingID: string = '';
+  orderID: string = '';
+
+  // Order summary
+  summary: { qty: number; value: number; description: string }[] = [];
+  remainingAmount: number = 200;
+  daysBeforeReservation: number = 30;
+
+  constructor(
+    @Inject(DOCUMENT) private document: Document,
+    private route: ActivatedRoute,
+    private router: Router,
+    private redsysService: RedsysService,
+    private bookingsService: BookingsService,
+    private ordersService: OrdersService, // Add this if not already present
+    private paymentOptionsService: PaymentOptionsService,
+    private summaryService: SummaryService,
+    private messageService: MessageService
+  ) {}
+
+  ngOnInit() {
+    // Load booking ID from route params
+    this.route.params.subscribe((params) => {
+      this.bookingID = params['bookingId'];
+      this.loadBookingDetails();
+    });
+
+    this.loadScalapayScript();
+    this.calculatePaymentDeadline();
+  }
+
+  loadBookingDetails() {
+    if (!this.bookingID) return;
+
+    this.isLoading = true;
+    this.bookingsService.getBookingById(this.bookingID).subscribe({
+      next: (booking) => {
+        console.log('Booking loaded:', booking);
+        this.totalPrice = booking.extraData?.total || 0;
+        this.orderID = booking.id || '';
+
+        // Set summary from booking data
+        if (booking.extraData?.extendedTotal) {
+          this.summary = booking.extraData.extendedTotal;
+        }
+
+        // Calculate remaining amount for deposit
+        this.calculateRemainingAmount();
+
+        // If we have departure date, calculate payment deadline
+        if (booking.periodData?.['dayOne']) {
+          this.calculatePaymentDeadline(booking.periodData['dayOne']);
+        }
+
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading booking:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo cargar la información de la reserva.',
+        });
+        this.isLoading = false;
+      },
+    });
+  }
+
+  loadScalapayScript() {
+    if (
+      !this.document.querySelector('script[src*="scalapay-widget-loader.js"]')
+    ) {
+      const script = this.document.createElement('script');
+      script.type = 'module';
+      script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js';
+      this.document.head.appendChild(script);
+    }
+  }
+
+  toggleDropdown(): void {
+    this.isOpen = !this.isOpen;
+  }
+
+  onPaymentTypeChange(): void {
+    // Reinicia opciones cuando se cambia de tipo pago
+    this.paymentMethod = '';
+    this.installmentOption = '';
+    this.isPaymentMethodsOpen = false;
+    this.isInstallmentsOpen = false;
+  }
+
+  togglePaymentMethodsDropdown(): void {
+    this.isPaymentMethodsOpen = !this.isPaymentMethodsOpen;
+  }
+
+  toggleInstallmentsDropdown(): void {
+    this.isInstallmentsOpen = !this.isInstallmentsOpen;
+  }
+
+  onPaymentMethodChange(): void {
+    // Agregar lógica si es necesario
+  }
+
+  onInstallmentOptionChange(): void {
+    // Agregar lógica si es necesario
+  }
+
+  toggleSourceDropdown(event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.isSourceDropdownOpen = !this.isSourceDropdownOpen;
+  }
+
+  selectSource(source: string, event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.selectedSource = source;
+    this.isSourceDropdownOpen = false;
+    this.updatePaymentOption();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const dropdownElement = this.document.querySelector('.dropdown-container');
+    if (
+      dropdownElement &&
+      !dropdownElement.contains(event.target as Node) &&
+      this.isSourceDropdownOpen
+    ) {
+      this.isSourceDropdownOpen = false;
+    }
+  }
+
+  reloadScalapayWidgets() {
+    setTimeout(() => {
+      const priceContainerThree = document.getElementById(
+        'price-container-three'
+      );
+      const priceContainerFour = document.getElementById(
+        'price-container-four'
+      );
+
+      if (priceContainerThree) {
+        priceContainerThree.textContent = `€ ${this.totalPrice.toFixed(2)}`;
+      }
+
+      if (priceContainerFour) {
+        priceContainerFour.textContent = `€ ${this.totalPrice.toFixed(2)}`;
+      }
+
+      const event = new CustomEvent('scalapay-widget-reload');
+      window.dispatchEvent(event);
+    }, 200);
+  }
+
+  redirectToRedSys(
+    publicID: string,
+    price: number,
+    bookingID: string,
+    paymentID: string
+  ) {
+    const formData = this.redsysService.generateFormData(
+      bookingID,
+      publicID,
+      price,
+      paymentID
+    );
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'https://sis-t.redsys.es:25443/sis/realizarPago';
+
+    Object.entries(formData).forEach(([key, value]) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = value as string;
+      form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+  async submitPayment() {
+    if (this.isLoading) return; // Prevent multiple submissions
+
+    this.isLoading = true;
+    console.log('Payment process started');
+    console.log('Payment Type:', this.paymentType);
+    console.log('Payment Method:', this.paymentMethod);
+    console.log('Installment Option:', this.installmentOption);
+    console.log('Total Price:', this.totalPrice);
+    console.log('Terms Accepted:', this.termsAccepted);
+
+    // Update payment option before proceeding
+    this.updatePaymentOption();
+
+    try {
+      // Determine the payment amount based on payment type
+      const paymentAmount =
+        this.paymentType === 'deposit' ? this.depositAmount : this.totalPrice;
+      console.log(`Processing payment of ${paymentAmount}`);
+
+      const payment = await this.createPayment(this.bookingID, {
+        amount: paymentAmount,
+        registerBy: 'user',
+      });
+
+      const publicID = payment.publicID;
+      console.log('Payment created:', payment);
+
+      // Handle payment method redirect
+      if (this.paymentMethod === 'creditCard') {
+        console.log('Redirecting to credit card payment');
+        this.redirectToRedSys(
+          this.orderID,
+          paymentAmount,
+          this.bookingID,
+          publicID
+        );
+        return;
+      } else if (this.paymentMethod === 'transfer') {
+        console.log('Redirecting to bank transfer page');
+        this.router.navigate([
+          `/reservation/${this.bookingID}/transfer/${publicID}`,
+        ]);
+        return;
+      }
+    } catch (error) {
+      console.error('Error in payment process:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error en el proceso de pago',
+        detail:
+          'Ha ocurrido un error al procesar el pago. Por favor, inténtalo de nuevo.',
+      });
+    } finally {
+      // This will only run if we didn't redirect earlier
+      this.isLoading = false;
+    }
+  }
+
+  createPayment(
+    bookingID: string,
+    payment: {
+      amount: number;
+      registerBy: string;
+    }
+  ): Promise<Payment> {
+    return new Promise((resolve, reject) => {
+      this.bookingsService.createPayment(bookingID, payment).subscribe({
+        next: (response) => {
+          resolve(response);
+        },
+        error: (error) => {
+          reject(error);
+        },
+      });
+    });
+  }
+
+  updatePaymentOption() {
+    if (!this.paymentType) return;
+
+    const paymentOption: PaymentOption = {
+      type: this.paymentType as 'complete' | 'installments' | 'deposit',
+      source:
+        this.selectedSource !== 'Selecciona' ? this.selectedSource : undefined,
+    };
+
+    if (
+      (this.paymentType === 'complete' || this.paymentType === 'deposit') &&
+      this.paymentMethod
+    ) {
+      paymentOption.method = this.paymentMethod as 'creditCard' | 'transfer';
+
+      // Add deposit amount for deposit payment type
+      if (this.paymentType === 'deposit') {
+        paymentOption.depositAmount = this.depositAmount;
+      }
+    }
+
+    if (this.paymentType === 'installments' && this.installmentOption) {
+      paymentOption.installmentOption = this.installmentOption as
+        | 'three'
+        | 'four';
+    }
+
+    this.paymentOptionsService.updatePaymentOption(paymentOption);
+
+    // Update the order with payment information
+    const currentOrder = this.summaryService.getOrderValue();
+    if (currentOrder) {
+      currentOrder.payment = paymentOption;
+      this.summaryService.updateOrder(currentOrder);
+    }
+  }
+
+  calculateRemainingAmount() {
+    this.remainingAmount = this.totalPrice - this.depositAmount;
+  }
+
+  calculatePaymentDeadline(departureDate?: string) {
+    if (departureDate) {
+      const departureDateTime = new Date(departureDate);
+      const deadline = new Date(departureDateTime);
+      deadline.setDate(deadline.getDate() - this.daysBeforeReservation);
+
+      this.paymentDeadline = deadline.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      });
+    } else {
+      // Default deadline if no departure date provided
+      const today = new Date();
+      const defaultDeadline = new Date(today);
+      defaultDeadline.setDate(defaultDeadline.getDate() + 30);
+
+      this.paymentDeadline = defaultDeadline.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      });
+    }
+  }
+
+  goBack(): void {
+    window.history.back();
+  }
+}

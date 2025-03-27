@@ -96,12 +96,20 @@
                     font-size: 1.1rem;
                     font-weight: 600;
                     color: #333;
+
+                    @media (max-width: 576px) {
+                        font-size: 1rem;
+                    }
                 }
 
                 .optional-label {
                     color: #4f97fb;
                     font-weight: bold;
                     margin-right: 0.5rem;
+
+                    @media (max-width: 576px) {
+                        margin-right: 0.3rem;
+                    }
                 }
 
                 .activity-price {
@@ -114,12 +122,21 @@
                         font-size: 1.3rem;
                         font-weight: 700;
                         color: #333;
+
+                        @media (max-width: 576px) {
+                            font-size: 1.1rem;
+                        }
                     }
 
                     .per-person {
                         font-size: 0.75rem;
                         color: #666;
                         margin-top: 2px;
+
+                        @media (max-width: 576px) {
+                            margin-top: 0;
+                            font-size: 0.7rem;
+                        }
                     }
                 }
             }
@@ -127,8 +144,6 @@
             .activity-description {
                 font-size: 0.95rem;
                 color: #666;
-                line-height: 1.5;
-                margin: 0.75rem 0;
                 flex: 1;
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -137,6 +152,12 @@
                 line-clamp: 3;
                 -webkit-box-orient: vertical;
                 max-height: 4.5em; /* 3 líneas de texto */
+                margin-right: 20%;
+
+                @media (max-width: 767px) {
+                    margin-right: 0;
+                    margin-bottom: 10px;
+                }
             }
 
             .activity-actions {
@@ -147,7 +168,15 @@
                 button {
                     min-width: 120px;
                 }
+
+                @media (max-width: 767px) {
+                    margin-top: 0;
+                }
             }
+        }
+
+        @media (max-width: 767px) {
+            flex-direction: row; /* Mantener layout horizontal en tablets */
         }
 
         @media (max-width: 576px) {
@@ -157,17 +186,44 @@
                 min-height: auto;
 
                 .activity-header {
-                    flex-direction: column;
+                    flex-direction: row;
+                    flex-wrap: wrap;
+                }
 
-                    .activity-price {
-                        align-items: flex-start;
-                        margin-top: 0.5rem;
+                .activity-title-container {
+                    display: flex;
+                    align-items: center;
+                }
+
+                .activity-price {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
+                    justify-content: flex-end;
+                    margin-top: 4px;
+
+                    .price-value {
+                        margin-right: 4px;
                     }
                 }
 
                 .activity-description {
                     max-height: none;
                     -webkit-line-clamp: initial;
+                    line-clamp: initial;
+                    margin-bottom: 1rem;
+                    margin-right: 0;
+                }
+
+                .activity-actions {
+                    justify-content: center;
+                    margin-top: 1rem;
+                    width: 100%;
+
+                    button {
+                        width: 80%;
+                        max-width: 200px;
+                    }
                 }
             }
         }
@@ -178,6 +234,27 @@
         padding: 2rem;
         color: #666;
         font-style: italic;
+    }
+
+    /* Ajustes para diferentes dispositivos */
+    @media (max-width: 991px) {
+        margin: 0.5rem;
+
+        .activity-item {
+            padding: 0.75rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        margin: 0.25rem;
+
+        .activities-content {
+            padding: 0.25rem;
+        }
+
+        .activity-item {
+            padding: 0.75rem;
+        }
     }
 }
 
@@ -203,6 +280,18 @@
         .p-panel-content {
             padding: 0;
         }
+
+        @media (max-width: 576px) {
+            border-radius: 8px;
+
+            .p-panel-header {
+                padding: 0.75rem 1rem;
+
+                .p-panel-title {
+                    font-size: 1rem;
+                }
+            }
+        }
     }
 
     .p-dataview .p-dataview-content {
@@ -213,25 +302,11 @@
     }
 
     .p-button {
-        &.p-button-success {
-            background-color: transparent;
-            border-color: #4ecdc4 !important;
-            color: #4ecdc4 !important;
-            border-radius: 50px;
-
-            .p-button-icon {
-                color: #4ecdc4 !important;
-            }
-
-            &:hover {
-                background-color: #f0fffd !important;
-            }
-        }
+        border-radius: 50px;
 
         &.p-button-outlined {
             border-color: #ff6b6b !important;
             color: #ff6b6b !important;
-            border-radius: 50px;
 
             .p-button-icon {
                 color: #ff6b6b !important;
@@ -240,6 +315,11 @@
             &:hover {
                 background-color: #fff0f0 !important;
             }
+        }
+
+        @media (max-width: 576px) {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
         }
     }
 }

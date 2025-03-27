@@ -1,5 +1,46 @@
-<div class="container-flight">
-  <app-flight-section
-  [flight]="flight">
-</app-flight-section>
+<!-- Two-column layout container -->
+<div class="flight-container">
+  <!-- Left column: Flight information -->
+  <div class="flight-info-column">
+    <p-panel>
+      <app-flight-section [flight]="flight"></app-flight-section>
+    </p-panel>
+  </div>
+  
+  <!-- Right column: Flight identifiers -->
+  <div class="flight-identifiers-column">
+    <p-panel header="Identificadores de Vuelo">
+      <div class="identifiers-content">
+        <!-- Outbound flight identifiers -->
+        <div class="flight-type-header">Vuelo de Ida</div>
+        <ng-container *ngIf="flight.outbound?.segments && flight.outbound.segments.length > 0">
+          <div *ngFor="let segment of flight.outbound.segments; let i = index" class="segment-identifier">
+            <div class="identifier-item">
+              <span class="identifier-label">Vuelo {{i+1}}:</span>
+              <span class="identifier-value">{{segment.flightNumber}}</span>
+            </div>
+            <div class="identifier-item">
+              <span class="identifier-label">Ruta:</span>
+              <span class="identifier-value">{{segment.departureCity}} → {{segment.arrivalCity}}</span>
+            </div>
+          </div>
+        </ng-container>
+        
+        <!-- Inbound flight identifiers -->
+        <div class="flight-type-header" *ngIf="flight.inbound?.segments && flight.inbound.segments.length > 0">Vuelo de Vuelta</div>
+        <ng-container *ngIf="flight.inbound?.segments && flight.inbound.segments.length > 0">
+          <div *ngFor="let segment of flight.inbound.segments; let i = index" class="segment-identifier">
+            <div class="identifier-item">
+              <span class="identifier-label">Vuelo {{i+1}}:</span>
+              <span class="identifier-value">{{segment.flightNumber}}</span>
+            </div>
+            <div class="identifier-item">
+              <span class="identifier-label">Ruta:</span>
+              <span class="identifier-value">{{segment.departureCity}} → {{segment.arrivalCity}}</span>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </p-panel>
+  </div>
 </div>

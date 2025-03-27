@@ -1,9 +1,13 @@
 <p-panel styleClass="booking-reference">
   <div class="booking-reference-container">
+    <!-- Add the back button here -->
+    <button pButton icon="pi pi-arrow-left" class="p-button-text p-button-rounded back-button" (click)="goBack()"></button>
+    
     <div class="booking-code">
       <span class="booking-number">{{ bookingCode }} - {{ bookingReference }}</span>
       <p-tag value="{{ status }}" severity="info" [rounded]="true"></p-tag>
     </div>
+    
     <button pButton label="Cancelar reserva" icon="pi pi-times-circle"
             class="p-button-outlined p-button-rounded cancel-button"
             (click)="onCancelBooking()"></button>

@@ -5,6 +5,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BookingsService } from '../../core/services/bookings.service';
 import { BookingMappingService } from '../../core/services/booking-mapping.service';
 import { PeriodsService } from '../../core/services/periods.service';
+import { RetailersService, Retailer } from '../../core/services/retailers.service';
 import { Activity } from '../../core/models/tours/activity.model';
 import { Flight } from '../../core/models/tours/flight.model';
 import { finalize } from 'rxjs/operators';
@@ -42,12 +43,12 @@ interface BookingImage {
   departureDate: string;
   passengers: number;
   price: string;
+  tourName?: string; 
 }
 
 interface RetailerInfo {
   name: string;
   email: string;
-  phone: string;
 }
 
 interface TripItemData {
@@ -107,6 +108,7 @@ export class BookingsComponent implements OnInit {
   isLoading: boolean = false;
   bookingComplete: any = null; // Objeto de booking completo
   availableActivities: BookingActivity[] = []; // Array para actividades disponibles
+  currentRetailer: Retailer | null = null; // Para almacenar información del retailer
 
   // Datos básicos que se actualizarán dinámicamente
   bookingData: BookingData = {
@@ -115,27 +117,23 @@ export class BookingsComponent implements OnInit {
     bookingCode: '',
     bookingReference: '',
     status: '',
-    retailer: 'Different Roads',
+    retailer: '',
     creationDate: '',
     price: '',
   };
 
   // El resto de datos se mantendrán quemados
-  retailerInfo: RetailerInfo = {
-    name: 'Different Roads',
-    email: 'info@differentroads.es',
-    phone: '+34 78 43 645 3',
-  };
 
-  isTO: boolean = false;
-  isAdmin: boolean = true;
+
+  isTO: boolean = true;
+  isAdmin: boolean = false;
 
   bookingImages: BookingImage[] = [
     {
       id: 1,
       name: 'Destino de viaje',
       imageUrl: 'https://picsum.photos/400/200',
-      retailer: 'Different Roads',
+      retailer: '',
       creationDate: '',
       departureDate: '',
       passengers: 0,
@@ -202,7 +200,8 @@ export class BookingsComponent implements OnInit {
     private fb: FormBuilder,
     private bookingsService: BookingsService,
     private bookingMappingService: BookingMappingService,
-    private periodsService: PeriodsService
+    private periodsService: PeriodsService,
+    private retailersService: RetailersService // Nuevo servicio añadido
   ) {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
@@ -243,6 +242,10 @@ export class BookingsComponent implements OnInit {
           // Actualizar información de la imagen
           this.updateBookingImages(booking);
           
+          // Cargar información del retailer
+          const retailerId = booking?.retailerID || '';
+          this.loadRetailerInfo(retailerId);
+          
           // Actualizar datos de elementos del viaje de forma dinámica
           this.updateTripItemsData(booking);
           
@@ -280,6 +283,52 @@ export class BookingsComponent implements OnInit {
           });
         }
       });
+  }
+
+  // Método para cargar la información del retailer
+  loadRetailerInfo(retailerId: string): void {
+    if (!retailerId) {
+      // Establecer valores por defecto si no hay ID
+      this.currentRetailer = null;
+      this.bookingData.retailer = 'Sin asignar';
+      if (this.bookingImages.length > 0) {
+        this.bookingImages[0].retailer = 'Sin asignar';
+      }
+    
+      return;
+    }
+    
+    // Usar el método preloadRetailerName para cargar el nombre rápidamente
+    this.retailersService.preloadRetailerName(retailerId);
+    
+    // Obtener información completa del retailer
+    this.retailersService.getRetailerById(retailerId).subscribe({
+      next: (retailerData) => {
+        this.currentRetailer = retailerData;
+        
+        // Actualizar bookingData
+        this.bookingData.retailer = retailerData.name || 'Sin nombre';
+        
+        // Actualizar retailerInfo
+       
+        
+        // Actualizar bookingImages
+        if (this.bookingImages.length > 0) {
+          this.bookingImages[0].retailer = retailerData.name || 'Sin nombre';
+        }
+      },
+      error: (error) => {
+        console.error('Error al cargar datos del retailer:', error);
+        this.currentRetailer = null;
+        
+        // Establecer valores por defecto en caso de error
+        this.bookingData.retailer = 'No disponible';
+        
+        if (this.bookingImages.length > 0) {
+          this.bookingImages[0].retailer = 'No disponible';
+        }
+      }
+    });
   }
 
   // Método para cargar actividades del período
@@ -376,26 +425,27 @@ export class BookingsComponent implements OnInit {
       bookingCode: booking?.ID || '',
       bookingReference: booking?.externalID || '',
       status: booking?.status || '',
-      retailer: 'Different Roads', // Mantener este valor quemado
+      retailer: '', // Se actualizará en loadRetailerInfo
       creationDate: booking?.createdAt ? this.formatDateForDisplay(booking.createdAt) : '',
-      price: booking?.total ? this.formatCurrency(booking.total) : 
-             booking?.periodData?.total ? this.formatCurrency(booking.periodData.total) : '0 €',
+      price: this.formatCurrency(booking?.total || booking?.periodData?.total || 0),
     };
   }
 
   // Actualizar información de las imágenes
   updateBookingImages(booking: any): void {
     if (this.bookingImages.length > 0) {
+      const tourName = booking?.periodData?.['tour']?.name || 'Sin título';
+      
       this.bookingImages[0] = {
         ...this.bookingImages[0],
-        name: booking?.periodData?.['tour']?.name || this.bookingImages[0].name,
+        name: tourName,
+        tourName: tourName, // Añadimos el nombre del tour
         imageUrl: this.bookingImages[0].imageUrl, // Mantener la imagen quemada
-        retailer: this.bookingImages[0].retailer, // Mantener el retailer quemado
+        retailer: '', // Se actualizará en loadRetailerInfo
         creationDate: booking?.createdAt ? this.formatDateForDisplay(booking.createdAt) : this.bookingImages[0].creationDate,
         departureDate: booking?.periodData?.['dayOne'] ? this.formatDateShort(booking.periodData['dayOne']) : this.bookingImages[0].departureDate,
         passengers: booking?.travelersNumber || this.bookingImages[0].passengers,
-        price: booking?.total ? this.formatCurrency(booking.total) : 
-               booking?.periodData?.total ? this.formatCurrency(booking.periodData.total) : this.bookingImages[0].price,
+        price: this.formatCurrency(booking?.total || booking?.periodData?.total || 0),
       };
     }
   }
@@ -765,6 +815,7 @@ export class BookingsComponent implements OnInit {
       });
     }
   }
+
 
   reprintPaymentReminder(): void {
     if (this.isTO) {

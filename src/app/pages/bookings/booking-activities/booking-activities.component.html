@@ -19,8 +19,7 @@
                     <span *ngIf="activity.perPerson" class="per-person">por persona</span>
                   </div>
                 </div>
-                <div class="activity-description">
-                  {{ activity.description }}
+                <div class="activity-description" [innerHTML]="getSafeDescription(activity.description)">
                 </div>
                 <div class="activity-actions">
                   <button
@@ -28,7 +27,7 @@
                     pButton
                     type="button"
                     label="Añadir"
-                    class="p-button-rounded p-button-success"
+                    class="p-button-rounded"
                     (click)="onAddActivity(activity.id)">
                   </button>
                   <button

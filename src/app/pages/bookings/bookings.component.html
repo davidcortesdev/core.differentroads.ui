@@ -1,26 +1,26 @@
 <!-- Loading Indicator -->
 <div *ngIf="isLoading" class="loading-container">
   <p-progressSpinner></p-progressSpinner>
-  <span>Cargando información de la reserva...</span>
 </div>
 
 <!-- Contenido principal - solo se muestra cuando no está cargando -->
 <div *ngIf="!isLoading">
   <!-- Header booking section -->
-  <app-booking-header-section
+ <!--  <app-booking-header-section
     [title]="bookingData.title"
     [date]="bookingData.date"
     [retailerInfo]="retailerInfo"
     [showRetailerPanel]="isAdmin"
     (backEvent)="goBack()">
-  </app-booking-header-section>
+  </app-booking-header-section> -->
   
   <!-- Code booking section -->
   <app-booking-code-section
     [bookingCode]="bookingData.bookingCode"
     [bookingReference]="bookingData.bookingReference"
     [status]="bookingData.status"
-    (cancelBooking)="cancelBooking()">
+    (cancelBooking)="cancelBooking()"
+    (backEvent)="goBack()">
   </app-booking-code-section>
   
   <!-- Documents booking section -->
@@ -35,7 +35,8 @@
   
   <!-- Componente de vista de detalles -->
   <app-booking-details-view
-    [bookingImages]="bookingImages">
+    [bookingImages]="bookingImages"
+    [tourName]="bookingData.title">
   </app-booking-details-view>
   
   <!-- Payment History - Versión actualizada que solo usa tripItems -->
@@ -54,15 +55,10 @@
   </app-booking-personal-data>
   
  <!-- Flights -->
-  <div class="container-flight">
     <app-booking-flights *ngIf="adaptedFlightData"
     [flight]="adaptedFlightData">
   </app-booking-flights>
-  Prueba
-  </div>
-
-
-
+ 
 
   <!-- Activities -->
   <app-booking-activities 

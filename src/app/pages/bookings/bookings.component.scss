@@ -37,6 +37,9 @@
         padding: 0.5rem;
     }
 }
-.container-flight {
-    margin: 20px;
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
 }

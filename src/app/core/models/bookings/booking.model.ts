@@ -1,6 +1,7 @@
 import { PriceData } from '../commons/price-data.model';
 import { OrderTraveler, PaymentOption } from '../orders/order.model';
 import { Flight } from '../tours/flight.model';
+import { BookingTraveler } from './booking-traveler.model';
 
 export interface Booking {
   id: string;
@@ -18,7 +19,7 @@ export interface Booking {
   deadlines?: any[];
   flights?: Flight[];
   createdAt?: string;
-  travelers?: OrderTraveler[];
+  travelers?: BookingTraveler[];
 }
 
 export interface BookingCreateInput {
@@ -29,7 +30,7 @@ export interface BookingCreateInput {
     priceData?: PriceData[];
     _id?: string;
   };
-  summary: string;
+  textSummary: any;
   total: number;
   priceData: any;
   name: string;

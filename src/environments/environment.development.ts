@@ -12,4 +12,11 @@ export const environment = {
 
   googleMapsApiKey: 'AIzaSyB6sxlxeTVlRllpGPyDPbKmaZPQJsb8YAs',
   notificationsApiUrl: 'https://api.differentroads.co/dev/v3/notification',
+
+  cloudinary: {
+    uploadPreset: 'dr_uploads',
+    cloudName: 'dxp2hxees',
+    apiSecret: 'mD3dyC3tOF1i_nV0p-t9f-3_zKY',
+    apiKey: '197192715793311',
+  },
 };

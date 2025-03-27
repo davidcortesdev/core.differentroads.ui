@@ -22,6 +22,7 @@ import { PaymentOptionsService } from '../../core/services/checkout/paymentOptio
 import { MessageService, MenuItem } from 'primeng/api';
 import { DiscountsService } from '../../core/services/checkout/discounts.service';
 import { AuthenticateService } from '../../core/services/auth-service.service';
+import { TextsService } from '../../core/services/checkout/texts.service';
 
 @Component({
   selector: 'app-checkout',
@@ -129,7 +130,8 @@ export class CheckoutComponent implements OnInit {
     private insurancesService: InsurancesService,
     private paymentOptionsService: PaymentOptionsService,
     private messageService: MessageService,
-    private discountsService: DiscountsService
+    private discountsService: DiscountsService,
+    private textsService: TextsService
   ) {}
 
   ngOnInit() {
@@ -818,13 +820,16 @@ export class CheckoutComponent implements OnInit {
         }
       }
 
+      // Get textSummary data from TextsService
+      const textSummary = this.textsService.getTextsData();
+
       const bookingData: BookingCreateInput = {
         tour: {
           id: this.tourID,
           name: this.tourName,
           priceData: this.pricesService.getPriceDataById(this.tourID),
         },
-        summary: '',
+        textSummary: textSummary, // Include the complete texts data
         total: this.total,
         priceData: this.pricesService.getPriceDataById(this.periodID),
         id: this.orderDetails?._id || '',
@@ -840,6 +845,17 @@ export class CheckoutComponent implements OnInit {
         externalID: this.periodID,
         payment: this.paymentOptionsService.getPaymentOption() || undefined,
       };
+
+      // Save the period data to the TextsService as well
+      this.textsService.updateText('period', this.periodID, this.periodData);
+
+      // Store tour information if available
+      if (this.periodData?.tourName) {
+        this.textsService.updateText('tour', this.tourID, {
+          name: this.periodData.tourName,
+        });
+      }
+
       let bookingID = '';
       let bookingSID = '';
       let order: Order | undefined;

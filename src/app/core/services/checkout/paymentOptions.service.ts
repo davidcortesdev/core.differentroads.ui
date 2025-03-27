@@ -16,8 +16,6 @@ export class PaymentOptionsService {
   }
 
   getPaymentOption(): PaymentOption | null {
-    console.log('getPaymentOption_______', this.paymentOptionSource.getValue());
-
     return this.paymentOptionSource.getValue();
   }
 

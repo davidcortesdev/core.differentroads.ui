@@ -11,6 +11,12 @@ import {
   PaymentInfo,
 } from '../../core/models/reservation/reservation.model';
 import { BookingMappingService } from '../../core/services/booking-mapping.service';
+import {
+  Payment,
+  VoucherReviewStatus,
+} from '../../core/models/bookings/payment.model';
+import { Booking } from '../../core/models/bookings/booking.model';
+import { CloudinaryResponse } from '../../core/services/file-upload.service';
 
 @Component({
   selector: 'app-reservation',
@@ -43,7 +49,10 @@ export class ReservationComponent implements OnInit, OnDestroy {
   ];
   flights: Flight[] = [];
   priceDetails: PriceDetail[] = [];
-  paymentInfo: PaymentInfo | undefined;
+  paymentInfo: Payment | undefined;
+  paymentID: string = '';
+  bookingData: Booking | undefined;
+  uploadedVoucher: CloudinaryResponse | null = null;
 
   constructor(
     private messageService: MessageService,
@@ -75,6 +84,11 @@ export class ReservationComponent implements OnInit, OnDestroy {
           detail: 'No se pudo encontrar el ID de reserva en la URL.',
         });
       }
+
+      this.paymentID = params['paymentID'];
+      if (this.paymentID) {
+        this.getPaymentData();
+      }
     });
   }
 
@@ -99,13 +113,15 @@ export class ReservationComponent implements OnInit, OnDestroy {
         })
       )
       .subscribe((booking) => {
-        // Use the mapping service to transform the booking data
-        this.reservationInfo = this.bookingMapper.mapToReservationInfo(booking);
+        // Mapear la reserva utilizando booking y, de estar disponible, paymentInfo.
+        this.reservationInfo = this.bookingMapper.mapToReservationInfo(
+          booking,
+          this.paymentInfo
+        );
         this.flights = this.bookingMapper.mapToFlights(booking);
         this.priceDetails = this.bookingMapper.mapToPriceDetails(booking);
-        this.paymentInfo = this.bookingMapper.mapToPaymentInfo(booking);
 
-        // Update bank info with booking-specific data
+        // Actualizar bankInfo con datos específicos del booking.
         if (booking.ID) {
           this.bankInfo.forEach((bank) => {
             bank.concept = `${booking.ID} ${
@@ -114,41 +130,94 @@ export class ReservationComponent implements OnInit, OnDestroy {
           });
         }
 
+        this.bookingData = booking;
         console.log('Booking data:', booking);
       });
   }
 
-  onBasicUploadAuto(event: any) {
-    if (event.files && event.files.length > 0) {
-      const file = event.files[0];
-
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Archivo subido',
-        detail: `El archivo ${file.name} se ha subido correctamente.`,
+  getPaymentData() {
+    this.loading = true;
+    this.bookingsService
+      .getPaymentsByPublicID(this.paymentID)
+      .pipe(
+        takeUntil(this.destroy$),
+        catchError((err) => {
+          this.error = true;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al cargar los datos del pago.',
+          });
+          console.error('Error fetching payment:', err);
+          return EMPTY;
+        }),
+        finalize(() => {
+          this.loading = false;
+        })
+      )
+      .subscribe((payment) => {
+        console.log('Payment data:', payment);
+        this.paymentInfo = payment;
+        if (payment.vouchers && payment.vouchers.length > 0) {
+          this.uploadedVoucher = {
+            secure_url: payment.vouchers[0].fileUrl,
+            public_id: payment.vouchers[0].id,
+          } as CloudinaryResponse;
+        }
+        // Si ya se cargó el booking, actualiza la información de la reserva.
+        if (this.bookingData) {
+          this.reservationInfo = this.bookingMapper.mapToReservationInfo(
+            this.bookingData,
+            this.paymentInfo
+          );
+        }
       });
+  }
 
-      // Here you would upload the file to your server
-      // this.bookingsService.uploadVoucher(this.bookingId, file)
-      //   .pipe(takeUntil(this.destroy$))
-      //   .subscribe({
-      //     next: (response) => {
-      //       // Handle successful upload
-      //     },
-      //     error: (err) => {
-      //       this.messageService.add({
-      //         severity: 'error',
-      //         summary: 'Error',
-      //         detail: 'Error al subir el justificante.'
-      //       });
-      //     }
-      //   });
-    } else {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'No se ha seleccionado ningún archivo.',
-      });
+  handleVoucherUpload(response: CloudinaryResponse) {
+    this.uploadedVoucher = response;
+    // Aquí se podría actualizar la reserva con la URL del voucher. Código de ejemplo comentado.
+    if (this.bookingId && response) {
+      this.bookingsService
+        .uploadVoucher(this.bookingId, this.paymentID, {
+          fileUrl: response.secure_url,
+          uploadDate: new Date(),
+          reviewStatus: VoucherReviewStatus.PENDING,
+          id: response.public_id,
+          metadata: response,
+        })
+        .pipe(
+          takeUntil(this.destroy$),
+          catchError((error) => {
+            this.handleVoucherError(error);
+            return EMPTY;
+          })
+        )
+        .subscribe(() => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Justificante subido',
+            detail: 'El justificante se ha subido correctamente.',
+          });
+          // Refetch the reservation state after uploading voucher
+          this.getBookingData();
+          this.getPaymentData();
+        });
+    }
+  }
+
+  handleVoucherError(error: any) {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Error al subir el justificante.',
+    });
+  }
+
+  // Nuevo método para visualizar el voucher subido
+  viewVoucher(): void {
+    if (this.uploadedVoucher && this.uploadedVoucher.secure_url) {
+      window.open(this.uploadedVoucher.secure_url, '_blank');
     }
   }
 

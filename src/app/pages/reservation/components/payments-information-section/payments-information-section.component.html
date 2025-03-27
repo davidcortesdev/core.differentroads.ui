@@ -1,29 +1,41 @@
 <p-panel styleClass="pay-pan">
-    <ng-template pTemplate="header">
-        <div class="pan-hdr">Información sobre el pago</div>
-    </ng-template>
-    <div class="pay-det">
-        <div class="pay-amts">
-            <div class="amt-box">
-                <span class="lbl">Total a pagar</span>
-                <br>
-                <span class="val">{{paymentInfo.totalAmount}}€</span>
-            </div>
-            <div class="amt-box">
-                <span class="lbl">Pagado</span>
-                <br>
-                <span class="val pay">{{paymentInfo.paidAmount}}€</span>
-            </div>
-            <div class="amt-box">
-                <span class="lbl">Restante</span>
-                <br>
-                <span class="val rem">{{paymentInfo.remainingAmount}}€</span>
-            </div>
-        </div>
-        <div class="pay-sch">
-            <p class="pay-date">{{paymentInfo.lastPaymentDate}}: {{paymentInfo.lastPaymentDetails}}</p>
-            <p class="next-pay">Tu próximo pago: {{paymentInfo.nextPaymentDetails}}</p>
-        </div>
-        <p class="pay-note" style="font-style: italic">*Te avisaremos 40 días antes del inicio del viaje para abonar el resto del importe o cuando el cupo de vuelos de tu ciudad esté lleno para abonar el 25% del importe</p>
+  <ng-template pTemplate="header">
+    <div class="pan-hdr">Información sobre el pago</div>
+  </ng-template>
+  <div class="pay-det">
+    <div class="pay-amts">
+      <div class="amt-box">
+        <span class="lbl">Total a pagar</span>
+        <br />
+        <span class="val">{{ paymentInfo.totalAmount | currencyFormat }}</span>
+      </div>
+      <div class="amt-box">
+        <span class="lbl">Pagado</span>
+        <br />
+        <span class="val pay">{{
+          paymentInfo.paidAmount | currencyFormat
+        }}</span>
+      </div>
+      <div class="amt-box">
+        <span class="lbl">Restante</span>
+        <br />
+        <span class="val rem">{{
+          paymentInfo.remainingAmount | currencyFormat
+        }}</span>
+      </div>
     </div>
+    <div class="pay-sch">
+      <p class="pay-date">
+        {{ paymentInfo.lastPaymentDate }}: {{ paymentInfo.lastPaymentDetails }}
+      </p>
+      <p class="next-pay">
+        Tu próximo pago: {{ paymentInfo.nextPaymentDetails }}
+      </p>
+    </div>
+    <p class="pay-note" style="font-style: italic">
+      *Te avisaremos 40 días antes del inicio del viaje para abonar el resto del
+      importe o cuando el cupo de vuelos de tu ciudad esté lleno para abonar el
+      25% del importe
+    </p>
+  </div>
 </p-panel>

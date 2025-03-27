@@ -201,8 +201,8 @@ export class BookingsService {
    * @param id - The public ID.
    * @returns Observable of Payment array.
    */
-  getPaymentsByPublicID(id: string): Observable<Payment[]> {
-    return this.http.get<Payment[]>(
+  getPaymentsByPublicID(id: string): Observable<Payment> {
+    return this.http.get<Payment>(
       `${this.API_URL}/${id}/payment/by-public-id`,
       this.httpOptions
     );

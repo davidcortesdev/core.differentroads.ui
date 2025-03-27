@@ -57,4 +57,5 @@ export interface ReservationInfo {
   customerName: string;
   tripDetails: TripDetails;
   travelers: TravelerInfo[];
+  totalAmount: number;
 }

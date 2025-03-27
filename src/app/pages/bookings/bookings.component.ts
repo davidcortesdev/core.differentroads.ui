@@ -6,6 +6,7 @@ import { BookingsService } from '../../core/services/bookings.service';
 import { BookingMappingService } from '../../core/services/booking-mapping.service';
 import { PeriodsService } from '../../core/services/periods.service';
 import { Activity } from '../../core/models/tours/activity.model';
+import { Flight } from '../../core/models/tours/flight.model';
 import { finalize } from 'rxjs/operators';
 import { catchError, of } from 'rxjs';
 
@@ -49,11 +50,10 @@ interface RetailerInfo {
   phone: string;
 }
 
-// Mantener unitPrice en la interfaz para compatibilidad con el componente hijo
 interface TripItemData {
   quantity: number;
   unitPrice: number;
-  value?: number;  // Añadido para almacenar el valor total
+  value?: number;
   description?: string;
 }
 
@@ -74,30 +74,9 @@ interface PaymentHistoryItem {
   status: string;
 }
 
-interface FlightSegment {
-  departureDate: string;
-  departureTime: string;
-  departureAirport: string;
-  departureCode: string;
-  arrivalTime: string;
-  arrivalAirport: string;
-  arrivalCode: string;
-}
-
-interface FlightDirection {
-  date: string;
-  segments: FlightSegment[];
-  stops: number;
-}
-
-interface FlightsData {
-  outbound: FlightDirection;
-  inbound: FlightDirection;
-}
-
 // Interfaz actualizada para los datos de pasajeros compatible con el componente hijo
 export interface PassengerData {
-  id: number; // Debe ser number para mantener compatibilidad
+  id: number;
   fullName: string;
   documentType: string;
   documentNumber: string;
@@ -111,7 +90,6 @@ export interface PassengerData {
   documentExpirationDate?: string;
   comfortPlan?: string;
   insurance?: string;
-  // Campos adicionales que pueden venir de la API
   nationality?: string;
   ageGroup?: string;
 }
@@ -181,17 +159,27 @@ export class BookingsComponent implements OnInit {
   // Datos reales de pasajeros que se cargarán de la API
   passengers: PassengerData[] = [];
 
-  flightsData: FlightsData = {
+  // Datos adaptados para Flight Section Component
+  adaptedFlightData: Flight = {
+    id: '',
+    externalID: '',
+    name: '',
     outbound: {
+      activityID: 0,
+      availability: 0,
       date: '',
-      stops: 0,
+      name: '',
       segments: [],
+      serviceCombinationID: 0
     },
     inbound: {
+      activityID: 0,
+      availability: 0,
       date: '',
-      stops: 0,
+      name: '',
       segments: [],
-    },
+      serviceCombinationID: 0
+    }
   };
 
   bookingActivities: BookingActivity[] = [];
@@ -261,9 +249,9 @@ export class BookingsComponent implements OnInit {
           // Actualizar información de pagos
           this.updatePaymentInfo(booking);
           
-          // Actualizar vuelos si están disponibles
+          // Actualizar vuelos si están disponibles - ahora directamente para Flight
           if (booking.flights && booking.flights.length > 0) {
-            this.updateFlightsData(booking);
+            this.adaptFlightData(booking);
           }
           
           // Actualizar pasajeros si están disponibles
@@ -453,69 +441,93 @@ export class BookingsComponent implements OnInit {
     }
   }
 
- // Actualizar información de vuelos usando Flight de los modelos
-updateFlightsData(booking: any): void {
-  if (booking.flights && booking.flights.length > 0) {
-    try {
-      // Inicializar datos de vuelos
-      this.flightsData = {
-        outbound: {
-          date: '',
-          stops: 0,
-          segments: []
-        },
-        inbound: {
-          date: '',
-          stops: 0,
-          segments: []
-        }
-      };
-      
-      // Procesar vuelos
-      booking.flights.forEach((flight: any) => {
+  // Método adaptado para trabajar directamente con FlightSectionComponent
+  adaptFlightData(booking: any): void {
+    if (booking.flights && booking.flights.length > 0) {
+      try {
+        // Inicializar el objeto Flight
+        this.adaptedFlightData = {
+          id: this.bookingId || '',
+          externalID: this.bookingData.bookingReference || '',
+          name: 'Flight Details',
+          outbound: {
+            activityID: 0,
+            availability: 1,
+            date: '',
+            name: 'Outbound Flight',
+            serviceCombinationID: 0,
+            segments: []
+          },
+          inbound: {
+            activityID: 0,
+            availability: 1,
+            date: '',
+            name: 'Inbound Flight',
+            serviceCombinationID: 0,
+            segments: []
+          }
+        };
+        
+        // Procesar vuelos
+        const flight = booking.flights[0]; // Tomamos el primer vuelo
+        
         // Procesar segmentos de ida (outbound)
         if (flight.outbound && flight.outbound.segments && flight.outbound.segments.length > 0) {
-          this.flightsData.outbound.date = flight.outbound.date || '';
-          this.flightsData.outbound.stops = flight.outbound.segments.length - 1;
+          this.adaptedFlightData.outbound.date = flight.outbound.date || '';
           
           // Mapear cada segmento
-          this.flightsData.outbound.segments = flight.outbound.segments.map((segment: any) => ({
-            departureDate: segment.departureDate || '',
+          this.adaptedFlightData.outbound.segments = flight.outbound.segments.map((segment: any, index: number) => ({
+            departureCity: segment.departureCity || '',
+            arrivalCity: segment.arrivalCity || '',
+            flightNumber: segment.flightNumber || 'XX123',
+            departureIata: segment.departureIata || '',
             departureTime: segment.departureTime || '',
-            departureAirport: segment.departureCity || '',
-            departureCode: segment.departureIata || '',
             arrivalTime: segment.arrivalTime || '',
-            arrivalAirport: segment.arrivalCity || '',
-            arrivalCode: segment.arrivalIata || ''
+            arrivalIata: segment.arrivalIata || '',
+            numNights: segment.numNights || 0,
+            differential: segment.differential || 0,
+            order: index,
+            airline: {
+              name: segment.airline?.name || 'Airline',
+              email: segment.airline?.email || 'info@airline.com',
+              logo: segment.airline?.logo || ''
+            }
           }));
         }
         
         // Procesar segmentos de vuelta (inbound)
         if (flight.inbound && flight.inbound.segments && flight.inbound.segments.length > 0) {
-          this.flightsData.inbound.date = flight.inbound.date || '';
-          this.flightsData.inbound.stops = flight.inbound.segments.length - 1;
+          this.adaptedFlightData.inbound.date = flight.inbound.date || '';
           
           // Mapear cada segmento
-          this.flightsData.inbound.segments = flight.inbound.segments.map((segment: any) => ({
-            departureDate: segment.departureDate || '',
+          this.adaptedFlightData.inbound.segments = flight.inbound.segments.map((segment: any, index: number) => ({
+            departureCity: segment.departureCity || '',
+            arrivalCity: segment.arrivalCity || '',
+            flightNumber: segment.flightNumber || 'XX456',
+            departureIata: segment.departureIata || '',
             departureTime: segment.departureTime || '',
-            departureAirport: segment.departureCity || '',
-            departureCode: segment.departureIata || '',
             arrivalTime: segment.arrivalTime || '',
-            arrivalAirport: segment.arrivalCity || '',
-            arrivalCode: segment.arrivalIata || ''
+            arrivalIata: segment.arrivalIata || '',
+            numNights: segment.numNights || 0,
+            differential: segment.differential || 0,
+            order: index,
+            airline: {
+              name: segment.airline?.name || 'Airline',
+              email: segment.airline?.email || 'info@airline.com',
+              logo: segment.airline?.logo || ''
+            }
           }));
         }
-      });
-      
-      console.log('Datos de vuelos actualizados:', this.flightsData);
-    } catch (error) {
-      console.error('Error al procesar datos de vuelos:', error);
+        
+        console.log('Datos adaptados para Flight:', this.adaptedFlightData);
+      } catch (error) {
+        console.error('Error al procesar datos de vuelos:', error);
+      }
+    } else {
+      console.log('No hay información de vuelos disponible');
     }
-  } else {
-    console.log('No hay información de vuelos disponible');
   }
-}
+
   // Actualizar actividades
   updateActivitiesData(booking: any): void {
     // Limpiar actividades existentes
@@ -568,7 +580,7 @@ updateFlightsData(booking: any): void {
         // Obtener número de documento
         const documentNumber = travelerData.dni || travelerData.passportID || travelerData.docNum || '';
         
-        // Mapear datos del pasajero - importante: ID debe ser número
+        // Mapear datos del pasajero - importante: ID debe ser number
         const passenger: PassengerData = {
           id: index + 1, // Convertir a number usando el índice
           fullName: fullName,
@@ -841,7 +853,7 @@ updateFlightsData(booking: any): void {
   }
   
   // Método para formatear fecha corta (ej: "3 Jun")
-    formatDateShort(dateStr: string): string {
+  formatDateShort(dateStr: string): string {
     try {
       const date = new Date(dateStr);
       const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -850,4 +862,4 @@ updateFlightsData(booking: any): void {
       return dateStr;
     }
   }
-}
+ }

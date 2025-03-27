@@ -181,7 +181,6 @@ import { BookingActivitiesComponent } from './pages/bookings/booking-activities/
 import { BookingCodeSectionComponent } from './pages/bookings/booking-code-section/booking-code-section.component';
 import { BookingDetailsViewComponent } from './pages/bookings/booking-details-view/booking-details-view.component';
 import { BookingDocumentActionsComponent } from './pages/bookings/booking-document-actions/booking-document-actions.component';
-import { BookingFlightsComponent } from './pages/bookings/booking-flights/booking-flights.component';
 import { BookingHeaderSectionComponent } from './pages/bookings/booking-header-section/booking-header-section.component';
 import { BookingPaymentHistoryComponent } from './pages/bookings/booking-payment-history/booking-payment-history.component';
 import { BookingPersonalDataComponent } from './pages/bookings/booking-personal-data/booking-personal-data.component';
@@ -280,7 +279,6 @@ registerLocaleData(localeEs);
     BookingCodeSectionComponent,
     BookingDetailsViewComponent,
     BookingDocumentActionsComponent,
-    BookingFlightsComponent,
     BookingHeaderSectionComponent,
     BookingPaymentHistoryComponent,
     BookingPersonalDataComponent,

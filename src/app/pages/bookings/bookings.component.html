@@ -53,10 +53,13 @@
     [passengers]="passengers">
   </app-booking-personal-data>
   
-  <!-- Flights -->
-  <app-booking-flights
-    [flightsData]="flightsData">
-  </app-booking-flights>
+ <!-- Flights -->
+  <div class="container-flight">
+    <app-flight-section
+    [flight]="adaptedFlightData">
+  </app-flight-section>
+  </div>
+
   
   <!-- Activities -->
   <app-booking-activities 

@@ -39,6 +39,7 @@ export interface OrderProduct {
 export class TourOrderService {
   private basePrice$ = new BehaviorSubject<number>(0);
   private departureSelected$ = new BehaviorSubject<boolean>(false);
+  public selectedFlight$ = new BehaviorSubject<any>(null);
   // BehaviorSubject para almacenar y compartir la información
   private selectedDateInfoSource = new BehaviorSubject<DateInfo>({
     date: '',

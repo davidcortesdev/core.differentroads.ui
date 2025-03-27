@@ -19,32 +19,35 @@
     <!-- Marketing Badge -->
     <div class="badge" *ngIf="tour.marketingSection?.marketingTag">
       <p-message
-      severity="secondary"
-      variant="outlined"
-      icon="pi pi-star"
-      size="small"
-      >{{ tour.marketingSection?.marketingTag }}</p-message
-    >
+        severity="secondary"
+        variant="outlined"
+        icon="pi pi-star"
+        size="small"
+        >{{ tour.marketingSection?.marketingTag }}</p-message
+      >
     </div>
 
     <!-- Price Section -->
     <div class="price-section">
       <div class="price-info">
-        <div class="before-price" *ngIf="totalPrice <= 0">
+        <div
+          class="before-price"
+          *ngIf="totalPrice <= 0 && selectedActivities.length <= 0"
+        >
           <span>Antes</span>
           <span>{{ basePrice + 200 | currencyFormat : "EUR" }}</span>
         </div>
         <div class="current-price">
-          <span>{{ totalPrice > 0 ? 'Total' : 'Desde' }}</span>
-          <span class="amount">{{ (totalPrice > 0 ? totalPrice : basePrice) | currencyFormat : "EUR" }}</span>
+          <span>{{ totalPrice > 0 ? "Total" : "Desde" }}</span>
+          <span class="amount">{{
+            (totalPrice > 0 ? totalPrice : basePrice) | currencyFormat : "EUR"
+          }}</span>
         </div>
       </div>
-      <!-- Total Price Information -->
-      <div class="total-price-container" *ngIf="totalPrice > 0">
-        <div class="passengers-info">
+      <div class="total-price-container">
+        <div class="passengers-info" *ngIf="selectedDate && departureCity">
           <span>{{ selectedDate }} - {{ tripType }}</span>
-          <br>
-          <!-- for in selected activities array name  -->
+          <br />
           <span>{{
             departureCity.toLowerCase().includes("sin")
               ? "Sin vuelos "
@@ -53,9 +56,16 @@
               : " Vuelo Desde " + departureCity
           }}</span>
         </div>
-        <span *ngFor="let activity of selectedActivities">{{
-          activity.name
-        }}</span>
+        <span
+          *ngIf="selectedActivities.length > 0"
+          pTooltip="{{ getSelectedActivitiesNames() }}"
+          tooltipPosition="bottom"
+        >
+          {{ selectedActivities.length }} actividad{{
+            selectedActivities.length > 1 ? "es" : ""
+          }}
+          opcional{{ selectedActivities.length > 1 ? "es" : "" }}
+        </span>
       </div>
     </div>
 

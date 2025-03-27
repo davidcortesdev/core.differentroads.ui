@@ -185,4 +185,16 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   bookTour() {
     this.tourComponent.createOrderAndRedirect(this.periodID);
   }
+
+  getSelectedActivitiesNames(): string {
+    // Verifica si hay actividades seleccionadas
+    if (!this.selectedActivities || this.selectedActivities.length === 0) {
+      return 'No hay actividades seleccionadas';
+    }
+  
+    // Extrae los nombres y los une en un string separado por comas (o <br> para saltos de línea)
+    return this.selectedActivities
+      .map(activity => activity.name) // Extrae solo el nombre
+      .join(', '); // Separa por comas (puedes usar '<br>' si prefieres saltos de línea)
+  }
 }

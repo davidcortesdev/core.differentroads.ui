@@ -34,8 +34,6 @@ export class PassengerCardComponent implements OnInit, OnChanges {
       }
       this.initForm();
     });
-    
-    console.log('passenger', this.passenger);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -70,18 +68,17 @@ export class PassengerCardComponent implements OnInit, OnChanges {
   }
 
   onEdit(): void {
-    console.log('edit');
     this.isEditing = true;
-    // No es necesario reinicializar el formulario aquí, ya que no ha cambiado el pasajero
   }
 
   onSave(): void {
-    console.log('save');
     if (this.passengerForm.valid) {
+      const formValue = this.passengerForm.getRawValue(); // Gets values including disabled fields
+      
       // Crear una copia del pasajero con los valores actualizados
       const updatedPassenger: PassengerData = {
         ...this.passenger,
-        ...this.passengerForm.value
+        ...formValue
       };
       
       // Emitir el pasajero actualizado al componente padre
@@ -115,10 +112,32 @@ export class PassengerCardComponent implements OnInit, OnChanges {
   }
 
   onCancel(): void {
-    console.log('cancel');
     // Restaurar el formulario a los valores originales antes de salir del modo edición
     this.passengerForm.reset(this.passenger);
     this.isEditing = false;
+  }
+  
+  // Method to check if there are any pending fields
+  hasPendingFields(): boolean {
+    if (!this.passenger) return true;
+    
+    // Check required fields first
+    if (!this.passenger.fullName || !this.passenger.documentNumber || !this.passenger.documentType) {
+      return true;
+    }
+    
+    // Check other important fields
+    if (!this.passenger.birthDate || !this.passenger.gender || !this.passenger.email || 
+        !this.passenger.phone || !this.passenger.room) {
+      return true;
+    }
+    
+    // Check passport specific fields
+    if (!this.passenger.documentExpeditionDate || !this.passenger.documentExpirationDate) {
+      return true;
+    }
+    
+    return false;
   }
 
   getPassengerTypeLabel(type: string): string {

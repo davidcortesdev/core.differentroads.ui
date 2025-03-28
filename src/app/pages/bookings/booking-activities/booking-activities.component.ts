@@ -27,16 +27,13 @@ export class BookingActivitiesComponent implements OnInit {
   constructor(private sanitizer: DomSanitizer) {}
 
   ngOnInit(): void {
-    console.log('BookingActivitiesComponent inicializado con activities:', this.activities);
   }
 
   onEliminateActivity(activityId: number): void {
-    console.log('Eliminando actividad con ID:', activityId);
     this.eliminateActivity.emit(activityId);
   }
 
   onAddActivity(activityId: number): void {
-    console.log('Añadiendo actividad con ID:', activityId);
     this.addActivity.emit(activityId);
   }
 

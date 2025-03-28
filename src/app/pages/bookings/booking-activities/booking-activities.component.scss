@@ -246,7 +246,7 @@
     }
 
     @media (max-width: 576px) {
-        margin: 0.25rem;
+        margin: 0.8rem;
 
         .activities-content {
             padding: 0.25rem;
@@ -321,5 +321,8 @@
             font-size: 0.9rem;
             padding: 0.5rem 1rem;
         }
+    }
+    ::ng-deep .p-dataview-emptymessage {
+        display: none !important;
     }
 }

@@ -1,6 +1,6 @@
 <div class="activities-container">
   <p-panel header="Actividades">
-    <p-dataview #dv [value]="activities">
+    <p-dataview #dv [value]="activities" [emptyMessage]="''">
       <ng-template #list let-items>
         <div class="activities-content">
           <div *ngFor="let activity of items" class="activity-item">
@@ -34,7 +34,7 @@
                     *ngIf="activity.isOptional && activity.isIncluded"
                     pButton
                     type="button"
-                    label="Eliminar Actividad"
+                    label="Eliminar"
                     class="p-button-rounded p-button-outlined"
                     (click)="onEliminateActivity(activity.id)">
                   </button>

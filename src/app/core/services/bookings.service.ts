@@ -8,7 +8,12 @@ import {
   GetAllBookingsParams,
 } from '../models/bookings/booking.model';
 import { Order } from '../models/orders/order.model';
-import { IPaymentVoucher, Payment } from '../models/bookings/payment.model';
+import {
+  IPaymentVoucher,
+  Payment,
+  PaymentStatus,
+  VoucherReviewStatus,
+} from '../models/bookings/payment.model';
 import { Pagination } from '../models/commons/pagination.model';
 
 @Injectable({
@@ -288,11 +293,11 @@ export class BookingsService {
     id: string,
     paymentId: string,
     voucherId: string,
-    data: any
+    status: VoucherReviewStatus
   ): Observable<any> {
     return this.http.put<any>(
       `${this.API_URL}/${id}/payment/${paymentId}/voucher/${voucherId}/review`,
-      data,
+      { status, complete: true },
       this.httpOptions
     );
   }

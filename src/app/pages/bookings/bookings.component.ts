@@ -5,11 +5,18 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BookingsService } from '../../core/services/bookings.service';
 import { BookingMappingService } from '../../core/services/booking-mapping.service';
 import { PeriodsService } from '../../core/services/periods.service';
-import { RetailersService, Retailer } from '../../core/services/retailers.service';
+import {
+  RetailersService,
+  Retailer,
+} from '../../core/services/retailers.service';
 import { Activity } from '../../core/models/tours/activity.model';
 import { Flight } from '../../core/models/tours/flight.model';
 import { finalize } from 'rxjs/operators';
 import { catchError, of } from 'rxjs';
+import {
+  Payment,
+  PaymentStatus,
+} from '../../core/models/bookings/payment.model';
 
 interface BookingData {
   title: string;
@@ -43,7 +50,7 @@ interface BookingImage {
   departureDate: string;
   passengers: number;
   price: string;
-  tourName?: string; 
+  tourName?: string;
 }
 
 interface RetailerInfo {
@@ -67,12 +74,6 @@ interface PaymentInfo {
 interface UpcomingPayment {
   date: string;
   amount: number;
-}
-
-interface PaymentHistoryItem {
-  date: string;
-  amount: number;
-  status: string;
 }
 
 // Interfaz actualizada para los datos de pasajeros compatible con el componente hijo
@@ -124,7 +125,6 @@ export class BookingsComponent implements OnInit {
 
   // El resto de datos se mantendrán quemados
 
-
   isTO: boolean = true;
   isAdmin: boolean = false;
 
@@ -152,7 +152,7 @@ export class BookingsComponent implements OnInit {
 
   upcomingPayments: UpcomingPayment[] = [];
 
-  paymentHistory: PaymentHistoryItem[] = [];
+  paymentHistory: Payment[] = []; // Updated payment history type
 
   // Datos reales de pasajeros que se cargarán de la API
   passengers: PassengerData[] = [];
@@ -168,7 +168,7 @@ export class BookingsComponent implements OnInit {
       date: '',
       name: '',
       segments: [],
-      serviceCombinationID: 0
+      serviceCombinationID: 0,
     },
     inbound: {
       activityID: 0,
@@ -176,8 +176,8 @@ export class BookingsComponent implements OnInit {
       date: '',
       name: '',
       segments: [],
-      serviceCombinationID: 0
-    }
+      serviceCombinationID: 0,
+    },
   };
 
   bookingActivities: BookingActivity[] = [];
@@ -185,12 +185,12 @@ export class BookingsComponent implements OnInit {
   paymentForm: FormGroup;
   displayPaymentModal: boolean = false;
 
+  // Nueva propiedad para almacenar el total de la reserva
+  bookingTotal: number = 0;
+
   // Getter para combinar actividades incluidas y disponibles
   get combinedActivities(): BookingActivity[] {
-    return [
-      ...this.bookingActivities,
-      ...this.availableActivities
-    ];
+    return [...this.availableActivities];
   }
 
   constructor(
@@ -210,9 +210,9 @@ export class BookingsComponent implements OnInit {
 
   ngOnInit(): void {
     this.messageService.clear();
-    
+
     // Obtenemos el ID de la URL
-    this.route.params.subscribe(params => {
+    this.route.params.subscribe((params) => {
       if (params['id']) {
         this.bookingId = params['id'];
         this.loadBookingData(this.bookingId);
@@ -224,8 +224,9 @@ export class BookingsComponent implements OnInit {
   loadBookingData(id: string): void {
     console.log('Cargando datos de la reserva con ID:', id);
     this.isLoading = true;
-    
-    this.bookingsService.getBookingById(id)
+
+    this.bookingsService
+      .getBookingById(id)
       .pipe(
         finalize(() => {
           this.isLoading = false;
@@ -235,38 +236,41 @@ export class BookingsComponent implements OnInit {
         next: (booking) => {
           console.log('Booking cargado:', booking);
           this.bookingComplete = booking;
-          
+
           // Actualizar datos básicos de la reserva
           this.updateBasicBookingData(booking);
-          
+
           // Actualizar información de la imagen
           this.updateBookingImages(booking);
-          
+
           // Cargar información del retailer
           const retailerId = booking?.retailerID || '';
           this.loadRetailerInfo(retailerId);
-          
+
           // Actualizar datos de elementos del viaje de forma dinámica
           this.updateTripItemsData(booking);
-          
+
           // Actualizar información de pagos
           this.updatePaymentInfo(booking);
-          
+
           // Actualizar vuelos si están disponibles - ahora directamente para Flight
           if (booking.flights && booking.flights.length > 0) {
             this.adaptFlightData(booking);
           }
-          
+
           // Actualizar pasajeros si están disponibles
           if (booking.travelers && booking.travelers.length > 0) {
             this.updatePassengersData(booking);
           }
-          
+
           // Actualizar actividades si están disponibles
-          if (booking.optionalActivitiesRef && booking.optionalActivitiesRef.length > 0) {
+          if (
+            booking.optionalActivitiesRef &&
+            booking.optionalActivitiesRef.length > 0
+          ) {
             this.updateActivitiesData(booking);
           }
-          
+
           // Cargar actividades del período usando el externalID correcto
           if (booking.periodData && booking.periodData['externalID']) {
             this.loadPeriodActivities(booking.periodData['externalID']);
@@ -281,7 +285,7 @@ export class BookingsComponent implements OnInit {
             detail: 'No se pudo cargar la información de la reserva',
             life: 3000,
           });
-        }
+        },
       });
   }
 
@@ -294,24 +298,23 @@ export class BookingsComponent implements OnInit {
       if (this.bookingImages.length > 0) {
         this.bookingImages[0].retailer = 'Sin asignar';
       }
-    
+
       return;
     }
-    
+
     // Usar el método preloadRetailerName para cargar el nombre rápidamente
     this.retailersService.preloadRetailerName(retailerId);
-    
+
     // Obtener información completa del retailer
     this.retailersService.getRetailerById(retailerId).subscribe({
       next: (retailerData) => {
         this.currentRetailer = retailerData;
-        
+
         // Actualizar bookingData
         this.bookingData.retailer = retailerData.name || 'Sin nombre';
-        
+
         // Actualizar retailerInfo
-       
-        
+
         // Actualizar bookingImages
         if (this.bookingImages.length > 0) {
           this.bookingImages[0].retailer = retailerData.name || 'Sin nombre';
@@ -320,24 +323,25 @@ export class BookingsComponent implements OnInit {
       error: (error) => {
         console.error('Error al cargar datos del retailer:', error);
         this.currentRetailer = null;
-        
+
         // Establecer valores por defecto en caso de error
         this.bookingData.retailer = 'No disponible';
-        
+
         if (this.bookingImages.length > 0) {
           this.bookingImages[0].retailer = 'No disponible';
         }
-      }
+      },
     });
   }
 
   // Método para cargar actividades del período
   loadPeriodActivities(externalId: string): void {
     console.log('Cargando actividades del período:', externalId);
-    
-    this.periodsService.getActivities(externalId)
+
+    this.periodsService
+      .getActivities(externalId)
       .pipe(
-        catchError(error => {
+        catchError((error) => {
           console.error('Error al cargar actividades del período:', error);
           this.messageService.add({
             key: 'center',
@@ -349,41 +353,49 @@ export class BookingsComponent implements OnInit {
           return of([]);
         })
       )
-      .subscribe(activities => {
+      .subscribe((activities) => {
         console.log('Actividades del período obtenidas:', activities);
-        
+
         // Convertir actividades de la API al formato del componente
-        this.availableActivities = activities.map((activity: Activity, index: number) => {
-          // Verificar si esta actividad ya está incluida en las actividades actuales
-          const isAlreadyIncluded = this.bookingActivities.some(
-            bookingActivity => bookingActivity.title === activity.name
-          );
-          
-          if (isAlreadyIncluded) {
-            return null; // Para filtrar después
-          }
-          
-          // Extraer la URL de la imagen si existe
-          let imageUrl = 'https://picsum.photos/400/200'; // Imagen predeterminada
-          if (activity.activityImage && activity.activityImage.length > 0 && 
-              activity.activityImage[0].url) {
-            imageUrl = activity.activityImage[0].url;
-          }
-          
-          return {
-            id: 1000 + index, // ID arbitrario que no entre en conflicto con los existentes
-            title: activity.name || `Actividad ${index + 1}`,
-            description: activity.description || 'Sin descripción disponible',
-            imageUrl: imageUrl,
-            price: activity.price ? `+${activity.price}€` : '+0€',
-            priceValue: activity.price || 0,
-            isOptional: true,
-            perPerson: true, // Valor predeterminado ya que perPerson no está en Activity
-            isIncluded: false
-          };
-        }).filter(activity => activity !== null); // Filtrar las actividades que ya están incluidas
-        
-        console.log('Actividades disponibles procesadas:', this.availableActivities);
+        this.availableActivities = activities
+          .map((activity: Activity, index: number) => {
+            // Verificar si esta actividad ya está incluida en las actividades actuales
+            const isAlreadyIncluded = this.bookingActivities.some(
+              (bookingActivity) => bookingActivity.title === activity.name
+            );
+
+            if (isAlreadyIncluded) {
+              return null; // Para filtrar después
+            }
+
+            // Extraer la URL de la imagen si existe
+            let imageUrl = 'https://picsum.photos/400/200'; // Imagen predeterminada
+            if (
+              activity.activityImage &&
+              activity.activityImage.length > 0 &&
+              activity.activityImage[0].url
+            ) {
+              imageUrl = activity.activityImage[0].url;
+            }
+
+            return {
+              id: 1000 + index, // ID arbitrario que no entre en conflicto con los existentes
+              title: activity.name || `Actividad ${index + 1}`,
+              description: activity.description || 'Sin descripción disponible',
+              imageUrl: imageUrl,
+              price: activity.price ? `+${activity.price}€` : '+0€',
+              priceValue: activity.price || 0,
+              isOptional: true,
+              perPerson: true, // Valor predeterminado ya que perPerson no está en Activity
+              isIncluded: false,
+            };
+          })
+          .filter((activity) => activity !== null); // Filtrar las actividades que ya están incluidas
+
+        console.log(
+          'Actividades disponibles procesadas:',
+          this.availableActivities
+        );
       });
   }
 
@@ -391,28 +403,31 @@ export class BookingsComponent implements OnInit {
   updateTripItemsData(booking: any): void {
     // Limpiar el array de elementos del viaje
     this.tripItems = [];
-    
+
     // Verificar si extendedTotal existe en periodData
-    if (booking?.periodData?.extendedTotal && Array.isArray(booking.periodData.extendedTotal)) {
+    if (
+      booking?.periodData?.extendedTotal &&
+      Array.isArray(booking.periodData.extendedTotal)
+    ) {
       const extendedTotal = booking.periodData.extendedTotal;
-      
+
       // Recorrer los elementos de extendedTotal y agregarlos al array
       extendedTotal.forEach((item: any) => {
         const qty = item.qty || 0;
         const value = item.value || 0;
         const description = item.description || '';
-        
+
         // Agregar el item al array - ahora unitPrice es el valor individual
         // y value se mantiene como el valor total (qty * value individual)
         this.tripItems.push({
           quantity: qty,
           unitPrice: value, // Guardar el valor total en unitPrice para compatibilidad
-          value: value,     // Valor total sin modificar
-          description: description
+          value: value, // Valor total sin modificar
+          description: description,
         });
       });
     }
-    
+
     console.log('Elementos del viaje actualizados:', this.tripItems);
   }
 
@@ -420,14 +435,19 @@ export class BookingsComponent implements OnInit {
   updateBasicBookingData(booking: any): void {
     this.bookingData = {
       title: booking?.periodData?.['tour']?.name || 'Sin título',
-      date: booking?.periodData?.['dayOne'] ? 
-            this.formatDateForDisplay(booking.periodData['dayOne']) : 'Fecha no disponible',
+      date: booking?.periodData?.['dayOne']
+        ? this.formatDateForDisplay(booking.periodData['dayOne'])
+        : 'Fecha no disponible',
       bookingCode: booking?.ID || '',
       bookingReference: booking?.externalID || '',
       status: booking?.status || '',
       retailer: '', // Se actualizará en loadRetailerInfo
-      creationDate: booking?.createdAt ? this.formatDateForDisplay(booking.createdAt) : '',
-      price: this.formatCurrency(booking?.total || booking?.periodData?.total || 0),
+      creationDate: booking?.createdAt
+        ? this.formatDateForDisplay(booking.createdAt)
+        : '',
+      price: this.formatCurrency(
+        booking?.total || booking?.periodData?.total || 0
+      ),
     };
   }
 
@@ -435,58 +455,73 @@ export class BookingsComponent implements OnInit {
   updateBookingImages(booking: any): void {
     if (this.bookingImages.length > 0) {
       const tourName = booking?.periodData?.['tour']?.name || 'Sin título';
-      
+
       this.bookingImages[0] = {
         ...this.bookingImages[0],
         name: tourName,
         tourName: tourName, // Añadimos el nombre del tour
         imageUrl: this.bookingImages[0].imageUrl, // Mantener la imagen quemada
         retailer: '', // Se actualizará en loadRetailerInfo
-        creationDate: booking?.createdAt ? this.formatDateForDisplay(booking.createdAt) : this.bookingImages[0].creationDate,
-        departureDate: booking?.periodData?.['dayOne'] ? this.formatDateShort(booking.periodData['dayOne']) : this.bookingImages[0].departureDate,
-        passengers: booking?.travelersNumber || this.bookingImages[0].passengers,
-        price: this.formatCurrency(booking?.total || booking?.periodData?.total || 0),
+        creationDate: booking?.createdAt
+          ? this.formatDateForDisplay(booking.createdAt)
+          : this.bookingImages[0].creationDate,
+        departureDate: booking?.periodData?.['dayOne']
+          ? this.formatDateShort(booking.periodData['dayOne'])
+          : this.bookingImages[0].departureDate,
+        passengers:
+          booking?.travelersNumber || this.bookingImages[0].passengers,
+        price: this.formatCurrency(
+          booking?.total || booking?.periodData?.total || 0
+        ),
       };
     }
   }
 
   // Actualizar información de pagos
   updatePaymentInfo(booking: any): void {
+    // Se obtiene el total de la reserva desde booking o periodData
     const total = booking?.total || booking?.periodData?.total || 0;
-    const paidAmount = booking?.paidAmount || 0;
-    
+    // Guardamos el total para pasarlo al componente de pagos
+    this.bookingTotal = total;
+
+    // Actualizamos la información de pagos a nivel local (si se usa en otro lado)
     this.paymentInfo = {
       totalPrice: total,
-      pendingAmount: total - paidAmount,
-      paidAmount: paidAmount
+      pendingAmount: total - (booking?.paidAmount || 0),
+      paidAmount: booking?.paidAmount || 0,
     };
-    
+
     // Actualizar el historial de pagos si existe
     if (booking.payments && Array.isArray(booking.payments)) {
-      this.paymentHistory = booking.payments.map((payment: any) => ({
-        date: this.formatDateForDisplay(payment.date || payment.createdAt),
-        amount: payment.amount || 0,
-        status: payment.status || 'Pendiente'
-      }));
+      this.paymentHistory = booking.payments;
     } else {
       // Si no hay pagos, crear un historial básico con el total como pendiente
-      this.paymentHistory = [{
-        date: this.formatDateForDisplay(booking.createdAt || new Date().toISOString()),
-        amount: total,
-        status: 'Pendiente'
-      }];
+      this.paymentHistory = [
+        {
+          bookingID: this.bookingId,
+          amount: total,
+          publicID: '', // default empty until set by backend
+          status: PaymentStatus.PENDING,
+          createdAt: this.formatDateForDisplay(
+            booking.createdAt || new Date().toISOString()
+          ),
+          updatedAt: this.formatDateForDisplay(
+            booking.createdAt || new Date().toISOString()
+          ),
+        },
+      ];
     }
-    
+
     // Actualizar pagos programados (ejemplo, se puede adaptar según los datos reales)
     this.upcomingPayments = [];
     if (this.paymentInfo.pendingAmount > 0) {
       // Si hay un monto pendiente, crear un pago programado a futuro
       const futureDate = new Date();
       futureDate.setMonth(futureDate.getMonth() + 1);
-      
+
       this.upcomingPayments.push({
         date: futureDate.toISOString().split('T')[0],
-        amount: this.paymentInfo.pendingAmount
+        amount: this.paymentInfo.pendingAmount,
       });
     }
   }
@@ -506,7 +541,7 @@ export class BookingsComponent implements OnInit {
             date: '',
             name: 'Outbound Flight',
             serviceCombinationID: 0,
-            segments: []
+            segments: [],
           },
           inbound: {
             activityID: 0,
@@ -514,61 +549,72 @@ export class BookingsComponent implements OnInit {
             date: '',
             name: 'Inbound Flight',
             serviceCombinationID: 0,
-            segments: []
-          }
+            segments: [],
+          },
         };
-        
+
         // Procesar vuelos
         const flight = booking.flights[0]; // Tomamos el primer vuelo
-        
+
         // Procesar segmentos de ida (outbound)
-        if (flight.outbound && flight.outbound.segments && flight.outbound.segments.length > 0) {
+        if (
+          flight.outbound &&
+          flight.outbound.segments &&
+          flight.outbound.segments.length > 0
+        ) {
           this.adaptedFlightData.outbound.date = flight.outbound.date || '';
-          
+
           // Mapear cada segmento
-          this.adaptedFlightData.outbound.segments = flight.outbound.segments.map((segment: any, index: number) => ({
-            departureCity: segment.departureCity || '',
-            arrivalCity: segment.arrivalCity || '',
-            flightNumber: segment.flightNumber || 'XX123',
-            departureIata: segment.departureIata || '',
-            departureTime: segment.departureTime || '',
-            arrivalTime: segment.arrivalTime || '',
-            arrivalIata: segment.arrivalIata || '',
-            numNights: segment.numNights || 0,
-            differential: segment.differential || 0,
-            order: index,
-            airline: {
-              name: segment.airline?.name || 'Airline',
-              email: segment.airline?.email || 'info@airline.com',
-              logo: segment.airline?.logo || ''
-            }
-          }));
+          this.adaptedFlightData.outbound.segments =
+            flight.outbound.segments.map((segment: any, index: number) => ({
+              departureCity: segment.departureCity || '',
+              arrivalCity: segment.arrivalCity || '',
+              flightNumber: segment.flightNumber || 'XX123',
+              departureIata: segment.departureIata || '',
+              departureTime: segment.departureTime || '',
+              arrivalTime: segment.arrivalTime || '',
+              arrivalIata: segment.arrivalIata || '',
+              numNights: segment.numNights || 0,
+              differential: segment.differential || 0,
+              order: index,
+              airline: {
+                name: segment.airline?.name || 'Airline',
+                email: segment.airline?.email || 'info@airline.com',
+                logo: segment.airline?.logo || '',
+              },
+            }));
         }
-        
+
         // Procesar segmentos de vuelta (inbound)
-        if (flight.inbound && flight.inbound.segments && flight.inbound.segments.length > 0) {
+        if (
+          flight.inbound &&
+          flight.inbound.segments &&
+          flight.inbound.segments.length > 0
+        ) {
           this.adaptedFlightData.inbound.date = flight.inbound.date || '';
-          
+
           // Mapear cada segmento
-          this.adaptedFlightData.inbound.segments = flight.inbound.segments.map((segment: any, index: number) => ({
-            departureCity: segment.departureCity || '',
-            arrivalCity: segment.arrivalCity || '',
-            flightNumber: segment.flightNumber || 'XX456',
-            departureIata: segment.departureIata || '',
-            departureTime: segment.departureTime || '',
-            arrivalTime: segment.arrivalTime || '',
-            arrivalIata: segment.arrivalIata || '',
-            numNights: segment.numNights || 0,
-            differential: segment.differential || 0,
-            order: index,
-            airline: {
-              name: segment.airline?.name || 'Airline',
-              email: segment.airline?.email || 'info@airline.com',
-              logo: segment.airline?.logo || ''
-            }
-          }));
+          this.adaptedFlightData.inbound.segments = flight.inbound.segments.map(
+            (segment: any, index: number) => ({
+              departureCity: segment.departureCity || '',
+              arrivalCity: segment.arrivalCity || '',
+              flightNumber: segment.flightNumber || 'XX456',
+              departureIata: segment.departureIata || '',
+              departureTime: segment.departureTime || '',
+              arrivalTime: segment.arrivalTime || '',
+              arrivalIata: segment.arrivalIata || '',
+              numNights: segment.numNights || 0,
+              differential: segment.differential || 0,
+              order: index,
+              airline: {
+                name: segment.airline?.name || 'Airline',
+                email: segment.airline?.email || 'info@airline.com',
+                logo: segment.airline?.logo || '',
+              },
+            })
+          );
         }
-        
+
         console.log('Datos adaptados para Flight:', this.adaptedFlightData);
       } catch (error) {
         console.error('Error al procesar datos de vuelos:', error);
@@ -582,9 +628,12 @@ export class BookingsComponent implements OnInit {
   updateActivitiesData(booking: any): void {
     // Limpiar actividades existentes
     this.bookingActivities = [];
-    
+
     // Verificar si hay actividades opcionales
-    if (booking.optionalActivitiesRef && Array.isArray(booking.optionalActivitiesRef)) {
+    if (
+      booking.optionalActivitiesRef &&
+      Array.isArray(booking.optionalActivitiesRef)
+    ) {
       booking.optionalActivitiesRef.forEach((activity: any, index: number) => {
         this.bookingActivities.push({
           id: index + 1,
@@ -595,7 +644,7 @@ export class BookingsComponent implements OnInit {
           priceValue: activity.price || 0,
           isOptional: true,
           perPerson: activity.perPerson || true,
-          isIncluded: true // Si está en optionalActivitiesRef, ya está incluida
+          isIncluded: true, // Si está en optionalActivitiesRef, ya está incluida
         });
       });
     }
@@ -604,56 +653,72 @@ export class BookingsComponent implements OnInit {
   // Actualizar información de pasajeros
   updatePassengersData(booking: any): void {
     console.log('Actualizando datos de pasajeros:', booking.travelers);
-    
+
     if (booking.travelers && booking.travelers.length > 0) {
       // Limpiar el array de pasajeros
       this.passengers = [];
-      
+
       // Procesar los datos de los viajeros y mapearlos a nuestra interfaz
       booking.travelers.forEach((traveler: any, index: number) => {
         // Extraer los datos del viajero
         const travelerData = traveler.travelerData || {};
-        
+
         // Construir el nombre completo
         const firstName = travelerData.name || '';
         const lastName = travelerData.surname || '';
         const fullName = `${firstName} ${lastName}`.trim();
-        
+
         // Extraer tipo de documento
         let documentType = travelerData.documentType || '';
         if (documentType.toLowerCase() === 'dni' || travelerData.dni) {
           documentType = 'DNI';
-        } else if (documentType.toLowerCase().includes('passport') || travelerData.passportID) {
+        } else if (
+          documentType.toLowerCase().includes('passport') ||
+          travelerData.passportID
+        ) {
           documentType = 'Pasaporte';
         }
-        
+
         // Obtener número de documento
-        const documentNumber = travelerData.dni || travelerData.passportID || travelerData.docNum || '';
-        
+        const documentNumber =
+          travelerData.dni ||
+          travelerData.passportID ||
+          travelerData.docNum ||
+          '';
+
         // Mapear datos del pasajero - importante: ID debe ser number
         const passenger: PassengerData = {
           id: index + 1, // Convertir a number usando el índice
           fullName: fullName,
           documentType: documentType,
           documentNumber: documentNumber,
-          birthDate: travelerData.birthDate ? this.formatDateForDisplay(travelerData.birthDate) : '',
+          birthDate: travelerData.birthDate
+            ? this.formatDateForDisplay(travelerData.birthDate)
+            : '',
           email: travelerData.email || '',
           phone: travelerData.phone || '',
-          type: (travelerData.ageGroup || '').toLowerCase() === 'adultos' ? 'adult' : 'child',
+          type:
+            (travelerData.ageGroup || '').toLowerCase() === 'adultos'
+              ? 'adult'
+              : 'child',
           room: traveler.roomType || 'Sin asignar', // Requerido por el componente hijo
           gender: travelerData.sex || '',
           comfortPlan: 'Standard', // Campo necesario para el componente hijo
           insurance: 'Básico', // Campo necesario para el componente hijo
-          documentExpeditionDate: travelerData.minorIdIssueDate ? this.formatDateForDisplay(travelerData.minorIdIssueDate) : '',
-          documentExpirationDate: travelerData.minorIdExpirationDate ? this.formatDateForDisplay(travelerData.minorIdExpirationDate) : '',
+          documentExpeditionDate: travelerData.minorIdIssueDate
+            ? this.formatDateForDisplay(travelerData.minorIdIssueDate)
+            : '',
+          documentExpirationDate: travelerData.minorIdExpirationDate
+            ? this.formatDateForDisplay(travelerData.minorIdExpirationDate)
+            : '',
           nationality: travelerData.nationality || '',
-          ageGroup: travelerData.ageGroup || ''
+          ageGroup: travelerData.ageGroup || '',
         };
-        
+
         // Añadir al array de pasajeros
         this.passengers.push(passenger);
       });
-      
+
       console.log('Pasajeros procesados:', this.passengers);
     }
   }
@@ -663,30 +728,32 @@ export class BookingsComponent implements OnInit {
     const activityIndex = this.bookingActivities.findIndex(
       (act) => act.id === activityId
     );
-    
+
     if (activityIndex !== -1) {
       const removedActivity = this.bookingActivities[activityIndex];
-      
+
       // Quitar la actividad de las incluidas
       this.bookingActivities.splice(activityIndex, 1);
-      
+
       // Añadir a las disponibles si no está ya
-      if (!this.availableActivities.some(a => a.title === removedActivity.title)) {
+      if (
+        !this.availableActivities.some((a) => a.title === removedActivity.title)
+      ) {
         this.availableActivities.push({
           ...removedActivity,
-          isIncluded: false
+          isIncluded: false,
         });
       }
-      
+
       // Buscar y eliminar del resumen del viaje
       const tripItemIndex = this.tripItems.findIndex(
-        item => item.description === removedActivity.title
+        (item) => item.description === removedActivity.title
       );
-      
+
       if (tripItemIndex !== -1) {
         this.tripItems.splice(tripItemIndex, 1);
       }
-      
+
       this.messageService.add({
         key: 'center',
         severity: 'success',
@@ -702,27 +769,27 @@ export class BookingsComponent implements OnInit {
     const activityIndex = this.availableActivities.findIndex(
       (act) => act.id === activityId
     );
-    
+
     if (activityIndex !== -1) {
       const activity = this.availableActivities[activityIndex];
-      
+
       // Actualizar el estado de la actividad
       activity.isIncluded = true;
-      
+
       // Añadir a las actividades incluidas
-      this.bookingActivities.push({...activity});
-      
+      this.bookingActivities.push({ ...activity });
+
       // Quitar de las disponibles
       this.availableActivities.splice(activityIndex, 1);
-      
+
       // Añadir al resumen del viaje
       this.tripItems.push({
         quantity: 1,
         unitPrice: activity.priceValue,
         value: activity.priceValue,
-        description: activity.title
+        description: activity.title,
       });
-      
+
       this.messageService.add({
         key: 'center',
         severity: 'success',
@@ -765,10 +832,15 @@ export class BookingsComponent implements OnInit {
       .toString()
       .padStart(2, '0')}/${today.getFullYear()}`;
 
+    // Prepend a complete Payment object (using minimal defaults)
     this.paymentHistory.unshift({
-      date: formattedDate,
+      bookingID: this.bookingId,
       amount: amount,
-      status: 'Pagado',
+      publicID: '', // default empty until set by backend
+      status: PaymentStatus.COMPLETED,
+      createdAt: formattedDate,
+      updatedAt: formattedDate,
+      // Optionals can be left undefined or added as needed
     });
 
     this.messageService.add({
@@ -815,7 +887,6 @@ export class BookingsComponent implements OnInit {
       });
     }
   }
-
 
   reprintPaymentReminder(): void {
     if (this.isTO) {
@@ -867,7 +938,7 @@ export class BookingsComponent implements OnInit {
       this.hidePaymentModal();
     }
   }
-  
+
   formatQuantity(item: TripItemData): string {
     return `${item.quantity}x`;
   }
@@ -892,25 +963,42 @@ export class BookingsComponent implements OnInit {
   calculateTotal(item: TripItemData): number {
     return item.quantity * item.unitPrice; // Multiplicar cantidad por valor unitario
   }
-  
+
   // Método para formatear fecha
   formatDateForDisplay(dateStr: string): string {
     try {
       const date = new Date(dateStr);
-      return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+      return `${date.getDate().toString().padStart(2, '0')}/${(
+        date.getMonth() + 1
+      )
+        .toString()
+        .padStart(2, '0')}/${date.getFullYear()}`;
     } catch (e) {
       return dateStr;
     }
   }
-  
+
   // Método para formatear fecha corta (ej: "3 Jun")
   formatDateShort(dateStr: string): string {
     try {
       const date = new Date(dateStr);
-      const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      const months = [
+        'Ene',
+        'Feb',
+        'Mar',
+        'Abr',
+        'May',
+        'Jun',
+        'Jul',
+        'Ago',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dic',
+      ];
       return `${date.getDate()} ${months[date.getMonth()]}`;
     } catch (e) {
       return dateStr;
     }
   }
- }
+}

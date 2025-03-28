@@ -119,7 +119,6 @@ export class ReservationComponent implements OnInit, OnDestroy {
           this.paymentInfo
         );
 
-        this.paymentStatus = this.reservationInfo.status;
         this.flights = this.bookingMapper.mapToFlights(booking);
         this.priceDetails = this.bookingMapper.mapToPriceDetails(booking);
 
@@ -172,6 +171,8 @@ export class ReservationComponent implements OnInit, OnDestroy {
           this.paymentInfo?.method === 'transfer'
         ) {
           this.paymentStatus = 'transfer';
+        } else {
+          this.paymentStatus = undefined;
         }
 
         // Si ya se cargó el booking, actualiza la información de la reserva.

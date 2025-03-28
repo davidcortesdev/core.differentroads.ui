@@ -1,26 +1,5 @@
-import { Component, Input, OnInit } from '@angular/core';
-
-// Interfaces para los datos de vuelos
-export interface FlightSegment {
-  departureDate: string;
-  departureTime: string;
-  departureAirport: string;
-  departureCode: string;
-  arrivalTime: string;
-  arrivalAirport: string;
-  arrivalCode: string;
-}
-
-export interface FlightDirection {
-  date: string;
-  segments: FlightSegment[];
-  stops: number;
-}
-
-export interface FlightsData {
-  outbound: FlightDirection;
-  inbound: FlightDirection;
-}
+import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Flight } from '../../../core/models/tours/flight.model';
 
 @Component({
   selector: 'app-booking-flights',
@@ -28,10 +7,52 @@ export interface FlightsData {
   styleUrls: ['./booking-flights.component.scss'],
   standalone: false,
 })
-export class BookingFlightsComponent implements OnInit {
-  @Input() flightsData!: FlightsData;
-
+export class BookingFlightsComponent implements OnInit, OnChanges {
+  @Input() flight!: Flight; // Recibe el vuelo seleccionado
+  
   constructor() {}
-
-  ngOnInit(): void {}
+  
+  ngOnInit(): void {
+    this.validateFlightData();
+  }
+  
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['flight']) {
+      console.log('Flight data changed:', this.flight);
+      this.validateFlightData();
+    }
+  }
+  
+  private validateFlightData(): void {
+    if (!this.flight) {
+      console.error('Flight data is undefined or null');
+      return;
+    }
+    
+    console.log('Flight data received:', {
+      id: this.flight.id,
+      externalID: this.flight.externalID,
+      outboundSegments: this.flight.outbound?.segments?.length || 0,
+      inboundSegments: this.flight.inbound?.segments?.length || 0
+    });
+    
+    // Validar que los segmentos tengan la información necesaria
+    if (this.flight.outbound?.segments?.length) {
+      const firstSegment = this.flight.outbound.segments[0];
+      console.log('First outbound segment:', {
+        departureCity: firstSegment.departureCity,
+        arrivalCity: firstSegment.arrivalCity,
+        flightNumber: firstSegment.flightNumber
+      });
+    }
+    
+    if (this.flight.inbound?.segments?.length) {
+      const firstSegment = this.flight.inbound.segments[0];
+      console.log('First inbound segment:', {
+        departureCity: firstSegment.departureCity,
+        arrivalCity: firstSegment.arrivalCity,
+        flightNumber: firstSegment.flightNumber
+      });
+    }
+  }
 }

@@ -3,7 +3,7 @@ import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 interface RetailerInfo {
   name: string;
   email: string;
-  phone: string;
+/*   phone: string; */
 }
 
 @Component({
@@ -15,7 +15,7 @@ interface RetailerInfo {
 export class BookingHeaderSectionComponent implements OnInit {
   @Input() title: string = '';
   @Input() date: string = '';
-  @Input() retailerInfo: RetailerInfo = { name: '', email: '', phone: '' };
+  @Input() retailerInfo: RetailerInfo = { name: '', email: ''/* , phone: '' */ };
   @Input() showRetailerPanel: boolean = false;
 
   @Output() backEvent = new EventEmitter<void>();

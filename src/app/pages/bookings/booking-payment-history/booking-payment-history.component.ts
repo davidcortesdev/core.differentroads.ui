@@ -1,9 +1,12 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
+// Interfaz compatible con la del componente padre
 interface TripItemData {
   quantity: number;
   unitPrice: number;
+  value?: number; // Añadido para compatibilidad con el componente padre
+  description?: string;
 }
 
 interface PaymentInfo {
@@ -30,12 +33,8 @@ interface PaymentHistoryItem {
   standalone: false,
 })
 export class BookingPaymentHistoryComponent implements OnInit {
-  @Input() adultData: TripItemData = { quantity: 0, unitPrice: 0 };
-  @Input() individualData: TripItemData = { quantity: 0, unitPrice: 0 };
-  @Input() gondolaData: TripItemData = { quantity: 0, unitPrice: 0 };
-  @Input() comfortPlanData: TripItemData = { quantity: 0, unitPrice: 0 };
-  @Input() flightData: TripItemData = { quantity: 0, unitPrice: 0 };
-  @Input() discountData: TripItemData = { quantity: 0, unitPrice: 0 };
+  // Inputs dinámicos para los trip items
+  @Input() tripItems: TripItemData[] = [];
 
   @Input() paymentInfo: PaymentInfo = {
     totalPrice: 0,
@@ -52,22 +51,29 @@ export class BookingPaymentHistoryComponent implements OnInit {
   displayPaymentModal: boolean = false;
   uploadedFiles: any[] = [];
 
+  // Siempre usaremos los elementos dinámicos
+  useDynamicItems: boolean = true;
+
   constructor(private fb: FormBuilder) {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
     });
   }
 
-  ngOnInit(): void {}
-
-  // Métodos para calcular totales
-  calculateTotal(item: TripItemData): number {
-    return item.quantity * item.unitPrice;
+  ngOnInit(): void {
+    // No necesitamos hacer nada aquí, siempre usaremos los elementos dinámicos
   }
 
-  formatQuantity(item: TripItemData): string {
-    return `${item.quantity}x${item.unitPrice}`;
-  }
+ // Métodos para cálculos
+calculateTotal(item: TripItemData): number {
+  // Multiplicar quantity * unitPrice para obtener el total
+  return item.quantity * item.unitPrice;
+}
+
+formatQuantity(item: TripItemData): string {
+  // Mostrar la cantidad y el precio unitario
+  return `${item.quantity}x${this.formatPrice(item.unitPrice)}`;
+}
 
   formatPrice(price: number): string {
     return `${price}€`;

@@ -4,41 +4,16 @@
     <div class="payment-column-left">
       <p-panel header="Resumen del viaje">
         <div class="trip-summary">
-          <div class="trip-item">
-            <span class="description">Adultos</span>
-            <span class="quantity">{{ formatQuantity(adultData) }}</span>
-            <span class="price">{{ formatPrice(calculateTotal(adultData)) }}</span>
-          </div>
-          <p-divider />
-          <div class="trip-item">
-            <span class="description">Individual</span>
-            <span class="quantity">{{ formatQuantity(individualData) }}</span>
-            <span class="price">{{ formatPrice(calculateTotal(individualData)) }}</span>
-          </div>
-          <p-divider />
-          <div class="trip-item">
-            <span class="description">Opcional: recorrido en góndola (Adultos)</span>
-            <span class="quantity">{{ formatQuantity(gondolaData) }}</span>
-            <span class="price">{{ formatPrice(calculateTotal(gondolaData)) }}</span>
-          </div>
-          <p-divider />
-          <div class="trip-item">
-            <span class="description">Comfort Plan (Adultos)</span>
-            <span class="quantity">{{ formatQuantity(comfortPlanData) }}</span>
-            <span class="price">{{ formatPrice(calculateTotal(comfortPlanData)) }}</span>
-          </div>
-          <p-divider />
-          <div class="trip-item">
-            <span class="description">Vuelo desde Barcelona</span>
-            <span class="quantity">{{ formatQuantity(flightData) }}</span>
-            <span class="price">{{ formatPrice(calculateTotal(flightData)) }}</span>
-          </div>
-          <p-divider />
-          <div class="trip-item">
-            <span class="description">Descuento por puntos</span>
-            <span class="quantity">{{ formatQuantity(discountData) }}</span>
-            <span class="price">-{{ formatPrice(calculateTotal(discountData)) }}</span>
-          </div>
+          <ng-container *ngFor="let item of tripItems; let last = last">
+            <div class="trip-item" *ngIf="item.quantity > 0">
+              <span class="description">{{ item.description || 'Elemento sin descripción' }}</span>
+              <span class="quantity">{{ formatQuantity(item) }}</span>
+              <span class="price" [ngClass]="{'discount': item.description && item.description.toLowerCase().includes('descuento')}">
+                {{ item.description && item.description.toLowerCase().includes('descuento') ? '–' : '' }}{{ formatPrice(calculateTotal(item)) }}
+              </span>
+            </div>
+            <p-divider *ngIf="!last && item.quantity > 0"></p-divider>
+          </ng-container>
         </div>
       </p-panel>
     </div>
@@ -117,7 +92,7 @@
     </div>
     
     <div class="p-dialog-footer">
-      <p-button label="Cancelar" icon="pi pi-times" (onClick)="hidePaymentModal() " 
+      <p-button label="Cancelar" icon="pi pi-times" (onClick)="hidePaymentModal()" 
                styleClass="p-button-outlined"></p-button>
       <p-button label="Realizar pago" icon="pi pi-check" type="submit" 
                styleClass="p-button-danger p-button-success" [disabled]="paymentForm.invalid"></p-button>

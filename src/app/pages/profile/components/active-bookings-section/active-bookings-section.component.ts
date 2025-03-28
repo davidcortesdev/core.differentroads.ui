@@ -1,6 +1,7 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { Router } from '@angular/router'; 
 import { BookingsService } from '../../../../core/services/bookings.service';
+import { forkJoin } from 'rxjs';
 
 interface Booking {
   id: string;
@@ -32,31 +33,47 @@ export class ActiveBookingsSectionComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.fetchBookingsByEmail(this.userEmail);
+    this.fetchBookingsWithMultipleStatuses(this.userEmail);
   }
 
-  fetchBookingsByEmail(email: string, page: number = 1) {
-    this.bookingsService
-      .getBookingsByEmail(email, 'Booked', page, 1000)
-      .subscribe((response) => {
-        console.log('Respuesta completa:', response);
-        
-        this.bookings = response?.data?.map((booking: any) => {
-          console.log('Booking original:', booking);
-          
-          return {
-            id: booking?._id ?? '',
-            title: booking?.periodData?.['tour']?.name || '',
-            reservationNumber: booking?.ID ?? '',
-            creationDate: new Date(booking?.createdAt ?? ''),
-            status: booking?.status ?? '',
-            departureDate: new Date(booking?.periodData?.['dayOne'] ?? ''),
-            image: 'https://picsum.photos/200',
-          };
-        });
-        
-        console.log('Bookings mapeados:', this.bookings);
-      });
+  fetchBookingsWithMultipleStatuses(email: string, page: number = 1) {
+    // Obtenemos las reservas tanto con estado "Booked" como "RQ"
+    const bookedRequest = this.bookingsService.getBookingsByEmail(email, 'Booked', page, 1000);
+    const rqRequest = this.bookingsService.getBookingsByEmail(email, 'RQ', page, 1000);
+    
+    // Utilizamos forkJoin para hacer ambas peticiones en paralelo
+    forkJoin([bookedRequest, rqRequest]).subscribe(([bookedResponse, rqResponse]) => {
+      console.log('Respuesta Booked:', bookedResponse);
+      console.log('Respuesta RQ:', rqResponse);
+      
+      // Mapea las reservas Booked
+      const bookedBookings = bookedResponse?.data?.map((booking: any) => this.mapBooking(booking)) || [];
+      
+      // Mapea las reservas RQ
+      const rqBookings = rqResponse?.data?.map((booking: any) => this.mapBooking(booking)) || [];
+      
+      // Combina ambos arrays
+      this.bookings = [...bookedBookings, ...rqBookings];
+      
+      // Ordena las reservas por fecha de creación (más reciente primero - de la más nueva a la más antigua)
+      this.bookings.sort((a, b) => b.creationDate.getTime() - a.creationDate.getTime());
+      
+      console.log('Bookings combinados y ordenados:', this.bookings);
+    });
+  }
+  
+  mapBooking(booking: any): Booking {
+    console.log('Mapeando booking:', booking);
+    
+    return {
+      id: booking?._id ?? '',
+      title: booking?.periodData?.['tour']?.name || '',
+      reservationNumber: booking?.ID ?? '',
+      creationDate: new Date(booking?.createdAt ?? ''),
+      status: booking?.status ?? '',
+      departureDate: new Date(booking?.periodData?.['dayOne'] ?? ''),
+      image: 'https://picsum.photos/200',
+    };
   }
 
   toggleContent() {
@@ -72,5 +89,17 @@ export class ActiveBookingsSectionComponent implements OnInit {
     // Opción 2: Emitir el evento para que el componente padre cargue los datos
     // Descomentar esta línea si prefieres esta opción
     // this.bookingSelected.emit(booking.id);
+  }
+  
+  // Método de utilidad para obtener el estilo según el estado de la reserva
+  getStatusStyle(status: string) {
+    switch (status) {
+      case 'Booked':
+        return 'bg-green-100 text-green-800';
+      case 'RQ':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
   }
 }

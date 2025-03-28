@@ -28,7 +28,7 @@
                 ></p-radioButton>
                 <span class="option-text">Paga tu viaje al completo</span>
                 <span class="option-price">{{
-                  totalPrice | currencyFormat
+                  remainingAmount | currencyFormat
                 }}</span>
               </div>
             </p-panel>
@@ -79,8 +79,8 @@
               <p-inputNumber
                 id="amountToPay"
                 [(ngModel)]="amountToPay"
-                [min]="0"
-                [max]="totalPrice"
+                [min]="depositAmount"
+                [max]="remainingAmount"
                 [step]="50"
                 placeholder="Ingrese el monto a abonar"
                 mode="decimal"
@@ -148,15 +148,7 @@
           </div>
 
           <div class="buttons-container">
-            <p-button
-              label="Regresar"
-              severity="secondary"
-              icon="pi pi-arrow-left"
-              styleClass="back-button"
-              [disabled]="isLoading"
-              (click)="goBack()"
-            ></p-button>
-
+            <div></div>
             <p-button
               [label]="isLoading ? 'Procesando...' : 'Realizar pago'"
               styleClass="payment-button"
@@ -211,19 +203,44 @@
                   <span>incluido</span>
                 </span>
               </div>
+              <div></div>
+              <div></div>
+
+              <div class="item">
+                <span> <b>Subtotal</b></span>
+                <span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                  <span>
+                    <b>{{ totalPrice | currencyFormat }}</b>
+                  </span>
+                </span>
+              </div>
+              <div class="item">
+                <span>Total abonado</span>
+                <span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                  <span>
+                    <b>{{ paidAmount | currencyFormat }}</b>
+                  </span>
+                </span>
+              </div>
             </div>
-            >
 
             <!-- Total section -->
             <div class="total-section">
               <div class="total">
                 <span>TOTAL</span>
                 <span class="price">{{
-                  totalPrice | currencyFormat : "EUR"
+                  remainingAmount | currencyFormat : "EUR"
                 }}</span>
               </div>
             </div>
-            <!-- Flights info if selected -->
           </div>
         </div>
       </div>

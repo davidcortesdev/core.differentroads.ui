@@ -8,7 +8,7 @@ import { Payment } from '../../core/models/bookings/payment.model';
 import { PaymentOptionsService } from '../../core/services/checkout/paymentOptions.service';
 import { PaymentOption } from '../../core/models/orders/order.model';
 import { SummaryService } from '../../core/services/checkout/summary.service';
-import { OrdersService } from '../../core/services/orders.service';
+import { AuthenticateService } from '../../core/services/auth-service.service';
 
 @Component({
   selector: 'app-payments',
@@ -20,7 +20,8 @@ export class PaymentsComponent implements OnInit {
   // Estado de la sección de opciones de pago
   isOpen: boolean = true;
   paymentType: string = '';
-  totalPrice: number = 0; // Valor de ejemplo
+  totalPrice: number = 0;
+  paidAmount: number = 0;
   depositAmount: number = 200; // Valor de ejemplo
   paymentDeadline: string = '15/08/2023'; // Valor de ejemplo
 
@@ -46,7 +47,6 @@ export class PaymentsComponent implements OnInit {
 
   // Payment info
   bookingID: string = '';
-  orderID: string = '';
 
   // Order summary
   summary: { qty: number; value: number; description: string }[] = [];
@@ -60,10 +60,10 @@ export class PaymentsComponent implements OnInit {
     private router: Router,
     private redsysService: RedsysService,
     private bookingsService: BookingsService,
-    private ordersService: OrdersService, // Add this if not already present
     private paymentOptionsService: PaymentOptionsService,
     private summaryService: SummaryService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private authService: AuthenticateService // new injection
   ) {}
 
   ngOnInit() {
@@ -84,16 +84,23 @@ export class PaymentsComponent implements OnInit {
     this.bookingsService.getBookingById(this.bookingID).subscribe({
       next: (booking) => {
         console.log('Booking loaded:', booking);
+        // Initially set totalPrice from periodData if available
         this.totalPrice = booking.periodData?.['total'] || 0;
-        this.orderID = booking.id || '';
 
-        // Set summary from booking data
-        if (booking.extraData?.extendedTotal) {
-          this.summary = booking.extraData.extendedTotal;
+        // Use extendedTotal from extraData to connect the summary and recalculate totalPrice
+        if (booking.periodData?.['extendedTotal']) {
+          this.summary = booking.periodData['extendedTotal'];
+          this.totalPrice = this.summary.reduce(
+            (acc, item) => acc + item.value * item.qty,
+            0
+          );
         }
 
         // Calculate remaining amount for deposit
         this.calculateRemainingAmount();
+
+        // Llamada al nuevo método para obtener los pagos y actualizar totales
+        this.fetchPayments();
 
         // If we have departure date, calculate payment deadline
         if (booking.periodData?.['dayOne']) {
@@ -111,6 +118,31 @@ export class PaymentsComponent implements OnInit {
         });
         this.isLoading = false;
       },
+    });
+  }
+
+  // NUEVO método para calcular pagos abonados y saldo pendiente
+  fetchPayments() {
+    this.bookingsService.getPayments(this.bookingID).subscribe((payments) => {
+      const totalPaid = payments.reduce(
+        (sum, payment) =>
+          payment.status === 'COMPLETED' ? sum + payment.amount : sum,
+        0
+      );
+      this.paidAmount = totalPaid;
+      this.remainingAmount = this.totalPrice - totalPaid;
+
+      // Agregar líneas al resumen: historial de pagos y pendiente de pago
+      this.summary.push({
+        qty: 1,
+        value: this.paidAmount,
+        description: 'Historial de pagos',
+      });
+      this.summary.push({
+        qty: 1,
+        value: this.remainingAmount,
+        description: 'Pendiente de pago',
+      });
     });
   }
 
@@ -265,22 +297,24 @@ export class PaymentsComponent implements OnInit {
     try {
       // Determine the payment amount based on payment type
       const paymentAmount =
-        this.paymentType === 'deposit' ? this.depositAmount : this.totalPrice;
+        this.paymentType === 'deposit'
+          ? this.amountToPay
+          : this.remainingAmount;
       console.log(`Processing payment of ${paymentAmount}`);
 
       const payment = await this.createPayment(this.bookingID, {
         amount: paymentAmount,
-        registerBy: 'user',
+        registerBy: this.authService.getCurrentUsername(),
       });
 
       const publicID = payment.publicID;
-      console.log('Payment created:', payment);
 
       // Handle payment method redirect
       if (this.paymentMethod === 'creditCard') {
         console.log('Redirecting to credit card payment');
+        // Cambiado: intercambiamos publicID y orderID
         this.redirectToRedSys(
-          this.orderID,
+          publicID,
           paymentAmount,
           this.bookingID,
           publicID
@@ -364,6 +398,7 @@ export class PaymentsComponent implements OnInit {
   }
 
   calculateRemainingAmount() {
+    // Si se desea conservar la lógica previa en caso de no contar con pagos (o complementar)
     this.remainingAmount = this.totalPrice - this.depositAmount;
   }
 
@@ -390,9 +425,5 @@ export class PaymentsComponent implements OnInit {
         year: 'numeric',
       });
     }
-  }
-
-  goBack(): void {
-    window.history.back();
   }
 }

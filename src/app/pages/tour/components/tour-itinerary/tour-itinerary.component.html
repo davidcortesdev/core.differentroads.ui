@@ -146,13 +146,18 @@
                           class="highlight-card-description"
                         ></div>
                       </ng-template>
-                      <ng-template pTemplate="footer">
+                      <ng-template
+                        pTemplate="footer"
+                        *ngIf="highlight.optional"
+                      >
                         <p-button
                           (click)="onAddActivity(highlight)"
                           label="{{ highlight.added ? 'Añadida' : 'Añadir' }}"
                           styleClass="p-button-rounded"
                         ></p-button>
-                        <div>+{{ highlight.price | currencyFormat : "EUR"}}</div>
+                        <div>
+                          +{{ highlight.price | currencyFormat : "EUR" }}
+                        </div>
                       </ng-template>
                     </p-card>
                   </ng-template>

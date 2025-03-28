@@ -1,35 +1,5 @@
 .single-payment-content {
   background-color: var(--accent-white);
-  padding: 1rem 0;
-
-  &-title {
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-    padding: 2rem 2rem 0 2rem;
-    margin: 0;
-  }
-
-  &-subtitle {
-    font-size: 1.2rem;
-    font-weight: 500;
-    margin-bottom: 1rem;
-    padding: 0 2rem;
-  }
-
-  /* Ajuste específico para PrimeNG Steps */
-  ::ng-deep .p-steps {
-    margin: 0 !important;
-    padding: 0 !important;
-
-    .p-steps-item:first-child {
-      padding-left: 0 !important;
-    }
-
-    .p-steps-item:last-child {
-      padding-right: 0 !important;
-    }
-  }
 
   .single-payment-content-container {
     display: grid;
@@ -42,19 +12,14 @@
       grid-template-columns: 1fr;
     }
 
-    .right-column {
+    .order-summary {
       position: sticky;
       top: 2rem;
       height: fit-content;
       align-self: start;
-    }
-
-    .order-summary {
       background: #fff;
       border-radius: 8px;
       padding: 1.5rem;
-      height: fit-content;
-      position: relative;
       font-size: 0.9rem;
 
       h3 {
@@ -85,6 +50,7 @@
               &:nth-child(1) {
                 grid-column: 1;
               }
+
               &:nth-child(2) {
                 grid-column: 2;
                 display: grid;
@@ -100,13 +66,6 @@
           }
         }
 
-        .flights-info {
-          margin: 1.5rem 0;
-          padding: 1rem 0;
-          border-top: 1px solid #eee;
-          border-bottom: 1px solid #eee;
-        }
-
         .total-section {
           margin-top: 1.5rem;
           color: var(--background-azul);
@@ -114,6 +73,7 @@
           @media (max-width: 768px) {
             margin-top: 1.2rem;
           }
+
           @media (max-width: 425px) {
             margin-top: 1rem;
           }
@@ -136,6 +96,7 @@
             @media (max-width: 768px) {
               font-size: 1rem;
             }
+
             @media (max-width: 425px) {
               font-size: 0.9rem;
             }
@@ -147,308 +108,184 @@
         }
       }
     }
-  }
 
-  .container {
-    width: 100%;
-    padding: 0 1rem;
-    max-width: 1200px;
-    margin: 0 auto;
-
-    @media (max-width: 768px) {
-      padding: 0 0.75rem;
-    }
-
-    .header-container {
-      cursor: pointer;
-    }
-
-    .title-with-icon {
-      display: inline-flex;
-      align-items: center;
-      margin-bottom: 5px;
+    .container {
       width: 100%;
-
-      .title {
-        color: var(--background-azul);
-        font-weight: 500;
-        font-size: 1rem;
-      }
-
-      .pi {
-        color: var(--background-azul);
-        margin-left: 8px;
-      }
-    }
-
-    .title-underline {
-      height: 1.5px;
-      background-color: var(--background-azul);
-      width: 24.2%;
-      margin-bottom: 15px;
-
-      &.pay {
-        width: 25.5%;
-      }
+      padding: 0 1rem;
+      max-width: 1200px;
+      margin: 0 auto;
 
       @media (max-width: 768px) {
-        width: 50%;
+        padding: 0 0.75rem;
       }
-      @media (max-width: 480px) {
+
+      .header-container {
+        cursor: pointer;
+      }
+
+      .title-with-icon {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 5px;
         width: 100%;
-      }
-    }
 
-    /* Ajustes para los paneles de pago */
-    ::ng-deep .payment-panel {
-      color: var(--background-azul);
-      font-weight: 500;
-      margin-bottom: 0.75rem;
-      width: 100%;
-      background: transparent;
+        .title {
+          color: var(--background-azul);
+          font-weight: 500;
+          font-size: 1rem;
+        }
 
-      .p-panel-header {
-        display: none;
-      }
-
-      .p-panel-content {
-        border: 1px solid #d4d4d8;
-        border-radius: 0.75rem;
-        padding: 1.25rem 1rem;
-        background: transparent;
-
-        @media (min-width: 768px) {
-          padding: 1.75rem 1.5rem;
+        .pi {
+          color: var(--background-azul);
+          margin-left: 8px;
         }
       }
 
-      .p-radiobutton .p-radiobutton-box {
-        border: 2px solid var(--background-azul);
-      }
+      .title-underline {
+        height: 1.5px;
+        background-color: var(--background-azul);
+        width: 24.2%;
+        margin-bottom: 15px;
 
-      .p-radiobutton .p-radiobutton-box.p-highlight {
-        border-color: var(--background-azul);
-        background: #fff;
-
-        .p-radiobutton-icon {
-          background-color: var(--background-azul);
-          width: 10px;
-          height: 10px;
+        &.pay {
+          width: 25.5%;
         }
-      }
 
-      &.selected {
-        .p-panel-content {
-          border: 2px solid var(--background-azul);
-          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        @media (max-width: 768px) {
+          width: 50%;
         }
-      }
-    }
-
-    .payment-panels {
-      margin-top: 1rem;
-    }
-
-    .payment-option {
-      display: flex;
-      align-items: center;
-      flex-wrap: nowrap;
-
-      @media (max-width: 480px) {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .option-text {
-        margin-left: 1rem;
-        flex-grow: 1;
 
         @media (max-width: 480px) {
-          margin-left: 0;
-          margin-top: 0.5rem;
           width: 100%;
         }
       }
 
-      .option-price {
-        font-weight: bold;
-        font-size: 1.125rem;
-        margin-left: auto;
+      ::ng-deep {
+        .payment-panel {
+          color: var(--background-azul);
+          font-weight: 500;
+          margin-bottom: 0.75rem;
+          width: 100%;
+          background: transparent;
+
+          .p-panel-header {
+            display: none;
+          }
+
+          .p-panel-content {
+            border: 1px solid #d4d4d8;
+            border-radius: 0.75rem;
+            padding: 1.25rem 1rem;
+            background: transparent;
+
+            @media (min-width: 768px) {
+              padding: 1.75rem 1.5rem;
+            }
+          }
+
+          .p-radiobutton .p-radiobutton-box {
+            border: 2px solid var(--background-azul);
+          }
+
+          .p-radiobutton .p-radiobutton-box.p-highlight {
+            border-color: var(--background-azul);
+            background: #fff;
+
+            .p-radiobutton-icon {
+              background-color: var(--background-azul);
+              width: 10px;
+              height: 10px;
+            }
+          }
+
+          &.selected {
+            .p-panel-content {
+              border: 2px solid var(--background-azul);
+              box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            }
+          }
+        }
+      }
+
+      .payment-panels {
+        margin-top: 1rem;
+      }
+
+      .payment-option {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
 
         @media (max-width: 480px) {
-          margin-left: 0;
-          margin-top: 0.5rem;
-          align-self: flex-end;
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .option-text {
+          margin-left: 1rem;
+          flex-grow: 1;
+
+          @media (max-width: 480px) {
+            margin-left: 0;
+            margin-top: 0.5rem;
+            width: 100%;
+          }
+        }
+
+        .option-price {
+          font-weight: bold;
+          font-size: 1.125rem;
+          margin-left: auto;
+
+          @media (max-width: 480px) {
+            margin-left: 0;
+            margin-top: 0.5rem;
+            align-self: flex-end;
+          }
         }
       }
 
-      .scalapay-logo {
-        height: 24px;
-        margin-left: auto;
-
-        @media (max-width: 480px) {
-          margin-left: 0;
-          margin-top: 0.5rem;
-          align-self: flex-end;
-        }
+      .payment-methods-section {
+        margin-top: 2rem;
       }
-    }
 
-    .payment-methods-section {
-      margin-top: 2rem;
-    }
+      .payment-methods-row {
+        display: flex;
+        flex-direction: row;
+        gap: 1rem;
+        margin-top: 1rem;
 
-    .payment-methods-row {
-      display: flex;
-      flex-direction: row;
-      gap: 1rem;
-      margin-top: 1rem;
-
-      @media (max-width: 768px) {
-        flex-direction: column;
-        gap: 0.75rem;
-      }
-    }
-
-    .payment-method-container {
-      flex: 1;
-
-      ::ng-deep .p-panel-content {
-        border: 1px solid #d4d4d8;
-        border-radius: 0.75rem;
-        padding: 1.5rem 1rem;
-        width: 100%;
-        height: 100%;
-
-        @media (min-width: 768px) {
-          padding: 2rem 1.5rem;
-        }
-      }
-    }
-
-    .payment-method-panel {
-      transition: all 0.2s ease;
-      cursor: pointer;
-
-      &.selected {
-        .p-panel-content {
-          border-color: var(--background-azul);
-          border-width: 2px;
-        }
-      }
-    }
-
-    /* Sección de plazos (si aplica) */
-    .installments-section {
-      margin-top: 2rem;
-    }
-
-    .installment-panels-row {
-      display: flex;
-      flex-direction: row;
-      gap: 1rem;
-      margin-top: 1rem;
-
-      @media (max-width: 768px) {
-        flex-direction: column;
-        gap: 0.75rem;
-      }
-    }
-
-    .installment-panel-container {
-      flex: 1;
-
-      ::ng-deep .p-panel-content {
-        border: 1px solid #d4d4d8;
-        border-radius: 0.75rem;
-        padding: 1.5rem 1rem;
-        width: 100%;
-        height: 100%;
-
-        @media (min-width: 768px) {
-          padding: 2rem 1.5rem;
-        }
-      }
-    }
-
-    .installment-content {
-      margin-left: 1rem;
-      width: 100%;
-
-      @media (max-width: 480px) {
-        margin-left: 0.5rem;
-      }
-    }
-
-    .scalapay-widget-container {
-      width: 100%;
-      text-align: center;
-      font-size: 14px;
-    }
-
-    ::ng-deep scalapay-widget {
-      .info-container {
-        p.installment-info {
-          display: none !important;
+        @media (max-width: 768px) {
+          flex-direction: column;
+          gap: 0.75rem;
         }
       }
 
-      img.logo {
-        max-width: 120px !important;
-        margin: 0 auto;
+      .payment-method-container {
+        flex: 1;
+
+        ::ng-deep .p-panel-content {
+          border: 1px solid #d4d4d8;
+          border-radius: 0.75rem;
+          padding: 1.5rem 1rem;
+          width: 100%;
+          height: 100%;
+
+          @media (min-width: 768px) {
+            padding: 2rem 1.5rem;
+          }
+        }
       }
-    }
 
-    .source-section {
-      margin-top: 2rem;
-    }
+      .payment-method-panel {
+        transition: all 0.2s ease;
+        cursor: pointer;
 
-    .dropdown-container {
-      position: relative;
-      width: 100%;
-      cursor: pointer;
-    }
-
-    .dropdown-select {
-      font-size: 15px;
-      padding: 0;
-      border: none;
-      border-bottom: 2px solid var(--background-azul);
-      border-radius: 0;
-      background: transparent;
-      color: var(--background-azul);
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .dropdown-options {
-      border-radius: 8px;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      width: 20%;
-      background: #fff;
-      z-index: 10;
-      margin-top: 0.5rem;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      overflow-y: auto;
-      max-height: 15rem;
-
-      @media (max-width: 480px) {
-        max-width: 100%;
-      }
-    }
-
-    .dropdown-option {
-      padding: 0.75rem 1rem;
-      cursor: pointer;
-      color: var(--background-azul);
-      font-size: 14px;
-
-      &:hover {
-        background-color: #f8fafc;
+        &.selected {
+          .p-panel-content {
+            border: 2px solid var(--background-azul);
+          }
+        }
       }
     }
 
@@ -473,6 +310,7 @@
         .p-checkbox-box {
           border: 2px solid var(--background-azul);
         }
+
         .p-checkbox-box.p-highlight {
           border-color: var(--background-azul);
           background: var(--background-azul);
@@ -497,36 +335,44 @@
       }
     }
 
-    /* Botón de pago */
-    :host ::ng-deep .payment-button {
-      margin: 10px 0;
+    ::ng-deep {
+      .payment-button {
+        margin: 10px 0;
 
-      &.p-button {
-        width: 100%;
-        border-radius: 100px;
-        height: 50px;
-        background-color: var(--p-primary-color);
-        border-color: #ff6b6b;
-        margin-top: -20px;
-
-        &.p-disabled,
-        &.payment-button-disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        .p-button-label {
-          font-weight: 500;
-          font-size: 1rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+        &.p-button {
           width: 100%;
+          border-radius: 100px;
+          height: 50px;
+          background-color: var(--p-primary-color);
+          border-color: #ff6b6b;
+          margin-top: -20px;
+
+          &.p-disabled,
+          &.payment-button-disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+          }
+
+          .p-button-label {
+            font-weight: 500;
+            font-size: 1rem;
+          }
         }
       }
+    }
 
-      &.p-disabled {
-        opacity: 0.6;
+    ::ng-deep {
+      .p-radiobutton .p-radiobutton-box {
+        border-color: var(--background-azul);
+      }
+
+      .p-radiobutton-checked .p-radiobutton-box {
+        border-color: var(--background-azul) !important;
+        background: var(--background-azul-color-letra) !important;
+      }
+
+      .p-radiobutton-checked .p-radiobutton-icon {
+        background-color: var(--background-azul) !important;
       }
     }
 
@@ -534,10 +380,6 @@
       display: flex;
       justify-content: space-between;
       margin-top: 2rem;
-
-      .back-button {
-        margin-right: 1rem;
-      }
 
       .payment-button {
         flex-grow: 1;
@@ -562,130 +404,24 @@
     margin-left: 0.5rem;
   }
 
-  .travelers-list {
-    margin-top: 1rem;
-
-    .traveler-item {
-      padding: 0.75rem 0;
-      border-bottom: 1px solid #e2e8f0;
-
-      &:last-child {
-        border-bottom: none;
-      }
-    }
-
-    .traveler-row {
-      display: flex;
-      align-items: center;
-      flex-wrap: nowrap;
-    }
-
-    .checkbox-container {
-      margin-right: 1rem;
-      flex-shrink: 0;
-      width: 1.5rem;
-
-      ::ng-deep .p-checkbox {
-        .p-checkbox-box {
-          border: 2px solid var(--background-azul);
-        }
-        .p-checkbox-box.p-highlight {
-          border-color: var(--background-azul);
-          background: var(--background-azul);
-        }
-      }
-    }
-
-    .checkbox-placeholder {
-      width: 1.5rem;
-      height: 1.5rem;
-    }
-
-    .traveler-info {
-      display: flex;
-      flex-direction: column;
-      flex-grow: 1;
-
-      @media (min-width: 768px) {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-      }
-    }
-
-    .traveler-name {
-      font-weight: 500;
-      color: var(--background-azul);
-      margin-bottom: 0.25rem;
-
-      @media (min-width: 768px) {
-        margin-bottom: 0;
-      }
-    }
-
-    .points-badge {
-      display: inline-flex;
-      padding: 0.25rem 0.5rem;
-      border-radius: 1rem;
-      font-size: 0.875rem;
-      background-color: #f1f5f9;
-      align-self: flex-start;
-
-      @media (min-width: 768px) {
-        align-self: center;
-      }
-    }
-
-    .points-label {
-      color: #64748b;
-    }
-
-    .points-redeemed-label {
-      color: var(--background-azul);
-      font-weight: 500;
-    }
+  :host ::ng-deep .payment-button .p-button-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
   }
 
-  .travelers-points-section {
-    margin-top: 2rem;
-    margin-bottom: 2rem;
-
-    ::ng-deep .p-accordion {
-      .p-accordion-header-link {
-        color: var(--background-azul);
-        font-weight: 500;
-        padding: 1rem 0;
-        background: transparent;
-        border: none;
-        border-bottom: 1px solid #e2e8f0;
-      }
-
-      .p-accordion-content {
-        border: none;
-        background: transparent;
-        padding: 1rem 0;
-      }
-
-      .p-accordion-header-text {
-        font-size: 1rem;
-      }
-
-      .p-accordion-toggle-icon {
-        color: var(--background-azul);
-      }
-    }
+  :host ::ng-deep .payment-button.p-disabled {
+    opacity: 0.6;
   }
 }
 
-/* Ajuste del grid a 1 columna para pantallas <= 1024px */
-@media (max-width: 1024px) {
-  .single-payment-content {
-    .single-payment-content-container {
-      grid-template-columns: 1fr;
+@media screen and (max-width: 1024px) {
+  .single-payment-content .single-payment-content-container {
+    grid-template-columns: 1fr;
 
-      .right-column {
-        position: static;
-      }
+    .right-column {
+      position: static;
     }
   }
 }

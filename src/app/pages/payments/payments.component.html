@@ -166,72 +166,69 @@
       </div>
     </div>
 
-    <!-- Right column - Order Summary and Discount Code -->
-    <div class="right-column">
-      <!-- Order Summary Section -->
-      <div class="order-summary">
-        <h3>Resumen del pedido</h3>
-        <div class="summary-content">
-          <!-- Tour base info -->
-          <div class="tour-base-info">
-            <!-- Selected items list -->
-            <div class="selected-items">
-              <div *ngFor="let item of summary" class="item">
-                <span>{{ item.description }}</span>
-                <span *ngIf="item.value">
-                  <span>{{ item.qty }}</span>
-                  <span>x</span>
-                  <span>{{ item.value | currencyFormat : "EUR" }}</span>
-                  <span>=</span>
-                  <span>{{
-                    item.value * item.qty | currencyFormat : "EUR"
-                  }}</span>
-                </span>
-                <span *ngIf="!item.value">
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                  <span>incluido</span>
-                </span>
-              </div>
-              <div></div>
-              <div></div>
-
-              <div class="item">
-                <span> <b>Subtotal</b></span>
-                <span>
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                  <span>
-                    <b>{{ totalPrice | currencyFormat }}</b>
-                  </span>
-                </span>
-              </div>
-              <div class="item">
-                <span>Total abonado</span>
-                <span>
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                  <span>
-                    <b>{{ paidAmount | currencyFormat }}</b>
-                  </span>
-                </span>
-              </div>
-            </div>
-
-            <!-- Total section -->
-            <div class="total-section">
-              <div class="total">
-                <span>TOTAL</span>
-                <span class="price">{{
-                  remainingAmount | currencyFormat : "EUR"
+    <!-- Order Summary Section -->
+    <div class="order-summary">
+      <h3>Resumen del pedido</h3>
+      <div class="summary-content">
+        <!-- Tour base info -->
+        <div class="tour-base-info">
+          <!-- Selected items list -->
+          <div class="selected-items">
+            <div *ngFor="let item of summary" class="item">
+              <span>{{ item.description }}</span>
+              <span *ngIf="item.value">
+                <span>{{ item.qty }}</span>
+                <span>x</span>
+                <span>{{ item.value | currencyFormat : "EUR" }}</span>
+                <span>=</span>
+                <span>{{
+                  item.value * item.qty | currencyFormat : "EUR"
                 }}</span>
-              </div>
+              </span>
+              <span *ngIf="!item.value">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span>incluido</span>
+              </span>
+            </div>
+            <div></div>
+            <div></div>
+
+            <div class="item">
+              <span> <b>Subtotal</b></span>
+              <span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span>
+                  <b>{{ totalPrice | currencyFormat }}</b>
+                </span>
+              </span>
+            </div>
+            <div class="item">
+              <span>Total abonado</span>
+              <span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span>
+                  <b>{{ paidAmount | currencyFormat }}</b>
+                </span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Total section -->
+          <div class="total-section">
+            <div class="total">
+              <span>TOTAL</span>
+              <span class="price">{{
+                remainingAmount | currencyFormat : "EUR"
+              }}</span>
             </div>
           </div>
         </div>

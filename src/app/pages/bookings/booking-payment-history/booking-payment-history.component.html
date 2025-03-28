@@ -65,7 +65,7 @@
                 label="Realizar pago"
                 icon="pi pi-dollar"
                 styleClass="p-button-success"
-                (onClick)="showPaymentModal()"
+                (onClick)="navigateToPayment()"
               ></p-button>
             </div>
           </div>
@@ -96,7 +96,9 @@
                 {{ getStatusText(item.status) }}
                 <button
                   *ngIf="
-                    item.status === 'PENDING_REVIEW' && item?.vouchers?.length
+                    isTO &&
+                    item.status === 'PENDING_REVIEW' &&
+                    item?.vouchers?.length
                   "
                   type="button"
                   class="p-button p-component p-button-text"

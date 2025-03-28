@@ -125,7 +125,7 @@ export class BookingsComponent implements OnInit {
 
   // El resto de datos se mantendrán quemados
 
-  isTO: boolean = false;
+  isTO: boolean = true;
   isAdmin: boolean = true;
 
   bookingImages: BookingImage[] = [

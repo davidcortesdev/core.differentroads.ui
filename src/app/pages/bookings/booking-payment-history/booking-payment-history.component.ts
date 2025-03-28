@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { BookingsService } from '../../../core/services/bookings.service';
 import {
   Payment,
@@ -32,6 +33,7 @@ export class BookingPaymentHistoryComponent implements OnInit {
   @Input() bookingID: string = '';
   @Input() bookingTotal: number = 0;
   @Input() tripItems: TripItemData[] = [];
+  @Input() isTO: boolean = false; // Add this line to receive isTO from parent
 
   @Output() registerPayment = new EventEmitter<number>();
 
@@ -60,7 +62,8 @@ export class BookingPaymentHistoryComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private bookingsService: BookingsService
+    private bookingsService: BookingsService,
+    private router: Router
   ) {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
@@ -213,6 +216,10 @@ export class BookingPaymentHistoryComponent implements OnInit {
     window.open(this.selectedReviewVoucherUrl, '_blank');
   }
 
+  navigateToPayment(): void {
+    this.router.navigate([`/payment/${this.bookingID}/`]);
+  }
+
   formatDateForDisplay(dateStr: string): string {
     try {
       const date = new Date(dateStr);
@@ -230,6 +237,8 @@ export class BookingPaymentHistoryComponent implements OnInit {
     switch (status) {
       case 'COMPLETED':
         return 'Completado';
+      case 'PENDING':
+        return 'Pendiente';
       case 'PENDING_REVIEW':
         return 'Pendiente de revisión';
       case 'REJECTED':

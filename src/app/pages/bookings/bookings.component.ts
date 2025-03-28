@@ -125,8 +125,8 @@ export class BookingsComponent implements OnInit {
 
   // El resto de datos se mantendrán quemados
 
-  isTO: boolean = true;
-  isAdmin: boolean = false;
+  isTO: boolean = false;
+  isAdmin: boolean = true;
 
   bookingImages: BookingImage[] = [
     {
@@ -222,7 +222,6 @@ export class BookingsComponent implements OnInit {
 
   // Método para cargar los datos de la reserva
   loadBookingData(id: string): void {
-    console.log('Cargando datos de la reserva con ID:', id);
     this.isLoading = true;
 
     this.bookingsService
@@ -234,7 +233,6 @@ export class BookingsComponent implements OnInit {
       )
       .subscribe({
         next: (booking) => {
-          console.log('Booking cargado:', booking);
           this.bookingComplete = booking;
 
           // Actualizar datos básicos de la reserva
@@ -277,7 +275,6 @@ export class BookingsComponent implements OnInit {
           }
         },
         error: (error) => {
-          console.error('Error al cargar la reserva:', error);
           this.messageService.add({
             key: 'center',
             severity: 'error',
@@ -321,7 +318,6 @@ export class BookingsComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error al cargar datos del retailer:', error);
         this.currentRetailer = null;
 
         // Establecer valores por defecto en caso de error
@@ -336,13 +332,10 @@ export class BookingsComponent implements OnInit {
 
   // Método para cargar actividades del período
   loadPeriodActivities(externalId: string): void {
-    console.log('Cargando actividades del período:', externalId);
-
     this.periodsService
       .getActivities(externalId)
       .pipe(
         catchError((error) => {
-          console.error('Error al cargar actividades del período:', error);
           this.messageService.add({
             key: 'center',
             severity: 'warn',
@@ -354,8 +347,6 @@ export class BookingsComponent implements OnInit {
         })
       )
       .subscribe((activities) => {
-        console.log('Actividades del período obtenidas:', activities);
-
         // Convertir actividades de la API al formato del componente
         this.availableActivities = activities
           .map((activity: Activity, index: number) => {
@@ -391,11 +382,6 @@ export class BookingsComponent implements OnInit {
             };
           })
           .filter((activity) => activity !== null); // Filtrar las actividades que ya están incluidas
-
-        console.log(
-          'Actividades disponibles procesadas:',
-          this.availableActivities
-        );
       });
   }
 
@@ -427,8 +413,6 @@ export class BookingsComponent implements OnInit {
         });
       });
     }
-
-    console.log('Elementos del viaje actualizados:', this.tripItems);
   }
 
   // Actualizar datos básicos de la reserva
@@ -614,13 +598,9 @@ export class BookingsComponent implements OnInit {
             })
           );
         }
-
-        console.log('Datos adaptados para Flight:', this.adaptedFlightData);
       } catch (error) {
-        console.error('Error al procesar datos de vuelos:', error);
+        // Si hay error al procesar, continúa sin mostrar datos de vuelo
       }
-    } else {
-      console.log('No hay información de vuelos disponible');
     }
   }
 
@@ -652,8 +632,6 @@ export class BookingsComponent implements OnInit {
 
   // Actualizar información de pasajeros
   updatePassengersData(booking: any): void {
-    console.log('Actualizando datos de pasajeros:', booking.travelers);
-
     if (booking.travelers && booking.travelers.length > 0) {
       // Limpiar el array de pasajeros
       this.passengers = [];
@@ -718,8 +696,6 @@ export class BookingsComponent implements OnInit {
         // Añadir al array de pasajeros
         this.passengers.push(passenger);
       });
-
-      console.log('Pasajeros procesados:', this.passengers);
     }
   }
 
@@ -805,8 +781,6 @@ export class BookingsComponent implements OnInit {
   }
 
   cancelBooking(): void {
-    console.log('Cancelando reserva:', this.bookingData.bookingCode);
-
     if (this.isTO) {
       this.messageService.add({
         key: 'center',
@@ -820,8 +794,6 @@ export class BookingsComponent implements OnInit {
   }
 
   registerPayment(amount: number): void {
-    console.log('Registrando pago de:', amount);
-
     this.paymentInfo.paidAmount += amount;
     this.paymentInfo.pendingAmount -= amount;
 

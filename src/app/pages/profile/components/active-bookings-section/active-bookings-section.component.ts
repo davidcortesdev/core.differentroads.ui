@@ -42,9 +42,7 @@ export class ActiveBookingsSectionComponent implements OnInit {
     const rqRequest = this.bookingsService.getBookingsByEmail(email, 'RQ', page, 1000);
     
     // Utilizamos forkJoin para hacer ambas peticiones en paralelo
-    forkJoin([bookedRequest, rqRequest]).subscribe(([bookedResponse, rqResponse]) => {
-      console.log('Respuesta Booked:', bookedResponse);
-      console.log('Respuesta RQ:', rqResponse);
+    forkJoin([bookedRequest, rqRequest]).subscribe(([bookedResponse, rqResponse]) => {;
       
       // Mapea las reservas Booked
       const bookedBookings = bookedResponse?.data?.map((booking: any) => this.mapBooking(booking)) || [];
@@ -58,12 +56,10 @@ export class ActiveBookingsSectionComponent implements OnInit {
       // Ordena las reservas por fecha de creación (más reciente primero - de la más nueva a la más antigua)
       this.bookings.sort((a, b) => b.creationDate.getTime() - a.creationDate.getTime());
       
-      console.log('Bookings combinados y ordenados:', this.bookings);
     });
   }
   
   mapBooking(booking: any): Booking {
-    console.log('Mapeando booking:', booking);
     
     return {
       id: booking?._id ?? '',
@@ -81,8 +77,7 @@ export class ActiveBookingsSectionComponent implements OnInit {
   }
 
   viewBooking(booking: Booking) {
-    console.log('Navegando a booking con ID:', booking.id);
-    
+
     // Opción 1: Navegar a una ruta con el ID
     this.router.navigate(['bookings', booking.id]);
     

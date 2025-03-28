@@ -16,7 +16,6 @@ import { ContentPageComponent } from './pages/content-page/content-page.componen
 import { ToursComponent } from './shared/components/tours/tours.component';
 import { ReservationComponent } from './pages/reservation/reservation.component';
 import { BookingsComponent } from './pages/bookings/bookings.component';
-import { P } from '../../dist/core.differentroads.ui/browser/chunk-LKGOHPSE';
 import { PaymentsComponent } from './pages/payments/payments.component';
 
 const routes: Routes = [

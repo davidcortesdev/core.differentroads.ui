@@ -20,7 +20,7 @@ export class PaymentsComponent implements OnInit {
   // Estado de la sección de opciones de pago
   isOpen: boolean = true;
   paymentType: string = '';
-  totalPrice: number = 1000; // Valor de ejemplo
+  totalPrice: number = 0; // Valor de ejemplo
   depositAmount: number = 200; // Valor de ejemplo
   paymentDeadline: string = '15/08/2023'; // Valor de ejemplo
 
@@ -52,6 +52,7 @@ export class PaymentsComponent implements OnInit {
   summary: { qty: number; value: number; description: string }[] = [];
   remainingAmount: number = 200;
   daysBeforeReservation: number = 30;
+  amountToPay: number = 200;
 
   constructor(
     @Inject(DOCUMENT) private document: Document,
@@ -68,7 +69,7 @@ export class PaymentsComponent implements OnInit {
   ngOnInit() {
     // Load booking ID from route params
     this.route.params.subscribe((params) => {
-      this.bookingID = params['bookingId'];
+      this.bookingID = params['id'];
       this.loadBookingDetails();
     });
 
@@ -83,7 +84,7 @@ export class PaymentsComponent implements OnInit {
     this.bookingsService.getBookingById(this.bookingID).subscribe({
       next: (booking) => {
         console.log('Booking loaded:', booking);
-        this.totalPrice = booking.extraData?.total || 0;
+        this.totalPrice = booking.periodData?.['total'] || 0;
         this.orderID = booking.id || '';
 
         // Set summary from booking data
@@ -232,7 +233,23 @@ export class PaymentsComponent implements OnInit {
   }
 
   async submitPayment() {
-    if (this.isLoading) return; // Prevent multiple submissions
+    if (this.isLoading || this.amountToPay <= 0) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Por favor ingrese un monto válido a abonar.',
+      });
+      return;
+    }
+
+    if (this.amountToPay > this.remainingAmount) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'El monto ingresado excede el saldo restante.',
+      });
+      return;
+    }
 
     this.isLoading = true;
     console.log('Payment process started');

@@ -1,43 +1,39 @@
-<p-progressSpinner
-  *ngIf="loading"
-  styleClass="reservation-loader"
-></p-progressSpinner>
-
-<div
-  *ngIf="!loading && !error"
-  class="res-conf"
-  [ngClass]="reservationInfo?.status"
->
+<div class="loading-container" *ngIf="loading">
+  <p-progressSpinner styleClass="reservation-loader"></p-progressSpinner>
+</div>
+<div *ngIf="!loading && !error" class="res-conf" [ngClass]="paymentStatus">
   <!-- Header con check y título -->
   <div class="hdr">
     <span
       class="status-icon"
-      *ngIf="reservationInfo?.status !== 'transfer'"
+      *ngIf="paymentStatus !== 'transfer'"
       [class]="
-        reservationInfo?.status === 'confirm'
+        paymentStatus === 'confirm'
           ? 'pi pi-check-circle'
           : 'pi pi-exclamation-circle'
       "
     ></span>
-    <h1 *ngIf="reservationInfo?.status === 'confirm'">
+    <h1 *ngIf="paymentStatus === 'confirm'">
       ¡Tu reserva con número {{ reservationInfo?.reservationNumber }} ha sido
       confirmada!
     </h1>
-    <h1 *ngIf="reservationInfo?.status === 'rq'">
+    <h1 *ngIf="paymentStatus === 'rq'">
       ¡Tu reserva con número {{ reservationInfo?.reservationNumber }} está en
       petición!
     </h1>
-    <h1 *ngIf="reservationInfo?.status === 'transfer'">
+    <h1 *ngIf="paymentStatus === 'transfer'">
       Confirma tu petición de reserva realizando el pago por transferencia
     </h1>
   </div>
 
   <!-- Mensaje de bienvenida -->
   <div class="wel">
-    <p class="greet">Hola {{ reservationInfo?.customerName }},</p>
+    <p class="greet" *ngIf="reservationInfo?.customerName">
+      Hola {{ reservationInfo?.customerName }},
+    </p>
 
     <!-- Mensajes específicos por estado -->
-    <ng-container *ngIf="reservationInfo?.status === 'confirm'">
+    <ng-container *ngIf="paymentStatus === 'confirm'">
       <p class="hl">
         ¡Estamos emocionados de confirmarte que tu reserva ha sido realizada con
         éxito!
@@ -54,7 +50,7 @@
       </p>
     </ng-container>
 
-    <ng-container *ngIf="reservationInfo?.status === 'rq'">
+    <ng-container *ngIf="paymentStatus === 'rq'">
       <p class="hl">
         Hemos bloqueado tus plazas, ¡Esto significa que te tenemos en cuenta
         para la salida de este tour!
@@ -73,7 +69,7 @@
       </p>
     </ng-container>
 
-    <ng-container *ngIf="reservationInfo?.status === 'transfer'">
+    <ng-container *ngIf="paymentStatus === 'transfer'">
       <p class="hl">¡Hemos recibido tu petición de reserva del tour!</p>
       <p class="msg">
         Por favor, realiza el pago por transferencia antes de las 11:59 pm
@@ -86,10 +82,7 @@
     </ng-container>
 
     <!-- Recuadro coral con información bancaria -->
-    <p-panel
-      styleClass="bank-panel"
-      *ngIf="bookingData?.periodData?.['payment'].method === 'transfer'"
-    >
+    <p-panel styleClass="bank-panel" *ngIf="paymentStatus === 'transfer'">
       <ng-template pTemplate="header">
         <div class="pan-hdr">
           Realiza el pago a través de una de estas entidades bancarias y adjunta
@@ -118,9 +111,7 @@
       </div>
     </p-panel>
 
-    <ng-container
-      *ngIf="bookingData?.periodData?.['payment'].method === 'transfer'"
-    >
+    <ng-container *ngIf="paymentStatus === 'transfer'">
       <!-- Botón de justificante: mostrar componente de subida o botón de ver voucher -->
       <ng-container *ngIf="!uploadedVoucher; else voucherView">
         <app-upload-button

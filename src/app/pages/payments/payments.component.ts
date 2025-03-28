@@ -27,7 +27,7 @@ export class PaymentsComponent implements OnInit {
 
   // Estado para métodos de pago
   isPaymentMethodsOpen: boolean = true;
-  paymentMethod: string = '';
+  paymentMethod: 'transfer' | 'creditCard' | undefined;
 
   // Estado para pagos a plazos
   isInstallmentsOpen: boolean = true;
@@ -63,7 +63,7 @@ export class PaymentsComponent implements OnInit {
     private paymentOptionsService: PaymentOptionsService,
     private summaryService: SummaryService,
     private messageService: MessageService,
-    private authService: AuthenticateService // new injection
+    private authService: AuthenticateService
   ) {}
 
   ngOnInit() {
@@ -163,7 +163,7 @@ export class PaymentsComponent implements OnInit {
 
   onPaymentTypeChange(): void {
     // Reinicia opciones cuando se cambia de tipo pago
-    this.paymentMethod = '';
+    this.paymentMethod = undefined;
     this.installmentOption = '';
     this.isPaymentMethodsOpen = false;
     this.isInstallmentsOpen = false;
@@ -305,6 +305,7 @@ export class PaymentsComponent implements OnInit {
       const payment = await this.createPayment(this.bookingID, {
         amount: paymentAmount,
         registerBy: this.authService.getCurrentUsername(),
+        method: this.paymentMethod!,
       });
 
       const publicID = payment.publicID;
@@ -346,6 +347,7 @@ export class PaymentsComponent implements OnInit {
     payment: {
       amount: number;
       registerBy: string;
+      method: 'creditCard' | 'transfer';
     }
   ): Promise<Payment> {
     return new Promise((resolve, reject) => {

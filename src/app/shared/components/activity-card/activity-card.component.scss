@@ -60,6 +60,7 @@ $colors: (
     position: relative;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     padding: 0;
+    will-change: transform; // Optimize for GPU acceleration
 
     &:hover {
       transform: translateY(-3px);
@@ -186,6 +187,7 @@ $colors: (
       border-radius: map.get($border-radius, md);
       background-color: #f5f5f5;
       transition: transform 0.3s ease;
+      will-change: transform; // Optimize for GPU acceleration
 
       &:hover {
         transform: scale(1.03);

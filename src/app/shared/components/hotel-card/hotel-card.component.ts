@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Hotel } from '../../../core/models/tours/tour.model';
 
 @Component({
@@ -7,14 +7,15 @@ import { Hotel } from '../../../core/models/tours/tour.model';
   templateUrl: './hotel-card.component.html',
   styleUrls: ['./hotel-card.component.scss']
 })
-export class HotelCardComponent implements OnChanges {
+export class HotelCardComponent implements OnInit {
   @Input() hotel: Hotel | null = null;
   @Input() bookingScore: number = 8.9;
   @Input() bookingLogoSrc: string = 'booking-logo.png';
   
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['hotel']) {
-      console.log('Hotel data received in HotelCardComponent:', this.hotel);
+  ngOnInit(): void {
+    // Set default booking logo if not provided
+    if (!this.bookingLogoSrc) {
+      this.bookingLogoSrc = 'assets/images/booking-logo.png';
     }
   }
 }

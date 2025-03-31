@@ -1,11 +1,35 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
+/**
+ * SortByPipe
+ * 
+ * A custom Angular pipe that sorts an array of objects by a specified property path.
+ * 
+ * @example
+ * // Sort users by name
+ * <div *ngFor="let user of users | sortBy:'name'">
+ *   {{ user.name }}
+ * </div>
+ * 
+ * // Sort users by nested property (descending order)
+ * <div *ngFor="let user of users | sortBy:'profile.age':true">
+ *   {{ user.profile.age }}
+ * </div>
+ */
 @Pipe({
   name: 'sortBy',
   standalone: true,
 })
 export class SortByPipe implements PipeTransform {
-  transform(array: any[], path: string): any[] {
+  /**
+   * Transforms an array by sorting its elements based on a specified property path.
+   * 
+   * @param array - The array to sort
+   * @param path - The property path to sort by (supports dot notation for nested properties)
+   * @param descending - Whether to sort in descending order (default: false)
+   * @returns The sorted array
+   */
+  transform(array: any[], path: string, descending: boolean = false): any[] {
     //console.log('Entrada del pipe:', array);
     //console.log('Path a ordenar:', path);
 
@@ -37,7 +61,13 @@ export class SortByPipe implements PipeTransform {
       if (aValue === undefined) return 1;
       if (bValue === undefined) return -1;
 
-      const result = aValue < bValue ? -1 : 1;
+      let result = aValue < bValue ? -1 : 1;
+      
+      // If descending is true, invert the result
+      if (descending) {
+        result = -result;
+      }
+      
       //console.log('Resultado de la comparación:', result);
 
       return result;

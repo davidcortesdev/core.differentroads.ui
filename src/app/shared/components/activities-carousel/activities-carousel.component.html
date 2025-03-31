@@ -7,6 +7,8 @@
     [responsiveOptions]="responsiveOptions"
     [showIndicators]="true"
     [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
+    [lazy]="true"
+    [trackBy]="trackByFn"
   >
     <ng-template let-highlight pTemplate="item">
       <app-activity-card 

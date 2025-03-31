@@ -1,5 +1,5 @@
 <div class="additional-info">
-  <p-accordion *ngIf="infoCards.length > 0" [multiple]="true" [value]="0">
+  <p-accordion *ngIf="infoCards.length > 0" [multiple]="true" [value]="0" (onOpen)="onAccordionTabOpen()">
     <p-accordion-panel
       *ngFor="let card of infoCards; let i = index; trackBy: trackByFn"
       [value]="i"

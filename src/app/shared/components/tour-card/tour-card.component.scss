@@ -392,7 +392,7 @@ $spacing-md: 1rem;
 // Trip type badges
 .trip-type-s {
   @include trip-type-badge;
-  background-color: var(--color-singles) !important;
+  background-color: var(--color-single) !important;
 }
 
 .trip-type-g {

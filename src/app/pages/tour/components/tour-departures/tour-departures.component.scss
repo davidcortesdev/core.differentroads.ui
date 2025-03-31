@@ -503,3 +503,24 @@ $primary: var(--p-primary-color);
     }
   }
 }
+
+// Trip type tags in expanded row
+.trip-type-tag {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: white;
+}
+
+.trip-type-tag-group {
+  background-color: var(--color-group);
+}
+
+.trip-type-tag-single {
+  background-color: var(--color-single);
+}
+
+.trip-type-tag-private {
+  background-color: var(--color-private);
+}

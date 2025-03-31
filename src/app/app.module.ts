@@ -191,6 +191,8 @@ import { UploadButtonComponent } from './shared/components/upload-button/upload-
 import { PaymentsComponent } from './pages/payments/payments.component';
 import { TourInfoAccordionComponent } from './pages/tour/components/tour-info-accordion/tour-info-accordion.component';
 import { HotelCardComponent } from './shared/components/hotel-card/hotel-card.component';
+import { ActivitiesCarouselComponent } from './shared/components/activities-carousel/activities-carousel.component';
+import { ActivityCardComponent } from './shared/components/activity-card/activity-card.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -293,6 +295,8 @@ registerLocaleData(localeEs);
     PaymentsComponent,
     TourInfoAccordionComponent,
     HotelCardComponent,
+    ActivitiesCarouselComponent,
+    ActivityCardComponent,
 
   ],
   imports: [

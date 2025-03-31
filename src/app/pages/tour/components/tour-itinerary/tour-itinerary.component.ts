@@ -25,6 +25,12 @@ import { forkJoin } from 'rxjs';
 import { HotelsService } from '../../../../core/services/hotels.service';
 // Add this import
 import { HotelCardComponent } from '../../../../shared/components/hotel-card/hotel-card.component';
+// Add these imports at the top of the file
+import { ActivityCardComponent } from '../../../../shared/components/activity-card/activity-card.component';
+import { ActivitiesCarouselComponent } from '../../../../shared/components/activities-carousel/activities-carousel.component';
+
+// Then in the @Component decorator, add these to the imports array if it's a standalone component
+// If it's not standalone, you'll need to add them to the module's declarations
 interface City {
   nombre: string;
   lat: number;
@@ -532,7 +538,7 @@ export class TourItineraryComponent implements OnInit {
       return {
         title: day.name,
         description: this.sanitizer.bypassSecurityTrustHtml(
-          day.description || day.longDescription || ''
+          day.description || ''
         ),
         image: day.itimage?.[0]?.url || '',
         hotel: hotel || null,

@@ -1,0 +1,64 @@
+<p-card
+  styleClass="highlight-card"
+  [style]="{
+    'border-radius': '1rem',
+    overflow: 'hidden',
+    border: 'none',
+    boxShadow: 'none'
+  }"
+>
+  <ng-template pTemplate="header">
+    <div class="image-container">
+      <img
+        [src]="highlight.image || ''"
+        [alt]="highlight.title"
+        loading="lazy"
+      />
+      <span
+        class="status-badge"
+        [class.optional]="!highlight.recommended && highlight.optional"
+        [attr.aria-label]="
+          highlight.recommended
+            ? 'Actividad recomendada'
+            : highlight.optional
+            ? 'Actividad opcional'
+            : 'Actividad incluida'
+        "
+      >
+        <i
+          class="pi pi-star"
+          *ngIf="highlight.recommended"
+          aria-hidden="true"
+        ></i>
+        {{
+          highlight.recommended
+            ? "Recomendada"
+            : highlight.optional
+            ? "Opcional"
+            : "Incluida"
+        }}
+      </span>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="content">
+    <h3 [title]="highlight.title">{{ highlight.title }}</h3>
+    <div
+      [innerHTML]="highlight.description"
+      class="highlight-card-description"
+    ></div>
+  </ng-template>
+
+  <ng-template pTemplate="footer" *ngIf="highlight.optional">
+    <p-button
+      (click)="onAddActivity(highlight)"
+      [label]="highlight.added ? 'Eliminar' : 'Añadir'"
+      styleClass="p-button-rounded"
+      [outlined]="highlight.added"
+      [attr.aria-label]="
+        highlight.added ? 'Eliminar actividad' : 'Añadir actividad'
+      "
+    ></p-button>
+    <div class="price">+{{ highlight.price | currencyFormat : "EUR" }}</div>
+  </ng-template>
+</p-card>

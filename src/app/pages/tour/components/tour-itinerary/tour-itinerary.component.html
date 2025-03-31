@@ -83,75 +83,11 @@
                 [bookingLogoSrc]="'booking-logo.png'"
               ></app-hotel-card>
 
-              <div class="itinerary-activities">
-                <p-carousel
-                  [value]="event.highlights"
-                  [numVisible]="3"
-                  [circular]="true"
-                  [showNavigators]="false"
-                  [responsiveOptions]="responsiveOptions"
-                  [showIndicators]="true"
-                  [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
-                >
-                  <ng-template let-highlight pTemplate="item">
-                    <p-card
-                      styleClass="highlight-card"
-                      [style]="{
-                        'border-radius': '1rem',
-                        overflow: 'hidden',
-                        border: 'none',
-                        boxShadow: 'none'
-                      }"
-                    >
-                      <ng-template pTemplate="header">
-                        <img
-                          [src]="highlight.image || ''"
-                          [alt]="highlight.title"
-                        />
-                        <span
-                          class="status-badge"
-                          [class.optional]="
-                            !highlight.recommended && highlight.optional
-                          "
-                        >
-                          <i
-                            class="pi pi-star"
-                            *ngIf="highlight.recommended"
-                            style="font-size: 1em"
-                          ></i>
-                          {{
-                            highlight.recommended
-                              ? "Recomendada"
-                              : highlight.optional
-                              ? "Opcional"
-                              : "Incluida"
-                          }}
-                        </span>
-                      </ng-template>
-                      <ng-template pTemplate="content">
-                        <h3>{{ highlight.title }}</h3>
-                        <div
-                          [innerHTML]="highlight.description"
-                          class="highlight-card-description"
-                        ></div>
-                      </ng-template>
-                      <ng-template
-                        pTemplate="footer"
-                        *ngIf="highlight.optional"
-                      >
-                        <p-button
-                          (click)="onAddActivity(highlight)"
-                          label="{{ highlight.added ? 'Añadida' : 'Añadir' }}"
-                          styleClass="p-button-rounded"
-                        ></p-button>
-                        <div>
-                          +{{ highlight.price | currencyFormat : "EUR" }}
-                        </div>
-                      </ng-template>
-                    </p-card>
-                  </ng-template>
-                </p-carousel>
-              </div>
+              <!-- Replace the activities carousel with the new component -->
+              <app-activities-carousel
+                [highlights]="event.highlights"
+                (addActivity)="onAddActivity($event)"
+              ></app-activities-carousel>
             </ng-template>
           </p-panel>
         </ng-template>

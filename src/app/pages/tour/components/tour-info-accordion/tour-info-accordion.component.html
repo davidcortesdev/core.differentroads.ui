@@ -12,12 +12,12 @@
       </p-accordion-header>
       <p-accordion-content>
         <div class="paddingDiv">
-          <div [ngClass]="{'truncated-content': !card.showFullContent}">
-            <div [innerHTML]="sanitizeHtml(card.content)"></div>
+          <div class="content-wrapper">
+            <div #contentDiv [ngClass]="{'truncated-content': !card.showFullContent}" [innerHTML]="sanitizeHtml(card.content)"></div>
+            <button class="show-more-btn" (click)="toggleContent(card)">
+              {{ card.showFullContent ? 'Mostrar menos' : 'Mostrar más' }}
+            </button>
           </div>
-          <button class="show-more-btn" (click)="toggleContent(card)">
-            {{ card.showFullContent ? 'Mostrar menos' : 'Mostrar más' }}
-          </button>
         </div>
       </p-accordion-content>
     </p-accordion-panel>

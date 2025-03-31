@@ -1,11 +1,11 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ViewChildren, QueryList, ElementRef, AfterViewInit } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 interface InfoCard {
   title: string;
   content: string;
   order: string;
-  showFullContent?: boolean; // Add this property to track expanded state
+  showFullContent?: boolean;
 }
 
 @Component({
@@ -14,8 +14,10 @@ interface InfoCard {
   templateUrl: './tour-info-accordion.component.html',
   styleUrl: './tour-info-accordion.component.scss',
 })
-export class TourInfoAccordionComponent {
+export class TourInfoAccordionComponent implements AfterViewInit {
   @Input() infoCards: InfoCard[] = [];
+  // Fix: Add the definite assignment assertion operator (!)
+  @ViewChildren('contentDiv') contentDivs!: QueryList<ElementRef>;
   
   constructor(private sanitizer: DomSanitizer) {}
   
@@ -44,5 +46,35 @@ export class TourInfoAccordionComponent {
     if (!content) return '';
     const lines = content.split('\n');
     return lines.slice(0, 10).join('\n');
+  }
+
+
+  
+  ngAfterViewInit() {
+    setTimeout(() => {
+      this.checkContentHeight();
+    });
+  }
+  
+  checkContentHeight() {
+    if (this.contentDivs) {
+      this.contentDivs.forEach((div: ElementRef, index: number) => {
+        const element = div.nativeElement;
+        const isOverflowing = element.scrollHeight > 300; // 300px is our max-height
+        
+        if (isOverflowing) {
+          element.parentElement.classList.add('content-overflow');
+        } else {
+          element.parentElement.classList.remove('content-overflow');
+        }
+      });
+    }
+  }
+  
+  // Make sure to call this method when accordion panels are expanded
+  onAccordionTabOpen() {
+    setTimeout(() => {
+      this.checkContentHeight();
+    });
   }
 }

@@ -9,7 +9,7 @@
       <p-rating
         [ngModel]="hotel?.category"
         [readonly]="true"
-        [stars]="5"
+        [stars]="hotel?.category"
       ></p-rating>
     </span>
     <h4 class="hotel-card-name">
@@ -22,13 +22,25 @@
       <i class="pi pi-map-marker"></i> {{ hotel?.address }}
     </p>
   </div>
-  <div class="hotel-card-bookings-section">
-    <img
-      [src]="bookingLogoSrc"
-      alt="Booking Logo"
-      class="logo"
-      height="60px"
-    />
-    <p>{{ bookingScore }}</p>
+  <!-- Only show booking section if bookingRank or bookingLink exists -->
+  <div class="hotel-card-bookings-section" *ngIf="hotel?.bookingRank || hotel?.bookingLink">
+    <a *ngIf="hotel?.bookingLink" [href]="hotel?.bookingLink" target="_blank" class="booking-link">
+      <img
+        [src]="bookingLogoSrc"
+        alt="Booking Logo"
+        class="logo"
+        height="60px"
+      />
+      <p>{{ hotel?.bookingRank }}</p>
+    </a>
+    <ng-container *ngIf="!hotel?.bookingLink">
+      <img
+        [src]="bookingLogoSrc"
+        alt="Booking Logo"
+        class="logo"
+        height="60px"
+      />
+      <p>{{ hotel?.bookingRank }}</p>
+    </ng-container>
   </div>
 </div>

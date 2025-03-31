@@ -14,6 +14,7 @@ export class HotelCardComponent implements OnInit {
   
   ngOnInit(): void {
     // Set default booking logo if not provided
+    console.log('hotel',this.hotel);
     if (!this.bookingLogoSrc) {
       this.bookingLogoSrc = 'assets/images/booking-logo.png';
     }

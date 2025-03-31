@@ -6,7 +6,6 @@ import { AuthenticateService } from '../../../../core/services/auth-service.serv
 import { Tour } from '../../../../core/models/tours/tour.model';
 import { Subscription } from 'rxjs';
 import { InfoCard } from '../tour-info-accordion/tour-info-accordion.component';
-import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
   selector: 'app-tour-additional-info',
@@ -97,14 +96,8 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   }
 
   handleDownloadTrip(): void {
-    console.log('Downloading trip information...');
-
-    if (this.tour) {
-      // Optimización: Usar Promise para simular operación asíncrona
-      this.showDownloadNotification();
-    } else {
-      alert('No hay información disponible para descargar');
-    }
+    // Abre el modal sin validar autenticación
+    this.visible = true;
   }
 
   // Optimización: Método separado para mostrar notificación

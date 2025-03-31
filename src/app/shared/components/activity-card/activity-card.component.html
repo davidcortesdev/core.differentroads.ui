@@ -45,8 +45,9 @@
   >
     <p-button
       (click)="onAddActivity(highlight)"
-      label="{{ highlight.added ? 'Añadida' : 'Añadir' }}"
+      label="{{ highlight.added ? 'Eliminar' : 'Añadir' }}"
       styleClass="p-button-rounded"
+      [outlined]="highlight.added"
     ></p-button>
     <div>
       +{{ highlight.price | currencyFormat : "EUR" }}

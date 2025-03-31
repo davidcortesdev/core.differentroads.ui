@@ -51,7 +51,7 @@ $white: #fff;
   align-items: center;
   flex-wrap: wrap;
   margin: 1rem 0;
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: stretch;
@@ -61,7 +61,7 @@ $white: #fff;
 .action-card {
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
-  
+
   &:hover {
     transform: translateY(-3px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -72,7 +72,7 @@ $white: #fff;
   display: flex;
   gap: 1rem;
   align-items: center;
-  padding: 0.5rem;
+  //padding: 0.5rem;
 }
 
 .card-text {
@@ -129,13 +129,13 @@ $white: #fff;
         }
       }
     }
-    
+
     .p-card {
       .p-card-content {
-        padding: 0.5rem;
+        //padding: 0.5rem;
       }
     }
-    
+
     .budget-modal {
       .p-dialog-content {
         padding: 0;
@@ -148,7 +148,7 @@ $white: #fff;
   .p-icon {
     @extend %txt-azul;
   }
-  
+
   .p-btn,
   .p-select,
   p-select {
@@ -156,12 +156,19 @@ $white: #fff;
     padding-bottom: 0.5rem;
     border-radius: 11.82px;
   }
-  
+
+  p-card{
+    padding: 0;
+    p-card-body{
+      padding: 0;
+    }
+  }
+
   .p-autocomplete,
   .p-btn {
     min-width: 250px;
   }
-  
+
   .p-autocomplete {
     .p-autocomplete-input {
       width: 100%;
@@ -172,7 +179,7 @@ $white: #fff;
       padding-top: 1.5rem !important;
       padding-bottom: 0.5rem !important;
     }
-    
+
     .p-autocomplete-overlay {
       @extend %brd-rad;
       background: $white;
@@ -180,7 +187,7 @@ $white: #fff;
       border: 1px solid #d9d9d9;
       z-index: 1;
     }
-    
+
     .p-autocomplete-dropdown {
       position: absolute;
       top: 50%;
@@ -191,7 +198,7 @@ $white: #fff;
       z-index: 1;
     }
   }
-  
+
   .p-ovl .p-overlay-content {
     @extend %brd-rad;
     padding: 0;

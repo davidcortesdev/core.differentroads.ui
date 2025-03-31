@@ -64,6 +64,7 @@
           *ngIf="selectedActivities.length"
           [pTooltip]="getSelectedActivitiesNames()"
           tooltipPosition="bottom"
+          class="activities-badge"
         >
           {{ selectedActivities.length }}
           actividad{{ selectedActivities.length > 1 ? "es" : "" }} opcional{{

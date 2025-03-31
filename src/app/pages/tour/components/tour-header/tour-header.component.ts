@@ -93,6 +93,8 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   
   // Helper method for template
   formatDepartureCity(city: string): string {
+    if (!city) return '';
+    
     const cityLower = city.toLowerCase();
     if (cityLower.includes("sin")) {
       return "Sin vuelos";

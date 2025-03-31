@@ -31,18 +31,18 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   departureCity: string = '';
   selectedActivities: OptionalActivityRef[] = [];
 
-  // Información de pasajeros
+  // Passenger information
   adultsCount: number = 1;
   childrenCount: number = 0;
 
-  // Precio base y total
+  // Base and total prices
   basePrice: number = 0;
   totalPrice: number = 0;
   travelersText: string = '';
 
   private isScrolled = false;
   private headerHeight = 0;
-  private subscriptions: Subscription = new Subscription();
+  private subscriptions = new Subscription();
   periodID: any;
   flightID: string | number | undefined;
 
@@ -56,52 +56,129 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.route.params.subscribe((params) => {
-      const slug = params['slug'];
-      if (slug) {
-        this.loadTourData(slug);
-      }
-    });
+    this.initializeSubscriptions();
+  }
 
-    // Suscribirse a cambios de pasajeros
-    this.tourOrderService.selectedTravelers$.subscribe((travelers) => {
-      this.adultsCount = travelers.adults;
-      this.childrenCount = travelers.children;
-      this.calculateTotalPrice();
-      this.getPassengersInfo();
-      console.log('Travelers:', travelers);
-    });
+  ngOnDestroy() {
+    this.subscriptions.unsubscribe();
+  }
 
-    this.tourOrderService.selectedActivities$.subscribe((activities) => {
-      this.selectedActivities = activities;
-      this.calculateTotalPrice();
-    });
+  ngAfterViewInit() {
+    this.setHeaderHeight();
+  }
 
-    // Suscribirse a los cambios en la información de fechas y precios
+  @HostListener('window:scroll', [])
+  onWindowScroll() {
+    this.handleScrollEffect();
+  }
+
+  bookTour() {
+    this.tourComponent.createOrderAndRedirect(this.periodID);
+  }
+
+  getDuration(): string {
+    const days = this.tour.activePeriods?.[0]?.days;
+    return days ? `${days} días, ${days - 1} noches` : '';
+  }
+
+  getSelectedActivitiesNames(): string {
+    if (!this.selectedActivities?.length) {
+      return 'No hay actividades seleccionadas';
+    }
+    
+    return this.selectedActivities
+      .map(activity => activity.name)
+      .join(', ');
+  }
+  
+  // Helper method for template
+  formatDepartureCity(city: string): string {
+    const cityLower = city.toLowerCase();
+    if (cityLower.includes("sin")) {
+      return "Sin vuelos";
+    } else if (cityLower.includes("vuelo")) {
+      return city;
+    }
+    return "Vuelo Desde " + city;
+  }
+
+  // Private methods
+  private initializeSubscriptions() {
+    // Load tour data from route params
     this.subscriptions.add(
-      this.tourOrderService.selectedDateInfo$.subscribe((dateInfo) => {
+      this.route.params.subscribe(params => {
+        const slug = params['slug'];
+        if (slug) {
+          this.loadTourData(slug);
+        }
+      })
+    );
+
+    // Subscribe to traveler changes
+    this.subscriptions.add(
+      this.tourOrderService.selectedTravelers$.subscribe(travelers => {
+        this.adultsCount = travelers.adults;
+        this.childrenCount = travelers.children;
+        this.calculateTotalPrice();
+        this.getPassengersInfo();
+      })
+    );
+
+    // Subscribe to activity changes
+    this.subscriptions.add(
+      this.tourOrderService.selectedActivities$.subscribe(activities => {
+        this.selectedActivities = activities;
+        this.calculateTotalPrice();
+      })
+    );
+
+    // Subscribe to date info changes
+    this.subscriptions.add(
+      this.tourOrderService.selectedDateInfo$.subscribe(dateInfo => {
         this.selectedDate = dateInfo.date;
         this.periodID = dateInfo.periodID;
         this.tripType = dateInfo.tripType;
         this.departureCity = dateInfo.departureCity || '';
         this.flightID = dateInfo.flightID;
-        console.log('Date info:', dateInfo);
       })
     );
   }
 
-  ngOnDestroy() {
-    // Limpiar suscripciones para evitar memory leaks
-    this.subscriptions.unsubscribe();
+  private loadTourData(slug: string) {
+    this.subscriptions.add(
+      this.toursService.getTourDetailBySlug(slug).subscribe({
+        next: (tourData) => {
+          this.tour = { ...this.tour, ...tourData };
+          this.marketingTag = tourData.marketingSection?.marketingTag || '';
+
+          if (tourData.price) {
+            this.basePrice = tourData.price;
+            this.calculateTotalPrice();
+          }
+        },
+        error: (error) => {
+          console.error('Error loading tour:', error);
+        },
+      })
+    );
   }
 
-  ngAfterViewInit() {
-    // Obtener la altura del encabezado
+  private calculateTotalPrice(): void {
+    this.subscriptions.add(
+      this.tourOrderService.getTotalPrice().subscribe(totalPrice => {
+        this.totalPrice = totalPrice;
+      })
+    );
+  }
+
+  private getPassengersInfo() {
+    this.travelersText = this.tourOrderService.getTravelersText();
+  }
+
+  private setHeaderHeight() {
     const headerElement = this.el.nativeElement.querySelector('.tour-header');
     if (headerElement) {
       this.headerHeight = headerElement.offsetHeight;
-
-      // Establecer la altura como variable CSS personalizada
       document.documentElement.style.setProperty(
         '--header-height',
         `${this.headerHeight}px`
@@ -109,8 +186,7 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  @HostListener('window:scroll', [])
-  onWindowScroll() {
+  private handleScrollEffect() {
     const scrollPosition =
       window.pageYOffset ||
       document.documentElement.scrollTop ||
@@ -120,81 +196,16 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (!headerElement) return;
 
-    // Umbral de scroll - puede ajustarse según necesidades
     const scrollThreshold = 100;
 
     if (scrollPosition > scrollThreshold && !this.isScrolled) {
-      // Aplicar clase scrolled al header
       this.renderer.addClass(headerElement, 'scrolled');
-
-      // Añadir clase al componente para activar el espaciado
       this.renderer.addClass(this.el.nativeElement, 'header-fixed');
-
       this.isScrolled = true;
     } else if (scrollPosition <= scrollThreshold && this.isScrolled) {
-      // Quitar clase scrolled al header
       this.renderer.removeClass(headerElement, 'scrolled');
-
-      // Quitar clase al componente para desactivar el espaciado
       this.renderer.removeClass(this.el.nativeElement, 'header-fixed');
-
       this.isScrolled = false;
     }
-  }
-
-  private loadTourData(slug: string) {
-    this.toursService.getTourDetailBySlug(slug).subscribe({
-      next: (tourData) => {
-        console.log('Tour Data:', tourData);
-        this.tour = {
-          ...this.tour,
-          ...tourData,
-        };
-        // Extraer el marketingTag si existe
-        this.marketingTag = tourData.marketingSection?.marketingTag || '';
-
-        // Establecer el precio base inicial
-        if (tourData.price) {
-          this.basePrice = tourData.price;
-          this.calculateTotalPrice();
-        }
-      },
-      error: (error) => {
-        console.error('Error loading tour:', error);
-      },
-    });
-  }
-
-  getDuration(): string {
-    const days = this.tour.activePeriods?.[0]?.days;
-    return days ? `${days} días, ${days - 1} noches` : '';
-  }
-
-  // Calcular precio total basado en número de adultos y niños
-  calculateTotalPrice(): void {
-    this.tourOrderService.getTotalPrice().subscribe((totalPrice) => {
-      this.totalPrice = totalPrice;
-    });
-  }
-
-  // Obtener texto de pasajeros para mostrar
-  getPassengersInfo() {
-    this.travelersText = this.tourOrderService.getTravelersText();
-  }
-
-  bookTour() {
-    this.tourComponent.createOrderAndRedirect(this.periodID);
-  }
-
-  getSelectedActivitiesNames(): string {
-    // Verifica si hay actividades seleccionadas
-    if (!this.selectedActivities || this.selectedActivities.length === 0) {
-      return 'No hay actividades seleccionadas';
-    }
-  
-    // Extrae los nombres y los une en un string separado por comas (o <br> para saltos de línea)
-    return this.selectedActivities
-      .map(activity => activity.name) // Extrae solo el nombre
-      .join(', '); // Separa por comas (puedes usar '<br>' si prefieres saltos de línea)
   }
 }

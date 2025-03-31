@@ -205,10 +205,9 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
 
     console.log('filteredDepartures', this.filteredDepartures);
 
-    // this.addToCart(this.filteredDepartures[0]);
-
-    // Si hay salidas filtradas, actualizar el precio base
+    // Automatically select the first departure if available
     if (this.filteredDepartures.length > 0) {
+      this.addToCart(this.filteredDepartures[0]);
       this.tourOrderService.updateBasePrice(this.filteredDepartures[0].price);
     }
 
@@ -277,6 +276,10 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
     // Actualizar precios con la primera salida filtrada si existe
     if (this.filteredDepartures.length > 0) {
       this.tourOrderService.updateBasePrice(this.filteredDepartures[0].price);
+      // Select the first departure if not already selected
+      if (!this.selectedDepartureId) {
+        this.addToCart(this.filteredDepartures[0]);
+      }
     }
   }
 
@@ -353,17 +356,10 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
         this.filterDepartures();
         this.filterDeparturesByMonth(); // Filtrar por el mes actual
 
-        // Si ya tenemos datos disponibles, actualizar el servicio compartido
-        // con la información de la primera salida recomendada
-        // if (this.filteredDepartures.length > 0) {
-        //   const recommendedDeparture = this.filteredDepartures[0];
-
-        //   // Actualizar la información compartida con los datos iniciales
-        //   this.tourOrderService.updateSelectedDateInfo(
-        //     recommendedDeparture.externalID,
-        //     recommendedDeparture.flightID
-        //   );
-        // }
+        // Ensure we have a selected departure after loading data
+        if (!this.selectedDepartureId && this.filteredDepartures.length > 0) {
+          this.addToCart(this.filteredDepartures[0]);
+        }
       });
   }
 

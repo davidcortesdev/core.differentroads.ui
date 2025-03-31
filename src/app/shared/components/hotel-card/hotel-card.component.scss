@@ -1,0 +1,145 @@
+// Variables
+$breakpoints: (
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1366px,
+);
+
+$spaces: (
+  xs: 0.5rem,
+  sm: 0.75rem,
+  base: 1rem,
+  lg: 1.5rem,
+);
+
+$border-radius: (
+  sm: 8px,
+  md: 14px,
+  lg: 18px,
+);
+
+$colors: (
+  primary: var(--p-primary-color),
+  secondary: var(--p-button-primary-color),
+  background: var(--background-azul),
+  text: var(--background-azul),
+  text-light: var(--background-azul-color-letra),
+  border: #d9d9d9,
+  border-light: #f0f0f0,
+);
+
+// Import Sass modules
+@use "sass:map";
+
+// Mixins
+@mixin resp($bp) {
+  @media (max-width: map.get($breakpoints, $bp)) {
+    @content;
+  }
+}
+
+@mixin flex($dir: row, $just: flex-start, $align: stretch, $gap: 0) {
+  display: flex;
+  flex-direction: $dir;
+  justify-content: $just;
+  align-items: $align;
+  @if $gap > 0 {
+    gap: $gap;
+  }
+}
+
+// Hotel card
+.hotel-card {
+  color: map.get($colors, text);
+  @include flex(row, flex-start, center, 1rem);
+  border-radius: map.get($border-radius, lg);
+  border: 1px solid map.get($colors, border);
+  padding: 8px;
+  margin-top: 1rem;
+  max-height: 10rem;
+
+  @include resp(xl) {
+    padding: 8px 15px 8px 8px;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  @include resp(md) {
+    flex-direction: column;
+
+    &-image {
+      width: 100%;
+      margin-bottom: 0.5rem;
+    }
+
+    &-content {
+      padding: 0.5rem 0;
+    }
+  }
+
+  &-image {
+    width: 40%;
+    object-fit: cover;
+    border-radius: map.get($border-radius, md);
+    aspect-ratio: 2/1;
+
+    @include resp(xl) {
+      border-radius: 10px;
+    }
+
+    @include resp(sm) {
+      width: 100%;
+    }
+  }
+
+  &-content {
+    @include flex(column, flex-start, flex-start, 0.5rem);
+    flex-grow: 1;
+    padding: 0.75rem 0;
+
+    h4,
+    p {
+      margin: 0;
+    }
+
+    h4 {
+      font-size: 13px;
+      font-weight: 500;
+
+      @include resp(xl) {
+        font-size: 16px;
+      }
+    }
+
+    p {
+      font-size: 14px;
+
+      @include resp(xl) {
+        font-size: 13px;
+      }
+
+      i {
+        color: map.get($colors, primary);
+      }
+    }
+  }
+
+  &-bookings-section {
+    @include flex(row, center, center, 1rem);
+    margin-top: 0.75rem;
+
+    p {
+      display: inline-flex;
+      height: 29px;
+      width: 29px;
+      justify-content: center;
+      align-items: center;
+      border-radius: 3.314px 3.314px 3.314px 0px;
+      background: map.get($colors, background);
+      color: map.get($colors, text-light);
+      font-size: 11.6px;
+      font-weight: 600;
+    }
+  }
+}

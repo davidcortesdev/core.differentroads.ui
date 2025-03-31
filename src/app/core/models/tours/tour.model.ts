@@ -66,14 +66,20 @@ export interface DayCard {
 export interface Hotel {
   id: string;
   name: string;
-  category: string;
+  externalID: string;
+  city?: string;
+  description?: string;
   address: string;
+  category: string;
+  phone?: string | null;
+  provider?: string;
   link: string;
-  image: CldImage[];
-  phone?: string;
+  rank?: number;
   bookingLink?: string;
   bookingRank?: string;
-  externalID: string;
+  hotelimage: CldImage[];
+  availableLangs?: string[];
+  isLangAvailable?: boolean;
 }
 
 export interface PeriodHotel {

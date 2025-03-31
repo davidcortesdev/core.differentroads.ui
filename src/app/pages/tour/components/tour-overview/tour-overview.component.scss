@@ -240,12 +240,20 @@
 .tour-image {
   height: fit-content;
   position: relative;
+  width: 100%; // Ensure the container takes full width
 
-  ::ng-deep img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 8px;
+  ::ng-deep {
+    .p-image {
+      width: 100%; // Make the p-image component take full width
+      display: block; // Ensure it's a block element
+      
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 8px;
+      }
+    }
   }
 
   .tour-content-image-tags {

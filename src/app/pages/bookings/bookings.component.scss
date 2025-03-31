@@ -32,8 +32,15 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 1rem;
+    background-color: red;
 
     @media (max-width: 480px) {
         padding: 0.5rem;
     }
+}
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
 }

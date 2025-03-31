@@ -36,6 +36,8 @@ export class PeriodPricesService {
     return this.getPeriodPrices(periodId).pipe(
       map((periodPrices) => {
         const priceData = periodPrices[activityId]?.priceData;
+        console.log('priceData', priceData);
+
         if (priceData) {
           return (
             priceData.find((price) => price.age_group_name === ageGroupName)
@@ -80,6 +82,8 @@ export class PeriodPricesService {
     return this.periodsService.getPeriodPrices(periodId).pipe(
       map((prices) => {
         this.updatePeriodPrices(periodId, prices);
+        console.log('prices', prices);
+
         return prices;
       })
     );

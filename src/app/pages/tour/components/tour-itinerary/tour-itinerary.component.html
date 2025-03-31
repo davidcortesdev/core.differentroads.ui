@@ -134,9 +134,22 @@
                         />
                         <span
                           class="status-badge"
-                          [class.optional]="highlight.optional"
+                          [class.optional]="
+                            !highlight.recommended && highlight.optional
+                          "
                         >
-                          {{ highlight.optional ? "Opcional" : "Incluida" }}
+                          <i
+                            class="pi pi-star"
+                            *ngIf="highlight.recommended"
+                            style="font-size: 1em"
+                          ></i>
+                          {{
+                            highlight.recommended
+                              ? "Recomendada"
+                              : highlight.optional
+                              ? "Opcional"
+                              : "Incluida"
+                          }}
                         </span>
                       </ng-template>
                       <ng-template pTemplate="content">
@@ -146,13 +159,18 @@
                           class="highlight-card-description"
                         ></div>
                       </ng-template>
-                      <ng-template pTemplate="footer">
+                      <ng-template
+                        pTemplate="footer"
+                        *ngIf="highlight.optional"
+                      >
                         <p-button
                           (click)="onAddActivity(highlight)"
                           label="{{ highlight.added ? 'Añadida' : 'Añadir' }}"
                           styleClass="p-button-rounded"
                         ></p-button>
-                        <div>+{{ highlight.price | currencyFormat : "EUR"}}</div>
+                        <div>
+                          +{{ highlight.price | currencyFormat : "EUR" }}
+                        </div>
                       </ng-template>
                     </p-card>
                   </ng-template>

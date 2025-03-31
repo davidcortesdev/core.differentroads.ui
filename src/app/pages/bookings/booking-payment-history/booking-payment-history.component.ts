@@ -1,26 +1,26 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { BookingsService } from '../../../core/services/bookings.service';
+import {
+  Payment,
+  PaymentStatus,
+  VoucherReviewStatus,
+} from '../../../core/models/bookings/payment.model';
 
+// Interfaces existentes
 interface TripItemData {
   quantity: number;
   unitPrice: number;
+  description?: string;
 }
+
+// Actualizamos la interfaz para incluir identificadores de pago y voucher
 
 interface PaymentInfo {
   totalPrice: number;
   pendingAmount: number;
   paidAmount: number;
-}
-
-interface UpcomingPayment {
-  date: string;
-  amount: number;
-}
-
-interface PaymentHistoryItem {
-  date: string;
-  amount: number;
-  status: string;
 }
 
 @Component({
@@ -30,47 +30,89 @@ interface PaymentHistoryItem {
   standalone: false,
 })
 export class BookingPaymentHistoryComponent implements OnInit {
-  @Input() adultData: TripItemData = { quantity: 0, unitPrice: 0 };
-  @Input() individualData: TripItemData = { quantity: 0, unitPrice: 0 };
-  @Input() gondolaData: TripItemData = { quantity: 0, unitPrice: 0 };
-  @Input() comfortPlanData: TripItemData = { quantity: 0, unitPrice: 0 };
-  @Input() flightData: TripItemData = { quantity: 0, unitPrice: 0 };
-  @Input() discountData: TripItemData = { quantity: 0, unitPrice: 0 };
-
-  @Input() paymentInfo: PaymentInfo = {
-    totalPrice: 0,
-    pendingAmount: 0,
-    paidAmount: 0,
-  };
-  @Input() upcomingPayments: UpcomingPayment[] = [];
-  @Input() paymentHistory: PaymentHistoryItem[] = [];
+  @Input() bookingID: string = '';
+  @Input() bookingTotal: number = 0;
+  @Input() tripItems: TripItemData[] = [];
+  @Input() isTO: boolean = false; // Add this line to receive isTO from parent
 
   @Output() registerPayment = new EventEmitter<number>();
-  @Output() fileUploaded = new EventEmitter<any>();
 
+  paymentInfo: PaymentInfo = { totalPrice: 0, pendingAmount: 0, paidAmount: 0 };
+  paymentHistory: Payment[] = [];
   paymentForm: FormGroup;
   displayPaymentModal: boolean = false;
-  uploadedFiles: any[] = [];
 
-  constructor(private fb: FormBuilder) {
+  displayReviewModal: boolean = false;
+  selectedReviewVoucherUrl: string = '';
+  selectedPayment: Payment | null = null;
+
+  deadlines: {
+    date: string;
+    amount: number;
+    status: string;
+  }[] = [
+    {
+      date: '01/01/2021',
+      amount: 100,
+      status: 'COMPLETED',
+    },
+  ];
+
+  isReviewLoading: boolean = false;
+
+  constructor(
+    private fb: FormBuilder,
+    private bookingsService: BookingsService,
+    private router: Router
+  ) {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
     });
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    if (this.bookingID) {
+      this.bookingsService.getPayments(this.bookingID).subscribe((payments) => {
+        const totalCompleted = payments.reduce(
+          (sum, payment) =>
+            payment.status === 'COMPLETED' ? sum + payment.amount : sum,
+          0
+        );
+        this.paymentInfo = {
+          totalPrice: this.bookingTotal,
+          paidAmount: totalCompleted,
+          pendingAmount: this.bookingTotal - totalCompleted,
+        };
+        // Mapear pagos e incluir paymentId y voucherId asumidos de la respuesta
+        this.paymentHistory = payments.filter(
+          (payment) => payment.status !== 'PENDING'
+        );
+      });
+    }
+  }
 
-  // Métodos para calcular totales
+  private refreshPayments(): void {
+    if (this.bookingID) {
+      this.bookingsService.getPayments(this.bookingID).subscribe((payments) => {
+        const totalCompleted = payments.reduce(
+          (sum, payment) =>
+            payment.status === 'COMPLETED' ? sum + payment.amount : sum,
+          0
+        );
+        this.paymentInfo = {
+          totalPrice: this.bookingTotal,
+          paidAmount: totalCompleted,
+          pendingAmount: this.bookingTotal - totalCompleted,
+        };
+        this.paymentHistory = payments.filter(
+          (payment) => payment.status !== 'PENDING'
+        );
+      });
+    }
+  }
+
   calculateTotal(item: TripItemData): number {
     return item.quantity * item.unitPrice;
-  }
-
-  formatQuantity(item: TripItemData): string {
-    return `${item.quantity}x${item.unitPrice}`;
-  }
-
-  formatPrice(price: number): string {
-    return `${price}€`;
   }
 
   formatCurrency(amount: number): string {
@@ -94,18 +136,117 @@ export class BookingPaymentHistoryComponent implements OnInit {
     }
   }
 
-  onFileUpload(event: any): void {
-    for (let file of event.files) {
-      this.uploadedFiles.push(file);
-    }
-    this.fileUploaded.emit(event.files);
+  showReviewModal(payment: Payment): void {
+    this.selectedReviewVoucherUrl = payment.vouchers?.[0].fileUrl || '';
+    this.selectedPayment = payment;
+
+    this.displayReviewModal = true;
   }
 
-  formatDate(dateStr: string): string {
-    if (dateStr.includes('-')) {
-      const parts = dateStr.split('-');
-      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  hideReviewModal(): void {
+    this.displayReviewModal = false;
+  }
+
+  approvePaymentReview(): void {
+    if (
+      !this.selectedPayment ||
+      !this.selectedPayment.publicID ||
+      !this.selectedPayment.vouchers
+    ) {
+      return;
     }
-    return dateStr;
+    this.isReviewLoading = true;
+    this.bookingsService
+      .reviewVoucher(
+        this.bookingID,
+        this.selectedPayment.publicID,
+        this.selectedPayment.vouchers[0].id,
+        VoucherReviewStatus.APPROVED
+      )
+      .subscribe({
+        next: () => {
+          if (this.selectedPayment) {
+            this.selectedPayment.status = PaymentStatus.COMPLETED;
+          }
+          this.isReviewLoading = false;
+          this.displayReviewModal = false;
+          this.refreshPayments();
+        },
+        error: (error) => {
+          console.error('Error al aprobar revisión de pago:', error);
+          this.isReviewLoading = false;
+        },
+      });
+  }
+
+  rejectPaymentReview(): void {
+    if (
+      !this.selectedPayment ||
+      !this.selectedPayment.publicID ||
+      !this.selectedPayment.vouchers
+    ) {
+      return;
+    }
+    this.isReviewLoading = true;
+    this.bookingsService
+      .reviewVoucher(
+        this.bookingID,
+        this.selectedPayment.publicID,
+        this.selectedPayment.vouchers[0].id,
+        VoucherReviewStatus.DENIED
+      )
+      .subscribe({
+        next: () => {
+          if (this.selectedPayment) {
+            this.selectedPayment.status = PaymentStatus.FAILED;
+          }
+          this.isReviewLoading = false;
+          this.displayReviewModal = false;
+          this.refreshPayments();
+        },
+        error: (error) => {
+          console.error('Error al rechazar revisión de pago:', error);
+          this.isReviewLoading = false;
+        },
+      });
+  }
+
+  viewPaymentReview(): void {
+    // Abre el voucher URL en otra pestaña
+    window.open(this.selectedReviewVoucherUrl, '_blank');
+  }
+
+  navigateToPayment(): void {
+    this.router.navigate([`/payment/${this.bookingID}/`]);
+  }
+
+  formatDateForDisplay(dateStr: string): string {
+    try {
+      const date = new Date(dateStr);
+      return `${date.getDate().toString().padStart(2, '0')}/${(
+        date.getMonth() + 1
+      )
+        .toString()
+        .padStart(2, '0')}/${date.getFullYear()}`;
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
+  getStatusText(status: string): string {
+    switch (status) {
+      case 'COMPLETED':
+        return 'Completado';
+      case 'PENDING':
+        return 'Pendiente';
+      case 'PENDING_REVIEW':
+        return 'Pendiente de revisión';
+      case 'REJECTED':
+        return 'Rechazado';
+      case 'FAILED':
+        return 'Fallido';
+      default:
+        return status;
+    }
   }
 }

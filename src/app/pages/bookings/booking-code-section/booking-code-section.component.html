@@ -1,9 +1,17 @@
 <p-panel styleClass="booking-reference">
   <div class="booking-reference-container">
-    <div class="booking-code">
-      <span class="booking-number">{{ bookingCode }} - {{ bookingReference }}</span>
-      <p-tag value="{{ status }}" severity="info" [rounded]="true"></p-tag>
+    <!-- Desktop: estructura original -->
+    <!-- Móvil/Tablet: Primera fila con icono alineado a la izquierda y texto centrado -->
+    <div class="booking-info-row">
+      <button pButton icon="pi pi-arrow-left" class="p-button-text p-button-rounded back-button" (click)="goBack()"></button>
+      
+      <div class="booking-code">
+        <span class="booking-number">{{ bookingCode }} - {{ bookingReference }}</span>
+        <p-tag value="{{ status }}" severity="info" [rounded]="true"></p-tag>
+      </div>
     </div>
+    
+    <!-- Móvil/Tablet: Segunda fila: botón de cancelar -->
     <button pButton label="Cancelar reserva" icon="pi pi-times-circle"
             class="p-button-outlined p-button-rounded cancel-button"
             (click)="onCancelBooking()"></button>

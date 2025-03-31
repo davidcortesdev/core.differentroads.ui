@@ -63,7 +63,7 @@ export class ToursService {
       'monthTags',
       'marketingSection',
       'activePeriods',
-      'tourType'
+      'tourType',
     ];
 
     const toursObservable = filters.destination
@@ -78,7 +78,7 @@ export class ToursService {
         const monthSet = new Set<string>();
         const tagsSet = new Set<string>();
         tours.forEach((tour: any) => {
-          tour.monthTags?.forEach((month: string) => {
+          (tour.monthTags || []).forEach((month: string) => {
             monthSet.add(month);
           });
           tour.tags?.forEach((tag: string) => {

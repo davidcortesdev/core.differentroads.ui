@@ -194,18 +194,20 @@
             </div>
 
             <div class="info">
-
-                <span
-                  *ngIf="getTripTypeInfo(item.group) && getTripTypeInfo(item.group)?.class === 'single'"
-                  [pTooltip]="getTripTypeInfo(item.group)?.description"
-                  tooltipPosition="top"
-                  class="trip-type-tag"
-                  [ngClass]="
-                    'trip-type-tag-' + getTripTypeInfo(item.group)?.class
-                  "
-                >
-                  {{ getTripTypeInfo(item.group)?.title }}
-                </span>
+              <span
+                *ngIf="
+                  getTripTypeInfo(item.group) &&
+                  getTripTypeInfo(item.group)?.class === 'single'
+                "
+                [pTooltip]="getTripTypeInfo(item.group)?.description"
+                tooltipPosition="top"
+                class="trip-type-tag"
+                [ngClass]="
+                  'trip-type-tag-' + getTripTypeInfo(item.group)?.class
+                "
+              >
+                {{ getTripTypeInfo(item.group)?.title }}
+              </span>
 
               <p-tag
                 severity="warn"
@@ -235,13 +237,8 @@
                 "
                 [disabled]="item.status === 'complete'"
                 (onClick)="addToCart(item)"
-                [severity]="
-                  item.status === 'complete'
-                    ? 'secondary'
-                    : isDepartureSelected(item)
-                    ? 'success'
-                    : 'primary'
-                "
+                styleClass="p-button-rounded"
+                [outlined]="isDepartureSelected(item)"
                 [raised]="true"
               ></p-button>
             </div>

@@ -67,11 +67,6 @@ $colors: (
     }
   }
 
-  // Rest of the styles remain unchanged
-  .p-carousel-indicators {
-    display: none;
-  }
-
   // Responsive carousel adjustments
   @include resp(md) {
     .p-carousel {

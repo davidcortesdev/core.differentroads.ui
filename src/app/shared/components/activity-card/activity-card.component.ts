@@ -14,7 +14,7 @@ import { ButtonModule } from 'primeng/button';
 
 // Define a proper interface for the highlight data
 export interface ActivityHighlight {
-  id?: string | number;
+  id: string;
   title: string;
   description: string;
   image?: string;
@@ -36,16 +36,14 @@ export class ActivityCardComponent implements OnInit, OnChanges {
   @Output() addActivity = new EventEmitter<ActivityHighlight>();
 
   ngOnInit(): void {
-    console.log('ActivityCardComponent - highlight data:', this.highlight);
+    // Removed console.log for production
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['highlight'])
-      console.log('ActivityCardComponent - highlight changed:', this.highlight);
+    // Removed console.log for production
   }
 
   onAddActivity(highlight: ActivityHighlight): void {
-    console.log('ActivityCardComponent - addActivity clicked:', highlight);
     this.addActivity.emit(highlight);
   }
 }

@@ -9,12 +9,10 @@ import { Hotel } from '../../../core/models/tours/tour.model';
 })
 export class HotelCardComponent implements OnInit {
   @Input() hotel: Hotel | null = null;
-  @Input() bookingScore: number = 8.9;
-  @Input() bookingLogoSrc: string = 'booking-logo.png';
+  @Input() bookingLogoSrc: string = 'assets/images/booking-logo.png';
   
   ngOnInit(): void {
-    // Set default booking logo if not provided
-    console.log('hotel',this.hotel);
+    // Removed console.log for production
     if (!this.bookingLogoSrc) {
       this.bookingLogoSrc = 'assets/images/booking-logo.png';
     }

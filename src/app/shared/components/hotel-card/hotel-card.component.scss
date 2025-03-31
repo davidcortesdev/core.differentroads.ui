@@ -180,3 +180,36 @@ $colors: (
     }
   }
 }
+
+// Add to the end of your file
+.hotel-link, .booking-link {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s ease;
+  
+  &:hover {
+    color: map.get($colors, primary);
+    text-decoration: underline;
+  }
+}
+
+// Optimize image loading
+.hotel-card-image {
+  will-change: transform;
+  transition: transform 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.02);
+  }
+}
+
+// Add responsive improvements
+@include resp(sm) {
+  .hotel-card {
+    max-height: none;
+    
+    &-bookings-section {
+      margin-top: 0.5rem;
+    }
+  }
+}

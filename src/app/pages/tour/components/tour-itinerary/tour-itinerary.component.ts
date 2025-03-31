@@ -26,7 +26,7 @@ import { HotelsService } from '../../../../core/services/hotels.service';
 // Add this import
 import { HotelCardComponent } from '../../../../shared/components/hotel-card/hotel-card.component';
 // Add these imports at the top of the file
-import { ActivityCardComponent } from '../../../../shared/components/activity-card/activity-card.component';
+import { ActivityCardComponent, ActivityHighlight } from '../../../../shared/components/activity-card/activity-card.component';
 import { ActivitiesCarouselComponent } from '../../../../shared/components/activities-carousel/activities-carousel.component';
 
 // Then in the @Component decorator, add these to the imports array if it's a standalone component
@@ -44,15 +44,6 @@ interface EventItem {
   color?: string;
   image?: string;
   description?: SafeHtml;
-}
-interface Highlight {
-  id: string;
-  title: string;
-  description: string;
-  image: string;
-  optional: boolean;
-  recommended: boolean;
-  added?: boolean;
 }
 
 
@@ -213,7 +204,7 @@ export class TourItineraryComponent implements OnInit {
     hotel: Hotel | null;
     collapsed: boolean;
     color?: string;
-    highlights?: Highlight[];
+    highlights?: ActivityHighlight[];
   }[] = [];
 
   activities: Activity[] = [];
@@ -606,7 +597,7 @@ export class TourItineraryComponent implements OnInit {
     return this.tagsOptions.find((tag) => tag.type === tripType);
   }
 
-  onAddActivity(highlight: Highlight): void {
+  onAddActivity(highlight: ActivityHighlight): void {
     // Toggle del estado de la actividad
     highlight.added = !highlight.added;
 

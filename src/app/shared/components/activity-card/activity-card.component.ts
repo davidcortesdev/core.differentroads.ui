@@ -14,7 +14,7 @@ import { ButtonModule } from 'primeng/button';
 
 // Define a proper interface for the highlight data
 export interface ActivityHighlight {
-  id?: string | number;
+  id: string;
   title: string;
   description: string;
   image?: string;

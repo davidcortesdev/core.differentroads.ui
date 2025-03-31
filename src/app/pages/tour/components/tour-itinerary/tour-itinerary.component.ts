@@ -26,8 +26,12 @@ import { HotelsService } from '../../../../core/services/hotels.service';
 // Add this import
 import { HotelCardComponent } from '../../../../shared/components/hotel-card/hotel-card.component';
 // Add these imports at the top of the file
-import { ActivityCardComponent, ActivityHighlight } from '../../../../shared/components/activity-card/activity-card.component';
+import {
+  ActivityCardComponent,
+  ActivityHighlight,
+} from '../../../../shared/components/activity-card/activity-card.component';
 import { ActivitiesCarouselComponent } from '../../../../shared/components/activities-carousel/activities-carousel.component';
+import { MessageService } from 'primeng/api';
 
 // Then in the @Component decorator, add these to the imports array if it's a standalone component
 // If it's not standalone, you'll need to add them to the module's declarations
@@ -45,7 +49,6 @@ interface EventItem {
   image?: string;
   description?: SafeHtml;
 }
-
 
 @Component({
   selector: 'app-tour-itinerary',
@@ -264,7 +267,8 @@ export class TourItineraryComponent implements OnInit {
     private tourOrderService: TourOrderService,
     private tourDataService: TourDataService,
     private periodPricesService: PeriodPricesService,
-    private hotelsService: HotelsService
+    private hotelsService: HotelsService,
+    private messageService: MessageService
   ) {
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}`;
@@ -602,6 +606,22 @@ export class TourItineraryComponent implements OnInit {
     highlight.added = !highlight.added;
 
     this.tourOrderService.toggleActivity(highlight.id, highlight.title);
+    // Show message when adding an activity
+    if (highlight.added) {
+      // You can use a proper notification service here if available
+      this.showActivityAddedMessage();
+    }
+  }
+
+  // Add this new method to show the message
+  showActivityAddedMessage(): void {
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Actividad añadida',
+      detail:
+        'Las actividades se añaden para todos los pasajeros. Podrás personalizarlas por pasajero en el proceso de pago.',
+      life: 5000,
+    });
   }
 
   fetchHotels(): void {

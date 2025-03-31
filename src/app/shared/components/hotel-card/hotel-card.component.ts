@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { Hotel } from '../../../core/models/tours/tour.model';
 
 @Component({
@@ -7,15 +7,10 @@ import { Hotel } from '../../../core/models/tours/tour.model';
   templateUrl: './hotel-card.component.html',
   styleUrls: ['./hotel-card.component.scss']
 })
-export class HotelCardComponent implements OnInit {
+export class HotelCardComponent {
   @Input() hotel: Hotel | null = null;
-  @Input() bookingScore: number = 8.9;
-  @Input() bookingLogoSrc: string = 'booking-logo.png';
   
-  ngOnInit(): void {
-    // Set default booking logo if not provided
-    if (!this.bookingLogoSrc) {
-      this.bookingLogoSrc = 'assets/images/booking-logo.png';
-    }
-  }
+  // Definir como propiedad normal en lugar de Input
+  bookingLogoSrc: string = 'assets/images/booking-logo.png';
+  
 }

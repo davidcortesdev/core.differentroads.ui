@@ -252,6 +252,7 @@ $colors: (
     //aspect-ratio: 16 / 9;
     object-fit: cover;
     border-radius: map.get($border-radius, md);
+    aspect-ratio: 2/1;
 
     @include resp(xl) {
       border-radius: 10px;

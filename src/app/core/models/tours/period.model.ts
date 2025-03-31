@@ -3,7 +3,7 @@ import { Insurance } from './insurance.model';
 import { ReservationMode } from './reservation-mode.model';
 import { Flight } from './flight.model';
 import { CMSCollections } from '../commons/cms-collections.model';
-import { Hotel } from './tour.model';
+import { PeriodHotel } from './tour.model';
 
 export interface Period extends CMSCollections {
   dayOne: string;
@@ -18,6 +18,11 @@ export interface Period extends CMSCollections {
   reservationModes?: ReservationMode[];
   insurances?: Insurance[];
   flights?: Flight[];
-  hotels?: Hotel[];
+  hotels?: [
+    {
+      hotels: PeriodHotel[];
+      days: string[];
+    }
+  ];
   includedActivities?: Activity[];
 }

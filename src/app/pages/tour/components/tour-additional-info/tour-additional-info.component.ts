@@ -4,12 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ToursService } from '../../../../core/services/tours.service';
 import { Tour } from '../../../../core/models/tours/tour.model';
 import { Subscription } from 'rxjs';
-
-interface InfoCard {
-  title: string;
-  content: string;
-  order: string;
-}
+import { InfoCard } from '../tour-info-accordion/tour-info-accordion.component';
 
 @Component({
   selector: 'app-tour-additional-info',
@@ -21,16 +16,16 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   tour: Tour | null = null;
   visible: boolean = false;
   private subscription: Subscription = new Subscription();
-  
+
   // Optimización: Extraer configuraciones a propiedades
   dialogBreakpoints = { '1199px': '80vw', '575px': '90vw' };
   dialogStyle = { width: '50vw' };
-  
+
   // Optimización: Getters para simplificar la plantilla
   get infoCards(): InfoCard[] {
     return this.tour?.['extra-info-section']?.['info-card'] || [];
   }
-  
+
   get hasInfoCards(): boolean {
     return this.infoCards.length > 0;
   }
@@ -128,8 +123,7 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
       this.tour?.name || 'Mi viaje con Different Roads'
     );
     const emailBody = encodeURIComponent(
-      '¡Mira este increíble viaje que estoy planeando! ' +
-        window.location.href
+      '¡Mira este increíble viaje que estoy planeando! ' + window.location.href
     );
     window.open(`mailto:?subject=${emailSubject}&body=${emailBody}`);
   }

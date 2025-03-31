@@ -35,7 +35,7 @@ export class TourOverviewComponent implements OnInit {
         'country',
       ]; // Add selected fields here
       this.toursService
-        .getTourDetailBySlug(slug,selectedFields)
+        .getTourDetailBySlug(slug, selectedFields)
         //.getTourDetailBySlug(slug)
         .subscribe((tour) => {
           this.tour = tour;
@@ -57,15 +57,25 @@ export class TourOverviewComponent implements OnInit {
 
   get breadcrumbItems(): MenuItem[] {
     return [
-      { 
+      {
         label: this.tour?.continent,
         routerLink: ['/tours'],
-        queryParams: { destination: this.tour?.continent.trim() }
+        queryParams: {
+          destination:
+            typeof this.tour?.continent === 'string'
+              ? this.tour.continent.trim()
+              : this.tour?.continent || '',
+        },
       },
-      { 
+      {
         label: this.tour?.country,
         routerLink: ['/tours'],
-        queryParams: { destination: this.tour?.country.trim() }
+        queryParams: {
+          destination:
+            typeof this.tour?.country === 'string'
+              ? this.tour.country.trim()
+              : this.tour?.country || '',
+        },
       },
       { label: this.tour?.name },
     ];

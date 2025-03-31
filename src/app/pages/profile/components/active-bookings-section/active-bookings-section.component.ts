@@ -110,8 +110,6 @@ export class ActiveBookingsSectionComponent implements OnInit {
 
     // Método para cargar todas las imágenes de los tours
     loadTourImages() {
-      console.log('Cargando imágenes de los tours...');
-      console.log('Reservas:', this.bookings);
       if (!this.bookings || this.bookings.length === 0) return;
   
       // Para cada reserva, cargamos su imagen correspondiente
@@ -127,10 +125,8 @@ export class ActiveBookingsSectionComponent implements OnInit {
     const image = await this.getImage(booking.tourID);
     if (image && image.url) {
       booking.image = image.url; // Actualizamos la URL de la imagen
-      console.log('Imagen actualizada:', booking.image);
       this.cdr.detectChanges(); // Forzar la detección de cambios
     }
-    console.log(booking.image);
   }
 
   getImage(id: string): Promise<CldImage | null> {

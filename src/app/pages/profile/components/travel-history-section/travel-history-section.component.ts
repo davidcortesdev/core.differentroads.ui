@@ -1,5 +1,8 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectorRef } from '@angular/core';
 import { BookingsService } from '../../../../core/services/bookings.service';
+import { ToursService } from '../../../../core/services/tours.service';
+import { CldImage } from '../../../../core/models/commons/cld-image.model';
+import { Tour } from '../../../../core/models/tours/tour.model';
 
 interface TravelHistory {
   bookingNumber: string;
@@ -8,7 +11,8 @@ interface TravelHistory {
   departure: string;
   origin: string;
   passengers: number;
-  image: string; // Agregada la propiedad image
+  image: string;
+  tourID?: string; // Añadido tourID para obtener imágenes
 }
 
 @Component({
@@ -22,12 +26,11 @@ export class TravelHistorySectionComponent implements OnInit {
   isExpanded: boolean = true;
   @Input() userEmail!: string;
 
-  constructor(private bookingsService: BookingsService) {}
-
-  private getRandomPicsumUrl(): string {
-    const randomId = Math.floor(Math.random() * 1000);
-    return `https://picsum.photos/id/${randomId}/400/300`;
-  }
+  constructor(
+    private bookingsService: BookingsService,
+    private toursService: ToursService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
     this.fetchTravelHistory(this.userEmail);
@@ -37,20 +40,78 @@ export class TravelHistorySectionComponent implements OnInit {
     this.bookingsService
       .getBookingsByEmail(email, 'Pending,Canceled', 1, 1000)
       .subscribe((response) => {
-        console.log(response);
 
-        this.travels = response?.data?.map((booking) => ({
-          bookingNumber: booking?.ID ?? '',
-          date: new Date(booking?.createdAt ?? '').toLocaleDateString(),
-          destination: booking?.periodData?.['tour']?.name || '',
-          departure: new Date(
-            booking?.periodData?.['dayOne'] ?? ''
-          ).toLocaleDateString(),
-          origin: booking?.flights?.[0]?.name ?? 'MAD',
-          passengers: booking?.travelersNumber ?? 0,
-          image: this.getRandomPicsumUrl(), // Agregada la imagen
-        }));
+        this.travels = response?.data?.map((booking) => this.mapTravel(booking)) || [];
+        
+        // Cargar las imágenes después de que los viajes estén disponibles
+        this.loadTourImages();
       });
+  }
+
+  mapTravel(booking: any): TravelHistory {
+    const tourID = booking?.periodData?.tourID || '';
+    
+    return {
+      bookingNumber: booking?.ID ?? '',
+      date: new Date(booking?.createdAt ?? '').toLocaleDateString(),
+      destination: booking?.periodData?.['tour']?.name || '',
+      departure: new Date(
+        booking?.periodData?.['dayOne'] ?? ''
+      ).toLocaleDateString(),
+      origin: booking?.flights?.[0]?.name ?? 'MAD',
+      passengers: booking?.travelersNumber ?? 0,
+      image: '', // Imagen por defecto
+      tourID: tourID,
+    };
+  }
+
+  // Método para cargar todas las imágenes de los tours
+  loadTourImages() {
+    if (!this.travels || this.travels.length === 0) return;
+
+    // Para cada viaje, cargamos su imagen correspondiente
+    this.travels.forEach((travel) => {
+      if (travel.tourID) {
+        this.loadTravelImage(travel);
+      }
+    });
+  }
+
+  async loadTravelImage(travel: TravelHistory) {
+    if (!travel.tourID) return;
+    const image = await this.getImage(travel.tourID);
+    if (image && image.url) {
+      travel.image = image.url; // Actualizamos la URL de la imagen
+      this.cdr.detectChanges(); // Forzar la detección de cambios
+    }
+  }
+
+  getImage(id: string): Promise<CldImage | null> {
+    return new Promise((resolve) => {
+      const filters = {
+        externalID: id,
+      };
+      this.toursService.getFilteredToursList(filters).subscribe({
+        next: (tourData) => {
+          if (
+            tourData &&
+            tourData.data &&
+            tourData.data.length > 0 &&
+            tourData.data[0].image &&
+            tourData.data[0].image.length > 0
+          ) {
+            resolve(tourData.data[0].image[0]);
+          } else {
+            console.log('No image data available for tour:', id);
+            resolve(null);
+          }
+        },
+        error: (err) => {
+          console.error('Error fetching tour image:', err);
+          resolve(null);
+        },
+      });
+    });
   }
 
   toggleContent() {

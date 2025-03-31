@@ -1,3 +1,4 @@
+// Optimización: Mantener las variables y mixins existentes
 // Variables
 $azul: var(--background-azul);
 $primary: var(--p-primary-color);
@@ -38,17 +39,16 @@ $white: #fff;
   @extend %input-focus;
 }
 
+// Optimización: Agrupar estilos relacionados
 .paddingDiv {
   padding: 1rem;
 }
 
-// Component styles
+// Component styles - Optimización: Usar mixins donde sea posible
 .tour-additional-info-container {
-  display: flex;
+  @include flex(space-evenly, center);
   flex-direction: row;
   gap: 1rem;
-  justify-content: space-evenly;
-  align-items: center;
   flex-wrap: wrap;
   margin: 1rem 0;
 
@@ -69,10 +69,8 @@ $white: #fff;
 }
 
 .card-content {
-  display: flex;
+  @include flex(flex-start, center);
   gap: 1rem;
-  align-items: center;
-  //padding: 0.5rem;
 }
 
 .card-text {
@@ -89,9 +87,7 @@ $white: #fff;
   border-radius: 25%;
   width: 40px;
   height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include flex;
 
   i {
     color: $white;
@@ -104,6 +100,7 @@ $white: #fff;
   padding: 0 1rem;
 }
 
+// El resto del SCSS se mantiene igual
 // Angular host and deep styles
 :host {
   ::ng-deep {

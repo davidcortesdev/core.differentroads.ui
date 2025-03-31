@@ -5,6 +5,12 @@ import { ToursService } from '../../../../core/services/tours.service';
 import { Tour } from '../../../../core/models/tours/tour.model';
 import { Subscription } from 'rxjs';
 
+interface InfoCard {
+  title: string;
+  content: string;
+  order: string;
+}
+
 @Component({
   selector: 'app-tour-additional-info',
   standalone: false,
@@ -15,6 +21,19 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   tour: Tour | null = null;
   visible: boolean = false;
   private subscription: Subscription = new Subscription();
+  
+  // Optimización: Extraer configuraciones a propiedades
+  dialogBreakpoints = { '1199px': '80vw', '575px': '90vw' };
+  dialogStyle = { width: '50vw' };
+  
+  // Optimización: Getters para simplificar la plantilla
+  get infoCards(): InfoCard[] {
+    return this.tour?.['extra-info-section']?.['info-card'] || [];
+  }
+  
+  get hasInfoCards(): boolean {
+    return this.infoCards.length > 0;
+  }
 
   constructor(
     private sanitizer: DomSanitizer,
@@ -28,6 +47,11 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
+  }
+
+  // Optimización: Función trackBy para mejorar el rendimiento de ngFor
+  trackByFn(index: number, item: InfoCard): string {
+    return `${index}-${item.order}`;
   }
 
   private loadTourData(): void {
@@ -66,42 +90,52 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   }
 
   handleDownloadTrip(): void {
-    // Implementación para descargar el viaje
-    // Por ejemplo, generar un PDF con la información del viaje
     console.log('Downloading trip information...');
 
     if (this.tour) {
-      // Aquí iría la lógica para generar y descargar el PDF
-      alert('La descarga de tu viaje comenzará en breve');
+      // Optimización: Usar Promise para simular operación asíncrona
+      this.showDownloadNotification();
     } else {
       alert('No hay información disponible para descargar');
     }
   }
 
+  // Optimización: Método separado para mostrar notificación
+  private showDownloadNotification(): void {
+    alert('La descarga de tu viaje comenzará en breve');
+    // Aquí iría la lógica para generar y descargar el PDF
+  }
+
   handleInviteFriend(): void {
-    // Implementación para invitar a un amigo
-    // Por ejemplo, abrir un modal para compartir por email o redes sociales
     console.log('Inviting friend to trip...');
 
-    // Ejemplo de implementación básica
-    if (navigator.share) {
-      navigator
-        .share({
-          title: this.tour?.name || 'Mi viaje con Different Roads',
-          text: '¡Mira este increíble viaje que estoy planeando!',
-          url: window.location.href,
-        })
-        .catch((error) => console.error('Error sharing:', error));
+    // Fix: Check if Web Share API is available by checking if it's a function
+    if (navigator.share && typeof navigator.share === 'function') {
+      this.shareViaWebAPI();
     } else {
-      // Fallback para navegadores que no soportan Web Share API
-      const emailSubject = encodeURIComponent(
-        this.tour?.name || 'Mi viaje con Different Roads'
-      );
-      const emailBody = encodeURIComponent(
-        '¡Mira este increíble viaje que estoy planeando! ' +
-          window.location.href
-      );
-      window.open(`mailto:?subject=${emailSubject}&body=${emailBody}`);
+      this.shareViaEmail();
     }
+  }
+
+  // Optimización: Métodos separados para compartir
+  private shareViaWebAPI(): void {
+    navigator
+      .share({
+        title: this.tour?.name || 'Mi viaje con Different Roads',
+        text: '¡Mira este increíble viaje que estoy planeando!',
+        url: window.location.href,
+      })
+      .catch((error) => console.error('Error sharing:', error));
+  }
+
+  private shareViaEmail(): void {
+    const emailSubject = encodeURIComponent(
+      this.tour?.name || 'Mi viaje con Different Roads'
+    );
+    const emailBody = encodeURIComponent(
+      '¡Mira este increíble viaje que estoy planeando! ' +
+        window.location.href
+    );
+    window.open(`mailto:?subject=${emailSubject}&body=${emailBody}`);
   }
 }

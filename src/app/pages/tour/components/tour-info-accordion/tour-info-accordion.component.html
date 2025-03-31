@@ -1,0 +1,18 @@
+<div class="additional-info">
+  <p-accordion *ngIf="infoCards.length > 0" [multiple]="true" [value]="0">
+    <p-accordion-panel
+      *ngFor="let card of infoCards; let i = index; trackBy: trackByFn"
+      [value]="i"
+    >
+      <p-accordion-header>
+        <ng-template #toggleicon let-active="active">
+          <i class="pi" [ngClass]="active ? 'pi-minus-circle' : 'pi-plus-circle'" aria-hidden="true"></i>
+        </ng-template>
+        <div [innerHTML]="sanitizeHtml(card.title)"></div>
+      </p-accordion-header>
+      <p-accordion-content>
+        <div class="paddingDiv" [innerHTML]="sanitizeHtml(card.content)"></div>
+      </p-accordion-content>
+    </p-accordion-panel>
+  </p-accordion>
+</div>

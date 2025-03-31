@@ -49,11 +49,6 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
     this.subscription.unsubscribe();
   }
 
-  // Optimización: Función trackBy para mejorar el rendimiento de ngFor
-  trackByFn(index: number, item: InfoCard): string {
-    return `${index}-${item.order}`;
-  }
-
   private loadTourData(): void {
     const slug = this.route.snapshot.paramMap.get('slug');
     if (slug) {

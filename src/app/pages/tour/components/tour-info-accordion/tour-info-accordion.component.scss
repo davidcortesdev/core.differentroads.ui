@@ -1,0 +1,32 @@
+// Variables
+$azul: var(--background-azul);
+$coral: #ff6f61;
+$white: #fff;
+
+.additional-info {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.paddingDiv {
+  padding: 1rem;
+}
+
+:host {
+  ::ng-deep {
+    p-accordion {
+      width: 100%;
+
+      p-accordion-header {
+        flex-direction: row-reverse;
+        gap: 1rem;
+        justify-content: flex-end;
+
+        i {
+          color: $coral;
+        }
+      }
+    }
+  }
+}

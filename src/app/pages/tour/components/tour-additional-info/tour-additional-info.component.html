@@ -48,22 +48,5 @@
   </p-card>
 </div>
 
-<div class="mt-4 additional-info">
-  <!-- Optimización: Usar trackBy para mejorar el rendimiento de ngFor -->
-  <p-accordion *ngIf="hasInfoCards" [multiple]="true" [value]="0">
-    <p-accordion-panel
-      *ngFor="let card of infoCards; let i = index; trackBy: trackByFn"
-      [value]="i"
-    >
-      <p-accordion-header>
-        <ng-template #toggleicon let-active="active">
-          <i class="pi" [ngClass]="active ? 'pi-minus-circle' : 'pi-plus-circle'" aria-hidden="true"></i>
-        </ng-template>
-        <div [innerHTML]="sanitizeHtml(card.title)"></div>
-      </p-accordion-header>
-      <p-accordion-content>
-        <div class="paddingDiv" [innerHTML]="sanitizeHtml(card.content)"></div>
-      </p-accordion-content>
-    </p-accordion-panel>
-  </p-accordion>
-</div>
+<!-- Reemplazamos el acordeón con el nuevo componente -->
+<app-tour-info-accordion *ngIf="hasInfoCards" [infoCards]="infoCards"></app-tour-info-accordion>

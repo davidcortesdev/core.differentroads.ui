@@ -13,7 +13,10 @@
       ></p-rating>
     </span>
     <h4 class="hotel-card-name">
-      {{ hotel?.name }}
+      <a *ngIf="hotel?.link" [href]="hotel?.link" target="_blank" class="hotel-link">
+        {{ hotel?.name }}
+      </a>
+      <span *ngIf="!hotel?.link">{{ hotel?.name }}</span>
     </h4>
     <p class="hotel-card-location">
       <i class="pi pi-map-marker"></i> {{ hotel?.address }}

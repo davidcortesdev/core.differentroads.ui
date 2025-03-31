@@ -1,0 +1,163 @@
+// Variables
+$breakpoints: (
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1366px,
+);
+
+$spaces: (
+  xs: 0.5rem,
+  sm: 0.75rem,
+  base: 1rem,
+  lg: 1.5rem,
+);
+
+$border-radius: (
+  sm: 8px,
+  md: 14px,
+  lg: 18px,
+);
+
+$colors: (
+  primary: var(--p-primary-color),
+  secondary: var(--p-button-primary-color),
+  background: var(--background-azul),
+  text: var(--background-azul),
+  text-light: var(--background-azul-color-letra),
+  border: #d9d9d9,
+  border-light: #f0f0f0,
+);
+
+// Import Sass modules
+@use "sass:map";
+
+// Mixins
+@mixin resp($bp) {
+  @media (max-width: map.get($breakpoints, $bp)) {
+    @content;
+  }
+}
+
+@mixin flex($dir: row, $just: flex-start, $align: stretch, $gap: 0) {
+  display: flex;
+  flex-direction: $dir;
+  justify-content: $just;
+  align-items: $align;
+  @if $gap > 0 {
+    gap: $gap;
+  }
+}
+
+:host ::ng-deep {
+  .highlight-card {
+    border: none;
+    margin: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-width: 20rem;
+    position: relative;
+
+    @include resp(xl) {
+      margin: 0.25rem;
+      max-width: 15rem;
+    }
+
+    &-description {
+      height: 8em;
+      max-height: 8em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 0.8rem;
+    }
+
+    .p-card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .p-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem;
+      border-top: 1px solid map.get($colors, border-light);
+      font-size: 1.2rem;
+      color: map.get($colors, primary);
+      font-weight: 600;
+
+      div {
+        font-size: 1rem;
+      }
+      .p-button {
+        padding: 0.5em 1.5em;
+        font-weight: 300;
+      }
+    }
+
+    .status-badge {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      background: map.get($colors, secondary);
+      color: map.get($colors, background);
+      padding: 0.3rem 0.6rem;
+      border-radius: map.get($border-radius, sm);
+      font-size: 0.9rem;
+
+      @include resp(md) {
+        top: 0.5rem;
+        right: 0.5rem;
+        padding: 0.2rem 0.4rem;
+        font-size: 0.8rem;
+      }
+
+      &.optional {
+        background: map.get($colors, primary);
+        color: #fff;
+      }
+    }
+
+    h3 {
+      margin: 0.5rem 0;
+      color: map.get($colors, text);
+      font-size: 1rem;
+      font-weight: 600;
+      min-height: 2.2rem;
+
+      @include resp(md) {
+        font-size: 1.1rem;
+        margin: 0.25rem 0;
+      }
+    }
+
+    p {
+      margin: 0;
+      color: map.get($colors, text);
+      line-height: 1.5;
+      font-size: 0.875rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+
+    img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: map.get($border-radius, md);
+
+      @include resp(md) {
+        height: 180px;
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+<div class="itinerary-activities">
+  <p-carousel
+    [value]="highlights"
+    [numVisible]="3"
+    [circular]="true"
+    [showNavigators]="false"
+    [responsiveOptions]="responsiveOptions"
+    [showIndicators]="true"
+    [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
+  >
+    <ng-template let-highlight pTemplate="item">
+      <app-activity-card 
+        [highlight]="highlight"
+        (addActivity)="onAddActivity($event)"
+      ></app-activity-card>
+    </ng-template>
+  </p-carousel>
+</div>

@@ -1,0 +1,99 @@
+// Variables
+$breakpoints: (
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1366px,
+);
+
+$spaces: (
+  xs: 0.5rem,
+  sm: 0.75rem,
+  base: 1rem,
+  lg: 1.5rem,
+);
+
+$border-radius: (
+  sm: 8px,
+  md: 14px,
+  lg: 18px,
+);
+
+$colors: (
+  primary: var(--p-primary-color),
+  secondary: var(--p-button-primary-color),
+  background: var(--background-azul),
+  text: var(--background-azul),
+  text-light: var(--background-azul-color-letra),
+  border: #d9d9d9,
+  border-light: #f0f0f0,
+);
+
+// Import Sass modules
+@use "sass:map";
+
+// Mixins
+@mixin resp($bp) {
+  @media (max-width: map.get($breakpoints, $bp)) {
+    @content;
+  }
+}
+
+@mixin flex($dir: row, $just: flex-start, $align: stretch, $gap: 0) {
+  display: flex;
+  flex-direction: $dir;
+  justify-content: $just;
+  align-items: $align;
+  @if $gap > 0 {
+    gap: $gap;
+  }
+}
+
+.itinerary-activities {
+  margin-top: 0.75rem;
+
+  @include resp(xl) {
+    margin-top: 0.5rem;
+  }
+}
+
+:host ::ng-deep {
+  .p-carousel {
+    width: 100%;
+
+    .p-card-body,
+    .p-carousel-content {
+      padding: 0;
+    }
+  }
+
+  // Rest of the styles remain unchanged
+  .p-carousel-indicators {
+    display: none;
+  }
+
+  // Responsive carousel adjustments
+  @include resp(md) {
+    .p-carousel {
+      .p-carousel-content {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .highlight-card {
+        flex: 1 1 calc(50% - 1rem);
+        max-width: calc(50% - 1rem);
+      }
+    }
+  }
+
+  @include resp(sm) {
+    .p-carousel {
+      .highlight-card {
+        flex: 1 1 100%;
+        max-width: 100%;
+      }
+    }
+  }
+}

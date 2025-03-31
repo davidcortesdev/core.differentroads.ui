@@ -196,7 +196,7 @@
             <div class="info">
 
                 <span
-                  *ngIf="getTripTypeInfo(item.group)"
+                  *ngIf="getTripTypeInfo(item.group) && getTripTypeInfo(item.group)?.class === 'single'"
                   [pTooltip]="getTripTypeInfo(item.group)?.description"
                   tooltipPosition="top"
                   class="trip-type-tag"
@@ -205,9 +205,6 @@
                   "
                 >
                   {{ getTripTypeInfo(item.group)?.title }}
-                </span>
-                <span *ngIf="!getTripTypeInfo(item.group)">
-                  {{ item.group || "N/A" }}
                 </span>
 
               <p-tag

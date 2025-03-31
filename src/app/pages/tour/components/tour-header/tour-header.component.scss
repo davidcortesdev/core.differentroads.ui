@@ -4,6 +4,8 @@ $rating-star-color: #ffa41c;
 $shadow-color: rgba(0, 0, 0, 0.1);
 $mobile-breakpoint: 767px;
 $tablet-breakpoint: 1024px;
+
+// Main component styles
 .tour-header {
   position: relative;
   width: 100%;
@@ -18,54 +20,64 @@ $tablet-breakpoint: 1024px;
   border-bottom: 2px solid var(--p-menubar-background);
   color: var(--background-azul);
   gap: 38px;
-&.scrolled {
+
+  &.scrolled {
     position: fixed;
     box-shadow: 0 2px 10px $shadow-color;
     left: 0;
     right: 0;
   }
+
   // Tour Info Section
   .tour-info {
     flex: 1;
+
     .rating-reviews {
       display: flex;
       align-items: center;
       gap: 0.5rem;
       margin-bottom: 0.5rem;
+
       .rating-container {
         display: flex;
         align-items: center;
         gap: 0.5rem;
+
         .rating-value {
           color: var(--text-color);
           font-weight: 600;
         }
+
         ::ng-deep .p-rating {
           .p-rating-item.p-rating-item-active .p-rating-icon {
             color: $rating-star-color;
           }
         }
       }
+
       .review-count {
         color: var(--primary-color);
         text-decoration: underline;
         font-size: 0.9rem;
       }
     }
+
     h1 {
       margin: 0 0 0.5rem 0;
       font-size: 1.75rem;
       color: var(--text-color);
       font-weight: 600;
     }
+
     .tour-meta {
       display: flex;
       gap: 0.5rem;
       color: var(--text-color);
       font-size: 1rem;
+
       .country,
       .duration {
-&:not(:last-child)::after {
+        &:not(:last-child)::after {
           content: "•";
           margin-left: 0.5rem;
           color: var(--text-color-secondary);
@@ -73,55 +85,56 @@ $tablet-breakpoint: 1024px;
       }
     }
   }
+
   // Tour Actions Section
   .tour-actions {
     display: flex;
     align-items: center;
     gap: 2rem;
+
     .badge {
       display: flex;
       align-items: center;
       gap: 0.5rem;
       padding: 0.5rem 1rem;
       font-size: 0.9rem;
+
       i {
         color: var(--p-primary-color);
       }
     }
+
     .price-section {
       text-align: right;
       gap: 0;
+
       .total-price-container {
         text-align: right;
         font-size: 0.7rem;
         font-weight: 400;
-        // .total {
-        //   .pasajeros {
-        //     font-size: 0.1rem;
-        //     margin-right: 0.2rem;
-        //   }
-        //   .amount {
-        //     font-weight: 600;
-        //   }
-        // }
-        // .passengers-info span {
-        //   display: block;
-        //   text-align: center;
-        //   font-size: 0.85rem;
-        // }
+        
+        .activities-badge {
+          display: inline-block;
+          cursor: pointer;
+          text-decoration: underline;
+          color: var(--primary-color);
+        }
       }
+
       .price-info {
-        // margin-bottom: 0.25rem;
         .before-price {
           color: var(--text-color-secondary);
           font-size: 0.9rem;
+
           span:last-child {
             text-decoration: line-through;
             margin-left: 0.5rem;
           }
         }
+
         .current-price {
           font-weight: 700;
+
           .amount {
             margin-left: 0.5rem;
             font-size: 1.1rem;
@@ -129,32 +142,49 @@ $tablet-breakpoint: 1024px;
         }
       }
     }
+
     ::ng-deep .p-button {
       background-color: $primary-button-color;
       border-color: $primary-button-color;
       padding: 0.75rem 2rem;
       font-weight: 500;
+      transition: all 0.2s ease;
+      
+      &:hover:not(:disabled) {
+        background-color: darken($primary-button-color, 10%);
+        border-color: darken($primary-button-color, 10%);
+      }
+      
+      &:disabled {
+        opacity: 0.6;
+      }
     }
   }
+
   // Mobile Styles
   @media (max-width: $mobile-breakpoint) {
     padding: 1rem;
     flex-direction: column;
     align-items: flex-start;
+
     .tour-info {
       width: 100%;
       margin-bottom: 1rem;
+
       h1 {
         font-size: 1.25rem;
         margin-bottom: 0.25rem;
       }
+
       .tour-meta {
         font-size: 0.9rem;
       }
     }
+
     .tour-actions {
       width: 100%;
       display: block;
+
       .badge {
         float: left;
         width: 65%;
@@ -167,6 +197,7 @@ $tablet-breakpoint: 1024px;
         padding-top: 3px;
         height: 40px;
       }
+
       .price-section {
         float: right;
         width: 35%;
@@ -177,6 +208,7 @@ $tablet-breakpoint: 1024px;
         justify-content: center;
         height: 40px;
       }
+
       ::ng-deep .p-button {
         clear: both;
         display: block;
@@ -184,11 +216,13 @@ $tablet-breakpoint: 1024px;
         border-radius: 2rem;
         margin-bottom: 0.5rem;
       }
+
       .booking-container .total-price-container {
         margin-top: 0.5rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
+
         .passengers-info span {
           font-weight: 600;
           font-size: 0.9rem;
@@ -198,103 +232,116 @@ $tablet-breakpoint: 1024px;
       }
     }
   }
+
   // Tablet Styles
   @media (min-width: #{$mobile-breakpoint + 1px}) and (max-width: $tablet-breakpoint) {
     padding: 1.25rem;
     flex-wrap: wrap;
+
     .tour-info {
       width: 70%;
       float: left;
+
       h1 {
         font-size: 1.5rem;
         margin-bottom: 0.4rem;
       }
     }
+
     .tour-actions {
       width: 30%;
       float: right;
       display: flex;
       flex-direction: column;
       align-items: flex-end;
+
       .badge {
         display: none;
       }
+
       .price-section {
         text-align: right;
         margin-bottom: 0;
         width: 100%;
+
         .price-info {
           margin-bottom: -1.6rem;
           margin-top: 2rem;
           margin-right: 5px;
         }
       }
+
       ::ng-deep .p-button {
         padding: 0.65rem 1.5rem;
         width: 100%;
         margin-bottom: 0.5rem;
       }
+
       .booking-container {
         width: 100%;
         display: flex;
         text-align: center;
       }
     }
-&::after {
+
+    &::after {
       content: "";
       display: table;
       clear: both;
     }
   }
 }
+
 // Component wrapper styles
 app-tour-header {
   display: block;
-&::after {
+
+  &::after {
     content: "";
     display: block;
     height: 0;
     transition: height 0.1s ease;
   }
-&.header-fixed::after {
+
+  &.header-fixed::after {
     height: var(--header-height, 0);
   }
 }
+
+// PrimeNG component overrides
 ::ng-deep .p-message-secondary.p-message-outlined {
   border-radius: 27px;
   height: 2rem;
 }
+
 ::ng-deep .p-message-sm .p-message-icon {
   color: var(--primary-color-500);
 }
-/// Updated tooltip styles based on PrimeNG documentation
-// Final tooltip styles targeting exact classes from DevTools
+
+// Tooltip styles
 :host ::ng-deep {
-  .p-tooltip.p-component.p-tooltip-bottom {
-    .p-tooltip-text {
-      background-color: white !important;
-      color: var(--background-azul) !important;
-      border: 1px solid #e0e0e0;
-    }
-  }
-  .p-tooltip-top, .p-tooltip-bottom {
-    .p-tooltip-arrow {
-      border-top-color: white !important;
-      border-bottom-color: white !important;
-    }
-  }
   .p-tooltip {
     position: absolute;
     max-width: var(--p-tooltip-max-width);
-&::before, &::after {
+    
+    &::before, &::after {
       box-sizing: border-box;
     }
-  }
-  // Specific targeting for different tooltip positions
-  div#pn_id_1188_tooltip.p-tooltip.p-component.p-tooltip-bottom {
-    .p-tooltip-text {
+    
+    &.p-component.p-tooltip-bottom .p-tooltip-text,
+    &#pn_id_1188_tooltip.p-component.p-tooltip-bottom .p-tooltip-text {
       background-color: white !important;
       color: var(--background-azul) !important;
+      border: 1px solid #e0e0e0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 0.75rem;
+      border-radius: 6px;
     }
+  }
+  
+  .p-tooltip-top .p-tooltip-arrow,
+  .p-tooltip-bottom .p-tooltip-arrow {
+    border-top-color: white !important;
+    border-bottom-color: white !important;
   }
 }

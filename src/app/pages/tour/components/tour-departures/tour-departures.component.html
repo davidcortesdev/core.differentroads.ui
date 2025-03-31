@@ -170,76 +170,9 @@
 
     <ng-template #list let-departures>
       <div class="dep-list">
-        <!-- Primer elemento con etiqueta recomendada -->
-        <div *ngIf="departures.length > 0" class="rec-container">
-          <div class="rec-label">Salida recomendada</div>
-          <div class="dep-item first-item">
-            <div class="dates">
-              <div class="d-date">
-                <span class="d-name">{{
-                  departures[0].departureDate | date : "EEEE" : "UTC"
-                }}</span>
-                <span class="d-day">{{
-                  departures[0].departureDate | date : "dd MMM" : "UTC"
-                }}</span>
-              </div>
-              <i class="pi pi-arrow-right"></i>
-              <div class="d-date">
-                <span class="d-name">{{
-                  departures[0].returnDate | date : "EEEE" : "UTC"
-                }}</span>
-                <span class="d-day">{{
-                  departures[0].returnDate | date : "dd MMM" : "UTC"
-                }}</span>
-              </div>
-            </div>
-
-            <div class="info">
-              <p-tag
-                severity="info"
-                [value]="departures[0].group"
-                *ngIf="departures[0].group"
-              >
-                <i class="pi pi-users" style="font-size: 0.7rem"></i>
-              </p-tag>
-              <p-tag
-                severity="warn"
-                value="Lista de espera"
-                *ngIf="departures[0].waitingList"
-                ><i class="pi pi-clock" style="font-size: 0.7rem"></i>
-              </p-tag>
-            </div>
-
-            <div class="f-price">
-              <div class="p-container">
-                <span>desde</span>
-                <span class="amount">{{
-                  departures[0].price | currencyFormat : "EUR"
-                }}</span>
-              </div>
-            </div>
-
-            <div class="actions">
-              <p-button
-                [label]="
-                  departures[0].status === 'complete'
-                    ? 'COMPLETO'
-                    : isDepartureSelected(departures[0])
-                    ? 'Añadido'
-                    : 'Añadir'
-                "
-                [disabled]="departures[0].status === 'complete'"
-                (onClick)="addToCart(departures[0])"
-                [severity]="'primary'"
-                [raised]="true"
-              ></p-button>
-            </div>
-          </div>
-        </div>
-
         <!-- Resto de los elementos -->
         <ng-container *ngFor="let item of departures; let i = index">
-          <div class="dep-item" *ngIf="i > 0">
+          <div class="dep-item">
             <div class="dates">
               <div class="d-date">
                 <span class="d-name">{{
@@ -261,9 +194,21 @@
             </div>
 
             <div class="info">
-              <p-tag severity="info" [value]="item.group" *ngIf="item.group">
-                <i class="pi pi-users" style="font-size: 0.7rem"></i>
-              </p-tag>
+              <span
+                *ngIf="
+                  getTripTypeInfo(item.group) &&
+                  getTripTypeInfo(item.group)?.class === 'single'
+                "
+                [pTooltip]="getTripTypeInfo(item.group)?.description"
+                tooltipPosition="top"
+                class="trip-type-tag"
+                [ngClass]="
+                  'trip-type-tag-' + getTripTypeInfo(item.group)?.class
+                "
+              >
+                {{ getTripTypeInfo(item.group)?.title }}
+              </span>
+
               <p-tag
                 severity="warn"
                 value="Lista de espera"
@@ -292,13 +237,8 @@
                 "
                 [disabled]="item.status === 'complete'"
                 (onClick)="addToCart(item)"
-                [severity]="
-                  item.status === 'complete'
-                    ? 'secondary'
-                    : isDepartureSelected(item)
-                    ? 'success'
-                    : 'primary'
-                "
+                styleClass="p-button-rounded"
+                [outlined]="isDepartureSelected(item)"
                 [raised]="true"
               ></p-button>
             </div>

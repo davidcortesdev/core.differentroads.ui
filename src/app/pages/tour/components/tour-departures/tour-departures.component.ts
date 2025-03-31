@@ -11,6 +11,9 @@ import { TourComponent } from '../../tour.component';
 import { TourDataService } from '../../../../core/services/tour-data/tour-data.service';
 import { Subscription } from 'rxjs';
 import { TourOrderService } from '../../../../core/services/tour-data/tour-order.service';
+import { TripType } from '../../../../shared/models/interfaces/trip-type.interface';
+import { TRIP_TYPES } from '../../../../shared/constants/trip-types.constants';
+
 
 export interface Departure {
   name: string;
@@ -73,6 +76,9 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
   // Add properties to track selected departure
   selectedDepartureId: string | null = null;
   selectedFlightId: string | null = null;
+
+    // Constants
+    tripTypes: TripType[] = TRIP_TYPES;
 
   constructor(
     private route: ActivatedRoute,
@@ -384,4 +390,25 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
       ];
     }
   }
+
+    // Trip type handling
+    getTripTypeInfo(tripType: string | undefined): TripType | undefined {
+      if (!tripType) return undefined;
+  
+      const type = tripType.toLowerCase();
+  
+      if (type.includes('single') || type.includes('singles')) {
+        return this.tripTypes.find((tt) => tt.class === 'single');
+      }
+  
+      if (type.includes('group') || type.includes('grupo')) {
+        return this.tripTypes.find((tt) => tt.class === 'group');
+      }
+  
+      if (type.includes('private') || type.includes('privado')) {
+        return this.tripTypes.find((tt) => tt.class === 'private');
+      }
+  
+      return undefined;
+    }
 }

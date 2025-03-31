@@ -5,7 +5,12 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { environment } from '../../../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { GeoService } from '../../../../core/services/geo.service';
-import { Itinerary, Tour } from '../../../../core/models/tours/tour.model';
+import {
+  Hotel,
+  Itinerary,
+  PeriodHotel,
+  Tour,
+} from '../../../../core/models/tours/tour.model';
 import { Panel } from 'primeng/panel';
 import { PeriodsService } from '../../../../core/services/periods.service';
 import { Period } from '../../../../core/models/tours/period.model';
@@ -17,6 +22,7 @@ import { OptionalActivityRef } from '../../../../core/models/orders/order.model'
 import { TourOrderService } from '../../../../core/services/tour-data/tour-order.service';
 import { DateOption } from '../tour-date-selector/tour-date-selector.component';
 import { forkJoin } from 'rxjs';
+import { HotelsService } from '../../../../core/services/hotels.service';
 
 interface City {
   nombre: string;
@@ -185,7 +191,8 @@ export class TourItineraryComponent implements OnInit {
   };
   selectedDate: string = '';
   tripType: string = '';
-  hotels: any[] = [];
+  hotels: Period['hotels'] | undefined;
+  hotelsData: Hotel[] = [];
   showPlaceholder: boolean = true;
 
   currentPeriod: Period | undefined;
@@ -194,7 +201,7 @@ export class TourItineraryComponent implements OnInit {
     title: string;
     description: SafeHtml;
     image: string;
-    hotel: any;
+    hotel: Hotel | null;
     collapsed: boolean;
     color?: string;
     highlights?: Highlight[];
@@ -256,7 +263,8 @@ export class TourItineraryComponent implements OnInit {
     private geoService: GeoService,
     private tourOrderService: TourOrderService,
     private tourDataService: TourDataService,
-    private periodPricesService: PeriodPricesService
+    private periodPricesService: PeriodPricesService,
+    private hotelsService: HotelsService
   ) {
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}`;
@@ -421,7 +429,8 @@ export class TourItineraryComponent implements OnInit {
         next: (period) => {
           this.currentPeriod = period;
           this.tripType = period.tripType || '';
-          this.hotels = period.hotels as any[];
+          this.hotels = period.hotels;
+          this.fetchHotels();
 
           const allActivities = [
             ...(period.activities || []),
@@ -509,16 +518,21 @@ export class TourItineraryComponent implements OnInit {
         (activity) => index + 1 === activity.day
       );
 
+      const hotelByDay = this.hotels?.find((hotel) =>
+        hotel.days.includes(`${index + 1}`)
+      );
+
+      const hotel = this.hotelsData.find(
+        (hotelData) => hotelData.id === hotelByDay?.hotels[0].id
+      );
+
       return {
         title: day.name,
-        description: this.sanitizer.bypassSecurityTrustHtml(day.description),
+        description: this.sanitizer.bypassSecurityTrustHtml(
+          day.description || day.longDescription || ''
+        ),
         image: day.itimage?.[0]?.url || '',
-        hotel:
-          this.hotels?.find(
-            (hotel) =>
-              `${hotel?.id}` === `${day.id}` ||
-              hotel?.days?.includes(`${index + 1}`)
-          ) || null,
+        hotel: hotel || null,
         collapsed: index !== 0,
         color: '#9C27B0',
         highlights:
@@ -588,5 +602,29 @@ export class TourItineraryComponent implements OnInit {
     highlight.added = !highlight.added;
 
     this.tourOrderService.toggleActivity(highlight.id, highlight.title);
+  }
+
+  fetchHotels(): void {
+    this.hotels?.forEach((hotel) => {
+      hotel.hotels.forEach((hotel) => {
+        // Check if the hotel already exists in hotelsData
+        if (
+          !this.hotelsData.some(
+            (existingHotel) => existingHotel.id === hotel.id
+          )
+        ) {
+          this.hotelsService.getHotelById(hotel.id).subscribe({
+            next: (hotelData) => {
+              this.hotelsData.push(hotelData);
+              // Update the itinerary after fetching hotel data
+              this.updateItinerary();
+            },
+            error: (error) => {
+              console.error('Error fetching hotel:', error);
+            },
+          });
+        }
+      });
+    });
   }
 }

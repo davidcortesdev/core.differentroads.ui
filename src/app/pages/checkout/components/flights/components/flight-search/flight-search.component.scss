@@ -1,6 +1,6 @@
 $primary: var(--background-azul);
 $accent: #f67362;
-$text: #666;
+$text: var(--background-azul);
 $light: #f5f5f5;
 $border: #ddd;
 
@@ -23,6 +23,7 @@ $border: #ddd;
   font-family: Arial, sans-serif;
   margin: 0 0 20px 0;
   background-color: #fff !important;
+  color: $primary;
   @extend %shadow;
 
   .p-panel-header {
@@ -30,6 +31,34 @@ $border: #ddd;
   }
   .p-panel-content {
     padding: 20px;
+  }
+}
+
+// Estilos globales para los radio buttons
+::ng-deep {
+  .p-radiobutton .p-radiobutton-box {
+    border-color: var(--background-azul);
+  }
+
+  .p-radiobutton-checked .p-radiobutton-box {
+    border-color: var(--background-azul) !important;
+    background: var(--background-azul-color-letra) !important;
+  }
+
+  .p-radiobutton-checked .p-radiobutton-icon {
+    background-color: var(--background-azul) !important;
+  }
+}
+
+::ng-deep {
+  .p-select-label {
+    color: $primary;
+  }
+  .p-select-list-container {
+    background-color: #fff;
+  }
+  .p-select-option {
+    color: $primary;
   }
 }
 
@@ -42,8 +71,8 @@ $border: #ddd;
     color: $primary;
   }
   p {
+    color: $primary;
     margin: 0;
-    color: $text;
     font-size: 0.9rem;
   }
 }
@@ -100,6 +129,7 @@ $border: #ddd;
         display: block;
       }
       .from {
+        color: $primary;
         @extend %small;
       }
     }
@@ -133,6 +163,7 @@ $border: #ddd;
         }
       }
       .dest-lbl {
+        color: $primary;
         @extend %small;
         margin-bottom: 5px;
       }
@@ -156,8 +187,12 @@ $border: #ddd;
       margin-left: 10px;
 
       .date-lbl {
+        color: $primary;
         @extend %small;
         margin-bottom: 5px;
+      }
+      .static-field {
+        color: $primary;
       }
 
       ::ng-deep .p-calendar {
@@ -506,12 +541,6 @@ $border: #ddd;
 
   .search-opts {
     flex-direction: column;
-
-    .sort,
-    .filter {
-      width: 100%;
-      margin-bottom: 15px;
-    }
     .btn-search {
       width: 100%;
       ::ng-deep .p-button {

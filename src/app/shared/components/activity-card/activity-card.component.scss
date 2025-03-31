@@ -59,7 +59,8 @@ $colors: (
     max-width: 20rem;
     position: relative;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    
+    padding: 0;
+
     &:hover {
       transform: translateY(-3px);
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -73,15 +74,15 @@ $colors: (
     .image-container {
       position: relative;
       overflow: hidden;
-      
+
       &::after {
-        content: '';
+        content: "";
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0));
+        background: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0));
         pointer-events: none;
       }
     }
@@ -117,12 +118,12 @@ $colors: (
         font-size: 1rem;
         font-weight: 500;
       }
-      
+
       .p-button {
         padding: 0.5em 1.5em;
         font-weight: 300;
         transition: all 0.2s ease;
-        
+
         &:hover {
           transform: scale(1.05);
         }
@@ -139,7 +140,7 @@ $colors: (
       border-radius: map.get($border-radius, sm);
       font-size: 0.9rem;
       z-index: 1;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       transition: transform 0.2s ease;
 
       @include resp(md) {
@@ -153,7 +154,7 @@ $colors: (
         background: map.get($colors, primary);
         color: #fff;
       }
-      
+
       i {
         margin-right: 0.3rem;
       }
@@ -185,7 +186,7 @@ $colors: (
       border-radius: map.get($border-radius, md);
       background-color: #f5f5f5;
       transition: transform 0.3s ease;
-      
+
       &:hover {
         transform: scale(1.03);
       }

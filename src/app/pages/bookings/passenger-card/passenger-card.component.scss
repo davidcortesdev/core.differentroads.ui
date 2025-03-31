@@ -43,9 +43,14 @@
 
   .p-card-footer {
     border-top: 1px solid #e9ecef;
-    padding: 0.5rem 0.75rem;
+
     border-radius: 0 0 8px 8px;
     background-color: transparent;
+  }
+
+  .p-divider {
+    --p-divider-horizontal-margin: 0px;
+    --p-divider-border-color: #e9ecef;
   }
 }
 
@@ -110,6 +115,9 @@
   padding: 0.25rem 0;
   border-radius: 4px;
   justify-content: space-between;
+  &.hab {
+    background: #94898960;
+  }
 }
 
 .detail-label {
@@ -120,6 +128,9 @@
   font-size: 0.875rem;
   display: flex;
   align-items: center;
+  &.hab {
+    margin-left: 10px;
+  }
 }
 
 .detail-value {
@@ -128,18 +139,74 @@
   font-weight: 500;
   padding: 0.15rem 0;
   text-align: right;
+  &.hab {
+    margin-right: 10px;
+  }
+
+  &.pending-value {
+    color: #6c757d;
+    font-style: italic;
+    opacity: 0.8;
+  }
 }
 
 /* Footer and buttons styling */
 .passenger-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  position: relative;
+}
+
+.pending-fields-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 4px;
+  background-color: #94898960; /* Mismo color que la habitación */
+  max-width: calc(100% - 50px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  i {
+    color: #495057;
+    font-size: 0.9rem;
+    min-width: 14px;
+    flex-shrink: 0;
+  }
+
+  span {
+    color: #495057;
+    font-size: 0.75rem;
+    font-weight: 400;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.edit-button-container {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-spacer {
+  flex: 1;
 }
 
 .edit-buttons {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
+  margin-left: auto;
 }
 
 /* Edit mode specific styles */
@@ -233,6 +300,32 @@ input.p-inputtext {
 
 /* Responsive adjustments for mobile */
 @media (max-width: 768px) {
+  .passenger-footer {
+    padding: 0.5rem;
+  }
+
+  .pending-fields-indicator {
+    height: 36px;
+    max-width: calc(100% - 45px);
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+
+    i {
+      font-size: 0.8rem;
+    }
+
+    span {
+      font-size: 0.7rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .edit-button-container {
+    width: 36px;
+  }
+
   .detail-row {
     /* Mantener la disposición horizontal */
     flex-direction: row;
@@ -252,17 +345,10 @@ input.p-inputtext {
       white-space: normal; /* Permitir saltos de línea si es necesario */
       overflow: visible; /* Quitar el truncamiento */
       text-overflow: clip; /* Quitar elipsis */
-    }
-  }
 
-  /* Asegurar que el icono de edición permanezca a la derecha en todas las pantallas */
-  .passenger-footer {
-    display: flex;
-    justify-content: flex-end !important;
-    padding-right: 0.5rem;
-
-    .p-button {
-      margin-left: auto; /* Fuerza alineación a la derecha */
+      &.pending-value {
+        font-size: 0.75rem;
+      }
     }
   }
 
@@ -270,11 +356,6 @@ input.p-inputtext {
   :host ::ng-deep .passenger-card-panel {
     .p-card-content {
       padding: 0.75rem 0.5rem;
-    }
-
-    .p-card-footer {
-      display: flex;
-      justify-content: flex-end;
     }
   }
 
@@ -285,8 +366,8 @@ input.p-inputtext {
 
   /* Asegurar que los botones de acción sean más fáciles de tocar en móvil */
   :host ::ng-deep .p-button.p-button-rounded {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 36px;
+    height: 36px;
   }
 
   /* Mantener los botones de edición alineados a la derecha en móvil */

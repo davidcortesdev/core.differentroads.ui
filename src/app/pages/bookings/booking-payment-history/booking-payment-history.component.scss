@@ -1,397 +1,400 @@
 .payment-history-container {
-    .payment-row {
-        display: flex;
-        flex-direction: row;
+  .payment-row {
+    display: flex;
+    flex-direction: row;
 
-        .payment-column-left,
-        .payment-column-right {
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .payment-column-left {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .payment-column-right {
-            flex: 1.5;
-            min-width: 0;
-        }
-
-        p-panel {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-        }
+    .payment-column-left,
+    .payment-column-right {
+      padding: 0;
+      display: flex;
+      flex-direction: column;
     }
+
+    .payment-column-left {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .payment-column-right {
+      flex: 1.5;
+      min-width: 0;
+    }
+
+    p-panel {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+  }
 }
 
 @media (max-width: 768px) {
-    .payment-history-container .payment-row {
-        flex-direction: column;
-    }
+  .payment-history-container .payment-row {
+    flex-direction: column;
+  }
 }
 
 .trip-summary {
-    font-size: 14px;
+  font-size: 14px;
 
-    .trip-item {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 0.5rem;
-        padding: 0.5rem 0;
-        border-bottom: 1px solid #eee;
+  .trip-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
 
-        .description {
-            flex: 2;
-            font-weight: 500;
-            font-size: 14px;
-            text-align: left;
-            padding-right: 8px;
-        }
-
-        .quantity,
-        .price {
-            flex: 1;
-            text-align: right;
-        }
+    .description {
+      flex: 2;
+      font-weight: 500;
+      font-size: 14px;
+      text-align: left;
+      padding-right: 8px;
     }
+
+    .quantity,
+    .price {
+      flex: 1;
+      text-align: right;
+    }
+  }
 }
 
 .payment-info {
-    font-size: 14px;
+  font-size: 14px;
 
+  .payment-unified-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: nowrap;
+    min-width: 0;
+
+    .payment-info-columns {
+      display: flex;
+      flex: 1;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .payment-buttons {
+      display: flex;
+      gap: 10px;
+      white-space: nowrap;
+
+      .p-button {
+        margin: 0;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        padding: 0.5rem 0.75rem;
+
+        .p-button-label {
+          font-weight: normal;
+        }
+      }
+    }
+  }
+
+  .payment-column {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+
+    .label {
+      font-size: 0.875rem;
+      color: #666;
+      margin-bottom: 0.25rem;
+    }
+
+    .amount {
+      font-size: 1.5rem;
+      font-weight: 600;
+
+      &.paid {
+        color: #28a745;
+      }
+    }
+  }
+
+  @media (max-width: 1100px) and (min-width: 993px) {
     .payment-unified-row {
-        display: flex;
+      .payment-buttons {
+        .p-button {
+          font-size: 0.8rem;
+          padding: 0.4rem 0.6rem;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 992px) {
+    .payment-unified-row {
+      flex-direction: column;
+
+      .payment-info-columns {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+        margin-bottom: 1rem;
+
+        .payment-column {
+          .label,
+          .amount {
+            text-align: center;
+          }
+        }
+      }
+
+      .payment-buttons {
+        width: 100%;
         justify-content: space-between;
-        align-items: center;
-        gap: 16px;
+
+        .p-button {
+          flex: 1;
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 576px) {
+    .payment-unified-row {
+      .payment-info-columns {
+        flex-direction: row;
         flex-wrap: nowrap;
-        min-width: 0;
 
-        .payment-info-columns {
-            display: flex;
-            flex: 1;
-            gap: 16px;
-            min-width: 0;
+        .payment-column {
+          flex: 1;
+          font-size: 0.9rem;
+
+          .amount {
+            font-size: 1.2rem;
+          }
         }
+      }
 
-        .payment-buttons {
-            display: flex;
-            gap: 10px;
-            white-space: nowrap;
-
-            .p-button {
-                margin: 0;
-                font-size: 0.85rem;
-                white-space: nowrap;
-                padding: 0.5rem 0.75rem;
-
-                .p-button-label {
-                    font-weight: normal;
-                }
-            }
-        }
-    }
-
-    .payment-column {
-        display: flex;
+      .payment-buttons {
         flex-direction: column;
-        flex: 1;
-        min-width: 0;
 
-        .label {
-            font-size: 0.875rem;
-            color: #666;
-            margin-bottom: 0.25rem;
+        .p-button {
+          margin-bottom: 0.5rem;
+          width: 100%;
         }
-
-        .amount {
-            font-size: 1.5rem;
-            font-weight: 600;
-
-            &.paid {
-                color: #28a745;
-            }
-        }
+      }
     }
-
-    @media (max-width: 1100px) and (min-width: 993px) {
-        .payment-unified-row {
-            .payment-buttons {
-                .p-button {
-                    font-size: 0.8rem;
-                    padding: 0.4rem 0.6rem;
-                }
-            }
-        }
-    }
-
-    @media (max-width: 992px) {
-        .payment-unified-row {
-            flex-direction: column;
-
-            .payment-info-columns {
-                width: 100%;
-                justify-content: center;
-                text-align: center;
-                margin-bottom: 1rem;
-
-                .payment-column {
-                    .label,
-                    .amount {
-                        text-align: center;
-                    }
-                }
-            }
-
-            .payment-buttons {
-                width: 100%;
-                justify-content: space-between;
-
-                .p-button {
-                    flex: 1;
-                    font-size: 0.9rem;
-                }
-            }
-        }
-    }
-
-    @media (max-width: 576px) {
-        .payment-unified-row {
-            .payment-info-columns {
-                flex-direction: row;
-                flex-wrap: nowrap;
-
-                .payment-column {
-                    flex: 1;
-                    font-size: 0.9rem;
-
-                    .amount {
-                        font-size: 1.2rem;
-                    }
-                }
-            }
-
-            .payment-buttons {
-                flex-direction: column;
-
-                .p-button {
-                    margin-bottom: 0.5rem;
-                    width: 100%;
-                }
-            }
-        }
-    }
+  }
 }
 
 .payment-columns-container {
-    display: flex;
-    flex-direction: row;
-    gap: 20px;
-    margin-top: 1rem;
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  margin-top: 1rem;
 
-    .payment-column-half {
-        flex: 1;
-        min-width: 0;
+  .payment-column-deadlines {
+    min-width: 30%;
+  }
+
+  .payment-column-history {
+    flex: 1;
+  }
+
+  @media (max-width: 992px) {
+    flex-direction: column;
+
+    .payment-column {
+      margin-bottom: 0.5rem;
+
+      &:last-child {
+        margin-top: 0.5rem;
+      }
     }
-
-    @media (max-width: 992px) {
-        flex-direction: column;
-
-        .payment-column-half {
-            margin-bottom: 0.5rem;
-
-            &:last-child {
-                margin-top: 0.5rem;
-            }
-        }
-    }
+  }
 }
 
 .upcoming-payments,
 .payment-history,
-.payment-column-half {
-    h3 {
-        font-size: 0.9rem;
-        margin-bottom: 1rem;
-        text-align: left;
+.payment-column {
+  h3 {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    text-align: left;
+  }
+
+  .upcoming-payment-item,
+  .history-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #eee;
+
+    .date {
+      flex: 1;
+      font-weight: 500;
+      text-align: left;
     }
 
-    .upcoming-payment-item,
-    .history-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid #eee;
-
-        .date {
-            flex: 1;
-            font-weight: 500;
-            text-align: left;
-        }
-
-        .status {
-            flex: 1;
-            color: #666;
-            text-align: center;
-        }
-
-        .amount {
-            flex: 1;
-            font-weight: 600;
-            text-align: right;
-        }
+    .status {
+      flex: 1;
+      color: #666;
+      text-align: center;
     }
+
+    .amount {
+      flex: 1;
+      font-weight: 600;
+      text-align: right;
+    }
+  }
 }
 
 :host ::ng-deep {
-    .p-panel {
-        border: 1px solid #eaeaea;
-        border-radius: 12px;
-        margin: 0.75rem;
-        margin-top: 0.5rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        transition: all 0.3s ease;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
+  .p-panel {
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+    margin: 0.75rem;
+    margin-top: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 
-        &:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-
-        .p-panel-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            font-size: 14px;
-        }
-    }
-
-    .p-panel .p-panel-header {
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        height: 50px;
-        padding-left: 1rem;
-        border-radius: 10px;
-        margin-bottom: -10px;
-        border-bottom: 1px solid #66666627;
-
-        .p-panel-title {
-            font-weight: 600;
-            font-size: 16px;
-        }
-    }
-
-    .p-panel .p-panel-header {
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        height: 50px;
-        padding-left: 1rem;
-        border-radius: 10px;
-        margin-bottom: -10px;
-        border-bottom: 1px solid #66666627;
-
-        .p-panel-title {
-            font-weight: 600;
-            font-size: 16px;
-        }
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
 
     .p-panel-content {
-        padding: 1rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+    }
+  }
+
+  .p-panel .p-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    height: 50px;
+    padding-left: 1rem;
+    border-radius: 10px;
+    margin-bottom: -10px;
+    border-bottom: 1px solid #66666627;
+
+    .p-panel-title {
+      font-weight: 600;
+      font-size: 16px;
+    }
+  }
+
+  .p-panel .p-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    height: 50px;
+    padding-left: 1rem;
+    border-radius: 10px;
+    margin-bottom: -10px;
+    border-bottom: 1px solid #66666627;
+
+    .p-panel-title {
+      font-weight: 600;
+      font-size: 16px;
+    }
+  }
+
+  .p-panel-content {
+    padding: 1rem;
+  }
+
+  .p-button {
+    &.p-button-success {
+      background-color: transparent;
+      border-color: #4ecdc4 !important;
+      color: #4ecdc4 !important;
+      border-radius: 50px;
+
+      .p-button-icon {
+        color: #4ecdc4 !important;
+      }
+
+      &:hover {
+        background-color: #f0fffd !important;
+      }
     }
 
-    .p-button {
-        &.p-button-success {
-            background-color: transparent;
-            border-color: #4ecdc4 !important;
-            color: #4ecdc4 !important;
-            border-radius: 50px;
+    &.p-button-outlined {
+      border-color: #ff6b6b !important;
+      color: #ff6b6b !important;
+      border-radius: 50px;
 
-            .p-button-icon {
-                color: #4ecdc4 !important;
-            }
+      .p-button-icon {
+        color: #ff6b6b !important;
+      }
 
-            &:hover {
-                background-color: #f0fffd !important;
-            }
-        }
+      &:hover {
+        background-color: #fff0f0 !important;
+      }
+    }
+  }
 
-        &.p-button-outlined {
-            border-color: #ff6b6b !important;
-            color: #ff6b6b !important;
-            border-radius: 50px;
+  .p-divider {
+    --p-divider-horizontal-margin: 0px;
+  }
 
-            .p-button-icon {
-                color: #ff6b6b !important;
-            }
-
-            &:hover {
-                background-color: #fff0f0 !important;
-            }
-        }
+  .p-inputgroup {
+    width: 100%;
+    .p-inputgroup-addon {
+      margin-left: 10px;
     }
 
-    .p-divider {
-        --p-divider-horizontal-margin: 0px;
+    .p-inputtext {
+      width: 50%;
+      margin-bottom: 20px;
     }
+  }
 
-    .p-inputgroup {
-        width: 100%;
-        .p-inputgroup-addon {
-            margin-left: 10px;
-        }
+  .p-dialog-footer {
+    padding: 1rem 0px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+  }
 
-        .p-inputtext {
-            width: 50%;
-            margin-bottom: 20px;
-        }
+  .p-toast {
+    z-index: 9999;
+    position: fixed;
+
+    .p-toast-message {
+      width: 90vw;
+      max-width: 300px;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+
+      .p-toast-message-content {
+        padding: 0.75rem;
+        word-break: break-word;
+      }
     }
-
-    .p-dialog-footer {
-        padding: 0px;
-        flex-shrink: 0;
-        display: flex;
-        justify-content: center;
+  }
+  .p-dialog {
+    @media (max-width: 768px) {
+      width: 90% !important;
+      margin: 0 auto;
+      max-height: 80vh;
+      overflow-y: auto;
     }
-
-    .p-toast {
-        z-index: 9999;
-        position: fixed;
-
-        .p-toast-message {
-            width: 90vw;
-            max-width: 300px;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-
-            .p-toast-message-content {
-                padding: 0.75rem;
-                word-break: break-word;
-            }
-        }
-    }
-    .p-dialog {
-        @media (max-width: 768px) {
-            width: 90% !important;
-            margin: 0 auto;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-    }
+  }
 }
 
 .required {
-    color: red;
+  color: red;
 }
 
 .mt-4 {
-    margin-top: 1rem;
+  margin-top: 1rem;
 }

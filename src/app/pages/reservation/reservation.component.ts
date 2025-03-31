@@ -8,7 +8,6 @@ import {
   BankInfo,
   Flight,
   PriceDetail,
-  PaymentInfo,
 } from '../../core/models/reservation/reservation.model';
 import { BookingMappingService } from '../../core/services/booking-mapping.service';
 import {
@@ -53,6 +52,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
   paymentID: string = '';
   bookingData: Booking | undefined;
   uploadedVoucher: CloudinaryResponse | null = null;
+  paymentStatus: 'confirm' | 'rq' | 'transfer' | undefined;
 
   constructor(
     private messageService: MessageService,
@@ -118,6 +118,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
           booking,
           this.paymentInfo
         );
+
         this.flights = this.bookingMapper.mapToFlights(booking);
         this.priceDetails = this.bookingMapper.mapToPriceDetails(booking);
 
@@ -164,6 +165,16 @@ export class ReservationComponent implements OnInit, OnDestroy {
             public_id: payment.vouchers[0].id,
           } as CloudinaryResponse;
         }
+
+        if (
+          this.paymentInfo?.status === 'PENDING' &&
+          this.paymentInfo?.method === 'transfer'
+        ) {
+          this.paymentStatus = 'transfer';
+        } else {
+          this.paymentStatus = undefined;
+        }
+
         // Si ya se cargó el booking, actualiza la información de la reserva.
         if (this.bookingData) {
           this.reservationInfo = this.bookingMapper.mapToReservationInfo(

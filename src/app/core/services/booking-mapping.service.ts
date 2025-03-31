@@ -16,28 +16,13 @@ export class BookingMappingService {
     let status: 'confirm' | 'rq' | 'transfer';
 
     // Si se dispone de información del pago, se determina el estado basándose en él.
-    if (
-      payment &&
-      (payment.status === PaymentStatus.COMPLETED ||
-        payment.status === PaymentStatus.PENDING_REVIEW)
-    ) {
-      status =
-        booking.status?.toLowerCase() === 'booked'
-          ? 'confirm'
-          : ['on_request', 'rq'].includes(booking.status?.toLowerCase())
-          ? 'rq'
-          : 'confirm';
-    } else {
-      // Sin información de pago, se utiliza la lógica original.
-      status =
-        booking.periodData?.['payment'].method === 'transfer'
-          ? 'transfer'
-          : booking.status?.toLowerCase() === 'booked'
-          ? 'confirm'
-          : ['on_request', 'rq'].includes(booking.status?.toLowerCase())
-          ? 'rq'
-          : 'confirm';
-    }
+
+    status =
+      booking.status?.toLowerCase() === 'booked'
+        ? 'confirm'
+        : ['on_request', 'rq'].includes(booking.status?.toLowerCase())
+        ? 'rq'
+        : 'confirm';
 
     // Extract travelers information
     const travelers: TravelerInfo[] =
@@ -63,10 +48,41 @@ export class BookingMappingService {
           name: `${t.travelerData?.['name']} ${t.travelerData?.['surname']}`,
           email: t.travelerData?.['email'] || booking.owner || '',
           phone: t.travelerData?.['phone'] || '',
-          gender: this.formatGender(t.travelerData?.['sex']),
+          gender: this.formatGender(t.travelerData?.['sex'] || ''),
           room: roomName,
         };
       }) || [];
+
+    // Nuevo cálculo basado en ageGroup (values: 'Adultos' o 'Niños')
+    const travelerAgeSummary =
+      booking.travelers?.reduce((acc, t) => {
+        const ageGroup = t.travelerData?.ageGroup || 'Adultos';
+        acc[ageGroup] = (acc[ageGroup] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
+
+    const summaryParts: string[] = [];
+    if (travelerAgeSummary['Adultos']) {
+      summaryParts.push(
+        `${travelerAgeSummary['Adultos']} ${
+          travelerAgeSummary['Adultos'] === 1 ? 'Adulto' : 'Adultos'
+        }`
+      );
+    }
+    if (travelerAgeSummary['Niños']) {
+      summaryParts.push(
+        `${travelerAgeSummary['Niños']} ${
+          travelerAgeSummary['Niños'] === 1 ? 'Niño' : 'Niños'
+        }`
+      );
+    }
+    const travelersSummary = summaryParts.join(', ');
+
+    // Obtener el traveler que sea lead para extraer customerName
+    const leadTraveler = booking.travelers?.find((t) => t.lead);
+    const customerName = leadTraveler
+      ? `${leadTraveler.travelerData?.name} ${leadTraveler.travelerData?.surname}`.trim()
+      : '';
 
     return {
       status: status,
@@ -75,16 +91,14 @@ export class BookingMappingService {
         'es-ES'
       ),
       amount: this.calculatePaidAmount(booking),
-      customerName: booking.extraData?.customerName || '',
+      customerName: customerName, // Cambiado para usar leadTraveler
       tripDetails: {
         destination:
           booking.periodData?.['tour']?.name ||
           booking.extraData?.destination ||
           '',
         period: this.formatTripPeriod(booking),
-        travelers: `${booking.travelersNumber || 0} ${
-          booking.travelersNumber === 1 ? 'Adulto' : 'Adultos'
-        }`,
+        travelers: travelersSummary,
       },
       travelers: travelers,
       totalAmount: booking.periodData?.['total'] || 0,

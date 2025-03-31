@@ -1,125 +1,69 @@
-<div class="flights-container">
-    <p-panel header="Vuelos">
-      <div class="flights-content">
-        <!-- IDA -->
-        <div class="flight-direction">
-          <div class="direction-header">
-            <div class="direction-title">IDA</div>
-            <div class="direction-line"></div>
-            <div class="direction-date">{{flightsData.outbound.date}}</div>
-          </div>
-          
-          <div class="stops-info">
-            <i class="pi pi-info-circle"></i>
-            <span>{{flightsData.outbound.stops}} escala</span>
-          </div>
-          
-          <!-- Primer segmento IDA -->
-          <div class="flight-segment">
-            <div class="segment-time departure">
-              <div class="time">
-                <i class="pi pi-arrow-up flight-icon departure"></i>
-                {{flightsData.outbound.segments[0].departureTime}}
-              </div>
-              <div class="airport">{{flightsData.outbound.segments[0].departureAirport}} ({{flightsData.outbound.segments[0].departureCode}})</div>
-            </div>
-            
-            <div class="segment-connector">
-              <i class="pi pi-send flight-path-icon"></i>
-            </div>
-            
-            <div class="segment-time arrival">
-              <div class="time">
-                {{flightsData.outbound.segments[0].arrivalTime}}
-                <i class="pi pi-arrow-down flight-icon arrival"></i>
-              </div>
-              <div class="airport">{{flightsData.outbound.segments[0].arrivalAirport}} ({{flightsData.outbound.segments[0].arrivalCode}})</div>
-            </div>
-          </div>
-          
-          <!-- Segundo segmento IDA -->
-          <div class="flight-segment second-segment">
-            <div class="segment-time departure">
-              <div class="time">
-                <i class="pi pi-arrow-up flight-icon departure"></i>
-                {{flightsData.outbound.segments[1].departureTime}}
-              </div>
-              <div class="airport">{{flightsData.outbound.segments[1].departureAirport}} ({{flightsData.outbound.segments[1].departureCode}})</div>
-            </div>
-            
-            <div class="segment-connector">
-              <i class="pi pi-send flight-path-icon"></i>
-            </div>
-            
-            <div class="segment-time arrival">
-              <div class="time">
-                {{flightsData.outbound.segments[1].arrivalTime}}
-                <i class="pi pi-arrow-down flight-icon arrival"></i>
-              </div>
-              <div class="airport">{{flightsData.outbound.segments[1].arrivalAirport}} ({{flightsData.outbound.segments[1].arrivalCode}})</div>
-            </div>
-          </div>
+<!-- Two-column layout container -->
+<div class="flight-container">
+  <!-- Left column: Flight information -->
+  <div class="flight-info-column">
+    <p-panel [showHeader]="!hasValidFlightData()">
+      <ng-template #header>
+        <div>Vuelos</div>
+      </ng-template>
+      <!-- Mostrar componente de vuelo solo si hay información válida de vuelos -->
+      <ng-container *ngIf="hasValidFlightData(); else noFlights">
+        <app-flight-section [flight]="flight"></app-flight-section>
+      </ng-container>
+      <!-- Plantilla para cuando no hay información de vuelos -->
+      <ng-template #noFlights>
+        <div class="no-flights-message">
+          <p>Sin vuelos</p>
         </div>
-        
-        <!-- VUELTA -->
-        <div class="flight-direction">
-          <div class="direction-header">
-            <div class="direction-title">VUELTA</div>
-            <div class="direction-line"></div>
-            <div class="direction-date">{{flightsData.inbound.date}}</div>
-          </div>
-          
-          <div class="stops-info">
-            <i class="pi pi-info-circle"></i>
-            <span>{{flightsData.inbound.stops}} escala</span>
-          </div>
-          
-          <!-- Primer segmento VUELTA -->
-          <div class="flight-segment">
-            <div class="segment-time departure">
-              <div class="time">
-                <i class="pi pi-arrow-up flight-icon departure"></i>
-                {{flightsData.inbound.segments[0].departureTime}}
-              </div>
-              <div class="airport">{{flightsData.inbound.segments[0].departureAirport}} ({{flightsData.inbound.segments[0].departureCode}})</div>
-            </div>
-            
-            <div class="segment-connector">
-              <i class="pi pi-send flight-path-icon"></i>
-            </div>
-            
-            <div class="segment-time arrival">
-              <div class="time">
-                {{flightsData.inbound.segments[0].arrivalTime}}
-                <i class="pi pi-arrow-down flight-icon arrival"></i>
-              </div>
-              <div class="airport">{{flightsData.inbound.segments[0].arrivalAirport}} ({{flightsData.inbound.segments[0].arrivalCode}})</div>
-            </div>
-          </div>
-          
-          <!-- Segundo segmento VUELTA -->
-          <div class="flight-segment second-segment">
-            <div class="segment-time departure">
-              <div class="time">
-                <i class="pi pi-arrow-up flight-icon departure"></i>
-                {{flightsData.inbound.segments[1].departureTime}}
-              </div>
-              <div class="airport">{{flightsData.inbound.segments[1].departureAirport}} ({{flightsData.inbound.segments[1].departureCode}})</div>
-            </div>
-            
-            <div class="segment-connector">
-              <i class="pi pi-send flight-path-icon"></i>
-            </div>
-            
-            <div class="segment-time arrival">
-              <div class="time">
-                {{flightsData.inbound.segments[1].arrivalTime}}
-                <i class="pi pi-arrow-down flight-icon arrival"></i>
-              </div>
-              <div class="airport">{{flightsData.inbound.segments[1].arrivalAirport}} ({{flightsData.inbound.segments[1].arrivalCode}})</div>
-            </div>
-          </div>
-        </div>
-      </div>
+      </ng-template>
     </p-panel>
   </div>
+  
+  <!-- Right column: Flight identifiers -->
+  <div class="flight-identifiers-column">
+    <p-panel>
+      <ng-template #header>
+        <div>Identificadores de Vuelo</div>
+      </ng-template>
+      <ng-container *ngIf="hasValidFlightData(); else noIdentifiers">
+        <div class="identifiers-content">
+          <!-- Outbound flight identifiers -->
+          <div class="flight-type-header">Vuelo de Ida</div>
+          <ng-container *ngIf="flight.outbound?.segments && flight.outbound.segments.length > 0">
+            <div *ngFor="let segment of flight.outbound.segments; let i = index" class="segment-identifier">
+              <div class="identifier-item">
+                <span class="identifier-label">Vuelo {{i+1}}:</span>
+                <span class="identifier-value">{{segment.flightNumber}}</span>
+              </div>
+              <div class="identifier-item">
+                <span class="identifier-label">Ruta:</span>
+                <span class="identifier-value">{{segment.departureCity}} → {{segment.arrivalCity}}</span>
+              </div>
+            </div>
+          </ng-container>
+          
+          <!-- Inbound flight identifiers -->
+          <div class="flight-type-header" *ngIf="flight.inbound?.segments && flight.inbound.segments.length > 0">Vuelo de Vuelta</div>
+          <ng-container *ngIf="flight.inbound?.segments && flight.inbound.segments.length > 0">
+            <div *ngFor="let segment of flight.inbound.segments; let i = index" class="segment-identifier">
+              <div class="identifier-item">
+                <span class="identifier-label">Vuelo {{i+1}}:</span>
+                <span class="identifier-value">{{segment.flightNumber}}</span>
+              </div>
+              <div class="identifier-item">
+                <span class="identifier-label">Ruta:</span>
+                <span class="identifier-value">{{segment.departureCity}} → {{segment.arrivalCity}}</span>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+      </ng-container>
+      <!-- Plantilla para cuando no hay identificadores de vuelo -->
+      <ng-template #noIdentifiers>
+        <div class="no-flights-message">
+          <p>Sin vuelos</p>
+        </div>
+      </ng-template>
+    </p-panel>
+  </div>
+</div>

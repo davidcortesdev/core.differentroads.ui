@@ -10,11 +10,19 @@ export class BookingCodeSectionComponent implements OnInit {
   @Input() bookingCode: string = '';
   @Input() bookingReference: string = '';
   @Input() status: string = '';
+  
+  // Add the new event emitter for back button
+  @Output() backEvent = new EventEmitter<void>();
   @Output() cancelBooking = new EventEmitter<void>();
 
   constructor() {}
 
   ngOnInit(): void {}
+
+  // Add the goBack method
+  goBack(): void {
+    this.backEvent.emit();
+  }
 
   onCancelBooking(): void {
     this.cancelBooking.emit();

@@ -5,7 +5,12 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { environment } from '../../../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { GeoService } from '../../../../core/services/geo.service';
-import { Itinerary, Tour } from '../../../../core/models/tours/tour.model';
+import {
+  Hotel,
+  Itinerary,
+  PeriodHotel,
+  Tour,
+} from '../../../../core/models/tours/tour.model';
 import { Panel } from 'primeng/panel';
 import { PeriodsService } from '../../../../core/services/periods.service';
 import { Period } from '../../../../core/models/tours/period.model';
@@ -16,6 +21,8 @@ import { PeriodPricesService } from '../../../../core/services/tour-data/period-
 import { OptionalActivityRef } from '../../../../core/models/orders/order.model';
 import { TourOrderService } from '../../../../core/services/tour-data/tour-order.service';
 import { DateOption } from '../tour-date-selector/tour-date-selector.component';
+import { forkJoin } from 'rxjs';
+import { HotelsService } from '../../../../core/services/hotels.service';
 
 interface City {
   nombre: string;
@@ -37,6 +44,7 @@ interface Highlight {
   description: string;
   image: string;
   optional: boolean;
+  recommended: boolean;
   added?: boolean;
 }
 @Component({
@@ -79,92 +87,92 @@ export class TourItineraryComponent implements OnInit {
     minZoom: 1,
     styles: [
       {
-        "elementType": "geometry",
-        "stylers": [{"color": "#f5f5f5"}]
+        elementType: 'geometry',
+        stylers: [{ color: '#f5f5f5' }],
       },
       {
-        "elementType": "labels.icon",
-        "stylers": [{"visibility": "off"}]
+        elementType: 'labels.icon',
+        stylers: [{ visibility: 'off' }],
       },
       {
-        "elementType": "labels.text.fill",
-        "stylers": [{"color": "#616161"}]
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#616161' }],
       },
       {
-        "elementType": "labels.text.stroke",
-        "stylers": [{"color": "#f5f5f5"}]
+        elementType: 'labels.text.stroke',
+        stylers: [{ color: '#f5f5f5' }],
       },
       {
-        "featureType": "administrative.land_parcel",
-        "elementType": "labels.text.fill",
-        "stylers": [{"color": "#bdbdbd"}]
+        featureType: 'administrative.land_parcel',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#bdbdbd' }],
       },
       {
-        "featureType": "poi",
-        "elementType": "geometry",
-        "stylers": [{"color": "#eeeeee"}]
+        featureType: 'poi',
+        elementType: 'geometry',
+        stylers: [{ color: '#eeeeee' }],
       },
       {
-        "featureType": "poi",
-        "elementType": "labels.text.fill",
-        "stylers": [{"color": "#757575"}]
+        featureType: 'poi',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#757575' }],
       },
       {
-        "featureType": "poi.park",
-        "elementType": "geometry",
-        "stylers": [{"color": "#e5e5e5"}]
+        featureType: 'poi.park',
+        elementType: 'geometry',
+        stylers: [{ color: '#e5e5e5' }],
       },
       {
-        "featureType": "poi.park",
-        "elementType": "labels.text.fill",
-        "stylers": [{"color": "#9e9e9e"}]
+        featureType: 'poi.park',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#9e9e9e' }],
       },
       {
-        "featureType": "road",
-        "elementType": "geometry",
-        "stylers": [{"color": "#ffffff"}]
+        featureType: 'road',
+        elementType: 'geometry',
+        stylers: [{ color: '#ffffff' }],
       },
       {
-        "featureType": "road.arterial",
-        "elementType": "labels.text.fill",
-        "stylers": [{"color": "#757575"}]
+        featureType: 'road.arterial',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#757575' }],
       },
       {
-        "featureType": "road.highway",
-        "elementType": "geometry",
-        "stylers": [{"color": "#dadada"}]
+        featureType: 'road.highway',
+        elementType: 'geometry',
+        stylers: [{ color: '#dadada' }],
       },
       {
-        "featureType": "road.highway",
-        "elementType": "labels.text.fill",
-        "stylers": [{"color": "#616161"}]
+        featureType: 'road.highway',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#616161' }],
       },
       {
-        "featureType": "road.local",
-        "elementType": "labels.text.fill",
-        "stylers": [{"color": "#9e9e9e"}]
+        featureType: 'road.local',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#9e9e9e' }],
       },
       {
-        "featureType": "transit.line",
-        "elementType": "geometry",
-        "stylers": [{"color": "#e5e5e5"}]
+        featureType: 'transit.line',
+        elementType: 'geometry',
+        stylers: [{ color: '#e5e5e5' }],
       },
       {
-        "featureType": "transit.station",
-        "elementType": "geometry",
-        "stylers": [{"color": "#eeeeee"}]
+        featureType: 'transit.station',
+        elementType: 'geometry',
+        stylers: [{ color: '#eeeeee' }],
       },
       {
-        "featureType": "water",
-        "elementType": "geometry",
-        "stylers": [{"color": "#c9c9c9"}]
+        featureType: 'water',
+        elementType: 'geometry',
+        stylers: [{ color: '#c9c9c9' }],
       },
       {
-        "featureType": "water",
-        "elementType": "labels.text.fill",
-        "stylers": [{"color": "#9e9e9e"}]
-      }
-    ]
+        featureType: 'water',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#9e9e9e' }],
+      },
+    ],
   };
   markerOptions: google.maps.MarkerOptions = {
     draggable: false,
@@ -183,7 +191,8 @@ export class TourItineraryComponent implements OnInit {
   };
   selectedDate: string = '';
   tripType: string = '';
-  hotels: any[] = [];
+  hotels: Period['hotels'] | undefined;
+  hotelsData: Hotel[] = [];
   showPlaceholder: boolean = true;
 
   currentPeriod: Period | undefined;
@@ -192,7 +201,7 @@ export class TourItineraryComponent implements OnInit {
     title: string;
     description: SafeHtml;
     image: string;
-    hotel: any;
+    hotel: Hotel | null;
     collapsed: boolean;
     color?: string;
     highlights?: Highlight[];
@@ -254,7 +263,8 @@ export class TourItineraryComponent implements OnInit {
     private geoService: GeoService,
     private tourOrderService: TourOrderService,
     private tourDataService: TourDataService,
-    private periodPricesService: PeriodPricesService
+    private periodPricesService: PeriodPricesService,
+    private hotelsService: HotelsService
   ) {
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}`;
@@ -298,39 +308,20 @@ export class TourItineraryComponent implements OnInit {
                   dayOne: period.dayOne,
                 };
               });
+
               this.selectedOption = this.dateOptions[0];
               this.selectedDate = this.dateOptions[0].label;
               this.itinerariesData = tourData['itinerary-section'];
-              this.updateItinerary();
 
               this.title = tourData['itinerary-section'].title;
 
+              // Manually trigger date change with the first option
               if (this.selectedOption) {
-                this.periodsService
-                  .getPeriodDetail(this.selectedOption.value, [
-                    'tripType',
-                    'hotels',
-                    'activities',
-                  ])
-                  .subscribe({
-                    next: (period) => {
-                      this.currentPeriod = period;
-                      this.tripType = period.tripType || '';
-                      this.hotels = period.hotels as any[];
-                      this.activities = [
-                        ...(period.activities || []),
-                        ...(period.includedActivities || []),
-                      ].map((activity) => ({
-                        ...activity,
-                        price: this.periodPricesService.getCachedPeriodActivityPrice(
-                          this.selectedOption.value,
-                          activity.activityId
-                        ) || 0,
-                      }));
-                      this.updateItinerary();
-                    },
-                    error: (error) => console.error('Error period:', error),
-                  });}
+                // Call onDateChange with an event object containing the value of the first option
+                this.onDateChange({ value: this.selectedOption.value });
+              } else {
+                console.warn('No period options available');
+              }
             },
             error: (error) => console.error('Error itinerary section:', error),
           });
@@ -426,6 +417,7 @@ export class TourItineraryComponent implements OnInit {
       this.dateOptions[0];
     this.updateDateDisplay();
     this.showPlaceholder = false;
+
     this.periodsService
       .getPeriodDetail(this.selectedOption.value, [
         'tripType',
@@ -437,31 +429,64 @@ export class TourItineraryComponent implements OnInit {
         next: (period) => {
           this.currentPeriod = period;
           this.tripType = period.tripType || '';
-          this.hotels = period.hotels as any[];
-          this.activities = [
+          this.hotels = period.hotels;
+          this.fetchHotels();
+
+          const allActivities = [
             ...(period.activities || []),
             ...(period.includedActivities || []),
-          ].map((activity) => {
-            return {
-              ...activity,
-              price:
-                this.periodPricesService.getCachedPeriodActivityPrice(
-                  this.selectedOption.value,
-                  activity.activityId
-                ) || 0,
-            };
+          ];
+
+          // Create a temporary array to store activities
+          this.activities = allActivities.map((activity) => ({
+            ...activity,
+            price: 0, // Initialize with 0, will be updated when prices load
+          }));
+
+          // For each activity, get its price and update the activities array
+          allActivities.forEach((activity) => {
+            this.periodPricesService
+              .getPeriodPriceById(
+                this.selectedOption.value,
+                activity.activityId
+              )
+              .subscribe({
+                next: (price) => {
+                  // Find and update the activity's price in the activities array
+                  const activityIndex = this.activities.findIndex(
+                    (a) => a.activityId === activity.activityId
+                  );
+                  if (activityIndex !== -1) {
+                    this.activities[activityIndex].price = price;
+
+                    // Update the itinerary if it's already populated
+                    if (this.itinerary.length > 0) {
+                      this.updateItinerary();
+                    }
+                  }
+                },
+                error: (error) => {
+                  console.error(
+                    `Error getting price for activity ${activity.activityId}:`,
+                    error
+                  );
+                  // Even if we have an error, keep the activity with price 0
+                  const activityIndex = this.activities.findIndex(
+                    (a) => a.activityId === activity.activityId
+                  );
+                },
+              });
           });
 
           this.updateItinerary();
 
           // Share the updated selected date and trip type with the service
-
-          this.tourOrderService.updateSelectedDateInfo(
-            period.externalID,
-            ''
-          );
+          this.tourOrderService.updateSelectedDateInfo(period.externalID, '');
         },
-        error: (error) => console.error('Error period:', error),
+        error: (error) => {
+          console.error('Error fetching period details:', error);
+          // Handle the error - maybe show a notification to the user
+        },
       });
   }
 
@@ -481,40 +506,47 @@ export class TourItineraryComponent implements OnInit {
     )[0];
 
     if (!selectedItinerary) {
-      console.error('No itinerary found for the selected option.');
+      console.error(
+        'No itinerary found for the selected option:',
+        this.selectedOption.value
+      );
       return;
     }
 
-    console.log('Selected itinerary____:', this.activities);
-
     this.itinerary = selectedItinerary['days'].map((day, index) => {
-      // console.log('this.hotels',this.hotels);
+      const dayActivities = this.activities.filter(
+        (activity) => index + 1 === activity.day
+      );
+
+      const hotelByDay = this.hotels?.find((hotel) =>
+        hotel.days.includes(`${index + 1}`)
+      );
+
+      const hotel = this.hotelsData.find(
+        (hotelData) => hotelData.id === hotelByDay?.hotels[0].id
+      );
+
       return {
         title: day.name,
-        description: this.sanitizer.bypassSecurityTrustHtml(day.description),
+        description: this.sanitizer.bypassSecurityTrustHtml(
+          day.description || day.longDescription || ''
+        ),
         image: day.itimage?.[0]?.url || '',
-        hotel:
-          this.hotels?.find(
-            (hotel) =>
-              `${hotel?.id}` === `${day.id}` ||
-              hotel?.days?.includes(`${index + 1}`)
-          ) || null,
+        hotel: hotel || null,
         collapsed: index !== 0,
         color: '#9C27B0',
         highlights:
-          this.activities
-            .filter((activity) => index + 1 === activity.day)
-            .map((activity) => {
-              return {
-                id: `${activity.activityId}`,
-                title: activity.name,
-                description: activity.description || '',
-                image: activity.activityImage?.[0]?.url || '',
-                optional: activity.optional,
-                recommended: activity.recommended,
-                price: activity.price,
-              };
-            }) || [],
+          dayActivities.map((activity) => {
+            return {
+              id: `${activity.activityId}`,
+              title: activity.name,
+              description: activity.description || '',
+              image: activity.activityImage?.[0]?.url || '',
+              optional: activity.optional,
+              recommended: activity.recommended ?? false,
+              price: activity.price,
+            };
+          }) || [],
       };
     });
   }
@@ -570,5 +602,29 @@ export class TourItineraryComponent implements OnInit {
     highlight.added = !highlight.added;
 
     this.tourOrderService.toggleActivity(highlight.id, highlight.title);
+  }
+
+  fetchHotels(): void {
+    this.hotels?.forEach((hotel) => {
+      hotel.hotels.forEach((hotel) => {
+        // Check if the hotel already exists in hotelsData
+        if (
+          !this.hotelsData.some(
+            (existingHotel) => existingHotel.id === hotel.id
+          )
+        ) {
+          this.hotelsService.getHotelById(hotel.id).subscribe({
+            next: (hotelData) => {
+              this.hotelsData.push(hotelData);
+              // Update the itinerary after fetching hotel data
+              this.updateItinerary();
+            },
+            error: (error) => {
+              console.error('Error fetching hotel:', error);
+            },
+          });
+        }
+      });
+    });
   }
 }

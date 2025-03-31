@@ -541,7 +541,9 @@ export class CheckoutComponent implements OnInit {
               'Adultos'
             ) ||
             0,
-          description: this.selectedFlight.name,
+          description:
+            this.selectedFlight.outbound.activityName ||
+            this.selectedFlight.name,
         });
       }
 

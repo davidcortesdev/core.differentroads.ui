@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 
 // Interface para los elementos del dataview de imágenes
-interface BookingImage {
+export interface BookingImage {
   id: number;
   name: string;
   imageUrl: string;
@@ -10,6 +10,7 @@ interface BookingImage {
   departureDate: string;
   passengers: number;
   price: string;
+  tourName?: string;
 }
 
 @Component({
@@ -20,6 +21,7 @@ interface BookingImage {
 })
 export class BookingDetailsViewComponent implements OnInit {
   @Input() bookingImages: BookingImage[] = [];
+  @Input() tourName: string = '';
 
   constructor() {}
 

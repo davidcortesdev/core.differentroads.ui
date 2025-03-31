@@ -18,12 +18,12 @@ export class ActivitiesCarouselComponent implements OnInit, OnChanges {
   
   responsiveOptions = [
     {
-      breakpoint: '1199px',
+      breakpoint: '1559px',
       numVisible: 3,
       numScroll: 1,
     },
     {
-      breakpoint: '991px',
+      breakpoint: '1200px',
       numVisible: 2,
       numScroll: 1,
     },

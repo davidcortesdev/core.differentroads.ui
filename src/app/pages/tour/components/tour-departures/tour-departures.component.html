@@ -194,9 +194,19 @@
             </div>
 
             <div class="info">
-              <p-tag severity="info" [value]="item.group" *ngIf="item.group">
-                <i class="pi pi-users" style="font-size: 0.7rem"></i>
-              </p-tag>
+
+                <span
+                  *ngIf="getTripTypeInfo(item.group) && getTripTypeInfo(item.group)?.class === 'single'"
+                  [pTooltip]="getTripTypeInfo(item.group)?.description"
+                  tooltipPosition="top"
+                  class="trip-type-tag"
+                  [ngClass]="
+                    'trip-type-tag-' + getTripTypeInfo(item.group)?.class
+                  "
+                >
+                  {{ getTripTypeInfo(item.group)?.title }}
+                </span>
+
               <p-tag
                 severity="warn"
                 value="Lista de espera"

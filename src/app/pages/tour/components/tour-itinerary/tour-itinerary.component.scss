@@ -509,11 +509,7 @@ $colors: (
         }
       }
     }
-
-    .p-carousel-indicators {
-      display: none;
-    }
-
+    
     // Responsive carousel adjustments
     @include resp(md) {
       .p-carousel {

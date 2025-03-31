@@ -128,7 +128,9 @@
 >
   <form [formGroup]="paymentForm" (ngSubmit)="onSubmitPayment()">
     <div class="p-field">
-      <label for="amount">Monto del pago<span class="required">*</span></label>
+      <label for="amount"
+        >Importe del pago<span class="required">*</span></label
+      >
       <div class="p-inputgroup">
         <input
           type="number"
@@ -172,7 +174,7 @@
   <div class="p-dialog-content">
     <p>Tranferencia de {{ selectedPayment?.amount || 0 | currencyFormat }}</p>
     <p-button
-      label="Ver comporbante"
+      label="Ver comprobante"
       icon="pi pi-external-link"
       (onClick)="viewPaymentReview()"
       styleClass="p-button-info"

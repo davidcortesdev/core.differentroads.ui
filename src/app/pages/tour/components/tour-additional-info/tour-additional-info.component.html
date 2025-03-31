@@ -1,18 +1,20 @@
 <div class="tour-additional-info-container">
+  <!-- Optimización: Mover el (click) al elemento p-card para mejor accesibilidad -->
   <p-card styleClass="action-card" (click)="handleSaveTrip()">
     <div class="card-content">
       <span class="bg-pink-100">
-        <i class="pi pi-bookmark"></i>
+        <i class="pi pi-bookmark" aria-hidden="true"></i>
       </span>
       <span class="card-text">Guarda tu viaje</span>
     </div>
   </p-card>
 
+  <!-- Optimización: Extraer configuraciones comunes a variables -->
   <p-dialog
     [(visible)]="visible"
     [modal]="true"
-    [breakpoints]="{ '1199px': '80vw', '575px': '90vw' }"
-    [style]="{ width: '50vw' }"
+    [breakpoints]="dialogBreakpoints"
+    [style]="dialogStyle"
     [draggable]="false"
     [resizable]="false"
     styleClass="budget-modal"
@@ -25,40 +27,26 @@
     ></app-budget-dialog>
   </p-dialog>
 
-  <p-card styleClass="action-card claseBord">
-    <div class="card-content" (click)="handleDownloadTrip()">
+  <!-- Optimización: Mover el (click) al elemento p-card para mejor accesibilidad -->
+  <p-card styleClass="action-card claseBord" (click)="handleDownloadTrip()">
+    <div class="card-content">
       <span class="bg-pink-100">
-        <i class="pi pi-download"></i>
+        <i class="pi pi-download" aria-hidden="true"></i>
       </span>
       <span class="card-text">Descargar tu viaje</span>
     </div>
   </p-card>
 
-  <p-card styleClass="action-card">
-    <div class="card-content" (click)="handleInviteFriend()">
+  <!-- Optimización: Mover el (click) al elemento p-card para mejor accesibilidad -->
+  <p-card styleClass="action-card" (click)="handleInviteFriend()">
+    <div class="card-content">
       <span class="bg-pink-100">
-        <i class="pi pi-user-plus"></i>
+        <i class="pi pi-user-plus" aria-hidden="true"></i>
       </span>
       <span class="card-text">Invita a un amigo a tu viaje</span>
     </div>
   </p-card>
 </div>
 
-<div class="mt-4 additional-info">
-  <p-accordion *ngIf="tour?.['extra-info-section']?.['info-card']?.length" [multiple]="true" [value]="0">
-    <p-accordion-panel
-      *ngFor="let card of tour?.['extra-info-section']?.['info-card']; let i = index"
-      [value]="i"
-    >
-      <p-accordion-header>
-        <ng-template #toggleicon let-active="active">
-          <i class="pi" [ngClass]="active ? 'pi-minus-circle' : 'pi-plus-circle'"></i>
-        </ng-template>
-        <div [innerHTML]="sanitizeHtml(card.title)"></div>
-      </p-accordion-header>
-      <p-accordion-content>
-        <div class="paddingDiv" [innerHTML]="sanitizeHtml(card.content)"></div>
-      </p-accordion-content>
-    </p-accordion-panel>
-  </p-accordion>
-</div>
+<!-- Reemplazamos el acordeón con el nuevo componente -->
+<app-tour-info-accordion *ngIf="hasInfoCards" [infoCards]="infoCards"></app-tour-info-accordion>

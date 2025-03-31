@@ -189,6 +189,7 @@ import { BookingUpdateTravelComponent } from './pages/bookings/booking-update-tr
 import { PassengerCardComponent } from './pages/bookings/passenger-card/passenger-card.component';
 import { UploadButtonComponent } from './shared/components/upload-button/upload-button.component';
 import { PaymentsComponent } from './pages/payments/payments.component';
+import { TourInfoAccordionComponent } from './pages/tour/components/tour-info-accordion/tour-info-accordion.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -288,7 +289,9 @@ registerLocaleData(localeEs);
     BookingUpdateTravelComponent,
     PassengerCardComponent,
     UploadButtonComponent,
-    PaymentsComponent
+    PaymentsComponent,
+    TourInfoAccordionComponent,
+
   ],
   imports: [
     // Angular Modules

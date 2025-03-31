@@ -2,9 +2,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { ToursService } from '../../../../core/services/tours.service';
+import { AuthenticateService } from '../../../../core/services/auth-service.service';
 import { Tour } from '../../../../core/models/tours/tour.model';
 import { Subscription } from 'rxjs';
 import { InfoCard } from '../tour-info-accordion/tour-info-accordion.component';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
   selector: 'app-tour-additional-info',
@@ -16,6 +18,7 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   tour: Tour | null = null;
   visible: boolean = false;
   private subscription: Subscription = new Subscription();
+  isAuthenticated: boolean = false;
 
   // Optimización: Extraer configuraciones a propiedades
   dialogBreakpoints = { '1199px': '80vw', '575px': '90vw' };
@@ -33,11 +36,21 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   constructor(
     private sanitizer: DomSanitizer,
     private route: ActivatedRoute,
-    private toursService: ToursService
+    private toursService: ToursService,
+    private authService: AuthenticateService
   ) {}
 
   ngOnInit(): void {
     this.loadTourData();
+
+    // Subscribe to authentication status
+    const authSubscription = this.authService.isLoggedIn().subscribe({
+      next: (isAuthenticated) => {
+        this.isAuthenticated = isAuthenticated;
+      },
+    });
+
+    this.subscription.add(authSubscription);
   }
 
   ngOnDestroy(): void {
@@ -68,6 +81,10 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   }
 
   handleSaveTrip(): void {
+    if (!this.isAuthenticated) {
+      // User is not authenticated, don't open the modal
+      return;
+    }
     this.visible = true;
   }
 

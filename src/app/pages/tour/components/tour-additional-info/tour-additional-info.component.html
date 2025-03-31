@@ -1,6 +1,16 @@
 <div class="tour-additional-info-container">
   <!-- Optimización: Mover el (click) al elemento p-card para mejor accesibilidad -->
-  <p-card styleClass="action-card" (click)="handleSaveTrip()">
+  <!-- Add tooltip for unauthenticated users -->
+  <p-card
+    styleClass="action-card"
+    (click)="handleSaveTrip()"
+    [pTooltip]="
+      !isAuthenticated
+        ? 'Para guardar tu presupuesto debes iniciar sesión o registrarte en la plataforma'
+        : undefined
+    "
+    tooltipPosition="top"
+  >
     <div class="card-content">
       <span class="bg-pink-100">
         <i class="pi pi-bookmark" aria-hidden="true"></i>
@@ -49,4 +59,7 @@
 </div>
 
 <!-- Reemplazamos el acordeón con el nuevo componente -->
-<app-tour-info-accordion *ngIf="hasInfoCards" [infoCards]="infoCards"></app-tour-info-accordion>
+<app-tour-info-accordion
+  *ngIf="hasInfoCards"
+  [infoCards]="infoCards"
+></app-tour-info-accordion>

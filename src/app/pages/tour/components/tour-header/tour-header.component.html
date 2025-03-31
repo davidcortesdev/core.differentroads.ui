@@ -14,7 +14,7 @@
       <span class="duration">{{ getDuration() }}</span>
     </div>
   </div>
-  
+
   <!-- Tour Actions Section -->
   <div class="tour-actions">
     <!-- Marketing Badge -->
@@ -23,7 +23,8 @@
         severity="secondary"
         variant="outlined"
         icon="pi pi-star"
-        size="small">
+        size="small"
+      >
         {{ tour.marketingSection?.marketingTag }}
       </p-message>
     </div>
@@ -33,28 +34,41 @@
       <div class="price-info">
         <div
           class="before-price"
-          *ngIf="!totalPrice && !selectedActivities.length">
+          *ngIf="!totalPrice && !selectedActivities.length"
+        >
           <span>Antes</span>
           <span>{{ basePrice + 200 | currencyFormat : "EUR" }}</span>
         </div>
         <div class="current-price">
           <span>{{ totalPrice > 0 ? "Total" : "Desde" }}</span>
-          <span class="amount">{{ (totalPrice || basePrice) | currencyFormat : "EUR" }}</span>
+          <span class="amount">{{
+            totalPrice || basePrice | currencyFormat : "EUR"
+          }}</span>
         </div>
       </div>
       <div class="total-price-container">
         <div class="passengers-info" *ngIf="selectedDate && departureCity">
-          <span>{{ selectedDate }} - {{ tripType }}</span>
+          <span
+            >{{ selectedDate
+            }}{{
+              tripType.toLowerCase() === "single" ||
+              tripType.toLowerCase() === "singles"
+                ? " - " + tripType
+                : ""
+            }}</span
+          >
           <br />
           <span>{{ formatDepartureCity(departureCity) }}</span>
         </div>
         <span
           *ngIf="selectedActivities.length"
           [pTooltip]="getSelectedActivitiesNames()"
-          tooltipPosition="bottom">
-          {{ selectedActivities.length }} 
-          actividad{{ selectedActivities.length > 1 ? 'es' : '' }}
-          opcional{{ selectedActivities.length > 1 ? 'es' : '' }}
+          tooltipPosition="bottom"
+        >
+          {{ selectedActivities.length }}
+          actividad{{ selectedActivities.length > 1 ? "es" : "" }} opcional{{
+            selectedActivities.length > 1 ? "es" : ""
+          }}
         </span>
       </div>
     </div>
@@ -65,7 +79,8 @@
         label="Reservar mi tour"
         styleClass="p-button-rounded"
         [disabled]="!selectedDate || !totalPrice"
-        (onClick)="bookTour()">
+        (onClick)="bookTour()"
+      >
       </p-button>
     </div>
   </div>

@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CarouselModule } from 'primeng/carousel';
-import { ActivityCardComponent } from '../activity-card/activity-card.component';
+import { ActivityCardComponent, ActivityHighlight } from '../activity-card/activity-card.component';
 import { CAROUSEL_CONFIG } from '../../../shared/constants/carousel.constants';
 
 @Component({
@@ -12,8 +12,8 @@ import { CAROUSEL_CONFIG } from '../../../shared/constants/carousel.constants';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ActivitiesCarouselComponent implements OnInit, OnChanges {
-  @Input() highlights: any[] = [];
-  @Output() addActivity = new EventEmitter<any>();
+  @Input() highlights: ActivityHighlight[] = [];
+  @Output() addActivity = new EventEmitter<ActivityHighlight>();
   
   protected carouselConfig = CAROUSEL_CONFIG;
   
@@ -24,7 +24,7 @@ export class ActivitiesCarouselComponent implements OnInit, OnChanges {
       numScroll: 1,
     },
     {
-      breakpoint: '1200px',
+      breakpoint: '800px',
       numVisible: 2,
       numScroll: 1,
     },
@@ -47,12 +47,12 @@ export class ActivitiesCarouselComponent implements OnInit, OnChanges {
     }
   }
 
-  onAddActivity(highlight: any): void {
+  onAddActivity(highlight: ActivityHighlight): void {
     console.log('ActivitiesCarouselComponent - activity added:', highlight);
     this.addActivity.emit(highlight);
   }
 
-  trackByFn(index: number, item: any): any {
+  trackByFn(index: number, item: ActivityHighlight): string | number {
     return item.id || index;
   }
 }

@@ -178,7 +178,7 @@ export class ToursComponent implements OnInit {
             tag: tour.marketingSection?.marketingSeasonTag || '',
             price: tour.price || 0,
             availableMonths:
-              tour.monthTags?.map((month: string) =>
+              (tour.monthTags || [])?.map((month: string) =>
                 month.substring(0, 3).toUpperCase()
               ) || [],
             isByDr: tour.tourType !== 'FIT',

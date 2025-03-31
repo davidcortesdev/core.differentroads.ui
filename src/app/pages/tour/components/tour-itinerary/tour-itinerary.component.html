@@ -134,9 +134,22 @@
                         />
                         <span
                           class="status-badge"
-                          [class.optional]="highlight.optional"
+                          [class.optional]="
+                            !highlight.recommended && highlight.optional
+                          "
                         >
-                          {{ highlight.optional ? "Opcional" : "Incluida" }}
+                          <i
+                            class="pi pi-star"
+                            *ngIf="highlight.recommended"
+                            style="font-size: 1em"
+                          ></i>
+                          {{
+                            highlight.recommended
+                              ? "Recomendada"
+                              : highlight.optional
+                              ? "Opcional"
+                              : "Incluida"
+                          }}
                         </span>
                       </ng-template>
                       <ng-template pTemplate="content">

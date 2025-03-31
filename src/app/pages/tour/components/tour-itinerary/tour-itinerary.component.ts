@@ -23,7 +23,8 @@ import { TourOrderService } from '../../../../core/services/tour-data/tour-order
 import { DateOption } from '../tour-date-selector/tour-date-selector.component';
 import { forkJoin } from 'rxjs';
 import { HotelsService } from '../../../../core/services/hotels.service';
-
+// Add this import
+import { HotelCardComponent } from '../../../../shared/components/hotel-card/hotel-card.component';
 interface City {
   nombre: string;
   lat: number;
@@ -47,6 +48,8 @@ interface Highlight {
   recommended: boolean;
   added?: boolean;
 }
+
+
 @Component({
   selector: 'app-tour-itinerary',
   standalone: false,

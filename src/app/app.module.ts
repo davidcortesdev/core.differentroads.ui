@@ -190,6 +190,7 @@ import { PassengerCardComponent } from './pages/bookings/passenger-card/passenge
 import { UploadButtonComponent } from './shared/components/upload-button/upload-button.component';
 import { PaymentsComponent } from './pages/payments/payments.component';
 import { TourInfoAccordionComponent } from './pages/tour/components/tour-info-accordion/tour-info-accordion.component';
+import { HotelCardComponent } from './shared/components/hotel-card/hotel-card.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -291,6 +292,7 @@ registerLocaleData(localeEs);
     UploadButtonComponent,
     PaymentsComponent,
     TourInfoAccordionComponent,
+    HotelCardComponent,
 
   ],
   imports: [

@@ -1,0 +1,34 @@
+<div class="hotel-card" *ngIf="hotel?.name">
+  <img
+    [src]="hotel?.hotelimage?.[0]?.url || ''"
+    [alt]="hotel?.hotelimage?.[0]?.alt || hotel?.name"
+    class="hotel-card-image"
+  />
+  <div class="hotel-card-content">
+    <span>
+      <p-rating
+        [ngModel]="hotel?.category"
+        [readonly]="true"
+        [stars]="5"
+      ></p-rating>
+    </span>
+    <h4 class="hotel-card-name">
+      <a *ngIf="hotel?.link" [href]="hotel?.link" target="_blank" class="hotel-link">
+        {{ hotel?.name }}
+      </a>
+      <span *ngIf="!hotel?.link">{{ hotel?.name }}</span>
+    </h4>
+    <p class="hotel-card-location">
+      <i class="pi pi-map-marker"></i> {{ hotel?.address }}
+    </p>
+  </div>
+  <div class="hotel-card-bookings-section">
+    <img
+      [src]="bookingLogoSrc"
+      alt="Booking Logo"
+      class="logo"
+      height="60px"
+    />
+    <p>{{ bookingScore }}</p>
+  </div>
+</div>

@@ -75,37 +75,13 @@
                   class="img"
                 />
               </div>
-              <div class="hotel-card" *ngIf="event?.hotel?.name">
-                <img
-                  [src]="event.hotel.hotelimage?.[0]?.url||'https://picsum.photos/200'"
-                  [alt]="event.hotel.hotelimage?.[0]?.alt || event.hotel.name"
-                  class="hotel-card-image"
-                />
-                <div class="hotel-card-content">
-                  <span>
-                    <p-rating
-                      [ngModel]="event.hotel.rank || 4"
-                      [readonly]="true"
-                      [stars]="5"
-                    ></p-rating>
-                  </span>
-                  <h4 class="hotel-card-name">
-                    {{ event.hotel.name }}
-                  </h4>
-                  <p class="hotel-card-location">
-                    <i class="pi pi-map-marker"></i> {{ event.hotel.address }}
-                  </p>
-                </div>
-                <div class="hotel-card-bookings-section">
-                  <img
-                    src="booking-logo.png"
-                    alt="Different Roads Logo"
-                    class="logo"
-                    height="60px"
-                  />
-                  <p>8.9</p>
-                </div>
-              </div>
+              
+              <!-- Replace the hotel card with the new component -->
+              <app-hotel-card 
+                [hotel]="event.hotel"
+                [bookingScore]="8.9"
+                [bookingLogoSrc]="'booking-logo.png'"
+              ></app-hotel-card>
 
               <div class="itinerary-activities">
                 <p-carousel
@@ -129,7 +105,7 @@
                     >
                       <ng-template pTemplate="header">
                         <img
-                          [src]="highlight.image || 'https://picsum.photos/200'"
+                          [src]="highlight.image || ''"
                           [alt]="highlight.title"
                         />
                         <span

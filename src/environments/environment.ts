@@ -14,9 +14,9 @@ export const environment = {
   notificationsApiUrl: 'https://api.differentroads.co/dev/v3/notification',
 
   cloudinary: {
-    cloudName: 'your-cloud-name', // Make sure this is defined
-    uploadPreset: 'your-upload-preset', // Make sure this is defined
-    apiKey: 'your-api-key',
-    apiSecret: 'your-api-secret',
+    uploadPreset: 'dr_uploads',
+    cloudName: 'dxp2hxees',
+    apiSecret: 'mD3dyC3tOF1i_nV0p-t9f-3_zKY',
+    apiKey: '197192715793311',
   },
 };

@@ -27,6 +27,7 @@ import {
 import { MessageService } from 'primeng/api';
 import { Subscription } from 'rxjs';
 import { TextsService } from '../../../../core/services/checkout/texts.service';
+import { AuthenticateService } from '../../../../core/services/auth-service.service';
 
 interface TravelerWithPoints {
   id: string;
@@ -61,7 +62,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
   isPaymentMethodsOpen: boolean = true;
   paymentType: string | null = null;
   installmentOption: string | null = null;
-  paymentMethod: string | null = null;
+  paymentMethod: 'creditCard' | 'transfer' | null = null;
 
   isSourceDropdownOpen: boolean = false;
   selectedSource: string = 'Selecciona';
@@ -99,6 +100,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     private pointsService: PointsService,
     private discountsService: DiscountsService,
     private messageService: MessageService,
+    private authService: AuthenticateService,
     private textsService: TextsService
   ) {}
 
@@ -350,7 +352,9 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
 
       const payment = await this.createPayment(bookingID, {
         amount: paymentAmount,
-        registerBy: 'user',
+        registerBy: this.authService.getCurrentUsername(),
+
+        method: this.paymentMethod!,
       });
 
       const publicID = payment.publicID;
@@ -392,6 +396,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     payment: {
       amount: number;
       registerBy: string;
+      method: 'creditCard' | 'transfer';
     }
   ): Promise<Payment> {
     return new Promise((resolve, reject) => {

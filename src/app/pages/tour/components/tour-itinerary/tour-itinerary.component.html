@@ -30,47 +30,14 @@
           ></span>
         </ng-template>
         <ng-template pTemplate="content" let-event>
-          <p-panel
+          <!-- Update these lines in the template -->
+          <app-tour-itinerary-panel
             #itineraryPanel
-            [toggleable]="true"
-            styleClass="custom-panel"
-            [(collapsed)]="event.collapsed"
-          >
-            <ng-template pTemplate="header">
-              <div
-                class="panel-header-content"
-                [attr.data-index]="itinerary.indexOf(event)"
-                (click)="markerClicked($event)"
-              >
-                <div class="day-info">
-                  <h3 class="day-title">{{ event.title }}</h3>
-                </div>
-              </div>
-            </ng-template>
-            <ng-template pTemplate="content">
-              <div class="itinerary-content">
-                <div [innerHTML]="event.description"></div>
-                <img
-                  *ngIf="event.image"
-                  [src]="event.image"
-                  [alt]="event.title"
-                  width="100%"
-                  class="img"
-                />
-              </div>
-
-              <app-hotel-card
-                [hotel]="event.hotel"
-                [bookingScore]="8.9"
-                [bookingLogoSrc]="'booking-logo.png'"
-              ></app-hotel-card>
-
-              <app-activities-carousel
-                [highlights]="event.highlights"
-                (addActivity)="onAddActivity($event)"
-              ></app-activities-carousel>
-            </ng-template>
-          </p-panel>
+            [event]="event"
+            [index]="itinerary.indexOf(event)"
+            (addActivity)="onAddActivity($event)"
+            (panelClick)="handlePanelClick($event)"
+          ></app-tour-itinerary-panel>
         </ng-template>
       </p-timeline>
     </div>

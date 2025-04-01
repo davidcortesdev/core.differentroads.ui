@@ -431,6 +431,16 @@ export class TourItineraryComponent implements OnInit {
     });
   }
 
+  // Add this method to handle panel clicks
+  handlePanelClick(index: number): void {
+    this.itinerary[index].collapsed = !this.itinerary[index].collapsed;
+    if (!this.itinerary[index].collapsed) {
+      setTimeout(() => {
+        this.scrollToPanel(index);
+      }, 100);
+    }
+  }
+
   fetchHotels(): void {
     if (!this.hotels) {
       console.warn('No hotels available to fetch.');

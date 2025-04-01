@@ -18,6 +18,10 @@ export class TourItineraryPanelComponent {
     collapsed: boolean;
     color?: string;
     highlights: ActivityHighlight[]; // Remove the optional (?) to fix type error
+    extraInfo?: {
+      title?: string;
+      content?: string;
+    };
   };
   @Input() index!: number;
   

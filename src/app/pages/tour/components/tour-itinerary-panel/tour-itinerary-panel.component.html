@@ -21,17 +21,23 @@
         *ngIf="event.image"
         [src]="event.image"
         [alt]="event.title"
-        width="100%"
+        loading="lazy"
         class="img"
       />
     </div>
-
+    <div class="extra-info-section" *ngIf="event.extraInfo?.title || event.extraInfo?.content">
+      <h4 class="extra-info-title" *ngIf="event.extraInfo?.title">{{ event.extraInfo?.title }}</h4>
+      <div class="extra-info-content" *ngIf="event.extraInfo?.content" [innerHTML]="event.extraInfo?.content"></div>
+    </div>
+    
     <app-hotel-card
+      *ngIf="event.hotel"
       [hotel]="event.hotel"
     ></app-hotel-card>
 
     <app-activities-carousel
-      [highlights]="event.highlights || []"
+      *ngIf="event.highlights?.length"
+      [highlights]="event.highlights"
       (addActivity)="onAddActivity($event)"
     ></app-activities-carousel>
   </ng-template>

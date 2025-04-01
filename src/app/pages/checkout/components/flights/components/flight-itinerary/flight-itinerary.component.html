@@ -27,7 +27,7 @@
               : "--/--/----"
           }}
         </span>
-        <span class="journey-item-departure-city">{{ journey.segments[0].departureCity }} <strong>({{ journey.departure.iata }})</strong></span>
+        <span class="journey-item-departure-city">{{ journey.segments[0].departureCity }} </span>
       </div>
 
       <div class="journey-item-flight-info space-y-2">
@@ -104,21 +104,21 @@
       </div>
 
       <div class="journey-item-departure pl-2">
-        <span class="journey-item-departure-time">
+        <span class="journey-item-departure-time" style="text-align: right; width: 100%;">
           {{
             isValidDate(journey.arrival.time)
               ? (journey.arrival.time | date : "HH:mm" : "UTC")
               : "--:--"
           }}
         </span>
-        <span class="journey-item-departure-date">
+        <span class="journey-item-departure-date" style="text-align: right; width: 100%;">
           {{
             isValidDate(journey.arrival.date)
               ? (journey.arrival.date | date : "dd-MM-yyyy" : "UTC")
               : "--/--/----"
           }}
         </span>
-        <span class="journey-item-departure-city">{{ journey.segments[journey.segments.length - 1].arrivalCity }} <strong>({{ journey.arrival.iata }})</strong></span>
+        <span class="journey-item-departure-city" style="text-align: right; width: 100%;">{{ journey.segments[journey.segments.length - 1].arrivalCity }} </span>
       </div>
     </div>
   </div>

@@ -53,17 +53,26 @@ export class ScalapayService {
     this.validateEnvironment();
 
     const url = `${this.API_URL}/v2/orders`;
+    console.log('Requesting Scalapay URL:', url);
+    console.log('Request payload:', JSON.stringify(orderData, null, 2));
+    
     return this.http
       .post<ScalapayOrderResponse>(url, orderData, this.getHttpOptions())
       .toPromise()
       .then((response) => {
+        console.log('Successful response:', response);
         if (!response) {
           throw new Error('No response received');
         }
         return response;
       })
       .catch((error) => {
-        console.error('Error processing order:', error);
+        console.error('Error details:', error);
+        console.error('Error status:', error.status);
+        console.error('Error message:', error.message);
+        if (error.error) {
+          console.error('Server response:', error.error);
+        }
         throw error;
       });
   }

@@ -432,7 +432,15 @@ export class TourItineraryComponent implements OnInit {
   }
 
   fetchHotels(): void {
-    this.hotels?.forEach((hotel) => {
+    if (!this.hotels) {
+      console.warn('No hotels available to fetch.');
+      return;
+    }
+    this.hotels.forEach((hotel) => {
+      if (!hotel.hotels) {
+        console.warn(`No hotels found for period hotel: ${hotel}`);
+        return;
+      }
       hotel.hotels.forEach((hotel) => {
         // Check if the hotel already exists in hotelsData
         if (

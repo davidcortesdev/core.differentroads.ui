@@ -8,7 +8,7 @@
     .step {
       display: flex;
       flex-direction: column;
-      gap: .5rem;
+      gap: 0.5rem;
 
       .step-title {
         width: fit-content;
@@ -21,10 +21,10 @@
       }
 
       .step-description {
-        font-size: .875rem;
+        font-size: 0.875rem;
         align-items: center;
         display: flex;
-        gap: .5rem;
+        gap: 0.5rem;
       }
     }
 
@@ -97,7 +97,7 @@
       font-size: 0.875rem;
 
       @media (max-width: 480px) {
-        font-size: .75rem;
+        font-size: 0.75rem;
       }
     }
 
@@ -144,10 +144,10 @@
     }
 
     .dataview-per-person {
-      font-size: .875rem;
+      font-size: 0.875rem;
 
       @media (max-width: 768px) {
-        font-size: .75rem;
+        font-size: 0.75rem;
       }
     }
 
@@ -160,6 +160,18 @@
     .dataview-buy-button {
       flex: 1;
       white-space: nowrap;
+
+      ::ng-deep .added-button {
+        border-color: var(--p-primary-color) !important;
+        color: var(--p-primary-color) !important;
+        background-color: transparent;
+
+        &:hover {
+          border-color: var(--p-primary-color) !important;
+          color: var(--p-primary-color) !important;
+          background-color: transparent;
+        }
+      }
     }
   }
 }

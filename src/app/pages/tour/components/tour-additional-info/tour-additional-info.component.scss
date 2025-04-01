@@ -68,6 +68,17 @@ $white: #fff;
   }
 }
 
+// Add style for disabled card
+.disabled-card {
+  opacity: 0.7;
+  cursor: not-allowed;
+
+  &:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
 .card-content {
   @include flex(flex-start, center);
   gap: 1rem;
@@ -154,9 +165,9 @@ $white: #fff;
     border-radius: 11.82px;
   }
 
-  p-card{
+  p-card {
     padding: 0;
-    p-card-body{
+    p-card-body {
       padding: 0;
     }
   }
@@ -201,5 +212,9 @@ $white: #fff;
     padding: 0;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
     background: $white;
+  }
+
+  .p-tooltip {
+    text-align: center;
   }
 }

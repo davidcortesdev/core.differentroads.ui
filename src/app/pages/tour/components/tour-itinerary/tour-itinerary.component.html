@@ -11,6 +11,14 @@
   (dateChange)="onDateChange($event)"
 ></app-tour-date-selector>
 
+<!-- Updated panel controls with matching padding -->
+<div class="panel-controls-container">
+  <div class="panel-controls">
+    <button pButton type="button" icon="pi pi-plus" class="p-button-rounded p-button-outlined" pTooltip="Expandir todos" tooltipPosition="top" (click)="expandAllPanels()"></button>
+    <button pButton type="button" icon="pi pi-minus" class="p-button-rounded p-button-outlined" pTooltip="Contraer todos" tooltipPosition="top" (click)="collapseAllPanels()"></button>
+  </div>
+</div>
+
 <div class="itinerary-container">
   <div class="timeline-section">
     <div class="card">
@@ -28,97 +36,21 @@
             [attr.data-index]="itinerary.indexOf(event)"
             (click)="markerClicked($event)"
           ></span>
-          <!--  <span
-            class="p-timeline-event-marker clickable-marker"
-            [ngClass]="{ 'active-marker': !event.collapsed }"
-            [style.backgroundColor]="event.color"
-            [attr.data-index]="itinerary.indexOf(event)"
-            (click)="markerClicked($event)"
-          >
-          
-          </span>
-          -->
         </ng-template>
         <ng-template pTemplate="content" let-event>
-          <p-panel
+          <app-tour-itinerary-panel
             #itineraryPanel
-            [toggleable]="true"
-            styleClass="custom-panel"
-            [(collapsed)]="event.collapsed"
-          >
-            <ng-template pTemplate="header">
-              <div
-                class="panel-header-content"
-                [attr.data-index]="itinerary.indexOf(event)"
-                (click)="markerClicked($event)"
-              >
-                <div class="day-info">
-                  <h3 class="day-title">{{ event.title }}</h3>
-                </div>
-                <!--<div class="header-image">
-                  <img
-                    *ngIf="event.image"
-                    [src]="event.image"
-                    [alt]="event.title"
-                    class="day-thumbnail"
-                  />
-                </div>-->
-              </div>
-            </ng-template>
-            <ng-template pTemplate="content">
-              <!-- <h3 class="content-title">{{ event.title }}</h3> -->
-              <div class="itinerary-content">
-                <div [innerHTML]="event.description"></div>
-                <img
-                  *ngIf="event.image"
-                  [src]="event.image"
-                  [alt]="event.title"
-                  width="100%"
-                  class="img"
-                />
-              </div>
-
-              <!-- Replace the hotel card with the new component -->
-              <app-hotel-card
-                [hotel]="event.hotel"
-                [bookingScore]="8.9"
-                [bookingLogoSrc]="'booking-logo.png'"
-              ></app-hotel-card>
-
-              <!-- Replace the activities carousel with the new component -->
-              <app-activities-carousel
-                [highlights]="event.highlights"
-                (addActivity)="onAddActivity($event)"
-              ></app-activities-carousel>
-            </ng-template>
-          </p-panel>
+            [event]="event"
+            [index]="itinerary.indexOf(event)"
+            (addActivity)="onAddActivity($event)"
+            (panelClick)="handlePanelClick($event)"
+          ></app-tour-itinerary-panel>
         </ng-template>
       </p-timeline>
     </div>
   </div>
   <div class="map-section">
-    <!-- Map will be added here later -->
-    <div class="map-placeholder">
-      <p *ngIf="!apiLoaded">Loading map...</p>
-      <div class="map-loaded" *ngIf="apiLoaded">
-        <google-map
-          [center]="center"
-          [zoom]="zoom"
-          [options]="mapOptions"
-          [width]="sizeMapaWidth"
-          [height]="sizeMapaHeight"
-          [mapTypeId]="mapTypeId"
-        >
-          <map-marker
-            #markerElem
-            *ngFor="let marker of markers"
-            [position]="marker.position"
-            [options]="marker.options"
-          >
-          </map-marker>
-          <map-info-window>Hello Google Maps</map-info-window>
-        </google-map>
-      </div>
-    </div>
+    <!-- Usar el nuevo componente de mapa -->
+    <app-tour-map [cities]="cities" [citiesData]="citiesData"></app-tour-map>
   </div>
 </div>

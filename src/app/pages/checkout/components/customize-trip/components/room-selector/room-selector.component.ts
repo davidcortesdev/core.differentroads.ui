@@ -82,10 +82,15 @@ export class RoomSelectorComponent implements OnChanges {
       this.periodsService
         .getReservationModes(this.periodID)
         .subscribe((rooms: ReservationMode[]) => {
-          this.allRoomsAvailability = rooms.map((room) => ({
-            ...room,
-            price: this.pricesService.getPriceById(room.externalID, 'Adultos'),
-          }));
+          this.allRoomsAvailability = rooms
+            .map((room) => ({
+              ...room,
+              price: this.pricesService.getPriceById(
+                room.externalID,
+                'Adultos'
+              ),
+            }))
+            .sort((a, b) => (a.places || 0) - (b.places || 0));
 
           // Get existing traveler room assignments first
           const travelersRoomAssignments = this.initializeRoomsFromTravelers();
@@ -185,7 +190,6 @@ export class RoomSelectorComponent implements OnChanges {
         qty: this.selectedRooms[externalID],
       } as ReservationMode;
     });
-
     const travelerNumbers =
       this.travelersService.travelersNumbersSource.getValue();
     const totalTravelers =
@@ -194,6 +198,7 @@ export class RoomSelectorComponent implements OnChanges {
       (sum, room) => sum + (room.places || 0) * (room.qty || 0),
       0
     );
+
     if (selectedPlaces > totalTravelers) {
       this.errorMsg =
         'Las habitaciones seleccionadas no se corresponden con la cantidad de viajeros.';
@@ -208,5 +213,19 @@ export class RoomSelectorComponent implements OnChanges {
     return this.allRoomsAvailability.some(
       (room) => room.name?.toLowerCase().includes('doble') && room.places === 1
     );
+  }
+
+  get isSharedRoomSelected(): boolean {
+    return Object.keys(this.selectedRooms).some((externalID) => {
+      const room = this.allRoomsAvailability.find(
+        (r) => r.externalID === externalID
+      );
+      return (
+        room &&
+        room.name?.toLowerCase().includes('doble') &&
+        room.places === 1 &&
+        this.selectedRooms[externalID] > 0
+      );
+    });
   }
 }

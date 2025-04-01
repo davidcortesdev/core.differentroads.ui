@@ -40,20 +40,30 @@ interface Journey {
   standalone: false,
 })
 export class FlightSectionComponent implements OnChanges {
-  @Input() flight!: Flight; // Recibe el vuelo seleccionado
+  @Input() flight!: Flight;
   journeys: Journey[] = [];
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['flight'] && this.flight) {
-      this.journeys = [];
-      const outboundJourney = this.computeJourney('outbound');
-      if (outboundJourney) {
-        this.journeys.push(outboundJourney);
-      }
-      const inboundJourney = this.computeJourney('inbound');
-      if (inboundJourney) {
-        this.journeys.push(inboundJourney);
-      }
+      this.processFlightData();
+    }
+  }
+
+  // Track by function for better ngFor performance
+  trackBySegmentId(index: number, segment: FlightSegment): string {
+    return `${segment.departureIata}-${segment.arrivalIata}-${segment.departureTime}`;
+  }
+
+  // Extracted method for better organization
+  private processFlightData(): void {
+    this.journeys = [];
+    const outboundJourney = this.computeJourney('outbound');
+    if (outboundJourney) {
+      this.journeys.push(outboundJourney);
+    }
+    const inboundJourney = this.computeJourney('inbound');
+    if (inboundJourney) {
+      this.journeys.push(inboundJourney);
     }
   }
 

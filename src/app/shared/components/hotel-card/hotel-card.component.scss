@@ -49,6 +49,8 @@ $colors: (
   }
 }
 
+// Keep existing variables and mixins...
+
 // Hotel card
 .hotel-card {
   color: map.get($colors, text);
@@ -59,6 +61,7 @@ $colors: (
   margin-top: map.get($spaces, base);
   max-height: 10rem;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  will-change: transform;
   
   &:hover {
     transform: translateY(-2px);
@@ -86,10 +89,16 @@ $colors: (
   }
 
   &-image {
-    width: 40%;
+    width: 35%;
     object-fit: cover;
     border-radius: map.get($border-radius, md);
-    aspect-ratio: 2/1;
+    //aspect-ratio: 2/1;
+    will-change: transform;
+    transition: transform 0.3s ease;
+    
+    &:hover {
+      transform: scale(1.02);
+    }
 
     @include resp(xl) {
       border-radius: 10px;
@@ -105,8 +114,7 @@ $colors: (
     flex-grow: 1;
     padding: map.get($spaces, sm) 0;
 
-    h4,
-    p {
+    h4, p {
       margin: 0;
     }
 
@@ -131,7 +139,6 @@ $colors: (
       }
     }
     
-    // Hotel link styling moved inside content section
     .hotel-link {
       color: inherit;
       text-decoration: none;
@@ -173,37 +180,11 @@ $colors: (
     
     .logo {
       transition: transform 0.2s ease;
-      
-      &:hover {
-        transform: scale(1.05);
-      }
     }
   }
 }
 
-// Add to the end of your file
-.hotel-link, .booking-link {
-  text-decoration: none;
-  color: inherit;
-  transition: color 0.2s ease;
-  
-  &:hover {
-    color: map.get($colors, primary);
-    text-decoration: underline;
-  }
-}
-
-// Optimize image loading
-.hotel-card-image {
-  will-change: transform;
-  transition: transform 0.3s ease;
-  
-  &:hover {
-    transform: scale(1.02);
-  }
-}
-
-// Add responsive improvements
+// Responsive improvements
 @include resp(sm) {
   .hotel-card {
     max-height: none;

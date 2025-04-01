@@ -4,13 +4,15 @@
     [alt]="hotel?.hotelimage?.[0]?.alt || hotel?.name"
     class="hotel-card-image"
     loading="lazy"
+    width="300"
+    height="150"
   />
   <div class="hotel-card-content">
     <span>
       <p-rating
         [ngModel]="hotel?.category || 0"
         [readonly]="true"
-        [stars]="hotel?.category || 5"
+        [stars]="hotel?.category || 0"
       ></p-rating>
     </span>
     <h4 class="hotel-card-name">
@@ -20,30 +22,31 @@
       <span *ngIf="!hotel?.link">{{ hotel?.name }}</span>
     </h4>
     <p class="hotel-card-location">
-      <i class="pi pi-map-marker"></i> {{ hotel?.address || 'No address available' }}
+      <i class="pi pi-map-marker" aria-hidden="true"></i> {{ hotel?.address || 'No address available' }}
     </p>
   </div>
-  <!-- Only show booking section if bookingRank or bookingLink exists -->
   <div class="hotel-card-bookings-section" *ngIf="hotel?.bookingRank || hotel?.bookingLink">
-    <a *ngIf="hotel?.bookingLink" [href]="hotel?.bookingLink" target="_blank" rel="noopener" class="booking-link">
-      <img
-        [src]="bookingLogoSrc"
-        alt="Booking Logo"
-        class="logo"
-        height="60"
-        width="auto"
-      />
-      <p>{{ hotel?.bookingRank || '-' }}</p>
-    </a>
-    <ng-container *ngIf="!hotel?.bookingLink">
-      <img
-        [src]="bookingLogoSrc"
-        alt="Booking Logo"
-        class="logo"
-        height="60"
-        width="auto"
-      />
-      <p>{{ hotel?.bookingRank || '-' }}</p>
+    <ng-container *ngIf="hotel?.bookingLink; else noBookingLink">
+      <a [href]="hotel?.bookingLink" target="_blank" rel="noopener" class="booking-link">
+        <img
+          [src]="bookingLogoSrc"
+          alt="Booking Logo"
+          class="logo"
+          height="60"
+          width="100"
+        />
+        <p>{{ hotel?.bookingRank || '-' }}</p>
+      </a>
     </ng-container>
+    <ng-template #noBookingLink>
+      <img
+        [src]="bookingLogoSrc"
+        alt="Booking Logo"
+        class="logo"
+        height="60"
+        width="100"
+      />
+      <p>{{ hotel?.bookingRank || '-' }}</p>
+    </ng-template>
   </div>
 </div>

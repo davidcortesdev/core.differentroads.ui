@@ -193,6 +193,9 @@ import { TourInfoAccordionComponent } from './pages/tour/components/tour-info-ac
 import { HotelCardComponent } from './shared/components/hotel-card/hotel-card.component';
 import { ActivitiesCarouselComponent } from './shared/components/activities-carousel/activities-carousel.component';
 import { ActivityCardComponent } from './shared/components/activity-card/activity-card.component';
+import { TourMapComponent } from './shared/components/tour-map/tour-map.component';
+import { TourItineraryPanelComponent } from './pages/tour/components/tour-itinerary-panel/tour-itinerary-panel.component';
+import { AirportSearchComponent } from './features/airports/airport-search/airport-search.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -297,7 +300,9 @@ registerLocaleData(localeEs);
     HotelCardComponent,
     ActivitiesCarouselComponent,
     ActivityCardComponent,
-
+    TourMapComponent,
+    TourItineraryPanelComponent,
+    AirportSearchComponent,
   ],
   imports: [
     // Angular Modules

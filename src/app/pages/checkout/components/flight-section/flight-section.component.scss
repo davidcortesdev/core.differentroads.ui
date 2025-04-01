@@ -86,11 +86,16 @@
 
         &.departure {
           margin-right: 0.5rem;
+          text-align: left;
         }
 
         &.arrival {
           margin-left: 0.5rem;
-          text-align: right;
+          
+          .time, .airport {
+            //text-align: right;
+            justify-content: flex-end;
+          }
         }
 
         .time {

@@ -50,6 +50,7 @@
 
         ::ng-deep .p-steps {
           font-size: 14px;
+          margin-bottom: 1rem !important; // Add more space below the steps
           .p-steps-item {
             &:before {
               border-top: 2px solid var(--background-azul); // Línea azul
@@ -69,6 +70,12 @@
             border-color: var(--background-azul);
             color: var(--background-azul);
           }
+        }
+        
+        // Add space between steps and content
+        > div:nth-child(2) {
+          margin-top: 1.5rem;
+          padding-top: 1rem;
         }
       }
     }

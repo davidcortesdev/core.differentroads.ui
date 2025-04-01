@@ -34,6 +34,7 @@ export class CheckoutComponent implements OnInit {
   currentStep: number = 1;
   orderDetails: Order | null = null;
   availableTravelers: string[] = [];
+  hasValidDocument: boolean = false;
 
   // PrimeNG Steps
   activeIndex: number = 0;
@@ -422,6 +423,18 @@ export class CheckoutComponent implements OnInit {
   /* Summary */
   updateOrderSummary() {
     this.summary = [];
+    const travelersDatainfo = this.travelersService.getTravelers();
+
+    // Verifica si AL MENOS UN viajero tiene DNI o pasaporte válido
+    const hasValidDocument = travelersDatainfo.some((traveler) => {
+      const documents = traveler.travelerData || {};
+
+      return (
+        (documents.dni && documents.dni.trim() !== '') ||
+        (documents.passportID && documents.passportID.trim() !== '')
+      );
+    });
+    this.hasValidDocument = hasValidDocument;
 
     this.travelersService.updateTravelersWithRooms();
 

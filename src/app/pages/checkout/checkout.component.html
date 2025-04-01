@@ -138,16 +138,29 @@
             </div>
             <!-- Points section -->
             <br /><br />
-            <p>Acumulas {{ subtotal * 0.03 | number:'1.0-0' }} puntos con este viaje</p>
-            <p-message
-              severity="secondary"
-              size="small"
-              icon="pi pi-exclamation-circle"
-              >Se genera un abono del 3% del importe del viaje en puntos a
-              descontar en futuras compras para aquellos viajeros de los que se
-              indique el DNI.</p-message
-            >
-
+            <div *ngIf="hasValidDocument; else noPoints">
+              <p>Acumulas {{ subtotal * 0.03 | number:'1.0-0' }} puntos con este viaje</p>
+              <p-message
+                severity="secondary"
+                size="small"
+                icon="pi pi-exclamation-circle"
+              >
+                Se genera un abono del 3% del importe del viaje en puntos a
+                descontar en futuras compras para aquellos viajeros de los que se
+                indique el DNI.
+              </p-message>
+            </div>
+            
+            <ng-template #noPoints>
+              <p>No acumulas ningún punto en este viaje</p>
+              <p-message
+                severity="warn"
+                size="small"
+                icon="pi pi-info-circle"
+              >
+                Para acumular puntos, es necesario indicar el DNI o pasaporte de al menos un viajero.
+              </p-message>
+            </ng-template>
             <!-- Total section -->
             <div class="total-section">
               <div class="total">

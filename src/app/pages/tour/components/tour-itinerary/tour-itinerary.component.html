@@ -11,15 +11,17 @@
   (dateChange)="onDateChange($event)"
 ></app-tour-date-selector>
 
+<!-- Updated panel controls with matching padding -->
+<div class="panel-controls-container">
+  <div class="panel-controls">
+    <button pButton type="button" icon="pi pi-plus" class="p-button-rounded p-button-outlined" pTooltip="Expandir todos" tooltipPosition="top" (click)="expandAllPanels()"></button>
+    <button pButton type="button" icon="pi pi-minus" class="p-button-rounded p-button-outlined" pTooltip="Contraer todos" tooltipPosition="top" (click)="collapseAllPanels()"></button>
+  </div>
+</div>
+
 <div class="itinerary-container">
   <div class="timeline-section">
     <div class="card">
-      <!-- Add expand/collapse all buttons -->
-      <div class="panel-controls">
-        <button pButton type="button" icon="pi pi-plus" class="p-button-rounded p-button-outlined" pTooltip="Expandir todos" tooltipPosition="top" (click)="expandAllPanels()"></button>
-        <button pButton type="button" icon="pi pi-minus" class="p-button-rounded p-button-outlined" pTooltip="Contraer todos" tooltipPosition="top" (click)="collapseAllPanels()"></button>
-      </div>
-      
       <p-timeline
         [value]="itinerary"
         align="left"
@@ -36,7 +38,6 @@
           ></span>
         </ng-template>
         <ng-template pTemplate="content" let-event>
-          <!-- Update these lines in the template -->
           <app-tour-itinerary-panel
             #itineraryPanel
             [event]="event"

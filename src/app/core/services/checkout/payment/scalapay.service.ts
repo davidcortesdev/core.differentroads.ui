@@ -8,7 +8,10 @@ import { environment } from '../../../../../environments/environment';
   providedIn: 'root',
 })
 export class ScalapayService {
-  private readonly API_URL = environment.scalapayApiUrl;
+  //private readonly API_URL = environment.scalapayApiUrl;
+  //private readonly API_KEY = environment.scalapayApiKey;
+
+  private readonly API_URL = '/scalapay-api';
   private readonly API_KEY = environment.scalapayApiKey;
 
   constructor(private http: HttpClient) {}

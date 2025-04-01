@@ -26,7 +26,7 @@
             {{ segment.departureTime }}
           </div>
           <div class="airport">
-            {{ segment.departureCity }} ({{ segment.departureIata }})
+            {{ segment.departureCity }} ({{ segment.departureIata | uppercase }})
           </div>
         </div>
         <div class="segment-connector">
@@ -39,7 +39,7 @@
             <i class="pi pi-arrow-down flight-icon arrival" aria-hidden="true"></i>
           </div>
           <div class="airport">
-            {{ segment.arrivalCity }} ({{ segment.arrivalIata }})
+            {{ segment.arrivalCity }} ({{ segment.arrivalIata | uppercase }})
           </div>
         </div>
       </div>
@@ -70,7 +70,7 @@
             {{ segment.departureTime }}
           </div>
           <div class="airport">
-            {{ segment.departureCity }} ({{ segment.departureIata }})
+            {{ segment.departureCity }} ({{ segment.departureIata | uppercase }})
           </div>
         </div>
         <div class="segment-connector">
@@ -83,7 +83,7 @@
             <i class="pi pi-arrow-down flight-icon arrival" aria-hidden="true"></i>
           </div>
           <div class="airport">
-            {{ segment.arrivalCity }} ({{ segment.arrivalIata }})
+            {{ segment.arrivalCity }} ({{ segment.arrivalIata | uppercase }})
           </div>
         </div>
       </div>

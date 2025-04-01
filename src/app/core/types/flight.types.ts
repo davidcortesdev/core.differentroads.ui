@@ -121,7 +121,7 @@ export interface FlightOrderResponse {
  * Interface for temporary stored flight offers
  */
 export interface ITempFlightOffer {
-  id: string;
+  _id: string;
   offerData: FlightOffer;
   pricingData?: FlightOffer;
   bookingData?: any;

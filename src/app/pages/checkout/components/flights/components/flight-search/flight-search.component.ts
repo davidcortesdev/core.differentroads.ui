@@ -155,7 +155,7 @@ export class FlightSearchComponent implements OnInit {
       destinationLocationCode: destinationCode,
       departureDate: departureDate,
       adults: formValue.adults || 1,
-      max: 5,
+      max: 10,
     };
 
     // Si es ida y vuelta, añadir la fecha de regreso
@@ -295,14 +295,14 @@ export class FlightSearchComponent implements OnInit {
 
       // Transformamos los precios
       const priceDataArray = offerData.travelerPricings.map((tp: any) => ({
-        id: offerData.id + '-' + tp.travelerId,
+        id: offer._id,
         value: parseFloat(tp.price.total),
         value_with_campaign: parseFloat(tp.price.total),
         campaign: null,
         age_group_name: tp.travelerType === 'ADULT' ? 'Adultos' : 'Niños',
-        category_name: 'Vuelo',
-        period_product: 'FLIGHT',
-        _id: offerData.id + '-' + tp.travelerId,
+        category_name: 'amadeus',
+        period_product: 'flight',
+        _id: offer._id,
       }));
 
       // Creamos las fechas formateadas para los vuelos
@@ -488,17 +488,13 @@ export class FlightSearchComponent implements OnInit {
 
       // Construir el objeto Flight
       const flight: Flight = {
-        id: offerData.id,
+        id: offer._id,
         externalID: offerData.id,
         name: inboundItinerary
-          ? `${this.getAirlineName(offerData.validatingAirlineCodes[0])} - ${
-              outbound.segments[0]?.departure?.iataCode
-            } a ${
+          ? `Vuelo ${outbound.segments[0]?.departure?.iataCode} - ${
               outbound.segments[outbound.segments.length - 1]?.arrival?.iataCode
             }`
-          : `${this.getAirlineName(offerData.validatingAirlineCodes[0])} - ${
-              outbound.segments[0]?.departure?.iataCode
-            } a ${
+          : `Vuelo ${outbound.segments[0]?.departure?.iataCode} - ${
               outbound.segments[outbound.segments.length - 1]?.arrival?.iataCode
             }`,
         outbound: {
@@ -681,7 +677,21 @@ export class FlightSearchComponent implements OnInit {
 
   selectFlight(flight: Flight): void {
     this.selectedFlightId = flight.externalID;
-    this.filteredFlightsChange.emit([flight]);
+
+    // Add a flag to indicate this is an Amadeus flight
+    const flightWithSource = {
+      ...flight,
+      source: 'amadeus', // Add a source identifier
+      // Ensure required fields are present for the order
+      id: flight.id || flight.externalID,
+      externalID: flight.externalID,
+      name: flight.name || `$ ${flight.outbound.segments[0]?.flightNumber}`,
+    };
+
+    console.log('Flight selected in search component:', flightWithSource);
+
+    // Emit only the selected flight for the parent component to trigger auto-selection
+    this.filteredFlightsChange.emit([flightWithSource]);
   }
 
   isFlightSelected(flight: Flight): boolean {

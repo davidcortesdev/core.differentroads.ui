@@ -524,6 +524,9 @@ export class CheckoutComponent implements OnInit {
       })
     );
 
+    // Get all flights for the order from the FlightsService
+    const orderFlights = this.flightsService.getOrderFlights();
+
     if (
       this.selectedFlight &&
       this.selectedFlight.externalID! !== 'undefined'
@@ -547,7 +550,10 @@ export class CheckoutComponent implements OnInit {
         });
       }
 
-      tempOrderData['flights'] = [this.selectedFlight];
+      // Use all flights from the service instead of just the selected one
+      tempOrderData['flights'] =
+        orderFlights.length > 0 ? orderFlights : [this.selectedFlight];
+      console.log('Setting flights in order:', tempOrderData['flights']);
     }
 
     if (this.selectedInsurances.length === 0) {

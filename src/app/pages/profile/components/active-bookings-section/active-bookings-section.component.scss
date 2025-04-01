@@ -81,8 +81,7 @@ $a: var(--background-azul);
         .info-content {
             display: grid;
             gap: 0.25rem;
-            margin-right: 80px;
-            .info-row {
+            margin-right: 80px;            .info-row {
                 @include f(row, space-between, center);
                 font-size: 12px;
                 .label {

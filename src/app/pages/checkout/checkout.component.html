@@ -138,7 +138,7 @@
             </div>
             <!-- Points section -->
             <br /><br />
-            <p>Acumulas {{ points }} puntos con este viaje</p>
+            <p>Acumulas {{ subtotal * 0.03 | number:'1.0-0' }} puntos con este viaje</p>
             <p-message
               severity="secondary"
               size="small"
@@ -153,6 +153,7 @@
               <div class="total">
                 <span>TOTAL</span>
                 <span class="price">{{ total | currencyFormat : "EUR" }}</span>
+                <span class="price">{{ subtotal | currencyFormat : "EUR" }}</span>
               </div>
             </div>
             <!-- Flights info if selected -->

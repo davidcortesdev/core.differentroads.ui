@@ -1,18 +1,15 @@
+<!-- Título de salida fuera del flight-itinerary -->
+<div class="flight-departure-title" *ngIf="journeys && journeys.length > 0">
+  <h3>Salida {{ journeys[0].segments[0].departureCity }} ({{ journeys[0].departure.iata }})</h3>
+</div>
+
 <div class="flight-itinerary">
   <div class="flight-itinerary-journey">
     <!-- Iteramos sobre cada journey (outbound e inbound) -->
     <div class="journey-item" *ngFor="let journey of journeys; let i = index">
       <span class="journey-item-departure-text">
-        <span class="direction-text">{{ i === 0 ? "IDA" : "VUELTA" }}</span>
-        <span class="route-text">
-          <strong>
-            {{ journey.segments[0].departureCity }} ({{
-              journey.departure.iata
-            }}) -
-            {{ journey.segments[journey.segments.length - 1].arrivalCity }}
-            ({{ journey.arrival.iata }})
-          </strong>
-        </span>
+        <span class="direction-text small">{{ i === 0 ? "IDA" : "VUELTA" }}</span>
+        <span class="route-text-empty"></span>
       </span>
 
       <div class="journey-item-departure pr-2">
@@ -30,11 +27,12 @@
               : "--/--/----"
           }}
         </span>
+        <span class="journey-item-departure-city">{{ journey.segments[0].departureCity }} <strong>({{ journey.departure.iata }})</strong></span>
       </div>
 
       <div class="journey-item-flight-info space-y-2">
         <p-overlayPanel #op>
-          <p>Detalle del vuelo</p>
+          <p style="color: var(--background-azul); font-weight: 500; margin-bottom: 1rem;">Detalle del vuelo</p>
           <p-timeline [value]="journey.timelineData" align="left">
             <ng-template #opposite let-item>
               <i
@@ -120,6 +118,7 @@
               : "--/--/----"
           }}
         </span>
+        <span class="journey-item-departure-city">{{ journey.segments[journey.segments.length - 1].arrivalCity }} <strong>({{ journey.arrival.iata }})</strong></span>
       </div>
     </div>
   </div>
@@ -133,11 +132,12 @@
       <span class="flight-itinerary-price-wrapper-text">Por persona</span>
     </div>
     <p-button
-      type="button"
-      class="button-rounded is-primary px-6 py-3"
-      (click)="selectFlight(flight)"
-    >
-      {{ isFlightSelected(flight) ? "Seleccionado" : "Seleccionar" }}
-    </p-button>
+  type="button"
+  class="button-rounded is-primary px-6 py-3"
+  [styleClass]="isFlightSelected(flight) ? 'selected-flight-button' : ''"
+  (click)="selectFlight(flight)"
+>
+  {{ isFlightSelected(flight) ? "Seleccionado" : "Seleccionar" }}
+</p-button>
   </div>
 </div>

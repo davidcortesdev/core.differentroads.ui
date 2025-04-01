@@ -61,6 +61,7 @@
                     [label]="isActivityAdded(item) ? 'Añadido' : 'Añadir'"
                     [disabled]="item.availability === 0"
                     [rounded]="true"
+                    [styleClass]="isActivityAdded(item) ? 'added-button' : ''"
                     (click)="toggleActivity(item)"
                   />
                 </div>

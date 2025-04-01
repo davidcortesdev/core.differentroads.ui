@@ -9,8 +9,11 @@
   <p-dataview #dv [value]="insurances">
     <ng-template #list let-items>
       <div class="dataview-grid">
+        <!-- Basic Insurance Card - Now clickable -->
         <div class="dataview-item">
-          <div class="dataview-card dataview-card-border">
+          <div class="dataview-card dataview-card-border"
+               [class.dataview-card-selected]="basicInsuranceSelected"
+               (click)="toggleInsurance(null)">
             <div class="dataview-selector">
               <p-radioButton
                 inputId="basicInsurance"
@@ -18,7 +21,6 @@
                 [value]="null"
                 [(ngModel)]="selectedInsurance"
                 [checked]="basicInsuranceSelected"
-                (onClick)="toggleInsurance(null)"
               ></p-radioButton>
             </div>
             <div class="dataview-content">
@@ -27,7 +29,6 @@
                   <div class="dataview-name">Seguro Básico</div>
                 </div>
               </div>
-
               <div class="dataview-actions">
                 <div class="dataview-price">
                   <span class="dataview-price-value">incluido </span>
@@ -36,18 +37,19 @@
             </div>
           </div>
         </div>
+        <!-- Other Insurance Cards - Now clickable -->
         <div class="dataview-item" *ngFor="let item of items">
-          <div class="dataview-card dataview-card-border">
+          <div class="dataview-card dataview-card-border"
+               [class.dataview-card-selected]="selectedInsurance === item"
+               (click)="toggleInsurance(item)">
             <div class="dataview-selector">
               <p-radioButton
                 [inputId]="item.id"
                 name="insurance"
                 [value]="item"
                 [(ngModel)]="selectedInsurance"
-                (onClick)="toggleInsurance(item)"
               ></p-radioButton>
             </div>
-
             <div class="dataview-content">
               <div class="dataview-info">
                 <div>
@@ -61,7 +63,6 @@
                   ></div>
                 </div>
               </div>
-
               <div class="dataview-actions">
                 <div class="dataview-price">
                   <span class="dataview-price-value">

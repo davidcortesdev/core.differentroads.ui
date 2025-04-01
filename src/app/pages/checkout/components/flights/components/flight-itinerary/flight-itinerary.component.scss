@@ -1,72 +1,87 @@
+// Variables
+$background-azul: var(--background-azul);
+$primary-color: var(--primary-color-500);
+$border-color: $background-azul;
+
+// Breakpoints
+$mobile: 425px;
+$small-tablet: 576px;
+$tablet: 768px;
+$desktop: 992px;
+
+// Flight departure title outside component
+.flight-departure-title {
+  margin-bottom: 1rem;
+  
+  h3 {
+    color: $background-azul;
+    font-weight: 500;
+    font-size: 1.25rem;
+  }
+}
+
+// Main component
 .flight-itinerary {
-  color: var(--background-azul);
+  color: $background-azul;
   display: flex;
   border-radius: 1rem;
   background-color: #fff;
   width: 100%;
 
-  /* Mantener el diseño en fila incluso en pantallas pequeñas */
-  @media (max-width: 425px) {
+  @media (max-width: $mobile) {
     flex-direction: row;
     flex-wrap: wrap;
   }
 
-  .header {
-    border: 1px solid red;
-  }
-
+  // Journey section (left side)
   &-journey {
     background-color: transparent;
-    border-right: 0.0625rem solid var(--background-azul);
+    border-right: 0.0625rem solid $border-color;
     width: 75%;
 
-    /* Mantener el borde derecho pero ajustar el ancho al 100% */
-    @media (max-width: 425px) {
+    @media (max-width: $mobile) {
       width: 100%;
       border-right: none;
-      border-bottom: 0.0625rem solid var(--background-azul);
+      border-bottom: 0.0625rem solid $border-color;
     }
 
-    /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
-    @media (max-width: 992px) and (min-width: 426px) {
+    @media (max-width: $desktop) and (min-width: $mobile + 1px) {
       width: 70%;
       padding: 0.5rem;
     }
 
-    /* Pantallas pequeñas pero no móviles (entre 426px y 576px) */
-    @media (max-width: 576px) and (min-width: 426px) {
+    @media (max-width: $small-tablet) and (min-width: $mobile + 1px) {
       width: 65%;
     }
 
+    // Journey item (each flight segment)
     .journey-item {
       align-items: center;
       display: flex;
-      border-bottom: 0.0625rem solid var(--background-azul);
+      border-bottom: 0.0625rem solid $border-color;
       justify-content: space-between;
       padding: 1rem;
       position: relative;
       z-index: 1;
       flex-wrap: wrap;
 
-      /* Mantener el diseño en fila incluso en pantallas pequeñas */
-      @media (max-width: 425px) {
+      @media (max-width: $mobile) {
         flex-direction: row;
         padding: 0.5rem;
         gap: 0.25rem;
       }
 
-      /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
-      @media (max-width: 992px) and (min-width: 426px) {
+      @media (max-width: $desktop) and (min-width: $mobile + 1px) {
         padding: 0.75rem 0.5rem;
       }
 
-      /* Pantallas pequeñas pero no móviles */
-      @media (max-width: 576px) and (min-width: 426px) {
+      @media (max-width: $small-tablet) and (min-width: $mobile + 1px) {
         padding: 0.5rem 0.25rem;
       }
 
+      // Horizontal line through the middle
       &::after {
-        background-color: var(--background-azul);
+        background-color: $border-color;
         bottom: 0;
         content: "";
         height: 0.0625rem;
@@ -78,7 +93,7 @@
         width: 90%;
         z-index: -1;
 
-        @media (max-width: 425px) {
+        @media (max-width: $mobile) {
           width: 80%;
         }
       }
@@ -87,60 +102,57 @@
         border-bottom: 0;
       }
 
+      // Direction text (IDA/VUELTA)
+      &-departure-text {
+        width: 100%;
+        font-size: 14px;
+        
+        .direction-text {
+          color: red;
+          font-weight: 600;
+          margin-right: 5px;
+          
+          &.small {
+            font-size: 0.8rem;
+          }
+        }
+
+        .route-text {
+          color: $background-azul;
+          font-weight: 400;
+        }
+        
+        .route-text-empty {
+          visibility: hidden;
+          height: 1rem;
+        }
+      }
+
+      // Departure and arrival blocks
       &-departure {
         background-color: white;
         display: flex;
         flex-direction: column;
         font-size: 0.75rem;
 
-        @media (max-width: 425px) {
+        @media (max-width: $mobile) {
           padding: 0 !important;
           font-size: 0.65rem;
         }
 
-        /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
-        @media (max-width: 992px) and (min-width: 426px) {
+        @media (max-width: $desktop) and (min-width: $mobile + 1px) {
           font-size: 0.7rem;
         }
 
-        /* Pantallas pequeñas pero no móviles */
-        @media (max-width: 576px) and (min-width: 426px) {
+        @media (max-width: $small-tablet) and (min-width: $mobile + 1px) {
           font-size: 0.65rem;
-        }
-
-        &-text {
-          width: 100%;
-          font-size: 14px;
-          .direction-text {
-            color: red;
-            font-weight: 600;
-            margin-right: 5px;
-          }
-
-          .route-text {
-            color: var(--background-azul);
-            font-weight: 400;
-          }
-
-          &-invisible {
-            visibility: hidden;
-
-            @media (max-width: 425px) {
-              visibility: hidden;
-              height: 1rem;
-            }
-          }
         }
 
         &:first-child {
           padding-right: 0.5rem;
 
-          @media (max-width: 425px) {
-            padding-right: 0.25rem;
-          }
-
-          /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
-          @media (max-width: 992px) and (min-width: 426px) {
+          @media (max-width: $desktop) and (min-width: $mobile + 1px),
+                 (max-width: $mobile) {
             padding-right: 0.25rem;
           }
         }
@@ -148,41 +160,34 @@
         &:last-child {
           padding-left: 0.5rem;
 
-          @media (max-width: 425px) {
-            padding-left: 0.25rem;
-          }
-
-          /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
-          @media (max-width: 992px) and (min-width: 426px) {
+          @media (max-width: $desktop) and (min-width: $mobile + 1px),
+                 (max-width: $mobile) {
             padding-left: 0.25rem;
           }
         }
 
-        &-title {
-          color: var(--background-azul);
+        &-city {
           font-weight: 400;
-        }
-
-        &-country {
-          font-weight: 600;
-          margin-left: 0.25rem;
+          font-size: 0.8rem;
+          
+          strong {
+            font-weight: 600;
+          }
         }
 
         &-time {
           font-size: 1.5rem;
           font-weight: 600;
 
-          @media (max-width: 425px) {
+          @media (max-width: $mobile) {
             font-size: 1.25rem;
           }
 
-          /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
-          @media (max-width: 992px) and (min-width: 426px) {
+          @media (max-width: $desktop) and (min-width: $mobile + 1px) {
             font-size: 1.5rem;
           }
 
-          /* Pantallas pequeñas pero no móviles */
-          @media (max-width: 576px) and (min-width: 426px) {
+          @media (max-width: $small-tablet) and (min-width: $mobile + 1px) {
             font-size: 1.25rem;
           }
         }
@@ -191,95 +196,89 @@
           margin: 0 auto;
           font-size: 0.75rem;
 
-          @media (max-width: 425px) {
+          @media (max-width: $mobile) {
             font-size: 0.6rem;
           }
 
-          /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
-          @media (max-width: 992px) and (min-width: 426px) {
+          @media (max-width: $desktop) and (min-width: $mobile + 1px) {
             font-size: 0.7rem;
           }
 
-          /* Pantallas pequeñas pero no móviles */
-          @media (max-width: 576px) and (min-width: 426px) {
+          @media (max-width: $small-tablet) and (min-width: $mobile + 1px) {
             font-size: 0.65rem;
           }
         }
       }
 
+      // Flight info (middle section)
       &-flight-info {
         background-color: white;
         align-items: center;
         display: flex;
         flex-direction: column;
         padding: 0 0.5rem;
-
         padding-bottom: 1.55rem;
 
-        @media (max-width: 425px) {
+        @media (max-width: $desktop) and (min-width: $mobile + 1px),
+               (max-width: $mobile) {
           padding: 0 0.25rem;
+        }
+        
+        @media (max-width: $mobile) {
           font-size: 0.65rem;
         }
 
-        /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
-        @media (max-width: 992px) and (min-width: 426px) {
-          padding: 0 0.25rem;
-        }
-
+        // Segments text (stops)
         &-segments {
           padding: 0.25rem 0;
           font-size: 0.8rem;
 
-          @media (max-width: 425px) {
+          @media (max-width: $mobile) {
             padding: 0.1rem 0;
             font-size: 0.65rem;
           }
 
-          /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
-          @media (max-width: 992px) and (min-width: 426px) {
+          @media (max-width: $desktop) and (min-width: $mobile + 1px) {
             font-size: 0.7rem;
           }
 
-          /* Pantallas pequeñas pero no móviles */
-          @media (max-width: 576px) and (min-width: 426px) {
+          @media (max-width: $small-tablet) and (min-width: $mobile + 1px) {
             font-size: 0.65rem;
           }
         }
 
+        // Airline name
         &-aeroline {
-          color: var(--background-azul);
+          color: $background-azul;
           font-size: 1rem;
           font-weight: 500;
 
-          @media (max-width: 425px) {
+          @media (max-width: $mobile) {
             font-size: 0.85rem;
           }
 
-          /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
-          @media (max-width: 992px) and (min-width: 426px) {
+          @media (max-width: $desktop) and (min-width: $mobile + 1px) {
             font-size: 1rem;
           }
 
-          /* Pantallas pequeñas pero no móviles */
-          @media (max-width: 576px) and (min-width: 426px) {
+          @media (max-width: $small-tablet) and (min-width: $mobile + 1px) {
             font-size: 0.85rem;
           }
         }
 
+        // Flight duration
         &-flight-hours {
           font-size: 0.75rem;
 
-          @media (max-width: 425px) {
+          @media (max-width: $mobile) {
             font-size: 0.65rem;
           }
 
-          /* Pantallas medianas mantienen el layout pero con elementos más pequeños */
-          @media (max-width: 992px) and (min-width: 426px) {
+          @media (max-width: $desktop) and (min-width: $mobile + 1px) {
             font-size: 0.7rem;
           }
 
-          /* Pantallas pequeñas pero no móviles */
-          @media (max-width: 576px) and (min-width: 426px) {
+          @media (max-width: $small-tablet) and (min-width: $mobile + 1px) {
             font-size: 0.65rem;
           }
         }
@@ -287,6 +286,7 @@
     }
   }
 
+  // Price section (right side)
   &-price {
     align-items: center;
     background-color: transparent;
@@ -297,22 +297,19 @@
     width: 25%;
     gap: 0.5rem;
 
-    /* Cambio a layout horizontal en pantallas pequeñas pero no móviles */
-    @media (max-width: 576px) and (min-width: 426px) {
+    @media (max-width: $small-tablet) and (min-width: $mobile + 1px) {
       width: 35%;
       padding: 0.5rem;
       gap: 0.25rem;
     }
 
-    /* Cambio a layout para pantallas medianas */
-    @media (max-width: 768px) and (min-width: 577px) {
+    @media (max-width: $tablet) and (min-width: $small-tablet + 1px) {
       width: 30%;
       padding: 0.75rem;
       gap: 0.25rem;
     }
 
-    /* Solo el bloque de precios se muestra en columna en pantallas muy pequeñas */
-    @media (max-width: 425px) {
+    @media (max-width: $mobile) {
       width: 100%;
       flex-direction: column;
       gap: 0.5rem;
@@ -326,17 +323,15 @@
       text-align: center;
       font-size: 0.875rem;
 
-      /* Cambio a layout horizontal solo en pantallas medianas y más pequeñas */
-      @media (max-width: 768px) and (min-width: 426px) {
+      @media (max-width: $tablet) and (min-width: $mobile + 1px) {
         font-size: 0.8rem;
       }
 
-      /* Pantallas pequeñas pero no móviles */
-      @media (max-width: 576px) and (min-width: 426px) {
+      @media (max-width: $small-tablet) and (min-width: $mobile + 1px) {
         font-size: 0.75rem;
       }
 
-      @media (max-width: 425px) {
+      @media (max-width: $mobile) {
         align-items: center;
         text-align: center;
         width: 100%;
@@ -348,35 +343,33 @@
         font-weight: 600;
         line-height: 1;
 
-        /* Tamaño reducido en pantallas medianas */
-        @media (max-width: 992px) and (min-width: 577px) {
+        @media (max-width: $desktop) and (min-width: $small-tablet + 1px) {
           font-size: 1.5rem;
         }
 
-        /* Pantallas pequeñas pero no móviles */
-        @media (max-width: 576px) and (min-width: 426px) {
+        @media (max-width: $small-tablet) and (min-width: $mobile + 1px) {
           font-size: 1.25rem;
         }
 
-        @media (max-width: 425px) {
+        @media (max-width: $mobile) {
           font-size: 1.3rem;
         }
       }
     }
 
+    // Button styles
     ::ng-deep .p-button {
-      @media (max-width: 992px) and (min-width: 577px) {
+      @media (max-width: $desktop) and (min-width: $small-tablet + 1px) {
         font-size: 0.8rem;
         padding: 0.4rem 0.8rem !important;
       }
 
-      /* Pantallas pequeñas pero no móviles */
-      @media (max-width: 576px) and (min-width: 426px) {
+      @media (max-width: $small-tablet) and (min-width: $mobile + 1px) {
         font-size: 0.75rem;
         padding: 0.3rem 0.6rem !important;
       }
 
-      @media (max-width: 425px) {
+      @media (max-width: $mobile) {
         width: 100%;
         font-size: 0.7rem;
         padding: 0.3rem 0.6rem !important;
@@ -385,10 +378,17 @@
   }
 }
 
-/* Overlay panel responsive adjustments */
+// Selected flight button style
+::ng-deep .selected-flight-button {
+  background-color: var(--primary-color-300) !important;
+  border-color: var(--primary-color-300) !important;
+}
+
+// Overlay panel styles
 ::ng-deep .p-overlaypanel {
-  width: 10rem !important; /* Default width for popover */
-  @media (max-width: 425px) {
+  width: 10rem !important;
+  
+  @media (max-width: $mobile) {
     width: 90vw !important;
     max-width: 320px !important;
 
@@ -398,7 +398,7 @@
     }
   }
 
-  @media (max-width: 992px) and (min-width: 426px) {
+  @media (max-width: $desktop) and (min-width: $mobile + 1px) {
     max-width: 400px !important;
 
     .p-timeline {
@@ -408,58 +408,35 @@
   }
 }
 
-/* Estilos globales para el p-timeline dentro del p-overlayPanel */
-
-::ng-deep .p-popover-content .p-timeline .p-timeline-event-marker {
-  background-color: var(--primary-color-500);
-  border-color: var(--primary-color-500);
-  height: 12px;
-  width: 12px;
-  margin-top: 4px;
-  margin-right: 3px;
-}
-
-::ng-deep .p-popover-content .p-timeline .p-timeline-event-connector {
-  border-left: 2px dashed var(--background-azul);
-  background-color: transparent;
-}
-
-::ng-deep .p-popover-content .p-timeline .p-timeline-event-content {
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  min-width: 10rem;
-}
-
-::ng-deep .p-popover-content .p-timeline .p-timeline-event-opposite {
-  font-size: 0.875rem;
-  color: var(--background-azul);
-}
-
-::ng-deep .p-popover-content .p-timeline .pi-send {
-  color: var(--background-azul);
-}
-::ng-deep .p-timeline-event-opposite {
-  flex: 0.1;
-}
-/* Overlay panel responsive adjustments */
-::ng-deep .p-overlaypanel {
-  width: 10rem !important; /* Default width for popover */
-  @media (max-width: 425px) {
-    width: 90vw !important;
-    max-width: 320px !important;
-
-    .p-timeline {
-      padding: 0.5rem !important;
-      font-size: 0.65rem;
-    }
+// Timeline styles
+::ng-deep .p-popover-content .p-timeline {
+  .p-timeline-event-marker {
+    background-color: $primary-color;
+    border-color: $primary-color;
+    height: 12px;
+    width: 12px;
+    margin-top: 4px;
+    margin-right: 3px;
   }
 
-  @media (max-width: 992px) and (min-width: 426px) {
-    max-width: 400px !important;
+  .p-timeline-event-connector {
+    border-left: 2px dashed $background-azul;
+    background-color: transparent;
+  }
 
-    .p-timeline {
-      padding: 0.5rem !important;
-      font-size: 0.8rem;
-    }
+  .p-timeline-event-content {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    min-width: 10rem;
+  }
+
+  .p-timeline-event-opposite {
+    font-size: 0.875rem;
+    color: $background-azul;
+    flex: 0.1;
+  }
+
+  .pi-send {
+    color: $background-azul;
   }
 }

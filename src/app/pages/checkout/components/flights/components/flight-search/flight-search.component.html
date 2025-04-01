@@ -1,5 +1,5 @@
 <p-panel>
-  <ng-template pTemplate="header">
+  <ng-template #header>
     <div class="flt-hdr">
       <h2>Mejor precio, reserva simple</h2>
       <p>Fiordos Noruegos | 2 adultos - 1 niño</p>
@@ -107,7 +107,7 @@
       <div class="btn-search">
         <p-button
           label="Buscar"
-          styleClass="p-button-danger"
+          styleClass=""
           (click)="buscar()"
         ></p-button>
       </div>
@@ -121,7 +121,7 @@
   *ngIf="!isLoading && searchPerformed && filteredOffers.length > 0"
 >
   <p-panel styleClass="results-panel">
-    <ng-template pTemplate="header">
+    <ng-template #header>
       <div class="res-header">
         <h3>Resultados de búsqueda</h3>
         <div class="count">
@@ -153,15 +153,14 @@
 <!-- Estado inicial - sin búsqueda -->
 <div class="no-search" *ngIf="!isLoading && !searchPerformed">
   <p-panel>
-    <div class="msg">
-      <i class="pi pi-search"></i>
-      <h3>Busca tu vuelo</h3>
-      <p>
-        Selecciona tu ciudad de origen y haz clic en "Buscar" para encontrar
-        vuelos disponibles.
-      </p>
-    </div>
-  </p-panel>
+  <div class="msg" style="text-align: center">
+    <h3><i class="pi pi-search"></i> Busca tu vuelo</h3>
+    <p>
+      Selecciona tu ciudad de origen y haz clic en "Buscar" para encontrar
+      vuelos disponibles.
+    </p>
+  </div>
+</p-panel>
 </div>
 
 <!-- Estado de error o sin resultados -->

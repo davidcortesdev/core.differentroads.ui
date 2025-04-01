@@ -1,5 +1,5 @@
 <div class="flights-container">
-  <P class="title">Vuelos</P>
+  <p class="title">Vuelos</p>
   <div class="flights-content">
     <!-- IDA -->
     <div class="flight-direction" *ngIf="journeys[0]">
@@ -11,34 +11,35 @@
         </div>
       </div>
       <div class="stops-info">
-        <i class="pi pi-info-circle"></i>
+        <i class="pi pi-info-circle" aria-hidden="true"></i>
         <span>{{ journeys[0].stopsText }}</span>
+        <!-- Removed duration-info span -->
       </div>
-      <!-- Primer segmento IDA -->
+      <!-- Segmentos IDA -->
       <div
         class="flight-segment"
         *ngFor="let segment of journeys[0].segments; let i = index"
       >
         <div class="segment-time departure">
           <div class="time">
-            <i class="pi pi-arrow-up flight-icon departure"></i>
+            <i class="pi pi-arrow-up flight-icon departure" aria-hidden="true"></i>
             {{ segment.departureTime }}
           </div>
           <div class="airport">
-            {{ segment.departureCity }} ({{ segment.departureIata }})
+            {{ segment.departureCity }} ({{ segment.departureIata | uppercase }})
           </div>
         </div>
         <div class="segment-connector">
-          <i class="pi pi-send flight-path-icon"></i>
+          <i class="pi pi-send flight-path-icon" aria-hidden="true"></i>
           <span class="name"> {{ segment.airline.name }}</span>
         </div>
         <div class="segment-time arrival">
           <div class="time">
             {{ segment.arrivalTime }}
-            <i class="pi pi-arrow-down flight-icon arrival"></i>
+            <i class="pi pi-arrow-down flight-icon arrival" aria-hidden="true"></i>
           </div>
           <div class="airport">
-            {{ segment.arrivalCity }} ({{ segment.arrivalIata }})
+            {{ segment.arrivalCity }} ({{ segment.arrivalIata | uppercase }})
           </div>
         </div>
       </div>
@@ -54,34 +55,35 @@
         </div>
       </div>
       <div class="stops-info">
-        <i class="pi pi-info-circle"></i>
+        <i class="pi pi-info-circle" aria-hidden="true"></i>
         <span>{{ journeys[1].stopsText }}</span>
+        <!-- Removed duration-info span -->
       </div>
-      <!-- Primer segmento VUELTA -->
+      <!-- Segmentos VUELTA -->
       <div
         class="flight-segment"
         *ngFor="let segment of journeys[1].segments; let i = index"
       >
         <div class="segment-time departure">
           <div class="time">
-            <i class="pi pi-arrow-up flight-icon departure"></i>
+            <i class="pi pi-arrow-up flight-icon departure" aria-hidden="true"></i>
             {{ segment.departureTime }}
           </div>
           <div class="airport">
-            {{ segment.departureCity }} ({{ segment.departureIata }})
+            {{ segment.departureCity }} ({{ segment.departureIata | uppercase }})
           </div>
         </div>
         <div class="segment-connector">
-          <i class="pi pi-send flight-path-icon"></i>
-          <span> {{ segment.airline.name }}</span>
+          <i class="pi pi-send flight-path-icon" aria-hidden="true"></i>
+          <span class="name"> {{ segment.airline.name }}</span>
         </div>
         <div class="segment-time arrival">
           <div class="time">
             {{ segment.arrivalTime }}
-            <i class="pi pi-arrow-down flight-icon arrival"></i>
+            <i class="pi pi-arrow-down flight-icon arrival" aria-hidden="true"></i>
           </div>
           <div class="airport">
-            {{ segment.arrivalCity }} ({{ segment.arrivalIata }})
+            {{ segment.arrivalCity }} ({{ segment.arrivalIata | uppercase }})
           </div>
         </div>
       </div>

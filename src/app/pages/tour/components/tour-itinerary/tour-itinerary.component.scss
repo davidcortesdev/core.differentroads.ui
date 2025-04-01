@@ -545,3 +545,50 @@ $colors: (
 .active-marker {
   // This is already defined above - consider removing this duplicate
 }
+
+// Add this after the timeline-section styles
+// Panel controls styling
+// Panel controls container - add this to match itinerary-container padding
+.panel-controls-container {
+  padding: 0 map.get($spaces, lg);
+  
+  @include resp(xl) {
+    padding: 0 map.get($spaces, base);
+  }
+  
+  @include resp(sm) {
+    padding: 0 map.get($spaces, base);
+  }
+}
+
+// Update the panel-controls class to remove padding
+.panel-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  
+  @include resp(md) {
+    justify-content: center;
+  }
+  
+  .p-button-outlined {
+    color: map.get($colors, primary);
+    border-color: map.get($colors, primary);
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: map.get($border-radius, sm);
+    
+    .p-button-icon {
+      font-size: 0.75rem;
+    }
+    
+    &:hover {
+      background-color: rgba(map.get($colors, primary), 0.1);
+    }
+    
+    &:focus {
+      box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px rgba(map.get($colors, primary), 0.3);
+    }
+  }
+}

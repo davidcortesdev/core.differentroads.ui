@@ -441,6 +441,29 @@ export class TourItineraryComponent implements OnInit {
     }
   }
 
+  // Add these methods after handlePanelClick method
+  
+  /**
+   * Expands all day panels in the itinerary
+   */
+  expandAllPanels(): void {
+    if (this.itinerary && this.itinerary.length > 0) {
+      this.itinerary.forEach(item => {
+        item.collapsed = false;
+      });
+    }
+  }
+  
+  /**
+   * Collapses all day panels in the itinerary
+   */
+  collapseAllPanels(): void {
+    if (this.itinerary && this.itinerary.length > 0) {
+      this.itinerary.forEach(item => {
+        item.collapsed = true;
+      });
+    }
+  }
   fetchHotels(): void {
     if (!this.hotels) {
       console.warn('No hotels available to fetch.');

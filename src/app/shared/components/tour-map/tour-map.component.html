@@ -8,14 +8,17 @@
       [width]="sizeMapaWidth"
       [height]="sizeMapaHeight"
       [mapTypeId]="mapTypeId"
+      [mapId]="mapId"
     >
-      <map-marker
+      <map-advanced-marker
         #markerElem
         *ngFor="let marker of markers"
         [position]="marker.position"
+        [title]="marker.title || ''"
         [options]="marker.options"
       >
-      </map-marker>
+      </map-advanced-marker>
+      
       <!-- Add polyline to connect markers -->
       <map-polyline
         *ngIf="polylinePath.length > 1"

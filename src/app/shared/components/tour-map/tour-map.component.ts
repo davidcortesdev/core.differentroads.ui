@@ -15,7 +15,7 @@ interface MapMarker {
   };
   title?: string;
   info?: string;
-  options: google.maps.MarkerOptions;
+  options: google.maps.marker.AdvancedMarkerElementOptions; // Updated from MarkerOptions
 }
 
 @Component({
@@ -39,6 +39,7 @@ export class TourMapComponent implements OnInit, OnDestroy {
   sizeMapaHeight = '100%';
   advancedMarkerOptions: google.maps.marker.AdvancedMarkerElementOptions = {
     gmpDraggable: false,
+    title: '',
   };
   advancedMarkerPositions: google.maps.LatLngLiteral[] = [];
   apiLoaded: boolean = false;
@@ -60,7 +61,7 @@ export class TourMapComponent implements OnInit, OnDestroy {
     disableDoubleClickZoom: true,
     maxZoom: 15,
     minZoom: 1,
-    styles: [
+    /*styles: [
       {
         elementType: 'geometry',
         stylers: [{ color: '#f5f5f5' }],
@@ -147,11 +148,12 @@ export class TourMapComponent implements OnInit, OnDestroy {
         elementType: 'labels.text.fill',
         stylers: [{ color: '#9e9e9e' }],
       },
-    ],
+    ],*/
   };
   
-  markerOptions: google.maps.MarkerOptions = {
-    draggable: false,
+  markerOptions: google.maps.marker.AdvancedMarkerElementOptions = {
+    gmpDraggable: false,
+    title: '',
   };
 
   private scriptElement: HTMLScriptElement | null = null;
@@ -181,7 +183,7 @@ export class TourMapComponent implements OnInit, OnDestroy {
     }
 
     this.scriptElement = document.createElement('script');
-    this.scriptElement.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}`;
+    this.scriptElement.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}&libraries=marker`;
     this.scriptElement.async = true;
     this.scriptElement.defer = true;
     
@@ -198,7 +200,8 @@ export class TourMapComponent implements OnInit, OnDestroy {
 
   private initializeMap(): void {
     this.mapTypeId = google.maps.MapTypeId.ROADMAP;
-    this.mapId = google.maps.Map.DEMO_MAP_ID;
+    // Replace DEMO_MAP_ID with your actual Map ID from Google Cloud Console
+    this.mapId = "7f7a264cb58d0536"; // Get this from Google Cloud Console
     this.apiLoaded = true;
 
     // Initialize polyline options with the primary color
@@ -215,15 +218,18 @@ export class TourMapComponent implements OnInit, OnDestroy {
 
   addMarker(ciudad: City): void {
     const position = { lat: ciudad.lat, lng: ciudad.lng };
+    
+    // Create marker options with title
+    const markerOptions: google.maps.marker.AdvancedMarkerElementOptions = {
+      gmpDraggable: false,
+      title: ciudad.nombre,
+    };
+    
     this.markers.push({
       position,
-      label: {
-        color: 'red',
-        text: ciudad.nombre,
-      },
       title: ciudad.nombre,
       info: ciudad.nombre,
-      options: {},
+      options: markerOptions,
     });
     
     // Add the position to the polyline path

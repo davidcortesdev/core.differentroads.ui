@@ -14,6 +14,12 @@
 <div class="itinerary-container">
   <div class="timeline-section">
     <div class="card">
+      <!-- Add expand/collapse all buttons -->
+      <div class="panel-controls">
+        <button pButton type="button" icon="pi pi-plus" class="p-button-rounded p-button-outlined" pTooltip="Expandir todos" tooltipPosition="top" (click)="expandAllPanels()"></button>
+        <button pButton type="button" icon="pi pi-minus" class="p-button-rounded p-button-outlined" pTooltip="Contraer todos" tooltipPosition="top" (click)="collapseAllPanels()"></button>
+      </div>
+      
       <p-timeline
         [value]="itinerary"
         align="left"

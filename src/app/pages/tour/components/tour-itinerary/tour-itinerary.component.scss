@@ -545,3 +545,36 @@ $colors: (
 .active-marker {
   // This is already defined above - consider removing this duplicate
 }
+
+// Add this after the timeline-section styles
+// Panel controls styling
+.panel-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  
+  @include resp(md) {
+    justify-content: center;
+  }
+  
+  .p-button-outlined {
+    color: map.get($colors, primary);
+    border-color: map.get($colors, primary);
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: map.get($border-radius, sm);
+    
+    .p-button-icon {
+      font-size: 0.5rem;
+    }
+    
+    &:hover {
+      background-color: rgba(map.get($colors, primary), 0.1);
+    }
+    
+    &:focus {
+      box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px rgba(map.get($colors, primary), 0.3);
+    }
+  }
+}

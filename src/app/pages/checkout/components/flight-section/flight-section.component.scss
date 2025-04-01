@@ -4,7 +4,7 @@
   .title {
     font-size: 0.9rem;
     font-weight: 700;
-    color: #333;
+    color: var(--background-azul);
     margin-right: 1rem;
     min-width: 90px;
   }
@@ -27,7 +27,7 @@
       .direction-title {
         font-size: 1rem;
         font-weight: 700;
-        color: #333;
+        color: var(--background-azul);
         margin-right: 1rem;
       }
 
@@ -41,7 +41,7 @@
       .direction-date {
         font-size: 1rem;
         font-weight: 700;
-        color: #333;
+        color: var(--background-azul);
         margin-left: 1rem;
         min-width: 120px;
         text-align: right;
@@ -52,7 +52,7 @@
     .stops-info {
       margin: 0.5rem 0;
       font-size: 0.9rem;
-      color: #666;
+      color: var(--background-azul);
       display: flex;
       align-items: center;
 
@@ -89,7 +89,7 @@
         .time {
           font-size: 1rem;
           font-weight: 600;
-          color: #333;
+          color: var(--background-azul);
           display: flex;
           align-items: center;
           margin-bottom: 0.25rem;
@@ -98,7 +98,7 @@
 
         .airport {
           font-size: 0.85rem;
-          color: #666;
+          color: var(--background-azul);
         }
       }
 

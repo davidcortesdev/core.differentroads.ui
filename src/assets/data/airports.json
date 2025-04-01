@@ -324,1285 +324,6 @@
       }
     }
   },
-
-  {
-    "city": "Milan",
-    "name": "Milan Malpensa Airport",
-    "iata": "MXP",
-    "country": "Italy",
-    "translations": {
-      "es": {
-        "city": "Milán",
-        "name": "Aeropuerto de Milán-Malpensa",
-        "country": "Italia"
-      }
-    }
-  },
-  {
-    "city": "Venice",
-    "name": "Venice Marco Polo Airport",
-    "iata": "VCE",
-    "country": "Italy",
-    "translations": {
-      "es": {
-        "city": "Venecia",
-        "name": "Aeropuerto Marco Polo de Venecia",
-        "country": "Italia"
-      }
-    }
-  },
-  {
-    "city": "Naples",
-    "name": "Naples International Airport",
-    "iata": "NAP",
-    "country": "Italy",
-    "translations": {
-      "es": {
-        "city": "Nápoles",
-        "name": "Aeropuerto Internacional de Nápoles",
-        "country": "Italia"
-      }
-    }
-  },
-
-  {
-    "city": "Nice",
-    "name": "Nice Côte d'Azur Airport",
-    "iata": "NCE",
-    "country": "France",
-    "translations": {
-      "es": {
-        "city": "Niza",
-        "name": "Aeropuerto de Niza-Costa Azul",
-        "country": "Francia"
-      }
-    }
-  },
-  {
-    "city": "Lyon",
-    "name": "Lyon-Saint Exupéry Airport",
-    "iata": "LYS",
-    "country": "France",
-    "translations": {
-      "es": {
-        "city": "Lyon",
-        "name": "Aeropuerto de Lyon-Saint Exupéry",
-        "country": "Francia"
-      }
-    }
-  },
-  {
-    "city": "Marseille",
-    "name": "Marseille Provence Airport",
-    "iata": "MRS",
-    "country": "France",
-    "translations": {
-      "es": {
-        "city": "Marsella",
-        "name": "Aeropuerto de Marsella Provenza",
-        "country": "Francia"
-      }
-    }
-  },
-
-  {
-    "city": "Lisbon",
-    "name": "Lisbon Airport",
-    "iata": "LIS",
-    "country": "Portugal",
-    "translations": {
-      "es": {
-        "city": "Lisboa",
-        "name": "Aeropuerto de Lisboa",
-        "country": "Portugal"
-      }
-    }
-  },
-  {
-    "city": "Porto",
-    "name": "Francisco Sá Carneiro Airport",
-    "iata": "OPO",
-    "country": "Portugal",
-    "translations": {
-      "es": {
-        "city": "Oporto",
-        "name": "Aeropuerto Francisco Sá Carneiro",
-        "country": "Portugal"
-      }
-    }
-  },
-  {
-    "city": "Faro",
-    "name": "Faro Airport",
-    "iata": "FAO",
-    "country": "Portugal",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Faro",
-        "country": "Portugal"
-      }
-    }
-  },
-
-  {
-    "city": "Athens",
-    "name": "Athens International Airport",
-    "iata": "ATH",
-    "country": "Greece",
-    "translations": {
-      "es": {
-        "city": "Atenas",
-        "name": "Aeropuerto Internacional de Atenas",
-        "country": "Grecia"
-      }
-    }
-  },
-  {
-    "city": "Thessaloniki",
-    "name": "Thessaloniki Airport",
-    "iata": "SKG",
-    "country": "Greece",
-    "translations": {
-      "es": {
-        "city": "Tesalónica",
-        "name": "Aeropuerto de Tesalónica",
-        "country": "Grecia"
-      }
-    }
-  },
-  {
-    "city": "Heraklion",
-    "name": "Heraklion International Airport",
-    "iata": "HER",
-    "country": "Greece",
-    "translations": {
-      "es": {
-        "city": "Heraclión",
-        "name": "Aeropuerto Internacional de Heraclión",
-        "country": "Grecia"
-      }
-    }
-  },
-  {
-    "city": "Rhodes",
-    "name": "Rhodes International Airport",
-    "iata": "RHO",
-    "country": "Greece",
-    "translations": {
-      "es": {
-        "city": "Rodas",
-        "name": "Aeropuerto Internacional de Rodas",
-        "country": "Grecia"
-      }
-    }
-  },
-
-  {
-    "city": "Osaka",
-    "name": "Kansai International Airport",
-    "iata": "KIX",
-    "country": "Japan",
-    "translations": {
-      "es": {
-        "city": "Osaka",
-        "name": "Aeropuerto Internacional de Kansai",
-        "country": "Japón"
-      }
-    }
-  },
-  {
-    "city": "Fukuoka",
-    "name": "Fukuoka Airport",
-    "iata": "FUK",
-    "country": "Japan",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Fukuoka",
-        "country": "Japón"
-      }
-    }
-  },
-
-  {
-    "city": "Los Angeles",
-    "name": "Los Angeles International Airport",
-    "iata": "LAX",
-    "country": "United States",
-    "translations": {
-      "es": {
-        "city": "Los Ángeles",
-        "name": "Aeropuerto Internacional de Los Ángeles",
-        "country": "Estados Unidos"
-      }
-    }
-  },
-  {
-    "city": "Chicago",
-    "name": "O'Hare International Airport",
-    "iata": "ORD",
-    "country": "United States",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto Internacional O'Hare",
-        "country": "Estados Unidos"
-      }
-    }
-  },
-  {
-    "city": "Miami",
-    "name": "Miami International Airport",
-    "iata": "MIA",
-    "country": "United States",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto Internacional de Miami",
-        "country": "Estados Unidos"
-      }
-    }
-  },
-  {
-    "city": "San Francisco",
-    "name": "San Francisco International Airport",
-    "iata": "SFO",
-    "country": "United States",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto Internacional de San Francisco",
-        "country": "Estados Unidos"
-      }
-    }
-  },
-
-  {
-    "city": "Casablanca",
-    "name": "Mohammed V International Airport",
-    "iata": "CMN",
-    "country": "Morocco",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto Internacional Mohammed V",
-        "country": "Marruecos"
-      }
-    }
-  },
-  {
-    "city": "Marrakesh",
-    "name": "Marrakesh Menara Airport",
-    "iata": "RAK",
-    "country": "Morocco",
-    "translations": {
-      "es": {
-        "city": "Marrakech",
-        "name": "Aeropuerto de Marrakech-Menara",
-        "country": "Marruecos"
-      }
-    }
-  },
-  {
-    "city": "Tangier",
-    "name": "Tangier Ibn Battouta Airport",
-    "iata": "TNG",
-    "country": "Morocco",
-    "translations": {
-      "es": {
-        "city": "Tánger",
-        "name": "Aeropuerto de Tánger-Ibn Batouta",
-        "country": "Marruecos"
-      }
-    }
-  },
-
-  {
-    "city": "Reykjavik",
-    "name": "Keflavík International Airport",
-    "iata": "KEF",
-    "country": "Iceland",
-    "translations": {
-      "es": {
-        "city": "Reikiavik",
-        "name": "Aeropuerto Internacional de Keflavík",
-        "country": "Islandia"
-      }
-    }
-  },
-  {
-    "city": "Reykjavik",
-    "name": "Reykjavik Airport",
-    "iata": "RKV",
-    "country": "Iceland",
-    "translations": {
-      "es": {
-        "city": "Reikiavik",
-        "name": "Aeropuerto de Reikiavik",
-        "country": "Islandia"
-      }
-    }
-  },
-  {
-    "city": "Madrid",
-    "name": "Adolfo Suárez Madrid-Barajas",
-    "iata": "MAD",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Barcelona",
-    "name": "Barcelona-El Prat",
-    "iata": "BCN",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Malaga",
-    "name": "Málaga-Costa del Sol Airport",
-    "iata": "AGP",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "city": "Málaga",
-        "name": "Aeropuerto de Málaga-Costa del Sol",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Palma de Mallorca",
-    "name": "Palma de Mallorca Airport",
-    "iata": "PMI",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Palma de Mallorca",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Alicante",
-    "name": "Alicante-Elche Airport",
-    "iata": "ALC",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Alicante-Elche",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Valencia",
-    "name": "Valencia Airport",
-    "iata": "VLC",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Valencia",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Seville",
-    "name": "Seville Airport",
-    "iata": "SVQ",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "city": "Sevilla",
-        "name": "Aeropuerto de Sevilla",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Bilbao",
-    "name": "Bilbao Airport",
-    "iata": "BIO",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Bilbao",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Gran Canaria",
-    "name": "Gran Canaria Airport",
-    "iata": "LPA",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Gran Canaria",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Tenerife",
-    "name": "Tenerife South Airport",
-    "iata": "TFS",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Tenerife Sur",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Tenerife",
-    "name": "Tenerife North Airport",
-    "iata": "TFN",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Tenerife Norte",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Ibiza",
-    "name": "Ibiza Airport",
-    "iata": "IBZ",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Ibiza",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Santiago de Compostela",
-    "name": "Santiago de Compostela Airport",
-    "iata": "SCQ",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Santiago de Compostela",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "London",
-    "name": "Heathrow Airport",
-    "iata": "LHR",
-    "country": "United Kingdom",
-    "translations": {
-      "es": {
-        "city": "Londres",
-        "name": "Aeropuerto de Heathrow",
-        "country": "Reino Unido"
-      }
-    }
-  },
-  {
-    "city": "Paris",
-    "name": "Charles de Gaulle Airport",
-    "iata": "CDG",
-    "country": "France",
-    "translations": {
-      "es": {
-        "city": "París",
-        "name": "Aeropuerto Charles de Gaulle",
-        "country": "Francia"
-      }
-    }
-  },
-  {
-    "city": "New York",
-    "name": "John F. Kennedy International Airport",
-    "iata": "JFK",
-    "country": "United States",
-    "translations": {
-      "es": {
-        "city": "Nueva York",
-        "name": "Aeropuerto Internacional John F. Kennedy",
-        "country": "Estados Unidos"
-      }
-    }
-  },
-  {
-    "city": "Amsterdam",
-    "name": "Amsterdam Airport Schiphol",
-    "iata": "AMS",
-    "country": "Netherlands",
-    "translations": {
-      "es": {
-        "city": "Ámsterdam",
-        "name": "Aeropuerto de Schiphol",
-        "country": "Países Bajos"
-      }
-    }
-  },
-  {
-    "city": "Rome",
-    "name": "Leonardo da Vinci International Airport",
-    "iata": "FCO",
-    "country": "Italy",
-    "translations": {
-      "es": {
-        "city": "Roma",
-        "name": "Aeropuerto Internacional Leonardo da Vinci",
-        "country": "Italia"
-      }
-    }
-  },
-  {
-    "city": "Dubai",
-    "name": "Dubai International Airport",
-    "iata": "DXB",
-    "country": "United Arab Emirates",
-    "translations": {
-      "es": {
-        "city": "Dubái",
-        "name": "Aeropuerto Internacional de Dubái",
-        "country": "Emiratos Árabes Unidos"
-      }
-    }
-  },
-  {
-    "city": "Tokyo",
-    "name": "Narita International Airport",
-    "iata": "NRT",
-    "country": "Japan",
-    "translations": {
-      "es": {
-        "city": "Tokio",
-        "name": "Aeropuerto Internacional de Narita",
-        "country": "Japón"
-      }
-    }
-  },
-  {
-    "city": "Singapore",
-    "name": "Singapore Changi Airport",
-    "iata": "SIN",
-    "country": "Singapore",
-    "translations": {
-      "es": {
-        "city": "Singapur",
-        "name": "Aeropuerto de Changi",
-        "country": "Singapur"
-      }
-    }
-  },
-  {
-    "city": "Sydney",
-    "name": "Sydney Airport",
-    "iata": "SYD",
-    "country": "Australia",
-    "translations": {
-      "es": {
-        "city": "Sídney",
-        "name": "Aeropuerto de Sídney",
-        "country": "Australia"
-      }
-    }
-  },
-  {
-    "city": "Istanbul",
-    "name": "Istanbul Airport",
-    "iata": "IST",
-    "country": "Turkey",
-    "translations": {
-      "es": {
-        "city": "Estambul",
-        "name": "Aeropuerto de Estambul",
-        "country": "Turquía"
-      }
-    }
-  },
-  {
-    "city": "Frankfurt",
-    "name": "Frankfurt Airport",
-    "iata": "FRA",
-    "country": "Germany",
-    "translations": {
-      "es": {
-        "city": "Fráncfort",
-        "name": "Aeropuerto de Fráncfort",
-        "country": "Alemania"
-      }
-    }
-  },
-  {
-    "city": "Hong Kong",
-    "name": "Hong Kong International Airport",
-    "iata": "HKG",
-    "country": "China",
-    "translations": {
-      "es": {
-        "city": "Hong Kong",
-        "name": "Aeropuerto Internacional de Hong Kong",
-        "country": "China"
-      }
-    }
-  },
-  {
-    "city": "Seoul",
-    "name": "Incheon International Airport",
-    "iata": "ICN",
-    "country": "South Korea",
-    "translations": {
-      "es": {
-        "city": "Seúl",
-        "name": "Aeropuerto Internacional de Incheon",
-        "country": "Corea del Sur"
-      }
-    }
-  },
-
-  {
-    "city": "Milan",
-    "name": "Milan Malpensa Airport",
-    "iata": "MXP",
-    "country": "Italy",
-    "translations": {
-      "es": {
-        "city": "Milán",
-        "name": "Aeropuerto de Milán-Malpensa",
-        "country": "Italia"
-      }
-    }
-  },
-  {
-    "city": "Venice",
-    "name": "Venice Marco Polo Airport",
-    "iata": "VCE",
-    "country": "Italy",
-    "translations": {
-      "es": {
-        "city": "Venecia",
-        "name": "Aeropuerto Marco Polo de Venecia",
-        "country": "Italia"
-      }
-    }
-  },
-  {
-    "city": "Naples",
-    "name": "Naples International Airport",
-    "iata": "NAP",
-    "country": "Italy",
-    "translations": {
-      "es": {
-        "city": "Nápoles",
-        "name": "Aeropuerto Internacional de Nápoles",
-        "country": "Italia"
-      }
-    }
-  },
-
-  {
-    "city": "Nice",
-    "name": "Nice Côte d'Azur Airport",
-    "iata": "NCE",
-    "country": "France",
-    "translations": {
-      "es": {
-        "city": "Niza",
-        "name": "Aeropuerto de Niza-Costa Azul",
-        "country": "Francia"
-      }
-    }
-  },
-  {
-    "city": "Lyon",
-    "name": "Lyon-Saint Exupéry Airport",
-    "iata": "LYS",
-    "country": "France",
-    "translations": {
-      "es": {
-        "city": "Lyon",
-        "name": "Aeropuerto de Lyon-Saint Exupéry",
-        "country": "Francia"
-      }
-    }
-  },
-  {
-    "city": "Marseille",
-    "name": "Marseille Provence Airport",
-    "iata": "MRS",
-    "country": "France",
-    "translations": {
-      "es": {
-        "city": "Marsella",
-        "name": "Aeropuerto de Marsella Provenza",
-        "country": "Francia"
-      }
-    }
-  },
-
-  {
-    "city": "Lisbon",
-    "name": "Lisbon Airport",
-    "iata": "LIS",
-    "country": "Portugal",
-    "translations": {
-      "es": {
-        "city": "Lisboa",
-        "name": "Aeropuerto de Lisboa",
-        "country": "Portugal"
-      }
-    }
-  },
-  {
-    "city": "Porto",
-    "name": "Francisco Sá Carneiro Airport",
-    "iata": "OPO",
-    "country": "Portugal",
-    "translations": {
-      "es": {
-        "city": "Oporto",
-        "name": "Aeropuerto Francisco Sá Carneiro",
-        "country": "Portugal"
-      }
-    }
-  },
-  {
-    "city": "Faro",
-    "name": "Faro Airport",
-    "iata": "FAO",
-    "country": "Portugal",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Faro",
-        "country": "Portugal"
-      }
-    }
-  },
-
-  {
-    "city": "Athens",
-    "name": "Athens International Airport",
-    "iata": "ATH",
-    "country": "Greece",
-    "translations": {
-      "es": {
-        "city": "Atenas",
-        "name": "Aeropuerto Internacional de Atenas",
-        "country": "Grecia"
-      }
-    }
-  },
-  {
-    "city": "Thessaloniki",
-    "name": "Thessaloniki Airport",
-    "iata": "SKG",
-    "country": "Greece",
-    "translations": {
-      "es": {
-        "city": "Tesalónica",
-        "name": "Aeropuerto de Tesalónica",
-        "country": "Grecia"
-      }
-    }
-  },
-  {
-    "city": "Heraklion",
-    "name": "Heraklion International Airport",
-    "iata": "HER",
-    "country": "Greece",
-    "translations": {
-      "es": {
-        "city": "Heraclión",
-        "name": "Aeropuerto Internacional de Heraclión",
-        "country": "Grecia"
-      }
-    }
-  },
-  {
-    "city": "Rhodes",
-    "name": "Rhodes International Airport",
-    "iata": "RHO",
-    "country": "Greece",
-    "translations": {
-      "es": {
-        "city": "Rodas",
-        "name": "Aeropuerto Internacional de Rodas",
-        "country": "Grecia"
-      }
-    }
-  },
-
-  {
-    "city": "Osaka",
-    "name": "Kansai International Airport",
-    "iata": "KIX",
-    "country": "Japan",
-    "translations": {
-      "es": {
-        "city": "Osaka",
-        "name": "Aeropuerto Internacional de Kansai",
-        "country": "Japón"
-      }
-    }
-  },
-  {
-    "city": "Fukuoka",
-    "name": "Fukuoka Airport",
-    "iata": "FUK",
-    "country": "Japan",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Fukuoka",
-        "country": "Japón"
-      }
-    }
-  },
-
-  {
-    "city": "Los Angeles",
-    "name": "Los Angeles International Airport",
-    "iata": "LAX",
-    "country": "United States",
-    "translations": {
-      "es": {
-        "city": "Los Ángeles",
-        "name": "Aeropuerto Internacional de Los Ángeles",
-        "country": "Estados Unidos"
-      }
-    }
-  },
-  {
-    "city": "Chicago",
-    "name": "O'Hare International Airport",
-    "iata": "ORD",
-    "country": "United States",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto Internacional O'Hare",
-        "country": "Estados Unidos"
-      }
-    }
-  },
-  {
-    "city": "Miami",
-    "name": "Miami International Airport",
-    "iata": "MIA",
-    "country": "United States",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto Internacional de Miami",
-        "country": "Estados Unidos"
-      }
-    }
-  },
-  {
-    "city": "San Francisco",
-    "name": "San Francisco International Airport",
-    "iata": "SFO",
-    "country": "United States",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto Internacional de San Francisco",
-        "country": "Estados Unidos"
-      }
-    }
-  },
-
-  {
-    "city": "Casablanca",
-    "name": "Mohammed V International Airport",
-    "iata": "CMN",
-    "country": "Morocco",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto Internacional Mohammed V",
-        "country": "Marruecos"
-      }
-    }
-  },
-  {
-    "city": "Marrakesh",
-    "name": "Marrakesh Menara Airport",
-    "iata": "RAK",
-    "country": "Morocco",
-    "translations": {
-      "es": {
-        "city": "Marrakech",
-        "name": "Aeropuerto de Marrakech-Menara",
-        "country": "Marruecos"
-      }
-    }
-  },
-  {
-    "city": "Tangier",
-    "name": "Tangier Ibn Battouta Airport",
-    "iata": "TNG",
-    "country": "Morocco",
-    "translations": {
-      "es": {
-        "city": "Tánger",
-        "name": "Aeropuerto de Tánger-Ibn Batouta",
-        "country": "Marruecos"
-      }
-    }
-  },
-
-  {
-    "city": "Reykjavik",
-    "name": "Keflavík International Airport",
-    "iata": "KEF",
-    "country": "Iceland",
-    "translations": {
-      "es": {
-        "city": "Reikiavik",
-        "name": "Aeropuerto Internacional de Keflavík",
-        "country": "Islandia"
-      }
-    }
-  },
-  {
-    "city": "Reykjavik",
-    "name": "Reykjavik Airport",
-    "iata": "RKV",
-    "country": "Iceland",
-    "translations": {
-      "es": {
-        "city": "Reikiavik",
-        "name": "Aeropuerto de Reikiavik",
-        "country": "Islandia"
-      }
-    }
-  },
-  {
-    "city": "Madrid",
-    "name": "Adolfo Suárez Madrid-Barajas",
-    "iata": "MAD",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Barcelona",
-    "name": "Barcelona-El Prat",
-    "iata": "BCN",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Malaga",
-    "name": "Málaga-Costa del Sol Airport",
-    "iata": "AGP",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "city": "Málaga",
-        "name": "Aeropuerto de Málaga-Costa del Sol",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Palma de Mallorca",
-    "name": "Palma de Mallorca Airport",
-    "iata": "PMI",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Palma de Mallorca",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Alicante",
-    "name": "Alicante-Elche Airport",
-    "iata": "ALC",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Alicante-Elche",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Valencia",
-    "name": "Valencia Airport",
-    "iata": "VLC",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Valencia",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Seville",
-    "name": "Seville Airport",
-    "iata": "SVQ",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "city": "Sevilla",
-        "name": "Aeropuerto de Sevilla",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Bilbao",
-    "name": "Bilbao Airport",
-    "iata": "BIO",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Bilbao",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Gran Canaria",
-    "name": "Gran Canaria Airport",
-    "iata": "LPA",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Gran Canaria",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Tenerife",
-    "name": "Tenerife South Airport",
-    "iata": "TFS",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Tenerife Sur",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Tenerife",
-    "name": "Tenerife North Airport",
-    "iata": "TFN",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Tenerife Norte",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Ibiza",
-    "name": "Ibiza Airport",
-    "iata": "IBZ",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Ibiza",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "Santiago de Compostela",
-    "name": "Santiago de Compostela Airport",
-    "iata": "SCQ",
-    "country": "Spain",
-    "translations": {
-      "es": {
-        "name": "Aeropuerto de Santiago de Compostela",
-        "country": "España"
-      }
-    }
-  },
-  {
-    "city": "London",
-    "name": "Heathrow Airport",
-    "iata": "LHR",
-    "country": "United Kingdom",
-    "translations": {
-      "es": {
-        "city": "Londres",
-        "name": "Aeropuerto de Heathrow",
-        "country": "Reino Unido"
-      }
-    }
-  },
-  {
-    "city": "Paris",
-    "name": "Charles de Gaulle Airport",
-    "iata": "CDG",
-    "country": "France",
-    "translations": {
-      "es": {
-        "city": "París",
-        "name": "Aeropuerto Charles de Gaulle",
-        "country": "Francia"
-      }
-    }
-  },
-  {
-    "city": "New York",
-    "name": "John F. Kennedy International Airport",
-    "iata": "JFK",
-    "country": "United States",
-    "translations": {
-      "es": {
-        "city": "Nueva York",
-        "name": "Aeropuerto Internacional John F. Kennedy",
-        "country": "Estados Unidos"
-      }
-    }
-  },
-  {
-    "city": "Amsterdam",
-    "name": "Amsterdam Airport Schiphol",
-    "iata": "AMS",
-    "country": "Netherlands",
-    "translations": {
-      "es": {
-        "city": "Ámsterdam",
-        "name": "Aeropuerto de Schiphol",
-        "country": "Países Bajos"
-      }
-    }
-  },
-  {
-    "city": "Rome",
-    "name": "Leonardo da Vinci International Airport",
-    "iata": "FCO",
-    "country": "Italy",
-    "translations": {
-      "es": {
-        "city": "Roma",
-        "name": "Aeropuerto Internacional Leonardo da Vinci",
-        "country": "Italia"
-      }
-    }
-  },
-  {
-    "city": "Dubai",
-    "name": "Dubai International Airport",
-    "iata": "DXB",
-    "country": "United Arab Emirates",
-    "translations": {
-      "es": {
-        "city": "Dubái",
-        "name": "Aeropuerto Internacional de Dubái",
-        "country": "Emiratos Árabes Unidos"
-      }
-    }
-  },
-  {
-    "city": "Tokyo",
-    "name": "Narita International Airport",
-    "iata": "NRT",
-    "country": "Japan",
-    "translations": {
-      "es": {
-        "city": "Tokio",
-        "name": "Aeropuerto Internacional de Narita",
-        "country": "Japón"
-      }
-    }
-  },
-  {
-    "city": "Singapore",
-    "name": "Singapore Changi Airport",
-    "iata": "SIN",
-    "country": "Singapore",
-    "translations": {
-      "es": {
-        "city": "Singapur",
-        "name": "Aeropuerto de Changi",
-        "country": "Singapur"
-      }
-    }
-  },
-  {
-    "city": "Sydney",
-    "name": "Sydney Airport",
-    "iata": "SYD",
-    "country": "Australia",
-    "translations": {
-      "es": {
-        "city": "Sídney",
-        "name": "Aeropuerto de Sídney",
-        "country": "Australia"
-      }
-    }
-  },
-  {
-    "city": "Istanbul",
-    "name": "Istanbul Airport",
-    "iata": "IST",
-    "country": "Turkey",
-    "translations": {
-      "es": {
-        "city": "Estambul",
-        "name": "Aeropuerto de Estambul",
-        "country": "Turquía"
-      }
-    }
-  },
-  {
-    "city": "Frankfurt",
-    "name": "Frankfurt Airport",
-    "iata": "FRA",
-    "country": "Germany",
-    "translations": {
-      "es": {
-        "city": "Fráncfort",
-        "name": "Aeropuerto de Fráncfort",
-        "country": "Alemania"
-      }
-    }
-  },
-  {
-    "city": "Hong Kong",
-    "name": "Hong Kong International Airport",
-    "iata": "HKG",
-    "country": "China",
-    "translations": {
-      "es": {
-        "city": "Hong Kong",
-        "name": "Aeropuerto Internacional de Hong Kong",
-        "country": "China"
-      }
-    }
-  },
-  {
-    "city": "Seoul",
-    "name": "Incheon International Airport",
-    "iata": "ICN",
-    "country": "South Korea",
-    "translations": {
-      "es": {
-        "city": "Seúl",
-        "name": "Aeropuerto Internacional de Incheon",
-        "country": "Corea del Sur"
-      }
-    }
-  },
-
   {
     "city": "Milan",
     "name": "Milan Malpensa Airport",
@@ -1681,7 +402,6 @@
       }
     }
   },
-
   {
     "city": "Lisbon",
     "name": "Lisbon Airport",
@@ -1720,7 +440,6 @@
       }
     }
   },
-
   {
     "city": "Athens",
     "name": "Athens International Airport",
@@ -1773,7 +492,6 @@
       }
     }
   },
-
   {
     "city": "Osaka",
     "name": "Kansai International Airport",
@@ -1799,7 +517,6 @@
       }
     }
   },
-
   {
     "city": "Los Angeles",
     "name": "Los Angeles International Airport",
@@ -1849,7 +566,6 @@
       }
     }
   },
-
   {
     "city": "Casablanca",
     "name": "Mohammed V International Airport",
@@ -1888,7 +604,6 @@
       }
     }
   },
-
   {
     "city": "Reykjavik",
     "name": "Keflavík International Airport",
@@ -1954,7 +669,6 @@
       }
     }
   },
-
   {
     "city": "Rotterdam",
     "name": "Rotterdam The Hague Airport",
@@ -1980,7 +694,6 @@
       }
     }
   },
-
   {
     "city": "Antalya",
     "name": "Antalya Airport",
@@ -2018,7 +731,6 @@
       }
     }
   },
-
   {
     "city": "Cairo",
     "name": "Cairo International Airport",
@@ -2105,7 +817,6 @@
       }
     }
   },
-
   {
     "city": "Ho Chi Minh City",
     "name": "Tan Son Nhat International Airport",
@@ -2145,7 +856,6 @@
       }
     }
   },
-
   {
     "city": "Delhi",
     "name": "Indira Gandhi International Airport",
@@ -2197,7 +907,6 @@
       }
     }
   },
-
   {
     "city": "Beijing",
     "name": "Beijing Capital International Airport",
@@ -2249,7 +958,6 @@
       }
     }
   },
-
   {
     "city": "Melbourne",
     "name": "Melbourne Airport",
@@ -2300,7 +1008,6 @@
       }
     }
   },
-
   {
     "city": "Auckland",
     "name": "Auckland Airport",
@@ -2412,7 +1119,6 @@
       }
     }
   },
-
   {
     "city": "Guatemala City",
     "name": "La Aurora International Airport",
@@ -2426,7 +1132,6 @@
       }
     }
   },
-
   {
     "city": "San Salvador",
     "name": "El Salvador International Airport",
@@ -2439,7 +1144,6 @@
       }
     }
   },
-
   {
     "city": "Tegucigalpa",
     "name": "Toncontín International Airport",
@@ -2464,7 +1168,6 @@
       }
     }
   },
-
   {
     "city": "Managua",
     "name": "Augusto C. Sandino International Airport",
@@ -2477,7 +1180,6 @@
       }
     }
   },
-
   {
     "city": "San José",
     "name": "Juan Santamaría International Airport",
@@ -2502,7 +1204,6 @@
       }
     }
   },
-
   {
     "city": "Panama City",
     "name": "Tocumen International Airport",
@@ -2516,7 +1217,6 @@
       }
     }
   },
-
   {
     "city": "Belize City",
     "name": "Philip S. W. Goldson International Airport",

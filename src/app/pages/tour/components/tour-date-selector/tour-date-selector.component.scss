@@ -142,3 +142,10 @@ $spaces: (
   @include trip-type-badge;
   background-color: var(--color-private) !important;
 }
+
+// Add this with your other trip-type styles
+.trip-type-placeholder {
+  width: 24px;
+  height: 24px;
+  display: inline-block;
+}

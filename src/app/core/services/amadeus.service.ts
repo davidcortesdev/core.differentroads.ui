@@ -9,7 +9,7 @@ import {
   FlightOfferPrice,
   Traveler,
   FlightOrderResponse,
-} from '../types/flight.types';
+} from '../models/amadeus/flight.types';
 
 @Injectable({
   providedIn: 'root',

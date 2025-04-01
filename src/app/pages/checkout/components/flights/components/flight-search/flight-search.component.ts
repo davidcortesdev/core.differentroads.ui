@@ -4,7 +4,7 @@ import { AmadeusService } from '../../../../../../core/services/amadeus.service'
 import {
   FlightOffersParams,
   ITempFlightOffer,
-} from '../../../../../../core/types/flight.types';
+} from '../../../../../../core/models/amadeus/flight.types';
 import {
   Flight,
   FlightSegment,

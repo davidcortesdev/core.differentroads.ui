@@ -15,6 +15,7 @@ export class BookingCodeSectionComponent implements OnInit {
   @Output() backEvent = new EventEmitter<void>();
   @Output() cancelBooking = new EventEmitter<void>();
 
+
   constructor() {}
 
   ngOnInit(): void {}

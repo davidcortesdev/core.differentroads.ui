@@ -84,13 +84,13 @@
             }
 
             .booking-label {
-                color: #666;
+                /*color: #666;*/
                 font-size: 0.9rem;
                 width: auto;
                 &.tourname {
                     font-size: 1.3rem;
                     font-weight: 700;
-                    color: #333;
+                    /*color: #333;*/
                     width: 100%;
                 }
             }
@@ -98,7 +98,7 @@
             .booking-value {
                 font-weight: 500;
                 font-size: 0.9rem;
-                color: #333;
+                /*color: #333;*/
                 text-align: right;
             }
         }
@@ -162,6 +162,7 @@
             display: flex;
             align-items: center;
             margin-right: 10px;
+            color: #666; // Cambia el color a tu preferencia
 
             i {
                 font-size: 1rem;
@@ -178,10 +179,11 @@
             }
         }
 
+
         .price-tag {
             font-size: 1.3rem;
             font-weight: 700;
-            color: #333;
+            /*color: #333;*/
         }
     }
 

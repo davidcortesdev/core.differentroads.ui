@@ -19,13 +19,7 @@
                     item.description &&
                     item.description.toLowerCase().includes('descuento')
                 }"
-              >
-                {{
-                  item.description &&
-                  item.description.toLowerCase().includes("descuento")
-                    ? "–"
-                    : ""
-                }}{{ calculateTotal(item) | currencyFormat }}
+              >{{calculateTotal(item) | currencyFormat }}
               </span>
             </div>
             <p-divider *ngIf="!last && item.quantity > 0"></p-divider>

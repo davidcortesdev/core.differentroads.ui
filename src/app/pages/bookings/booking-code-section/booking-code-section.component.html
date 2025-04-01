@@ -6,7 +6,9 @@
       <button pButton icon="pi pi-arrow-left" class="p-button-text p-button-rounded back-button" (click)="goBack()"></button>
       
       <div class="booking-code">
-        <span class="booking-number">{{ bookingCode }} - {{ bookingReference }}</span>
+        <span class="booking-number">
+          {{ bookingReference === '000000' ? bookingCode : bookingCode + ' - ' + bookingReference }}
+        </span>        
         <p-tag value="{{ status }}" severity="info" [rounded]="true"></p-tag>
       </div>
     </div>

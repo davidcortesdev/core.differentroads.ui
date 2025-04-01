@@ -4,7 +4,7 @@
   .title {
     font-size: 0.9rem;
     font-weight: 700;
-    color: #333;
+    /*color: #333;*/
     margin-right: 1rem;
     min-width: 90px;
   }
@@ -27,7 +27,7 @@
       .direction-title {
         font-size: 1rem;
         font-weight: 700;
-        color: #333;
+        /*color: #333;*/
         margin-right: 1rem;
       }
 
@@ -41,7 +41,7 @@
       .direction-date {
         font-size: 1rem;
         font-weight: 700;
-        color: #333;
+        /*color: #333;*/
         margin-left: 1rem;
         min-width: 120px;
         text-align: right;
@@ -89,7 +89,8 @@
         .time {
           font-size: 1rem;
           font-weight: 600;
-          color: #333;
+          /*color: #333;*/
+          margin-bottom: 0.25rem;
           display: flex;
           align-items: center;
           margin-bottom: 0.25rem;

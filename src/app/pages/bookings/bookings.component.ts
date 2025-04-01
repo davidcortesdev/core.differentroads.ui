@@ -269,6 +269,8 @@ export class BookingsComponent implements OnInit {
             this.updateActivitiesData(booking);
           }
 
+          
+
           // Cargar actividades del período usando el externalID correcto
           if (booking.periodData && booking.periodData['externalID']) {
             this.loadPeriodActivities(booking.periodData['externalID']);

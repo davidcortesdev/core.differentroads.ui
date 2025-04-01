@@ -432,7 +432,18 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
           `/reservation/${bookingID}/transfer/${publicID}`,
         ]);
         return;
+      } else if (this.paymentType === 'installments') {
+        console.log('Processing Scalapay payment');
+        this.processScalapay(bookingID, publicID);
+        return;
       }
+      // If we reach here, it means the payment method was not recognized
+      console.error('Unknown payment method:', this.paymentMethod);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Método de pago desconocido',
+        detail: 'El método de pago seleccionado no es válido.',
+      })
     } catch (error) {
       console.error('Error in payment process:', error);
       this.messageService.add({

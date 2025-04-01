@@ -21,15 +21,25 @@ $spacing-md: 1rem;
 
 @mixin responsive-font($mobile, $tablet, $desktop) {
   font-size: $desktop;
-
   @media screen and (max-width: $breakpoint-tablet) {
     font-size: $tablet;
   }
-
   @media screen and (max-width: $breakpoint-mobile) {
     font-size: $mobile;
   }
 }
+
+@mixin tablet {
+  @media screen and (max-width: $breakpoint-tablet) {
+    @content;
+  }
+}
+@mixin mobile {
+  @media screen and (max-width: $breakpoint-mobile) {
+    @content;
+  }
+}
+
 .tour-card {
   padding: $spacing-sm;
   height: 100%;
@@ -57,10 +67,10 @@ $spacing-md: 1rem;
       cursor: pointer;
       position: relative;
       height: 230px;
-      @media screen and (max-width: $breakpoint-tablet) {
+      @include tablet {
         height: 220px;
       }
-      @media screen and (max-width: $breakpoint-mobile) {
+      @include mobile {
         height: 240px;
       }
       img {
@@ -108,20 +118,32 @@ $spacing-md: 1rem;
             padding: $spacing-xs $spacing-xs * 2;
             border-radius: $border-radius-sm;
             @include responsive-font(0.8rem, 0.85rem, 0.7rem);
-          }
-          .tag.expandable-tag {
-            transition: all 0.3s ease;
-            max-width: 40px;
-            overflow: hidden;
-            white-space: nowrap;
-            cursor: pointer;
-            border-radius: 10px;
-            margin-bottom: 0.1rem;
-          }
-          .tag.expandable-tag:hover {
-            max-width: none;
-            width: auto;
-            padding-right: $spacing-sm;
+            &.expandable-tag {
+              transition: all 0.3s ease;
+              max-width: 40px;
+              overflow: hidden;
+              white-space: nowrap;
+              cursor: pointer;
+              border-radius: 10px;
+              margin-bottom: 0.1rem;
+              &:hover {
+                max-width: none;
+                width: auto;
+                padding-right: $spacing-sm;
+                .short-text {
+                  opacity: 0;
+                  width: 0;
+                  position: absolute;
+                  overflow: hidden;
+                }
+                .expanded-content {
+                  opacity: 1;
+                  max-width: none;
+                  width: auto;
+                  margin-left: 0;
+                }
+              }
+            }
           }
           .short-text {
             display: inline-block;
@@ -131,24 +153,12 @@ $spacing-md: 1rem;
               height: 1rem;
             }
           }
-          .tag.expandable-tag:hover .short-text {
-            opacity: 0;
-            width: 0;
-            position: absolute;
-            overflow: hidden;
-          }
           .expanded-content {
             display: inline-block;
             opacity: 0;
             max-width: 0;
             overflow: hidden;
             transition: all 0.2s ease;
-          }
-          .tag.expandable-tag:hover .expanded-content {
-            opacity: 1;
-            max-width: none;
-            width: auto;
-            margin-left: 0;
           }
         }
         .title-overlay {
@@ -216,19 +226,17 @@ $spacing-md: 1rem;
           vertical-align: middle;
         }
       }
-      .buttonVertour {
-        ::ng-deep .p-button {
-          border-radius: 1.5rem;
-          min-width: 7rem;
-          margin-top: 13px;
-          @media screen and (max-width: $breakpoint-tablet) {
-            min-width: 6rem;
-          }
-          @media screen and (max-width: $breakpoint-mobile) {
-            min-width: 6rem;
-            height: 2.5rem;
-            font-size: 0.9rem;
-          }
+      .buttonVertour ::ng-deep .p-button {
+        border-radius: 1.5rem;
+        min-width: 7rem;
+        margin-top: 13px;
+        @include tablet {
+          min-width: 6rem;
+        }
+        @include mobile {
+          min-width: 6rem;
+          height: 2.5rem;
+          font-size: 0.9rem;
         }
       }
       .trip-type-container {
@@ -246,12 +254,12 @@ $spacing-md: 1rem;
         align-items: center;
         justify-content: flex-start;
         margin-top: -15px;
-        @media screen and (max-width: $breakpoint-tablet) {
+        @include tablet {
           width: 12rem;
           height: 2.2rem;
           margin-top: -8px;
         }
-        @media screen and (max-width: $breakpoint-mobile) {
+        @include mobile {
           width: 100%;
           height: auto;
           max-height: 3.5rem;
@@ -264,100 +272,86 @@ $spacing-md: 1rem;
       }
     }
   }
-  &.isLarge {
-    ::ng-deep .tour-card-wrapper {
-      .p-card {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        .p-card-body {
-          padding: 10px;
-        }
-        .p-card-content {
-          padding: 0;
-        }
+  &.isLarge ::ng-deep .tour-card-wrapper {
+    .p-card {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      .p-card-body {
+        padding: 10px;
       }
-      .image-container {
-        height: 280px;
-        @media screen and (max-width: $breakpoint-tablet) {
-          height: 220px;
-        }
-        @media screen and (max-width: $breakpoint-mobile) {
-          height: 240px;
-        }
-        img {
-          border-radius: $border-radius-lg;
-        }
-        .overlay {
-          .rating,
-          .tag {
-            padding: 0.3rem 0.6rem;
-            font-size: 0.9rem;
-          }
-          .title-overlay {
-            h3 {
-              font-size: 1.5rem;
-            }
-            p {
-              font-size: 1rem;
-            }
-          }
-        }
+      .p-card-content {
+        padding: 0;
       }
-      .card-footer {
-        .price-section {
-          .price-info {
-            .desde {
-              font-size: 0.9rem;
-              color: var(--background-azul);
-              @media screen and (max-width: $breakpoint-tablet) {
-                font-size: 0.85rem;
-                margin-top: 0.4rem;
-              }
-              @media screen and (max-width: $breakpoint-mobile) {
-                font-size: 0.8rem;
-                margin-top: 0.3rem;
-              }
-            }
-            .price {
-              font-size: 2rem;
-              font-weight: bold;
-              color: var(--background-azul);
-              line-height: 1.2rem;
-              margin-bottom: $spacing-sm;
-              @media screen and (max-width: $breakpoint-tablet) {
-                font-size: 1.4rem;
-              }
-              @media screen and (max-width: $breakpoint-mobile) {
-                font-size: 1.3rem;
-              }
-            }
-          }
-        }
-        .priceScalapay {
-          color: var(--p-primary-color);
+    }
+    .image-container {
+      height: 280px;
+      @include tablet {
+        height: 220px;
+      }
+      @include mobile {
+        height: 240px;
+      }
+      img {
+        border-radius: $border-radius-lg;
+      }
+      .overlay {
+        .rating,
+        .tag {
+          padding: 0.3rem 0.6rem;
           font-size: 0.9rem;
-          display: flex;
-          align-items: center;
-          gap: 0.3rem;
-          margin-top: -0.2rem;
-          img {
-            height: 1.3rem;
-            display: inline-block;
-            vertical-align: middle;
+        }
+        .title-overlay {
+          h3 {
+            font-size: 1.5rem;
+          }
+          p {
+            font-size: 1rem;
           }
         }
       }
     }
+    .card-footer .price-section .price-info {
+      .desde {
+        font-size: 0.9rem;
+        color: var(--background-azul);
+        @include tablet {
+          font-size: 0.85rem;
+          margin-top: 0.4rem;
+        }
+        @include mobile {
+          font-size: 0.8rem;
+          margin-top: 0.3rem;
+        }
+      }
+      .price {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--background-azul);
+        line-height: 1.2rem;
+        margin-bottom: $spacing-sm;
+        @include tablet {
+          font-size: 1.4rem;
+        }
+        @include mobile {
+          font-size: 1.3rem;
+        }
+      }
+    }
+    .card-footer .priceScalapay {
+      margin-top: -0.2rem;
+    }
   }
 }
-.trip-type-s {
-  @include trip-type-badge;
-  background-color: var(--color-single) !important;
-}
-.trip-type-g {
-  @include trip-type-badge;
-  background-color: var(--color-group) !important;
-}
-.trip-type-p {
-  @include trip-type-badge;
-  background-color: var(--color-private) !important;
+.trip-type {
+  &-s {
+    @include trip-type-badge;
+    background-color: var(--color-single) !important;
+  }
+  &-g {
+    @include trip-type-badge;
+    background-color: var(--color-group) !important;
+  }
+  &-p {
+    @include trip-type-badge;
+    background-color: var(--color-private) !important;
+  }
 }

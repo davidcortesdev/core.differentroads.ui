@@ -402,7 +402,6 @@ registerLocaleData(localeEs);
       },
     }),
     MessageService,
-    ScalapayService,
   ],
   bootstrap: [AppComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],

@@ -13,6 +13,10 @@ export class ScalapayService {
 
   constructor(private http: HttpClient) {}
 
+  /**
+   * Configura las cabeceras HTTP para las peticiones a la API de Scalapay
+   * @returns Opciones HTTP con cabeceras configuradas
+   */
   private getHttpOptions() {
     return {
       headers: new HttpHeaders({
@@ -23,13 +27,27 @@ export class ScalapayService {
     };
   }
 
-  createOrder(orderData: ScalapayOrderRequest): Promise<ScalapayOrderResponse> {
+  /**
+   * Verifica que las variables de entorno necesarias estén definidas
+   * @returns Promise rechazado si las variables no están definidas
+   */
+  private validateEnvironment(): Promise<void> {
     if (!this.API_URL || !this.API_KEY) {
       console.error(
         'Environment variables scalapayApiUrl or scalapayApiKey are not defined'
       );
       return Promise.reject('Environment variables not defined');
     }
+    return Promise.resolve();
+  }
+
+    /**
+   * Crea una nueva orden en Scalapay
+   * @param orderData Datos de la orden a crear
+   * @returns Promise con la respuesta de la creación de la orden
+   */
+  createOrder(orderData: ScalapayOrderRequest): Promise<ScalapayOrderResponse> {
+    this.validateEnvironment();
 
     const url = `${this.API_URL}/v2/orders`;
     return this.http
@@ -47,13 +65,13 @@ export class ScalapayService {
       });
   }
 
+    /**
+   * Captura un pago en Scalapay
+   * @param paymentData Datos del pago a capturar
+   * @returns Promise con la respuesta de la captura del pago
+   */
   capturePayment(paymentData: any): Promise<any> {
-    if (!this.API_URL || !this.API_KEY) {
-      console.error(
-        'Environment variables scalapayApiUrl or scalapayApiKey are not defined'
-      );
-      return Promise.reject('Environment variables not defined');
-    }
+    this.validateEnvironment();
 
     const url = `${this.API_URL}/v2/payments/capture`;
     return this.http
@@ -71,13 +89,13 @@ export class ScalapayService {
       });
   }
 
+    /**
+   * Obtiene los detalles de un pago específico
+   * @param paymentId ID del pago a consultar
+   * @returns Promise con los detalles del pago
+   */
   getPaymentDetails(paymentId: string): Promise<any> {
-    if (!this.API_URL || !this.API_KEY) {
-      console.error(
-        'Environment variables scalapayApiUrl or scalapayApiKey are not defined'
-      );
-      return Promise.reject('Environment variables not defined');
-    }
+    this.validateEnvironment();
 
     const url = `${this.API_URL}/v2/payments/${paymentId}`;
     return this.http

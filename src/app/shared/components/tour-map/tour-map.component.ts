@@ -11,7 +11,7 @@ export interface City {
   selector: 'app-tour-map',
   standalone: false,
   templateUrl: './tour-map.component.html',
-  styleUrls: ['./tour-map.component.scss']
+  styleUrls: ['./tour-map.component.scss'],
 })
 export class TourMapComponent implements OnInit {
   @Input() cities: string[] = [];
@@ -33,11 +33,11 @@ export class TourMapComponent implements OnInit {
   // Add polyline options and path
   polylinePath: google.maps.LatLngLiteral[] = [];
   polylineOptions: google.maps.PolylineOptions = {
-    strokeColor: '#FF0000',
+    strokeColor: this.getPrimaryColor(),
     strokeOpacity: 0.8,
     geodesic: true,
     clickable: false,
-    strokeWeight: 3
+    strokeWeight: 3,
   };
   mapOptions: google.maps.MapOptions = {
     zoomControl: true,
@@ -148,12 +148,12 @@ export class TourMapComponent implements OnInit {
       this.mapTypeId = google.maps.MapTypeId.ROADMAP;
       this.mapId = google.maps.Map.DEMO_MAP_ID;
       this.apiLoaded = true;
-      
-      // Initialize polyline options without the icons
+
+      // Initialize polyline options without the icons and update color
       this.polylineOptions = {
         ...this.polylineOptions,
-        // Remove the icons property or set it to an empty array
-        icons: []
+        strokeColor: this.getPrimaryColor(),
+        icons: [],
       };
     });
   }
@@ -239,67 +239,79 @@ export class TourMapComponent implements OnInit {
     this.citiesData = citiesData;
     this.markers = [];
     this.polylinePath = []; // Reset the polyline path
-    citiesData.forEach(city => this.addMarker(city));
-    
+    citiesData.forEach((city) => this.addMarker(city));
+
     // Create a smooth path with additional points
     if (this.polylinePath.length > 1) {
       this.polylinePath = this.createSmoothPath(this.polylinePath);
     }
-    
+
     this.calculateMapCenter();
   }
-  
+
   // Create a smooth curved path between points
-  private createSmoothPath(points: google.maps.LatLngLiteral[]): google.maps.LatLngLiteral[] {
+  private createSmoothPath(
+    points: google.maps.LatLngLiteral[]
+  ): google.maps.LatLngLiteral[] {
     if (points.length <= 2) return points;
-    
+
     const smoothPath: google.maps.LatLngLiteral[] = [];
     const numPoints = 20; // Increased number of points for smoother curves
-    
+
     for (let i = 0; i < points.length - 1; i++) {
       const p1 = points[i];
       const p2 = points[i + 1];
-      
+
       // Add the current point
       smoothPath.push(p1);
-      
+
       // Calculate control points for the curve
       // We'll offset the control points perpendicular to the line between p1 and p2
       const dx = p2.lng - p1.lng;
       const dy = p2.lat - p1.lat;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      
+
       // Create perpendicular offset (this controls the curve amount)
       const curveFactor = dist * 0.3; // Adjust this value to control curve intensity
-      const perpX = -dy / dist * curveFactor;
-      const perpY = dx / dist * curveFactor;
-      
+      const perpX = (-dy / dist) * curveFactor;
+      const perpY = (dx / dist) * curveFactor;
+
       // Control point (midpoint with perpendicular offset)
       const ctrlPoint = {
         lat: (p1.lat + p2.lat) / 2 + perpY,
-        lng: (p1.lng + p2.lng) / 2 + perpX
+        lng: (p1.lng + p2.lng) / 2 + perpX,
       };
-      
+
       // Add intermediate points using quadratic Bézier curve
       for (let j = 1; j < numPoints; j++) {
         const t = j / numPoints;
-        
+
         // Quadratic Bézier curve formula: B(t) = (1-t)²P0 + 2(1-t)tP1 + t²P2
-        const lat = Math.pow(1-t, 2) * p1.lat + 
-                    2 * (1-t) * t * ctrlPoint.lat + 
-                    Math.pow(t, 2) * p2.lat;
-                    
-        const lng = Math.pow(1-t, 2) * p1.lng + 
-                    2 * (1-t) * t * ctrlPoint.lng + 
-                    Math.pow(t, 2) * p2.lng;
-        
+        const lat =
+          Math.pow(1 - t, 2) * p1.lat +
+          2 * (1 - t) * t * ctrlPoint.lat +
+          Math.pow(t, 2) * p2.lat;
+
+        const lng =
+          Math.pow(1 - t, 2) * p1.lng +
+          2 * (1 - t) * t * ctrlPoint.lng +
+          Math.pow(t, 2) * p2.lng;
+
         smoothPath.push({ lat, lng });
       }
     }
-    
+
     // Add the last point
     smoothPath.push(points[points.length - 1]);
-    
+
     return smoothPath;
+  }
+
+  // Helper method to get primary color from CSS variables
+  private getPrimaryColor(): string {
+    const primaryColor = getComputedStyle(document.documentElement)
+      .getPropertyValue('--p-primary-color')
+      .trim();
+    return primaryColor || '#FF0000'; // Fallback to red if variable not found
   }
 }

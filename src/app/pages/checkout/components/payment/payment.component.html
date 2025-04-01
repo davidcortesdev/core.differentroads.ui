@@ -24,6 +24,23 @@
       </div>
     </p-panel>
 
+    <!-- New deposit payment option -->
+    <p-panel styleClass="payment-panel">
+      <div class="payment-option">
+        <p-radioButton
+          name="paymentType"
+          value="deposit"
+          [(ngModel)]="paymentType"
+          (onChange)="onPaymentTypeChange()"
+        ></p-radioButton>
+        <span class="option-text">
+          Paga ahora {{ depositAmount | currencyFormat }} y el resto antes del
+          {{ paymentDeadline }}
+        </span>
+        <span class="option-price">{{ depositAmount | currencyFormat }}</span>
+      </div>
+    </p-panel>
+
     <p-panel styleClass="payment-panel">
       <div class="payment-option">
         <p-radioButton
@@ -33,13 +50,20 @@
           (onChange)="onPaymentTypeChange()"
         ></p-radioButton>
         <span class="option-text">Paga a plazos</span>
-        <img src="scalapay.svg" alt="ScalaPay" class="scalapay-logo" />
+        <img
+          src="assets/images/scalapay.svg"
+          alt="ScalaPay"
+          class="scalapay-logo"
+        />
       </div>
     </p-panel>
   </div>
 
-  <!-- Sección de métodos de pago para pago completo -->
-  <div *ngIf="paymentType === 'complete'" class="payment-methods-section">
+  <!-- Sección de métodos de pago para pago completo o depósito -->
+  <div
+    *ngIf="paymentType === 'complete' || paymentType === 'deposit'"
+    class="payment-methods-section"
+  >
     <div class="header-container" (click)="togglePaymentMethodsDropdown()">
       <div class="title-with-icon">
         <span class="title">Selecciona el método de pago</span>
@@ -188,33 +212,63 @@
     </div>
   </div>
 
-  <div class="source-section">
-    <div class="header-container">
-      <div class="title-with-icon">
-        <span class="title">Por último, ¿Cómo nos has conocido?</span>
-      </div>
-    </div>
+  <!-- Make sure the travelers-points-section is properly displaying -->
+  <div *ngIf="uniqueTravelers.length > 0" class="travelers-points-section">
+    <p-accordion [activeIndex]="0">
+      <p-accordionTab header="Puntos de viajeros">
+        <div class="travelers-list">
+          <div *ngFor="let traveler of uniqueTravelers" class="traveler-item">
+            <div class="traveler-row">
+              <!-- Checkbox container -->
+              <div class="checkbox-container">
+                <p-checkbox
+                  *ngIf="(traveler.points || 0) > 0"
+                  [binary]="true"
+                  [(ngModel)]="traveler.redeemCheckbox"
+                  (onChange)="onRedeemCheckboxChange(traveler)"
+                  styleClass="points-checkbox"
+                  [disabled]="isLoading"
+                ></p-checkbox>
+                <div
+                  *ngIf="!traveler.points || traveler.points <= 0"
+                  class="checkbox-placeholder"
+                ></div>
+              </div>
 
-    <div class="dropdown-container" (click)="toggleSourceDropdown($event)">
-      <div class="dropdown-select">
-        <span>{{ selectedSource }}</span>
-        <i
-          class="pi"
-          [ngClass]="isSourceDropdownOpen ? 'pi-chevron-up' : 'pi-chevron-down'"
-        ></i>
-      </div>
-      <div class="dropdown-options" *ngIf="isSourceDropdownOpen">
-        <div
-          *ngFor="let option of sourcesOptions"
-          class="dropdown-option"
-          (click)="selectSource(option, $event)"
-        >
-          {{ option }}
+              <!-- Traveler info with status indicators -->
+              <div class="traveler-info">
+                <span class="traveler-name"
+                  >{{ traveler.firstName }} {{ traveler.lastName }}</span
+                >
+
+                <span class="points-badge" *ngIf="!traveler.redeemCheckbox">
+                  <span
+                    class="points-label"
+                    *ngIf="traveler.points && traveler.points > 0"
+                  >
+                    {{ traveler.points }} pts disponibles
+                  </span>
+                  <span
+                    class="points-label"
+                    *ngIf="!traveler.points || traveler.points <= 0"
+                  >
+                    No hay puntos disponibles
+                  </span>
+                </span>
+                <span class="points-badge" *ngIf="traveler.redeemCheckbox">
+                  <span class="points-redeemed-label">
+                    {{ traveler.points || 0 }} pts aplicados
+                  </span>
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </p-accordionTab>
+    </p-accordion>
   </div>
 
+  <!-- The existing terms-container should come after our new section -->
   <div class="terms-container">
     <p-checkbox
       [(ngModel)]="termsAccepted"
@@ -231,28 +285,35 @@
     </label>
   </div>
 
-  <p-button
-    label="Realizar pago"
-    styleClass="payment-button"
-    [disabled]="
-      isLoading ||
-      !termsAccepted ||
-      !paymentType ||
-      (paymentType === 'complete' && !paymentMethod) ||
-      (paymentType === 'installments' && !installmentOption)
-    "
-    [ngClass]="{
-      'payment-button-disabled':
+  <div class="buttons-container">
+    <p-button
+      label="Regresar"
+      severity="secondary"
+      icon="pi pi-arrow-left"
+      styleClass="back-button"
+      [disabled]="isLoading"
+      (click)="goBack()"
+    ></p-button>
+
+    <p-button
+      [label]="isLoading ? 'Procesando...' : 'Realizar pago'"
+      styleClass="payment-button"
+      [disabled]="
         isLoading ||
         !termsAccepted ||
         !paymentType ||
-        (paymentType === 'complete' && !paymentMethod) ||
+        ((paymentType === 'complete' || paymentType === 'deposit') &&
+          !paymentMethod) ||
         (paymentType === 'installments' && !installmentOption)
-    }"
-    (click)="submitPayment()"
-  >
-    <ng-template pTemplate="icon">
-      <i *ngIf="isLoading" class="pi pi-spin pi-spinner"></i>
-    </ng-template>
-  </p-button>
+      "
+      (click)="submitPayment()"
+    >
+      <ng-template *ngIf="isLoading" pTemplate="content">
+        <div class="button-content">
+          <span>Procesando</span>
+          <i class="pi pi-spin pi-spinner ml-2"></i>
+        </div>
+      </ng-template>
+    </p-button>
+  </div>
 </div>

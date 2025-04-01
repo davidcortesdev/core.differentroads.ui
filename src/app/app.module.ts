@@ -1,10 +1,13 @@
-import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA, LOCALE_ID } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule } from '@angular/forms';
 import { ApplicationConfig } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+
+import { registerLocaleData } from '@angular/common';
+import localeEs from '@angular/common/locales/es';
 
 import { HttpClient } from '@angular/common/http';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
@@ -154,13 +157,49 @@ import { GoogleMapsModule } from '@angular/google-maps';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SortByPipe } from './shared/pipes/sort-by.pipe';
 import { InsurancesComponent } from './pages/checkout/components/customize-trip/components/insurances/insurances.component';
-
+import { Dialog } from 'primeng/dialog';
+import { BudgetDialogComponent } from './shared/components/budget-dialog/budget-dialog.component';
+import { OverlayPanelModule } from 'primeng/overlaypanel';
+import { Amplify } from 'aws-amplify';
+import awsconfig from '../../src/aws-exports';
+import { TripTypesSectionComponent } from './pages/home/components/trip-types-section/trip-types-section.component';
+import { ConfirmationCodeComponent } from './shared/components/confirmation-code/confirmation-code.component';
 import { ScalapayService } from './core/services/checkout/payment/scalapay.service';
 
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
+
+import { MessageService } from 'primeng/api';
+import { TourDateSelectorComponent } from './pages/tour/components/tour-date-selector/tour-date-selector.component';
+import { DiscountCodeComponent } from './pages/checkout/components/discount-code/discount-code.component';
+import { FlightSearchComponent } from './pages/checkout/components/flights/components/flight-search/flight-search.component';
+import { TravelerItemComponent } from './pages/checkout/components/traveler-item/traveler-item.component';
+import { FlightSectionComponent } from './pages/checkout/components/flight-section/flight-section.component';
+import { LoginModalComponent } from './pages/checkout/components/flights/components/login-modal/login-modal.component';
+import { BookingsComponent } from './pages/bookings/bookings.component';
+import { BookingActivitiesComponent } from './pages/bookings/booking-activities/booking-activities.component';
+import { BookingCodeSectionComponent } from './pages/bookings/booking-code-section/booking-code-section.component';
+import { BookingDetailsViewComponent } from './pages/bookings/booking-details-view/booking-details-view.component';
+import { BookingDocumentActionsComponent } from './pages/bookings/booking-document-actions/booking-document-actions.component';
+import { BookingFlightsComponent } from './pages/bookings/booking-flights/booking-flights.component';
+import { BookingHeaderSectionComponent } from './pages/bookings/booking-header-section/booking-header-section.component';
+import { BookingPaymentHistoryComponent } from './pages/bookings/booking-payment-history/booking-payment-history.component';
+import { BookingPersonalDataComponent } from './pages/bookings/booking-personal-data/booking-personal-data.component';
+import { BookingUpdateTravelComponent } from './pages/bookings/booking-update-travel/booking-update-travel.component';
+import { PassengerCardComponent } from './pages/bookings/passenger-card/passenger-card.component';
+import { UploadButtonComponent } from './shared/components/upload-button/upload-button.component';
+import { PaymentsComponent } from './pages/payments/payments.component';
+import { TourInfoAccordionComponent } from './pages/tour/components/tour-info-accordion/tour-info-accordion.component';
+import { HotelCardComponent } from './shared/components/hotel-card/hotel-card.component';
+import { ActivitiesCarouselComponent } from './shared/components/activities-carousel/activities-carousel.component';
+import { ActivityCardComponent } from './shared/components/activity-card/activity-card.component';
+import { TourMapComponent } from './shared/components/tour-map/tour-map.component';
+import { TourItineraryPanelComponent } from './pages/tour/components/tour-itinerary-panel/tour-itinerary-panel.component';
+import { AirportSearchComponent } from './features/airports/airport-search/airport-search.component';
+// Register Spanish locale data
+registerLocaleData(localeEs);
 
 @NgModule({
   declarations: [
@@ -180,7 +219,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     HighlightSectionComponent,
     FullCardSectionComponent,
     CarouselSectionComponent,
-
     // Community Components
     CommunitySectionComponent,
     CommunityHeroComponent,
@@ -239,6 +277,34 @@ export function HttpLoaderFactory(http: HttpClient) {
     PricesSectionComponent,
     PaymentsInformationSectionComponent,
     InsurancesComponent,
+    BudgetDialogComponent,
+    TripTypesSectionComponent,
+    TourDateSelectorComponent,
+    DiscountCodeComponent,
+    FlightSearchComponent,
+    TravelerItemComponent,
+    FlightSectionComponent,
+    LoginModalComponent,
+    BookingsComponent,
+    BookingActivitiesComponent,
+    BookingCodeSectionComponent,
+    BookingDetailsViewComponent,
+    BookingDocumentActionsComponent,
+    BookingFlightsComponent,
+    BookingHeaderSectionComponent,
+    BookingPaymentHistoryComponent,
+    BookingPersonalDataComponent,
+    BookingUpdateTravelComponent,
+    PassengerCardComponent,
+    UploadButtonComponent,
+    PaymentsComponent,
+    TourInfoAccordionComponent,
+    HotelCardComponent,
+    ActivitiesCarouselComponent,
+    ActivityCardComponent,
+    TourMapComponent,
+    TourItineraryPanelComponent,
+    AirportSearchComponent,
   ],
   imports: [
     // Angular Modules
@@ -249,7 +315,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     CommonModule,
     NgComponentOutlet,
     NewsLetterSectionComponent,
-    SignUpComponent,
+    ConfirmationCodeComponent,
     MenubarModule,
     RippleModule,
     AvatarModule,
@@ -297,6 +363,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     GoogleMapsModule,
     MenuModule,
     SkeletonModule,
+    Dialog,
+    OverlayPanelModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,
@@ -311,6 +379,8 @@ export function HttpLoaderFactory(http: HttpClient) {
   providers: [
     provideAnimationsAsync(),
     provideHttpClient(),
+    // Add this provider to set Spanish as the default locale
+    { provide: LOCALE_ID, useValue: 'es-ES' },
     /*providePrimeNG({
       theme: {
         preset: Aura,
@@ -331,9 +401,14 @@ export function HttpLoaderFactory(http: HttpClient) {
         },
       },
     }),
+    MessageService,
     ScalapayService,
   ],
   bootstrap: [AppComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class AppModule {}
+export class AppModule {
+  constructor() {
+    Amplify.configure(awsconfig);
+  }
+}

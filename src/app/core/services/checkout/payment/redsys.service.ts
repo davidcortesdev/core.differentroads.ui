@@ -14,22 +14,27 @@ export class RedsysService {
 
   constructor() {}
 
-  generateFormData(bookingID: string, publicID: string, price: number) {
+  generateFormData(
+    bookingID: string,
+    publicID: string,
+    price: number,
+    paymentID: string
+  ) {
     const pos = new RedSys(this.MERCHANT_KEY);
 
     const baseUrl = window.location.origin;
 
     const obj = {
-      amount: price,
+      amount: price * 100,
       orderReference: publicID,
       merchantName: 'Different Test',
       merchantCode: this.REDSYS_FUC,
       currency: CURRENCIES['EUR'],
       transactionType: TRANSACTION_TYPES['AUTHORIZATION'],
       terminal: '1',
-      merchantURL: `${environment.redsysNotifyUrl}/${publicID}`,
-      successURL: `${baseUrl}/reservation/${bookingID}/success/${publicID}`,
-      errorURL: `${baseUrl}/reservation/${bookingID}/error/${publicID}`,
+      merchantURL: `${environment.dataApiUrl}/redsys/notify/${paymentID}`,
+      successURL: `${baseUrl}/reservation/${bookingID}/success/${paymentID}`,
+      errorURL: `${baseUrl}/reservation/${bookingID}/error/${paymentID}`,
     };
 
     // Make a payment

@@ -3,11 +3,13 @@ import { ActivatedRoute } from '@angular/router';
 import { GeneralConfigService } from '../../../../core/services/general-config.service';
 import { FaqConfig } from '../../../../core/models/general/faq.model';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { InfoCard } from '../tour-info-accordion/tour-info-accordion.component';
 
 interface FaqItem {
   question: string;
   answer: string;
 }
+
 
 @Component({
   selector: 'app-tour-faq',
@@ -18,6 +20,7 @@ interface FaqItem {
 export class TourFaqComponent implements OnInit {
   title: string | undefined;
   faqs: FaqItem[] | undefined;
+  formattedFaqs: InfoCard[] = [];
 
   constructor(
     private sanitizer: DomSanitizer,
@@ -41,6 +44,13 @@ export class TourFaqComponent implements OnInit {
       .subscribe((faqSection: FaqConfig) => {
         this.title = faqSection['section-title'];
         this.faqs = faqSection['faq-cards'] || [];
+        
+        // Transform faqs to the format expected by tour-info-accordion
+        this.formattedFaqs = this.faqs.map((faq, index) => ({
+          title: faq.question,
+          content: faq.answer,
+          order: index.toString()
+        }));
       });
   }
 

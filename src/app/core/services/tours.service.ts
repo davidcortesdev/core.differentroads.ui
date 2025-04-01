@@ -27,6 +27,7 @@ interface TourFilters {
   minDate?: string;
   destination?: string;
   tags?: string[]; // Nuevo filtro para tags
+  externalID?: string;
 }
 
 @Injectable({
@@ -50,7 +51,7 @@ export class ToursService {
   }
 
   getFilteredToursList(filters: TourFilters): Observable<{
-    data: TourList[];
+    data: Tour[];
     filtersOptions: Record<string, string[] | number[] | undefined>;
   }> {
     const selectedFields: SelectedFields = [
@@ -63,6 +64,8 @@ export class ToursService {
       'monthTags',
       'marketingSection',
       'activePeriods',
+      'tourType',
+      'externalID'
     ];
 
     const toursObservable = filters.destination
@@ -77,15 +80,26 @@ export class ToursService {
         const monthSet = new Set<string>();
         const tagsSet = new Set<string>();
         tours.forEach((tour: any) => {
-          tour.monthTags?.forEach((month: string) => {
-            monthSet.add(month);
-          });
-          tour.tags?.forEach((tag: string) => {
-            tagsSet.add(tag);
-          });
-          tour.vtags?.forEach((tag: string) => {
-            tagsSet.add(tag);
-          });
+          // Check if monthTags is an array before calling forEach
+          if (Array.isArray(tour.monthTags)) {
+            tour.monthTags.forEach((month: string) => {
+              monthSet.add(month);
+            });
+          }
+          
+          // Check if tags is an array before calling forEach
+          if (Array.isArray(tour.tags)) {
+            tour.tags.forEach((tag: string) => {
+              tagsSet.add(tag);
+            });
+          }
+          
+          // Check if vtags is an array before calling forEach
+          if (Array.isArray(tour.vtags)) {
+            tour.vtags.forEach((tag: string) => {
+              tagsSet.add(tag);
+            });
+          }
         });
         const filtersOptions = {
           month: Array.from(monthSet),
@@ -98,6 +112,11 @@ export class ToursService {
           const priceFilters = filters.price || [];
           const tourSeasonFilters = filters.tourSeason || [];
           const tagFilters = filters.tags || [];
+
+          // Ensure tags and vtags are arrays
+          const tourTags = Array.isArray(tour.tags) ? tour.tags : [];
+          const tourVtags = Array.isArray(tour.vtags) ? tour.vtags : [];
+          const tourMonthTags = Array.isArray(tour.monthTags) ? tour.monthTags : [];
 
           const priceMatch =
             !priceFilters.length ||
@@ -125,21 +144,21 @@ export class ToursService {
             !tagFilters.length ||
             tagFilters.some(
               (tag: string) =>
-                tour.tags.includes(tag) || tour.vtags.includes(tag)
+                tourTags.includes(tag) || tourVtags.includes(tag)
             );
 
           return (
             (!filters.tourType ||
-              tour.tags.includes(filters.tourType) ||
-              tour.vtags.includes(filters.tourType)) &&
+              tourTags.includes(filters.tourType) ||
+              tourVtags.includes(filters.tourType)) &&
             (!filters.month?.length ||
               filters.month.some((month: string) =>
-                tour.monthTags.includes(month)
+                tourMonthTags.includes(month)
               )) &&
             (!tourSeasonFilters.length ||
               tourSeasonFilters.some(
                 (season: string) =>
-                  tour.tags.includes(season) || tour.vtags.includes(season)
+                  tourTags.includes(season) || tourVtags.includes(season)
               )) &&
             priceMatch &&
             (!filters.periodTripType ||
@@ -167,6 +186,13 @@ export class ToursService {
           );
         }
 
+        // Fix the incorrect assignment that's causing the error
+        if (filters.externalID) {
+          filteredTours = filteredTours.filter((tour: any) => 
+            tour.externalID === filters.externalID
+          );
+        }
+        
         return { data: filteredTours, filtersOptions };
       })
     );
@@ -236,6 +262,7 @@ export class ToursService {
       'image',
       'country',
       'webSlug',
+      'tourType',
     ]).pipe(map((tourData: Tour) => tourData));
   }
 
@@ -247,15 +274,32 @@ export class ToursService {
       ids.forEach((id) => {
         this.getTourCardData(id).subscribe({
           next: (tour) => {
+            const tripType = tour.activePeriods
+              ?.map((period) => period.tripType)
+              .filter((type): type is string => !!type)
+              .filter((value, index, self) => self.indexOf(value) === index);
+
+            const days = tour.activePeriods?.[0]?.days || 0;
+
             tourCards.push({
               imageUrl: tour.image?.[0]?.url || '',
               title: tour.name || '',
-              description: tour.description || '',
+              description:
+                tour.country && days
+                  ? `${tour.country} en: ${days} dias`
+                  : tour.description || '',
               rating: 5,
               tag: tour.marketingSection?.marketingSeasonTag || '',
               price: tour.basePrice || 0,
-              availableMonths: tour.monthTags || [],
-              isByDr: true,
+              availableMonths: (tour.monthTags || []).map(
+                (month: string): string => month.toLocaleUpperCase().slice(0, 3)
+              ),
+              isByDr: tour.tourType !== 'FIT',
+              webSlug:
+                tour.webSlug ||
+                tour.name?.toLowerCase().replace(/\s+/g, '-') ||
+                '',
+              tripType: tripType || [],
             });
             completed++;
 

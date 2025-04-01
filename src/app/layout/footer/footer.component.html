@@ -1,32 +1,101 @@
 <footer class="footer">
   <div class="container">
+    <!-- Logo Section -->
     <div class="section logo-section">
       <div class="logo">
-        <img src="white-logo.svg" alt="Different Roads" />
+        <img src="assets/images/white-logo.svg" alt="Different Roads" />
       </div>
     </div>
 
+    <!-- Newsletter Section -->
     <div class="section newsletter">
-      <h2 class="title">
+      <h2 class="title inicial" [class.hidden]="isSubscribed">
         Regístrate para recibir ofertas exclusivas, eventos y más
       </h2>
-      <div class="inputGroup">
-        <input type="text" placeholder="Escribe tu email o teléfono" />
-        <button>
-          <i class="pi pi-arrow-right"></i>
-        </button>
+      <div
+        id="mlb2-6075553"
+        class="ml-form-embedContainer ml-subscribe-form ml-subscribe-form-6075553"
+      >
+        <div class="ml-form-align-left">
+          <div class="ml-form-embedWrapper embedForm">
+            <div class="ml-form-embedBody ml-form-embedBodyHorizontal row-form">
+              <form
+                class="ml-block-form"
+                action="https://static.mailerlite.com/webforms/submit/l1x1u8"
+                data-code="l1x1u8"
+                method="post"
+                target="_blank"
+                rel="noopener noreferrer"
+                (submit)="handleFormSubmit($event)"
+              >
+                <div class="ml-form-formContent horozintalForm">
+                  <div class="ml-form-horizontalRow mlformhorizontalRow">
+                    <div class="ml-input-horizontal">
+                      <div class="horizontal-fields">
+                        <div
+                          class="inputGroup ml-validate-email ml-validate-required mlfieldemail"
+                        >
+                          <input
+                            type="email"
+                            class="form-control"
+                            data-inputmask=""
+                            name="fields[email]"
+                            placeholder="Escribe tu email"
+                            autocomplete="email"
+                          />
+                          <button type="submit" aria-label="Enviar">
+                            <i class="pi pi-arrow-right"></i>
+                          </button>
+                          <button
+                            disabled="disabled"
+                            style="display: none"
+                            type="button"
+                            class="loading"
+                            aria-label="Cargando"
+                          >
+                            <div class="ml-form-embedSubmitLoad"></div>
+                            <span class="sr-only">Loading...</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <input type="hidden" name="ml-submit" value="1" />
+                <input type="hidden" name="anticsrf" value="true" />
+              </form>
+            </div>
+          </div>
+        </div>
+        <div class="ml-form-successBody row-success" style="display: none">
+          <div class="ml-form-successContent">
+            <h2 class="title">¡Tu viaje empieza ahora!</h2>
+            <p>
+              Ahora ya formas parte de la comunidad de Different Roads.
+              Prepárate porque tu próximo destino esté más cerca de lo que
+              imaginas...
+            </p>
+          </div>
+        </div>
       </div>
+
       <div class="socialLinks">
-        <a href="https://www.instagram.com/different_roads/" class="socialLink">
+        <a
+          href="https://www.instagram.com/different_roads/"
+          class="socialLink"
+          aria-label="Follow us on Instagram"
+        >
           <i class="pi pi-instagram"></i>
         </a>
         <a
+          aria-label="Follow us on Facebook"
           href="https://www.facebook.com/DifferentRoadsViajes/"
           class="socialLink"
         >
           <i class="pi pi-facebook"></i>
         </a>
         <a
+          aria-label="Follow us on YouTube"
           href="https://www.youtube.com/c/DifferentRoads_viajes"
           class="socialLink"
         >
@@ -34,58 +103,71 @@
         </a>
       </div>
       <div class="contactInfo">
-        <p>{{ footerData.contactInfo.phone }}</p>
-        <p>{{ footerData.contactInfo.email }}</p>
+        <p>{{ footerSection?.['contact-info']?.phone }}</p>
+        <p>{{ footerSection?.['contact-info']?.email }}</p>
       </div>
     </div>
 
+    <!-- About Us Section -->
     <div class="section">
-      <h3>Sobre Nosotros</h3>
+      <h3>{{footerSection?.['section-1']?.['section-title']}}</h3>
       <ul class="links">
-        <li *ngFor="let link of footerData.aboutUsLinks">
-          <a [href]="link.url">{{ link.label }}</a>
+        <li
+          *ngFor="let link of (footerSection?.['section-1']?.links || []) | sortBy:'order'"
+        >
+          <a [href]="link.url" *ngIf="link">{{ link.text }}</a>
         </li>
       </ul>
     </div>
 
+    <!-- Our Trips Section -->
     <div class="section">
-      <h3>Nuestros Viajes</h3>
+      <h3>{{footerSection?.['section-2']?.['section-title']}}</h3>
       <ul class="links">
-        <li *ngFor="let link of footerData.ourTripsLinks">
-          <a [href]="link.url">{{ link.label }}</a>
+        <li
+          *ngFor="let link of (footerSection?.['section-2']?.links || []) | sortBy:'order'"
+        >
+          <a [href]="link.url" *ngIf="link">{{ link.text }}</a>
         </li>
       </ul>
     </div>
 
+    <!-- Travel Types Section -->
     <div class="section">
-      <h3>Tipos de viaje</h3>
+      <h3>{{footerSection?.['section-3']?.['section-title']}}</h3>
       <ul class="links">
-        <li *ngFor="let link of footerData.travelTypesLinks">
-          <a [href]="link.url">{{ link.label }}</a>
+        <li
+          *ngFor="let link of (footerSection?.['section-3']?.links || []) | sortBy:'order'"
+        >
+          <a [href]="link.url" *ngIf="link">{{ link.text }}</a>
         </li>
       </ul>
     </div>
 
+    <!-- Tour Operator Section -->
     <div class="section">
-      <h3>Touroperador</h3>
+      <h3>{{footerSection?.['section-4']?.['section-title']}}</h3>
       <ul class="links">
-        <li *ngFor="let link of footerData.tourOperatorLinks">
-          <a [href]="link.url">{{ link.label }}</a>
+        <li
+          *ngFor="let link of (footerSection?.['section-4']?.links || []) | sortBy:'order'"
+        >
+          <a [href]="link.url" *ngIf="link">{{ link.text }}</a>
         </li>
       </ul>
     </div>
   </div>
 
+  <!-- Bottom Section -->
   <div class="bottom">
     <div class="copyright">
-      {{ footerData.copyrightText }}
+      {{ footerSection?.copyright?.text }} {{ footerSection?.copyright?.year }}
     </div>
     <div class="payment">
-      <img src="scalapay.svg" alt="Scalapay" style="filter: invert(1);">
-      <img src="visa.svg" alt="Visa" />
-      <img src="master.svg" alt="Mastercard" />
-      <img src="confianzaonline.svg" alt="confianzaonline" />
-      <img src="ssl.svg" alt="SSL" />
+      <img src="assets/images/scalapay.svg" alt="Scalapay" style="filter: invert(1)" />
+      <img src="assets/images/visa.svg" alt="Visa" />
+      <img src="assets/images/master.svg" alt="Mastercard" />
+      <img src="assets/images/confianzaonline.svg" alt="confianzaonline" />
+      <img src="assets/images/ssl.svg" alt="SSL" />
     </div>
   </div>
 </footer>

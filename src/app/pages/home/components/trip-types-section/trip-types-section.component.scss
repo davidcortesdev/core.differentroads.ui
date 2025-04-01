@@ -1,0 +1,104 @@
+// Variables for reusability
+$breakpoint-mobile: 768px;
+$border-radius-sm: 0.5rem;
+$border-radius-md: 8px;
+$spacing-sm: 0.4rem;
+$spacing-md: 1rem;
+$spacing-lg: 1.5rem;
+
+// Base styles
+.trip-types-section {
+  width: 100%;
+  padding: $spacing-md 0;
+  margin-bottom: 2rem;
+}
+
+.trip-types-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-md;
+
+  @media (max-width: $breakpoint-mobile) {
+    flex-direction: column;
+    gap: $spacing-lg;
+  }
+}
+
+.trip-type-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-sm;
+  transition: transform 0.3s ease;
+  cursor: pointer;
+  flex: 1;
+  max-width: 32%;
+
+  &:hover {
+    transform: translateY(-5px);
+  }
+
+  @media (max-width: $breakpoint-mobile) {
+    width: 100%;
+    max-width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+.trip-type-content {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  width: 100%;
+
+  .title-container {
+    display: inline-block;
+    padding: $spacing-sm 0.75rem;
+    border-radius: $border-radius-md;
+    border: none;
+
+    h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 400;
+      white-space: nowrap;
+      color: white;
+    }
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #666;
+    line-height: 1.2;
+  }
+
+  @media (max-width: $breakpoint-mobile) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-sm;
+  }
+}
+
+// Trip type specific styles using a mixin for DRY code
+@mixin trip-type-colors($color) {
+  .title-container {
+    background-color: $color;
+  }
+}
+
+.group {
+  @include trip-type-colors(var(--color-group));
+}
+
+.singles {
+  @include trip-type-colors(var(--color-single));
+}
+
+.private {
+  @include trip-type-colors(var(--color-private));
+}

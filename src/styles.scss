@@ -23,6 +23,10 @@
   --background-azul-color-letra: white;
   --background-white: #f7f6f2;
 
+  --color-group: #3aa0ff;
+  --color-single: #8e00fd;
+  --color-private: #00b27a;
+
   --surface-color-0: #f7f6f2;
   --surface-color-50: #fafaf9;
   --surface-color-100: #f5f5f4;
@@ -35,7 +39,6 @@
   --surface-color-800: #292524;
   --surface-color-900: #1c1917;
   --surface-color-950: #0c0a09;
-
 
   --accent-white: #f7f6f2;
 
@@ -68,6 +71,20 @@ body {
   margin: 0;
 }
 
+:root {
+  --toast-z-index: 9999;
+}
+
+.p-toast {
+  position: fixed !important;
+  z-index: var(--toast-z-index) !important;
+}
+
+.p-toast-top-right {
+  top: 20px !important;
+  right: 20px !important;
+}
+
 /* Estilos temporales que formatean los textos que llegan desde el quill js */
 
 .formated-content {
@@ -80,7 +97,6 @@ body {
   .ql-snow {
     .ql-picker {
       &.ql-size {
-
         .ql-picker-label,
         .ql-picker-item {
           &::before {

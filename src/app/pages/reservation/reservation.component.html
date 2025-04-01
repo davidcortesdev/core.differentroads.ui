@@ -1,159 +1,229 @@
-<div class="res-conf" [ngClass]="reservationInfo.status">
-    <!-- Header con check y título -->
-    <div class="hdr">
-        <span class="status-icon" *ngIf="reservationInfo.status !== 'transfer'" [class]="reservationInfo.status === 'confirm' ? 'pi pi-check-circle' : 'pi pi-exclamation-circle'"></span>
-        <h1 *ngIf="reservationInfo.status === 'confirm'">
-            ¡Tu reserva con número {{reservationInfo.reservationNumber}} ha sido confirmada!
-        </h1>
-        <h1 *ngIf="reservationInfo.status === 'rq'">
-            ¡Tu reserva con número {{reservationInfo.reservationNumber}} está en petición!
-        </h1>
-        <h1 *ngIf="reservationInfo.status === 'transfer'">
-            Confirma tu petición de reserva realizando el pago por transferencia
-        </h1>
-    </div>
+<div class="loading-container" *ngIf="loading">
+  <p-progressSpinner styleClass="reservation-loader"></p-progressSpinner>
+</div>
+<div
+  *ngIf="!loading && !error"
+  class="res-conf"
+  [ngClass]="paymentStatus || reservationInfo?.status"
+>
+  <!-- Header con check y título -->
+  <div class="hdr">
+    <span
+      class="status-icon"
+      *ngIf="(paymentStatus || reservationInfo?.status) !== 'transfer'"
+      [class]="
+        (paymentStatus || reservationInfo?.status) === 'confirm'
+          ? 'pi pi-check-circle'
+          : 'pi pi-exclamation-circle'
+      "
+    ></span>
+    <h1 *ngIf="(paymentStatus || reservationInfo?.status) === 'confirm'">
+      ¡Tu reserva con número {{ reservationInfo?.reservationNumber }} ha sido
+      confirmada!
+    </h1>
+    <h1 *ngIf="(paymentStatus || reservationInfo?.status) === 'rq'">
+      ¡Tu reserva con número {{ reservationInfo?.reservationNumber }} está en
+      petición!
+    </h1>
+    <h1 *ngIf="(paymentStatus || reservationInfo?.status) === 'transfer'">
+      Confirma tu petición de reserva realizando el pago por transferencia
+    </h1>
+  </div>
 
-    <!-- Mensaje de bienvenida -->
-    <div class="wel">
-        <p class="greet">Hola {{reservationInfo.customerName}},</p>
-        
-        <!-- Mensajes específicos por estado -->
-        <ng-container *ngIf="reservationInfo.status === 'confirm'">
-            <p class="hl">
-                ¡Estamos emocionados de confirmarte que tu reserva ha sido realizada con éxito!
-            </p>
-            <p class="msg">
-                Gracias por elegirnos para tu próximo viaje. Sabemos que cada viaje es una oportunidad para crear 
-                recuerdos inolvidables, y estamos aquí para asegurarnos de que todo sea perfecto. Si tienes alguna 
-                pregunta sobre tu destino, recomendaciones de actividades o cualquier detalle relacionado con tu viaje, 
-                no dudes en contactarnos.
-            </p>
-            <p class="msg">
-                ¡Estamos seguros de que vivirás una experiencia maravillosa!
-            </p>
-        </ng-container>
+  <!-- Mensaje de bienvenida -->
+  <div class="wel">
+    <p class="greet" *ngIf="reservationInfo?.customerName">
+      Hola {{ reservationInfo?.customerName }},
+    </p>
 
-        <ng-container *ngIf="reservationInfo.status === 'rq'">
-            <p class="hl">
-                Hemos bloqueado tus plazas, ¡Esto significa que te tenemos en cuenta para la salida de este tour!
-            </p>
-            <p class="msg">
-                Pero algunos de los servicios incluidos en tu viaje están aún pendientes de confirmación. 
-                Si el precio de tu viaje sufre alguna modificación podrás cancelar la reserva sin ningún 
-                compromiso y recibir un reembolso inmediato.
-            </p>
-            <p class="msg">
-                Nuestro equipo de atención al cliente se pondrá en contacto contigo <span class="status-msg">vía email</span> en las próximas 
-                24/48 horas con toda la información actualizada y los detalles para realizar el pago del depósito 
-                de tu viaje. Agradecemos tu paciencia y comprensión
-            </p>
-        </ng-container>
+    <!-- Mensajes específicos por estado -->
+    <ng-container
+      *ngIf="(paymentStatus || reservationInfo?.status) === 'confirm'"
+    >
+      <p class="hl">
+        ¡Estamos emocionados de confirmarte que tu reserva ha sido realizada con
+        éxito!
+      </p>
+      <p class="msg">
+        Gracias por elegirnos para tu próximo viaje. Sabemos que cada viaje es
+        una oportunidad para crear recuerdos inolvidables, y estamos aquí para
+        asegurarnos de que todo sea perfecto. Si tienes alguna pregunta sobre tu
+        destino, recomendaciones de actividades o cualquier detalle relacionado
+        con tu viaje, no dudes en contactarnos.
+      </p>
+      <p class="msg">
+        ¡Estamos seguros de que vivirás una experiencia maravillosa!
+      </p>
+    </ng-container>
 
-        <ng-container *ngIf="reservationInfo.status === 'transfer'">
-            <p class="hl">
-                ¡Hemos recibido tu petición de reserva del tour!
-            </p>
-            <p class="msg">
-                Pero algunos de los servicios incluidos en tu viaje están aún pendientes de configuración.
-                Nuestro equipo de atención al cliente se pondrá en contacto contigo en las próximas
-                24/48 horas vía email con toda la información actualizada. Por favor, realiza el pago por
-                transferencia antes de las 23:59 del 17/10/2024 a través de las entidades bancarias que
-                te indicamos a continuación.
-            </p>
-            <p class="status-msg" style="color: #F05A4C">
-                IMPORTANTE: Sube el correspondiente justificante de pago dentro de este plazo para
-                evitar que tu viaje se cancele automáticamente.
-            </p>
-            <p class="msg">
-                Nuestro equipo de atención al cliente se pondrá en contacto contigo vía email en las
-                próximas 24/48 horas con toda la información actualizada y los detalles para realizar el
-                pago del depósito de tu viaje.
-            </p>
-            <p class="msg">
-                Si el precio de tu viaje sufre alguna modificación, podrás cancelar la reserva sin ningún
-                compromiso y recibir su reembolso inmediato.
-            </p>
-        
-        <!-- Recuadro coral con información bancaria -->
-        <p-panel styleClass="bank-panel" *ngIf="reservationInfo.status === 'transfer'">
-            <ng-template pTemplate="header">
-                <div class="pan-hdr">Realiza el pago a través de una de estas entidades bancarias y adjunta el justificante</div>
-            </ng-template>
-            <div class="bank-info">
-                <div class="bank-column" *ngFor="let bank of bankInfo">
-                    <div class="bank-row">
-                        <span class="label">Banco:</span>
-                        <span class="value">{{ bank.name }}</span>
-                    </div>
-                    <div class="bank-row">
-                        <span class="label">Cuenta:</span>
-                        <span class="value">{{ bank.account }}</span>
-                    </div>
-                    <div class="bank-row">
-                        <span class="label">Beneficiario:</span>
-                        <span class="value">{{ bank.beneficiary }}</span>
-                    </div>
-                    <div class="bank-row">
-                        <span class="label">Concepto:</span>
-                        <span class="value">{{ bank.concept }}</span>
-                    </div>
-                </div>
-            </div>
-        </p-panel>
+    <ng-container *ngIf="(paymentStatus || reservationInfo?.status) === 'rq'">
+      <p class="hl">
+        Hemos bloqueado tus plazas, ¡Esto significa que te tenemos en cuenta
+        para la salida de este tour!
+      </p>
+      <p class="msg">
+        Pero algunos de los servicios incluidos en tu viaje están aún pendientes
+        de confirmación. Si el precio de tu viaje sufre alguna modificación
+        podrás cancelar la reserva sin ningún compromiso y recibir un reembolso
+        inmediato.
+      </p>
+      <p class="msg">
+        Nuestro equipo de atención al cliente se pondrá en contacto contigo
+        <span class="status-msg">vía email</span> en las próximas 24/48 horas
+        con toda la información actualizada y los detalles para realizar el pago
+        del depósito de tu viaje. Agradecemos tu paciencia y comprensión
+      </p>
+    </ng-container>
 
-        <!-- Botón de subir justificante -->
-        <p-fileUpload 
-            mode="basic" 
-            name="demo[]" 
-            chooseIcon="pi pi-upload" 
-            url="https://www.primefaces.org/cdn/api/upload.php" 
-            accept="image/*, .pdf"
-            maxFileSize="1000000" 
-            (onUpload)="onBasicUploadAuto($event)" 
-            [auto]="true" 
-            chooseLabel="Subir justificante de transferencia"
-            class="upload-button"
-        ></p-fileUpload>
-        </ng-container>
-    </div>
+    <ng-container
+      *ngIf="(paymentStatus || reservationInfo?.status) === 'transfer'"
+    >
+      <p class="hl">¡Hemos recibido tu petición de reserva del tour!</p>
+      <p class="msg">
+        Por favor, realiza el pago por transferencia antes de las 11:59 pm
+        {{ nextDayDate }} a través de las entidades bancarias que se indican.
+      </p>
+      <p class="status-msg" style="color: #f05a4c" *ngIf="!uploadedVoucher">
+        IMPORTANTE: Sube el justificante de pago dentro de este plazo para
+        evitar que tu viaje se cancele automáticamente.
+      </p>
+    </ng-container>
 
-    <!-- Panel de detalles -->
-    <p-panel styleClass="det-panel">
-        <div class="det-item">
-            <label class="val">Fecha de reserva:</label>
-            <span>{{reservationInfo.date}}</span>
+    <!-- Recuadro coral con información bancaria -->
+    <p-panel styleClass="bank-panel" *ngIf="paymentStatus === 'transfer'">
+      <ng-template pTemplate="header">
+        <div class="pan-hdr">
+          Realiza el pago a través de una de estas entidades bancarias y adjunta
+          el justificante
         </div>
-        <div class="det-item">
-            <label class="val">Número de reserva:</label>
-            <span>{{reservationInfo.reservationNumber}}</span>
+      </ng-template>
+      <div class="bank-info">
+        <div class="bank-column" *ngFor="let bank of bankInfo">
+          <div class="bank-row">
+            <span class="label">Banco:</span>
+            <span class="value">{{ bank.name }}</span>
+          </div>
+          <div class="bank-row">
+            <span class="label">Cuenta:</span>
+            <span class="value">{{ bank.account }}</span>
+          </div>
+          <div class="bank-row">
+            <span class="label">Beneficiario:</span>
+            <span class="value">{{ bank.beneficiary }}</span>
+          </div>
+          <div class="bank-row">
+            <span class="label">Concepto:</span>
+            <span class="value">{{ bank.concept }}</span>
+          </div>
         </div>
-        <div class="det-item">
-            <label class="val">Importe abonado:</label>
-            <span>{{reservationInfo.amount}}</span>
-        </div>
+      </div>
     </p-panel>
 
-    <!-- Sección de creación de contraseña -->
-    <div class="lnk">
-        <p>
-            Te has dado de alta en nuestra web al realizar tu reserva, crea tu contraseña para acceder a
-            <a href="#">tu perfil</a> y poder gestionar tu reserva
-        </p>
-        <a href="#" class="pwd" style="color: #55728F">Crear contraseña</a>
+    <ng-container *ngIf="paymentInfo?.method === 'transfer'">
+      <!-- Botón de justificante: mostrar componente de subida o botón de ver voucher -->
+      <ng-container
+        *ngIf="
+          !uploadedVoucher && paymentInfo?.status == 'PENDING';
+          else voucherView
+        "
+      >
+        <app-upload-button
+          label="Subir justificante de transferencia"
+          accept="image/*, .pdf"
+          [maxFileSize]="1000000"
+          folder="vouchers"
+          [auto]="false"
+          chooseIcon="pi pi-upload"
+          styleClass="upload-button"
+          (onUploadSuccess)="handleVoucherUpload($event)"
+          (onUploadError)="handleVoucherError($event)"
+        >
+        </app-upload-button>
+      </ng-container>
+      <ng-template #voucherView>
+        <p-button
+          label="Ver justificante"
+          (onClick)="viewVoucher()"
+          severity="info"
+        ></p-button>
+        <ng-container *ngIf="paymentInfo?.status === 'PENDING_REVIEW'">
+          <p class="voucher-status-text">
+            Hemos recibido tu comprobante de pago y nuestro equipo lo estará
+            validando. Recibirás una notificación en tu correo cuando la
+            transferencia sea verificada.
+          </p>
+        </ng-container>
+      </ng-template>
+    </ng-container>
+  </div>
+
+  <!-- Panel de detalles -->
+  <p-panel styleClass="det-panel">
+    <div class="det-item">
+      <label class="val">Fecha de reserva:</label>
+      <span>{{ reservationInfo?.date }}</span>
     </div>
+    <div class="det-item">
+      <label class="val">Número de reserva:</label>
+      <span>{{ reservationInfo?.reservationNumber }}</span>
+    </div>
+    <div class="det-item">
+      <label class="val">{{
+        paymentInfo?.status === "PENDING"
+          ? "Pendiente a abonar:"
+          : "Importe abonado:"
+      }}</label>
+      <span>{{ paymentInfo?.amount || 0 | currencyFormat : "EUR" }}</span>
+    </div>
+  </p-panel>
 
-    <!-- Panel de información del viaje -->
-    <app-travel-information-section [tripDetails]="reservationInfo.tripDetails"></app-travel-information-section>
+  <!-- Sección de creación de contraseña -->
+  <!--   <div class="lnk">
+    <p>
+      Te has dado de alta en nuestra web al realizar tu reserva, crea tu
+      contraseña para acceder a
+      <a href="#">tu perfil</a> y poder gestionar tu reserva
+    </p>
+    <a href="#" class="pwd" style="color: #55728f">Crear contraseña</a>
+  </div> -->
 
-    <!-- Panel de información de viajeros -->
-    <app-travelers-information-section [travelers]="reservationInfo.travelers"></app-travelers-information-section>
+  <!-- Panel de información del viaje -->
+  <app-travel-information-section
+    *ngIf="reservationInfo?.tripDetails"
+    [tripDetails]="reservationInfo!.tripDetails"
+  ></app-travel-information-section>
 
-    <!-- Panel de vuelos -->
-    <app-flights-section [flights]="flights"></app-flights-section>
+  <!-- Panel de información de viajeros -->
+  <app-travelers-information-section
+    *ngIf="reservationInfo?.travelers"
+    [travelers]="reservationInfo!.travelers"
+  ></app-travelers-information-section>
 
-    <!-- Panel de precios -->
-    <app-prices-section [priceDetails]="priceDetails"></app-prices-section>
+  <!-- Panel de vuelos -->
+  <app-flights-section [flights]="flights"></app-flights-section>
 
-    <!-- Panel de información de pago -->
-    <app-payments-information-section [paymentInfo]="paymentInfo"></app-payments-information-section>
+  <!-- Panel de precios -->
+  <app-prices-section [priceDetails]="priceDetails"></app-prices-section>
+
+  <!-- Panel de información de pago -->
+  <app-payments-information-section
+    *ngIf="reservationInfo?.totalAmount"
+    [totalAmount]="reservationInfo!.totalAmount"
+    [bookingID]="bookingId"
+    [bookingData]="bookingData!"
+    [currentPayment]="paymentInfo!"
+  ></app-payments-information-section>
+</div>
+
+<div *ngIf="error" class="error-container">
+  <i
+    class="pi pi-exclamation-triangle"
+    style="font-size: 3rem; color: #f05a4c"
+  ></i>
+  <h2>No se pudo cargar la información de la reserva</h2>
+  <p>
+    Por favor, inténtalo de nuevo más tarde o ponte en contacto con nuestro
+    equipo de soporte.
+  </p>
+  <button pButton type="button" label="Volver" routerLink="/"></button>
 </div>

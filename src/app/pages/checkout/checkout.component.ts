@@ -12,12 +12,17 @@ import { ActivitiesService } from '../../core/services/checkout/activities.servi
 import { Activity } from '../../core/models/tours/activity.model';
 import { FlightsService } from '../../core/services/checkout/flights.service';
 import { Flight } from '../../core/models/tours/flight.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { BookingsService } from '../../core/services/bookings.service';
 import { BookingCreateInput } from '../../core/models/bookings/booking.model';
 import { Period } from '../../core/models/tours/period.model';
 import { InsurancesService } from '../../core/services/checkout/insurances.service';
 import { Insurance } from '../../core/models/tours/insurance.model';
+import { PaymentOptionsService } from '../../core/services/checkout/paymentOptions.service';
+import { MessageService, MenuItem } from 'primeng/api';
+import { DiscountsService } from '../../core/services/checkout/discounts.service';
+import { AuthenticateService } from '../../core/services/auth-service.service';
+import { TextsService } from '../../core/services/checkout/texts.service';
 
 @Component({
   selector: 'app-checkout',
@@ -29,6 +34,35 @@ export class CheckoutComponent implements OnInit {
   currentStep: number = 1;
   orderDetails: Order | null = null;
   availableTravelers: string[] = [];
+
+  // PrimeNG Steps
+  activeIndex: number = 0;
+  items: MenuItem[] = [
+    {
+      label: 'Personaliza tu viaje',
+      command: (event) => {
+        this.onActiveIndexChange(0);
+      },
+    },
+    {
+      label: 'Vuelos',
+      command: (event) => {
+        this.onActiveIndexChange(1);
+      },
+    },
+    {
+      label: 'Viajeros',
+      command: (event) => {
+        this.onActiveIndexChange(2);
+      },
+    },
+    {
+      label: 'Pago',
+      command: (event) => {
+        this.onActiveIndexChange(3);
+      },
+    },
+  ];
 
   // Tour information
   tourName: string = '';
@@ -63,6 +97,22 @@ export class CheckoutComponent implements OnInit {
   tourID: string = '';
   periodID: string = '';
   periodData!: Period;
+  flightlessOption: Flight | null = null;
+
+  // Add property to control budget dialog visibility
+  budgetDialogVisible: boolean = false;
+
+  discountInfo: {
+    code?: string;
+    amount: number;
+    description: string;
+    type: string;
+  } | null = null;
+
+  points: number = 0;
+
+  // Add a new property to control the login modal visibility in checkout
+  loginDialogVisible: boolean = false;
 
   constructor(
     private ordersService: OrdersService,
@@ -73,12 +123,30 @@ export class CheckoutComponent implements OnInit {
     private pricesService: PricesService,
     private activitiesService: ActivitiesService,
     private flightsService: FlightsService,
+    private authService: AuthenticateService,
     private route: ActivatedRoute,
+    private router: Router,
     private bookingsService: BookingsService,
-    private insurancesService: InsurancesService
+    private insurancesService: InsurancesService,
+    private paymentOptionsService: PaymentOptionsService,
+    private messageService: MessageService,
+    private discountsService: DiscountsService,
+    private textsService: TextsService
   ) {}
 
   ngOnInit() {
+    // Read step from URL if present
+    this.route.queryParams.subscribe((params) => {
+      if (params['step']) {
+        const stepParam = parseInt(params['step']);
+        if (!isNaN(stepParam) && stepParam >= 1 && stepParam <= 4) {
+          this.currentStep = stepParam;
+          // Also update the activeIndex (0-based) to match the currentStep (1-based)
+          this.activeIndex = stepParam - 1;
+        }
+      }
+    });
+
     const orderId =
       this.route.snapshot.paramMap.get('id') || '67b702314d0586617b90606b';
     this.ordersService.getOrderDetails(orderId).subscribe((order) => {
@@ -87,29 +155,48 @@ export class CheckoutComponent implements OnInit {
       this.orderDetails = order;
       this.summaryService.updateOrder(order);
 
+      const periodID = order.periodID;
+      this.periodID = periodID;
+
+      // Initialize discounts if present in the order
+      if (order.discounts && order.discounts.length > 0) {
+        this.discountInfo = order.discounts[0];
+      }
+
       this.initializeTravelers(order.travelers || []);
       this.initializeActivities(order.optionalActivitiesRef || []);
       this.initializeFlights(order.flights || []);
       this.initializeInsurances(order.insurancesRef || []);
 
-      const periodID = order.periodID;
-      this.periodID = periodID;
-
       this.periodsService
-        .getPeriodDetail(periodID, ['tourID', 'name', 'dayOne', 'returnDate'])
+        .getPeriodDetail(periodID, [
+          'tourID',
+          'tourName',
+          'name',
+          'dayOne',
+          'returnDate',
+        ])
         .subscribe((period) => {
           console.log('Period details:', period);
           this.periodData = period;
-
-          this.tourName = period.name;
+          this.tourName = period.tourName;
 
           this.tourID = period.tourID;
-          this.tourDates = `${period.dayOne} - ${period.returnDate}`;
+          this.tourDates = `
+            ${new Date(period.dayOne).toLocaleDateString('es-ES', {
+              day: '2-digit',
+              month: 'long',
+              timeZone: 'UTC',
+            })} - 
+            ${new Date(period.returnDate).toLocaleDateString('es-ES', {
+              day: '2-digit',
+              month: 'long',
+              timeZone: 'UTC',
+            })}
+          `;
         });
 
       this.periodsService.getPeriodPrices(periodID).subscribe((prices) => {
-        console.log('Prices:', prices);
-
         this.prices = prices;
         this.pricesService.updatePrices(prices);
         this.updateOrderSummary();
@@ -121,6 +208,7 @@ export class CheckoutComponent implements OnInit {
       this.travelersSelected = data;
       this.updateOrderSummary();
     });
+
     this.travelersService.travelers$.subscribe((travelers) => {
       //this.updateOrderSummary();
     });
@@ -149,6 +237,56 @@ export class CheckoutComponent implements OnInit {
       this.selectedInsurances = insurances;
       this.updateOrderSummary();
     });
+
+    this.flightsService.flightlessOption$.subscribe((option) => {
+      this.flightlessOption = option;
+    });
+
+    this.discountsService.selectedDiscounts$.subscribe((discounts) => {
+      console.log('Discounts updated:', discounts);
+      this.updateOrderSummary();
+    });
+  }
+
+  /* Steps Navigation Methods */
+  onActiveIndexChange(index: number): void {
+    // Sin validaciones: permitir el cambio de índice directamente
+    this.activeIndex = index;
+    this.currentStep = index + 1; // Actualizar currentStep (base 1) para que coincida con activeIndex (base 0)
+
+    // Actualizar la URL para reflejar el paso actual
+    this.updateStepInUrl(this.currentStep);
+
+    // Actualizar el resumen del pedido después de cambiar el paso
+    this.updateOrderSummary();
+    this.updateOrder();
+  }
+
+  nextStepWithValidation(targetIndex: number): void {
+    // Usar nextStep para validar antes de cambiar el paso
+    if (this.nextStep(targetIndex + 1)) {
+      this.activeIndex = targetIndex;
+      this.currentStep = targetIndex + 1;
+    }
+  }
+
+  // Method to update URL when step changes
+  updateStepInUrl(step: any): void {
+    // Extract the step number if it's an event object, otherwise use the value directly
+    const stepNumber =
+      typeof step === 'object' && step !== null ? step.value : step;
+
+    // Make sure we have a valid number
+    if (typeof stepNumber === 'number' && !isNaN(stepNumber)) {
+      this.currentStep = stepNumber;
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { step: stepNumber },
+        queryParamsHandling: 'merge',
+      });
+    } else {
+      console.error('Invalid step value:', step);
+    }
   }
 
   /* Inicialization */
@@ -221,9 +359,42 @@ export class CheckoutComponent implements OnInit {
     this.activitiesService.updateActivities(activities);
   }
 
-  initializeFlights(flights: Flight[]) {
+  initializeFlights(flights: Flight[] | { id: string; externalID: string }[]) {
     if (flights.length > 0) {
-      this.selectedFlight = flights[0];
+      if ('externalID' in flights[0]) {
+        this.periodsService.getFlights(this.periodID).subscribe({
+          next: (flightsData) => {
+            const filteredFlights = flightsData
+              .filter(
+                (flight) => flight.name && !flight.name.includes('Sin vuelos')
+              )
+              .map((flight) => {
+                return {
+                  ...flight,
+                  price:
+                    this.pricesService.getPriceById(
+                      `${flight.outbound.activityID}`,
+                      'Adultos'
+                    ) +
+                    this.pricesService.getPriceById(
+                      `${flight.inbound.activityID}`,
+                      'Adultos'
+                    ),
+                };
+              });
+            const selectedFlight = filteredFlights.find(
+              (flight) => flight.externalID === flights[0].externalID
+            );
+
+            this.flightsService.updateSelectedFlight(selectedFlight as Flight);
+          },
+          error: (error) => {
+            console.error('Error fetching flights:', error);
+          },
+        });
+      } else {
+        this.selectedFlight = null;
+      }
       this.flightsService.updateSelectedFlight(this.selectedFlight);
     }
   }
@@ -340,6 +511,8 @@ export class CheckoutComponent implements OnInit {
     let tempOrderData: Order = { ...this.summaryService.getOrderValue()! };
     const travelersData = this.travelersService.getTravelers();
 
+    // Save the entire summary to the order
+    tempOrderData['summary'] = this.summary;
     tempOrderData['travelers'] = travelersData;
     tempOrderData['optionalActivitiesRef'] = this.activities.map(
       (activity) => ({
@@ -351,15 +524,28 @@ export class CheckoutComponent implements OnInit {
       })
     );
 
-    if (this.selectedFlight) {
-      this.summary.push({
-        qty:
-          this.travelersSelected.adults +
-          this.travelersSelected.childs +
-          this.travelersSelected.babies,
-        value: this.selectedFlight.price || 0,
-        description: this.selectedFlight.name,
-      });
+    if (
+      this.selectedFlight &&
+      this.selectedFlight.externalID! !== 'undefined'
+    ) {
+      if (!this.selectedFlight.name.toLowerCase().includes('sin ')) {
+        this.summary.push({
+          qty:
+            this.travelersSelected.adults +
+            this.travelersSelected.childs +
+            this.travelersSelected.babies,
+          value:
+            this.selectedFlight.price ||
+            this.pricesService.getPriceById(
+              this.selectedFlight.externalID,
+              'Adultos'
+            ) ||
+            0,
+          description:
+            this.selectedFlight.outbound.activityName ||
+            this.selectedFlight.name,
+        });
+      }
 
       tempOrderData['flights'] = [this.selectedFlight];
     }
@@ -398,6 +584,28 @@ export class CheckoutComponent implements OnInit {
       tempOrderData['insurancesRef'] = [];
     }
 
+    // Append all discounts from DiscountsService
+    const discounts = this.discountsService.getSelectedDiscounts();
+
+    if (discounts && discounts.length > 0) {
+      discounts.forEach((discount) => {
+        if (discount.source === 'coupon') {
+          this.summary.push({
+            qty: 1,
+            value: -discount.amount,
+            description: `Descuento cupon: ${discount.description}`,
+          });
+        } else {
+          this.summary.push({
+            qty: 1,
+            value: -discount.amount,
+            description: `${discount.description}`,
+          });
+        }
+      });
+      tempOrderData['discounts'] = discounts;
+    }
+
     this.summaryService.updateOrder(tempOrderData);
 
     this.calculateTotals();
@@ -411,41 +619,170 @@ export class CheckoutComponent implements OnInit {
     this.travelers = event.adults + event.childs + event.babies;
   }
 
-  calculateTotals() {
-    this.subtotal = this.summary.reduce(
+  // Método para manejar el descuento
+  handleDiscountApplied(discountInfo: {
+    code?: string;
+    amount: number;
+    description: string;
+    type: string;
+  }): void {
+    // Verificar si ya tenemos un descuento de cupón
+    const currentDiscounts = this.discountsService.getSelectedDiscounts();
+    const nonCouponDiscounts = currentDiscounts.filter(
+      (d) => d.source !== 'coupon'
+    );
+
+    // Si el monto es 0, significa que estamos eliminando el descuento
+    if (discountInfo.amount === 0) {
+      this.discountsService.updateSelectedDiscounts(nonCouponDiscounts);
+    } else {
+      const couponDiscount = {
+        type: discountInfo.type,
+        amount: discountInfo.amount,
+        description: discountInfo.code || '',
+        source: 'coupon',
+      };
+
+      this.discountsService.updateSelectedDiscounts([
+        ...nonCouponDiscounts,
+        couponDiscount,
+      ]);
+    }
+
+    // Actualizar manualmente el resumen
+    this.updateOrderSummary();
+  }
+
+  // Método para calcular totales
+  calculateTotals(): void {
+    // Calcular subtotal a partir de elementos del resumen, excluyendo elementos de descuento
+    this.subtotal = this.summary.reduce((acc, item) => {
+      // Solo agregar valores positivos al subtotal (ignorar elementos de descuento con valores negativos)
+      if (item.value >= 0) {
+        return acc + item.value * item.qty;
+      }
+      return acc;
+    }, 0);
+
+    // Calcular total incluyendo todos los elementos (tanto valores positivos como negativos)
+    this.total = this.summary.reduce(
       (acc, item) => acc + item.value * item.qty,
       0
     );
-    this.total = this.subtotal;
   }
 
   /* Steps and validations */
 
   nextStep(step: number): boolean {
     switch (step) {
-      case 1:
-        break;
       case 2:
-      case 3:
-      case 4:
-        this.updateOrderSummary();
+        const { adults, childs, babies } = this.travelersSelected;
+        if (childs + babies > adults) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Número incorrecto de viajeros',
+            detail:
+              'La cantidad de niños y bebés no puede superar el número de adultos. Por favor, ajusta la selección.',
+          });
 
-        this.updateOrder().subscribe({
-          next: (response) => {
-            console.log('Order updated');
-            return true;
-          },
-          error: (error) => {
-            console.error('Error updating order:', error);
-            return false;
-          },
-        });
+          return false;
+        }
+        const totalTravelers = adults + childs + babies;
+        const totalCapacity = this.rooms.reduce(
+          (acc, room) => acc + room.places * (room.qty || 1),
+          0
+        );
+        if (totalTravelers > totalCapacity) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Selección de habitaciones incorrecta',
+            detail:
+              'La cantidad de habitaciones seleccionadas no coincide con el número de viajeros.',
+          });
+
+          return false;
+        }
+        break;
+      case 3:
+        break;
+      case 4:
+        const travelersComponent =
+          this.travelersService.getTravelersComponent();
+        if (!travelersComponent.areAllTravelersValid()) {
+          return false;
+        }
         break;
       default:
         return false;
     }
 
+    this.updateOrderSummary();
+    this.updateOrder();
+
+    // Update URL with new step if validations pass
+    if (step !== this.currentStep) {
+      this.updateStepInUrl(step);
+    }
+
     return true;
+  }
+
+  // New method to check auth before continuing from flights step
+  checkAuthAndContinue(
+    nextStep: number,
+    activateCallback: any,
+    useFlightless: boolean = false
+  ): void {
+    this.authService.isLoggedIn().subscribe((isLoggedIn) => {
+      if (isLoggedIn) {
+        // User is logged in, proceed normally
+        if (useFlightless) {
+          // Handle "Lo quiero sin vuelos" button
+          if (this.flightlessOption) {
+            this.flightsService.updateSelectedFlight(this.flightlessOption);
+            if (this.nextStep(nextStep)) {
+              activateCallback(nextStep);
+            }
+          }
+        } else {
+          // Handle "Continuar" button
+          if (this.nextStep(nextStep)) {
+            activateCallback(nextStep);
+          }
+        }
+      } else {
+        // User is not logged in, save URL and show login dialog
+        sessionStorage.setItem('redirectUrl', window.location.pathname);
+        // Show the login modal instead of redirecting
+        this.loginDialogVisible = true;
+      }
+    });
+  }
+
+  // Add method to close the login modal
+  closeLoginModal(): void {
+    this.loginDialogVisible = false;
+  }
+
+  // Add method to navigate to login page
+  navigateToLogin(): void {
+    this.closeLoginModal();
+    this.router.navigate(['/login']);
+  }
+
+  // Add method to navigate to register page
+  navigateToRegister(): void {
+    this.closeLoginModal();
+    this.router.navigate(['/sign-up']); // Changed from '/register' to '/sign-up'
+  }
+
+  // Remove authentication check from here since it's now handled in checkAuthAndContinue
+  selectFlightlessAndContinue(): boolean {
+    if (this.flightlessOption) {
+      this.flightsService.updateSelectedFlight(this.flightlessOption);
+      return true;
+    }
+    return false;
   }
 
   /* Order update */
@@ -453,23 +790,48 @@ export class CheckoutComponent implements OnInit {
   updateOrder() {
     console.log('Updating order:', this.summaryService.getOrderValue());
 
-    return this.ordersService.updateOrder(
-      this.summaryService.getOrderValue()!._id,
-      this.summaryService.getOrderValue()!
-    );
+    this.ordersService
+      .updateOrder(
+        this.summaryService.getOrderValue()!._id,
+        this.summaryService.getOrderValue()!
+      )
+      .subscribe({
+        next: (response) => {
+          console.log('Order updated:', response);
+          return response;
+        },
+        error: (error) => {
+          console.error('Error updating order:', error);
+          return error;
+        },
+      });
   }
 
   /* Booking create */
 
   processBooking(): Promise<{ bookingID: string; ID: string }> {
     return new Promise((resolve, reject) => {
+      // Ensure payment data is included in the order
+      const currentOrder = this.summaryService.getOrderValue();
+      if (currentOrder) {
+        // Update payment details from the payment options service
+        const paymentOption = this.paymentOptionsService.getPaymentOption();
+        if (paymentOption) {
+          currentOrder.payment = paymentOption;
+          this.summaryService.updateOrder(currentOrder);
+        }
+      }
+
+      // Get textSummary data from TextsService
+      const textSummary = this.textsService.getTextsData();
+
       const bookingData: BookingCreateInput = {
         tour: {
           id: this.tourID,
           name: this.tourName,
           priceData: this.pricesService.getPriceDataById(this.tourID),
         },
-        summary: '',
+        textSummary: textSummary, // Include the complete texts data
         total: this.total,
         priceData: this.pricesService.getPriceDataById(this.periodID),
         id: this.orderDetails?._id || '',
@@ -483,7 +845,19 @@ export class CheckoutComponent implements OnInit {
         usePoints: {},
         name: this.periodData.name,
         externalID: this.periodID,
+        payment: this.paymentOptionsService.getPaymentOption() || undefined,
       };
+
+      // Save the period data to the TextsService as well
+      this.textsService.updateText('period', this.periodID, this.periodData);
+
+      // Store tour information if available
+      if (this.periodData?.tourName) {
+        this.textsService.updateText('tour', this.tourID, {
+          name: this.periodData.tourName,
+        });
+      }
+
       let bookingID = '';
       let bookingSID = '';
       let order: Order | undefined;
@@ -495,12 +869,16 @@ export class CheckoutComponent implements OnInit {
             console.log('Booking created:', response);
             bookingID = response.bookingID;
             bookingSID = response.ID;
-            order = response.order;
+            order = {
+              ...response.order,
+              payment:
+                this.paymentOptionsService.getPaymentOption() || undefined,
+            };
 
             this.bookingsService
               .saveTravelers(response.bookingID, {
                 bookingSID: response.ID,
-                bookingID: this.orderDetails?._id!,
+                bookingID: response.bookingID,
                 order: response.order as Order,
               })
               .subscribe({
@@ -538,5 +916,15 @@ export class CheckoutComponent implements OnInit {
           },
         });
     });
+  }
+
+  // Método para guardar viaje
+  saveTrip(): void {
+    this.budgetDialogVisible = true;
+  }
+
+  // Método para manejar el cierre del diálogo
+  handleCloseBudgetDialog(): void {
+    this.budgetDialogVisible = false;
   }
 }

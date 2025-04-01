@@ -2,45 +2,48 @@
   <div
     *ngFor="let room of roomsAvailabilityForTravelersNumber; let i = index"
     class="room-item"
+    [ngClass]="{ selected: selectedRooms[room.externalID] > 0 }"
   >
-    <p>
-      {{ room.name }}
-      {{ "   " }}
-      <span *ngIf="room.price > 0"
-        >+{{ room.price | currencyFormat : "EUR" }}</span
-      >
-      <span *ngIf="room.price < 0">{{
-        room.price | currencyFormat : "EUR"
-      }}</span>
-    </p>
+    <div class="room-price-data">
+      <p>
+        {{ room.name }}
+      </p>
+      <p *ngIf="room.price > 0">+{{ room.price | currencyFormat : "EUR" }}</p>
+      <p *ngIf="room.price < 0">{{ room.price | currencyFormat : "EUR" }}</p>
 
-    <p-inputNumber
-      [(ngModel)]="selectedRooms[room.externalID]"
-      (ngModelChange)="onRoomSpacesChange(room, $event)"
-      [min]="0"
-      [max]="8"
-      [showButtons]="true"
-      buttonLayout="horizontal"
-      spinnerMode="horizontal"
-      placeholder="0"
-    >
-      <ng-template #incrementbuttonicon>
-        <span class="pi pi-chevron-up"></span>
-      </ng-template>
-      <ng-template #decrementbuttonicon>
-        <span class="pi pi-chevron-down"></span>
-      </ng-template>
-    </p-inputNumber>
+      <p-inputNumber
+        [(ngModel)]="selectedRooms[room.externalID]"
+        (ngModelChange)="onRoomSpacesChange(room, $event)"
+        [min]="0"
+        [max]="8"
+        [showButtons]="true"
+        buttonLayout="horizontal"
+        spinnerMode="horizontal"
+        placeholder="0"
+      >
+        <ng-template #incrementbuttonicon>
+          <span class="pi pi-chevron-up"></span>
+        </ng-template>
+        <ng-template #decrementbuttonicon>
+          <span class="pi pi-chevron-down"></span>
+        </ng-template>
+      </p-inputNumber>
+    </div>
+
+    <p class="room-description">
+      {{ room.description }}
+    </p>
   </div>
 </div>
 
 <div class="messages">
-  <div class="info-message">
+  <div *ngIf="isSharedRoomSelected" class="info-message">
     <i class="pi pi-info-circle"></i>
     <p>
       La asignación de compañero se realiza por orden de reserva. En caso de no
       tener compañero una semana antes de la salida, deberás abonar el
-      suplemento individual.
+      suplemento individual. Puedes asegurar el precio agregando el seguro de
+      habitación.
     </p>
   </div>
 

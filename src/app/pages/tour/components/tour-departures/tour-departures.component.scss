@@ -37,6 +37,7 @@ $primary: var(--p-primary-color);
   .f-hdr {
     @include flex(space-between, flex-start);
     flex-wrap: wrap;
+    padding-bottom: 1rem;
     .f-box {
       min-width: 300px;
       flex: 1;
@@ -110,7 +111,7 @@ $primary: var(--p-primary-color);
       flex: 1;
     }
     ::ng-deep .p-button-text {
-      min-width: 120px;
+
       @extend %txt-azul;
       .circle {
         background: $primary;
@@ -226,10 +227,9 @@ $primary: var(--p-primary-color);
       }
     }
     .p-button {
-      background: $primary;
-      border-radius: 6rem;
-      width: 144.935px;
-      height: 49.254px;
+      border-radius: 1.5rem;
+      min-width: 7rem;
+
     }
     .p-dataview-content {
       background-color: transparent;
@@ -385,11 +385,6 @@ $primary: var(--p-primary-color);
           padding-right: 0.5rem;
         }
       }
-      .p-button {
-        width: 130px;
-        height: 45px;
-        font-size: 0.9rem;
-      }
       .p-dataview-content {
         font-size: 0.95rem;
       }
@@ -455,10 +450,6 @@ $primary: var(--p-primary-color);
           }
         }
       }
-      .p-button {
-        width: 144.935px;
-        height: 49.254px;
-      }
     }
   }
   .p-type {
@@ -501,4 +492,25 @@ $primary: var(--p-primary-color);
       margin: 0 0.5rem;
     }
   }
+}
+
+// Trip type tags in expanded row
+.trip-type-tag {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: white;
+}
+
+.trip-type-tag-group {
+  background-color: var(--color-group);
+}
+
+.trip-type-tag-single {
+  background-color: var(--color-single);
+}
+
+.trip-type-tag-private {
+  background-color: var(--color-private);
 }

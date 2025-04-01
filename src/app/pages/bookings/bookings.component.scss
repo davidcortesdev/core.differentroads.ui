@@ -1,0 +1,46 @@
+:host ::ng-deep {
+    .p-toast {
+        position: fixed;
+        z-index: 9999;
+
+        @media (max-width: 480px) {
+            width: 90% !important;
+            left: 50% !important;
+            top: 20px !important;
+            transform: translateX(-50%) !important;
+        }
+
+        @media (min-width: 481px) and (max-width: 768px) {
+            top: 20px !important;
+            right: 20px !important;
+            width: auto !important;
+            max-width: 400px !important;
+        }
+
+        @media (min-width: 769px) {
+            top: 20px !important;
+            right: 20px !important;
+            width: auto !important;
+            max-width: 350px !important;
+        }
+    }
+}
+
+.booking-container {
+    display: flex;
+    flex-direction: column;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+    background-color: red;
+
+    @media (max-width: 480px) {
+        padding: 0.5rem;
+    }
+}
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}

@@ -5,10 +5,17 @@ import {
   ElementRef,
   Renderer2,
   AfterViewInit,
+  OnDestroy,
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ToursService } from '../../../../core/services/tours.service';
+import { TourComponent } from '../../tour.component';
 import { Tour } from '../../../../core/models/tours/tour.model';
+import { TourDataService } from '../../../../core/services/tour-data/tour-data.service';
+import { Subscription } from 'rxjs';
+import { PeriodPricesService } from '../../../../core/services/tour-data/period-prices.service';
+import { TourOrderService } from '../../../../core/services/tour-data/tour-order.service';
+import { OptionalActivityRef } from '../../../../core/models/orders/order.model';
 
 @Component({
   selector: 'app-tour-header',
@@ -16,35 +23,164 @@ import { Tour } from '../../../../core/models/tours/tour.model';
   templateUrl: './tour-header.component.html',
   styleUrls: ['./tour-header.component.scss'],
 })
-export class TourHeaderComponent implements OnInit, AfterViewInit {
+export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   tour: Partial<Tour> = {};
   marketingTag: string = '';
+  selectedDate: string = '';
+  tripType: string = '';
+  departureCity: string = '';
+  selectedActivities: OptionalActivityRef[] = [];
+
+  // Passenger information
+  adultsCount: number = 1;
+  childrenCount: number = 0;
+
+  // Base and total prices
+  basePrice: number = 0;
+  totalPrice: number = 0;
+  travelersText: string = '';
+
   private isScrolled = false;
   private headerHeight = 0;
+  private subscriptions = new Subscription();
+  periodID: any;
+  flightID: string | number | undefined;
 
   constructor(
     private route: ActivatedRoute,
     private toursService: ToursService,
+    private tourComponent: TourComponent,
     private el: ElementRef,
-    private renderer: Renderer2
+    private renderer: Renderer2,
+    private tourOrderService: TourOrderService
   ) {}
 
   ngOnInit() {
-    this.route.params.subscribe((params) => {
-      const slug = params['slug'];
-      if (slug) {
-        this.loadTourData(slug);
-      }
-    });
+    this.initializeSubscriptions();
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.unsubscribe();
   }
 
   ngAfterViewInit() {
-    // Obtener la altura del encabezado
+    this.setHeaderHeight();
+  }
+
+  @HostListener('window:scroll', [])
+  onWindowScroll() {
+    this.handleScrollEffect();
+  }
+
+  bookTour() {
+    this.tourComponent.createOrderAndRedirect(this.periodID);
+  }
+
+  getDuration(): string {
+    const days = this.tour.activePeriods?.[0]?.days;
+    return days ? `${days} días, ${days - 1} noches` : '';
+  }
+
+  getSelectedActivitiesNames(): string {
+    if (!this.selectedActivities?.length) {
+      return 'No hay actividades seleccionadas';
+    }
+    
+    return this.selectedActivities
+      .map(activity => activity.name)
+      .join(', ');
+  }
+  
+  // Helper method for template
+  formatDepartureCity(city: string): string {
+    if (!city) return '';
+    
+    const cityLower = city.toLowerCase();
+    if (cityLower.includes("sin")) {
+      return "Sin vuelos";
+    } else if (cityLower.includes("vuelo")) {
+      return city;
+    }
+    return "Vuelo Desde " + city;
+  }
+
+  // Private methods
+  private initializeSubscriptions() {
+    // Load tour data from route params
+    this.subscriptions.add(
+      this.route.params.subscribe(params => {
+        const slug = params['slug'];
+        if (slug) {
+          this.loadTourData(slug);
+        }
+      })
+    );
+
+    // Subscribe to traveler changes
+    this.subscriptions.add(
+      this.tourOrderService.selectedTravelers$.subscribe(travelers => {
+        this.adultsCount = travelers.adults;
+        this.childrenCount = travelers.children;
+        this.calculateTotalPrice();
+        this.getPassengersInfo();
+      })
+    );
+
+    // Subscribe to activity changes
+    this.subscriptions.add(
+      this.tourOrderService.selectedActivities$.subscribe(activities => {
+        this.selectedActivities = activities;
+        this.calculateTotalPrice();
+      })
+    );
+
+    // Subscribe to date info changes
+    this.subscriptions.add(
+      this.tourOrderService.selectedDateInfo$.subscribe(dateInfo => {
+        this.selectedDate = dateInfo.date;
+        this.periodID = dateInfo.periodID;
+        this.tripType = dateInfo.tripType;
+        this.departureCity = dateInfo.departureCity || '';
+        this.flightID = dateInfo.flightID;
+      })
+    );
+  }
+
+  private loadTourData(slug: string) {
+    this.subscriptions.add(
+      this.toursService.getTourDetailBySlug(slug).subscribe({
+        next: (tourData) => {
+          this.tour = { ...this.tour, ...tourData };
+          this.marketingTag = tourData.marketingSection?.marketingTag || '';
+
+          if (tourData.price) {
+            this.basePrice = tourData.price;
+            this.calculateTotalPrice();
+          }
+        },
+        error: (error) => {
+          console.error('Error loading tour:', error);
+        },
+      })
+    );
+  }
+
+  private calculateTotalPrice(): void {
+    this.subscriptions.add(
+      this.tourOrderService.getTotalPrice().subscribe(totalPrice => {
+        this.totalPrice = totalPrice;
+      })
+    );
+  }
+
+  private getPassengersInfo() {
+    this.travelersText = this.tourOrderService.getTravelersText();
+  }
+
+  private setHeaderHeight() {
     const headerElement = this.el.nativeElement.querySelector('.tour-header');
     if (headerElement) {
       this.headerHeight = headerElement.offsetHeight;
-
-      // Establecer la altura como variable CSS personalizada
       document.documentElement.style.setProperty(
         '--header-height',
         `${this.headerHeight}px`
@@ -52,8 +188,7 @@ export class TourHeaderComponent implements OnInit, AfterViewInit {
     }
   }
 
-  @HostListener('window:scroll', [])
-  onWindowScroll() {
+  private handleScrollEffect() {
     const scrollPosition =
       window.pageYOffset ||
       document.documentElement.scrollTop ||
@@ -63,54 +198,16 @@ export class TourHeaderComponent implements OnInit, AfterViewInit {
 
     if (!headerElement) return;
 
-    // Umbral de scroll - puede ajustarse según necesidades
     const scrollThreshold = 100;
 
     if (scrollPosition > scrollThreshold && !this.isScrolled) {
-      // Aplicar clase scrolled al header
       this.renderer.addClass(headerElement, 'scrolled');
-
-      // Añadir clase al componente para activar el espaciado
       this.renderer.addClass(this.el.nativeElement, 'header-fixed');
-
       this.isScrolled = true;
     } else if (scrollPosition <= scrollThreshold && this.isScrolled) {
-      // Quitar clase scrolled al header
       this.renderer.removeClass(headerElement, 'scrolled');
-
-      // Quitar clase al componente para desactivar el espaciado
       this.renderer.removeClass(this.el.nativeElement, 'header-fixed');
-
       this.isScrolled = false;
     }
-  }
-
-  private loadTourData(slug: string) {
-    this.toursService.getTourDetailBySlug(slug).subscribe({
-      next: (tourData) => {
-        console.log('Tour Data:', tourData);
-        this.tour = {
-          ...this.tour,
-          ...tourData,
-        };
-        // Extraer el marketingTag si existe
-        this.marketingTag = tourData.marketingSection?.marketingTag || '';
-      },
-      error: (error) => {
-        console.error('Error loading tour:', error);
-      },
-    });
-  }
-
-  getDuration(): string {
-    if (this.tour.activePeriods && this.tour.activePeriods.length > 0) {
-      return this.getDuration2(this.tour.activePeriods[0].days);
-    }
-    return '';
-  }
-
-  getDuration2(days: number | undefined): string {
-    if (!days) return '';
-    return `${days} días, ${days - 1} noches`;
   }
 }

@@ -1,0 +1,53 @@
+<div class="activities-container">
+  <p-panel header="Actividades">
+    <p-dataview #dv [value]="activities" [emptyMessage]="''">
+      <ng-template #list let-items>
+        <div class="activities-content">
+          <div *ngFor="let activity of items" class="activity-item">
+            <div class="activity-content">
+              <div class="activity-image">
+                <img [src]="activity.imageUrl" [alt]="activity.title" />
+              </div>
+              <div class="activity-details">
+                <div class="activity-header">
+                  <div class="activity-title-container">
+                    <span *ngIf="activity.isOptional" class="optional-label">Opcional:</span>
+                    <span class="activity-title">{{ activity.title }}</span>
+                  </div>
+                  <div class="activity-price">
+                    <span class="price-value">{{ activity.price }}</span>
+                    <span *ngIf="activity.perPerson" class="per-person">por persona</span>
+                  </div>
+                </div>
+                <div class="activity-description" [innerHTML]="getSafeDescription(activity.description)">
+                </div>
+                <div class="activity-actions">
+                  <button
+                    *ngIf="activity.isOptional && !activity.isIncluded"
+                    pButton
+                    type="button"
+                    label="Añadir"
+                    class="p-button-rounded"
+                    (click)="onAddActivity(activity.id)">
+                  </button>
+                  <button
+                    *ngIf="activity.isOptional && activity.isIncluded"
+                    pButton
+                    type="button"
+                    label="Eliminar"
+                    class="p-button-rounded p-button-outlined"
+                    (click)="onEliminateActivity(activity.id)">
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div *ngIf="items.length === 0" class="no-activities">
+            No hay actividades disponibles para esta reserva.
+          </div>
+        </div>
+      </ng-template>
+    </p-dataview>
+  </p-panel>
+</div>

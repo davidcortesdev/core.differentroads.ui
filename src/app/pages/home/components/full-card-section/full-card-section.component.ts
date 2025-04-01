@@ -1,74 +1,74 @@
-import { Component, OnInit, Input, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { BlockType } from '../../../../core/models/blocks/block.model';
 import { FullSliderContent } from '../../../../core/models/blocks/full-slider-content.model';
+import { Router } from '@angular/router';
 
-type Card = {
+interface Card {
   id: number;
-  title?: string;
-  description: string;
+  subtitle: string;
+  link: string;
   image: { url: string; alt: string };
-};
+}
 
 @Component({
   selector: 'app-full-card-section',
   standalone: false,
   templateUrl: './full-card-section.component.html',
   styleUrls: ['./full-card-section.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FullCardSectionComponent implements OnInit {
   @Input() content!: FullSliderContent;
   @Input() type!: BlockType;
   @Input() title!: string;
-  cards: Card[] = []; 
+  cards: Card[] = [];
 
-  constructor(private sanitizer: DomSanitizer) {}
+  constructor(
+    private sanitizer: DomSanitizer,
+    private readonly router: Router
+  ) {}
 
   ngOnInit(): void {
-    console.log('Received content:', this.content);
-    console.log('Received title:', this.title);
-    console.log('Received type:', this.type);
-
-  
-  if (this.content && this.content['card-list']) {
-    
-    this.cards = this.content['card-list'].map((card: any, index: number) => {
-      
-      const { title, description } = this.extractTitleAndDescriptionFromHtml(card.subtitle);
-
-      return {
-        id: index + 1, 
-        title: title, 
-        description: description, 
-        image: {
-          url: card.image[0].url, 
-          alt: `Image ${index + 1}`, 
-        },
-      };
-    });
-  } else {
-    console.error('No cards received or cards array is empty');
+    this.initializeCards();
   }
-}
 
+  protected sanitizeHtml(html: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
 
-extractTitleAndDescriptionFromHtml(html: string): { title: string, description: string } {
-  const div = document.createElement('div');
-  div.innerHTML = html;
+  onClick(url: string): void {
+    if (!url) return;
+    this.navigate(url);
+  }
 
-  
-  const strongElements = div.querySelectorAll('strong');
+  trackByCardId(index: number, card: Card): number {
+    return card.id;
+  }
 
-  
-  const title = strongElements[0]?.textContent || '';
+  private initializeCards(): void {
+    if (this.content?.['card-list']?.length) {
+      this.cards = this.content['card-list'].map((card: any, index: number) => ({
+        id: index + 1,
+        subtitle: card.subtitle || '',
+        link: card.link || '',
+        image: {
+          url: card.image?.[0]?.url || '',
+          alt: `Image ${index + 1}`,
+        },
+      }));
+    } else {
+      console.error('No cards received or cards array is empty');
+    }
+  }
 
-  
-  const description = strongElements[1]?.textContent || '';
+  private navigate(url: string): void {
+    this.isExternalUrl(url)
+      ? window.open(url, '_blank', 'noopener,noreferrer')
+      : this.router.navigate([url]);
+  }
 
-  return { title, description };
-}
-
-getSanitizedDescription(description: string): SafeHtml {
-  return this.sanitizer.bypassSecurityTrustHtml(description);
-}
+  private isExternalUrl(url: string): boolean {
+    return /^https?:\/\//.test(url);
+  }
 }

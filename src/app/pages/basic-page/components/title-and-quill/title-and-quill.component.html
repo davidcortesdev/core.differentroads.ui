@@ -1,5 +1,5 @@
-<div class="main-container">
-  <h3 class="landingTitle">{{ title }}</h3>
+<div *ngIf="title || description" class="main-container">
+  <h3 *ngIf="title" class="landingTitle">{{ title }}</h3>
   <div
     *ngIf="description"
     [innerHTML]="sanitizeHtml(description)"

@@ -31,6 +31,7 @@ export interface Flight {
     segments: FlightSegment[];
     serviceCombinationID: number;
     prices?: PriceData[];
+    activityName?: string;
   };
   name: string;
   outbound: {
@@ -41,6 +42,7 @@ export interface Flight {
     segments: FlightSegment[];
     serviceCombinationID: number;
     prices?: PriceData[];
+    activityName?: string;
   };
   price?: number;
   priceData?: PriceData[];

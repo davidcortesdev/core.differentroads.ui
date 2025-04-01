@@ -23,7 +23,7 @@
           <div class="booking-item" *ngFor="let booking of bookings">
             <div class="booking-item-content">
               <div class="image-container">
-                <img [src]="booking.image" alt="Booking image" />
+                <img [src]="booking.image" alt="booking.title"/>
               </div>
 
               <div class="info-sections">
@@ -73,6 +73,7 @@
                   pButton
                   label="Ver reserva"
                   class="p-button-rounded"
+                  (click)="viewBooking(booking)"
                 ></button>
               </div>
             </div>

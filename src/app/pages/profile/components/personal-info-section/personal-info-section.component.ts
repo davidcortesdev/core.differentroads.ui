@@ -3,6 +3,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 
 interface PersonalInfo {
   nombre: string;
+  apellido: string;
   telefono: string;
   email: string;
   sexo: string;

@@ -1,13 +1,27 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  Output,
+  EventEmitter,
+} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ToursService } from '../../../../core/services/tours.service';
 import { TourComponent } from '../../tour.component';
+import { TourDataService } from '../../../../core/services/tour-data/tour-data.service';
+import { Subscription } from 'rxjs';
+import { TourOrderService } from '../../../../core/services/tour-data/tour-order.service';
+import { TripType } from '../../../../shared/models/interfaces/trip-type.interface';
+import { TRIP_TYPES } from '../../../../shared/constants/trip-types.constants';
+
 
 export interface Departure {
+  name: string;
   departureDate: Date;
   returnDate: Date;
   destination?: string;
   flights?: string;
+  flightID: string;
   price: number;
   originalPrice: number;
   discount: number;
@@ -29,16 +43,21 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
   departures: Departure[] = [];
   filteredDepartures: Departure[] = [];
   selectedCity: string = '';
-  readonly priceFrom: number = 1500;
 
-  // Propiedades para pasajeros
+  // Propiedades para pasajeros (incluye bebés pero no se usarán para el precio)
   travelers = {
     adults: 1,
-    children: 2,
+    children: 0,
     babies: 0,
   };
 
-  passengerText: string = '1 Adulto, 2 Niños'; // Valor inicial
+  // Emitir cambios en la selección de pasajeros (solo adultos y niños)
+  @Output() passengerChange = new EventEmitter<{
+    adults: number;
+    children: number;
+  }>();
+
+  passengerText: string = '1 Adulto'; // Valor inicial
 
   // Nueva propiedad para el panel de pasajeros
   showPassengersPanel: boolean = false;
@@ -51,10 +70,21 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
   private cities: string[] = [];
   filteredCities: string[] = [];
 
+  // Para manejar las suscripciones
+  private subscriptions = new Subscription();
+
+  // Add properties to track selected departure
+  selectedDepartureId: string | null = null;
+  selectedFlightId: string | null = null;
+
+    // Constants
+    tripTypes: TripType[] = TRIP_TYPES;
+
   constructor(
     private route: ActivatedRoute,
     private toursService: ToursService,
-    private tourComponent: TourComponent
+    private tourDataService: TourDataService,
+    private tourOrderService: TourOrderService
   ) {}
 
   filterCities(event: { query: string }): void {
@@ -64,7 +94,7 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
     );
   }
 
-  // Nuevos métodos para el selector de pasajeros
+  // Métodos para el selector de pasajeros
   togglePassengersPanel(event: Event): void {
     this.showPassengersPanel = !this.showPassengersPanel;
     event.stopPropagation();
@@ -82,11 +112,19 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
       this.travelers.babies = Math.max(0, this.travelers.babies + change);
     }
 
+    this.tourOrderService.updateSelectedTravelers(this.travelers);
     this.updatePassengerText();
   }
 
   applyPassengers(): void {
     this.showPassengersPanel = false;
+
+    // Emitir cambio de pasajeros al aplicar (solo adultos y niños)
+    this.passengerChange.emit({
+      adults: this.travelers.adults,
+      children: this.travelers.children,
+      // No enviamos los bebés para el cálculo del precio
+    });
   }
 
   updatePassengerText(): void {
@@ -120,7 +158,48 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
   }
 
   addToCart(departure: Departure): void {
-    this.tourComponent.createOrderAndRedirect(departure);
+    // Antes de redirigir, actualizamos la información en el servicio compartido
+    const selectedDate = new Date(departure.departureDate);
+    const returnDate = new Date(departure.returnDate);
+
+    // Formatear las fechas para mostrar en el header
+    const dateString = `${selectedDate.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: 'short',
+    })} - ${returnDate.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: 'short',
+    })}`;
+
+    // Actualizar la información compartida
+
+    this.tourOrderService.updateSelectedDateInfo(
+      departure.externalID,
+      departure.flightID
+    );
+
+    // Update our local tracking properties
+    this.selectedDepartureId = departure.externalID;
+    this.selectedFlightId = departure.flightID;
+
+    this.tourOrderService.updateSelectedTravelers(this.travelers);
+
+    // Emitir información de pasajeros (solo adultos y niños)
+    this.passengerChange.emit({
+      adults: this.travelers.adults,
+      children: this.travelers.children,
+    });
+
+    // Continuar con la redirección
+    //this.tourComponent.createOrderAndRedirect(departure);
+  }
+
+  // Add a helper method to check if a departure is currently selected
+  isDepartureSelected(departure: Departure): boolean {
+    return (
+      this.selectedDepartureId === departure.externalID &&
+      this.selectedFlightId === departure.flightID
+    );
   }
 
   filterDepartures(): void {
@@ -129,6 +208,15 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
         departure.destination === this.selectedCity ||
         departure.flights === this.selectedCity
     );
+
+    console.log('filteredDepartures', this.filteredDepartures);
+
+    // Automatically select the first departure if available
+    if (this.filteredDepartures.length > 0) {
+      this.addToCart(this.filteredDepartures[0]);
+      this.tourOrderService.updateBasePrice(this.filteredDepartures[0].price);
+    }
+
     console.log('filteredDepartures', this.filteredDepartures);
   }
 
@@ -152,7 +240,7 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
     // Mantenemos el año en la propiedad pero no lo mostramos en la interfaz
     this.year = this.currentMonth.getFullYear();
   }
-
+  /*
   previousMonth(): void {
     this.currentMonth = new Date(
       this.currentMonth.getFullYear(),
@@ -162,7 +250,8 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
     this.updateMonthDisplay();
     this.filterDeparturesByMonth();
   }
-
+    */
+  /*
   nextMonth(): void {
     this.currentMonth = new Date(
       this.currentMonth.getFullYear(),
@@ -172,9 +261,9 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
     this.updateMonthDisplay();
     this.filterDeparturesByMonth();
   }
-
+*/
   filterDeparturesByMonth(): void {
-    const startOfMonth = new Date(
+    /* const startOfMonth = new Date(
       this.currentMonth.getFullYear(),
       this.currentMonth.getMonth(),
       1
@@ -183,12 +272,21 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
       this.currentMonth.getFullYear(),
       this.currentMonth.getMonth() + 1,
       0
-    );
-
+    );*/
+    /*
     this.filteredDepartures = this.departures.filter((departure) => {
       const departureDate = new Date(departure.departureDate);
       return departureDate >= startOfMonth && departureDate <= endOfMonth;
-    });
+    });*/
+
+    // Actualizar precios con la primera salida filtrada si existe
+    if (this.filteredDepartures.length > 0) {
+      this.tourOrderService.updateBasePrice(this.filteredDepartures[0].price);
+      // Select the first departure if not already selected
+      if (!this.selectedDepartureId) {
+        this.addToCart(this.filteredDepartures[0]);
+      }
+    }
   }
 
   ngOnInit() {
@@ -201,10 +299,20 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
         this.loadTourData(slug);
       }
     });
+
+    // Emitir la información inicial de pasajeros
+    setTimeout(() => {
+      this.passengerChange.emit({
+        adults: this.travelers.adults,
+        children: this.travelers.children,
+      });
+      this.tourOrderService.updateSelectedTravelers(this.travelers);
+    }, 0);
   }
 
   ngOnDestroy() {
-    // Código de limpieza si es necesario
+    // Limpieza de suscripciones
+    this.subscriptions.unsubscribe();
   }
 
   private loadTourData(slug: string) {
@@ -220,12 +328,18 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
                 return null;
               }
               uniquePeriods.add(periodKey);
+
               return {
+                name: period.name,
                 departureDate: new Date(period.dayOne),
                 returnDate: new Date(period.returnDate),
                 destination: flight.name,
+                flightID: `${flight.activityID}`,
                 flights: flight.name,
-                price: tour.basePrice + (flight.prices || 0),
+                price:
+                  tour.basePrice +
+                  (period.basePrice || 0) +
+                  (flight.prices || 0),
                 originalPrice: tour.basePrice + 200,
                 discount: 10,
                 group: period.tripType || 'Grupo',
@@ -244,13 +358,14 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
               .filter((destination): destination is string => !!destination)
           ),
         ];
-
-        console.log('departures', this.departures);
-        console.log('cities', this.cities);
-
         this.setCheapestCityAsDefault();
         this.filterDepartures();
         this.filterDeparturesByMonth(); // Filtrar por el mes actual
+
+        // Ensure we have a selected departure after loading data
+        if (!this.selectedDepartureId && this.filteredDepartures.length > 0) {
+          this.addToCart(this.filteredDepartures[0]);
+        }
       });
   }
 
@@ -275,4 +390,25 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
       ];
     }
   }
+
+    // Trip type handling
+    getTripTypeInfo(tripType: string | undefined): TripType | undefined {
+      if (!tripType) return undefined;
+  
+      const type = tripType.toLowerCase();
+  
+      if (type.includes('single') || type.includes('singles')) {
+        return this.tripTypes.find((tt) => tt.class === 'single');
+      }
+  
+      if (type.includes('group') || type.includes('grupo')) {
+        return this.tripTypes.find((tt) => tt.class === 'group');
+      }
+  
+      if (type.includes('private') || type.includes('privado')) {
+        return this.tripTypes.find((tt) => tt.class === 'private');
+      }
+  
+      return undefined;
+    }
 }

@@ -28,6 +28,7 @@ export interface Tour extends CMSCollections {
   'travelers-section': TravelersSection;
   supportSection: SupportSection;
   continent: string;
+  tourType: string;
 }
 
 export interface Expert {
@@ -42,7 +43,7 @@ export interface Itinerary {
   'day-card': DayCard[];
   itineraries: {
     id: number;
-    title: string;
+    iname: string;
     periods: string[];
     days: DayCard[];
   }[];
@@ -55,15 +56,36 @@ export interface DayCard {
   itimage: CldImage[];
   hotel: Hotel;
   description: string;
+  longDescription?: string;
+  extraInfo?: {
+    title: string;
+    content: string;
+  };
 }
 
 export interface Hotel {
-  id?: number;
+  id: string;
   name: string;
-  category: string;
+  externalID: string;
+  city?: string;
+  description?: string;
   address: string;
+  category: string;
+  phone?: string | null;
+  provider?: string;
   link: string;
+  rank?: number;
+  bookingLink?: string;
+  bookingRank?: string;
   hotelimage: CldImage[];
+  availableLangs?: string[];
+  isLangAvailable?: boolean;
+}
+
+export interface PeriodHotel {
+  id: string;
+  name: string;
+  externalID: string;
 }
 
 export interface CardList {
@@ -74,7 +96,7 @@ export interface CardList {
 }
 
 export interface ExtraInfoSection {
-  infoCard: any[];
+  'info-card': any[];
 }
 
 export interface MarketingSection {
@@ -103,11 +125,6 @@ export interface Flight {
   activityID: number;
   prices: number;
 }
-
-/* export interface TravelersSection {
-  title: string;
-  travelersCards: TravelersCard[];
-} */
 
 export interface TravelersSection {
   title: string;

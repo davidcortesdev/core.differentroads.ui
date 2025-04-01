@@ -1,0 +1,43 @@
+<p-panel styleClass="booking-details-panel">
+  <p-dataview #dv [value]="bookingImages">
+    <ng-template #list let-items>
+      <div class="booking-details-container">
+        <div *ngFor="let item of items" class="booking-info-item">
+          <div class="booking-image">
+            <img [src]="item.imageUrl" [alt]="item.name" />
+          </div>
+          <div class="booking-details">
+            <div class="booking-row top-row">
+              <div class="booking-label tourname">{{ tourName }}</div>
+            </div>
+            <div class="booking-row top-row">
+              <div class="booking-label">Retailer:</div>
+              <div class="booking-value">{{ item.retailer }}</div>
+            </div>
+            <div class="booking-row bottom-row">
+              <div class="booking-label">Fecha creación:</div>
+              <div class="booking-value">{{ item.creationDate }}</div>
+            </div>
+          </div>
+          <div class="booking-right-info">
+            <div class="top-row">
+              <div class="departure-date">
+                <span class="label">Salida:</span>
+                <span class="value">{{ item.departureDate }}</span>
+              </div>
+            </div>
+            <div class="bottom-row">
+              <div class="user-price-container">
+                <div class="user-tag">
+                  <p-tag [value]="item.passengers.toString()" severity="info" [rounded]="false"></p-tag>
+                  <i class="pi pi-user"></i>
+                </div>
+                <div class="price-tag">{{ item.price }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+  </p-dataview>
+</p-panel>

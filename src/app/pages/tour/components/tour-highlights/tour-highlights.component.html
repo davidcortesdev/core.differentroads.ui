@@ -2,14 +2,15 @@
   <h2>{{ highlightsTitle }}</h2>
 
   <p-carousel
-    autoplayInterval="7000"
+    [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
     [value]="highlights"
     [numVisible]="5"
     [numScroll]="1"
     [circular]="true"
-    [showNavigators]="false"
+    [showNavigators]="true"
     [responsiveOptions]="responsiveOptions"
     [showIndicators]="true"
+    class="custom-carousel"
   >
     <ng-template let-highlight pTemplate="item">
       <p-card

@@ -1,4 +1,5 @@
 <div class="tour-header">
+  <!-- Tour Information Section -->
   <div class="tour-info">
     <div class="rating-reviews">
       <div class="rating-container">
@@ -13,28 +14,75 @@
       <span class="duration">{{ getDuration() }}</span>
     </div>
   </div>
+
+  <!-- Tour Actions Section -->
   <div class="tour-actions">
-    <div class="badge">
-      <i class="pi pi-user"></i>
-      <span>{{
-        tour.marketingSection?.marketingTag ||
-          "El mejor valorado por nuestros viajeros"
-      }}</span>
+    <!-- Marketing Badge -->
+    <div class="badge" *ngIf="tour.marketingSection?.marketingTag">
+      <p-message
+        severity="secondary"
+        variant="outlined"
+        icon="pi pi-star"
+        size="small"
+      >
+        {{ tour.marketingSection?.marketingTag }}
+      </p-message>
     </div>
+
+    <!-- Price Section -->
     <div class="price-section">
       <div class="price-info">
-        <div class="before-price">
-          <!-- <span>Antes</span>
-          <span class="amount">{{ tour.basePrice + 200 }}€</span> -->
+        <div
+          class="before-price"
+          *ngIf="!totalPrice && !selectedActivities.length"
+        >
+          <span>Antes</span>
+          <span>{{ basePrice + 200 | currencyFormat : "EUR" }}</span>
         </div>
         <div class="current-price">
-          <span>Desde</span>
-          <span class="amount">{{ tour.price || 0 | currencyFormat : "EUR"  }}</span>
+          <span>{{ totalPrice > 0 ? "Total" : "Desde" }}</span>
+          <span class="amount">{{
+            totalPrice || basePrice | currencyFormat : "EUR"
+          }}</span>
         </div>
       </div>
-      <a href="#prices" class="price-link">Ir a este precio</a>
+      <div class="total-price-container">
+        <div class="passengers-info" *ngIf="selectedDate && departureCity">
+          <span
+            >{{ selectedDate
+            }}{{
+              tripType.toLowerCase() === "single" ||
+              tripType.toLowerCase() === "singles"
+                ? " - " + tripType
+                : ""
+            }}</span
+          >
+          <br />
+          <span>{{ formatDepartureCity(departureCity) }}</span>
+        </div>
+        <span
+          *ngIf="selectedActivities.length"
+          [pTooltip]="getSelectedActivitiesNames()"
+          tooltipPosition="bottom"
+          class="activities-badge"
+        >
+          {{ selectedActivities.length }}
+          actividad{{ selectedActivities.length > 1 ? "es" : "" }} opcional{{
+            selectedActivities.length > 1 ? "es" : ""
+          }}
+        </span>
+      </div>
     </div>
-    <p-button label="Reservar mi tour" styleClass="p-button-rounded"></p-button>
+
+    <!-- Booking Container -->
+    <div class="booking-container">
+      <p-button
+        label="Reservar mi tour"
+        styleClass="p-button-rounded"
+        [disabled]="!selectedDate || !totalPrice"
+        (onClick)="bookTour()"
+      >
+      </p-button>
+    </div>
   </div>
 </div>
-<!-- El div spacer se creará dinámicamente desde el componente -->

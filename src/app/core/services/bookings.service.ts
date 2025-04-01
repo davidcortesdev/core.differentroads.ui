@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   Booking,
@@ -8,7 +8,12 @@ import {
   GetAllBookingsParams,
 } from '../models/bookings/booking.model';
 import { Order } from '../models/orders/order.model';
-import { IPaymentVoucher, Payment } from '../models/bookings/payment.model';
+import {
+  IPaymentVoucher,
+  Payment,
+  PaymentStatus,
+  VoucherReviewStatus,
+} from '../models/bookings/payment.model';
 import { Pagination } from '../models/commons/pagination.model';
 
 @Injectable({
@@ -38,8 +43,6 @@ export class BookingsService {
     ID: string;
     order: Order;
   }> {
-    console.log('data', `${this.API_URL}/${orderID}/create`, data);
-
     return this.http.post<{
       bookingID: string;
       ID: string;
@@ -203,8 +206,8 @@ export class BookingsService {
    * @param id - The public ID.
    * @returns Observable of Payment array.
    */
-  getPaymentsByPublicID(id: string): Observable<Payment[]> {
-    return this.http.get<Payment[]>(
+  getPaymentsByPublicID(id: string): Observable<Payment> {
+    return this.http.get<Payment>(
       `${this.API_URL}/${id}/payment/by-public-id`,
       this.httpOptions
     );
@@ -216,12 +219,14 @@ export class BookingsService {
    * @param data - The payment data.
    * @returns Observable of any.
    */
-  createPayment(id: string, data: Partial<Payment>): Observable<any> {
-    return this.http.post<any>(
-      `${this.API_URL}/${id}/payment`,
-      data,
-      this.httpOptions
-    );
+  createPayment(id: string, data: Partial<Payment>): Observable<Payment> {
+    return this.http
+      .post<{ data: Payment }>(
+        `${this.API_URL}/${id}/payment`,
+        data,
+        this.httpOptions
+      )
+      .pipe(map((response) => response.data));
   }
 
   /**
@@ -288,11 +293,11 @@ export class BookingsService {
     id: string,
     paymentId: string,
     voucherId: string,
-    data: any
+    status: VoucherReviewStatus
   ): Observable<any> {
     return this.http.put<any>(
       `${this.API_URL}/${id}/payment/${paymentId}/voucher/${voucherId}/review`,
-      data,
+      { status, complete: true },
       this.httpOptions
     );
   }

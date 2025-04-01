@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { RouterModule, Routes, ExtraOptions } from '@angular/router';
 import { MainComponent } from './layout/main/main.component';
 import { HomeComponent } from './pages/home/home.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
@@ -15,6 +15,9 @@ import { CheckoutComponent } from './pages/checkout/checkout.component';
 import { ContentPageComponent } from './pages/content-page/content-page.component';
 import { ToursComponent } from './shared/components/tours/tours.component';
 import { ReservationComponent } from './pages/reservation/reservation.component';
+import { BookingsComponent } from './pages/bookings/bookings.component';
+import { PaymentsComponent } from './pages/payments/payments.component';
+import { AirportSearchComponent } from './features/airports/airport-search/airport-search.component';
 
 const routes: Routes = [
   {
@@ -34,16 +37,32 @@ const routes: Routes = [
       { path: 'pages/:slug', component: BasicPageComponent },
       { path: 'checkout', component: CheckoutComponent },
       { path: 'checkout/:id', component: CheckoutComponent },
+      { path: 'payment/:id', component: PaymentsComponent },
       { path: 'landing/:slug', component: ContentPageComponent },
       { path: 'collection/:slug', component: ContentPageComponent },
+      { path: 'press/:slug', component: ContentPageComponent },
+      { path: 'blog/:slug', component: ContentPageComponent },
       { path: 'reservation/:id', component: ReservationComponent },
+      {
+        path: 'reservation/:id/:status/:paymentID',
+        component: ReservationComponent,
+      },
+      { path: 'bookings/:id', component: BookingsComponent },
+      { path: 'aeropuertos', component: AirportSearchComponent },
       { path: '**', component: NotFoundComponent },
     ],
   },
 ];
 
+// Configure the router to scroll to top on navigation
+const routerOptions: ExtraOptions = {
+  scrollPositionRestoration: 'enabled',
+  anchorScrolling: 'enabled',
+  scrollOffset: [0, 0],
+};
+
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
+  imports: [RouterModule.forRoot(routes, routerOptions)],
   exports: [RouterModule],
 })
 export class AppRoutingModule {}

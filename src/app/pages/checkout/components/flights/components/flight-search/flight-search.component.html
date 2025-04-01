@@ -1,0 +1,181 @@
+<p-panel>
+  <ng-template #header>
+    <div class="flt-hdr">
+      <h2>Mejor precio, reserva simple</h2>
+      <p>Fiordos Noruegos | 2 adultos - 1 niño</p>
+    </div>
+  </ng-template>
+
+  <form [formGroup]="flightForm">
+    <div class="travel-type">
+      <div class="radio">
+        <p-radioButton
+          formControlName="tipoViaje"
+          name="tipoViaje"
+          value="idaVuelta"
+          inputId="idaVuelta"
+        ></p-radioButton>
+        <label for="idaVuelta">Ida y vuelta</label>
+      </div>
+      <div class="radio">
+        <p-radioButton
+          formControlName="tipoViaje"
+          name="tipoViaje"
+          value="soloDia"
+          inputId="soloDia"
+        ></p-radioButton>
+        <label for="soloDia">Solo ida</label>
+      </div>
+      <!-- Baggage filters removed -->
+    </div>
+
+    <div class="flt-details">
+      <!-- Ida -->
+      <div class="row">
+        <div class="label">
+          <label>Ida</label>
+          <div class="from">Desde</div>
+        </div>
+        <div class="input origin">
+          <i class="pi pi-plane"></i>
+          <p-dropdown
+            formControlName="origen"
+            [options]="ciudades"
+            optionLabel="nombre"
+            styleClass="w-full"
+          ></p-dropdown>
+          <a href="#" class="change"></a>
+        </div>
+        <div class="input destination">
+          <div class="dest-lbl">Llegada</div>
+          <div class="static-field">{{ tourOrigenConstante.nombre }}</div>
+        </div>
+        <div class="date">
+          <div class="date-lbl">Fecha</div>
+          <div class="static-field">{{ fechaIdaFormateada }}</div>
+        </div>
+      </div>
+
+      <!-- Regreso -->
+      <div class="row" *ngIf="tipoViaje === 'idaVuelta'">
+        <div class="label">
+          <label>Regreso</label>
+          <div class="from">Desde</div>
+        </div>
+        <div class="input origin">
+          <i class="pi pi-plane"></i>
+          <div class="static-field">{{ tourOrigenConstante.nombre }}</div>
+        </div>
+        <div class="input destination">
+          <div class="dest-lbl">Llegada</div>
+          <div class="static-field">
+            {{
+              flightForm.get("origen")?.value?.nombre ||
+                flightForm.get("origen")?.value
+            }}
+          </div>
+        </div>
+        <div class="date">
+          <div class="date-lbl">Fecha</div>
+          <div class="static-field">{{ fechaRegresoFormateada }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="search-opts">
+      <div class="sort">
+        <!--  <p-button
+          label="Ordenar por precio"
+          icon="pi pi-sort"
+          styleClass="p-button-outlined"
+        ></p-button> -->
+      </div>
+      <div class="filter">
+        <!--   <p-dropdown
+          [options]="escalaOptions"
+          formControlName="escala"
+          placeholder="Escala"
+          styleClass="p-button-outlined"
+        ></p-dropdown>
+        <p-dropdown
+          [options]="aerolineaOptions"
+          formControlName="aerolinea"
+          placeholder="Aerolínea"
+          styleClass="p-button-outlined"
+        ></p-dropdown> -->
+      </div>
+      <div class="btn-search">
+        <p-button
+          label="Buscar"
+          styleClass=""
+          (click)="buscar()"
+        ></p-button>
+      </div>
+    </div>
+  </form>
+</p-panel>
+
+<!-- Lista de resultados de vuelos -->
+<div
+  class="flt-results"
+  *ngIf="!isLoading && searchPerformed && filteredOffers.length > 0"
+>
+  <p-panel styleClass="results-panel">
+    <ng-template #header>
+      <div class="res-header">
+        <h3>Resultados de búsqueda</h3>
+        <div class="count">
+          {{ transformedFlights.length }} vuelos encontrados
+        </div>
+      </div>
+    </ng-template>
+
+    <!-- Lista de vuelos usando el componente flight-itinerary -->
+    <div class="flt-list">
+      <div *ngFor="let flight of transformedFlights" class="item">
+        <app-flight-itinerary
+          [flight]="flight"
+          [selectFlight]="selectFlight.bind(this)"
+          [isFlightSelected]="isFlightSelected.bind(this)"
+        >
+        </app-flight-itinerary>
+      </div>
+    </div>
+  </p-panel>
+</div>
+
+<!-- Estado de carga -->
+<div class="loading" *ngIf="isLoading">
+  <p-progressSpinner></p-progressSpinner>
+  <div class="msg">Buscando los mejores vuelos para ti...</div>
+</div>
+
+<!-- Estado inicial - sin búsqueda -->
+<div class="no-search" *ngIf="!isLoading && !searchPerformed">
+  <p-panel>
+  <div class="msg" style="text-align: center">
+    <h3><i class="pi pi-search"></i> Busca tu vuelo</h3>
+    <p>
+      Selecciona tu ciudad de origen y haz clic en "Buscar" para encontrar
+      vuelos disponibles.
+    </p>
+  </div>
+</p-panel>
+</div>
+
+<!-- Estado de error o sin resultados -->
+<div
+  class="no-results"
+  *ngIf="!isLoading && searchPerformed && filteredOffers.length === 0"
+>
+  <p-panel>
+    <div class="msg">
+      <i class="pi pi-info-circle"></i>
+      <h3>No se encontraron vuelos</h3>
+      <p>
+        No hay vuelos disponibles con los criterios seleccionados. Por favor,
+        intenta modificar tu búsqueda.
+      </p>
+    </div>
+  </p-panel>
+</div>

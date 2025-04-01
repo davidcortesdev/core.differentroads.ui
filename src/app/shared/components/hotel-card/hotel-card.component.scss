@@ -1,0 +1,196 @@
+// Variables
+$breakpoints: (
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1366px,
+);
+
+$spaces: (
+  xs: 0.5rem,
+  sm: 0.75rem,
+  base: 1rem,
+  lg: 1.5rem,
+);
+
+$border-radius: (
+  sm: 8px,
+  md: 14px,
+  lg: 18px,
+);
+
+$colors: (
+  primary: var(--p-primary-color),
+  secondary: var(--p-button-primary-color),
+  background: var(--background-azul),
+  text: var(--background-azul),
+  text-light: var(--background-azul-color-letra),
+  border: #d9d9d9,
+  border-light: #f0f0f0,
+);
+
+// Import Sass modules
+@use "sass:map";
+
+// Mixins
+@mixin resp($bp) {
+  @media (max-width: map.get($breakpoints, $bp)) {
+    @content;
+  }
+}
+
+@mixin flex($dir: row, $just: flex-start, $align: stretch, $gap: 0) {
+  display: flex;
+  flex-direction: $dir;
+  justify-content: $just;
+  align-items: $align;
+  @if $gap > 0 {
+    gap: $gap;
+  }
+}
+
+// Keep existing variables and mixins...
+
+// Hotel card
+.hotel-card {
+  color: map.get($colors, text);
+  @include flex(row, flex-start, center, 1rem);
+  border-radius: map.get($border-radius, lg);
+  border: 1px solid map.get($colors, border);
+  padding: map.get($spaces, xs) map.get($spaces, xs);
+  margin-top: map.get($spaces, base);
+  max-height: 10rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  will-change: transform;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  @include resp(xl) {
+    padding: map.get($spaces, xs) 15px map.get($spaces, xs) map.get($spaces, xs);
+    gap: map.get($spaces, sm);
+    margin-top: map.get($spaces, sm);
+  }
+
+  @include resp(md) {
+    flex-direction: column;
+    max-height: none;
+
+    &-image {
+      width: 100%;
+      margin-bottom: map.get($spaces, xs);
+    }
+
+    &-content {
+      padding: map.get($spaces, xs) 0;
+    }
+  }
+
+  &-image {
+    width: 35%;
+    object-fit: cover;
+    border-radius: map.get($border-radius, md);
+    //aspect-ratio: 2/1;
+    will-change: transform;
+    transition: transform 0.3s ease;
+    
+    &:hover {
+      transform: scale(1.02);
+    }
+
+    @include resp(xl) {
+      border-radius: 10px;
+    }
+
+    @include resp(sm) {
+      width: 100%;
+    }
+  }
+
+  &-content {
+    @include flex(column, flex-start, flex-start, 0.5rem);
+    flex-grow: 1;
+    padding: map.get($spaces, sm) 0;
+
+    h4, p {
+      margin: 0;
+    }
+
+    h4 {
+      font-size: 13px;
+      font-weight: 500;
+
+      @include resp(xl) {
+        font-size: 16px;
+      }
+    }
+
+    p {
+      font-size: 14px;
+
+      @include resp(xl) {
+        font-size: 13px;
+      }
+
+      i {
+        color: map.get($colors, primary);
+      }
+    }
+    
+    .hotel-link {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.2s ease;
+      
+      &:hover {
+        color: map.get($colors, primary);
+        text-decoration: underline;
+      }
+    }
+  }
+
+  &-bookings-section {
+    @include flex(row, center, center, 1rem);
+    margin-top: 0.75rem;
+
+    .booking-link {
+      @include flex(row, center, center, 1rem);
+      text-decoration: none;
+      transition: transform 0.2s ease;
+      
+      &:hover {
+        transform: scale(1.05);
+      }
+    }
+
+    p {
+      display: inline-flex;
+      height: 29px;
+      width: 29px;
+      justify-content: center;
+      align-items: center;
+      border-radius: 3.314px 3.314px 3.314px 0px;
+      background: map.get($colors, background);
+      color: map.get($colors, text-light);
+      font-size: 11.6px;
+      font-weight: 600;
+    }
+    
+    .logo {
+      transition: transform 0.2s ease;
+    }
+  }
+}
+
+// Responsive improvements
+@include resp(sm) {
+  .hotel-card {
+    max-height: none;
+    
+    &-bookings-section {
+      margin-top: 0.5rem;
+    }
+  }
+}

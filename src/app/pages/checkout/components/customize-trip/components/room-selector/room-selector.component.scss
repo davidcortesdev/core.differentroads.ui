@@ -10,17 +10,23 @@
   }
 
   .room-item {
-    align-items: center;
     color: var(--background-azul);
     display: flex;
+    flex-direction: column;
     padding: 2rem 1.5rem;
     border: 1px solid var(--background-azul);
     border-radius: 0.5rem;
-    justify-content: space-between;
 
     p {
       margin: 0;
       font-weight: 500;
+    }
+
+    .room-price-data {
+      display: flex;
+      align-items: center;
+
+      justify-content: space-between;
     }
 
     ::ng-deep .p-inputnumber {
@@ -32,13 +38,22 @@
       box-shadow: none;
       color: var(--background-azul);
       text-align: center;
-      width: 3.5rem;
+      width: 2.5rem;
     }
 
     ::ng-deep .p-inputnumber-button {
       border: 0;
       color: var(--background-azul);
     }
+
+    .room-description {
+      font-size: 0.6875rem;
+    }
+  }
+
+  .room-item.selected {
+    border-color: var(--background-azul);
+    background-color: white;
   }
 }
 

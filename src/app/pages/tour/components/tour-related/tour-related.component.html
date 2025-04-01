@@ -1,1 +1,14 @@
-<p>tour-related works!</p>
+<div class="related-tours-container">
+  <app-tours-section 
+    *ngIf="!isLoading && sectionContent" 
+    [content]="sectionContent">
+  </app-tours-section>
+  
+  <div *ngIf="isLoading" class="loading-indicator">
+    <p>Cargando tours relacionados...</p>
+  </div>
+  
+  <div *ngIf="!isLoading && !sectionContent" class="no-tours-message">
+    <p>No se encontraron tours relacionados</p>
+  </div>
+</div>

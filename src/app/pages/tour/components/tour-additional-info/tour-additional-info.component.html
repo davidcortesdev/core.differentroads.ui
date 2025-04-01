@@ -1,51 +1,65 @@
-<div class="">
-  <p-card styleClass="">
-    <div class="" (click)="handleSaveTrip()">
+<div class="tour-additional-info-container">
+  <!-- Optimización: Mover el (click) al elemento p-card para mejor accesibilidad -->
+  <!-- Add tooltip for unauthenticated users -->
+  <p-card
+    styleClass="action-card"
+    (click)="handleSaveTrip()"
+    [pTooltip]="
+      !isAuthenticated
+        ? 'Para guardar tu presupuesto debes iniciar sesión o registrarte en la plataforma'
+        : undefined
+    "
+    tooltipPosition="top"
+  >
+    <div class="card-content">
       <span class="bg-pink-100">
-        <i class="pi pi-bookmark"></i>
+        <i class="pi pi-bookmark" aria-hidden="true"></i>
       </span>
-      <span class="">Guarda tu viaje</span>
+      <span class="card-text">Guarda tu viaje</span>
     </div>
   </p-card>
 
-  <p-card styleClass="claseBord">
-    <div class="" (click)="handleDownloadTrip()">
+  <!-- Optimización: Extraer configuraciones comunes a variables -->
+  <p-dialog
+    [(visible)]="visible"
+    [modal]="true"
+    [breakpoints]="dialogBreakpoints"
+    [style]="dialogStyle"
+    [draggable]="false"
+    [resizable]="false"
+    styleClass="budget-modal"
+  >
+    <app-budget-dialog
+      class="budget-dialog"
+      [visible]="visible"
+      [handleCloseModal]="handleCloseModal.bind(this)"
+      (close)="handleCloseModal()"
+    ></app-budget-dialog>
+  </p-dialog>
+
+  <!-- Optimización: Mover el (click) al elemento p-card para mejor accesibilidad -->
+  <p-card styleClass="action-card claseBord" (click)="handleDownloadTrip()">
+    <div class="card-content">
       <span class="bg-pink-100">
-        <i class="pi pi-download"></i>
+        <i class="pi pi-download" aria-hidden="true"></i>
       </span>
-      <span class="">Descargar tu viaje</span>
+      <span class="card-text">Descargar tu viaje</span>
     </div>
   </p-card>
 
-  <p-card styleClass="">
-    <div class="" (click)="handleInviteFriend()">
+  <!-- Optimización: Mover el (click) al elemento p-card para mejor accesibilidad -->
+  <p-card styleClass="action-card" (click)="handleInviteFriend()">
+    <div class="card-content">
       <span class="bg-pink-100">
-        <i class="pi pi-user-plus"></i>
+        <i class="pi pi-user-plus" aria-hidden="true"></i>
       </span>
-      <span class="">Invita a un amigo a tu viaje</span>
+      <span class="card-text">Invita a un amigo a tu viaje</span>
     </div>
   </p-card>
 </div>
 
-<div class="mt-4 additional-info">
-  <p-accordion>
-    <p-accordion-panel
-      *ngFor="let card of tour?.['extra-info-section']?.['info-card']; let i = index"
-      [value]="i"
-    >
-      <p-accordion-header>
-        <ng-template #toggleicon let-active="active">
-          @if (active) {
-          <i class="pi pi-minus-circle"></i>
-          } @else {
-          <i class="pi pi-plus-circle"></i>
-          }
-        </ng-template>
-        <div [innerHTML]="sanitizeHtml(card.title)"></div>
-      </p-accordion-header>
-      <p-accordion-content>
-        <div [innerHTML]="sanitizeHtml(card.content)"></div>
-      </p-accordion-content>
-    </p-accordion-panel>
-  </p-accordion>
-</div>
+<!-- Reemplazamos el acordeón con el nuevo componente -->
+<app-tour-info-accordion
+  *ngIf="hasInfoCards"
+  [infoCards]="infoCards"
+></app-tour-info-accordion>

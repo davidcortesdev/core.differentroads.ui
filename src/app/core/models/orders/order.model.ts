@@ -1,4 +1,5 @@
 import { Pagination } from '../commons/pagination.model';
+import { Flight } from '../tours/flight.model';
 
 export interface Order {
   _id: string;
@@ -13,12 +14,16 @@ export interface Order {
   optionalActivitiesRef?: OptionalActivityRef[];
   insurancesRef?: OptionalActivityRef[];
   extraData?: any;
-  flights?: any;
+  flights?: Flight[] | { id: string; name?: string; externalID: string }[];
+  summary?: SummaryItem[];
+  discounts?: DiscountInfo[];
+  payment?: PaymentOption;
 }
 
 export interface OptionalActivityRef {
   id: string;
   travelersAssigned: string[];
+  name?: string;
 }
 
 export interface TravelerData {
@@ -37,6 +42,10 @@ export interface TravelerData {
   postalCode?: string;
   sex?: string;
   surname?: string;
+
+  minorIdExpirationDate?: string;
+  minorIdIssueDate?: string;
+  associatedAdult?: string;
 }
 
 export interface OrderTraveler {
@@ -72,4 +81,29 @@ export interface CreateBookingResult {
 export interface OrderListResponse {
   data: Order[];
   pagination: Pagination;
+}
+
+// Add this interface for summary items
+export interface SummaryItem {
+  qty: number;
+  value: number;
+  description: string;
+}
+
+// Add this interface for discount information
+export interface DiscountInfo {
+  code?: string;
+  amount: number;
+  description: string;
+  type: string;
+}
+
+// Payment option interface
+export interface PaymentOption {
+  type: 'complete' | 'installments' | 'deposit';
+  method?: 'creditCard' | 'transfer';
+  installmentOption?: 'three' | 'four';
+  source?: string;
+  // Add properties for deposit payment
+  depositAmount?: number;
 }

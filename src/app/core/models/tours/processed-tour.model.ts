@@ -3,9 +3,10 @@ export interface ProcessedTour {
   title: string;
   description: string;
   rating: number;
-  tag: string;
+  tag?: string;
   price: number;
   availableMonths: string[];
   isByDr: boolean;
-  webSlug?: string;
+  webSlug: string;
+  tripType?: string[];
 }

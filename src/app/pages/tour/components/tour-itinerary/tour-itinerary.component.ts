@@ -1,27 +1,38 @@
-import { Component, OnInit, ViewChildren, QueryList } from '@angular/core';
+import { Component, OnInit, ViewChildren, QueryList, ViewChild } from '@angular/core';
 import { ToursService } from '../../../../core/services/tours.service';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { environment } from '../../../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { GeoService } from '../../../../core/services/geo.service';
-import { Itinerary, Tour } from '../../../../core/models/tours/tour.model';
+import {
+  Hotel,
+  Itinerary,
+  PeriodHotel,
+  Tour,
+} from '../../../../core/models/tours/tour.model';
 import { Panel } from 'primeng/panel';
 import { PeriodsService } from '../../../../core/services/periods.service';
 import { Period } from '../../../../core/models/tours/period.model';
 import { Activity } from '../../../../core/models/tours/activity.model';
-interface City {
-  nombre: string;
-  lat: number;
-  lng: number;
-}
-interface DateOption {
-  label: string;
-  value: string;
-  price: number;
-  isGroup: boolean;
-  externalID?: string;
-}
+import { TourDataService } from '../../../../core/services/tour-data/tour-data.service';
+import { CAROUSEL_CONFIG } from '../../../../shared/constants/carousel.constants';
+import { PeriodPricesService } from '../../../../core/services/tour-data/period-prices.service';
+import { OptionalActivityRef } from '../../../../core/models/orders/order.model';
+import { TourOrderService } from '../../../../core/services/tour-data/tour-order.service';
+import { DateOption } from '../tour-date-selector/tour-date-selector.component';
+import { forkJoin } from 'rxjs';
+import { HotelsService } from '../../../../core/services/hotels.service';
+import { HotelCardComponent } from '../../../../shared/components/hotel-card/hotel-card.component';
+import {
+  ActivityCardComponent,
+  ActivityHighlight,
+} from '../../../../shared/components/activity-card/activity-card.component';
+import { ActivitiesCarouselComponent } from '../../../../shared/components/activities-carousel/activities-carousel.component';
+import { MessageService } from 'primeng/api';
+// Importar el nuevo componente del mapa
+import { TourMapComponent, City } from '../../../../shared/components/tour-map/tour-map.component';
+
 interface EventItem {
   status?: string;
   date?: string;
@@ -30,12 +41,7 @@ interface EventItem {
   image?: string;
   description?: SafeHtml;
 }
-interface Highlight {
-  title: string;
-  description: string;
-  image: string;
-  optional: boolean;
-}
+
 @Component({
   selector: 'app-tour-itinerary',
   standalone: false,
@@ -44,45 +50,18 @@ interface Highlight {
 })
 export class TourItineraryComponent implements OnInit {
   @ViewChildren('itineraryPanel') itineraryPanels!: QueryList<Panel>;
-  mapTypeId: google.maps.MapTypeId | undefined;
-  mapId: string | undefined;
-  getLatLog(
-    city: City
-  ):
-    | google.maps.LatLngLiteral
-    | google.maps.LatLng
-    | google.maps.LatLngAltitude
-    | google.maps.LatLngAltitudeLiteral {
-    return { lat: city.lat, lng: city.lng };
-  }
-  markers: any = [];
-  infoContent = '';
+  @ViewChild(TourMapComponent) tourMapComponent!: TourMapComponent;
+  
+  // Mantener solo las propiedades necesarias para el componente principal
   cities: string[] = [];
   citiesData: City[] = [];
-  center: google.maps.LatLngLiteral = { lat: 40.73061, lng: -73.935242 };
-  zoom = 8;
-  sizeMapaWidth = '100%';
-  sizeMapaHeight = '100%';
-  advancedMarkerOptions: google.maps.marker.AdvancedMarkerElementOptions = {
-    gmpDraggable: false,
-  };
-  advancedMarkerPositions: google.maps.LatLngLiteral[] = [];
-  apiLoaded: boolean = false;
-  mapOptions: google.maps.MapOptions = {
-    zoomControl: true,
-    scrollwheel: false,
-    disableDoubleClickZoom: true,
-    maxZoom: 15,
-    minZoom: 1,
-  };
-  markerOptions: google.maps.MarkerOptions = {
-    draggable: false,
-  };
   events: EventItem[];
   title: string = 'Itinerario';
   dateOptions: DateOption[] = [];
+  protected carouselConfig = CAROUSEL_CONFIG;
 
   selectedOption: DateOption = {
+    id: 0,
     label: '',
     value: '',
     price: 0,
@@ -90,7 +69,8 @@ export class TourItineraryComponent implements OnInit {
   };
   selectedDate: string = '';
   tripType: string = '';
-  hotels: any[] = [];
+  hotels: Period['hotels'] | undefined;
+  hotelsData: Hotel[] = [];
   showPlaceholder: boolean = true;
 
   currentPeriod: Period | undefined;
@@ -99,10 +79,14 @@ export class TourItineraryComponent implements OnInit {
     title: string;
     description: SafeHtml;
     image: string;
-    hotel: any;
+    hotel: Hotel | null;
     collapsed: boolean;
     color?: string;
-    highlights?: Highlight[];
+    highlights?: ActivityHighlight[];
+    extraInfo?: {
+      title?: string;
+      content?: string;
+    };
   }[] = [];
 
   activities: Activity[] = [];
@@ -123,26 +107,51 @@ export class TourItineraryComponent implements OnInit {
       numScroll: 1,
     },
   ];
+
+  tagsOptions: {
+    type: string;
+    color:
+      | 'success'
+      | 'secondary'
+      | 'info'
+      | 'warn'
+      | 'danger'
+      | 'contrast'
+      | undefined;
+    value: string;
+  }[] = [
+    {
+      type: 'Grupo',
+      color: 'info',
+      value: 'G',
+    },
+    {
+      type: 'Single',
+      color: 'success',
+      value: 'S',
+    },
+    {
+      type: 'Propios',
+      color: 'warn',
+      value: 'P',
+    },
+  ];
+
   constructor(
     private toursService: ToursService,
     private periodsService: PeriodsService,
     private route: ActivatedRoute,
     private sanitizer: DomSanitizer,
-    private httpClient: HttpClient,
-    private geoService: GeoService
+    private geoService: GeoService,
+    private tourOrderService: TourOrderService,
+    private tourDataService: TourDataService,
+    private periodPricesService: PeriodPricesService,
+    private hotelsService: HotelsService,
+    private messageService: MessageService
   ) {
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}`;
-    script.async = true;
-    script.defer = true;
-    document.head.appendChild(script);
-    script.addEventListener('load', () => {
-      this.mapTypeId = google.maps.MapTypeId.ROADMAP;
-      this.mapId = google.maps.Map.DEMO_MAP_ID;
-      this.apiLoaded = true;
-    });
     this.events = [];
   }
+  
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
       const slug = params['slug'];
@@ -155,44 +164,38 @@ export class TourItineraryComponent implements OnInit {
           ])
           .subscribe({
             next: (tourData) => {
-              console.log('Tour data:', tourData);
               this.dateOptions = tourData.activePeriods.map((period) => {
-                console.log('Period:', period);
-
+                let iti = tourData['itinerary-section'].itineraries;
                 return {
+                  id: period.id,
                   label: period.name,
                   value: period.externalID + '',
                   price: (period.basePrice || 0) + (tourData.basePrice || 0),
                   isGroup: true,
+                  tripType: period.tripType,
+                  itineraryId: iti.filter((f) =>
+                    f.periods.some((p) => p.includes(period.id + ''))
+                  )[0]?.id,
+                  itineraryName: iti.filter((f) =>
+                    f.periods.some((p) => p.includes(period.id + ''))
+                  )[0]?.iname,
+                  dayOne: period.dayOne,
                 };
               });
+
               this.selectedOption = this.dateOptions[0];
               this.selectedDate = this.dateOptions[0].label;
               this.itinerariesData = tourData['itinerary-section'];
-              this.updateItinerary();
 
               this.title = tourData['itinerary-section'].title;
 
-              this.periodsService
-                .getPeriodDetail(this.selectedOption.value, [
-                  'tripType',
-                  'hotels',
-                  'activities',
-                ])
-                .subscribe({
-                  next: (period) => {
-                    console.log('Period itinerary:', period);
-                    this.currentPeriod = period;
-                    this.tripType = period.tripType || '';
-                    this.hotels = period.hotels as any[];
-                    this.activities = [
-                      ...(period.activities || []),
-                      ...(period.includedActivities || []),
-                    ];
-                    this.updateItinerary();
-                  },
-                  error: (error) => console.error('Error period:', error),
-                });
+              // Manually trigger date change with the first option
+              if (this.selectedOption) {
+                // Call onDateChange with an event object containing the value of the first option
+                this.onDateChange({ value: this.selectedOption.value });
+              } else {
+                console.warn('No period options available');
+              }
             },
             error: (error) => console.error('Error itinerary section:', error),
           });
@@ -201,84 +204,25 @@ export class TourItineraryComponent implements OnInit {
           .getTourDetailBySlug(slug, ['cities'])
           .subscribe((tour) => {
             this.cities = tour['cities'];
-            let loadedCities = 0;
-            const totalCities = this.cities.length;
             this.cities.forEach((city) => {
               this.geoService.getCoordinates(city).subscribe((coordinates) => {
                 if (coordinates) {
-                  this.citiesData.push({
+                  const newCity = {
                     nombre: city,
                     lat: Number(coordinates.lat),
                     lng: Number(coordinates.lon),
-                  });
-                  this.addMarker({
-                    nombre: city,
-                    lat: Number(coordinates.lat),
-                    lng: Number(coordinates.lon),
-                  });
-                  loadedCities++;
-                  this.calculateMapCenter();
+                  };
+                  this.citiesData.push(newCity);
+                  
+                  // Actualizar el componente del mapa cuando esté disponible
+                  if (this.tourMapComponent) {
+                    this.tourMapComponent.updateCitiesData(this.citiesData);
+                  }
                 }
               });
             });
           });
       }
-    });
-  }
-  private calculateMapCenter(): void {
-    if (this.citiesData.length === 0) return;
-    const bounds = new google.maps.LatLngBounds();
-    this.citiesData.forEach((city) => {
-      bounds.extend({ lat: city.lat, lng: city.lng });
-    });
-    this.center = {
-      lat: bounds.getCenter().lat(),
-      lng: bounds.getCenter().lng(),
-    };
-    const PADDING = 10;
-    if (this.mapOptions.maxZoom) {
-      this.zoom = Math.min(
-        this.getZoomLevel(bounds, PADDING),
-        this.mapOptions.maxZoom
-      );
-    }
-  }
-  private getZoomLevel(
-    bounds: google.maps.LatLngBounds,
-    padding: number
-  ): number {
-    const WORLD_DIM = { height: 256, width: 256 };
-    const ZOOM_MAX = 21;
-    function latRad(lat: number) {
-      const sin = Math.sin((lat * Math.PI) / 180);
-      const radX2 = Math.log((1 + sin) / (1 - sin)) / 2;
-      return Math.max(Math.min(radX2, Math.PI), -Math.PI) / 2;
-    }
-    function zoom(mapPx: number, worldPx: number, fraction: number) {
-      return Math.floor(Math.log(mapPx / worldPx / fraction) / Math.LN2);
-    }
-    const ne = bounds.getNorthEast();
-    const sw = bounds.getSouthWest();
-    const latFraction = (latRad(ne.lat()) - latRad(sw.lat())) / Math.PI;
-    const lngDiff = ne.lng() - sw.lng();
-    const lngFraction = (lngDiff < 0 ? lngDiff + 360 : lngDiff) / 360;
-    const latZoom = zoom(400 - padding * 2, WORLD_DIM.height, latFraction);
-    const lngZoom = zoom(800 - padding * 2, WORLD_DIM.width, lngFraction);
-    return Math.min(latZoom, lngZoom, ZOOM_MAX);
-  }
-  addMarker(ciudad: City) {
-    this.markers.push({
-      position: {
-        lat: ciudad.lat,
-        lng: ciudad.lng,
-      },
-      label: {
-        color: 'red',
-        text: ciudad.nombre,
-      },
-      title: ciudad.nombre,
-      info: ciudad.nombre,
-      options: {},
     });
   }
 
@@ -288,6 +232,7 @@ export class TourItineraryComponent implements OnInit {
       this.dateOptions[0];
     this.updateDateDisplay();
     this.showPlaceholder = false;
+
     this.periodsService
       .getPeriodDetail(this.selectedOption.value, [
         'tripType',
@@ -299,16 +244,64 @@ export class TourItineraryComponent implements OnInit {
         next: (period) => {
           this.currentPeriod = period;
           this.tripType = period.tripType || '';
-          this.hotels = period.hotels as any[];
-          this.activities = [
+          this.hotels = period.hotels;
+          this.fetchHotels();
+
+          const allActivities = [
             ...(period.activities || []),
             ...(period.includedActivities || []),
           ];
-          console.log('Period itinerary 2:', period);
+
+          // Create a temporary array to store activities
+          this.activities = allActivities.map((activity) => ({
+            ...activity,
+            price: 0, // Initialize with 0, will be updated when prices load
+          }));
+
+          // For each activity, get its price and update the activities array
+          allActivities.forEach((activity) => {
+            this.periodPricesService
+              .getPeriodPriceById(
+                this.selectedOption.value,
+                activity.activityId
+              )
+              .subscribe({
+                next: (price) => {
+                  // Find and update the activity's price in the activities array
+                  const activityIndex = this.activities.findIndex(
+                    (a) => a.activityId === activity.activityId
+                  );
+                  if (activityIndex !== -1) {
+                    this.activities[activityIndex].price = price;
+
+                    // Update the itinerary if it's already populated
+                    if (this.itinerary.length > 0) {
+                      this.updateItinerary();
+                    }
+                  }
+                },
+                error: (error) => {
+                  console.error(
+                    `Error getting price for activity ${activity.activityId}:`,
+                    error
+                  );
+                  // Even if we have an error, keep the activity with price 0
+                  const activityIndex = this.activities.findIndex(
+                    (a) => a.activityId === activity.activityId
+                  );
+                },
+              });
+          });
 
           this.updateItinerary();
+
+          // Share the updated selected date and trip type with the service
+          this.tourOrderService.updateSelectedDateInfo(period.externalID, '');
         },
-        error: (error) => console.error('Error period:', error),
+        error: (error) => {
+          console.error('Error fetching period details:', error);
+          // Handle the error - maybe show a notification to the user
+        },
       });
   }
 
@@ -320,50 +313,59 @@ export class TourItineraryComponent implements OnInit {
   }
 
   updateItinerary(): void {
-    console.log(
-      this.itinerariesData?.['itineraries'],
-      this.selectedOption.value
-    );
-
     const selectedItinerary = this.itinerariesData?.['itineraries'].filter(
       (itinerary) =>
         itinerary.periods
           .map((period) => period.split('-')[1])
           .includes(this.selectedOption.value)
     )[0];
-    console.log('Selected itinerary:', selectedItinerary, this.hotels);
 
-    this.itinerary = selectedItinerary!['days'].map((day, index) => {
-      console.log(
-        'itinerary activities',
-        this.activities.filter((activity) => index + 1 === activity.day)
+    if (!selectedItinerary) {
+      console.error(
+        'No itinerary found for the selected option:',
+        this.selectedOption.value
+      );
+      return;
+    }
+
+    this.itinerary = selectedItinerary['days'].map((day, index) => {
+      const dayActivities = this.activities.filter(
+        (activity) => index + 1 === activity.day
+      );
+
+      const hotelByDay = this.hotels?.find((hotel) =>
+        hotel.days.includes(`${index + 1}`)
+      );
+
+      const hotel = this.hotelsData.find(
+        (hotelData) => hotelData.id === hotelByDay?.hotels[0].id
       );
 
       return {
         title: day.name,
-        description: this.sanitizer.bypassSecurityTrustHtml(day.description),
-        image: day.itimage?.[0]?.url || '',
-        hotel: this.hotels.find(
-          (hotel) =>
-            `${hotel?.id}` === `${day.id}` ||
-            hotel?.days?.includes(`${index + 1}`)
+        description: this.sanitizer.bypassSecurityTrustHtml(
+          day.description || ''
         ),
+        image: day.itimage?.[0]?.url || '',
+        hotel: hotel || null,
         collapsed: index !== 0,
         color: '#9C27B0',
+        // Add extraInfo to the itinerary item
+        extraInfo: day.extraInfo,
         highlights:
-          this.activities
-            .filter((activity) => index + 1 === activity.day)
-            .map((activity) => {
-              return {
-                title: activity.name,
-                description: activity.description || '',
-                image: activity.activityImage?.[0]?.url || '',
-                optional: activity.optional,
-              };
-            }) || [],
+          dayActivities.map((activity) => {
+            return {
+              id: `${activity.activityId}`,
+              title: activity.name,
+              description: activity.description || '',
+              image: activity.activityImage?.[0]?.url || '',
+              optional: activity.optional,
+              recommended: activity.recommended ?? false,
+              price: activity.price,
+            };
+          }) || [],
       };
     });
-    console.log('Itinerary:', this.itinerary);
   }
 
   markerClicked(event: MouseEvent): void {
@@ -382,7 +384,7 @@ export class TourItineraryComponent implements OnInit {
   }
 
   scrollToPanel(index: number): void {
-    if (this.itineraryPanels && this.itineraryPanels.length > index) {
+    if (this.itineraryPanels && this.itineraryPanels?.length > index) {
       const panelArray = this.itineraryPanels.toArray();
       if (panelArray[index]) {
         const el = panelArray[index].el.nativeElement;
@@ -406,5 +408,97 @@ export class TourItineraryComponent implements OnInit {
       return this.findScrollableParent(element.parentElement);
     }
     return window;
+  }
+
+  getTagConfig(tripType: string) {
+    return this.tagsOptions.find((tag) => tag.type === tripType);
+  }
+
+  onAddActivity(highlight: ActivityHighlight): void {
+    // Toggle del estado de la actividad
+    highlight.added = !highlight.added;
+
+    this.tourOrderService.toggleActivity(highlight.id, highlight.title);
+    // Show message when adding an activity
+    if (highlight.added) {
+      // You can use a proper notification service here if available
+      this.showActivityAddedMessage();
+    }
+  }
+
+  // Add this new method to show the message
+  showActivityAddedMessage(): void {
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Actividad añadida',
+      detail:
+        'Las actividades se añaden para todos los pasajeros. Podrás personalizarlas por pasajero en el proceso de pago.',
+      life: 5000,
+    });
+  }
+
+  // Add this method to handle panel clicks
+  handlePanelClick(index: number): void {
+    this.itinerary[index].collapsed = !this.itinerary[index].collapsed;
+    if (!this.itinerary[index].collapsed) {
+      setTimeout(() => {
+        this.scrollToPanel(index);
+      }, 100);
+    }
+  }
+
+  // Add these methods after handlePanelClick method
+  
+  /**
+   * Expands all day panels in the itinerary
+   */
+  expandAllPanels(): void {
+    if (this.itinerary && this.itinerary.length > 0) {
+      this.itinerary.forEach(item => {
+        item.collapsed = false;
+      });
+    }
+  }
+  
+  /**
+   * Collapses all day panels in the itinerary
+   */
+  collapseAllPanels(): void {
+    if (this.itinerary && this.itinerary.length > 0) {
+      this.itinerary.forEach(item => {
+        item.collapsed = true;
+      });
+    }
+  }
+  fetchHotels(): void {
+    if (!this.hotels) {
+      console.warn('No hotels available to fetch.');
+      return;
+    }
+    this.hotels.forEach((hotel) => {
+      if (!hotel.hotels) {
+        console.warn(`No hotels found for period hotel: ${hotel}`);
+        return;
+      }
+      hotel.hotels.forEach((hotel) => {
+        // Check if the hotel already exists in hotelsData
+        if (
+          !this.hotelsData.some(
+            (existingHotel) => existingHotel.id === hotel.id
+          )
+        ) {
+          this.hotelsService.getHotelById(hotel.id).subscribe({
+            next: (hotelData) => {
+              this.hotelsData.push(hotelData);
+              // Update the itinerary after fetching hotel data
+              this.updateItinerary();
+            },
+            error: (error) => {
+              console.error('Error fetching hotel:', error);
+            },
+          });
+        }
+      });
+    });
   }
 }

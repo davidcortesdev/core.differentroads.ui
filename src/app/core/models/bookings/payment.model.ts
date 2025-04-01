@@ -10,11 +10,13 @@ export interface Payment {
   status: PaymentStatus;
   registerBy?: string;
   vouchers?: IPaymentVoucher[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface IPaymentVoucher {
   fileUrl: string;
-  metadata?: any;
+  metadata: any;
   uploadDate: Date;
   reviewStatus: VoucherReviewStatus;
   id: string;

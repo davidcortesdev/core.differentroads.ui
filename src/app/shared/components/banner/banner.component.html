@@ -1,5 +1,5 @@
 <div class="banner">
-    <img [src]="imageUrl" alt="Banner image" class="banner__image">
+    <img [src]="imageUrl" [alt]="imageAlt" class="banner__image">
     <div class="banner__content">
       <h1 class="banner__title">{{title}}</h1>
       <p *ngIf="subtitle && !hideSubtitle" class="banner__subtitle">{{subtitle}}</p>

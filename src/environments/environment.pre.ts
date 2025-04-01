@@ -11,6 +11,14 @@ export const environment = {
     'https://qt4uw3rgx6.execute-api.us-east-2.amazonaws.com/release/redsys/notify',
 
   googleMapsApiKey: 'AIzaSyB6sxlxeTVlRllpGPyDPbKmaZPQJsb8YAs',
+  notificationsApiUrl: 'https://api.differentroads.co/pre/v3/notification',
+
+  cloudinary: {
+    uploadPreset: 'dr_uploads',
+    cloudName: 'dxp2hxees',
+    apiSecret: 'mD3dyC3tOF1i_nV0p-t9f-3_zKY',
+    apiKey: '197192715793311',
+  },
 
   scalapayApiUrl: 'https://integration.api.scalapay.com',
   scalapayApiKey: 'qhtfs87hjnc12kkos',

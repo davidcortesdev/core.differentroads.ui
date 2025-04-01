@@ -1,0 +1,52 @@
+<div class="hotel-card" *ngIf="hotel?.name">
+  <img
+    [src]="hotel?.hotelimage?.[0]?.url || ''"
+    [alt]="hotel?.hotelimage?.[0]?.alt || hotel?.name"
+    class="hotel-card-image"
+    loading="lazy"
+    width="300"
+    height="150"
+  />
+  <div class="hotel-card-content">
+    <span>
+      <p-rating
+        [ngModel]="hotel?.category || 0"
+        [readonly]="true"
+        [stars]="hotel?.category || 0"
+      ></p-rating>
+    </span>
+    <h4 class="hotel-card-name">
+      <a *ngIf="hotel?.link" [href]="hotel?.link" target="_blank" rel="noopener" class="hotel-link">
+        {{ hotel?.name }}
+      </a>
+      <span *ngIf="!hotel?.link">{{ hotel?.name }}</span>
+    </h4>
+    <p class="hotel-card-location">
+      <i class="pi pi-map-marker" aria-hidden="true"></i> {{ hotel?.address || 'No address available' }}
+    </p>
+  </div>
+  <div class="hotel-card-bookings-section" *ngIf="hotel?.bookingRank || hotel?.bookingLink">
+    <ng-container *ngIf="hotel?.bookingLink; else noBookingLink">
+      <a [href]="hotel?.bookingLink" target="_blank" rel="noopener" class="booking-link">
+        <img
+          [src]="bookingLogoSrc"
+          alt="Booking Logo"
+          class="logo"
+          height="60"
+          width="100"
+        />
+        <p>{{ hotel?.bookingRank || '-' }}</p>
+      </a>
+    </ng-container>
+    <ng-template #noBookingLink>
+      <img
+        [src]="bookingLogoSrc"
+        alt="Booking Logo"
+        class="logo"
+        height="60"
+        width="100"
+      />
+      <p>{{ hotel?.bookingRank || '-' }}</p>
+    </ng-template>
+  </div>
+</div>

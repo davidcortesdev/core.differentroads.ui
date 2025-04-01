@@ -1,3 +1,4 @@
+<!-- header.component.html -->
 <div class="header-wrapper">
   <div class="top-section">
     <p-menubar styleClass="top-menu">
@@ -6,7 +7,7 @@
           src="logo-different-color.webp"
           alt="Different Roads Logo"
           class="logo"
-          height="40"
+          height="50"
           width="auto"
           loading="lazy"
           [routerLink]="['/']"
@@ -26,7 +27,7 @@
               styleClass="user-chip"
             >
             </p-chip>
-            <p-menu #menu [model]="userMenuItems" [popup]="true" />
+            <p-menu #menu [model]="userMenuItems" [popup]="true" styleClass="user-popup-menu" autoDisplay="true" baseZIndex="1000"/>
           </ng-container>
           <ng-template #userSkeleton>
             <p-skeleton width="150px" height="32px" styleClass="user-skeleton"></p-skeleton>
@@ -35,20 +36,30 @@
       </ng-template>
     </p-menubar>
   </div>
-
+  
   <div class="bottom-section">
-    <p-menubar styleClass="nav-menu">
-      <ng-template #start>
-        <ng-container *ngIf="!isLoadingMenu; else menuSkeleton">
-          <p-menubar [model]="leftMenuItems"></p-menubar>
-        </ng-container>
-      </ng-template>
-      <ng-template #end>
-        <ng-container *ngIf="!isLoadingMenu; else menuSkeleton">
-          <p-menubar [model]="rightMenuItems" styleClass="right-menu"></p-menubar>
-        </ng-container>
-      </ng-template>
-    </p-menubar>
+    <!-- Para dispositivos móviles y tablets - un único menú combinado -->
+    <ng-container *ngIf="isMobileView; else desktopMenus">
+      <p-menubar styleClass="nav-menu" [model]="combinedMenuItems">
+        <!-- No separate templates for mobile view -->
+      </p-menubar>
+    </ng-container>
+    
+    <!-- Para desktop - menús separados -->
+    <ng-template #desktopMenus>
+      <p-menubar styleClass="nav-menu">
+        <ng-template #start>
+          <ng-container *ngIf="!isLoadingMenu; else menuSkeleton">
+            <p-menubar [model]="leftMenuItems" styleClass="left-menu" autoZIndex="true" autoDisplay="true" baseZIndex="1000"></p-menubar>
+          </ng-container>
+        </ng-template>
+        <ng-template #end>
+          <ng-container *ngIf="!isLoadingMenu; else menuSkeleton">
+            <p-menubar [model]="rightMenuItems" styleClass="right-menu" autoZIndex="true" autoDisplay="true" baseZIndex="1000"></p-menubar>
+          </ng-container>
+        </ng-template>
+      </p-menubar>
+    </ng-template>
   </div>
 </div>
 

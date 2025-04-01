@@ -167,7 +167,7 @@ export class ToursComponent implements OnInit {
 
         // Process tour data
         this.displayedTours = tours.data.map((tour: any) => {
-          const days = tour.activePeriods?.[0]?.days || '';
+          const days = tour?.activePeriods?.[0]?.days || '';
 
           return {
             imageUrl: tour.image?.[0]?.url || '',
@@ -178,10 +178,10 @@ export class ToursComponent implements OnInit {
             tag: tour.marketingSection?.marketingSeasonTag || '',
             price: tour.price || 0,
             availableMonths:
-              tour.monthTags?.map((month: string) =>
+              (tour.monthTags || [])?.map((month: string) =>
                 month.substring(0, 3).toUpperCase()
               ) || [],
-            isByDr: true,
+            isByDr: tour.tourType !== 'FIT',
             webSlug: tour.webSlug || '',
           };
         });

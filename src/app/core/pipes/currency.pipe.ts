@@ -4,7 +4,7 @@ import { Pipe, PipeTransform } from '@angular/core';
   name: 'currencyFormat',
 })
 export class CurrencyPipe implements PipeTransform {
-  transform(value: number, currencyCode: string = 'EUR'): string {
+  transform(value: number |undefined, currencyCode: string = 'EUR'): string {
     if (value == null) return '';
     return new Intl.NumberFormat('es-ES', {
       style: 'currency',
@@ -12,6 +12,6 @@ export class CurrencyPipe implements PipeTransform {
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
       useGrouping: true,
-    }).format(value);
+    }).format(value || 0);
   }
 }

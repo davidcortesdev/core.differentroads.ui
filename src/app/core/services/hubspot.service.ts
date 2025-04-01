@@ -6,9 +6,9 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 interface ContactData {
   email: string;
-  firstname: string;
-  lastname: string;
-  phone: string;
+  firstname?: string;
+  lastname?: string;
+  phone?: string;
 }
 
 @Injectable({
@@ -26,9 +26,9 @@ export class HubspotService {
     });
     const data = {
       email: contactData.email,
-      firstname: contactData.firstname,
-      lastname: contactData.lastname,
-      phone: contactData.phone,
+      firstname: contactData.firstname || '',
+      lastname: contactData.lastname || '',
+      phone: contactData.phone || '',
     };
 
     return this.http.post(this.DATA_API_URL, data, { headers }).pipe(

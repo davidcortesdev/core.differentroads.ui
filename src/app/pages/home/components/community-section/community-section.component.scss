@@ -1,4 +1,14 @@
 .community-section {
   padding: 4rem 4rem;
   background-color: var(--background-azul);
+
+  /* Tablet (dispositivos medianos) */
+  @media screen and (max-width: 1024px) {
+    padding: 3rem 2rem; /* Reduce padding en todos los lados para tablet */
+  }
+
+  /* Móvil (dispositivos pequeños) */
+  @media screen and (max-width: 768px) {
+    padding: 2rem 1rem; /* Reduce aún más el padding para móvil */
+  }
 }

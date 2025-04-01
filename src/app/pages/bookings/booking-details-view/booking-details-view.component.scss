@@ -1,0 +1,227 @@
+:host ::ng-deep {
+    /* Estilos para el panel de detalles */
+    .booking-details-panel {
+        border: 1px solid #eaeaea;
+        border-radius: 12px;
+        margin: 0.75rem;
+        margin-top: 18px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+
+        &:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .p-panel-content {
+            padding: 1rem;
+        }
+    }
+
+    /* Configuración para todos los paneles */
+    .p-panel-header {
+        padding: 0;
+    }
+}
+
+/* Estilos para el contenedor del dataview */
+.booking-details-container {
+    width: 100%;
+}
+
+.booking-info-item {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    width: 100%;
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+    }
+
+    .booking-image {
+        flex: 0 0 auto;
+        margin-right: 20px;
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        @media (min-width: 769px) {
+            width: 200px;
+            height: 100px;
+        }
+
+        @media (max-width: 768px) {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 15px;
+        }
+    }
+
+    .booking-details {
+        flex: 1;
+        padding-right: 15px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100px;
+
+        .booking-row {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+
+            &.top-row {
+                padding-top: 5px;
+                margin-bottom: 10px;
+            }
+
+            &.bottom-row {
+                padding-bottom: 5px;
+            }
+
+            .booking-label {
+                color: #666;
+                font-size: 0.9rem;
+                width: auto;
+                &.tourname {
+                    font-size: 1.3rem;
+                    font-weight: 700;
+                    color: #333;
+                    width: 100%;
+                }
+            }
+
+            .booking-value {
+                font-weight: 500;
+                font-size: 0.9rem;
+                color: #333;
+                text-align: right;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .booking-row {
+                justify-content: flex-start;
+
+                .booking-label {
+                    width: 30%;
+                }
+
+                .booking-value {
+                    width: 70%;
+                    text-align: left;
+                    padding-left: 1rem;
+                    margin-left: 0;
+                }
+            }
+        }
+    }
+
+    .booking-right-info {
+        text-align: right;
+        min-width: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100px;
+
+        .top-row {
+            padding-top: 5px;
+        }
+
+        .bottom-row {
+            padding-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .user-price-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .departure-date {
+            .label {
+                font-size: 0.8rem;
+                color: #666;
+                margin-right: 5px;
+            }
+
+            .value {
+                font-weight: 600;
+            }
+        }
+
+        .user-tag {
+            display: flex;
+            align-items: center;
+            margin-right: 10px;
+
+            i {
+                font-size: 1rem;
+                margin-left: 5px;
+                color: #666;
+            }
+
+            ::ng-deep .p-tag {
+                background-color: #4f97fb;
+                color: #fff;
+                font-size: 0.8rem;
+                padding: 0.2rem 0.5rem;
+                border-radius: 4px;
+            }
+        }
+
+        .price-tag {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .booking-right-info {
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            height: auto;
+
+            .top-row,
+            .bottom-row {
+                display: flex;
+                align-items: center;
+            }
+
+            .departure-date {
+                text-align: left;
+                margin-right: 10px;
+            }
+
+            .booking-value,
+            .price-tag,
+            .user-tag {
+                text-align: right;
+            }
+        }
+
+        .booking-details {
+            .booking-row {
+                justify-content: space-between;
+
+                .booking-value {
+                    text-align: right;
+                    margin-left: auto;
+                }
+            }
+        }
+    }
+}

@@ -1,5 +1,7 @@
 import { PriceData } from '../commons/price-data.model';
-import { OrderTraveler } from '../orders/order.model';
+import { OrderTraveler, PaymentOption } from '../orders/order.model';
+import { Flight } from '../tours/flight.model';
+import { BookingTraveler } from './booking-traveler.model';
 
 export interface Booking {
   id: string;
@@ -15,8 +17,9 @@ export interface Booking {
   travelersNumber: number;
   extraData?: any;
   deadlines?: any[];
-  flights?: any;
+  flights?: Flight[];
   createdAt?: string;
+  travelers?: BookingTraveler[];
 }
 
 export interface BookingCreateInput {
@@ -27,7 +30,7 @@ export interface BookingCreateInput {
     priceData?: PriceData[];
     _id?: string;
   };
-  summary: string;
+  textSummary: any;
   total: number;
   priceData: any;
   name: string;
@@ -44,6 +47,7 @@ export interface BookingCreateInput {
   paymentTerms: any;
   redeemPoints: number;
   usePoints: Record<string, number>;
+  payment?: PaymentOption;
 }
 
 export interface GetAllBookingsParams {
@@ -60,18 +64,4 @@ export interface GetAllBookingsParams {
 export interface OptionalActivityRef {
   id: string;
   travelersAssigned: string[];
-}
-
-interface OptionalActivity {
-  status: string;
-  activityId: string;
-  description: string;
-  externalID: string;
-  name: string;
-  optional: boolean;
-  periodId: string;
-  productType: string;
-  availability: number;
-  priceData: PriceData[];
-  _id: string;
 }

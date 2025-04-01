@@ -1,18 +1,28 @@
 <div class="container">
-  <app-banner 
-    [imageUrl]="bannerImage" 
+  <app-banner
+    [imageUrl]="bannerImage"
+    [imageAlt]="bannerImageAlt"
     [title]="bannerTitle"
-    [subtitle]="bannerSubtitle">
+    [subtitle]="bannerSubtitle"
+    *ngIf="isLanding || isCollection"
+  >
   </app-banner>
-  <app-title-and-quill [title]="bannerTitle" [description]="bannerDescription"></app-title-and-quill>
-  <app-dynamic-components *ngIf="blocks" [blocks]="blocks"></app-dynamic-components>
-  
-  <!-- Replace app-tours-filter with app-tours -->
-  <app-tours 
+  <app-title-and-quill
+    [title]="contentTitle"
+    [description]="contentDescription"
+  ></app-title-and-quill>
+
+  <app-tours
     *ngIf="showTours"
     [showTours]="showTours"
     [isOffersCollection]="isTagBasedCollection"
     [initialTags]="collectionTags"
-    (toursLoaded)="onToursLoaded($event)">
+    (toursLoaded)="onToursLoaded($event)"
+  >
   </app-tours>
+
+  <app-dynamic-components
+    *ngIf="blocks.length"
+    [blocks]="blocks"
+  ></app-dynamic-components>
 </div>

@@ -4,12 +4,44 @@
     <div class="step-description">Vuelos disponibles</div>
   </div>
 
+  <!-- Display original flights -->
   <div *ngFor="let flight of filteredFlights">
     <app-flight-itinerary
       [flight]="flight"
-      [selectFlight]="selectFlight.bind(this)"
+      [selectFlight]="selectFlightWithAuthCheck.bind(this)"
       [isFlightSelected]="isFlightSelected.bind(this)"
     >
     </app-flight-itinerary>
   </div>
+
+  <!-- Add the button to toggle flight search -->
+  <div class="flight-search-toggle">
+    <p-button
+      label="Ver otras opciones de vuelos"
+      styleClass="p-button-outlined"
+      (click)="toggleFlightSearch()"
+      [icon]="showFlightSearch ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+      iconPos="right"
+    >
+    </p-button>
+  </div>
+
+  <!-- Conditionally display flight search -->
+  <div *ngIf="showFlightSearch">
+    <app-flight-search
+      [flights]="flights"
+      [tourDestination]="tourDestination"
+      (filteredFlightsChange)="onFilteredFlightsChange($event)"
+    >
+    </app-flight-search>
+  </div>
+
+  <!-- Login Modal with PrimeNG dialog -->
+  <app-login-modal
+    [visible]="loginDialogVisible"
+    (close)="closeLoginModal()"
+    (login)="navigateToLogin()"
+    (register)="navigateToRegister()"
+  >
+  </app-login-modal>
 </div>

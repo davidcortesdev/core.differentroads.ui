@@ -1,11 +1,11 @@
-<div class="reviews-section" role="region" aria-label="Customer Reviews">
+<div *ngIf="reviews?.length" class="reviews-section" role="region" aria-label="Customer Reviews">
   <p-carousel
     [value]="reviews"
     [numVisible]="6"
     [numScroll]="1"
     [circular]="true"
     [responsiveOptions]="responsiveOptions"
-    [autoplayInterval]="5000"
+    [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
     [showNavigators]="true"
     [showIndicators]="true"
   >

@@ -10,8 +10,13 @@
                 item.description || "Elemento sin descripción"
               }}</span>
               <span class="quantity"
-                >{{ item.quantity }}x{{ item.unitPrice | currencyFormat }}</span
-              >
+                >{{ item.quantity }}
+              </span>
+              <span>x</span>
+              <span class="unit-price"
+                >{{ item.unitPrice | currencyFormat:"EUR" }}
+              </span>
+              <span>=</span>
               <span
                 class="price"
                 [ngClass]="{

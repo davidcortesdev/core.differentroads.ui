@@ -1,4 +1,3 @@
-// Variables for reusability
 $breakpoint-tablet: 1024px;
 $breakpoint-mobile: 768px;
 $border-radius-sm: 4px;
@@ -8,7 +7,6 @@ $spacing-xs: 0.2rem;
 $spacing-sm: 0.5rem;
 $spacing-md: 1rem;
 
-// Mixins for reusability
 @mixin trip-type-badge {
   color: white !important;
   font-weight: bold;
@@ -32,11 +30,9 @@ $spacing-md: 1rem;
     font-size: $mobile;
   }
 }
-
 .tour-card {
   padding: $spacing-sm;
   height: 100%;
-
   ::ng-deep .tour-card-wrapper {
     .p-card {
       border-radius: $border-radius-lg;
@@ -44,14 +40,12 @@ $spacing-md: 1rem;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-
       .p-card-body {
         flex: 1;
         display: flex;
         flex-direction: column;
         padding: 0;
       }
-
       .p-card-content {
         padding: $spacing-md;
         flex: 1;
@@ -59,27 +53,22 @@ $spacing-md: 1rem;
         flex-direction: column;
       }
     }
-
     .image-container {
       cursor: pointer;
       position: relative;
       height: 230px;
-
       @media screen and (max-width: $breakpoint-tablet) {
         height: 220px;
       }
-
       @media screen and (max-width: $breakpoint-mobile) {
         height: 240px;
       }
-
       img {
         width: 100%;
         height: 100%;
         object-fit: cover;
         border-radius: $border-radius-md;
       }
-
       .overlay {
         position: absolute;
         top: 0;
@@ -91,7 +80,6 @@ $spacing-md: 1rem;
         display: flex;
         flex-direction: column;
         border-radius: $border-radius-lg;
-
         .rating {
           align-self: flex-start;
           background: var(--p-primary-color);
@@ -100,14 +88,12 @@ $spacing-md: 1rem;
           border-radius: $border-radius-sm;
           @include responsive-font(0.8rem, 0.85rem, 0.7rem);
         }
-
         .indicator {
           font-weight: 500;
           text-align: start;
           color: var(--p-primary-color);
           @include responsive-font(0.7rem, 0.8rem, 0.75rem);
         }
-
         .tags-container {
           position: absolute;
           top: $spacing-md;
@@ -116,7 +102,6 @@ $spacing-md: 1rem;
           flex-direction: column;
           gap: 0.1rem;
           align-items: flex-end;
-
           .tag {
             background: var(--p-button-primary-color);
             color: var(--background-azul);
@@ -133,30 +118,25 @@ $spacing-md: 1rem;
             border-radius: 10px;
             margin-bottom: 0.1rem;
           }
-
           .tag.expandable-tag:hover {
             max-width: none;
             width: auto;
             padding-right: $spacing-sm;
           }
-
           .short-text {
             display: inline-block;
             transition: all 0.1s ease;
-
             img {
               width: 1rem;
               height: 1rem;
             }
           }
-
           .tag.expandable-tag:hover .short-text {
             opacity: 0;
             width: 0;
             position: absolute;
             overflow: hidden;
           }
-
           .expanded-content {
             display: inline-block;
             opacity: 0;
@@ -164,24 +144,20 @@ $spacing-md: 1rem;
             overflow: hidden;
             transition: all 0.2s ease;
           }
-
           .tag.expandable-tag:hover .expanded-content {
             opacity: 1;
             max-width: none;
             width: auto;
-            margin-left: 0; /* Quité el margen para que no haya espacio */
+            margin-left: 0;
           }
         }
-
         .title-overlay {
           margin-top: auto;
           color: white;
-
           p {
             margin-bottom: 0;
             @include responsive-font(0.9rem, 0.95rem, 0.8rem);
           }
-
           h3 {
             margin-top: 1px;
             margin-bottom: 0.3rem;
@@ -190,77 +166,64 @@ $spacing-md: 1rem;
         }
       }
     }
-
     .card-footer {
       margin: 0 -#{$spacing-md};
       display: flex;
       flex-direction: column;
       gap: $spacing-md;
-
       .price-content {
         display: flex;
         flex-direction: column;
-        gap: $spacing-sm; // Añadido gap para separar elementos adecuadamente
+        gap: $spacing-sm;
       }
-
       .price-section {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
         width: 100%;
-
         .price-info {
           display: flex;
           flex-direction: column;
           align-items: flex-start;
-
           .desde {
             font-size: 0.9rem;
             color: var(--background-azul);
             margin-bottom: $spacing-xs;
           }
-
           .price {
             font-size: 1.5rem;
             font-weight: bold;
             color: var(--background-azul);
           }
         }
-
         .button-container {
           display: flex;
           align-items: center;
           gap: $spacing-sm;
         }
       }
-
-      // Movido fuera de .price-info a .price-content
       .priceScalapay {
         color: var(--p-primary-color);
         font-size: 0.9rem;
         display: flex;
         align-items: center;
         gap: 0.3rem;
-        margin-top: -0.5rem; // Ajuste para acercarlo al precio
-        margin-bottom: 0.5rem; // Espacio antes de los meses
-
+        margin-top: -0.5rem;
+        margin-bottom: 0.5rem;
         img {
           height: 1.3rem;
           display: inline-block;
           vertical-align: middle;
         }
       }
-
       .buttonVertour {
         ::ng-deep .p-button {
           border-radius: 1.5rem;
           min-width: 7rem;
           margin-top: 13px;
-
           @media screen and (max-width: $breakpoint-tablet) {
             min-width: 6rem;
           }
-
           @media screen and (max-width: $breakpoint-mobile) {
             min-width: 6rem;
             height: 2.5rem;
@@ -268,14 +231,12 @@ $spacing-md: 1rem;
           }
         }
       }
-
       .trip-type-container {
         display: flex;
         gap: 0.3rem;
         margin-right: 8px;
         margin-top: 13px;
       }
-
       .months {
         display: flex;
         gap: $spacing-sm;
@@ -285,13 +246,11 @@ $spacing-md: 1rem;
         align-items: center;
         justify-content: flex-start;
         margin-top: -15px;
-
         @media screen and (max-width: $breakpoint-tablet) {
           width: 12rem;
           height: 2.2rem;
           margin-top: -8px;
         }
-
         @media screen and (max-width: $breakpoint-mobile) {
           width: 100%;
           height: auto;
@@ -299,99 +258,80 @@ $spacing-md: 1rem;
           overflow-y: auto;
           margin-top: -8px;
         }
-
         .month {
           font-size: 0.7rem;
         }
       }
     }
   }
-
   &.isLarge {
     ::ng-deep .tour-card-wrapper {
       .p-card {
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
         .p-card-body {
           padding: 10px;
         }
-
         .p-card-content {
           padding: 0;
         }
       }
-
       .image-container {
         height: 280px;
-
         @media screen and (max-width: $breakpoint-tablet) {
           height: 220px;
         }
-
         @media screen and (max-width: $breakpoint-mobile) {
           height: 240px;
         }
-
         img {
           border-radius: $border-radius-lg;
         }
-
         .overlay {
           .rating,
           .tag {
             padding: 0.3rem 0.6rem;
             font-size: 0.9rem;
           }
-
           .title-overlay {
             h3 {
               font-size: 1.5rem;
             }
-
             p {
               font-size: 1rem;
             }
           }
         }
       }
-
       .card-footer {
         .price-section {
           .price-info {
             .desde {
               font-size: 0.9rem;
               color: var(--background-azul);
-
               @media screen and (max-width: $breakpoint-tablet) {
                 font-size: 0.85rem;
                 margin-top: 0.4rem;
               }
-
               @media screen and (max-width: $breakpoint-mobile) {
                 font-size: 0.8rem;
                 margin-top: 0.3rem;
               }
             }
-
             .price {
               font-size: 2rem;
               font-weight: bold;
               color: var(--background-azul);
               line-height: 1.2rem;
               margin-bottom: $spacing-sm;
-
               @media screen and (max-width: $breakpoint-tablet) {
                 font-size: 1.4rem;
               }
-
               @media screen and (max-width: $breakpoint-mobile) {
                 font-size: 1.3rem;
               }
             }
           }
         }
-
-        // Actualizado para la versión isLarge
         .priceScalapay {
           color: var(--p-primary-color);
           font-size: 0.9rem;
@@ -399,7 +339,6 @@ $spacing-md: 1rem;
           align-items: center;
           gap: 0.3rem;
           margin-top: -0.2rem;
-
           img {
             height: 1.3rem;
             display: inline-block;
@@ -410,18 +349,14 @@ $spacing-md: 1rem;
     }
   }
 }
-
-// Trip type badges
 .trip-type-s {
   @include trip-type-badge;
   background-color: var(--color-single) !important;
 }
-
 .trip-type-g {
   @include trip-type-badge;
   background-color: var(--color-group) !important;
 }
-
 .trip-type-p {
   @include trip-type-badge;
   background-color: var(--color-private) !important;

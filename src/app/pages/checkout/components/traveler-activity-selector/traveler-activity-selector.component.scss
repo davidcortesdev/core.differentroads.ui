@@ -1,0 +1,53 @@
+.activity-selector {
+    margin: 0;
+    padding: 0;
+
+    h4 {
+        font-size: 1rem;
+        margin-bottom: 15px;
+        font-weight: 600;
+        color: #0a3d62;
+    }
+
+    .no-activities {
+        padding: 12px;
+        text-align: center;
+        color: #6c757d;
+        font-style: italic;
+    }
+
+    .activities-list {
+        .activity-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f2f2f2;
+
+            &:last-child {
+                border-bottom: none;
+            }
+
+            .activity-name {
+                font-weight: 400;
+                font-size: 0.95rem;
+                color: #333;
+            }
+
+            .activity-action {
+                ::ng-deep {
+                    .p-checkbox {
+                        .p-checkbox-box {
+                            border-color: #ddd;
+
+                            &.p-highlight {
+                                background-color: #ff6b6b;
+                                border-color: #ff6b6b;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

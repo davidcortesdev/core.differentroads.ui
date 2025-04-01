@@ -1,0 +1,21 @@
+<div class="activity-selector">
+    <h4>Opcionales añadidas por el pasajero</h4>
+    
+    <div *ngIf="activities.length === 0" class="no-activities">
+      No hay actividades opcionales disponibles.
+    </div>
+  
+    <div *ngIf="activities.length > 0" class="activities-list">
+      <div *ngFor="let activity of activities" class="activity-item">
+        <div class="activity-name">{{ activity.name }}</div>
+        
+        <div class="activity-action">
+          <p-checkbox 
+            [(ngModel)]="selectedActivities[activity.activityId]" 
+            [binary]="true"
+            (onChange)="toggleActivity(activity)">
+          </p-checkbox>
+        </div>
+      </div>
+    </div>
+  </div>

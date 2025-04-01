@@ -87,7 +87,7 @@ $colors: (
   }
 }
 
-// Map section
+// Map section - Simplificado ya que la mayoría de los estilos ahora están en el componente del mapa
 .map-section {
   flex: 2;
   position: sticky;
@@ -107,6 +107,7 @@ $colors: (
   @include resp(sm) {
     height: 250px;
   }
+}
 
   .map-placeholder {
     width: 100%;
@@ -123,7 +124,7 @@ $colors: (
       height: 100%;
     }
   }
-}
+
 
 // Panel header content
 .panel-header-content {

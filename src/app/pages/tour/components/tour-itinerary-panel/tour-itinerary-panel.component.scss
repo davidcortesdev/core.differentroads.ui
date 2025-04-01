@@ -53,6 +53,7 @@ $colors: (
 .panel-header-content {
   @include flex(row, space-between, center);
   width: 100%;
+  cursor: pointer;
 
   @include resp(md) {
     flex-direction: column;
@@ -79,19 +80,17 @@ $colors: (
 .itinerary-content {
   color: map.get($colors, text);
   display: grid;
-  gap: 0.5rem;
+  gap: 1rem;
   grid-template-columns: 1fr 1fr;
   margin: 0.5rem 0;
-  margin-top: -20px;
-
+  
   img {
     width: 320px;
     height: 250px;
     object-fit: cover;
     border-radius: map.get($border-radius, md);
-    margin-top: 20px;
     justify-self: end;
-
+    
     @include resp(md) {
       height: 180px;
       width: 100%;
@@ -102,19 +101,19 @@ $colors: (
       height: 200px;
     }
   }
-
+  
   @include resp(sm) {
     grid-template-columns: 1fr;
     gap: 0.75rem;
     grid-template-areas: "image" "description";
 
+    div {
+      grid-area: description;
+    }
+
     img {
       grid-area: image;
       justify-self: center;
-    }
-
-    div:not(:has(img)) {
-      grid-area: description;
     }
   }
 }
@@ -138,6 +137,7 @@ $colors: (
     }
   }
 }
+
 .extra-info-section {
   margin-top: 1rem;
   
@@ -151,4 +151,11 @@ $colors: (
     font-size: 0.9rem;
     line-height: 1.5;
   }
+}
+
+// Add spacing between sections
+app-hotel-card,
+app-activities-carousel {
+  display: block;
+  margin-top: 1.5rem;
 }

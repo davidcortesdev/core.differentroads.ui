@@ -23,11 +23,11 @@ $spacing-md: 1rem;
 
 @mixin responsive-font($mobile, $tablet, $desktop) {
   font-size: $desktop;
-  
+
   @media screen and (max-width: $breakpoint-tablet) {
     font-size: $tablet;
   }
-  
+
   @media screen and (max-width: $breakpoint-mobile) {
     font-size: $mobile;
   }
@@ -116,7 +116,7 @@ $spacing-md: 1rem;
           flex-direction: column;
           gap: 0.1rem;
           align-items: flex-end;
-      
+
           .tag {
             background: var(--p-button-primary-color);
             color: var(--background-azul);
@@ -133,31 +133,30 @@ $spacing-md: 1rem;
             border-radius: 10px;
             margin-bottom: 0.1rem;
           }
-          
+
           .tag.expandable-tag:hover {
-            max-width: none; 
-            width: auto; 
-            padding-right: $spacing-sm; 
-            
+            max-width: none;
+            width: auto;
+            padding-right: $spacing-sm;
           }
-          
+
           .short-text {
             display: inline-block;
             transition: all 0.1s ease;
-            
-            img{
+
+            img {
               width: 1rem;
-              height: 1rem
+              height: 1rem;
             }
           }
-          
+
           .tag.expandable-tag:hover .short-text {
             opacity: 0;
             width: 0;
             position: absolute;
             overflow: hidden;
           }
-          
+
           .expanded-content {
             display: inline-block;
             opacity: 0;
@@ -165,7 +164,7 @@ $spacing-md: 1rem;
             overflow: hidden;
             transition: all 0.2s ease;
           }
-          
+
           .tag.expandable-tag:hover .expanded-content {
             opacity: 1;
             max-width: none;
@@ -201,6 +200,7 @@ $spacing-md: 1rem;
       .price-content {
         display: flex;
         flex-direction: column;
+        gap: $spacing-sm; // Añadido gap para separar elementos adecuadamente
       }
 
       .price-section {
@@ -225,22 +225,29 @@ $spacing-md: 1rem;
             font-weight: bold;
             color: var(--background-azul);
           }
-
-          .priceScalapay {
-            color: var(--p-primary-color);
-            font-size: 0.9rem;
-          }
-          
-          img {
-            height: 1.3rem;
-            filter: invert(59%) sepia(29%) saturate(7459%) hue-rotate(329deg) brightness(80%) contrast(95%);
-          }
         }
-        
+
         .button-container {
           display: flex;
           align-items: center;
           gap: $spacing-sm;
+        }
+      }
+
+      // Movido fuera de .price-info a .price-content
+      .priceScalapay {
+        color: var(--p-primary-color);
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        margin-top: -0.5rem; // Ajuste para acercarlo al precio
+        margin-bottom: 0.5rem; // Espacio antes de los meses
+
+        img {
+          height: 1.3rem;
+          display: inline-block;
+          vertical-align: middle;
         }
       }
 
@@ -249,11 +256,11 @@ $spacing-md: 1rem;
           border-radius: 1.5rem;
           min-width: 7rem;
           margin-top: 13px;
-          
+
           @media screen and (max-width: $breakpoint-tablet) {
             min-width: 6rem;
           }
-          
+
           @media screen and (max-width: $breakpoint-mobile) {
             min-width: 6rem;
             height: 2.5rem;
@@ -277,10 +284,12 @@ $spacing-md: 1rem;
         height: 2.5rem;
         align-items: center;
         justify-content: flex-start;
+        margin-top: -15px;
 
         @media screen and (max-width: $breakpoint-tablet) {
           width: 12rem;
           height: 2.2rem;
+          margin-top: -8px;
         }
 
         @media screen and (max-width: $breakpoint-mobile) {
@@ -288,6 +297,7 @@ $spacing-md: 1rem;
           height: auto;
           max-height: 3.5rem;
           overflow-y: auto;
+          margin-top: -8px;
         }
 
         .month {
@@ -327,7 +337,8 @@ $spacing-md: 1rem;
         }
 
         .overlay {
-          .rating, .tag {
+          .rating,
+          .tag {
             padding: 0.3rem 0.6rem;
             font-size: 0.9rem;
           }
@@ -368,7 +379,7 @@ $spacing-md: 1rem;
               color: var(--background-azul);
               line-height: 1.2rem;
               margin-bottom: $spacing-sm;
-              
+
               @media screen and (max-width: $breakpoint-tablet) {
                 font-size: 1.4rem;
               }
@@ -377,11 +388,22 @@ $spacing-md: 1rem;
                 font-size: 1.3rem;
               }
             }
+          }
+        }
 
-            .priceScalapay {
-              color: var(--p-primary-color);
-              font-size: 0.9rem;
-            }
+        // Actualizado para la versión isLarge
+        .priceScalapay {
+          color: var(--p-primary-color);
+          font-size: 0.9rem;
+          display: flex;
+          align-items: center;
+          gap: 0.3rem;
+          margin-top: -0.2rem;
+
+          img {
+            height: 1.3rem;
+            display: inline-block;
+            vertical-align: middle;
           }
         }
       }

@@ -25,7 +25,10 @@
         class="img"
       />
     </div>
-
+    <div class="extra-info-section" *ngIf="event.extraInfo && event.extraInfo.title">
+      <h4 class="extra-info-title">{{ event.extraInfo.title }}</h4>
+      <div class="extra-info-content" [innerHTML]="event.extraInfo.content"></div>
+    </div>
     <app-hotel-card
       [hotel]="event.hotel"
     ></app-hotel-card>

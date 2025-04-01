@@ -83,6 +83,10 @@ export class TourItineraryComponent implements OnInit {
     collapsed: boolean;
     color?: string;
     highlights?: ActivityHighlight[];
+    extraInfo?: {
+      title?: string;
+      content?: string;
+    };
   }[] = [];
 
   activities: Activity[] = [];
@@ -346,6 +350,8 @@ export class TourItineraryComponent implements OnInit {
         hotel: hotel || null,
         collapsed: index !== 0,
         color: '#9C27B0',
+        // Add extraInfo to the itinerary item
+        extraInfo: day.extraInfo,
         highlights:
           dayActivities.map((activity) => {
             return {

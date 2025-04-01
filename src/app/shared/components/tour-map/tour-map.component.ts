@@ -149,20 +149,11 @@ export class TourMapComponent implements OnInit {
       this.mapId = google.maps.Map.DEMO_MAP_ID;
       this.apiLoaded = true;
       
-      // Initialize polyline options with Google Maps API objects after API is loaded
+      // Initialize polyline options without the icons
       this.polylineOptions = {
         ...this.polylineOptions,
-        icons: [{
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 7,
-            fillColor: '#FF0000',
-            fillOpacity: 0.8,
-            strokeWeight: 0
-          },
-          offset: '0',
-          repeat: '120px'
-        }]
+        // Remove the icons property or set it to an empty array
+        icons: []
       };
     });
   }

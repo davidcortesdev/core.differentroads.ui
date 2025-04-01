@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { AmadeusService } from '../../../../../../core/services/amadeus.service';
+import { AirportService } from '../../../../../../core/services/airport.service';
 import {
   FlightOffersParams,
   ITempFlightOffer,
@@ -46,15 +47,7 @@ export class FlightSearchComponent implements OnInit {
     this.fechaRegresoConstante
   );
 
-  ciudades: Ciudad[] = [
-    { nombre: 'Madrid', codigo: 'MAD' },
-    { nombre: 'Nueva York', codigo: 'NYC' },
-    { nombre: 'Lisboa', codigo: 'LIS' },
-    { nombre: 'Casablanca', codigo: 'CMN' },
-    { nombre: 'Sevilla', codigo: 'SVQ' },
-    { nombre: 'Noruega - Oslo Gardemoen', codigo: 'OSL' },
-    { nombre: 'Sevilla - San Pablo', codigo: 'SVQ' },
-  ];
+  filteredCities: Ciudad[] = [];
 
   aerolineas: Ciudad[] = [
     { nombre: 'Todas', codigo: 'ALL' },
@@ -84,11 +77,13 @@ export class FlightSearchComponent implements OnInit {
   // Array para almacenar vuelos transformados
   transformedFlights: Flight[] = [];
 
-  constructor(private fb: FormBuilder, private amadeusService: AmadeusService) {
+  constructor(
+    private fb: FormBuilder,
+    private amadeusService: AmadeusService,
+    private airportService: AirportService
+  ) {
     // Seleccionar ciudad por defecto (Madrid)
-    const defaultCity =
-      this.ciudades.find((city) => city.nombre === 'Madrid') ||
-      this.ciudades[0];
+    const defaultCity = { nombre: 'Madrid', codigo: 'MAD' };
 
     this.flightForm = this.fb.group({
       origen: [defaultCity], // Usamos el objeto Ciudad completo
@@ -143,6 +138,8 @@ export class FlightSearchComponent implements OnInit {
         ? this.getCityCode(formValue.origen)
         : formValue.origen.codigo;
 
+    console.log('Origin code for search:', originCode); // Added debug log
+
     // Usar el código de destino fijo del tour
     const destinationCode = this.tourOrigenConstante.codigo;
 
@@ -187,7 +184,7 @@ export class FlightSearchComponent implements OnInit {
   }
 
   getCityCode(cityName: string): string {
-    const city = this.ciudades.find(
+    const city = this.filteredCities.find(
       (c) => c.nombre.toLowerCase() === cityName.toLowerCase()
     );
     return city ? city.codigo : 'MAD';
@@ -542,7 +539,7 @@ export class FlightSearchComponent implements OnInit {
 
   // Add a helper method to get city name from IATA code
   getCityName(iataCode: string): string | null {
-    const city = this.ciudades.find((c) => c.codigo === iataCode);
+    const city = this.filteredCities.find((c) => c.codigo === iataCode);
     if (city) {
       return city.nombre.split(' - ')[0]; // Return just the city name part
     }
@@ -696,5 +693,15 @@ export class FlightSearchComponent implements OnInit {
 
   isFlightSelected(flight: Flight): boolean {
     return flight.externalID === this.selectedFlightId;
+  }
+
+  searchCities(event: any): void {
+    const query = event.query;
+    this.airportService.searchAirports(query).subscribe((airports) => {
+      this.filteredCities = airports.map((airport) => ({
+        nombre: airport.city + ' - ' + airport.name,
+        codigo: airport.iata,
+      }));
+    });
   }
 }

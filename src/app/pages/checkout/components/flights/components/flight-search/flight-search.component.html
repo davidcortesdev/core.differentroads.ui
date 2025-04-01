@@ -38,12 +38,16 @@
         </div>
         <div class="input origin">
           <i class="pi pi-plane"></i>
-          <p-dropdown
+          <p-autocomplete
             formControlName="origen"
-            [options]="ciudades"
-            optionLabel="nombre"
+            [suggestions]="filteredCities"
+            (completeMethod)="searchCities($event)"
+            field="nombre"
+            [forceSelection]="true"
             styleClass="w-full"
-          ></p-dropdown>
+            [dropdown]="true"
+          >
+          </p-autocomplete>
           <a href="#" class="change"></a>
         </div>
         <div class="input destination">
@@ -105,11 +109,7 @@
         ></p-dropdown> -->
       </div>
       <div class="btn-search">
-        <p-button
-          label="Buscar"
-          styleClass=""
-          (click)="buscar()"
-        ></p-button>
+        <p-button label="Buscar" styleClass="" (click)="buscar()"></p-button>
       </div>
     </div>
   </form>
@@ -153,14 +153,14 @@
 <!-- Estado inicial - sin búsqueda -->
 <div class="no-search" *ngIf="!isLoading && !searchPerformed">
   <p-panel>
-  <div class="msg" style="text-align: center">
-    <h3><i class="pi pi-search"></i> Busca tu vuelo</h3>
-    <p>
-      Selecciona tu ciudad de origen y haz clic en "Buscar" para encontrar
-      vuelos disponibles.
-    </p>
-  </div>
-</p-panel>
+    <div class="msg" style="text-align: center">
+      <h3><i class="pi pi-search"></i> Busca tu vuelo</h3>
+      <p>
+        Selecciona tu ciudad de origen y haz clic en "Buscar" para encontrar
+        vuelos disponibles.
+      </p>
+    </div>
+  </p-panel>
 </div>
 
 <!-- Estado de error o sin resultados -->

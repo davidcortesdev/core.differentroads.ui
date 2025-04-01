@@ -11,12 +11,19 @@
   </div>
 
   <div class="booking-content" [ngClass]="{ hidden: !isExpanded }">
+    <!-- Loading indicator -->
+    <div class="loading-container" *ngIf="loading">
+      <p-progressSpinner strokeWidth="3" animationDuration=".5s"></p-progressSpinner>
+    </div>
+    
+    <!-- Content when not loading -->
     <p-dataView
       #dv
       [value]="bookings"
       [rows]="5"
       [paginator]="true"
       styleClass="transparent-dataview"
+      *ngIf="!loading"
     >
       <ng-template #list let-bookings>
         <div class="booking-list">

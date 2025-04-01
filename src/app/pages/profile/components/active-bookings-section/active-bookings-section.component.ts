@@ -27,7 +27,7 @@ export class ActiveBookingsSectionComponent implements OnInit {
   bookings: Booking[] = [];
   isExpanded: boolean = true;
   @Input() userEmail!: string;
-  
+  loading: boolean = false;  
   // Agregamos un EventEmitter para avisar al componente padre cuando se selecciona una reserva
   @Output() bookingSelected = new EventEmitter<string>();
 
@@ -39,6 +39,7 @@ export class ActiveBookingsSectionComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.loading = true;
     this.fetchBookingsWithMultipleStatuses(this.userEmail);
   }
 
@@ -58,6 +59,7 @@ export class ActiveBookingsSectionComponent implements OnInit {
       
       // Combina ambos arrays
       this.bookings = [...bookedBookings, ...rqBookings];
+      this.loading = false;
       
       // Ordena las reservas por fecha de creación (más reciente primero - de la más nueva a la más antigua)
       this.bookings.sort((a, b) => b.creationDate.getTime() - a.creationDate.getTime());

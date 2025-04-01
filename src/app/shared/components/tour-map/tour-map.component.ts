@@ -186,6 +186,8 @@ export class TourMapComponent implements OnInit, OnDestroy {
     this.scriptElement.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}&libraries=marker`;
     this.scriptElement.async = true;
     this.scriptElement.defer = true;
+    // Add loading attribute to follow best practices
+    this.scriptElement.setAttribute('loading', 'async');
     
     this.scriptElement.addEventListener('load', () => {
       this.initializeMap();

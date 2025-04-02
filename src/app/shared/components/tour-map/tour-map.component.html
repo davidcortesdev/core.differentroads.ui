@@ -8,14 +8,24 @@
       [width]="sizeMapaWidth"
       [height]="sizeMapaHeight"
       [mapTypeId]="mapTypeId"
+      [mapId]="mapId"
     >
-      <map-marker
+      <map-advanced-marker
         #markerElem
         *ngFor="let marker of markers"
         [position]="marker.position"
+        [title]="marker.title || ''"
         [options]="marker.options"
       >
-      </map-marker>
+      </map-advanced-marker>
+      
+      <!-- Add polyline to connect markers -->
+      <map-polyline
+        *ngIf="polylinePath.length > 1"
+        [path]="polylinePath"
+        [options]="polylineOptions"
+      >
+      </map-polyline>
       <map-info-window>Hello Google Maps</map-info-window>
     </google-map>
   </div>

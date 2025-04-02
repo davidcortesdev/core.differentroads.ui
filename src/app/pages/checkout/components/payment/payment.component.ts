@@ -477,19 +477,17 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
 
   loadTravelersWithPoints() {
     this.travelersService.travelers$.subscribe((travelers) => {
-      // Create a map to track unique emails
       const emailMap = new Map<string, TravelerWithPoints>();
       let needToUpdateTravelers = false;
 
-      // Process travelers and keep only first occurrence of each email
       travelers.forEach((traveler) => {
         const email = traveler.travelerData?.email || '';
+        console.log('Traveler email:', email);
         if (email && !emailMap.has(email)) {
           const existingTraveler = this.uniqueTravelers.find(
             (t) => t.email === email
           );
 
-          // If traveler already exists in our list, preserve its state
           if (existingTraveler) {
             emailMap.set(email, {
               ...existingTraveler,
@@ -500,7 +498,6 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
                 traveler.travelerData?.surname || existingTraveler.lastName,
             });
           } else {
-            // This is a new traveler
             emailMap.set(email, {
               id: traveler._id || '',
               firstName: traveler.travelerData?.name || '',
@@ -512,23 +509,18 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
             needToUpdateTravelers = true;
           }
 
-          // Only fetch points if we don't have them cached and aren't already loading them
-          if (
-            !this.pointsCache.has(email) &&
-            !this.loadingPointsFor.has(email)
-          ) {
+          if (!this.pointsCache.has(email) && !this.loadingPointsFor.has(email)) {
+            console.log('Iniciando obtención de puntos para:', email);
             this.fetchTravelerPoints(email, emailMap);
           }
         }
       });
 
-      // Only update the array if necessary
       if (
         needToUpdateTravelers ||
         this.uniqueTravelers.length !== emailMap.size
       ) {
         this.uniqueTravelers = Array.from(emailMap.values());
-        // Update checkbox states based on active discounts
         this.updateCheckboxStates();
       }
     });
@@ -538,22 +530,36 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     email: string,
     emailMap: Map<string, TravelerWithPoints>
   ) {
-    // Mark as loading to prevent duplicate requests
     this.loadingPointsFor.add(email);
 
     this.pointsService.getTravelerPoints(email).subscribe({
       next: (response) => {
-        const points = response || 50;
+        console.log(`Puntos obtenidos para ${email}:`, response);
+        const points = response?.points ?? 0;
+        const travelerCategory = response?.typeTraveler?.toLowerCase() || 'default'
+        let maxRedeemableAmount = 0;
+      
+      switch(travelerCategory) {
+        case 'globetrotter': // Trotamundos
+          maxRedeemableAmount = 50; // 50€ máximo
+          break;
+        case 'traveler': // Viajante
+          maxRedeemableAmount = 75; // 75€ máximo
+          break;
+        case 'nomad': 
+          maxRedeemableAmount = this.totalPrice * 0.05; 
+          break;
+        default:
+          maxRedeemableAmount = 0;
+      }
 
-        // Update cache
+        
         this.pointsCache.set(email, points);
 
-        // Update traveler if it exists
         const traveler = emailMap.get(email);
         if (traveler) {
-          traveler.points = points;
+          traveler.points = maxRedeemableAmount;
 
-          // Check if we need to update the array
           const existingIndex = this.uniqueTravelers.findIndex(
             (t) => t.email === email
           );
@@ -564,21 +570,16 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
           }
         }
 
-        // Remove from loading set
         this.loadingPointsFor.delete(email);
       },
       error: (error) => {
         console.error(`Error fetching points for ${email}:`, error);
+        this.pointsCache.set(email, 0);
 
-        // Update cache with default value
-        this.pointsCache.set(email, 50);
-
-        // Update traveler if it exists
         const traveler = emailMap.get(email);
         if (traveler) {
-          traveler.points = 50;
+          traveler.points = 0;
 
-          // Check if we need to update the array
           const existingIndex = this.uniqueTravelers.findIndex(
             (t) => t.email === email
           );
@@ -589,7 +590,6 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
           }
         }
 
-        // Remove from loading set
         this.loadingPointsFor.delete(email);
       },
     });

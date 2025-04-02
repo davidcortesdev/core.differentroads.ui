@@ -24,6 +24,7 @@ import { DiscountsService } from '../../core/services/checkout/discounts.service
 import { AuthenticateService } from '../../core/services/auth-service.service';
 import { TextsService } from '../../core/services/checkout/texts.service';
 import { AmadeusService } from '../../core/services/amadeus.service';
+import { ProcessBookingService } from '../../core/services/checkout/process-booking.service';
 
 import { Subscription } from 'rxjs';
 @Component({
@@ -137,7 +138,8 @@ export class CheckoutComponent implements OnInit {
     private messageService: MessageService,
     private discountsService: DiscountsService,
     private textsService: TextsService,
-    private amadeusService: AmadeusService // <-- Nueva inyección
+    private amadeusService: AmadeusService, // <-- Nueva inyección
+    private processBookingService: ProcessBookingService // New service injection
   ) {}
 
   ngOnInit() {
@@ -917,179 +919,40 @@ export class CheckoutComponent implements OnInit {
   }
 
   /* Booking create */
-
   processBooking(): Promise<{ bookingID: string; ID: string }> {
-    return new Promise((resolve, reject) => {
-      // Ensure payment data is included in the order
-      const currentOrder = this.summaryService.getOrderValue();
-      if (currentOrder) {
-        // Update payment details from the payment options service
-        const paymentOption = this.paymentOptionsService.getPaymentOption();
-        if (paymentOption) {
-          currentOrder.payment = paymentOption;
-          this.summaryService.updateOrder(currentOrder);
+    return this.processBookingService
+      .processBooking(
+        this.orderDetails,
+        this.tourID,
+        this.tourName,
+        this.periodID,
+        this.periodData,
+        this.selectedFlight,
+        this.summary,
+        this.total
+      )
+      .catch((error) => {
+        // Handle specific error from flight processing
+        if (error.message === 'FLIGHT_PROCESSING_FAILED') {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error al procesar vuelo',
+            detail:
+              'No se pudo procesar la reserva del vuelo. Por favor, inténtelo de nuevo o contacte con atención al cliente.',
+            life: 10000,
+          });
+        } else {
+          // Handle other errors
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error en el proceso de reserva',
+            detail:
+              'Ha ocurrido un error durante el proceso de reserva. Por favor, inténtelo de nuevo.',
+            life: 8000,
+          });
         }
-      }
-
-      // Get textSummary data from TextsService
-      const textSummary = this.textsService.getTextsData();
-
-      const bookingData: BookingCreateInput = {
-        tour: {
-          id: this.tourID,
-          name: this.tourName,
-          priceData: this.pricesService.getPriceDataById(this.tourID),
-        },
-        textSummary: textSummary, // Include the complete texts data
-        total: this.total,
-        priceData: this.pricesService.getPriceDataById(this.periodID),
-        id: this.orderDetails?._id || '',
-        extendedTotal: this.summary,
-        dayOne: this.periodData.dayOne,
-        numberOfDays: this.periodData.numberOfDays,
-        returnDate: this.periodData.returnDate,
-        tourID: this.tourID,
-        paymentTerms: '',
-        redeemPoints: 0,
-        usePoints: {},
-        name: this.periodData.name,
-        externalID: this.periodID,
-        payment: this.paymentOptionsService.getPaymentOption() || undefined,
-      };
-
-      // Save the period data to the TextsService as well
-      this.textsService.updateText('period', this.periodID, this.periodData);
-
-      // Store tour information if available
-      if (this.periodData?.tourName) {
-        this.textsService.updateText('tour', this.tourID, {
-          name: this.periodData.tourName,
-        });
-      }
-
-      let bookingID = '';
-      let bookingSID = '';
-      let order: Order | undefined;
-
-      this.bookingsService
-        .createBooking(this.orderDetails?._id!, bookingData)
-        .subscribe({
-          next: (response) => {
-            console.log('Booking created:', response);
-            bookingID = response.bookingID;
-            bookingSID = response.ID;
-            order = {
-              ...response.order,
-              payment:
-                this.paymentOptionsService.getPaymentOption() || undefined,
-            };
-
-            // Nuevo: Si el vuelo es de Amadeus, se crea el pedido de vuelo en Amadeus.
-            if (
-              this.selectedFlight &&
-              this.selectedFlight.source === 'amadeus'
-            ) {
-              const travelers = this.travelersService.getTravelers();
-              this.amadeusService
-                .createFlightOrder(
-                  this.selectedFlight.id,
-                  travelers.map((traveler) => ({
-                    id: traveler._id || '',
-                    dateOfBirth:
-                      traveler.travelerData?.birthdate || '1982-01-16',
-                    name: {
-                      firstName: traveler.travelerData?.name || 'Usuario',
-                      lastName: traveler.travelerData?.surname || 'Different',
-                    },
-                    gender:
-                      (traveler.travelerData?.sex as 'MALE' | 'FEMALE') ||
-                      'MALE',
-                    contact: {
-                      emailAddress:
-                        traveler.travelerData?.email ||
-                        'info@differenttours.es',
-                      phones: [
-                        {
-                          deviceType: 'MOBILE',
-                          countryCallingCode: '34',
-                          number: traveler.travelerData?.phone || '300000000',
-                        },
-                      ],
-                    },
-                    documents: [
-                      {
-                        documentType: 'PASSPORT',
-                        number: traveler.travelerData?.passportID || 'AA000000',
-                        issuanceCountry:
-                          traveler.travelerData?.nationality || 'ES',
-                        expiryDate:
-                          traveler.travelerData?.passportExpirationDate ||
-                          '2030-01-01',
-                        validityCountry:
-                          traveler.travelerData?.nationality || 'ES',
-                        nationality: traveler.travelerData?.nationality || 'ES',
-                        holder: true,
-                      },
-                    ],
-                  }))
-                )
-                .subscribe({
-                  next: (flightOrderResponse) => {
-                    console.log(
-                      'Flight order created in Amadeus:',
-                      flightOrderResponse
-                    );
-                  },
-                  error: (error) => {
-                    console.error(
-                      'Error creating flight order in Amadeus:',
-                      error
-                    );
-                  },
-                });
-            }
-
-            this.bookingsService
-              .saveTravelers(response.bookingID, {
-                bookingSID: response.ID,
-                bookingID: response.bookingID,
-                order: response.order as Order,
-              })
-              .subscribe({
-                next: (response) => {
-                  console.log('Travelers saved:', response);
-
-                  this.bookingsService
-                    .bookOrder(bookingID, {
-                      order: order,
-                      ID: bookingSID,
-                    })
-                    .subscribe({
-                      next: (response) => {
-                        console.log('Order booked:', response);
-                        resolve({
-                          bookingID: bookingID,
-                          ID: bookingSID,
-                        });
-                      },
-                      error: (error) => {
-                        console.error('Error booking order:', error);
-                        reject(error);
-                      },
-                    });
-                },
-                error: (error) => {
-                  console.error('Error saving travelers:', error);
-                  reject(error);
-                },
-              });
-          },
-          error: (error) => {
-            console.error('Error creating booking:', error);
-            reject(error);
-          },
-        });
-    });
+        throw error; // Re-throw to stop the booking process
+      });
   }
 
   // Método para guardar viaje

@@ -138,16 +138,27 @@
             </div>
             <!-- Points section -->
             <br /><br />
-            <p>Acumulas {{ points }} puntos con este viaje</p>
-            <p-message
-              severity="secondary"
-              size="small"
-              icon="pi pi-exclamation-circle"
-              >Se genera un abono del 3% del importe del viaje en puntos a
-              descontar en futuras compras para aquellos viajeros de los que se
-              indique el DNI.</p-message
-            >
-
+            <div *ngIf="isAuthenticated; else notAuthenticated">
+              <p>Acumulas {{ subtotal * 0.03 | number:'1.0-0' }} puntos con este viaje</p>
+              <p-message
+                severity="secondary"
+                size="small"
+                icon="pi pi-exclamation-circle"
+              >
+                Se genera un abono del 3% del importe del viaje en puntos a
+                descontar en futuras compras.
+              </p-message>
+            </div>
+            
+            <ng-template #notAuthenticated>
+              <p-message
+                severity="warn"
+                size="small"
+                icon="pi pi-info-circle"
+              >
+                Para acumular puntos, es necesario iniciar sesión.
+              </p-message>
+            </ng-template>
             <!-- Total section -->
             <div class="total-section">
               <div class="total">

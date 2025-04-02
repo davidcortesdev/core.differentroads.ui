@@ -23,7 +23,7 @@ import { MessageService, MenuItem } from 'primeng/api';
 import { DiscountsService } from '../../core/services/checkout/discounts.service';
 import { AuthenticateService } from '../../core/services/auth-service.service';
 import { TextsService } from '../../core/services/checkout/texts.service';
-
+import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-checkout',
   standalone: false,
@@ -34,6 +34,9 @@ export class CheckoutComponent implements OnInit {
   currentStep: number = 1;
   orderDetails: Order | null = null;
   availableTravelers: string[] = [];
+  hasValidDocument: boolean = false;
+  private subscription: Subscription = new Subscription();
+  isAuthenticated: boolean = false;
 
   // PrimeNG Steps
   activeIndex: number = 0;
@@ -147,6 +150,12 @@ export class CheckoutComponent implements OnInit {
       }
     });
 
+    const authSubscription = this.authService.isLoggedIn().subscribe({
+      next: (isAuthenticated) => {
+        this.isAuthenticated = isAuthenticated;
+      },
+    });
+    this.subscription.add(authSubscription);
     const orderId =
       this.route.snapshot.paramMap.get('id') || '67b702314d0586617b90606b';
     this.ordersService.getOrderDetails(orderId).subscribe((order) => {
@@ -422,6 +431,18 @@ export class CheckoutComponent implements OnInit {
   /* Summary */
   updateOrderSummary() {
     this.summary = [];
+    const travelersDatainfo = this.travelersService.getTravelers();
+
+    // Verifica si AL MENOS UN viajero tiene DNI o pasaporte válido
+    const hasValidDocument = travelersDatainfo.some((traveler) => {
+      const documents = traveler.travelerData || {};
+
+      return (
+        (documents.dni && documents.dni.trim() !== '') ||
+        (documents.passportID && documents.passportID.trim() !== '')
+      );
+    });
+    this.hasValidDocument = hasValidDocument;
 
     this.travelersService.updateTravelersWithRooms();
 
@@ -726,6 +747,7 @@ export class CheckoutComponent implements OnInit {
 
     return true;
   }
+
 
   // New method to check auth before continuing from flights step
   checkAuthAndContinue(

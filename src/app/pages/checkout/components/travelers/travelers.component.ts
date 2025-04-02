@@ -232,6 +232,9 @@ export class TravelersComponent implements OnInit {
       for (let i = 0; i < this.travelerForms.length; i++) {
         const form = this.travelerForms[i];
         if (!form || form.invalid) {
+          console.log('Invalid form', form.invalid);
+          console.log('Form value', form.errors);
+
           this.notifyMissingTravelers(i);
           return false;
         }
@@ -293,6 +296,8 @@ export class TravelersComponent implements OnInit {
         ];
 
         additionalFields.forEach((field) => {
+          console.log('Field', field, form.get(field)?.errors?.['required']);
+
           if (form.get(field)?.errors?.['required']) {
             // Mapear nombres de campo a nombres más amigables
             const fieldNames: { [key: string]: string } = {

@@ -749,7 +749,7 @@ export class CheckoutComponent implements OnInit {
 
         console.log(
           "Travelers' data is valid",
-          travelersComponent.areAllTravelersValid()()
+          travelersComponent.areAllTravelersValid() // Fixed: removed extra parentheses
         );
         if (!travelersComponent.areAllTravelersValid()) {
           return false;

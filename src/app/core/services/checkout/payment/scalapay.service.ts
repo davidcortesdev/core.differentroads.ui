@@ -8,10 +8,11 @@ import { environment } from '../../../../../environments/environment';
   providedIn: 'root',
 })
 export class ScalapayService {
-  //private readonly API_URL = environment.scalapayApiUrl;
-  //private readonly API_KEY = environment.scalapayApiKey;
-
-  private readonly API_URL = '/scalapay-api';
+  // In development, use the proxy. In production, use the Azure Function
+  private readonly API_URL = environment.production 
+    ? '/api/scalapay' 
+    : '/scalapay-api';
+  
   private readonly API_KEY = environment.scalapayApiKey;
 
   constructor(private http: HttpClient) {}
@@ -50,29 +51,29 @@ export class ScalapayService {
    * @returns Promise con la respuesta de la creación de la orden
    */
   createOrder(orderData: ScalapayOrderRequest): Promise<ScalapayOrderResponse> {
-    this.validateEnvironment();
+    if (!this.API_URL || !this.API_KEY) {
+      console.error(
+        'Environment variables scalapayApiUrl or scalapayApiKey are not defined'
+      );
+      return Promise.reject('Environment variables not defined');
+    }
 
-    const url = `${this.API_URL}/v2/orders`;
-    console.log('Requesting Scalapay URL:', url);
-    console.log('Request payload:', JSON.stringify(orderData, null, 2));
-    
+    // In production, use the Azure Function endpoint
+    const url = environment.production 
+      ? `${this.API_URL}/orders` 
+      : `${this.API_URL}/v2/orders`;
+      
     return this.http
       .post<ScalapayOrderResponse>(url, orderData, this.getHttpOptions())
       .toPromise()
       .then((response) => {
-        console.log('Successful response:', response);
         if (!response) {
           throw new Error('No response received');
         }
         return response;
       })
       .catch((error) => {
-        console.error('Error details:', error);
-        console.error('Error status:', error.status);
-        console.error('Error message:', error.message);
-        if (error.error) {
-          console.error('Server response:', error.error);
-        }
+        console.error('Error processing order:', error);
         throw error;
       });
   }

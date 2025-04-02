@@ -63,3 +63,10 @@
   *ngIf="hasInfoCards"
   [infoCards]="infoCards"
 ></app-tour-info-accordion>
+<app-login-modal
+  [visible]="loginDialogVisible"
+  (close)="closeLoginModal()"
+  (login)="navigateToLogin()"
+  (register)="navigateToRegister()"
+>
+</app-login-modal>

@@ -1,11 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { Tour } from '../../../../core/models/tours/tour.model';
 import { ToursService } from '../../../../core/services/tours.service';
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
-import { Tour } from '../../../../core/models/tours/tour.model';
-import { Subscription } from 'rxjs';
-import { InfoCard } from '../tour-info-accordion/tour-info-accordion.component';
 
 @Component({
   selector: 'app-tour-additional-info',
@@ -18,13 +17,14 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   visible: boolean = false;
   private subscription: Subscription = new Subscription();
   isAuthenticated: boolean = false;
+  loginDialogVisible: boolean = false;
 
   // Optimización: Extraer configuraciones a propiedades
   dialogBreakpoints = { '1199px': '80vw', '575px': '90vw' };
   dialogStyle = { width: '50vw' };
 
   // Optimización: Getters para simplificar la plantilla
-  get infoCards(): InfoCard[] {
+  get infoCards(): any[] {
     return this.tour?.['extra-info-section']?.['info-card'] || [];
   }
 
@@ -36,7 +36,8 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
     private sanitizer: DomSanitizer,
     private route: ActivatedRoute,
     private toursService: ToursService,
-    private authService: AuthenticateService
+    private authService: AuthenticateService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -80,11 +81,17 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   }
 
   handleSaveTrip(): void {
-    if (!this.isAuthenticated) {
-      // User is not authenticated, don't open the modal
-      return;
-    }
-    this.visible = true;
+    this.authService.isLoggedIn().subscribe((isLoggedIn) => {
+      if (isLoggedIn) {
+        // User is authenticated, open the save trip modal
+        this.visible = true;
+      } else {
+        // User is not authenticated, save URL and show login dialog
+        const currentUrl = window.location.pathname;
+        sessionStorage.setItem('redirectUrl', currentUrl);
+        this.loginDialogVisible = true;
+      }
+    });
   }
 
   sanitizeHtml(html: string): SafeHtml {
@@ -136,5 +143,20 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
       '¡Mira este increíble viaje que estoy planeando! ' + window.location.href
     );
     window.open(`mailto:?subject=${emailSubject}&body=${emailBody}`);
+  }
+
+  // Add methods to handle login modal
+  closeLoginModal(): void {
+    this.loginDialogVisible = false;
+  }
+
+  navigateToLogin(): void {
+    this.closeLoginModal();
+    this.router.navigate(['/login']);
+  }
+
+  navigateToRegister(): void {
+    this.closeLoginModal();
+    this.router.navigate(['/sign-up']);
   }
 }

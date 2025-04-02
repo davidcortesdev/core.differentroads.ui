@@ -88,7 +88,7 @@ $a: var(--background-azul);
         
         .booking-item-content {
             display: grid;
-            grid-template-columns: 200px 1fr 150px 200px;
+            grid-template-columns: 200px 0.8fr 0.3fr 200px;
             gap: 1rem;
             align-items: start;
         }
@@ -169,6 +169,11 @@ $a: var(--background-azul);
         @include f(column, flex-start, stretch, 0.5rem);
         
         .departure-info {
+            display: flex;
+            align-items: left;
+            max-width: 100%;
+            overflow: hidden;
+            
             span,
             strong {
                 font-size: 16px;

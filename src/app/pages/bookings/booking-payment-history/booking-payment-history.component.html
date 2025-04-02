@@ -4,7 +4,7 @@
     <div class="payment-column-left">
       <p-panel header="Resumen del viaje">
         <div class="trip-summary">
-          <p-table [value]="tripItems" stripedRows [tableStyle]="{'min-width': '100%'}" 
+          <p-table [value]="tripItems" [tableStyle]="{'min-width': '100%'}" 
                   styleClass="p-datatable-sm p-datatable-borderless p-datatable-responsive">
             <ng-template pTemplate="body" let-item>
               <tr *ngIf="item.quantity > 0">
@@ -65,8 +65,8 @@
         <!-- Contenedor de columnas para pagos y historial -->
         <div class="payment-columns-container">
           <!-- Próximos pagos -->
-          <div class="payment-column-deadlines payment-column">
-            <h3>Próximo pago</h3>
+          <p-panel header="Próximo pago" [toggleable]="deadlines && deadlines.length > 0" 
+                   [collapsed]="false" [styleClass]="deadlines && deadlines.length > 0 ? '' : 'empty-panel'">
             <div
               *ngFor="let payment of deadlines"
               class="upcoming-payment-item"
@@ -74,11 +74,14 @@
               <span class="date">{{ payment.date }}</span>
               <span class="amount">{{ payment.amount | currencyFormat }}</span>
             </div>
-          </div>
-
+            <div *ngIf="!deadlines || deadlines.length === 0" class="empty-message">
+              No hay pagos programados
+            </div>
+          </p-panel>
+          
           <!-- Historial de pagos -->
-          <div class="payment-column-history payment-column">
-            <h3>Historial de pago</h3>
+          <p-panel header="Historial de pago" [toggleable]="paymentHistory && paymentHistory.length > 0" 
+                   [collapsed]="false" [styleClass]="paymentHistory && paymentHistory.length > 0 ? '' : 'empty-panel'">
             <div *ngFor="let item of paymentHistory" class="history-item">
               <span class="date">{{ item.createdAt | date }}</span>
               <span class="status">
@@ -98,7 +101,10 @@
               </span>
               <span class="amount">{{ item.amount | currencyFormat }}</span>
             </div>
-          </div>
+            <div *ngIf="!paymentHistory || paymentHistory.length === 0" class="empty-message">
+              No hay ningun pago registrado
+            </div>
+          </p-panel>
         </div>
       </p-panel>
     </div>

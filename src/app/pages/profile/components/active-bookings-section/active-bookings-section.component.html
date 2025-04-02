@@ -56,7 +56,7 @@
               <div class="info-right">
                 <div class="departure-info">
                   <span>Salida: </span>
-                  <strong>{{ booking.departureDate | date : "d MMM" }}</strong>
+                  <strong>{{ booking.departureDate | date : "dd-MMM-yyyy" }}</strong>
                   <span class="state">{{ booking.status.charAt(0) }}</span>
                 </div>
                 <!-- Si tienes estos datos en tu objeto booking -->

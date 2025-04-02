@@ -23,14 +23,14 @@
       [rows]="5"
       [paginator]="true"
       styleClass="transparent-dataview"
-      *ngIf="!loading"
+      *ngIf="!loading && bookings.length > 0"
     >
       <ng-template #list let-bookings>
         <div class="booking-list">
-          <div class="booking-item" *ngFor="let booking of bookings">
+          <div class="booking-item" *ngFor="let booking of bookings; trackBy: trackByBookingId">
             <div class="booking-item-content">
               <div class="image-container">
-                <img [src]="booking.image" alt="booking.title"/>
+                <img [src]="booking.image || 'assets/images/placeholder.jpg'" [alt]="booking.title"/>
               </div>
 
               <div class="info-sections">
@@ -59,11 +59,10 @@
                   <strong>{{ booking.departureDate | date : "dd-MM-yyyy" }}</strong>
                   <span class="state">{{ booking.status.charAt(0) }}</span>
                 </div>
-                <!-- Si tienes estos datos en tu objeto booking -->
-                <div class="passenger-price" *ngIf="booking.passengers && booking.price">
+                <div class="passenger-price" *ngIf="booking.passengers">
                   <span class="num-users">{{ booking.passengers }}</span>
                   <i class="pi pi-users"></i>
-                  <strong>{{ booking.price | currency : "EUR" }}</strong>
+                  <strong *ngIf="booking.price">{{ booking.price | currency : "EUR" }}</strong>
                 </div>
               </div>
 
@@ -85,6 +84,11 @@
               </div>
             </div>
           </div>
+        </div>
+      </ng-template>
+      <ng-template pTemplate="empty">
+        <div class="empty-message">
+          No hay reservas activas disponibles
         </div>
       </ng-template>
     </p-dataView>

@@ -1,0 +1,16 @@
+{
+  "name": "core-differentroads-api",
+  "version": "1.0.0",
+  "description": "API functions for Different Roads",
+  "scripts": {
+    "start": "func start",
+    "test": "echo \"No tests yet...\""
+  },
+  "dependencies": {
+    "@azure/functions": "^3.5.1",
+    "node-fetch": "^2.6.7"
+  },
+  "devDependencies": {
+    "azure-functions-core-tools": "^4.0.5198"
+  }
+}

@@ -334,7 +334,7 @@ export class TourItineraryComponent implements OnInit {
       );
 
       const hotelByDay = this.hotels?.find((hotel) =>
-        hotel.days.includes(`${index + 1}`)
+        hotel.days?.includes(`${index + 1}`)
       );
 
       const hotel = this.hotelsData.find(

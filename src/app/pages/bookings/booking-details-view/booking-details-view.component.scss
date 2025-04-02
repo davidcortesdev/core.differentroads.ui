@@ -162,7 +162,8 @@
             display: flex;
             align-items: center;
             margin-right: 10px;
-            color: #666; // Cambia el color a tu preferencia
+            color: #666; 
+            // Cambia el color a tu preferencia
 
             i {
                 font-size: 1rem;
@@ -185,6 +186,8 @@
             font-weight: 700;
             /*color: #333;*/
         }
+
+        span .ptag-label{color: #666;}
     }
 
     @media (max-width: 768px) {

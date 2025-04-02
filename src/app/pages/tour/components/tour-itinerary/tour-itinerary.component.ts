@@ -333,12 +333,13 @@ export class TourItineraryComponent implements OnInit {
         (activity) => index + 1 === activity.day
       );
 
+      // Fix: Safely check if hotel.days exists before using includes
       const hotelByDay = this.hotels?.find((hotel) =>
-        hotel.days.includes(`${index + 1}`)
+        hotel.days && hotel.days.includes(`${index + 1}`)
       );
 
       const hotel = this.hotelsData.find(
-        (hotelData) => hotelData.id === hotelByDay?.hotels[0].id
+        (hotelData) => hotelData.id === hotelByDay?.hotels?.[0]?.id
       );
 
       return {
@@ -350,7 +351,6 @@ export class TourItineraryComponent implements OnInit {
         hotel: hotel || null,
         collapsed: index !== 0,
         color: '#9C27B0',
-        // Add extraInfo to the itinerary item
         extraInfo: day.extraInfo,
         highlights:
           dayActivities.map((activity) => {
@@ -476,7 +476,7 @@ export class TourItineraryComponent implements OnInit {
       return;
     }
     this.hotels.forEach((hotel) => {
-      if (!hotel.hotels) {
+      if (!hotel.hotels || hotel.hotels.length === 0) {
         console.warn(`No hotels found for period hotel: ${hotel}`);
         return;
       }

@@ -8,11 +8,10 @@ import { environment } from '../../../../../environments/environment';
   providedIn: 'root',
 })
 export class ScalapayService {
-  // In development, use the proxy. In production, use the Azure Function
-  private readonly API_URL = environment.production 
-    ? '/api/scalapay' 
-    : '/scalapay-api';
-  
+  //private readonly API_URL = environment.scalapayApiUrl;
+  //private readonly API_KEY = environment.scalapayApiKey;
+
+  private readonly API_URL = '/scalapay-api';
   private readonly API_KEY = environment.scalapayApiKey;
 
   constructor(private http: HttpClient) {}
@@ -45,40 +44,40 @@ export class ScalapayService {
     return Promise.resolve();
   }
 
-    /**
+  /**
    * Crea una nueva orden en Scalapay
    * @param orderData Datos de la orden a crear
    * @returns Promise con la respuesta de la creación de la orden
    */
   createOrder(orderData: ScalapayOrderRequest): Promise<ScalapayOrderResponse> {
-    if (!this.API_URL || !this.API_KEY) {
-      console.error(
-        'Environment variables scalapayApiUrl or scalapayApiKey are not defined'
-      );
-      return Promise.reject('Environment variables not defined');
-    }
+    this.validateEnvironment();
 
-    // In production, use the Azure Function endpoint
-    const url = environment.production 
-      ? `${this.API_URL}/orders` 
-      : `${this.API_URL}/v2/orders`;
-      
+    const url = `${this.API_URL}/v2/orders`;
+    console.log('Requesting Scalapay URL:', url);
+    console.log('Request payload:', JSON.stringify(orderData, null, 2));
+
     return this.http
       .post<ScalapayOrderResponse>(url, orderData, this.getHttpOptions())
       .toPromise()
       .then((response) => {
+        console.log('Successful response:', response);
         if (!response) {
           throw new Error('No response received');
         }
         return response;
       })
       .catch((error) => {
-        console.error('Error processing order:', error);
+        console.error('Error details:', error);
+        console.error('Error status:', error.status);
+        console.error('Error message:', error.message);
+        if (error.error) {
+          console.error('Server response:', error.error);
+        }
         throw error;
       });
   }
 
-    /**
+  /**
    * Captura un pago en Scalapay
    * @param paymentData Datos del pago a capturar
    * @returns Promise con la respuesta de la captura del pago
@@ -102,7 +101,7 @@ export class ScalapayService {
       });
   }
 
-    /**
+  /**
    * Obtiene los detalles de un pago específico
    * @param paymentId ID del pago a consultar
    * @returns Promise con los detalles del pago

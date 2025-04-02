@@ -19,7 +19,7 @@
     <div class="form-row">
       <div class="form-column">
         <div class="form-field">
-          <label>Nombre{{ isFirstTraveler ? "*" : "" }}</label>
+          <label>Nombre{{ allFieldsMandatory ? "*" : "" }}</label>
           <input
             pInputText
             name="nombre"
@@ -30,7 +30,7 @@
       </div>
       <div class="form-column">
         <div class="form-field">
-          <label>Apellido{{ isFirstTraveler ? "*" : "" }}</label>
+          <label>Apellido{{ allFieldsMandatory ? "*" : "" }}</label>
           <input
             pInputText
             name="apellido"
@@ -45,7 +45,7 @@
     <div class="form-row">
       <div class="form-column">
         <div class="form-field">
-          <label>E-mail{{ isFirstTraveler ? "*" : "" }}</label>
+          <label>E-mail{{ allFieldsMandatory ? "*" : "" }}</label>
           <input
             pInputText
             name="email"
@@ -59,10 +59,10 @@
     <!-- Botón Ver más/menos -->
     <div class="form-row">
       <div class="form-column">
-        <button 
-          pButton 
-          type="button" 
-          [label]="showMoreFields ? 'Ver menos' : 'Ver más'" 
+        <button
+          pButton
+          type="button"
+          [label]="showMoreFields ? 'Ver menos' : 'Ver más'"
           [icon]="showMoreFields ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
           (click)="toggleMoreFields()"
           class="p-button-text p-button-sm show-more-button"
@@ -113,12 +113,17 @@
       <div class="form-column">
         <div class="form-field">
           <label>Nacionalidad</label>
-          <input
-            pInputText
-            name="nacionalidad"
-            placeholder="Introduce tu nacionalidad"
+          <p-autocomplete
             formControlName="nationality"
-          />
+            [suggestions]="filteredCountries"
+            (completeMethod)="filterCountries($event)"
+            (onSelect)="onCountrySelect($event.value)"
+            [optionValue]="'ISO'"
+            [dropdown]="true"
+            [forceSelection]="true"
+            field="nationality"
+            placeholder="Introduce tu nacionalidad"
+          ></p-autocomplete>
         </div>
       </div>
       <div class="form-column">

@@ -746,6 +746,11 @@ export class CheckoutComponent implements OnInit {
       case 4:
         const travelersComponent =
           this.travelersService.getTravelersComponent();
+
+        console.log(
+          "Travelers' data is valid",
+          travelersComponent.areAllTravelersValid()()
+        );
         if (!travelersComponent.areAllTravelersValid()) {
           return false;
         }

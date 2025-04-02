@@ -5,11 +5,16 @@ import {
   OnDestroy,
   ViewChild,
   ChangeDetectionStrategy,
+  OnChanges,
+  SimpleChanges,
 } from '@angular/core';
 import { FormGroup, Validators } from '@angular/forms';
 import { Select } from 'primeng/select';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { CountriesService } from '../../../../core/services/countries.service';
+import { Country } from '../../../../shared/models/country.model';
+import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 
 // Interfaces para mejorar la tipificación
 export interface TravelerData {
@@ -29,13 +34,13 @@ export interface SelectOption {
   styleUrls: ['./traveler-item.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush, // Mejora de rendimiento
 })
-export class TravelerItemComponent implements OnInit, OnDestroy {
+export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
   @Input() form!: FormGroup;
   @Input() index!: number;
   @Input() traveler!: TravelerData;
   @Input() sexoOptions: SelectOption[] = [];
-  @Input() isFirstTraveler: boolean = false;
   @Input() getAdultsOptionsFn!: (index: number) => SelectOption[];
+  @Input() allFieldsMandatory: boolean = false;
 
   @ViewChild('sexoSelect') sexoSelect!: Select;
 
@@ -47,7 +52,10 @@ export class TravelerItemComponent implements OnInit, OnDestroy {
   // Destructor de suscripciones
   private destroy$ = new Subject<void>();
 
-  constructor() {}
+  // Propiedades para el autocompletado de países
+  filteredCountries: Country[] = [];
+
+  constructor(private countriesService: CountriesService) {}
 
   ngOnInit(): void {
     // Escuchar cambios en campos relevantes para limpiar caché
@@ -62,8 +70,20 @@ export class TravelerItemComponent implements OnInit, OnDestroy {
         ?.valueChanges.pipe(takeUntil(this.destroy$))
         .subscribe(() => this.clearDocumentOptionsCache());
 
-      // Actualizar validadores según si es el primer viajero o no
+      // Initial validators setup
       this.updateValidators();
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // React to input changes, particularly allFieldsMandatory
+    if (changes['allFieldsMandatory']) {
+      this.updateValidators();
+
+      // Set showMoreFields to true when allFieldsMandatory is true
+      if (this.allFieldsMandatory) {
+        this.showMoreFields = true;
+      }
     }
   }
 
@@ -79,33 +99,49 @@ export class TravelerItemComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Actualiza los validadores según si es el primer viajero o no
+   * Actualiza los validadores basados en la bandera allFieldsMandatory
    */
   private updateValidators(): void {
-    const firstNameControl = this.form.get('firstName');
-    const lastNameControl = this.form.get('lastName');
-    const emailControl = this.form.get('email');
+    if (!this.form) return;
 
-    if (firstNameControl && lastNameControl && emailControl) {
-      if (this.isFirstTraveler) {
-        // Solo el primer viajero tiene campos obligatorios
-        firstNameControl.setValidators([Validators.required]);
-        lastNameControl.setValidators([Validators.required]);
-        emailControl.setValidators([Validators.required, Validators.email]);
-      } else {
-        // Resto de viajeros sin campos obligatorios
-        firstNameControl.clearValidators();
-        lastNameControl.clearValidators();
-        emailControl.clearValidators();
+    const requiredFields = ['firstName', 'lastName', 'email'];
 
-        // Mantener solo validador de formato para email si se introduce
-        emailControl.setValidators([Validators.email]);
-      }
+    // For debugging
+    console.log(
+      `Updating validators: allFieldsMandatory=${this.allFieldsMandatory}`
+    );
 
-      // Actualizar estado de los controles
-      firstNameControl.updateValueAndValidity();
-      lastNameControl.updateValueAndValidity();
-      emailControl.updateValueAndValidity();
+    if (this.allFieldsMandatory) {
+      // Todos los campos obligatorios
+      Object.keys(this.form.controls).forEach((key) => {
+        const control = this.form.get(key);
+        if (control) {
+          if (key === 'email') {
+            control.setValidators([Validators.required, Validators.email]);
+          } else if (
+            requiredFields.includes(key) ||
+            (key !== 'minorIdExpirationDate' &&
+              key !== 'minorIdIssueDate' &&
+              key !== 'associatedAdult')
+          ) {
+            control.setValidators([Validators.required]);
+          }
+          control.updateValueAndValidity({ emitEvent: false });
+        }
+      });
+    } else {
+      // Viajeros sin campos obligatorios
+      Object.keys(this.form.controls).forEach((key) => {
+        const control = this.form.get(key);
+        if (control) {
+          if (key === 'email') {
+            control.setValidators([Validators.email]);
+          } else {
+            control.clearValidators();
+          }
+          control.updateValueAndValidity({ emitEvent: false });
+        }
+      });
     }
   }
 
@@ -162,6 +198,30 @@ export class TravelerItemComponent implements OnInit, OnDestroy {
    */
   private clearDocumentOptionsCache(): void {
     this.documentOptionsCache = {};
+  }
+
+  /**
+   * Filtra países basado en el término de búsqueda
+   * @param event Evento de autocompletado
+   */
+  filterCountries(event: AutoCompleteCompleteEvent): void {
+    const query = event.query;
+    this.countriesService.searchCountries(query).subscribe((countries) => {
+      this.filteredCountries = countries;
+    });
+  }
+
+  /**
+   * Maneja la selección de un país
+   * @param country País seleccionado
+   */
+  onCountrySelect(country: Country): void {
+    console.log('Selected country:', country);
+
+    if (this.form && country) {
+      this.form.get('nationality')?.setValue(country.ISO);
+      this.clearDocumentOptionsCache();
+    }
   }
 
   /**

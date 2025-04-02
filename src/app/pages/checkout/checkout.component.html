@@ -82,7 +82,7 @@
 
           <!-- Step 3: Travelers -->
           <div *ngSwitchCase="2">
-            <app-travelers></app-travelers>
+            <app-travelers [allFieldsMandatory]="true"></app-travelers>
             <div class="flex pt-6 justify-between">
               <p-button
                 label="Continuar"
@@ -139,7 +139,10 @@
             <!-- Points section -->
             <br /><br />
             <div *ngIf="isAuthenticated; else notAuthenticated">
-              <p>Acumulas {{ subtotal * 0.03 | number:'1.0-0' }} puntos con este viaje</p>
+              <p>
+                Acumulas {{ subtotal * 0.03 | number : "1.0-0" }} puntos con
+                este viaje
+              </p>
               <p-message
                 severity="secondary"
                 size="small"
@@ -149,13 +152,9 @@
                 descontar en futuras compras.
               </p-message>
             </div>
-            
+
             <ng-template #notAuthenticated>
-              <p-message
-                severity="warn"
-                size="small"
-                icon="pi pi-info-circle"
-              >
+              <p-message severity="warn" size="small" icon="pi pi-info-circle">
                 Para acumular puntos, es necesario iniciar sesión.
               </p-message>
             </ng-template>

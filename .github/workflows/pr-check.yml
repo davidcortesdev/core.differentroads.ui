@@ -29,27 +29,62 @@ jobs:
       - name: Check if branch is up to date with main
         id: check_branch
         run: |
+          # Ensure we have the latest from main
+          git fetch origin main --quiet
+          
+          # Create a temporary branch to test merge
+          git branch temp-merge-test $(git rev-parse HEAD)
+          
+          # Try to merge main into the temp branch and capture if there are changes
+          MERGE_OUTPUT=$(git checkout temp-merge-test && git merge --no-commit --no-ff origin/main 2>&1 || true)
+          HAS_CHANGES=$(echo "$MERGE_OUTPUT" | grep -c "Already up to date")
+          
+          # Return to original branch
+          git checkout -
+          git branch -D temp-merge-test
+          
+          # Also do the traditional checks
           BEHIND_BY=$(git rev-list --count HEAD..origin/main)
-          echo "Debug - BEHIND_BY value: $BEHIND_BY"
+          DIVERGED=$(git rev-list --count origin/main..HEAD)
+          
           echo "behind_by=$BEHIND_BY" >> $GITHUB_ENV
-          echo "Debug - GITHUB_ENV content:"
-          cat $GITHUB_ENV
-          if [ $BEHIND_BY -gt 0 ]; then
-            echo "⚠️ This branch is behind main by $BEHIND_BY commits"
+          echo "diverged=$DIVERGED" >> $GITHUB_ENV
+          echo "has_changes=$([ $HAS_CHANGES -eq 0 ] && echo 'true' || echo 'false')" >> $GITHUB_ENV
+          
+          if [ $BEHIND_BY -gt 0 ] || [ $HAS_CHANGES -eq 0 ]; then
+            echo "⚠️ This branch needs updates from main"
+            echo "behind=true" >> $GITHUB_OUTPUT
           else
             echo "✅ Branch is up to date with main"
+            echo "behind=false" >> $GITHUB_OUTPUT
+          fi
+          
+          if [ $DIVERGED -gt 0 ]; then
+            echo "ℹ️ This branch has $DIVERGED commits that main doesn't have"
           fi
 
       - name: Add comment to PR if branch is not up to date
-        if: env.behind_by > 0 && github.event_name == 'pull_request'
+        if: (env.behind_by > 0 || env.has_changes == 'true') && github.event_name == 'pull_request'
         uses: actions/github-script@v7.0.1
         with:
           script: |
+            let message = '';
+            
+            if (process.env.behind_by > 0) {
+              message += `⚠️ This branch is behind main by ${process.env.behind_by} commits. `;
+            }
+            
+            if (process.env.diverged > 0) {
+              message += `ℹ️ This branch has ${process.env.diverged} commits that main doesn't have. `;
+            }
+            
+            message += `Please update your branch with the latest changes from main using:\n\`\`\`\n git fetch origin main \n git merge --no-ff origin/main\n\`\`\``;
+            
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `⚠️ This branch is behind main by ${process.env.behind_by} commits. Please update your branch with the latest changes from main using:\n\`\`\`\n git fetch origin main \n git merge --no-ff origin/main\n\`\`\``
+              body: message
             })
 
       - name: Fail if branch is not up to date
@@ -59,7 +94,7 @@ jobs:
   build-check:
     runs-on: [ubuntu-latest]
     needs: check-branch
-    if: needs.check-branch.outputs.behind_by == '0'
+    if: success() && (needs.check-branch.result == 'success')
     
     steps:
 

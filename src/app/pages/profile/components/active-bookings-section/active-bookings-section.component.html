@@ -30,7 +30,8 @@
           <div class="booking-item" *ngFor="let booking of bookings; trackBy: trackByBookingId">
             <div class="booking-item-content">
               <div class="image-container">
-                <img [src]="booking.image || 'assets/images/placeholder.jpg'" [alt]="booking.title"/>
+                <p-skeleton *ngIf="!booking.image" width="100%" height="100%" styleClass="booking-image-skeleton"></p-skeleton>
+                <img *ngIf="booking.image" [src]="booking.image" [alt]="booking.title"/>
               </div>
 
               <div class="info-sections">

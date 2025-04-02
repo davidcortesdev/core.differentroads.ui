@@ -114,6 +114,11 @@ $a: var(--background-azul);
                 transform: scale(1.05);
             }
         }
+        
+        ::ng-deep .booking-image-skeleton {
+            border-radius: 10px;
+            height: 100% !important;
+        }
     }
     
     // Secciones de información

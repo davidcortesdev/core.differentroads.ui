@@ -197,6 +197,7 @@ import { TourMapComponent } from './shared/components/tour-map/tour-map.componen
 import { TourItineraryPanelComponent } from './pages/tour/components/tour-itinerary-panel/tour-itinerary-panel.component';
 import { AirportSearchComponent } from './features/airports/airport-search/airport-search.component';
 import { TravelerActivitySelectorComponent } from './pages/checkout/components/traveler-activity-selector/traveler-activity-selector.component';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -365,6 +366,7 @@ registerLocaleData(localeEs);
     SkeletonModule,
     Dialog,
     OverlayPanelModule,
+    ToggleSwitchModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

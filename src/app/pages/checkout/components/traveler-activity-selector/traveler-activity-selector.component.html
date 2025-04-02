@@ -1,21 +1,31 @@
 <div class="activity-selector">
-    <h4>Opcionales añadidas por el pasajero</h4>
-    
-    <div *ngIf="activities.length === 0" class="no-activities">
-      No hay actividades opcionales disponibles.
+  <!-- Mostrar información del pasajero -->
+  <div class="traveler-info" *ngIf="currentTraveler">
+    <h4>Actividades para: {{ currentTraveler.travelerData?.name }} {{ currentTraveler.travelerData?.surname }}</h4>
+    <div class="traveler-ids">
+      <p><small>ID Pasajero: <strong>{{ travelerId }}</strong></small></p>
     </div>
+  </div>
   
-    <div *ngIf="activities.length > 0" class="activities-list">
-      <div *ngFor="let activity of activities" class="activity-item">
+  <div *ngIf="activities.length > 0" class="activities-list">
+    <div *ngFor="let activity of activities" class="activity-item">
+      <div class="activity-info">
         <div class="activity-name">{{ activity.name }}</div>
-        
-        <div class="activity-action">
-          <p-checkbox 
-            [(ngModel)]="selectedActivities[activity.activityId]" 
-            [binary]="true"
-            (onChange)="toggleActivity(activity)">
-          </p-checkbox>
+        <div class="activity-price" *ngIf="activity.price">
+          <small>Precio: {{ activity.price | currency }}</small>
         </div>
+      </div>
+      
+      <div class="activity-action">
+        <p-toggleSwitch
+          [(ngModel)]="selectedActivities[activity.activityId]"
+          (onChange)="toggleActivity(activity)">
+        </p-toggleSwitch>
       </div>
     </div>
   </div>
+  
+  <div *ngIf="activities.length === 0" class="no-activities">
+    <p>No hay actividades opcionales disponibles para este viajero.</p>
+  </div>
+</div>

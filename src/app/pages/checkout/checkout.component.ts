@@ -540,7 +540,7 @@ export class CheckoutComponent implements OnInit {
         id: activity.activityId,
         _id: activity.id,
         travelersAssigned: travelersData.map(
-          (traveler) => traveler._id || '123'
+          (traveler) => traveler._id || this.travelersService.generateHexID() // Cambio aquí
         ),
       })
     );
@@ -597,7 +597,7 @@ export class CheckoutComponent implements OnInit {
         (insurance) => ({
           id: insurance.activityId,
           travelersAssigned: travelersData.map(
-            (traveler) => traveler._id || '123'
+            (traveler) => traveler._id || this.travelersService.generateHexID() // Cambio aquí
           ),
         })
       );

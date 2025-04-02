@@ -266,5 +266,9 @@
       </div>
     </ng-container>
   </div>
-    <app-traveler-activity-selector></app-traveler-activity-selector>
+
+  <app-traveler-activity-selector 
+  *ngIf="travelerId"
+  [travelerId]="travelerId">
+</app-traveler-activity-selector>
 </form>

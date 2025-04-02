@@ -10,6 +10,7 @@ import { FormGroup, Validators } from '@angular/forms';
 import { Select } from 'primeng/select';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { TravelersService } from '../../../../core/services/checkout/travelers.service';
 
 // Interfaces para mejorar la tipificación
 export interface TravelerData {
@@ -27,7 +28,7 @@ export interface SelectOption {
   standalone: false,
   templateUrl: './traveler-item.component.html',
   styleUrls: ['./traveler-item.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush, // Mejora de rendimiento
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TravelerItemComponent implements OnInit, OnDestroy {
   @Input() form!: FormGroup;
@@ -36,21 +37,28 @@ export class TravelerItemComponent implements OnInit, OnDestroy {
   @Input() sexoOptions: SelectOption[] = [];
   @Input() isFirstTraveler: boolean = false;
   @Input() getAdultsOptionsFn!: (index: number) => SelectOption[];
+  @Input() travelerId: string | null = null;
 
   @ViewChild('sexoSelect') sexoSelect!: Select;
 
-  // Add showMoreFields flag to control visibility
-  showMoreFields: boolean = false;
+  // Propiedad para almacenar y mostrar los IDs
+  travelerIds: { id: string | null, _id: string | null } = { id: null, _id: null };
 
-  // Cache para opciones de documentos
+  showMoreFields: boolean = false;
   private documentOptionsCache: { [key: string]: SelectOption[] } = {};
-  // Destructor de suscripciones
   private destroy$ = new Subject<void>();
 
-  constructor() {}
+  constructor(private travelersService: TravelersService) {}
 
   ngOnInit(): void {
-    // Escuchar cambios en campos relevantes para limpiar caché
+    // Inicializar el ID del viajero si no existe
+    this.initializeTravelerId();
+
+    // Mostrar IDs en consola
+    this.logTravelerIds();
+    const currentTraveler = this.travelersService.getTravelers()[this.index];
+    this.travelerId = currentTraveler?._id || null;
+
     if (this.form) {
       this.form
         .get('ageGroup')
@@ -62,25 +70,45 @@ export class TravelerItemComponent implements OnInit, OnDestroy {
         ?.valueChanges.pipe(takeUntil(this.destroy$))
         .subscribe(() => this.clearDocumentOptionsCache());
 
-      // Actualizar validadores según si es el primer viajero o no
       this.updateValidators();
     }
   }
 
   ngOnDestroy(): void {
-    // Limpiar suscripciones al destruir el componente
     this.destroy$.next();
     this.destroy$.complete();
   }
 
-  // Add toggle method for show more/less functionality
+  private initializeTravelerId(): void {
+    const currentTravelers = this.travelersService.getTravelers();
+    
+    if (currentTravelers[this.index]) {
+      // Generar un nuevo ID si no existe
+      if (!currentTravelers[this.index]._id) {
+        currentTravelers[this.index]._id = this.travelersService.generateHexID();
+        this.travelersService.updateTravelers(currentTravelers);
+      }
+
+      // Actualizar la propiedad para mostrar en el template
+      this.travelerIds = {
+        id: currentTravelers[this.index].id || null,
+        _id: currentTravelers[this.index]._id || null
+      };
+    }
+  }
+
+  private logTravelerIds(): void {
+    const currentTraveler = this.travelersService.getTravelers()[this.index];
+    console.groupCollapsed(`IDs del Viajero ${this.index + 1}`);
+    console.log('ID:', currentTraveler?.id || 'No disponible');
+    console.log('_ID:', currentTraveler?._id || 'No disponible');
+    console.groupEnd();
+  }
+
   toggleMoreFields(): void {
     this.showMoreFields = !this.showMoreFields;
   }
 
-  /**
-   * Actualiza los validadores según si es el primer viajero o no
-   */
   private updateValidators(): void {
     const firstNameControl = this.form.get('firstName');
     const lastNameControl = this.form.get('lastName');
@@ -88,45 +116,31 @@ export class TravelerItemComponent implements OnInit, OnDestroy {
 
     if (firstNameControl && lastNameControl && emailControl) {
       if (this.isFirstTraveler) {
-        // Solo el primer viajero tiene campos obligatorios
         firstNameControl.setValidators([Validators.required]);
         lastNameControl.setValidators([Validators.required]);
         emailControl.setValidators([Validators.required, Validators.email]);
       } else {
-        // Resto de viajeros sin campos obligatorios
         firstNameControl.clearValidators();
         lastNameControl.clearValidators();
         emailControl.clearValidators();
-
-        // Mantener solo validador de formato para email si se introduce
         emailControl.setValidators([Validators.email]);
       }
 
-      // Actualizar estado de los controles
       firstNameControl.updateValueAndValidity();
       lastNameControl.updateValueAndValidity();
       emailControl.updateValueAndValidity();
     }
   }
 
-  /**
-   * Obtiene el título del pasajero con su número
-   * @param num Número de pasajero
-   */
   getTitlePasajero(num: string): string {
     return 'Pasajero ' + num;
   }
 
-  /**
-   * Obtiene las opciones de documento basadas en edad y nacionalidad
-   * Implementa memoización para evitar cálculos repetidos
-   */
   getDocumentOptions(): SelectOption[] {
     const ageGroup = this.form.get('ageGroup')?.value || '';
     const nationality = this.form.get('nationality')?.value || '';
     const cacheKey = `${ageGroup}-${nationality}`;
 
-    // Devolver del caché si existe
     if (this.documentOptionsCache[cacheKey]) {
       return this.documentOptionsCache[cacheKey];
     }
@@ -141,32 +155,20 @@ export class TravelerItemComponent implements OnInit, OnDestroy {
       options.push({ label: 'DNI', value: 'dni' });
     }
 
-    // Pasaporte siempre disponible
     options.push({ label: 'Pasaporte', value: 'passport' });
 
-    // Guardar en caché para futuras llamadas
     this.documentOptionsCache[cacheKey] = options;
-
     return options;
   }
 
-  /**
-   * Obtiene las opciones de adultos para asociar a un bebé
-   */
   getAdultsOptions(): SelectOption[] {
     return this.getAdultsOptionsFn ? this.getAdultsOptionsFn(this.index) : [];
   }
 
-  /**
-   * Limpia la caché de opciones de documentos cuando cambian los valores relevantes
-   */
   private clearDocumentOptionsCache(): void {
     this.documentOptionsCache = {};
   }
 
-  /**
-   * Función trackBy para mejorar rendimiento en listas ngFor
-   */
   trackByFn(index: number, item: any): number {
     return index;
   }

@@ -36,13 +36,16 @@
 
             .activity-action {
                 ::ng-deep {
-                    .p-checkbox {
-                        .p-checkbox-box {
-                            border-color: #ddd;
+                    /* Estilos para p-toggleSwitch */
+                    .p-toggleswitch {
+                        .p-toggleswitch-slider {
+                            background: #ffffff;
+                            border: 1px solid #ddd;
+                        }
 
-                            &.p-highlight {
+                        &.p-toggleswitch-checked {
+                            .p-toggleswitch-slider {
                                 background-color: #ff6b6b;
-                                border-color: #ff6b6b;
                             }
                         }
                     }

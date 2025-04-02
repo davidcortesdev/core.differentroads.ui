@@ -64,6 +64,8 @@ export class ActiveBookingsSectionComponent implements OnInit, OnDestroy {
         const rqBookings = rqResponse?.data?.map((booking: any) => this.mapBooking(booking)) || [];
         
         this.bookings = [...bookedBookings, ...rqBookings];
+        console.log(this.bookings)
+
         
         // Ordenar por fecha de creación (más reciente primero)
         this.bookings.sort((a, b) => b.creationDate.getTime() - a.creationDate.getTime());
@@ -93,7 +95,7 @@ export class ActiveBookingsSectionComponent implements OnInit, OnDestroy {
       departureDate: new Date(booking?.periodData?.['dayOne'] ?? ''),
       image: '', // Imagen por defecto
       tourID: tourID,
-      passengers: booking?.passengers?.length || 0,
+      passengers: booking?.travelersNumber || 0,
       price: booking?.totalPrice || 0
     };
   }

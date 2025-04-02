@@ -1,4 +1,8 @@
+$p: var(--p-primary-color);
+
+
 :host ::ng-deep {
+
     /* Estilos para el panel de detalles */
     .booking-details-panel {
         border: 1px solid #eaeaea;
@@ -87,6 +91,7 @@
                 /*color: #666;*/
                 font-size: 0.9rem;
                 width: auto;
+
                 &.tourname {
                     font-size: 1.3rem;
                     font-weight: 700;
@@ -101,6 +106,8 @@
                 /*color: #333;*/
                 text-align: right;
             }
+
+
         }
 
         @media (min-width: 769px) {
@@ -158,74 +165,74 @@
             }
         }
 
+        .num-users {
+            background-color: $p;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-right: 5px;
+        }
+
         .user-tag {
             display: flex;
             align-items: center;
-            margin-right: 10px;
-            color: #666; 
-            // Cambia el color a tu preferencia
-
-            i {
+            
+            .pi-users {
+                color: $p;
                 font-size: 1rem;
-                margin-left: 5px;
-                color: #666;
-            }
-
-            ::ng-deep .p-tag {
-                background-color: #4f97fb;
-                color: #fff;
-                font-size: 0.8rem;
-                padding: 0.2rem 0.5rem;
-                border-radius: 4px;
             }
         }
-
-
-        .price-tag {
-            font-size: 1.3rem;
-            font-weight: 700;
-            /*color: #333;*/
-        }
-
-        span .ptag-label{color: #666;}
     }
 
-    @media (max-width: 768px) {
-        .booking-right-info {
-            width: 100%;
+
+    .price-tag {
+        font-size: 1.3rem;
+        font-weight: 700;
+        /*color: #333;*/
+    }
+
+    span .ptag-label {
+        color: #666;
+    }
+}
+
+@media (max-width: 768px) {
+    .booking-right-info {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 15px;
+        height: auto;
+
+        .top-row,
+        .bottom-row {
             display: flex;
-            flex-direction: row;
-            justify-content: space-between;
             align-items: center;
-            margin-top: 15px;
-            height: auto;
-
-            .top-row,
-            .bottom-row {
-                display: flex;
-                align-items: center;
-            }
-
-            .departure-date {
-                text-align: left;
-                margin-right: 10px;
-            }
-
-            .booking-value,
-            .price-tag,
-            .user-tag {
-                text-align: right;
-            }
         }
 
-        .booking-details {
-            .booking-row {
-                justify-content: space-between;
+        .departure-date {
+            text-align: left;
+            margin-right: 10px;
+        }
 
-                .booking-value {
-                    text-align: right;
-                    margin-left: auto;
-                }
+        .booking-value,
+        .price-tag,
+        .user-tag {
+            text-align: right;
+        }
+    }
+
+    .booking-details {
+        .booking-row {
+            justify-content: space-between;
+
+            .booking-value {
+                text-align: right;
+                margin-left: auto;
             }
         }
     }

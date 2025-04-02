@@ -57,7 +57,7 @@
               <div class="info-right">
                 <div class="departure-info">
                   <span>Salida: </span>
-                  <strong>{{ booking.departureDate | date : "dd-MM-yyyy" }}</strong>
+                  <strong>{{ booking.departureDate | date : "dd/MM/yyyy" }}</strong>
                   <span class="state">{{ booking.status.charAt(0) }}</span>
                 </div>
                 <div class="passenger-price" *ngIf="booking.passengers">

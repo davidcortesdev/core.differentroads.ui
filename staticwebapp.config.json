@@ -14,6 +14,11 @@
         "Access-Control-Allow-Headers": "Content-Type, Authorization"
       },
       "rewrite": "https://integration.api.scalapay.com/{rest}"
+    },
+    {
+      "route": "/*",
+      "serve": "/index.html",
+      "statusCode": 200
     }
   ],
   "responseOverrides": {

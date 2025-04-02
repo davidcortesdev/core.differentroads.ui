@@ -681,6 +681,12 @@ export class CheckoutComponent implements OnInit {
 
   /* Steps and validations */
 
+  // Helper method to apply 12% markup to prices - same as in flight-search component
+  applyPriceMarkup(price: number | string): number {
+    const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
+    return numericPrice * 1.12; // Adding 12% markup
+  }
+
   nextStep(step: number): boolean {
     switch (step) {
       case 2:
@@ -747,7 +753,12 @@ export class CheckoutComponent implements OnInit {
                   const currentPrice = parseFloat(
                     this.selectedFlight?.price?.toString() || '0'
                   );
-                  const newPrice = parseFloat(updatedOffer.price?.total || '0');
+
+                  // Apply 12% markup to the new price, just like in flight-search
+                  const newBasePrice = parseFloat(
+                    updatedOffer.price?.total || '0'
+                  );
+                  const newPrice = this.applyPriceMarkup(newBasePrice);
 
                   if (Math.abs(currentPrice - newPrice) > 0.01) {
                     // Considerar diferencia mayor a 0.01 como cambio real

@@ -81,7 +81,7 @@ export interface Traveler {
       number: string;
     }[];
   };
-  documents?: {
+  documents: {
     documentType: 'PASSPORT' | 'ID_CARD';
     birthPlace?: string;
     issuanceLocation?: string;

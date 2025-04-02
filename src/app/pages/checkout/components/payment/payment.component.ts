@@ -367,9 +367,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         return;
       } else if (this.paymentMethod === 'transfer') {
         console.log('Redirecting to bank transfer page');
-        this.router.navigate([
-          `/reservation/${bookingID}/transfer/${publicID}`,
-        ]);
+
         return;
       }
     } catch (error) {

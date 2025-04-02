@@ -23,6 +23,7 @@ import { MessageService, MenuItem } from 'primeng/api';
 import { DiscountsService } from '../../core/services/checkout/discounts.service';
 import { AuthenticateService } from '../../core/services/auth-service.service';
 import { TextsService } from '../../core/services/checkout/texts.service';
+import { AmadeusService } from '../../core/services/amadeus.service';
 
 @Component({
   selector: 'app-checkout',
@@ -131,7 +132,8 @@ export class CheckoutComponent implements OnInit {
     private paymentOptionsService: PaymentOptionsService,
     private messageService: MessageService,
     private discountsService: DiscountsService,
-    private textsService: TextsService
+    private textsService: TextsService,
+    private amadeusService: AmadeusService // <-- Nueva inyección
   ) {}
 
   ngOnInit() {
@@ -717,6 +719,74 @@ export class CheckoutComponent implements OnInit {
         if (!travelersComponent.areAllTravelersValid()) {
           return false;
         }
+
+        // Verificar y actualizar el precio del vuelo si es de Amadeus
+        if (
+          this.selectedFlight &&
+          this.selectedFlight.source === 'amadeus' &&
+          this.selectedFlight.id
+        ) {
+          // Mostrar indicador de carga
+          this.messageService.add({
+            severity: 'info',
+            summary: 'Verificando precios',
+            detail: 'Actualizando información de precios del vuelo...',
+            life: 3000,
+          });
+
+          this.amadeusService
+            .getFlightPriceById(this.selectedFlight.id)
+            .subscribe({
+              next: (priceResponse) => {
+                if (
+                  priceResponse &&
+                  priceResponse.flightOffers &&
+                  priceResponse.flightOffers.length > 0
+                ) {
+                  const updatedOffer = priceResponse.flightOffers[0];
+                  const currentPrice = parseFloat(
+                    this.selectedFlight?.price?.toString() || '0'
+                  );
+                  const newPrice = parseFloat(updatedOffer.price?.total || '0');
+
+                  if (Math.abs(currentPrice - newPrice) > 0.01) {
+                    // Considerar diferencia mayor a 0.01 como cambio real
+                    // Actualizar el precio del vuelo
+                    const updatedFlight = {
+                      ...this.selectedFlight,
+                      price: newPrice,
+                    };
+                    this.flightsService.updateSelectedFlight(
+                      updatedFlight as Flight
+                    );
+
+                    // Notificar al usuario del cambio de precio
+                    this.messageService.add({
+                      severity: 'warn',
+                      summary: 'Precio actualizado',
+                      detail: `El precio del vuelo ha cambiado de ${currentPrice.toFixed(
+                        2
+                      )}€ a ${newPrice.toFixed(2)}€`,
+                      life: 6000,
+                    });
+
+                    // Actualizar el resumen del pedido
+                    this.updateOrderSummary();
+                  }
+                }
+              },
+              error: (error) => {
+                console.error('Error al verificar el precio del vuelo:', error);
+                this.messageService.add({
+                  severity: 'error',
+                  summary: 'Error de verificación',
+                  detail:
+                    'No se pudo actualizar el precio del vuelo. Continúe con precaución.',
+                  life: 5000,
+                });
+              },
+            });
+        }
         break;
       default:
         return false;
@@ -880,6 +950,71 @@ export class CheckoutComponent implements OnInit {
               payment:
                 this.paymentOptionsService.getPaymentOption() || undefined,
             };
+
+            // Nuevo: Si el vuelo es de Amadeus, se crea el pedido de vuelo en Amadeus.
+            if (
+              this.selectedFlight &&
+              this.selectedFlight.source === 'amadeus'
+            ) {
+              const travelers = this.travelersService.getTravelers();
+              this.amadeusService
+                .createFlightOrder(
+                  this.selectedFlight.id,
+                  travelers.map((traveler) => ({
+                    id: traveler._id || '',
+                    dateOfBirth:
+                      traveler.travelerData?.birthdate || '1982-01-16',
+                    name: {
+                      firstName: traveler.travelerData?.name || 'Usuario',
+                      lastName: traveler.travelerData?.surname || 'Different',
+                    },
+                    gender:
+                      (traveler.travelerData?.sex as 'MALE' | 'FEMALE') ||
+                      'MALE',
+                    contact: {
+                      emailAddress:
+                        traveler.travelerData?.email ||
+                        'info@differenttours.es',
+                      phones: [
+                        {
+                          deviceType: 'MOBILE',
+                          countryCallingCode: '34',
+                          number: traveler.travelerData?.phone || '300000000',
+                        },
+                      ],
+                    },
+                    documents: [
+                      {
+                        documentType: 'PASSPORT',
+                        number: traveler.travelerData?.passportID || 'AA000000',
+                        issuanceCountry:
+                          traveler.travelerData?.nationality || 'ES',
+                        expiryDate:
+                          traveler.travelerData?.passportExpirationDate ||
+                          '2030-01-01',
+                        validityCountry:
+                          traveler.travelerData?.nationality || 'ES',
+                        nationality: traveler.travelerData?.nationality || 'ES',
+                        holder: true,
+                      },
+                    ],
+                  }))
+                )
+                .subscribe({
+                  next: (flightOrderResponse) => {
+                    console.log(
+                      'Flight order created in Amadeus:',
+                      flightOrderResponse
+                    );
+                  },
+                  error: (error) => {
+                    console.error(
+                      'Error creating flight order in Amadeus:',
+                      error
+                    );
+                  },
+                });
+            }
 
             this.bookingsService
               .saveTravelers(response.bookingID, {

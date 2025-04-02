@@ -282,6 +282,12 @@ export class FlightSearchComponent implements OnInit {
     console.log('Transformed flights:', this.transformedFlights);
   }
 
+  // Helper method to apply 12% markup to prices
+  applyPriceMarkup(price: number | string): number {
+    const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
+    return numericPrice * 1.12; // Adding 12% markup
+  }
+
   transformOffersToFlightFormat(offers: ITempFlightOffer[]): Flight[] {
     return offers.map((offer) => {
       const offerData = offer.offerData;
@@ -290,11 +296,11 @@ export class FlightSearchComponent implements OnInit {
       const inboundItinerary =
         offerData.itineraries.length > 1 ? offerData.itineraries[1] : null;
 
-      // Transformamos los precios
+      // Transformamos los precios con markup del 12%
       const priceDataArray = offerData.travelerPricings.map((tp: any) => ({
         id: offer._id,
-        value: parseFloat(tp.price.total),
-        value_with_campaign: parseFloat(tp.price.total),
+        value: this.applyPriceMarkup(tp.price.total),
+        value_with_campaign: this.applyPriceMarkup(tp.price.total),
         campaign: null,
         age_group_name: tp.travelerType === 'ADULT' ? 'Adultos' : 'Niños',
         category_name: 'amadeus',
@@ -529,7 +535,7 @@ export class FlightSearchComponent implements OnInit {
               serviceCombinationID: 0,
               prices: [],
             },
-        price: parseFloat(offerData.price.total),
+        price: this.applyPriceMarkup(offerData.price.total),
         priceData: priceDataArray,
       };
 
@@ -580,7 +586,7 @@ export class FlightSearchComponent implements OnInit {
           stops: outbound?.segments.length - 1,
           prices: offerData.travelerPricings.map((tp: any) => ({
             age_group_name: tp.travelerType === 'ADULT' ? 'Adultos' : 'Niños',
-            value: parseFloat(tp.price.total) / 2,
+            value: this.applyPriceMarkup(tp.price.total) / 2,
           })),
         },
         inbound: inbound
@@ -605,7 +611,7 @@ export class FlightSearchComponent implements OnInit {
               prices: offerData.travelerPricings.map((tp: any) => ({
                 age_group_name:
                   tp.travelerType === 'ADULT' ? 'Adultos' : 'Niños',
-                value: parseFloat(tp.price.total) / 2,
+                value: this.applyPriceMarkup(tp.price.total) / 2,
               })),
             }
           : {
@@ -619,7 +625,7 @@ export class FlightSearchComponent implements OnInit {
               stops: 0,
               prices: [],
             },
-        price: parseFloat(offerData.price.total),
+        price: this.applyPriceMarkup(offerData.price.total),
         hasHandBaggage: offerData.travelerPricings.some((tp: any) =>
           tp.fareDetailsBySegment.some(
             (seg: any) =>

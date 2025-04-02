@@ -33,6 +33,7 @@ export class ActiveBookingsSectionComponent implements OnInit, OnDestroy {
   @Output() bookingSelected = new EventEmitter<string>();
   
   private subscriptions: Subscription = new Subscription();
+  private imageCache: Map<string, string> = new Map(); // Cache for tour images
 
   constructor(
     private bookingsService: BookingsService,
@@ -108,26 +109,64 @@ export class ActiveBookingsSectionComponent implements OnInit, OnDestroy {
   loadTourImages() {
     if (!this.bookings || this.bookings.length === 0) return;
 
-    // Procesar en lotes para evitar demasiadas solicitudes simultáneas
-    const batchSize = 5;
-    for (let i = 0; i < this.bookings.length; i += batchSize) {
-      const batch = this.bookings.slice(i, i + batchSize);
-      batch.forEach(booking => {
-        if (booking.tourID) {
-          this.loadBookingImage(booking);
+    // Group bookings by tourID to avoid duplicate requests
+    const tourGroups = new Map<string, Booking[]>();
+    
+    this.bookings.forEach(booking => {
+      if (booking.tourID) {
+        // If we already have this tour in the cache, apply the image immediately
+        if (this.imageCache.has(booking.tourID)) {
+          booking.image = this.imageCache.get(booking.tourID) || '';
+          return;
         }
+        
+        // Group bookings by tourID
+        if (!tourGroups.has(booking.tourID)) {
+          tourGroups.set(booking.tourID, []);
+        }
+        tourGroups.get(booking.tourID)?.push(booking);
+      }
+    });
+
+    // Process each unique tourID
+    const batchSize = 5;
+    let i = 0;
+    const uniqueTourIds = Array.from(tourGroups.keys());
+    
+    // Process in batches
+    const processBatch = () => {
+      const batch = uniqueTourIds.slice(i, i + batchSize);
+      if (batch.length === 0) return;
+      
+      batch.forEach(tourID => {
+        this.loadTourImage(tourID, tourGroups.get(tourID) || []);
       });
+      
+      i += batchSize;
+      if (i < uniqueTourIds.length) {
+        setTimeout(processBatch, 300); // Add a small delay between batches
+      }
+    };
+    
+    processBatch();
+  }
+
+  async loadTourImage(tourID: string, bookings: Booking[]) {
+    const image = await this.getImage(tourID);
+    if (image && image.url) {
+      // Store in cache
+      this.imageCache.set(tourID, image.url);
+      
+      // Update all bookings with this tourID
+      bookings.forEach(booking => {
+        booking.image = image.url;
+      });
+      
+      this.cdr.detectChanges();
     }
   }
 
-  async loadBookingImage(booking: Booking) {
-    if (!booking.tourID) return;
-    const image = await this.getImage(booking.tourID);
-    if (image && image.url) {
-      booking.image = image.url; // Actualizamos la URL de la imagen
-      this.cdr.detectChanges(); // Forzar la detección de cambios
-    }
-  }
+  // Replace the existing loadBookingImage method with the one above
 
   getImage(id: string): Promise<CldImage | null> {
     return new Promise((resolve) => {

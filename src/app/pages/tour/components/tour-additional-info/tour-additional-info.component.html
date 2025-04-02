@@ -65,6 +65,7 @@
 ></app-tour-info-accordion>
 <app-login-modal
   [visible]="loginDialogVisible"
+  [modalType]="'budget'"
   (close)="closeLoginModal()"
   (login)="navigateToLogin()"
   (register)="navigateToRegister()"

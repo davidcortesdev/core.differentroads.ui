@@ -11,6 +11,7 @@ import { Activity } from '../../../../../../core/models/tours/activity.model';
 import { PricesService } from '../../../../../../core/services/checkout/prices.service';
 import { ActivitiesService } from '../../../../../../core/services/checkout/activities.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-optional-activities',
@@ -27,7 +28,8 @@ export class OptionalActivitiesComponent implements OnInit, OnChanges {
     private periodsService: PeriodsService,
     private pricesService: PricesService,
     private activitiesService: ActivitiesService, // Inject the service
-    private sanitizer: DomSanitizer // Inject DomSanitizer
+    private sanitizer: DomSanitizer, // Inject DomSanitizer
+    private messageService: MessageService
   ) {
     this.activitiesService.activities$.subscribe((activities) => {
       this.addedActivities = new Set(
@@ -79,17 +81,20 @@ export class OptionalActivitiesComponent implements OnInit, OnChanges {
   toggleActivity(activity: Activity): void {
     if (this.addedActivities.has(activity.activityId)) {
       this.addedActivities.delete(activity.activityId);
-      console.log('Activity removed:', activity);
     } else {
       this.addedActivities.add(activity.activityId);
-      console.log('Activity added:', activity);
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Actividad añadida',
+        detail:
+          'Las actividades se añaden para todos los pasajeros. Podrás personalizarlas por pasajero en el proceso de pago.',
+        life: 5000,
+      });
     }
     this.updateAddedActivities();
   }
 
   updateAddedActivities(): void {
-    console.log('Updating added activities:', this.addedActivities);
-
     const activities = this.optionalActivities.filter((activity) =>
       this.addedActivities.has(activity.activityId)
     );

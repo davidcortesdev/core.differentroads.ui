@@ -4,10 +4,10 @@
   .title {
     font-size: 0.9rem;
     font-weight: 700;
-    /*color: #333;*/
     margin-right: 1rem;
     min-width: 90px;
   }
+  
   .flights-content {
     display: flex;
     flex-direction: column;
@@ -27,7 +27,6 @@
       .direction-title {
         font-size: 1rem;
         font-weight: 700;
-        /*color: #333;*/
         margin-right: 1rem;
       }
 
@@ -41,7 +40,6 @@
       .direction-date {
         font-size: 1rem;
         font-weight: 700;
-        /*color: #333;*/
         margin-left: 1rem;
         min-width: 120px;
         text-align: right;
@@ -52,7 +50,7 @@
     .stops-info {
       margin: 0.5rem 0;
       font-size: 0.9rem;
-      color: #666;
+      color: var(--background-azul);
       display: flex;
       align-items: center;
 
@@ -60,6 +58,12 @@
         margin-right: 0.5rem;
         color: var(--primary-color-500);
         font-size: 1rem;
+      }
+      
+      .duration-info {
+        margin-left: auto;
+        font-weight: 600;
+        color: var(--primary-color-500);
       }
     }
 
@@ -79,17 +83,22 @@
 
         &.departure {
           margin-right: 0.5rem;
+          text-align: left;
         }
 
         &.arrival {
           margin-left: 0.5rem;
-          text-align: right;
+          
+          .time, .airport {
+            text-align: right;
+            justify-content: flex-end;
+          }
         }
 
         .time {
           font-size: 1rem;
           font-weight: 600;
-          /*color: #333;*/
+          
           margin-bottom: 0.25rem;
           display: flex;
           align-items: center;
@@ -99,7 +108,7 @@
 
         .airport {
           font-size: 0.85rem;
-          color: #666;
+          color: var(--background-azul);
         }
       }
 

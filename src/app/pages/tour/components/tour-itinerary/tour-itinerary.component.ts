@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChildren, QueryList } from '@angular/core';
+import { Component, OnInit, ViewChildren, QueryList, ViewChild } from '@angular/core';
 import { ToursService } from '../../../../core/services/tours.service';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -23,23 +23,15 @@ import { TourOrderService } from '../../../../core/services/tour-data/tour-order
 import { DateOption } from '../tour-date-selector/tour-date-selector.component';
 import { forkJoin } from 'rxjs';
 import { HotelsService } from '../../../../core/services/hotels.service';
-// Add this import
 import { HotelCardComponent } from '../../../../shared/components/hotel-card/hotel-card.component';
-// Add these imports at the top of the file
 import {
   ActivityCardComponent,
   ActivityHighlight,
 } from '../../../../shared/components/activity-card/activity-card.component';
 import { ActivitiesCarouselComponent } from '../../../../shared/components/activities-carousel/activities-carousel.component';
 import { MessageService } from 'primeng/api';
-
-// Then in the @Component decorator, add these to the imports array if it's a standalone component
-// If it's not standalone, you'll need to add them to the module's declarations
-interface City {
-  nombre: string;
-  lat: number;
-  lng: number;
-}
+// Importar el nuevo componente del mapa
+import { TourMapComponent, City } from '../../../../shared/components/tour-map/tour-map.component';
 
 interface EventItem {
   status?: string;
@@ -58,128 +50,11 @@ interface EventItem {
 })
 export class TourItineraryComponent implements OnInit {
   @ViewChildren('itineraryPanel') itineraryPanels!: QueryList<Panel>;
-  mapTypeId: google.maps.MapTypeId | undefined;
-  mapId: string | undefined;
-  getLatLog(
-    city: City
-  ):
-    | google.maps.LatLngLiteral
-    | google.maps.LatLng
-    | google.maps.LatLngAltitude
-    | google.maps.LatLngAltitudeLiteral {
-    return { lat: city.lat, lng: city.lng };
-  }
-  markers: any = [];
-  infoContent = '';
+  @ViewChild(TourMapComponent) tourMapComponent!: TourMapComponent;
+  
+  // Mantener solo las propiedades necesarias para el componente principal
   cities: string[] = [];
   citiesData: City[] = [];
-  center: google.maps.LatLngLiteral = { lat: 40.73061, lng: -73.935242 };
-  zoom = 8;
-  sizeMapaWidth = '100%';
-  sizeMapaHeight = '100%';
-  advancedMarkerOptions: google.maps.marker.AdvancedMarkerElementOptions = {
-    gmpDraggable: false,
-  };
-  advancedMarkerPositions: google.maps.LatLngLiteral[] = [];
-  apiLoaded: boolean = false;
-  mapOptions: google.maps.MapOptions = {
-    zoomControl: true,
-    scrollwheel: false,
-    disableDoubleClickZoom: true,
-    maxZoom: 15,
-    minZoom: 1,
-    styles: [
-      {
-        elementType: 'geometry',
-        stylers: [{ color: '#f5f5f5' }],
-      },
-      {
-        elementType: 'labels.icon',
-        stylers: [{ visibility: 'off' }],
-      },
-      {
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#616161' }],
-      },
-      {
-        elementType: 'labels.text.stroke',
-        stylers: [{ color: '#f5f5f5' }],
-      },
-      {
-        featureType: 'administrative.land_parcel',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#bdbdbd' }],
-      },
-      {
-        featureType: 'poi',
-        elementType: 'geometry',
-        stylers: [{ color: '#eeeeee' }],
-      },
-      {
-        featureType: 'poi',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#757575' }],
-      },
-      {
-        featureType: 'poi.park',
-        elementType: 'geometry',
-        stylers: [{ color: '#e5e5e5' }],
-      },
-      {
-        featureType: 'poi.park',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#9e9e9e' }],
-      },
-      {
-        featureType: 'road',
-        elementType: 'geometry',
-        stylers: [{ color: '#ffffff' }],
-      },
-      {
-        featureType: 'road.arterial',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#757575' }],
-      },
-      {
-        featureType: 'road.highway',
-        elementType: 'geometry',
-        stylers: [{ color: '#dadada' }],
-      },
-      {
-        featureType: 'road.highway',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#616161' }],
-      },
-      {
-        featureType: 'road.local',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#9e9e9e' }],
-      },
-      {
-        featureType: 'transit.line',
-        elementType: 'geometry',
-        stylers: [{ color: '#e5e5e5' }],
-      },
-      {
-        featureType: 'transit.station',
-        elementType: 'geometry',
-        stylers: [{ color: '#eeeeee' }],
-      },
-      {
-        featureType: 'water',
-        elementType: 'geometry',
-        stylers: [{ color: '#c9c9c9' }],
-      },
-      {
-        featureType: 'water',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#9e9e9e' }],
-      },
-    ],
-  };
-  markerOptions: google.maps.MarkerOptions = {
-    draggable: false,
-  };
   events: EventItem[];
   title: string = 'Itinerario';
   dateOptions: DateOption[] = [];
@@ -208,6 +83,10 @@ export class TourItineraryComponent implements OnInit {
     collapsed: boolean;
     color?: string;
     highlights?: ActivityHighlight[];
+    extraInfo?: {
+      title?: string;
+      content?: string;
+    };
   }[] = [];
 
   activities: Activity[] = [];
@@ -270,18 +149,9 @@ export class TourItineraryComponent implements OnInit {
     private hotelsService: HotelsService,
     private messageService: MessageService
   ) {
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}`;
-    script.async = true;
-    script.defer = true;
-    document.head.appendChild(script);
-    script.addEventListener('load', () => {
-      this.mapTypeId = google.maps.MapTypeId.ROADMAP;
-      this.mapId = google.maps.Map.DEMO_MAP_ID;
-      this.apiLoaded = true;
-    });
     this.events = [];
   }
+  
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
       const slug = params['slug'];
@@ -334,84 +204,25 @@ export class TourItineraryComponent implements OnInit {
           .getTourDetailBySlug(slug, ['cities'])
           .subscribe((tour) => {
             this.cities = tour['cities'];
-            let loadedCities = 0;
-            const totalCities = this.cities?.length;
             this.cities.forEach((city) => {
               this.geoService.getCoordinates(city).subscribe((coordinates) => {
                 if (coordinates) {
-                  this.citiesData.push({
+                  const newCity = {
                     nombre: city,
                     lat: Number(coordinates.lat),
                     lng: Number(coordinates.lon),
-                  });
-                  this.addMarker({
-                    nombre: city,
-                    lat: Number(coordinates.lat),
-                    lng: Number(coordinates.lon),
-                  });
-                  loadedCities++;
-                  this.calculateMapCenter();
+                  };
+                  this.citiesData.push(newCity);
+                  
+                  // Actualizar el componente del mapa cuando esté disponible
+                  if (this.tourMapComponent) {
+                    this.tourMapComponent.updateCitiesData(this.citiesData);
+                  }
                 }
               });
             });
           });
       }
-    });
-  }
-  private calculateMapCenter(): void {
-    if (this.citiesData?.length === 0) return;
-    const bounds = new google.maps.LatLngBounds();
-    this.citiesData.forEach((city) => {
-      bounds.extend({ lat: city.lat, lng: city.lng });
-    });
-    this.center = {
-      lat: bounds.getCenter().lat(),
-      lng: bounds.getCenter().lng(),
-    };
-    const PADDING = 10;
-    if (this.mapOptions.maxZoom) {
-      this.zoom = Math.min(
-        this.getZoomLevel(bounds, PADDING),
-        this.mapOptions.maxZoom
-      );
-    }
-  }
-  private getZoomLevel(
-    bounds: google.maps.LatLngBounds,
-    padding: number
-  ): number {
-    const WORLD_DIM = { height: 256, width: 256 };
-    const ZOOM_MAX = 21;
-    function latRad(lat: number) {
-      const sin = Math.sin((lat * Math.PI) / 180);
-      const radX2 = Math.log((1 + sin) / (1 - sin)) / 2;
-      return Math.max(Math.min(radX2, Math.PI), -Math.PI) / 2;
-    }
-    function zoom(mapPx: number, worldPx: number, fraction: number) {
-      return Math.floor(Math.log(mapPx / worldPx / fraction) / Math.LN2);
-    }
-    const ne = bounds.getNorthEast();
-    const sw = bounds.getSouthWest();
-    const latFraction = (latRad(ne.lat()) - latRad(sw.lat())) / Math.PI;
-    const lngDiff = ne.lng() - sw.lng();
-    const lngFraction = (lngDiff < 0 ? lngDiff + 360 : lngDiff) / 360;
-    const latZoom = zoom(400 - padding * 2, WORLD_DIM.height, latFraction);
-    const lngZoom = zoom(800 - padding * 2, WORLD_DIM.width, lngFraction);
-    return Math.min(latZoom, lngZoom, ZOOM_MAX);
-  }
-  addMarker(ciudad: City) {
-    this.markers.push({
-      position: {
-        lat: ciudad.lat,
-        lng: ciudad.lng,
-      },
-      label: {
-        color: 'red',
-        text: ciudad.nombre,
-      },
-      title: ciudad.nombre,
-      info: ciudad.nombre,
-      options: {},
     });
   }
 
@@ -539,6 +350,8 @@ export class TourItineraryComponent implements OnInit {
         hotel: hotel || null,
         collapsed: index !== 0,
         color: '#9C27B0',
+        // Add extraInfo to the itinerary item
+        extraInfo: day.extraInfo,
         highlights:
           dayActivities.map((activity) => {
             return {
@@ -624,6 +437,39 @@ export class TourItineraryComponent implements OnInit {
     });
   }
 
+  // Add this method to handle panel clicks
+  handlePanelClick(index: number): void {
+    this.itinerary[index].collapsed = !this.itinerary[index].collapsed;
+    if (!this.itinerary[index].collapsed) {
+      setTimeout(() => {
+        this.scrollToPanel(index);
+      }, 100);
+    }
+  }
+
+  // Add these methods after handlePanelClick method
+  
+  /**
+   * Expands all day panels in the itinerary
+   */
+  expandAllPanels(): void {
+    if (this.itinerary && this.itinerary.length > 0) {
+      this.itinerary.forEach(item => {
+        item.collapsed = false;
+      });
+    }
+  }
+  
+  /**
+   * Collapses all day panels in the itinerary
+   */
+  collapseAllPanels(): void {
+    if (this.itinerary && this.itinerary.length > 0) {
+      this.itinerary.forEach(item => {
+        item.collapsed = true;
+      });
+    }
+  }
   fetchHotels(): void {
     if (!this.hotels) {
       console.warn('No hotels available to fetch.');

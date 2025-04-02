@@ -17,6 +17,7 @@ import { ToursComponent } from './shared/components/tours/tours.component';
 import { ReservationComponent } from './pages/reservation/reservation.component';
 import { BookingsComponent } from './pages/bookings/bookings.component';
 import { PaymentsComponent } from './pages/payments/payments.component';
+import { AirportSearchComponent } from './features/airports/airport-search/airport-search.component';
 
 const routes: Routes = [
   {
@@ -47,6 +48,7 @@ const routes: Routes = [
         component: ReservationComponent,
       },
       { path: 'bookings/:id', component: BookingsComponent },
+      { path: 'aeropuertos', component: AirportSearchComponent },
       { path: '**', component: NotFoundComponent },
     ],
   },

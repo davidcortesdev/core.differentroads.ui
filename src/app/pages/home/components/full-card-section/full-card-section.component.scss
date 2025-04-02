@@ -49,6 +49,7 @@
         color: white;
         padding: 10px;
         z-index: 2;
+        margin: 0;
 
         @media (max-width: 1200px) {
           left: 20px;
@@ -101,9 +102,6 @@
           }
         }
 
-
-        margin: 0;
-
         p {
           cursor: pointer;
           transition: opacity 0.2s ease;
@@ -111,7 +109,6 @@
           &:hover {
             opacity: 0.8;
           }
-
         }
       }
     }

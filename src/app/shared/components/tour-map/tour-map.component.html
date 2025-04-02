@@ -1,0 +1,32 @@
+<div class="map-placeholder">
+  <p *ngIf="!apiLoaded">Loading map...</p>
+  <div class="map-loaded" *ngIf="apiLoaded">
+    <google-map
+      [center]="center"
+      [zoom]="zoom"
+      [options]="mapOptions"
+      [width]="sizeMapaWidth"
+      [height]="sizeMapaHeight"
+      [mapTypeId]="mapTypeId"
+      [mapId]="mapId"
+    >
+      <map-advanced-marker
+        #markerElem
+        *ngFor="let marker of markers"
+        [position]="marker.position"
+        [title]="marker.title || ''"
+        [options]="marker.options"
+      >
+      </map-advanced-marker>
+      
+      <!-- Add polyline to connect markers -->
+      <map-polyline
+        *ngIf="polylinePath.length > 1"
+        [path]="polylinePath"
+        [options]="polylineOptions"
+      >
+      </map-polyline>
+      <map-info-window>Hello Google Maps</map-info-window>
+    </google-map>
+  </div>
+</div>

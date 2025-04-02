@@ -1,0 +1,44 @@
+<p-panel
+  [toggleable]="true"
+  styleClass="custom-panel"
+  [(collapsed)]="event.collapsed"
+>
+  <ng-template pTemplate="header">
+    <div
+      class="panel-header-content"
+      [attr.data-index]="index"
+      (click)="handleClick()"
+    >
+      <div class="day-info">
+        <h3 class="day-title">{{ event.title }}</h3>
+      </div>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="content">
+    <div class="itinerary-content">
+      <div [innerHTML]="event.description"></div>
+      <img
+        *ngIf="event.image"
+        [src]="event.image"
+        [alt]="event.title"
+        loading="lazy"
+        class="img"
+      />
+    </div>
+    <div class="extra-info-section" *ngIf="event.extraInfo?.title || event.extraInfo?.content">
+      <h4 class="extra-info-title" *ngIf="event.extraInfo?.title">{{ event.extraInfo?.title }}</h4>
+      <div class="extra-info-content" *ngIf="event.extraInfo?.content" [innerHTML]="event.extraInfo?.content"></div>
+    </div>
+    
+    <app-hotel-card
+      *ngIf="event.hotel"
+      [hotel]="event.hotel"
+    ></app-hotel-card>
+
+    <app-activities-carousel
+      *ngIf="event.highlights?.length"
+      [highlights]="event.highlights"
+      (addActivity)="onAddActivity($event)"
+    ></app-activities-carousel>
+  </ng-template>
+</p-panel>

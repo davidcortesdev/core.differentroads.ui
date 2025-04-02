@@ -87,7 +87,7 @@ $colors: (
   }
 }
 
-// Map section
+// Map section - Simplificado ya que la mayoría de los estilos ahora están en el componente del mapa
 .map-section {
   flex: 2;
   position: sticky;
@@ -107,6 +107,7 @@ $colors: (
   @include resp(sm) {
     height: 250px;
   }
+}
 
   .map-placeholder {
     width: 100%;
@@ -123,7 +124,7 @@ $colors: (
       height: 100%;
     }
   }
-}
+
 
 // Panel header content
 .panel-header-content {
@@ -543,4 +544,51 @@ $colors: (
 
 .active-marker {
   // This is already defined above - consider removing this duplicate
+}
+
+// Add this after the timeline-section styles
+// Panel controls styling
+// Panel controls container - add this to match itinerary-container padding
+.panel-controls-container {
+  padding: 0 map.get($spaces, lg);
+  
+  @include resp(xl) {
+    padding: 0 map.get($spaces, base);
+  }
+  
+  @include resp(sm) {
+    padding: 0 map.get($spaces, base);
+  }
+}
+
+// Update the panel-controls class to remove padding
+.panel-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  
+  @include resp(md) {
+    justify-content: center;
+  }
+  
+  .p-button-outlined {
+    color: map.get($colors, primary);
+    border-color: map.get($colors, primary);
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: map.get($border-radius, sm);
+    
+    .p-button-icon {
+      font-size: 0.75rem;
+    }
+    
+    &:hover {
+      background-color: rgba(map.get($colors, primary), 0.1);
+    }
+    
+    &:focus {
+      box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px rgba(map.get($colors, primary), 0.3);
+    }
+  }
 }

@@ -23,7 +23,7 @@
             <div class="dataview-image">
               <img
                 class="dataview-img"
-                [src]="item.activityImage?.[0]?.url ||'https://picsum.photos/1000?random=8'"
+                [src]="item.activityImage?.[0]?.url ||''"
                 [alt]="item.name"
               />
             </div>
@@ -58,7 +58,7 @@
                 <div class="dataview-buttons">
                   <p-button
                     class="dataview-buy-button"
-                    [label]="isActivityAdded(item) ? 'Añadido' : 'Añadir'"
+                    [label]="isActivityAdded(item) ? 'Eliminar' : 'Añadir'"
                     [disabled]="item.availability === 0"
                     [rounded]="true"
                     [styleClass]="isActivityAdded(item) ? 'added-button' : ''"

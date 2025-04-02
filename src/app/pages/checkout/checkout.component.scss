@@ -1,5 +1,6 @@
 .checkout {
   background-color: var(--accent-white);
+  color: var(--background-azul); // Add this to set default text color
 
   &-title {
     font-size: 1.8rem;
@@ -8,12 +9,14 @@
     padding: 0 2rem;
     padding-top: 2rem;
     margin: 0;
+    color: var(--background-azul); // Ensure title has the correct color
   }
   &-subtitle {
     font-size: 1.2rem;
     font-weight: 500;
     margin-bottom: 1rem;
     padding: 0 2rem;
+    color: var(--background-azul); // Ensure subtitle has the correct color
   }
 
   /* Solución específica para eliminar los márgenes del componente p-steps */
@@ -47,6 +50,7 @@
 
         ::ng-deep .p-steps {
           font-size: 14px;
+          margin-bottom: 1rem !important; // Add more space below the steps
           .p-steps-item {
             &:before {
               border-top: 2px solid var(--background-azul); // Línea azul
@@ -67,6 +71,12 @@
             color: var(--background-azul);
           }
         }
+        
+        // Add space between steps and content
+        > div:nth-child(2) {
+          margin-top: 1.5rem;
+          padding-top: 1rem;
+        }
       }
     }
 
@@ -85,11 +95,13 @@
       height: fit-content;
       position: relative;
       font-size: 0.9rem;
+      color: var(--background-azul); // Add this to ensure text color in main content
 
       h3 {
         margin-bottom: 1.5rem;
         padding-bottom: 1rem;
         border-bottom: 1px solid #eee;
+        color: var(--background-azul); // Ensure heading has correct color
       }
 
       .summary-content {
@@ -402,4 +414,17 @@ p-button.continue-button ::ng-deep .p-button {
 
 ::ng-deep   .p-message-sm .p-message-text {
   font-size: 0.7rem;
+}
+
+// Ensure all text in the checkout component has the correct color
+::ng-deep .checkout {
+  p, span, div, h1, h2, h3, h4, h5, h6, label {
+    color: var(--background-azul);
+  }
+  
+  // Exception for buttons - don't change their text color
+  .p-button .p-button-label,
+  .p-button .p-button-icon {
+    color: inherit;
+  }
 }

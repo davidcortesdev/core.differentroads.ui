@@ -47,20 +47,30 @@
             }
 
             .value-container {
-                display: flex;
+                display: grid;
+                grid-template-columns: auto 20px auto 20px auto;
                 align-items: center;
                 
-                .qty, .unit-price, .total-price {
-                    margin: 0 4px;
+                .qty {
+                    text-align: right;
+                    min-width: 30px;
                 }
                 
-                .operator {
-                    margin: 0 6px;
-                    color: #666;
+                .unit-price {
+                    text-align: right;
+                    min-width: 60px;
                 }
                 
                 .total-price {
+                    text-align: right;
+                    min-width: 60px;
                     font-weight: 600;
+                }
+                
+                .operator {
+                    text-align: center;
+                    width: 20px;
+                    color: #666;
                 }
             }
 
@@ -69,9 +79,7 @@
                     color: #28a745;
                 }
 
-                .description::before {
-                    content: "- ";
-                }
+                
             }
         }
     }

@@ -9,12 +9,14 @@ import { BudgetDialogComponent } from '../../../../shared/components/budget-dial
 import { NotificationsService } from '../../../../core/services/notifications.service';
 import { TourDataService } from '../../../../core/services/tour-data/tour-data.service';
 import { TourOrderService } from '../../../../core/services/tour-data/tour-order.service';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-tour-additional-info',
   standalone: false,
   templateUrl: './tour-additional-info.component.html',
   styleUrl: './tour-additional-info.component.scss',
+  providers: [MessageService] // Añadir MessageService al componente
 })
 export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   @ViewChild(BudgetDialogComponent) budgetDialog!: BudgetDialogComponent;
@@ -25,7 +27,7 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   isAuthenticated: boolean = false;
   loginDialogVisible: boolean = false;
   userEmail: string = '';
-  loading: boolean = false; // Para mostrar estado de carga durante el guardado directo
+  loading: boolean = false;
 
   // Optimización: Extraer configuraciones a propiedades
   dialogBreakpoints = { '1199px': '80vw', '575px': '90vw' };
@@ -48,13 +50,14 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
     private router: Router,
     private notificationsService: NotificationsService,
     private tourDataService: TourDataService,
-    private tourOrderService: TourOrderService
+    private tourOrderService: TourOrderService,
+    private messageService: MessageService
   ) {}
 
   ngOnInit(): void {
     this.loadTourData();
 
-    // Subscribe to authentication status
+    // Inicializamos el estado de autenticación sin mostrar modales
     const authSubscription = this.authService.isLoggedIn().subscribe({
       next: (isAuthenticated) => {
         this.isAuthenticated = isAuthenticated;
@@ -112,24 +115,25 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   }
 
   handleSaveTrip(): void {
-    this.authService.isLoggedIn().subscribe((isLoggedIn) => {
-      if (isLoggedIn) {
-        // User is authenticated, guardar el presupuesto directamente
-        this.savePresupuestoDirectamente();
-      } else {
-        // User is not authenticated, save URL and show login dialog
-        const currentUrl = window.location.pathname;
-        sessionStorage.setItem('redirectUrl', currentUrl);
-        this.loginDialogVisible = true;
-      }
-    });
+    // En lugar de usar la suscripción para determinar si mostrar el modal,
+    // simplemente verificamos el estado actual
+    if (this.isAuthenticated) {
+      // User is authenticated, guardar el presupuesto directamente
+      this.savePresupuestoDirectamente();
+    } else {
+      // User is not authenticated, save URL and show login dialog
+      const currentUrl = window.location.pathname;
+      sessionStorage.setItem('redirectUrl', currentUrl);
+      this.loginDialogVisible = true; // SOLO aquí se activa el modal de login
+    }
   }
 
-  // Nuevo método para guardar el presupuesto directamente sin abrir el modal
+  // Método para guardar el presupuesto directamente sin abrir el modal
   savePresupuestoDirectamente(): void {
     // Verificar que tenemos la información necesaria
     if (!this.userEmail) {
       console.error('No se pudo obtener el email del usuario');
+      this.showErrorToast('No se pudo obtener la información del usuario. Por favor, inténtalo de nuevo.');
       return;
     }
 
@@ -153,9 +157,9 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
 
     // Información del viajero (usando datos del usuario logueado)
     const travelerInfo = {
-      name: 'Usuario Registrado', // Podrías obtener el nombre real del usuario si está disponible
+      name: 'Usuario Registrado',
       email: this.userEmail,
-      phone: '' // Si tienes acceso al teléfono del usuario, podrías usarlo aquí
+      phone: ''
     };
 
     // Crear la orden
@@ -171,15 +175,36 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
           console.log('Orden creada automáticamente:', createdOrder);
           this.loading = false;
           
-          // Mostrar mensaje de éxito al usuario
-          alert('Presupuesto guardado correctamente.');
+          // Mostrar mensaje de éxito con Toast
+          this.showSuccessToast('Presupuesto guardado correctamente');
         },
         error: (error) => {
           console.error('Error al crear la orden:', error);
           this.loading = false;
-          alert('Ha ocurrido un error al guardar el presupuesto. Por favor, inténtalo de nuevo.');
+          
+          // Mostrar mensaje de error con Toast
+          this.showErrorToast('Ha ocurrido un error al guardar el presupuesto. Por favor, inténtalo de nuevo.');
         },
       });
+  }
+
+  // Métodos para mostrar mensajes Toast
+  showSuccessToast(message: string): void {
+    this.messageService.add({
+      severity: 'success',
+      summary: '¡Éxito!',
+      detail: message,
+      life: 3000
+    });
+  }
+
+  showErrorToast(message: string): void {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: message,
+      life: 5000
+    });
   }
 
   sanitizeHtml(html: string): SafeHtml {
@@ -191,8 +216,7 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   }
 
   handleDownloadTrip(): void {
-    // Para descargar el viaje, seguimos mostrando el modal original
-    // que incluye la funcionalidad de envío de correo
+    // Solo mostrar el modal sin mostrar Toast
     this.visible = true;
   }
 

@@ -63,6 +63,10 @@
   *ngIf="hasInfoCards"
   [infoCards]="infoCards"
 ></app-tour-info-accordion>
+
+<!-- Añadir el componente Toast de PrimeNG -->
+<p-toast position="top-right"></p-toast>
+
 <app-login-modal
   [visible]="loginDialogVisible"
   [modalType]="'budget'"

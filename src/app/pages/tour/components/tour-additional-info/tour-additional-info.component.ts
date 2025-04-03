@@ -1,10 +1,14 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Tour } from '../../../../core/models/tours/tour.model';
 import { ToursService } from '../../../../core/services/tours.service';
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
+import { BudgetDialogComponent } from '../../../../shared/components/budget-dialog/budget-dialog.component';
+import { NotificationsService } from '../../../../core/services/notifications.service';
+import { TourDataService } from '../../../../core/services/tour-data/tour-data.service';
+import { TourOrderService } from '../../../../core/services/tour-data/tour-order.service';
 
 @Component({
   selector: 'app-tour-additional-info',
@@ -13,11 +17,15 @@ import { AuthenticateService } from '../../../../core/services/auth-service.serv
   styleUrl: './tour-additional-info.component.scss',
 })
 export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
+  @ViewChild(BudgetDialogComponent) budgetDialog!: BudgetDialogComponent;
+  
   tour: Tour | null = null;
   visible: boolean = false;
   private subscription: Subscription = new Subscription();
   isAuthenticated: boolean = false;
   loginDialogVisible: boolean = false;
+  userEmail: string = '';
+  loading: boolean = false; // Para mostrar estado de carga durante el guardado directo
 
   // Optimización: Extraer configuraciones a propiedades
   dialogBreakpoints = { '1199px': '80vw', '575px': '90vw' };
@@ -37,7 +45,10 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private toursService: ToursService,
     private authService: AuthenticateService,
-    private router: Router
+    private router: Router,
+    private notificationsService: NotificationsService,
+    private tourDataService: TourDataService,
+    private tourOrderService: TourOrderService
   ) {}
 
   ngOnInit(): void {
@@ -47,10 +58,30 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
     const authSubscription = this.authService.isLoggedIn().subscribe({
       next: (isAuthenticated) => {
         this.isAuthenticated = isAuthenticated;
+        
+        // Si el usuario está autenticado, obtener su email
+        if (isAuthenticated) {
+          this.getUserEmail();
+        }
       },
     });
 
     this.subscription.add(authSubscription);
+  }
+
+  // Método para obtener el email del usuario
+  private getUserEmail(): void {
+    const emailSubscription = this.authService.getUserEmail().subscribe({
+      next: (email) => {
+        this.userEmail = email;
+        console.log('Email del usuario logueado:', email);
+      },
+      error: (error) => {
+        console.error('Error al obtener el email del usuario:', error);
+      }
+    });
+
+    this.subscription.add(emailSubscription);
   }
 
   ngOnDestroy(): void {
@@ -83,8 +114,8 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   handleSaveTrip(): void {
     this.authService.isLoggedIn().subscribe((isLoggedIn) => {
       if (isLoggedIn) {
-        // User is authenticated, open the save trip modal
-        this.visible = true;
+        // User is authenticated, guardar el presupuesto directamente
+        this.savePresupuestoDirectamente();
       } else {
         // User is not authenticated, save URL and show login dialog
         const currentUrl = window.location.pathname;
@@ -92,6 +123,63 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
         this.loginDialogVisible = true;
       }
     });
+  }
+
+  // Nuevo método para guardar el presupuesto directamente sin abrir el modal
+  savePresupuestoDirectamente(): void {
+    // Verificar que tenemos la información necesaria
+    if (!this.userEmail) {
+      console.error('No se pudo obtener el email del usuario');
+      return;
+    }
+
+    this.loading = true;
+
+    // Obtener información sobre periodo seleccionado y viajeros
+    let selectedPeriod: any;
+    let travelers: any;
+
+    // Subscribirse a los datos necesarios
+    const periodSubscription = this.tourOrderService.selectedDateInfo$.subscribe(dateInfo => {
+      selectedPeriod = dateInfo;
+    });
+    
+    const travelersSubscription = this.tourOrderService.selectedTravelers$.subscribe(travelersData => {
+      travelers = travelersData;
+    });
+
+    this.subscription.add(periodSubscription);
+    this.subscription.add(travelersSubscription);
+
+    // Información del viajero (usando datos del usuario logueado)
+    const travelerInfo = {
+      name: 'Usuario Registrado', // Podrías obtener el nombre real del usuario si está disponible
+      email: this.userEmail,
+      phone: '' // Si tienes acceso al teléfono del usuario, podrías usarlo aquí
+    };
+
+    // Crear la orden
+    this.tourOrderService
+      .createOrder({
+        periodID: selectedPeriod?.periodID || '',
+        status: 'Budget',
+        owner: this.userEmail,
+        traveler: travelerInfo,
+      })
+      .subscribe({
+        next: (createdOrder) => {
+          console.log('Orden creada automáticamente:', createdOrder);
+          this.loading = false;
+          
+          // Mostrar mensaje de éxito al usuario
+          alert('Presupuesto guardado correctamente.');
+        },
+        error: (error) => {
+          console.error('Error al crear la orden:', error);
+          this.loading = false;
+          alert('Ha ocurrido un error al guardar el presupuesto. Por favor, inténtalo de nuevo.');
+        },
+      });
   }
 
   sanitizeHtml(html: string): SafeHtml {
@@ -103,7 +191,8 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   }
 
   handleDownloadTrip(): void {
-    // Abre el modal sin validar autenticación
+    // Para descargar el viaje, seguimos mostrando el modal original
+    // que incluye la funcionalidad de envío de correo
     this.visible = true;
   }
 

@@ -1,22 +1,21 @@
 <div class="active-bookings">
+  <!-- Header with toggle functionality -->
   <div class="booking-header" (click)="toggleContent()">
     <span>Reservas activas</span>
-    <i
-      class="pi"
-      [ngClass]="{
-        'pi-chevron-down arrow-down': !isExpanded,
-        'pi-chevron-up arrow-up': isExpanded
-      }"
-    ></i>
+    <i class="pi" [ngClass]="{
+      'pi-chevron-down arrow-down': !isExpanded,
+      'pi-chevron-up arrow-up': isExpanded
+    }"></i>
   </div>
 
+  <!-- Collapsible content section -->
   <div class="booking-content" [ngClass]="{ hidden: !isExpanded }">
     <!-- Loading indicator -->
     <div class="loading-container" *ngIf="loading">
       <p-progressSpinner strokeWidth="3" animationDuration=".5s"></p-progressSpinner>
     </div>
     
-    <!-- Content when not loading -->
+    <!-- Bookings data view -->
     <p-dataView
       #dv
       [value]="bookings"
@@ -29,11 +28,13 @@
         <div class="booking-list">
           <div class="booking-item" *ngFor="let booking of bookings; trackBy: trackByBookingId">
             <div class="booking-item-content">
+              <!-- Booking image -->
               <div class="image-container">
                 <p-skeleton *ngIf="!booking.image" width="100%" height="100%" styleClass="booking-image-skeleton"></p-skeleton>
                 <img *ngIf="booking.image" [src]="booking.image" [alt]="booking.title"/>
               </div>
 
+              <!-- Booking information -->
               <div class="info-sections">
                 <div class="title-section">
                   <h2>{{ booking.title }}</h2>
@@ -54,6 +55,7 @@
                 </div>
               </div>
 
+              <!-- Departure and passenger info -->
               <div class="info-right">
                 <div class="departure-info">
                   <span>Salida: </span>
@@ -67,14 +69,11 @@
                 </div>
               </div>
 
+              <!-- Action buttons -->
               <div class="buttons">
                 <div class="top-buttons">
-                  <button
-                    pButton
-                    label="Descargar"
-                    class="p-button-outlined"
-                  ></button>
-                  <button pButton label="Enviar" class="sendbtn"></button>
+                  <p-button label="Descargar" class="p-button-outlined"></p-button>
+                  <p-button label="Enviar" class="sendbtn"></p-button>
                 </div>
                 <button
                   pButton
@@ -87,6 +86,8 @@
           </div>
         </div>
       </ng-template>
+      
+      <!-- Empty state template -->
       <ng-template pTemplate="empty">
         <div class="empty-message">
           No hay reservas activas disponibles

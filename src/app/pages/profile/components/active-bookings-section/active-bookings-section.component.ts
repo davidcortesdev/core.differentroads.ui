@@ -29,11 +29,12 @@ export class ActiveBookingsSectionComponent implements OnInit, OnDestroy {
   isExpanded: boolean = true;
   @Input() userEmail!: string;
   loading: boolean = false;  
-  // Agregamos un EventEmitter para avisar al componente padre cuando se selecciona una reserva
   @Output() bookingSelected = new EventEmitter<string>();
   
-  private subscriptions: Subscription = new Subscription();
-  private imageCache: Map<string, string> = new Map(); // Cache for tour images
+  private subscriptions = new Subscription();
+  private imageCache = new Map<string, string>(); // Cache for tour images
+  private readonly BATCH_SIZE = 5;
+  private readonly BATCH_DELAY = 300;
 
   constructor(
     private bookingsService: BookingsService,
@@ -64,8 +65,6 @@ export class ActiveBookingsSectionComponent implements OnInit, OnDestroy {
         const rqBookings = rqResponse?.data?.map((booking: any) => this.mapBooking(booking)) || [];
         
         this.bookings = [...bookedBookings, ...rqBookings];
-        console.log(this.bookings)
-
         
         // Ordenar por fecha de creación (más reciente primero)
         this.bookings.sort((a, b) => b.creationDate.getTime() - a.creationDate.getTime());
@@ -84,8 +83,6 @@ export class ActiveBookingsSectionComponent implements OnInit, OnDestroy {
   }
   
   mapBooking(booking: any): Booking {
-    const tourID = booking?.periodData?.tourID || '';
-    
     return {
       id: booking?._id ?? '',
       title: booking?.periodData?.['tour']?.name || '',
@@ -94,7 +91,7 @@ export class ActiveBookingsSectionComponent implements OnInit, OnDestroy {
       status: booking?.status ?? '',
       departureDate: new Date(booking?.periodData?.['dayOne'] ?? ''),
       image: '', // Imagen por defecto
-      tourID: tourID,
+      tourID: booking?.periodData?.tourID || '',
       passengers: booking?.travelersNumber || 0,
       price: booking?.totalPrice || 0
     };
@@ -109,53 +106,57 @@ export class ActiveBookingsSectionComponent implements OnInit, OnDestroy {
   }
   
   loadTourImages() {
-    if (!this.bookings || this.bookings.length === 0) return;
+    if (!this.bookings?.length) return;
 
     // Group bookings by tourID to avoid duplicate requests
+    const tourGroups = this.groupBookingsByTourId();
+    
+    // Process each unique tourID in batches
+    const uniqueTourIds = Array.from(tourGroups.keys());
+    this.processTourImageBatches(uniqueTourIds, tourGroups);
+  }
+
+  private groupBookingsByTourId(): Map<string, Booking[]> {
     const tourGroups = new Map<string, Booking[]>();
     
     this.bookings.forEach(booking => {
-      if (booking.tourID) {
-        // If we already have this tour in the cache, apply the image immediately
-        if (this.imageCache.has(booking.tourID)) {
-          booking.image = this.imageCache.get(booking.tourID) || '';
-          return;
-        }
-        
-        // Group bookings by tourID
-        if (!tourGroups.has(booking.tourID)) {
-          tourGroups.set(booking.tourID, []);
-        }
-        tourGroups.get(booking.tourID)?.push(booking);
+      if (!booking.tourID) return;
+      
+      // If we already have this tour in the cache, apply the image immediately
+      if (this.imageCache.has(booking.tourID)) {
+        booking.image = this.imageCache.get(booking.tourID) || '';
+        return;
       }
+      
+      // Group bookings by tourID
+      if (!tourGroups.has(booking.tourID)) {
+        tourGroups.set(booking.tourID, []);
+      }
+      tourGroups.get(booking.tourID)?.push(booking);
     });
-
-    // Process each unique tourID
-    const batchSize = 5;
-    let i = 0;
-    const uniqueTourIds = Array.from(tourGroups.keys());
     
-    // Process in batches
-    const processBatch = () => {
-      const batch = uniqueTourIds.slice(i, i + batchSize);
-      if (batch.length === 0) return;
-      
-      batch.forEach(tourID => {
-        this.loadTourImage(tourID, tourGroups.get(tourID) || []);
-      });
-      
-      i += batchSize;
-      if (i < uniqueTourIds.length) {
-        setTimeout(processBatch, 300); // Add a small delay between batches
-      }
-    };
-    
-    processBatch();
+    return tourGroups;
   }
 
-  async loadTourImage(tourID: string, bookings: Booking[]) {
+  private processTourImageBatches(tourIds: string[], tourGroups: Map<string, Booking[]>, startIndex = 0) {
+    const batch = tourIds.slice(startIndex, startIndex + this.BATCH_SIZE);
+    if (!batch.length) return;
+    
+    batch.forEach(tourID => {
+      this.loadTourImage(tourID, tourGroups.get(tourID) || []);
+    });
+    
+    const nextIndex = startIndex + this.BATCH_SIZE;
+    if (nextIndex < tourIds.length) {
+      setTimeout(() => {
+        this.processTourImageBatches(tourIds, tourGroups, nextIndex);
+      }, this.BATCH_DELAY);
+    }
+  }
+
+  private async loadTourImage(tourID: string, bookings: Booking[]) {
     const image = await this.getImage(tourID);
-    if (image && image.url) {
+    if (image?.url) {
       // Store in cache
       this.imageCache.set(tourID, image.url);
       
@@ -168,17 +169,12 @@ export class ActiveBookingsSectionComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Replace the existing loadBookingImage method with the one above
-
-  getImage(id: string): Promise<CldImage | null> {
+  private getImage(id: string): Promise<CldImage | null> {
     return new Promise((resolve) => {
       const filters = { externalID: id };
       const subscription = this.toursService.getFilteredToursList(filters).subscribe({
         next: (tourData) => {
-          if (
-            tourData?.data?.length > 0 &&
-            tourData.data[0].image?.length > 0
-          ) {
+          if (tourData?.data?.length > 0 && tourData.data[0].image?.length > 0) {
             resolve(tourData.data[0].image[0]);
           } else {
             console.warn('No image data available for tour:', id);
@@ -195,7 +191,6 @@ export class ActiveBookingsSectionComponent implements OnInit, OnDestroy {
     });
   }
   
-  // Add this function for trackBy
   trackByBookingId(index: number, booking: Booking): string {
     return booking.id;
   }

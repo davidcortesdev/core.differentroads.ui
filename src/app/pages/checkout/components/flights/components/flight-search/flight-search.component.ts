@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { AmadeusService } from '../../../../../../core/services/amadeus.service';
 import { AirportService } from '../../../../../../core/services/airport.service';
+import { TravelersService } from '../../../../../../core/services/checkout/travelers.service';
 import {
   FlightOffersParams,
   ITempFlightOffer,
@@ -26,6 +27,8 @@ export class FlightSearchComponent implements OnInit {
   @Output() filteredFlightsChange = new EventEmitter<any[]>();
   @Input() flights: Flight[] = [];
   @Input() tourDestination: Ciudad = { nombre: '', codigo: '' };
+  @Input() dayOne: string | null = null;
+  @Input() returnDate: string | null = null;
 
   flightForm: FormGroup;
 
@@ -80,7 +83,8 @@ export class FlightSearchComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private amadeusService: AmadeusService,
-    private airportService: AirportService
+    private airportService: AirportService,
+    private travelersService: TravelersService // Inject TravelersService
   ) {
     // Seleccionar ciudad por defecto (Madrid)
     const defaultCity = { nombre: 'Madrid', codigo: 'MAD' };
@@ -91,6 +95,8 @@ export class FlightSearchComponent implements OnInit {
       equipajeMano: [this.equipajeMano],
       equipajeBodega: [this.equipajeBodega],
       adults: [1],
+      children: [0], // Initialize children field
+      infants: [0], // Initialize infants field
       aerolinea: [null],
       escala: [null],
     });
@@ -102,7 +108,19 @@ export class FlightSearchComponent implements OnInit {
       this.tourOrigenConstante = this.tourDestination;
     }
 
-    // Se elimina la búsqueda automática al iniciar
+    // Use dayOne and returnDate if provided
+    if (this.dayOne) {
+      this.fechaIdaConstante = new Date(this.dayOne);
+      this.fechaIdaFormateada = this.formatDisplayDate(this.fechaIdaConstante);
+    }
+    if (this.returnDate) {
+      this.fechaRegresoConstante = new Date(this.returnDate);
+      this.fechaRegresoFormateada = this.formatDisplayDate(
+        this.fechaRegresoConstante
+      );
+    }
+
+    // Remove automatic search on initialization
 
     // Actualizar el tipo de viaje al cambiar en el formulario
     this.flightForm.get('tipoViaje')?.valueChanges.subscribe((value) => {
@@ -116,6 +134,15 @@ export class FlightSearchComponent implements OnInit {
 
     this.flightForm.get('equipajeBodega')?.valueChanges.subscribe((value) => {
       this.equipajeBodega = value;
+    });
+
+    // Subscribe to traveler count updates
+    this.travelersService.travelersNumbers$.subscribe((travelersNumbers) => {
+      this.flightForm.patchValue({
+        adults: travelersNumbers.adults,
+        children: travelersNumbers.childs, // Ensure children are updated
+        infants: travelersNumbers.babies, // Ensure infants are updated
+      });
     });
   }
 
@@ -152,8 +179,11 @@ export class FlightSearchComponent implements OnInit {
       destinationLocationCode: destinationCode,
       departureDate: departureDate,
       adults: formValue.adults || 1,
+      children: formValue.children || 0,
+      infants: formValue.infants || 0,
       max: 10,
     };
+    console.log('Search parameters:', searchParams); // Added debug log
 
     // Si es ida y vuelta, añadir la fecha de regreso
     if (formValue.tipoViaje === 'idaVuelta') {

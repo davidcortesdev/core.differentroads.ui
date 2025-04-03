@@ -36,7 +36,7 @@ export class CountriesService {
         return countries.filter(
           (country) =>
             country.name.toLowerCase().includes(lowerSearchTerm) ||
-            country.nationality.toLowerCase().includes(lowerSearchTerm)
+            country.code.toLowerCase().includes(lowerSearchTerm)
         );
       })
     );

@@ -6,6 +6,7 @@ import { PriceData } from '../../../../core/models/commons/price-data.model';
 import { Order } from '../../../../core/models/orders/order.model';
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
 import { Router } from '@angular/router';
+import { Period } from '../../../../core/models/tours/period.model';
 
 @Component({
   selector: 'app-flights',
@@ -15,6 +16,7 @@ import { Router } from '@angular/router';
 })
 export class FlightsComponent implements OnInit {
   @Input() orderDetails: Order | null = null;
+  @Input() periodData: Period | null = null;
 
   selectedFlight: Flight | null = null;
   flights: Flight[] = [];
@@ -39,6 +41,9 @@ export class FlightsComponent implements OnInit {
   ngOnInit(): void {
     if (this.orderDetails) {
       const periodID = this.orderDetails.periodID;
+      const dayOne = this.periodData?.dayOne || null;
+      const returnDate = this.periodData?.returnDate || null;
+
       this.periodsService.getFlights(periodID).subscribe((flights) => {
         this.flights = flights;
         console.log('Flights:', this.flights);
@@ -46,6 +51,7 @@ export class FlightsComponent implements OnInit {
         // Extract destination information from the first valid flight
         this.extractTourDestination();
 
+        // Pass dayOne and returnDate to the FlightSearchComponent
         this.filteredFlights = this.flights
           .filter(
             (flight) =>
@@ -56,6 +62,8 @@ export class FlightsComponent implements OnInit {
               ...flight,
               price: this.calculateTotalPrice(flight),
               priceData: this.calculateTotalPriceData(flight),
+              dayOne, // Add dayOne
+              returnDate, // Add returnDate
             };
           });
 

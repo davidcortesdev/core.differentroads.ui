@@ -219,7 +219,7 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
     console.log('Selected country:', country);
 
     if (this.form && country) {
-      this.form.get('nationality')?.setValue(country.ISO);
+      this.form.get('nationality')?.setValue(country.code);
       this.clearDocumentOptionsCache();
     }
   }

@@ -218,26 +218,6 @@ export class TourMapComponent implements OnInit, OnDestroy {
     return { lat: city.lat, lng: city.lng };
   }
 
-  addMarker(ciudad: City): void {
-    const position = { lat: ciudad.lat, lng: ciudad.lng };
-    
-    // Create marker options with title
-    const markerOptions: google.maps.marker.AdvancedMarkerElementOptions = {
-      gmpDraggable: false,
-      title: ciudad.nombre,
-    };
-    
-    this.markers.push({
-      position,
-      title: ciudad.nombre,
-      info: ciudad.nombre,
-      options: markerOptions,
-    });
-    
-    // Add the position to the polyline path
-    this.polylinePath.push(position);
-  }
-
   calculateMapCenter(): void {
     if (!this.citiesData?.length) return;
     
@@ -264,17 +244,38 @@ export class TourMapComponent implements OnInit, OnDestroy {
   updateCitiesData(citiesData: City[]): void {
     this.citiesData = citiesData;
     this.markers = [];
-    this.polylinePath = []; 
+    // We're not using polylinePath anymore
+    // this.polylinePath = []; 
     
     // Add markers for each city
     citiesData.forEach((city) => this.addMarker(city));
-
-    // Create a smooth path with additional points if we have multiple cities
-    if (this.polylinePath.length > 1) {
-      this.polylinePath = this.createSmoothPath(this.polylinePath);
-    }
-
+  
+    // Removed polyline creation code
+    // if (this.polylinePath.length > 1) {
+    //   this.polylinePath = this.createSmoothPath(this.polylinePath);
+    // }
+  
     this.calculateMapCenter();
+  }
+
+  addMarker(ciudad: City): void {
+    const position = { lat: ciudad.lat, lng: ciudad.lng };
+    
+    // Create marker options with title
+    const markerOptions: google.maps.marker.AdvancedMarkerElementOptions = {
+      gmpDraggable: false,
+      title: ciudad.nombre,
+    };
+    
+    this.markers.push({
+      position,
+      title: ciudad.nombre,
+      info: ciudad.nombre,
+      options: markerOptions,
+    });
+    
+    // Removed adding position to polyline path
+    // this.polylinePath.push(position);
   }
 
   // Create a smooth curved path between points using quadratic Bézier curves

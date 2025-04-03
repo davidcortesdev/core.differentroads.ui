@@ -558,62 +558,85 @@ export class CheckoutComponent implements OnInit {
       this.selectedFlight.externalID! !== 'undefined'
     ) {
       if (!this.selectedFlight.name.toLowerCase().includes('sin ')) {
-        this.summary.push({
-          qty:
-            this.travelersSelected.adults +
-            this.travelersSelected.childs +
-            this.travelersSelected.babies,
-          value:
-            this.selectedFlight.price ||
-            this.pricesService.getPriceById(
-              this.selectedFlight.externalID,
-              'Adultos'
-            ) ||
-            0,
-          description:
-            this.selectedFlight.outbound.activityName ||
-            this.selectedFlight.name,
-        });
+        // Check if flight is from Amadeus and has separate price data
+        if (
+          this.selectedFlight.source === 'amadeus' &&
+          this.selectedFlight.priceData
+        ) {
+          // Get adult price data
+          const adultPrice = this.selectedFlight.priceData.find(
+            (price) => price.age_group_name === 'Adultos'
+          );
+
+          // Get child price data
+          const childPrice = this.selectedFlight.priceData.find(
+            (price) => price.age_group_name === 'Niños'
+          );
+
+          // Add adult price to summary if there are adults
+          if (adultPrice && this.travelersSelected.adults > 0) {
+            this.summary.push({
+              qty: this.travelersSelected.adults,
+              value: adultPrice.value,
+              description: `${this.selectedFlight.name} (Adultos)`,
+            });
+          }
+
+          // Add child price to summary if there are children
+          if (childPrice && this.travelersSelected.childs > 0) {
+            this.summary.push({
+              qty: this.travelersSelected.childs,
+              value: childPrice.value,
+              description: `${this.selectedFlight.name} (Niños)`,
+            });
+          }
+
+          // Add baby price if available
+          if (this.travelersSelected.babies > 0) {
+            const babyPrice = this.selectedFlight.priceData.find(
+              (price) => price.age_group_name === 'Bebes'
+            );
+
+            if (babyPrice) {
+              this.summary.push({
+                qty: this.travelersSelected.babies,
+                value: babyPrice.value,
+                description: `${this.selectedFlight.name} (Bebes)`,
+              });
+            } else {
+              // If no specific baby price, add with zero value
+              this.summary.push({
+                qty: this.travelersSelected.babies,
+                value: 0,
+                description: `${this.selectedFlight.name} (Bebes)`,
+              });
+            }
+          }
+        } else {
+          // Keep original code for non-Amadeus flights
+          this.summary.push({
+            qty:
+              this.travelersSelected.adults +
+              this.travelersSelected.childs +
+              this.travelersSelected.babies,
+            value:
+              this.selectedFlight.price ||
+              this.pricesService.getPriceById(
+                this.selectedFlight.externalID,
+                'Adultos'
+              ) ||
+              0,
+            description:
+              this.selectedFlight.outbound.activityName ||
+              this.selectedFlight.name,
+          });
+        }
       }
 
       // Use all flights from the service instead of just the selected one
       tempOrderData['flights'] =
         orderFlights.length > 0 ? orderFlights : [this.selectedFlight];
       console.log('Setting flights in order:', tempOrderData['flights']);
-    }
-
-    if (this.selectedInsurances.length === 0) {
-      this.summary.push({
-        qty:
-          this.travelersSelected.adults +
-          this.travelersSelected.childs +
-          this.travelersSelected.babies,
-        value: 0,
-        description: 'Seguro básico',
-      });
-    }
-
-    if (this.selectedInsurances.length > 0) {
-      this.selectedInsurances.forEach((insurance) => {
-        this.summary.push({
-          qty:
-            this.travelersSelected.adults +
-            this.travelersSelected.childs +
-            this.travelersSelected.babies,
-          value: insurance.price || 0,
-          description: insurance.name,
-        });
-      });
-      tempOrderData['insurancesRef'] = this.selectedInsurances.map(
-        (insurance) => ({
-          id: insurance.activityId,
-          travelersAssigned: travelersData.map(
-            (traveler) => traveler._id || '123'
-          ),
-        })
-      );
-    } else {
-      tempOrderData['insurancesRef'] = [];
     }
 
     // Append all discounts from DiscountsService

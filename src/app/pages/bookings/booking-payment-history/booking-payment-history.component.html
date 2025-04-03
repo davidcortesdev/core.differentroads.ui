@@ -1,26 +1,19 @@
 <div class="payment-history-container">
   <div class="payment-row">
-    <!-- Resumen del viaje (columna izquierda) -->
+    <!-- Resumen del viaje usando el componente summary-table -->
     <div class="payment-column-left">
-      <p-panel header="Resumen del viaje">
-        <div class="trip-summary">
-          <p-table [value]="tripItems" [tableStyle]="{'min-width': '100%'}" 
-                  styleClass="p-datatable-sm p-datatable-borderless p-datatable-responsive">
-            <ng-template pTemplate="body" let-item>
-              <tr *ngIf="item.quantity > 0">
-                <td class="description">{{ item.description || "Elemento sin descripción" }}</td>
-                <td class="quantity text-right">{{ item.quantity }}</td>
-                <td class="operator text-center">x</td>
-                <td class="unit-price text-right">{{ item.unitPrice | currencyFormat:"EUR" }}</td>
-                <td class="operator text-center">=</td>
-                <td class="price text-right" [ngClass]="{
-                  discount: item.description && item.description.toLowerCase().includes('descuento')
-                }">{{ calculateTotal(item) | currencyFormat }}</td>
-              </tr>
-            </ng-template>
-          </p-table>
-        </div>
-      </p-panel>
+      <app-summary-table
+        [summary]= "tripItems"
+        [description]= "",
+        [qty]= "'quantity'",
+        [value]= "'unitPrice'",
+        [showPointsSection]="false",
+        [showTotalSection]="false",
+        [showFlightSection]="false",
+        [title]="'Resumen del viaje'",
+        [currency]="'EUR'",
+        [customClass]="'booking-summary'">
+      </app-summary-table>
     </div>
 
     <!-- Información de pagos (columna derecha) -->
@@ -65,8 +58,7 @@
         <!-- Contenedor de columnas para pagos y historial -->
         <div class="payment-columns-container">
           <!-- Próximos pagos -->
-          <p-panel header="Próximo pago" [toggleable]="deadlines && deadlines.length > 0" 
-                   [collapsed]="false" [styleClass]="deadlines && deadlines.length > 0 ? '' : 'empty-panel'">
+          <p-panel header="Próximo pago" [styleClass]="deadlines && deadlines.length > 0 ? '' : 'empty-panel'">
             <div
               *ngFor="let payment of deadlines"
               class="upcoming-payment-item"
@@ -80,8 +72,7 @@
           </p-panel>
           
           <!-- Historial de pagos -->
-          <p-panel header="Historial de pago" [toggleable]="paymentHistory && paymentHistory.length > 0" 
-                   [collapsed]="false" [styleClass]="paymentHistory && paymentHistory.length > 0 ? '' : 'empty-panel'">
+          <p-panel header="Historial de pago" [styleClass]="paymentHistory && paymentHistory.length > 0 ? '' : 'empty-panel'">
             <div *ngFor="let item of paymentHistory" class="history-item">
               <span class="date">{{ item.createdAt | date }}</span>
               <span class="status">

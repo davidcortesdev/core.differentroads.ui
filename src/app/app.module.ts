@@ -196,8 +196,10 @@ import { ActivityCardComponent } from './shared/components/activity-card/activit
 import { TourMapComponent } from './shared/components/tour-map/tour-map.component';
 import { TourItineraryPanelComponent } from './pages/tour/components/tour-itinerary-panel/tour-itinerary-panel.component';
 import { AirportSearchComponent } from './features/airports/airport-search/airport-search.component';
+import { SummaryTableComponent } from './components/summary-table/summary-table.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
+
 
 @NgModule({
   declarations: [
@@ -303,6 +305,7 @@ registerLocaleData(localeEs);
     TourMapComponent,
     TourItineraryPanelComponent,
     AirportSearchComponent,
+    SummaryTableComponent,
   ],
   imports: [
     // Angular Modules

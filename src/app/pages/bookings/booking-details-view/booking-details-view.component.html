@@ -16,7 +16,7 @@
             </div>
             <div class="booking-row bottom-row">
               <div class="booking-label">Fecha creación:</div>
-              <div class="booking-value">{{ item.creationDate }}</div>
+              <div class="booking-value">{{ item.creationDate | date : "dd/MM/yyyy" }}</div>
             </div>
           </div>
           <div class="booking-right-info">

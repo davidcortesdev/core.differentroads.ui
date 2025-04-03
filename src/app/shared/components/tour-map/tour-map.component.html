@@ -19,13 +19,8 @@
       >
       </map-advanced-marker>
       
-      <!-- Add polyline to connect markers -->
-      <map-polyline
-        *ngIf="polylinePath.length > 1"
-        [path]="polylinePath"
-        [options]="polylineOptions"
-      >
-      </map-polyline>
+      <!-- Removed polyline component -->
+      
       <map-info-window>Hello Google Maps</map-info-window>
     </google-map>
   </div>

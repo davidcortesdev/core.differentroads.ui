@@ -2,17 +2,13 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
 export class BudgetDialogService {
-  private visibleSubject = new BehaviorSubject<boolean>(false);
-  visible$ = this.visibleSubject.asObservable();
+  private isShareModeSubject = new BehaviorSubject<boolean>(false);
+  isShareMode$ = this.isShareModeSubject.asObservable();
 
-  show() {
-    this.visibleSubject.next(true);
-  }
-
-  hide() {
-    this.visibleSubject.next(false);
+  setShareMode(isShareMode: boolean) {
+    this.isShareModeSubject.next(isShareMode);
   }
 }

@@ -1,13 +1,12 @@
 <div class="tour-additional-info-container">
-  <!-- Optimización: Mover el (click) al elemento p-card para mejor accesibilidad -->
-  <!-- Add tooltip for unauthenticated users -->
+  <!-- Card para "Guarda tu presupuesto" con tooltip mejorado -->
   <p-card
     styleClass="action-card"
     (click)="handleSaveTrip()"
     [pTooltip]="
       !isAuthenticated
         ? 'Para guardar tu presupuesto debes iniciar sesión o registrarte en la plataforma'
-        : undefined
+        : 'Guarda este presupuesto en tu perfil para consultarlo más tarde'
     "
     tooltipPosition="top"
   >
@@ -15,56 +14,47 @@
       <span class="bg-pink-100">
         <i class="pi pi-bookmark" aria-hidden="true"></i>
       </span>
-      <span class="card-text">Guarda tu viaje</span>
+      <span class="card-text">Guarda tu presupuesto</span>
     </div>
   </p-card>
 
-  <!-- Optimización: Extraer configuraciones comunes a variables -->
-  <p-dialog
-    [(visible)]="visible"
-    [modal]="true"
-    [breakpoints]="dialogBreakpoints"
-    [style]="dialogStyle"
-    [draggable]="false"
-    [resizable]="false"
-    styleClass="budget-modal"
+  <!-- Card para "Descarga tu presupuesto" con tooltip -->
+  <p-card
+     styleClass="action-card claseBord"
+     (click)="handleDownloadTrip()"
+    pTooltip="Envia un email con un PDF con toda la información de este presupuesto"
+    tooltipPosition="top"
   >
-    <app-budget-dialog
-      class="budget-dialog"
-      [visible]="visible"
-      [handleCloseModal]="handleCloseModal.bind(this)"
-      (close)="handleCloseModal()"
-    ></app-budget-dialog>
-  </p-dialog>
-
-  <!-- Optimización: Mover el (click) al elemento p-card para mejor accesibilidad -->
-  <p-card styleClass="action-card claseBord" (click)="handleDownloadTrip()">
     <div class="card-content">
       <span class="bg-pink-100">
         <i class="pi pi-download" aria-hidden="true"></i>
       </span>
-      <span class="card-text">Descargar tu viaje</span>
+      <span class="card-text">Descarga tu presupuesto</span>
     </div>
   </p-card>
 
-  <!-- Optimización: Mover el (click) al elemento p-card para mejor accesibilidad -->
-  <p-card styleClass="action-card" (click)="handleInviteFriend()">
+  <!-- Card para "Comparte tu presupuesto con alguien" con tooltip (ahora abre el mismo modal) -->
+  <p-card
+     styleClass="action-card"
+     (click)="handleInviteFriend()"
+    pTooltip="Comparte este presupuesto con amigos o familiares"
+    tooltipPosition="top"
+  >
     <div class="card-content">
       <span class="bg-pink-100">
         <i class="pi pi-user-plus" aria-hidden="true"></i>
       </span>
-      <span class="card-text">Invita a un amigo a tu viaje</span>
+      <span class="card-text">Comparte tu presupuesto con alguien</span>
     </div>
   </p-card>
 </div>
 
-<!-- Reemplazamos el acordeón con el nuevo componente -->
+<!-- Resto del componente sin cambios -->
 <app-tour-info-accordion
   *ngIf="hasInfoCards"
   [infoCards]="infoCards"
 ></app-tour-info-accordion>
 
-<!-- Añadir el componente Toast de PrimeNG -->
 <p-toast position="top-right"></p-toast>
 
 <app-login-modal
@@ -75,3 +65,25 @@
   (register)="navigateToRegister()"
 >
 </app-login-modal>
+
+<!-- Dialog mejorado para resolver problemas de cierre -->
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [breakpoints]="dialogBreakpoints"
+  [style]="dialogStyle"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="budget-modal"
+  [closeOnEscape]="true"
+  [dismissableMask]="true"
+  (onHide)="handleCloseModal()"
+>
+  <app-budget-dialog
+    class="budget-dialog"
+    [visible]="visible"
+    [handleCloseModal]="handleCloseModal.bind(this)"
+    [shouldClearFields]="shouldClearFields"
+    (close)="handleCloseModal()"
+  ></app-budget-dialog>
+</p-dialog>

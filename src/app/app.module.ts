@@ -175,8 +175,9 @@ import { DiscountCodeComponent } from './pages/checkout/components/discount-code
 import { FlightSearchComponent } from './pages/checkout/components/flights/components/flight-search/flight-search.component';
 import { TravelerItemComponent } from './pages/checkout/components/traveler-item/traveler-item.component';
 import { FlightSectionComponent } from './pages/checkout/components/flight-section/flight-section.component';
-import { LoginModalComponent } from './pages/checkout/components/flights/components/login-modal/login-modal.component';
-import { BookingsComponent } from './pages/bookings/bookings.component';
+import { LoginModalComponent } from './shared/components/login-modal/login-modal.component';
+/* import { LoginModalComponent } from './pages/checkout/components/flights/components/login-modal/login-modal.component';
+ */import { BookingsComponent } from './pages/bookings/bookings.component';
 import { BookingActivitiesComponent } from './pages/bookings/booking-activities/booking-activities.component';
 import { BookingCodeSectionComponent } from './pages/bookings/booking-code-section/booking-code-section.component';
 import { BookingDetailsViewComponent } from './pages/bookings/booking-details-view/booking-details-view.component';
@@ -196,6 +197,7 @@ import { ActivityCardComponent } from './shared/components/activity-card/activit
 import { TourMapComponent } from './shared/components/tour-map/tour-map.component';
 import { TourItineraryPanelComponent } from './pages/tour/components/tour-itinerary-panel/tour-itinerary-panel.component';
 import { AirportSearchComponent } from './features/airports/airport-search/airport-search.component';
+
 // Register Spanish locale data
 registerLocaleData(localeEs);
 

@@ -10,6 +10,14 @@ $a: var(--background-azul);
   @if $gap != 0 { gap: $gap; }
 }
 
+@mixin button($s: 12px, $p: 6px 12px, $h: 30px) {
+  font-size: $s;
+  padding: $p;
+  border-radius: 20px;
+  height: $h;
+  @include flex(row, center, center);
+}
+
 .active-bookings {
   margin: 0 15px;
 
@@ -206,7 +214,10 @@ $a: var(--background-azul);
           &:hover { background-color: rgba($a, 0.1); }
         }
         
-        .p-button { flex: 1; }
+        .p-button { 
+          flex: 1; 
+          @include button;
+        }
         
         .sendbtn {
           background-color: $a;
@@ -218,6 +229,7 @@ $a: var(--background-azul);
       .p-button-rounded {
         width: 100%;
         margin-top: auto;
+        @include button;
         &:hover { opacity: 0.9; }
       }
     }
@@ -335,5 +347,13 @@ $a: var(--background-azul);
         }
       }
     }
+  }
+}
+
+::ng-deep .elongated-button {
+  .p-button {
+    min-width: 120px;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
   }
 }

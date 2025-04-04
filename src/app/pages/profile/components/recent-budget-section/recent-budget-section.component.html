@@ -57,11 +57,10 @@
               </div>
 
               <div class="info-right">
+                <!-- In your HTML where you show the departure date -->
                 <div class="departure-info">
                   <span>Salida: </span>
-                  <strong>{{ budget.departureDate | date : "d MMM" }}</strong>
-                  <span class="state">R</span>
-                </div>
+                  <strong>{{ budget.departureName || formatShortDate(budget.departureDate) }}</strong>                </div>
                 <div class="passenger-price">
                   <span class="num-users">{{ budget.passengers }}</span>
                   <i class="pi pi-users"></i>

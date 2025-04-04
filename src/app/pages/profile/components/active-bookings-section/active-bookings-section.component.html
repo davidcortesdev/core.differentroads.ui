@@ -62,7 +62,7 @@
                   <strong>{{ booking.departureDate | date : "dd/MM/yyyy" }}</strong>
                   <span class="state">{{ booking.status.charAt(0) }}</span>
                 </div>
-                <div class="passenger-price" *ngIf="booking.passengers">
+                <div class="passenger-price" *ngIf="booking.passengers" style="display: flex; justify-content: flex-end; align-items: center; gap: 4px;">
                   <span class="num-users">{{ booking.passengers }}</span>
                   <i class="pi pi-users"></i>
                   <strong *ngIf="booking.price">{{ booking.price | currency : "EUR" }}</strong>

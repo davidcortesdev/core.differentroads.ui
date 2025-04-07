@@ -84,6 +84,17 @@
     [visible]="visible"
     [handleCloseModal]="handleCloseModal.bind(this)"
     [shouldClearFields]="shouldClearFields"
+    [existingOrderId]="isUpdateMode && existingOrder && existingOrder._id ? existingOrder._id : null"    [tourName]="isUpdateMode ? tourName : (tour?.name || '')"
+    [periodName]="isUpdateMode ? periodName : ''"
+    [periodDates]="isUpdateMode ? periodDates : ''"
+    [departureCity]="isUpdateMode ? (selectedFlight?.name || 'Sin vuelos') : ''"
+    [tripType]="'Circuito'"
+    [travelersCount]="isUpdateMode ? {
+      adults: travelersSelected?.adults || 0,
+      children: travelersSelected?.childs || 0,
+      babies: travelersSelected?.babies || 0
+    } : null"
+    [periodId]="isUpdateMode ? periodID : ''"
     (close)="handleCloseModal()"
   ></app-budget-dialog>
 </p-dialog>

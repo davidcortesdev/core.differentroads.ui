@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, Input } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -11,6 +11,9 @@ import { TourDataService } from '../../../../core/services/tour-data/tour-data.s
 import { TourOrderService } from '../../../../core/services/tour-data/tour-order.service';
 import { MessageService } from 'primeng/api';
 import { CognitoUserPool } from 'amazon-cognito-identity-js';
+import { Order } from '../../../../core/models/orders/order.model';
+import { OrdersService } from '../../../../core/services/orders.service';
+import { SummaryService } from '../../../../core/services/checkout/summary.service';
 
 @Component({
   selector: 'app-tour-additional-info',
@@ -22,6 +25,15 @@ import { CognitoUserPool } from 'amazon-cognito-identity-js';
 export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   @ViewChild(BudgetDialogComponent) budgetDialog!: BudgetDialogComponent;
   
+  // Nuevos inputs para poder recibir datos del checkout si está disponible
+  @Input() existingOrder: Order | null = null;
+  @Input() tourName: string = '';
+  @Input() periodName: string = '';
+  @Input() periodDates: string = '';
+  @Input() selectedFlight: any = null;
+  @Input() travelersSelected: any = { adults: 0, childs: 0, babies: 0 };
+  @Input() periodID: string = '';
+  
   tour: Tour | null = null;
   visible: boolean = false;
   private subscription: Subscription = new Subscription();
@@ -32,6 +44,11 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   
   // Flag para indicar si limpiar los campos del formulario
   shouldClearFields: boolean = false;
+
+  // Flag para indicar si estamos en modo actualización (checkout) o creación (tour detail)
+  get isUpdateMode(): boolean {
+    return !!this.existingOrder;
+  }
 
   // Optimización: Extraer configuraciones a propiedades
   dialogBreakpoints = { '1199px': '80vw', '575px': '90vw' };
@@ -55,11 +72,16 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
     private notificationsService: NotificationsService,
     private tourDataService: TourDataService,
     private tourOrderService: TourOrderService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private ordersService: OrdersService,
+    private summaryService: SummaryService
   ) {}
 
   ngOnInit(): void {
-    this.loadTourData();
+    // Solo cargar datos del tour si no estamos en modo actualización
+    if (!this.isUpdateMode) {
+      this.loadTourData();
+    }
 
     // Inicializamos el estado de autenticación sin mostrar modales
     const authSubscription = this.authService.isLoggedIn().subscribe({
@@ -89,20 +111,6 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
     });
 
     this.subscription.add(authSubscription);
-
-    // Verificamos si hay información en localStorage relacionada con Cognito
-    Object.keys(localStorage).forEach(key => {
-      if (key.includes('Cognito') || key.includes('cognito') || key.includes('aws') || key.includes('AWS')) {
-        // No hacemos console.log, solo conservamos la lógica
-      }
-    });
-    
-    // Y también en sessionStorage
-    Object.keys(sessionStorage).forEach(key => {
-      if (key.includes('Cognito') || key.includes('cognito') || key.includes('aws') || key.includes('AWS') || key === 'redirectUrl') {
-        // No hacemos console.log, solo conservamos la lógica
-      }
-    });
   }
 
   // Método para obtener el email del usuario
@@ -198,7 +206,13 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
     // simplemente verificamos el estado actual
     if (this.isAuthenticated) {
       // User is authenticated, guardar el presupuesto directamente
-      this.savePresupuestoDirectamente();
+      if (this.isUpdateMode) {
+        // En modo actualización (desde checkout)
+        this.actualizarPresupuestoDirectamente();
+      } else {
+        // En modo creación (desde tour detail)
+        this.savePresupuestoDirectamente();
+      }
     } else {
       // User is not authenticated, save URL and show login dialog
       const currentUrl = window.location.pathname;
@@ -207,7 +221,7 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Método para guardar el presupuesto directamente sin abrir el modal
+  // Método original para guardar presupuesto (crear nueva orden)
   savePresupuestoDirectamente(): void {
     // Verificar que tenemos la información necesaria
     if (!this.userEmail) {
@@ -262,6 +276,88 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
           this.showErrorToast('Ha ocurrido un error al guardar el presupuesto. Por favor, inténtalo de nuevo.');
         },
       });
+  }
+
+  // Nuevo método para actualizar presupuesto (actualizar orden existente)
+  actualizarPresupuestoDirectamente(): void {
+    // Verificar que tenemos la información necesaria
+    if (!this.userEmail) {
+      this.showErrorToast('No se pudo obtener la información del usuario. Por favor, inténtalo de nuevo.');
+      return;
+    }
+
+    if (!this.existingOrder || !this.existingOrder._id) {
+      this.showErrorToast('No se encontró información de la orden existente.');
+      return;
+    }
+
+    this.loading = true;
+
+    // Obtener la orden actual del servicio de resumen o usar la existente
+    const currentOrder = this.summaryService.getOrderValue() || this.existingOrder;
+    
+    // Crear una copia del objeto para no modificar el original
+    const updatedOrder = { ...currentOrder };
+    
+    // Actualizar SOLO las propiedades que necesitamos cambiar
+    updatedOrder.status = 'Budget';
+    updatedOrder.owner = this.userEmail;
+    
+    // Verificar que tenemos el ID necesario
+    if (!updatedOrder._id) {
+      this.showErrorToast('No se pudo identificar la orden para actualizar.');
+      this.loading = false;
+      return;
+    }
+
+    // Actualizar la orden existente 
+    this.ordersService
+      .updateOrder(updatedOrder._id, updatedOrder)
+      .subscribe({
+        next: (response) => {
+          this.loading = false;
+          
+          // Enviar la notificación de presupuesto
+          const products = this.buildProductsFromOrder(updatedOrder);
+          
+          this.notificationsService
+            .sendBudgetNotificationEmail({
+              id: updatedOrder._id,
+              email: this.userEmail,
+              products: products,
+            })
+            .subscribe({
+              next: (notificationResponse) => {
+                this.showSuccessToast('Presupuesto guardado y enviado correctamente');
+              },
+              error: (error) => {
+                this.showErrorToast('Se guardó el presupuesto pero hubo un error al enviar la notificación.');
+              }
+            });
+        },
+        error: (error) => {
+          this.loading = false;
+          this.showErrorToast('Ha ocurrido un error al guardar el presupuesto. Por favor, inténtalo de nuevo.');
+          console.error('Error al actualizar la orden:', error);
+        },
+      });
+  }
+
+  // Helper method para construir los productos a partir de la orden actual
+  buildProductsFromOrder(order: any): any[] {
+    if (!order.summary || order.summary.length === 0) {
+      return [];
+    }
+
+    return order.summary.map((item: any) => {
+      return {
+        id: '',
+        name: item.description,
+        price: item.value,
+        qty: item.qty,
+        total: item.value * item.qty,
+      };
+    });
   }
 
   // Métodos para mostrar mensajes Toast

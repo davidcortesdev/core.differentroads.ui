@@ -232,11 +232,12 @@ $a: var(--background-azul);
         }
         
         .sendbtn {
-          background-color: var(--background-azul);
-          color: white;
+          background-color: var(--background-azul) !important;
+          color: white !important;
           width: 100%;
           height: 30px;
           font-size: 0.75rem;
+          border-color: var(--background-azul) !important;
         }
       }
       

@@ -28,6 +28,8 @@ import { MessageService } from 'primeng/api';
 import { Subscription } from 'rxjs';
 import { TextsService } from '../../../../core/services/checkout/texts.service';
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
+import { Flight } from '../../../../core/models/tours/flight.model';
+import { FlightsService } from '../../../../core/services/checkout/flights.service';
 
 interface TravelerWithPoints {
   id: string;
@@ -89,6 +91,9 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
   private pointsCache: Map<string, number> = new Map();
   private loadingPointsFor: Set<string> = new Set();
 
+  // Nuevo: variable para almacenar el vuelo desde el service
+  private currentFlight: Flight | null = null;
+
   constructor(
     @Inject(DOCUMENT) private document: Document,
     private redsysService: RedsysService,
@@ -101,7 +106,8 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     private discountsService: DiscountsService,
     private messageService: MessageService,
     private authService: AuthenticateService,
-    private textsService: TextsService
+    private textsService: TextsService,
+    private flightsService: FlightsService // Inyección del flight service
   ) {}
 
   ngOnInit() {
@@ -109,6 +115,15 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     this.calculateRemainingAmount();
     this.calculatePaymentDeadline();
     this.loadTravelersWithPoints();
+
+    // Suscribirse al vuelo seleccionado desde el service
+    this.flightsService.selectedFlight$.subscribe((flight) => {
+      this.currentFlight = flight;
+      if (flight && flight.source === 'amadeus' && flight.price) {
+        this.depositAmount = flight.price;
+      }
+      this.calculateRemainingAmount();
+    });
 
     // Subscribe to discounts changes
     this.discountSubscription =

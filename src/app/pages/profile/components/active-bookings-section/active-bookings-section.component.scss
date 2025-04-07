@@ -173,8 +173,15 @@ $a: var(--background-azul);
       }
       
       .passenger-price {
-        margin-top: 5px;
-        @include flex(row, flex-start, center, 1rem);
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 4px;
+        margin-top: auto;
+        padding-bottom: 0px;
+        position: relative;
+        top: 31px;
+        right: 15px;
         
         i, span {
           font-size: 16px;
@@ -198,6 +205,53 @@ $a: var(--background-azul);
     
     // Buttons
     .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      margin-top: -4px;
+      width: 100%;
+      height: 100%;
+      
+      .top-buttons {
+        display: grid;
+        grid-template-columns: 6fr 6fr;
+        gap: 8px;
+        margin-top: 12px;
+        margin-bottom: 0;
+        width: 100%;
+        
+        ::ng-deep .p-button-outlined {
+          border: 1.5px solid $a;
+          color: $a;
+          width: 100%;
+          height: 30px;
+          font-size: 0.75rem;
+          &:hover { background-color: rgba($a, 0.1); }
+        }
+        
+        .sendbtn {
+          background-color: var(--background-azul);
+          color: white;
+          width: 100%;
+          height: 30px;
+          font-size: 0.75rem;
+        }
+      }
+      
+      .view-booking-container {
+        width: 100%;
+        text-align: center;
+        margin-top: 4px;
+        
+        ::ng-deep .p-button-rounded {
+          width: 100%;
+          height: 30px;
+          font-size: 0.8rem;
+        }
+      }
+    }
       margin-top: -4px;
       @include flex(column, space-between, stretch, 1.2rem);
       width: 100%;
@@ -263,7 +317,7 @@ $a: var(--background-azul);
       }
     }
   }
-}
+
 
 // Responsive styles - consolidated
 @media screen and (max-width: 1366px) {

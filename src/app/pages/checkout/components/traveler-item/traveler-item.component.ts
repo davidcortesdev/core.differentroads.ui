@@ -116,6 +116,12 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
       Object.keys(this.form.controls).forEach((key) => {
         const control = this.form.get(key);
         if (control) {
+          // No aplicar validación requerida a "ageGroup"
+          if (key === 'ageGroup') {
+            control.clearValidators();
+            control.updateValueAndValidity({ emitEvent: false });
+            return;
+          }
           if (key === 'email') {
             control.setValidators([Validators.required, Validators.email]);
           } else if (

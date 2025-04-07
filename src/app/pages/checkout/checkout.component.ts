@@ -769,86 +769,16 @@ export class CheckoutComponent implements OnInit {
       case 4:
         const travelersComponent =
           this.travelersService.getTravelersComponent();
-
-        console.log(
-          "Travelers' data is valid",
-          travelersComponent.areAllTravelersValid() // Fixed: removed extra parentheses
-        );
-        if (!travelersComponent.areAllTravelersValid()) {
+        if (!travelersComponent) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error en viajeros',
+            detail: 'No se han cargado los datos de viajeros.',
+          });
           return false;
         }
-
-        // Verificar y actualizar el precio del vuelo si es de Amadeus
-        if (
-          this.selectedFlight &&
-          this.selectedFlight.source === 'amadeus' &&
-          this.selectedFlight.id
-        ) {
-          // Mostrar indicador de carga
-          this.messageService.add({
-            severity: 'info',
-            summary: 'Verificando precios',
-            detail: 'Actualizando información de precios del vuelo...',
-            life: 3000,
-          });
-
-          this.amadeusService
-            .getFlightPriceById(this.selectedFlight.id)
-            .subscribe({
-              next: (priceResponse) => {
-                if (
-                  priceResponse &&
-                  priceResponse.flightOffers &&
-                  priceResponse.flightOffers.length > 0
-                ) {
-                  const updatedOffer = priceResponse.flightOffers[0];
-                  const currentPrice = parseFloat(
-                    this.selectedFlight?.price?.toString() || '0'
-                  );
-
-                  // Apply 12% markup to the new price, just like in flight-search
-                  const newBasePrice = parseFloat(
-                    updatedOffer.price?.total || '0'
-                  );
-                  const newPrice = this.applyPriceMarkup(newBasePrice);
-
-                  if (Math.abs(currentPrice - newPrice) > 0.01) {
-                    // Considerar diferencia mayor a 0.01 como cambio real
-                    // Actualizar el precio del vuelo
-                    const updatedFlight = {
-                      ...this.selectedFlight,
-                      price: newPrice,
-                    };
-                    this.flightsService.updateSelectedFlight(
-                      updatedFlight as Flight
-                    );
-
-                    // Notificar al usuario del cambio de precio
-                    this.messageService.add({
-                      severity: 'warn',
-                      summary: 'Precio actualizado',
-                      detail: `El precio del vuelo ha cambiado de ${currentPrice.toFixed(
-                        2
-                      )}€ a ${newPrice.toFixed(2)}€`,
-                      life: 6000,
-                    });
-
-                    // Actualizar el resumen del pedido
-                    this.updateOrderSummary();
-                  }
-                }
-              },
-              error: (error) => {
-                console.error('Error al verificar el precio del vuelo:', error);
-                this.messageService.add({
-                  severity: 'error',
-                  summary: 'Error de verificación',
-                  detail:
-                    'No se pudo actualizar el precio del vuelo. Continúe con precaución.',
-                  life: 5000,
-                });
-              },
-            });
+        if (!travelersComponent.areAllTravelersValid()) {
+          return false;
         }
         break;
       default:

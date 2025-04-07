@@ -19,8 +19,8 @@ interface Traveler {
   passportExpirationDate: string;
   passportIssueDate: string;
   ageGroup: string;
-  category: string;
-  dni: string;
+  category?: string;
+  dni?: string;
   // Campos adicionales para viajeros bebés
   minorIdExpirationDate?: string;
   minorIdIssueDate?: string;
@@ -112,7 +112,6 @@ export class TravelersComponent implements OnInit {
             traveler.travelerData?.passportExpirationDate || '',
           passportIssueDate: traveler.travelerData?.passportIssueDate || '',
           ageGroup: traveler.travelerData?.ageGroup || '',
-          category: traveler.travelerData?.category || '',
           dni: traveler.travelerData?.dni || '',
           minorIdExpirationDate:
             traveler.travelerData?.minorIdExpirationDate || '',
@@ -146,8 +145,6 @@ export class TravelersComponent implements OnInit {
       passportExpirationDate: [''],
       passportIssueDate: [''],
       ageGroup: [''],
-      category: [''],
-      dni: [''],
       // Campos adicionales para viajeros bebés
       minorIdExpirationDate: [''],
       minorIdIssueDate: [''],
@@ -176,24 +173,28 @@ export class TravelersComponent implements OnInit {
   }
 
   onTravelerChange(index: number): void {
-    const traveler = this.travelerForms[index].value;
-    traveler.birthdate = traveler.birthdate
-      ? formatDate(traveler.birthdate, 'yyyy-MM-dd', 'en-US')
+    // Obtener el valor actual del formulario y preservar ageGroup si está vacío
+    const formValue = this.travelerForms[index].value;
+    if (!formValue.ageGroup && this.travelers[index]?.ageGroup) {
+      formValue.ageGroup = this.travelers[index].ageGroup;
+    }
+    formValue.birthdate = formValue.birthdate
+      ? formatDate(formValue.birthdate, 'yyyy-MM-dd', 'en-US')
       : '';
-    traveler.passportExpirationDate = traveler.passportExpirationDate
-      ? formatDate(traveler.passportExpirationDate, 'yyyy-MM-dd', 'en-US')
+    formValue.passportExpirationDate = formValue.passportExpirationDate
+      ? formatDate(formValue.passportExpirationDate, 'yyyy-MM-dd', 'en-US')
       : '';
-    traveler.passportIssueDate = traveler.passportIssueDate
-      ? formatDate(traveler.passportIssueDate, 'yyyy-MM-dd', 'en-US')
+    formValue.passportIssueDate = formValue.passportIssueDate
+      ? formatDate(formValue.passportIssueDate, 'yyyy-MM-dd', 'en-US')
       : '';
-    traveler.minorIdExpirationDate = traveler.minorIdExpirationDate
-      ? formatDate(traveler.minorIdExpirationDate, 'yyyy-MM-dd', 'en-US')
+    formValue.minorIdExpirationDate = formValue.minorIdExpirationDate
+      ? formatDate(formValue.minorIdExpirationDate, 'yyyy-MM-dd', 'en-US')
       : '';
-    traveler.minorIdIssueDate = traveler.minorIdIssueDate
-      ? formatDate(traveler.minorIdIssueDate, 'yyyy-MM-dd', 'en-US')
+    formValue.minorIdIssueDate = formValue.minorIdIssueDate
+      ? formatDate(formValue.minorIdIssueDate, 'yyyy-MM-dd', 'en-US')
       : '';
 
-    this.travelers[index] = traveler;
+    this.travelers[index] = formValue;
 
     this.travelersService.updateTravelers(
       this.travelers.map((traveler) => ({
@@ -208,7 +209,6 @@ export class TravelersComponent implements OnInit {
           passportExpirationDate: traveler.passportExpirationDate,
           passportIssueDate: traveler.passportIssueDate,
           ageGroup: traveler.ageGroup,
-          category: traveler.category,
           dni: traveler.dni,
           postalCode: traveler.cp,
           sex: traveler.sexo,
@@ -227,39 +227,31 @@ export class TravelersComponent implements OnInit {
   }
 
   areAllTravelersValid(): boolean {
+    // Forzar la validación de todos los formularios
+    this.travelerForms.forEach((form) => form.markAllAsTouched());
+    let allValid = true;
     if (this.allFieldsMandatory) {
-      // Verificar todos los viajeros cuando todos los campos son obligatorios
       for (let i = 0; i < this.travelerForms.length; i++) {
         const form = this.travelerForms[i];
         if (!form || form.invalid) {
-          console.log('Invalid form', form.invalid);
-          console.log('Form value', form.errors);
-
           this.notifyMissingTravelers(i);
-          return false;
+          allValid = false;
         }
       }
-      return true;
     } else {
-      // Verificar solo los campos obligatorios (nombre, apellido, email) para todos los viajeros
       for (let i = 0; i < this.travelerForms.length; i++) {
         const form = this.travelerForms[i];
         if (!form) continue;
-
-        // Verificar solo los campos obligatorios básicos
         const firstNameValid = form.get('firstName')?.valid ?? false;
         const lastNameValid = form.get('lastName')?.valid ?? false;
         const emailValid = form.get('email')?.valid ?? false;
-
-        const valid = firstNameValid && lastNameValid && emailValid;
-
-        if (!valid) {
+        if (!(firstNameValid && lastNameValid && emailValid)) {
           this.notifyMissingTravelers(i);
-          return false;
+          allValid = false;
         }
       }
-      return true;
     }
+    return allValid;
   }
 
   notifyMissingTravelers(index: number = 0): void {
@@ -267,6 +259,12 @@ export class TravelersComponent implements OnInit {
     if (form && form.invalid) {
       const missingFields: string[] = [];
 
+      Object.keys(form.controls).forEach((key) => {
+        const control = form.get(key);
+        if (control && control.invalid) {
+          console.log(`Control '${key}' is invalid. Errors:`, control.errors);
+        }
+      });
       // Campos siempre obligatorios
       if (form.get('firstName')?.errors?.['required']) {
         missingFields.push('Nombre');

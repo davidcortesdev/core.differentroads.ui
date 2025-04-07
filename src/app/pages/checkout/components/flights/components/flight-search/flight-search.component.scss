@@ -25,6 +25,7 @@ $border: #ddd;
   background-color: #fff !important;
   color: $primary;
   @extend %shadow;
+  padding: 1rem;
 
   .p-panel-header {
     border-bottom: 1px solid #e9ecef;
@@ -32,6 +33,8 @@ $border: #ddd;
   }
   .p-panel-content {
     padding: 20px;
+    width: 100%;
+    border: none;
   }
 }
 

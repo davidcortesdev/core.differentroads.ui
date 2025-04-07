@@ -84,7 +84,42 @@ export class BookingPaymentHistoryComponent implements OnInit {
           pendingAmount: this.bookingTotal - totalCompleted,
         };
         // Mapear pagos e incluir paymentId y voucherId asumidos de la respuesta
-        this.paymentHistory = payments.filter(
+        this.paymentHistory = /*  MOCKEO PARA PRUEBAS[{
+          createdAt: 'someday',
+          amount: 3,
+          status: PaymentStatus.PENDING,
+          publicID: '123', 
+          updatedAt: 'someOtherDay',
+          bookingID: '123',
+        },{
+          createdAt: 'someday',
+          amount: 4,
+          status: PaymentStatus.COMPLETED,
+          publicID: '234', 
+          updatedAt: 'someOtherDay',
+          bookingID: '234',
+        },{
+          createdAt:'someday',
+          amount: 5,
+          status: PaymentStatus.PENDING,
+          publicID: '345',
+          updatedAt:'someOtherDay',
+          bookingID: '345',
+        },{
+          createdAt:'someday',
+          amount: 6,
+          status: PaymentStatus.PENDING,
+          publicID: '456',
+          updatedAt:'someOtherDay',
+          bookingID: '456',
+        },{
+          createdAt:'someday',
+          amount: 7,
+          status: PaymentStatus.PENDING,
+          publicID: '567',
+          updatedAt:'someOtherDay',
+          bookingID: '567',
+        }]*/payments.filter(
           (payment) => payment.status !== 'PENDING'
         );
       });

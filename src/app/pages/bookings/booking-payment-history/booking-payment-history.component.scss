@@ -39,27 +39,57 @@
   font-size: 14px;
 
   .trip-item {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #eee;
-
+    display: grid;
+    grid-template-columns: 1fr auto auto auto auto auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.75rem 0;
+    
     .description {
-      flex: 2;
-      font-weight: 500;
-      font-size: 14px;
+      grid-column: 1;
       text-align: left;
-      padding-right: 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding-right: 1rem;
     }
-
-    .quantity,
-    .price {
-      flex: 1;
+    
+    .quantity {
+      grid-column: 2;
       text-align: right;
+      min-width: 1.5rem;
+    }
+    
+    span:nth-child(3) { /* x */
+      grid-column: 3;
+      text-align: center;
+      min-width: 1.5rem;
+      justify-self: center;
+    }
+    
+    .unit-price {
+      grid-column: 4;
+      text-align: right;
+      min-width: 2.5rem;
+    }
+    
+    span:nth-child(5) { /* = */
+      grid-column: 5;
+      text-align: center;
+      min-width: 1.5rem;
+      justify-self: center;
+    }
+    
+    .price {
+      grid-column: 6;
+      text-align: right;
+      font-weight: 600;
+      min-width: 2.5rem;
     }
   }
 }
+
+
 
 .payment-info {
   font-size: 14px;
@@ -141,6 +171,7 @@
         margin-bottom: 1rem;
 
         .payment-column {
+
           .label,
           .amount {
             text-align: center;
@@ -193,61 +224,91 @@
   flex-direction: row;
   gap: 20px;
   margin-top: 1rem;
-
-  .payment-column-deadlines {
-    min-width: 30%;
-  }
-
-  .payment-column-history {
+  
+  p-panel {
     flex: 1;
+    
+    &:first-child {
+      min-width: 30%;
+    }
+    
+    &:last-child {
+      flex: 1.5;
+    }
   }
-
+  
   @media (max-width: 992px) {
     flex-direction: column;
-
-    .payment-column {
-      margin-bottom: 0.5rem;
-
+    
+    p-panel {
+      margin-bottom: 1rem;
+      
       &:last-child {
-        margin-top: 0.5rem;
+        margin-bottom: 0;
       }
+    }
+  }
+  
+  ::ng-deep {
+    .p-panel .p-panel-header {
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      
+      .p-panel-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+      
+      .p-panel-header-icon {
+        font-size: 0.9rem;
+        transition: transform 0.3s;
+      }
+    }
+    
+    .p-panel-collapsed .p-panel-header-icon {
+      transform: rotate(-180deg);
+    }
+    
+    .p-panel .p-panel-content {
+      height: auto;
+      min-height: 50px;
+      padding: 0.75rem 1rem;
+    }
+    
+    .p-panel.empty-panel .p-panel-header {
+      cursor: default;
+      opacity: 0.7;
     }
   }
 }
 
-.upcoming-payments,
-.payment-history,
-.payment-column {
-  h3 {
-    font-size: 0.9rem;
-    margin-bottom: 1rem;
+.upcoming-payment-item,
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #eee;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .date {
+    flex: 1;
+    font-weight: 500;
     text-align: left;
   }
 
-  .upcoming-payment-item,
-  .history-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid #eee;
+  .status {
+    flex: 1;
+    color: #666;
+    text-align: center;
+  }
 
-    .date {
-      flex: 1;
-      font-weight: 500;
-      text-align: left;
-    }
-
-    .status {
-      flex: 1;
-      color: #666;
-      text-align: center;
-    }
-
-    .amount {
-      flex: 1;
-      font-weight: 600;
-      text-align: right;
-    }
+  .amount {
+    flex: 1;
+    font-weight: 600;
+    text-align: right;
   }
 }
 
@@ -348,6 +409,7 @@
 
   .p-inputgroup {
     width: 100%;
+
     .p-inputgroup-addon {
       margin-left: 10px;
     }
@@ -381,6 +443,7 @@
       }
     }
   }
+
   .p-dialog {
     @media (max-width: 768px) {
       width: 90% !important;
@@ -397,4 +460,99 @@
 
 .mt-4 {
   margin-top: 1rem;
+}
+
+:host ::ng-deep {
+  .p-datatable-borderless .p-datatable-thead > tr > th,
+  .p-datatable-borderless .p-datatable-tbody > tr > td {
+    border: none;
+  }
+  
+  .p-datatable-sm .p-datatable-tbody > tr > td {
+    padding: 0.5rem 0.5rem;
+  }
+  
+  .text-right {
+    text-align: right;
+  }
+  
+  .text-center {
+    text-align: center;
+  }
+
+  // Make numeric columns with comfortable spacing
+  .p-datatable-tbody > tr > td.operator {
+    width: 25px;
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+  
+  .p-datatable-tbody > tr > td.quantity {
+    width: 45px;
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+  
+  .p-datatable-tbody > tr > td.unit-price {
+    width: auto;
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+  
+  .p-datatable-tbody > tr > td.price {
+    width: auto;
+    font-weight: bold;
+    padding-left: 6px !important;
+    
+    &.discount {
+      color: green;
+    }
+  }
+  
+  .p-datatable-tbody > tr > td.description {
+    width: 100%;
+    padding-right: 1rem !important;
+  }
+  
+  // Mobile responsive styles
+  @media (max-width: 768px) {
+    .p-datatable-responsive .p-datatable-tbody > tr {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .p-datatable-responsive .p-datatable-tbody > tr > td.description {
+      width: 100%;
+      font-weight: 600;
+      padding-bottom: 0.5rem;
+    }
+    
+    .p-datatable-responsive .p-datatable-tbody > tr > td.operator:nth-child(5) {
+      display: none; // Hide the "=" operator on mobile
+    }
+    
+    .p-datatable-responsive .p-datatable-tbody > tr > td.quantity,
+    .p-datatable-responsive .p-datatable-tbody > tr > td.operator,
+    .p-datatable-responsive .p-datatable-tbody > tr > td.unit-price {
+      padding: 0.25rem 2px;
+    }
+    
+    .p-datatable-responsive .p-datatable-tbody > tr > td.price {
+      margin-left: auto;
+      padding-left: 0.5rem;
+    }
+  }
+}
+
+// Add this to your existing styles
+:host ::ng-deep {
+  .panel-background {
+    &.order-summary {
+      background-color: transparent !important;
+      padding: 0;
+      margin: 0;
+    }
+  }
 }

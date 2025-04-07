@@ -5,12 +5,23 @@
     </div>
 
     <div class="booking-content" [ngClass]="{'hidden': !isExpanded}">
+
+        <div class="loading-container" *ngIf="loading">
+            <p-progressSpinner strokeWidth="3" animationDuration=".5s"></p-progressSpinner>
+        </div>
+
+        <!-- Empty state message when no travels are available -->
+        <div class="empty-state" *ngIf="!loading && (!travels || travels.length === 0)">
+            <p>No se han realizado viajes aún</p>
+        </div>
+
         <p-dataView
             #dv
             [value]="travels"
             [rows]="5"
             [paginator]="true"
             styleClass="transparent-dataview"
+            *ngIf="!loading && travels && travels.length > 0"
         >
             <ng-template #list let-travels>
                 <div class="booking-list">

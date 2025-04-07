@@ -105,6 +105,8 @@
     }
 
     .cancel-button {
+        color: var(--p-button-primary-hover-border-color);
+
         @media (max-width: 768px) {
             align-self: flex-end;
             width: 100%;

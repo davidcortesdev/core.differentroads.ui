@@ -10,6 +10,7 @@ import { NotificationsService } from '../../../../core/services/notifications.se
 import { TourDataService } from '../../../../core/services/tour-data/tour-data.service';
 import { TourOrderService } from '../../../../core/services/tour-data/tour-order.service';
 import { MessageService } from 'primeng/api';
+import { CognitoUserPool } from 'amazon-cognito-identity-js';
 
 @Component({
   selector: 'app-tour-additional-info',
@@ -28,6 +29,9 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   loginDialogVisible: boolean = false;
   userEmail: string = '';
   loading: boolean = false;
+  
+  // Flag para indicar si limpiar los campos del formulario
+  shouldClearFields: boolean = false;
 
   // Optimización: Extraer configuraciones a propiedades
   dialogBreakpoints = { '1199px': '80vw', '575px': '90vw' };
@@ -65,11 +69,40 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
         // Si el usuario está autenticado, obtener su email
         if (isAuthenticated) {
           this.getUserEmail();
+          
+          // También verificamos con el método getCurrentUser de cognito directamente
+          const cognitoCurrentUser = this.authService.getCurrentUser();
+          
+          // Obtener el nombre de usuario actual
+          const currentUsername = this.authService.getCurrentUsername();
+          
+          // Intentar obtener los atributos del usuario completos
+          this.getUserAttributes();
         }
       },
+      error: (error) => {
+        // Manejo silencioso del error
+      },
+      complete: () => {
+        // Completado
+      }
     });
 
     this.subscription.add(authSubscription);
+
+    // Verificamos si hay información en localStorage relacionada con Cognito
+    Object.keys(localStorage).forEach(key => {
+      if (key.includes('Cognito') || key.includes('cognito') || key.includes('aws') || key.includes('AWS')) {
+        // No hacemos console.log, solo conservamos la lógica
+      }
+    });
+    
+    // Y también en sessionStorage
+    Object.keys(sessionStorage).forEach(key => {
+      if (key.includes('Cognito') || key.includes('cognito') || key.includes('aws') || key.includes('AWS') || key === 'redirectUrl') {
+        // No hacemos console.log, solo conservamos la lógica
+      }
+    });
   }
 
   // Método para obtener el email del usuario
@@ -77,14 +110,60 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
     const emailSubscription = this.authService.getUserEmail().subscribe({
       next: (email) => {
         this.userEmail = email;
-        console.log('Email del usuario logueado:', email);
+        
+        // Intentar obtener más información del usuario si está disponible
+        this.tryGetAdditionalUserInfo();
       },
       error: (error) => {
-        console.error('Error al obtener el email del usuario:', error);
+        // Manejo silencioso del error
+      },
+      complete: () => {
+        // Completado
       }
     });
 
     this.subscription.add(emailSubscription);
+  }
+
+  // Método para obtener atributos del usuario de Cognito
+  private getUserAttributes(): void {
+    const attributesSubscription = this.authService.getUserAttributes().subscribe({
+      next: (attributes) => {
+        // Procesamiento silencioso de los atributos
+      },
+      error: (error) => {
+        // Manejo silencioso del error
+      },
+      complete: () => {
+        // Completado
+      }
+    });
+    this.subscription.add(attributesSubscription);
+  }
+  
+  // Método para intentar obtener información adicional del usuario
+  private tryGetAdditionalUserInfo(): void {
+    // Verificar si hay un usuario en el pool de Cognito
+    try {
+      const userPool = new CognitoUserPool({
+        UserPoolId: 'us-east-1_7g4sL6XLN', // Puedes obtener esto desde environment.cognitoUserPoolId
+        ClientId: '5hfu0oe9jrsgbvb7rjn76jrrn6' // Puedes obtener esto desde environment.cognitoAppClientId
+      });
+      
+      const currentUser = userPool.getCurrentUser();
+      
+      if (currentUser) {
+        currentUser.getSession((err: any, session: any) => {
+          if (err) {
+            return;
+          }
+          
+          // No hacemos console.log de los tokens ni la sesión
+        });
+      }
+    } catch (error) {
+      // Manejo silencioso del error
+    }
   }
 
   ngOnDestroy(): void {
@@ -106,7 +185,7 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
             this.tour = tour;
           },
           error: (error) => {
-            console.error('Error loading tour data:', error);
+            // Manejo silencioso del error
           },
         });
 
@@ -132,7 +211,6 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   savePresupuestoDirectamente(): void {
     // Verificar que tenemos la información necesaria
     if (!this.userEmail) {
-      console.error('No se pudo obtener el email del usuario');
       this.showErrorToast('No se pudo obtener la información del usuario. Por favor, inténtalo de nuevo.');
       return;
     }
@@ -172,14 +250,12 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
       })
       .subscribe({
         next: (createdOrder) => {
-          console.log('Orden creada automáticamente:', createdOrder);
           this.loading = false;
           
           // Mostrar mensaje de éxito con Toast
           this.showSuccessToast('Presupuesto guardado correctamente');
         },
         error: (error) => {
-          console.error('Error al crear la orden:', error);
           this.loading = false;
           
           // Mostrar mensaje de error con Toast
@@ -212,50 +288,26 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   }
 
   handleCloseModal(): void {
+    // Asegurar que el modal se cierra correctamente
     this.visible = false;
+    // Importante: Restablecer shouldClearFields después de cerrar el modal
+    setTimeout(() => {
+      this.shouldClearFields = false;
+    }, 100);
   }
 
   handleDownloadTrip(): void {
-    // Solo mostrar el modal sin mostrar Toast
+    // Explícitamente establecer en falso para asegurar que mantenga los datos
+    this.shouldClearFields = false;
     this.visible = true;
   }
 
-  // Optimización: Método separado para mostrar notificación
-  private showDownloadNotification(): void {
-    alert('La descarga de tu viaje comenzará en breve');
-    // Aquí iría la lógica para generar y descargar el PDF
-  }
-
+  // Modificado para que abra el mismo modal que Descargar pero con campos vacíos
   handleInviteFriend(): void {
-    console.log('Inviting friend to trip...');
-
-    // Fix: Check if Web Share API is available by checking if it's a function
-    if (navigator.share && typeof navigator.share === 'function') {
-      this.shareViaWebAPI();
-    } else {
-      this.shareViaEmail();
-    }
-  }
-
-  // Optimización: Métodos separados para compartir
-  private shareViaWebAPI(): void {
-    navigator
-      .share({
-        title: this.tour?.name || 'Mi viaje con Different Roads',
-        text: '¡Mira este increíble viaje que estoy planeando!',
-        url: window.location.href,
-      })
-      .catch((error) => console.error('Error sharing:', error));
-  }
-
-  private shareViaEmail(): void {
-    const emailSubject = encodeURIComponent(
-      this.tour?.name || 'Mi viaje con Different Roads'
-    );
-    const emailBody = encodeURIComponent(
-      '¡Mira este increíble viaje que estoy planeando! ' + window.location.href
-    );
-    window.open(`mailto:?subject=${emailSubject}&body=${emailBody}`);
+    // Activar el flag para limpiar campos
+    this.shouldClearFields = true;
+    // Mostrar el modal
+    this.visible = true;
   }
 
   // Add methods to handle login modal

@@ -10,6 +10,7 @@ import {
   Traveler,
   FlightOrderResponse,
 } from '../models/amadeus/flight.types';
+import { PriceData } from '../models/commons/price-data.model';
 
 @Injectable({
   providedIn: 'root',
@@ -56,8 +57,42 @@ export class AmadeusService {
   ): Observable<FlightOrderResponse> {
     return this.http.post<FlightOrderResponse>(
       `${this.apiUrl}/flights/book/${id}`,
-      { travelers },
+      travelers,
       this.httpOptions
     );
+  }
+  // Nuevo helper para aplicar el 12% de recargo y limitar a 2 decimales
+  calculatePriceWithMarkup(price: number | string): number {
+    const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
+    return parseFloat((numericPrice * 1.12).toFixed(2));
+  }
+
+  // Nuevo método para transformar FlightOfferPrice[] a PriceData[]
+  transformFlightPriceData(flightOffers: FlightOfferPrice[]): PriceData[] {
+    const priceData: PriceData[] = [];
+    flightOffers.forEach((offer) => {
+      // Iterar sobre cada travelerPricing para extraer los datos de precio
+      offer.travelerPricings.forEach((tp: any) => {
+        const total = tp.price?.total || 0;
+        const calculatedPrice = this.calculatePriceWithMarkup(total);
+        let ageGroup = 'Adultos';
+        if (tp.travelerType === 'CHILD') {
+          ageGroup = 'Niños';
+        } else if (tp.travelerType === 'INFANT') {
+          ageGroup = 'Bebes';
+        }
+        priceData.push({
+          id: tp.id || '',
+          value: calculatedPrice,
+          value_with_campaign: calculatedPrice,
+          campaign: null,
+          age_group_name: ageGroup,
+          category_name: 'amadeus',
+          period_product: 'flight',
+          _id: tp.id || '',
+        });
+      });
+    });
+    return priceData;
   }
 }

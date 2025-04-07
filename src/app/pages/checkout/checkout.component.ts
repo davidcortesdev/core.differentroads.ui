@@ -792,12 +792,11 @@ export class CheckoutComponent implements OnInit {
                   'Updated flight price data from Amadeus:',
                   response
                 );
-                // Transform FlightOfferPrice[] to PriceData[]
-                const transformedPriceData = this.transformFlightPriceData(
-                  response.flightOffers
-                );
-
-                // Get new adult price for comparison
+                // Usar el nuevo método del AmadeusService para transformar la respuesta
+                const transformedPriceData =
+                  this.amadeusService.transformFlightPriceData(
+                    response.flightOffers
+                  );
                 const newAdultPrice = transformedPriceData.find(
                   (price) => price.age_group_name === 'Adultos'
                 )?.value;
@@ -962,28 +961,5 @@ export class CheckoutComponent implements OnInit {
   // Método para manejar el cierre del diálogo
   handleCloseBudgetDialog(): void {
     this.budgetDialogVisible = false;
-  }
-
-  // Add a new helper method to transform FlightOfferPrice[] to PriceData[]
-  transformFlightPriceData(flightOffers: any[]): PriceData[] {
-    return flightOffers.map((offer) => {
-      return {
-        id: offer.id || '',
-        value: this.applyPriceMarkup(offer.price?.total || 0),
-        value_with_campaign: this.applyPriceMarkup(offer.price?.total || 0),
-        campaign: null,
-        age_group_name:
-          offer.travelerType === 'ADULT'
-            ? 'Adultos'
-            : offer.travelerType === 'CHILD'
-            ? 'Niños'
-            : offer.travelerType === 'INFANT'
-            ? 'Bebes'
-            : offer.age_group_name || 'Adultos',
-        category_name: 'amadeus',
-        period_product: 'flight',
-        _id: offer.id || '',
-      };
-    });
   }
 }

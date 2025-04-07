@@ -367,6 +367,9 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         return;
       } else if (this.paymentMethod === 'transfer') {
         console.log('Redirecting to bank transfer page');
+        this.router.navigate([
+          `/reservation/${bookingID}/transfer/${publicID}`,
+        ]);
 
         return;
       }
@@ -509,7 +512,10 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
             needToUpdateTravelers = true;
           }
 
-          if (!this.pointsCache.has(email) && !this.loadingPointsFor.has(email)) {
+          if (
+            !this.pointsCache.has(email) &&
+            !this.loadingPointsFor.has(email)
+          ) {
             console.log('Iniciando obtención de puntos para:', email);
             this.fetchTravelerPoints(email, emailMap);
           }
@@ -536,24 +542,24 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       next: (response) => {
         console.log(`Puntos obtenidos para ${email}:`, response);
         const points = response?.points ?? 0;
-        const travelerCategory = response?.typeTraveler?.toLowerCase() || 'default'
+        const travelerCategory =
+          response?.typeTraveler?.toLowerCase() || 'default';
         let maxRedeemableAmount = 0;
-      
-      switch(travelerCategory) {
-        case 'globetrotter': // Trotamundos
-          maxRedeemableAmount = 50; // 50€ máximo
-          break;
-        case 'traveler': // Viajante
-          maxRedeemableAmount = 75; // 75€ máximo
-          break;
-        case 'nomad': 
-          maxRedeemableAmount = this.totalPrice * 0.05; 
-          break;
-        default:
-          maxRedeemableAmount = 0;
-      }
 
-        
+        switch (travelerCategory) {
+          case 'globetrotter': // Trotamundos
+            maxRedeemableAmount = 50; // 50€ máximo
+            break;
+          case 'traveler': // Viajante
+            maxRedeemableAmount = 75; // 75€ máximo
+            break;
+          case 'nomad':
+            maxRedeemableAmount = this.totalPrice * 0.05;
+            break;
+          default:
+            maxRedeemableAmount = 0;
+        }
+
         this.pointsCache.set(email, points);
 
         const traveler = emailMap.get(email);

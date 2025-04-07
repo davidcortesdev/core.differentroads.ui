@@ -153,6 +153,13 @@ $p: var(--p-primary-color);
     .buttons[_ngcontent-ng-c3944280590] {
         gap: 1.8rem;
     }
+
+    .loading-container {
+        display: flex;
+        justify-content: center;
+        padding: 2rem 0;
+    }
+
     .buttons {
         @include flex(column, space-between, stretch, 0.5rem);
         margin-top: 5px;

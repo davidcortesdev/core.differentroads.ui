@@ -5,6 +5,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BookingsService } from '../../core/services/bookings.service';
 import { BookingMappingService } from '../../core/services/booking-mapping.service';
 import { PeriodsService } from '../../core/services/periods.service';
+import { ToursService } from '../../core/services/tours.service';
 import {
   RetailersService,
   Retailer,
@@ -201,7 +202,8 @@ export class BookingsComponent implements OnInit {
     private bookingsService: BookingsService,
     private bookingMappingService: BookingMappingService,
     private periodsService: PeriodsService,
-    private retailersService: RetailersService // Nuevo servicio añadido
+    private retailersService: RetailersService, // Nuevo servicio añadido
+    private toursService: ToursService
   ) {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
@@ -268,6 +270,8 @@ export class BookingsComponent implements OnInit {
           ) {
             this.updateActivitiesData(booking);
           }
+
+          
 
           // Cargar actividades del período usando el externalID correcto
           if (booking.periodData && booking.periodData['externalID']) {
@@ -420,14 +424,14 @@ export class BookingsComponent implements OnInit {
     this.bookingData = {
       title: booking?.periodData?.['tour']?.name || 'Sin título',
       date: booking?.periodData?.['dayOne']
-        ? this.formatDateForDisplay(booking.periodData['dayOne'])
+        ? booking.periodData['dayOne']
         : 'Fecha no disponible',
       bookingCode: booking?.ID || '',
       bookingReference: booking?.externalID || '',
       status: booking?.status || '',
       retailer: '', // Se actualizará en loadRetailerInfo
       creationDate: booking?.createdAt
-        ? this.formatDateForDisplay(booking.createdAt)
+        ? booking.createdAt
         : '',
       price: this.formatCurrency(
         booking?.total || booking?.periodData?.total || 0
@@ -439,18 +443,20 @@ export class BookingsComponent implements OnInit {
   updateBookingImages(booking: any): void {
     if (this.bookingImages.length > 0) {
       const tourName = booking?.periodData?.['tour']?.name || 'Sin título';
-
+      const tourID = booking?.periodData?.tourID || '';
+      
+      // Inicializar con valores básicos
       this.bookingImages[0] = {
         ...this.bookingImages[0],
         name: tourName,
         tourName: tourName, // Añadimos el nombre del tour
-        imageUrl: this.bookingImages[0].imageUrl, // Mantener la imagen quemada
+        imageUrl: '', // Imagen temporal mientras carga
         retailer: '', // Se actualizará en loadRetailerInfo
         creationDate: booking?.createdAt
-          ? this.formatDateForDisplay(booking.createdAt)
+          ? booking.createdAt
           : this.bookingImages[0].creationDate,
         departureDate: booking?.periodData?.['dayOne']
-          ? this.formatDateShort(booking.periodData['dayOne'])
+          ? booking.periodData['dayOne']
           : this.bookingImages[0].departureDate,
         passengers:
           booking?.travelersNumber || this.bookingImages[0].passengers,
@@ -458,7 +464,32 @@ export class BookingsComponent implements OnInit {
           booking?.total || booking?.periodData?.total || 0
         ),
       };
+      
+      // Si tenemos un tourID, intentamos cargar la imagen real
+      if (tourID) {
+        this.loadTourImage(tourID);
+      }
     }
+  }
+  
+  // Método para cargar la imagen del tour
+  loadTourImage(tourID: string): void {
+    const filters = { externalID: tourID };
+    this.toursService.getFilteredToursList(filters).subscribe({
+      next: (tourData) => {
+        if (
+          tourData?.data?.length > 0 &&
+          tourData.data[0].image?.length > 0 &&
+          tourData.data[0].image[0].url
+        ) {
+          // Actualizar la imagen con la URL real
+          this.bookingImages[0].imageUrl = tourData.data[0].image[0].url;
+        }
+      },
+      error: (err) => {
+        console.error('Error fetching tour image:', err);
+      }
+    });
   }
 
   // Actualizar información de pagos
@@ -486,12 +517,10 @@ export class BookingsComponent implements OnInit {
           amount: total,
           publicID: '', // default empty until set by backend
           status: PaymentStatus.PENDING,
-          createdAt: this.formatDateForDisplay(
-            booking.createdAt || new Date().toISOString()
-          ),
-          updatedAt: this.formatDateForDisplay(
-            booking.createdAt || new Date().toISOString()
-          ),
+          createdAt: booking.createdAt || new Date().toISOString()
+          ,
+          updatedAt: booking.createdAt || new Date().toISOString()
+          ,
         },
       ];
     }
@@ -619,7 +648,7 @@ export class BookingsComponent implements OnInit {
           id: index + 1,
           title: activity.name || `Actividad ${index + 1}`,
           description: activity.description || 'Sin descripción disponible',
-          imageUrl: 'https://picsum.photos/400/200', // Imagen predeterminada
+          imageUrl: activity.image || 'https://picsum.photos/400/200', // Imagen predeterminada
           price: activity.price ? `+${activity.price}€` : '+0€',
           priceValue: activity.price || 0,
           isOptional: true,
@@ -671,7 +700,7 @@ export class BookingsComponent implements OnInit {
           documentType: documentType,
           documentNumber: documentNumber,
           birthDate: travelerData.birthDate
-            ? this.formatDateForDisplay(travelerData.birthDate)
+            ? travelerData.birthDate
             : '',
           email: travelerData.email || '',
           phone: travelerData.phone || '',
@@ -684,10 +713,10 @@ export class BookingsComponent implements OnInit {
           comfortPlan: 'Standard', // Campo necesario para el componente hijo
           insurance: 'Básico', // Campo necesario para el componente hijo
           documentExpeditionDate: travelerData.minorIdIssueDate
-            ? this.formatDateForDisplay(travelerData.minorIdIssueDate)
+            ? travelerData.minorIdIssueDate
             : '',
           documentExpirationDate: travelerData.minorIdExpirationDate
-            ? this.formatDateForDisplay(travelerData.minorIdExpirationDate)
+            ? travelerData.minorIdExpirationDate
             : '',
           nationality: travelerData.nationality || '',
           ageGroup: travelerData.ageGroup || '',
@@ -934,20 +963,6 @@ export class BookingsComponent implements OnInit {
   // Método actualizado para calcular el total multiplicando qty x unitPrice
   calculateTotal(item: TripItemData): number {
     return item.quantity * item.unitPrice; // Multiplicar cantidad por valor unitario
-  }
-
-  // Método para formatear fecha
-  formatDateForDisplay(dateStr: string): string {
-    try {
-      const date = new Date(dateStr);
-      return `${date.getDate().toString().padStart(2, '0')}/${(
-        date.getMonth() + 1
-      )
-        .toString()
-        .padStart(2, '0')}/${date.getFullYear()}`;
-    } catch (e) {
-      return dateStr;
-    }
   }
 
   // Método para formatear fecha corta (ej: "3 Jun")

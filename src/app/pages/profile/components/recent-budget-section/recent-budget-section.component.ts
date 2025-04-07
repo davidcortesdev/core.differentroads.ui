@@ -27,6 +27,7 @@ interface Budget {
 export class RecentBudgetSectionComponent implements OnInit {
   budgets: Budget[] = [];
   isExpanded: boolean = true;
+  loading: boolean = false;
   @Input() userEmail!: string;
 
   constructor(
@@ -44,6 +45,7 @@ export class RecentBudgetSectionComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.loading = true;
     this.fetchBudgets();
   }
 
@@ -117,6 +119,8 @@ export class RecentBudgetSectionComponent implements OnInit {
           }
         });
       });
+
+    this.loading = false;
   }
 
   // Crea un presupuesto base con los datos mínimos de la orden

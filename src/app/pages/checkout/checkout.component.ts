@@ -780,6 +780,47 @@ export class CheckoutComponent implements OnInit {
         if (!travelersComponent.areAllTravelersValid()) {
           return false;
         }
+        // NEW: If selected flight is from Amadeus, update its price data BEFORE moving to step 4
+        if (this.selectedFlight?.source === 'amadeus') {
+          // Store old flight price for comparison (using Adult price)
+          const oldPrice = this.selectedFlight.price;
+          this.amadeusService
+            .getFlightPriceById(this.selectedFlight.id)
+            .subscribe({
+              next: (response) => {
+                console.log(
+                  'Updated flight price data from Amadeus:',
+                  response
+                );
+                // Transform FlightOfferPrice[] to PriceData[]
+                const transformedPriceData = this.transformFlightPriceData(
+                  response.flightOffers
+                );
+
+                // Get new adult price for comparison
+                const newAdultPrice = transformedPriceData.find(
+                  (price) => price.age_group_name === 'Adultos'
+                )?.value;
+
+                if (newAdultPrice !== undefined && oldPrice !== newAdultPrice) {
+                  this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Precio de vuelo actualizado',
+                    detail:
+                      'El precio del vuelo ha cambiado, por favor verifique.',
+                  });
+                }
+
+                // Update the selected flight's priceData with transformed data:
+                if (this.selectedFlight) {
+                  this.selectedFlight.priceData = transformedPriceData;
+                }
+              },
+              error: (err) => {
+                console.error('Error fetching flight price:', err);
+              },
+            });
+        }
         break;
       default:
         return false;
@@ -921,5 +962,28 @@ export class CheckoutComponent implements OnInit {
   // Método para manejar el cierre del diálogo
   handleCloseBudgetDialog(): void {
     this.budgetDialogVisible = false;
+  }
+
+  // Add a new helper method to transform FlightOfferPrice[] to PriceData[]
+  transformFlightPriceData(flightOffers: any[]): PriceData[] {
+    return flightOffers.map((offer) => {
+      return {
+        id: offer.id || '',
+        value: this.applyPriceMarkup(offer.price?.total || 0),
+        value_with_campaign: this.applyPriceMarkup(offer.price?.total || 0),
+        campaign: null,
+        age_group_name:
+          offer.travelerType === 'ADULT'
+            ? 'Adultos'
+            : offer.travelerType === 'CHILD'
+            ? 'Niños'
+            : offer.travelerType === 'INFANT'
+            ? 'Bebes'
+            : offer.age_group_name || 'Adultos',
+        category_name: 'amadeus',
+        period_product: 'flight',
+        _id: offer.id || '',
+      };
+    });
   }
 }

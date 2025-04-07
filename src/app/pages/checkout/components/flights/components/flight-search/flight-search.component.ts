@@ -32,7 +32,7 @@ export class FlightSearchComponent implements OnInit {
 
   flightForm: FormGroup;
 
-  tipoViaje: string = 'soloDia';
+  tipoViaje: string = 'idaVuelta';
   equipajeMano: boolean = false;
   equipajeBodega: boolean = false;
 
@@ -220,21 +220,21 @@ export class FlightSearchComponent implements OnInit {
     return city ? city.codigo : 'MAD';
   }
 
+  // Update formatDate to use UTC values
   formatDate(date: Date): string {
     const d = new Date(date);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
-      2,
-      '0'
-    )}-${String(d.getDate()).padStart(2, '0')}`;
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
-  // Método auxiliar para formatear fechas para mostrar
+  // Update formatDisplayDate to use UTC values
   formatDisplayDate(date: Date): string {
-    return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    return `${day}/${month}/${year}`;
   }
 
   filterOffers() {

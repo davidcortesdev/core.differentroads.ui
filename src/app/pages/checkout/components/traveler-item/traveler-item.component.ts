@@ -215,11 +215,12 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
    * Maneja la selección de un país
    * @param country País seleccionado
    */
-  onCountrySelect(country: Country): void {
+  onCountrySelect(country: any): void {
     console.log('Selected country:', country);
 
     if (this.form && country) {
-      this.form.get('nationality')?.setValue(country.code);
+      // No need to manually set the value, the autocomplete binding does this
+      // Just make sure to clear the document options cache
       this.clearDocumentOptionsCache();
     }
   }

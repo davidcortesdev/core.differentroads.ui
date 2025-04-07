@@ -1,10 +1,10 @@
 [
     {
-        "name": "Afghanistan",
+        "name": "Afganistán",
         "code": "AF"
     },
     {
-        "name": "Åland Islands",
+        "name": "Islas Åland",
         "code": "AX"
     },
     {
@@ -12,11 +12,11 @@
         "code": "AL"
     },
     {
-        "name": "Algeria",
+        "name": "Argelia",
         "code": "DZ"
     },
     {
-        "name": "American Samoa",
+        "name": "Samoa Americana",
         "code": "AS"
     },
     {
@@ -28,15 +28,15 @@
         "code": "AO"
     },
     {
-        "name": "Anguilla",
+        "name": "Anguila",
         "code": "AI"
     },
     {
-        "name": "Antarctica",
+        "name": "Antártida",
         "code": "AQ"
     },
     {
-        "name": "Antigua and Barbuda",
+        "name": "Antigua y Barbuda",
         "code": "AG"
     },
     {
@@ -60,7 +60,7 @@
         "code": "AT"
     },
     {
-        "name": "Azerbaijan",
+        "name": "Azerbaiyán",
         "code": "AZ"
     },
     {
@@ -68,11 +68,11 @@
         "code": "BS"
     },
     {
-        "name": "Bahrain",
+        "name": "Baréin",
         "code": "BH"
     },
     {
-        "name": "Bangladesh",
+        "name": "Bangladés",
         "code": "BD"
     },
     {
@@ -80,59 +80,59 @@
         "code": "BB"
     },
     {
-        "name": "Belarus",
+        "name": "Bielorrusia",
         "code": "BY"
     },
     {
-        "name": "Belgium",
+        "name": "Bélgica",
         "code": "BE"
     },
     {
-        "name": "Belize",
+        "name": "Belice",
         "code": "BZ"
     },
     {
-        "name": "Benin",
+        "name": "Benín",
         "code": "BJ"
     },
     {
-        "name": "Bermuda",
+        "name": "Bermudas",
         "code": "BM"
     },
     {
-        "name": "Bhutan",
+        "name": "Bután",
         "code": "BT"
     },
     {
-        "name": "Bolivia, Plurinational State of",
+        "name": "Bolivia, Estado Plurinacional de",
         "code": "BO"
     },
     {
-        "name": "Bonaire, Sint Eustatius and Saba",
+        "name": "Bonaire, San Eustaquio y Saba",
         "code": "BQ"
     },
     {
-        "name": "Bosnia and Herzegovina",
+        "name": "Bosnia y Herzegovina",
         "code": "BA"
     },
     {
-        "name": "Botswana",
+        "name": "Botsuana",
         "code": "BW"
     },
     {
-        "name": "Bouvet Island",
+        "name": "Isla Bouvet",
         "code": "BV"
     },
     {
-        "name": "Brazil",
+        "name": "Brasil",
         "code": "BR"
     },
     {
-        "name": "British Indian Ocean Territory",
+        "name": "Territorio Británico del Océano Índico",
         "code": "IO"
     },
     {
-        "name": "Brunei Darussalam",
+        "name": "Brunéi Darussalam",
         "code": "BN"
     },
     {
@@ -148,27 +148,27 @@
         "code": "BI"
     },
     {
-        "name": "Cambodia",
+        "name": "Camboya",
         "code": "KH"
     },
     {
-        "name": "Cameroon",
+        "name": "Camerún",
         "code": "CM"
     },
     {
-        "name": "Canada",
+        "name": "Canadá",
         "code": "CA"
     },
     {
-        "name": "Cape Verde",
+        "name": "Cabo Verde",
         "code": "CV"
     },
     {
-        "name": "Cayman Islands",
+        "name": "Islas Caimán",
         "code": "KY"
     },
     {
-        "name": "Central African Republic",
+        "name": "República Centroafricana",
         "code": "CF"
     },
     {
@@ -184,11 +184,11 @@
         "code": "CN"
     },
     {
-        "name": "Christmas Island",
+        "name": "Isla de Navidad",
         "code": "CX"
     },
     {
-        "name": "Cocos (Keeling) Islands",
+        "name": "Islas Cocos (Keeling)",
         "code": "CC"
     },
     {
@@ -196,7 +196,7 @@
         "code": "CO"
     },
     {
-        "name": "Comoros",
+        "name": "Comoras",
         "code": "KM"
     },
     {
@@ -204,11 +204,11 @@
         "code": "CG"
     },
     {
-        "name": "Congo, the Democratic Republic of the",
+        "name": "Congo, la República Democrática del",
         "code": "CD"
     },
     {
-        "name": "Cook Islands",
+        "name": "Islas Cook",
         "code": "CK"
     },
     {
@@ -220,7 +220,7 @@
         "code": "CI"
     },
     {
-        "name": "Croatia",
+        "name": "Croacia",
         "code": "HR"
     },
     {
@@ -232,19 +232,19 @@
         "code": "CW"
     },
     {
-        "name": "Cyprus",
+        "name": "Chipre",
         "code": "CY"
     },
     {
-        "name": "Czech Republic",
+        "name": "República Checa",
         "code": "CZ"
     },
     {
-        "name": "Denmark",
+        "name": "Dinamarca",
         "code": "DK"
     },
     {
-        "name": "Djibouti",
+        "name": "Yibuti",
         "code": "DJ"
     },
     {
@@ -252,7 +252,7 @@
         "code": "DM"
     },
     {
-        "name": "Dominican Republic",
+        "name": "República Dominicana",
         "code": "DO"
     },
     {
@@ -260,7 +260,7 @@
         "code": "EC"
     },
     {
-        "name": "Egypt",
+        "name": "Egipto",
         "code": "EG"
     },
     {
@@ -268,7 +268,7 @@
         "code": "SV"
     },
     {
-        "name": "Equatorial Guinea",
+        "name": "Guinea Ecuatorial",
         "code": "GQ"
     },
     {
@@ -280,43 +280,43 @@
         "code": "EE"
     },
     {
-        "name": "Ethiopia",
+        "name": "Etiopía",
         "code": "ET"
     },
     {
-        "name": "Falkland Islands (Malvinas)",
+        "name": "Islas Malvinas (Falkland)",
         "code": "FK"
     },
     {
-        "name": "Faroe Islands",
+        "name": "Islas Feroe",
         "code": "FO"
     },
     {
-        "name": "Fiji",
+        "name": "Fiyi",
         "code": "FJ"
     },
     {
-        "name": "Finland",
+        "name": "Finlandia",
         "code": "FI"
     },
     {
-        "name": "France",
+        "name": "Francia",
         "code": "FR"
     },
     {
-        "name": "French Guiana",
+        "name": "Guayana Francesa",
         "code": "GF"
     },
     {
-        "name": "French Polynesia",
+        "name": "Polinesia Francesa",
         "code": "PF"
     },
     {
-        "name": "French Southern Territories",
+        "name": "Territorios Australes Franceses",
         "code": "TF"
     },
     {
-        "name": "Gabon",
+        "name": "Gabón",
         "code": "GA"
     },
     {
@@ -328,7 +328,7 @@
         "code": "GE"
     },
     {
-        "name": "Germany",
+        "name": "Alemania",
         "code": "DE"
     },
     {
@@ -340,19 +340,19 @@
         "code": "GI"
     },
     {
-        "name": "Greece",
+        "name": "Grecia",
         "code": "GR"
     },
     {
-        "name": "Greenland",
+        "name": "Groenlandia",
         "code": "GL"
     },
     {
-        "name": "Grenada",
+        "name": "Granada",
         "code": "GD"
     },
     {
-        "name": "Guadeloupe",
+        "name": "Guadalupe",
         "code": "GP"
     },
     {
@@ -364,7 +364,7 @@
         "code": "GT"
     },
     {
-        "name": "Guernsey",
+        "name": "Guernesey",
         "code": "GG"
     },
     {
@@ -372,7 +372,7 @@
         "code": "GN"
     },
     {
-        "name": "Guinea-Bissau",
+        "name": "Guinea-Bisáu",
         "code": "GW"
     },
     {
@@ -380,15 +380,15 @@
         "code": "GY"
     },
     {
-        "name": "Haiti",
+        "name": "Haití",
         "code": "HT"
     },
     {
-        "name": "Heard Island and McDonald Islands",
+        "name": "Islas Heard y McDonald",
         "code": "HM"
     },
     {
-        "name": "Holy See (Vatican City State)",
+        "name": "Santa Sede (Estado de la Ciudad del Vaticano)",
         "code": "VA"
     },
     {
@@ -400,11 +400,11 @@
         "code": "HK"
     },
     {
-        "name": "Hungary",
+        "name": "Hungría",
         "code": "HU"
     },
     {
-        "name": "Iceland",
+        "name": "Islandia",
         "code": "IS"
     },
     {
@@ -416,7 +416,7 @@
         "code": "ID"
     },
     {
-        "name": "Iran, Islamic Republic of",
+        "name": "Irán, República Islámica de",
         "code": "IR"
     },
     {
@@ -424,7 +424,7 @@
         "code": "IQ"
     },
     {
-        "name": "Ireland",
+        "name": "Irlanda",
         "code": "IE"
     },
     {
@@ -436,7 +436,7 @@
         "code": "IL"
     },
     {
-        "name": "Italy",
+        "name": "Italia",
         "code": "IT"
     },
     {
@@ -444,7 +444,7 @@
         "code": "JM"
     },
     {
-        "name": "Japan",
+        "name": "Japón",
         "code": "JP"
     },
     {
@@ -452,15 +452,15 @@
         "code": "JE"
     },
     {
-        "name": "Jordan",
+        "name": "Jordania",
         "code": "JO"
     },
     {
-        "name": "Kazakhstan",
+        "name": "Kazajistán",
         "code": "KZ"
     },
     {
-        "name": "Kenya",
+        "name": "Kenia",
         "code": "KE"
     },
     {
@@ -468,11 +468,11 @@
         "code": "KI"
     },
     {
-        "name": "Korea, Democratic People's Republic of",
+        "name": "Corea del Norte",
         "code": "KP"
     },
     {
-        "name": "Korea, Republic of",
+        "name": "Corea del Sur",
         "code": "KR"
     },
     {
@@ -480,23 +480,23 @@
         "code": "KW"
     },
     {
-        "name": "Kyrgyzstan",
+        "name": "Kirguistán",
         "code": "KG"
     },
     {
-        "name": "Lao People's Democratic Republic",
+        "name": "Laos",
         "code": "LA"
     },
     {
-        "name": "Latvia",
+        "name": "Letonia",
         "code": "LV"
     },
     {
-        "name": "Lebanon",
+        "name": "Líbano",
         "code": "LB"
     },
     {
-        "name": "Lesotho",
+        "name": "Lesoto",
         "code": "LS"
     },
     {
@@ -504,7 +504,7 @@
         "code": "LR"
     },
     {
-        "name": "Libya",
+        "name": "Libia",
         "code": "LY"
     },
     {
@@ -512,11 +512,11 @@
         "code": "LI"
     },
     {
-        "name": "Lithuania",
+        "name": "Lituania",
         "code": "LT"
     },
     {
-        "name": "Luxembourg",
+        "name": "Luxemburgo",
         "code": "LU"
     },
     {
@@ -832,7 +832,7 @@
         "code": "SS"
     },
     {
-        "name": "Spain",
+        "name": "España",
         "code": "ES"
     },
     {
@@ -856,35 +856,35 @@
         "code": "SZ"
     },
     {
-        "name": "Sweden",
+        "name": "Suecia",
         "code": "SE"
     },
     {
-        "name": "Switzerland",
+        "name": "Suiza",
         "code": "CH"
     },
     {
-        "name": "Syrian Arab Republic",
+        "name": "República Árabe Siria",
         "code": "SY"
     },
     {
-        "name": "Taiwan, Province of China",
+        "name": "Taiwán",
         "code": "TW"
     },
     {
-        "name": "Tajikistan",
+        "name": "Tayikistán",
         "code": "TJ"
     },
     {
-        "name": "Tanzania, United Republic of",
+        "name": "Tanzania",
         "code": "TZ"
     },
     {
-        "name": "Thailand",
+        "name": "Tailandia",
         "code": "TH"
     },
     {
-        "name": "Timor-Leste",
+        "name": "Timor Oriental",
         "code": "TL"
     },
     {
@@ -908,11 +908,11 @@
         "code": "TN"
     },
     {
-        "name": "Turkey",
+        "name": "Turquía",
         "code": "TR"
     },
     {
-        "name": "Turkmenistan",
+        "name": "Turkmenistán",
         "code": "TM"
     },
     {

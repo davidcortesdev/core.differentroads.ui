@@ -117,12 +117,13 @@
             formControlName="nationality"
             [suggestions]="filteredCountries"
             (completeMethod)="filterCountries($event)"
-            (onSelect)="onCountrySelect($event.value)"
-            [optionValue]="'ISO'"
+            (onSelect)="onCountrySelect($event)"
+            [optionValue]="'code'"
             [dropdown]="true"
             [forceSelection]="true"
-            field="nationality"
+            field="name"
             placeholder="Introduce tu nacionalidad"
+            appendTo="body"
           ></p-autocomplete>
         </div>
       </div>

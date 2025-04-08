@@ -83,7 +83,9 @@
 
           <!-- Step 3: Travelers -->
           <div *ngSwitchCase="2">
-            <app-travelers [allFieldsMandatory]="true"></app-travelers>
+            <app-travelers
+              [allFieldsMandatory]="isAmadeusFlightSelected"
+            ></app-travelers>
             <div class="flex pt-6 justify-between">
               <p-button
                 label="Continuar"

@@ -41,4 +41,21 @@ export class CountriesService {
       })
     );
   }
+
+  /**
+   * Obtiene un país por su código
+   * @param code Código del país (ISO)
+   * @returns Observable con el país encontrado o null si no existe
+   */
+  getCountryByCode(code: string): Observable<Country | null> {
+    if (!code) return of(null);
+
+    // Primero intentamos buscar en la caché de países
+    return this.getCountries().pipe(
+      map((countries) => {
+        const country = countries.find((c) => c.code === code);
+        return country || null;
+      })
+    );
+  }
 }

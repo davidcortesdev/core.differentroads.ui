@@ -6,8 +6,13 @@
   </p-panel>
   <p class="user-description">
     <i class="pi pi-exclamation-circle info-icon"></i>
-    Introduce el nombre y el apellido tal y como aparecen en el DNI. Podrás
-    rellenar los datos no obligatorios más adelante.
+    Introduce el nombre y el apellido tal y como aparecen en el DNI.
+    <strong>Los campos marcados con * son obligatorios.</strong>
+    {{
+      allFieldsMandatory
+        ? "Todos los campos son necesarios para vuelos seleccionados."
+        : ""
+    }}
   </p>
 </div>
 
@@ -19,7 +24,7 @@
     <div class="form-row">
       <div class="form-column">
         <div class="form-field">
-          <label>Nombre{{ allFieldsMandatory ? "*" : "" }}</label>
+          <label>Nombre*</label>
           <input
             pInputText
             name="nombre"
@@ -30,7 +35,7 @@
       </div>
       <div class="form-column">
         <div class="form-field">
-          <label>Apellido{{ allFieldsMandatory ? "*" : "" }}</label>
+          <label>Apellido*</label>
           <input
             pInputText
             name="apellido"
@@ -45,7 +50,7 @@
     <div class="form-row">
       <div class="form-column">
         <div class="form-field">
-          <label>E-mail{{ allFieldsMandatory ? "*" : "" }}</label>
+          <label>E-mail*</label>
           <input
             pInputText
             name="email"
@@ -79,7 +84,7 @@
         <div class="form-row">
           <div class="form-column half-width">
             <div class="form-field">
-              <label>Sexo</label>
+              <label>Sexo{{ allFieldsMandatory ? "*" : "" }}</label>
               <p-select
                 #sexoSelect
                 formControlName="sexo"
@@ -93,7 +98,9 @@
           </div>
           <div class="form-column half-width">
             <div class="form-field">
-              <label>Fecha de nacimiento</label>
+              <label
+                >Fecha de nacimiento{{ allFieldsMandatory ? "*" : "" }}</label
+              >
               <p-datepicker
                 formControlName="birthdate"
                 placeholder="dd/mm/aaaa"
@@ -112,7 +119,7 @@
     <div class="form-row">
       <div class="form-column">
         <div class="form-field">
-          <label>Nacionalidad</label>
+          <label>Nacionalidad{{ allFieldsMandatory ? "*" : "" }}</label>
           <p-autocomplete
             formControlName="nationality"
             [suggestions]="filteredCountries"

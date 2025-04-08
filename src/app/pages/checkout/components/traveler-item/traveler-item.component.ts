@@ -72,6 +72,20 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
 
       // Initial validators setup
       this.updateValidators();
+
+      // Set passport as default document type if not already set
+      if (!this.form.get('documentType')?.value) {
+        this.form.get('documentType')?.setValue('passport');
+      }
+    }
+    if (this.form && this.form.get('nationality')?.value) {
+      const code = this.form.get('nationality')?.value;
+      this.countriesService.getCountryByCode(code).subscribe((country) => {
+        if (country) {
+          this.form.get('nationality')?.setValue(country.code); // mantiene el valor
+          this.filteredCountries = [country]; // necesario para que lo muestre
+        }
+      });
     }
   }
 
@@ -111,24 +125,34 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
       `Updating validators: allFieldsMandatory=${this.allFieldsMandatory}`
     );
 
+    // First, ensure name, surname and email are ALWAYS required
+    requiredFields.forEach((field) => {
+      const control = this.form.get(field);
+      if (control) {
+        if (field === 'email') {
+          control.setValidators([Validators.required, Validators.email]);
+        } else {
+          control.setValidators([Validators.required]);
+        }
+        control.updateValueAndValidity({ emitEvent: false });
+      }
+    });
+
+    // Then apply additional validators for other fields when allFieldsMandatory is true
     if (this.allFieldsMandatory) {
-      // Todos los campos obligatorios
       Object.keys(this.form.controls).forEach((key) => {
+        // Skip already handled required fields
+        if (requiredFields.includes(key)) return;
+
         const control = this.form.get(key);
         if (control) {
           // No aplicar validación requerida a "ageGroup"
           if (key === 'ageGroup') {
             control.clearValidators();
-            control.updateValueAndValidity({ emitEvent: false });
-            return;
-          }
-          if (key === 'email') {
-            control.setValidators([Validators.required, Validators.email]);
           } else if (
-            requiredFields.includes(key) ||
-            (key !== 'minorIdExpirationDate' &&
-              key !== 'minorIdIssueDate' &&
-              key !== 'associatedAdult')
+            key !== 'minorIdExpirationDate' &&
+            key !== 'minorIdIssueDate' &&
+            key !== 'associatedAdult'
           ) {
             control.setValidators([Validators.required]);
           }
@@ -136,15 +160,14 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
         }
       });
     } else {
-      // Viajeros sin campos obligatorios
+      // For non-required fields when not Amadeus flight
       Object.keys(this.form.controls).forEach((key) => {
+        // Skip already handled required fields
+        if (requiredFields.includes(key)) return;
+
         const control = this.form.get(key);
         if (control) {
-          if (key === 'email') {
-            control.setValidators([Validators.email]);
-          } else {
-            control.clearValidators();
-          }
+          control.clearValidators();
           control.updateValueAndValidity({ emitEvent: false });
         }
       });

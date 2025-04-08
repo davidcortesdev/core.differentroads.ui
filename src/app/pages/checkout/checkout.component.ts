@@ -40,6 +40,7 @@ export class CheckoutComponent implements OnInit {
   hasValidDocument: boolean = false;
   private subscription: Subscription = new Subscription();
   isAuthenticated: boolean = false;
+  isAmadeusFlightSelected: boolean = false;
 
   // PrimeNG Steps
   activeIndex: number = 0;
@@ -244,6 +245,8 @@ export class CheckoutComponent implements OnInit {
 
     this.flightsService.selectedFlight$.subscribe((flight) => {
       this.selectedFlight = flight;
+      // Update Amadeus flight status
+      this.isAmadeusFlightSelected = flight?.source === 'amadeus';
       this.updateOrderSummary();
     });
 

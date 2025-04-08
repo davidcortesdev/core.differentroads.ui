@@ -368,7 +368,6 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       const payment = await this.createPayment(bookingID, {
         amount: paymentAmount,
         registerBy: this.authService.getCurrentUsername(),
-
         method: this.paymentMethod!,
       });
 
@@ -385,17 +384,30 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         this.router.navigate([
           `/reservation/${bookingID}/transfer/${publicID}`,
         ]);
-
         return;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in payment process:', error);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error en el proceso de pago',
-        detail:
-          'Ha ocurrido un error al procesar el pago. Por favor, inténtalo de nuevo.',
-      });
+
+      // Check for flight booking error
+      if (error.message && error.message.includes('FLIGHT_BOOKING_FAILED')) {
+        // Show specific error for flight booking failures
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error en la reserva del vuelo',
+          detail:
+            'No se pudo completar la reserva del vuelo. Por favor, contacte con nuestro servicio de atención al cliente o pruebe con otro método de pago.',
+          sticky: true,
+        });
+      } else {
+        // Generic error message
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error en el proceso de pago',
+          detail:
+            'Ha ocurrido un error al procesar el pago. Por favor, inténtalo de nuevo.',
+        });
+      }
     } finally {
       // This will only run if we didn't redirect earlier
       this.isLoading = false;

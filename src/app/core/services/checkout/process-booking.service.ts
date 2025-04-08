@@ -96,13 +96,19 @@ export class ProcessBookingService {
         selectedFlight?.source === 'amadeus' &&
         !this.stepsCompleted.flightHandled
       ) {
-        await this.handleAmadeusFlight(
-          selectedFlight,
-          this.currentBookingID!,
-          this.currentBookingSID!,
-          this.currentOrder
-        );
-        this.stepsCompleted.flightHandled = true;
+        try {
+          await this.handleAmadeusFlight(
+            selectedFlight,
+            this.currentBookingID!,
+            this.currentBookingSID!,
+            this.currentOrder
+          );
+          this.stepsCompleted.flightHandled = true;
+        } catch (flightError) {
+          // Capturar y propagar el error de vuelo específicamente
+          console.error('Flight booking error:', flightError);
+          throw flightError;
+        }
       }
 
       // Paso 6: guardar viajeros
@@ -291,12 +297,16 @@ export class ProcessBookingService {
         .createFlightOrder(selectedFlight.id, passengerData)
         .subscribe({
           next: () => resolve(),
-          error: (err) =>
-            reject(
-              new Error(
-                err.error?.message || 'Error al procesar el vuelo con Amadeus'
-              )
-            ),
+          error: (err) => {
+            console.error('Amadeus flight booking error:', err);
+            // Crear un error específico que incluya el código FLIGHT_BOOKING_FAILED
+            const errorMessage =
+              err.error?.message || 'Error al procesar el vuelo con Amadeus';
+            const flightError = new Error(
+              `FLIGHT_BOOKING_FAILED: ${errorMessage}`
+            );
+            reject(flightError);
+          },
         });
     });
   }

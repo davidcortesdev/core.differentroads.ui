@@ -8,7 +8,12 @@ import {
   OnChanges,
   SimpleChanges,
 } from '@angular/core';
-import { FormGroup, Validators } from '@angular/forms';
+import {
+  FormGroup,
+  Validators,
+  AbstractControl,
+  ValidatorFn,
+} from '@angular/forms';
 import { Select } from 'primeng/select';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -25,6 +30,28 @@ export interface TravelerData {
 export interface SelectOption {
   label: string;
   value: string;
+}
+
+export function futureDateValidator(): ValidatorFn {
+  return (control: AbstractControl): { [key: string]: any } | null => {
+    const selectedDate = new Date(control.value);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return selectedDate > today
+      ? null
+      : { futureDate: { value: control.value } };
+  };
+}
+
+export function pastDateValidator(): ValidatorFn {
+  return (control: AbstractControl): { [key: string]: any } | null => {
+    const selectedDate = new Date(control.value);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return selectedDate < today ? null : { pastDate: { value: control.value } };
+  };
 }
 
 @Component({
@@ -149,6 +176,10 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
           // No aplicar validación requerida a "ageGroup"
           if (key === 'ageGroup') {
             control.clearValidators();
+          } else if (key === 'passportExpirationDate') {
+            control.setValidators([Validators.required, futureDateValidator()]);
+          } else if (key === 'passportIssueDate') {
+            control.setValidators([Validators.required, pastDateValidator()]);
           } else if (
             key !== 'minorIdExpirationDate' &&
             key !== 'minorIdIssueDate' &&

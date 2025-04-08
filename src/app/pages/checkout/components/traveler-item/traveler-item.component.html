@@ -48,7 +48,7 @@
 
     <!-- Email -->
     <div class="form-row">
-      <div class="form-column">
+      <div class="form-column half-width">
         <div class="form-field">
           <label>E-mail*</label>
           <input
@@ -57,6 +57,20 @@
             placeholder="e-mail"
             formControlName="email"
           />
+        </div>
+      </div>
+      <div class="form-column half-width">
+        <div class="form-field">
+          <label>Sexo{{ allFieldsMandatory ? "*" : "" }}</label>
+          <p-select
+            #sexoSelect
+            formControlName="sexo"
+            [options]="sexoOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Seleccione"
+          >
+          </p-select>
         </div>
       </div>
     </div>
@@ -78,46 +92,22 @@
 
   <!-- Campos adicionales (mostrados/ocultados con el botón) -->
   <div class="additional-fields" *ngIf="showMoreFields">
-    <!-- Sexo y Fecha de nacimiento -->
+    <!-- Sexo y Fecha de nacimiento y nacionalidad -->
     <div class="form-row">
-      <div class="form-column">
-        <div class="form-row">
-          <div class="form-column half-width">
-            <div class="form-field">
-              <label>Sexo{{ allFieldsMandatory ? "*" : "" }}</label>
-              <p-select
-                #sexoSelect
-                formControlName="sexo"
-                [options]="sexoOptions"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Seleccione"
-              >
-              </p-select>
-            </div>
-          </div>
-          <div class="form-column half-width">
-            <div class="form-field">
-              <label
-                >Fecha de nacimiento{{ allFieldsMandatory ? "*" : "" }}</label
-              >
-              <p-datepicker
-                formControlName="birthdate"
-                placeholder="dd/mm/aaaa"
-                [iconDisplay]="'input'"
-                [showIcon]="true"
-                appendTo="body"
-              >
-              </p-datepicker>
-            </div>
-          </div>
+      <div class="form-column half-width">
+        <div class="form-field">
+          <label>Fecha de nacimiento{{ allFieldsMandatory ? "*" : "" }}</label>
+          <p-datepicker
+            formControlName="birthdate"
+            placeholder="dd/mm/aaaa"
+            [iconDisplay]="'input'"
+            [showIcon]="true"
+            appendTo="body"
+          >
+          </p-datepicker>
         </div>
       </div>
-    </div>
-
-    <!-- Nacionalidad y Código postal -->
-    <div class="form-row">
-      <div class="form-column">
+      <div class="form-column half-width">
         <div class="form-field">
           <label>Nacionalidad{{ allFieldsMandatory ? "*" : "" }}</label>
           <p-autocomplete
@@ -132,17 +122,6 @@
             placeholder="Introduce tu nacionalidad"
             appendTo="body"
           ></p-autocomplete>
-        </div>
-      </div>
-      <div class="form-column">
-        <div class="form-field">
-          <label>Código postal</label>
-          <input
-            pInputText
-            name="cp"
-            placeholder="Introduce C.P"
-            formControlName="cp"
-          />
         </div>
       </div>
     </div>

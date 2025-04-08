@@ -28,7 +28,8 @@ import { MessageService } from 'primeng/api';
 import { Subscription } from 'rxjs';
 import { TextsService } from '../../../../core/services/checkout/texts.service';
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
-
+import { PeriodsService } from '../../../../core/services/periods.service';
+import { UsersService } from '../../../../core/services/users.service';
 interface TravelerWithPoints {
   id: string;
   firstName: string;
@@ -37,7 +38,8 @@ interface TravelerWithPoints {
   points?: number;
   redeeming?: boolean;
   pointsRedeemed?: number;
-  redeemCheckbox?: boolean; // Add this new property
+  redeemCheckbox?: boolean;
+  category?:string; // Add this new property
 }
 
 @Component({
@@ -48,6 +50,7 @@ interface TravelerWithPoints {
 })
 export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
   @Input() totalPrice: number = 0;
+  @Input() tourName: string = '';
   @Input() processBooking!: () => Promise<{
     bookingID: string;
     ID: string;
@@ -56,7 +59,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
   @Output() goBackEvent = new EventEmitter<void>();
 
   selectedPointsDiscount: string[] = [];
-
+  
   isOpen: boolean = true;
   isInstallmentsOpen: boolean = true;
   isPaymentMethodsOpen: boolean = true;
@@ -101,7 +104,9 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     private discountsService: DiscountsService,
     private messageService: MessageService,
     private authService: AuthenticateService,
-    private textsService: TextsService
+    private textsService: TextsService,
+    private periodsService: PeriodsService,
+    private usersService: UsersService,
   ) {}
 
   ngOnInit() {
@@ -342,6 +347,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       const bookingID = response.bookingID;
       const ID = response.ID;
 
+
       console.log('Booking created successfully:', bookingID);
 
       // Determine the payment amount based on payment type
@@ -372,6 +378,9 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         ]);
         return;
       }
+      
+      // Supongamos que 'this.tourName' es el nombre del tour. De lo contrario, cámbialo por el valor deseado.
+      this.sendRedemptionPoints(bookingID, this.tourName ||  'Default');
     } catch (error) {
       console.error('Error in payment process:', error);
       this.messageService.add({
@@ -540,16 +549,22 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         const points = response?.points ?? 0;
         const travelerCategory = response?.typeTraveler?.toLowerCase() || 'default'
         let maxRedeemableAmount = 0;
-      
+        let estraveler= '';
       switch(travelerCategory) {
-        case 'globetrotter': // Trotamundos
-          maxRedeemableAmount = 50; // 50€ máximo
+        case 'globetrotter': 
+          maxRedeemableAmount = 50;
+          estraveler='Trotamundos';
           break;
-        case 'traveler': // Viajante
-          maxRedeemableAmount = 75; // 75€ máximo
+        case 'voyager': 
+          maxRedeemableAmount = 75; 
+          estraveler='Viajante';
           break;
         case 'nomad': 
-          maxRedeemableAmount = this.totalPrice * 0.05; 
+          maxRedeemableAmount = 100; 
+          estraveler='Nómada';
+          break;
+        case 'default': 
+          maxRedeemableAmount = 50; 
           break;
         default:
           maxRedeemableAmount = 0;
@@ -560,7 +575,8 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
 
         const traveler = emailMap.get(email);
         if (traveler) {
-          traveler.points = maxRedeemableAmount;
+          traveler.points =Math.min(points, maxRedeemableAmount);
+          traveler.category= estraveler;
 
           const existingIndex = this.uniqueTravelers.findIndex(
             (t) => t.email === email
@@ -593,6 +609,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         }
 
         this.loadingPointsFor.delete(email);
+        console.log('Viajeros únicos antes de mostrar:', JSON.stringify(this.uniqueTravelers));
       },
     });
   }
@@ -654,5 +671,47 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       ...otherDiscounts,
       ...pointDiscounts,
     ]);
+  }
+
+  // Agrega este método al final del archivo para enviar la redención de puntos:
+  sendRedemptionPoints(bookingID: string, tourName: string): void {
+    console.log('Iniciando proceso de redención para booking:', bookingID, 'y tour:', tourName);
+    // Itera por cada viajero que haya seleccionado redimir puntos
+    this.uniqueTravelers.forEach(traveler => {
+      if (traveler.redeemCheckbox) {
+        console.log('Procesando redención para el viajero:', traveler.email);
+        // Obtener el usuario correcto usando UsersService para obtener el id correcto
+        this.usersService.getUserByEmail(traveler.email).subscribe({
+          next: user => {
+            console.log('Usuario obtenido:', user);
+            const redemptionObject = {
+              travelerID: user._id as string,
+              type: 'redemption',
+              points: traveler.points || 0,
+              extraData: {
+                bookingID: bookingID,
+                tourName: tourName
+              },
+              category: 'Viaje',
+              concept: 'Reserva',
+              origin: 'User',
+              transactionEmail: traveler.email
+            };
+            console.log('Objeto de redención para', traveler.email, ':', redemptionObject);
+            this.pointsService.createPoints(redemptionObject).subscribe({
+              next: res => {
+                console.log(`Redemption points created for ${traveler.email}:`, res);
+              },
+              error: err => {
+                console.error(`Error creating redemption points for ${traveler.email}:`, err);
+              }
+            });
+          },
+          error: err => {
+            console.error(`Error obteniendo usuario para ${traveler.email}:`, err);
+          }
+        });
+      }
+    });
   }
 }

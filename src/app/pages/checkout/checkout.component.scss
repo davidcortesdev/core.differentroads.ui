@@ -462,6 +462,8 @@ p-button.continue-button ::ng-deep .p-button {
 
     .p-card-body {
       padding: 0.5rem 0.75rem;
+      background-color: white;
+      border-radius: 11.82px;
     }
 
     .p-card-content {
@@ -485,20 +487,6 @@ p-button.continue-button ::ng-deep .p-button {
     font-size: 0.85rem;
     white-space: normal;
     font-weight: 500;
-  }
-
-  .bg-pink-100 {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    border-radius: 50%;
-
-    i {
-      font-size: 1rem;
-      color: var(--p-primary-color);
-    }
   }
 
   // Responsive adjustments

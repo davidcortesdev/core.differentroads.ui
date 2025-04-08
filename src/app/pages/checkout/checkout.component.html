@@ -22,24 +22,6 @@
               <p-button class="next" label="Continuar" icon="pi pi-arrow-right" iconPos="right"
                 (onClick)="nextStepWithValidation(1)"></p-button>
             </div>
-            
-            <!-- Tour additional info component with all required inputs -->
-            <div class="tour-actions-container">
-              <app-tour-additional-info
-                [existingOrder]="orderDetails"
-                [tourName]="tourName"
-                [periodName]="periodData?.name || ''"
-                [periodDates]="tourDates"
-                [selectedFlight]="selectedFlight"
-                [travelersSelected]="{
-                  adults: travelersSelected.adults,
-                  childs: travelersSelected.childs,
-                  babies: travelersSelected.babies
-                }"
-                [periodID]="periodID"
-                [isAuthenticated]="isAuthenticated"
-              ></app-tour-additional-info>
-            </div>
           </div>
 
           <!-- Step 2: Flights -->
@@ -73,6 +55,23 @@
               [departureDate]="periodData.dayOne || null" (goBackEvent)="onActiveIndexChange(2)"></app-payment>
           </div>
         </div>
+      </div>
+      <!-- Tour additional info component with all required inputs -->
+      <div class="tour-actions-container">
+        <app-tour-additional-info
+          [existingOrder]="orderDetails"
+          [tourName]="tourName"
+          [periodName]="periodData.name || ''"
+          [periodDates]="tourDates"
+          [selectedFlight]="selectedFlight"
+          [travelersSelected]="{
+            adults: travelersSelected.adults,
+            childs: travelersSelected.childs,
+            babies: travelersSelected.babies
+          }"
+          [periodID]="periodID"
+          [isAuthenticated]="isAuthenticated"
+        ></app-tour-additional-info>
       </div>
     </div>
 

@@ -103,6 +103,8 @@
               [processBooking]="processBooking.bind(this)"
               [departureDate]="periodData.dayOne || null"
               (goBackEvent)="onActiveIndexChange(2)"
+              (goToTravelers)="navigateToTravelers()"
+              (goToFlights)="navigateToFlights()"
             ></app-payment>
           </div>
         </div>

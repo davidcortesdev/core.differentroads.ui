@@ -56,6 +56,8 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
   }>;
   @Input() departureDate: string | null = null;
   @Output() goBackEvent = new EventEmitter<void>();
+  @Output() goToFlights = new EventEmitter<void>();
+  @Output() goToTravelers = new EventEmitter<void>();
 
   selectedPointsDiscount: string[] = [];
 
@@ -93,6 +95,12 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
 
   // Nuevo: variable para almacenar el vuelo desde el service
   private currentFlight: Flight | null = null;
+
+  // New properties for error handling dialog
+  errorDialogVisible: boolean = false;
+  errorType: 'traveler-data' | 'flight-selection' | 'generic' = 'generic';
+  errorMessage: string = '';
+  errorSummary: string = '';
 
   constructor(
     @Inject(DOCUMENT) private document: Document,
@@ -389,29 +397,64 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     } catch (error: any) {
       console.error('Error in payment process:', error);
 
-      // Check for flight booking error
-      if (error.message && error.message.includes('FLIGHT_BOOKING_FAILED')) {
-        // Show specific error for flight booking failures
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error en la reserva del vuelo',
-          detail:
-            'No se pudo completar la reserva del vuelo. Por favor, contacte con nuestro servicio de atención al cliente o pruebe con otro método de pago.',
-          sticky: true,
-        });
-      } else {
-        // Generic error message
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error en el proceso de pago',
-          detail:
-            'Ha ocurrido un error al procesar el pago. Por favor, inténtalo de nuevo.',
-        });
-      }
-    } finally {
-      // This will only run if we didn't redirect earlier
+      // Close loading state
       this.isLoading = false;
+
+      // Parse the error to determine the type
+      if (error.message && error.message.includes('FLIGHT_BOOKING_FAILED')) {
+        // Check if it's a traveler data related error
+        if (error.message.includes('INVALID DATA')) {
+          this.showErrorDialog(
+            'traveler-data',
+            'Error en datos de viajeros',
+            'Los datos de los viajeros están incompletos o son incorrectos para la reserva del vuelo. Por favor, complete la información requerida (pasaportes, fechas de nacimiento, etc.).'
+          );
+        } else {
+          // General flight booking error
+          this.showErrorDialog(
+            'flight-selection',
+            'Error en la reserva del vuelo',
+            'No se pudo completar la reserva del vuelo seleccionado. Esto puede deberse a disponibilidad o cambio de tarifas. Por favor, seleccione otro vuelo.'
+          );
+        }
+      } else {
+        // Generic error
+        this.showErrorDialog(
+          'generic',
+          'Error en el proceso de pago',
+          'Ha ocurrido un error al procesar el pago. Por favor, inténtelo de nuevo más tarde o contacte con atención al cliente.'
+        );
+      }
+
+      return;
     }
+  }
+
+  // New method to show error dialog
+  showErrorDialog(
+    type: 'traveler-data' | 'flight-selection' | 'generic',
+    summary: string,
+    message: string
+  ): void {
+    this.errorType = type;
+    this.errorSummary = summary;
+    this.errorMessage = message;
+    this.errorDialogVisible = true;
+  }
+
+  // Navigation methods
+  goToTravelersStep(): void {
+    this.errorDialogVisible = false;
+    this.goToTravelers.emit();
+  }
+
+  goToFlightsStep(): void {
+    this.errorDialogVisible = false;
+    this.goToFlights.emit();
+  }
+
+  closeErrorDialog(): void {
+    this.errorDialogVisible = false;
   }
 
   // Add this method to handle the back button click

@@ -1025,4 +1025,13 @@ export class CheckoutComponent implements OnInit {
   handleCloseBudgetDialog(): void {
     this.budgetDialogVisible = false;
   }
+
+  // New handlers for navigation from payment component
+  navigateToTravelers(): void {
+    this.onActiveIndexChange(2); // Go to travelers step (index 2)
+  }
+
+  navigateToFlights(): void {
+    this.onActiveIndexChange(1); // Go to flights step (index 1)
+  }
 }

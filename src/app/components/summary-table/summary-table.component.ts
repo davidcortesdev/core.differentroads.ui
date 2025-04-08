@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MessageModule } from 'primeng/message';
+import { PointsCalculatorService } from '../../core/services/checkout/points-calculator.service';
 
 export interface SummaryItem {
   description?: string;
@@ -44,7 +45,7 @@ export class SummaryTableComponent implements OnInit {
   @Input() isAuthenticated: boolean = false;
   @Input() selectedFlight: any = null;
 
-  constructor() { }
+  constructor(private pointsCalculator: PointsCalculatorService) { }
 
   ngOnInit(): void {
   }
@@ -70,4 +71,10 @@ export class SummaryTableComponent implements OnInit {
     const value = this.getValue(item);
     return value !== null && value !== undefined ? value * qty : 0;
   }
+
+  getEarnedPoints(): number {
+    return this.pointsCalculator.calculateEarnedPoints(this.subtotal);
+    
+  }
+
 }

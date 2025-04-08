@@ -65,7 +65,8 @@
           <!-- Step 4: Payment -->
           <div *ngSwitchCase="3">
             <app-payment 
-              [totalPrice]="total" 
+              [totalPrice]="total"
+              [subtotalPrice]="subtotal" 
               [processBooking]="processBooking.bind(this)"
               [departureDate]="periodData.dayOne || null" 
               (goBackEvent)="onActiveIndexChange(2)"

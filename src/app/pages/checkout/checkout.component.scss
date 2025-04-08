@@ -465,16 +465,13 @@ p-button.continue-button ::ng-deep .p-button {
       background-color: white;
       border-radius: 11.82px;
     }
-
     .p-card-content {
       padding: 0.25rem 0;
     }
-
     &:hover {
       box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
     }
   }
-
   .card-content {
     display: flex;
     flex-direction: row;
@@ -482,13 +479,11 @@ p-button.continue-button ::ng-deep .p-button {
     text-align: left;
     gap: 0.5rem;
   }
-
   .card-text {
     font-size: 0.85rem;
     white-space: normal;
     font-weight: 500;
   }
-
   // Responsive adjustments
   @media screen and (max-width: 768px) {
     .tour-additional-info-container {
@@ -499,7 +494,6 @@ p-button.continue-button ::ng-deep .p-button {
       flex-basis: 48%;
     }
   }
-
   @media screen and (max-width: 480px) {
     .action-card {
       flex-basis: 100%;

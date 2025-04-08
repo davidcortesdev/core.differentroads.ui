@@ -4,7 +4,6 @@ import { GeneralConfigService } from '../../../../core/services/general-config.s
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
   PointsSection,
-  PointsCard,
 } from '../../../../core/models/general/points-sections.model';
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
 import { UsersService } from '../../../../core/services/users.service';
@@ -15,6 +14,7 @@ interface PointsRecord {
   concept: string;
   tour: string;
   points: number;
+  type: string; // 'income' o 'redemption'
 }
 
 interface MembershipCard {
@@ -28,6 +28,7 @@ interface MembershipCard {
   minTrips: number;
   maxTrips?: number;
   remainingTrips?: number;
+  statusText: string; // Para el texto "Desbloqueado" o "x de y viajes completados"
 }
 
 @Component({
@@ -41,7 +42,7 @@ export class PointsSectionComponent implements OnInit {
   showTable: boolean = false;
   totalPoints: number = 0;
   membershipCards: MembershipCard[] = [];
-  currentTrips: number = 0; // Inicializado en 0, se actualizará con la respuesta
+  currentTrips: number = 0;
   userEmail: string = '';
   userDni: string = '';
   isLoading: boolean = true;
@@ -60,18 +61,15 @@ export class PointsSectionComponent implements OnInit {
     // Primero obtenemos el email del usuario autenticado
     this.authService.getUserEmail().subscribe({
       next: (email: string) => {
-        console.log('Email del usuario autenticado:', email);
         if (email) {
           this.userEmail = email;
           // Después obtenemos los datos del usuario incluyendo el DNI
           this.getUserDniByEmail(email);
         } else {
-          console.warn('No hay usuario autenticado o no se pudo obtener el email');
           this.isLoading = false;
         }
       },
       error: (error) => {
-        console.error('Error al obtener el email del usuario:', error);
         this.isLoading = false;
       }
     });
@@ -83,19 +81,15 @@ export class PointsSectionComponent implements OnInit {
   private getUserDniByEmail(email: string): void {
     this.usersService.getUserByEmail(email).subscribe({
       next: (user) => {
-        console.log('Datos completos del usuario:', user);
         if (user && user.dni) {
           this.userDni = user.dni;
-          console.log('DNI del usuario obtenido:', this.userDni);
           // Una vez que tenemos el DNI, cargamos los puntos
           this.loadPoints();
         } else {
-          console.warn('El usuario no tiene DNI registrado');
           this.isLoading = false;
         }
       },
       error: (error) => {
-        console.error('Error al obtener el usuario por email:', error);
         this.isLoading = false;
       }
     });
@@ -103,91 +97,66 @@ export class PointsSectionComponent implements OnInit {
 
   private loadPoints(): void {
     if (!this.userEmail) {
-      console.warn('No se puede cargar los puntos porque el email no está disponible');
       this.isLoading = false;
       return;
     }
-    
-    console.log('Obteniendo puntos para el email:', this.userEmail);
     
     // Obtener los puntos del usuario
     this.pointsService
       .getPointsByDni(this.userEmail, { page: 1, limit: 1000 })
       .subscribe({
         next: (response: any) => {
-          console.log('Respuesta completa de getPointsByDni:', response);
-          
           if (response && response.data) {
             this.points = response.data.map((point: any) => ({
               booking: point.extraData?.bookingID || 'N/A',
-              category: point.type === 'income' ? 'Acumulación' : 'Redención',
-              concept: point.extraData?.concept || point.subType || 'N/A',
+              category: point.category,
+              concept: point.concept,
               tour: point.extraData?.tourName || 'N/A',
               points: point.points || 0,
+              type: point.type || 'income', // Por defecto asumimos income si no viene tipo
             }));
-            
-            console.log('Puntos procesados:', this.points);
             
             // Obtener el total de puntos directamente de la respuesta
             this.totalPoints = response.totalpoints || 0;
-            console.log('Total de puntos:', this.totalPoints);
             
-            // Obtener la cantidad de viajes que ha realizado el usuario
-            if (response.trips !== undefined) {
+            // Obtener la cantidad de viajes desde count
+            if (response.count !== undefined) {
+              this.currentTrips = response.count;
+            } else if (response.trips !== undefined) {
+              // Fallback a trips si count no está disponible
               this.currentTrips = response.trips;
-              console.log('Cantidad de viajes completados:', this.currentTrips);
             }
             
-            // Capturar el tipo de viajero de la respuesta
-            if (response.typetraveler) {
-              console.log('Tipo de viajero obtenido:', response.typetraveler);
-              // Actualizar las tarjetas para marcar la tarjeta correcta como actual
-              this.updateCurrentMembershipCard(response.typetraveler);
-            }
-            
-            // Actualizar las tarjetas con la información de viajes completados
-            this.updateCardsByTrips();
-          } else {
-            console.warn('La respuesta no contiene datos de puntos válidos');
+            // Actualizar las tarjetas con la información de viajes 
+            this.updateCardsByCount();
           }
           this.isLoading = false;
         },
         error: (error) => {
-          console.error('Error al obtener los puntos:', error);
           // En caso de error, intentamos obtener al menos el total de puntos
           this.loadTotalPoints();
           this.isLoading = false;
         },
         complete: () => {
-          console.log('Petición de puntos completada');
         }
       });
   }
   
-  private updateCardsByTrips(): void {
-    // Actualizar el estado de desbloqueo de las tarjetas basado en los viajes
+  private updateCardsByCount(): void {
+    // Actualizar el estado de todas las tarjetas basado en la cantidad de viajes (count)
     this.membershipCards.forEach(card => {
       // Una tarjeta está desbloqueada si el usuario tiene suficientes viajes
-      const isUnlockedByTrips = this.currentTrips >= card.minTrips;
+      card.unlocked = this.currentTrips >= card.minTrips;
       
-      // Solo actualizamos el estado si no ha sido marcada como actual por el tipo de viajero
-      if (!card.isCurrent) {
-        card.unlocked = isUnlockedByTrips;
-      }
+      // Una tarjeta es la actual si la cantidad de viajes está dentro de su rango
+      card.isCurrent = this.currentTrips >= card.minTrips && 
+                       (card.maxTrips === undefined || this.currentTrips < card.maxTrips);
       
-      // Actualizar la cantidad de viajes restantes
-      card.remainingTrips = isUnlockedByTrips 
-        ? 0 
-        : card.minTrips - this.currentTrips;
-    });
-  }
-  
-  private updateCurrentMembershipCard(typeTraveler: string): void {
-    // Actualizar las tarjetas basado en el tipo de viajero recibido
-    this.membershipCards.forEach(card => {
-      if (card.title === typeTraveler) {
-        card.unlocked = true;
-        card.isCurrent = true;
+      // Actualizar el tipo según el estado actual
+      if (card.isCurrent) {
+        card.type = 'Enhorabuena, ya eres viajero:';
+      } else {
+        card.type = 'Viajero';
       }
     });
   }
@@ -199,71 +168,73 @@ export class PointsSectionComponent implements OnInit {
     
     this.pointsService.getTotalPointsByDni(this.userEmail).subscribe({
       next: (total: number) => {
-        console.log('Total de puntos obtenido con getTotalPointsByDni:', total);
         this.totalPoints = total;
       },
       error: (error) => {
-        console.error('Error al obtener el total de puntos:', error);
       }
     });
   }
 
   private loadMembershipCards(): void {
-    const cardConfigs = [
-      {
-        title: 'Globetrotter',
-        minTrips: 1,
-        maxTrips: 3,
-        type: 'Viajero',
-      },
-      {
-        title: 'Voyager',
-        minTrips: 3,
-        maxTrips: 6,
-        type: 'Viajero',
-      },
-      {
-        title: 'Nomad',
-        minTrips: 6,
-        maxTrips: undefined,
-        type: 'Viajero',
-      },
-    ];
-
     this.generalConfigService
       .getPointsSection()
       .subscribe({
         next: (response: PointsSection) => {
-          console.log('Respuesta de getPointsSection:', response);
-          
-          this.membershipCards = cardConfigs
-            .map((config) => {
-              const card = response['points-cards'].find(
-                (c) => c.name === config.title
-              );
-              if (!card) return null;
+          // Verificar que tenemos las tarjetas de puntos
+          if (response['points-cards'] && response['points-cards'].length > 0) {
+            // Ordenar las tarjetas por minTravels para asegurarnos de que estén en orden ascendente
+            const sortedCards = [...response['points-cards']].sort((a, b) => {
+              const minA = parseInt(a.minTravels) || 0;
+              const minB = parseInt(b.minTravels) || 0;
+              return minA - minB;
+            });
+            
+            // Transformar las PointsCard en MembershipCard
+            this.membershipCards = sortedCards.map((card, index, array) => {
+              // Convertir minTravels a número
+              const minTrips = parseInt(card.minTravels) || 0;
               
+              // Determinar maxTrips: 
+              // - Si hay una siguiente tarjeta, maxTrips es el minTravels de esa tarjeta
+              // - Si es la última tarjeta, maxTrips es undefined (sin límite)
+              let maxTrips: number | undefined;
+              if (index < array.length - 1) {
+                maxTrips = parseInt(array[index + 1].minTravels) || undefined;
+              }
+              
+              // Si maxTravels está definido en la tarjeta, usamos ese valor
+              if (card.maxTravels && card.maxTravels !== '' && !isNaN(Number(card.maxTravels))) {
+                maxTrips = parseInt(card.maxTravels.toString());
+              }
+              
+              // Generar el texto del requisito
+              const requirement = !maxTrips
+                ? `${minTrips} viajes en adelante`
+                : `${minTrips} - ${maxTrips} viajes`;
+              
+              // Por defecto todas las tarjetas muestran "Viajero" como tipo
               return {
-                type: config.type,
-                title: config.title,
-                image: card['point-image'][0].url,
+                type: 'Viajero',
+                title: card.name,
+                image: card['point-image'][0]?.url || '',
                 benefits: this.sanitizeHtml(card.content),
-                unlocked: false,
-                isCurrent: false,
-                requirement: !config.maxTrips
-                  ? `${config.minTrips} viajes en adelante`
-                  : `${config.minTrips} - ${config.maxTrips} viajes`,
-                minTrips: config.minTrips,
-                maxTrips: config.maxTrips,
-                remainingTrips: 0, // Se actualizará cuando tengamos los datos reales
+                unlocked: false, // Se actualizará después con updateCardsByCount
+                isCurrent: false, // Se actualizará después con updateCardsByCount
+                requirement: requirement,
+                minTrips: minTrips,
+                maxTrips: maxTrips,
+                remainingTrips: minTrips, // Valor inicial, se actualizará después
+                statusText: 'Desbloqueado' // Valor inicial, se actualizará después
               };
-            })
-            .filter((card) => card !== null);
-          
-          console.log('Tarjetas de membresía procesadas:', this.membershipCards);
+            });
+            
+            // Si ya tenemos la cantidad de viajes, actualizamos los estados de las tarjetas
+            if (this.currentTrips > 0) {
+              this.updateCardsByCount();
+            }
+          }
         },
         error: (error) => {
-          console.error('Error al obtener las tarjetas de membresía:', error);
         }
       });
   }
@@ -278,9 +249,7 @@ export class PointsSectionComponent implements OnInit {
   }
 
   getRemainingTripsText(card: MembershipCard): string {
-    if (card.isCurrent) {
-      return 'Nivel Actual';
-    } else if (card.unlocked) {
+    if (card.unlocked) {
       return 'Desbloqueado';
     } else {
       const requiredTrips = card.minTrips;
@@ -288,8 +257,21 @@ export class PointsSectionComponent implements OnInit {
     }
   }
 
+  // Nuevo método para formatear los puntos con el símbolo + o - según el tipo
+  getFormattedPoints(point: PointsRecord): string {
+    if (point.type === 'redemption') {
+      return `- ${point.points}`;
+    } else {
+      return `+ ${point.points}`;
+    }
+  }
+
+  // Método para obtener la clase CSS según el tipo de punto (para colorear)
+  getPointsClass(type: string): string {
+    return type === 'redemption' ? 'redemption-points' : 'income-points';
+  }
+
   toggleTable(): void {
     this.showTable = !this.showTable;
-    console.log('Estado de la tabla:', this.showTable ? 'Visible' : 'Oculta');
   }
 }

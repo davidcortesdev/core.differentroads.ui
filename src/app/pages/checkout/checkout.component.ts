@@ -10,6 +10,7 @@ import { ReservationMode } from '../../core/models/tours/reservation-mode.model'
 import { PricesService } from '../../core/services/checkout/prices.service';
 import { ActivitiesService } from '../../core/services/checkout/activities.service';
 import { Activity } from '../../core/models/tours/activity.model';
+import { OptionalActivityRef } from '../../core/models/orders/order.model';
 import { FlightsService } from '../../core/services/checkout/flights.service';
 import { Flight } from '../../core/models/tours/flight.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -83,6 +84,7 @@ export class CheckoutComponent implements OnInit {
 
   // Cart information
   activities: Activity[] = [];
+  selectedActivities: OptionalActivityRef[] = [];
   selectedFlight: Flight | null = null;
   selectedInsurances: Insurance[] = [];
   summary: { qty: number; value: number; description: string }[] = [];
@@ -165,8 +167,6 @@ export class CheckoutComponent implements OnInit {
     const orderId =
       this.route.snapshot.paramMap.get('id') || '67b702314d0586617b90606b';
     this.ordersService.getOrderDetails(orderId).subscribe((order) => {
-      console.log('Order details:', order);
-
       this.orderDetails = order;
       this.summaryService.updateOrder(order);
 
@@ -192,7 +192,6 @@ export class CheckoutComponent implements OnInit {
           'returnDate',
         ])
         .subscribe((period) => {
-          console.log('Period details:', period);
           this.periodData = period;
           this.tourName = period.tourName;
 
@@ -222,6 +221,7 @@ export class CheckoutComponent implements OnInit {
       this.travelers = data.adults + data.childs + data.babies;
       this.travelersSelected = data;
       this.updateOrderSummary();
+      this.updateActivitiesSelectedTravelers();
     });
 
     this.travelersService.travelers$.subscribe((travelers) => {
@@ -233,14 +233,19 @@ export class CheckoutComponent implements OnInit {
     });
 
     this.roomsService.selectedRooms$.subscribe((rooms) => {
-      console.log('Selected rooms:', rooms);
       this.rooms = rooms;
       this.updateOrderSummary();
     });
 
+    this.activitiesService.selectedActivities$.subscribe(
+      (selectedActivities) => {
+        this.selectedActivities = selectedActivities;
+        this.updateOrderSummary();
+      }
+    );
+
     this.activitiesService.activities$.subscribe((activities) => {
       this.activities = activities;
-      this.updateOrderSummary();
     });
 
     this.flightsService.selectedFlight$.subscribe((flight) => {
@@ -260,7 +265,6 @@ export class CheckoutComponent implements OnInit {
     });
 
     this.discountsService.selectedDiscounts$.subscribe((discounts) => {
-      console.log('Discounts updated:', discounts);
       this.updateOrderSummary();
     });
   }
@@ -374,6 +378,8 @@ export class CheckoutComponent implements OnInit {
     });
 
     this.activitiesService.updateActivities(activities);
+    // Actualizar las actividades seleccionadas en el service
+    this.activitiesService.updateSelectedActivities(optionalActivitiesRef);
   }
 
   initializeFlights(flights: Flight[] | { id: string; externalID: string }[]) {
@@ -492,48 +498,75 @@ export class CheckoutComponent implements OnInit {
       });
     });
 
-    this.activities.forEach((activity) => {
-      const adultsPrice = this.pricesService.getPriceById(
-        activity.activityId,
-        'Adultos'
-      );
-      const childsPrice = this.pricesService.getPriceById(
-        activity.activityId,
-        'Niños'
+    const travelers = this.travelersService.getTravelers();
+    this.selectedActivities.forEach((activityRef) => {
+      const activityData = this.activities.find(
+        (act) => act.activityId === activityRef.id
       );
 
-      const babiesPrice = this.pricesService.getPriceById(
-        activity.activityId,
-        'Bebes'
-      );
-      if (adultsPrice === childsPrice) {
-        this.summary.push({
-          qty: this.travelersSelected.adults + this.travelersSelected.childs,
-          value: adultsPrice,
-          description: activity.name,
+      if (activityData) {
+        let adultCount = 0,
+          childCount = 0,
+          babyCount = 0;
+        activityRef.travelersAssigned.forEach((travelerId) => {
+          const traveler = travelers.find((t) => t._id === travelerId);
+          if (traveler) {
+            const ageGroup = traveler.travelerData?.ageGroup;
+            if (ageGroup === 'Adultos') adultCount++;
+            else if (ageGroup === 'Niños') childCount++;
+            else if (ageGroup === 'Bebes') babyCount++;
+          }
         });
-      } else {
-        if (adultsPrice) {
+
+        // Nuevos cambios: combinar adultos y niños si el precio es el mismo
+        const adultPrice = this.pricesService.getPriceById(
+          activityData.activityId,
+          'Adultos'
+        );
+        const childPrice = this.pricesService.getPriceById(
+          activityData.activityId,
+          'Niños'
+        );
+
+        if (adultPrice !== undefined && childPrice !== undefined) {
+          if (adultPrice === childPrice) {
+            const combinedCount = adultCount + childCount;
+            if (combinedCount > 0) {
+              this.summary.push({
+                qty: combinedCount,
+                value: adultPrice,
+                description: `${activityData.name}`,
+              });
+            }
+          } else {
+            if (adultCount > 0 && adultPrice) {
+              this.summary.push({
+                qty: adultCount,
+                value: adultPrice,
+                description: `${activityData.name} (adultos)`,
+              });
+            }
+            if (childCount > 0 && childPrice && childPrice !== 0) {
+              this.summary.push({
+                qty: childCount,
+                value: childPrice,
+                description: `${activityData.name} (niños)`,
+              });
+            }
+          }
+        }
+
+        if (babyCount > 0) {
+          const price = this.pricesService.getPriceById(
+            activityData.activityId,
+            'Bebes'
+          );
           this.summary.push({
-            qty: this.travelersSelected.adults,
-            value: adultsPrice,
-            description: activity.name + ' (adultos)',
+            qty: babyCount,
+            value: price || 0,
+            description: `${activityData.name} (bebes)`,
           });
         }
-        if (childsPrice && this.travelersSelected.childs) {
-          this.summary.push({
-            qty: this.travelersSelected.childs,
-            value: childsPrice,
-            description: activity.name + ' (niños)',
-          });
-        }
-      }
-      if (babiesPrice) {
-        this.summary.push({
-          qty: this.travelersSelected.babies,
-          value: babiesPrice,
-          description: activity.name + ' (bebes)',
-        });
       }
     });
 
@@ -543,15 +576,9 @@ export class CheckoutComponent implements OnInit {
     // Save the entire summary to the order
     tempOrderData['summary'] = this.summary;
     tempOrderData['travelers'] = travelersData;
-    tempOrderData['optionalActivitiesRef'] = this.activities.map(
-      (activity) => ({
-        id: activity.activityId,
-        _id: activity.id,
-        travelersAssigned: travelersData.map(
-          (traveler) => traveler._id || this.travelersService.generateHexID() // Cambio aquí
-        ),
-      })
-    );
+
+    // Use this.selectedActivities directly instead of calling getActivitiesWithTravelers()
+    tempOrderData['optionalActivitiesRef'] = this.selectedActivities;
 
     // Get all flights for the order from the FlightsService
     const orderFlights = this.flightsService.getOrderFlights();
@@ -639,7 +666,6 @@ export class CheckoutComponent implements OnInit {
       // Use all flights from the service instead of just the selected one
       tempOrderData['flights'] =
         orderFlights.length > 0 ? orderFlights : [this.selectedFlight];
-      console.log('Setting flights in order:', tempOrderData['flights']);
       tempOrderData['flights'] = [this.selectedFlight];
     }
 
@@ -704,12 +730,19 @@ export class CheckoutComponent implements OnInit {
     this.calculateTotals();
   }
 
-  handleTravelersChange(event: {
-    adults: number;
-    childs: number;
-    babies: number;
-  }) {
-    this.travelers = event.adults + event.childs + event.babies;
+  // Updated updateActivitiesSelectedTravelers: add delay to ensure travelers data is ready.
+  updateActivitiesSelectedTravelers(): void {
+    setTimeout(() => {
+      const currentTravelers = this.travelersService.getTravelers();
+      const allIds = currentTravelers.map((t) => t._id!);
+      const updatedActivities = this.selectedActivities.map((activity) => ({
+        ...activity,
+        travelersAssigned: allIds,
+      }));
+      this.selectedActivities = updatedActivities;
+      this.activitiesService.updateSelectedActivities(updatedActivities);
+      this.updateOrderSummary();
+    }, 100);
   }
 
   // Método para manejar el descuento
@@ -826,10 +859,6 @@ export class CheckoutComponent implements OnInit {
             .getFlightPriceById(this.selectedFlight.id)
             .subscribe({
               next: (response) => {
-                console.log(
-                  'Updated flight price data from Amadeus:',
-                  response
-                );
                 // Usar el nuevo método del AmadeusService para transformar la respuesta
                 const transformedPriceData =
                   this.amadeusService.transformFlightPriceData(
@@ -935,8 +964,6 @@ export class CheckoutComponent implements OnInit {
   /* Order update */
 
   updateOrder() {
-    console.log('Updating order:', this.summaryService.getOrderValue());
-
     this.ordersService
       .updateOrder(
         this.summaryService.getOrderValue()!._id,
@@ -944,11 +971,9 @@ export class CheckoutComponent implements OnInit {
       )
       .subscribe({
         next: (response) => {
-          console.log('Order updated:', response);
           return response;
         },
         error: (error) => {
-          console.error('Error updating order:', error);
           return error;
         },
       });

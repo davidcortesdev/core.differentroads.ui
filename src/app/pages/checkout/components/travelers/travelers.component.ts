@@ -14,7 +14,6 @@ interface Traveler {
   birthdate: string;
   sexo: string;
   documentType: string;
-  cp: string;
   nationality: string;
   passportExpirationDate: string;
   passportIssueDate: string;
@@ -69,7 +68,6 @@ export class TravelersComponent implements OnInit {
       birthdate: [''],
       sexo: [''],
       documentType: [''],
-      cp: [''],
       nationality: [''],
       passportExpirationDate: [''],
       passportIssueDate: [''],
@@ -106,7 +104,6 @@ export class TravelersComponent implements OnInit {
           birthdate: traveler.travelerData?.birthdate || '',
           sexo: traveler.travelerData?.sex || '',
           documentType: traveler.travelerData?.documentType || '',
-          cp: traveler.travelerData?.postalCode || '',
           nationality: traveler.travelerData?.nationality || '',
           passportExpirationDate:
             traveler.travelerData?.passportExpirationDate || '',
@@ -140,7 +137,6 @@ export class TravelersComponent implements OnInit {
       birthdate: [''],
       sexo: [''],
       documentType: [''],
-      cp: [''],
       nationality: [''],
       passportExpirationDate: [''],
       passportIssueDate: [''],
@@ -210,7 +206,6 @@ export class TravelersComponent implements OnInit {
           passportIssueDate: traveler.passportIssueDate,
           ageGroup: traveler.ageGroup,
           dni: traveler.dni,
-          postalCode: traveler.cp,
           sex: traveler.sexo,
           documentType: traveler.documentType,
           // Campos adicionales para bebés:
@@ -287,15 +282,12 @@ export class TravelersComponent implements OnInit {
           'birthdate',
           'sexo',
           'documentType',
-          'cp',
           'nationality',
           'passportExpirationDate',
           'passportIssueDate',
         ];
 
         additionalFields.forEach((field) => {
-          console.log('Field', field, form.get(field)?.errors?.['required']);
-
           if (form.get(field)?.errors?.['required']) {
             // Mapear nombres de campo a nombres más amigables
             const fieldNames: { [key: string]: string } = {
@@ -304,7 +296,6 @@ export class TravelersComponent implements OnInit {
               birthdate: 'Fecha de nacimiento',
               sexo: 'Sexo',
               documentType: 'Tipo de documento',
-              cp: 'Código postal',
               nationality: 'Nacionalidad',
               passportExpirationDate: 'Fecha de caducidad del pasaporte',
               passportIssueDate: 'Fecha de expedición del pasaporte',

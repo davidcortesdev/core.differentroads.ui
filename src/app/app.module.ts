@@ -177,7 +177,7 @@ import { TravelerItemComponent } from './pages/checkout/components/traveler-item
 import { FlightSectionComponent } from './pages/checkout/components/flight-section/flight-section.component';
 import { LoginModalComponent } from './shared/components/login-modal/login-modal.component';
 /* import { LoginModalComponent } from './pages/checkout/components/flights/components/login-modal/login-modal.component';
- */import { BookingsComponent } from './pages/bookings/bookings.component';
+ */ import { BookingsComponent } from './pages/bookings/bookings.component';
 import { BookingActivitiesComponent } from './pages/bookings/booking-activities/booking-activities.component';
 import { BookingCodeSectionComponent } from './pages/bookings/booking-code-section/booking-code-section.component';
 import { BookingDetailsViewComponent } from './pages/bookings/booking-details-view/booking-details-view.component';
@@ -199,9 +199,10 @@ import { TourItineraryPanelComponent } from './pages/tour/components/tour-itiner
 import { AirportSearchComponent } from './features/airports/airport-search/airport-search.component';
 
 import { SummaryTableComponent } from './components/summary-table/summary-table.component';
+import { TravelerActivitySelectorComponent } from './pages/checkout/components/traveler-activity-selector/traveler-activity-selector.component';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 // Register Spanish locale data
 registerLocaleData(localeEs);
-
 
 @NgModule({
   declarations: [
@@ -308,6 +309,7 @@ registerLocaleData(localeEs);
     TourItineraryPanelComponent,
     AirportSearchComponent,
     SummaryTableComponent,
+    TravelerActivitySelectorComponent,
   ],
   imports: [
     // Angular Modules
@@ -368,6 +370,7 @@ registerLocaleData(localeEs);
     SkeletonModule,
     Dialog,
     OverlayPanelModule,
+    ToggleSwitchModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

@@ -548,7 +548,7 @@ export class CheckoutComponent implements OnInit {
         id: activity.activityId,
         _id: activity.id,
         travelersAssigned: travelersData.map(
-          (traveler) => traveler._id || '123'
+          (traveler) => traveler._id || this.travelersService.generateHexID() // Cambio aquí
         ),
       })
     );
@@ -640,6 +640,41 @@ export class CheckoutComponent implements OnInit {
       tempOrderData['flights'] =
         orderFlights.length > 0 ? orderFlights : [this.selectedFlight];
       console.log('Setting flights in order:', tempOrderData['flights']);
+      tempOrderData['flights'] = [this.selectedFlight];
+    }
+
+    if (this.selectedInsurances.length === 0) {
+      this.summary.push({
+        qty:
+          this.travelersSelected.adults +
+          this.travelersSelected.childs +
+          this.travelersSelected.babies,
+        value: 0,
+        description: 'Seguro básico',
+      });
+    }
+
+    if (this.selectedInsurances.length > 0) {
+      this.selectedInsurances.forEach((insurance) => {
+        this.summary.push({
+          qty:
+            this.travelersSelected.adults +
+            this.travelersSelected.childs +
+            this.travelersSelected.babies,
+          value: insurance.price || 0,
+          description: insurance.name,
+        });
+      });
+      tempOrderData['insurancesRef'] = this.selectedInsurances.map(
+        (insurance) => ({
+          id: insurance.activityId,
+          travelersAssigned: travelersData.map(
+            (traveler) => traveler._id || this.travelersService.generateHexID() // Cambio aquí
+          ),
+        })
+      );
+    } else {
+      tempOrderData['insurancesRef'] = [];
     }
 
     // Append all discounts from DiscountsService

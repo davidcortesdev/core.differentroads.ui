@@ -20,6 +20,7 @@ import { takeUntil } from 'rxjs/operators';
 import { CountriesService } from '../../../../core/services/countries.service';
 import { Country } from '../../../../shared/models/country.model';
 import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
+import { TravelersService } from '../../../../core/services/checkout/travelers.service';
 
 // Interfaces para mejorar la tipificación
 export interface TravelerData {
@@ -59,7 +60,7 @@ export function pastDateValidator(): ValidatorFn {
   standalone: false,
   templateUrl: './traveler-item.component.html',
   styleUrls: ['./traveler-item.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush, // Mejora de rendimiento
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
   @Input() form!: FormGroup;
@@ -68,24 +69,37 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
   @Input() sexoOptions: SelectOption[] = [];
   @Input() getAdultsOptionsFn!: (index: number) => SelectOption[];
   @Input() allFieldsMandatory: boolean = false;
+  @Input() travelerId: string | null = null;
 
   @ViewChild('sexoSelect') sexoSelect!: Select;
 
-  // Add showMoreFields flag to control visibility
-  showMoreFields: boolean = false;
+  // Propiedad para almacenar y mostrar los IDs
+  travelerIds: { id: string | null; _id: string | null } = {
+    id: null,
+    _id: null,
+  };
 
-  // Cache para opciones de documentos
+  showMoreFields: boolean = false;
   private documentOptionsCache: { [key: string]: SelectOption[] } = {};
-  // Destructor de suscripciones
   private destroy$ = new Subject<void>();
 
   // Propiedades para el autocompletado de países
   filteredCountries: Country[] = [];
 
-  constructor(private countriesService: CountriesService) {}
+  constructor(
+    private countriesService: CountriesService,
+    private travelersService: TravelersService
+  ) {}
 
   ngOnInit(): void {
-    // Escuchar cambios en campos relevantes para limpiar caché
+    // Inicializar el ID del viajero si no existe
+    this.initializeTravelerId();
+
+    // Mostrar IDs en consola
+    this.logTravelerIds();
+    const currentTraveler = this.travelersService.getTravelers()[this.index];
+    this.travelerId = currentTraveler?._id || null;
+
     if (this.form) {
       this.form
         .get('ageGroup')
@@ -129,12 +143,37 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnDestroy(): void {
-    // Limpiar suscripciones al destruir el componente
     this.destroy$.next();
     this.destroy$.complete();
   }
 
-  // Add toggle method for show more/less functionality
+  private initializeTravelerId(): void {
+    const currentTravelers = this.travelersService.getTravelers();
+
+    if (currentTravelers[this.index]) {
+      // Generar un nuevo ID si no existe
+      if (!currentTravelers[this.index]._id) {
+        currentTravelers[this.index]._id =
+          this.travelersService.generateHexID();
+        this.travelersService.updateTravelers(currentTravelers);
+      }
+
+      // Actualizar la propiedad para mostrar en el template
+      this.travelerIds = {
+        id: currentTravelers[this.index].id || null,
+        _id: currentTravelers[this.index]._id || null,
+      };
+    }
+  }
+
+  private logTravelerIds(): void {
+    const currentTraveler = this.travelersService.getTravelers()[this.index];
+    console.groupCollapsed(`IDs del Viajero ${this.index + 1}`);
+    console.log('ID:', currentTraveler?.id || 'No disponible');
+    console.log('_ID:', currentTraveler?._id || 'No disponible');
+    console.groupEnd();
+  }
+
   toggleMoreFields(): void {
     this.showMoreFields = !this.showMoreFields;
   }
@@ -205,24 +244,15 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  /**
-   * Obtiene el título del pasajero con su número
-   * @param num Número de pasajero
-   */
   getTitlePasajero(num: string): string {
     return 'Pasajero ' + num;
   }
 
-  /**
-   * Obtiene las opciones de documento basadas en edad y nacionalidad
-   * Implementa memoización para evitar cálculos repetidos
-   */
   getDocumentOptions(): SelectOption[] {
     const ageGroup = this.form.get('ageGroup')?.value || '';
     const nationality = this.form.get('nationality')?.value || '';
     const cacheKey = `${ageGroup}-${nationality}`;
 
-    // Devolver del caché si existe
     if (this.documentOptionsCache[cacheKey]) {
       return this.documentOptionsCache[cacheKey];
     }
@@ -237,25 +267,16 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
       options.push({ label: 'DNI', value: 'dni' });
     }
 
-    // Pasaporte siempre disponible
     options.push({ label: 'Pasaporte', value: 'passport' });
 
-    // Guardar en caché para futuras llamadas
     this.documentOptionsCache[cacheKey] = options;
-
     return options;
   }
 
-  /**
-   * Obtiene las opciones de adultos para asociar a un bebé
-   */
   getAdultsOptions(): SelectOption[] {
     return this.getAdultsOptionsFn ? this.getAdultsOptionsFn(this.index) : [];
   }
 
-  /**
-   * Limpia la caché de opciones de documentos cuando cambian los valores relevantes
-   */
   private clearDocumentOptionsCache(): void {
     this.documentOptionsCache = {};
   }

@@ -9,7 +9,6 @@ export interface Point {
   category: string;
   concept: string;
   origin: string;
-  count:number;
   transactionEmail: string;
 }
 

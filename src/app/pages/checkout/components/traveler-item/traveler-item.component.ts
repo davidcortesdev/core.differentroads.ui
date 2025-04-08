@@ -86,6 +86,9 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
   // Propiedades para el autocompletado de países
   filteredCountries: Country[] = [];
 
+  // Formatos de fecha aceptados
+  dateFormat: string = 'dd/mm/yy';
+
   constructor(
     private countriesService: CountriesService,
     private travelersService: TravelersService
@@ -128,6 +131,9 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
         }
       });
     }
+
+    // Convertir todos los campos de fecha string a objetos Date
+    this.convertDateFields();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -139,6 +145,11 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
       if (this.allFieldsMandatory) {
         this.showMoreFields = true;
       }
+    }
+
+    // Si hay cambios en los datos del viajero, convertir fechas
+    if (changes['traveler']) {
+      this.convertDateFields();
     }
   }
 
@@ -311,5 +322,37 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
    */
   trackByFn(index: number, item: any): number {
     return index;
+  }
+
+  /**
+   * Convierte los valores string de fecha a objetos Date para los datepickers
+   */
+  private convertDateFields(): void {
+    if (!this.form) return;
+
+    const dateFields = [
+      'birthdate',
+      'passportExpirationDate',
+      'passportIssueDate',
+      'minorIdExpirationDate',
+      'minorIdIssueDate',
+    ];
+
+    dateFields.forEach((field) => {
+      const control = this.form.get(field);
+      if (control && control.value && !(control.value instanceof Date)) {
+        try {
+          // Convertir el valor string a Date
+          const dateValue = new Date(control.value);
+          if (!isNaN(dateValue.getTime())) {
+            // Comprobar si es una fecha válida
+            control.setValue(dateValue, { emitEvent: false });
+            console.log(`Campo ${field} convertido a Date:`, dateValue);
+          }
+        } catch (error) {
+          console.error(`Error al convertir la fecha para ${field}:`, error);
+        }
+      }
+    });
   }
 }

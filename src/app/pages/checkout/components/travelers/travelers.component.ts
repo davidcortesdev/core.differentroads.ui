@@ -50,7 +50,8 @@ export class TravelersComponent implements OnInit {
   // Opciones base para documento (se completarán dinámicamente)
   baseDocumentOptions = [
     { label: 'Pasaporte', value: 'passport' },
-    { label: 'DNI', value: 'dni' },
+    /*     { label: 'DNI', value: 'dni' },
+     */
   ];
 
   constructor(
@@ -73,8 +74,8 @@ export class TravelersComponent implements OnInit {
       passportIssueDate: [''],
       ageGroup: [''],
       category: [''],
-      dni: [''],
-      // Campos adicionales para viajeros bebés
+      /*       dni: [''],
+       */ // Campos adicionales para viajeros bebés
       minorIdExpirationDate: [''],
       minorIdIssueDate: [''],
       associatedAdult: [''],
@@ -109,8 +110,8 @@ export class TravelersComponent implements OnInit {
             traveler.travelerData?.passportExpirationDate || '',
           passportIssueDate: traveler.travelerData?.passportIssueDate || '',
           ageGroup: traveler.travelerData?.ageGroup || '',
-          dni: traveler.travelerData?.dni || '',
-          minorIdExpirationDate:
+          /*           dni: traveler.travelerData?.dni || '',
+           */ minorIdExpirationDate:
             traveler.travelerData?.minorIdExpirationDate || '',
           minorIdIssueDate: traveler.travelerData?.minorIdIssueDate || '',
           associatedAdult: traveler.travelerData?.associatedAdult || '',
@@ -205,8 +206,8 @@ export class TravelersComponent implements OnInit {
           passportExpirationDate: traveler.passportExpirationDate,
           passportIssueDate: traveler.passportIssueDate,
           ageGroup: traveler.ageGroup,
-          dni: traveler.dni,
-          sex: traveler.sexo,
+          /*           dni: traveler.dni,
+           */ sex: traveler.sexo,
           documentType: traveler.documentType,
           // Campos adicionales para bebés:
           minorIdExpirationDate: traveler.minorIdExpirationDate,
@@ -329,9 +330,9 @@ export class TravelersComponent implements OnInit {
     if (form.get('ageGroup')?.value === 'Bebés') {
       options.push({ label: 'Libro de Familia', value: 'family-book' });
     }
-    if (form.get('nationality')?.value === 'Español') {
+    /*   if (form.get('nationality')?.value === 'Español') {
       options.push({ label: 'DNI', value: 'dni' });
-    }
+    } */
     options.push({ label: 'Pasaporte', value: 'passport' });
     return options;
   }

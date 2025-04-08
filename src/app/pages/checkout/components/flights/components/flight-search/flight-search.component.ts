@@ -319,19 +319,10 @@ export class FlightSearchComponent implements OnInit {
       const inboundItinerary =
         offerData.itineraries.length > 1 ? offerData.itineraries[1] : null;
 
-      // Transformar precios usando el método del AmadeusService
-      const priceDataArray = offerData.travelerPricings.map((tp: any) => ({
-        id: offer._id,
-        value: this.amadeusService.calculatePriceWithMarkup(tp.price.total),
-        value_with_campaign: this.amadeusService.calculatePriceWithMarkup(
-          tp.price.total
-        ),
-        campaign: null,
-        age_group_name: tp.travelerType === 'ADULT' ? 'Adultos' : 'Niños',
-        category_name: 'amadeus',
-        period_product: 'flight',
-        _id: offer._id,
-      }));
+      // Use transformFlightPriceData method to get the price data array
+      const priceDataArray = this.amadeusService.transformFlightPriceData([
+        offerData,
+      ]);
 
       // Creamos las fechas formateadas para los vuelos
       const departureDateStr = this.formatDate(this.fechaIdaConstante);
@@ -560,9 +551,9 @@ export class FlightSearchComponent implements OnInit {
               serviceCombinationID: 0,
               prices: [],
             },
-        price: this.amadeusService.calculatePriceWithMarkup(
-          offerData.price.total
-        ),
+        price:
+          priceDataArray.find((price) => price.age_group_name === 'Adultos')
+            ?.value_with_campaign || 0,
         priceData: priceDataArray,
         // Add source property to indicate Amadeus flight
         source: 'amadeus',

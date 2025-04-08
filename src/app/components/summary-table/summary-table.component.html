@@ -7,14 +7,14 @@
             <div class="selected-items">
                 <div *ngFor="let item of summary" class="item" [ngClass]="{'discount': isDiscount(item)}">
                     <span class="description">{{ getDescription(item) }}</span>
-                    <span *ngIf="getValue(item) !== null" class="value-container">
+                    <span *ngIf="getValue(item) != 0" class="value-container">
                         <span class="qty">{{ getQuantity(item) }}</span>
                         <span class="operator">x</span>
                         <span class="unit-price">{{ getValue(item) | currencyFormat : currency }}</span>
                         <span class="operator">=</span>
                         <span class="total-price">{{ calculateTotal(item) | currencyFormat : currency }}</span>
                     </span>
-                    <span *ngIf="getValue(item) === null" class="included-container">
+                    <span *ngIf="getValue(item) == 0" class="included-container">
                         <span class="included-text">{{ includedText }}</span>
                     </span>
                 </div>

@@ -146,12 +146,14 @@ $a: var(--background-azul);
     
     // Right info
     .info-right {
-      margin-top: 5px;
-      @include flex(column, flex-start, stretch, 0.5rem);
+      margin-top: 1.5rem;
+      width: 10rem;
+      @include flex(column, flex-start, stretch, 1.5rem);
       
       .departure-info {
         display: flex;
         align-items: left;
+        justify-content: space-between;
         max-width: 100%;
         overflow: hidden;
         
@@ -160,13 +162,12 @@ $a: var(--background-azul);
           color: $a;
         }
         
-        strong { margin-left: 15px; }
         
         .state {
           margin-left: 5px;
           background-color: $a;
           color: #fff !important;
-          padding: 1px 5px;
+          //padding: 1px 5px;
           border-radius: 5px;
           font-size: 0.7rem !important;
         }
@@ -174,14 +175,15 @@ $a: var(--background-azul);
       
       .passenger-price {
         display: flex;
-        justify-content: flex-end;
+        align-self: flex-end;
+        justify-content:space-between;   
+        width: 100%;     
         align-items: center;
-        gap: 4px;
         margin-top: auto;
         padding-bottom: 0px;
-        position: relative;
-        top: 43px;
-        right: 15px;
+        //position: relative;
+        //top: 43px;
+        //right: 15px;
         
         i, span {
           font-size: 16px;
@@ -199,6 +201,12 @@ $a: var(--background-azul);
         strong {
           font-size: 16px;
           color: $p;
+        }
+
+        .passenger-info {
+          display: flex;
+          align-items: center;
+          gap: 10px;
         }
       }
     }

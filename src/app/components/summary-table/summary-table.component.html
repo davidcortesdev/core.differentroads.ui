@@ -24,7 +24,7 @@
             <br *ngIf="showPointsSection" /><br *ngIf="showPointsSection" />
             <div class="points-section" *ngIf="showPointsSection">
                 <div *ngIf="isAuthenticated; else notAuthenticated">
-                    <p>Acumulas {{ subtotal * 0.03 | number:'1.0-0' }} puntos con este viaje</p>
+                    <p>Acumulas {{ getEarnedPoints() }} puntos con este viaje</p>
                     <p-message severity="secondary" size="small" icon="pi pi-exclamation-circle">
                         Se genera un abono del 3% del importe del viaje en puntos a
                         descontar en futuras compras.

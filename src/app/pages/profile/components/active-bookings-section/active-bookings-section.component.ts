@@ -1,9 +1,10 @@
 import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router'; 
 import { BookingsService } from '../../../../core/services/bookings.service';
-import { forkJoin, Subscription } from 'rxjs';
+import { forkJoin, Subscription, from, of } from 'rxjs';
 import { ToursService } from '../../../../core/services/tours.service';
 import { CldImage } from '../../../../core/models/commons/cld-image.model';
+import { mergeMap, catchError, finalize } from 'rxjs/operators';
 
 interface Booking {
   id: string;
@@ -69,9 +70,11 @@ export class ActiveBookingsSectionComponent implements OnInit, OnDestroy {
         // Ordenar por fecha de creación (más reciente primero)
         this.bookings.sort((a, b) => b.creationDate.getTime() - a.creationDate.getTime());
         
+        // Fetch detailed booking information to get accurate prices
+        this.fetchDetailedBookingInfo();
+        
         // Cargar las imágenes después de que las reservas estén disponibles
         this.loadTourImages();
-        this.loading = false;
       },
       error: (error) => {
         console.error('Error fetching bookings:', error);
@@ -80,6 +83,63 @@ export class ActiveBookingsSectionComponent implements OnInit, OnDestroy {
     });
     
     this.subscriptions.add(subscription);
+  }
+  
+  fetchDetailedBookingInfo() {
+    // Process bookings in batches to avoid too many simultaneous requests
+    const processBookings = (startIndex = 0) => {
+      const batch = this.bookings.slice(startIndex, startIndex + this.BATCH_SIZE);
+      if (!batch.length) {
+        this.loading = false;
+        return;
+      }
+      
+      const subscription = from(batch)
+        .pipe(
+          mergeMap(booking => {
+            return this.bookingsService.getBookingById(booking.id).pipe(
+              catchError(error => {
+                console.error(`Error fetching detailed info for booking ${booking.id}:`, error);
+                return of(null);
+              })
+            );
+          }, 3) // Limit concurrent requests to 3
+        )
+        .subscribe({
+          next: (detailedBooking) => {
+            if (detailedBooking) {
+              // Find the corresponding booking in our array
+;
+                const index = this.bookings.findIndex(b => b.reservationNumber === detailedBooking.ID);
+                console.log(this.bookings)
+                console.log(detailedBooking);
+                console.log(detailedBooking.periodData?.['total']);
+                console.log(detailedBooking.periodData?.['total']);
+
+                this.bookings[index].price = detailedBooking.periodData?.['total'] || 0;
+                
+                this.cdr.detectChanges();
+              
+            }
+          },
+          complete: () => {
+            // Process next batch
+            const nextIndex = startIndex + this.BATCH_SIZE;
+            if (nextIndex < this.bookings.length) {
+              setTimeout(() => {
+                processBookings(nextIndex);
+              }, this.BATCH_DELAY);
+            } else {
+              this.loading = false;
+            }
+          }
+        });
+      
+      this.subscriptions.add(subscription);
+    };
+    
+    // Start processing bookings
+    processBookings();
   }
   
   mapBooking(booking: any): Booking {

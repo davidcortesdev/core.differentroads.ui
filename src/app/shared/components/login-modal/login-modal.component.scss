@@ -1,0 +1,155 @@
+/* Estilos generales del modal */
+:host ::ng-deep .login-modal .p-dialog-header {
+    display: flex;
+    flex-direction: row;
+    padding: 1.25rem;
+    border-bottom: 1px solid #f0f0f0;
+    position: relative;
+}
+
+/* Título del modal */
+:host ::ng-deep .login-modal .p-dialog-title {
+    width: 100%;
+    text-align: center;
+    margin: 0;
+    font-weight: bold;
+    color: var(--background-azul);
+}
+
+/* Contenedor de iconos del header */
+:host ::ng-deep .login-modal .p-dialog-header-icons {
+    position: absolute !important;
+    right: 1rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    margin: 0 !important;
+}
+
+/* Botón de cerrar */
+:host ::ng-deep .login-modal .p-dialog-header-icon,
+:host ::ng-deep .login-modal .p-dialog-header-close {
+    border: none !important;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+    color: var(--background-azul) !important;
+}
+
+/* Estados hover y focus del botón cerrar */
+:host ::ng-deep .login-modal .p-dialog-header-icon:hover,
+:host ::ng-deep .login-modal .p-dialog-header-icon:focus,
+:host ::ng-deep .login-modal .p-dialog-header-close:hover,
+:host ::ng-deep .login-modal .p-dialog-header-close:focus {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    color: var(--background-azul) !important;
+}
+
+:host ::ng-deep .login-modal .p-dialog-content {
+    padding: 1.5rem 1rem;
+    overflow-x: hidden;
+}
+
+:host ::ng-deep .login-modal .p-dialog-header h2 {
+    color: var(--background-azul);
+    margin: 0;
+    font-weight: bold;
+    width: 100%;
+    text-align: center;
+    margin-left: 30px;
+}
+
+:host ::ng-deep .login-modal .login-modal-content {
+    text-align: center;
+    color: var(--background-azul);
+    line-height: 1.5;
+}
+
+:host ::ng-deep .login-modal .p-dialog-footer {
+    text-align: center;
+    padding: 1.25rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+:host ::ng-deep .login-modal .login-modal-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* Estilos para todos los botones */
+:host ::ng-deep .login-modal .p-button {
+    border-radius: 50px !important;
+    padding: 0.75rem 1.25rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+/* Botón Iniciar sesión - Sin borde */
+:host ::ng-deep .login-modal .p-button.p-button-primary {
+    background-color: var(--p-primary-color) !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    color: white !important;
+}
+
+:host ::ng-deep .login-modal .p-button.p-button-primary:hover {
+    background-color: var(--p-primary-color) !important;
+    filter: brightness(110%);
+    transform: translateY(-1px);
+}
+
+:host ::ng-deep .login-modal .p-button.p-button-primary:focus {
+    box-shadow: none !important;
+}
+
+/* Botón Registrarse - Con borde */
+:host ::ng-deep .login-modal .p-button.p-button-outline {
+    background-color: transparent !important;
+    color: var(--p-primary-color) !important;
+    border: 1px solid var(--p-primary-color) !important;
+    box-shadow: none !important;
+}
+
+:host ::ng-deep .login-modal .p-button.p-button-outline:hover {
+    background-color: rgba(var(--p-primary-color-rgb), 0.04) !important;
+    border: 1px solid var(--p-primary-color) !important;
+}
+
+/* Ajustes de responsividad */
+@media screen and (max-width: 991px) {
+    :host ::ng-deep .login-modal .p-dialog-content {
+        padding: 1rem 0.75rem;
+    }
+
+    :host ::ng-deep .login-modal .p-button {
+        padding: 0.6rem 1rem;
+    }
+}
+
+@media screen and (max-width: 767px) {
+    :host ::ng-deep .login-modal h2 {
+        font-size: 1.25rem;
+    }
+
+    :host ::ng-deep .login-modal .login-modal-content {
+        font-size: 0.9rem;
+    }
+}
+
+@media screen and (max-width: 575px) {
+    :host ::ng-deep .login-modal .login-modal-footer {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    :host ::ng-deep .login-modal .p-button {
+        width: 100%;
+    }
+}

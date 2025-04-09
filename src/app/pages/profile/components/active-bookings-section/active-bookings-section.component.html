@@ -39,7 +39,7 @@
                 <div class="title-section">
                   <h2>{{ booking.title }}</h2>
                 </div>
-                <div class="info-content">
+                <div class="info-content" style="line-height: 2;">
                   <div class="info-row">
                     <span class="label">Nº Reserva:</span>
                     <span class="value budget">{{ booking.reservationNumber }}</span>
@@ -72,15 +72,25 @@
               <!-- Action buttons -->
               <div class="buttons">
                 <div class="top-buttons">
-                  <p-button label="Descargar" class="p-button-outlined"></p-button>
-                  <p-button label="Enviar" class="sendbtn"></p-button>
+                  <p-button 
+                    label="Descargar" 
+                    styleClass="p-button-outlined" 
+                    [rounded]="true"
+                  ></p-button>
+                  <p-button 
+                    label="Enviar" 
+                    styleClass="sendbtn p-button-outlined"
+                    [style]="{width: '100%', backgroundColor: 'var(--background-azul)', color: 'white', height: '30px', fontSize: '0.75rem'}" 
+                    [rounded]="true"
+                  ></p-button>
                 </div>
-                <button
-                  pButton
-                  label="Ver reserva"
-                  class="p-button-rounded"
-                  (click)="viewBooking(booking)"
-                ></button>
+                <div class="view-booking-container">
+                  <p-button
+                    label="Ver reserva"
+                    styleClass="p-button-rounded"
+                    (click)="viewBooking(booking)"
+                  ></p-button>
+                </div>
               </div>
             </div>
           </div>

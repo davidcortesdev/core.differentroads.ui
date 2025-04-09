@@ -1,0 +1,39 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [breakpoints]="{ '1199px': '80vw', '575px': '90vw' }"
+  [style]="{ width: '50vw' }"
+  [draggable]="false"
+  [resizable]="false"
+  (onHide)="onClose()"
+  styleClass="login-modal"
+  [showHeader]="true"
+>
+  <ng-template pTemplate="header">
+    <h2>{{ modalTitle }}</h2>
+  </ng-template>
+
+  <ng-template pTemplate="header">
+    <h2>{{ modalTitle }}</h2>
+  </ng-template>
+  
+  <div class="login-modal-content">
+    <p>{{ modalMessage }}</p>
+    <p>Si ya tienes cuenta, inicia sesión o regístrate para continuar.</p>
+  </div>
+  
+  <ng-template pTemplate="footer">
+    <div class="login-modal-footer">
+      <p-button
+        label="Iniciar sesión"
+        styleClass="p-button-primary"
+        (click)="onLogin()"
+      ></p-button>
+      <p-button
+        label="Registrarse"
+        styleClass="p-button-outline"
+        (click)="onRegister()"
+      ></p-button>
+    </div>
+  </ng-template>
+</p-dialog>

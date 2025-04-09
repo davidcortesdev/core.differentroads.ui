@@ -1,10 +1,13 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { AmadeusService } from '../../../../../../core/services/amadeus.service';
+import { AirportService } from '../../../../../../core/services/airport.service';
+import { TravelersService } from '../../../../../../core/services/checkout/travelers.service';
+import { TextsService } from '../../../../../../core/services/checkout/texts.service';
 import {
   FlightOffersParams,
   ITempFlightOffer,
-} from '../../../../../../core/types/flight.types';
+} from '../../../../../../core/models/amadeus/flight.types';
 import {
   Flight,
   FlightSegment,
@@ -25,10 +28,12 @@ export class FlightSearchComponent implements OnInit {
   @Output() filteredFlightsChange = new EventEmitter<any[]>();
   @Input() flights: Flight[] = [];
   @Input() tourDestination: Ciudad = { nombre: '', codigo: '' };
+  @Input() dayOne: string | null = null;
+  @Input() returnDate: string | null = null;
 
   flightForm: FormGroup;
 
-  tipoViaje: string = 'soloDia';
+  tipoViaje: string = 'idaVuelta';
   equipajeMano: boolean = false;
   equipajeBodega: boolean = false;
 
@@ -46,15 +51,7 @@ export class FlightSearchComponent implements OnInit {
     this.fechaRegresoConstante
   );
 
-  ciudades: Ciudad[] = [
-    { nombre: 'Madrid', codigo: 'MAD' },
-    { nombre: 'Nueva York', codigo: 'NYC' },
-    { nombre: 'Lisboa', codigo: 'LIS' },
-    { nombre: 'Casablanca', codigo: 'CMN' },
-    { nombre: 'Sevilla', codigo: 'SVQ' },
-    { nombre: 'Noruega - Oslo Gardemoen', codigo: 'OSL' },
-    { nombre: 'Sevilla - San Pablo', codigo: 'SVQ' },
-  ];
+  filteredCities: Ciudad[] = [];
 
   aerolineas: Ciudad[] = [
     { nombre: 'Todas', codigo: 'ALL' },
@@ -84,11 +81,27 @@ export class FlightSearchComponent implements OnInit {
   // Array para almacenar vuelos transformados
   transformedFlights: Flight[] = [];
 
-  constructor(private fb: FormBuilder, private amadeusService: AmadeusService) {
+  // Tour name from TextsService
+  tourName: string = 'Destino';
+
+  // Add sorting options
+  sortOptions = [
+    { label: 'Precio (menor a mayor)', value: 'price-asc' },
+    { label: 'Precio (mayor a menor)', value: 'price-desc' },
+    { label: 'Duración (más corto)', value: 'duration' },
+  ];
+
+  selectedSortOption: string = 'price-asc'; // Default sort option
+
+  constructor(
+    private fb: FormBuilder,
+    private amadeusService: AmadeusService,
+    private airportService: AirportService,
+    private travelersService: TravelersService, // Inject TravelersService
+    private textsService: TextsService // Add TextsService
+  ) {
     // Seleccionar ciudad por defecto (Madrid)
-    const defaultCity =
-      this.ciudades.find((city) => city.nombre === 'Madrid') ||
-      this.ciudades[0];
+    const defaultCity = { nombre: 'Madrid', codigo: 'MAD' };
 
     this.flightForm = this.fb.group({
       origen: [defaultCity], // Usamos el objeto Ciudad completo
@@ -96,6 +109,8 @@ export class FlightSearchComponent implements OnInit {
       equipajeMano: [this.equipajeMano],
       equipajeBodega: [this.equipajeBodega],
       adults: [1],
+      children: [0], // Initialize children field
+      infants: [0], // Initialize infants field
       aerolinea: [null],
       escala: [null],
     });
@@ -107,7 +122,25 @@ export class FlightSearchComponent implements OnInit {
       this.tourOrigenConstante = this.tourDestination;
     }
 
-    // Se elimina la búsqueda automática al iniciar
+    // Use dayOne and returnDate if provided
+    if (this.dayOne) {
+      this.fechaIdaConstante = new Date(this.dayOne);
+      this.fechaIdaFormateada = this.formatDisplayDate(this.fechaIdaConstante);
+    }
+    if (this.returnDate) {
+      this.fechaRegresoConstante = new Date(this.returnDate);
+      this.fechaRegresoFormateada = this.formatDisplayDate(
+        this.fechaRegresoConstante
+      );
+    }
+
+    // Get tour name from TextsService
+    const tourTexts = this.textsService.getTextsForCategory('tour');
+    if (tourTexts && tourTexts['name']) {
+      this.tourName = tourTexts['name'];
+    }
+
+    // Remove automatic search on initialization
 
     // Actualizar el tipo de viaje al cambiar en el formulario
     this.flightForm.get('tipoViaje')?.valueChanges.subscribe((value) => {
@@ -121,6 +154,15 @@ export class FlightSearchComponent implements OnInit {
 
     this.flightForm.get('equipajeBodega')?.valueChanges.subscribe((value) => {
       this.equipajeBodega = value;
+    });
+
+    // Subscribe to traveler count updates
+    this.travelersService.travelersNumbers$.subscribe((travelersNumbers) => {
+      this.flightForm.patchValue({
+        adults: travelersNumbers.adults,
+        children: travelersNumbers.childs, // Ensure children are updated
+        infants: travelersNumbers.babies, // Ensure infants are updated
+      });
     });
   }
 
@@ -143,6 +185,8 @@ export class FlightSearchComponent implements OnInit {
         ? this.getCityCode(formValue.origen)
         : formValue.origen.codigo;
 
+    console.log('Origin code for search:', originCode); // Added debug log
+
     // Usar el código de destino fijo del tour
     const destinationCode = this.tourOrigenConstante.codigo;
 
@@ -155,8 +199,11 @@ export class FlightSearchComponent implements OnInit {
       destinationLocationCode: destinationCode,
       departureDate: departureDate,
       adults: formValue.adults || 1,
-      max: 5,
+      children: formValue.children || 0,
+      infants: formValue.infants || 0,
+      max: 10,
     };
+    console.log('Search parameters:', searchParams); // Added debug log
 
     // Si es ida y vuelta, añadir la fecha de regreso
     if (formValue.tipoViaje === 'idaVuelta') {
@@ -187,27 +234,27 @@ export class FlightSearchComponent implements OnInit {
   }
 
   getCityCode(cityName: string): string {
-    const city = this.ciudades.find(
+    const city = this.filteredCities.find(
       (c) => c.nombre.toLowerCase() === cityName.toLowerCase()
     );
     return city ? city.codigo : 'MAD';
   }
 
+  // Update formatDate to use UTC values
   formatDate(date: Date): string {
     const d = new Date(date);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
-      2,
-      '0'
-    )}-${String(d.getDate()).padStart(2, '0')}`;
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
-  // Método auxiliar para formatear fechas para mostrar
+  // Update formatDisplayDate to use UTC values
   formatDisplayDate(date: Date): string {
-    return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    return `${day}/${month}/${year}`;
   }
 
   filterOffers() {
@@ -274,6 +321,9 @@ export class FlightSearchComponent implements OnInit {
       );
     });
 
+    // Apply sorting after filtering
+    this.sortFlights(this.selectedSortOption);
+
     // Transformamos las ofertas a formato Flight para el componente de itinerario
     this.transformedFlights = this.transformOffersToFlightFormat(
       this.filteredOffers
@@ -285,25 +335,62 @@ export class FlightSearchComponent implements OnInit {
     console.log('Transformed flights:', this.transformedFlights);
   }
 
+  // Add new sorting method
+  sortFlights(sortOption: string) {
+    // Sort the filteredOffers based on the selected option
+    switch (sortOption) {
+      case 'price-asc':
+        this.filteredOffers.sort(
+          (a, b) =>
+            parseFloat(a.offerData.price.total) -
+            parseFloat(b.offerData.price.total)
+        );
+        break;
+      case 'price-desc':
+        this.filteredOffers.sort(
+          (a, b) =>
+            parseFloat(b.offerData.price.total) -
+            parseFloat(a.offerData.price.total)
+        );
+        break;
+      case 'duration':
+        this.filteredOffers.sort((a, b) => {
+          // Convert duration strings like PT5H30M to minutes for comparison
+          const getDurationMinutes = (offer: ITempFlightOffer) => {
+            const duration = offer.offerData.itineraries[0].duration || '';
+            const hours = parseInt(duration.match(/(\d+)H/)?.[1] || '0');
+            const minutes = parseInt(duration.match(/(\d+)M/)?.[1] || '0');
+            return hours * 60 + minutes;
+          };
+          return getDurationMinutes(a) - getDurationMinutes(b);
+        });
+        break;
+    }
+  }
+
+  // Method to handle sort dropdown changes
+  onSortChange(event: any) {
+    this.selectedSortOption = event.value;
+    if (this.filteredOffers.length > 0) {
+      this.sortFlights(this.selectedSortOption);
+      this.transformedFlights = this.transformOffersToFlightFormat(
+        this.filteredOffers
+      );
+      this.filteredFlightsChange.emit(this.transformedFlights);
+    }
+  }
+
   transformOffersToFlightFormat(offers: ITempFlightOffer[]): Flight[] {
     return offers.map((offer) => {
       const offerData = offer.offerData;
       const outbound = offerData.itineraries[0];
-      // Detectamos si existe un itinerario de regreso
       const inboundItinerary =
         offerData.itineraries.length > 1 ? offerData.itineraries[1] : null;
 
-      // Transformamos los precios
-      const priceDataArray = offerData.travelerPricings.map((tp: any) => ({
-        id: offerData.id + '-' + tp.travelerId,
-        value: parseFloat(tp.price.total),
-        value_with_campaign: parseFloat(tp.price.total),
-        campaign: null,
-        age_group_name: tp.travelerType === 'ADULT' ? 'Adultos' : 'Niños',
-        category_name: 'Vuelo',
-        period_product: 'FLIGHT',
-        _id: offerData.id + '-' + tp.travelerId,
-      }));
+      // Use transformFlightPriceData method to get the price data array
+      const priceDataArray = this.amadeusService.transformFlightPriceData([
+        offerData,
+      ]);
 
       // Creamos las fechas formateadas para los vuelos
       const departureDateStr = this.formatDate(this.fechaIdaConstante);
@@ -488,17 +575,13 @@ export class FlightSearchComponent implements OnInit {
 
       // Construir el objeto Flight
       const flight: Flight = {
-        id: offerData.id,
+        id: offer._id,
         externalID: offerData.id,
         name: inboundItinerary
-          ? `${this.getAirlineName(offerData.validatingAirlineCodes[0])} - ${
-              outbound.segments[0]?.departure?.iataCode
-            } a ${
+          ? `Vuelo ${outbound.segments[0]?.departure?.iataCode} - ${
               outbound.segments[outbound.segments.length - 1]?.arrival?.iataCode
             }`
-          : `${this.getAirlineName(offerData.validatingAirlineCodes[0])} - ${
-              outbound.segments[0]?.departure?.iataCode
-            } a ${
+          : `Vuelo ${outbound.segments[0]?.departure?.iataCode} - ${
               outbound.segments[outbound.segments.length - 1]?.arrival?.iataCode
             }`,
         outbound: {
@@ -525,7 +608,7 @@ export class FlightSearchComponent implements OnInit {
               }`,
               segments: inboundSegments,
               serviceCombinationID: 0,
-              prices: priceDataArray,
+              prices: [],
             }
           : {
               activityID: 0,
@@ -536,8 +619,12 @@ export class FlightSearchComponent implements OnInit {
               serviceCombinationID: 0,
               prices: [],
             },
-        price: parseFloat(offerData.price.total),
+        price:
+          priceDataArray.find((price) => price.age_group_name === 'Adultos')
+            ?.value_with_campaign || 0,
         priceData: priceDataArray,
+        // Add source property to indicate Amadeus flight
+        source: 'amadeus',
       };
 
       return flight;
@@ -546,7 +633,7 @@ export class FlightSearchComponent implements OnInit {
 
   // Add a helper method to get city name from IATA code
   getCityName(iataCode: string): string | null {
-    const city = this.ciudades.find((c) => c.codigo === iataCode);
+    const city = this.filteredCities.find((c) => c.codigo === iataCode);
     if (city) {
       return city.nombre.split(' - ')[0]; // Return just the city name part
     }
@@ -587,7 +674,8 @@ export class FlightSearchComponent implements OnInit {
           stops: outbound?.segments.length - 1,
           prices: offerData.travelerPricings.map((tp: any) => ({
             age_group_name: tp.travelerType === 'ADULT' ? 'Adultos' : 'Niños',
-            value: parseFloat(tp.price.total) / 2,
+            value:
+              this.amadeusService.calculatePriceWithMarkup(tp.price.total) / 2,
           })),
         },
         inbound: inbound
@@ -612,7 +700,9 @@ export class FlightSearchComponent implements OnInit {
               prices: offerData.travelerPricings.map((tp: any) => ({
                 age_group_name:
                   tp.travelerType === 'ADULT' ? 'Adultos' : 'Niños',
-                value: parseFloat(tp.price.total) / 2,
+                value:
+                  this.amadeusService.calculatePriceWithMarkup(tp.price.total) /
+                  2,
               })),
             }
           : {
@@ -626,7 +716,9 @@ export class FlightSearchComponent implements OnInit {
               stops: 0,
               prices: [],
             },
-        price: parseFloat(offerData.price.total),
+        price: this.amadeusService.calculatePriceWithMarkup(
+          offerData.price.total
+        ),
         hasHandBaggage: offerData.travelerPricings.some((tp: any) =>
           tp.fareDetailsBySegment.some(
             (seg: any) =>
@@ -681,10 +773,34 @@ export class FlightSearchComponent implements OnInit {
 
   selectFlight(flight: Flight): void {
     this.selectedFlightId = flight.externalID;
-    this.filteredFlightsChange.emit([flight]);
+
+    // Add a flag to indicate this is an Amadeus flight
+    const flightWithSource = {
+      ...flight,
+      source: 'amadeus', // Add a source identifier
+      // Ensure required fields are present for the order
+      id: flight.id || flight.externalID,
+      externalID: flight.externalID,
+      name: flight.name || `$ ${flight.outbound.segments[0]?.flightNumber}`,
+    };
+
+    console.log('Flight selected in search component:', flightWithSource);
+
+    // Emit only the selected flight for the parent component to trigger auto-selection
+    this.filteredFlightsChange.emit([flightWithSource]);
   }
 
   isFlightSelected(flight: Flight): boolean {
     return flight.externalID === this.selectedFlightId;
+  }
+
+  searchCities(event: any): void {
+    const query = event.query;
+    this.airportService.searchAirports(query).subscribe((airports) => {
+      this.filteredCities = airports.map((airport) => ({
+        nombre: airport.city + ' - ' + airport.name,
+        codigo: airport.iata,
+      }));
+    });
   }
 }

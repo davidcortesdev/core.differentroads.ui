@@ -23,6 +23,7 @@ export interface FlightSegment {
 export interface Flight {
   id: string;
   externalID: string;
+  source?: string;
   inbound: {
     activityID: number;
     availability: number;

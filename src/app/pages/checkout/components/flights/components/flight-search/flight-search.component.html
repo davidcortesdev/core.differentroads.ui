@@ -2,7 +2,24 @@
   <ng-template #header>
     <div class="flt-hdr">
       <h2>Mejor precio, reserva simple</h2>
-      <p>Fiordos Noruegos | 2 adultos - 1 niño</p>
+      <p>
+        {{ tourName }}
+        <span *ngIf="flightForm.get('adults')?.value > 0">
+          | {{ flightForm.get("adults")?.value }} adulto{{
+            flightForm.get("adults")?.value > 1 ? "s" : ""
+          }}
+        </span>
+        <span *ngIf="flightForm.get('children')?.value > 0">
+          , {{ flightForm.get("children")?.value }} niño{{
+            flightForm.get("children")?.value > 1 ? "s" : ""
+          }}
+        </span>
+        <span *ngIf="flightForm.get('infants')?.value > 0">
+          , {{ flightForm.get("infants")?.value }} bebé{{
+            flightForm.get("infants")?.value > 1 ? "s" : ""
+          }}
+        </span>
+      </p>
     </div>
   </ng-template>
 
@@ -38,12 +55,16 @@
         </div>
         <div class="input origin">
           <i class="pi pi-plane"></i>
-          <p-dropdown
+          <p-autocomplete
             formControlName="origen"
-            [options]="ciudades"
-            optionLabel="nombre"
+            [suggestions]="filteredCities"
+            (completeMethod)="searchCities($event)"
+            field="nombre"
+            [forceSelection]="true"
             styleClass="w-full"
-          ></p-dropdown>
+            [dropdown]="true"
+          >
+          </p-autocomplete>
           <a href="#" class="change"></a>
         </div>
         <div class="input destination">
@@ -52,7 +73,9 @@
         </div>
         <div class="date">
           <div class="date-lbl">Fecha</div>
-          <div class="static-field">{{ fechaIdaFormateada }}</div>
+          <div class="static-field">
+            {{ fechaIdaConstante | date : "dd/MM/yyyy" : "UTC" }}
+          </div>
         </div>
       </div>
 
@@ -77,18 +100,23 @@
         </div>
         <div class="date">
           <div class="date-lbl">Fecha</div>
-          <div class="static-field">{{ fechaRegresoFormateada }}</div>
+          <div class="static-field">
+            {{ fechaRegresoConstante | date : "dd/MM/yyyy" : "UTC" }}
+          </div>
         </div>
       </div>
     </div>
 
     <div class="search-opts">
       <div class="sort">
-        <!--  <p-button
-          label="Ordenar por precio"
-          icon="pi pi-sort"
+        <p-dropdown
+          [options]="sortOptions"
+          [(ngModel)]="selectedSortOption"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="Ordenar por"
+          (onChange)="onSortChange($event)"
           styleClass="p-button-outlined"
-        ></p-button> -->
+        ></p-dropdown>
       </div>
       <div class="filter">
         <!--   <p-dropdown
@@ -105,11 +133,7 @@
         ></p-dropdown> -->
       </div>
       <div class="btn-search">
-        <p-button
-          label="Buscar"
-          styleClass=""
-          (click)="buscar()"
-        ></p-button>
+        <p-button label="Buscar" styleClass="" (click)="buscar()"></p-button>
       </div>
     </div>
   </form>
@@ -124,6 +148,7 @@
     <ng-template #header>
       <div class="res-header">
         <h3>Resultados de búsqueda</h3>
+        -
         <div class="count">
           {{ transformedFlights.length }} vuelos encontrados
         </div>
@@ -153,14 +178,14 @@
 <!-- Estado inicial - sin búsqueda -->
 <div class="no-search" *ngIf="!isLoading && !searchPerformed">
   <p-panel>
-  <div class="msg" style="text-align: center">
-    <h3><i class="pi pi-search"></i> Busca tu vuelo</h3>
-    <p>
-      Selecciona tu ciudad de origen y haz clic en "Buscar" para encontrar
-      vuelos disponibles.
-    </p>
-  </div>
-</p-panel>
+    <div class="msg" style="text-align: center">
+      <h3><i class="pi pi-search"></i> Busca tu vuelo</h3>
+      <p>
+        Selecciona tu ciudad de origen y haz clic en "Buscar" para encontrar
+        vuelos disponibles.
+      </p>
+    </div>
+  </p-panel>
 </div>
 
 <!-- Estado de error o sin resultados -->

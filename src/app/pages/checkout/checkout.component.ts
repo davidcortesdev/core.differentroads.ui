@@ -10,6 +10,7 @@ import { ReservationMode } from '../../core/models/tours/reservation-mode.model'
 import { PricesService } from '../../core/services/checkout/prices.service';
 import { ActivitiesService } from '../../core/services/checkout/activities.service';
 import { Activity } from '../../core/models/tours/activity.model';
+import { OptionalActivityRef } from '../../core/models/orders/order.model';
 import { FlightsService } from '../../core/services/checkout/flights.service';
 import { Flight } from '../../core/models/tours/flight.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -23,6 +24,9 @@ import { MessageService, MenuItem } from 'primeng/api';
 import { DiscountsService } from '../../core/services/checkout/discounts.service';
 import { AuthenticateService } from '../../core/services/auth-service.service';
 import { TextsService } from '../../core/services/checkout/texts.service';
+import { AmadeusService } from '../../core/services/amadeus.service';
+import { ProcessBookingService } from '../../core/services/checkout/process-booking.service';
+
 import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-checkout',
@@ -37,6 +41,7 @@ export class CheckoutComponent implements OnInit {
   hasValidDocument: boolean = false;
   private subscription: Subscription = new Subscription();
   isAuthenticated: boolean = false;
+  isAmadeusFlightSelected: boolean = false;
 
   // PrimeNG Steps
   activeIndex: number = 0;
@@ -79,6 +84,7 @@ export class CheckoutComponent implements OnInit {
 
   // Cart information
   activities: Activity[] = [];
+  selectedActivities: OptionalActivityRef[] = [];
   selectedFlight: Flight | null = null;
   selectedInsurances: Insurance[] = [];
   summary: { qty: number; value: number; description: string }[] = [];
@@ -134,7 +140,9 @@ export class CheckoutComponent implements OnInit {
     private paymentOptionsService: PaymentOptionsService,
     private messageService: MessageService,
     private discountsService: DiscountsService,
-    private textsService: TextsService
+    private textsService: TextsService,
+    private amadeusService: AmadeusService, // <-- Nueva inyección
+    private processBookingService: ProcessBookingService // New service injection
   ) {}
 
   ngOnInit() {
@@ -159,8 +167,6 @@ export class CheckoutComponent implements OnInit {
     const orderId =
       this.route.snapshot.paramMap.get('id') || '67b702314d0586617b90606b';
     this.ordersService.getOrderDetails(orderId).subscribe((order) => {
-      console.log('Order details:', order);
-
       this.orderDetails = order;
       this.summaryService.updateOrder(order);
 
@@ -186,7 +192,6 @@ export class CheckoutComponent implements OnInit {
           'returnDate',
         ])
         .subscribe((period) => {
-          console.log('Period details:', period);
           this.periodData = period;
           this.tourName = period.tourName;
 
@@ -203,6 +208,20 @@ export class CheckoutComponent implements OnInit {
               timeZone: 'UTC',
             })}
           `;
+
+          // Save tour information to TextsService
+          this.textsService.updateTextsForCategory('tour', {
+            name: period.tourName,
+            id: period.tourID,
+            period: period.name,
+          });
+
+          // Also save period data separately
+          this.textsService.updateTextsForCategory('period', {
+            name: period.name,
+            dayOne: period.dayOne,
+            returnDate: period.returnDate,
+          });
         });
 
       this.periodsService.getPeriodPrices(periodID).subscribe((prices) => {
@@ -216,6 +235,7 @@ export class CheckoutComponent implements OnInit {
       this.travelers = data.adults + data.childs + data.babies;
       this.travelersSelected = data;
       this.updateOrderSummary();
+      this.updateActivitiesSelectedTravelers();
     });
 
     this.travelersService.travelers$.subscribe((travelers) => {
@@ -227,18 +247,25 @@ export class CheckoutComponent implements OnInit {
     });
 
     this.roomsService.selectedRooms$.subscribe((rooms) => {
-      console.log('Selected rooms:', rooms);
       this.rooms = rooms;
       this.updateOrderSummary();
     });
 
+    this.activitiesService.selectedActivities$.subscribe(
+      (selectedActivities) => {
+        this.selectedActivities = selectedActivities;
+        this.updateOrderSummary();
+      }
+    );
+
     this.activitiesService.activities$.subscribe((activities) => {
       this.activities = activities;
-      this.updateOrderSummary();
     });
 
     this.flightsService.selectedFlight$.subscribe((flight) => {
       this.selectedFlight = flight;
+      // Update Amadeus flight status
+      this.isAmadeusFlightSelected = flight?.source === 'amadeus';
       this.updateOrderSummary();
     });
 
@@ -252,7 +279,6 @@ export class CheckoutComponent implements OnInit {
     });
 
     this.discountsService.selectedDiscounts$.subscribe((discounts) => {
-      console.log('Discounts updated:', discounts);
       this.updateOrderSummary();
     });
   }
@@ -366,6 +392,8 @@ export class CheckoutComponent implements OnInit {
     });
 
     this.activitiesService.updateActivities(activities);
+    // Actualizar las actividades seleccionadas en el service
+    this.activitiesService.updateSelectedActivities(optionalActivitiesRef);
   }
 
   initializeFlights(flights: Flight[] | { id: string; externalID: string }[]) {
@@ -484,48 +512,75 @@ export class CheckoutComponent implements OnInit {
       });
     });
 
-    this.activities.forEach((activity) => {
-      const adultsPrice = this.pricesService.getPriceById(
-        activity.activityId,
-        'Adultos'
-      );
-      const childsPrice = this.pricesService.getPriceById(
-        activity.activityId,
-        'Niños'
+    const travelers = this.travelersService.getTravelers();
+    this.selectedActivities.forEach((activityRef) => {
+      const activityData = this.activities.find(
+        (act) => act.activityId === activityRef.id
       );
 
-      const babiesPrice = this.pricesService.getPriceById(
-        activity.activityId,
-        'Bebes'
-      );
-      if (adultsPrice === childsPrice) {
-        this.summary.push({
-          qty: this.travelersSelected.adults + this.travelersSelected.childs,
-          value: adultsPrice,
-          description: activity.name,
+      if (activityData) {
+        let adultCount = 0,
+          childCount = 0,
+          babyCount = 0;
+        activityRef.travelersAssigned.forEach((travelerId) => {
+          const traveler = travelers.find((t) => t._id === travelerId);
+          if (traveler) {
+            const ageGroup = traveler.travelerData?.ageGroup;
+            if (ageGroup === 'Adultos') adultCount++;
+            else if (ageGroup === 'Niños') childCount++;
+            else if (ageGroup === 'Bebes') babyCount++;
+          }
         });
-      } else {
-        if (adultsPrice) {
+
+        // Nuevos cambios: combinar adultos y niños si el precio es el mismo
+        const adultPrice = this.pricesService.getPriceById(
+          activityData.activityId,
+          'Adultos'
+        );
+        const childPrice = this.pricesService.getPriceById(
+          activityData.activityId,
+          'Niños'
+        );
+
+        if (adultPrice !== undefined && childPrice !== undefined) {
+          if (adultPrice === childPrice) {
+            const combinedCount = adultCount + childCount;
+            if (combinedCount > 0) {
+              this.summary.push({
+                qty: combinedCount,
+                value: adultPrice,
+                description: `${activityData.name}`,
+              });
+            }
+          } else {
+            if (adultCount > 0 && adultPrice) {
+              this.summary.push({
+                qty: adultCount,
+                value: adultPrice,
+                description: `${activityData.name} (adultos)`,
+              });
+            }
+            if (childCount > 0 && childPrice && childPrice !== 0) {
+              this.summary.push({
+                qty: childCount,
+                value: childPrice,
+                description: `${activityData.name} (niños)`,
+              });
+            }
+          }
+        }
+
+        if (babyCount > 0) {
+          const price = this.pricesService.getPriceById(
+            activityData.activityId,
+            'Bebes'
+          );
           this.summary.push({
-            qty: this.travelersSelected.adults,
-            value: adultsPrice,
-            description: activity.name + ' (adultos)',
+            qty: babyCount,
+            value: price || 0,
+            description: `${activityData.name} (bebes)`,
           });
         }
-        if (childsPrice && this.travelersSelected.childs) {
-          this.summary.push({
-            qty: this.travelersSelected.childs,
-            value: childsPrice,
-            description: activity.name + ' (niños)',
-          });
-        }
-      }
-      if (babiesPrice) {
-        this.summary.push({
-          qty: this.travelersSelected.babies,
-          value: babiesPrice,
-          description: activity.name + ' (bebes)',
-        });
       }
     });
 
@@ -535,39 +590,96 @@ export class CheckoutComponent implements OnInit {
     // Save the entire summary to the order
     tempOrderData['summary'] = this.summary;
     tempOrderData['travelers'] = travelersData;
-    tempOrderData['optionalActivitiesRef'] = this.activities.map(
-      (activity) => ({
-        id: activity.activityId,
-        _id: activity.id,
-        travelersAssigned: travelersData.map(
-          (traveler) => traveler._id || '123'
-        ),
-      })
-    );
+
+    // Use this.selectedActivities directly instead of calling getActivitiesWithTravelers()
+    tempOrderData['optionalActivitiesRef'] = this.selectedActivities;
+
+    // Get all flights for the order from the FlightsService
+    const orderFlights = this.flightsService.getOrderFlights();
 
     if (
       this.selectedFlight &&
       this.selectedFlight.externalID! !== 'undefined'
     ) {
       if (!this.selectedFlight.name.toLowerCase().includes('sin ')) {
-        this.summary.push({
-          qty:
-            this.travelersSelected.adults +
-            this.travelersSelected.childs +
-            this.travelersSelected.babies,
-          value:
-            this.selectedFlight.price ||
-            this.pricesService.getPriceById(
-              this.selectedFlight.externalID,
-              'Adultos'
-            ) ||
-            0,
-          description:
-            this.selectedFlight.outbound.activityName ||
-            this.selectedFlight.name,
-        });
+        // Check if flight is from Amadeus and has separate price data
+        if (
+          this.selectedFlight.source === 'amadeus' &&
+          this.selectedFlight.priceData
+        ) {
+          // Get adult price data
+          const adultPrice = this.selectedFlight.priceData.find(
+            (price) => price.age_group_name === 'Adultos'
+          );
+
+          // Get child price data
+          const childPrice = this.selectedFlight.priceData.find(
+            (price) => price.age_group_name === 'Niños'
+          );
+
+          // Add adult price to summary if there are adults
+          if (adultPrice && this.travelersSelected.adults > 0) {
+            this.summary.push({
+              qty: this.travelersSelected.adults,
+              value: adultPrice.value,
+              description: `${this.selectedFlight.name} (Adultos)`,
+            });
+          }
+
+          // Add child price to summary if there are children
+          if (childPrice && this.travelersSelected.childs > 0) {
+            this.summary.push({
+              qty: this.travelersSelected.childs,
+              value: childPrice.value,
+              description: `${this.selectedFlight.name} (Niños)`,
+            });
+          }
+
+          // Add baby price if available
+          if (this.travelersSelected.babies > 0) {
+            const babyPrice = this.selectedFlight.priceData.find(
+              (price) => price.age_group_name === 'Bebes'
+            );
+
+            if (babyPrice) {
+              this.summary.push({
+                qty: this.travelersSelected.babies,
+                value: babyPrice.value,
+                description: `${this.selectedFlight.name} (Bebes)`,
+              });
+            } else {
+              // If no specific baby price, add with zero value
+              this.summary.push({
+                qty: this.travelersSelected.babies,
+                value: 0,
+                description: `${this.selectedFlight.name} (Bebes)`,
+              });
+            }
+          }
+        } else {
+          // Keep original code for non-Amadeus flights
+          this.summary.push({
+            qty:
+              this.travelersSelected.adults +
+              this.travelersSelected.childs +
+              this.travelersSelected.babies,
+            value:
+              this.selectedFlight.price ||
+              this.pricesService.getPriceById(
+                this.selectedFlight.externalID,
+                'Adultos'
+              ) ||
+              0,
+            description:
+              this.selectedFlight.outbound.activityName ||
+              this.selectedFlight.name,
+          });
+        }
       }
 
+      // Use all flights from the service instead of just the selected one
+      tempOrderData['flights'] =
+        orderFlights.length > 0 ? orderFlights : [this.selectedFlight];
       tempOrderData['flights'] = [this.selectedFlight];
     }
 
@@ -597,7 +709,7 @@ export class CheckoutComponent implements OnInit {
         (insurance) => ({
           id: insurance.activityId,
           travelersAssigned: travelersData.map(
-            (traveler) => traveler._id || '123'
+            (traveler) => traveler._id || this.travelersService.generateHexID() // Cambio aquí
           ),
         })
       );
@@ -632,12 +744,19 @@ export class CheckoutComponent implements OnInit {
     this.calculateTotals();
   }
 
-  handleTravelersChange(event: {
-    adults: number;
-    childs: number;
-    babies: number;
-  }) {
-    this.travelers = event.adults + event.childs + event.babies;
+  // Updated updateActivitiesSelectedTravelers: add delay to ensure travelers data is ready.
+  updateActivitiesSelectedTravelers(): void {
+    setTimeout(() => {
+      const currentTravelers = this.travelersService.getTravelers();
+      const allIds = currentTravelers.map((t) => t._id!);
+      const updatedActivities = this.selectedActivities.map((activity) => ({
+        ...activity,
+        travelersAssigned: allIds,
+      }));
+      this.selectedActivities = updatedActivities;
+      this.activitiesService.updateSelectedActivities(updatedActivities);
+      this.updateOrderSummary();
+    }, 100);
   }
 
   // Método para manejar el descuento
@@ -694,6 +813,12 @@ export class CheckoutComponent implements OnInit {
 
   /* Steps and validations */
 
+  // Helper method to apply 12% markup to prices - same as in flight-search component
+  applyPriceMarkup(price: number | string): number {
+    const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
+    return numericPrice * 1.12; // Adding 12% markup
+  }
+
   nextStep(step: number): boolean {
     switch (step) {
       case 2:
@@ -729,8 +854,52 @@ export class CheckoutComponent implements OnInit {
       case 4:
         const travelersComponent =
           this.travelersService.getTravelersComponent();
+        if (!travelersComponent) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error en viajeros',
+            detail: 'No se han cargado los datos de viajeros.',
+          });
+          return false;
+        }
         if (!travelersComponent.areAllTravelersValid()) {
           return false;
+        }
+        // NEW: If selected flight is from Amadeus, update its price data BEFORE moving to step 4
+        if (this.selectedFlight?.source === 'amadeus') {
+          // Store old flight price for comparison (using Adult price)
+          const oldPrice = this.selectedFlight.price;
+          this.amadeusService
+            .getFlightPriceById(this.selectedFlight.id)
+            .subscribe({
+              next: (response) => {
+                // Usar el nuevo método del AmadeusService para transformar la respuesta
+                const transformedPriceData =
+                  this.amadeusService.transformFlightPriceData(
+                    response.flightOffers
+                  );
+                const newAdultPrice = transformedPriceData.find(
+                  (price) => price.age_group_name === 'Adultos'
+                )?.value;
+
+                if (newAdultPrice !== undefined && oldPrice !== newAdultPrice) {
+                  this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Precio de vuelo actualizado',
+                    detail:
+                      'El precio del vuelo ha cambiado, por favor verifique.',
+                  });
+                }
+
+                // Update the selected flight's priceData with transformed data:
+                if (this.selectedFlight) {
+                  this.selectedFlight.priceData = transformedPriceData;
+                }
+              },
+              error: (err) => {
+                console.error('Error fetching flight price:', err);
+              },
+            });
         }
         break;
       default:
@@ -747,7 +916,6 @@ export class CheckoutComponent implements OnInit {
 
     return true;
   }
-
 
   // New method to check auth before continuing from flights step
   checkAuthAndContinue(
@@ -810,8 +978,6 @@ export class CheckoutComponent implements OnInit {
   /* Order update */
 
   updateOrder() {
-    console.log('Updating order:', this.summaryService.getOrderValue());
-
     this.ordersService
       .updateOrder(
         this.summaryService.getOrderValue()!._id,
@@ -819,125 +985,49 @@ export class CheckoutComponent implements OnInit {
       )
       .subscribe({
         next: (response) => {
-          console.log('Order updated:', response);
           return response;
         },
         error: (error) => {
-          console.error('Error updating order:', error);
           return error;
         },
       });
   }
 
   /* Booking create */
-
   processBooking(): Promise<{ bookingID: string; ID: string }> {
-    return new Promise((resolve, reject) => {
-      // Ensure payment data is included in the order
-      const currentOrder = this.summaryService.getOrderValue();
-      if (currentOrder) {
-        // Update payment details from the payment options service
-        const paymentOption = this.paymentOptionsService.getPaymentOption();
-        if (paymentOption) {
-          currentOrder.payment = paymentOption;
-          this.summaryService.updateOrder(currentOrder);
+    return this.processBookingService
+      .processBooking(
+        this.orderDetails,
+        this.tourID,
+        this.tourName,
+        this.periodID,
+        this.periodData,
+        this.selectedFlight,
+        this.summary,
+        this.total
+      )
+      .catch((error) => {
+        // Handle specific error from flight processing
+        if (error.message === 'FLIGHT_PROCESSING_FAILED') {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error al procesar vuelo',
+            detail:
+              'No se pudo procesar la reserva del vuelo. Por favor, inténtelo de nuevo o contacte con atención al cliente.',
+            life: 10000,
+          });
+        } else {
+          // Handle other errors
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error en el proceso de reserva',
+            detail:
+              'Ha ocurrido un error durante el proceso de reserva. Por favor, inténtelo de nuevo.',
+            life: 8000,
+          });
         }
-      }
-
-      // Get textSummary data from TextsService
-      const textSummary = this.textsService.getTextsData();
-
-      const bookingData: BookingCreateInput = {
-        tour: {
-          id: this.tourID,
-          name: this.tourName,
-          priceData: this.pricesService.getPriceDataById(this.tourID),
-        },
-        textSummary: textSummary, // Include the complete texts data
-        total: this.total,
-        priceData: this.pricesService.getPriceDataById(this.periodID),
-        id: this.orderDetails?._id || '',
-        extendedTotal: this.summary,
-        dayOne: this.periodData.dayOne,
-        numberOfDays: this.periodData.numberOfDays,
-        returnDate: this.periodData.returnDate,
-        tourID: this.tourID,
-        paymentTerms: '',
-        redeemPoints: 0,
-        usePoints: {},
-        name: this.periodData.name,
-        externalID: this.periodID,
-        payment: this.paymentOptionsService.getPaymentOption() || undefined,
-      };
-
-      // Save the period data to the TextsService as well
-      this.textsService.updateText('period', this.periodID, this.periodData);
-
-      // Store tour information if available
-      if (this.periodData?.tourName) {
-        this.textsService.updateText('tour', this.tourID, {
-          name: this.periodData.tourName,
-        });
-      }
-
-      let bookingID = '';
-      let bookingSID = '';
-      let order: Order | undefined;
-
-      this.bookingsService
-        .createBooking(this.orderDetails?._id!, bookingData)
-        .subscribe({
-          next: (response) => {
-            console.log('Booking created:', response);
-            bookingID = response.bookingID;
-            bookingSID = response.ID;
-            order = {
-              ...response.order,
-              payment:
-                this.paymentOptionsService.getPaymentOption() || undefined,
-            };
-
-            this.bookingsService
-              .saveTravelers(response.bookingID, {
-                bookingSID: response.ID,
-                bookingID: response.bookingID,
-                order: response.order as Order,
-              })
-              .subscribe({
-                next: (response) => {
-                  console.log('Travelers saved:', response);
-
-                  this.bookingsService
-                    .bookOrder(bookingID, {
-                      order: order,
-                      ID: bookingSID,
-                    })
-                    .subscribe({
-                      next: (response) => {
-                        console.log('Order booked:', response);
-                        resolve({
-                          bookingID: bookingID,
-                          ID: bookingSID,
-                        });
-                      },
-                      error: (error) => {
-                        console.error('Error booking order:', error);
-                        reject(error);
-                      },
-                    });
-                },
-                error: (error) => {
-                  console.error('Error saving travelers:', error);
-                  reject(error);
-                },
-              });
-          },
-          error: (error) => {
-            console.error('Error creating booking:', error);
-            reject(error);
-          },
-        });
-    });
+        throw error; // Re-throw to stop the booking process
+      });
   }
 
   // Método para guardar viaje
@@ -948,5 +1038,14 @@ export class CheckoutComponent implements OnInit {
   // Método para manejar el cierre del diálogo
   handleCloseBudgetDialog(): void {
     this.budgetDialogVisible = false;
+  }
+
+  // New handlers for navigation from payment component
+  navigateToTravelers(): void {
+    this.onActiveIndexChange(2); // Go to travelers step (index 2)
+  }
+
+  navigateToFlights(): void {
+    this.onActiveIndexChange(1); // Go to flights step (index 1)
   }
 }

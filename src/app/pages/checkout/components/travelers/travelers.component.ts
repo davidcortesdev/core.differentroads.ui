@@ -1,10 +1,9 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Select } from 'primeng/select';
 import { TravelersService } from '../../../../core/services/checkout/travelers.service';
 import { MessageService } from 'primeng/api';
 import { formatDate } from '@angular/common';
-import { TravelerItemComponent } from '../traveler-item/traveler-item.component';
 
 interface Traveler {
   firstName: string;
@@ -15,13 +14,12 @@ interface Traveler {
   birthdate: string;
   sexo: string;
   documentType: string;
-  cp: string;
   nationality: string;
   passportExpirationDate: string;
   passportIssueDate: string;
   ageGroup: string;
-  category: string;
-  dni: string;
+  category?: string;
+  dni?: string;
   // Campos adicionales para viajeros bebés
   minorIdExpirationDate?: string;
   minorIdIssueDate?: string;
@@ -41,6 +39,7 @@ export class TravelersComponent implements OnInit {
   travelerForms: FormGroup[] = [];
 
   @ViewChild('sexoSelect') sexoSelect!: Select;
+  @Input() allFieldsMandatory: boolean = false;
 
   // Se agrega la propiedad 'sexoOptions' para el select de sexo
   sexoOptions = [
@@ -51,7 +50,8 @@ export class TravelersComponent implements OnInit {
   // Opciones base para documento (se completarán dinámicamente)
   baseDocumentOptions = [
     { label: 'Pasaporte', value: 'passport' },
-    { label: 'DNI', value: 'dni' },
+    /*     { label: 'DNI', value: 'dni' },
+     */
   ];
 
   constructor(
@@ -69,14 +69,13 @@ export class TravelersComponent implements OnInit {
       birthdate: [''],
       sexo: [''],
       documentType: [''],
-      cp: [''],
       nationality: [''],
       passportExpirationDate: [''],
       passportIssueDate: [''],
       ageGroup: [''],
       category: [''],
-      dni: [''],
-      // Campos adicionales para viajeros bebés
+      /*       dni: [''],
+       */ // Campos adicionales para viajeros bebés
       minorIdExpirationDate: [''],
       minorIdIssueDate: [''],
       associatedAdult: [''],
@@ -106,15 +105,13 @@ export class TravelersComponent implements OnInit {
           birthdate: traveler.travelerData?.birthdate || '',
           sexo: traveler.travelerData?.sex || '',
           documentType: traveler.travelerData?.documentType || '',
-          cp: traveler.travelerData?.postalCode || '',
           nationality: traveler.travelerData?.nationality || '',
           passportExpirationDate:
             traveler.travelerData?.passportExpirationDate || '',
           passportIssueDate: traveler.travelerData?.passportIssueDate || '',
           ageGroup: traveler.travelerData?.ageGroup || '',
-          category: traveler.travelerData?.category || '',
-          dni: traveler.travelerData?.dni || '',
-          minorIdExpirationDate:
+          /*           dni: traveler.travelerData?.dni || '',
+           */ minorIdExpirationDate:
             traveler.travelerData?.minorIdExpirationDate || '',
           minorIdIssueDate: traveler.travelerData?.minorIdIssueDate || '',
           associatedAdult: traveler.travelerData?.associatedAdult || '',
@@ -130,22 +127,21 @@ export class TravelersComponent implements OnInit {
   }
 
   createTravelerForm(): FormGroup {
+    // Creamos el formulario sin validadores, estos se aplicarán en el componente hijo
+    // según el valor de allFieldsMandatory
     const form = this.fb.group({
-      firstName: [''], // Validators will be set in the child component
-      lastName: [''], // based on isFirstTraveler
-      email: [''], // based on isFirstTraveler
+      firstName: [''],
+      lastName: [''],
+      email: [''],
       phone: [''],
       passport: [''],
       birthdate: [''],
       sexo: [''],
       documentType: [''],
-      cp: [''],
       nationality: [''],
       passportExpirationDate: [''],
       passportIssueDate: [''],
       ageGroup: [''],
-      category: [''],
-      dni: [''],
       // Campos adicionales para viajeros bebés
       minorIdExpirationDate: [''],
       minorIdIssueDate: [''],
@@ -174,24 +170,28 @@ export class TravelersComponent implements OnInit {
   }
 
   onTravelerChange(index: number): void {
-    const traveler = this.travelerForms[index].value;
-    traveler.birthdate = traveler.birthdate
-      ? formatDate(traveler.birthdate, 'yyyy-MM-dd', 'en-US')
+    // Obtener el valor actual del formulario y preservar ageGroup si está vacío
+    const formValue = this.travelerForms[index].value;
+    if (!formValue.ageGroup && this.travelers[index]?.ageGroup) {
+      formValue.ageGroup = this.travelers[index].ageGroup;
+    }
+    formValue.birthdate = formValue.birthdate
+      ? formatDate(formValue.birthdate, 'yyyy-MM-dd', 'en-US')
       : '';
-    traveler.passportExpirationDate = traveler.passportExpirationDate
-      ? formatDate(traveler.passportExpirationDate, 'yyyy-MM-dd', 'en-US')
+    formValue.passportExpirationDate = formValue.passportExpirationDate
+      ? formatDate(formValue.passportExpirationDate, 'yyyy-MM-dd', 'en-US')
       : '';
-    traveler.passportIssueDate = traveler.passportIssueDate
-      ? formatDate(traveler.passportIssueDate, 'yyyy-MM-dd', 'en-US')
+    formValue.passportIssueDate = formValue.passportIssueDate
+      ? formatDate(formValue.passportIssueDate, 'yyyy-MM-dd', 'en-US')
       : '';
-    traveler.minorIdExpirationDate = traveler.minorIdExpirationDate
-      ? formatDate(traveler.minorIdExpirationDate, 'yyyy-MM-dd', 'en-US')
+    formValue.minorIdExpirationDate = formValue.minorIdExpirationDate
+      ? formatDate(formValue.minorIdExpirationDate, 'yyyy-MM-dd', 'en-US')
       : '';
-    traveler.minorIdIssueDate = traveler.minorIdIssueDate
-      ? formatDate(traveler.minorIdIssueDate, 'yyyy-MM-dd', 'en-US')
+    formValue.minorIdIssueDate = formValue.minorIdIssueDate
+      ? formatDate(formValue.minorIdIssueDate, 'yyyy-MM-dd', 'en-US')
       : '';
 
-    this.travelers[index] = traveler;
+    this.travelers[index] = formValue;
 
     this.travelersService.updateTravelers(
       this.travelers.map((traveler) => ({
@@ -206,10 +206,8 @@ export class TravelersComponent implements OnInit {
           passportExpirationDate: traveler.passportExpirationDate,
           passportIssueDate: traveler.passportIssueDate,
           ageGroup: traveler.ageGroup,
-          category: traveler.category,
-          dni: traveler.dni,
-          postalCode: traveler.cp,
-          sex: traveler.sexo,
+          /*           dni: traveler.dni,
+           */ sex: traveler.sexo,
           documentType: traveler.documentType,
           // Campos adicionales para bebés:
           minorIdExpirationDate: traveler.minorIdExpirationDate,
@@ -225,30 +223,45 @@ export class TravelersComponent implements OnInit {
   }
 
   areAllTravelersValid(): boolean {
-    // Solo verificamos que el primer viajero tenga los campos obligatorios
-    const firstTravelerForm = this.travelerForms[0];
-
-    // Check if form exists and all required fields are valid
-    const firstNameValid = firstTravelerForm?.get('firstName')?.valid ?? false;
-    const lastNameValid = firstTravelerForm?.get('lastName')?.valid ?? false;
-    const emailValid = firstTravelerForm?.get('email')?.valid ?? false;
-
-    const valid = firstTravelerForm
-      ? firstNameValid && lastNameValid && emailValid
-      : false;
-
-    if (!valid) {
-      this.notifyMissingTravelers();
+    // Forzar la validación de todos los formularios
+    this.travelerForms.forEach((form) => form.markAllAsTouched());
+    let allValid = true;
+    if (this.allFieldsMandatory) {
+      for (let i = 0; i < this.travelerForms.length; i++) {
+        const form = this.travelerForms[i];
+        if (!form || form.invalid) {
+          this.notifyMissingTravelers(i);
+          allValid = false;
+        }
+      }
+    } else {
+      for (let i = 0; i < this.travelerForms.length; i++) {
+        const form = this.travelerForms[i];
+        if (!form) continue;
+        const firstNameValid = form.get('firstName')?.valid ?? false;
+        const lastNameValid = form.get('lastName')?.valid ?? false;
+        const emailValid = form.get('email')?.valid ?? false;
+        if (!(firstNameValid && lastNameValid && emailValid)) {
+          this.notifyMissingTravelers(i);
+          allValid = false;
+        }
+      }
     }
-    return valid;
+    return allValid;
   }
 
-  notifyMissingTravelers(): void {
-    // Solo notificamos para el primer viajero
-    const form = this.travelerForms[0];
+  notifyMissingTravelers(index: number = 0): void {
+    const form = this.travelerForms[index];
     if (form && form.invalid) {
       const missingFields: string[] = [];
 
+      Object.keys(form.controls).forEach((key) => {
+        const control = form.get(key);
+        if (control && control.invalid) {
+          console.log(`Control '${key}' is invalid. Errors:`, control.errors);
+        }
+      });
+      // Campos siempre obligatorios
       if (form.get('firstName')?.errors?.['required']) {
         missingFields.push('Nombre');
       }
@@ -258,11 +271,45 @@ export class TravelersComponent implements OnInit {
       if (form.get('email')?.errors?.['required']) {
         missingFields.push('Email');
       }
+      if (form.get('email')?.errors?.['email']) {
+        missingFields.push('Email (formato inválido)');
+      }
+
+      // Verificar campos adicionales solo si allFieldsMandatory es true
+      if (this.allFieldsMandatory) {
+        const additionalFields = [
+          'phone',
+          'passport',
+          'birthdate',
+          'sexo',
+          'documentType',
+          'nationality',
+          'passportExpirationDate',
+          'passportIssueDate',
+        ];
+
+        additionalFields.forEach((field) => {
+          if (form.get(field)?.errors?.['required']) {
+            // Mapear nombres de campo a nombres más amigables
+            const fieldNames: { [key: string]: string } = {
+              phone: 'Teléfono',
+              passport: 'Pasaporte',
+              birthdate: 'Fecha de nacimiento',
+              sexo: 'Sexo',
+              documentType: 'Tipo de documento',
+              nationality: 'Nacionalidad',
+              passportExpirationDate: 'Fecha de caducidad del pasaporte',
+              passportIssueDate: 'Fecha de expedición del pasaporte',
+            };
+            missingFields.push(fieldNames[field] || field);
+          }
+        });
+      }
 
       if (missingFields.length > 0) {
         this.messageService.add({
           severity: 'error',
-          summary: 'Faltan datos para pasajero 1',
+          summary: `Faltan datos para pasajero ${index + 1}`,
           detail: `Debes llenar los campos obligatorios: ${missingFields.join(
             ', '
           )}`,
@@ -283,9 +330,9 @@ export class TravelersComponent implements OnInit {
     if (form.get('ageGroup')?.value === 'Bebés') {
       options.push({ label: 'Libro de Familia', value: 'family-book' });
     }
-    if (form.get('nationality')?.value === 'Español') {
+    /*   if (form.get('nationality')?.value === 'Español') {
       options.push({ label: 'DNI', value: 'dni' });
-    }
+    } */
     options.push({ label: 'Pasaporte', value: 'passport' });
     return options;
   }

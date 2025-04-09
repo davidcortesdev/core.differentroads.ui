@@ -9,7 +9,7 @@ export interface BookingImage {
   creationDate: string;
   departureDate: string;
   passengers: number;
-  price: string;
+  price: number;
   tourName?: string;
 }
 

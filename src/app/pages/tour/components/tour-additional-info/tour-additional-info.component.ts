@@ -33,11 +33,11 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   @Input() selectedFlight: any = null;
   @Input() travelersSelected: any = { adults: 0, childs: 0, babies: 0 };
   @Input() periodID: string = '';
+  @Input() isAuthenticated: boolean = false;
   
   tour: Tour | null = null;
   visible: boolean = false;
   private subscription: Subscription = new Subscription();
-  isAuthenticated: boolean = false;
   loginDialogVisible: boolean = false;
   userEmail: string = '';
   loading: boolean = false;
@@ -316,24 +316,8 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           this.loading = false;
-          
-          // Enviar la notificación de presupuesto
-          const products = this.buildProductsFromOrder(updatedOrder);
-          
-          this.notificationsService
-            .sendBudgetNotificationEmail({
-              id: updatedOrder._id,
-              email: this.userEmail,
-              products: products,
-            })
-            .subscribe({
-              next: (notificationResponse) => {
-                this.showSuccessToast('Presupuesto guardado y enviado correctamente');
-              },
-              error: (error) => {
-                this.showErrorToast('Se guardó el presupuesto pero hubo un error al enviar la notificación.');
-              }
-            });
+          // Mostrar mensaje de éxito (sin enviar notificación por correo)
+          this.showSuccessToast('Presupuesto guardado correctamente');
         },
         error: (error) => {
           this.loading = false;

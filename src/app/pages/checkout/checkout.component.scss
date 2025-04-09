@@ -487,7 +487,7 @@ p-button.continue-button ::ng-deep .p-button {
   // Responsive adjustments
   @media screen and (max-width: 768px) {
     .tour-additional-info-container {
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
     }
 
     .action-card {

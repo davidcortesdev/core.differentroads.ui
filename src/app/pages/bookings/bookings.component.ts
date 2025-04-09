@@ -50,7 +50,7 @@ interface BookingImage {
   creationDate: string;
   departureDate: string;
   passengers: number;
-  price: string;
+  price: number;
   tourName?: string;
 }
 
@@ -138,7 +138,7 @@ export class BookingsComponent implements OnInit {
       creationDate: '',
       departureDate: '',
       passengers: 0,
-      price: '',
+      price: 0,
     },
   ];
 
@@ -271,7 +271,7 @@ export class BookingsComponent implements OnInit {
             this.updateActivitiesData(booking);
           }
 
-          
+
 
           // Cargar actividades del período usando el externalID correcto
           if (booking.periodData && booking.periodData['externalID']) {
@@ -433,9 +433,9 @@ export class BookingsComponent implements OnInit {
       creationDate: booking?.createdAt
         ? booking.createdAt
         : '',
-      price: this.formatCurrency(
+      price:
         booking?.total || booking?.periodData?.total || 0
-      ),
+      ,
     };
   }
 
@@ -444,7 +444,7 @@ export class BookingsComponent implements OnInit {
     if (this.bookingImages.length > 0) {
       const tourName = booking?.periodData?.['tour']?.name || 'Sin título';
       const tourID = booking?.periodData?.tourID || '';
-      
+
       // Inicializar con valores básicos
       this.bookingImages[0] = {
         ...this.bookingImages[0],
@@ -460,18 +460,16 @@ export class BookingsComponent implements OnInit {
           : this.bookingImages[0].departureDate,
         passengers:
           booking?.travelersNumber || this.bookingImages[0].passengers,
-        price: this.formatCurrency(
-          booking?.total || booking?.periodData?.total || 0
-        ),
+        price: booking?.total || booking?.periodData?.total || 0,
       };
-      
+
       // Si tenemos un tourID, intentamos cargar la imagen real
       if (tourID) {
         this.loadTourImage(tourID);
       }
     }
   }
-  
+
   // Método para cargar la imagen del tour
   loadTourImage(tourID: string): void {
     const filters = { externalID: tourID };
@@ -940,27 +938,7 @@ export class BookingsComponent implements OnInit {
     }
   }
 
-  formatQuantity(item: TripItemData): string {
-    return `${item.quantity}x`;
-  }
 
-  formatPrice(price: number): string {
-    return `${price}€`;
-  }
-
-  formatCurrency(amount: number): string {
-    return `${amount.toLocaleString('es-ES')} €`;
-  }
-
-  formatDate(dateStr: string): string {
-    if (dateStr.includes('-')) {
-      const parts = dateStr.split('-');
-      return `${parts[2]}/${parts[1]}/${parts[0]}`;
-    }
-    return dateStr;
-  }
-
-  // Método actualizado para calcular el total multiplicando qty x unitPrice
   calculateTotal(item: TripItemData): number {
     return item.quantity * item.unitPrice; // Multiplicar cantidad por valor unitario
   }

@@ -93,7 +93,7 @@ export class ActiveBookingsSectionComponent implements OnInit, OnDestroy {
       image: '', // Imagen por defecto
       tourID: booking?.periodData?.tourID || '',
       passengers: booking?.travelersNumber || 0,
-      price: booking?.totalPrice || 0
+      price: booking?.totalPrice || 0,
     };
   }
 

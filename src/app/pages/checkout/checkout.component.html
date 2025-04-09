@@ -22,19 +22,6 @@
               <p-button class="next" label="Continuar" icon="pi pi-arrow-right" iconPos="right"
                 (onClick)="nextStepWithValidation(1)"></p-button>
             </div>
-            <div class="flex pt-6 justify-end">
-              <p-button class="file" iconPos="right" (onClick)="saveTrip()">
-                <ng-template pTemplate="content">
-                  <div class="title">
-                    <div>Guarda este viaje</div>
-                    <div class="description">
-                      Sujeto a disponibilidad en el momento de la reserva y sólo
-                      para salidas con stock
-                    </div>
-                  </div>
-                </ng-template>
-              </p-button>
-            </div>
           </div>
 
           <!-- Step 2: Flights -->
@@ -75,6 +62,23 @@
           </div>
         </div>
       </div>
+      <!-- Tour additional info component with all required inputs -->
+      <div class="tour-actions-container">
+        <app-tour-additional-info
+          [existingOrder]="orderDetails"
+          [tourName]="tourName"
+          [periodName]="periodData.name || ''"
+          [periodDates]="tourDates"
+          [selectedFlight]="selectedFlight"
+          [travelersSelected]="{
+            adults: travelersSelected.adults,
+            childs: travelersSelected.childs,
+            babies: travelersSelected.babies
+          }"
+          [periodID]="periodID"
+          [isAuthenticated]="isAuthenticated"
+        ></app-tour-additional-info>
+      </div>
     </div>
 
     <!-- Right column - Order Summary and Discount Code -->
@@ -99,24 +103,13 @@
         (discountApplied)="handleDiscountApplied($event)">
       </app-discount-code>
     </div>
-
   </div>
 
-  <!-- Budget dialog remains the same -->
-  <p-dialog [(visible)]="budgetDialogVisible" [modal]="true" [breakpoints]="{ '1199px': '80vw', '575px': '90vw' }"
-    [style]="{ width: '50vw' }" [draggable]="false" [resizable]="false" class="">
-    <app-budget-dialog class="budget-dialog" [visible]="budgetDialogVisible"
-      [handleCloseModal]="handleCloseBudgetDialog.bind(this)" (close)="handleCloseBudgetDialog()"
-      [existingOrderId]="orderDetails?._id ?? null" [tourName]="tourName" [periodName]="periodData.name"
-      [periodDates]="tourDates" [departureCity]="selectedFlight?.name || 'Sin vuelos'" [tripType]="'Circuito'"
-      [travelersCount]="{
-        adults: travelersSelected.adults,
-        children: travelersSelected.childs,
-        babies: travelersSelected.babies
-      }" [periodId]="periodID"></app-budget-dialog>
-  </p-dialog>
-
-  <app-login-modal [visible]="loginDialogVisible" (close)="closeLoginModal()" (login)="navigateToLogin()"
+  <!-- Login modal para manejar la autenticación -->
+  <app-login-modal 
+    [visible]="loginDialogVisible" 
+    (close)="closeLoginModal()" 
+    (login)="navigateToLogin()"
     (register)="navigateToRegister()">
   </app-login-modal>
 </div>

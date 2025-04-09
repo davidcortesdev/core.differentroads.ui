@@ -55,8 +55,8 @@ export class PointsService {
    * @param email Traveler's email address
    * @returns Observable with points information
    */
-  getTravelerPoints(email: string): Observable<{ points: number, typeTraveler: string }> {
-    return this.http.get<{ points: number, typeTraveler: string }>(
+  getTravelerPoints(email: string): Observable<{ points: number, typeTraveler: string, maxpoints: number }> {
+    return this.http.get<{ points: number, typeTraveler: string, maxpoints: number }>(
       `${this.API_URL}/by-user/${email}/total-points`
     );
   }

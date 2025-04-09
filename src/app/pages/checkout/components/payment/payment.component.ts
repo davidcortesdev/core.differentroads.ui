@@ -631,29 +631,9 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       next: (response) => {
         console.log(`Puntos obtenidos para ${email}:`, response);
         const points = response?.points ?? 0;
-        const travelerCategory =
-          response?.typeTraveler?.toLowerCase() || 'default';
-        let maxRedeemableAmount = 0;
-        let estraveler = '';
-        switch (travelerCategory) {
-          case 'globetrotter':
-            maxRedeemableAmount = 50;
-            estraveler = 'Trotamundos';
-            break;
-          case 'voyager':
-            maxRedeemableAmount = 75;
-            estraveler = 'Viajante';
-            break;
-          case 'nomad':
-            maxRedeemableAmount = 100;
-            estraveler = 'Nómada';
-            break;
-          case 'default':
-            maxRedeemableAmount = 50;
-            break;
-          default:
-            maxRedeemableAmount = 0;
-        }
+        const travelerCategory = response?.typeTraveler?.toLowerCase() || 'default'
+        const maxRedeemableAmount = response?.maxpoints || 50;
+      
 
         switch (travelerCategory) {
           case 'globetrotter': // Trotamundos
@@ -673,8 +653,8 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
 
         const traveler = emailMap.get(email);
         if (traveler) {
-          traveler.points = Math.min(points, maxRedeemableAmount);
-          traveler.category = estraveler;
+          traveler.points =Math.min(points, maxRedeemableAmount);
+          traveler.category= travelerCategory;
 
           const existingIndex = this.uniqueTravelers.findIndex(
             (t) => t.email === email

@@ -109,11 +109,14 @@
 
     <div class="search-opts">
       <div class="sort">
-        <!--  <p-button
-          label="Ordenar por precio"
-          icon="pi pi-sort"
+        <p-dropdown
+          [options]="sortOptions"
+          [(ngModel)]="selectedSortOption"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="Ordenar por"
+          (onChange)="onSortChange($event)"
           styleClass="p-button-outlined"
-        ></p-button> -->
+        ></p-dropdown>
       </div>
       <div class="filter">
         <!--   <p-dropdown

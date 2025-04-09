@@ -84,6 +84,15 @@ export class FlightSearchComponent implements OnInit {
   // Tour name from TextsService
   tourName: string = 'Destino';
 
+  // Add sorting options
+  sortOptions = [
+    { label: 'Precio (menor a mayor)', value: 'price-asc' },
+    { label: 'Precio (mayor a menor)', value: 'price-desc' },
+    { label: 'Duración (más corto)', value: 'duration' },
+  ];
+
+  selectedSortOption: string = 'price-asc'; // Default sort option
+
   constructor(
     private fb: FormBuilder,
     private amadeusService: AmadeusService,
@@ -312,6 +321,9 @@ export class FlightSearchComponent implements OnInit {
       );
     });
 
+    // Apply sorting after filtering
+    this.sortFlights(this.selectedSortOption);
+
     // Transformamos las ofertas a formato Flight para el componente de itinerario
     this.transformedFlights = this.transformOffersToFlightFormat(
       this.filteredOffers
@@ -321,6 +333,51 @@ export class FlightSearchComponent implements OnInit {
     this.filteredFlightsChange.emit(this.transformedFlights);
 
     console.log('Transformed flights:', this.transformedFlights);
+  }
+
+  // Add new sorting method
+  sortFlights(sortOption: string) {
+    // Sort the filteredOffers based on the selected option
+    switch (sortOption) {
+      case 'price-asc':
+        this.filteredOffers.sort(
+          (a, b) =>
+            parseFloat(a.offerData.price.total) -
+            parseFloat(b.offerData.price.total)
+        );
+        break;
+      case 'price-desc':
+        this.filteredOffers.sort(
+          (a, b) =>
+            parseFloat(b.offerData.price.total) -
+            parseFloat(a.offerData.price.total)
+        );
+        break;
+      case 'duration':
+        this.filteredOffers.sort((a, b) => {
+          // Convert duration strings like PT5H30M to minutes for comparison
+          const getDurationMinutes = (offer: ITempFlightOffer) => {
+            const duration = offer.offerData.itineraries[0].duration || '';
+            const hours = parseInt(duration.match(/(\d+)H/)?.[1] || '0');
+            const minutes = parseInt(duration.match(/(\d+)M/)?.[1] || '0');
+            return hours * 60 + minutes;
+          };
+          return getDurationMinutes(a) - getDurationMinutes(b);
+        });
+        break;
+    }
+  }
+
+  // Method to handle sort dropdown changes
+  onSortChange(event: any) {
+    this.selectedSortOption = event.value;
+    if (this.filteredOffers.length > 0) {
+      this.sortFlights(this.selectedSortOption);
+      this.transformedFlights = this.transformOffersToFlightFormat(
+        this.filteredOffers
+      );
+      this.filteredFlightsChange.emit(this.transformedFlights);
+    }
   }
 
   transformOffersToFlightFormat(offers: ITempFlightOffer[]): Flight[] {

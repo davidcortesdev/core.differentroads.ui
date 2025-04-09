@@ -632,7 +632,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         console.log(`Puntos obtenidos para ${email}:`, response);
         const points = response?.points ?? 0;
         const travelerCategory = response?.typeTraveler?.toLowerCase() || 'default'
-        const maxRedeemableAmount = response?.maxpoints || 50;
+        let maxRedeemableAmount = response?.maxpoints;
       
 
         switch (travelerCategory) {

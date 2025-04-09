@@ -1,6 +1,10 @@
 <!-- Título de salida fuera del flight-itinerary -->
 <div class="flight-departure-title" *ngIf="journeys && journeys.length > 0">
-  <h3>Salida {{ journeys[0].segments[0].departureCity }} ({{ journeys[0].departure.iata }})</h3>
+  <h3>
+    Salida {{ journeys[0].segments[0].departureCity }} ({{
+      journeys[0].departure.iata
+    }})
+  </h3>
 </div>
 
 <div class="flight-itinerary">
@@ -8,7 +12,9 @@
     <!-- Iteramos sobre cada journey (outbound e inbound) -->
     <div class="journey-item" *ngFor="let journey of journeys; let i = index">
       <span class="journey-item-departure-text">
-        <span class="direction-text small">{{ i === 0 ? "IDA" : "VUELTA" }}</span>
+        <span class="direction-text small">{{
+          i === 0 ? "IDA" : "VUELTA"
+        }}</span>
         <span class="route-text-empty"></span>
       </span>
 
@@ -27,12 +33,22 @@
               : "--/--/----"
           }}
         </span>
-        <span class="journey-item-departure-city">{{ journey.segments[0].departureCity }} </span>
+        <span class="journey-item-departure-city"
+          >{{ journey.segments[0].departureCity }}
+        </span>
       </div>
 
       <div class="journey-item-flight-info space-y-2">
         <p-overlayPanel #op>
-          <p style="color: var(--background-azul); font-weight: 500; margin-bottom: 1rem;">Detalle del vuelo</p>
+          <p
+            style="
+              color: var(--background-azul);
+              font-weight: 500;
+              margin-bottom: 1rem;
+            "
+          >
+            Detalle del vuelo
+          </p>
           <p-timeline [value]="journey.timelineData" align="left">
             <ng-template #opposite let-item>
               <i
@@ -104,21 +120,31 @@
       </div>
 
       <div class="journey-item-departure pl-2">
-        <span class="journey-item-departure-time" style="text-align: right; width: 100%;">
+        <span
+          class="journey-item-departure-time"
+          style="text-align: right; width: 100%"
+        >
           {{
             isValidDate(journey.arrival.time)
               ? (journey.arrival.time | date : "HH:mm" : "UTC")
               : "--:--"
           }}
         </span>
-        <span class="journey-item-departure-date" style="text-align: right; width: 100%;">
+        <span
+          class="journey-item-departure-date"
+          style="text-align: right; width: 100%"
+        >
           {{
             isValidDate(journey.arrival.date)
               ? (journey.arrival.date | date : "dd-MM-yyyy" : "UTC")
               : "--/--/----"
           }}
         </span>
-        <span class="journey-item-departure-city" style="text-align: right; width: 100%;">{{ journey.segments[journey.segments.length - 1].arrivalCity }} </span>
+        <span
+          class="journey-item-departure-city"
+          style="text-align: right; width: 100%"
+          >{{ journey.segments[journey.segments.length - 1].arrivalCity }}
+        </span>
       </div>
     </div>
   </div>
@@ -130,14 +156,21 @@
         {{ getPrice() || flight.price || 0 | currencyFormat : "EUR" }}
       </span>
       <span class="flight-itinerary-price-wrapper-text">Por persona</span>
+      <!-- Add message for Amadeus flights -->
+      <span
+        *ngIf="flight.source === 'amadeus'"
+        class="flight-itinerary-price-wrapper-fee-text"
+      >
+        Tasas y gastos de gestión incluidos
+      </span>
     </div>
     <p-button
-  type="button"
-  class="button-rounded is-primary px-6 py-3"
-  [styleClass]="isFlightSelected(flight) ? 'selected-flight-button' : ''"
-  (click)="selectFlight(flight)"
->
-  {{ isFlightSelected(flight) ? "Seleccionado" : "Seleccionar" }}
-</p-button>
+      type="button"
+      class="button-rounded is-primary px-6 py-3"
+      [styleClass]="isFlightSelected(flight) ? 'selected-flight-button' : ''"
+      (click)="selectFlight(flight)"
+    >
+      {{ isFlightSelected(flight) ? "Seleccionado" : "Seleccionar" }}
+    </p-button>
   </div>
 </div>

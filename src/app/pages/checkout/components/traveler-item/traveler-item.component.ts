@@ -5,11 +5,22 @@ import {
   OnDestroy,
   ViewChild,
   ChangeDetectionStrategy,
+  OnChanges,
+  SimpleChanges,
 } from '@angular/core';
-import { FormGroup, Validators } from '@angular/forms';
+import {
+  FormGroup,
+  Validators,
+  AbstractControl,
+  ValidatorFn,
+} from '@angular/forms';
 import { Select } from 'primeng/select';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { CountriesService } from '../../../../core/services/countries.service';
+import { Country } from '../../../../shared/models/country.model';
+import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
+import { TravelersService } from '../../../../core/services/checkout/travelers.service';
 
 // Interfaces para mejorar la tipificación
 export interface TravelerData {
@@ -22,35 +33,76 @@ export interface SelectOption {
   value: string;
 }
 
+export function futureDateValidator(): ValidatorFn {
+  return (control: AbstractControl): { [key: string]: any } | null => {
+    const selectedDate = new Date(control.value);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return selectedDate > today
+      ? null
+      : { futureDate: { value: control.value } };
+  };
+}
+
+export function pastDateValidator(): ValidatorFn {
+  return (control: AbstractControl): { [key: string]: any } | null => {
+    const selectedDate = new Date(control.value);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return selectedDate < today ? null : { pastDate: { value: control.value } };
+  };
+}
+
 @Component({
   selector: 'app-traveler-item',
   standalone: false,
   templateUrl: './traveler-item.component.html',
   styleUrls: ['./traveler-item.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush, // Mejora de rendimiento
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TravelerItemComponent implements OnInit, OnDestroy {
+export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
   @Input() form!: FormGroup;
   @Input() index!: number;
   @Input() traveler!: TravelerData;
   @Input() sexoOptions: SelectOption[] = [];
-  @Input() isFirstTraveler: boolean = false;
   @Input() getAdultsOptionsFn!: (index: number) => SelectOption[];
+  @Input() allFieldsMandatory: boolean = false;
+  @Input() travelerId: string | null = null;
 
   @ViewChild('sexoSelect') sexoSelect!: Select;
 
-  // Add showMoreFields flag to control visibility
-  showMoreFields: boolean = false;
+  // Propiedad para almacenar y mostrar los IDs
+  travelerIds: { id: string | null; _id: string | null } = {
+    id: null,
+    _id: null,
+  };
 
-  // Cache para opciones de documentos
+  showMoreFields: boolean = false;
   private documentOptionsCache: { [key: string]: SelectOption[] } = {};
-  // Destructor de suscripciones
   private destroy$ = new Subject<void>();
 
-  constructor() {}
+  // Propiedades para el autocompletado de países
+  filteredCountries: Country[] = [];
+
+  // Formatos de fecha aceptados
+  dateFormat: string = 'dd/mm/yy';
+
+  constructor(
+    private countriesService: CountriesService,
+    private travelersService: TravelersService
+  ) {}
 
   ngOnInit(): void {
-    // Escuchar cambios en campos relevantes para limpiar caché
+    // Inicializar el ID del viajero si no existe
+    this.initializeTravelerId();
+
+    // Mostrar IDs en consola
+    this.logTravelerIds();
+    const currentTraveler = this.travelersService.getTravelers()[this.index];
+    this.travelerId = currentTraveler?._id || null;
+
     if (this.form) {
       this.form
         .get('ageGroup')
@@ -62,71 +114,156 @@ export class TravelerItemComponent implements OnInit, OnDestroy {
         ?.valueChanges.pipe(takeUntil(this.destroy$))
         .subscribe(() => this.clearDocumentOptionsCache());
 
-      // Actualizar validadores según si es el primer viajero o no
+      // Initial validators setup
       this.updateValidators();
+
+      // Set passport as default document type if not already set
+      if (!this.form.get('documentType')?.value) {
+        this.form.get('documentType')?.setValue('passport');
+      }
+    }
+    if (this.form && this.form.get('nationality')?.value) {
+      const code = this.form.get('nationality')?.value;
+      this.countriesService.getCountryByCode(code).subscribe((country) => {
+        if (country) {
+          this.form.get('nationality')?.setValue(country.code); // mantiene el valor
+          this.filteredCountries = [country]; // necesario para que lo muestre
+        }
+      });
+    }
+
+    // Convertir todos los campos de fecha string a objetos Date
+    this.convertDateFields();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // React to input changes, particularly allFieldsMandatory
+    if (changes['allFieldsMandatory']) {
+      this.updateValidators();
+
+      // Set showMoreFields to true when allFieldsMandatory is true
+      if (this.allFieldsMandatory) {
+        this.showMoreFields = true;
+      }
+    }
+
+    // Si hay cambios en los datos del viajero, convertir fechas
+    if (changes['traveler']) {
+      this.convertDateFields();
     }
   }
 
   ngOnDestroy(): void {
-    // Limpiar suscripciones al destruir el componente
     this.destroy$.next();
     this.destroy$.complete();
   }
 
-  // Add toggle method for show more/less functionality
+  private initializeTravelerId(): void {
+    const currentTravelers = this.travelersService.getTravelers();
+
+    if (currentTravelers[this.index]) {
+      // Generar un nuevo ID si no existe
+      if (!currentTravelers[this.index]._id) {
+        currentTravelers[this.index]._id =
+          this.travelersService.generateHexID();
+        this.travelersService.updateTravelers(currentTravelers);
+      }
+
+      // Actualizar la propiedad para mostrar en el template
+      this.travelerIds = {
+        id: currentTravelers[this.index].id || null,
+        _id: currentTravelers[this.index]._id || null,
+      };
+    }
+  }
+
+  private logTravelerIds(): void {
+    const currentTraveler = this.travelersService.getTravelers()[this.index];
+    console.groupCollapsed(`IDs del Viajero ${this.index + 1}`);
+    console.log('ID:', currentTraveler?.id || 'No disponible');
+    console.log('_ID:', currentTraveler?._id || 'No disponible');
+    console.groupEnd();
+  }
+
   toggleMoreFields(): void {
     this.showMoreFields = !this.showMoreFields;
   }
 
   /**
-   * Actualiza los validadores según si es el primer viajero o no
+   * Actualiza los validadores basados en la bandera allFieldsMandatory
    */
   private updateValidators(): void {
-    const firstNameControl = this.form.get('firstName');
-    const lastNameControl = this.form.get('lastName');
-    const emailControl = this.form.get('email');
+    if (!this.form) return;
 
-    if (firstNameControl && lastNameControl && emailControl) {
-      if (this.isFirstTraveler) {
-        // Solo el primer viajero tiene campos obligatorios
-        firstNameControl.setValidators([Validators.required]);
-        lastNameControl.setValidators([Validators.required]);
-        emailControl.setValidators([Validators.required, Validators.email]);
-      } else {
-        // Resto de viajeros sin campos obligatorios
-        firstNameControl.clearValidators();
-        lastNameControl.clearValidators();
-        emailControl.clearValidators();
+    const requiredFields = ['firstName', 'lastName', 'email'];
 
-        // Mantener solo validador de formato para email si se introduce
-        emailControl.setValidators([Validators.email]);
+    // For debugging
+    console.log(
+      `Updating validators: allFieldsMandatory=${this.allFieldsMandatory}`
+    );
+
+    // First, ensure name, surname and email are ALWAYS required
+    requiredFields.forEach((field) => {
+      const control = this.form.get(field);
+      if (control) {
+        if (field === 'email') {
+          control.setValidators([Validators.required, Validators.email]);
+        } else {
+          control.setValidators([Validators.required]);
+        }
+        control.updateValueAndValidity({ emitEvent: false });
       }
+    });
 
-      // Actualizar estado de los controles
-      firstNameControl.updateValueAndValidity();
-      lastNameControl.updateValueAndValidity();
-      emailControl.updateValueAndValidity();
+    // Then apply additional validators for other fields when allFieldsMandatory is true
+    if (this.allFieldsMandatory) {
+      Object.keys(this.form.controls).forEach((key) => {
+        // Skip already handled required fields
+        if (requiredFields.includes(key)) return;
+
+        const control = this.form.get(key);
+        if (control) {
+          // No aplicar validación requerida a "ageGroup"
+          if (key === 'ageGroup') {
+            control.clearValidators();
+          } else if (key === 'passportExpirationDate') {
+            control.setValidators([Validators.required, futureDateValidator()]);
+          } else if (key === 'passportIssueDate') {
+            control.setValidators([Validators.required, pastDateValidator()]);
+          } else if (
+            key !== 'minorIdExpirationDate' &&
+            key !== 'minorIdIssueDate' &&
+            key !== 'associatedAdult'
+          ) {
+            control.setValidators([Validators.required]);
+          }
+          control.updateValueAndValidity({ emitEvent: false });
+        }
+      });
+    } else {
+      // For non-required fields when not Amadeus flight
+      Object.keys(this.form.controls).forEach((key) => {
+        // Skip already handled required fields
+        if (requiredFields.includes(key)) return;
+
+        const control = this.form.get(key);
+        if (control) {
+          control.clearValidators();
+          control.updateValueAndValidity({ emitEvent: false });
+        }
+      });
     }
   }
 
-  /**
-   * Obtiene el título del pasajero con su número
-   * @param num Número de pasajero
-   */
   getTitlePasajero(num: string): string {
     return 'Pasajero ' + num;
   }
 
-  /**
-   * Obtiene las opciones de documento basadas en edad y nacionalidad
-   * Implementa memoización para evitar cálculos repetidos
-   */
   getDocumentOptions(): SelectOption[] {
     const ageGroup = this.form.get('ageGroup')?.value || '';
     const nationality = this.form.get('nationality')?.value || '';
     const cacheKey = `${ageGroup}-${nationality}`;
 
-    // Devolver del caché si existe
     if (this.documentOptionsCache[cacheKey]) {
       return this.documentOptionsCache[cacheKey];
     }
@@ -141,27 +278,43 @@ export class TravelerItemComponent implements OnInit, OnDestroy {
       options.push({ label: 'DNI', value: 'dni' });
     }
 
-    // Pasaporte siempre disponible
     options.push({ label: 'Pasaporte', value: 'passport' });
 
-    // Guardar en caché para futuras llamadas
     this.documentOptionsCache[cacheKey] = options;
-
     return options;
   }
 
-  /**
-   * Obtiene las opciones de adultos para asociar a un bebé
-   */
   getAdultsOptions(): SelectOption[] {
     return this.getAdultsOptionsFn ? this.getAdultsOptionsFn(this.index) : [];
   }
 
-  /**
-   * Limpia la caché de opciones de documentos cuando cambian los valores relevantes
-   */
   private clearDocumentOptionsCache(): void {
     this.documentOptionsCache = {};
+  }
+
+  /**
+   * Filtra países basado en el término de búsqueda
+   * @param event Evento de autocompletado
+   */
+  filterCountries(event: AutoCompleteCompleteEvent): void {
+    const query = event.query;
+    this.countriesService.searchCountries(query).subscribe((countries) => {
+      this.filteredCountries = countries;
+    });
+  }
+
+  /**
+   * Maneja la selección de un país
+   * @param country País seleccionado
+   */
+  onCountrySelect(country: any): void {
+    console.log('Selected country:', country);
+
+    if (this.form && country) {
+      // No need to manually set the value, the autocomplete binding does this
+      // Just make sure to clear the document options cache
+      this.clearDocumentOptionsCache();
+    }
   }
 
   /**
@@ -169,5 +322,37 @@ export class TravelerItemComponent implements OnInit, OnDestroy {
    */
   trackByFn(index: number, item: any): number {
     return index;
+  }
+
+  /**
+   * Convierte los valores string de fecha a objetos Date para los datepickers
+   */
+  private convertDateFields(): void {
+    if (!this.form) return;
+
+    const dateFields = [
+      'birthdate',
+      'passportExpirationDate',
+      'passportIssueDate',
+      'minorIdExpirationDate',
+      'minorIdIssueDate',
+    ];
+
+    dateFields.forEach((field) => {
+      const control = this.form.get(field);
+      if (control && control.value && !(control.value instanceof Date)) {
+        try {
+          // Convertir el valor string a Date
+          const dateValue = new Date(control.value);
+          if (!isNaN(dateValue.getTime())) {
+            // Comprobar si es una fecha válida
+            control.setValue(dateValue, { emitEvent: false });
+            console.log(`Campo ${field} convertido a Date:`, dateValue);
+          }
+        } catch (error) {
+          console.error(`Error al convertir la fecha para ${field}:`, error);
+        }
+      }
+    });
   }
 }

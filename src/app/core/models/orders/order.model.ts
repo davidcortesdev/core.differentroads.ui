@@ -24,6 +24,7 @@ export interface OptionalActivityRef {
   id: string;
   travelersAssigned: string[];
   name?: string;
+  _id?: string;
 }
 
 export interface TravelerData {
@@ -57,6 +58,7 @@ export interface OrderTraveler {
   optionalActivitiesIDs?: string[];
   insuranceID?: string;
   _id?: string;
+  id?: string;
 }
 
 export interface GetAllOrdersParams {

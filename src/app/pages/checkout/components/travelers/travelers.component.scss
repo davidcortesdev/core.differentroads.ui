@@ -107,89 +107,91 @@
   }
 }
 
-// Estilos globales para componentes PrimeNG
-::ng-deep {
-  // Campos de formulario
-  .form-field {
-    margin-bottom: 10px;
-
-    label {
-      display: block;
-      color: var(--background-azul);
-    }
-
-    // Estilos comunes para inputs
-    .p-inputtext,
-    .p-dropdown,
-    .p-calendar,
-    .p-autocomplete,
-    .p-inputmask,
-    .p-select {
-      width: 100%;
-      border: none;
-      border-bottom: 1px solid var(--background-azul);
-      border-radius: 0;
-      background: transparent;
-      font-size: 14px;
-    }
-
-    .p-datepicker {
-      width: 100%;
-    }
-
-    .p-select {
-      cursor: pointer;
-    }
-
-    .p-select-dropdown {
-      color: var(--background-azul);
-    }
-
-    .p-button-rounded {
-      border-radius: var(--p-button-rounded-border-radius);
-      width: 100%;
-    }
-  }
-
-  // Botón "ver más"
-  .view-more-btn {
-    border-radius: 6rem;
-    width: 100%;
-  }
-
-  // Estilos de panel
-  .p-panel {
-    .p-panel-content {
-      padding: 10px 300px 10px 10px;
-      border: 1px solid #d1c1c1;
-      display: inline-block;
-      border-radius: 9px;
-    }
-
-    .p-panel-header {
-      padding: 0;
-    }
-  }
-
-  // Estilos de acordeón
-  .p-accordionpanel:not(.p-disabled).p-accordionpanel-active > .p-accordionheader {
-    color: var(--background-azul);
-  }
-
-  .p-accordionheader {
-    font-size: 15px;
-  }
-
-  // Acordeón de viajeros
-  .travelers-accordion {
-    width: 100%;
-    
-    .p-accordion-tab {
+.content-form {
+  ::ng-deep {
+    // Campos de formulario
+    .form-field {
       margin-bottom: 10px;
+
+      label {
+        display: block;
+        color: var(--background-azul);
+      }
+
+      // Estilos comunes para inputs
+      .p-inputtext,
+      .p-dropdown,
+      .p-calendar,
+      .p-autocomplete,
+      .p-inputmask,
+      .p-select {
+        width: 100%;
+        border: none;
+        border-bottom: 1px solid var(--background-azul);
+        border-radius: 0;
+        background: transparent;
+        font-size: 14px;
+      }
+
+      .p-datepicker {
+        width: 100%;
+      }
+
+      .p-select {
+        cursor: pointer;
+      }
+
+      .p-select-dropdown {
+        color: var(--background-azul);
+      }
+
+      .p-button-rounded {
+        border-radius: var(--p-button-rounded-border-radius);
+        width: 100%;
+      }
     }
-    
-    .p-accordion-content {
-      overflow: visible;
+
+    // Botón "ver más"
+    .view-more-btn {
+      border-radius: 6rem;
+      width: 100%;
+    }
+
+    // Estilos de panel
+    .p-panel {
+      .p-panel-content {
+        padding: 10px 300px 10px 10px;
+        border: 1px solid #d1c1c1;
+        display: inline-block;
+        border-radius: 9px;
+      }
+
+      .p-panel-header {
+        padding: 0;
+      }
+    }
+
+    // Estilos de acordeón
+    .p-accordionpanel:not(.p-disabled).p-accordionpanel-active
+      > .p-accordionheader {
+      color: var(--background-azul);
+    }
+
+    .p-accordionheader {
+      font-size: 15px;
+    }
+
+    // Acordeón de viajeros
+    .travelers-accordion {
+      width: 100%;
+
+      .p-accordion-tab {
+        margin-bottom: 10px;
+      }
+
+      .p-accordion-content {
+        overflow: visible;
+      }
     }
   }
 }

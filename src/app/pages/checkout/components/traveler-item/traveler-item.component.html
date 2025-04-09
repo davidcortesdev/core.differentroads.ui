@@ -6,8 +6,13 @@
   </p-panel>
   <p class="user-description">
     <i class="pi pi-exclamation-circle info-icon"></i>
-    Introduce el nombre y el apellido tal y como aparecen en el DNI. Podrás
-    rellenar los datos no obligatorios más adelante.
+    Introduce el nombre y el apellido tal y como aparecen en el DNI.
+    <strong>Los campos marcados con * son obligatorios.</strong>
+    {{
+      allFieldsMandatory
+        ? "Todos los campos son necesarios para vuelos seleccionados."
+        : ""
+    }}
   </p>
 </div>
 
@@ -19,7 +24,7 @@
     <div class="form-row">
       <div class="form-column">
         <div class="form-field">
-          <label>Nombre{{ isFirstTraveler ? "*" : "" }}</label>
+          <label>Nombre*</label>
           <input
             pInputText
             name="nombre"
@@ -30,7 +35,7 @@
       </div>
       <div class="form-column">
         <div class="form-field">
-          <label>Apellido{{ isFirstTraveler ? "*" : "" }}</label>
+          <label>Apellido*</label>
           <input
             pInputText
             name="apellido"
@@ -43,9 +48,9 @@
 
     <!-- Email -->
     <div class="form-row">
-      <div class="form-column">
+      <div class="form-column half-width">
         <div class="form-field">
-          <label>E-mail{{ isFirstTraveler ? "*" : "" }}</label>
+          <label>E-mail*</label>
           <input
             pInputText
             name="email"
@@ -54,15 +59,29 @@
           />
         </div>
       </div>
+      <div class="form-column half-width">
+        <div class="form-field">
+          <label>Sexo{{ allFieldsMandatory ? "*" : "" }}</label>
+          <p-select
+            #sexoSelect
+            formControlName="sexo"
+            [options]="sexoOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Seleccione"
+          >
+          </p-select>
+        </div>
+      </div>
     </div>
 
     <!-- Botón Ver más/menos -->
     <div class="form-row">
       <div class="form-column">
-        <button 
-          pButton 
-          type="button" 
-          [label]="showMoreFields ? 'Ver menos' : 'Ver más'" 
+        <button
+          pButton
+          type="button"
+          [label]="showMoreFields ? 'Ver menos' : 'Ver más'"
           [icon]="showMoreFields ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
           (click)="toggleMoreFields()"
           class="p-button-text p-button-sm show-more-button"
@@ -73,63 +92,37 @@
 
   <!-- Campos adicionales (mostrados/ocultados con el botón) -->
   <div class="additional-fields" *ngIf="showMoreFields">
-    <!-- Sexo y Fecha de nacimiento -->
+    <!-- Sexo y Fecha de nacimiento y nacionalidad -->
     <div class="form-row">
-      <div class="form-column">
-        <div class="form-row">
-          <div class="form-column half-width">
-            <div class="form-field">
-              <label>Sexo</label>
-              <p-select
-                #sexoSelect
-                formControlName="sexo"
-                [options]="sexoOptions"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Seleccione"
-              >
-              </p-select>
-            </div>
-          </div>
-          <div class="form-column half-width">
-            <div class="form-field">
-              <label>Fecha de nacimiento</label>
-              <p-datepicker
-                formControlName="birthdate"
-                placeholder="dd/mm/aaaa"
-                [iconDisplay]="'input'"
-                [showIcon]="true"
-                appendTo="body"
-              >
-              </p-datepicker>
-            </div>
-          </div>
+      <div class="form-column half-width">
+        <div class="form-field">
+          <label>Fecha de nacimiento{{ allFieldsMandatory ? "*" : "" }}</label>
+          <p-datepicker
+            formControlName="birthdate"
+            placeholder="dd/mm/aaaa"
+            [iconDisplay]="'input'"
+            [showIcon]="true"
+            [dateFormat]="dateFormat"
+            appendTo="body"
+          >
+          </p-datepicker>
         </div>
       </div>
-    </div>
-
-    <!-- Nacionalidad y Código postal -->
-    <div class="form-row">
-      <div class="form-column">
+      <div class="form-column half-width">
         <div class="form-field">
-          <label>Nacionalidad</label>
-          <input
-            pInputText
-            name="nacionalidad"
-            placeholder="Introduce tu nacionalidad"
+          <label>Nacionalidad{{ allFieldsMandatory ? "*" : "" }}</label>
+          <p-autocomplete
             formControlName="nationality"
-          />
-        </div>
-      </div>
-      <div class="form-column">
-        <div class="form-field">
-          <label>Código postal</label>
-          <input
-            pInputText
-            name="cp"
-            placeholder="Introduce C.P"
-            formControlName="cp"
-          />
+            [suggestions]="filteredCountries"
+            (completeMethod)="filterCountries($event)"
+            (onSelect)="onCountrySelect($event)"
+            [optionValue]="'code'"
+            [dropdown]="true"
+            [forceSelection]="true"
+            field="name"
+            placeholder="Introduce tu nacionalidad"
+            appendTo="body"
+          ></p-autocomplete>
         </div>
       </div>
     </div>
@@ -188,6 +181,7 @@
                     placeholder="dd/mm/aaaa"
                     [iconDisplay]="'input'"
                     [showIcon]="true"
+                    [dateFormat]="dateFormat"
                     appendTo="body"
                   >
                   </p-datepicker>
@@ -265,4 +259,7 @@
       </div>
     </ng-container>
   </div>
+
+  <app-traveler-activity-selector *ngIf="travelerId" [travelerId]="travelerId">
+  </app-traveler-activity-selector>
 </form>

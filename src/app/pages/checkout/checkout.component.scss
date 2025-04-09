@@ -71,7 +71,7 @@
             color: var(--background-azul);
           }
         }
-        
+
         // Add space between steps and content
         > div:nth-child(2) {
           margin-top: 1.5rem;
@@ -154,7 +154,7 @@
           @media (max-width: 768px) {
             margin-top: 1.2rem;
           }
-          
+
           @media (max-width: 425px) {
             margin-top: 1rem;
           }
@@ -173,11 +173,11 @@
             padding-top: 0.5rem;
             border-top: 1px solid var(--background-azul);
             border-bottom: 1px solid var(--background-azul);
-            
+
             @media (max-width: 768px) {
               font-size: 1rem;
             }
-            
+
             @media (max-width: 425px) {
               font-size: 0.9rem;
             }
@@ -412,19 +412,91 @@ p-button.continue-button ::ng-deep .p-button {
   }
 }
 
-::ng-deep   .p-message-sm .p-message-text {
+::ng-deep .p-message-sm .p-message-text {
   font-size: 0.7rem;
 }
 
 // Ensure all text in the checkout component has the correct color
 ::ng-deep .checkout {
-  p, span, div, h1, h2, h3, h4, h5, h6, label {
+  p,
+  span,
+  div,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  label {
     color: var(--background-azul);
   }
-  
+
   // Exception for buttons - don't change their text color
   .p-button .p-button-label,
   .p-button .p-button-icon {
     color: inherit;
+  }
+}
+
+// Add these styles at the end of the file
+
+// Optimized styles for tour-additional-info component
+.tour-actions-container {
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+::ng-deep .tour-actions-container {
+  .tour-additional-info-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .action-card {
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+
+    .p-card-body {
+      padding: 0.5rem 0.75rem;
+      background-color: white;
+      border-radius: 11.82px;
+    }
+    .p-card-content {
+      padding: 0.25rem 0;
+    }
+    &:hover {
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+    }
+  }
+  .card-content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    text-align: left;
+    gap: 0.5rem;
+  }
+  .card-text {
+    font-size: 0.85rem;
+    white-space: normal;
+    font-weight: 500;
+  }
+  // Responsive adjustments
+  @media screen and (max-width: 768px) {
+    .tour-additional-info-container {
+      flex-wrap: nowrap;
+    }
+
+    .action-card {
+      flex-basis: 48%;
+    }
+  }
+  @media screen and (max-width: 480px) {
+    .action-card {
+      flex-basis: 100%;
+    }
   }
 }

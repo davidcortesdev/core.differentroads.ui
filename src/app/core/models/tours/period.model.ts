@@ -25,4 +25,8 @@ export interface Period extends CMSCollections {
     }
   ];
   includedActivities?: Activity[];
+  consolidator: {
+    airportsFilters: string[];
+    includeTourConfig: boolean;
+  };
 }

@@ -34,7 +34,7 @@
                   <span class="num-users">{{ item.passengers }}</span>
                   <i class="pi pi-users"></i>
                 </div>
-                <div class="price-tag">{{ item.price }}</div>
+                <div class="price-tag">{{ item.price | currency: "EUR"}}</div>
               </div>
             </div>
           </div>

@@ -16,7 +16,7 @@ interface Booking {
   image: string;
   tourID?: string;
   passengers?: number;
-  price?: number;
+  price?: number; // Changed from string to number for consistency
 }
 
 @Component({
@@ -108,18 +108,14 @@ export class ActiveBookingsSectionComponent implements OnInit, OnDestroy {
         .subscribe({
           next: (detailedBooking) => {
             if (detailedBooking) {
-              // Find the corresponding booking in our array
-;
-                const index = this.bookings.findIndex(b => b.reservationNumber === detailedBooking.ID);
-                console.log(this.bookings)
-                console.log(detailedBooking);
-                console.log(detailedBooking.periodData?.['total']);
-                console.log(detailedBooking.periodData?.['total']);
-
-                this.bookings[index].price = detailedBooking.periodData?.['total'] || 0;
-                
-                this.cdr.detectChanges();
+              // Find the corresponding booking by reservation number
+              const index = this.bookings.findIndex(b => b.reservationNumber === detailedBooking.ID);
               
+              if (index >= 0) {
+                // Update the price with the accurate information
+                this.bookings[index].price = detailedBooking.periodData?.['total'] || 0;
+                this.cdr.detectChanges();
+              }
             }
           },
           complete: () => {

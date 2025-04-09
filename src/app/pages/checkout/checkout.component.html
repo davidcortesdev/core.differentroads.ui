@@ -34,19 +34,6 @@
                 (onClick)="nextStepWithValidation(1)"
               ></p-button>
             </div>
-            <div class="flex pt-6 justify-end">
-              <p-button class="file" iconPos="right" (onClick)="saveTrip()">
-                <ng-template pTemplate="content">
-                  <div class="title">
-                    <div>Guarda este viaje</div>
-                    <div class="description">
-                      Sujeto a disponibilidad en el momento de la reserva y sólo
-                      para salidas con stock
-                    </div>
-                  </div>
-                </ng-template>
-              </p-button>
-            </div>
           </div>
 
           <!-- Step 2: Flights -->
@@ -110,6 +97,23 @@
             </app-payment>
           </div>
         </div>
+      </div>
+      <!-- Tour additional info component with all required inputs -->
+      <div class="tour-actions-container">
+        <app-tour-additional-info
+          [existingOrder]="orderDetails"
+          [tourName]="tourName"
+          [periodName]="periodData.name || ''"
+          [periodDates]="tourDates"
+          [selectedFlight]="selectedFlight"
+          [travelersSelected]="{
+            adults: travelersSelected.adults,
+            childs: travelersSelected.childs,
+            babies: travelersSelected.babies
+          }"
+          [periodID]="periodID"
+          [isAuthenticated]="isAuthenticated"
+        ></app-tour-additional-info>
       </div>
     </div>
 

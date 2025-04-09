@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { AmadeusService } from '../../../../../../core/services/amadeus.service';
 import { AirportService } from '../../../../../../core/services/airport.service';
 import { TravelersService } from '../../../../../../core/services/checkout/travelers.service';
+import { TextsService } from '../../../../../../core/services/checkout/texts.service';
 import {
   FlightOffersParams,
   ITempFlightOffer,
@@ -80,11 +81,15 @@ export class FlightSearchComponent implements OnInit {
   // Array para almacenar vuelos transformados
   transformedFlights: Flight[] = [];
 
+  // Tour name from TextsService
+  tourName: string = 'Destino';
+
   constructor(
     private fb: FormBuilder,
     private amadeusService: AmadeusService,
     private airportService: AirportService,
-    private travelersService: TravelersService // Inject TravelersService
+    private travelersService: TravelersService, // Inject TravelersService
+    private textsService: TextsService // Add TextsService
   ) {
     // Seleccionar ciudad por defecto (Madrid)
     const defaultCity = { nombre: 'Madrid', codigo: 'MAD' };
@@ -118,6 +123,12 @@ export class FlightSearchComponent implements OnInit {
       this.fechaRegresoFormateada = this.formatDisplayDate(
         this.fechaRegresoConstante
       );
+    }
+
+    // Get tour name from TextsService
+    const tourTexts = this.textsService.getTextsForCategory('tour');
+    if (tourTexts && tourTexts['name']) {
+      this.tourName = tourTexts['name'];
     }
 
     // Remove automatic search on initialization

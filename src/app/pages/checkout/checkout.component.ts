@@ -208,6 +208,20 @@ export class CheckoutComponent implements OnInit {
               timeZone: 'UTC',
             })}
           `;
+
+          // Save tour information to TextsService
+          this.textsService.updateTextsForCategory('tour', {
+            name: period.tourName,
+            id: period.tourID,
+            period: period.name,
+          });
+
+          // Also save period data separately
+          this.textsService.updateTextsForCategory('period', {
+            name: period.name,
+            dayOne: period.dayOne,
+            returnDate: period.returnDate,
+          });
         });
 
       this.periodsService.getPeriodPrices(periodID).subscribe((prices) => {

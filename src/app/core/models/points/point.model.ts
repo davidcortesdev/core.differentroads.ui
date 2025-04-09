@@ -6,7 +6,8 @@ export interface Point {
     bookingID: string;
     tourName: string;
   };
-  subType: string;
+  category: string;
+  concept: string;
   origin: string;
   transactionEmail: string;
 }

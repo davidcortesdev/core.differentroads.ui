@@ -28,7 +28,9 @@ import { MessageService } from 'primeng/api';
 import { Subscription } from 'rxjs';
 import { TextsService } from '../../../../core/services/checkout/texts.service';
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
-
+import { PeriodsService } from '../../../../core/services/periods.service';
+import { UsersService } from '../../../../core/services/users.service';
+import { PointsCalculatorService } from '../../../../core/services/checkout/points-calculator.service';
 interface TravelerWithPoints {
   id: string;
   firstName: string;
@@ -37,7 +39,9 @@ interface TravelerWithPoints {
   points?: number;
   redeeming?: boolean;
   pointsRedeemed?: number;
-  redeemCheckbox?: boolean; // Add this new property
+  redeemCheckbox?: boolean;
+  category?:string;
+  type?:string;
 }
 
 @Component({
@@ -48,6 +52,8 @@ interface TravelerWithPoints {
 })
 export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
   @Input() totalPrice: number = 0;
+  @Input() subtotalPrice: number = 0;
+  @Input() tourName: string = '';
   @Input() processBooking!: () => Promise<{
     bookingID: string;
     ID: string;
@@ -56,7 +62,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
   @Output() goBackEvent = new EventEmitter<void>();
 
   selectedPointsDiscount: string[] = [];
-
+  
   isOpen: boolean = true;
   isInstallmentsOpen: boolean = true;
   isPaymentMethodsOpen: boolean = true;
@@ -101,7 +107,10 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     private discountsService: DiscountsService,
     private messageService: MessageService,
     private authService: AuthenticateService,
-    private textsService: TextsService
+    private textsService: TextsService,
+    private periodsService: PeriodsService,
+    private usersService: UsersService,
+    private pointsCalculator: PointsCalculatorService
   ) {}
 
   ngOnInit() {
@@ -342,6 +351,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       const bookingID = response.bookingID;
       const ID = response.ID;
 
+
       console.log('Booking created successfully:', bookingID);
 
       // Determine the payment amount based on payment type
@@ -372,6 +382,9 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         ]);
         return;
       }
+      
+      await this.createReservationPoints(bookingID, this.tourName || '');
+      this.sendRedemptionPoints(bookingID, this.tourName || '');
     } catch (error) {
       console.error('Error in payment process:', error);
       this.messageService.add({
@@ -381,12 +394,12 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
           'Ha ocurrido un error al procesar el pago. Por favor, inténtalo de nuevo.',
       });
     } finally {
-      // This will only run if we didn't redirect earlier
+      
       this.isLoading = false;
     }
   }
 
-  // Add this method to handle the back button click
+  
   goBack(): void {
     this.goBackEvent.emit();
   }
@@ -481,10 +494,9 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     this.travelersService.travelers$.subscribe((travelers) => {
       const emailMap = new Map<string, TravelerWithPoints>();
       let needToUpdateTravelers = false;
-
+      
       travelers.forEach((traveler) => {
         const email = traveler.travelerData?.email || '';
-        console.log('Traveler email:', email);
         if (email && !emailMap.has(email)) {
           const existingTraveler = this.uniqueTravelers.find(
             (t) => t.email === email
@@ -504,6 +516,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
               id: traveler._id || '',
               firstName: traveler.travelerData?.name || '',
               lastName: traveler.travelerData?.surname || '',
+              type: traveler.travelerData?.ageGroup || '',
               email: email,
               points: this.pointsCache.get(email) || 0,
               redeemCheckbox: false,
@@ -540,16 +553,22 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         const points = response?.points ?? 0;
         const travelerCategory = response?.typeTraveler?.toLowerCase() || 'default'
         let maxRedeemableAmount = 0;
-      
+        let estraveler= '';
       switch(travelerCategory) {
-        case 'globetrotter': // Trotamundos
-          maxRedeemableAmount = 50; // 50€ máximo
+        case 'globetrotter': 
+          maxRedeemableAmount = 50;
+          estraveler='Trotamundos';
           break;
-        case 'traveler': // Viajante
-          maxRedeemableAmount = 75; // 75€ máximo
+        case 'voyager': 
+          maxRedeemableAmount = 75; 
+          estraveler='Viajante';
           break;
         case 'nomad': 
-          maxRedeemableAmount = this.totalPrice * 0.05; 
+          maxRedeemableAmount = 100; 
+          estraveler='Nómada';
+          break;
+        case 'default': 
+          maxRedeemableAmount = 50; 
           break;
         default:
           maxRedeemableAmount = 0;
@@ -560,7 +579,8 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
 
         const traveler = emailMap.get(email);
         if (traveler) {
-          traveler.points = maxRedeemableAmount;
+          traveler.points =Math.min(points, maxRedeemableAmount);
+          traveler.category= estraveler;
 
           const existingIndex = this.uniqueTravelers.findIndex(
             (t) => t.email === email
@@ -593,6 +613,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         }
 
         this.loadingPointsFor.delete(email);
+        console.log('Viajeros únicos antes de mostrar:', JSON.stringify(this.uniqueTravelers));
       },
     });
   }
@@ -654,5 +675,132 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       ...otherDiscounts,
       ...pointDiscounts,
     ]);
+  }
+
+  
+  sendRedemptionPoints(bookingID: string, tourName: string): void {
+    console.log('Iniciando proceso de redención para booking:', bookingID, 'y tour:', tourName);
+    
+    this.uniqueTravelers.forEach(traveler => {
+      if (traveler.redeemCheckbox) {
+        console.log('Procesando redención para el viajero:', traveler.email);
+        
+        this.usersService.getUserByEmail(traveler.email).subscribe({
+          next: user => {
+            console.log('Usuario obtenido:', user);
+            const redemptionObject = {
+              travelerID: user._id as string,
+              type: 'redemption',
+              points: traveler.points || 0,
+              extraData: {
+                bookingID: bookingID,
+                tourName: tourName
+              },
+              category: 'Viaje',
+              concept: 'Reserva',
+              origin: 'User',
+              transactionEmail: traveler.email
+            };
+            console.log('Objeto de redención para', traveler.email, ':', redemptionObject);
+            this.pointsService.createPoints(redemptionObject).subscribe({
+              next: res => {
+                console.log(`Redemption points created for ${traveler.email}:`, res);
+              },
+              error: err => {
+                console.error(`Error creating redemption points for ${traveler.email}:`, err);
+              }
+            });
+          },
+          error: err => {
+            console.error(`Error obteniendo usuario para ${traveler.email}:`, err);
+          }
+        });
+      }
+    });
+  }
+
+  getEarnedPoints(): number {
+    const adultTravelers = this.uniqueTravelers.filter(traveler => traveler.type === 'Adultos');
+    if (adultTravelers.length === 0) return 0;
+    return this.pointsCalculator.calculateEarnedPoints(this.subtotalPrice);
+  }
+
+  async createReservationPoints(bookingID: string, tourName: string): Promise<void> {
+    console.log('Iniciando proceso de asignación de puntos por reserva');
+    
+    const adultTravelers = this.uniqueTravelers.filter(traveler => traveler.type === 'Adultos');
+    if (adultTravelers.length === 0) return;
+  
+    const totalPoints = this.getEarnedPoints();
+    const validTravelers: { email: string, userID: string }[] = [];
+  
+    
+    for (const traveler of adultTravelers) {
+      if (!traveler.email) continue;
+      
+      try {
+        const user = await this.usersService.getUserByEmail(traveler.email).toPromise();
+        if (user && user._id) {
+          validTravelers.push({ email: traveler.email, userID: user._id });
+        }
+      } catch (error) {
+        console.error(`Error verificando usuario ${traveler.email}:`, error);
+      }
+    }
+  
+    
+    if (validTravelers.length === 0) {
+      const currentUser = this.authService.getCurrentUsername();
+      try {
+        const user = await this.usersService.getUserByEmail(currentUser).toPromise();
+        if (user && user._id) {
+          const pointsObject = {
+            travelerID: user._id,
+            type: 'income',
+            points: totalPoints,
+            extraData: {
+              bookingID: bookingID,
+              tourName: tourName
+            },
+            category: 'Viaje',
+            concept: 'Reserva',
+            origin: 'System',
+            transactionEmail: currentUser
+          };
+  
+          this.pointsService.createPoints(pointsObject).subscribe({
+            next: (res) => console.log(`Points created for logged user ${currentUser}:`, res),
+            error: (err) => console.error(`Error creating points for ${currentUser}:`, err)
+          });
+        }
+      } catch (error) {
+        console.error('Error getting logged user:', error);
+      }
+      return;
+    }
+  
+    
+    const pointsPerTraveler = Math.floor(totalPoints / validTravelers.length);
+  
+    validTravelers.forEach(traveler => {
+      const pointsObject = {
+        travelerID: traveler.userID,
+        type: 'income',
+        points: pointsPerTraveler,
+        extraData: {
+          bookingID: bookingID,
+          tourName: tourName
+        },
+        category: 'Viaje',
+        concept: 'Reserva',
+        origin: 'System',
+        transactionEmail: traveler.email
+      };
+  
+      this.pointsService.createPoints(pointsObject).subscribe({
+        next: (res) => console.log(`Points created for ${traveler.email}:`, res),
+        error: (err) => console.error(`Error creating points for ${traveler.email}:`, err)
+      });
+    });
   }
 }

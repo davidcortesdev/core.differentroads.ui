@@ -6,7 +6,9 @@
         <p-rating [ngModel]="averageRating" [readonly]="true" [stars]="5"></p-rating>
         <span class="rating-value">{{ averageRating | number:'1.1-1' }}</span>
       </div>
-      <a [routerLink]="[]" fragment="tour-reviews" class="review-count" *ngIf="reviewCount > 0">{{ reviewCount }} Reviews</a>
+      <a [routerLink]="[]" fragment="tour-reviews" class="review-count" *ngIf="reviewCount > 0">
+        {{ reviewCount }} {{ reviewCount === 1 ? 'Review' : 'Reviews' }}
+      </a>
     </div>
     <h1>{{ tour.name }}</h1>
     <div class="tour-meta">
@@ -48,15 +50,11 @@
       </div>
       <div class="total-price-container">
         <div class="passengers-info" *ngIf="selectedDate && departureCity">
-          <span
-            >{{ selectedDate
-            }}{{
-              tripType.toLowerCase() === "single" ||
-              tripType.toLowerCase() === "singles"
+          <span>{{ selectedDate }}{{
+              tripType.toLowerCase() === "single" || tripType.toLowerCase() === "singles"
                 ? " - " + tripType
                 : ""
-            }}</span
-          >
+            }}</span>
           <br />
           <span>{{ formatDepartureCity(departureCity) }}</span>
         </div>
@@ -81,8 +79,7 @@
         styleClass="p-button-rounded"
         [disabled]="!selectedDate || !totalPrice"
         (onClick)="bookTour()"
-      >
-      </p-button>
+      ></p-button>
     </div>
   </div>
 </div>

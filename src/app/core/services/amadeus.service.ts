@@ -82,14 +82,13 @@ export class AmadeusService {
           ageGroup = 'Bebes';
         }
         priceData.push({
-          id: tp.id || '',
+          id: tp.id || offer.id,
           value: calculatedPrice,
           value_with_campaign: calculatedPrice,
           campaign: null,
           age_group_name: ageGroup,
           category_name: 'amadeus',
           period_product: 'flight',
-          _id: tp.id || '',
         });
       });
     });

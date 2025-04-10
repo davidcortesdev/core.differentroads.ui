@@ -131,10 +131,13 @@ export class ProcessBookingService {
         this.stepsCompleted.orderBooked = true;
       }
 
-      return {
+      // Almacenar resultado y reiniciar estado
+      const result = {
         bookingID: this.currentBookingID!,
         ID: this.currentBookingSID!,
       };
+      this.resetState();
+      return result;
     } catch (error) {
       console.error('Error in processBooking:', error);
       this.currentError =

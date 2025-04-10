@@ -31,7 +31,7 @@ jobs:
         run: |
           # Ensure we have the latest from main
           echo "🔍 Fetching latest changes from main branch..."
-          git fetch origin main --quiet
+          git fetch --quiet
           
           # Create a temporary branch to test merge
           echo "🔄 Creating temporary branch for merge test..."

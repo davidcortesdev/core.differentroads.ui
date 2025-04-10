@@ -27,8 +27,8 @@
             <div
               class="review-text-container"
               [attr.aria-label]="'Review by ' + review.traveler"
+              [innerHTML]="review.review | nl2br"
             >
-              {{ review.review }}
             </div>
           </ng-template>
           <ng-template #footer>

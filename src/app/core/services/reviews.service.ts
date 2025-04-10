@@ -18,6 +18,9 @@ export interface ReviewFilter {
   createdTo?: Date | string;
   tourIds?: number[];
   travelerIds?: number[];
+  // Added new properties to match the C# model
+  reviewDate?: Date | string;
+  status?: string;
 }
 
 export interface Review {

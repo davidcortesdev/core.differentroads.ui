@@ -28,7 +28,10 @@ export class CommunityReviewsComponent implements OnInit {
   }
 
   loadReviews(): void {
-    this.reviewsService.getTopReviews(20, { showOnHomePage: true }).pipe(
+    this.reviewsService.getTopReviews(20, { 
+      showOnHomePage: true,
+      status: 'ACTIVE' 
+    }).pipe(
       switchMap(reviews => {
         // Create an array of observables for each tour and traveler request
         const reviewRequests = reviews.map(review => {
@@ -71,8 +74,7 @@ export class CommunityReviewsComponent implements OnInit {
           tour: review.tourName || '',
           date: review.reviewDate,
         }));
-        console.log(reviewsWithData);
-        console.log(this.reviewsCards);
+
       },
       error: (error) => {
         console.error('Error fetching reviews:', error);

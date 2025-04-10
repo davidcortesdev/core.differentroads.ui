@@ -34,6 +34,7 @@
       [tourDestination]="tourDestination"
       [dayOne]="periodData.dayOne"
       [returnDate]="periodData.returnDate"
+      [periodID]="orderDetails?.periodID || null"
       (filteredFlightsChange)="onFilteredFlightsChange($event)"
     >
     </app-flight-search>

@@ -303,6 +303,22 @@ export class TravelersComponent implements OnInit {
             };
             missingFields.push(fieldNames[field] || field);
           }
+
+          // Verificar errores específicos de validación de fechas
+          if (field === 'passportExpirationDate') {
+            if (form.get(field)?.errors?.['futureDate']) {
+              missingFields.push(
+                'Fecha de caducidad del pasaporte (debe ser una fecha futura)'
+              );
+            }
+          }
+          if (field === 'passportIssueDate') {
+            if (form.get(field)?.errors?.['pastDate']) {
+              missingFields.push(
+                'Fecha de expedición del pasaporte (debe ser una fecha pasada)'
+              );
+            }
+          }
         });
       }
 

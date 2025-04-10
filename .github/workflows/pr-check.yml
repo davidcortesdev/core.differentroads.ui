@@ -13,33 +13,43 @@ on:
       - '!develop'
 
 jobs:
-  check-sync:
-    runs-on: ubuntu-latest
-
+  check-branch:
+    runs-on: [ubuntu-latest]
+    
     steps:
+
       - name: Checkout repository
-        uses: actions/checkout@v2
-    
-      - name: Fetch all branches
-        run: git fetch --all
-    
+        uses: actions/checkout@v4.2.2
+
+      - name: Fetch latest main
+        run: git fetch
+
       - name: Check if branch is up to date with main
         id: check_branch
         run: |
-          git fetch origin main
-          # Use the specific command to check if branch is behind main
-          echo "📈 Calculating commit differences..."
+          # Ensure we have the latest from main
+          git fetch --quiet
+          
+          # Create a temporary branch to test merge
+          git branch temp-merge-test $(git rev-parse HEAD)
+          
+          # Try to merge main into the temp branch and capture if there are changes
+          MERGE_OUTPUT=$(git checkout temp-merge-test && git merge --no-commit --no-ff origin/main 2>&1 || true)
+          HAS_CHANGES=$(echo "$MERGE_OUTPUT" | grep -c "Already up to date")
+          
+          # Return to original branch
+          git checkout -
+          git branch -D temp-merge-test
+          
+          # Also do the traditional checks
           BEHIND_BY=$(git rev-list --count HEAD..origin/main)
           DIVERGED=$(git rev-list --count origin/main..HEAD)
           
-          echo "📊 Branch status:"
-          echo "  - Behind main by: $BEHIND_BY commits"
-          echo "  - Ahead of main by: $DIVERGED commits"
-          
           echo "behind_by=$BEHIND_BY" >> $GITHUB_ENV
           echo "diverged=$DIVERGED" >> $GITHUB_ENV
+          echo "has_changes=$([ $HAS_CHANGES -eq 0 ] && echo 'true' || echo 'false')" >> $GITHUB_ENV
           
-          if [ $BEHIND_BY -gt 0 ]; then
+          if [ $BEHIND_BY -gt 0 ] || [ $HAS_CHANGES -eq 0 ]; then
             echo "⚠️ This branch needs updates from main"
             echo "behind=true" >> $GITHUB_OUTPUT
           else
@@ -52,7 +62,7 @@ jobs:
           fi
 
       - name: Add comment to PR if branch is not up to date
-        if: env.behind_by > 0 && github.event_name == 'pull_request'
+        if: (env.behind_by > 0 || env.has_changes == 'true') && github.event_name == 'pull_request'
         uses: actions/github-script@v7.0.1
         with:
           script: |
@@ -81,17 +91,18 @@ jobs:
 
   build-check:
     runs-on: [ubuntu-latest]
-    needs: check-sync
-    if: success() || (github.event_name == 'pull_request' && needs.check-sync.result == 'success')
+    needs: check-branch
+    if: success() && (needs.check-branch.result == 'success')
     
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
 
       - name: Setup Node.js
         uses: actions/setup-node@v4.2.0
         with:
-          node-version: '18'
+          node-version: '22'
 
       - name: Install dependencies
         run: npm ci

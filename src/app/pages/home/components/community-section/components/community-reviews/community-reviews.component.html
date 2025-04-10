@@ -1,4 +1,7 @@
 <div class="community-reviews">
   <h3>{{ reviews?.title }}</h3>
-  <app-reviews [reviews]="reviewsCards"></app-reviews>
+  <app-reviews 
+    [reviewsFilter]="reviewsFilter"
+    (reviewsLoaded)="onReviewsLoaded($event)">
+  </app-reviews>
 </div>

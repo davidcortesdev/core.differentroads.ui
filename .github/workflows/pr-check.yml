@@ -23,32 +23,9 @@ jobs:
       - name: Fetch all branches
         run: git fetch --all
     
-      - name: Check if branch is behind main
-        run: |
-          git fetch origin main
-           if [ $(git rev-list --count HEAD..origin/main) -ne 0 ]; then
-           echo "Branch is behind main"
-            exit 1
-           else
-             echo "Branch is up to date with main"
-           fi
-    
-
-
-  check-branch:
-    runs-on: [ubuntu-latest]
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4.2.2
-
-      - name: Fetch all branches
-        run: git fetch --all
-
       - name: Check if branch is up to date with main
         id: check_branch
         run: |
-          
           git fetch origin main
           # Use the specific command to check if branch is behind main
           echo "📈 Calculating commit differences..."
@@ -104,8 +81,8 @@ jobs:
 
   build-check:
     runs-on: [ubuntu-latest]
-    needs: check-branch
-    if: success() || (github.event_name == 'pull_request' && needs.check-branch.result == 'success')
+    needs: check-sync
+    if: success() || (github.event_name == 'pull_request' && needs.check-sync.result == 'success')
     
     steps:
       - name: Checkout repository

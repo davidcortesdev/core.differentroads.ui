@@ -1,6 +1,10 @@
 <div id="tour-reviews">
   <div *ngIf="reviewsCards.length > 0" class="tour-reviews-container">
-    <app-reviews [reviews]="reviewsCards"></app-reviews>
+    <app-reviews 
+      [tourExternalId]="tourExternalId"
+      (reviewsLoaded)="onReviewsLoaded($event)"
+      (loadingChange)="onLoadingChange($event)">
+    </app-reviews>
   </div>
 
   <div *ngIf="loading" class="tour-reviews-container loading">

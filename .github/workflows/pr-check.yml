@@ -27,6 +27,7 @@ jobs:
         id: check_branch
         run: |
           
+          git fetch origin main
           # Use the specific command to check if branch is behind main
           echo "📈 Calculating commit differences..."
           BEHIND_BY=$(git rev-list --count HEAD..origin/main)

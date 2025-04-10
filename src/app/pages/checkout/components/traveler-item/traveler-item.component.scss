@@ -6,16 +6,16 @@
 // Estilos del encabezado
 .traveler-header {
   margin-bottom: 1rem;
-  
+
   .user {
     display: inline-block;
     margin: 0 0 0 14px;
     padding: 0;
   }
-  
+
   .user-description {
     font-size: 12px;
-    
+
     .info-icon {
       font-size: 0.8rem;
       font-weight: bold;
@@ -27,8 +27,9 @@
 .traveler-form {
   margin-top: 20px;
   width: 100%;
-  
-  .form-section, .document-section {
+
+  .form-section,
+  .document-section {
     margin-bottom: 1rem;
   }
 
@@ -36,10 +37,10 @@
     display: flex;
     justify-content: space-between;
     margin-bottom: 15px;
-    
+
     @media (max-width: 768px) {
       flex-direction: column;
-      
+
       .form-column {
         margin-right: 0;
         margin-bottom: 10px;
@@ -50,14 +51,14 @@
   .form-column {
     flex: 1;
     margin-right: 10px;
-    
+
     &:last-child {
       margin-right: 0;
     }
-    
+
     &.half-width {
       flex: 0.5;
-      
+
       @media (max-width: 768px) {
         flex: 1 1 100%;
         margin-right: 0;
@@ -68,69 +69,72 @@
   .form-field {
     margin-bottom: 10px;
     font-size: 14px;
-    
+
     label {
       display: block;
       margin-bottom: 5px;
       color: var(--background-azul);
     }
-    
-    input, p-autocomplete, p-calendar, p-select {
+
+    input,
+    p-autocomplete,
+    p-calendar,
+    p-select {
       width: 100%;
     }
   }
 }
+.traveler-form {
+  // Estilos globales para componentes PrimeNG
+  ::ng-deep {
+    .form-field {
+      .p-inputtext,
+      .p-dropdown,
+      .p-calendar,
+      .p-autocomplete,
+      .p-inputmask,
+      .p-select {
+        width: 100%;
+        border: none;
+        border-bottom: 1px solid var(--background-azul);
+        border-radius: 0;
+        background: transparent;
+        font-size: 14px;
+      }
 
-// Estilos globales para componentes PrimeNG
-::ng-deep {
-  .form-field {
-    .p-inputtext,
-    .p-dropdown,
-    .p-calendar,
-    .p-autocomplete,
-    .p-inputmask,
-    .p-select {
-      width: 100%;
-      border: none;
-      border-bottom: 1px solid var(--background-azul);
-      border-radius: 0;
-      background: transparent;
-      font-size: 14px;
+      .p-datepicker {
+        width: 100%;
+      }
+
+      .p-select {
+        cursor: pointer;
+      }
+
+      .p-select-dropdown {
+        color: var(--background-azul);
+      }
     }
-    
-    .p-datepicker {
-      width: 100%;
-    }
-    
-    .p-select {
-      cursor: pointer;
-    }
-    
-    .p-select-dropdown {
-      color: var(--background-azul);
-    }
-  }
-  
-  .p-panel {
-    &.user-button .p-panel-content {
-      padding: 10px;
-      border: 1px solid #d1c1c1;
-      border-radius: 9px;
-      width: auto;
-      display: inline-block;
-    }
-    
-    .p-panel-header {
-      padding: 0;
+
+    .p-panel {
+      &.user-button .p-panel-content {
+        padding: 10px;
+        border: 1px solid #d1c1c1;
+        border-radius: 9px;
+        width: auto;
+        display: inline-block;
+      }
+
+      .p-panel-header {
+        padding: 0;
+      }
     }
   }
 }
-
 .show-more-button {
   margin-top: 10px;
   color: var(--background-azul);
   font-size: 0.9rem;
-  
+
   &:hover {
     background-color: rgba(0, 0, 0, 0.04);
   }

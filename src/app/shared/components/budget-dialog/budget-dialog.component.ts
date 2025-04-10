@@ -349,9 +349,8 @@ export class BudgetDialogComponent implements OnInit, OnDestroy, OnChanges {
       return {
         id: '', // No tenemos ID específico en el resumen
         name: item.description,
-        price: item.value,
-        qty: item.qty,
-        total: item.value * item.qty,
+        singlePrice: item.value,
+        units: item.qty,
       };
     });
   }

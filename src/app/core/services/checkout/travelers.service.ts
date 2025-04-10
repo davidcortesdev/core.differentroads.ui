@@ -150,7 +150,21 @@ export class TravelersService {
   }
 
   getTravelers(): OrderTraveler[] {
-    return this.travelersSource.getValue();
+    const travelers = this.travelersSource.getValue();
+    
+    // Verificar si algún viajero no tiene ID
+    const needsUpdate = travelers.some(t => !t._id);
+    
+    if (needsUpdate) {
+      const updatedTravelers = travelers.map(t => ({
+        ...t,
+        _id: t._id || this.generateHexID()
+      }));
+      this.travelersSource.next(updatedTravelers);
+      return updatedTravelers;
+    }
+    
+    return travelers;
   }
 
   generateHexID() {

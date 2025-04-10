@@ -3,7 +3,7 @@
     <div class="pan-hdr">Vuelos</div>
   </ng-template>
 
-  <div class="flt-info" *ngFor="let flight of flights">
+  <div class="flt-info" *ngFor="let flight of filteredFlights">
     <div class="flt-hdr">
       <span class="flt-type">{{
         flight.type === "direct" ? "Vuelta" : "Ida"

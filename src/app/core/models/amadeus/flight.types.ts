@@ -81,7 +81,7 @@ export interface Traveler {
       number: string;
     }[];
   };
-  documents?: {
+  documents: {
     documentType: 'PASSPORT' | 'ID_CARD';
     birthPlace?: string;
     issuanceLocation?: string;
@@ -121,7 +121,7 @@ export interface FlightOrderResponse {
  * Interface for temporary stored flight offers
  */
 export interface ITempFlightOffer {
-  id: string;
+  _id: string;
   offerData: FlightOffer;
   pricingData?: FlightOffer;
   bookingData?: any;

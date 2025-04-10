@@ -29,8 +29,11 @@
   <!-- Conditionally display flight search -->
   <div *ngIf="showFlightSearch">
     <app-flight-search
+      *ngIf="periodData"
       [flights]="flights"
       [tourDestination]="tourDestination"
+      [dayOne]="periodData.dayOne"
+      [returnDate]="periodData.returnDate"
       (filteredFlightsChange)="onFilteredFlightsChange($event)"
     >
     </app-flight-search>

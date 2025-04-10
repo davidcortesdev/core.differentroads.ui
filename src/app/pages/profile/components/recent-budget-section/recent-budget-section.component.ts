@@ -359,7 +359,13 @@ export class RecentBudgetSectionComponent implements OnInit, AfterViewInit {
           });
         },
         error: (error) => {
-          // ...existing error handling code if needed...
+          // Nuevo mensaje de error
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al enviar el presupuesto',
+          });
+          console.error('Error sending budget notification:', error);
         },
       });
   }

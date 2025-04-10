@@ -8,6 +8,7 @@ export interface TourFilter {
   code?: string;
   name?: string;
   description?: string;
+  tkId?:string;
 }
 
 export interface Tour {

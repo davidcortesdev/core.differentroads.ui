@@ -22,7 +22,7 @@ export interface Tour {
   providedIn: 'root',
 })
 export class TourNetService {
-  private readonly API_URL = `${environment.tourApiUrl}/api/Tour`;
+  private readonly API_URL = `${environment.tourApiUrl}/Tour`;
 
   constructor(private http: HttpClient) {}
 

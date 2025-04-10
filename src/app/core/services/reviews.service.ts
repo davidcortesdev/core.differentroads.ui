@@ -42,7 +42,7 @@ export interface Review {
   providedIn: 'root',
 })
 export class ReviewsService {
-  private readonly API_URL = `${environment.reviewsApiUrl}/api/Review`;
+  private readonly API_URL = `${environment.reviewsApiUrl}/Review`;
 
   constructor(private http: HttpClient) {}
 

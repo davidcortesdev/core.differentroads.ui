@@ -68,7 +68,7 @@ export class NotificationsService {
   getBudgetDocument(id: string): Observable<{
     fileUrl: string;
   }> {
-    const url = `${environment.notificationsApiUrl}/document/budget/${id}`;
+    const url = `${environment.notificationsApiUrl}/documents/budget/${id}`;
     return this.http.get<any>(url);
   }
 }

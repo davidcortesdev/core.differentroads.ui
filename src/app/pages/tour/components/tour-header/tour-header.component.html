@@ -6,7 +6,7 @@
         <p-rating [ngModel]="4.7" [readonly]="true" [stars]="5"></p-rating>
         <span class="rating-value">4.7</span>
       </div>
-      <a href="#reviews" class="review-count">200 Reviews</a>
+      <a [routerLink]="[]" fragment="tour-reviews" class="review-count">200 Reviews</a>
     </div>
     <h1>{{ tour.name }}</h1>
     <div class="tour-meta">

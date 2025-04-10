@@ -20,7 +20,7 @@ export const environment = {
     apiKey: '197192715793311',
   },
 
-  reviewsApiUrl: 'reviews-pre.differentroads.es/api',
-  tourApiUrl: 'tour-pre.differentroads.es/api',
-  travelersApiUrl: 'travelers-pre.differentroads.es/api',
+  reviewsApiUrl: 'https://reviews-pre.differentroads.es/api',
+  tourApiUrl: 'https://tour-pre.differentroads.es/api',
+  travelersApiUrl: 'https://travelers-pre.differentroads.es/api',
 };

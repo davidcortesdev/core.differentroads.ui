@@ -2,11 +2,11 @@
   <!-- Tour Information Section -->
   <div class="tour-info">
     <div class="rating-reviews">
-      <div class="rating-container">
-        <p-rating [ngModel]="4.7" [readonly]="true" [stars]="5"></p-rating>
-        <span class="rating-value">4.7</span>
+      <div class="rating-container" *ngIf="averageRating > 0">
+        <p-rating [ngModel]="averageRating" [readonly]="true" [stars]="5"></p-rating>
+        <span class="rating-value">{{ averageRating | number:'1.1-1' }}</span>
       </div>
-      <a [routerLink]="[]" fragment="tour-reviews" class="review-count">200 Reviews</a>
+      <a [routerLink]="[]" fragment="tour-reviews" class="review-count" *ngIf="reviewCount > 0">{{ reviewCount }} Reviews</a>
     </div>
     <h1>{{ tour.name }}</h1>
     <div class="tour-meta">

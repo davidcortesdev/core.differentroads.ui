@@ -93,4 +93,30 @@ export class TourNetService {
       })
     );
   }
+
+  /**
+   * Get tour ID by TK ID
+   * @param tkId TK identifier
+   * @returns Observable of tour ID number
+   */
+  getTourIdByTKId(tkId: string): Observable<number> {
+    const filter: TourFilter = {
+      tkId: tkId,
+    };
+    
+    return this.getTours(filter).pipe(
+      map(tours => {
+        if (tours.length > 0) {
+          const id = tours[0].id;
+          console.log('Tour ID:', id);
+          return id;
+        }
+        return 0; // Return 0 if no tour is found
+      }),
+      catchError(error => {
+        console.error('Error fetching tours:', error);
+        return of(0); // Return 0 on error
+      })
+    );
+  }
 }

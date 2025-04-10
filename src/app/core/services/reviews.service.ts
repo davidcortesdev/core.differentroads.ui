@@ -63,23 +63,66 @@ export class ReviewsService {
 
     // Add filter parameters if provided
     if (filter) {
-      Object.entries(filter).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          // Handle arrays (tourIds, travelerIds)
-          if (Array.isArray(value)) {
-            value.forEach((item) => {
-              params = params.append(key, item.toString());
-            });
-          } else if (value instanceof Date) {
-            // Format dates to ISO string
-            params = params.set(key, value.toISOString());
-          } else {
-            params = params.set(key, value.toString());
-          }
-        }
-      });
+      params = this.addFilterParams(params, filter);
     }
 
     return this.http.get<Review[]>(`${this.API_URL}/top/${count}`, { params });
+  }
+
+  /**
+   * Get the count of reviews with optional filters
+   * @param filter Optional filter criteria
+   * @returns Observable of the review count
+   */
+  getReviewCount(filter?: ReviewFilter): Observable<number> {
+    let params = new HttpParams();
+
+    // Add filter parameters if provided
+    if (filter) {
+      params = this.addFilterParams(params, filter);
+    }
+
+    return this.http.get<number>(`${this.API_URL}/count`, { params });
+  }
+
+  /**
+   * Get the average rating of reviews with optional filters
+   * @param filter Optional filter criteria
+   * @returns Observable of the average rating
+   */
+  getAverageRating(filter?: ReviewFilter): Observable<number> {
+    let params = new HttpParams();
+
+    // Add filter parameters if provided
+    if (filter) {
+      params = this.addFilterParams(params, filter);
+    }
+
+    return this.http.get<number>(`${this.API_URL}/average-rating`, { params });
+  }
+
+  /**
+   * Helper method to add filter parameters to HttpParams
+   * @param params Initial HttpParams object
+   * @param filter Filter criteria
+   * @returns HttpParams with filter parameters added
+   */
+  private addFilterParams(params: HttpParams, filter: ReviewFilter): HttpParams {
+    Object.entries(filter).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        // Handle arrays (tourIds, travelerIds)
+        if (Array.isArray(value)) {
+          value.forEach((item) => {
+            params = params.append(key, item.toString());
+          });
+        } else if (value instanceof Date) {
+          // Format dates to ISO string
+          params = params.set(key, value.toISOString());
+        } else {
+          params = params.set(key, value.toString());
+        }
+      }
+    });
+    return params;
   }
 }

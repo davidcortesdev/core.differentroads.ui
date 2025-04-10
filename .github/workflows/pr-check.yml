@@ -20,21 +20,23 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
 
       - name: Fetch latest main
-        run: git fetch
+        run: git fetch origin main
 
       - name: Check if branch is up to date with main
         id: check_branch
         run: |
           # Ensure we have the latest from main
-          git fetch --quiet
+          git fetch origin main --quiet
           
           # Create a temporary branch to test merge
-          #git branch temp-merge-test $(git rev-parse HEAD)
+          git branch temp-merge-test $(git rev-parse HEAD)
           
           # Try to merge main into the temp branch and capture if there are changes
-          MERGE_OUTPUT=$(git merge --no-commit --no-ff origin/main 2>&1 || true)
+          MERGE_OUTPUT=$(git checkout temp-merge-test && git merge --no-commit --no-ff origin/main 2>&1 || true)
           HAS_CHANGES=$(echo "$MERGE_OUTPUT" | grep -c "Already up to date")
           
           # Return to original branch

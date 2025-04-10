@@ -31,10 +31,10 @@ jobs:
           git fetch --quiet
           
           # Create a temporary branch to test merge
-          git branch temp-merge-test $(git rev-parse HEAD)
+          #git branch temp-merge-test $(git rev-parse HEAD)
           
           # Try to merge main into the temp branch and capture if there are changes
-          MERGE_OUTPUT=$(git checkout temp-merge-test && git merge --no-commit --no-ff origin/main 2>&1 || true)
+          MERGE_OUTPUT=$(git merge --no-commit --no-ff origin/main 2>&1 || true)
           HAS_CHANGES=$(echo "$MERGE_OUTPUT" | grep -c "Already up to date")
           
           # Return to original branch

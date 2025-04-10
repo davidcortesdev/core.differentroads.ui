@@ -17,22 +17,15 @@ jobs:
     runs-on: [ubuntu-latest]
     
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
-        with:
-          fetch-depth: 0
 
-      - name: Fetch latest main
-        run: git fetch origin main
+      - name: Fetch all branches
+        run: git fetch --all
 
       - name: Check if branch is up to date with main
         id: check_branch
         run: |
-          # Ensure we have the latest from all remotes
-          echo "🔍 Fetching latest changes from all remotes..."
-          git fetch --all
-
           
           # Use the specific command to check if branch is behind main
           echo "📈 Calculating commit differences..."
@@ -59,7 +52,7 @@ jobs:
           fi
 
       - name: Add comment to PR if branch is not up to date
-        if: (env.behind_by > 0 || env.has_changes == 'true') && github.event_name == 'pull_request'
+        if: env.behind_by > 0 && github.event_name == 'pull_request'
         uses: actions/github-script@v7.0.1
         with:
           script: |
@@ -89,17 +82,16 @@ jobs:
   build-check:
     runs-on: [ubuntu-latest]
     needs: check-branch
-    if: success() && (needs.check-branch.result == 'success')
+    if: success() || (github.event_name == 'pull_request' && needs.check-branch.result == 'success')
     
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
 
       - name: Setup Node.js
         uses: actions/setup-node@v4.2.0
         with:
-          node-version: '22'
+          node-version: '18'
 
       - name: Install dependencies
         run: npm ci

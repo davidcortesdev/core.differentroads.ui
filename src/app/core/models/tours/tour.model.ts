@@ -29,6 +29,9 @@ export interface Tour extends CMSCollections {
   supportSection: SupportSection;
   continent: string;
   tourType: string;
+  consolidator: {
+    airportsFilters: string[];
+  };
 }
 
 export interface Expert {

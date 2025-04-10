@@ -131,7 +131,7 @@
     <div class="form-row">
       <div class="form-column">
         <div class="form-field">
-          <label>Teléfono</label>
+          <label>Teléfono {{ allFieldsMandatory ? "*" : "" }}</label>
           <input
             pInputText
             name="telefono"
@@ -142,7 +142,7 @@
       </div>
       <div class="form-column">
         <div class="form-field">
-          <label>Tipo documento</label>
+          <label>Tipo documento {{ allFieldsMandatory ? "*" : "" }}</label>
           <p-select
             appendTo="body"
             formControlName="documentType"

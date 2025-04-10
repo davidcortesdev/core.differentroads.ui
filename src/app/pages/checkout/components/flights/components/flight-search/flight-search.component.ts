@@ -4,6 +4,8 @@ import { AmadeusService } from '../../../../../../core/services/amadeus.service'
 import { AirportService } from '../../../../../../core/services/airport.service';
 import { TravelersService } from '../../../../../../core/services/checkout/travelers.service';
 import { TextsService } from '../../../../../../core/services/checkout/texts.service';
+import { PeriodsService } from '../../../../../../core/services/periods.service'; // new import
+import { ToursService } from '../../../../../../core/services/tours.service'; // new import
 import {
   FlightOffersParams,
   ITempFlightOffer,
@@ -12,6 +14,8 @@ import {
   Flight,
   FlightSegment,
 } from '../../../../../../core/models/tours/flight.model';
+import { Period } from '../../../../../../core/models/tours/period.model'; // new import
+import { Tour } from '../../../../../../core/models/tours/tour.model'; // new import
 
 interface Ciudad {
   nombre: string;
@@ -30,6 +34,10 @@ export class FlightSearchComponent implements OnInit {
   @Input() tourDestination: Ciudad = { nombre: '', codigo: '' };
   @Input() dayOne: string | null = null;
   @Input() returnDate: string | null = null;
+  @Input() periodID: string | null = null; // new input property
+
+  // Add new property to store consolidated airports filters
+  airportsFilters: string[] = [];
 
   flightForm: FormGroup;
 
@@ -98,7 +106,9 @@ export class FlightSearchComponent implements OnInit {
     private amadeusService: AmadeusService,
     private airportService: AirportService,
     private travelersService: TravelersService, // Inject TravelersService
-    private textsService: TextsService // Add TextsService
+    private textsService: TextsService, // Add TextsService
+    private periodsService: PeriodsService, // new injection
+    private toursService: ToursService // new injection
   ) {
     // Seleccionar ciudad por defecto (Madrid)
     const defaultCity = { nombre: 'Madrid', codigo: 'MAD' };
@@ -164,6 +174,55 @@ export class FlightSearchComponent implements OnInit {
         infants: travelersNumbers.babies, // Ensure infants are updated
       });
     });
+
+    // Fetch period and tour details based on periodID input
+    if (this.periodID) {
+      this.periodsService
+        .getPeriodDetail(this.periodID, ['consolidator', 'tourID'])
+        .subscribe({
+          next: (period) => {
+            if (period.tourID) {
+              this.toursService
+                .getTourDetailByExternalID(period.tourID, ['consolidator'])
+                .subscribe({
+                  next: (tour) => {
+                    const periodFilters =
+                      period.consolidator?.airportsFilters || [];
+                    const tourFilters =
+                      tour.consolidator?.airportsFilters || [];
+                    const includeTourConfig =
+                      period.consolidator?.includeTourConfig || false;
+                    console.log(
+                      'Period filters:________',
+                      periodFilters,
+                      'Tour filters:',
+                      tourFilters,
+                      'Include tour config:',
+                      includeTourConfig
+                    );
+
+                    if (periodFilters.length > 0) {
+                      this.airportsFilters = includeTourConfig
+                        ? [...periodFilters, ...tourFilters]
+                        : periodFilters;
+                    } else {
+                      this.airportsFilters = tourFilters;
+                    }
+                    if (tour.name) {
+                      this.tourName = tour.name;
+                    }
+                  },
+                  error: (err) => {
+                    console.error('Error fetching tour details', err);
+                  },
+                });
+            }
+          },
+          error: (err) => {
+            console.error('Error fetching period details', err);
+          },
+        });
+    }
   }
 
   buscar() {
@@ -796,7 +855,24 @@ export class FlightSearchComponent implements OnInit {
 
   searchCities(event: any): void {
     const query = event.query;
+    console.log('____', this.airportsFilters);
+
     this.airportService.searchAirports(query).subscribe((airports) => {
+      // Filtrar aeropuertos según airportsFilters (país, ciudad o IATA)
+      if (this.airportsFilters && this.airportsFilters.length) {
+        airports = airports.filter((airport) =>
+          this.airportsFilters.some((filter) => {
+            const lowerFilter = filter.toLowerCase();
+            return (
+              airport.city.toLowerCase().includes(lowerFilter) ||
+              airport.name.toLowerCase().includes(lowerFilter) ||
+              airport.iata.toLowerCase().includes(lowerFilter) ||
+              (airport.country &&
+                airport.country.toLowerCase().includes(lowerFilter))
+            );
+          })
+        );
+      }
       this.filteredCities = airports.map((airport) => ({
         nombre: airport.city + ' - ' + airport.name,
         codigo: airport.iata,

@@ -3,7 +3,7 @@ import { Flight } from '../tours/flight.model';
 
 export interface Order {
   _id: string;
-  id: string;
+  ID: string;
   periodID: string;
   retailerID: string;
   status: 'AB' | 'Budget';

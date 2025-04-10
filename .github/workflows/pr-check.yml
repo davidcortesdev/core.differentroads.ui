@@ -29,43 +29,18 @@ jobs:
       - name: Check if branch is up to date with main
         id: check_branch
         run: |
-          # Ensure we have the latest from main
-          echo "🔍 Fetching latest changes from main branch..."
-          git fetch --quiet
+          # Ensure we have the latest from all remotes
+          echo "🔍 Fetching latest changes from all remotes..."
+          git fetch --all
           
-          # Create a temporary branch to test merge
-          echo "🔄 Creating temporary branch for merge test..."
-          git branch temp-merge-test $(git rev-parse HEAD)
+          # Get current branch name
+          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          echo "🔖 Current branch: $CURRENT_BRANCH"
           
-          # Try to merge main into the temp branch and capture if there are changes
-          echo "🧪 Testing merge with main branch..."
-          MERGE_OUTPUT=$(git checkout temp-merge-test && git merge --no-commit --no-ff origin/main 2>&1 || true)
-          echo "📋 Merge output: $MERGE_OUTPUT"
-          
-          # Check for both "Already up to date" and "Automatic merge went well"
-          HAS_CHANGES=0
-          if echo "$MERGE_OUTPUT" | grep -q "Already up to date"; then
-            HAS_CHANGES=0
-            echo "📊 Status: Already up to date (no changes needed)"
-          elif echo "$MERGE_OUTPUT" | grep -q "Automatic merge went well"; then
-            HAS_CHANGES=1
-            echo "📊 Status: Merge successful (changes were applied)"
-          else
-            HAS_CHANGES=1
-            echo "📊 Status: Merge status unclear, assuming changes needed"
-          fi
-          
-          echo "📊 Has changes: $([ $HAS_CHANGES -eq 1 ] && echo 'Yes' || echo 'No')"
-          
-          # Return to original branch
-          echo "🔙 Returning to original branch..."
-          git checkout -
-          git branch -D temp-merge-test
-          
-          # Also do the traditional checks
+          # Use the specific command to check if branch is behind main
           echo "📈 Calculating commit differences..."
-          BEHIND_BY=$(git rev-list --count HEAD..origin/main)
-          DIVERGED=$(git rev-list --count origin/main..HEAD)
+          BEHIND_BY=$(git rev-list --count $CURRENT_BRANCH..origin/main)
+          DIVERGED=$(git rev-list --count origin/main..$CURRENT_BRANCH)
           
           echo "📊 Branch status:"
           echo "  - Behind main by: $BEHIND_BY commits"
@@ -73,9 +48,8 @@ jobs:
           
           echo "behind_by=$BEHIND_BY" >> $GITHUB_ENV
           echo "diverged=$DIVERGED" >> $GITHUB_ENV
-          echo "has_changes=$([ $HAS_CHANGES -eq 0 ] && echo 'true' || echo 'false')" >> $GITHUB_ENV
           
-          if [ $BEHIND_BY -gt 0 ] || [ $HAS_CHANGES -eq 0 ]; then
+          if [ $BEHIND_BY -gt 0 ]; then
             echo "⚠️ This branch needs updates from main"
             echo "behind=true" >> $GITHUB_OUTPUT
           else

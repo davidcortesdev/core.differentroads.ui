@@ -41,8 +41,21 @@ jobs:
           echo "🧪 Testing merge with main branch..."
           MERGE_OUTPUT=$(git checkout temp-merge-test && git merge --no-commit --no-ff origin/main 2>&1 || true)
           echo "📋 Merge output: $MERGE_OUTPUT"
-          HAS_CHANGES=$(echo "$MERGE_OUTPUT" | grep -c "Already up to date")
-          echo "📊 Has changes: $([ $HAS_CHANGES -eq 0 ] && echo 'Yes' || echo 'No')"
+          
+          # Check for both "Already up to date" and "Automatic merge went well"
+          HAS_CHANGES=0
+          if echo "$MERGE_OUTPUT" | grep -q "Already up to date"; then
+            HAS_CHANGES=0
+            echo "📊 Status: Already up to date (no changes needed)"
+          elif echo "$MERGE_OUTPUT" | grep -q "Automatic merge went well"; then
+            HAS_CHANGES=1
+            echo "📊 Status: Merge successful (changes were applied)"
+          else
+            HAS_CHANGES=1
+            echo "📊 Status: Merge status unclear, assuming changes needed"
+          fi
+          
+          echo "📊 Has changes: $([ $HAS_CHANGES -eq 1 ] && echo 'Yes' || echo 'No')"
           
           # Return to original branch
           echo "🔙 Returning to original branch..."

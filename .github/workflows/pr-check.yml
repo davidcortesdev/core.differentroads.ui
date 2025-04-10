@@ -32,15 +32,12 @@ jobs:
           # Ensure we have the latest from all remotes
           echo "🔍 Fetching latest changes from all remotes..."
           git fetch --all
-          
-          # Get current branch name
-          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          echo "🔖 Current branch: $CURRENT_BRANCH"
+
           
           # Use the specific command to check if branch is behind main
           echo "📈 Calculating commit differences..."
-          BEHIND_BY=$(git rev-list --count $CURRENT_BRANCH..origin/main)
-          DIVERGED=$(git rev-list --count origin/main..$CURRENT_BRANCH)
+          BEHIND_BY=$(git rev-list --count HEAD..origin/main)
+          DIVERGED=$(git rev-list --count origin/main..HEAD)
           
           echo "📊 Branch status:"
           echo "  - Behind main by: $BEHIND_BY commits"

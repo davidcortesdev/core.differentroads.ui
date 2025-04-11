@@ -16,6 +16,7 @@ export interface Tour {
   code: string;
   name: string;
   description?: string;
+  tkId?: string;
   // Add other tour properties as needed based on the API response
 }
 

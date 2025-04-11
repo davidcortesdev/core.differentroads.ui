@@ -12,6 +12,7 @@ import { CAROUSEL_CONFIG } from '../../constants/carousel.constants';
 import { ReviewsService } from '../../../core/services/reviews.service';
 import { TourNetService } from '../../../core/services/tourNet.service';
 import { TravelersNetService } from '../../../core/services/travelersNet.service';
+import { ToursService } from '../../../core/services/tours.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
@@ -72,6 +73,7 @@ export class ReviewsComponent implements OnInit {
   constructor(
     private tourNetService: TourNetService,
     private travelersNetService: TravelersNetService,
+    private toursService: ToursService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -160,14 +162,40 @@ export class ReviewsComponent implements OnInit {
     
     if (review.tourId && !review.tour) {
       observable = this.tourNetService.getTourById(review.tourId).pipe(
-        map(tour => ({
-          ...reviewData,
-          tourName: tour?.name || 'Unknown Tour'
-        })),
-        catchError(() => of({
-          ...reviewData,
-          tourName: 'Unknown Tour'
-        }))
+        switchMap(tour => {
+          console.log('Tour data from getTourById:', tour);
+          let idext: string = tour.tkId || '';
+          
+          // Call getTourDetailByExternalID to get the tour name
+          if (idext) {
+            return this.toursService.getTourDetailByExternalID(idext).pipe(
+              map(tourDetail => {
+                return {
+                  ...reviewData,
+                  tourName: tourDetail?.name || tour?.name || 'Unknown Tour'
+                };
+              }),
+              catchError(() => {
+                return of({
+                  ...reviewData,
+                  tourName: tour?.name || 'Unknown Tour'
+                });
+              })
+            );
+          }
+          
+          return of({
+            ...reviewData,
+            tourName: tour?.name || 'Unknown Tour'
+          });
+        }),
+        catchError((error) => {
+          console.error('Error fetching tour data:', error);
+          return of({
+            ...reviewData,
+            tourName: 'Unknown Tour'
+          });
+        })
       );
     }
     

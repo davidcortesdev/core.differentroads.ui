@@ -50,6 +50,23 @@ export class ReviewsService {
   constructor(private http: HttpClient) {}
 
   /**
+   * Get reviews with optional filters
+   * @param count Number of reviews to retrieve
+   * @param filter Optional filter criteria
+   * @returns Observable of Review array
+   */
+  getReviews(filter?: ReviewFilter): Observable<Review[]> {
+    let params = new HttpParams();
+
+    // Add filter parameters if provided
+    if (filter) {
+      params = this.addFilterParams(params, filter);
+    }
+
+    return this.http.get<Review[]>(`${this.API_URL}`, { params });
+  }
+
+  /**
    * Get top reviews with optional filters
    * @param count Number of reviews to retrieve
    * @param filter Optional filter criteria
@@ -107,7 +124,10 @@ export class ReviewsService {
    * @param filter Filter criteria
    * @returns HttpParams with filter parameters added
    */
-  private addFilterParams(params: HttpParams, filter: ReviewFilter): HttpParams {
+  private addFilterParams(
+    params: HttpParams,
+    filter: ReviewFilter
+  ): HttpParams {
     Object.entries(filter).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         // Handle arrays (tourIds, travelerIds)

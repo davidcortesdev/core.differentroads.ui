@@ -1,13 +1,9 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { CardModule } from 'primeng/card';
-
-interface Review {
-  destination: string;
-  description: string;
-  date: string;
-  rating: number;
-}
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { ReviewCard } from '../../../../shared/models/reviews/review-card.model';
+import { TourNetService } from '../../../../core/services/tourNet.service';
+import { take, switchMap, of, Subject, takeUntil, finalize, catchError } from 'rxjs';
+import { ReviewsService } from '../../../../core/services/reviews.service';
+import { TravelerFilter, TravelersNetService } from '../../../../core/services/travelersNet.service';
 
 @Component({
   selector: 'app-review-section',
@@ -15,35 +11,70 @@ interface Review {
   templateUrl: './review-section.component.html',
   styleUrls: ['./review-section.component.scss'],
 })
-export class ReviewSectionComponent implements OnInit {
-  reviews: Review[] = [];
-  isExpanded: boolean = true;
+export class ReviewSectionComponent implements OnInit, OnDestroy {
+  @Input() userEmail!: string;
+  reviewsCards: ReviewCard[] = [];
+  loading = false;
+  isExpanded = true;
+  
+  private destroy$ = new Subject<void>();
 
-  ngOnInit() {
-    this.reviews = [
-      {
-        destination: 'Destino',
-        description: 'Lorem ipsum dolor sit amet consectetur.',
-        date: '01/01/2025',
-        rating: 5,
-      },
-      {
-        destination: 'Destino',
-        description: 'Lorem ipsum dolor sit amet consectetur.',
-        date: '12/05/2024',
-        rating: 5,
-      },
-      {
-        destination: 'Destino',
-        description:
-          'Lorem Ipsum es simplemente el texto de relleno de las imprentas y archivos de texto. Lorem Ipsum ha sido el texto de relleno estándar de las industrias desde el año 1500, cuando un impresor (N. del T. persona que se dedica a la imprenta) desconocido usó una galería de textos y los mezcló de tal manera que logró hacer un libro de textos especimen. No sólo sobrevivió 500 años, sino que tambien ingresó como texto de relleno en documentos electrónicos, quedando esencialmente igual al original. Fue popularizado en los 60s con la creación de las hojas "Letraset", las cuales contenian pasajes de Lorem Ipsum, y más recientemente con software de autoedición, como por ejemplo Aldus PageMaker, el cual incluye versiones de Lorem Ipsum.',
-        date: '01/03/2025',
-        rating: 5,
-      },
-    ];
+  constructor(
+    private reviewsService: ReviewsService,
+    private tourNetService: TourNetService,
+    private travelersNetService: TravelersNetService
+  ) {}
+
+  ngOnInit(): void {
+    if (this.userEmail) {
+      this.loadReviews();
+    }
   }
 
-  toggleContent() {
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  loadReviews(): void {
+    if (!this.userEmail) {
+      console.error('No user email provided');
+      return;
+    }
+
+    this.loading = true;
+    const filterTravel: TravelerFilter = {
+      email: this.userEmail
+    };
+    
+    this.travelersNetService.getTravelers(filterTravel).pipe(
+      take(1),
+      switchMap(travelers => {
+        if(!travelers || travelers.length === 0){
+          return of([]);
+        }
+        return this.reviewsService.getReviews({travelerId: travelers[0].id});
+      }),
+      catchError(error => {
+        console.error('Error fetching reviews:', error);
+        return of([]);
+      }),
+      finalize(() => this.loading = false),
+      takeUntil(this.destroy$)
+    ).subscribe(reviews => {
+      this.reviewsCards = reviews.map(review => ({
+        review: review.text,
+        score: review.rating,
+        traveler: '',
+        tour: '',
+        date: review.reviewDate,
+        tourId: review.tourId,
+        travelerId: review.travelerId
+      }));
+    });
+  }
+
+  toggleContent(): void {
     this.isExpanded = !this.isExpanded;
   }
 

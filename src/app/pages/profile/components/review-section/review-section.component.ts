@@ -1,24 +1,9 @@
-import { Component, Input, input, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { CardModule } from 'primeng/card';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { ReviewCard } from '../../../../shared/models/reviews/review-card.model';
-import {
-  TourFilter,
-  TourNetService,
-} from '../../../../core/services/tourNet.service';
-import { take, switchMap, of } from 'rxjs';
+import { TourNetService } from '../../../../core/services/tourNet.service';
+import { take, switchMap, of, Subject, takeUntil, finalize, catchError } from 'rxjs';
 import { ReviewsService } from '../../../../core/services/reviews.service';
-import {
-  TravelerFilter,
-  TravelersNetService,
-} from '../../../../core/services/travelersNet.service';
-
-interface Review {
-  destination: string;
-  description: string;
-  date: string;
-  rating: number;
-}
+import { TravelerFilter, TravelersNetService } from '../../../../core/services/travelersNet.service';
 
 @Component({
   selector: 'app-review-section',
@@ -26,12 +11,13 @@ interface Review {
   templateUrl: './review-section.component.html',
   styleUrls: ['./review-section.component.scss'],
 })
-export class ReviewSectionComponent implements OnInit {
+export class ReviewSectionComponent implements OnInit, OnDestroy {
   @Input() userEmail!: string;
   reviewsCards: ReviewCard[] = [];
   loading = false;
-
-  isExpanded: boolean = true;
+  isExpanded = true;
+  
+  private destroy$ = new Subject<void>();
 
   constructor(
     private reviewsService: ReviewsService,
@@ -39,8 +25,15 @@ export class ReviewSectionComponent implements OnInit {
     private travelersNetService: TravelersNetService
   ) {}
 
-  ngOnInit() {
-    this.loadReviews();
+  ngOnInit(): void {
+    if (this.userEmail) {
+      this.loadReviews();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadReviews(): void {
@@ -51,46 +44,37 @@ export class ReviewSectionComponent implements OnInit {
 
     this.loading = true;
     const filterTravel: TravelerFilter = {
-      email: this.userEmail,
+      email: this.userEmail
     };
-
-    this.travelersNetService
-      .getTravelers(filterTravel)
-      .pipe(
-        take(1),
-        switchMap((travelers) => {
-          if (!travelers || travelers.length === 0) {
-            return of([]);
-          }
-
-          return this.reviewsService.getReviews({
-            travelerId: travelers[0].id,
-          });
-        })
-      )
-      .subscribe({
-        next: (reviews) => {
-          // Map the API reviews to ReviewCard format
-          this.reviewsCards = reviews.map((review) => ({
-            review: review.text,
-            score: review.rating,
-            traveler: '',
-            tour: '',
-            date: review.reviewDate,
-            tourId: review.tourId,
-            travelerId: review.travelerId,
-          }));
-          this.loading = false;
-        },
-        error: (error) => {
-          console.error('Error fetching reviews:', error);
-          this.reviewsCards = [];
-          this.loading = false;
-        },
-      });
+    
+    this.travelersNetService.getTravelers(filterTravel).pipe(
+      take(1),
+      switchMap(travelers => {
+        if(!travelers || travelers.length === 0){
+          return of([]);
+        }
+        return this.reviewsService.getReviews({travelerId: travelers[0].id});
+      }),
+      catchError(error => {
+        console.error('Error fetching reviews:', error);
+        return of([]);
+      }),
+      finalize(() => this.loading = false),
+      takeUntil(this.destroy$)
+    ).subscribe(reviews => {
+      this.reviewsCards = reviews.map(review => ({
+        review: review.text,
+        score: review.rating,
+        traveler: '',
+        tour: '',
+        date: review.reviewDate,
+        tourId: review.tourId,
+        travelerId: review.travelerId
+      }));
+    });
   }
 
-  toggleContent() {
+  toggleContent(): void {
     this.isExpanded = !this.isExpanded;
   }
 

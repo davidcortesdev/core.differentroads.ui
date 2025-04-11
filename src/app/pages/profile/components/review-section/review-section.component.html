@@ -1,24 +1,25 @@
 <div class="reviewsdiv">
   <div class="reviews-header" (click)="toggleContent()">
     <span>Mis reseñas</span>
-    <i
-      class="pi"
-      [ngClass]="{
-        'pi-chevron-down arrow-down': !isExpanded,
-        'pi-chevron-up arrow-up': isExpanded
-      }"
-    ></i>
+    <i class="pi" [ngClass]="isExpanded ? 'pi-chevron-up arrow-up' : 'pi-chevron-down arrow-down'"></i>
   </div>
 
-  <div class="reviews-content" [ngClass]="{ hidden: !isExpanded }">
+  <div class="reviews-content" [hidden]="!isExpanded">
     <div id="reviews-grid">
-      <div *ngIf="reviewsCards.length > 0" class="reviews-grid">
-        <app-reviews [reviews]="reviewsCards"> </app-reviews>
-      </div>
-
-      <div *ngIf="loading" class="reviews-grid loading">
-        <div class="loading-indicator">Cargando reseñas...</div>
-      </div>
+      <ng-container *ngIf="!loading; else loadingTemplate">
+        <div *ngIf="reviewsCards.length > 0; else noReviews" class="reviews-grid">
+          <app-reviews [reviews]="reviewsCards"></app-reviews>
+        </div>
+        <ng-template #noReviews>
+          <div class="no-reviews">No tienes reseñas disponibles</div>
+        </ng-template>
+      </ng-container>
+      
+      <ng-template #loadingTemplate>
+        <div class="reviews-grid loading">
+          <div class="loading-indicator">Cargando reseñas...</div>
+        </div>
+      </ng-template>
     </div>
   </div>
 </div>

@@ -1,161 +1,162 @@
 :host {
-    --review-title-size: 3rem;
-    --review-heading-size: 1.79469rem;
-    --review-text-size: 0.95719rem;
-    --traveler-name-size: 1.4rem; /* New variable for traveler name size */
-    --card-padding: 0.5rem;
-    --content-height: 4rem;
-    --skeleton-bg: #e0e0e0;
-    --skeleton-highlight: #f0f0f0;
-  }
-  
-  .reviews-section {
-  
-    // Skeleton styles
-    .skeleton-container {
-      .skeleton-card {
-        height: 100%;
-        padding: var(--card-padding);
-        
-        .skeleton-traveler-name {
-          height: calc(var(--review-heading-size) * 1.2);
-          background: var(--skeleton-bg);
-          border-radius: 4px;
-          margin-bottom: 0.5rem;
-          animation: pulse 1.5s infinite ease-in-out;
-        }
-        
-        .skeleton-tour-name {
+  --review-title-size: 3rem;
+  --review-heading-size: 1.79469rem;
+  --review-text-size: 0.95719rem;
+  --traveler-name-size: 1.4rem;
+  --card-padding: 0.5rem;
+  --content-height: 4rem;
+  --skeleton-bg: #e0e0e0;
+  --skeleton-highlight: #f0f0f0;
+  --transition-duration: 0.3s; /* Añadido: variable para duración de transiciones */
+}
+
+.reviews-section {
+  // Skeleton styles
+  .skeleton-container {
+    .skeleton-card {
+      height: 100%;
+      padding: var(--card-padding);
+
+      .skeleton-traveler-name {
+        height: calc(var(--review-heading-size) * 1.2);
+        background: var(--skeleton-bg);
+        border-radius: 4px;
+        margin-bottom: 0.5rem;
+        animation: pulse 1.5s infinite ease-in-out;
+      }
+
+      .skeleton-tour-name {
+        height: calc(var(--review-text-size) * 1.2);
+        background: var(--skeleton-bg);
+        border-radius: 4px;
+        margin-bottom: 1rem;
+        width: 80%;
+        animation: pulse 1.5s infinite ease-in-out;
+      }
+
+      .skeleton-review-text {
+        height: var(--content-height);
+        background: var(--skeleton-bg);
+        border-radius: 4px;
+        animation: pulse 1.5s infinite ease-in-out;
+      }
+
+      .skeleton-footer {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 1rem;
+
+        .skeleton-date {
           height: calc(var(--review-text-size) * 1.2);
-          background: var(--skeleton-bg);
-          border-radius: 4px;
-          margin-bottom: 1rem;
-          width: 80%;
-          animation: pulse 1.5s infinite ease-in-out;
-        }
-        
-        .skeleton-review-text {
-          height: var(--content-height);
+          width: 30%;
           background: var(--skeleton-bg);
           border-radius: 4px;
           animation: pulse 1.5s infinite ease-in-out;
         }
-        
-        .skeleton-footer {
-          display: flex;
-          justify-content: space-between;
-          margin-top: 1rem;
-          
-          .skeleton-date {
-            height: calc(var(--review-text-size) * 1.2);
-            width: 30%;
-            background: var(--skeleton-bg);
-            border-radius: 4px;
-            animation: pulse 1.5s infinite ease-in-out;
-          }
-          
-          .skeleton-rating {
-            height: calc(var(--review-text-size) * 1.2);
-            width: 40%;
-            background: var(--skeleton-bg);
-            border-radius: 4px;
-            animation: pulse 1.5s infinite ease-in-out;
-          }
+
+        .skeleton-rating {
+          height: calc(var(--review-text-size) * 1.2);
+          width: 40%;
+          background: var(--skeleton-bg);
+          border-radius: 4px;
+          animation: pulse 1.5s infinite ease-in-out;
         }
       }
     }
-    
-    @keyframes pulse {
-      0% {
-        background-color: var(--skeleton-bg);
-      }
-      50% {
-        background-color: var(--skeleton-highlight);
-      }
-      100% {
-        background-color: var(--skeleton-bg);
-      }
+  }
+
+  @keyframes pulse {
+    0% {
+      background-color: var(--skeleton-bg);
     }
-  
-    ::ng-deep {
-      .p-carousel {
-        .padre {
+    50% {
+      background-color: var(--skeleton-highlight);
+    }
+    100% {
+      background-color: var(--skeleton-bg);
+    }
+  }
+
+  ::ng-deep {
+    .p-carousel {
+      .padre {
+        padding: var(--card-padding);
+        height: 100%;
+        background-color: transparent;
+        transition: transform var(--transition-duration) ease;
+
+        &:hover {
+          transform: translateY(-5px);
+        }
+
+        .p-card {
           padding: var(--card-padding);
-          height: 100%;
-          background-color: transparent;
-          transition: transform var(--transition-duration) ease;
-  
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          transition: box-shadow var(--transition-duration) ease;
+
           &:hover {
-            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
           }
-  
-          .p-card {
-            padding: var(--card-padding);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: box-shadow var(--transition-duration) ease;
-  
-            &:hover {
-              box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
-            }
-  
-            .p-card-title {
-              color: var(--background-azul);
-              font-size: var(--traveler-name-size); /* Changed from --review-heading-size */
-              font-weight: 500; /* Added bold font weight */
-              //margin-bottom: 0.5rem;
-              // Add these properties for multi-line ellipsis
+
+          .p-card-title {
+            color: var(--background-azul);
+            font-size: var(
+              --traveler-name-size
+            ); /* Changed from --review-heading-size */
+            font-weight: 500; /* Added bold font weight */
+            //margin-bottom: 0.5rem;
+            // Add these properties for multi-line ellipsis
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+          }
+
+          .p-card-subtitle {
+            color: var(--p-primary-color);
+            font-size: var(--review-text-size);
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+          }
+
+          .p-card-content {
+            color: var(--background-azul);
+            font-size: var(--review-text-size);
+            height: var(--content-height);
+
+            .review-text-container {
+              color: inherit;
               display: -webkit-box;
-              -webkit-line-clamp: 1;
+              -webkit-line-clamp: 4;
               -webkit-box-orient: vertical;
               overflow: hidden;
+              text-overflow: ellipsis;
+              max-height: var(--content-height);
             }
-  
-            .p-card-subtitle {
+          }
+
+          .p-card-footer {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            align-items: center;
+            border: none;
+            margin-top: 1rem;
+
+            .date {
               color: var(--p-primary-color);
               font-size: var(--review-text-size);
-              display: -webkit-box;
-              -webkit-line-clamp: 1;
-              -webkit-box-orient: vertical;
-              overflow: hidden;
             }
-  
-            .p-card-content {
-              color: var(--background-azul);
+
+            .p-rating .p-rating-icon {
+              color: var(--p-primary-color);
               font-size: var(--review-text-size);
-              height: var(--content-height);
-  
-              .review-text-container {
-                color: inherit;
-                display: -webkit-box;
-                -webkit-line-clamp: 4;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                max-height: var(--content-height);
-              }
-            }
-  
-            .p-card-footer {
-              display: flex;
-              justify-content: space-between;
-              flex-wrap: wrap;
-              align-items: center;
-              border: none;
-              margin-top: 1rem;
-  
-              .date {
+              transition: color var(--transition-duration) ease;
+
+              &.p-rating-icon-active {
                 color: var(--p-primary-color);
-                font-size: var(--review-text-size);
-              }
-  
-              .p-rating .p-rating-icon {
-                color: var(--p-primary-color);
-                font-size: var(--review-text-size);
-                transition: color var(--transition-duration) ease;
-  
-                &.p-rating-icon-active {
-                  color: var(--p-primary-color);
-                }
               }
             }
           }
@@ -163,3 +164,4 @@
       }
     }
   }
+}

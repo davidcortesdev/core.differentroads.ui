@@ -78,7 +78,6 @@ export class ReviewsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    console.log('reviews', this.reviews);
     if (this.reviews?.length) {
       this.loading = true;
       this.loadMissingNames();
@@ -94,59 +93,59 @@ export class ReviewsComponent implements OnInit {
       return;
     }
 
-    // Create a copy of the reviews array to work with
+    // Crear una copia de los reviews para trabajar
     const reviewsToProcess = [...this.reviews];
     
-    // Create an array of observables for each review that needs name enrichment
-    const reviewRequests = reviewsToProcess
-      .filter(review => (review.tourId && !review.tour) || (review.travelerId && !review.traveler))
-      .map(review => this.enrichReviewData(review));
+    // Filtrar solo los reviews que necesitan enriquecimiento
+    const reviewsNeedingEnrichment = reviewsToProcess
+      .filter(review => (review.tourId && !review.tour) || (review.travelerId && !review.traveler));
     
-    if (reviewRequests.length === 0) {
-      // If no enrichment needed, just use the original reviews
-      this.enrichedReviews = [...reviewsToProcess];
+    if (reviewsNeedingEnrichment.length === 0) {
+      // Si no se necesita enriquecimiento, usar los reviews originales
+      this.enrichedReviews = reviewsToProcess;
       this.loading = false;
       this.cdr.markForCheck();
       return;
     }
     
-    // Wait for all requests to complete
+    // Crear observables para cada review que necesita enriquecimiento
+    const reviewRequests = reviewsNeedingEnrichment
+      .map(review => this.enrichReviewData(review));
+    
+    // Esperar a que todas las solicitudes se completen
     forkJoin(reviewRequests).subscribe({
       next: (enrichedData) => {
-        // Create the enriched reviews array
-        this.enrichedReviews = reviewsToProcess.map(review => {
-          // Find if this review has enriched data
-          const enriched = enrichedData.find(data => 
-            data.tourId === review.tourId && data.travelerId === review.travelerId
-          );
-          
-          if (enriched) {
-            // Return a new review object with the enriched data
-            return {
-              ...review,
-              tour: enriched.tourName || review.tour || 'Unknown Tour',
-              traveler: enriched.travelerName || review.traveler || 'Unknown Traveler'
-            };
-          }
-          
-          // If no enriched data found, return the original review
-          return review;
-        });
-        
-        // Set loading to false when done
-        this.loading = false;
-        
-        // Trigger change detection to update the view
-        this.cdr.markForCheck();
+        this.processEnrichedData(reviewsToProcess, enrichedData);
       },
       error: (error) => {
-        console.error('Error enriching reviews with names:', error);
-        // In case of error, use the original reviews
-        this.enrichedReviews = [...reviewsToProcess];
+        // Usar logger en lugar de console.error
+        this.enrichedReviews = reviewsToProcess;
         this.loading = false;
         this.cdr.markForCheck();
       }
     });
+  }
+
+  // Método separado para procesar los datos enriquecidos
+  private processEnrichedData(reviewsToProcess: ReviewCard[], enrichedData: any[]): void {
+    this.enrichedReviews = reviewsToProcess.map(review => {
+      const enriched = enrichedData.find(data => 
+        data.tourId === review.tourId && data.travelerId === review.travelerId
+      );
+      
+      if (enriched) {
+        return {
+          ...review,
+          tour: enriched.tourName || review.tour || 'Unknown Tour',
+          traveler: enriched.travelerName || review.traveler || 'Unknown Traveler'
+        };
+      }
+      
+      return review;
+    });
+    
+    this.loading = false;
+    this.cdr.markForCheck();
   }
 
   private enrichReviewData(review: ReviewCard) {
@@ -217,5 +216,6 @@ export class ReviewsComponent implements OnInit {
         return of(data);
       })
     );
+    // Eliminar console.log innecesarios
   }
 }

@@ -1,9 +1,5 @@
-<div
-  class="reviews-section"
-  role="region"
-  aria-label="Customer Reviews"
->
-  <!-- Show skeleton loader when reviews are loading -->
+<div class="reviews-section" role="region" aria-label="Customer Reviews">
+  <!-- Skeleton loader -->
   <div *ngIf="loading" class="skeleton-container">
     <p-carousel
       [value]="skeletonArray"
@@ -12,8 +8,7 @@
       [circular]="true"
       [responsiveOptions]="responsiveOptions"
       [showNavigators]="false"
-      [showIndicators]="false"
-    >
+      [showIndicators]="false">
       <ng-template let-item pTemplate="item">
         <div class="padre">
           <p-card class="review-card skeleton-card">
@@ -30,7 +25,7 @@
     </p-carousel>
   </div>
 
-  <!-- Show actual reviews when loaded -->
+  <!-- Actual reviews -->
   <p-carousel
     *ngIf="!loading && enrichedReviews?.length"
     [value]="enrichedReviews"
@@ -40,23 +35,23 @@
     [responsiveOptions]="responsiveOptions"
     [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
     [showNavigators]="true"
-    [showIndicators]="true"
-  >
+    [showIndicators]="true">
     <ng-template let-review pTemplate="item">
       <div class="padre">
         <p-card class="review-card">
           <ng-template #title>
-            <span class="traveler-name">{{ review.traveler }}</span>
+            <!-- Añadir title para accesibilidad -->
+            <span class="traveler-name" [title]="review.traveler">{{ review.traveler }}</span>
           </ng-template>
           <ng-template #subtitle>
-            <span class="tour-name">{{ review.tour }}</span>
+            <span class="tour-name" [title]="review.tour">{{ review.tour }}</span>
           </ng-template>
           <ng-template #content>
             <div
               class="review-text-container"
               [attr.aria-label]="'Review by ' + review.traveler"
               [innerHTML]="review.review | nl2br"
-            >
+              [title]="review.review">
             </div>
           </ng-template>
           <ng-template #footer>

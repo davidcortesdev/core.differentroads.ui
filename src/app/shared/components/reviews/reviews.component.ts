@@ -162,7 +162,6 @@ export class ReviewsComponent implements OnInit {
     if (review.tourId && !review.tour) {
       observable = this.tourNetService.getTourById(review.tourId).pipe(
         switchMap(tour => {
-          console.log('Tour data from getTourById:', tour);
           let idext: string = tour.tkId || '';
           
           // Call getTourDetailByExternalID to get the tour name

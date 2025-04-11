@@ -3,9 +3,9 @@
  */
 export interface ReviewCard {
   travelerId: number;
-  traveler: string;
+  traveler?: string;
   tourId: number;
-  tour: string;
+  tour?: string;
   review: string;
   score: number;
   date: string;

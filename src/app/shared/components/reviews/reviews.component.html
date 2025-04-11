@@ -12,13 +12,21 @@
       <ng-template let-item pTemplate="item">
         <div class="padre">
           <p-card class="review-card skeleton-card">
-            <div class="skeleton-traveler-name"></div>
-            <div class="skeleton-tour-name"></div>
-            <div class="skeleton-review-text"></div>
-            <div class="skeleton-footer">
-              <div class="skeleton-date"></div>
-              <div class="skeleton-rating"></div>
-            </div>
+            <ng-template #title>
+              <div class="skeleton-traveler-name"></div>
+            </ng-template>
+            <ng-template #subtitle>
+              <div class="skeleton-tour-name"></div>
+            </ng-template>
+            <ng-template #content>
+              <div class="skeleton-review-text"></div>
+            </ng-template>
+            <ng-template #footer>
+              <div class="skeleton-footer">
+                <div class="skeleton-date"></div>
+                <div class="skeleton-rating"></div>
+              </div>
+            </ng-template>
           </p-card>
         </div>
       </ng-template>

@@ -32,7 +32,7 @@ interface EnrichedReviewData {
 })
 export class ReviewsComponent implements OnInit {
   @Input() reviews: ReviewCard[] = [];
-  
+
   enrichedReviews: ReviewCard[] = [];
   loading = true;
   skeletonArray = Array(6).fill({});
@@ -98,20 +98,24 @@ export class ReviewsComponent implements OnInit {
     }
 
     const reviewsToProcess = [...this.reviews];
-    
-    const reviewsNeedingEnrichment = reviewsToProcess
-      .filter(review => (review.tourId && !review.tour) || (review.travelerId && !review.traveler));
-    
+
+    const reviewsNeedingEnrichment = reviewsToProcess.filter(
+      (review) =>
+        (review.tourId && !review.tour) ||
+        (review.travelerId && !review.traveler)
+    );
+
     if (!reviewsNeedingEnrichment.length) {
       this.enrichedReviews = reviewsToProcess;
       this.loading = false;
       this.cdr.markForCheck();
       return;
     }
-    
-    const reviewRequests = reviewsNeedingEnrichment
-      .map(review => this.enrichReviewData(review));
-    
+
+    const reviewRequests = reviewsNeedingEnrichment.map((review) =>
+      this.enrichReviewData(review)
+    );
+
     forkJoin(reviewRequests).subscribe({
       next: (enrichedData) => {
         this.processEnrichedData(reviewsToProcess, enrichedData);
@@ -120,28 +124,34 @@ export class ReviewsComponent implements OnInit {
         this.enrichedReviews = reviewsToProcess;
         this.loading = false;
         this.cdr.markForCheck();
-      }
+      },
     });
   }
 
-  private processEnrichedData(reviewsToProcess: ReviewCard[], enrichedData: EnrichedReviewData[]): void {
-    this.enrichedReviews = reviewsToProcess.map(review => {
-      const enriched = enrichedData.find(data => 
-        String(data.tourId) === String(review.tourId) && String(data.travelerId) === String(review.travelerId)
+  private processEnrichedData(
+    reviewsToProcess: ReviewCard[],
+    enrichedData: EnrichedReviewData[]
+  ): void {
+    this.enrichedReviews = reviewsToProcess.map((review) => {
+      const enriched = enrichedData.find(
+        (data) =>
+          String(data.tourId) === String(review.tourId) &&
+          String(data.travelerId) === String(review.travelerId)
       );
-      
+
       if (enriched) {
         return {
           ...review,
           tour: enriched.tourName || review.tour || 'Unknown Tour',
-          traveler: enriched.travelerName || review.traveler || 'Unknown Traveler',
-          tourSlug: enriched.tourSlug // Add this line to pass the tourSlug
+          traveler:
+            enriched.travelerName || review.traveler || 'Unknown Traveler',
+          tourSlug: enriched.tourSlug, // Add this line to pass the tourSlug
         };
       }
-      
+
       return review;
     });
-    
+
     this.loading = false;
     this.cdr.markForCheck();
   }
@@ -151,55 +161,63 @@ export class ReviewsComponent implements OnInit {
       tourId: review.tourId || '',
       travelerId: review.travelerId || '',
       tourName: review.tour || '',
-      travelerName: review.traveler || ''
+      travelerName: review.traveler || '',
     };
 
     let observable = of(reviewData);
-    
+
     if (review.tourId && !review.tour) {
       observable = this.tourNetService.getTourById(review.tourId).pipe(
-        switchMap(tour => {
+        switchMap((tour) => {
           const idext: string = tour.tkId || '';
-          
+
           if (idext) {
             return this.toursService.getTourDetailByExternalID(idext).pipe(
-              map(tourDetail => ({
+              map((tourDetail) => ({
                 ...reviewData,
                 tourName: tourDetail?.name || tour?.name || 'Unknown Tour',
-                tourSlug: tourDetail?.webSlug
+                tourSlug: tourDetail?.webSlug,
               })),
-              catchError(() => of({
-                ...reviewData,
-                tourName: tour?.name || 'Unknown Tour'
-              }))
+              catchError(() =>
+                of({
+                  ...reviewData,
+                  tourName: tour?.name || 'Unknown Tour',
+                })
+              )
             );
           }
-          
+
           return of({
             ...reviewData,
-            tourName: tour?.name || 'Unknown Tour'
+            tourName: tour?.name || 'Unknown Tour',
           });
         }),
-        catchError(() => of({
-          ...reviewData,
-          tourName: 'Unknown Tour'
-        }))
+        catchError(() =>
+          of({
+            ...reviewData,
+            tourName: 'Unknown Tour',
+          })
+        )
       );
     }
-    
+
     return observable.pipe(
-      switchMap(data => {
+      switchMap((data) => {
         if (review.travelerId && !review.traveler) {
-          return this.travelersNetService.getTravelerById(review.travelerId).pipe(
-            map(traveler => ({
-              ...data,
-              travelerName: traveler?.name || 'Unknown Traveler'
-            })),
-            catchError(() => of({
-              ...data,
-              travelerName: 'Unknown Traveler'
-            }))
-          );
+          return this.travelersNetService
+            .getTravelerById(review.travelerId)
+            .pipe(
+              map((traveler) => ({
+                ...data,
+                travelerName: traveler?.name || 'Unknown Traveler',
+              })),
+              catchError(() =>
+                of({
+                  ...data,
+                  travelerName: 'Unknown Traveler',
+                })
+              )
+            );
         }
         return of(data);
       })

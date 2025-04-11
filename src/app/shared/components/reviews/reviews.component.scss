@@ -10,13 +10,13 @@
   --transition-duration: 0.3s;
 }
 
+// Update the skeleton styles to match the actual card dimensions
 .reviews-section {
   // Skeleton styles
   .skeleton-container {
     .skeleton-card {
       height: 100%;
-      padding: var(--card-padding);
-
+      
       .skeleton-traveler-name,
       .skeleton-tour-name,
       .skeleton-review-text,
@@ -28,32 +28,35 @@
       }
 
       .skeleton-traveler-name {
-        height: calc(var(--review-heading-size) * 1.2);
+        height: var(--traveler-name-size);
         margin-bottom: 0.5rem;
+        width: 70%;
       }
 
       .skeleton-tour-name {
-        height: calc(var(--review-text-size) * 1.2);
+        height: var(--review-text-size);
         margin-bottom: 1rem;
         width: 80%;
       }
 
       .skeleton-review-text {
         height: var(--content-height);
+        width: 100%;
       }
 
       .skeleton-footer {
         display: flex;
         justify-content: space-between;
         margin-top: 1rem;
+        width: 100%;
 
         .skeleton-date {
-          height: calc(var(--review-text-size) * 1.2);
+          height: var(--review-text-size);
           width: 30%;
         }
 
         .skeleton-rating {
-          height: calc(var(--review-text-size) * 1.2);
+          height: var(--review-text-size);
           width: 40%;
         }
       }

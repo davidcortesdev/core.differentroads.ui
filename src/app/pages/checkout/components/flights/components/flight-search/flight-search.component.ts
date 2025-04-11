@@ -348,13 +348,6 @@ export class FlightSearchComponent implements OnInit {
         matchesCheckedBaggage = hasCheckedBag;
       }
 
-      // Filtro por aerolínea
-      let matchesAirline = true;
-      if (formValue.aerolinea && formValue.aerolinea.codigo !== 'ALL') {
-        const airlineCode = formValue.aerolinea.codigo;
-        matchesAirline = offerData.validatingAirlineCodes.includes(airlineCode);
-      }
-
       // Filtro por número de escalas
       let matchesStops = true;
       if (formValue.escala) {
@@ -372,12 +365,7 @@ export class FlightSearchComponent implements OnInit {
         }
       }
 
-      return (
-        matchesHandBaggage &&
-        matchesCheckedBaggage &&
-        matchesAirline &&
-        matchesStops
-      );
+      return matchesHandBaggage && matchesCheckedBaggage && matchesStops;
     });
 
     // Apply sorting after filtering
@@ -544,6 +532,7 @@ export class FlightSearchComponent implements OnInit {
               name: this.getAirlineName(segment.carrierCode),
               email: '',
               logo: '',
+              code: segment.carrierCode,
             },
           };
         }
@@ -626,6 +615,7 @@ export class FlightSearchComponent implements OnInit {
                 name: this.getAirlineName(segment.carrierCode),
                 email: '',
                 logo: '',
+                code: segment.carrierCode,
               },
             };
           }
@@ -699,101 +689,6 @@ export class FlightSearchComponent implements OnInit {
     return null;
   }
 
-  transformOffersForParent(offers: ITempFlightOffer[]): any[] {
-    return offers.map((offer) => {
-      const offerData = offer.offerData;
-      const outbound = offerData.itineraries[0];
-      const inbound =
-        offerData.itineraries.length > 1 ? offerData.itineraries[1] : null;
-
-      return {
-        externalID: offerData.id,
-        name: `${offerData.validatingAirlineCodes[0]} - ${
-          outbound?.segments[0]?.departure?.iataCode
-        } to ${
-          outbound?.segments[outbound.segments.length - 1]?.arrival?.iataCode
-        }`,
-        outbound: {
-          origin: {
-            name: outbound?.segments[0]?.departure?.iataCode,
-            code: outbound?.segments[0]?.departure?.iataCode,
-          },
-          destination: {
-            name: outbound?.segments[outbound.segments.length - 1]?.arrival
-              ?.iataCode,
-            code: outbound?.segments[outbound.segments.length - 1]?.arrival
-              ?.iataCode,
-          },
-          departureDate: outbound?.segments[0]?.departure?.at,
-          arrivalDate:
-            outbound?.segments[outbound.segments.length - 1]?.arrival?.at,
-          airline: outbound?.segments[0]?.carrierCode,
-          flightNumber: outbound?.segments[0]?.number,
-          duration: outbound?.duration,
-          stops: outbound?.segments.length - 1,
-          prices: offerData.travelerPricings.map((tp: any) => ({
-            age_group_name: tp.travelerType === 'ADULT' ? 'Adultos' : 'Niños',
-            value:
-              this.amadeusService.calculatePriceWithMarkup(tp.price.total) / 2,
-          })),
-        },
-        inbound: inbound
-          ? {
-              origin: {
-                name: inbound.segments[0]?.departure?.iataCode,
-                code: inbound.segments[0]?.departure?.iataCode,
-              },
-              destination: {
-                name: inbound.segments[inbound.segments.length - 1]?.arrival
-                  ?.iataCode,
-                code: inbound.segments[inbound.segments.length - 1]?.arrival
-                  ?.iataCode,
-              },
-              departureDate: inbound.segments[0]?.departure?.at,
-              arrivalDate:
-                inbound.segments[inbound.segments.length - 1]?.arrival?.at,
-              airline: inbound.segments[0]?.carrierCode,
-              flightNumber: inbound.segments[0]?.number,
-              duration: inbound.duration,
-              stops: inbound.segments.length - 1,
-              prices: offerData.travelerPricings.map((tp: any) => ({
-                age_group_name:
-                  tp.travelerType === 'ADULT' ? 'Adultos' : 'Niños',
-                value:
-                  this.amadeusService.calculatePriceWithMarkup(tp.price.total) /
-                  2,
-              })),
-            }
-          : {
-              origin: { name: '', code: '' },
-              destination: { name: '', code: '' },
-              departureDate: '',
-              arrivalDate: '',
-              airline: '',
-              flightNumber: '',
-              duration: '',
-              stops: 0,
-              prices: [],
-            },
-        price: this.amadeusService.calculatePriceWithMarkup(
-          offerData.price.total
-        ),
-        hasHandBaggage: offerData.travelerPricings.some((tp: any) =>
-          tp.fareDetailsBySegment.some(
-            (seg: any) =>
-              seg.includedCabinBags && seg.includedCabinBags.quantity > 0
-          )
-        ),
-        hasCheckedBaggage: offerData.travelerPricings.some((tp: any) =>
-          tp.fareDetailsBySegment.some(
-            (seg: any) =>
-              seg.includedCheckedBags && seg.includedCheckedBags.quantity > 0
-          )
-        ),
-      };
-    });
-  }
-
   formatDuration(duration: string): string {
     if (!duration) return '';
 
@@ -808,8 +703,7 @@ export class FlightSearchComponent implements OnInit {
   }
 
   getAirlineName(code: string): string {
-    const airline = this.aerolineas.find((a) => a.codigo === code);
-    return airline ? airline.nombre : code;
+    return code;
   }
 
   hasHandBaggage(offer: ITempFlightOffer): boolean {

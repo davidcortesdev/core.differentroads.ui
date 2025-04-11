@@ -4,6 +4,7 @@ export interface Airline {
   name: string;
   email: string;
   logo: string;
+  code: string;
 }
 
 export interface FlightSegment {

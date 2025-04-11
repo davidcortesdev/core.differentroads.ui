@@ -271,8 +271,6 @@ export class BookingsComponent implements OnInit {
             this.updateActivitiesData(booking);
           }
 
-
-
           // Cargar actividades del período usando el externalID correcto
           if (booking.periodData && booking.periodData['externalID']) {
             this.loadPeriodActivities(booking.periodData['externalID']);
@@ -430,12 +428,8 @@ export class BookingsComponent implements OnInit {
       bookingReference: booking?.externalID || '',
       status: booking?.status || '',
       retailer: '', // Se actualizará en loadRetailerInfo
-      creationDate: booking?.createdAt
-        ? booking.createdAt
-        : '',
-      price:
-        booking?.total || booking?.periodData?.total || 0
-      ,
+      creationDate: booking?.createdAt ? booking.createdAt : '',
+      price: booking?.total || booking?.periodData?.total || 0,
     };
   }
 
@@ -486,7 +480,7 @@ export class BookingsComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error fetching tour image:', err);
-      }
+      },
     });
   }
 
@@ -515,10 +509,8 @@ export class BookingsComponent implements OnInit {
           amount: total,
           publicID: '', // default empty until set by backend
           status: PaymentStatus.PENDING,
-          createdAt: booking.createdAt || new Date().toISOString()
-          ,
-          updatedAt: booking.createdAt || new Date().toISOString()
-          ,
+          createdAt: booking.createdAt || new Date().toISOString(),
+          updatedAt: booking.createdAt || new Date().toISOString(),
         },
       ];
     }
@@ -592,6 +584,7 @@ export class BookingsComponent implements OnInit {
                 name: segment.airline?.name || 'Airline',
                 email: segment.airline?.email || 'info@airline.com',
                 logo: segment.airline?.logo || '',
+                code: segment.airline?.code || '',
               },
             }));
         }
@@ -621,6 +614,7 @@ export class BookingsComponent implements OnInit {
                 name: segment.airline?.name || 'Airline',
                 email: segment.airline?.email || 'info@airline.com',
                 logo: segment.airline?.logo || '',
+                code: segment.airline?.code || segment.airline?.name,
               },
             })
           );
@@ -697,9 +691,7 @@ export class BookingsComponent implements OnInit {
           fullName: fullName,
           documentType: documentType,
           documentNumber: documentNumber,
-          birthDate: travelerData.birthDate
-            ? travelerData.birthDate
-            : '',
+          birthDate: travelerData.birthDate ? travelerData.birthDate : '',
           email: travelerData.email || '',
           phone: travelerData.phone || '',
           type:
@@ -937,7 +929,6 @@ export class BookingsComponent implements OnInit {
       this.hidePaymentModal();
     }
   }
-
 
   calculateTotal(item: TripItemData): number {
     return item.quantity * item.unitPrice; // Multiplicar cantidad por valor unitario

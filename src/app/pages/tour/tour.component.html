@@ -14,7 +14,7 @@
     <app-tour-itinerary></app-tour-itinerary>
     <app-tour-departures></app-tour-departures>
     <app-tour-additional-info></app-tour-additional-info>
-    <app-tour-reviews></app-tour-reviews>
+    <app-tour-reviews *ngIf="tour?.externalID" [tourExternalId]="tour?.externalID"></app-tour-reviews>
     <app-tour-gallery></app-tour-gallery>
     <app-tour-faq></app-tour-faq>
     <app-tour-related *ngIf="tour?.tags" [destinations]="tour?.tags"></app-tour-related>

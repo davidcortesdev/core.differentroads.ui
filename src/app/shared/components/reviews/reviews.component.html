@@ -1,11 +1,11 @@
 <div
-  *ngIf="reviews?.length"
+  *ngIf="enrichedReviews?.length"
   class="reviews-section"
   role="region"
   aria-label="Customer Reviews"
 >
   <p-carousel
-    [value]="reviews"
+    [value]="enrichedReviews"
     [numVisible]="6"
     [numScroll]="1"
     [circular]="true"

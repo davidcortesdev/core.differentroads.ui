@@ -53,26 +53,15 @@ export class TourReviewsComponent implements OnInit {
           status: 'ACTIVE',
           tourId: tours[0].id
         });
-      }),
-      switchMap(reviews => {
-        if (!reviews || reviews.length === 0) {
-          return of([]);
-        }
-        
-        // Create an array of observables for each tour and traveler request
-        const reviewRequests = reviews.map(review => this.enrichReviewData(review));
-        
-        // Wait for all requests to complete
-        return forkJoin(reviewRequests);
       })
     ).subscribe({
-      next: (reviewsWithData) => {
+      next: (reviews) => {
         // Map the API reviews to ReviewCard format
-        this.reviewsCards = reviewsWithData.map(review => ({
+        this.reviewsCards = reviews.map(review => ({
           review: review.text,
           score: review.rating,
-          traveler: review.travelerName,
-          tour: review.tourName || '',
+          traveler: '',
+          tour: '',
           date: review.reviewDate,
           tourId: review.tourId,
           travelerId: review.travelerId
@@ -87,30 +76,5 @@ export class TourReviewsComponent implements OnInit {
     });
   }
 
-  private enrichReviewData(review: any) {
-    // Get tour information
-    const tourRequest = this.tourNetService.getTourById(review.tourId).pipe(
-      map(tour => ({
-        ...review,
-        tourName: tour.name
-      })),
-      catchError(() => of(review))
-    );
-    
-    // Get traveler information if travelerId exists
-    return tourRequest.pipe(
-      switchMap(reviewWithTour => {
-        if (reviewWithTour.travelerId) {
-          return this.travelersNetService.getTravelerById(reviewWithTour.travelerId).pipe(
-            map(traveler => ({
-              ...reviewWithTour,
-              travelerName: traveler.name
-            })),
-            catchError(() => of(reviewWithTour))
-          );
-        }
-        return of(reviewWithTour);
-      })
-    );
-  }
+  // Remove the enrichReviewData method as it's now moved to reviews.component.ts
 }

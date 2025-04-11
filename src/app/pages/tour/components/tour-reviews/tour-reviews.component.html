@@ -1,9 +1,7 @@
 <div id="tour-reviews">
   <div *ngIf="reviewsCards.length > 0" class="tour-reviews-container">
     <app-reviews 
-      [tourExternalId]="tourExternalId"
-      (reviewsLoaded)="onReviewsLoaded($event)"
-      (loadingChange)="onLoadingChange($event)">
+      [reviews]="reviewsCards">
     </app-reviews>
   </div>
 

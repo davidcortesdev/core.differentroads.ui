@@ -1,5 +1,5 @@
-<div class="active-bookings">
-  <div class="booking-header" (click)="toggleContent()">
+<div class="reviewsdiv">
+  <div class="reviews-header" (click)="toggleContent()">
     <span>Mis reseñas</span>
     <i
       class="pi"
@@ -10,23 +10,15 @@
     ></i>
   </div>
 
-  <div class="booking-content" [ngClass]="{ hidden: !isExpanded }">
-    <div class="reviews-grid">
-      <p-card *ngFor="let review of reviews" styleClass="review-card">
-        <div class="review-content">
-          <h3>{{ review.destination }}</h3>
-          <p class="description">{{ review.description }}</p>
-          <div class="review-footer">
-            <span class="date">{{ review.date }}</span>
-            <div class="rating">
-              <i
-                class="pi pi-star-fill"
-                *ngFor="let star of getRatingArray(review.rating)"
-              ></i>
-            </div>
-          </div>
-        </div>
-      </p-card>
+  <div class="reviews-content" [ngClass]="{ hidden: !isExpanded }">
+    <div id="reviews-grid">
+      <div *ngIf="reviewsCards.length > 0" class="reviews-grid">
+        <app-reviews [reviews]="reviewsCards"> </app-reviews>
+      </div>
+
+      <div *ngIf="loading" class="reviews-grid loading">
+        <div class="loading-indicator">Cargando reseñas...</div>
+      </div>
     </div>
   </div>
 </div>

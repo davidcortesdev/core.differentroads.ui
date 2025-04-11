@@ -2,6 +2,7 @@
     --review-title-size: 3rem;
     --review-heading-size: 1.79469rem;
     --review-text-size: 0.95719rem;
+    --traveler-name-size: 1.4rem; /* New variable for traveler name size */
     --card-padding: 0.5rem;
     --content-height: 4rem;
     --skeleton-bg: #e0e0e0;
@@ -99,10 +100,8 @@
   
             .p-card-title {
               color: var(--background-azul);
-              font-size: var(--review-heading-size);
-              font-weight: 700;
-              line-height: calc(var(--review-heading-size) * 1.034);
-              margin-bottom: 0.5rem;
+              font-size: var(--traveler-name-size); /* Changed from --review-heading-size */
+              //margin-bottom: 0.5rem;
               // Add these properties for multi-line ellipsis
               display: -webkit-box;
               -webkit-line-clamp: 1;
@@ -113,16 +112,15 @@
             .p-card-subtitle {
               color: var(--p-primary-color);
               font-size: var(--review-text-size);
-              font-weight: 700;
-              line-height: 1;
-              margin-bottom: 1rem;
+              display: -webkit-box;
+              -webkit-line-clamp: 1;
+              -webkit-box-orient: vertical;
+              overflow: hidden;
             }
   
             .p-card-content {
               color: var(--background-azul);
               font-size: var(--review-text-size);
-              font-weight: 500;
-              line-height: 1;
               height: var(--content-height);
   
               .review-text-container {
@@ -147,8 +145,6 @@
               .date {
                 color: var(--p-primary-color);
                 font-size: var(--review-text-size);
-                font-weight: 500;
-                line-height: 1;
               }
   
               .p-rating .p-rating-icon {

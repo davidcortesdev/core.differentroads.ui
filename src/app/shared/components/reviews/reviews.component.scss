@@ -8,14 +8,15 @@
   --skeleton-bg: #e0e0e0;
   --skeleton-highlight: #f0f0f0;
   --transition-duration: 0.3s;
+  --p-card-background: white; // Added new variable for card background
 }
 
+// Update the skeleton styles to match the actual card dimensions
 .reviews-section {
   // Skeleton styles
   .skeleton-container {
     .skeleton-card {
       height: 100%;
-      padding: var(--card-padding);
 
       .skeleton-traveler-name,
       .skeleton-tour-name,
@@ -28,32 +29,35 @@
       }
 
       .skeleton-traveler-name {
-        height: calc(var(--review-heading-size) * 1.2);
+        height: var(--traveler-name-size);
         margin-bottom: 0.5rem;
+        width: 70%;
       }
 
       .skeleton-tour-name {
-        height: calc(var(--review-text-size) * 1.2);
+        height: var(--review-text-size);
         margin-bottom: 1rem;
         width: 80%;
       }
 
       .skeleton-review-text {
         height: var(--content-height);
+        width: 100%;
       }
 
       .skeleton-footer {
         display: flex;
         justify-content: space-between;
         margin-top: 1rem;
+        width: 100%;
 
         .skeleton-date {
-          height: calc(var(--review-text-size) * 1.2);
+          height: var(--review-text-size);
           width: 30%;
         }
 
         .skeleton-rating {
-          height: calc(var(--review-text-size) * 1.2);
+          height: var(--review-text-size);
           width: 40%;
         }
       }
@@ -61,8 +65,13 @@
   }
 
   @keyframes pulse {
-    0%, 100% { background-color: var(--skeleton-bg); }
-    50% { background-color: var(--skeleton-highlight); }
+    0%,
+    100% {
+      background-color: var(--skeleton-bg);
+    }
+    50% {
+      background-color: var(--skeleton-highlight);
+    }
   }
 
   ::ng-deep {
@@ -81,6 +90,9 @@
           padding: var(--card-padding);
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
           transition: box-shadow var(--transition-duration) ease;
+          background-color: var(
+            --p-card-background
+          ); // Added this line to use the new variable
 
           &:hover {
             box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
@@ -119,7 +131,7 @@
               text-overflow: ellipsis;
               max-height: var(--content-height);
               cursor: pointer;
-              
+
               &:hover {
                 text-decoration: underline;
               }
@@ -158,20 +170,20 @@
 /* Estilos para el modal de reseña completa */
 .full-review-content {
   padding: 1rem;
-  
+
   .traveler-name {
     margin-top: 0;
     color: var(--background-azul);
     font-size: var(--traveler-name-size);
     font-weight: 500;
   }
-  
+
   .tour-name {
     color: var(--p-primary-color);
     font-size: var(--review-text-size);
     margin-bottom: 1rem;
   }
-  
+
   .review-text {
     color: var(--background-azul);
     font-size: var(--review-text-size);
@@ -179,12 +191,12 @@
     margin-bottom: 1.5rem;
     white-space: pre-line;
   }
-  
+
   .review-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    
+
     .date {
       color: var(--p-primary-color);
       font-size: var(--review-text-size);
@@ -196,5 +208,19 @@
 ::ng-deep .p-dialog {
   .full-review-content {
     padding: 0rem 1rem;
+  }
+}
+
+// Add this to your existing styles
+// Update the tour-name clickable styles
+.tour-name {
+  &.clickable {
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+      color: var(--p-primary-color-dark, #005a87);
+      opacity: 0.8;
+    }
   }
 }

@@ -26,7 +26,7 @@ export class CommunityReviewsComponent implements OnInit {
   loadReviews(): void {
     this.loading = true;
     
-    this.reviewsService.getTopReviews(20, { 
+    this.reviewsService.getTopReviews(25, { 
       showOnHomePage: true,
       status: 'ACTIVE'
     }).subscribe({

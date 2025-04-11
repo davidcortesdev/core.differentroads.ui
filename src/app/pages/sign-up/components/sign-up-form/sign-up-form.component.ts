@@ -141,6 +141,9 @@ export class SignUpFormComponent {
                 })
                 .subscribe(
                   () => {
+                    // NEW: Asignar 100 puntos al usuario recién creado
+                    this.authService.assignNewTravelerPoints(this.signUpForm.value.email);
+
                     this.isLoading = false;
                     this.isConfirming = true;
                     this.registeredUsername = this.signUpForm.value.email;

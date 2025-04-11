@@ -100,6 +100,8 @@
         border-radius: 0;
         background: transparent;
         font-size: 14px;
+        padding-top:  0rem !important;
+
       }
 
       .p-datepicker {
@@ -108,10 +110,15 @@
 
       .p-select {
         cursor: pointer;
+        padding-bottom: 0rem !important;
       }
 
       .p-select-dropdown {
         color: var(--background-azul);
+      }
+
+      .p-select-label {
+        padding-top: inherit;
       }
     }
 

@@ -1,5 +1,10 @@
 $azul: var(--background-azul);
 $primary: var(--p-primary-color);
+// Adding the paginator background variable
+:host {
+  --p-paginator-background: white;
+}
+
 @mixin flex($justify: center, $align: center) {
   display: flex;
   align-items: $align;

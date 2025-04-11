@@ -35,6 +35,10 @@ export class ReviewsComponent implements OnInit {
   // Create an array for skeleton items
   skeletonArray = Array(6).fill({});
 
+  // Añadir propiedades para el modal
+  showFullReviewModal = false;
+  selectedReview: ReviewCard | null = null;
+
   readonly responsiveOptions = [
     {
       breakpoint: '3500px',
@@ -216,5 +220,11 @@ export class ReviewsComponent implements OnInit {
       })
     );
     // Eliminar console.log innecesarios
+  }
+
+  // Método para abrir el modal con la reseña completa
+  openFullReview(review: ReviewCard): void {
+    this.selectedReview = review;
+    this.showFullReviewModal = true;
   }
 }

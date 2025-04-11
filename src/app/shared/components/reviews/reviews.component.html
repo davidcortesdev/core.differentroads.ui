@@ -51,7 +51,8 @@
               class="review-text-container"
               [attr.aria-label]="'Review by ' + review.traveler"
               [innerHTML]="review.review | nl2br"
-              [title]="review.review">
+              [title]="review.review"
+              (click)="openFullReview(review)">
             </div>
           </ng-template>
           <ng-template #footer>
@@ -70,3 +71,26 @@
     </ng-template>
   </p-carousel>
 </div>
+
+<!-- Añadir al final del archivo, justo antes del cierre del div principal -->
+<p-dialog 
+  [(visible)]="showFullReviewModal" 
+  [modal]="true"
+  [dismissableMask]="true"
+  [style]="{width: '90%', maxWidth: '600px'}"
+  [header]="'Reseña'"
+  [closeOnEscape]="true">
+  <div class="full-review-content">
+    <h3 class="traveler-name">{{ selectedReview?.traveler }}</h3>
+    <h4 class="tour-name">{{ selectedReview?.tour }}</h4>
+    <div class="review-text" [innerHTML]="selectedReview?.review ||'' | nl2br"></div>
+    <div class="review-footer">
+      <span class="date">{{ selectedReview?.date | date : "dd/MM/yyyy" }}</span>
+      <p-rating
+        [ngModel]="selectedReview?.score"
+        [readonly]="true"
+        [stars]="5">
+      </p-rating>
+    </div>
+  </div>
+</p-dialog>

@@ -134,6 +134,11 @@
               overflow: hidden;
               text-overflow: ellipsis;
               max-height: var(--content-height);
+              cursor: pointer; /* Añadir cursor pointer para indicar que es clickeable */
+              
+              &:hover {
+                text-decoration: underline; /* Opcional: añadir subrayado al pasar el ratón */
+              }
             }
           }
 
@@ -162,6 +167,63 @@
           }
         }
       }
+    }
+  }
+}
+
+/* Estilos para el modal de reseña completa */
+.full-review-content {
+  padding: 1rem;
+  
+  .tour-name {
+    color: var(--p-primary-color);
+    font-size: var(--review-text-size);
+    margin-bottom: 1rem;
+  }
+  
+  .review-text {
+    color: var(--background-azul);
+    font-size: var(--review-text-size);
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+    white-space: pre-line;
+  }
+  
+  .review-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    .date {
+      color: var(--p-primary-color);
+      font-size: var(--review-text-size);
+    }
+  }
+}
+
+/* Estilos para reducir el espacio en el diálogo */
+::ng-deep .p-dialog {
+  .p-dialog-header {
+    //padding-bottom: 0.5rem;
+  }
+  
+  .p-dialog-content {
+    //padding-top: 0.5rem;
+  }
+  
+  .full-review-content {
+    padding: 0rem 1rem;
+    .traveler-name {
+      margin-top: 0;
+      color: var(--background-azul);
+      font-size: var(--traveler-name-size);
+      font-weight: 500;
+    }
+    
+    .tour-name {
+      //margin-top: 0.5rem;
+      color: var(--p-primary-color);
+      font-size: var(--review-text-size);
     }
   }
 }

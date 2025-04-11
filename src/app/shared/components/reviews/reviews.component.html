@@ -40,7 +40,6 @@
       <div class="padre">
         <p-card class="review-card">
           <ng-template #title>
-            <!-- Añadir title para accesibilidad -->
             <span class="traveler-name" [title]="review.traveler">{{ review.traveler }}</span>
           </ng-template>
           <ng-template #subtitle>
@@ -63,8 +62,8 @@
             <p-rating
               [ngModel]="review.score"
               [readonly]="true"
-              [stars]="5"
-            ></p-rating>
+              [stars]="5">
+            </p-rating>
           </ng-template>
         </p-card>
       </div>
@@ -72,7 +71,7 @@
   </p-carousel>
 </div>
 
-<!-- Añadir al final del archivo, justo antes del cierre del div principal -->
+<!-- Modal de reseña completa -->
 <p-dialog 
   [(visible)]="showFullReviewModal" 
   [modal]="true"

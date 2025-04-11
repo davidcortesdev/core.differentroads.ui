@@ -7,7 +7,7 @@
   --content-height: 4rem;
   --skeleton-bg: #e0e0e0;
   --skeleton-highlight: #f0f0f0;
-  --transition-duration: 0.3s; /* Añadido: variable para duración de transiciones */
+  --transition-duration: 0.3s;
 }
 
 .reviews-section {
@@ -17,28 +17,29 @@
       height: 100%;
       padding: var(--card-padding);
 
-      .skeleton-traveler-name {
-        height: calc(var(--review-heading-size) * 1.2);
+      .skeleton-traveler-name,
+      .skeleton-tour-name,
+      .skeleton-review-text,
+      .skeleton-date,
+      .skeleton-rating {
         background: var(--skeleton-bg);
         border-radius: 4px;
-        margin-bottom: 0.5rem;
         animation: pulse 1.5s infinite ease-in-out;
+      }
+
+      .skeleton-traveler-name {
+        height: calc(var(--review-heading-size) * 1.2);
+        margin-bottom: 0.5rem;
       }
 
       .skeleton-tour-name {
         height: calc(var(--review-text-size) * 1.2);
-        background: var(--skeleton-bg);
-        border-radius: 4px;
         margin-bottom: 1rem;
         width: 80%;
-        animation: pulse 1.5s infinite ease-in-out;
       }
 
       .skeleton-review-text {
         height: var(--content-height);
-        background: var(--skeleton-bg);
-        border-radius: 4px;
-        animation: pulse 1.5s infinite ease-in-out;
       }
 
       .skeleton-footer {
@@ -49,32 +50,19 @@
         .skeleton-date {
           height: calc(var(--review-text-size) * 1.2);
           width: 30%;
-          background: var(--skeleton-bg);
-          border-radius: 4px;
-          animation: pulse 1.5s infinite ease-in-out;
         }
 
         .skeleton-rating {
           height: calc(var(--review-text-size) * 1.2);
           width: 40%;
-          background: var(--skeleton-bg);
-          border-radius: 4px;
-          animation: pulse 1.5s infinite ease-in-out;
         }
       }
     }
   }
 
   @keyframes pulse {
-    0% {
-      background-color: var(--skeleton-bg);
-    }
-    50% {
-      background-color: var(--skeleton-highlight);
-    }
-    100% {
-      background-color: var(--skeleton-bg);
-    }
+    0%, 100% { background-color: var(--skeleton-bg); }
+    50% { background-color: var(--skeleton-highlight); }
   }
 
   ::ng-deep {
@@ -100,12 +88,8 @@
 
           .p-card-title {
             color: var(--background-azul);
-            font-size: var(
-              --traveler-name-size
-            ); /* Changed from --review-heading-size */
-            font-weight: 500; /* Added bold font weight */
-            //margin-bottom: 0.5rem;
-            // Add these properties for multi-line ellipsis
+            font-size: var(--traveler-name-size);
+            font-weight: 500;
             display: -webkit-box;
             -webkit-line-clamp: 1;
             -webkit-box-orient: vertical;
@@ -134,10 +118,10 @@
               overflow: hidden;
               text-overflow: ellipsis;
               max-height: var(--content-height);
-              cursor: pointer; /* Añadir cursor pointer para indicar que es clickeable */
+              cursor: pointer;
               
               &:hover {
-                text-decoration: underline; /* Opcional: añadir subrayado al pasar el ratón */
+                text-decoration: underline;
               }
             }
           }
@@ -175,6 +159,13 @@
 .full-review-content {
   padding: 1rem;
   
+  .traveler-name {
+    margin-top: 0;
+    color: var(--background-azul);
+    font-size: var(--traveler-name-size);
+    font-weight: 500;
+  }
+  
   .tour-name {
     color: var(--p-primary-color);
     font-size: var(--review-text-size);
@@ -201,29 +192,9 @@
   }
 }
 
-/* Estilos para reducir el espacio en el diálogo */
+/* Estilos para el diálogo */
 ::ng-deep .p-dialog {
-  .p-dialog-header {
-    //padding-bottom: 0.5rem;
-  }
-  
-  .p-dialog-content {
-    //padding-top: 0.5rem;
-  }
-  
   .full-review-content {
     padding: 0rem 1rem;
-    .traveler-name {
-      margin-top: 0;
-      color: var(--background-azul);
-      font-size: var(--traveler-name-size);
-      font-weight: 500;
-    }
-    
-    .tour-name {
-      //margin-top: 0.5rem;
-      color: var(--p-primary-color);
-      font-size: var(--review-text-size);
-    }
   }
 }

@@ -14,6 +14,7 @@ import {
   fetchUserAttributes,
 } from 'aws-amplify/auth';
 import { UsersService } from './users.service';
+import { PointsService } from './points.service'; // new import
 import { firstValueFrom, catchError, tap, switchMap } from 'rxjs';
 
 @Injectable({
@@ -34,7 +35,8 @@ export class AuthenticateService {
   constructor(
     private router: Router,
     private usersService: UsersService,
-    private hubspotService: HubspotService
+    private hubspotService: HubspotService,
+    private pointsService: PointsService // new injection
   ) {
     this.userPool = new CognitoUserPool({
       UserPoolId: environment.cognitoUserPoolId,
@@ -386,7 +388,10 @@ export class AuthenticateService {
                   })
                 )
               ).pipe(
-                tap(() => console.log('Usuario creado en la base de datos.')),
+                tap(() => {
+                  console.log('Usuario creado en la base de datos.');
+                  this.assignNewTravelerPoints(email);
+                }),
                 catchError((createError) => {
                   console.error('Error al crear el usuario:', createError);
                   return of(null);
@@ -406,5 +411,39 @@ export class AuthenticateService {
     } catch (error) {
       console.error('Error en createUserIfNotExists:', error);
     }
+  }
+
+  // New method to assign 100 points to new travelers
+  assignNewTravelerPoints(email: string): void {
+    this.usersService.getUserByEmail(email).subscribe({
+      next: (user) => {
+        if (user && user._id) {
+          const pointsObject = {
+            travelerID: user._id,
+            type: 'income',
+            points: 100, 
+            extraData: {
+              bookingID: 'N/A',
+              tourName: 'N/A',
+            },
+            category: 'Paquete de Binevenida',
+            concept: 'Registro',
+            origin: 'System',
+            transactionEmail: email,
+          };
+          this.pointsService.createPoints(pointsObject).subscribe({
+            next: (res) => {
+              console.log(`100 puntos asignados al nuevo usuario ${email}:`, res);
+            },
+            error: (err) => {
+              console.error(`Error asignando puntos al usuario ${email}:`, err);
+            },
+          });
+        }
+      },
+      error: (err) => {
+        console.error(`Error obteniendo usuario por email ${email}:`, err);
+      },
+    });
   }
 }

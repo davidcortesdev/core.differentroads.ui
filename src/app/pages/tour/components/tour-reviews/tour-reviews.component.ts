@@ -48,7 +48,7 @@ export class TourReviewsComponent implements OnInit {
           return of([]);
         }
         // Now that we have the tour, we can filter reviews by its ID
-        return this.reviewsService.getTopReviews(20, { 
+        return this.reviewsService.getTopReviews(25, { 
           showOnTourPage: true,
           status: 'ACTIVE',
           tourId: tours[0].id

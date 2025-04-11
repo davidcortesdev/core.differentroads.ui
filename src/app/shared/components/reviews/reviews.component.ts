@@ -183,7 +183,7 @@ export class ReviewsComponent implements OnInit {
           const idext: string = tour.tkId || '';
 
           if (idext) {
-            return this.toursService.getTourDetailByExternalID(idext).pipe(
+            return this.toursService.getTourDetailByExternalID(idext,['name','webSlug']).pipe(
               map((tourDetail) => ({
                 ...reviewData,
                 tourName: tourDetail?.name || tour?.name || 'Unknown Tour',

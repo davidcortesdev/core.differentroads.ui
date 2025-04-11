@@ -181,20 +181,6 @@
 }
 
 .tour-overview {
-  margin: 0 40px;
-
-  @media (max-width: 576px) {
-    margin: 0 20px;
-  }
-  
-  .loading-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 300px;
-  }
-
-
   .tour-content {
     display: grid;
     grid-template-columns: 1fr 1fr;

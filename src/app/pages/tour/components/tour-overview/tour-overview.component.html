@@ -5,7 +5,7 @@
     styleClass="destinations-breadcrumb"
   ></p-breadcrumb>
 
-  <div class="tour-content" *ngIf="tour; else loading">
+  <div class="tour-content">
     <div class="tour-image">
       <p-image
         [src]="tour?.image?.[0]?.url"
@@ -15,7 +15,7 @@
 
       <div class="tour-content-image-tags">
         <div
-          *ngFor="let tag of tour?.vtags; trackBy: trackByIndex"
+          *ngFor="let tag of tour?.vtags; let i = index"
           class="tag is-rounded p-16"
         >
           {{ tag }}
@@ -28,7 +28,7 @@
 
         <div class="tour-content-countries-section">
           <div
-            *ngFor="let country of tour?.cities; trackBy: trackByIndex"
+            *ngFor="let country of tour?.cities; let i = index"
             class="tag is-ghost"
           >
             <i class="pi pi-map-marker"></i>
@@ -42,7 +42,7 @@
           [innerHTML]="sanitizeHtml(tour?.description || '')"
         ></div>
       </div>
-      <div class="expert-section" *ngIf="tour?.expert">
+      <div class="expert-section">
         <div class="expert-avatar">
           <p-avatar
             [image]="tour?.expert?.ephoto?.[0]?.url"
@@ -56,7 +56,7 @@
         </div>
         <div class="expert-opinion">
           <p-panel styleClass="expert-panel">
-            <ng-template pTemplate="content">
+            <ng-template #content>
               <div [innerHTML]="sanitizeHtml(tour?.expert?.opinion || '')"></div>
             </ng-template>
           </p-panel>
@@ -64,10 +64,4 @@
       </div>
     </div>
   </div>
-  
-  <ng-template #loading>
-    <div class="loading-container">
-      <p-progressSpinner></p-progressSpinner>
-    </div>
-  </ng-template>
 </div>

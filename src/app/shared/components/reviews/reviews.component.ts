@@ -79,83 +79,94 @@ export class ReviewsComponent implements OnInit {
     private travelersNetService: TravelersNetService,
     private toursService: ToursService,
     private cdr: ChangeDetectorRef,
-    private router: Router // Add Router to constructor
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     if (this.reviews?.length) {
       this.loading = true;
-      this.loadMissingNames();
+      // Initialize with reviews that don't need enrichment
+      this.initializeReviews();
     } else {
       this.loading = false;
     }
   }
 
-  loadMissingNames(): void {
+  initializeReviews(): void {
     if (!this.reviews?.length) {
       this.loading = false;
       return;
     }
 
     const reviewsToProcess = [...this.reviews];
-
-    const reviewsNeedingEnrichment = reviewsToProcess.filter(
-      (review) =>
-        (review.tourId && !review.tour) ||
-        (review.travelerId && !review.traveler)
+    
+    // Immediately show reviews that don't need enrichment
+    const completeReviews = reviewsToProcess.filter(
+      review => (review.tourId && review.tour && review.travelerId && review.traveler)
     );
-
-    if (!reviewsNeedingEnrichment.length) {
-      this.enrichedReviews = reviewsToProcess;
+    
+    const reviewsNeedingEnrichment = reviewsToProcess.filter(
+      review => (review.tourId && !review.tour) || (review.travelerId && !review.traveler)
+    );
+    
+    // If we have complete reviews, show them immediately and remove loading state
+    if (completeReviews.length > 0) {
+      this.enrichedReviews = completeReviews;
+      this.loading = false; // Remove loading state as soon as we have at least one review
+      this.cdr.markForCheck();
+    }
+    
+    // If we have reviews that need enrichment, process them individually
+    if (reviewsNeedingEnrichment.length > 0) {
+      this.processReviewsIncrementally(reviewsNeedingEnrichment);
+    } else if (completeReviews.length === 0) {
+      // Only if we have no complete reviews and no reviews to enrich
       this.loading = false;
       this.cdr.markForCheck();
-      return;
     }
+  }
 
-    const reviewRequests = reviewsNeedingEnrichment.map((review) =>
-      this.enrichReviewData(review)
-    );
-
-    forkJoin(reviewRequests).subscribe({
-      next: (enrichedData) => {
-        this.processEnrichedData(reviewsToProcess, enrichedData);
-      },
-      error: () => {
-        this.enrichedReviews = reviewsToProcess;
-        this.loading = false;
-        this.cdr.markForCheck();
-      },
+  processReviewsIncrementally(reviewsToEnrich: ReviewCard[]): void {
+    // Process each review individually to update UI incrementally
+    reviewsToEnrich.forEach(review => {
+      this.enrichReviewData(review).subscribe({
+        next: (enrichedData) => {
+          const enrichedReview = this.createEnrichedReview(review, enrichedData);
+          // Add the enriched review to our array
+          this.enrichedReviews = [...this.enrichedReviews, enrichedReview];
+          
+          // As soon as we have at least one review, remove the loading state
+          if (this.enrichedReviews.length > 0) {
+            this.loading = false;
+          }
+          
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          // Even on error, add the original review
+          this.enrichedReviews = [...this.enrichedReviews, review];
+          
+          // As soon as we have at least one review, remove the loading state
+          if (this.enrichedReviews.length > 0) {
+            this.loading = false;
+          }
+          
+          this.cdr.markForCheck();
+        }
+      });
     });
   }
 
-  private processEnrichedData(
-    reviewsToProcess: ReviewCard[],
-    enrichedData: EnrichedReviewData[]
-  ): void {
-    this.enrichedReviews = reviewsToProcess.map((review) => {
-      const enriched = enrichedData.find(
-        (data) =>
-          String(data.tourId) === String(review.tourId) &&
-          String(data.travelerId) === String(review.travelerId)
-      );
-
-      if (enriched) {
-        return {
-          ...review,
-          tour: enriched.tourName || review.tour || 'Unknown Tour',
-          traveler:
-            enriched.travelerName || review.traveler || 'Unknown Traveler',
-          tourSlug: enriched.tourSlug, // Add this line to pass the tourSlug
-        };
-      }
-
-      return review;
-    });
-
-    this.loading = false;
-    this.cdr.markForCheck();
+  private createEnrichedReview(review: ReviewCard, enrichedData: EnrichedReviewData): ReviewCard {
+    return {
+      ...review,
+      tour: enrichedData.tourName || review.tour || 'Unknown Tour',
+      traveler: enrichedData.travelerName || review.traveler || 'Unknown Traveler',
+      tourSlug: enrichedData.tourSlug
+    };
   }
 
+  // Keep the existing enrichReviewData method
   private enrichReviewData(review: ReviewCard): Observable<EnrichedReviewData> {
     const reviewData: EnrichedReviewData = {
       tourId: review.tourId || '',
@@ -229,10 +240,8 @@ export class ReviewsComponent implements OnInit {
     this.showFullReviewModal = true;
   }
 
-  // Add this method to handle navigation
-  // Fix the navigation method - check the correct route path for your application
   navigateToTour(tourSlug: string, event: MouseEvent): void {
-    event.stopPropagation(); // Prevent opening the full review modal
+    event.stopPropagation();
     if (tourSlug) {
       this.router.navigate(['/tour', tourSlug]);
     }

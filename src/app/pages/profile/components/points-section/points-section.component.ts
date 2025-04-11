@@ -58,18 +58,19 @@ export class PointsSectionComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Primero obtenemos el email del usuario autenticado
+    // Get authenticated user's email
     this.authService.getUserEmail().subscribe({
       next: (email: string) => {
         if (email) {
           this.userEmail = email;
-          // Después obtenemos los datos del usuario incluyendo el DNI
-          this.getUserDniByEmail(email);
+          // Load points directly using email
+          this.loadPoints();
         } else {
           this.isLoading = false;
         }
       },
       error: (error) => {
+        console.error('Error getting user email:', error);
         this.isLoading = false;
       }
     });
@@ -78,22 +79,6 @@ export class PointsSectionComponent implements OnInit {
     this.loadMembershipCards();
   }
 
-  private getUserDniByEmail(email: string): void {
-    this.usersService.getUserByEmail(email).subscribe({
-      next: (user) => {
-        if (user && user.dni) {
-          this.userDni = user.dni;
-          // Una vez que tenemos el DNI, cargamos los puntos
-          this.loadPoints();
-        } else {
-          this.isLoading = false;
-        }
-      },
-      error: (error) => {
-        this.isLoading = false;
-      }
-    });
-  }
 
   private loadPoints(): void {
     if (!this.userEmail) {
@@ -101,11 +86,14 @@ export class PointsSectionComponent implements OnInit {
       return;
     }
     
+    console.log('Iniciando obtención de puntos para el usuario:', this.userEmail);
+
     // Obtener los puntos del usuario
     this.pointsService
       .getPointsByDni(this.userEmail, { page: 1, limit: 1000 })
       .subscribe({
         next: (response: any) => {
+          console.log('Respuesta de puntos:', response);
           if (response && response.data) {
             this.points = response.data.map((point: any) => ({
               booking: point.extraData?.bookingID || 'N/A',
@@ -116,9 +104,11 @@ export class PointsSectionComponent implements OnInit {
               type: point.type || 'income', // Por defecto asumimos income si no viene tipo
             }));
             
+            console.log('Puntos mapeados:', this.points);
+            
             // Obtener el total de puntos directamente de la respuesta
             this.totalPoints = response.totalpoints || 0;
-            
+            console.log('Total de puntos:', this.totalPoints);
             // Obtener la cantidad de viajes desde count
             if (response.count !== undefined) {
               this.currentTrips = response.count;
@@ -126,6 +116,7 @@ export class PointsSectionComponent implements OnInit {
               // Fallback a trips si count no está disponible
               this.currentTrips = response.trips;
             }
+            console.log('Cantidad de viajes:', this.currentTrips);
             
             // Actualizar las tarjetas con la información de viajes 
             this.updateCardsByCount();
@@ -133,6 +124,7 @@ export class PointsSectionComponent implements OnInit {
           this.isLoading = false;
         },
         error: (error) => {
+          console.error('Error obteniendo puntos:', error);
           // En caso de error, intentamos obtener al menos el total de puntos
           this.loadTotalPoints();
           this.isLoading = false;
@@ -140,8 +132,8 @@ export class PointsSectionComponent implements OnInit {
         complete: () => {
         }
       });
-  }
-  
+  }  
+
   private updateCardsByCount(): void {
     // Actualizar el estado de todas las tarjetas basado en la cantidad de viajes (count)
     this.membershipCards.forEach(card => {
@@ -169,6 +161,7 @@ export class PointsSectionComponent implements OnInit {
     this.pointsService.getTotalPointsByDni(this.userEmail).subscribe({
       next: (total: number) => {
         this.totalPoints = total;
+        console.log('Total de puntos:', total);
       },
       error: (error) => {
       }

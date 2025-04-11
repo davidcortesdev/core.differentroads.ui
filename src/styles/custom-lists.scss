@@ -6,9 +6,9 @@ li.custom-list-item-g {
   margin-bottom: 0.5em !important;
   display: flex !important;
   align-items: center !important;
-  
+
   &::before {
-    content: '' !important;
+    content: "" !important;
     position: absolute !important;
     left: 0 !important;
     top: 50% !important;
@@ -29,17 +29,17 @@ li.custom-list-item {
   margin-bottom: 0.5em !important;
   display: flex !important;
   align-items: center !important;
-  
+
   &::before {
-    content: '' !important;
+    content: "" !important;
     position: absolute !important;
     left: 0 !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
     width: 13px !important;
     height: 13px !important;
-    border-radius: 2px !important;
-    background-color: #FF9800 !important;
+    border-radius: 2px !important; /* Ajusta el radio del borde si quieres esquinas redondeadas */
+    background-color: #ff9800 !important; /* Color naranja */
     display: block !important;
   }
 }

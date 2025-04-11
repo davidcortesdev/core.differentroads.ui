@@ -1,7 +1,13 @@
 <div class="community-reviews">
   <h3>{{ reviews?.title }}</h3>
-  <app-reviews 
-    [reviewsFilter]="reviewsFilter"
-    (reviewsLoaded)="onReviewsLoaded($event)">
-  </app-reviews>
+  
+  <div *ngIf="reviewsCards.length > 0" class="community-reviews-container">
+    <app-reviews 
+      [reviews]="reviewsCards">
+    </app-reviews>
+  </div>
+
+  <div *ngIf="loading" class="community-reviews-container loading">
+    <div class="loading-indicator">Cargando reseñas...</div>
+  </div>
 </div>

@@ -101,6 +101,7 @@
             .p-card-title {
               color: var(--background-azul);
               font-size: var(--traveler-name-size); /* Changed from --review-heading-size */
+              font-weight: 500; /* Added bold font weight */
               //margin-bottom: 0.5rem;
               // Add these properties for multi-line ellipsis
               display: -webkit-box;

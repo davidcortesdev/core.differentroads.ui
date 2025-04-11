@@ -43,7 +43,13 @@
             <span class="traveler-name" [title]="review.traveler">{{ review.traveler }}</span>
           </ng-template>
           <ng-template #subtitle>
-            <span class="tour-name" [title]="review.tour">{{ review.tour }}</span>
+            <span 
+              class="tour-name" 
+              [title]="review.tour"
+              [class.clickable]="review.tourSlug"
+              (click)="review.tourSlug && navigateToTour(review.tourSlug, $event)">
+              {{ review.tour }}
+            </span>
           </ng-template>
           <ng-template #content>
             <div
@@ -81,7 +87,12 @@
   [closeOnEscape]="true">
   <div class="full-review-content">
     <h3 class="traveler-name">{{ selectedReview?.traveler }}</h3>
-    <h4 class="tour-name">{{ selectedReview?.tour }}</h4>
+    <h4 
+      class="tour-name" 
+      [class.clickable]="selectedReview?.tourSlug"
+      (click)="selectedReview?.tourSlug && navigateToTour(selectedReview?.tourSlug || '', $event)">
+      {{ selectedReview?.tour }}
+    </h4>
     <div class="review-text" [innerHTML]="selectedReview?.review ||'' | nl2br"></div>
     <div class="review-footer">
       <span class="date">{{ selectedReview?.date | date : "dd/MM/yyyy" }}</span>

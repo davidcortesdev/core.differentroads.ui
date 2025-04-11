@@ -12,12 +12,15 @@ import { TravelersNetService } from '../../../core/services/travelersNet.service
 import { ToursService } from '../../../core/services/tours.service';
 import { forkJoin, Observable, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
+import { Router } from '@angular/router'; // Add this import
 
+// Update the EnrichedReviewData interface to include tourSlug
 interface EnrichedReviewData {
   tourId: string | number;
   travelerId: string | number;
   tourName: string;
   travelerName: string;
+  tourSlug?: string; // Add this property
 }
 
 @Component({
@@ -75,7 +78,8 @@ export class ReviewsComponent implements OnInit {
     private tourNetService: TourNetService,
     private travelersNetService: TravelersNetService,
     private toursService: ToursService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router // Add Router to constructor
   ) {}
 
   ngOnInit(): void {
@@ -130,7 +134,8 @@ export class ReviewsComponent implements OnInit {
         return {
           ...review,
           tour: enriched.tourName || review.tour || 'Unknown Tour',
-          traveler: enriched.travelerName || review.traveler || 'Unknown Traveler'
+          traveler: enriched.travelerName || review.traveler || 'Unknown Traveler',
+          tourSlug: enriched.tourSlug // Add this line to pass the tourSlug
         };
       }
       
@@ -160,7 +165,8 @@ export class ReviewsComponent implements OnInit {
             return this.toursService.getTourDetailByExternalID(idext).pipe(
               map(tourDetail => ({
                 ...reviewData,
-                tourName: tourDetail?.name || tour?.name || 'Unknown Tour'
+                tourName: tourDetail?.name || tour?.name || 'Unknown Tour',
+                tourSlug: tourDetail?.webSlug
               })),
               catchError(() => of({
                 ...reviewData,
@@ -203,5 +209,14 @@ export class ReviewsComponent implements OnInit {
   openFullReview(review: ReviewCard): void {
     this.selectedReview = review;
     this.showFullReviewModal = true;
+  }
+
+  // Add this method to handle navigation
+  // Fix the navigation method - check the correct route path for your application
+  navigateToTour(tourSlug: string, event: MouseEvent): void {
+    event.stopPropagation(); // Prevent opening the full review modal
+    if (tourSlug) {
+      this.router.navigate(['/tour', tourSlug]);
+    }
   }
 }

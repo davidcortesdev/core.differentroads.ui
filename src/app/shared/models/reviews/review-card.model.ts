@@ -5,6 +5,7 @@ export interface ReviewCard {
   travelerId: number;
   traveler?: string;
   tourId: number;
+  tourSlug?: string;
   tour?: string;
   review: string;
   score: number;

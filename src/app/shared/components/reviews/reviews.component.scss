@@ -198,3 +198,17 @@
     padding: 0rem 1rem;
   }
 }
+
+// Add this to your existing styles
+// Update the tour-name clickable styles
+.tour-name {
+  &.clickable {
+    cursor: pointer;
+    
+    &:hover {
+      text-decoration: underline;
+      color: var(--p-primary-color-dark, #005a87);
+      opacity: 0.8;
+    }
+  }
+}

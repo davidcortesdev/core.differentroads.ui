@@ -84,6 +84,27 @@ export class BookingMappingService {
       ? `${leadTraveler.travelerData?.name} ${leadTraveler.travelerData?.surname}`.trim()
       : '';
 
+    console.log('_______', booking?.periodData?.['total']);
+    console.log({
+      status: status,
+      reservationNumber: `#${booking.ID || booking.externalID}`,
+      date: new Date(booking.createdAt || Date.now()).toLocaleDateString(
+        'es-ES'
+      ),
+      amount: this.calculatePaidAmount(booking),
+      customerName: customerName, // Cambiado para usar leadTraveler
+      tripDetails: {
+        destination:
+          booking.periodData?.['tour']?.name ||
+          booking.extraData?.destination ||
+          '',
+        period: this.formatTripPeriod(booking),
+        travelers: travelersSummary,
+      },
+      travelers: travelers,
+      totalAmount: booking.periodData?.['total'],
+    });
+
     return {
       status: status,
       reservationNumber: `#${booking.ID || booking.externalID}`,
@@ -101,7 +122,7 @@ export class BookingMappingService {
         travelers: travelersSummary,
       },
       travelers: travelers,
-      totalAmount: booking.periodData?.['total'] || 0,
+      totalAmount: booking.periodData?.['total'],
     };
   }
 

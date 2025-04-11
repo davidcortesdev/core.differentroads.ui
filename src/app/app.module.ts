@@ -201,6 +201,7 @@ import { AirportSearchComponent } from './features/airports/airport-search/airpo
 import { SummaryTableComponent } from './components/summary-table/summary-table.component';
 import { TravelerActivitySelectorComponent } from './pages/checkout/components/traveler-activity-selector/traveler-activity-selector.component';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { Nl2brPipe } from "./shared/pipes/nl2br.pipe";
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -310,6 +311,7 @@ registerLocaleData(localeEs);
     AirportSearchComponent,
     SummaryTableComponent,
     TravelerActivitySelectorComponent,
+
   ],
   imports: [
     // Angular Modules
@@ -372,16 +374,17 @@ registerLocaleData(localeEs);
     OverlayPanelModule,
     ToggleSwitchModule,
     TranslateModule.forRoot({
-      loader: {
-        provide: TranslateLoader,
-        useFactory: HttpLoaderFactory,
-        deps: [HttpClient],
-      },
-      defaultLanguage: 'es',
+        loader: {
+            provide: TranslateLoader,
+            useFactory: HttpLoaderFactory,
+            deps: [HttpClient],
+        },
+        defaultLanguage: 'es',
     }),
     CurrencyPipe,
     SortByPipe,
-  ],
+    Nl2brPipe
+],
   providers: [
     provideAnimationsAsync(),
     provideHttpClient(),

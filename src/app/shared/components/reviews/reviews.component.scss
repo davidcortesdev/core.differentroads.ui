@@ -4,9 +4,77 @@
     --review-text-size: 0.95719rem;
     --card-padding: 0.5rem;
     --content-height: 4rem;
+    --skeleton-bg: #e0e0e0;
+    --skeleton-highlight: #f0f0f0;
   }
   
   .reviews-section {
+  
+    // Skeleton styles
+    .skeleton-container {
+      .skeleton-card {
+        height: 100%;
+        padding: var(--card-padding);
+        
+        .skeleton-traveler-name {
+          height: calc(var(--review-heading-size) * 1.2);
+          background: var(--skeleton-bg);
+          border-radius: 4px;
+          margin-bottom: 0.5rem;
+          animation: pulse 1.5s infinite ease-in-out;
+        }
+        
+        .skeleton-tour-name {
+          height: calc(var(--review-text-size) * 1.2);
+          background: var(--skeleton-bg);
+          border-radius: 4px;
+          margin-bottom: 1rem;
+          width: 80%;
+          animation: pulse 1.5s infinite ease-in-out;
+        }
+        
+        .skeleton-review-text {
+          height: var(--content-height);
+          background: var(--skeleton-bg);
+          border-radius: 4px;
+          animation: pulse 1.5s infinite ease-in-out;
+        }
+        
+        .skeleton-footer {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 1rem;
+          
+          .skeleton-date {
+            height: calc(var(--review-text-size) * 1.2);
+            width: 30%;
+            background: var(--skeleton-bg);
+            border-radius: 4px;
+            animation: pulse 1.5s infinite ease-in-out;
+          }
+          
+          .skeleton-rating {
+            height: calc(var(--review-text-size) * 1.2);
+            width: 40%;
+            background: var(--skeleton-bg);
+            border-radius: 4px;
+            animation: pulse 1.5s infinite ease-in-out;
+          }
+        }
+      }
+    }
+    
+    @keyframes pulse {
+      0% {
+        background-color: var(--skeleton-bg);
+      }
+      50% {
+        background-color: var(--skeleton-highlight);
+      }
+      100% {
+        background-color: var(--skeleton-bg);
+      }
+    }
   
     ::ng-deep {
       .p-carousel {

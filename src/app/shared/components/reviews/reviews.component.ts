@@ -27,6 +27,12 @@ export class ReviewsComponent implements OnInit {
   
   // New array to hold the fully enriched reviews
   enrichedReviews: ReviewCard[] = [];
+  
+  // Add loading state
+  loading = true;
+  
+  // Create an array for skeleton items
+  skeletonArray = Array(6).fill({});
 
   readonly responsiveOptions = [
     {
@@ -72,14 +78,17 @@ export class ReviewsComponent implements OnInit {
   ngOnInit(): void {
     console.log('reviews', this.reviews);
     if (this.reviews?.length) {
+      this.loading = true;
       this.loadMissingNames();
     } else {
+      this.loading = false;
       console.warn('No reviews provided to ReviewsComponent');
     }
   }
 
   loadMissingNames(): void {
     if (!this.reviews || this.reviews.length === 0) {
+      this.loading = false;
       return;
     }
 
@@ -94,6 +103,7 @@ export class ReviewsComponent implements OnInit {
     if (reviewRequests.length === 0) {
       // If no enrichment needed, just use the original reviews
       this.enrichedReviews = [...reviewsToProcess];
+      this.loading = false;
       this.cdr.markForCheck();
       return;
     }
@@ -121,6 +131,9 @@ export class ReviewsComponent implements OnInit {
           return review;
         });
         
+        // Set loading to false when done
+        this.loading = false;
+        
         // Trigger change detection to update the view
         this.cdr.markForCheck();
       },
@@ -128,6 +141,7 @@ export class ReviewsComponent implements OnInit {
         console.error('Error enriching reviews with names:', error);
         // In case of error, use the original reviews
         this.enrichedReviews = [...reviewsToProcess];
+        this.loading = false;
         this.cdr.markForCheck();
       }
     });

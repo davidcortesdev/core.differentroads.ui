@@ -1,10 +1,38 @@
 <div
-  *ngIf="enrichedReviews?.length"
   class="reviews-section"
   role="region"
   aria-label="Customer Reviews"
 >
+  <!-- Show skeleton loader when reviews are loading -->
+  <div *ngIf="loading" class="skeleton-container">
+    <p-carousel
+      [value]="skeletonArray"
+      [numVisible]="6"
+      [numScroll]="1"
+      [circular]="true"
+      [responsiveOptions]="responsiveOptions"
+      [showNavigators]="false"
+      [showIndicators]="false"
+    >
+      <ng-template let-item pTemplate="item">
+        <div class="padre">
+          <p-card class="review-card skeleton-card">
+            <div class="skeleton-traveler-name"></div>
+            <div class="skeleton-tour-name"></div>
+            <div class="skeleton-review-text"></div>
+            <div class="skeleton-footer">
+              <div class="skeleton-date"></div>
+              <div class="skeleton-rating"></div>
+            </div>
+          </p-card>
+        </div>
+      </ng-template>
+    </p-carousel>
+  </div>
+
+  <!-- Show actual reviews when loaded -->
   <p-carousel
+    *ngIf="!loading && enrichedReviews?.length"
     [value]="enrichedReviews"
     [numVisible]="6"
     [numScroll]="1"

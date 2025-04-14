@@ -47,7 +47,7 @@ export class ProcessBookingService {
     selectedFlight: Flight | null,
     summary: { qty: number; value: number; description: string }[],
     total: number
-  ): Promise<{ bookingID: string; ID: string }> {
+  ): Promise<{ bookingID: string; code: string }> {
     try {
       // Evita reprocesamiento si ya se completó la orden
       if (
@@ -58,7 +58,7 @@ export class ProcessBookingService {
         console.log('Booking already completed, returning existing values.');
         return {
           bookingID: this.currentBookingID,
-          ID: this.currentBookingSID,
+          code: this.currentBookingSID,
         };
       }
 
@@ -86,7 +86,7 @@ export class ProcessBookingService {
           bookingData
         );
         this.currentBookingID = response.bookingID;
-        this.currentBookingSID = response.ID;
+        this.currentBookingSID = response.code;
         this.currentOrder = response.order;
         this.stepsCompleted.bookingCreated = true;
       }
@@ -131,10 +131,13 @@ export class ProcessBookingService {
         this.stepsCompleted.orderBooked = true;
       }
 
-      return {
+      // Almacenar resultado y reiniciar estado
+      const result = {
         bookingID: this.currentBookingID!,
-        ID: this.currentBookingSID!,
+        code: this.currentBookingSID!,
       };
+      this.resetState();
+      return result;
     } catch (error) {
       console.error('Error in processBooking:', error);
       this.currentError =
@@ -216,13 +219,13 @@ export class ProcessBookingService {
   private async createBooking(
     orderId: string,
     bookingData: BookingCreateInput
-  ): Promise<{ bookingID: string; ID: string; order: Order }> {
+  ): Promise<{ bookingID: string; code: string; order: Order }> {
     return new Promise((resolve, reject) => {
       this.bookingsService.createBooking(orderId, bookingData).subscribe({
         next: (response) => {
           resolve({
             bookingID: response.bookingID,
-            ID: response.ID,
+            code: response.code,
             order: {
               ...response.order,
               payment:
@@ -339,7 +342,7 @@ export class ProcessBookingService {
       this.bookingsService
         .bookOrder(bookingID, {
           order,
-          ID: bookingSID,
+          code: bookingSID,
         })
         .subscribe({
           next: () => resolve(),

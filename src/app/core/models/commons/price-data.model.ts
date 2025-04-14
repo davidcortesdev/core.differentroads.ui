@@ -6,5 +6,5 @@ export interface PriceData {
   age_group_name: string;
   category_name: string;
   period_product?: string;
-  _id: string;
+  _id?: string;
 }

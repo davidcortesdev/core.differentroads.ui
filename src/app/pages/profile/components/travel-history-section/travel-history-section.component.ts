@@ -54,7 +54,7 @@ export class TravelHistorySectionComponent implements OnInit {
     const tourID = booking?.periodData?.tourID || '';
     
     return {
-      bookingNumber: booking?.ID ?? '',
+      bookingNumber: booking?.code ?? '',
       date: new Date(booking?.createdAt ?? '').toLocaleDateString(),
       destination: booking?.periodData?.['tour']?.name || '',
       departure: new Date(

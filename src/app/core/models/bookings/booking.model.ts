@@ -5,7 +5,7 @@ import { BookingTraveler } from './booking-traveler.model';
 
 export interface Booking {
   id: string;
-  ID: string;
+  code: string;
   orderId: string;
   status: string;
   periodData?: Record<string, any>;

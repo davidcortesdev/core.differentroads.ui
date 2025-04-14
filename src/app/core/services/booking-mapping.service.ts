@@ -84,7 +84,8 @@ export class BookingMappingService {
       ? `${leadTraveler.travelerData?.name} ${leadTraveler.travelerData?.surname}`.trim()
       : '';
 
-    return {
+    // Store the ReservationInfo in a variable
+    const reservationInfo: ReservationInfo = {
       status: status,
       reservationNumber: `#${booking.code || booking.externalID}`,
       date: new Date(booking.createdAt || Date.now()).toLocaleDateString(
@@ -103,6 +104,8 @@ export class BookingMappingService {
       travelers: travelers,
       totalAmount: booking.periodData?.['total'],
     };
+
+    return reservationInfo;
   }
 
   mapToFlights(booking: Booking): Flight[] {

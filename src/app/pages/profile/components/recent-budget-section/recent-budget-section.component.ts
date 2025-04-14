@@ -207,7 +207,7 @@ export class RecentBudgetSectionComponent implements OnInit, AfterViewInit {
 
     return {
       _id: order._id,
-      ID: order.ID || order.id || '',
+      ID: order.ID || order.code || order.periodID || '',
       title: 'Sin información del tour',
       budgetNumber: order.id || '',
       creationDate: new Date(order.createdAt || Date.now()),

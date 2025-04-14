@@ -4,8 +4,8 @@ import { Flight } from '../tours/flight.model';
 import { BookingTraveler } from './booking-traveler.model';
 
 export interface Booking {
-  id: string;
-  ID: string;
+  //id: string;
+  code: string;
   orderId: string;
   status: string;
   periodData?: Record<string, any>;

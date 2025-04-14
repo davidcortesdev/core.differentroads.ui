@@ -59,7 +59,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
   @Input() tourName: string = '';
   @Input() processBooking!: () => Promise<{
     bookingID: string;
-    ID: string;
+    code: string;
   }>;
   @Input() departureDate: string | null = null;
   @Output() goBackEvent = new EventEmitter<void>();
@@ -363,7 +363,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     // Update payment option before proceeding
     this.updatePaymentOption();
 
-    let bookingID: string, ID: string;
+    let bookingID: string, code: string;
 
     // Log applied points discounts if any
     if (this.pointsDiscounts.length > 0) {
@@ -373,7 +373,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     try {
       const response = await this.processBooking();
       const bookingID = response.bookingID;
-      const ID = response.ID;
+      const code = response.code;
       await this.createReservationPoints(bookingID, this.tourName || '');
       this.sendRedemptionPoints(bookingID, this.tourName || '');
       console.log('Booking created successfully:', bookingID);
@@ -396,7 +396,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       // Handle payment method redirect
       if (this.paymentMethod === 'creditCard') {
         console.log('Redirecting to credit card payment');
-        this.redirectToRedSys(ID, paymentAmount, bookingID, publicID);
+        this.redirectToRedSys(code, paymentAmount, bookingID, publicID);
         return;
       } else if (this.paymentMethod === 'transfer') {
         console.log('Redirecting to bank transfer page');

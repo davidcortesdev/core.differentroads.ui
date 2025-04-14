@@ -85,12 +85,14 @@
                     label="Descargar"
                     class="p-button-outlined"
                     (click)="downloadBudget(budget)"
+                    [loading]="downloadLoading[budget._id]"
                   ></button>
                   <button
                     pButton
                     label="Enviar"
                     class="p-button sendbtn"
                     (click)="sendBudgetNotification(budget)"
+                    [loading]="notificationLoading[budget._id]"
                   ></button>
                 </div>
                 <button

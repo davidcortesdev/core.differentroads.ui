@@ -71,11 +71,41 @@ export class UpdateProfileSectionComponent implements OnInit {
     }
   }
 
-  formatDate(dateString: string | undefined): string {
-    if (!dateString) return ''; 
-    const [day, month, year] = dateString.split('/');
-    if (!day || !month || !year) return '';
-    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  formatDate(dateInput: string | Date | undefined): string {
+    if (!dateInput) return '';
+    
+    // Handle Date objects
+    if (dateInput instanceof Date) {
+      const year = dateInput.getFullYear();
+      const month = String(dateInput.getMonth() + 1).padStart(2, '0');
+      const day = String(dateInput.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    
+    // Handle strings in DD/MM/YYYY format
+    if (typeof dateInput === 'string' && dateInput.includes('/')) {
+      const [day, month, year] = dateInput.split('/');
+      if (!day || !month || !year) return '';
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+    
+    // Para otras cadenas de texto (como objetos Date convertidos a string)
+    if (typeof dateInput === 'string') {
+      try {
+        const date = new Date(dateInput);
+        if (!isNaN(date.getTime())) {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        }
+      } catch (e) {
+        console.error('Error parsing date:', e);
+      }
+    }
+    
+    // Return empty string for any other type
+    return '';
   }
 
   filterSexo(event: any) {
@@ -161,14 +191,34 @@ export class UpdateProfileSectionComponent implements OnInit {
   }
 
   onSubmit() {
+    // Agregar console.log de los datos sin transformar
+    console.log('Datos originales antes de transformar:', {
+      id: this.personalInfo.id,
+      email: this.personalInfo.email,
+      nombre: this.personalInfo.nombre,
+      apellido: this.personalInfo.apellido,
+      telefono: this.personalInfo.telefono,
+      sexo: this.personalInfo.sexo,
+      fechaNacimiento: this.personalInfo.fechaNacimiento,
+      dni: this.personalInfo.dni,
+      fechaExpedicionDni: this.personalInfo.fechaExpedicionDni,
+      fechaCaducidadDni: this.personalInfo.fechaCaducidadDni,
+      nacionalidad: this.personalInfo.nacionalidad,
+      ciudad: this.personalInfo.ciudad,
+      codigoPostal: this.personalInfo.codigoPostal,
+      pasaporte: this.personalInfo.pasaporte,
+      paisExpedicion: this.personalInfo.paisExpedicion,
+      fechaExpedicionPasaporte: this.personalInfo.fechaExpedicionPasaporte,
+      fechaVencimientoPasaporte: this.personalInfo.fechaVencimientoPasaporte,
+      avatarUrl: this.personalInfo.avatarUrl
+    });
+
     const transformedPersonalInfo = {
       id: this.personalInfo.id,
       email: this.personalInfo.email,
       names: this.personalInfo.nombre,
       lastname: this.personalInfo.apellido,
-      phone: this.personalInfo.telefono
-        ? parseInt(this.personalInfo.telefono, 10)
-        : undefined,
+      phone: this.personalInfo.telefono ? parseInt(this.personalInfo.telefono, 10) : undefined,
       sex: this.personalInfo.sexo,
       birthdate: this.formatDate(this.personalInfo.fechaNacimiento),
       dni: this.personalInfo.dni,
@@ -178,15 +228,12 @@ export class UpdateProfileSectionComponent implements OnInit {
       city: this.personalInfo.ciudad,
       postalCode: this.personalInfo.codigoPostal,
       passportID: this.personalInfo.pasaporte,
-      passportIssuingCountry: this.personalInfo.paisExpedicion,
+      passportCountry: this.personalInfo.paisExpedicion,  // Changed to match the API field name
       passportIssueDate: this.formatDate(this.personalInfo.fechaExpedicionPasaporte),
       passportExpirationDate: this.formatDate(this.personalInfo.fechaVencimientoPasaporte),
-      profileImage:
-        this.uploadedFiles?.length > 0
-          ? this.uploadedFiles[0]
-          : this.personalInfo.avatarUrl,
-    };
-
+      profileImage: this.uploadedFiles?.length > 0 ? this.uploadedFiles[0] : this.personalInfo.avatarUrl,
+    }
+console.log('Transformed personal info:', transformedPersonalInfo);
     this.usersService
       .updateUser(this.personalInfo.id!, transformedPersonalInfo)
       .subscribe({

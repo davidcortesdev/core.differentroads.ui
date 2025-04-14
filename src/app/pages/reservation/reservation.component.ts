@@ -123,9 +123,9 @@ export class ReservationComponent implements OnInit, OnDestroy {
         this.priceDetails = this.bookingMapper.mapToPriceDetails(booking);
 
         // Actualizar bankInfo con datos específicos del booking.
-        if (booking.ID) {
+        if (booking.code) {
           this.bankInfo.forEach((bank) => {
-            bank.concept = `${booking.ID} ${
+            bank.concept = `${booking.code} ${
               this.reservationInfo?.customerName || ''
             }`;
           });

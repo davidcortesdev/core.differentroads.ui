@@ -40,6 +40,8 @@ export class RecentBudgetSectionComponent implements OnInit, AfterViewInit {
   isExpanded: boolean = true;
   loading: boolean = false;
   @Input() userEmail!: string;
+  downloadLoading: { [key: string]: boolean } = {};
+  notificationLoading: { [key: string]: boolean } = {};
 
   constructor(
     private ordersService: OrdersService,
@@ -310,7 +312,7 @@ export class RecentBudgetSectionComponent implements OnInit, AfterViewInit {
 
   // Nuevo método para descargar presupuesto
   downloadBudget(budget: Budget) {
-    // Muestra mensaje de "Generando documento..." usando PrimeNG MessageService
+    this.downloadLoading[budget._id] = true;
     this.messageService.add({
       severity: 'info',
       summary: 'Info',
@@ -319,10 +321,10 @@ export class RecentBudgetSectionComponent implements OnInit, AfterViewInit {
 
     this.notificationsService.getBudgetDocument(budget._id).subscribe({
       next: (response) => {
+        this.downloadLoading[budget._id] = false;
         if (response.fileUrl) {
           window.open(response.fileUrl, '_blank');
         } else {
-          // Muestra mensaje de error si no se obtiene el URL del documento
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
@@ -331,7 +333,7 @@ export class RecentBudgetSectionComponent implements OnInit, AfterViewInit {
         }
       },
       error: (error) => {
-        // Muestra mensaje de error ante fallo en la generación del documento
+        this.downloadLoading[budget._id] = false;
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
@@ -344,6 +346,7 @@ export class RecentBudgetSectionComponent implements OnInit, AfterViewInit {
 
   // Nuevo método para enviar notificación de presupuesto
   sendBudgetNotification(budget: Budget) {
+    this.notificationLoading[budget._id] = true;
     this.notificationsService
       .sendBudgetNotificationEmail({
         id: budget._id,
@@ -351,7 +354,7 @@ export class RecentBudgetSectionComponent implements OnInit, AfterViewInit {
       })
       .subscribe({
         next: (response) => {
-          // Nuevo mensaje de éxito
+          this.notificationLoading[budget._id] = false;
           this.messageService.add({
             severity: 'success',
             summary: 'Éxito',
@@ -359,7 +362,7 @@ export class RecentBudgetSectionComponent implements OnInit, AfterViewInit {
           });
         },
         error: (error) => {
-          // Nuevo mensaje de error
+          this.notificationLoading[budget._id] = false;
           this.messageService.add({
             severity: 'error',
             summary: 'Error',

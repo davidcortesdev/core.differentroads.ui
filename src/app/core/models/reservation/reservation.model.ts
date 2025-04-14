@@ -11,6 +11,7 @@ export interface Flight {
   airline: {
     name: string;
     logo: string;
+    code: string;
   };
   departure: {
     time: string;

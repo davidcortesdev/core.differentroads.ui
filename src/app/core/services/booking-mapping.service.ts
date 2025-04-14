@@ -222,8 +222,9 @@ export class BookingMappingService {
     flights.push({
       date: flightDate,
       airline: {
-        name: firstSegment.airline.name || '',
-        logo: firstSegment.airline.logo || 'https://picsum.photos/id/1/200/300',
+        name: firstSegment.airline.name,
+        logo: firstSegment.airline.logo,
+        code: firstSegment.airline.code,
       },
       departure: {
         time: firstSegment.departureTime || '',

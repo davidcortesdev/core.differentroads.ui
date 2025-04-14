@@ -9,6 +9,7 @@ export interface TourFilter {
   name?: string;
   description?: string;
   tkId?:string;
+  slug?:string;
 }
 
 export interface Tour {
@@ -17,6 +18,7 @@ export interface Tour {
   name: string;
   description?: string;
   tkId?: string;
+  slug?:string;
   // Add other tour properties as needed based on the API response
 }
 

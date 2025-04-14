@@ -180,27 +180,11 @@ export class ReviewsComponent implements OnInit {
     if (review.tourId && !review.tour) {
       observable = this.tourNetService.getTourById(review.tourId).pipe(
         switchMap((tour) => {
-          const idext: string = tour.tkId || '';
-
-          if (idext) {
-            return this.toursService.getTourDetailByExternalID(idext,['name','webSlug']).pipe(
-              map((tourDetail) => ({
-                ...reviewData,
-                tourName: tourDetail?.name || tour?.name || 'Unknown Tour',
-                tourSlug: tourDetail?.webSlug,
-              })),
-              catchError(() =>
-                of({
-                  ...reviewData,
-                  tourName: tour?.name || 'Unknown Tour',
-                })
-              )
-            );
-          }
-
+          // Removed the call to getTourDetailByExternalID
           return of({
             ...reviewData,
             tourName: tour?.name || 'Unknown Tour',
+            tourSlug: tour?.slug || '',
           });
         }),
         catchError(() =>

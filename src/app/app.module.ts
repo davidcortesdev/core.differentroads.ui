@@ -202,6 +202,7 @@ import { SummaryTableComponent } from './components/summary-table/summary-table.
 import { TravelerActivitySelectorComponent } from './pages/checkout/components/traveler-activity-selector/traveler-activity-selector.component';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { Nl2brPipe } from "./shared/pipes/nl2br.pipe";
+import { BookingListSectionComponent } from './pages/profile/components/booking-list-section/booking-list-section.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -311,6 +312,7 @@ registerLocaleData(localeEs);
     AirportSearchComponent,
     SummaryTableComponent,
     TravelerActivitySelectorComponent,
+    BookingListSectionComponent,
 
   ],
   imports: [

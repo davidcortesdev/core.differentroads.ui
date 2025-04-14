@@ -60,7 +60,7 @@ export class TravelHistorySectionComponent implements OnInit {
       departure: new Date(
         booking?.periodData?.['dayOne'] ?? ''
       ).toLocaleDateString(),
-      origin: booking?.flights?.[0]?.name ?? 'MAD',
+      origin: booking?.flights?.[0]?.name ?? 'MAD,kghhj',
       passengers: booking?.travelersNumber ?? 0,
       image: '', // Imagen por defecto
       tourID: tourID,

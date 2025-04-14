@@ -13,6 +13,8 @@ import { CldImage } from '../../../../core/models/commons/cld-image.model';
 import { Router } from '@angular/router';
 import { NotificationsService } from '../../../../core/services/notifications.service';
 import { MessageService } from 'primeng/api';
+import { SummaryService } from '../../../../core/services/checkout/summary.service';
+import { Order, SummaryItem } from '../../../../core/models/orders/order.model';
 
 interface Budget {
   _id: string;
@@ -27,6 +29,9 @@ interface Budget {
   price: number;
   image: string;
   tourID?: string; // Almacena el identificador del tour para obtener más datos
+  summary?: SummaryItem[]; // Add summary items array from older version
+  imageLoading: boolean; // Track if image is currently loading
+  imageLoaded: boolean; // Track if image has loaded successfully
 }
 
 @Component({
@@ -42,6 +47,7 @@ export class RecentBudgetSectionComponent implements OnInit, AfterViewInit {
   @Input() userEmail!: string;
   downloadLoading: { [key: string]: boolean } = {};
   notificationLoading: { [key: string]: boolean } = {};
+  currentOrder: Order | null = null; // Added from older version
 
   constructor(
     private ordersService: OrdersService,
@@ -51,21 +57,29 @@ export class RecentBudgetSectionComponent implements OnInit, AfterViewInit {
     private ngZone: NgZone,
     private router: Router,
     private notificationsService: NotificationsService,
-    private messageService: MessageService // new injection
+    private messageService: MessageService,
+    private summaryService: SummaryService // Added from older version
   ) {}
 
-  // Genera una URL aleatoria de Picsum como imagen temporal
-  private getRandomPicsumUrl(): string {
-    const randomId = Math.floor(Math.random() * 1000);
-    return `https://picsum.photos/id/${randomId}/400/300`;
+  // Default placeholder image for error cases
+  private getDefaultImage(): string {
+    return 'assets/images/placeholder-tour.jpg'; // Update with your default image path
   }
 
   ngOnInit() {
     this.loading = true;
     this.fetchBudgets();
+    this.getCurrentOrderFromSummary(); // Added from older version
   }
 
   ngAfterViewInit() {}
+
+  // Get current order from summary service (Added from older version)
+  getCurrentOrderFromSummary() {
+    this.summaryService.order$.subscribe(order => {
+      this.currentOrder = order;
+    });
+  }
 
   // Formatea la fecha mostrando el día y las 3 primeras letras del mes en español
   formatShortDate(date: Date): string {
@@ -93,71 +107,103 @@ export class RecentBudgetSectionComponent implements OnInit, AfterViewInit {
     return `${day} ${month}`;
   }
 
+  // Calculate total price from summary items (Added from older version)
+  calculateTotalFromSummary(summaryItems: SummaryItem[]): number {
+    if (!summaryItems || summaryItems.length === 0) return 0;
+    
+    return summaryItems.reduce((total, item) => {
+      return total + (item.value * item.qty);
+    }, 0);
+  }
+
   // Obtiene los presupuestos del usuario
   fetchBudgets() {
-    this.ordersService.getOrdersByUser(this.userEmail).subscribe((response) => {
-      const budgetOrders = response.data.filter(
-        (order) => order.status === 'Budget'
-      );
+    this.ordersService.getOrdersByUser(this.userEmail).subscribe({
+      next: (response) => {
+        const budgetOrders = response.data.filter(
+          (order) => order.status === 'Budget'
+        );
 
-      this.budgets = [];
+        this.budgets = [];
 
-      budgetOrders.forEach((order) => {
-        const periodId = order.periodID;
-        if (periodId) {
-          this.periodsService.getPeriodDetail(periodId, ['all']).subscribe(
-            (periodData) => {
-              const budget = this.createBudgetWithPeriodData(order, periodData);
-
-              this.ngZone.run(() => {
-                this.budgets.push(budget);
-                this.budgets = [...this.budgets]; // Nueva referencia para forzar actualización
-                this.budgets.sort(
-                  (a, b) => b.creationDate.getTime() - a.creationDate.getTime()
-                );
-                this.cdr.detectChanges();
-
-                if (budget.tourID) {
-                  this.loadBudgetImage(budget);
+        budgetOrders.forEach((order) => {
+          const periodId = order.periodID;
+          if (periodId) {
+            this.periodsService.getPeriodDetail(periodId, ['all']).subscribe({
+              next: (periodData) => {
+                const budget = this.createBudgetWithPeriodData(order, periodData);
+                
+                // Add summary data if available (Added from older version)
+                if (order.summary) {
+                  budget.summary = order.summary;
                 }
-              });
-            },
-            (error) => {
-              console.error('Error fetching period:', periodId, error);
 
-              const budget = this.createBudgetFromOrder(order);
+                this.ngZone.run(() => {
+                  this.budgets.push(budget);
+                  this.budgets = [...this.budgets]; // Nueva referencia para forzar actualización
+                  this.budgets.sort(
+                    (a, b) => b.creationDate.getTime() - a.creationDate.getTime()
+                  );
+                  this.cdr.detectChanges();
 
-              this.ngZone.run(() => {
-                this.budgets.push(budget);
-                this.budgets = [...this.budgets];
-                this.budgets.sort(
-                  (a, b) => b.creationDate.getTime() - a.creationDate.getTime()
-                );
-                this.cdr.detectChanges();
-              });
+                  if (budget.tourID) {
+                    this.loadBudgetImage(budget);
+                  }
+                });
+              },
+              error: (error) => {
+                const budget = this.createBudgetFromOrder(order);
+                
+                // Add summary data if available (Added from older version)
+                if (order.summary) {
+                  budget.summary = order.summary;
+                }
+
+                this.ngZone.run(() => {
+                  this.budgets.push(budget);
+                  this.budgets = [...this.budgets];
+                  this.budgets.sort(
+                    (a, b) => b.creationDate.getTime() - a.creationDate.getTime()
+                  );
+                  this.cdr.detectChanges();
+                });
+              }
+            });
+          } else {
+            const budget = this.createBudgetFromOrder(order);
+            
+            // Add summary data if available (Added from older version)
+            if (order.summary) {
+              budget.summary = order.summary;
             }
-          );
-        } else {
-          const budget = this.createBudgetFromOrder(order);
 
-          this.ngZone.run(() => {
-            this.budgets.push(budget);
-            this.budgets = [...this.budgets];
-            this.budgets.sort(
-              (a, b) => b.creationDate.getTime() - a.creationDate.getTime()
-            );
-            this.cdr.detectChanges();
-          });
-        }
-      });
+            this.ngZone.run(() => {
+              this.budgets.push(budget);
+              this.budgets = [...this.budgets];
+              this.budgets.sort(
+                (a, b) => b.creationDate.getTime() - a.creationDate.getTime()
+              );
+              this.cdr.detectChanges();
+            });
+          }
+        });
+        this.loading = false;
+      },
+      error: (error) => {
+        this.loading = false;
+      }
     });
-
-    this.loading = false;
   }
 
   // Crea un presupuesto base con los datos mínimos de la orden
   private createBaseBudget(order: any): Budget {
     const passengers = this.getPassengerCount(order);
+    
+    // Calculate price from summary if available
+    let calculatedPrice = order.price || 0;
+    if (order.summary && order.summary.length > 0) {
+      calculatedPrice = this.calculateTotalFromSummary(order.summary);
+    }
 
     return {
       _id: order._id,
@@ -169,9 +215,12 @@ export class RecentBudgetSectionComponent implements OnInit, AfterViewInit {
       departureName: '',
       departureDate: new Date(order.createdAt || Date.now()),
       passengers: passengers,
-      price: 0,
-      image: this.getRandomPicsumUrl(),
+      price: calculatedPrice,
+      image: this.getDefaultImage(),
       tourID: '',
+      summary: order.summary || [], // Added from older version
+      imageLoading: true, // Initially in loading state
+      imageLoaded: false // Not loaded yet
     };
   }
 
@@ -227,19 +276,56 @@ export class RecentBudgetSectionComponent implements OnInit, AfterViewInit {
 
   // Carga la imagen y el precio real del tour asociado al presupuesto
   async loadBudgetImage(budget: Budget) {
-    if (!budget.tourID) return;
-
-    const tourData = await this.getTourData(budget.tourID);
-
-    if (tourData.image && tourData.image.url) {
-      budget.image = tourData.image.url;
+    if (!budget.tourID) {
+      // If no tourID, end loading and use default image
+      budget.imageLoading = false;
+      budget.imageLoaded = false;
+      budget.image = this.getDefaultImage();
+      this.cdr.detectChanges();
+      return;
     }
-
-    if (tourData.price !== null && tourData.price !== undefined) {
-      budget.price = tourData.price;
+    
+    // Start loading indicator
+    budget.imageLoading = true;
+    budget.imageLoaded = false;
+    
+    try {
+      const tourData = await this.getTourData(budget.tourID);
+      
+      // Check if we have a valid image URL
+      if (tourData.image && tourData.image.url) {
+        budget.image = tourData.image.url;
+        
+        // Create a new Image object to preload the image
+        const img = new Image();
+        img.onload = () => {
+          budget.imageLoading = false;
+          budget.imageLoaded = true;
+          this.cdr.detectChanges();
+        };
+        
+        img.onerror = () => {
+          budget.image = this.getDefaultImage();
+          budget.imageLoading = false;
+          budget.imageLoaded = false;
+          this.cdr.detectChanges();
+        };
+        
+        img.src = budget.image;
+      } else {
+        budget.image = this.getDefaultImage();
+        budget.imageLoading = false;
+        budget.imageLoaded = false;
+        this.cdr.detectChanges();
+      }
+      
+      // REMOVED: Price calculation logic to avoid changing price after initial load
+    } catch (error) {
+      budget.image = this.getDefaultImage();
+      budget.imageLoading = false;
+      budget.imageLoaded = false;
+      this.cdr.detectChanges();
     }
-
-    this.cdr.detectChanges();
   }
 
   // Obtiene los datos del tour (imagen y precio)
@@ -264,7 +350,6 @@ export class RecentBudgetSectionComponent implements OnInit, AfterViewInit {
           }
         },
         error: (err) => {
-          console.error('Error fetching tour data:', err);
           resolve({ image: null, price: null });
         },
       });
@@ -280,26 +365,12 @@ export class RecentBudgetSectionComponent implements OnInit, AfterViewInit {
     });
   }
 
-  // Obtiene la imagen de un tour específico
-  getImage(id: string): Promise<CldImage | null> {
-    return new Promise((resolve) => {
-      const filters = {
-        externalID: id,
-      };
-      this.toursService.getFilteredToursList(filters).subscribe({
-        next: (tourData) => {
-          if (tourData?.data?.[0]?.image?.[0]) {
-            resolve(tourData.data[0].image[0]);
-          } else {
-            resolve(null);
-          }
-        },
-        error: (err) => {
-          console.error('Error fetching image:', err);
-          resolve(null);
-        },
-      });
-    });
+  // Maneja errores de carga de imagen
+  imageLoadError(budget: Budget): void {
+    budget.image = this.getDefaultImage();
+    budget.imageLoading = false;
+    budget.imageLoaded = false;
+    this.cdr.detectChanges();
   }
 
   // Alternar la vista expandida/contraída
@@ -307,8 +378,17 @@ export class RecentBudgetSectionComponent implements OnInit, AfterViewInit {
     this.isExpanded = !this.isExpanded;
   }
 
-  // Manejar la acción de ver un presupuesto
-  viewBudget(budget: Budget) {}
+  // Manejar la acción de ver un presupuesto (Updated from older version)
+  viewBudget(budget: Budget) {
+    // Load the order into the summary service
+    if (budget.budgetNumber) {
+      this.ordersService.getOrderById(budget.budgetNumber).subscribe(orderData => {
+        if (orderData) {
+          this.summaryService.updateOrder(orderData);
+        }
+      });
+    }
+  }
 
   // Nuevo método para descargar presupuesto
   downloadBudget(budget: Budget) {
@@ -339,7 +419,6 @@ export class RecentBudgetSectionComponent implements OnInit, AfterViewInit {
           summary: 'Error',
           detail: 'Error al generar el documento',
         });
-        console.error('Error generating document:', error);
       },
     });
   }
@@ -368,7 +447,6 @@ export class RecentBudgetSectionComponent implements OnInit, AfterViewInit {
             summary: 'Error',
             detail: 'Error al enviar el presupuesto',
           });
-          console.error('Error sending budget notification:', error);
         },
       });
   }

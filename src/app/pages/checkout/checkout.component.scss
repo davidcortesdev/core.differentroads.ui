@@ -3,7 +3,7 @@
   color: var(--background-azul); // Add this to set default text color
 
   &-title {
-    font-size: 1.8rem;
+    font-size: 1.3rem;
     font-weight: 700;
     margin-bottom: 1rem;
     padding: 0 2rem;
@@ -12,9 +12,9 @@
     color: var(--background-azul); // Ensure title has the correct color
   }
   &-subtitle {
-    font-size: 1.2rem;
+    font-size: 0.8rem;
     font-weight: 500;
-    margin-bottom: 1rem;
+    margin-top: 0.1rem;
     padding: 0 2rem;
     color: var(--background-azul); // Ensure subtitle has the correct color
   }
@@ -60,6 +60,7 @@
             color: var(--background-azul);
           }
           .p-steps-item-label {
+            font-size: 0.8rem;
             color: var(--background-azul);
           }
           .p-steps-item-active .p-steps-item-number {

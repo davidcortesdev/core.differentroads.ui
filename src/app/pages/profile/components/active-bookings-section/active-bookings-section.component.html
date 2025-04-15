@@ -2,31 +2,54 @@
   <!-- Header with toggle functionality -->
   <div class="booking-header" (click)="toggleContent()">
     <span>Reservas activas</span>
-    <i class="pi" [ngClass]="{
-      'pi-chevron-down arrow-down': !isExpanded,
-      'pi-chevron-up arrow-up': isExpanded
-    }"></i>
+    <i
+      class="pi"
+      [ngClass]="{
+        'pi-chevron-down arrow-down': !isExpanded,
+        'pi-chevron-up arrow-up': isExpanded
+      }"
+    ></i>
   </div>
 
   <!-- Collapsible content section -->
   <div class="booking-content" [ngClass]="{ hidden: !isExpanded }">
     <!-- Loading indicator -->
     <div class="loading-container" *ngIf="loading">
-      <p-progressSpinner strokeWidth="3" animationDuration=".5s"></p-progressSpinner>
+      <p-progressSpinner
+        strokeWidth="3"
+        animationDuration=".5s"
+      ></p-progressSpinner>
     </div>
 
     <!-- Bookings data view -->
-    <p-dataView #dv [value]="bookings" [rows]="5" [paginator]="true" styleClass="transparent-dataview"
-      *ngIf="!loading && bookings.length > 0">
+    <p-dataView
+      #dv
+      [value]="bookings"
+      [rows]="5"
+      [paginator]="true"
+      styleClass="transparent-dataview"
+      *ngIf="!loading && bookings.length > 0"
+    >
       <ng-template #list let-bookings>
         <div class="booking-list">
-          <div class="booking-item" *ngFor="let booking of bookings; trackBy: trackByBookingId">
+          <div
+            class="booking-item"
+            *ngFor="let booking of bookings; trackBy: trackByBookingId"
+          >
             <div class="booking-item-content">
               <!-- Booking image -->
               <div class="image-container">
-                <p-skeleton *ngIf="!booking.image" width="100%" height="100%"
-                  styleClass="booking-image-skeleton"></p-skeleton>
-                <img *ngIf="booking.image" [src]="booking.image" [alt]="booking.title" />
+                <p-skeleton
+                  *ngIf="!booking.image"
+                  width="100%"
+                  height="100%"
+                  styleClass="booking-image-skeleton"
+                ></p-skeleton>
+                <img
+                  *ngIf="booking.image"
+                  [src]="booking.image"
+                  [alt]="booking.title"
+                />
               </div>
 
               <!-- Booking information -->
@@ -34,14 +57,18 @@
                 <div class="title-section">
                   <h2>{{ booking.title }}</h2>
                 </div>
-                <div class="info-content" style="line-height: 2;">
+                <div class="info-content" style="line-height: 2">
                   <div class="info-row">
                     <span class="label">Nº Reserva:</span>
-                    <span class="value budget">{{ booking.reservationNumber }}</span>
+                    <span class="value budget">{{
+                      booking.reservationNumber
+                    }}</span>
                   </div>
                   <div class="info-row">
                     <span class="label">Fecha de creación:</span>
-                    <span class="value">{{ booking.creationDate | date : "dd/MM/yyyy" }}</span>
+                    <span class="value">{{
+                      booking.creationDate | date : "dd/MM/yyyy"
+                    }}</span>
                   </div>
                   <div class="info-row status">
                     <span class="label">Estado:</span>
@@ -54,7 +81,9 @@
               <div class="info-right">
                 <div class="departure-info">
                   <span>Salida: </span>
-                  <strong>{{ booking.departureDate | date : "dd/MM/yyyy" }}</strong>
+                  <strong>{{
+                    booking.departureDate | date : "dd/MM/yyyy"
+                  }}</strong>
                   <!--<span class="state">{{ booking.status.charAt(0) }}</span>-->
                 </div>
                 <div class="passenger-price" *ngIf="booking.passengers">
@@ -69,13 +98,27 @@
               <!-- Action buttons -->
               <div class="buttons">
                 <div class="top-buttons">
-                  <p-button label="Descargar" styleClass="p-button-outlined" [rounded]="true"></p-button>
-                  <p-button label="Enviar" styleClass="sendbtn p-button-outlined"
-                    [style]="{width: '100%', backgroundColor: 'var(--background-azul)', color: 'white', height: '30px', fontSize: '0.75rem'}"
-                    [rounded]="true"></p-button>
+                  <button
+                    pButton
+                    label="Descargar"
+                    class="p-button-outlined"
+                    (click)="downloadBooking(booking)"
+                    [loading]="downloadLoading[booking.id]"
+                  ></button>
+                  <button
+                    pButton
+                    label="Enviar"
+                    class="p-button sendbtn"
+                    (click)="sendBookingNotification(booking)"
+                    [loading]="notificationLoading[booking.id]"
+                  ></button>
                 </div>
                 <div class="view-booking-container">
-                  <p-button label="Ver reserva" styleClass="p-button-rounded" (click)="viewBooking(booking)"></p-button>
+                  <p-button
+                    label="Ver reserva"
+                    styleClass="p-button-rounded"
+                    (click)="viewBooking(booking)"
+                  ></p-button>
                 </div>
               </div>
             </div>
@@ -85,9 +128,7 @@
 
       <!-- Empty state template -->
       <ng-template pTemplate="empty">
-        <div class="empty-message">
-          No hay reservas activas disponibles
-        </div>
+        <div class="empty-message">No hay reservas activas disponibles</div>
       </ng-template>
     </p-dataView>
   </div>

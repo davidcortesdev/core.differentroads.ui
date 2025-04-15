@@ -40,12 +40,12 @@ export class BookingsService {
     data: BookingCreateInput
   ): Observable<{
     bookingID: string;
-    ID: string;
+    code: string;
     order: Order;
   }> {
     return this.http.post<{
       bookingID: string;
-      ID: string;
+      code: string;
       order: Order;
     }>(`${this.API_URL}/${orderID}/create`, data, this.httpOptions);
   }
@@ -79,13 +79,13 @@ export class BookingsService {
    * @param data - The booking data.
    * @returns Observable of any.
    */
-  bookOrder(id: string, data: { order: any; ID: any }): Observable<any> {
-    const { order, ID } = data;
+  bookOrder(id: string, data: { order: any; code: string }): Observable<any> {
+    const { order, code } = data;
     return this.http.post<any>(
       `${this.API_URL}/${id}/book`,
       {
         ...order,
-        bookingSID: ID,
+        bookingSID: code,
       },
       this.httpOptions
     );

@@ -424,7 +424,7 @@ export class BookingsComponent implements OnInit {
       date: booking?.periodData?.['dayOne']
         ? booking.periodData['dayOne']
         : 'Fecha no disponible',
-      bookingCode: booking?.ID || '',
+      bookingCode: booking?.code || '',
       bookingReference: booking?.externalID || '',
       status: booking?.status || '',
       retailer: '', // Se actualizará en loadRetailerInfo

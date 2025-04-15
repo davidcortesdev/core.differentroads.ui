@@ -13,6 +13,8 @@ import { forkJoin, Subscription, from, of } from 'rxjs';
 import { ToursService } from '../../../../core/services/tours.service';
 import { CldImage } from '../../../../core/models/commons/cld-image.model';
 import { mergeMap, catchError, finalize } from 'rxjs/operators';
+import { MessageService } from 'primeng/api';
+import { NotificationsService } from '../../../../core/services/notifications.service';
 
 interface Booking {
   id: string;
@@ -39,6 +41,8 @@ export class ActiveBookingsSectionComponent implements OnInit, OnDestroy {
   @Input() userEmail!: string;
   loading: boolean = false;
   @Output() bookingSelected = new EventEmitter<string>();
+  downloadLoading: { [key: string]: boolean } = {};
+  notificationLoading: { [key: string]: boolean } = {};
 
   private subscriptions = new Subscription();
   private imageCache = new Map<string, string>(); // Cache for tour images
@@ -49,7 +53,9 @@ export class ActiveBookingsSectionComponent implements OnInit, OnDestroy {
     private bookingsService: BookingsService,
     private router: Router,
     private toursService: ToursService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private messageService: MessageService,
+    private notificationsService: NotificationsService
   ) {}
 
   ngOnInit() {
@@ -292,5 +298,67 @@ export class ActiveBookingsSectionComponent implements OnInit, OnDestroy {
 
   trackByBookingId(index: number, booking: Booking): string {
     return booking.id;
+  }
+
+  downloadBooking(booking: Booking) {
+    this.downloadLoading[booking.id] = true;
+    // Show a message while generating the document
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Info',
+      detail: 'Generando documento...',
+    });
+
+    this.notificationsService.getBookingDocument(booking.id).subscribe({
+      next: (response) => {
+        this.downloadLoading[booking.id] = false;
+        if (response.fileUrl) {
+          window.open(response.fileUrl, '_blank');
+        } else {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se obtuvo el URL del documento',
+          });
+        }
+      },
+      error: (error) => {
+        this.downloadLoading[booking.id] = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Error al generar el documento',
+        });
+        console.error('Error generating document:', error);
+      },
+    });
+  }
+
+  sendBookingNotification(booking: Booking) {
+    this.notificationLoading[booking.id] = true;
+    this.notificationsService
+      .sendBookingNotificationEmail({
+        id: booking.id,
+        email: this.userEmail,
+      })
+      .subscribe({
+        next: (response) => {
+          this.notificationLoading[booking.id] = false;
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: 'Reserva enviada exitosamente',
+          });
+        },
+        error: (error) => {
+          this.notificationLoading[booking.id] = false;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al enviar la reserva',
+          });
+          console.error('Error sending booking notification:', error);
+        },
+      });
   }
 }

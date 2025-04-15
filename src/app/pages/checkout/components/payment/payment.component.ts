@@ -357,58 +357,78 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   async processScalapay(bookingID: string, publicID: string) {
-    const createItem = (): ScalapayItem => ({
-      price: { currency: 'EUR', amount: this.totalPrice.toString() },
-      name: `Tour - ${new Date().toLocaleDateString()}`,
-      category: 'travel',
-      brand: 'Different Roads',
-      sku: `SKU-${bookingID}`,
-      quantity: 1,
-    });
-
-    const createConsumer = (): ScalapayConsumer => ({
-      phoneNumber: '0400000001',
-      givenNames: 'Joe',
-      surname: 'Consumer',
-      email: 'test@scalapay.com',
-    });
-
-    const createMerchant = () => ({
-      redirectCancelUrl: `${window.location.origin}/confirmacion/${bookingID}/error/${publicID}`,
-      redirectConfirmUrl: `${window.location.origin}/confirmacion/${bookingID}/success/${publicID}`,
-    });
-
-    const createExtensions = (): ScalapayExtensions => ({
-      industry: {
-        travel: { startDate: '2023-11-30', endDate: '2023-12-18' },
-      },
-    });
-
-    const createOrderData = (): ScalapayOrderRequest => ({
-      product: 'pay-in-3',
-      type: 'online',
-      orderExpiryMilliseconds: 600000,
-      consumer: createConsumer(),
-      extensions: createExtensions(),
-      merchant: createMerchant(),
-      frequency: { number: 1, frequencyType: 'monthly' },
-      totalAmount: { currency: 'EUR', amount: this.totalPrice.toString() },
-      items: [createItem()],
-      merchantReference: bookingID,
-      taxAmount: { currency: 'EUR', amount: '0' },
-      shippingAmount: { currency: 'EUR', amount: '0' },
-      channel: 'online',
-    });
-
-    const orderDataWithTipo: ScalapayOrderRequest = createOrderData();
-
-    try {
-      const data = await this.scalapayService.createOrder(orderDataWithTipo);
-      window.location.href = data.checkoutUrl;
-    } catch (error) {
-      console.error('Error processing Scalapay payment:', error);
+      const createItem = (): ScalapayItem => ({
+        price: { currency: 'EUR', amount: this.totalPrice.toString() },
+        name: `Tour - ${new Date().toLocaleDateString()}`,
+        category: 'travel',
+        brand: 'Different Roads',
+        sku: `SKU-${bookingID}`,
+        quantity: 1,
+      });
+  
+      const createConsumer = (): ScalapayConsumer => ({
+        phoneNumber: '0400000001',
+        givenNames: 'Joe',
+        surname: 'Consumer',
+        email: 'test@scalapay.com',
+      });
+  
+      const createMerchant = () => ({
+        redirectCancelUrl: `${window.location.origin}/reservation/${bookingID}/error/${publicID}`,
+        redirectConfirmUrl: `${window.location.origin}/reservation/${bookingID}/success/${publicID}`,
+      });
+  
+      const createExtensions = (): ScalapayExtensions => ({
+        industry: {
+          travel: { startDate: '2023-11-30', endDate: '2023-12-18' },
+        },
+      });
+  
+      const createOrderData = (): ScalapayOrderRequest => ({
+        product: 'pay-in-3',
+        type: 'online',
+        orderExpiryMilliseconds: 600000,
+        consumer: createConsumer(),
+        extensions: createExtensions(),
+        merchant: createMerchant(),
+        frequency: { number: 1, frequencyType: 'monthly' },
+        totalAmount: { currency: 'EUR', amount: this.totalPrice.toString() },
+        items: [createItem()],
+        merchantReference: bookingID,
+        taxAmount: { currency: 'EUR', amount: '0' },
+        shippingAmount: { currency: 'EUR', amount: '0' },
+        channel: 'online',
+      });
+  
+      const orderDataWithTipo: ScalapayOrderRequest = createOrderData();
+  
+      try {
+        const data = await this.scalapayService.createOrder(orderDataWithTipo);
+        
+        // Update the payment with the Scalapay token before redirecting
+        if (data && data.token) {
+          this.bookingsService.updatePayment(publicID, {
+            externalID: data.token
+          }).subscribe({
+            next: (updateResponse) => {
+              console.log('Payment updated with Scalapay token:', updateResponse);
+              // Redirect to Scalapay checkout after updating the payment
+              window.location.href = data.checkoutUrl;
+            },
+            error: (updateError) => {
+              console.error('Error updating payment with Scalapay token:', updateError);
+              // Still redirect to Scalapay even if the update fails
+              window.location.href = data.checkoutUrl;
+            }
+          });
+        } else {
+          console.warn('No token received from Scalapay, redirecting without updating payment');
+          window.location.href = data.checkoutUrl;
+        }
+      } catch (error) {
+        console.error('Error processing Scalapay payment:', error);
+      }
     }
-  }
 
   async submitPayment() {
     if (this.isLoading) return; // Prevent multiple submissions

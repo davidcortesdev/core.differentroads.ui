@@ -24,6 +24,6 @@ export const environment = {
   tourApiUrl: 'https://tour.differentroads.es/api',
   travelersApiUrl: 'https://travelers.differentroads.es/api',
 
-  scalapayApiUrl: 'https://integration.api.scalapay.com',
+  scalapayApiUrl: 'https://fastapi.differentroads.es/scalapay',
   scalapayApiKey: 'qhtfs87hjnc12kkos',
 };

@@ -3,7 +3,7 @@ import { Flight } from '../tours/flight.model';
 
 export interface Order {
   _id: string;
-  id: string;
+  ID: string;
   periodID: string;
   retailerID: string;
   status: 'AB' | 'Budget';
@@ -24,6 +24,7 @@ export interface OptionalActivityRef {
   id: string;
   travelersAssigned: string[];
   name?: string;
+  _id?: string;
 }
 
 export interface TravelerData {
@@ -57,6 +58,7 @@ export interface OrderTraveler {
   optionalActivitiesIDs?: string[];
   insuranceID?: string;
   _id?: string;
+  id?: string;
 }
 
 export interface GetAllOrdersParams {

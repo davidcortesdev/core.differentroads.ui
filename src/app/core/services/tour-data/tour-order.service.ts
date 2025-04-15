@@ -253,10 +253,7 @@ export class TourOrderService {
       lead: i === 0,
       _id: this.travelersService.generateHexID(),
       travelerData: {
-        name:
-          i === 0
-            ? leadTraveler?.name || 'Pasajero ' + (i + 1)
-            : 'Pasajero ' + (i + 1),
+        name: leadTraveler?.name || '',
         email: i === 0 && leadTraveler?.email ? leadTraveler.email : '',
         phone: i === 0 && leadTraveler?.phone ? leadTraveler.phone : '',
         ageGroup: type,
@@ -426,20 +423,20 @@ export class TourOrderService {
       periodID: '',
       tripType: '',
       departureCity: '',
-      flightID: undefined
+      flightID: undefined,
     });
-    
+
     // Reset travelers to default values
     this.selectedTravelersSource.next({
       adults: 1,
       children: 0,
-      babies: 0
+      babies: 0,
     });
 
     // Reset prices and activities
     this.basePrice$.next(0);
     this.selectedActivitiesSource.next([]);
-    
+
     // Reset any other state variables you have in the service
     this.departureSelected$.next(false);
   }

@@ -65,7 +65,7 @@ export class ToursService {
       'marketingSection',
       'activePeriods',
       'tourType',
-      'externalID'
+      'externalID',
     ];
 
     const toursObservable = filters.destination
@@ -86,14 +86,14 @@ export class ToursService {
               monthSet.add(month);
             });
           }
-          
+
           // Check if tags is an array before calling forEach
           if (Array.isArray(tour.tags)) {
             tour.tags.forEach((tag: string) => {
               tagsSet.add(tag);
             });
           }
-          
+
           // Check if vtags is an array before calling forEach
           if (Array.isArray(tour.vtags)) {
             tour.vtags.forEach((tag: string) => {
@@ -116,7 +116,9 @@ export class ToursService {
           // Ensure tags and vtags are arrays
           const tourTags = Array.isArray(tour.tags) ? tour.tags : [];
           const tourVtags = Array.isArray(tour.vtags) ? tour.vtags : [];
-          const tourMonthTags = Array.isArray(tour.monthTags) ? tour.monthTags : [];
+          const tourMonthTags = Array.isArray(tour.monthTags)
+            ? tour.monthTags
+            : [];
 
           const priceMatch =
             !priceFilters.length ||
@@ -143,8 +145,7 @@ export class ToursService {
           const tagMatch =
             !tagFilters.length ||
             tagFilters.some(
-              (tag: string) =>
-                tourTags.includes(tag) || tourVtags.includes(tag)
+              (tag: string) => tourTags.includes(tag) || tourVtags.includes(tag)
             );
 
           return (
@@ -188,11 +189,11 @@ export class ToursService {
 
         // Fix the incorrect assignment that's causing the error
         if (filters.externalID) {
-          filteredTours = filteredTours.filter((tour: any) => 
-            tour.externalID === filters.externalID
+          filteredTours = filteredTours.filter(
+            (tour: any) => tour.externalID === filters.externalID
           );
         }
-        
+
         return { data: filteredTours, filtersOptions };
       })
     );
@@ -223,6 +224,29 @@ export class ToursService {
 
     return this.http
       .get<Tour[]>(`${this.API_URL}/filter-by/webSlug/${slug}`, { params })
+      .pipe(
+        map((tours: Tour[]) => {
+          if (tours.length > 0) {
+            return tours[0];
+          } else {
+            throw new Error('No tour found with the given slug');
+          }
+        })
+      );
+  }
+
+  getTourDetailByExternalID(
+    slug: string,
+    selectedFields: SelectedFields = ['all']
+  ): Observable<Tour> {
+    let params = new HttpParams();
+
+    if (selectedFields && selectedFields.length) {
+      params = params.set('selectedFields', selectedFields.join(','));
+    }
+
+    return this.http
+      .get<Tour[]>(`${this.API_URL}/filter-by/externalID/${slug}`, { params })
       .pipe(
         map((tours: Tour[]) => {
           if (tours.length > 0) {

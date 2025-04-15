@@ -10,6 +10,8 @@ export class SummaryService {
   order$ = this.orderSource.asObservable();
 
   updateOrder(order: Order) {
+    // Eliminamos logs innecesarios relacionados con estado previo o posterior
+    // Actualizamos el BehaviorSubject sin logs adicionales
     this.orderSource.next(order);
   }
 
@@ -32,6 +34,8 @@ export class SummaryService {
   }
 
   getOrderValue(): Order | null {
-    return this.orderSource?.getValue();
+    const order = this.orderSource?.getValue();
+    // No hacemos console.log aquí para evitar spam, ya que se llama con frecuencia
+    return order;
   }
 }

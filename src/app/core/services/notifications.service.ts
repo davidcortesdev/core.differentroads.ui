@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { filter, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface SendBudgetNotificationEmailServiceProps {
@@ -45,6 +45,25 @@ export class NotificationsService {
     return this.http.post<any>(this.API_URL, body, this.httpOptions);
   }
 
+  sendBookingNotificationEmail(
+    props: SendBudgetNotificationEmailServiceProps
+  ): Observable<any> {
+    const { id, email, products } = props;
+    console.log(id);
+
+    const body = {
+      trigger: 'NEW_BOOKING',
+      data: {
+        id,
+        emailOverride: email,
+        filters: {
+          bookState: 'Booked',
+        },
+      },
+    };
+    return this.http.post<any>(this.API_URL, body, this.httpOptions);
+  }
+
   cancelBookingNotification(
     props: CancelBookingNotificationProps
   ): Observable<any> {
@@ -63,5 +82,19 @@ export class NotificationsService {
       },
     };
     return this.http.post<any>(this.API_URL, body, this.httpOptions);
+  }
+
+  getBudgetDocument(id: string): Observable<{
+    fileUrl: string;
+  }> {
+    const url = `${environment.notificationsApiUrl}/documents/budget/${id}`;
+    return this.http.get<any>(url);
+  }
+
+  getBookingDocument(id: string): Observable<{
+    fileUrl: string;
+  }> {
+    const url = `${environment.notificationsApiUrl}/documents/bookingBone/${id}`;
+    return this.http.get<any>(url);
   }
 }

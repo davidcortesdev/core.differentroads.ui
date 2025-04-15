@@ -84,9 +84,10 @@ export class BookingMappingService {
       ? `${leadTraveler.travelerData?.name} ${leadTraveler.travelerData?.surname}`.trim()
       : '';
 
-    return {
+    // Store the ReservationInfo in a variable
+    const reservationInfo: ReservationInfo = {
       status: status,
-      reservationNumber: `#${booking.ID || booking.externalID}`,
+      reservationNumber: `#${booking.code || booking.externalID}`,
       date: new Date(booking.createdAt || Date.now()).toLocaleDateString(
         'es-ES'
       ),
@@ -101,8 +102,10 @@ export class BookingMappingService {
         travelers: travelersSummary,
       },
       travelers: travelers,
-      totalAmount: booking.periodData?.['total'] || 0,
+      totalAmount: booking.periodData?.['total'],
     };
+
+    return reservationInfo;
   }
 
   mapToFlights(booking: Booking): Flight[] {
@@ -222,8 +225,9 @@ export class BookingMappingService {
     flights.push({
       date: flightDate,
       airline: {
-        name: firstSegment.airline.name || '',
-        logo: firstSegment.airline.logo || 'https://picsum.photos/id/1/200/300',
+        name: firstSegment.airline.name,
+        logo: firstSegment.airline.logo,
+        code: firstSegment.airline.code,
       },
       departure: {
         time: firstSegment.departureTime || '',

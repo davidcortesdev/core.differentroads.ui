@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChildren, QueryList, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChildren, QueryList, ViewChild, OnDestroy } from '@angular/core';
 import { ToursService } from '../../../../core/services/tours.service';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -21,7 +21,8 @@ import { PeriodPricesService } from '../../../../core/services/tour-data/period-
 import { OptionalActivityRef } from '../../../../core/models/orders/order.model';
 import { TourOrderService } from '../../../../core/services/tour-data/tour-order.service';
 import { DateOption } from '../tour-date-selector/tour-date-selector.component';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { HotelsService } from '../../../../core/services/hotels.service';
 import { HotelCardComponent } from '../../../../shared/components/hotel-card/hotel-card.component';
 import {
@@ -32,6 +33,17 @@ import { ActivitiesCarouselComponent } from '../../../../shared/components/activ
 import { MessageService } from 'primeng/api';
 // Importar el nuevo componente del mapa
 import { TourMapComponent, City } from '../../../../shared/components/tour-map/tour-map.component';
+
+// Add these interfaces for the coordinate queue system
+interface PendingCity {
+  city: string;
+  index?: number;
+}
+
+interface CachedCoordinates {
+  lat: number;
+  lng: number;
+}
 
 interface EventItem {
   status?: string;
@@ -48,9 +60,18 @@ interface EventItem {
   templateUrl: './tour-itinerary.component.html',
   styleUrl: './tour-itinerary.component.scss',
 })
-export class TourItineraryComponent implements OnInit {
+export class TourItineraryComponent implements OnInit, OnDestroy {
   @ViewChildren('itineraryPanel') itineraryPanels!: QueryList<Panel>;
   @ViewChild(TourMapComponent) tourMapComponent!: TourMapComponent;
+  
+  // Add properties for the coordinate queue system
+  private destroy$ = new Subject<void>();
+  private pendingCities: PendingCity[] = [];
+  private processingQueue = false;
+  private lastRequestTime = 0;
+  private coordinatesCache = new Map<string, CachedCoordinates>();
+  private failedAttempts = new Map<string, number>();
+  private readonly MAX_ATTEMPTS = 3;
   
   // Mantener solo las propiedades necesarias para el componente principal
   cities: string[] = [];
@@ -204,26 +225,182 @@ export class TourItineraryComponent implements OnInit {
           .getTourDetailBySlug(slug, ['cities'])
           .subscribe((tour) => {
             this.cities = tour['cities'];
+            // Replace direct service calls with the queue system
             this.cities.forEach((city) => {
-              this.geoService.getCoordinates(city).subscribe((coordinates) => {
-                if (coordinates) {
-                  const newCity = {
-                    nombre: city,
-                    lat: Number(coordinates.lat),
-                    lng: Number(coordinates.lon),
-                  };
-                  this.citiesData.push(newCity);
-                  
-                  // Actualizar el componente del mapa cuando esté disponible
-                  if (this.tourMapComponent) {
-                    this.tourMapComponent.updateCitiesData(this.citiesData);
-                  }
-                }
-              });
+              this.getCoordinatesWithCache(city);
             });
           });
       }
     });
+  }
+
+  // Add this method to handle component cleanup
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // Add these new methods for the coordinate queue system
+  private getCoordinatesWithCache(city: string, index?: number): void {
+    // Skip empty or invalid city names
+    if (!city || typeof city !== 'string' || city.trim() === '') {
+      console.warn('Skipping invalid city name:', city);
+      return;
+    }
+    
+    // Normalize city name to avoid case-sensitive duplicates
+    const normalizedCity = city.trim().toLowerCase();
+    
+    // Check if we already have the coordinates in cache
+    if (this.coordinatesCache.has(normalizedCity)) {
+      console.log(`Using cached coordinates for "${city}"`);
+      const cachedCoordinates = this.coordinatesCache.get(normalizedCity)!;
+      this.addCityToData(
+        city,
+        cachedCoordinates.lat,
+        cachedCoordinates.lng,
+        index
+      );
+      return;
+    }
+  
+    // Check if we've exceeded the maximum number of failed attempts
+    const attempts = this.failedAttempts.get(normalizedCity) || 0;
+    if (attempts >= this.MAX_ATTEMPTS) {
+      console.warn(
+        `Skipping geocoding for "${city}" after ${this.MAX_ATTEMPTS} failed attempts`
+      );
+      return;
+    }
+  
+    // Check if this city is already in the pending queue
+    if (this.pendingCities.some(pending => pending.city.toLowerCase() === normalizedCity)) {
+      console.log(`City "${city}" is already in the pending queue`);
+      return;
+    }
+  
+    // Add to pending queue and process
+    console.log(`Adding "${city}" to geocoding queue`);
+    this.pendingCities.push({ city, index });
+  
+    // Start processing the queue if not already processing
+    if (!this.processingQueue) {
+      this.processCoordinateQueue();
+    }
+  }
+
+  private processCoordinateQueue(): void {
+    this.processingQueue = true;
+  
+    const processNext = () => {
+      if (this.pendingCities.length === 0) {
+        this.processingQueue = false;
+        return;
+      }
+
+      const now = Date.now();
+      const timeSinceLastRequest = now - this.lastRequestTime;
+
+      // If less than 1.25 seconds have passed since the last request, wait
+      if (timeSinceLastRequest < 1250 && this.lastRequestTime !== 0) {
+        setTimeout(processNext, 1250 - timeSinceLastRequest);
+        return;
+      }
+
+      // Process the next city in the queue
+      const nextCity = this.pendingCities.shift();
+      if (!nextCity) {
+        this.processingQueue = false;
+        return;
+      }
+
+      this.lastRequestTime = now;
+      const normalizedCity = nextCity.city.trim().toLowerCase();
+  
+      // Double-check cache before making the request (in case it was added while in queue)
+      if (this.coordinatesCache.has(normalizedCity)) {
+        console.log(`Using cached coordinates for "${nextCity.city}" (added while in queue)`);
+        const cachedCoordinates = this.coordinatesCache.get(normalizedCity)!;
+        this.addCityToData(
+          nextCity.city,
+          cachedCoordinates.lat,
+          cachedCoordinates.lng,
+          nextCity.index
+        );
+        
+        // Process the next city after a short delay
+        setTimeout(processNext, 100);
+        return;
+      }
+
+      this.geoService
+        .getCoordinates(nextCity.city)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (coordinates) => {
+            if (coordinates && coordinates.lat && coordinates.lon) {
+              // Valid coordinates received, store in cache with normalized key
+              this.coordinatesCache.set(normalizedCity, {
+                lat: Number(coordinates.lat),
+                lng: Number(coordinates.lon),
+              });
+  
+              // Add to city data
+              this.addCityToData(
+                nextCity.city,
+                Number(coordinates.lat),
+                Number(coordinates.lon),
+                nextCity.index
+              );
+  
+              // Reset failed attempts counter on success
+              this.failedAttempts.delete(normalizedCity);
+            } else {
+              // Invalid or empty coordinates, increment failed attempts
+              const attempts =
+                (this.failedAttempts.get(nextCity.city) || 0) + 1;
+              this.failedAttempts.set(nextCity.city, attempts);
+              console.warn(
+                `Failed to get valid coordinates for "${nextCity.city}" (attempt ${attempts}/${this.MAX_ATTEMPTS})`
+              );
+            }
+
+            // Process the next city after a delay of 1.5 seconds
+            setTimeout(processNext, 1500);
+          },
+          error: (error) => {
+            // Increment failed attempts on error
+            const attempts = (this.failedAttempts.get(nextCity.city) || 0) + 1;
+            this.failedAttempts.set(nextCity.city, attempts);
+
+            console.error(
+              `Error fetching coordinates for "${nextCity.city}" (attempt ${attempts}/${this.MAX_ATTEMPTS}):`,
+              error
+            );
+
+            // Continue processing even if there's an error, with a delay of 1.5 seconds
+            setTimeout(processNext, 1500);
+          },
+        });
+    };
+
+    // Start processing
+    processNext();
+  }
+
+  private addCityToData(city: string, lat: number, lng: number, index?: number): void {
+    const newCity = {
+      nombre: city,
+      lat: lat,
+      lng: lng,
+    };
+    
+    this.citiesData.push(newCity);
+    
+    // Actualizar el componente del mapa cuando esté disponible
+    if (this.tourMapComponent) {
+      this.tourMapComponent.updateCitiesData(this.citiesData);
+    }
   }
 
   onDateChange(event: any): void {
@@ -333,12 +510,13 @@ export class TourItineraryComponent implements OnInit {
         (activity) => index + 1 === activity.day
       );
 
+      // Fix: Safely check if hotel.days exists before using includes
       const hotelByDay = this.hotels?.find((hotel) =>
-        hotel.days.includes(`${index + 1}`)
+        hotel.days && hotel.days.includes(`${index + 1}`)
       );
 
       const hotel = this.hotelsData.find(
-        (hotelData) => hotelData.id === hotelByDay?.hotels[0].id
+        (hotelData) => hotelData.id === hotelByDay?.hotels?.[0]?.id
       );
 
       return {
@@ -350,7 +528,6 @@ export class TourItineraryComponent implements OnInit {
         hotel: hotel || null,
         collapsed: index !== 0,
         color: '#9C27B0',
-        // Add extraInfo to the itinerary item
         extraInfo: day.extraInfo,
         highlights:
           dayActivities.map((activity) => {
@@ -476,7 +653,7 @@ export class TourItineraryComponent implements OnInit {
       return;
     }
     this.hotels.forEach((hotel) => {
-      if (!hotel.hotels) {
+      if (!hotel.hotels || hotel.hotels.length === 0) {
         console.warn(`No hotels found for period hotel: ${hotel}`);
         return;
       }

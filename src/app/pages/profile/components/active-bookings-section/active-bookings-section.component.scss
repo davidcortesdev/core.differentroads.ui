@@ -1,356 +1,422 @@
 $p: var(--p-primary-color);
 $a: var(--background-azul);
-@mixin f($d: row, $j: flex-start, $a: stretch, $g: 0) {
-    display: flex;
-    flex-direction: $d;
-    justify-content: $j;
-    align-items: $a;
-    @if $g!=0 {
-        gap: $g;
-    }
+
+// Mixins for common patterns
+@mixin flex($dir: row, $just: flex-start, $align: stretch, $gap: 0) {
+  display: flex;
+  flex-direction: $dir;
+  justify-content: $just;
+  align-items: $align;
+  @if $gap != 0 { gap: $gap; }
 }
-@mixin b($s: 12px, $p: 6px 12px, $h: 30px) {
-    font-size: $s;
-    padding: $p;
-    border-radius: 20px;
-    height: $h;
-    @include f(row, center, center);
+
+@mixin button($s: 12px, $p: 6px 12px, $h: 30px) {
+  font-size: $s;
+  padding: $p;
+  border-radius: 20px;
+  height: $h;
+  @include flex(row, center, center);
 }
+
 .active-bookings {
-    margin: 0 15px;
-    .booking-header {
-        @include f(row, space-between, center);
-        padding: 1rem 0;
-        cursor: pointer;
-        background: 0;
-        border: 0;
-        span {
-            font-size: 18px;
-            font-weight: 700;
-            color: $a;
-        }
-        .pi {
-            font-size: 12px;
-            font-weight: 700;
-            &.arrow-down {
-                color: $p;
-            }
-            &.arrow-up {
-                color: $a;
-            }
-        }
+  margin: 0 15px;
+
+  // Header styles
+  .booking-header {
+    @include flex(row, space-between, center);
+    padding: 1rem 0;
+    cursor: pointer;
+    
+    span {
+      font-size: 18px;
+      font-weight: 700;
+      color: $a;
     }
-    .booking-content.hidden {
-        display: none;
+    
+    .pi {
+      font-size: 12px;
+      font-weight: 700;
+      transition: transform 0.2s;
+      &.arrow-down { color: $p; }
+      &.arrow-up { color: $a; }
     }
-    .booking-item {
-        background: #fff;
-        border-radius: 10px;
-        margin-bottom: 1rem;
-        padding: 0.6rem;
-        .booking-item-content {
-            display: grid;
-            grid-template-columns: 200px 1fr 150px 200px;
-            gap: 1rem;
-            align-items: start;
-        }
+  }
+  
+  // Hidden content
+  .booking-content.hidden { display: none; }
+  
+  // Loading and empty states
+  .loading-container {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 0;
+  }
+  
+  .empty-message {
+    text-align: center;
+    padding: 2rem 0;
+    color: $a;
+    font-size: 16px;
+  }
+  
+  // Booking item
+  .booking-item {
+    background: #fff;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    padding: 0.6rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
+    
+    .booking-item-content {
+      display: grid;
+      grid-template-columns: 200px 0.8fr 0.3fr 200px;
+      gap: 1rem;
+      align-items: start;
+    }
+    
+    // Image container
     .image-container {
-        width: 100%;
-        max-width: 200px;
-        height: 100px;
-        overflow: hidden;
-        border-radius: 10px;
-        background: #ccc;
-        img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 10px;
-        }
-    }
-    .info-sections {
-        margin-top: 5px;
-        @include f(column, center, stretch, 0.5rem);
-        .title-section h2 {
-            margin: 0;
-            font-size: 16px;
-            font-weight: 700;
-            color: $a;
-        }
-        .info-content {
-            display: grid;
-            gap: 0.25rem;
-            margin-right: 80px;
-            .info-row {
-                @include f(row, space-between, center);
-                font-size: 12px;
-                .label {
-                    min-width: 80px;
-                    color: $a;
-                }
-                .value {
-                    flex: 0.2;
-                    color: $a;
-                    text-align: right;
-                    padding-left: 10px;
-                }
-                .budget {
-                    font-weight: 700;
-                }
-            }
-        }
-    }
-    .info-right[_ngcontent-ng-c4187379547] {
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        align-items: stretch;
-        gap: 2.8rem;
-        margin-left: -20px;
-    }
-    .info-right {
-        margin-top: 5px;
-        @include f(column, flex-start, stretch, 0.5rem);
-        .departure-info {
-            span,
-            strong {
-                font-size: 16px;
-                color: $a;
-            }
-            strong {
-                margin-left: 15px;
-            }
-            .state {
-                margin-left: 5px;
-                background-color: $a;
-                color: #fff !important;
-                padding: 1px 5px;
-                border-radius: 5px;
-                font-size: 0.7rem !important;
-            }
-        }
-        .passenger-price {
-            margin-top: 5px;
-            @include f(row, flex-start, center, 1rem);
-            i,
-            span {
-                font-size: 16px;
-                color: $p;
-            }
-            .num-users {
-                background-color: $p;
-                color: #fff;
-                padding: 1px 6px;
-                border-radius: 5px;
-                font-size: 0.7em;
-            }
-            strong {
-                font-size: 16px;
-                color: $p;
-            }
-        }
-    }
-    .buttons {
-        margin-top: -4px;
-        @include f(column, space-between, stretch, 1.2rem);
+      width: 100%;
+      max-width: 200px;
+      height: 100px;
+      overflow: hidden;
+      border-radius: 10px;
+      background: #ccc;
+      
+      img {
         width: 100%;
         height: 100%;
-        .top-buttons {
-            @include f(row, flex-start, center, 0.5rem);
-            width: 100%;
-            margin-top: auto;
-            ::ng-deep .p-button-outlined {
-                border: 1.5px solid $a;
-                color: $a;
-            }
-            .p-button {
-                flex: 1;
-                @include b;
-            }
-            .sendbtn {
-                background-color: $a;
-                border: 0;
-            }
-        }
-        .p-button-rounded {
-            width: 100%;
-            @include b;
-            margin-top: auto;
-        }
+        object-fit: cover;
+        border-radius: 10px;
+        transition: transform 0.2s;
+        &:hover { transform: scale(1.05); }
+      }
+      
+      ::ng-deep .booking-image-skeleton {
+        border-radius: 10px;
+        height: 100% !important;
+      }
     }
-    ::ng-deep {
-        .p-dataview .p-dataview-content {
-            background: 0;
-            border: 0;
-            padding: 0;
-            border-radius: 8px;
+    
+    // Info sections
+    .info-sections {
+      margin-top: 5px;
+      max-width: 100%;
+      @include flex(column, center, stretch, 0.5rem);
+      
+      .title-section h2 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 700;
+        color: $a;
+      }
+      
+      .info-content {
+        min-width: 11rem;
+        max-width: 20rem;
+        gap: 0.25rem;
+        margin-right: 80px;
+        
+        .info-row {
+          @include flex(row, space-between, center);
+          font-size: 12px;
+          
+          .label {
+            min-width: 80px;
+            color: $a;
+          }
+          
+          .value {
+            flex: 0.2;
+            color: $a;
+            text-align: right;
+            padding-left: 10px;
+          }
+          
+          .budget { font-weight: 700; }
         }
-        .p-paginator {
-            background: 0;
-            border: 0;
-            padding: 1rem 0;
-            .p-paginator-element {
-                color: $a;
-                &.p-paginator-page.p-highlight {
-                    background: $p;
-                    color: #fff;
-                }
-            }
-            .p-paginator-page.p-paginator-page-selected {
-                background: $p;
-                color: #fff;
-            }
-        }
+      }
     }
-}
+    
+    // Right info
+    .info-right {
+      margin-top: 1.5rem;
+      width: 10rem;
+      @include flex(column, flex-start, stretch, 1.5rem);
+      
+      .departure-info {
+        display: flex;
+        align-items: left;
+        justify-content: space-between;
+        max-width: 100%;
+        overflow: hidden;
+        
+        span, strong {
+          font-size: 16px;
+          color: $a;
+        }
+        
+        
+        .state {
+          margin-left: 5px;
+          background-color: $a;
+          color: #fff !important;
+          //padding: 1px 5px;
+          border-radius: 5px;
+          font-size: 0.7rem !important;
+        }
+      }
+      
+      .passenger-price {
+        display: flex;
+        align-self: flex-end;
+        justify-content:space-between;   
+        width: 100%;     
+        align-items: center;
+        margin-top: auto;
+        padding-bottom: 0px;
+        //position: relative;
+        //top: 43px;
+        //right: 15px;
+        
+        i, span {
+          font-size: 16px;
+          color: $p;
+        }
+        
+        .num-users {
+          background-color: $p;
+          color: #fff;
+          padding: 3px 6px;
+          border-radius: 5px;
+          font-size: 0.7em;
+        }
+        
+        strong {
+          font-size: 16px;
+          color: $p;
+        }
+
+        .passenger-info {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+      }
+    }
+    
+    // Buttons
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      margin-top: -4px;
+      width: 100%;
+      height: 100%;
+      
+      .top-buttons {
+        display: grid;
+        grid-template-columns: 6fr 6fr;
+        gap: 8px;
+        margin-top: 12px;
+        margin-bottom: 0;
+        width: 100%;
+        
+        ::ng-deep .p-button-outlined {
+          border: 1.5px solid $a;
+          color: $a;
+          width: 100%;
+          height: 30px;
+          font-size: 0.75rem;
+          &:hover { background-color: rgba($a, 0.1); }
+        }
+        
+        .sendbtn {
+          background-color: var(--background-azul) !important;
+          color: white !important;
+          width: 100%;
+          height: 30px;
+          font-size: 0.75rem;
+          border-color: var(--background-azul) !important;
+        }
+      }
+      
+      .view-booking-container {
+        width: 100%;
+        text-align: center;
+        margin-top: 4px;
+        
+        ::ng-deep .p-button-rounded {
+          width: 100%;
+          height: 30px;
+          font-size: 0.8rem;
+        }
+      }
+    }
+      margin-top: -4px;
+      @include flex(column, space-between, stretch, 1.2rem);
+      width: 100%;
+      height: 100%;
+      
+      .top-buttons {
+        @include flex(row, flex-start, center, 0.5rem);
+        width: 100%;
+        margin-top: auto;
+        
+        ::ng-deep .p-button-outlined {
+          border: 1.5px solid $a;
+          color: $a;
+          &:hover { background-color: rgba($a, 0.1); }
+        }
+        
+        .p-button { 
+          flex: 1; 
+          @include button;
+        }
+        
+        .sendbtn {
+          background-color: $a;
+          border: 0;
+          &:hover { opacity: 0.9; }
+        }
+      }
+      
+      .p-button-rounded {
+        width: 100%;
+        margin-top: auto;
+        @include button;
+        &:hover { opacity: 0.9; }
+      }
+    }
+  }
+  
+  // Global styles
+  ::ng-deep {
+    .p-dataview .p-dataview-content {
+      background: transparent;
+      border: 0;
+      padding: 0;
+    }
+    
+    .p-paginator {
+      background: transparent;
+      border: 0;
+      padding: 1rem 0;
+      
+      .p-paginator-element {
+        color: $a;
+        
+        &:hover:not(.p-highlight) {
+          background-color: rgba($a, 0.1);
+        }
+        
+        &.p-paginator-page.p-highlight,
+        &.p-paginator-page.p-paginator-page-selected {
+          background: $p;
+          color: #fff;
+        }
+      }
+    }
+  }
+
+
+// Responsive styles - consolidated
 @media screen and (max-width: 1366px) {
-    .active-bookings .booking-item .booking-item-content {
-        grid-template-columns: 150px 1fr 130px 160px;
-        gap: 0.75rem;
-        .image-container {
-            margin-top: 8px;
-            max-width: 150px;
-            height: 85px;
+  .active-bookings .booking-item {
+    .booking-item-content {
+      grid-template-columns: 150px 1fr 130px 160px;
+      gap: 0.75rem;
+      
+      .image-container {
+        margin-top: 8px;
+        max-width: 150px;
+        height: 85px;
+      }
+      
+      .info-right {
+        gap: 0.25rem;
+        
+        .departure-info span,
+        .departure-info strong,
+        .passenger-price i,
+        .passenger-price span,
+        .passenger-price strong {
+          font-size: 14px;
         }
-        .info-content {
-            margin-right: 20px;
-        }
-        .info-right {
-            gap: 0.25rem;
-            .departure-info span,
-            .departure-info strong,
-            .passenger-price i,
-            .passenger-price span,
-            .passenger-price strong {
-                font-size: 14px;
-            }
-        }
-        .buttons {
-            gap: 0.7rem;
-            .top-buttons {
-                gap: 0.25rem;
-                .p-button {
-                    @include b(11px, 4px 8px);
-                }
-            }
-            .p-button-rounded {
-                @include b(11px, 4px 8px);
-            }
-        }
+      }
     }
+  }
 }
-@media screen and (max-width: 1024px) and (min-width: 769px) {
-    .active-bookings .booking-item {
-        padding: 0.75rem;
-        .booking-item-content {
-            grid-template-columns: 120px 1fr 1fr !important;
-            grid-template-rows: auto auto;
-            gap: 0.75rem !important;
-            .image-container {
-                max-width: 120px !important;
-                height: 80px !important;
-                grid-row: 1;
-                grid-column: 1;
-            }
-            .info-sections {
-                grid-row: 1;
-                grid-column: 2;
-                padding-right: 0.5rem;
-                .title-section h2 {
-                    font-size: 14px;
-                }
-                .info-content .info-row {
-                    font-size: 11px;
-                    .label {
-                        min-width: 70px;
-                    }
-                }
-            }
-            .info-right {
-                grid-row: 1;
-                grid-column: 3;
-                font-size: 14px;
-                .departure-info span,
-                .departure-info strong,
-                .passenger-price i,
-                .passenger-price span,
-                .passenger-price strong {
-                    font-size: 14px;
-                }
-                .passenger-price {
-                    margin-top: 10px;
-                    gap: 0.5rem;
-                }
-            }
-            .buttons {
-                grid-row: 2;
-                grid-column: 1/-1;
-                margin: 0;
-                flex-direction: column;
-                gap: 0.5rem;
-                padding-top: 0.5rem;
-                .top-buttons {
-                    gap: 0.25rem;
-                    .p-button {
-                        @include b(11px, 4px 8px, 28px);
-                    }
-                }
-                .p-button-rounded {
-                    @include b(11px, 4px 8px, 28px);
-                }
-            }
-        }
+
+@media screen and (max-width: 1024px) {
+  .active-bookings .booking-item {
+    padding: 0.75rem;
+    
+    .booking-item-content {
+      grid-template-columns: 120px 1fr 1fr;
+      grid-template-rows: auto auto;
+      
+      .image-container {
+        max-width: 120px;
+        height: 80px;
+        grid-row: 1;
+        grid-column: 1;
+      }
+      
+      .info-sections {
+        grid-row: 1;
+        grid-column: 2;
+      }
+      
+      .info-right {
+        grid-row: 1;
+        grid-column: 3;
+      }
+      
+      .buttons {
+        grid-row: 2;
+        grid-column: 1/-1;
+        margin: 0;
+        padding-top: 0.5rem;
+      }
     }
+  }
 }
+
 @media screen and (max-width: 768px) {
-    .active-bookings .booking-item {
-        padding: 1rem;
-        .booking-item-content {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
-            .image-container {
-                max-width: 100% !important;
-                height: 180px !important;
-            }
-            .info-sections,
-            .buttons {
-                margin-top: 8px;
-            }
-            .info-right,
-            .info-right[_ngcontent-ng-c3944280590] {
-                margin-top: -5px;
-                margin-left: 0;
-                gap: 1.5rem;
-            }
-            .buttons,
-            .buttons[_ngcontent-ng-c3944280590] {
-                margin-top: -10px;
-                gap: 1rem;
-            }
-            .info-right .passenger-price {
-                margin-top: -20px;
-                height: 36px;
-            }
-            .info-sections .info-content .info-row {
-                &:not(.status) {
-                    grid-template-columns: 1fr;
-                    gap: 0.5rem;
-                }
-                &.status {
-                    grid-template-columns: auto 1fr;
-                    .label {
-                        width: auto;
-                    }
-                }
-            }
+  .active-bookings .booking-item {
+    .booking-item-content {
+      grid-template-columns: 1fr;
+      
+      .image-container {
+        max-width: 100%;
+        height: 180px;
+      }
+      
+      .info-right {
+        margin-top: -5px;
+        gap: 1.5rem;
+        
+        .passenger-price {
+          margin-top: -20px;
         }
+      }
     }
+  }
 }
-@media screen and (max-width: 480px) {
-    .active-bookings .booking-item .booking-item-content .p-button-rounded {
-        height: 40px !important;
-        line-height: 40px;
-        font-size: 13px;
-    }
+
+::ng-deep .elongated-button {
+  .p-button {
+    min-width: 120px;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
 }

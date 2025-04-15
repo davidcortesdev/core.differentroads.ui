@@ -16,23 +16,25 @@
             </div>
             <div class="booking-row bottom-row">
               <div class="booking-label">Fecha creación:</div>
-              <div class="booking-value">{{ item.creationDate }}</div>
+              <div class="booking-value">{{ item.creationDate | date : "dd/MM/yyyy" }}</div>
             </div>
           </div>
           <div class="booking-right-info">
             <div class="top-row">
               <div class="departure-date">
                 <span class="label">Salida:</span>
-                <span class="value">{{ item.departureDate }}</span>
+                <span class="value">{{ item.departureDate | date : "dd/MM/yyyy"}}</span>
               </div>
             </div>
             <div class="bottom-row">
               <div class="user-price-container">
                 <div class="user-tag">
-                  <p-tag [value]="item.passengers.toString()" severity="info" [rounded]="false"></p-tag>
-                  <i class="pi pi-user"></i>
+                  <!--<p-tag [value]="item.passengers.toString()" severity="info" [rounded]="false" class="user-num"></p-tag>
+                  <i class="pi pi-user"></i>-->
+                  <span class="num-users">{{ item.passengers }}</span>
+                  <i class="pi pi-users"></i>
                 </div>
-                <div class="price-tag">{{ item.price }}</div>
+                <div class="price-tag">{{ item.price | currency: "EUR"}}</div>
               </div>
             </div>
           </div>

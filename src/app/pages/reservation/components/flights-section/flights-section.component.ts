@@ -10,6 +10,13 @@ import { Flight } from '../../../../core/models/reservation/reservation.model';
 export class FlightsSectionComponent {
   @Input() flights: Flight[] = [];
 
+  // Getter to filter out flights with 'sin ' in the airline name
+  get filteredFlights(): Flight[] {
+    return this.flights.filter(
+      (flight) => !flight.airline.name.toLowerCase().includes('sin ')
+    );
+  }
+
   // Method to format time string to Date object
   formatTime(timeString: string): Date {
     const [hours, minutes] = timeString.split(':').map(Number);

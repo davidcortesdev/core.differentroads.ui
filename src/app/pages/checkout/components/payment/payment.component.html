@@ -240,7 +240,7 @@
                 <span class="traveler-name"
                   >{{ traveler.firstName }} {{ traveler.lastName }}</span
                 >
-
+                <span>{{traveler.category}}</span>
                 <span class="points-badge" *ngIf="!traveler.redeemCheckbox">
                   <span
                     class="points-label"
@@ -316,4 +316,55 @@
       </ng-template>
     </p-button>
   </div>
+
+  <!-- Add the error dialog -->
+  <p-dialog
+    [(visible)]="errorDialogVisible"
+    [modal]="true"
+    [closable]="true"
+    [draggable]="false"
+    [resizable]="false"
+    styleClass="flight-error-dialog"
+    [style]="{ width: '450px' }"
+    header="{{ errorSummary }}"
+  >
+    <div class="error-content">
+      <i
+        class="pi pi-exclamation-circle error-icon"
+        style="font-size: 3rem; color: #f44336"
+      ></i>
+      <p>{{ errorMessage }}</p>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <div class="dialog-footer">
+        <p-button
+          *ngIf="errorType === 'traveler-data'"
+          label="Ir a datos de viajeros"
+          icon="pi pi-user"
+          styleClass="p-button-primary"
+          (onClick)="goToTravelersStep()"
+        >
+        </p-button>
+
+        <p-button
+          *ngIf="errorType === 'flight-selection'"
+          label="Seleccionar otro vuelo"
+          icon="pi pi-send"
+          styleClass="p-button-primary"
+          (onClick)="goToFlightsStep()"
+        >
+        </p-button>
+
+        <p-button
+          *ngIf="errorType === 'generic'"
+          label="Cerrar"
+          icon="pi pi-times"
+          styleClass="p-button-secondary"
+          (onClick)="closeErrorDialog()"
+        >
+        </p-button>
+      </div>
+    </ng-template>
+  </p-dialog>
 </div>

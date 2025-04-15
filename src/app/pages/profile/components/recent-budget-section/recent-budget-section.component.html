@@ -11,12 +11,30 @@
   </div>
 
   <div class="booking-content" [ngClass]="{ hidden: !isExpanded }">
+    <!-- Loading indicator -->
+    <div class="loading-container" *ngIf="loading">
+      <p-progressSpinner
+        strokeWidth="3"
+        animationDuration=".5s"
+      ></p-progressSpinner>
+    </div>
+
+    <!-- Empty state message when no budgets are available -->
+    <div
+      class="empty-state"
+      *ngIf="!loading && (!budgets || budgets.length === 0)"
+    >
+      <p>No hay presupuestos recientes</p>
+    </div>
+
+    <!-- Content when not loading and budgets exist -->
     <p-dataView
       #dv
       [value]="budgets"
       [rows]="5"
       [paginator]="true"
       styleClass="transparent-dataview"
+      *ngIf="!loading && budgets && budgets.length > 0"
     >
       <ng-template #list let-budgets>
         <div class="booking-list">
@@ -33,7 +51,7 @@
                 <div class="info-content">
                   <div class="info-row">
                     <span class="label">Nº Presupuesto:</span>
-                    <span class="value budget">{{ budget.id }}</span>
+                    <span class="value budget">{{ budget.ID }}</span>
                   </div>
                   <div class="info-row">
                     <span class="label">Fecha de creación:</span>
@@ -45,10 +63,13 @@
               </div>
 
               <div class="info-right">
+                <!-- In your HTML where you show the departure date -->
                 <div class="departure-info">
                   <span>Salida: </span>
-                  <strong>{{ budget.departureDate | date : "d MMM" }}</strong>
-                  <span class="state">R</span>
+                  <strong>{{
+                    budget.departureName ||
+                      formatShortDate(budget.departureDate)
+                  }}</strong>
                 </div>
                 <div class="passenger-price">
                   <span class="num-users">{{ budget.passengers }}</span>
@@ -63,13 +84,22 @@
                     pButton
                     label="Descargar"
                     class="p-button-outlined"
+                    (click)="downloadBudget(budget)"
+                    [loading]="downloadLoading[budget._id]"
                   ></button>
-                  <button pButton label="Enviar" class="p-button sendbtn"></button>
+                  <button
+                    pButton
+                    label="Enviar"
+                    class="p-button sendbtn"
+                    (click)="sendBudgetNotification(budget)"
+                    [loading]="notificationLoading[budget._id]"
+                  ></button>
                 </div>
                 <button
                   pButton
                   label="Reservar"
                   class="p-button-rounded"
+                  (click)="reserveBudget(budget)"
                 ></button>
               </div>
             </div>

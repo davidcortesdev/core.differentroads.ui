@@ -20,6 +20,10 @@ export const environment = {
     apiKey: '197192715793311',
   },
 
+  reviewsApiUrl: 'https://reviews-dev.differentroads.es/api',
+  tourApiUrl: 'https://tour-dev.differentroads.es/api',
+  travelersApiUrl: 'https://travelers-dev.differentroads.es/api',
+
   scalapayApiUrl: 'https://integration.api.scalapay.com',
   scalapayApiKey: 'qhtfs87hjnc12kkos',
 };

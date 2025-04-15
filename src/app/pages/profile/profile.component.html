@@ -25,6 +25,12 @@
       [userEmail]="userEmail"
       *ngIf="userEmail"
     ></app-recent-budget-section>
-    <app-review-section></app-review-section>
+    <app-review-section
+      [userEmail]="userEmail"
+      *ngIf="userEmail"
+    ></app-review-section>
   </div>
 </div>
+
+<!-- Toast para mostrar mensajes -->
+<p-toast [baseZIndex]="9999" position="top-right"></p-toast>

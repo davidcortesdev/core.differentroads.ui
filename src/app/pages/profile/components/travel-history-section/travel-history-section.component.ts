@@ -24,6 +24,7 @@ interface TravelHistory {
 export class TravelHistorySectionComponent implements OnInit {
   travels: TravelHistory[] = [];
   isExpanded: boolean = true;
+  loading: boolean = false;
   @Input() userEmail!: string;
 
   constructor(
@@ -33,6 +34,7 @@ export class TravelHistorySectionComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.loading = true;
     this.fetchTravelHistory(this.userEmail);
   }
 
@@ -42,7 +44,7 @@ export class TravelHistorySectionComponent implements OnInit {
       .subscribe((response) => {
 
         this.travels = response?.data?.map((booking) => this.mapTravel(booking)) || [];
-        
+        this.loading = false;
         // Cargar las imágenes después de que los viajes estén disponibles
         this.loadTourImages();
       });
@@ -52,7 +54,7 @@ export class TravelHistorySectionComponent implements OnInit {
     const tourID = booking?.periodData?.tourID || '';
     
     return {
-      bookingNumber: booking?.ID ?? '',
+      bookingNumber: booking?.code ?? '',
       date: new Date(booking?.createdAt ?? '').toLocaleDateString(),
       destination: booking?.periodData?.['tour']?.name || '',
       departure: new Date(

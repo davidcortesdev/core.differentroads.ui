@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Tour, Flight } from '../../../core/models/tours/tour.model';
 import { NotificationsService } from '../../../core/services/notifications.service';
@@ -9,17 +9,28 @@ import {
   TourOrderService,
 } from '../../../core/services/tour-data/tour-order.service';
 import { SummaryService } from '../../../core/services/checkout/summary.service';
+// Importamos los servicios de autenticación y usuarios
+import { AuthenticateService } from '../../../core/services/auth-service.service';
+import { UsersService } from '../../../core/services/users.service';
+import { Subscription } from 'rxjs';
+// Importamos MessageService para los Toast
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-budget-dialog',
   standalone: false,
   templateUrl: './budget-dialog.component.html',
   styleUrl: './budget-dialog.component.scss',
+  // Agregamos MessageService a los providers del componente
+  providers: [MessageService]
 })
-export class BudgetDialogComponent implements OnInit {
+export class BudgetDialogComponent implements OnInit, OnDestroy, OnChanges {
   @Input() visible: boolean = false;
   @Input() handleCloseModal: () => void = () => {};
   @Output() close = new EventEmitter<void>();
+  
+  // Input para indicar si se deben limpiar los campos
+  @Input() shouldClearFields: boolean = false;
 
   // New inputs for flexible usage
   @Input() existingOrderId: string | null = null;
@@ -62,6 +73,13 @@ export class BudgetDialogComponent implements OnInit {
   flights: Flight[] = [];
   selectedPeriod: DateInfo | null = null;
   loading: boolean = false;
+  isAuthenticated: boolean = false;
+  
+  // Flag interno para controlar si ya se ha inicializado
+  private initialized: boolean = false;
+  
+  // Subscripción para gestionar todas las suscripciones
+  private subscription: Subscription = new Subscription();
 
   constructor(
     private sanitizer: DomSanitizer,
@@ -69,29 +87,151 @@ export class BudgetDialogComponent implements OnInit {
     private tourOrderService: TourOrderService,
     private ordersService: OrdersService,
     private notificationsService: NotificationsService,
-    private summaryService: SummaryService // Add SummaryService
+    private summaryService: SummaryService,
+    private authService: AuthenticateService, // Inyectamos servicio de autenticación
+    private usersService: UsersService, // Inyectamos servicio de usuarios
+    private messageService: MessageService // Inyectamos MessageService para los toast
   ) {}
 
   ngOnInit(): void {
+    this.initialized = true;
+    
+    // Cargar datos del tour y periodo seleccionado
+    this.loadTourData();
+    
+    // Si no debemos limpiar los campos, verificamos autenticación
+    if (!this.shouldClearFields) {
+      this.checkAuthAndLoadUserData();
+    } else {
+      // Si shouldClearFields es true, limpiar los campos
+      this.resetTravelerForm();
+    }
+  }
+  
+  // Cargar datos del tour y viajeros de los servicios
+  private loadTourData(): void {
     // If we don't have inputs, use the service data (tour detail page)
     if (!this.existingOrderId) {
-      this.tourOrderService.selectedDateInfo$.subscribe((dateInfo) => {
+      const periodSubscription = this.tourOrderService.selectedDateInfo$.subscribe((dateInfo) => {
         this.selectedPeriod = dateInfo;
       });
+      this.subscription.add(periodSubscription);
 
-      this.tourDataService.tour$.subscribe((tour) => {
+      const tourSubscription = this.tourDataService.tour$.subscribe((tour) => {
         this.tourData = tour;
       });
+      this.subscription.add(tourSubscription);
 
-      this.tourOrderService.selectedTravelers$.subscribe((travelers) => {
+      const travelersSubscription = this.tourOrderService.selectedTravelers$.subscribe((travelers) => {
         this.travelers = travelers;
       });
+      this.subscription.add(travelersSubscription);
     } else {
       // Use input values passed from checkout (override service values)
       if (this.travelersCount) {
         this.travelers = this.travelersCount;
       }
     }
+  }
+  
+  // Implementamos OnChanges para detectar cambios en shouldClearFields
+  ngOnChanges(changes: SimpleChanges): void {
+    // Solo ejecutar si ya está inicializado
+    if (!this.initialized) return;
+    
+    // Si cambia shouldClearFields
+    if (changes['shouldClearFields']) {
+      if (this.shouldClearFields) {
+        this.resetTravelerForm();
+      } else if (this.isAuthenticated) {
+        // Solo cargar datos del usuario si está autenticado y no debemos limpiar campos
+        this.getUserEmailAndData();
+      }
+    }
+    
+    // Si cambia visible a true, verificar si debemos limpiar campos
+    if (changes['visible'] && changes['visible'].currentValue === true) {
+      if (this.shouldClearFields) {
+        this.resetTravelerForm();
+      }
+    }
+  }
+  
+  // Método para resetear el formulario
+  private resetTravelerForm(): void {
+    this.traveler = {
+      name: '',
+      email: '',
+      phone: ''
+    };
+    
+    // Resetear errores
+    this.travelerErrors = {
+      name: false,
+      email: false,
+      phone: false
+    };
+  }
+  
+  // Método para verificar autenticación y cargar datos del usuario
+  private checkAuthAndLoadUserData(): void {
+    const authSubscription = this.authService.isLoggedIn().subscribe({
+      next: (isAuthenticated) => {
+        this.isAuthenticated = isAuthenticated;
+        
+        if (isAuthenticated && !this.shouldClearFields) {
+          this.getUserEmailAndData();
+        }
+      },
+      error: (error) => {
+        // Manejo silencioso del error
+      }
+    });
+    
+    this.subscription.add(authSubscription);
+  }
+  
+  // Método para obtener el email y datos del usuario
+  private getUserEmailAndData(): void {
+    const emailSubscription = this.authService.getUserEmail().subscribe({
+      next: (email) => {
+        if (email && !this.shouldClearFields) {
+          // Prellenar el campo de email
+          this.traveler.email = email;
+          
+          // Obtener datos completos del usuario
+          this.getUserDataByEmail(email);
+        }
+      },
+      error: (error) => {
+        // Manejo silencioso del error
+      }
+    });
+    
+    this.subscription.add(emailSubscription);
+  }
+  
+  // Método para obtener datos completos del usuario por email
+  private getUserDataByEmail(email: string): void {
+    const userDataSubscription = this.usersService.getUserByEmail(email).subscribe({
+      next: (userData) => {
+        // Prellenar los campos del formulario con los datos del usuario si no debemos limpiarlos
+        if (userData && !this.shouldClearFields) {
+          this.traveler.name = userData.names ? `${userData.names} ${userData.lastname || ''}` : '';
+          this.traveler.phone = userData.phone ? userData.phone.toString() : '';
+        }
+      },
+      error: (error) => {
+        // Manejo silencioso del error
+      }
+    });
+    
+    this.subscription.add(userDataSubscription);
+  }
+
+  ngOnDestroy(): void {
+    // Limpiar todas las suscripciones
+    this.subscription.unsubscribe();
   }
 
   sanitizeHtml(html: string): SafeHtml {
@@ -100,6 +240,7 @@ export class BudgetDialogComponent implements OnInit {
 
   saveTrip() {
     if (!this.validateForm()) {
+      this.showErrorToast('Por favor, completa todos los campos obligatorios.');
       return;
     }
     this.loading = true;
@@ -123,6 +264,26 @@ export class BudgetDialogComponent implements OnInit {
     );
   }
 
+  // Método para mostrar Toast de éxito
+  showSuccessToast(message: string): void {
+    this.messageService.add({
+      severity: 'success',
+      summary: '¡Éxito!',
+      detail: message,
+      life: 5000
+    });
+  }
+
+  // Método para mostrar Toast de error
+  showErrorToast(message: string): void {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: message,
+      life: 5000
+    });
+  }
+
   // Method for updating existing order (checkout page)
   updateExistingOrder(): void {
     if (!this.existingOrderId) return;
@@ -133,8 +294,8 @@ export class BudgetDialogComponent implements OnInit {
     const orderToUpdate = this.summaryService.getOrderValue();
 
     if (!orderToUpdate) {
-      console.error('No order found in summary service');
       this.loading = false;
+      this.showErrorToast('No se encontró la orden para actualizar');
       return;
     }
 
@@ -144,8 +305,6 @@ export class BudgetDialogComponent implements OnInit {
     // Use the same pattern as checkout.updateOrder()
     this.ordersService.updateOrder(orderToUpdate._id, orderToUpdate).subscribe({
       next: (response) => {
-        console.log('Order updated to budget:', response);
-
         // Construir los productos a partir del summary de la orden
         const products = this.buildProductsFromOrder(orderToUpdate);
 
@@ -158,21 +317,24 @@ export class BudgetDialogComponent implements OnInit {
           })
           .subscribe({
             next: (response) => {
-              console.log('Budget notification sent:', response);
               this.loading = false;
-              this.handleCloseModal();
-              this.traveler = { name: '', email: '', phone: '' };
-              this.close.emit();
+              this.showSuccessToast('¡Presupuesto enviado correctamente a tu correo!');
+              setTimeout(() => {
+                if (this.handleCloseModal) {
+                  this.handleCloseModal();
+                }
+                this.close.emit();
+              }, 1500);
             },
             error: (error) => {
-              console.error('Error sending budget notification:', error);
               this.loading = false;
+              this.showErrorToast('Error al enviar la notificación del presupuesto');
             },
           });
       },
       error: (error) => {
-        console.error('Error updating order:', error);
         this.loading = false;
+        this.showErrorToast('Error al actualizar la orden');
       },
     });
   }
@@ -187,9 +349,8 @@ export class BudgetDialogComponent implements OnInit {
       return {
         id: '', // No tenemos ID específico en el resumen
         name: item.description,
-        price: item.value,
-        qty: item.qty,
-        total: item.value * item.qty,
+        singlePrice: item.value,
+        units: item.qty,
       };
     });
   }
@@ -197,6 +358,7 @@ export class BudgetDialogComponent implements OnInit {
   // Original method for creating new order (tour detail page)
   createOrder(): void {
     if (!this.validateForm()) {
+      this.showErrorToast('Por favor, completa todos los campos obligatorios.');
       return;
     }
     this.loading = true;
@@ -210,37 +372,44 @@ export class BudgetDialogComponent implements OnInit {
       })
       .subscribe({
         next: (createdOrder) => {
-          console.log('Order created:', createdOrder);
-
           // Use the new method to build products
           this.tourOrderService
             .buildOrderProducts(this.travelers, this.selectedPeriod)
-            .subscribe((products) => {
-              // Send budget notification email
-              this.notificationsService
-                .sendBudgetNotificationEmail({
-                  id: createdOrder._id,
-                  email: this.traveler.email,
-                  products,
-                })
-                .subscribe({
-                  next: (response) => {
-                    console.log('Budget notification sent:', response);
-                    this.loading = false;
-                    this.handleCloseModal();
-                    this.traveler = { name: '', email: '', phone: '' };
-                    this.close.emit();
-                  },
-                  error: (error) => {
-                    console.error('Error sending budget notification:', error);
-                    this.loading = false;
-                  },
-                });
+            .subscribe({
+              next: (products) => {
+                // Send budget notification email
+                this.notificationsService
+                  .sendBudgetNotificationEmail({
+                    id: createdOrder._id,
+                    email: this.traveler.email,
+                    products,
+                  })
+                  .subscribe({
+                    next: (response) => {
+                      this.loading = false;
+                      this.showSuccessToast('¡Presupuesto enviado correctamente a tu correo!');
+                      setTimeout(() => {
+                        if (this.handleCloseModal) {
+                          this.handleCloseModal();
+                        }
+                        this.close.emit();
+                      }, 1500);
+                    },
+                    error: (error) => {
+                      this.loading = false;
+                      this.showErrorToast('Error al enviar la notificación del presupuesto');
+                    },
+                  });
+              },
+              error: (error) => {
+                this.loading = false;
+                this.showErrorToast('Error al construir los productos para el presupuesto');
+              }
             });
         },
         error: (error) => {
-          console.error('Error creating order:', error);
           this.loading = false;
+          this.showErrorToast('Error al crear la orden');
         },
       });
   }

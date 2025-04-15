@@ -28,7 +28,12 @@ import { MessageService } from 'primeng/api';
 import { Subscription } from 'rxjs';
 import { TextsService } from '../../../../core/services/checkout/texts.service';
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
+import { Flight } from '../../../../core/models/tours/flight.model';
+import { FlightsService } from '../../../../core/services/checkout/flights.service';
 
+import { PeriodsService } from '../../../../core/services/periods.service';
+import { UsersService } from '../../../../core/services/users.service';
+import { PointsCalculatorService } from '../../../../core/services/checkout/points-calculator.service';
 interface TravelerWithPoints {
   id: string;
   firstName: string;
@@ -37,7 +42,9 @@ interface TravelerWithPoints {
   points?: number;
   redeeming?: boolean;
   pointsRedeemed?: number;
-  redeemCheckbox?: boolean; // Add this new property
+  redeemCheckbox?: boolean;
+  category?: string;
+  type?: string;
 }
 import { ScalapayOrderRequest } from '../../../../core/models/scalapay/ScalapayOrderRequest';
 import { ScalapayConsumer } from '../../../../core/models/scalapay/ScalapayConsumer';
@@ -54,12 +61,16 @@ import { ScalapayService } from '../../../../core/services/checkout/payment/scal
 })
 export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
   @Input() totalPrice: number = 0;
+  @Input() subtotalPrice: number = 0;
+  @Input() tourName: string = '';
   @Input() processBooking!: () => Promise<{
     bookingID: string;
-    ID: string;
+    code: string;
   }>;
   @Input() departureDate: string | null = null;
   @Output() goBackEvent = new EventEmitter<void>();
+  @Output() goToFlights = new EventEmitter<void>();
+  @Output() goToTravelers = new EventEmitter<void>();
 
   selectedPointsDiscount: string[] = [];
 
@@ -95,6 +106,15 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
   private pointsCache: Map<string, number> = new Map();
   private loadingPointsFor: Set<string> = new Set();
 
+  // Nuevo: variable para almacenar el vuelo desde el service
+  private currentFlight: Flight | null = null;
+
+  // New properties for error handling dialog
+  errorDialogVisible: boolean = false;
+  errorType: 'traveler-data' | 'flight-selection' | 'generic' = 'generic';
+  errorMessage: string = '';
+  errorSummary: string = '';
+
   constructor(
     @Inject(DOCUMENT) private document: Document,
     private redsysService: RedsysService,
@@ -108,7 +128,11 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     private discountsService: DiscountsService,
     private messageService: MessageService,
     private authService: AuthenticateService,
-    private textsService: TextsService
+    private textsService: TextsService,
+    private flightsService: FlightsService,
+    private periodsService: PeriodsService,
+    private usersService: UsersService,
+    private pointsCalculator: PointsCalculatorService
   ) {}
 
   ngOnInit() {
@@ -116,6 +140,15 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     this.calculateRemainingAmount();
     this.calculatePaymentDeadline();
     this.loadTravelersWithPoints();
+
+    // Suscribirse al vuelo seleccionado desde el service
+    this.flightsService.selectedFlight$.subscribe((flight) => {
+      this.currentFlight = flight;
+      if (flight && flight.source === 'amadeus' && flight.price) {
+        this.depositAmount = flight.price;
+      }
+      this.calculateRemainingAmount();
+    });
 
     // Subscribe to discounts changes
     this.discountSubscription =
@@ -391,7 +424,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     // Update payment option before proceeding
     this.updatePaymentOption();
 
-    let bookingID: string, ID: string;
+    let bookingID: string, code: string;
 
     // Log applied points discounts if any
     if (this.pointsDiscounts.length > 0) {
@@ -401,8 +434,9 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     try {
       const response = await this.processBooking();
       const bookingID = response.bookingID;
-      const ID = response.ID;
-
+      const code = response.code;
+      await this.createReservationPoints(bookingID, this.tourName || '');
+      this.sendRedemptionPoints(bookingID, this.tourName || '');
       console.log('Booking created successfully:', bookingID);
 
       // Determine the payment amount based on payment type
@@ -414,7 +448,6 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       const payment = await this.createPayment(bookingID, {
         amount: paymentAmount,
         registerBy: this.authService.getCurrentUsername(),
-
         method: this.paymentMethod!,
       });
 
@@ -424,7 +457,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       // Handle payment method redirect
       if (this.paymentMethod === 'creditCard') {
         console.log('Redirecting to credit card payment');
-        this.redirectToRedSys(ID, paymentAmount, bookingID, publicID);
+        this.redirectToRedSys(code, paymentAmount, bookingID, publicID);
         return;
       } else if (this.paymentMethod === 'transfer') {
         console.log('Redirecting to bank transfer page');
@@ -444,7 +477,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         summary: 'Método de pago desconocido',
         detail: 'El método de pago seleccionado no es válido.',
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in payment process:', error);
       this.messageService.add({
         severity: 'error',
@@ -452,13 +485,68 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         detail:
           'Ha ocurrido un error al procesar el pago. Por favor, inténtalo de nuevo.',
       });
-    } finally {
-      // This will only run if we didn't redirect earlier
+
       this.isLoading = false;
+
+      // Parse the error to determine the type
+      if (error.message && error.message.includes('FLIGHT_BOOKING_FAILED')) {
+        // Check if it's a traveler data related error
+        if (error.message.includes('INVALID DATA')) {
+          this.showErrorDialog(
+            'traveler-data',
+            'Error en datos de viajeros',
+            'Los datos de los viajeros están incompletos o son incorrectos para la reserva del vuelo. Por favor, complete la información requerida (pasaportes, fechas de nacimiento, etc.).'
+          );
+        } else {
+          // General flight booking error
+          this.showErrorDialog(
+            'flight-selection',
+            'Error en la reserva del vuelo',
+            'No se pudo completar la reserva del vuelo seleccionado. Esto puede deberse a disponibilidad o cambio de tarifas. Por favor, seleccione otro vuelo.'
+          );
+        }
+      } else {
+        // Generic error
+        this.showErrorDialog(
+          'generic',
+          'Error en el proceso de pago',
+          'Ha ocurrido un error al procesar el pago. Por favor, inténtelo de nuevo más tarde o contacte con atención al cliente.'
+        );
+      }
+
+      return;
     }
   }
 
+  // New method to show error dialog
+  showErrorDialog(
+    type: 'traveler-data' | 'flight-selection' | 'generic',
+    summary: string,
+    message: string
+  ): void {
+    this.errorType = type;
+    this.errorSummary = summary;
+    this.errorMessage = message;
+    this.errorDialogVisible = true;
+  }
+
+  // Navigation methods
+  goToTravelersStep(): void {
+    this.errorDialogVisible = false;
+    this.goToTravelers.emit();
+  }
+
+  goToFlightsStep(): void {
+    this.errorDialogVisible = false;
+    this.goToFlights.emit();
+  }
+
+  closeErrorDialog(): void {
+    this.errorDialogVisible = false;
+  }
+
   // Add this method to handle the back button click
+
   goBack(): void {
     this.goBackEvent.emit();
   }
@@ -556,7 +644,6 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
 
       travelers.forEach((traveler) => {
         const email = traveler.travelerData?.email || '';
-        console.log('Traveler email:', email);
         if (email && !emailMap.has(email)) {
           const existingTraveler = this.uniqueTravelers.find(
             (t) => t.email === email
@@ -576,6 +663,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
               id: traveler._id || '',
               firstName: traveler.travelerData?.name || '',
               lastName: traveler.travelerData?.surname || '',
+              type: traveler.travelerData?.ageGroup || '',
               email: email,
               points: this.pointsCache.get(email) || 0,
               redeemCheckbox: false,
@@ -583,7 +671,10 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
             needToUpdateTravelers = true;
           }
 
-          if (!this.pointsCache.has(email) && !this.loadingPointsFor.has(email)) {
+          if (
+            !this.pointsCache.has(email) &&
+            !this.loadingPointsFor.has(email)
+          ) {
             console.log('Iniciando obtención de puntos para:', email);
             this.fetchTravelerPoints(email, emailMap);
           }
@@ -610,29 +701,16 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       next: (response) => {
         console.log(`Puntos obtenidos para ${email}:`, response);
         const points = response?.points ?? 0;
-        const travelerCategory = response?.typeTraveler?.toLowerCase() || 'default'
-        let maxRedeemableAmount = 0;
-      
-      switch(travelerCategory) {
-        case 'globetrotter': // Trotamundos
-          maxRedeemableAmount = 50; // 50€ máximo
-          break;
-        case 'traveler': // Viajante
-          maxRedeemableAmount = 75; // 75€ máximo
-          break;
-        case 'nomad': 
-          maxRedeemableAmount = this.totalPrice * 0.05; 
-          break;
-        default:
-          maxRedeemableAmount = 0;
-      }
+        const travelerCategory =
+          response?.typeTraveler?.toLowerCase() || 'default';
+        let maxRedeemableAmount = response?.maxpoints;
 
-        
         this.pointsCache.set(email, points);
 
         const traveler = emailMap.get(email);
         if (traveler) {
-          traveler.points = maxRedeemableAmount;
+          traveler.points = Math.min(points, maxRedeemableAmount);
+          traveler.category = travelerCategory;
 
           const existingIndex = this.uniqueTravelers.findIndex(
             (t) => t.email === email
@@ -665,6 +743,10 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         }
 
         this.loadingPointsFor.delete(email);
+        console.log(
+          'Viajeros únicos antes de mostrar:',
+          JSON.stringify(this.uniqueTravelers)
+        );
       },
     });
   }
@@ -726,5 +808,130 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       ...otherDiscounts,
       ...pointDiscounts,
     ]);
+  }
+
+  sendRedemptionPoints(bookingID: string, tourName: string): void {
+    console.log(
+      'Iniciando proceso de redención para booking:',
+      bookingID,
+      'y tour:',
+      tourName
+    );
+
+    this.uniqueTravelers.forEach((traveler) => {
+      if (traveler.redeemCheckbox) {
+        console.log('Procesando redención para el viajero:', traveler.email);
+
+        this.usersService.getUserByEmail(traveler.email).subscribe({
+          next: (user) => {
+            console.log('Usuario obtenido:', user);
+            const redemptionObject = {
+              travelerID: user._id as string,
+              type: 'redemption',
+              points: traveler.points || 0,
+              extraData: {
+                bookingID: bookingID,
+                tourName: tourName,
+              },
+              category: 'Viaje',
+              concept: 'Reserva',
+              origin: 'User',
+              transactionEmail: traveler.email,
+            };
+            console.log(
+              'Objeto de redención para',
+              traveler.email,
+              ':',
+              redemptionObject
+            );
+            this.pointsService.createPoints(redemptionObject).subscribe({
+              next: (res) => {
+                console.log(
+                  `Redemption points created for ${traveler.email}:`,
+                  res
+                );
+              },
+              error: (err) => {
+                console.error(
+                  `Error creating redemption points for ${traveler.email}:`,
+                  err
+                );
+              },
+            });
+          },
+          error: (err) => {
+            console.error(
+              `Error obteniendo usuario para ${traveler.email}:`,
+              err
+            );
+          },
+        });
+      }
+    });
+  }
+
+  getEarnedPoints(): number {
+    const adultTravelers = this.uniqueTravelers.filter(
+      (traveler) => traveler.type === 'Adultos'
+    );
+    if (adultTravelers.length === 0) return 0;
+    console.log(
+      'puntos totales',
+      this.pointsCalculator.calculateEarnedPoints(this.subtotalPrice),
+      ',totalprice',
+      this.subtotalPrice
+    );
+    return this.pointsCalculator.calculateEarnedPoints(this.subtotalPrice);
+  }
+
+  async createReservationPoints(
+    bookingID: string,
+    tourName: string
+  ): Promise<void> {
+    console.log('Iniciando proceso de asignación de puntos por reserva');
+
+    const totalPoints = this.getEarnedPoints();
+    console.log(totalPoints);
+
+    // Asignar todos los puntos al usuario logueado
+
+    const currentUser = this.authService.getCurrentUsername();
+    let userEmail: string = '';
+    this.authService.getUserEmail().subscribe((email) => {
+      userEmail = email;
+      console.log('Usuario logueado:', currentUser, 'email:', userEmail);
+    });
+    try {
+      const user = await this.usersService
+        .getUserByEmail(userEmail)
+        .toPromise();
+      if (user && user._id) {
+        const pointsObject = {
+          travelerID: user._id,
+          type: 'income',
+          points: totalPoints,
+          extraData: {
+            bookingID: bookingID,
+            tourName: tourName,
+          },
+          category: 'Viaje',
+          concept: 'Reserva',
+          origin: 'System',
+          transactionEmail: userEmail,
+        };
+
+        this.pointsService.createPoints(pointsObject).subscribe({
+          next: (res) =>
+            console.log(
+              `Todos los puntos asignados al usuario logueado ${currentUser}:`,
+              res
+            ),
+          error: (err) =>
+            console.error(`Error creating points for ${currentUser}:`, err),
+        });
+      }
+    } catch (error) {
+      console.error('Error getting logged user:', error);
+    }
   }
 }

@@ -9,7 +9,7 @@ export interface BookingImage {
   creationDate: string;
   departureDate: string;
   passengers: number;
-  price: string;
+  price: number;
   tourName?: string;
 }
 
@@ -25,5 +25,5 @@ export class BookingDetailsViewComponent implements OnInit {
 
   constructor() {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {console.log('this.bookingImages',this.bookingImages);}
 }

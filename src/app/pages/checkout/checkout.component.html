@@ -34,19 +34,6 @@
                 (onClick)="nextStepWithValidation(1)"
               ></p-button>
             </div>
-            <div class="flex pt-6 justify-end">
-              <p-button class="file" iconPos="right" (onClick)="saveTrip()">
-                <ng-template pTemplate="content">
-                  <div class="title">
-                    <div>Guarda este viaje</div>
-                    <div class="description">
-                      Sujeto a disponibilidad en el momento de la reserva y sólo
-                      para salidas con stock
-                    </div>
-                  </div>
-                </ng-template>
-              </p-button>
-            </div>
           </div>
 
           <!-- Step 2: Flights -->
@@ -54,6 +41,7 @@
             <app-flights
               *ngIf="orderDetails && prices"
               [orderDetails]="orderDetails"
+              [periodData]="periodData"
             ></app-flights>
             <div class="flight-buttons">
               <p-button
@@ -82,7 +70,9 @@
 
           <!-- Step 3: Travelers -->
           <div *ngSwitchCase="2">
-            <app-travelers></app-travelers>
+            <app-travelers
+              [allFieldsMandatory]="isAmadeusFlightSelected"
+            ></app-travelers>
             <div class="flex pt-6 justify-between">
               <p-button
                 label="Continuar"
@@ -100,83 +90,50 @@
               [processBooking]="processBooking.bind(this)"
               [departureDate]="periodData.dayOne || null"
               (goBackEvent)="onActiveIndexChange(2)"
-            ></app-payment>
+              (goToTravelers)="navigateToTravelers()"
+              (goToFlights)="navigateToFlights()"
+              [tourName]="tourName"
+              [subtotalPrice]="subtotal"
+            >
+            </app-payment>
           </div>
         </div>
+      </div>
+      <!-- Tour additional info component with all required inputs -->
+      <div class="tour-actions-container">
+        <app-tour-additional-info
+          [existingOrder]="orderDetails"
+          [tourName]="tourName"
+          [periodName]="periodData.name || ''"
+          [periodDates]="tourDates"
+          [selectedFlight]="selectedFlight"
+          [travelersSelected]="{
+            adults: travelersSelected.adults,
+            childs: travelersSelected.childs,
+            babies: travelersSelected.babies
+          }"
+          [periodID]="periodID"
+          [isAuthenticated]="isAuthenticated"
+        ></app-tour-additional-info>
       </div>
     </div>
 
     <!-- Right column - Order Summary and Discount Code -->
     <div class="right-column">
       <!-- Order Summary Section -->
-      <div class="order-summary">
-        <h3>Resumen del pedido</h3>
-        <div class="summary-content">
-          <!-- Tour base info -->
-          <div class="tour-base-info">
-            <!-- Selected items list -->
-            <div class="selected-items">
-              <div *ngFor="let item of summary" class="item">
-                <span>{{ item.description }}</span>
-                <span *ngIf="item.value">
-                  <span>{{ item.qty }}</span>
-                  <span>x</span>
-                  <span>{{ item.value | currencyFormat : "EUR" }}</span>
-                  <span>=</span>
-                  <span>{{
-                    item.value * item.qty | currencyFormat : "EUR"
-                  }}</span>
-                </span>
-                <span *ngIf="!item.value">
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                  <span>incluido</span>
-                </span>
-              </div>
-            </div>
-            <!-- Points section -->
-            <br /><br />
-            <div *ngIf="isAuthenticated; else notAuthenticated">
-              <p>Acumulas {{ subtotal * 0.03 | number:'1.0-0' }} puntos con este viaje</p>
-              <p-message
-                severity="secondary"
-                size="small"
-                icon="pi pi-exclamation-circle"
-              >
-                Se genera un abono del 3% del importe del viaje en puntos a
-                descontar en futuras compras.
-              </p-message>
-            </div>
-            
-            <ng-template #notAuthenticated>
-              <p-message
-                severity="warn"
-                size="small"
-                icon="pi pi-info-circle"
-              >
-                Para acumular puntos, es necesario iniciar sesión.
-              </p-message>
-            </ng-template>
-            <!-- Total section -->
-            <div class="total-section">
-              <div class="total">
-                <span>TOTAL</span>
-                <span class="price">{{ total | currencyFormat : "EUR" }}</span>
-              </div>
-            </div>
-            <!-- Flights info if selected -->
-            <app-flight-section
-              *ngIf="
-                selectedFlight &&
-                !selectedFlight?.name?.toLowerCase()?.includes('sin ')
-              "
-              [flight]="selectedFlight"
-            ></app-flight-section>
-          </div>
-        </div>
-      </div>
+      <app-summary-table
+        [summary]="summary"
+        [subtotal]="subtotal"
+        [total]="total"
+        [isAuthenticated]="isAuthenticated"
+        [selectedFlight]="selectedFlight"
+        [showPointsSection]="true"
+        [showTotalSection]="true"
+        [showFlightSection]="true"
+        [currency]="'EUR'"
+        [title]="'Resumen del pedido'"
+      >
+      </app-summary-table>
 
       <app-discount-code
         [orderTotal]="subtotal"
@@ -217,7 +174,6 @@
     ></app-budget-dialog>
   </p-dialog>
 
-  <!-- Add the login modal at the bottom of the template -->
   <app-login-modal
     [visible]="loginDialogVisible"
     (close)="closeLoginModal()"

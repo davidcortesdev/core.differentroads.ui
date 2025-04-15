@@ -55,6 +55,13 @@ $a: var(--background-azul);
             align-items: start;
         }
     }
+
+    .loading-container {
+        display: flex;
+        justify-content: center;
+        padding: 2rem 0;
+    }
+
     .image-container {
         width: 100%;
         max-width: 200px;

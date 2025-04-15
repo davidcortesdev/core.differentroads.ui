@@ -62,7 +62,7 @@
 
   .pi-user {
     font-size: 1rem;
-    color: #1976d2;
+    /*color: #1976d2;*/
     padding: 0.4rem;
     border-radius: 50%;
     width: 2rem;
@@ -77,7 +77,7 @@
 .passenger-type {
   font-weight: 600;
   font-size: 0.9rem;
-  color: #495057;
+  /*color: #495057;*/
   text-transform: uppercase;
   letter-spacing: 0.5px;
   padding: 0.2rem 0.6rem;
@@ -95,7 +95,7 @@
   margin-top: 0.25rem;
   margin-bottom: 0.75rem;
   font-size: 1.3rem;
-  color: #212529;
+  /*color: #212529;*/
   font-weight: 600;
   border-bottom: 1px solid #e9ecef;
   padding-bottom: 0.4rem;
@@ -124,7 +124,7 @@
   font-weight: 500;
   min-width: 140px;
   width: 40%;
-  color: #6c757d;
+  /*color: #6c757d;*/
   font-size: 0.875rem;
   display: flex;
   align-items: center;
@@ -135,7 +135,7 @@
 
 .detail-value {
   width: 60%;
-  color: #212529;
+  /*color: #212529;*/
   font-weight: 500;
   padding: 0.15rem 0;
   text-align: right;
@@ -166,21 +166,21 @@
   gap: 0.5rem;
   padding: 0.4rem 0.5rem;
   border-radius: 4px;
-  background-color: #94898960; /* Mismo color que la habitación */
+  background-color: var(--p-primary-500);
   max-width: calc(100% - 50px);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 
   i {
-    color: #495057;
+    color: #fff;
     font-size: 0.9rem;
     min-width: 14px;
     flex-shrink: 0;
   }
 
   span {
-    color: #495057;
+    color: #fff;
     font-size: 0.75rem;
     font-weight: 400;
     white-space: nowrap;

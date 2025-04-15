@@ -1,3 +1,11 @@
-<div class="tour-reviews-container">
-  <app-reviews [reviews]="reviewsCards"></app-reviews>
+<div>
+  <div *ngIf="reviewsCards.length > 0" class="tour-reviews-container">
+    <app-reviews 
+      [reviews]="reviewsCards">
+    </app-reviews>
+  </div>
+
+  <div *ngIf="loading" class="tour-reviews-container loading">
+    <div class="loading-indicator">Cargando reseñas...</div>
+  </div>
 </div>

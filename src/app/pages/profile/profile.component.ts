@@ -16,6 +16,12 @@ export interface PersonalInfo {
   sexo: string;
   fechaNacimiento: string;
   avatarUrl: string;
+  ciudad: string;
+  codigoPostal: string;
+  fechaExpedicionDni: string;
+  fechaCaducidadDni: string;
+  paisExpedicion: string;
+  rol: string;
 }
 
 @Component({
@@ -44,6 +50,7 @@ export class ProfileComponent implements OnInit {
 
   fetchUserData(email: string) {
     this.usersService.getUserByEmail(email).subscribe((user) => {
+      console.log('User data from service:', user);
       this.personalInfo = {
         id: user._id,
         nombre: user.names || '',
@@ -64,26 +71,46 @@ export class ProfileComponent implements OnInit {
           ? this.formatDate(new Date(user.birthdate))
           : '',
         avatarUrl: user?.profileImage || this.avatarUrl,
+        ciudad: user?.city || '',
+        codigoPostal: user?.postalCode || '',
+        fechaExpedicionDni: user.dniIssueDate
+          ? this.formatDate(new Date(user.dniIssueDate))
+          : '',
+        fechaCaducidadDni: user.dniExpirationDate 
+          ? this.formatDate(new Date(user.dniExpirationDate))
+          : '',
+        paisExpedicion: user.passportCountry || '',
+        rol: user.rol || ''
       };
+      console.log('Formatted user data:', this.personalInfo);
     });
   }
 
-  formatDate(date: Date): string {
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
+  formatDate(dateInput: Date | string): string {
+    if (!dateInput) return '';
+    
+    // Si ya es una cadena formateada (como dd/mm/yyyy), devuélvela
+    if (typeof dateInput === 'string' && dateInput.includes('/')) {
+      return dateInput;
+    }
+    
+    // Convertir a objeto Date si es una cadena
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    
+    // Usar UTC methods para evitar problemas de zona horaria
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const year = date.getUTCFullYear();
     return `${day}/${month}/${year}`;
   }
 
   toggleEdit() {
     this.isEditing = !this.isEditing;
     if (!this.isEditing) {
-      this.saveUserData();
+      // Si se cancela la edición, recargar los datos del usuario
+      this.fetchUserData(this.userEmail);
     }
   }
 
-  saveUserData() {
-    console.log('Información guardada:', this.personalInfo);
-    // Aquí puedes agregar la lógica para guardar los datos actualizados
-  }
+
 }

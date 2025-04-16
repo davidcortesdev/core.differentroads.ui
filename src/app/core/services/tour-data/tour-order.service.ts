@@ -207,6 +207,7 @@ export class TourOrderService {
     status: 'Budget' | 'AB';
     owner: string;
     traveler?: { name: string; email: string; phone: string };
+    price?: number;
   }): Observable<Order> {
     const selectedPeriod = this.getCurrentDateInfo();
     if (!selectedPeriod.periodID) {
@@ -222,6 +223,7 @@ export class TourOrderService {
         this.selectedTravelersSource.getValue(),
         options.traveler
       ),
+      price: options.price || 0,
       flights: [
         {
           id: selectedPeriod?.flightID || '',

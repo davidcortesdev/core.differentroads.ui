@@ -405,6 +405,9 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       try {
         const data = await this.scalapayService.createOrder(orderDataWithTipo);
         
+        //TODO: Revisar que se graba en base de datos el token de scalapay
+        console.log('Scalapay order created:', data);
+        console.log('PublicID:',publicID);
         // Update the payment with the Scalapay token before redirecting
         if (data && data.token) {
           this.bookingsService.updatePayment(publicID, {

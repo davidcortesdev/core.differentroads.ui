@@ -511,14 +511,22 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
         (activity) => index + 1 === activity.day
       );
 
+      console.log('hotels', this.hotels);
+      console.log('hotelsData', this.hotelsData);
+      console.log('day', day);
+      console.log('index', index);
+
+      console.log('filter', this.hotels?.find((hotel) => hotel.days?.includes(`${index + 1}`)));
       // Fix: Safely check if hotel.days exists before using includes
       const hotelByDay = this.hotels?.find((hotel) =>
         hotel.days && hotel.days.includes(`${index + 1}`)
       );
-
+console.log('hotelByDay',hotelByDay);
+      
       const hotel = this.hotelsData.find(
-        (hotelData) => hotelData.id === hotelByDay?.hotels?.[0]?.id
+        (hotelData) => hotelData.externalID === hotelByDay?.hotels?.[0]?.externalID
       );
+      console.log('hotel',hotel);
 
       return {
         title: day.name,

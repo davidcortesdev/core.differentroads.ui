@@ -422,6 +422,7 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
           this.currentPeriod = period;
           this.tripType = period.tripType || '';
           this.hotels = period.hotels;
+          console.log('hotels', this.hotels);
           this.fetchHotels();
 
           const allActivities = [
@@ -661,11 +662,14 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
         // Check if the hotel already exists in hotelsData
         if (
           !this.hotelsData.some(
-            (existingHotel) => existingHotel.id === hotel.id
+            (existingHotel) => existingHotel.externalID === hotel.externalID
           )
         ) {
-          this.hotelsService.getHotelById(hotel.id).subscribe({
+          console.log('Fetching hotel:', hotel.externalID);
+          console.log('hotelsData:', hotel);
+          this.hotelsService.getHotelByExternalId(hotel.externalID).subscribe({
             next: (hotelData) => {
+              console.log('Hotel data:', hotelData);
               this.hotelsData.push(hotelData);
               // Update the itinerary after fetching hotel data
               this.updateItinerary();

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { map, Observable } from 'rxjs';
+import { map, Observable, catchError, switchMap, tap, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Activity } from '../models/tours/activity.model';
 import { Insurance } from '../models/tours/insurance.model';
@@ -95,5 +95,26 @@ export class PeriodsService {
         [key: string]: { priceData: PriceData[]; availability?: number };
       }>(`${this.DATA_API_URL}/${id}/prices`)
       .pipe(map((response) => response || []));
+  }
+
+  getActivitiesByPeriodId(periodId: string): Observable<Activity[]> {
+    const directUrl = `${environment.apiUrl}/data/cms/collections/es/activities/filter-by/activityId/${periodId}?selectedFields=all`;
+    return this.http.get<any>(directUrl).pipe(
+      tap(response => {
+      }),
+      map(response => {
+        let activities: Activity[] = [];
+        if (Array.isArray(response)) {
+          activities = response;
+        } else if (response && response.data && Array.isArray(response.data)) {
+          activities = response.data;
+        } else if (response && response.items && Array.isArray(response.items)) {
+          activities = response.items;
+        }
+        return activities;
+      }),
+      catchError(error => {      return of([]);
+      })
+    );
   }
 }

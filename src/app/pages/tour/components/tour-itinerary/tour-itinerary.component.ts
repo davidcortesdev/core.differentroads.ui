@@ -425,6 +425,7 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
           console.log('hotels', this.hotels);
           this.fetchHotels();
 
+          // Get activities from period details
           const allActivities = [
             ...(period.activities || []),
             ...(period.includedActivities || []),
@@ -435,6 +436,40 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
             ...activity,
             price: 0, // Initialize with 0, will be updated when prices load
           }));
+
+          // Fetch additional activities using getActivitiesByPeriodId
+          this.periodsService.getActivitiesByPeriodId(this.selectedOption.value)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: (additionalActivities) => {
+                console.log('Additional activities:', additionalActivities);
+                
+                // Add additional activities to the activities array if they don't already exist
+                if (additionalActivities && additionalActivities.length > 0) {
+                  additionalActivities.forEach(activity => {
+                    // Check if activity already exists in the array
+                  /*  const existingIndex = this.activities.findIndex(
+                      a => a.activityId === activity.activityId
+                    );*/
+                    
+                    //if (existingIndex === -1) {
+                      // Add new activity with price initialized to 0
+                      this.activities.push({
+                        ...activity,
+                        price: 0
+                      });
+                    //}
+                    console.log('Activities after adding:', this.activities);
+                  });
+                  
+                  // Update the itinerary with the new activities
+                  this.updateItinerary();
+                }
+              },
+              error: (error) => {
+                console.error('Error fetching additional activities:', error);
+              }
+            });
 
           // For each activity, get its price and update the activities array
           allActivities.forEach((activity) => {
@@ -505,16 +540,15 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
       );
       return;
     }
-
+console.log('this.activities',this.activities);
     this.itinerary = selectedItinerary['days'].map((day, index) => {
       const dayActivities = this.activities.filter(
         (activity) => index + 1 === activity.day
       );
+      console.log('index-dayActivities',index);
+      console.log('dayActivities',dayActivities);
 
-      console.log('hotels', this.hotels);
-      console.log('hotelsData', this.hotelsData);
-      console.log('day', day);
-      console.log('index', index);
+
 
       console.log('filter', this.hotels?.find((hotel) => hotel.days?.includes(`${index + 1}`)));
       // Fix: Safely check if hotel.days exists before using includes

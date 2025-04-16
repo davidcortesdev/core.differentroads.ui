@@ -29,6 +29,11 @@ export class OrdersService {
     return this.http.get<Order>(`${this.API_URL}/${id}`, this.httpOptions);
   }
 
+   // Add alias method for getOrderById to match what's used in the component
+   getOrderById(id: string): Observable<Order> {
+    return this.getOrderDetails(id);
+  }
+
   updateOrder(id: string, order: Order): Observable<Order> {
     return this.http.put<Order>(
       `${this.API_URL}/${id}`,

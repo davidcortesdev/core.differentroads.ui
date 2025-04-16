@@ -407,7 +407,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         
         console.log('Scalapay order created:', data);
         console.log('PublicID:', publicID);
-        
+
         // Ensure we have a token before proceeding
         if (!data || !data.token) {
           console.error('No token received from Scalapay');
@@ -416,14 +416,14 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
             summary: 'Error de pago',
             detail: 'No se pudo obtener el token de Scalapay. Por favor, inténtelo de nuevo.'
           });
-          this.isLoading = false;
+          this.isLoading = false; // Ensure loading state is reset
           return;
         }
         
-        // Update the payment with the Scalapay token before redirecting
+        // Update the payment with the Scalapay token and provider before redirecting
         this.bookingsService.updatePayment(publicID, {
-          externalID: data.token,
-          provider: 'Scalapay'
+          externalID: data.token, // Assigning the token from data to externalID
+          provider: 'Scalapay'    // Adding the provider information
         }).subscribe({
           next: (updateResponse) => {
             console.log('Payment updated with Scalapay token:', updateResponse);
@@ -435,9 +435,8 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
             // Log the error details for debugging
             console.error('Error details:', JSON.stringify(updateError));
             
-            // Still redirect to Scalapay even if the update fails
-            // But first try one more time to update the payment
-            this.retryUpdatePayment(publicID, data.token, data.checkoutUrl);
+            // Attempt to retry updating the payment (using the previously suggested method)
+            this.retryUpdatePayment(publicID, data.token, data.checkoutUrl); 
           }
         });
       } catch (error) {
@@ -447,11 +446,11 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
           summary: 'Error de pago',
           detail: 'Ha ocurrido un error al procesar el pago con Scalapay. Por favor, inténtelo de nuevo.'
         });
-        this.isLoading = false;
+        this.isLoading = false; // Ensure loading state is reset
       }
     }
-    
-  // Add this new method to retry updating the payment
+
+  // Add this method if you haven't already from the previous suggestion
   private retryUpdatePayment(publicID: string, token: string, checkoutUrl: string): void {
     // Wait a moment before retrying
     setTimeout(() => {
@@ -470,7 +469,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
           window.location.href = checkoutUrl;
         }
       });
-    }, 1000);
+    }, 1000); // Retry after 1 second
   }
 
   async submitPayment() {

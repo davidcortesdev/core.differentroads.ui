@@ -1,140 +1,137 @@
-<div class="active-bookings">
-    <!-- Header with toggle functionality -->
-    <div class="booking-header" (click)="toggleContent()">
-      <span>{{ config.title }}</span>
-      <i class="pi" [ngClass]="{
-        'pi-chevron-down arrow-down': !isExpanded,
-        'pi-chevron-up arrow-up': isExpanded
-      }"></i>
+<div class="active">
+  <!-- Header with toggle functionality -->
+  <div class="header" (click)="toggleContent()">
+    <span>{{ config.title }}</span>
+    <i class="pi" [ngClass]="{
+      'pi-chevron-down arrow-down': !isExpanded,
+      'pi-chevron-up arrow-up': isExpanded
+    }"></i>
+  </div>
+
+  <!-- Collapsible content section -->
+  <div class="content" [ngClass]="{ hidden: !isExpanded }">
+    <!-- Loading indicator -->
+    <div class="loading" *ngIf="loading">
+      <p-progressSpinner strokeWidth="3" animationDuration=".5s"></p-progressSpinner>
     </div>
-  
-    <!-- Collapsible content section -->
-    <div class="booking-content" [ngClass]="{ hidden: !isExpanded }">
-      <!-- Loading indicator -->
-      <div class="loading-container" *ngIf="loading">
-        <p-progressSpinner strokeWidth="3" animationDuration=".5s"></p-progressSpinner>
-      </div>
-  
-      <!-- Empty state message when no items are available -->
-      <div class="empty-state" *ngIf="!loading && (!bookingItems || bookingItems.length === 0)">
-        <p>{{ config.emptyMessage }}</p>
-      </div>
-  
-      <!-- Bookings data view -->
-      <p-dataView #dv [value]="bookingItems" [rows]="5" [paginator]="true" styleClass="transparent-dataview"
-      *ngIf="!loading && bookingItems.length > 0">
-        <ng-template #list let-items>
-          <div class="booking-list">
-            <div class="booking-item" *ngFor="let item of items; trackBy: trackById">
-              <div class="booking-item-content">
-                <!-- Item image -->
-                <div class="image-container">
-                  <p-skeleton *ngIf="!item.image || (item.imageLoading === true)" width="100%" height="100%"
-                    styleClass="booking-image-skeleton"></p-skeleton>
-                  <img *ngIf="item.image && (item.imageLoading !== true)" [src]="item.image" [alt]="item.title" 
-                    (error)="imageLoadError(item)" />
+
+    <!-- Empty state message when no items are available -->
+    <div class="empty" *ngIf="!loading && (!bookingItems || bookingItems.length === 0)">
+      <p>{{ config.emptyMessage }}</p>
+    </div>
+
+    <!-- Bookings data view -->
+    <p-dataView #dv [value]="bookingItems" [rows]="5" [paginator]="true" styleClass="transparent-dataview"
+    *ngIf="!loading && bookingItems.length > 0">
+      <ng-template #list let-items>
+        <div class="list">
+          <div class="item" *ngFor="let item of items; trackBy: trackById">
+            <div class="item-content">
+              <!-- Item image -->
+              <div class="image">
+                <p-skeleton *ngIf="!item.image || (item.imageLoading === true)" width="100%" height="100%"
+                  styleClass="booking-image-skeleton"></p-skeleton>
+                <img *ngIf="item.image && (item.imageLoading !== true)" [src]="item.image" [alt]="item.title" 
+                  (error)="imageLoadError(item)" />
+              </div>
+
+              <!-- Item information -->
+              <div class="sect">
+                <div class="title-section">
+                  <h2>{{ item.title }}</h2>
                 </div>
-  
-                <!-- Item information -->
-                <div class="info-sections">
-                  <div class="title-section">
-                    <h2>{{ item.title }}</h2>
-                  </div>
-                  <div class="info-content">
-                    <!-- Show the appropriate ID field based on component type -->
-                    <div class="info-row">
-                      <span class="label">{{ 
-                        config.type === 'active-bookings' ? 'Nº Reserva:' : 
-                        config.type === 'recent-budgets' ? 'Nº Presupuesto:' : 
-                        'Nº Reserva:'
-                      }}</span>
-                      <span class="value budget">
-                        {{ 
-                          config.type === 'active-bookings' ? (item.reservationNumber || '') : 
-                          config.type === 'recent-budgets' ? (item.ID || '') : 
-                          (item.number || item.code || '')
-                        }}
-                      </span>
-                    </div>
-                    <div class="info-row">
-                      <span class="label">Fecha de creación:</span>
-                      <span class="value">{{ item.creationDate | date : "dd/MM/yyyy" }}</span>
-                    </div>
-                    <div class="info-row status">
-                      <span class="label">Estado:</span>
-                      <span class="value">{{ item.status }}</span>
-                    </div>
-                    <!-- Show origin only for travel history -->
-                    <div class="info-row" *ngIf="item.origin && config.type === 'travel-history'">
-                      <span class="label">Origen:</span>
-                      <span class="value">{{ item.origin }}</span>
-                    </div>
-                  </div>
-                </div>
-  
-                <!-- Departure and passenger info -->
-                <div class="info-right">
-                  <div class="departure-info">
-                    <span>Salida: </span>
-                    <strong>
+                <div class="cont">
+                  <!-- Show the appropriate ID field based on component type -->
+                  <div class="info-row">
+                    <span class="label">{{ 
+                      config.type === 'active-bookings' ? 'Nº Reserva:' : 
+                      config.type === 'recent-budgets' ? 'Nº Presupuesto:' : 
+                      'Nº Reserva:'
+                    }}</span>
+                    <span class="value budget">
                       {{ 
-                        item.departureName ? item.departureName : 
-                        (item.departureDate | date : "dd/MM/yyyy") 
+                        config.type === 'active-bookings' ? (item.reservationNumber || '') : 
+                        config.type === 'recent-budgets' ? (item.ID || '') : 
+                        (item.number || item.code || '')
                       }}
-                    </strong>
+                    </span>
                   </div>
-                  <div class="passenger-price" *ngIf="item.passengers || item.price">
-                    <div class="passenger-info" *ngIf="item.passengers">
-                      <span class="num-users">{{ item.passengers }}</span>
-                      <i class="pi pi-users"></i>
-                    </div>
-                    <!-- Use currencyFormat pipe for budgets if available -->
-                    <strong *ngIf="item.price && config.type === 'recent-budgets'">
-                      {{ item.price | currencyFormat : "EUR" }}
-                    </strong>
-                    <!-- Use currency pipe for other types -->
-                    <strong *ngIf="item.price && config.type !== 'recent-budgets'">
-                      {{ item.price | currency : "EUR" }}
-                    </strong>
+                  <div class="info-row">
+                    <span class="label">Fecha de creación:</span>
+                    <span class="value">{{ item.creationDate | date : "dd/MM/yyyy" }}</span>
+                  </div>
+                  <div class="info-row status">
+                    <span class="label">Estado:</span>
+                    <span class="value">{{ item.status }}</span>
+                  </div>
+                  <!-- Show origin only for travel history -->
+                  <div class="info-row" *ngIf="item.origin && config.type === 'travel-history'">
+                    <span class="label">Origen:</span>
+                    <span class="value">{{ item.origin }}</span>
                   </div>
                 </div>
-  
-                <!-- Action buttons -->
-                <div class="buttons">
-                  <div class="top-buttons">
-                    <p-button *ngIf="config.actions.download" 
-                      [label]="config.buttonLabels?.download || 'Descargar'" 
-                      styleClass="p-button-outlined" 
-                      [loading]="downloadLoading[item.id]"
-                      (click)="downloadItem(item)"></p-button>
-                    <p-button *ngIf="config.actions.send" 
-                      [label]="config.buttonLabels?.send || 'Enviar'" 
-                      styleClass="sendbtn"
-                      [loading]="notificationLoading[item.id]"
-                      (click)="sendItem(item)"></p-button>
+              </div>
+
+              <!-- Departure and passenger info -->
+              <div class="right">
+                <div class="departure-info">
+                  <span>Salida: </span>
+                  <strong>
+                    {{ item.departureDate | date : "dd/MM/yyyy" }}
+                  </strong>
+                </div>
+                <div class="price" *ngIf="item.passengers || item.price">
+                  <div class="info" *ngIf="item.passengers">
+                    <span class="num-users">{{ item.passengers }}</span>
+                    <i class="pi pi-users"></i>
                   </div>
-                  <div class="bottom-buttons">
-                    <p-button *ngIf="config.actions.view" 
-                      [label]="config.buttonLabels?.view || 'Ver detalle'" 
-                      styleClass="p-button-rounded" 
-                      (click)="viewItem(item)"></p-button>
-                    <p-button *ngIf="config.actions.reserve && config.type === 'recent-budgets'" 
-                      [label]="config.buttonLabels?.reserve || 'Reservar'" 
-                      styleClass="p-button-rounded" 
-                      (click)="reserveItem(item)"></p-button>
-                  </div>
+                  <!-- Use currencyFormat pipe for budgets if available -->
+                  <strong *ngIf="item.price && config.type === 'recent-budgets'">
+                    {{ item.price | currencyFormat : "EUR" }}
+                  </strong>
+                  <!-- Use currency pipe for other types -->
+                  <strong *ngIf="item.price && config.type !== 'recent-budgets'">
+                    {{ item.price | currency : "EUR" }}
+                  </strong>
+                </div>
+              </div>
+
+              <!-- Action buttons -->
+              <div class="buttons">
+                <div class="top-buttons">
+                  <p-button *ngIf="config.actions.download" 
+                    [label]="config.buttonLabels?.download || 'Descargar'" 
+                    styleClass="p-button-outlined" 
+                    [loading]="downloadLoading[item.id]"
+                    (click)="downloadItem(item)"></p-button>
+                  <p-button *ngIf="config.actions.send" 
+                    [label]="config.buttonLabels?.send || 'Enviar'" 
+                    styleClass="sendbtn"
+                    [loading]="notificationLoading[item.id]"
+                    (click)="sendItem(item)"></p-button>
+                </div>
+                <div class="bottom-buttons">
+                  <p-button *ngIf="config.actions.view" 
+                    [label]="config.buttonLabels?.view || 'Ver detalle'" 
+                    styleClass="p-button-rounded" 
+                    (click)="viewItem(item)"></p-button>
+                  <p-button *ngIf="config.actions.reserve && config.type === 'recent-budgets'" 
+                    [label]="config.buttonLabels?.reserve || 'Reservar'" 
+                    styleClass="p-button-rounded" 
+                    (click)="reserveItem(item)"></p-button>
                 </div>
               </div>
             </div>
           </div>
-        </ng-template>
-  
-        <!-- Empty state template -->
-        <ng-template #empty>
-          <div class="empty-message">
-            {{ config.emptyMessage }}
-          </div>
-        </ng-template>
-      </p-dataView>
-    </div>
+        </div>
+      </ng-template>
+
+      <!-- Empty state template -->
+      <ng-template #empty>
+        <div class="empty-message">
+          {{ config.emptyMessage }}
+        </div>
+      </ng-template>
+    </p-dataView>
   </div>
+</div>

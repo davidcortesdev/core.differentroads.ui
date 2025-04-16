@@ -1,6 +1,6 @@
 .checkout {
   background-color: var(--accent-white);
-  color: var(--background-azul); // Add this to set default text color
+  color: var(--background-azul);
 
   &-title {
     font-size: 1.3rem;
@@ -9,20 +9,20 @@
     padding: 0 2rem;
     padding-top: 2rem;
     margin: 0;
-    color: var(--background-azul); // Ensure title has the correct color
+    color: var(--background-azul);
   }
   &-subtitle {
     font-size: 0.8rem;
     font-weight: 500;
     margin-top: 0.1rem;
     padding: 0 2rem;
-    color: var(--background-azul); // Ensure subtitle has the correct color
+    color: var(--background-azul);
   }
 
   /* Solución específica para eliminar los márgenes del componente p-steps */
   ::ng-deep .p-steps {
-    margin: 0 !important; // Elimina los márgenes laterales
-    padding: 0 !important; // Elimina el padding lateral
+    margin: 0 !important;
+    padding: 0 !important;
 
     .p-steps-item:first-child {
       padding-left: 0 !important;
@@ -50,10 +50,10 @@
 
         ::ng-deep .p-steps {
           font-size: 14px;
-          margin-bottom: 1rem !important; // Add more space below the steps
+          margin-bottom: 1rem !important;
           .p-steps-item {
             &:before {
-              border-top: 2px solid var(--background-azul); // Línea azul
+              border-top: 2px solid var(--background-azul);
             }
           }
           .p-steps-item-active .p-steps-item-label {
@@ -73,7 +73,6 @@
           }
         }
 
-        // Add space between steps and content
         > div:nth-child(2) {
           margin-top: 1.5rem;
           padding-top: 1rem;
@@ -81,7 +80,6 @@
       }
     }
 
-    /* Apply sticky positioning to the right column */
     .right-column {
       position: sticky;
       top: 2rem;
@@ -96,13 +94,13 @@
       height: fit-content;
       position: relative;
       font-size: 0.9rem;
-      color: var(--background-azul); // Add this to ensure text color in main content
+      color: var(--background-azul);
 
       h3 {
         margin-bottom: 1.5rem;
         padding-bottom: 1rem;
         border-bottom: 1px solid #eee;
-        color: var(--background-azul); // Ensure heading has correct color
+        color: var(--background-azul);
       }
 
       .summary-content {
@@ -439,9 +437,7 @@ p-button.continue-button ::ng-deep .p-button {
   }
 }
 
-// Add these styles at the end of the file
-
-// Optimized styles for tour-additional-info component
+// Styles for tour-additional-info component
 .tour-actions-container {
   margin-top: 1.5rem;
   width: 100%;
@@ -454,11 +450,12 @@ p-button.continue-button ::ng-deep .p-button {
     justify-content: space-between;
     gap: 1rem;
     width: 100%;
+    flex-wrap: nowrap !important; // Asegura que siempre estén en una sola fila
   }
 
   .action-card {
     flex: 1;
-    min-width: 0;
+    min-width: 0; // Permite que las cards se reduzcan en lugar de desbordar
     cursor: pointer;
 
     .p-card-body {
@@ -485,19 +482,33 @@ p-button.continue-button ::ng-deep .p-button {
     white-space: normal;
     font-weight: 500;
   }
+
   // Responsive adjustments
   @media screen and (max-width: 768px) {
     .tour-additional-info-container {
-      flex-wrap: nowrap;
+      flex-wrap: nowrap !important; // Redundante pero importante
     }
 
     .action-card {
-      flex-basis: 48%;
+      flex-basis: auto; // En lugar de un porcentaje fijo
+    }
+
+    .card-text {
+      font-size: 0.75rem; // Texto más pequeño en móviles
     }
   }
+
   @media screen and (max-width: 480px) {
-    .action-card {
-      flex-basis: 100%;
+    .tour-additional-info-container {
+      gap: 0.5rem; // Menor espacio entre elementos
+    }
+
+    .card-content {
+      gap: 0.25rem; // Menor espacio entre icono y texto
+    }
+
+    .card-text {
+      font-size: 0.7rem; // Texto aún más pequeño
     }
   }
 }

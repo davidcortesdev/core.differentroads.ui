@@ -408,20 +408,19 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         console.log('Scalapay order created:', data);
         console.log('PublicID:', publicID);
         
-        // Add validation to ensure token exists and is not empty
         if (data && data.token && data.token.trim() !== '') {
           console.log('Scalapay token received:', data.token);
           
-          // This is where we update the externalID with the Scalapay token
           this.bookingsService.updatePayment(publicID, {
             externalID: data.token,
             provider: 'Scalapay'
+            
           }).subscribe({
             next: (updateResponse) => {
               console.log('Payment updated with Scalapay token:', updateResponse);
               console.log('Confirmed externalID value:', data.token);
-              // Redirect to Scalapay checkout after updating the payment
               window.location.href = data.checkoutUrl;
+              
             },
             error: (updateError) => {
               console.error('Error updating payment with Scalapay token:', updateError);
@@ -484,40 +483,106 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         provider = 'scalapay';
       }
 
-      const payment = await this.createPayment(bookingID, {
-        amount: paymentAmount,
-        registerBy: this.authService.getCurrentUsername(),
-        method: this.paymentMethod!,
-        provider: provider
-        // Remove externalID initialization completely
-      });
+      // For Scalapay payments, get the token first before creating the payment record
+      if (this.paymentType === 'installments') {
+        console.log('Processing Scalapay payment - getting token first');
+        
+        try {
+          // Create Scalapay order to get token
+          const createItem = (): ScalapayItem => ({
+            price: { currency: 'EUR', amount: this.totalPrice.toString() },
+            name: `Tour - ${new Date().toLocaleDateString()}`,
+            category: 'travel',
+            brand: 'Different Roads',
+            sku: `SKU-${bookingID}`,
+            quantity: 1,
+          });
+      
+          const createConsumer = (): ScalapayConsumer => ({
+            phoneNumber: '0400000001',
+            givenNames: 'Joe',
+            surname: 'Consumer',
+            email: 'test@scalapay.com',
+          });
+      
+          const createMerchant = () => ({
+            redirectCancelUrl: `${window.location.origin}/reservation/${bookingID}/error/pending`,
+            redirectConfirmUrl: `${window.location.origin}/reservation/${bookingID}/success/pending`,
+          });
+      
+          const createExtensions = (): ScalapayExtensions => ({
+            industry: {
+              travel: { startDate: '2023-11-30', endDate: '2023-12-18' },
+            },
+          });
+      
+          const orderData = {
+            product: 'pay-in-3',
+            type: 'online',
+            orderExpiryMilliseconds: 600000,
+            consumer: createConsumer(),
+            extensions: createExtensions(),
+            merchant: createMerchant(),
+            frequency: { number: 1, frequencyType: 'monthly' },
+            totalAmount: { currency: 'EUR', amount: this.totalPrice.toString() },
+            items: [createItem()],
+            merchantReference: bookingID,
+            taxAmount: { currency: 'EUR', amount: '0' },
+            shippingAmount: { currency: 'EUR', amount: '0' },
+            channel: 'online',
+          };
+          
+          const scalapayResponse = await this.scalapayService.createOrder(orderData);
+          
+          if (scalapayResponse && scalapayResponse.token && scalapayResponse.token.trim() !== '') {
+            console.log('Scalapay token received:', scalapayResponse.token);
+            
+            // Create payment with token and provider already included
+            const payment = await this.createPayment(bookingID, {
+              amount: paymentAmount,
+              registerBy: this.authService.getCurrentUsername(),
+              method: this.paymentMethod!,
+              provider: 'Scalapay',
+              externalID: scalapayResponse.token
+            });
+            
+            console.log('Payment created with Scalapay token:', payment);
+            window.location.href = scalapayResponse.checkoutUrl;
+            return;
+          } else {
+            throw new Error('No valid token received from Scalapay');
+          }
+        } catch (error) {
+          console.error('Error processing Scalapay payment:', error);
+          throw error;
+        }
+      } else {
+        // For non-Scalapay payments, proceed as normal
+        const payment = await this.createPayment(bookingID, {
+          amount: paymentAmount,
+          registerBy: this.authService.getCurrentUsername(),
+          method: this.paymentMethod!,
+          provider: provider
+        });
+        
+        const publicID = payment.publicID;
+        console.log('Payment created:', payment);
 
-      const publicID = payment.publicID;
-      console.log('Payment created:', payment);
-
-      // Handle payment method redirect
-      if (this.paymentMethod === 'creditCard') {
-        console.log('Redirecting to credit card payment');
-        this.redirectToRedSys(code, paymentAmount, bookingID, publicID);
-        return;
-      } else if (this.paymentMethod === 'transfer') {
-        console.log('Redirecting to bank transfer page');
-        this.router.navigate([
-          `/reservation/${bookingID}/transfer/${publicID}`,
-        ]);
-        return;
-      } else if (this.paymentType === 'installments') {
-        console.log('Processing Scalapay payment');
-        this.processScalapay(bookingID, publicID);
-        return;
+        // Handle payment method redirect
+        if (this.paymentMethod === 'creditCard') {
+          console.log('Redirecting to credit card payment');
+          this.redirectToRedSys(code, paymentAmount, bookingID, publicID);
+          return;
+        } else if (this.paymentMethod === 'transfer') {
+          console.log('Redirecting to bank transfer page');
+          this.router.navigate([
+            `/reservation/${bookingID}/transfer/${publicID}`,
+          ]);
+          return;
+        }
       }
-      // If we reach here, it means the payment method was not recognized
-      console.error('Unknown payment method:', this.paymentMethod);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Método de pago desconocido',
-        detail: 'El método de pago seleccionado no es válido.',
-      })
+      
+      // ... rest of the code ...
     } catch (error: any) {
       console.error('Error in payment process:', error);
       this.messageService.add({

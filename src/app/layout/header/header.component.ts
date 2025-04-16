@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, Renderer2 } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { LanguageService } from '../../core/services/language.service';
 import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
@@ -27,6 +27,7 @@ import {
 })
 export class HeaderComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
+  private documentClickListener: Function | null = null;
   isLoadingMenu = true;
   isLoadingUser = false;
 
@@ -53,7 +54,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private languageService: LanguageService,
     private generalConfigService: GeneralConfigService,
     private authService: AuthenticateService,
-    private usersService: UsersService
+    private usersService: UsersService,
+    private elementRef: ElementRef,
+    private renderer: Renderer2
   ) {}
 
   ngOnInit(): void {
@@ -64,6 +67,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.initializeMenu();
     this.initializeUserMenu();
     this.handleResponsiveMenus();
+    this.initializeClickOutside();
 
     // Verificar si hay una redirección de autenticación (por ejemplo, de Google)
     this.checkAuthRedirect().finally(() => {
@@ -74,6 +78,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     // Limpiar el listener de resize
     window.removeEventListener('resize', this.checkScreenSize.bind(this));
+    
+    // Clean up document click listener
+    if (this.documentClickListener) {
+      this.documentClickListener();
+      this.documentClickListener = null;
+    }
 
     // Limpiar todas las suscripciones
     this.destroy$.next();
@@ -101,6 +111,15 @@ export class HeaderComponent implements OnInit, OnDestroy {
     // Si está autenticado, la lógica para mostrar el menú se maneja en el template
   }
 
+  // Método para cerrar todos los menús móviles
+  public closeAllMobileMenus(): void {
+    // Find all mobile active menus and remove the active class
+    const mobileActiveMenus = document.querySelectorAll('.p-menubar-mobile-active');
+    mobileActiveMenus.forEach(menu => {
+      menu.classList.remove('p-menubar-mobile-active');
+    });
+  }
+
   // Getter para clases CSS condicionales
   get userChipClass(): string {
     if (this.loadingAuthState) return 'auth-loading';
@@ -125,6 +144,22 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   private initializeMenu(): void {
     this.fetchMenuConfig();
+  }
+
+  private initializeClickOutside(): void {
+    // Only add listener in mobile view
+    if (this.isMobileView) {
+      this.documentClickListener = this.renderer.listen('document', 'click', (event) => {
+        // Check if click is outside the header element
+        if (!this.elementRef.nativeElement.contains(event.target)) {
+          this.closeAllMobileMenus();
+        }
+      });
+    } else if (this.documentClickListener) {
+      // Remove listener if not in mobile view
+      this.documentClickListener();
+      this.documentClickListener = null;
+    }
   }
 
   private initializeUserMenu(): void {
@@ -205,7 +240,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   private checkScreenSize(): void {
     // Set mobile view flag based on screen width (tablet breakpoint)
+    const wasMobileView = this.isMobileView;
     this.isMobileView = window.innerWidth <= 992; // Same as $tablet-breakpoint
+    
+    // If mobile view status changed, update click outside listener
+    if (wasMobileView !== this.isMobileView) {
+      this.initializeClickOutside();
+    }
   }
 
   private createLink(slug: string, type: string): string {

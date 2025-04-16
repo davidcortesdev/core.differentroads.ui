@@ -256,7 +256,7 @@ export class BookingsService {
    */
   updatePayment(paymentId: string, data: Partial<Payment>): Observable<any> {
     return this.http.put<any>(
-      `https://api.differentroads.es/dev/payment/${paymentId}`,
+      `${this.API_URL}/payment/${paymentId}`,
       data,
       this.httpOptions
     );

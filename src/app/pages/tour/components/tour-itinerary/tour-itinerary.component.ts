@@ -422,6 +422,7 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
           this.currentPeriod = period;
           this.tripType = period.tripType || '';
           this.hotels = period.hotels;
+          console.log('hotels', this.hotels);
           this.fetchHotels();
 
           const allActivities = [
@@ -510,14 +511,22 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
         (activity) => index + 1 === activity.day
       );
 
+      console.log('hotels', this.hotels);
+      console.log('hotelsData', this.hotelsData);
+      console.log('day', day);
+      console.log('index', index);
+
+      console.log('filter', this.hotels?.find((hotel) => hotel.days?.includes(`${index + 1}`)));
       // Fix: Safely check if hotel.days exists before using includes
       const hotelByDay = this.hotels?.find((hotel) =>
         hotel.days && hotel.days.includes(`${index + 1}`)
       );
-
+console.log('hotelByDay',hotelByDay);
+      
       const hotel = this.hotelsData.find(
-        (hotelData) => hotelData.id === hotelByDay?.hotels?.[0]?.id
+        (hotelData) => hotelData.externalID === hotelByDay?.hotels?.[0]?.externalID
       );
+      console.log('hotel',hotel);
 
       return {
         title: day.name,
@@ -661,11 +670,14 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
         // Check if the hotel already exists in hotelsData
         if (
           !this.hotelsData.some(
-            (existingHotel) => existingHotel.id === hotel.id
+            (existingHotel) => existingHotel.externalID === hotel.externalID
           )
         ) {
-          this.hotelsService.getHotelById(hotel.id).subscribe({
+          console.log('Fetching hotel:', hotel.externalID);
+          console.log('hotelsData:', hotel);
+          this.hotelsService.getHotelByExternalId(hotel.externalID).subscribe({
             next: (hotelData) => {
+              console.log('Hotel data:', hotelData);
               this.hotelsData.push(hotelData);
               // Update the itinerary after fetching hotel data
               this.updateItinerary();

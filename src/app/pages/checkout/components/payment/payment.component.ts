@@ -405,80 +405,33 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       try {
         const data = await this.scalapayService.createOrder(orderDataWithTipo);
         
+        //TODO: Revisar que se graba en base de datos el token de scalapay
         console.log('Scalapay order created:', data);
-        console.log('PublicID:', publicID);
-
-        // Ensure we have a token before proceeding
-        if (!data || !data.token) {
-          console.error('No token received from Scalapay');
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error de pago',
-            detail: 'No se pudo obtener el token de Scalapay. Por favor, inténtelo de nuevo.'
+        console.log('PublicID:',publicID);
+        // Update the payment with the Scalapay token before redirecting
+        if (data && data.token) {
+          this.bookingsService.updatePayment(publicID, {
+            externalID: data.token
+          }).subscribe({
+            next: (updateResponse) => {
+              console.log('Payment updated with Scalapay token:', updateResponse);
+              // Redirect to Scalapay checkout after updating the payment
+              window.location.href = data.checkoutUrl;
+            },
+            error: (updateError) => {
+              console.error('Error updating payment with Scalapay token:', updateError);
+              // Still redirect to Scalapay even if the update fails
+              window.location.href = data.checkoutUrl;
+            }
           });
-          this.isLoading = false; // Ensure loading state is reset
-          return;
+        } else {
+          console.warn('No token received from Scalapay, redirecting without updating payment');
+          window.location.href = data.checkoutUrl;
         }
-
-        // Log the payload just before sending
-        console.log('Payload for updatePayment:', JSON.stringify({ externalID: data.token, provider: 'Scalapay' }));
-        
-        // Update the payment with the Scalapay token and provider before redirecting
-        // The object literal here includes externalID: data.token
-        this.bookingsService.updatePayment(publicID, {
-          externalID: data.token, // Assigning the token from data to externalID
-          provider: 'Scalapay'    // Adding the provider information
-        }).subscribe({
-          next: (updateResponse) => {
-            console.log('Payment updated with Scalapay token:', updateResponse);
-            // Redirect to Scalapay checkout after updating the payment
-            window.location.href = data.checkoutUrl;
-          },
-          error: (updateError) => {
-            console.error('Error updating payment with Scalapay token:', updateError);
-            // Log the error details for debugging
-            console.error('Error details:', JSON.stringify(updateError));
-            
-            // Attempt to retry updating the payment
-            this.retryUpdatePayment(publicID, data.token, data.checkoutUrl); 
-          }
-        });
       } catch (error) {
         console.error('Error processing Scalapay payment:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error de pago',
-          detail: 'Ha ocurrido un error al procesar el pago con Scalapay. Por favor, inténtelo de nuevo.'
-        });
-        this.isLoading = false; // Ensure loading state is reset
       }
     }
-
-  // Add this method if you haven't already from the previous suggestion
-  private retryUpdatePayment(publicID: string, token: string, checkoutUrl: string): void {
-    // Wait a moment before retrying
-    setTimeout(() => {
-      // Log the payload for retry
-      console.log('Payload for retryUpdatePayment:', JSON.stringify({ externalID: token, provider: 'Scalapay' }));
-
-      // The object literal here includes externalID: token
-      this.bookingsService.updatePayment(publicID, {
-        externalID: token,
-        provider: 'Scalapay'
-      }).subscribe({
-        next: (updateResponse) => {
-          console.log('Payment updated with Scalapay token on retry:', updateResponse);
-          window.location.href = checkoutUrl;
-        },
-        error: (updateError) => {
-          console.error('Error updating payment with Scalapay token on retry:', updateError);
-          // At this point, we'll redirect anyway but log the issue
-          console.warn('Redirecting to Scalapay without saving token. This may cause issues with payment verification.');
-          window.location.href = checkoutUrl;
-        }
-      });
-    }, 1000); // Retry after 1 second
-  }
 
   async submitPayment() {
     if (this.isLoading) return; // Prevent multiple submissions
@@ -515,10 +468,22 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
 
       console.log(`Processing payment of ${paymentAmount}`);
 
+      // Determine the provider based on payment method/type
+      let provider: string | undefined;
+      if (this.paymentMethod === 'creditCard') {
+        provider = 'redsys';
+      } else if (this.paymentMethod === 'transfer') {
+        provider = 'transfer';
+      } else if (this.paymentType === 'installments') {
+        provider = 'scalapay';
+      }
+
       const payment = await this.createPayment(bookingID, {
         amount: paymentAmount,
         registerBy: this.authService.getCurrentUsername(),
         method: this.paymentMethod!,
+        provider: provider,
+        externalID: '' // Initially empty, will be updated for Scalapay
       });
 
       const publicID = payment.publicID;
@@ -621,12 +586,15 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     this.goBackEvent.emit();
   }
 
+  // Update the createPayment method to include provider and externalID
   createPayment(
     bookingID: string,
     payment: {
       amount: number;
       registerBy: string;
       method: 'creditCard' | 'transfer';
+      provider?: string;
+      externalID?: string;
     }
   ): Promise<Payment> {
     return new Promise((resolve, reject) => {

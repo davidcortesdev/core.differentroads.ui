@@ -408,15 +408,18 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         console.log('Scalapay order created:', data);
         console.log('PublicID:', publicID);
         
-        // Update the payment with the Scalapay token before redirecting
-        if (data && data.token) {
+        // Add validation to ensure token exists and is not empty
+        if (data && data.token && data.token.trim() !== '') {
+          console.log('Scalapay token received:', data.token);
+          
           // This is where we update the externalID with the Scalapay token
           this.bookingsService.updatePayment(publicID, {
             externalID: data.token,
-            provider: 'scalapay' // Also ensure provider is set correctly
+            provider: 'Scalapay'
           }).subscribe({
             next: (updateResponse) => {
               console.log('Payment updated with Scalapay token:', updateResponse);
+              console.log('Confirmed externalID value:', data.token);
               // Redirect to Scalapay checkout after updating the payment
               window.location.href = data.checkoutUrl;
             },
@@ -427,7 +430,8 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
             }
           });
         } else {
-          console.warn('No token received from Scalapay, redirecting without updating payment');
+          console.warn('No valid token received from Scalapay:', data);
+          // You might want to handle this case differently
           window.location.href = data.checkoutUrl;
         }
       } catch (error) {

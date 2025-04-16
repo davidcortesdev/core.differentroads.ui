@@ -403,7 +403,9 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       const orderDataWithTipo: ScalapayOrderRequest = createOrderData();
   
       try {
-        // Get Scalapay token and checkout URL
+        // Log the request for debugging
+        console.log('Sending Scalapay order request:', orderDataWithTipo);
+        
         const data = await this.scalapayService.createOrder(orderDataWithTipo);
         
         console.log('Scalapay order created:', data);
@@ -412,7 +414,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         if (data && data.token && data.token.trim() !== '') {
           console.log('Scalapay token received:', data.token);
           
-          // Update the payment with the Scalapay token and provider
+          // Add error handling for the payment update
           this.bookingsService.updatePayment(publicID, {
             externalID: data.token,
             provider: 'Scalapay'
@@ -420,7 +422,11 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
             next: (updateResponse) => {
               console.log('Payment updated with Scalapay token:', updateResponse);
               console.log('Confirmed externalID value:', data.token);
-              window.location.href = data.checkoutUrl;
+              
+              // Add a small delay before redirecting to ensure the update completes
+              setTimeout(() => {
+                window.location.href = data.checkoutUrl;
+              }, 500);
             },
             error: (updateError) => {
               console.error('Error updating payment with Scalapay token:', updateError);
@@ -429,12 +435,22 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
             }
           });
         } else {
-          console.warn('No valid token received from Scalapay:', data);
-          // You might want to handle this case differently
-          window.location.href = data.checkoutUrl;
+          console.error('No valid token received from Scalapay:', data);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error de Scalapay',
+            detail: 'No se recibió un token válido de Scalapay. Por favor, inténtelo de nuevo.'
+          });
+          this.isLoading = false;
         }
       } catch (error) {
         console.error('Error processing Scalapay payment:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error de Scalapay',
+          detail: 'Ocurrió un error al procesar el pago con Scalapay. Por favor, inténtelo de nuevo.'
+        });
+        this.isLoading = false;
       }
     }
 

@@ -489,7 +489,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         registerBy: this.authService.getCurrentUsername(),
         method: this.paymentMethod!,
         provider: provider,
-        externalID: '' // Initially empty, will be updated for Scalapay
+
       });
 
       const publicID = payment.publicID;

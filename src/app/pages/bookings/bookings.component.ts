@@ -684,7 +684,21 @@ export class BookingsComponent implements OnInit {
           travelerData.passportID ||
           travelerData.docNum ||
           '';
-
+          // Obtener la descripción de la habitación si está disponible
+          let roomDescription = 'Sin asignar';
+        
+          // Intentar obtener la descripción de la habitación desde los datos del periodo
+          if (booking.periodData?.textSummary?.rooms && traveler.periodReservationModeID) {
+            const roomInfo = booking.periodData.textSummary.rooms[traveler.periodReservationModeID];
+            if (roomInfo && roomInfo.description) {
+              roomDescription = roomInfo.description;
+            } else if (roomInfo && roomInfo.name) {
+              roomDescription = roomInfo.name;
+            }
+          } else if (traveler.roomType) {
+            // Si no hay información detallada, usar el tipo de habitación
+            roomDescription = traveler.roomType;
+          }
         // Mapear datos del pasajero - importante: ID debe ser number
         const passenger: PassengerData = {
           id: index + 1, // Convertir a number usando el índice
@@ -698,7 +712,7 @@ export class BookingsComponent implements OnInit {
             (travelerData.ageGroup || '').toLowerCase() === 'adultos'
               ? 'adult'
               : 'child',
-          room: traveler.roomType || 'Sin asignar', // Requerido por el componente hijo
+          room: roomDescription, // Requerido por el componente hijo
           gender: travelerData.sex || '',
           comfortPlan: 'Standard', // Campo necesario para el componente hijo
           insurance: 'Básico', // Campo necesario para el componente hijo

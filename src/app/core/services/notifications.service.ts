@@ -88,13 +88,20 @@ export class NotificationsService {
     fileUrl: string;
   }> {
     const url = `${environment.notificationsApiUrl}/documents/budget/${id}`;
-    return this.http.get<any>(url);
+    return this.http.get<{
+      fileUrl: string;
+    }>(url);
   }
 
-  getBookingDocument(id: string): Observable<{
+  getBookingDocument(
+    id: string,
+    force = false
+  ): Observable<{
     fileUrl: string;
   }> {
-    const url = `${environment.notificationsApiUrl}/documents/bookingBone/${id}`;
-    return this.http.get<any>(url);
+    const url = `${environment.notificationsApiUrl}/documents/bookingBone/${id}?force=${force}`;
+    return this.http.get<{
+      fileUrl: string;
+    }>(url);
   }
 }

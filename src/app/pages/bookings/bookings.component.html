@@ -26,12 +26,13 @@
 
   <!-- Documents booking section -->
   <app-booking-document-actions
-    [isVisible]="isTO && !isAdmin"
+    [isVisible]="isTO && isAdmin && bookingId != ''"
     (sendReminder)="sendReminder()"
     (reprintInfo)="reprintInfo()"
     (reprintVoucher)="reprintVoucher()"
     (reprintPaymentReminder)="reprintPaymentReminder()"
     (reprintETickets)="reprintETickets()"
+    [bookingId]="bookingId"
   >
   </app-booking-document-actions>
 

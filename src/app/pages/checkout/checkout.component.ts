@@ -994,7 +994,7 @@ export class CheckoutComponent implements OnInit {
   }
 
   /* Booking create */
-  processBooking(): Promise<{ bookingID: string; ID: string }> {
+  processBooking(): Promise<{ bookingID: string; code: string }> {
     return this.processBookingService
       .processBooking(
         this.orderDetails,

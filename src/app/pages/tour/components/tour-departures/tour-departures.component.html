@@ -1,12 +1,13 @@
 <div class="t-dep">
+  <p-toast></p-toast>
   <h1>Selecciona vuelos y acompañantes</h1>
 
   <!-- Sección de filtros con labels dentro de inputs -->
   <div class="f-hdr">
     <div class="f-box">
       <!-- Original label (will be hidden by CSS) -->
-      <div class="f-lbl city">Ciudad de origen</div>
-      <div class="f-cnt city">
+      <div class="f-lbl">Ciudad de origen</div>
+      <div class="f-cnt">
         <!-- New in-field label -->
         <span class="input-label">Ciudad de origen</span>
         <p-autocomplete
@@ -128,26 +129,6 @@
     </div>
   </div>
 
-  <!-- The rest of the HTML remains unchanged -->
-  <!-- Navegador de mes -->
-  <!--
-  <div class="m-nav">
-    <p-button 
-      label="Anterior" 
-      icon="pi pi-arrow-circle-left circle" 
-      styleClass="p-button-text" 
-      (onClick)="previousMonth()"
-    ></p-button>
-    <h2 class="m-display">{{ monthName }}</h2>
-    <p-button 
-      label="Siguiente" 
-      icon="pi pi-arrow-circle-right circle" 
-      iconPos="right" 
-      styleClass="p-button-text" 
-      (onClick)="nextMonth()"
-    ></p-button>
-  </div>
-  -->
   <!-- DataView con PrimeNG sin paginación -->
   <p-dataView
     #dv

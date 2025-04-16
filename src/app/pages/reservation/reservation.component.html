@@ -203,7 +203,10 @@
   <app-flights-section [flights]="flights"></app-flights-section>
 
   <!-- Panel de precios -->
-  <app-prices-section [priceDetails]="priceDetails"></app-prices-section>
+  <app-prices-section
+    *ngIf="reservationInfo?.totalAmount"
+    [priceDetails]="priceDetails"
+  ></app-prices-section>
 
   <!-- Panel de información de pago -->
   <app-payments-information-section

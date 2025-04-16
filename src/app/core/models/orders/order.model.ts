@@ -9,6 +9,7 @@ export interface Order {
   status: 'AB' | 'Budget';
   owner: string;
   travelers?: OrderTraveler[];
+  price?: number;
   createdAt?: string;
   updatedAt?: string;
   optionalActivitiesRef?: OptionalActivityRef[];

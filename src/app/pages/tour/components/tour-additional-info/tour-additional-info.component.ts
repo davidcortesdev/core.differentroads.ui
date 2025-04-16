@@ -208,9 +208,11 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
       // User is authenticated, guardar el presupuesto directamente
       if (this.isUpdateMode) {
         // En modo actualización (desde checkout)
+        console.log('Actualizando presupuesto...');
         this.actualizarPresupuestoDirectamente();
       } else {
         // En modo creación (desde tour detail)
+        console.log('Guardando presupuesto...');
         this.savePresupuestoDirectamente();
       }
     } else {
@@ -234,6 +236,7 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
     // Obtener información sobre periodo seleccionado y viajeros
     let selectedPeriod: any;
     let travelers: any;
+    let totalPrice: number = 0;
 
     // Subscribirse a los datos necesarios
     const periodSubscription = this.tourOrderService.selectedDateInfo$.subscribe(dateInfo => {
@@ -244,8 +247,13 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
       travelers = travelersData;
     });
 
+    const priceSubscription = this.tourOrderService.getTotalPrice().subscribe(price => {
+      totalPrice = price;
+    });
+
     this.subscription.add(periodSubscription);
     this.subscription.add(travelersSubscription);
+    this.subscription.add(priceSubscription);
 
     // Información del viajero (usando datos del usuario logueado)
     const travelerInfo = {
@@ -254,6 +262,15 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
       phone: ''
     };
 
+    // Agregar console.log para ver los datos
+    console.log('Datos a enviar en la orden:', {
+      periodID: selectedPeriod?.periodID || '',
+      status: 'Budget',
+      owner: this.userEmail,
+      traveler: travelerInfo,
+      price: totalPrice,
+    });
+
     // Crear la orden
     this.tourOrderService
       .createOrder({
@@ -261,11 +278,12 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
         status: 'Budget',
         owner: this.userEmail,
         traveler: travelerInfo,
+        price: totalPrice,
       })
       .subscribe({
         next: (createdOrder) => {
           this.loading = false;
-          
+          console.log('Orden creada:', createdOrder);
           // Mostrar mensaje de éxito con Toast
           this.showSuccessToast('Presupuesto guardado correctamente');
         },

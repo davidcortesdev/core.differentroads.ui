@@ -488,8 +488,8 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
         amount: paymentAmount,
         registerBy: this.authService.getCurrentUsername(),
         method: this.paymentMethod!,
-        provider: provider,
-
+        provider: provider
+        // Remove externalID initialization completely
       });
 
       const publicID = payment.publicID;

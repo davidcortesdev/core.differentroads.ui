@@ -405,13 +405,15 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       try {
         const data = await this.scalapayService.createOrder(orderDataWithTipo);
         
-        //TODO: Revisar que se graba en base de datos el token de scalapay
         console.log('Scalapay order created:', data);
-        console.log('PublicID:',publicID);
+        console.log('PublicID:', publicID);
+        
         // Update the payment with the Scalapay token before redirecting
         if (data && data.token) {
+          // This is where we update the externalID with the Scalapay token
           this.bookingsService.updatePayment(publicID, {
-            externalID: data.token
+            externalID: data.token,
+            provider: 'scalapay' // Also ensure provider is set correctly
           }).subscribe({
             next: (updateResponse) => {
               console.log('Payment updated with Scalapay token:', updateResponse);

@@ -419,8 +419,12 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
           this.isLoading = false; // Ensure loading state is reset
           return;
         }
+
+        // Log the payload just before sending
+        console.log('Payload for updatePayment:', JSON.stringify({ externalID: data.token, provider: 'Scalapay' }));
         
         // Update the payment with the Scalapay token and provider before redirecting
+        // The object literal here includes externalID: data.token
         this.bookingsService.updatePayment(publicID, {
           externalID: data.token, // Assigning the token from data to externalID
           provider: 'Scalapay'    // Adding the provider information
@@ -435,7 +439,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
             // Log the error details for debugging
             console.error('Error details:', JSON.stringify(updateError));
             
-            // Attempt to retry updating the payment (using the previously suggested method)
+            // Attempt to retry updating the payment
             this.retryUpdatePayment(publicID, data.token, data.checkoutUrl); 
           }
         });
@@ -454,6 +458,10 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
   private retryUpdatePayment(publicID: string, token: string, checkoutUrl: string): void {
     // Wait a moment before retrying
     setTimeout(() => {
+      // Log the payload for retry
+      console.log('Payload for retryUpdatePayment:', JSON.stringify({ externalID: token, provider: 'Scalapay' }));
+
+      // The object literal here includes externalID: token
       this.bookingsService.updatePayment(publicID, {
         externalID: token,
         provider: 'Scalapay'

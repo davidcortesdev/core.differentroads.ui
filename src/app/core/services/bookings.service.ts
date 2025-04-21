@@ -15,6 +15,7 @@ import {
   VoucherReviewStatus,
 } from '../models/bookings/payment.model';
 import { Pagination } from '../models/commons/pagination.model';
+import { BookingTraveler, TravelerData  } from '../models/bookings/booking-traveler.model';
 
 @Injectable({
   providedIn: 'root',
@@ -181,9 +182,9 @@ export class BookingsService {
    * @param data - The travelers data to update.
    * @returns Observable of any.
    */
-  updateTravelers(id: string, data: any): Observable<any> {
+  updateTravelers(bookingId: string, data: BookingTraveler): Observable<any> {
     return this.http.put<any>(
-      `${this.API_URL}/travelers/${id}`,
+      `${this.API_URL}/travelers/${data._id}`,//Api solo recibe /travelers/${}`
       data,
       this.httpOptions
     );

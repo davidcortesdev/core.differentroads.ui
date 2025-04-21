@@ -18,6 +18,7 @@ $breakpoint-small: 768px;
   .title {
     color: var(--background-azul);
     font-weight: 400;
+    margin-top: -10px;
   }
 
   h2 {
@@ -49,6 +50,7 @@ $breakpoint-small: 768px;
 
   @media screen and (max-width: $breakpoint-small) {
     padding: $mobile-padding;
+    margin-top: 20px;
 
     h2 {
       font-size: $title-mobile-size;

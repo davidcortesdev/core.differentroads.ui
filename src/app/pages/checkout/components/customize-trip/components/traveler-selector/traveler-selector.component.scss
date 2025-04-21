@@ -14,6 +14,10 @@
       border-bottom: 1px solid var(--background-azul);
       font-size: 1.2rem;
       font-weight: 500;
+      @media screen and (max-width: 480px) {
+        margin-top: 5px;
+        font-size: 1.1rem;
+      }
     }
   }
 
@@ -22,12 +26,19 @@
     font-weight: bold;
     margin-bottom: 10px;
     margin-top: 10px;
+    @media screen and (max-width: 480px) {
+      margin-top: 5px;
+      font-size: 1.1rem;
+    }
   }
 
   .traveler-selector-wrap {
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
+    @media screen and (max-width: 480px) {
+      margin-top: -10px;
+    }
 
     .traveler-selector-wrap-item {
       align-items: flex-start;
@@ -55,6 +66,9 @@
       .traveler-selector-wrap-item-group {
         display: flex;
         flex-direction: column;
+        @media screen and (max-width: 480px) {
+          font-size: 1.1rem;
+        }
 
         .traveler-selector-wrap-item-name {
           font-weight: bold;
@@ -77,16 +91,10 @@
       margin-left: 8px;
     }
   }
-
-  .booking-info-label {
-    margin-top: 16px;
-    color: #ff0000;
-    font-size: 14px;
-  }
 }
 
 .messages {
-  margin-top: 16px;
+  margin-top: 10px;
 
   .info-message,
   .error-message {

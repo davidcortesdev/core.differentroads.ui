@@ -1,6 +1,12 @@
 :host ::ng-deep {
-  /* Estilos para el panel de referencia de reserva */
   .container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+  }
+  /* Estilos para el panel de referencia de reserva */
+  .docs-container {
     border: 1px solid #eaeaea;
     border-radius: 12px;
     margin: 0.75rem;
@@ -8,6 +14,7 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     transition: all 0.3s ease;
     overflow: hidden;
+    width: 50%;
 
     &:hover {
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -16,6 +23,30 @@
     .p-panel-content {
       padding: 1rem;
     }
+
+    .p-table,
+    .p-table-wrapper {
+      width: 100% !important;
+    }
+    .p-table-wrapper {
+      overflow-x: auto;
+    }
+
+    .p-datatable-tbody > tr > td {
+      width: auto;
+    }
+  }
+
+  .not-container {
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+    margin: 0.75rem;
+    margin-top: 18px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    flex-grow: 1;
+    min-height: 100%;
   }
 
   .p-panel-header {
@@ -53,4 +84,8 @@
     background-color: #f9f9f9 !important;
     padding: 15px 20px;
   }
+}
+
+.versions-container {
+  margin-left: 4rem;
 }

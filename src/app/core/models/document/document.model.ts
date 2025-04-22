@@ -7,6 +7,7 @@ export interface Document {
     display_name: string;
     secure_url: string;
   };
+  type: string;
   createdAt: string;
   updatedAt: string;
   __v: number;

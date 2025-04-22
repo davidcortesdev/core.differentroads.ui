@@ -15,6 +15,7 @@ import {
   VoucherReviewStatus,
 } from '../models/bookings/payment.model';
 import { Pagination } from '../models/commons/pagination.model';
+import { Document } from '../models/document/document.model';
 
 @Injectable({
   providedIn: 'root',
@@ -342,6 +343,18 @@ export class BookingsService {
   getBookingInconsistencies(id: string): Observable<any> {
     return this.http.get<any>(
       `${this.API_URL}/${id}/inconsistencies`,
+      this.httpOptions
+    );
+  }
+
+  /**
+   * Fetches booking documentation by booking ID.
+   * @param id - The booking ID.
+   * @returns Observable of Document array.
+   */
+  getBookingDocumentation(id: string): Observable<Document[]> {
+    return this.http.get<Document[]>(
+      `${this.API_URL}/${id}/documents`,
       this.httpOptions
     );
   }

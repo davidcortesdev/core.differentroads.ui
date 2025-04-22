@@ -1,0 +1,28 @@
+<div class="container">
+  <p-panel header="Resumen del viaje">
+    <p-table [value]="documents" [tableStyle]="{ 'min-width': '50rem' }">
+      <ng-template #header>
+        <tr>
+          <th>Documento</th>
+          <th>Fecha de creación</th>
+          <th style="width: 5rem"></th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-document>
+        <tr>
+          <td>{{ document.fileData.display_name }}</td>
+          <td>{{ document.createdAt | date : "short" }}</td>
+          <td>
+            <a
+              [href]="document.fileData.secure_url"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <p-button icon="pi pi-download" severity="secondary" rounded />
+            </a>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-panel>
+</div>

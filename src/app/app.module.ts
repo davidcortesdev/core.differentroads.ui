@@ -200,6 +200,7 @@ import { TravelerActivitySelectorComponent } from './pages/checkout/components/t
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { Nl2brPipe } from "./shared/pipes/nl2br.pipe";
 import { BookingListSectionComponent } from './pages/profile/components/booking-list-section/booking-list-section.component';
+import { BookingDocumentationComponent } from './pages/bookings/booking-documentation/booking-documentation.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -307,6 +308,7 @@ registerLocaleData(localeEs);
     SummaryTableComponent,
     TravelerActivitySelectorComponent,
     BookingListSectionComponent,
+    BookingDocumentationComponent,
 
   ],
   imports: [

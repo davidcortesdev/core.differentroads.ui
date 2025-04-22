@@ -26,7 +26,7 @@
 
   <!-- Documents booking section -->
   <app-booking-document-actions
-    [isVisible]="isTO && isAdmin && bookingId != ''"
+    [isVisible]="false"
     (sendReminder)="sendReminder()"
     (reprintInfo)="reprintInfo()"
     (reprintVoucher)="reprintVoucher()"

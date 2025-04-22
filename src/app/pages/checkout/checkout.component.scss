@@ -176,7 +176,6 @@ p-button.file ::ng-deep .p-button {
   justify-content: flex-end;
   align-items: center;
   gap: 1rem;
-  margin: 2rem 0;
   width: 100%;
 
   @media screen and (min-width: 481px) and (max-width: 1024px) {
@@ -223,6 +222,7 @@ p-button.continue-button ::ng-deep .p-button {
 :host ::ng-deep {
   .p-button {
     border-radius: 50px;
+    margin: 20px 0px;
   }
 }
 

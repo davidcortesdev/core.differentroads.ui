@@ -13,18 +13,28 @@
   </div>
   <div class="column right-column">
     <app-points-section></app-points-section>
-    <app-active-bookings-section
+    
+    <!-- Componente unificado para reservas activas -->
+    <app-booking-list-section
       [userEmail]="userEmail"
+      [config]="activeBookingsConfig"
       *ngIf="userEmail"
-    ></app-active-bookings-section>
-    <app-travel-history-section
+    ></app-booking-list-section>
+    
+    <!-- Componente unificado para historial de viajes -->
+    <app-booking-list-section
       [userEmail]="userEmail"
+      [config]="travelHistoryConfig"
       *ngIf="userEmail"
-    ></app-travel-history-section>
-    <app-recent-budget-section
+    ></app-booking-list-section>
+    
+    <!-- Componente unificado para presupuestos recientes -->
+    <app-booking-list-section
       [userEmail]="userEmail"
+      [config]="recentBudgetsConfig"
       *ngIf="userEmail"
-    ></app-recent-budget-section>
+    ></app-booking-list-section>
+    
     <app-review-section
       [userEmail]="userEmail"
       *ngIf="userEmail"

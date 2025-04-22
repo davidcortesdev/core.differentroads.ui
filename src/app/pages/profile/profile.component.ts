@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UsersService } from '../../core/services/users.service';
-import { AuthenticateService } from '../../core/services/auth-service.service'; // Import AuthenticateService
+import { AuthenticateService } from '../../core/services/auth-service.service';
+import { BookingListConfig } from './components/booking-list-section/booking-list-section.component';
 
 export interface PersonalInfo {
   id?: string;
@@ -35,10 +36,63 @@ export class ProfileComponent implements OnInit {
   isEditing: boolean = false;
   avatarUrl: string = '';
   userEmail: string = '';
+  
+  // Configuration for each booking list type
+  activeBookingsConfig: BookingListConfig = {
+    type: 'active-bookings',
+    title: 'Reservas activas',
+    emptyMessage: 'No hay reservas activas disponibles',
+    status: 'Booked,RQ',
+    actions: {
+      download: true,
+      send: true,
+      view: true
+    },
+    buttonLabels: {
+      download: 'Descargar',
+      send: 'Enviar',
+      view: 'Ver reserva'
+    }
+  };
+  
+  travelHistoryConfig: BookingListConfig = {
+    type: 'travel-history',
+    title: 'Historial de viajes',
+    emptyMessage: 'No se han realizado viajes aún',
+    status: 'Pending,Canceled',
+    actions: {
+      download: true,
+      send: true,
+      view: true
+    },
+    buttonLabels: {
+      download: 'Descargar',
+      send: 'Enviar',
+      view: 'Ver viaje'
+    }
+  };
+  
+  recentBudgetsConfig: BookingListConfig = {
+    type: 'recent-budgets',
+    title: 'Presupuestos recientes',
+    emptyMessage: 'No hay presupuestos recientes',
+    status: 'Budget',
+    actions: {
+      download: true,
+      send: true,
+      view: false,
+      reserve: true
+    },
+    buttonLabels: {
+      download: 'Descargar',
+      send: 'Enviar',
+      reserve: 'Reservar'
+    }
+  };
 
   constructor(
     private usersService: UsersService,
-    private authService: AuthenticateService // Inject AuthenticateService
+    private authService: AuthenticateService
   ) {}
 
   ngOnInit() {
@@ -111,6 +165,4 @@ export class ProfileComponent implements OnInit {
       this.fetchUserData(this.userEmail);
     }
   }
-
-
 }

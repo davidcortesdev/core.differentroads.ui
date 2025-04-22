@@ -19,6 +19,21 @@ export class ActivitiesCarouselComponent {
   
   responsiveOptions = [
     {
+      breakpoint: '1920px',
+      numVisible: 6,
+      numScroll: 1,
+    },
+    {
+      breakpoint: '1800px',
+      numVisible: 5,
+      numScroll: 1,
+    },
+    {
+      breakpoint: '1680px',
+      numVisible: 4,
+      numScroll: 1,
+    },
+    {
       breakpoint: '1559px',
       numVisible: 3,
       numScroll: 1,

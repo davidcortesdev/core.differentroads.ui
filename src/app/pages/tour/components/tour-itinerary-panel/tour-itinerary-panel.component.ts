@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivityHighlight } from '../../../../shared/components/activity-card/activity-card.component';
 import { Hotel } from '../../../../core/models/tours/tour.model';
@@ -9,7 +9,7 @@ import { Hotel } from '../../../../core/models/tours/tour.model';
   templateUrl: './tour-itinerary-panel.component.html',
   styleUrls: ['./tour-itinerary-panel.component.scss']
 })
-export class TourItineraryPanelComponent {
+export class TourItineraryPanelComponent implements OnInit {
   @Input() event!: {
     title: string;
     description: SafeHtml;
@@ -17,7 +17,7 @@ export class TourItineraryPanelComponent {
     hotel: Hotel | null;
     collapsed: boolean;
     color?: string;
-    highlights: ActivityHighlight[]; // Remove the optional (?) to fix type error
+    highlights: ActivityHighlight[];
     extraInfo?: {
       title?: string;
       content?: string;
@@ -34,5 +34,10 @@ export class TourItineraryPanelComponent {
 
   handleClick(): void {
     this.panelClick.emit(this.index);
+  }
+
+  ngOnInit(): void {
+    console.log('event:', this.event);
+    console.log('index:', this.index);
   }
 }

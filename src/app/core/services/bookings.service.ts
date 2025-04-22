@@ -367,7 +367,7 @@ export class BookingsService {
    */
   getBookingNotificationLog(id: string): Observable<NotificationLog[]> {
     return this.http.get<NotificationLog[]>(
-      `${this.API_URL}/${id}/documents`,
+      `${this.API_URL}/${id}/notifications`,
       this.httpOptions
     );
   }

@@ -92,71 +92,33 @@
     <p-panel header="Notificaciones">
       <p-table
         #dt
-        [value]="latestDocuments"
+        [value]="notificationLogs"
         responsiveLayout="scroll"
         dataKey="_id"
       >
-        <ng-template #header>
+        <ng-template pTemplate="header">
           <tr>
-            <th *ngIf="showExpandControls" style="width: 3rem"></th>
-            <th>Documento</th>
-            <th>Fecha de creación</th>
-            <th style="width: 5rem"></th>
+            <th>Tipo</th>
+            <!--             <th>Destinatario</th> -->
+            <th>Fecha de envío</th>
+            <!--             <th>Estado</th>
+ -->
           </tr>
         </ng-template>
 
-        <ng-template let-document>
+        <ng-template pTemplate="body" let-log>
           <tr>
-            <td>{{ document.fileData.display_name }}</td>
-            <td>{{ document.createdAt | date : "short" }}</td>
-            <td>
-              <a
-                [href]="document.fileData.secure_url"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <p-button icon="pi pi-download" severity="secondary" rounded />
-              </a>
-            </td>
+            <td>{{ log.name }}</td>
+            <!-- <td>{{ log.recipient }}</td> -->
+            <td>{{ log.createdAt | date : "short" }}</td>
+            <!--             <td>{{ log.status }}</td>
+ -->
           </tr>
         </ng-template>
 
-        <ng-template #expandedrow let-document>
+        <ng-template pTemplate="emptymessage">
           <tr>
-            <td colspan="4">
-              <div
-                *ngIf="
-                  showExpandControls &&
-                  getPreviousVersions(document.type).length > 0
-                "
-                class="versions-container"
-              >
-                <p-table
-                  [value]="getPreviousVersions(document.type)"
-                  responsiveLayout="scroll"
-                >
-                  <ng-template #body let-prev>
-                    <tr>
-                      <td>
-                        <a
-                          [href]="prev.fileData.secure_url"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {{ prev.createdAt | date : "short" }} -
-                          {{ prev.fileData.display_name }}
-                        </a>
-                      </td>
-                    </tr>
-                  </ng-template>
-                  <ng-template #emptymessage>
-                    <tr>
-                      <td colspan="3">No hay versiones anteriores.</td>
-                    </tr>
-                  </ng-template>
-                </p-table>
-              </div>
-            </td>
+            <td colspan="4">No hay notificaciones registradas.</td>
           </tr>
         </ng-template>
       </p-table>

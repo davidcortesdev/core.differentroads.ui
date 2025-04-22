@@ -2,6 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { TableRowCollapseEvent, TableRowExpandEvent } from 'primeng/table';
 import { BookingsService } from '../../../core/services/bookings.service';
 import { Document } from '../../../core/models/document/document.model';
+import { NotificationLog } from '../../../core/models/notification-log/notification-log.model';
 
 @Component({
   selector: 'app-booking-documentation',
@@ -18,11 +19,15 @@ export class BookingDocumentationComponent implements OnInit {
   latestDocuments: Document[] = [];
   expandedRowKeys: { [key: string]: boolean } = {};
 
+  // Add property for notification logs
+  notificationLogs: NotificationLog[] = [];
+
   constructor(private bookingsService: BookingsService) {}
 
   ngOnInit(): void {
     if (this.bookingId) {
       this.loadDocuments();
+      this.loadNotificationLogs();
     }
   }
 
@@ -90,5 +95,18 @@ export class BookingDocumentationComponent implements OnInit {
 
   collapseAll() {
     this.expandedRowKeys = {};
+  }
+
+  // Add method to load notification logs
+  loadNotificationLogs(): void {
+    this.bookingsService.getBookingNotificationLog(this.bookingId).subscribe({
+      next: (logs) => {
+        this.notificationLogs = logs;
+        console.log('Notification logs loaded:', this.notificationLogs);
+      },
+      error: (err) => {
+        console.error('Error loading notification logs:', err);
+      },
+    });
   }
 }

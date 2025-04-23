@@ -124,4 +124,64 @@
       </p-table>
     </p-panel>
   </div>
+
+  <div class="notes-container">
+    <p-panel header="Notas">
+      <p-table
+        #dt
+        [value]="notes"
+        responsiveLayout="scroll"
+        dataKey="_id"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[10, 25]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} notas"
+        [rowHover]="true"
+        styleClass="p-datatable-gridlines p-datatable-sm"
+        [globalFilterFields]="['message', 'category', 'type']"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="createdAt">
+              Fecha de creación <p-sortIcon field="createdAt"></p-sortIcon>
+            </th>
+            <th>Mensaje</th>
+            <th>
+              Estado
+              <p-columnFilter
+                field="type"
+                matchMode="equals"
+                display="menu"
+                [showOperator]="false"
+                [filterOptions]="typeOptions"
+              ></p-columnFilter>
+            </th>
+            <th></th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-note>
+          <tr>
+            <td>{{ note.createdAt | date : "short" }}</td>
+            <td pTooltip="{{ note.message }}" tooltipPosition="top">
+              {{ note.title }}
+            </td>
+            <td>
+              <p-tag
+                [value]="note.type"
+                [severity]="getTypeSeverity(note.type)"
+              ></p-tag>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="4">No hay notas registradas.</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-panel>
+  </div>
 </div>

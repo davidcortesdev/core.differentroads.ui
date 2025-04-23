@@ -3,14 +3,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.8rem;
+    gap: 1.3rem;
+    flex-wrap: wrap;
+    margin: 1.3rem 0.75rem;
   }
   /* Estilos para el panel de referencia de reserva */
   .docs-container {
     border: 1px solid #eaeaea;
     border-radius: 12px;
-    margin: 0.75rem;
-    margin-top: 18px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     transition: all 0.3s ease;
     overflow: hidden;
@@ -40,13 +40,29 @@
   .not-container {
     border: 1px solid #eaeaea;
     border-radius: 12px;
-    margin: 0.75rem;
-    margin-top: 18px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     transition: all 0.3s ease;
     overflow: hidden;
     flex-grow: 1;
     min-height: 100%;
+  }
+
+  .notes-container {
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    min-height: 100%;
+    width: 100%;
+
+    .p-datatable th {
+      font-weight: 600;
+    }
+
+    .p-datatable-sm .p-datatable-tbody > tr > td {
+      padding: 0.5rem 1rem;
+    }
   }
 
   .p-panel-header {

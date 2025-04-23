@@ -3,6 +3,16 @@ import { TableRowCollapseEvent, TableRowExpandEvent } from 'primeng/table';
 import { BookingsService } from '../../../core/services/bookings.service';
 import { Document } from '../../../core/models/document/document.model';
 import { NotificationLog } from '../../../core/models/notification-log/notification-log.model';
+import { BookingNote } from '../../../core/models/bookings/booking-note.model';
+import { SelectItem } from 'primeng/api';
+
+type Severity =
+  | 'success'
+  | 'info'
+  | 'warn'
+  | 'danger'
+  | 'secondary'
+  | 'contrast';
 
 @Component({
   selector: 'app-booking-documentation',
@@ -22,12 +32,19 @@ export class BookingDocumentationComponent implements OnInit {
   // Add property for notification logs
   notificationLogs: NotificationLog[] = [];
 
+  // Add property for notes
+  notes: BookingNote[] = [];
+
+  // Add property for type options
+  typeOptions: SelectItem[] = [];
+
   constructor(private bookingsService: BookingsService) {}
 
   ngOnInit(): void {
     if (this.bookingId) {
       this.loadDocuments();
       this.loadNotificationLogs();
+      this.loadNotes();
     }
   }
 
@@ -108,5 +125,54 @@ export class BookingDocumentationComponent implements OnInit {
         console.error('Error loading notification logs:', err);
       },
     });
+  }
+
+  // Add method to load notes
+  loadNotes(): void {
+    this.bookingsService.getBookingNotes(this.bookingId).subscribe({
+      next: (notes) => {
+        this.notes = notes;
+        // Generar opciones únicas para filtro de estado
+        this.typeOptions = Array.from(new Set(notes.map((n) => n.type))).map(
+          (t) => ({ label: t, value: t })
+        );
+        console.log('Notes loaded:', this.notes);
+      },
+      error: (err) => {
+        console.error('Error loading notes:', err);
+      },
+    });
+  }
+
+  /** devuelve severidad válida para p-tag */
+  getCategorySeverity(category: string): Severity {
+    switch (category?.toLowerCase()) {
+      case 'internal':
+        return 'info';
+      case 'customer':
+        return 'warn';
+      case 'important':
+        return 'danger';
+      case 'system':
+        return 'secondary';
+      default:
+        return 'secondary';
+    }
+  }
+
+  /** devuelve severidad válida para p-tag */
+  getTypeSeverity(type: string): Severity {
+    switch (type?.toLowerCase()) {
+      case 'info':
+        return 'info';
+      case 'warning':
+        return 'warn';
+      case 'error':
+        return 'danger';
+      case 'success':
+        return 'success';
+      default:
+        return 'secondary';
+    }
   }
 }

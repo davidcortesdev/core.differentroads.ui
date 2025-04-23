@@ -904,17 +904,40 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
             console.error('Error sending budget notification:', error);
           },
         });
+    } else if (this.config.type === 'active-bookings') {
+      // For active bookings, use the booking notification service
+      this.notificationsService
+        .sendBookingNotificationEmail({
+          id: item.id,
+          email: this.userEmail,
+        })
+        .subscribe({
+          next: (response) => {
+            this.notificationLoading[item.id] = false;
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Éxito',
+              detail: 'Reserva enviada exitosamente',
+            });
+          },
+          error: (error) => {
+            this.notificationLoading[item.id] = false;
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Error al enviar la reserva',
+            });
+            console.error('Error sending booking notification:', error);
+          },
+        });
     } else {
-      // Logic for sending active bookings or travel history
+      // Logic for sending travel history - fallback to timeout for now
       setTimeout(() => {
         this.notificationLoading[item.id] = false;
         this.messageService.add({
           severity: 'success',
           summary: 'Éxito',
-          detail:
-            this.config.type === 'active-bookings'
-              ? 'Reserva enviada exitosamente'
-              : 'Información de viaje enviada exitosamente',
+          detail: 'Información de viaje enviada exitosamente',
         });
       }, 1000);
     }

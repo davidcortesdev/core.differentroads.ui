@@ -17,6 +17,7 @@ import {
 import { Pagination } from '../models/commons/pagination.model';
 import { Document } from '../models/document/document.model';
 import { NotificationLog } from '../models/notification-log/notification-log.model';
+import { BookingNote } from '../models/bookings/booking-note.model';
 
 @Injectable({
   providedIn: 'root',
@@ -368,6 +369,17 @@ export class BookingsService {
   getBookingNotificationLog(id: string): Observable<NotificationLog[]> {
     return this.http.get<NotificationLog[]>(
       `${this.API_URL}/${id}/notifications`,
+      this.httpOptions
+    );
+  }
+  /**
+   * Fetches booking notes by booking ID.
+   * @param id - The booking ID.
+   * @returns Observable of notes  array.
+   */
+  getBookingNotes(id: string): Observable<BookingNote[]> {
+    return this.http.get<BookingNote[]>(
+      `${this.API_URL}/${id}/notes`,
       this.httpOptions
     );
   }

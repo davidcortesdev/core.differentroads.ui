@@ -1,4 +1,13 @@
-import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef, OnDestroy, NgZone } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  Input,
+  Output,
+  EventEmitter,
+  ChangeDetectorRef,
+  OnDestroy,
+  NgZone,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription, forkJoin, from, of } from 'rxjs';
 import { mergeMap, catchError, finalize } from 'rxjs/operators';
@@ -20,7 +29,7 @@ import { Order, SummaryItem } from '../../../../core/models/orders/order.model';
 export interface BookingItem {
   id: string;
   title: string;
-  number: string;  // Generic for all types
+  number: string; // Generic for all types
   reservationNumber?: string; // For active bookings
   budgetNumber?: string; // For budgets
   ID?: string; // For budgets (in uppercase as in original component)
@@ -70,14 +79,14 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
   @Input() userEmail!: string;
   @Input() config!: BookingListConfig;
   @Output() itemSelected = new EventEmitter<BookingItem>();
-  
+
   bookingItems: BookingItem[] = [];
   isExpanded: boolean = true;
   loading: boolean = false;
   downloadLoading: { [key: string]: boolean } = {};
   notificationLoading: { [key: string]: boolean } = {};
   currentOrder: Order | null = null; // For budgets
-  
+
   private subscriptions = new Subscription();
   private imageCache = new Map<string, string>();
   private readonly BATCH_SIZE = 5;
@@ -100,21 +109,21 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
     this.loading = true;
     if (this.userEmail) {
       this.loadData();
-      
+
       // For budgets, get current order from summary service
       if (this.config.type === 'recent-budgets') {
         this.getCurrentOrderFromSummary();
       }
     }
   }
-  
+
   ngOnDestroy() {
     this.subscriptions.unsubscribe();
   }
 
   // Get current order from summary service (for budgets)
   getCurrentOrderFromSummary() {
-    const subscription = this.summaryService.order$.subscribe(order => {
+    const subscription = this.summaryService.order$.subscribe((order) => {
       this.currentOrder = order;
     });
     this.subscriptions.add(subscription);
@@ -128,8 +137,18 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
 
     const day = date.getDate();
     const monthNames = [
-      'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
-      'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
+      'Ene',
+      'Feb',
+      'Mar',
+      'Abr',
+      'May',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dic',
     ];
     const month = monthNames[date.getMonth()];
 
@@ -139,9 +158,9 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
   // Calculate total price from summary items (for budgets)
   calculateTotalFromSummary(summaryItems: SummaryItem[]): number {
     if (!summaryItems || summaryItems.length === 0) return 0;
-    
+
     return summaryItems.reduce((total, item) => {
-      return total + (item.value * item.qty);
+      return total + item.value * item.qty;
     }, 0);
   }
 
@@ -167,31 +186,49 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
   // ------------- ACTIVE BOOKINGS METHODS -------------
   fetchActiveBookings() {
     // Fetch bookings with 'Booked' and 'RQ' status
-    const bookedRequest = this.bookingsService.getBookingsByEmail(this.userEmail, 'Booked', 1, 1000);
-    const rqRequest = this.bookingsService.getBookingsByEmail(this.userEmail, 'RQ', 1, 1000);
-    
+    const bookedRequest = this.bookingsService.getBookingsByEmail(
+      this.userEmail,
+      'Booked',
+      1,
+      1000
+    );
+    const rqRequest = this.bookingsService.getBookingsByEmail(
+      this.userEmail,
+      'RQ',
+      1,
+      1000
+    );
+
     const subscription = forkJoin([bookedRequest, rqRequest]).subscribe({
       next: ([bookedResponse, rqResponse]) => {
-        const bookedBookings = bookedResponse?.data?.map((booking: any) => this.mapActiveBooking(booking)) || [];
-        const rqBookings = rqResponse?.data?.map((booking: any) => this.mapActiveBooking(booking)) || [];
-        
+        const bookedBookings =
+          bookedResponse?.data?.map((booking: any) =>
+            this.mapActiveBooking(booking)
+          ) || [];
+        const rqBookings =
+          rqResponse?.data?.map((booking: any) =>
+            this.mapActiveBooking(booking)
+          ) || [];
+
         this.bookingItems = [...bookedBookings, ...rqBookings];
-        
+
         // Sort by creation date (most recent first)
-        this.bookingItems.sort((a, b) => b.creationDate.getTime() - a.creationDate.getTime());
-        
+        this.bookingItems.sort(
+          (a, b) => b.creationDate.getTime() - a.creationDate.getTime()
+        );
+
         // Fetch detailed booking information for prices
         this.fetchDetailedBookingInfo();
-        
+
         // Load tour images
         this.loadTourImages();
       },
       error: (error) => {
         console.error('Error fetching bookings:', error);
         this.loading = false;
-      }
+      },
     });
-    
+
     this.subscriptions.add(subscription);
   }
 
@@ -208,25 +245,31 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
       tourID: booking?.periodData?.tourID || '',
       passengers: booking?.travelersNumber || 0,
       price: booking?.totalPrice || 0,
-      code: booking?.code
+      code: booking?.code,
     };
   }
 
   fetchDetailedBookingInfo() {
     // Process bookings in batches to avoid too many simultaneous requests
     const processBookings = (startIndex = 0) => {
-      const batch = this.bookingItems.slice(startIndex, startIndex + this.BATCH_SIZE);
+      const batch = this.bookingItems.slice(
+        startIndex,
+        startIndex + this.BATCH_SIZE
+      );
       if (!batch.length) {
         this.loading = false;
         return;
       }
-      
+
       const subscription = from(batch)
         .pipe(
-          mergeMap(item => {
+          mergeMap((item) => {
             return this.bookingsService.getBookingById(item.id).pipe(
-              catchError(error => {
-                console.error(`Error fetching detailed info for booking ${item.id}:`, error);
+              catchError((error) => {
+                console.error(
+                  `Error fetching detailed info for booking ${item.id}:`,
+                  error
+                );
                 return of(null);
               })
             );
@@ -236,19 +279,26 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
           next: (detailedBooking) => {
             if (detailedBooking) {
               // Find the corresponding booking by reservation number
-              const index = this.bookingItems.findIndex(b => 
-                b.reservationNumber === detailedBooking.code || b.id === detailedBooking.code
+              const index = this.bookingItems.findIndex(
+                (b) =>
+                  b.reservationNumber === detailedBooking.code ||
+                  b.id === detailedBooking.code
               );
-              
+
               if (index >= 0) {
                 // Update the price with the accurate information
-                this.bookingItems[index].price = detailedBooking.periodData?.['total'] || 0;
-                
+                this.bookingItems[index].price =
+                  detailedBooking.periodData?.['total'] || 0;
+
                 // Verify that the reservation number is present
-                if (detailedBooking.code && !this.bookingItems[index].reservationNumber) {
-                  this.bookingItems[index].reservationNumber = detailedBooking.code;
+                if (
+                  detailedBooking.code &&
+                  !this.bookingItems[index].reservationNumber
+                ) {
+                  this.bookingItems[index].reservationNumber =
+                    detailedBooking.code;
                 }
-                
+
                 this.cdr.detectChanges();
               }
             }
@@ -263,12 +313,12 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
             } else {
               this.loading = false;
             }
-          }
+          },
         });
-      
+
       this.subscriptions.add(subscription);
     };
-    
+
     // Start processing bookings
     processBookings();
   }
@@ -278,98 +328,108 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
     this.ordersService.getOrdersByUser(this.userEmail).subscribe({
       next: (response) => {
         console.log('Todos los presupuestos:', response.data);
-        const budgetOrders = response.data?.filter(
-          (order) => order.status === 'Budget'
-        ) || [];
+        const budgetOrders =
+          response.data?.filter((order) => order.status === 'Budget') || [];
         console.log('Presupuestos filtrados:', budgetOrders.length);
         this.bookingItems = [];
-  
+
         // Si no hay presupuestos, finalizar carga
         if (budgetOrders.length === 0) {
           this.loading = false;
           return;
         }
-  
+
         // Contador para monitorear cuándo se han procesado todos los elementos
         let processedCount = 0;
-  
+
         budgetOrders.forEach((order) => {
           const periodId = order.periodID;
           if (periodId) {
             this.periodsService.getPeriodDetail(periodId, ['all']).subscribe({
               next: (periodData) => {
                 const budget = this.mapBudget(order, periodData);
-                
+
                 // Add summary data if available
                 if (order.summary) {
                   budget.summary = order.summary;
                 }
-  
+
                 this.ngZone.run(() => {
                   this.bookingItems.push(budget);
                   this.bookingItems = [...this.bookingItems]; // New reference to force update
                   this.bookingItems.sort(
-                    (a, b) => b.creationDate.getTime() - a.creationDate.getTime()
+                    (a, b) =>
+                      b.creationDate.getTime() - a.creationDate.getTime()
                   );
-                  
+
                   if (budget.tourID) {
                     this.loadItemImage(budget);
                   }
-                  
+
                   processedCount++;
                   if (processedCount === budgetOrders.length) {
-                    console.log('Se han procesado todos los presupuestos:', processedCount);
+                    console.log(
+                      'Se han procesado todos los presupuestos:',
+                      processedCount
+                    );
                     this.loading = false;
                   }
-                  
+
                   this.cdr.detectChanges();
                 });
               },
               error: (error) => {
                 console.error('Error fetching period:', periodId, error);
                 const budget = this.mapBudget(order);
-                
+
                 if (order.summary) {
                   budget.summary = order.summary;
                 }
-  
+
                 this.ngZone.run(() => {
                   this.bookingItems.push(budget);
                   this.bookingItems = [...this.bookingItems];
                   this.bookingItems.sort(
-                    (a, b) => b.creationDate.getTime() - a.creationDate.getTime()
+                    (a, b) =>
+                      b.creationDate.getTime() - a.creationDate.getTime()
                   );
-                  
+
                   processedCount++;
                   if (processedCount === budgetOrders.length) {
-                    console.log('Se han procesado todos los presupuestos:', processedCount);
+                    console.log(
+                      'Se han procesado todos los presupuestos:',
+                      processedCount
+                    );
                     this.loading = false;
                   }
-                  
+
                   this.cdr.detectChanges();
                 });
-              }
+              },
             });
           } else {
             const budget = this.mapBudget(order);
-            
+
             if (order.summary) {
               budget.summary = order.summary;
             }
-  
+
             this.ngZone.run(() => {
               this.bookingItems.push(budget);
               this.bookingItems = [...this.bookingItems];
               this.bookingItems.sort(
                 (a, b) => b.creationDate.getTime() - a.creationDate.getTime()
               );
-              
+
               processedCount++;
               if (processedCount === budgetOrders.length) {
-                console.log('Se han procesado todos los presupuestos:', processedCount);
+                console.log(
+                  'Se han procesado todos los presupuestos:',
+                  processedCount
+                );
                 this.loading = false;
               }
-              
+
               this.cdr.detectChanges();
             });
           }
@@ -378,13 +438,13 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Error fetching orders:', error);
         this.loading = false;
-      }
+      },
     });
   }
 
   mapBudget(order: any, periodData?: any): BookingItem {
     const passengers = this.getPassengerCount(order);
-    
+
     // Calculate price from summary if available
     let calculatedPrice = order.price || 0;
     if (order.summary && order.summary.length > 0) {
@@ -408,7 +468,7 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
       departureName: '',
       summary: order.summary || [],
       imageLoading: true,
-      imageLoaded: false
+      imageLoaded: false,
     };
 
     if (periodData) {
@@ -457,7 +517,9 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response?.data) {
-            this.bookingItems = response.data.map((booking) => this.mapTravelHistory(booking));
+            this.bookingItems = response.data.map((booking) =>
+              this.mapTravelHistory(booking)
+            );
             // Load tour images
             this.loadTourImages();
           } else {
@@ -468,13 +530,13 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error fetching travel history:', error);
           this.loading = false;
-        }
+        },
       });
   }
 
   mapTravelHistory(booking: any): BookingItem {
     const tourID = booking?.periodData?.tourID || '';
-    
+
     return {
       id: booking?._id ?? '',
       title: booking?.periodData?.['tour']?.name || '',
@@ -486,34 +548,34 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
       passengers: booking?.travelersNumber ?? 0,
       image: '',
       tourID: tourID,
-      code: booking?.code ?? ''
+      code: booking?.code ?? '',
     };
   }
 
   // ------------- COMMON IMAGE LOADING METHODS -------------
   loadTourImages() {
     if (!this.bookingItems || this.bookingItems.length === 0) return;
-    
+
     // Group items by tourID to avoid duplicate requests
     const tourGroups = this.groupItemsByTourId();
-    
+
     // Process each unique tourID in batches
-    const uniqueTourIds = Array.from(tourGroups.keys()).filter(id => id); // Filter out empty IDs
-    
+    const uniqueTourIds = Array.from(tourGroups.keys()).filter((id) => id); // Filter out empty IDs
+
     if (uniqueTourIds.length === 0) {
       this.loading = false;
       return;
     }
-    
+
     this.processTourImageBatches(uniqueTourIds, tourGroups);
   }
 
   private groupItemsByTourId(): Map<string, BookingItem[]> {
     const tourGroups = new Map<string, BookingItem[]>();
-    
-    this.bookingItems.forEach(item => {
+
+    this.bookingItems.forEach((item) => {
       if (!item.tourID) return;
-      
+
       // If we already have this tour in the cache, apply the image immediately
       if (this.imageCache.has(item.tourID)) {
         item.image = this.imageCache.get(item.tourID) || '';
@@ -523,67 +585,73 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
         }
         return;
       }
-      
+
       // Group items by tourID
       if (!tourGroups.has(item.tourID)) {
         tourGroups.set(item.tourID, []);
       }
       tourGroups.get(item.tourID)?.push(item);
     });
-    
+
     return tourGroups;
   }
 
-  private processTourImageBatches(tourIds: string[], tourGroups: Map<string, BookingItem[]>, startIndex = 0) {
+  private processTourImageBatches(
+    tourIds: string[],
+    tourGroups: Map<string, BookingItem[]>,
+    startIndex = 0
+  ) {
     const batch = tourIds.slice(startIndex, startIndex + this.BATCH_SIZE);
     if (!batch.length) {
       this.loading = false;
       return;
     }
-    
+
     let completedBatches = 0;
-    
-    batch.forEach(tourID => {
-      this.loadTourImage(tourID, tourGroups.get(tourID) || [])
-        .finally(() => {
-          completedBatches++;
-          if (completedBatches === batch.length) {
-            // Process next batch once all current batch items are done
-            const nextIndex = startIndex + this.BATCH_SIZE;
-            if (nextIndex < tourIds.length) {
-              setTimeout(() => {
-                this.processTourImageBatches(tourIds, tourGroups, nextIndex);
-              }, this.BATCH_DELAY);
-            } else {
-              this.loading = false;
-            }
+
+    batch.forEach((tourID) => {
+      this.loadTourImage(tourID, tourGroups.get(tourID) || []).finally(() => {
+        completedBatches++;
+        if (completedBatches === batch.length) {
+          // Process next batch once all current batch items are done
+          const nextIndex = startIndex + this.BATCH_SIZE;
+          if (nextIndex < tourIds.length) {
+            setTimeout(() => {
+              this.processTourImageBatches(tourIds, tourGroups, nextIndex);
+            }, this.BATCH_DELAY);
+          } else {
+            this.loading = false;
           }
-        });
+        }
+      });
     });
   }
 
-  private async loadTourImage(tourID: string, items: BookingItem[]): Promise<void> {
+  private async loadTourImage(
+    tourID: string,
+    items: BookingItem[]
+  ): Promise<void> {
     try {
       const image = await this.getImage(tourID);
       if (image?.url) {
         // Store in cache
         this.imageCache.set(tourID, image.url);
-        
+
         // Update all items with this tourID
-        items.forEach(item => {
+        items.forEach((item) => {
           item.image = image.url;
-          
+
           // Update loading state if those properties exist
           if (item.imageLoading !== undefined) {
             item.imageLoading = false;
             item.imageLoaded = true;
           }
         });
-        
+
         this.cdr.detectChanges();
       } else {
         // Set default image for all items in this batch
-        items.forEach(item => {
+        items.forEach((item) => {
           item.image = this.getDefaultImage();
           if (item.imageLoading !== undefined) {
             item.imageLoading = false;
@@ -594,7 +662,7 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
       }
     } catch (error) {
       // Handle error case
-      items.forEach(item => {
+      items.forEach((item) => {
         item.image = this.getDefaultImage();
         if (item.imageLoading !== undefined) {
           item.imageLoading = false;
@@ -617,86 +685,93 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
       this.cdr.detectChanges();
       return;
     }
-    
+
     // Start loading indicator if properties exist
     if (item.imageLoading !== undefined) {
       item.imageLoading = true;
       item.imageLoaded = false;
     }
-    
-    this.getTourData(item.tourID).then(tourData => {
-      if (tourData.image?.url) {
-        // If image URL exists in the cache, use it immediately
-        if (this.imageCache.has(item.tourID!)) {
-          item.image = this.imageCache.get(item.tourID!)!;
-          if (item.imageLoading !== undefined) {
-            item.imageLoading = false;
-            item.imageLoaded = true;
+
+    this.getTourData(item.tourID)
+      .then((tourData) => {
+        if (tourData.image?.url) {
+          // If image URL exists in the cache, use it immediately
+          if (this.imageCache.has(item.tourID!)) {
+            item.image = this.imageCache.get(item.tourID!)!;
+            if (item.imageLoading !== undefined) {
+              item.imageLoading = false;
+              item.imageLoaded = true;
+            }
+            this.cdr.detectChanges();
+            return;
           }
-          this.cdr.detectChanges();
-          return;
-        }
-        
-        // Otherwise cache it and use it
-        item.image = tourData.image.url;
-        this.imageCache.set(item.tourID!, tourData.image.url);
-        
-        // Create a new Image object to preload the image
-        const img = new Image();
-        img.onload = () => {
-          if (item.imageLoading !== undefined) {
-            item.imageLoading = false;
-            item.imageLoaded = true;
-          }
-          this.cdr.detectChanges();
-        };
-        
-        img.onerror = () => {
+
+          // Otherwise cache it and use it
+          item.image = tourData.image.url;
+          this.imageCache.set(item.tourID!, tourData.image.url);
+
+          // Create a new Image object to preload the image
+          const img = new Image();
+          img.onload = () => {
+            if (item.imageLoading !== undefined) {
+              item.imageLoading = false;
+              item.imageLoaded = true;
+            }
+            this.cdr.detectChanges();
+          };
+
+          img.onerror = () => {
+            item.image = this.getDefaultImage();
+            if (item.imageLoading !== undefined) {
+              item.imageLoading = false;
+              item.imageLoaded = false;
+            }
+            this.cdr.detectChanges();
+          };
+
+          img.src = item.image;
+        } else {
           item.image = this.getDefaultImage();
           if (item.imageLoading !== undefined) {
             item.imageLoading = false;
             item.imageLoaded = false;
           }
           this.cdr.detectChanges();
-        };
-        
-        img.src = item.image;
-      } else {
+        }
+      })
+      .catch(() => {
         item.image = this.getDefaultImage();
         if (item.imageLoading !== undefined) {
           item.imageLoading = false;
           item.imageLoaded = false;
         }
         this.cdr.detectChanges();
-      }
-    }).catch(() => {
-      item.image = this.getDefaultImage();
-      if (item.imageLoading !== undefined) {
-        item.imageLoading = false;
-        item.imageLoaded = false;
-      }
-      this.cdr.detectChanges();
-    });
+      });
   }
 
   private getImage(id: string): Promise<CldImage | null> {
     return new Promise((resolve, reject) => {
       const filters = { externalID: id };
-      const subscription = this.toursService.getFilteredToursList(filters).subscribe({
-        next: (tourData) => {
-          if (tourData?.data?.length > 0 && tourData.data[0].image?.length > 0) {
-            resolve(tourData.data[0].image[0]);
-          } else {
-            console.warn('No image data available for tour:', id);
-            resolve(null);
-          }
-        },
-        error: (err) => {
-          console.error('Error fetching tour image:', err);
-          reject(err);
-        },
-      });
-      
+      const subscription = this.toursService
+        .getFilteredToursList(filters)
+        .subscribe({
+          next: (tourData) => {
+            if (
+              tourData?.data?.length > 0 &&
+              tourData.data[0].image?.length > 0
+            ) {
+              resolve(tourData.data[0].image[0]);
+            } else {
+              console.warn('No image data available for tour:', id);
+              resolve(null);
+            }
+          },
+          error: (err) => {
+            console.error('Error fetching tour image:', err);
+            reject(err);
+          },
+        });
+
       this.subscriptions.add(subscription);
     });
   }
@@ -751,7 +826,7 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
     } else if (this.config.type === 'recent-budgets') {
       // Load the order into the summary service
       if (item.ID) {
-        this.ordersService.getOrderById(item.id).subscribe(orderData => {
+        this.ordersService.getOrderById(item.id).subscribe((orderData) => {
           if (orderData) {
             this.summaryService.updateOrder(orderData);
           }
@@ -761,7 +836,7 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
       this.itemSelected.emit(item);
     }
   }
-  
+
   downloadItem(item: BookingItem) {
     this.downloadLoading[item.id] = true;
     this.messageService.add({
@@ -770,7 +845,13 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
       detail: 'Generando documento...',
     });
 
-    this.notificationsService.getBudgetDocument(item.id).subscribe({
+    // Choose the appropriate document method based on the component type
+    const documentObservable =
+      this.config.type === 'active-bookings'
+        ? this.notificationsService.getBookingDocument(item.id)
+        : this.notificationsService.getBudgetDocument(item.id);
+
+    documentObservable.subscribe({
       next: (response) => {
         this.downloadLoading[item.id] = false;
         if (response.fileUrl) {
@@ -794,33 +875,35 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
       },
     });
   }
-  
+
   sendItem(item: BookingItem) {
     this.notificationLoading[item.id] = true;
-    
+
     if (this.config.type === 'recent-budgets') {
-      this.notificationsService.sendBudgetNotificationEmail({
-        id: item.id,
-        email: this.userEmail,
-      }).subscribe({
-        next: (response) => {
-          this.notificationLoading[item.id] = false;
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Presupuesto enviado exitosamente',
-          });
-        },
-        error: (error) => {
-          this.notificationLoading[item.id] = false;
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Error al enviar el presupuesto',
-          });
-          console.error('Error sending budget notification:', error);
-        },
-      });
+      this.notificationsService
+        .sendBudgetNotificationEmail({
+          id: item.id,
+          email: this.userEmail,
+        })
+        .subscribe({
+          next: (response) => {
+            this.notificationLoading[item.id] = false;
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Éxito',
+              detail: 'Presupuesto enviado exitosamente',
+            });
+          },
+          error: (error) => {
+            this.notificationLoading[item.id] = false;
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Error al enviar el presupuesto',
+            });
+            console.error('Error sending budget notification:', error);
+          },
+        });
     } else {
       // Logic for sending active bookings or travel history
       setTimeout(() => {
@@ -828,20 +911,21 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
         this.messageService.add({
           severity: 'success',
           summary: 'Éxito',
-          detail: this.config.type === 'active-bookings' 
-            ? 'Reserva enviada exitosamente' 
-            : 'Información de viaje enviada exitosamente',
+          detail:
+            this.config.type === 'active-bookings'
+              ? 'Reserva enviada exitosamente'
+              : 'Información de viaje enviada exitosamente',
         });
       }, 1000);
     }
   }
-  
+
   reserveItem(item: BookingItem) {
     if (this.config.type === 'recent-budgets') {
       this.router.navigate(['/checkout', item.id]);
     }
   }
-  
+
   trackById(index: number, item: BookingItem): string {
     return item.id;
   }

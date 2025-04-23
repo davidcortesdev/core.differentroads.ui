@@ -907,10 +907,13 @@ export class BookingListSectionComponent implements OnInit, OnDestroy {
     } else if (this.config.type === 'active-bookings') {
       // For active bookings, use the booking notification service
       this.notificationsService
-        .sendBookingNotificationEmail({
-          id: item.id,
-          email: this.userEmail,
-        })
+        .sendBookingNotificationEmail(
+          {
+            id: item.id,
+            email: this.userEmail,
+          },
+          item.status
+        )
         .subscribe({
           next: (response) => {
             this.notificationLoading[item.id] = false;

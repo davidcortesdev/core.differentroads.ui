@@ -46,7 +46,8 @@ export class NotificationsService {
   }
 
   sendBookingNotificationEmail(
-    props: SendBudgetNotificationEmailServiceProps
+    props: SendBudgetNotificationEmailServiceProps,
+    bookState: string
   ): Observable<any> {
     const { id, email, products } = props;
     console.log(id);
@@ -57,7 +58,7 @@ export class NotificationsService {
         id,
         emailOverride: email,
         filters: {
-          bookState: 'Booked',
+          bookState,
         },
       },
     };

@@ -144,7 +144,6 @@
   }
 }
 
-/* Estilo para los botones */
 p-button.next ::ng-deep .p-button {
   border-radius: 50px;
   width: 100%;
@@ -170,7 +169,6 @@ p-button.file ::ng-deep .p-button {
   }
 }
 
-/* Estilo para los botones de navegación en el paso de vuelos */
 .flight-buttons {
   display: flex;
   justify-content: flex-end;
@@ -233,7 +231,6 @@ p-button.continue-button ::ng-deep .p-button {
   }
 }
 
-/* Estilos para la sección de vuelos */
 .booking-flights {
   background-color: white;
   border-radius: 0.5rem;
@@ -327,7 +324,6 @@ p-button.continue-button ::ng-deep .p-button {
   }
 }
 
-/* Responsive adjustments for PrimeNG Steps */
 @media screen and (min-width: 481px) and (max-width: 768px) {
   .checkout ::ng-deep .p-steps {
     .p-steps-item {
@@ -363,7 +359,6 @@ p-button.continue-button ::ng-deep .p-button {
   font-size: 0.7rem;
 }
 
-// Ensure all text in the checkout component has the correct color
 ::ng-deep .checkout {
   p,
   span,
@@ -378,14 +373,12 @@ p-button.continue-button ::ng-deep .p-button {
     color: var(--background-azul);
   }
 
-  // Exception for buttons - don't change their text color
   .p-button .p-button-label,
   .p-button .p-button-icon {
     color: inherit;
   }
 }
 
-// Styles for tour-additional-info component
 .tour-actions-container {
   margin-top: 1.5rem;
   width: 100%;
@@ -406,22 +399,22 @@ p-button.continue-button ::ng-deep .p-button {
     justify-content: space-between;
     gap: 1rem;
     width: 100%;
-    flex-wrap: nowrap !important; // Asegura que siempre estén en una sola fila
+    flex-wrap: nowrap !important;
 
     @media screen and (min-width: 481px) and (max-width: 1024px) {
       gap: 0.3rem;
       width: 100%;
       overflow: visible;
       .bg-pink-100 {
-        width: 40px;
-        height: 25px;
+        width: 40px !important;
+        height: 25px !important;
       }
     }
   }
 
   .action-card {
     flex: 1;
-    min-width: 0; // Permite que las cards se reduzcan en lugar de desbordar
+    min-width: 0;
     cursor: pointer;
 
     @media screen and (min-width: 481px) and (max-width: 1024px) {
@@ -429,7 +422,7 @@ p-button.continue-button ::ng-deep .p-button {
     }
 
     .p-card-body {
-      padding: 0.5rem 0.75rem;
+      padding: 0.4rem !important;
       background-color: white;
       border-radius: 11.82px;
 
@@ -460,7 +453,6 @@ p-button.continue-button ::ng-deep .p-button {
     font-size: 0.85rem;
     white-space: normal;
     font-weight: 500;
-
     @media screen and (min-width: 481px) and (max-width: 1024px) {
       font-size: 0.75rem;
       white-space: normal;
@@ -471,29 +463,27 @@ p-button.continue-button ::ng-deep .p-button {
       line-height: 1.2;
     }
   }
-
-  // Responsive adjustments
   @media screen and (min-width: 481px) and (max-width: 768px) {
     .tour-additional-info-container {
       flex-wrap: nowrap !important;
     }
-
     .action-card {
       flex-basis: auto;
     }
   }
-
   @media screen and (max-width: 480px) {
     .tour-additional-info-container {
       gap: 0.5rem;
     }
-
     .card-content {
       gap: 0.25rem;
     }
-
     .card-text {
       font-size: 0.7rem;
+    }
+    .p-card {
+      margin-top: -10px;
+      width: 300px;
     }
   }
 }

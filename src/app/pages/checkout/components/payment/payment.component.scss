@@ -378,8 +378,7 @@ $border-light: #d4d4d8;
       border-radius: 100px;
       height: 40px;
       background-color: var(--p-primary-color);
-
-      margin-top: 0px;
+      margin-top: 20px;
 
       &.p-disabled,
       &.payment-button-disabled {
@@ -412,7 +411,6 @@ $border-light: #d4d4d8;
   .buttons-container {
     display: flex;
     justify-content: space-between;
-    margin-top: 2rem;
 
     .back-button {
       margin-right: 1rem;

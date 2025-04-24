@@ -1,71 +1,82 @@
 $primary: var(--background-azul);
 $accent: #f67362;
-$text: var(--background-azul);
 $light: #f5f5f5;
 $border: #ddd;
-
 %flex-c {
   display: flex;
   align-items: center;
 }
-
 %small {
   font-size: 0.8rem;
-  color: $text;
+  color: $primary;
 }
-
 %shadow {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
 }
-
-::ng-deep .p-panel {
-  font-family: Arial, sans-serif;
-  margin: 0 0 20px 0;
-  background-color: #fff !important;
-  color: $primary;
-  @extend %shadow;
-
-  .p-panel-header {
-    border-bottom: 1px solid #e9ecef;
-    padding: 1rem;
-  }
-  .p-panel-content {
-    padding: 20px;
-    width: 100%;
-    border: none;
-  }
-}
-
 ::ng-deep {
+  .p-autocomplete {
+    .p-autocomplete-input {
+      padding: 1rem !important;
+    }
+    .p-inputtext {
+      border-radius: 10px !important;
+      padding-right: 55px !important;
+    }
+  }
+  .p-panel {
+    font-family: Arial, sans-serif;
+    margin: 0 0 20px 0;
+    background-color: #fff !important;
+    color: $primary;
+    @extend %shadow;
+    .p-panel-header {
+      border-bottom: 1px solid #e9ecef;
+      padding: 1rem;
+    }
+    .p-panel-content {
+      width: 100%;
+      border: none;
+    }
+  }
   .p-radiobutton .p-radiobutton-box {
-    border-color: var(--background-azul);
+    border-color: $primary;
   }
-
-  .p-radiobutton-checked .p-radiobutton-box {
-    border-color: var(--background-azul) !important;
-    background: var(--background-azul-color-letra) !important;
+  .p-radiobutton-checked {
+    .p-radiobutton-box {
+      border-color: $primary !important;
+      background: white !important;
+    }
+    .p-radiobutton-icon {
+      background-color: $primary !important;
+    }
   }
-
-  .p-radiobutton-checked .p-radiobutton-icon {
-    background-color: var(--background-azul) !important;
+  .p-button {
+    &.p-button-danger {
+      background: $accent;
+      border-color: $accent;
+      font-weight: 600;
+      padding: 0.5rem 2rem;
+      border-radius: 4px;
+    }
+    &.p-button-success {
+      background: var(--p-primary-color);
+      border-color: var(--p-primary-color);
+    }
+  }
+  .p-calendar {
+    width: 100%;
+    .p-inputtext {
+      font-size: 0.9rem;
+    }
+    .p-datepicker-trigger {
+      background-color: transparent;
+      border-color: $border;
+      color: $primary;
+    }
   }
 }
-
-::ng-deep {
-  .p-select-label {
-    color: $primary;
-  }
-  .p-select-list-container {
-    background-color: #fff;
-  }
-  .p-select-option {
-    color: $primary;
-  }
-}
-
 .flt-hdr {
-  margin-bottom: 20px;
   h2 {
     margin: 0 0 5px 0;
     font-size: 1.2rem;
@@ -78,68 +89,41 @@ $border: #ddd;
     font-size: 0.9rem;
   }
 }
-
 .travel-type {
   @extend %flex-c;
-  margin-bottom: 20px;
+  margin: 10px 0;
   padding-bottom: 15px;
   border-bottom: 1px solid #eee;
-
   .radio {
     @extend %flex-c;
     margin-right: 20px;
-
     label {
       margin-left: 8px;
       font-size: 0.9rem;
     }
   }
-
-  .sep {
-    height: 24px;
-    width: 1px;
-    background-color: $border;
-    margin: 0 15px;
-  }
-
-  .equip {
-    display: flex;
-
-    .check {
-      @extend %flex-c;
-      margin-right: 20px;
-
-      label {
-        margin-left: 8px;
-        font-size: 0.9rem;
-      }
-    }
-  }
 }
 
 .flt-details {
-  margin-bottom: 20px;
   .row {
     @extend %flex-c;
     margin-bottom: 15px;
     .label {
-      width: 80px;
-      label {
-        font-weight: 600;
-        font-size: 0.9rem;
-        margin-bottom: 5px;
-        display: block;
-      }
+      width: 70px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 5px;
+      display: block;
+
       .from {
         color: $primary;
         @extend %small;
       }
     }
+
     .input {
       flex: 1;
-      position: relative;
-      padding: 6px 8px;
-      margin-right: 10px;
+      margin-left: 20px;
       &.origin {
         i {
           position: absolute;
@@ -164,30 +148,17 @@ $border: #ddd;
           z-index: 2;
         }
       }
+
       .dest-lbl {
         color: $primary;
         @extend %small;
         margin-bottom: 5px;
-      }
-
-      ::ng-deep .p-dropdown {
-        width: 100%;
-        background: transparent;
-        border: none;
-
-        .p-dropdown-label {
-          font-size: 0.9rem;
-        }
-        .p-dropdown-trigger {
-          width: 2rem;
-        }
       }
     }
 
     .date {
       width: 150px;
       margin-left: 10px;
-
       .date-lbl {
         color: $primary;
         @extend %small;
@@ -196,19 +167,6 @@ $border: #ddd;
       .static-field {
         color: $primary;
       }
-
-      ::ng-deep .p-calendar {
-        width: 100%;
-
-        .p-inputtext {
-          font-size: 0.9rem;
-        }
-        .p-datepicker-trigger {
-          background-color: transparent;
-          border-color: $border;
-          color: $text;
-        }
-      }
     }
   }
 }
@@ -216,23 +174,10 @@ $border: #ddd;
 .search-opts {
   @extend %flex-c;
   justify-content: space-between;
-  margin-top: 30px;
   .sort,
   .filter {
     @extend %flex-c;
     gap: 10px;
-    ::ng-deep .p-button.p-button-outlined {
-      color: $text;
-      border-color: $border;
-      &:hover {
-        background: #f8f8f8;
-        border-color: #ccc;
-      }
-      .p-button-label {
-        font-weight: normal;
-        font-size: 0.9rem;
-      }
-    }
     ::ng-deep .p-dropdown {
       min-width: 120px;
       .p-dropdown-label {
@@ -241,6 +186,7 @@ $border: #ddd;
       }
     }
   }
+
   .btn-search ::ng-deep .p-button.p-button-danger {
     background: $accent;
     border-color: $accent;
@@ -250,21 +196,16 @@ $border: #ddd;
   }
 }
 
-.flt-results {
-  margin-top: 20px;
-}
-
 .res-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-
   h3 {
     margin: 0;
     font-size: 1.2rem;
     color: $primary;
+    margin-right: 10px;
   }
-
   .count {
     @extend %small;
   }
@@ -286,7 +227,6 @@ $border: #ddd;
     @extend %shadow;
     padding: 15px;
     transition: box-shadow 0.3s ease;
-
     &:hover {
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
@@ -304,7 +244,6 @@ $border: #ddd;
         @extend %flex-c;
         justify-content: center;
         margin-bottom: 5px;
-
         .code {
           font-weight: bold;
           color: $primary;
@@ -313,7 +252,7 @@ $border: #ddd;
 
       .name {
         font-size: 0.8rem;
-        color: $text;
+        color: $primary;
         text-align: center;
         max-width: 90px;
         white-space: nowrap;
@@ -324,7 +263,6 @@ $border: #ddd;
 
     .segment {
       padding: 0 15px;
-
       .seg-hdr {
         font-size: 0.8rem;
         color: #999;
@@ -335,20 +273,17 @@ $border: #ddd;
 
       .route {
         @extend %flex-c;
-
         .dep,
         .arr {
           width: 70px;
-
           .time {
             font-size: 1.1rem;
             font-weight: bold;
             color: $primary;
           }
-
           .airport {
             font-size: 0.9rem;
-            color: $text;
+            color: $primary;
           }
         }
 
@@ -356,10 +291,9 @@ $border: #ddd;
           flex: 1;
           padding: 0 15px;
           text-align: center;
-
           .duration {
             font-size: 0.9rem;
-            color: $text;
+            color: $primary;
             margin-bottom: 5px;
           }
 
@@ -368,7 +302,6 @@ $border: #ddd;
             height: 2px;
             background: $border;
             margin: 10px 0;
-
             .stops {
               position: absolute;
               top: -4px;
@@ -376,7 +309,6 @@ $border: #ddd;
               right: 0;
               display: flex;
               justify-content: space-evenly;
-
               .stop {
                 width: 10px;
                 height: 10px;
@@ -401,12 +333,10 @@ $border: #ddd;
       display: flex;
       flex-direction: column;
       gap: 10px;
-
       .bag-item {
         @extend %flex-c;
         color: #999;
         font-size: 0.9rem;
-
         i {
           margin-right: 5px;
         }
@@ -419,25 +349,17 @@ $border: #ddd;
 
     .price-box {
       text-align: right;
-
       .price {
         margin-bottom: 10px;
-
         .amount {
           font-size: 1.3rem;
           font-weight: bold;
           color: $primary;
         }
-
         .detail {
           font-size: 0.8rem;
           color: #999;
         }
-      }
-
-      ::ng-deep .p-button.p-button-success {
-        background: var(--p-primary-color);
-        border-color: var(--p-primary-color);
       }
     }
   }
@@ -449,10 +371,9 @@ $border: #ddd;
   align-items: center;
   justify-content: center;
   padding: 40px 0;
-
   .msg {
     margin-top: 20px;
-    color: $text;
+    color: $primary;
   }
 }
 
@@ -469,113 +390,124 @@ $border: #ddd;
     color: $accent;
     margin-bottom: 15px;
   }
-
   h3 {
     margin: 0 0 10px 0;
     color: $primary;
   }
-
   p {
-    color: $text;
+    color: $primary;
     max-width: 400px;
     margin: 0;
   }
 }
+@media (max-width: 767px) {
+  .travel-type {
+    display: flex;
+    justify-content: space-between;
+  }
+  .flt-details {
+    .row {
+      .input {
+        margin-left: 00px;
+      }
+      &:first-child {
+        display: block;
+        .label {
+          width: 30%;
+          display: inline-block;
+          vertical-align: middle;
+        }
+        .input.origin {
+          width: 70%;
+          display: inline-block;
+          vertical-align: middle;
+        }
+        .input.destination,
+        .date {
+          margin-top: 10px;
+        }
+        .input.destination {
+          width: 50%;
+          display: inline-block;
+        }
+        .date {
+          width: 50%;
+          display: inline-block;
+          margin-left: 0;
+        }
+      }
+      &:nth-child(2) {
+        display: block;
+        .label {
+          width: 30%;
+          display: inline-block;
+          vertical-align: middle;
+          margin-bottom: 0;
+        }
 
-@media (max-width: 992px) {
-  .flt-list .card {
-    grid-template-columns: 80px 1fr 1fr;
-    grid-template-rows: auto auto;
-    .airline {
-      grid-row: 1 / 3;
-    }
-    .segment {
-      grid-column: 2 / 4;
-      &.inbound {
-        margin-top: 15px;
+        .input.origin {
+          width: 70%;
+          display: inline-block;
+          vertical-align: middle;
+          margin-bottom: 10px;
+        }
+
+        .input.destination {
+          width: 50%;
+          display: inline-block;
+        }
+        .date {
+          width: 50%;
+          display: inline-block;
+          margin-left: 0;
+        }
       }
     }
-    .baggage {
-      grid-column: 1 / 3;
-      grid-row: 3;
-      margin-top: 15px;
-      flex-direction: row;
+  }
+  .search-opts {
+    flex-direction: column;
+    .sort {
+      width: 100%;
+      margin-bottom: 10px;
     }
-    .price-box {
-      grid-column: 3;
-      grid-row: 3;
-      margin-top: 15px;
+    .btn-search {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+
+      ::ng-deep .p-button {
+        width: auto;
+        min-width: 150px;
+      }
     }
   }
 }
 
-@media (max-width: 768px) {
-  .travel-type {
-    flex-direction: column;
-    align-items: flex-start;
-
-    .sep {
-      display: none;
-    }
-    .equip {
-      margin-top: 15px;
-    }
-  }
-
-  .flt-details .row {
-    flex-direction: column;
-    align-items: flex-start;
-
-    .label {
-      width: 100%;
-      margin-bottom: 10px;
-    }
-    .input {
-      width: 100%;
-      margin-bottom: 10px;
-      margin-right: 0;
-    }
-    .date {
-      width: 100%;
-      margin-left: 0;
-    }
-  }
-
-  .search-opts {
-    flex-direction: column;
-    .btn-search {
-      width: 100%;
-      ::ng-deep .p-button {
-        width: 100%;
+@media (min-width: 768px) and (max-width: 1024px) {
+  .flt-details {
+    .row {
+      &:first-child {
+        display: block;
+        .label {
+          display: inline-block;
+          vertical-align: middle;
+        }
+        .input.origin {
+          width: 75%;
+          display: inline-block;
+          vertical-align: middle;
+          margin-bottom: 15px;
+        }
+        .input.destination {
+          display: inline-block;
+          vertical-align: top;
+          margin-left: 44%;
+        }
+        .date {
+          display: inline-block;
+          margin-left: 4%;
+        }
       }
-    }
-  }
-
-  .flt-list .card {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-
-    .airline {
-      grid-row: 1;
-      margin-bottom: 15px;
-    }
-    .segment {
-      grid-column: 1;
-      &.outbound {
-        grid-row: 2;
-      }
-      &.inbound {
-        grid-row: 3;
-      }
-    }
-    .baggage {
-      grid-column: 1;
-      grid-row: 4;
-    }
-    .price-box {
-      grid-column: 1;
-      grid-row: 5;
-      text-align: center;
     }
   }
 }

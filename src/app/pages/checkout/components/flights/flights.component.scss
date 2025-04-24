@@ -34,4 +34,12 @@
       margin-top: -5px;
     }
   }
+  .flight-search-container {
+    width: 100%;
+    overflow-x: hidden;
+
+    @media (min-width: 768px) and (max-width: 1024px) {
+      padding: 0 0.5rem;
+    }
+  }
 }

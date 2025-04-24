@@ -65,6 +65,7 @@
         position: relative;
         @media (max-width: 425px) {
           height: 4rem;
+          margin-bottom: 20px;
         }
 
         // Bloques de tiempo (izquierda y derecha)
@@ -216,6 +217,9 @@
     padding: 1rem;
     width: 25%;
     gap: 0.5rem;
+    @media (max-width: 992px) and (min-width: 577px) {
+      margin-left: 15px;
+    }
 
     @media (max-width: 576px) and (min-width: 426px) {
       width: 35%;

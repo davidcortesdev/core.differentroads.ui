@@ -123,7 +123,6 @@ export class PassengerCardComponent implements OnInit, OnChanges {
     });
   }
 
-  // Custom validator to ensure birthDate is less than today
   birthDateValidator(control: AbstractControl): { [key: string]: boolean } | null {
     const selectedDate = new Date(control.value);
     if (selectedDate >= this.today) {

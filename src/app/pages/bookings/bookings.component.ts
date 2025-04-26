@@ -95,6 +95,10 @@ export interface PassengerData {
   insurance?: string;
   nationality?: string;
   ageGroup?: string;
+  _id?: string;
+  bookingID?: string;
+  bookingSID?: string;
+  lead?: boolean;
 }
 
 @Component({
@@ -684,28 +688,41 @@ export class BookingsComponent implements OnInit {
           travelerData.passportID ||
           travelerData.docNum ||
           '';
-          // Obtener la descripción de la habitación si está disponible
-          let roomDescription = 'Sin asignar';
-        
-          // Intentar obtener la descripción de la habitación desde los datos del periodo
-          if (booking.periodData?.textSummary?.rooms && traveler.periodReservationModeID) {
-            const roomInfo = booking.periodData.textSummary.rooms[traveler.periodReservationModeID];
-            if (roomInfo && roomInfo.description) {
-              roomDescription = roomInfo.description;
-            } else if (roomInfo && roomInfo.name) {
-              roomDescription = roomInfo.name;
-            }
-          } else if (traveler.roomType) {
-            // Si no hay información detallada, usar el tipo de habitación
-            roomDescription = traveler.roomType;
+          
+        // Obtener la descripción de la habitación si está disponible
+        let roomDescription = 'Sin asignar';
+      
+        // Intentar obtener la descripción de la habitación desde los datos del periodo
+        if (booking.periodData?.textSummary?.rooms && traveler.periodReservationModeID) {
+          const roomInfo = booking.periodData.textSummary.rooms[traveler.periodReservationModeID];
+          if (roomInfo && roomInfo.description) {
+            roomDescription = roomInfo.description;
+          } else if (roomInfo && roomInfo.name) {
+            roomDescription = roomInfo.name;
           }
+        } else if (traveler.roomType) {
+          // Si no hay información detallada, usar el tipo de habitación
+          roomDescription = traveler.roomType;
+        }
+        
+        // Manejar la fecha de nacimiento - verificar ambos campos posibles
+        let birthDate = '';
+        if (travelerData.birthDate) {
+          birthDate = travelerData.birthDate;
+        } else if (travelerData.birthdate) {
+          birthDate = travelerData.birthdate;
+        }
+        
+        console.log(`Traveler ${index} birthDate:`, birthDate);
+        
         // Mapear datos del pasajero - importante: ID debe ser number
         const passenger: PassengerData = {
           id: index + 1, // Convertir a number usando el índice
+          _id: traveler._id || '', // Asegurarnos de incluir el _id del viajero
           fullName: fullName,
           documentType: documentType,
           documentNumber: documentNumber,
-          birthDate: travelerData.birthDate ? travelerData.birthDate : '',
+          birthDate: birthDate,
           email: travelerData.email || '',
           phone: travelerData.phone || '',
           type:
@@ -716,18 +733,20 @@ export class BookingsComponent implements OnInit {
           gender: travelerData.sex || '',
           comfortPlan: 'Standard', // Campo necesario para el componente hijo
           insurance: 'Básico', // Campo necesario para el componente hijo
-          documentExpeditionDate: travelerData.minorIdIssueDate
-            ? travelerData.minorIdIssueDate
-            : '',
-          documentExpirationDate: travelerData.minorIdExpirationDate
-            ? travelerData.minorIdExpirationDate
-            : '',
+          documentExpeditionDate: travelerData.passportIssueDate || travelerData.minorIdIssueDate || '',
+          documentExpirationDate: travelerData.passportExpirationDate || travelerData.minorIdExpirationDate || '',
           nationality: travelerData.nationality || '',
           ageGroup: travelerData.ageGroup || '',
+          bookingID: this.bookingId, // Añadir el ID de la reserva
+          bookingSID: booking.bookingSID || this.bookingId, // Añadir el bookingSID
+          lead: traveler.lead || false,
         };
 
         // Añadir al array de pasajeros
         this.passengers.push(passenger);
+        
+        // Debug para verificar que los IDs se están pasando correctamente
+        console.log(`Passenger ${index} - _id: ${passenger._id}, bookingID: ${passenger.bookingID}, bookingSID: ${passenger.bookingSID}, birthDate: ${passenger.birthDate}`);
       });
     }
   }

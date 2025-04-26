@@ -13,4 +13,5 @@ export interface PassengerData {
     documentExpirationDate?: string;
     comfortPlan?: string;
     insurance?: string;
+    _id?: string;
   }

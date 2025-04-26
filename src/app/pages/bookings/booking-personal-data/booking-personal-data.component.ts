@@ -11,6 +11,7 @@ import { PassengerData } from '../passengerData';
 })
 export class BookingPersonalDataComponent implements OnInit {
   @Input() passengers: PassengerData[] = [];
+  @Input() bookingId!: string;
 
   // Número máximo de pasajeros por fila
   maxPassengersPerRow: number = 3;
@@ -70,7 +71,7 @@ export class BookingPersonalDataComponent implements OnInit {
    * Actualiza los datos del pasajero
    */
   updatePassenger(updatedPassenger: PassengerData): void {
-    const index = this.passengers.findIndex(p => p.id === updatedPassenger.id);
+    const index = this.passengers.findIndex(p => p._id === updatedPassenger._id);
     if (index !== -1) {
       this.passengers[index] = updatedPassenger;
     }

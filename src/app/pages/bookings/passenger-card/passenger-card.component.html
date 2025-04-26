@@ -36,7 +36,9 @@
 
       <div class="detail-row">
         <span class="detail-label">Fecha de nacimiento:</span>
-        <span class="detail-value" [ngClass]="{'pending-value': !passenger.birthDate}">{{passenger.birthDate ? formatDate(passenger.birthDate) : 'Pendiente'}}</span>
+        <span class="detail-value" [ngClass]="{'pending-value': !passenger.birthDate}">
+          {{passenger.birthDate ? formatDate(passenger.birthDate) : 'Pendiente'}}
+        </span>
       </div>
       <p-divider></p-divider>
 
@@ -53,14 +55,14 @@
       <div class="detail-row">
         <span class="detail-label">Fecha de expedición:</span>
         <span class="detail-value" [ngClass]="{'pending-value': !passenger.documentExpeditionDate}">
-          {{passenger.documentExpeditionDate || 'Pendiente'}}
+          {{passenger.documentExpeditionDate ? formatDate(passenger.documentExpeditionDate || '') : 'Pendiente'}}
         </span>
       </div>
       
       <div class="detail-row">
         <span class="detail-label">Fecha de caducidad:</span>
         <span class="detail-value" [ngClass]="{'pending-value': !passenger.documentExpirationDate}">
-          {{passenger.documentExpirationDate || 'Pendiente'}}
+          {{passenger.documentExpirationDate ? formatDate(passenger.documentExpirationDate || '') : 'Pendiente'}}
         </span>
       </div>
       <p-divider></p-divider>
@@ -109,17 +111,41 @@
         
         <div class="detail-row">
           <span class="detail-label">Fecha de expedición:</span>
-          <input type="text" pInputText formControlName="documentExpeditionDate" class="detail-value">
+          <p-datepicker
+            formControlName="documentExpeditionDate"
+            placeholder="dd/mm/aaaa"
+            [iconDisplay]="'input'"
+            [showIcon]="true"
+            appendTo="body"
+            dateFormat="dd/mm/yy"
+          >
+        </p-datepicker>
         </div>
         
         <div class="detail-row">
           <span class="detail-label">Fecha de caducidad:</span>
-          <input type="text" pInputText formControlName="documentExpirationDate" class="detail-value">
+          <p-datepicker
+            formControlName="documentExpirationDate"
+            placeholder="dd/mm/aaaa"
+            [iconDisplay]="'input'"
+            [showIcon]="true"
+            appendTo="body"
+            dateFormat="dd/mm/yy"
+          >
+          </p-datepicker>
         </div>
         
         <div class="detail-row">
           <span class="detail-label">Fecha de nacimiento:</span>
-          <input type="text" pInputText formControlName="birthDate" class="detail-value">
+          <p-datepicker
+            formControlName="birthDate"
+            placeholder="dd/mm/aaaa"
+            [iconDisplay]="'input'"
+            [showIcon]="true"
+            appendTo="body"
+            dateFormat="dd/mm/yy"
+          >
+          </p-datepicker>
         </div>
         
         <div class="detail-row">

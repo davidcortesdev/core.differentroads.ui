@@ -136,16 +136,21 @@
         </div>
         
         <div class="detail-row">
-          <span class="detail-label">Fecha de nacimiento:</span>
-          <p-datepicker
+            <span class="detail-label">Fecha de nacimiento:</span>
+            <p-datepicker
             formControlName="birthDate"
             placeholder="dd/mm/aaaa"
             [iconDisplay]="'input'"
             [showIcon]="true"
             appendTo="body"
             dateFormat="dd/mm/yy"
-          >
-          </p-datepicker>
+            [maxDate]="today"
+            >
+            </p-datepicker>
+        </div>
+        
+        <div *ngIf="passengerForm.get('birthDate')?.hasError('invalidBirthDate') && passengerForm.get('birthDate')?.touched" class="error-message">
+          La fecha de nacimiento debe ser menor a la fecha actual.
         </div>
         
         <div class="detail-row">

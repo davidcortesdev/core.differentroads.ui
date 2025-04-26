@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChanges } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 
 import { ActivatedRoute } from '@angular/router';
 import { MessageService } from 'primeng/api';
@@ -23,6 +23,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
   isEditing: boolean = false;
   passengerForm: FormGroup;
   form!: FormGroup;
+  today: Date = new Date();
 
   // Añadir propiedad para acceder al booking completo
   bookingComplete: any = null;
@@ -85,7 +86,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
       phone: [this.passenger.phone || ''],
       documentType: [this.passenger.documentType || ''],
       documentNumber: [this.passenger.documentNumber || ''],
-      birthDate: [this.passenger.birthDate || ''],
+      birthDate: [this.passenger.birthDate || '', [Validators.required, this.birthDateValidator.bind(this)]],
       gender: [this.passenger.gender || '']
       // Agregá los campos reales que estés usando
     });
@@ -109,7 +110,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
       fullName: [passenger.fullName, [Validators.required, Validators.minLength(3)]],
       documentType: [passenger.documentType, Validators.required],
       documentNumber: [passenger.documentNumber, [Validators.required, Validators.minLength(3)]],
-      birthDate: [passenger.birthDate],
+      birthDate: [passenger.birthDate, [Validators.required, this.birthDateValidator.bind(this)]],
       email: [passenger.email, Validators.email],
       phone: [passenger.phone],
       type: [passenger.type],
@@ -120,6 +121,15 @@ export class PassengerCardComponent implements OnInit, OnChanges {
       comfortPlan: [passenger.comfortPlan],
       insurance: [passenger.insurance],
     });
+  }
+
+  // Custom validator to ensure birthDate is less than today
+  birthDateValidator(control: AbstractControl): { [key: string]: boolean } | null {
+    const selectedDate = new Date(control.value);
+    if (selectedDate >= this.today) {
+      return { invalidBirthDate: true };
+    }
+    return null;
   }
 
   onEdit(): void {

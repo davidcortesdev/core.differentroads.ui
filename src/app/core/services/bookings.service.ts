@@ -15,6 +15,7 @@ import {
   VoucherReviewStatus,
 } from '../models/bookings/payment.model';
 import { Pagination } from '../models/commons/pagination.model';
+import { Activity } from '../models/tours/activity.model';
 
 @Injectable({
   providedIn: 'root',
@@ -312,11 +313,12 @@ export class BookingsService {
   addOptionalActivities(
     id: string,
     activityId: string,
-    travelers: string[]
+    travelers: string[],
+    activity: Activity
   ): Observable<any> {
-    return this.http.post<any>(
+    return this.http.put<any>(
       `${this.API_URL}/${id}/optional-activity/${activityId}`,
-      { travelers },
+      { travelers, activity },
       this.httpOptions
     );
   }

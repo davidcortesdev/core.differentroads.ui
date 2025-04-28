@@ -374,8 +374,8 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       const response = await this.processBooking();
       const bookingID = response.bookingID;
       const code = response.code;
-      await this.createReservationPoints(bookingID, this.tourName || '');
-      this.sendRedemptionPoints(bookingID, this.tourName || '');
+      await this.createReservationPoints(code, this.tourName || '');
+      this.sendRedemptionPoints(code, this.tourName || '');
       console.log('Booking created successfully:', bookingID);
 
       // Determine the payment amount based on payment type
@@ -742,6 +742,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     console.log(
       'Iniciando proceso de redención para booking:',
       bookingID,
+
       'y tour:',
       tourName
     );

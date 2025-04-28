@@ -13,17 +13,23 @@ export class CookiesConsentComponent {
   showOptions = false;
 
   essentialCookies = true; // Always enabled
-  necessaryCookies = false;
-  advertisingCookies = false;
-  analyticsCookies = false;
+  necessaryCookies = true;
+  advertisingCookies = true;
+  analyticsCookies = true;
 
   constructor(private cookieService: CookieService) {}
 
   ngOnInit(): void {
     this.cookiesAccepted = this.cookieService.check('cookiesAccepted');
-    this.necessaryCookies = this.cookieService.check('necessaryCookies');
-    this.advertisingCookies = this.cookieService.check('advertisingCookies');
-    this.analyticsCookies = this.cookieService.check('analyticsCookies');
+    this.necessaryCookies = this.cookieService.check('necessaryCookies')
+      ? this.cookieService.get('necessaryCookies') === 'true'
+      : true;
+    this.advertisingCookies = this.cookieService.check('advertisingCookies')
+      ? this.cookieService.get('advertisingCookies') === 'true'
+      : true;
+    this.analyticsCookies = this.cookieService.check('analyticsCookies')
+      ? this.cookieService.get('analyticsCookies') === 'true'
+      : true;
   }
 
   acceptAllCookies(): void {

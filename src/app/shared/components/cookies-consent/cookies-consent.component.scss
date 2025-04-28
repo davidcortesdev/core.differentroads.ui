@@ -26,28 +26,32 @@
   justify-content: center;
   z-index: 1001;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  max-height: 85vh;
 
   .content-wrapper {
     max-width: 1200px;
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.5rem;
 
     @media (min-width: 768px) {
       flex-direction: row;
       flex-wrap: wrap;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
     }
   }
 
   .cookie-text {
     flex: 1 1 40%;
+    color: var(--background-azul);
+
     .title {
       font-weight: 900;
       font-size: 1rem;
-      color: var(--primary-color, #007ad9);
+      color: var(--background-azul);
     }
     .description {
       font-size: 0.875rem;
@@ -62,10 +66,39 @@
     flex-wrap: wrap;
     gap: 0.5rem;
     justify-content: center;
+    align-items: center;
+    align-self: center;
 
     button {
       flex: 1 1 30%;
       min-width: 120px;
+    }
+
+    &.single-button {
+      justify-content: center;
+      flex: 1 1 40%;
+      margin-top: 1rem;
+      max-width: 30rem;
+    }
+  }
+
+  .cookie-switches {
+    flex: 1 1 40%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+
+    .switch-item {
+      width: 48%;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+
+      .switch-label {
+        font-weight: 500;
+        color: var(--primary-color-500);
+      }
     }
   }
 

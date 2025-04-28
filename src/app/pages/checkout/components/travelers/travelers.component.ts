@@ -40,6 +40,8 @@ export class TravelersComponent implements OnInit {
 
   @ViewChild('sexoSelect') sexoSelect!: Select;
   @Input() allFieldsMandatory: boolean = false;
+  @Input() reservationFields: { id: number; name: string; key: string }[] = [];
+  @Input() isAmadeusFlightSelected: boolean = false;
 
   // Se agrega la propiedad 'sexoOptions' para el select de sexo
   sexoOptions = [
@@ -357,7 +359,7 @@ export class TravelersComponent implements OnInit {
    * Filtra y devuelve las opciones de viajeros adultos para asociar a un bebé.
    */
   // Update the getAdultsOptions method to be accessible from the child component
-  getAdultsOptions(currentIndex: number): any[] {
+  getAdultsOptions(): any[] {
     return this.travelers
       .map((traveler, idx) => ({
         label: `${traveler.firstName} ${traveler.lastName}`,

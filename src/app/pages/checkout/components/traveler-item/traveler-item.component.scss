@@ -37,6 +37,8 @@
     display: flex;
     justify-content: space-between;
     margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
 
     @media (max-width: 768px) {
       flex-direction: column;
@@ -50,14 +52,14 @@
 
   .form-column {
     flex: 1;
-    margin-right: 10px;
 
     &:last-child {
       margin-right: 0;
     }
 
     &.half-width {
-      flex: 0.5;
+      flex: 49%;
+      max-width: 50%;
 
       @media (max-width: 768px) {
         flex: 1 1 100%;
@@ -100,8 +102,7 @@
         border-radius: 0;
         background: transparent;
         font-size: 14px;
-        padding-top:  0rem !important;
-
+        padding-top: 0rem !important;
       }
 
       .p-datepicker {

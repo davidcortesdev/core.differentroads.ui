@@ -6,6 +6,7 @@
   >
     <div class="content-form">
       <h3 class="title">Viajeros</h3>
+      <p></p>
       <p-accordion
         [multiple]="true"
         [value]="getAllTravelersIndices()"
@@ -27,6 +28,8 @@
               [sexoOptions]="sexoOptions"
               [getAdultsOptionsFn]="getAdultsOptions.bind(this)"
               [allFieldsMandatory]="allFieldsMandatory"
+              [reservationFields]="reservationFields"
+              [isAmadeusFlightSelected]="isAmadeusFlightSelected"
             ></app-traveler-item>
           </p-accordion-content>
         </p-accordion-panel>

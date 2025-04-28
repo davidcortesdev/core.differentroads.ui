@@ -161,6 +161,9 @@ import { Amplify } from 'aws-amplify';
 import awsconfig from '../../src/aws-exports';
 import { TripTypesSectionComponent } from './pages/home/components/trip-types-section/trip-types-section.component';
 import { ConfirmationCodeComponent } from './shared/components/confirmation-code/confirmation-code.component';
+
+import { CookieService } from 'ngx-cookie-service';
+
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -198,8 +201,10 @@ import { AirportSearchComponent } from './features/airports/airport-search/airpo
 import { SummaryTableComponent } from './components/summary-table/summary-table.component';
 import { TravelerActivitySelectorComponent } from './pages/checkout/components/traveler-activity-selector/traveler-activity-selector.component';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { Nl2brPipe } from "./shared/pipes/nl2br.pipe";
+import { Nl2brPipe } from './shared/pipes/nl2br.pipe';
 import { BookingListSectionComponent } from './pages/profile/components/booking-list-section/booking-list-section.component';
+import { CookiesComponent } from './shared/components/cookies/cookies.component';
+import { CookiesConsentComponent } from './shared/components/cookies-consent/cookies-consent.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -307,7 +312,8 @@ registerLocaleData(localeEs);
     SummaryTableComponent,
     TravelerActivitySelectorComponent,
     BookingListSectionComponent,
-
+    CookiesComponent,
+    CookiesConsentComponent,
   ],
   imports: [
     // Angular Modules
@@ -370,17 +376,17 @@ registerLocaleData(localeEs);
     OverlayPanelModule,
     ToggleSwitchModule,
     TranslateModule.forRoot({
-        loader: {
-            provide: TranslateLoader,
-            useFactory: HttpLoaderFactory,
-            deps: [HttpClient],
-        },
-        defaultLanguage: 'es',
+      loader: {
+        provide: TranslateLoader,
+        useFactory: HttpLoaderFactory,
+        deps: [HttpClient],
+      },
+      defaultLanguage: 'es',
     }),
     CurrencyPipe,
     SortByPipe,
-    Nl2brPipe
-],
+    Nl2brPipe,
+  ],
   providers: [
     provideAnimationsAsync(),
     provideHttpClient(),
@@ -407,6 +413,7 @@ registerLocaleData(localeEs);
       },
     }),
     MessageService,
+    CookieService,
   ],
   bootstrap: [AppComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],

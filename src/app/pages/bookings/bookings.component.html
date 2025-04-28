@@ -61,11 +61,16 @@
   <app-booking-flights *ngIf="adaptedFlightData" [flight]="adaptedFlightData">
   </app-booking-flights>
 
+  {{ bookingActivities.length }}
+
   <!-- Activities -->
   <app-booking-activities
-    [activities]="combinedActivities"
-    (eliminateActivity)="eliminateActivity($event)"
+    *ngIf="
+      bookingActivities.length > 0 && bookingComplete?.periodData?.['externalID']
+    "
+    [bookingActivities]="bookingActivities"
     (addActivity)="addActivity($event)"
+    [periodId]="bookingComplete?.periodData?.['externalID']"
   >
   </app-booking-activities>
 </div>

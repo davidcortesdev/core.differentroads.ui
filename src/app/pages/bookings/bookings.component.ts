@@ -16,6 +16,7 @@ import {
   Payment,
   PaymentStatus,
 } from '../../core/models/bookings/payment.model';
+import { NotificationsService } from '../../core/services/notifications.service';
 import { Booking } from '../../core/models/bookings/booking.model';
 
 interface BookingData {
@@ -196,7 +197,8 @@ export class BookingsComponent implements OnInit {
     private bookingsService: BookingsService,
     private bookingMappingService: BookingMappingService,
     private retailersService: RetailersService, // Nuevo servicio añadido
-    private toursService: ToursService
+    private toursService: ToursService,
+    private notificationsService: NotificationsService
   ) {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],

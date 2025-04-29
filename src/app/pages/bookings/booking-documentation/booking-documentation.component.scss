@@ -1,0 +1,107 @@
+:host ::ng-deep {
+  .container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.3rem;
+    flex-wrap: wrap;
+    margin: 1.3rem 0.75rem;
+  }
+  /* Estilos para el panel de referencia de reserva */
+  .docs-container {
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    width: 50%;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .p-panel-content {
+      padding: 1rem;
+    }
+
+    .p-table,
+    .p-table-wrapper {
+      width: 100% !important;
+    }
+    .p-table-wrapper {
+      overflow-x: auto;
+    }
+
+    .p-datatable-tbody > tr > td {
+      width: auto;
+    }
+  }
+
+  .not-container {
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    flex-grow: 1;
+    min-height: 100%;
+  }
+
+  .notes-container {
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    min-height: 100%;
+    width: 100%;
+
+    .p-datatable th {
+      font-weight: 600;
+    }
+
+    .p-datatable-sm .p-datatable-tbody > tr > td {
+      padding: 0.5rem 1rem;
+    }
+  }
+
+  .p-panel-header {
+    border-bottom: 1px solid #eaeaea;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+
+    .p-panel-title {
+      font-weight: 600;
+      font-size: 1.1rem;
+      /*color: #333;*/
+    }
+  }
+
+  @media (max-width: 576px) {
+    border-radius: 8px;
+
+    .p-panel-header {
+      padding: 0.75rem 1rem;
+
+      .p-panel-title {
+        font-size: 1rem;
+      }
+    }
+  }
+}
+
+.custom-panel {
+  border: none !important;
+  background-color: #f9f9f9 !important;
+  box-shadow: none !important;
+
+  ::ng-deep .p-panel-content {
+    border: none !important;
+    background-color: #f9f9f9 !important;
+    padding: 15px 20px;
+  }
+}
+
+.versions-container {
+  margin-left: 4rem;
+}

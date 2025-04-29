@@ -11,140 +11,105 @@
   <div class="flight-itinerary-journey">
     <!-- Iteramos sobre cada journey (outbound e inbound) -->
     <div class="journey-item" *ngFor="let journey of journeys; let i = index">
-      <span class="journey-item-departure-text">
-        <span class="direction-text small">{{
-          i === 0 ? "IDA" : "VUELTA"
-        }}</span>
-        <span class="route-text-empty"></span>
-      </span>
-
-      <div class="journey-item-departure pr-2">
-        <span class="journey-item-departure-time">
-          {{
-            isValidDate(journey.departure.time)
-              ? (journey.departure.time | date : "HH:mm" : "UTC")
-              : "--:--"
-          }}
-        </span>
-        <span class="journey-item-departure-date">
-          {{
-            isValidDate(journey.departure.date)
-              ? (journey.departure.date | date : "dd-MM-yyyy" : "UTC")
-              : "--/--/----"
-          }}
-        </span>
-        <span class="journey-item-departure-city"
-          >{{ journey.segments[0].departureCity }}
-        </span>
+      <!-- Etiqueta de IDA/VUELTA -->
+      <div class="journey-direction">
+        <span class="direction-text">{{i === 0 ? "IDA" : "VUELTA"}}</span>
       </div>
-
-      <div class="journey-item-flight-info space-y-2">
-        <p-overlayPanel #op>
-          <p
-            style="
-              color: var(--background-azul);
-              font-weight: 500;
-              margin-bottom: 1rem;
-            "
-          >
-            Detalle del vuelo
-          </p>
-          <p-timeline [value]="journey.timelineData" align="left">
-            <ng-template #opposite let-item>
-              <i
-                [class]="
-                  item.type === 'departure' ? 'pi pi-send' : 'pi pi-map-marker'
-                "
-              ></i>
-            </ng-template>
-            <ng-template let-item pTemplate="content">
-              <span *ngIf="item.type === 'departure'">
-                {{
-                  isValidDate(item.departureDateTime)
-                    ? (item.departureDateTime | date : "HH:mm" : "UTC")
-                    : item.departureDateTime
-                    ? (item.departureDateTime.toString() | slice : 16 : 21)
-                    : "--:--"
-                }}
-                {{ item.departureCity || "Unknown City" }} ({{
-                  item.departureIata || "???"
-                }})
-                <br />
-                {{
-                  isValidDate(item.departureDateTime)
-                    ? (item.departureDateTime | date : "dd-MM-yyyy" : "UTC")
-                    : (journey.departure.date | date : "dd-MM-yyyy" : "UTC")
-                }}
-                {{ item.flightNumber || "No flight number" }}
-              </span>
-              <span *ngIf="item.type === 'arrival'">
-                {{
-                  isValidDate(item.arrivalDateTime)
-                    ? (item.arrivalDateTime | date : "HH:mm" : "UTC")
-                    : item.arrivalDateTime
-                    ? (item.arrivalDateTime.toString() | slice : 16 : 21)
-                    : "--:--"
-                }}
-                {{ item.arrivalCity || "Unknown City" }} ({{
-                  item.arrivalIata || "???"
-                }})
-                <br />
-                {{
-                  isValidDate(item.arrivalDateTime)
-                    ? (item.arrivalDateTime | date : "dd-MM-yyyy" : "UTC")
-                    : (journey.arrival.date | date : "dd-MM-yyyy" : "UTC")
-                }}
-                {{ item.flightNumber || "No flight number" }}
-              </span>
-            </ng-template>
-          </p-timeline>
-        </p-overlayPanel>
-
-        <span
-          class="journey-item-flight-info-segments"
-          (click)="op.toggle($event)"
-          style="
-            cursor: pointer;
-            text-decoration: underline;
-            color: var(--p-primary-color);
-          "
-        >
-          {{ journey.stopsText }}
-        </span>
-        <span class="journey-item-flight-info-aeroline">
-          {{ journey.airlineName }}
-        </span>
-        <span class="journey-item-flight-info-flight-hours">
-          {{ journey.totalDuration }}
-        </span>
-      </div>
-
-      <div class="journey-item-departure pl-2">
-        <span
-          class="journey-item-departure-time"
-          style="text-align: right; width: 100%"
-        >
-          {{
-            isValidDate(journey.arrival.time)
-              ? (journey.arrival.time | date : "HH:mm" : "UTC")
-              : "--:--"
-          }}
-        </span>
-        <span
-          class="journey-item-departure-date"
-          style="text-align: right; width: 100%"
-        >
-          {{
-            isValidDate(journey.arrival.date)
-              ? (journey.arrival.date | date : "dd-MM-yyyy" : "UTC")
-              : "--/--/----"
-          }}
-        </span>
-        <span
-          class="journey-item-departure-city"
-          style="text-align: right; width: 100%"
-          >{{ journey.segments[journey.segments.length - 1].arrivalCity }}
-        </span>
+      
+      <div class="journey-row">
+        <!-- Columna izquierda - Hora y ciudad de salida -->
+        <div class="journey-time-block departure">
+          <span class="journey-time">
+            {{isValidDate(journey.departure.time) ? (journey.departure.time | date : "HH:mm" : "UTC") : "--:--"}}
+          </span>
+          <span class="journey-date">
+            {{isValidDate(journey.departure.date) ? (journey.departure.date | date : "dd-MM-yyyy" : "UTC") : "--/--/----"}}
+          </span>
+          <span class="journey-city">{{ journey.segments[0].departureCity }}</span>
+        </div>
+        
+        <!-- Línea izquierda -->
+        <div class="journey-line-left"></div>
+        
+        <!-- Columna central - Información de vuelo -->
+        <div class="journey-info-block">
+          <div class="stops-container">
+            <span class="journey-stops" (click)="op.toggle($event)">
+              {{ journey.stopsText || "vuelo directo" }}
+            </span>
+            <!-- Línea roja debajo del texto de escalas -->
+            <div class="stops-underline"></div>
+          </div>
+          <span class="journey-airline">{{ journey.airlineName }}</span>
+          <span class="journey-duration">{{ journey.totalDuration }}</span>
+          
+          <p-overlayPanel #op>
+            <p class="panel-title">Detalle del vuelo</p>
+            <p-timeline [value]="journey.timelineData" align="left">
+              <ng-template #opposite let-item>
+                <i
+                  [class]="
+                    item.type === 'departure' ? 'pi pi-send' : 'pi pi-map-marker'
+                  "
+                ></i>
+              </ng-template>
+              <ng-template let-item pTemplate="content">
+                <span *ngIf="item.type === 'departure'">
+                  {{
+                    isValidDate(item.departureDateTime)
+                      ? (item.departureDateTime | date : "HH:mm" : "UTC")
+                      : item.departureDateTime
+                      ? (item.departureDateTime.toString() | slice : 16 : 21)
+                      : "--:--"
+                  }}
+                  {{ item.departureCity || "Unknown City" }} ({{
+                    item.departureIata || "???"
+                  }})
+                  <br />
+                  {{
+                    isValidDate(item.departureDateTime)
+                      ? (item.departureDateTime | date : "dd-MM-yyyy" : "UTC")
+                      : (journey.departure.date | date : "dd-MM-yyyy" : "UTC")
+                  }}
+                  {{ item.flightNumber || "No flight number" }}
+                </span>
+                <span *ngIf="item.type === 'arrival'">
+                  {{
+                    isValidDate(item.arrivalDateTime)
+                      ? (item.arrivalDateTime | date : "HH:mm" : "UTC")
+                      : item.arrivalDateTime
+                      ? (item.arrivalDateTime.toString() | slice : 16 : 21)
+                      : "--:--"
+                  }}
+                  {{ item.arrivalCity || "Unknown City" }} ({{
+                    item.arrivalIata || "???"
+                  }})
+                  <br />
+                  {{
+                    isValidDate(item.arrivalDateTime)
+                      ? (item.arrivalDateTime | date : "dd-MM-yyyy" : "UTC")
+                      : (journey.arrival.date | date : "dd-MM-yyyy" : "UTC")
+                  }}
+                  {{ item.flightNumber || "No flight number" }}
+                </span>
+              </ng-template>
+            </p-timeline>
+          </p-overlayPanel>
+        </div>
+        
+        <!-- Línea derecha -->
+        <div class="journey-line-right"></div>
+        
+        <!-- Columna derecha - Hora y ciudad de llegada -->
+        <div class="journey-time-block arrival">
+          <span class="journey-time">
+            {{isValidDate(journey.arrival.time) ? (journey.arrival.time | date : "HH:mm" : "UTC") : "--:--"}}
+          </span>
+          <span class="journey-date">
+            {{isValidDate(journey.arrival.date) ? (journey.arrival.date | date : "dd-MM-yyyy" : "UTC") : "--/--/----"}}
+          </span>
+          <span class="journey-city">{{ journey.segments[journey.segments.length - 1].arrivalCity }}</span>
+        </div>
       </div>
     </div>
   </div>

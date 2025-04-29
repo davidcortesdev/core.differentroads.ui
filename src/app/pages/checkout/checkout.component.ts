@@ -601,7 +601,10 @@ export class CheckoutComponent implements OnInit {
       this.selectedFlight &&
       this.selectedFlight.externalID! !== 'undefined'
     ) {
-      if (!this.selectedFlight.name.toLowerCase().includes('sin ')) {
+      if (
+        !this.selectedFlight.name.toLowerCase().includes('sin ') &&
+        !this.selectedFlight.name.toLowerCase().includes('sinvue')
+      ) {
         // Check if flight is from Amadeus and has separate price data
         if (
           this.selectedFlight.source === 'amadeus' &&

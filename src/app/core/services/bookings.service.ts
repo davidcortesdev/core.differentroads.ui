@@ -15,6 +15,9 @@ import {
   VoucherReviewStatus,
 } from '../models/bookings/payment.model';
 import { Pagination } from '../models/commons/pagination.model';
+import { Document } from '../models/document/document.model';
+import { NotificationLog } from '../models/notification-log/notification-log.model';
+import { BookingNote } from '../models/bookings/booking-note.model';
 import { Activity } from '../models/tours/activity.model';
 
 @Injectable({
@@ -257,7 +260,7 @@ export class BookingsService {
    */
   updatePayment(paymentId: string, data: Partial<Payment>): Observable<any> {
     return this.http.put<any>(
-      `${environment.apiUrl}/payment/${paymentId}`,
+      `${this.API_URL}/payment/${paymentId}`,
       data,
       this.httpOptions
     );
@@ -344,6 +347,41 @@ export class BookingsService {
   getBookingInconsistencies(id: string): Observable<any> {
     return this.http.get<any>(
       `${this.API_URL}/${id}/inconsistencies`,
+      this.httpOptions
+    );
+  }
+
+  /**
+   * Fetches booking documentation by booking ID.
+   * @param id - The booking ID.
+   * @returns Observable of Document array.
+   */
+  getBookingDocumentation(id: string): Observable<Document[]> {
+    return this.http.get<Document[]>(
+      `${this.API_URL}/${id}/documents`,
+      this.httpOptions
+    );
+  }
+
+  /**
+   * Fetches booking notifications logs by booking ID.
+   * @param id - The booking ID.
+   * @returns Observable of notification Logs array.
+   */
+  getBookingNotificationLog(id: string): Observable<NotificationLog[]> {
+    return this.http.get<NotificationLog[]>(
+      `${this.API_URL}/${id}/notifications`,
+      this.httpOptions
+    );
+  }
+  /**
+   * Fetches booking notes by booking ID.
+   * @param id - The booking ID.
+   * @returns Observable of notes  array.
+   */
+  getBookingNotes(id: string): Observable<BookingNote[]> {
+    return this.http.get<BookingNote[]>(
+      `${this.API_URL}/${id}/notes`,
       this.httpOptions
     );
   }

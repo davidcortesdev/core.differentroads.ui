@@ -27,7 +27,7 @@
   </div>
 
   <!-- Conditionally display flight search -->
-  <div *ngIf="showFlightSearch">
+  <div *ngIf="showFlightSearch" class="flight-search-container">
     <app-flight-search
       *ngIf="periodData"
       [flights]="flights"

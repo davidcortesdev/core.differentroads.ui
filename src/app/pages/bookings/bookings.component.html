@@ -26,12 +26,13 @@
 
   <!-- Documents booking section -->
   <app-booking-document-actions
-    [isVisible]="isTO && !isAdmin"
+    [isVisible]="false"
     (sendReminder)="sendReminder()"
     (reprintInfo)="reprintInfo()"
     (reprintVoucher)="reprintVoucher()"
     (reprintPaymentReminder)="reprintPaymentReminder()"
     (reprintETickets)="reprintETickets()"
+    [bookingId]="bookingId"
   >
   </app-booking-document-actions>
 
@@ -72,6 +73,10 @@
     [periodId]="bookingComplete?.periodData?.['externalID']"
   >
   </app-booking-activities>
+
+  <app-booking-documentation
+    [bookingId]="bookingId"
+  ></app-booking-documentation>
 </div>
 
 <!-- Toast para mostrar mensajes -->

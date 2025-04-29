@@ -40,13 +40,6 @@ export class TourCardComponent implements OnInit, AfterViewInit {
   @Input() isLargeCard = false;
   @Input() showScalapayPrice = false;
 
-  readonly tripTypeMap: Record<TripTypeKey, TripTypeInfo> = {
-    [TripType.Single]: { label: 'S', class: 'trip-type-s' },
-    [TripType.Grupo]: { label: 'G', class: 'trip-type-g' },
-    [TripType.Propios]: { label: 'P', class: 'trip-type-p' },
-    [TripType.Fit]: { label: 'F', class: 'trip-type-f' }
-  };
-
   monthlyPrice = 0;
   scalapayWidgetId = '';
 
@@ -66,16 +59,6 @@ export class TourCardComponent implements OnInit, AfterViewInit {
     if (this.showScalapayPrice) {
       this.loadScalapayScript();
     }
-  }
-
-  getTripTypeLabel(type: string): string {
-    const lowerType = type.toLowerCase() as TripTypeKey;
-    return this.tripTypeMap[lowerType]?.label || type.charAt(0).toUpperCase();
-  }
-
-  getTripTypeClass(type: string): string {
-    const lowerType = type.toLowerCase() as TripTypeKey;
-    return this.tripTypeMap[lowerType]?.class || '';
   }
 
   handleTourClick(): void {

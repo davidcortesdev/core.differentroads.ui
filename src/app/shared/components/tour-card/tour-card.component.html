@@ -13,72 +13,13 @@
     </ng-template>
     
     <ng-template pTemplate="content">
-      <div class="card-footer">
-        <div class="price-content">
-          <div class="price-section">
-            <div class="price-info">
-              <span class="desde">Desde</span>
-              <span class="price">{{ tourData.price | currencyFormat : "EUR" }}</span>
-            </div>
-            <div class="button-container">
-              <div class="trip-type-container">
-                <p-tag
-                  *ngFor="let type of tourData.tripType"
-                  class="trip-type"
-                  [styleClass]="getTripTypeClass(type)"
-                >
-                  {{ getTripTypeLabel(type) }}
-                </p-tag>
-              </div>
-              <p-button
-                type="button"
-                label="Ver tour"
-                class="p-button-rounded buttonVertour"
-                [rounded]="true"
-                (onClick)="handleTourClick()"
-              ></p-button>
-            </div>
-          </div>
-          <ng-container *ngIf="showScalapayPrice">
-            <div class="priceScalapay">
-
-              <div class="widget" #widgetContainer>
-                <!-- El contenedor visible del precio actual -->
-                <span class="amount" style="display: none;">{{ tourData.price }}</span>
-                
-                <!-- Widget de Scalapay -->
-                <scalapay-widget
-                  #scalapayWidget
-                  channel="travel"
-                  type="tour-card"
-                  [amount]="tourData.price"
-                  show-title="false"
-                  frequency-number="30"
-                  number-of-installments="4"
-                  hide="false"
-                  hide-price="false"
-                  min="0.01"
-                  max="999999"
-                  currency-position="before"
-                  currency-display="symbol"
-                  logo-size="100"
-                  locale="es"
-                >
-                </scalapay-widget>
-              </div>
-            </div>
-          </ng-container>
-          <div class="months">
-            <p-tag
-              *ngFor="let month of tourData.availableMonths"
-              class="month"
-              severity="info"
-            >
-              {{ month }}
-            </p-tag>
-          </div>
-        </div>
-      </div>
+      <app-tour-card-content 
+        [tourData]="tourData" 
+        [showScalapayPrice]="showScalapayPrice"
+        [isLargeCard]="isLargeCard"
+        [scalapayWidgetId]="scalapayWidgetId"
+        (tourClick)="handleTourClick()">
+      </app-tour-card-content>
     </ng-template>
   </p-card>
 </div>

@@ -204,6 +204,7 @@ import { Nl2brPipe } from "./shared/pipes/nl2br.pipe";
 import { BookingListSectionComponent } from './pages/profile/components/booking-list-section/booking-list-section.component';
 import { BookingDocumentationComponent } from './pages/bookings/booking-documentation/booking-documentation.component';
 import { TourCardHeaderComponent } from './shared/components/tour-card/tour-card-header/tour-card-header.component';
+import { TourCardContentComponent } from './shared/components/tour-card/tour-card-content/tour-card-content.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -313,6 +314,7 @@ registerLocaleData(localeEs);
     BookingListSectionComponent,
     BookingDocumentationComponent,
     TourCardHeaderComponent,
+    TourCardContentComponent,
   ],
   imports: [
     // Angular Modules

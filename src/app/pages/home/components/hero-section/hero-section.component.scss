@@ -144,7 +144,7 @@
     }
 
     .p-select {
-      height: 53px;
+      height: 52px;
       border-radius: 0px;
       border-right: none;
       position: relative !important;
@@ -436,6 +436,7 @@
   @media screen and (max-width: 992px) {
     .firstElement {
       padding-left: 0.75rem;
+      margin-top: 1px;
     }
 
     .hero-form .input-lg p-iftalabel .label {

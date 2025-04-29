@@ -24,11 +24,11 @@ $color-primary: var(--background-azul);
 
 @mixin responsive-font($mobile, $tablet, $desktop) {
   font-size: $desktop;
-  
+
   @media screen and (max-width: $breakpoint-tablet) {
     font-size: $tablet;
   }
-  
+
   @media screen and (max-width: $breakpoint-mobile) {
     font-size: $mobile;
   }
@@ -52,40 +52,40 @@ $color-primary: var(--background-azul);
   display: flex;
   flex-direction: column;
   gap: $spacing-md;
-  
+
   // Contenido de precio
   .price-content {
     display: flex;
     flex-direction: column;
     gap: $spacing-sm;
   }
-  
+
   // Sección de precio
   .price-section {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     width: 100%;
-    
+
     // Información de precio
     .price-info {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
-      
+
       .desde {
         font-size: 0.9rem;
         color: $color-primary;
         margin-bottom: $spacing-xs;
       }
-      
+
       .price {
         font-size: 1.5rem;
         font-weight: bold;
         color: $color-primary;
       }
     }
-    
+
     // Contenedor de botones
     .button-container {
       display: flex;
@@ -93,7 +93,7 @@ $color-primary: var(--background-azul);
       gap: $spacing-sm;
     }
   }
-  
+
   // Precio Scalapay
   .priceScalapay {
     color: var(--p-primary-color);
@@ -104,71 +104,71 @@ $color-primary: var(--background-azul);
     flex-wrap: wrap;
     gap: 0.3rem;
     margin-top: -0.5rem;
-    margin-bottom: 1rem;
-    
+    margin-bottom: 1.8rem;
+
     @include tablet {
       flex-wrap: nowrap;
       font-size: 0.85rem;
       margin-top: 3px;
     }
-    
+
     @include mobile {
       flex-wrap: nowrap;
       font-size: 0.8rem;
       margin-top: 3px;
     }
-    
+
     span {
       white-space: nowrap;
-      
+
       @include tablet {
         flex-shrink: 1;
       }
-      
+
       @include mobile {
         flex-shrink: 1;
       }
     }
-    
+
     .widget {
       width: 100%;
       margin-top: 0.3rem;
       min-height: 40px;
       margin-bottom: -30px;
-      
+
       @include tablet {
         margin-top: 0.1rem;
       }
-      
+
       @include mobile {
         margin-top: 0;
       }
     }
   }
-  
+
   // Botón Ver Tour
   .buttonVertour ::ng-deep .p-button {
     border-radius: 1.5rem;
     min-width: 7rem;
     margin-top: 13px;
     transition: all 0.3s ease;
-    
+
     &:hover {
       transform: translateY(-2px);
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
-    
+
     @include tablet {
       min-width: 6rem;
     }
-    
+
     @include mobile {
       min-width: 6rem;
       height: 2.5rem;
       font-size: 0.9rem;
     }
   }
-  
+
   // Contenedor de tipo de viaje
   .trip-type-container {
     display: flex;
@@ -176,7 +176,7 @@ $color-primary: var(--background-azul);
     margin-right: 8px;
     margin-top: 13px;
   }
-  
+
   // Meses
   .months {
     display: flex;
@@ -184,23 +184,23 @@ $color-primary: var(--background-azul);
     width: 15rem;
     align-items: center;
     justify-content: flex-start;
-    
+
     @include tablet {
       width: 100%;
       height: auto;
       max-height: 3rem;
     }
-    
+
     @include mobile {
       width: 100%;
       height: auto;
       max-height: 3.5rem;
       overflow-y: auto;
     }
-    
+
     .month {
       font-size: 0.7rem;
-      
+
       @include tablet {
         font-size: 0.68rem;
       }
@@ -214,29 +214,29 @@ $color-primary: var(--background-azul);
     .desde {
       font-size: 0.9rem;
       color: var(--background-azul);
-      
+
       @include tablet {
         font-size: 0.85rem;
         margin-top: 0.4rem;
       }
-      
+
       @include mobile {
         font-size: 0.8rem;
         margin-top: 0.3rem;
       }
     }
-    
+
     .price {
       font-size: 2rem;
       font-weight: bold;
       color: var(--background-azul);
       line-height: 1.2rem;
       margin-bottom: $spacing-sm;
-      
+
       @include tablet {
         font-size: 1.4rem;
       }
-      
+
       @include mobile {
         font-size: 1.3rem;
       }
@@ -250,12 +250,12 @@ $color-primary: var(--background-azul);
     @include trip-type-badge;
     background-color: var(--color-single) !important;
   }
-  
+
   &-g {
     @include trip-type-badge;
     background-color: var(--color-group) !important;
   }
-  
+
   &-p {
     @include trip-type-badge;
     background-color: var(--color-private) !important;
@@ -268,25 +268,25 @@ $color-primary: var(--background-azul);
     @include tablet {
       margin-left: -0.2rem;
     }
-    
+
     @include mobile {
       margin-left: -0.3rem;
     }
-    
+
     .info-container {
       p.installment-info {
         display: none !important;
       }
     }
-    
+
     img.logo {
       max-width: 120px !important;
       margin: 0 auto;
-      
+
       @include tablet {
         max-width: 110px !important;
       }
-      
+
       @include mobile {
         max-width: 100px !important;
       }

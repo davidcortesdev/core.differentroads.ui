@@ -70,11 +70,7 @@ $spacing-md: 1rem;
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0.2),
-      rgba(0, 0, 0, 0.7)
-    );
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.7));
     padding: $spacing-md;
     display: flex;
     flex-direction: column;
@@ -130,7 +126,7 @@ $spacing-md: 1rem;
           position: relative;
           top: -1px; // Ajuste fino para centrar perfectamente con el texto
         }
-        
+
         display: flex;
         align-items: center;
         justify-content: flex-start;
@@ -231,7 +227,7 @@ $spacing-md: 1rem;
         max-width: 0;
         overflow: hidden;
         transition: all 0.3s ease;
-        
+
         img {
           width: 0.65rem; // Aseguramos que sea igual en todos lados
           height: auto;
@@ -254,7 +250,7 @@ $spacing-md: 1rem;
       h3 {
         margin-top: 1px;
         margin-bottom: 0.3rem;
-        @include responsive-font(1.2rem, 1.3rem, 1.2rem);
+        @include responsive-font(1rem, 1.1rem, 1.2rem); // Reducido el tamaño en mobile a 1.0rem y en tablet a 1.1rem
       }
     }
   }
@@ -288,10 +284,18 @@ $spacing-md: 1rem;
       .title-overlay {
         h3 {
           font-size: 1.5rem;
+
+          @include tablet {
+            font-size: 1.2rem; // Reducido el tamaño del título en la variante grande para tablet
+          }
         }
 
         p {
           font-size: 1rem;
+
+          @include tablet {
+            font-size: 0.9rem; // También reducimos ligeramente el subtítulo
+          }
         }
       }
     }

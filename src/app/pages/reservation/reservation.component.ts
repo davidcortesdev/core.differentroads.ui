@@ -34,14 +34,14 @@ export class ReservationComponent implements OnInit, OnDestroy {
   reservationInfo: ReservationInfo | undefined;
   bankInfo: BankInfo[] = [
     {
-      name: 'CaixaBank, S.A',
+      name: 'CaixaBank, S.A.',
       account: 'ES35 2100 1463 1702 0013 5710',
       beneficiary: 'Different Roads S.L',
       concept: '784932 Laura Segarra',
     },
     {
-      name: 'Banco Santander',
-      account: 'ES35 2100 1463 1702 0013 5710',
+      name: 'BANCO SANTANDER, S.A.',
+      account: 'ES55 0049 0265 4423 1052 3788',
       beneficiary: 'Different Roads S.L',
       concept: '784932 Laura Segarra',
     },

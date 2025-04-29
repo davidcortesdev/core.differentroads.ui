@@ -98,7 +98,7 @@ export class TourOrderService {
     this.selectedDateInfoSource.next({
       date: selectedPeriod?.name || '',
       tripType: selectedPeriod?.tripType || 'Grupo',
-      departureCity: selectedFlight?.name || '',
+      departureCity: selectedFlight?.name || 'Sin vuelos',
       basePrice:
         this.tourDataService.getTourBasePrice() +
         (selectedPeriod?.basePrice || 0),
@@ -228,11 +228,13 @@ export class TourOrderService {
         {
           id: selectedPeriod?.flightID || '',
           externalID: selectedPeriod?.flightID || '',
-          name: selectedPeriod?.departureCity?.toLowerCase()?.includes('sin ')
-            ? selectedPeriod?.departureCity
-            : !selectedPeriod?.departureCity?.toLowerCase()?.includes('vuelo')
-            ? 'Vuelo desde ' + selectedPeriod?.departureCity
-            : selectedPeriod?.departureCity,
+          name:
+            selectedPeriod?.departureCity?.toLowerCase()?.includes('sin ') ||
+            selectedPeriod?.departureCity?.toLowerCase()?.includes('sinvu')
+              ? selectedPeriod?.departureCity
+              : !selectedPeriod?.departureCity?.toLowerCase()?.includes('vuelo')
+              ? 'Vuelo desde ' + selectedPeriod?.departureCity
+              : selectedPeriod?.departureCity,
         },
       ],
       optionalActivitiesRef: this.getSelectedActivities(),
@@ -321,7 +323,8 @@ export class TourOrderService {
 
           if (
             selectedPeriod.flightID &&
-            !selectedPeriod.departureCity?.toLowerCase()?.includes('sin ')
+            !selectedPeriod.departureCity?.toLowerCase()?.includes('sin ') &&
+            !selectedPeriod.departureCity?.toLowerCase()?.includes('sinvue')
           ) {
             products.push({
               name: !selectedPeriod.departureCity

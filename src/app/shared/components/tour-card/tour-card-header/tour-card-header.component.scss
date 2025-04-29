@@ -78,8 +78,8 @@ $spacing-md: 1rem;
       color: var(--p-button-primary-color);
       padding: $spacing-xs $spacing-xs * 2;
       border-radius: $border-radius-sm;
-      @include responsive-font(0.8rem, 0.85rem, 0.7rem);
       margin-bottom: $spacing-xs;
+      @include responsive-font(0.8rem, 0.85rem, 0.7rem);
     }
 
     // Etiqueta By DR debajo del rating

@@ -1,0 +1,39 @@
+<div class="img" (click)="handleTourClick()">
+  <img [src]="tourData.imageUrl" [alt]="tourData.title" loading="lazy" />
+  <div class="overlay">
+    <ng-container *ngIf="averageRating !== undefined; else loadingRating">
+      <span class="rating p-button-primary">{{ averageRating }} ★</span>
+    </ng-container>
+    <ng-template #loadingRating>
+      <span *ngIf="isLoadingRating" class="rating p-button-primary loading">...</span>
+    </ng-template>
+    
+    <span *ngIf="tourData.isByDr" class="tag expandable-tag by-dr-tag">
+      <span class="short-text">
+        <img
+          alt="Different Roads logo"
+          src="favicon-different.png"
+          class="logo"
+          height="5px"
+        />
+        By DR
+      </span>
+      <span class="expanded-content">
+        <img
+          alt="Different Roads logo"
+          src="favicon-different.png"
+          class="logo"
+          height="5px"
+        />
+        Viaje creado por el equipo de Different Roads
+      </span>
+    </span>
+    <div class="tags-container">
+      <span class="tag" *ngIf="tourData.tag">{{ tourData.tag }}</span>
+    </div>
+    <div class="title-overlay">
+      <p>{{ tourData.description }}</p>
+      <h3>{{ tourData.title }}</h3>
+    </div>
+  </div>
+</div>

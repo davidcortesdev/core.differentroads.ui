@@ -1,0 +1,187 @@
+<div class="container">
+  <div class="docs-container">
+    <p-panel header="Documentación">
+      <p-table
+        #dt
+        [value]="latestDocuments"
+        responsiveLayout="scroll"
+        dataKey="_id"
+        [expandedRowKeys]="expandedRowKeys"
+        [expandableRows]="showExpandControls"
+        (onRowExpand)="onRowExpand($event)"
+        (onRowCollapse)="onRowCollapse($event)"
+      >
+        <ng-template #header>
+          <tr>
+            <th *ngIf="showExpandControls" style="width: 3rem"></th>
+            <th>Documento</th>
+            <th>Fecha de creación</th>
+            <th style="width: 5rem"></th>
+          </tr>
+        </ng-template>
+
+        <ng-template #body let-document let-expanded="expanded">
+          <tr>
+            <td *ngIf="showExpandControls">
+              <button
+                type="button"
+                pButton
+                [pRowToggler]="document"
+                [disabled]="getPreviousVersions(document.type).length === 0"
+                [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+                class="p-button-text p-button-rounded p-button-plain"
+              ></button>
+            </td>
+            <td>{{ document.fileData.display_name }}</td>
+            <td>{{ document.createdAt | date : "short" }}</td>
+            <td>
+              <a
+                [href]="document.fileData.secure_url"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <p-button icon="pi pi-download" severity="secondary" rounded />
+              </a>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template #expandedrow let-document>
+          <tr>
+            <td colspan="4">
+              <div
+                *ngIf="
+                  showExpandControls &&
+                  getPreviousVersions(document.type).length > 0
+                "
+                class="versions-container"
+              >
+                <p-table
+                  [value]="getPreviousVersions(document.type)"
+                  responsiveLayout="scroll"
+                >
+                  <ng-template #body let-prev>
+                    <tr>
+                      <td>
+                        <a
+                          [href]="prev.fileData.secure_url"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {{ prev.createdAt | date : "short" }} -
+                          {{ prev.fileData.display_name }}
+                        </a>
+                      </td>
+                    </tr>
+                  </ng-template>
+                  <ng-template #emptymessage>
+                    <tr>
+                      <td colspan="3">No hay versiones anteriores.</td>
+                    </tr>
+                  </ng-template>
+                </p-table>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-panel>
+  </div>
+
+  <div class="not-container">
+    <p-panel header="Notificaciones">
+      <p-table
+        #dt
+        [value]="notificationLogs"
+        responsiveLayout="scroll"
+        dataKey="_id"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Tipo</th>
+            <!--             <th>Destinatario</th> -->
+            <th>Fecha de envío</th>
+            <!--             <th>Estado</th>
+ -->
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-log>
+          <tr>
+            <td>{{ log.name }}</td>
+            <!-- <td>{{ log.recipient }}</td> -->
+            <td>{{ log.createdAt | date : "short" }}</td>
+            <!--             <td>{{ log.status }}</td>
+ -->
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="4">No hay notificaciones registradas.</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-panel>
+  </div>
+
+  <div class="notes-container">
+    <p-panel header="Notas">
+      <p-table
+        #dt
+        [value]="notes"
+        responsiveLayout="scroll"
+        dataKey="_id"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[10, 25]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} notas"
+        [rowHover]="true"
+        styleClass="p-datatable-gridlines p-datatable-sm"
+        [globalFilterFields]="['message', 'category', 'type']"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="createdAt">
+              Fecha de creación <p-sortIcon field="createdAt"></p-sortIcon>
+            </th>
+            <th>Mensaje</th>
+            <th>
+              Estado
+              <p-columnFilter
+                field="type"
+                matchMode="equals"
+                display="menu"
+                [showOperator]="false"
+                [filterOptions]="typeOptions"
+              ></p-columnFilter>
+            </th>
+            <th></th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-note>
+          <tr>
+            <td>{{ note.createdAt | date : "short" }}</td>
+            <td pTooltip="{{ note.message }}" tooltipPosition="top">
+              {{ note.title }}
+            </td>
+            <td>
+              <p-tag
+                [value]="note.type"
+                [severity]="getTypeSeverity(note.type)"
+              ></p-tag>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="4">No hay notas registradas.</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-panel>
+  </div>
+</div>

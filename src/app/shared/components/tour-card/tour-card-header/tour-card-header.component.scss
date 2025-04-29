@@ -125,11 +125,17 @@ $spacing-md: 1rem;
           filter: brightness(0) invert(1);
           width: 0.7rem;
           height: auto; // Mantiene la proporción original
-          vertical-align: middle;
+          vertical-align: middle; // Alinea verticalmente con el texto
           margin-right: 4px;
+          position: relative; // Añadido para ajuste fino
+          top: -1px; // Ajuste fino para centrar perfectamente con el texto
         }
+        
+        // Añadimos estilos para alinear el contenido completo
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
       }
-
       .expanded-content {
         display: none;
       }
@@ -205,12 +211,15 @@ $spacing-md: 1rem;
 
       // Texto corto para etiquetas expandibles
       .short-text {
-        display: inline-block;
-        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        transition: all 0.1s ease;
 
         img {
-          width: 0.7rem;
+          width: 0.6rem;
           height: auto; // Mantiene la proporción original
+          position: relative; // Añadido para ajuste fino
+          top: -1px; // Ajuste fino para centrar perfectamente con el texto
         }
       }
 

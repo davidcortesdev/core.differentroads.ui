@@ -161,6 +161,8 @@ import { Amplify } from 'aws-amplify';
 import awsconfig from '../../src/aws-exports';
 import { TripTypesSectionComponent } from './pages/home/components/trip-types-section/trip-types-section.component';
 import { ConfirmationCodeComponent } from './shared/components/confirmation-code/confirmation-code.component';
+import { ScalapayService } from './core/services/checkout/payment/scalapay.service';
+
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');

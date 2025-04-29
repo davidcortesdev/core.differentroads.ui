@@ -138,11 +138,13 @@ export class PaymentsComponent implements OnInit {
         value: this.paidAmount,
         description: 'Historial de pagos',
       });
-      this.summary.push({
-        qty: 1,
-        value: this.remainingAmount,
-        description: 'Pendiente de pago',
-      });
+      if (this.remainingAmount > 0) {
+        this.summary.push({
+          qty: 1,
+          value: this.remainingAmount,
+          description: 'Pendiente de pago',
+        });
+      }
     });
   }
 

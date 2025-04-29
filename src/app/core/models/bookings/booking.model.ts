@@ -4,7 +4,7 @@ import { Flight } from '../tours/flight.model';
 import { BookingTraveler } from './booking-traveler.model';
 
 export interface Booking {
-  //id: string;
+  _id: string;
   code: string;
   orderId: string;
   status: string;

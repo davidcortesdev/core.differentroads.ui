@@ -1,4 +1,5 @@
 export interface BookingTraveler {
+  _id: string;
   lead: boolean;
   bookingSID: string;
   flightID?: string;
@@ -9,7 +10,6 @@ export interface BookingTraveler {
   bookingID: string;
   externalID?: string;
   flightData?: Record<string, any>;
-  _id: string;
 }
 
 export interface TravelerData {

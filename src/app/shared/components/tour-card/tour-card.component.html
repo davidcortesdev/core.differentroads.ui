@@ -9,30 +9,7 @@
     [styleClass]="'tour-card-wrapper'"
   >
     <ng-template pTemplate="header">
-      <div class="img" (click)="handleTourClick()">
-        <img [src]="tourData.imageUrl" [alt]="tourData.title" loading="lazy" />
-        <div class="overlay">
-          <span class="rating p-button-primary">{{ tourData.rating }} ★</span>
-          <div class="tags-container">
-            <span *ngIf="tourData.isByDr" class="tag expandable-tag">
-              <span class="short-text">
-                <img
-                  alt="Different Roads logo"
-                  src="favicon-different.png"
-                  class="logo"
-                  height="5px"
-                />
-              </span>
-              <span class="expanded-content">Tour creado por Different Roads</span>
-            </span>
-            <span class="tag" *ngIf="tourData.tag">{{ tourData.tag }}</span>
-          </div>
-          <div class="title-overlay">
-            <p>{{ tourData.description }}</p>
-            <h3>{{ tourData.title }}</h3>
-          </div>
-        </div>
-      </div>
+      <app-tour-card-header [tourData]="tourData" (tourClick)="handleTourClick()"></app-tour-card-header>
     </ng-template>
     
     <ng-template pTemplate="content">

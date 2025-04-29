@@ -1,0 +1,217 @@
+// Variables
+$breakpoint-tablet: 1024px;
+$breakpoint-mobile: 768px;
+$border-radius-sm: 4px;
+$border-radius-md: 9.586px;
+$border-radius-lg: 1rem;
+$spacing-xs: 0.2rem;
+$spacing-sm: 0.5rem;
+$spacing-md: 1rem;
+
+// Mixins
+@mixin responsive-font($mobile, $tablet, $desktop) {
+  font-size: $desktop;
+
+  @media screen and (max-width: $breakpoint-tablet) {
+    font-size: $tablet;
+  }
+
+  @media screen and (max-width: $breakpoint-mobile) {
+    font-size: $mobile;
+  }
+}
+
+@mixin tablet {
+  @media screen and (max-width: $breakpoint-tablet) {
+    @content;
+  }
+}
+
+@mixin mobile {
+  @media screen and (max-width: $breakpoint-mobile) {
+    @content;
+  }
+}
+
+// Contenedor de imagen
+.img {
+  cursor: pointer;
+  position: relative;
+  height: 230px;
+
+  @include tablet {
+    height: 220px;
+  }
+
+  @include mobile {
+    height: 240px;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: $border-radius-md;
+  }
+
+  // Overlay sobre la imagen
+  .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.2),
+      rgba(0, 0, 0, 0.7)
+    );
+    padding: $spacing-md;
+    display: flex;
+    flex-direction: column;
+    border-radius: $border-radius-lg;
+
+    // Indicador de rating
+    .rating {
+      align-self: flex-start;
+      background: var(--p-primary-color);
+      color: var(--p-button-primary-color);
+      padding: $spacing-xs $spacing-xs * 2;
+      border-radius: $border-radius-sm;
+      @include responsive-font(0.8rem, 0.85rem, 0.7rem);
+    }
+
+    // Indicador general
+    .indicator {
+      font-weight: 500;
+      text-align: start;
+      color: var(--p-primary-color);
+      @include responsive-font(0.7rem, 0.8rem, 0.75rem);
+    }
+
+    // Contenedor de etiquetas
+    .tags-container {
+      position: absolute;
+      top: $spacing-md;
+      right: $spacing-md;
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+      align-items: flex-end;
+
+      // Etiqueta individual
+      .tag {
+        background: var(--p-button-primary-color);
+        color: var(--background-azul);
+        padding: $spacing-xs $spacing-xs * 2;
+        border-radius: $border-radius-sm;
+        @include responsive-font(0.8rem, 0.85rem, 0.7rem);
+
+        // Etiqueta expandible
+        &.expandable-tag {
+          transition: all 0.3s ease;
+          max-width: 40px;
+          overflow: hidden;
+          white-space: nowrap;
+          cursor: pointer;
+          border-radius: 10px;
+          margin-bottom: 0.1rem;
+
+          &:hover {
+            max-width: none;
+            width: auto;
+            padding-right: $spacing-sm;
+
+            .short-text {
+              opacity: 0;
+              width: 0;
+              position: absolute;
+              overflow: hidden;
+            }
+
+            .expanded-content {
+              opacity: 1;
+              max-width: none;
+              width: auto;
+              margin-left: 0;
+            }
+          }
+        }
+      }
+
+      // Texto corto para etiquetas expandibles
+      .short-text {
+        display: inline-block;
+        transition: all 0.1s ease;
+
+        img {
+          width: 1rem;
+          height: 1rem;
+        }
+      }
+
+      // Contenido expandido
+      .expanded-content {
+        display: inline-block;
+        opacity: 0;
+        max-width: 0;
+        overflow: hidden;
+        transition: all 0.2s ease;
+      }
+    }
+
+    // Título en el overlay
+    .title-overlay {
+      margin-top: auto;
+      color: white;
+
+      p {
+        margin-bottom: 0;
+        @include responsive-font(0.9rem, 0.95rem, 0.8rem);
+      }
+
+      h3 {
+        margin-top: 1px;
+        margin-bottom: 0.3rem;
+        @include responsive-font(1.2rem, 1.3rem, 1.2rem);
+      }
+    }
+  }
+}
+
+// Estilos para la variante grande
+:host-context(.isLarge) {
+  .img {
+    height: 280px;
+
+    @include tablet {
+      height: 220px;
+    }
+
+    @include mobile {
+      height: 240px;
+    }
+
+    img {
+      border-radius: $border-radius-lg;
+    }
+
+    .overlay {
+      .rating,
+      .tag {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.9rem;
+      }
+
+      .title-overlay {
+        h3 {
+          font-size: 1.5rem;
+        }
+
+        p {
+          font-size: 1rem;
+        }
+      }
+    }
+  }
+}

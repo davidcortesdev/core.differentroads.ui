@@ -203,6 +203,7 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { Nl2brPipe } from "./shared/pipes/nl2br.pipe";
 import { BookingListSectionComponent } from './pages/profile/components/booking-list-section/booking-list-section.component';
 import { BookingDocumentationComponent } from './pages/bookings/booking-documentation/booking-documentation.component';
+import { TourCardHeaderComponent } from './shared/components/tour-card/tour-card-header/tour-card-header.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -311,7 +312,7 @@ registerLocaleData(localeEs);
     TravelerActivitySelectorComponent,
     BookingListSectionComponent,
     BookingDocumentationComponent,
-
+    TourCardHeaderComponent,
   ],
   imports: [
     // Angular Modules

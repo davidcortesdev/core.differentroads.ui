@@ -53,7 +53,6 @@ export class TourCardComponent implements OnInit, AfterViewInit {
     // Validate that externalID exists and is not undefined or empty
     if (!this.tourData?.externalID?.trim()) {
       console.log('Missing or invalid externalID:', this.tourData);
-      return;
     }
 
     // Pre-calculate monthly price to avoid recalculation in template

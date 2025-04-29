@@ -27,6 +27,15 @@ export class TourCardContentComponent {
     'fit': { label: 'F', class: 'trip-type-f' }
   };
 
+  // Método para filtrar los tipos de viaje (solo S, G, P)
+  getFilteredTripTypes(): string[] {
+    if (!this.tourData.tripType) return [];
+    return this.tourData.tripType.filter(type => {
+      const lowerType = type.toLowerCase();
+      return lowerType === 'single' || lowerType === 'grupo' || lowerType === 'propios';
+    });
+  }
+
   getTripTypeLabel(type: string): string {
     const lowerType = type.toLowerCase();
     return this.tripTypeMap[lowerType]?.label || type.charAt(0).toUpperCase();

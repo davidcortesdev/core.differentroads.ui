@@ -8,7 +8,7 @@
       <div class="button-container">
         <div class="trip-type-container">
           <p-tag
-            *ngFor="let type of tourData.tripType"
+            *ngFor="let type of getFilteredTripTypes()"
             class="trip-type"
             [styleClass]="getTripTypeClass(type)"
           >

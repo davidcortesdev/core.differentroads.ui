@@ -2,18 +2,27 @@
   <img [src]="tourData.imageUrl" [alt]="tourData.title" loading="lazy" />
   <div class="overlay">
     <span class="rating p-button-primary">{{ tourData.rating }} ★</span>
-    <div class="tags-container">
-      <span *ngIf="tourData.isByDr" class="tag expandable-tag">
-        <span class="short-text">
-          <img
-            alt="Different Roads logo"
-            src="favicon-different.png"
-            class="logo"
-            height="5px"
-          />
-        </span>
-        <span class="expanded-content">Tour creado por Different Roads</span>
+    <span *ngIf="tourData.isByDr" class="tag expandable-tag by-dr-tag">
+      <span class="short-text">
+        <img
+          alt="Different Roads logo"
+          src="favicon-different.png"
+          class="logo"
+          height="5px"
+        />
+        By DR
       </span>
+      <span class="expanded-content">
+        <img
+          alt="Different Roads logo"
+          src="favicon-different.png"
+          class="logo"
+          height="5px"
+        />
+        Viaje creado por el equipo de Different Roads
+      </span>
+    </span>
+    <div class="tags-container">
       <span class="tag" *ngIf="tourData.tag">{{ tourData.tag }}</span>
     </div>
     <div class="title-overlay">

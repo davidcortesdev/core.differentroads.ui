@@ -1,36 +1,45 @@
-<h3 class="title">Agrega los datos del viajero</h3>
+<div class="cont">
+  <h3 class="title">Agrega los datos del viajero</h3>
 
-<div class="flex flex-col">
-  <div
-    class="border-2 border-dashed border-surface-200 dark:border-surface-700 rounded bg-surface-50 dark:bg-surface-950 flex-auto flex justify-center items-center font-medium"
-  >
-    <div class="content-form">
-      <h3 class="title">Viajeros</h3>
-      <p-accordion
-        [multiple]="true"
-        [value]="getAllTravelersIndices()"
-        class="travelers-accordion"
-      >
-        <p-accordion-panel
-          *ngFor="let form of travelerForms; let i = index"
-          [value]="i"
+  <div class="flex flex-col">
+    <div
+      class="border-2 border-dashed border-surface-200 dark:border-surface-700 rounded bg-surface-50 dark:bg-surface-950 flex-auto flex justify-center items-center font-medium"
+    >
+      <div class="content-form">
+        <div class="travel-title">
+          <h3 class="title">Viajeros</h3>
+
+        </div>
+        <div class="accordion">
+          <p-accordion
+          [multiple]="true"
+          [value]="getAllTravelersIndices()"
+          class="travelers-accordion"
         >
-          <p-accordion-header>
-            {{ getTitlePasajero((i + 1).toString()) }}
-            {{ i === 0 ? "(Persona que hace la reserva)" : "" }}
-          </p-accordion-header>
-          <p-accordion-content>
-            <app-traveler-item
-              [form]="form"
-              [index]="i"
-              [traveler]="travelers[i]"
-              [sexoOptions]="sexoOptions"
-              [getAdultsOptionsFn]="getAdultsOptions.bind(this)"
-              [allFieldsMandatory]="allFieldsMandatory"
-            ></app-traveler-item>
-          </p-accordion-content>
-        </p-accordion-panel>
-      </p-accordion>
+          <p-accordion-panel
+            *ngFor="let form of travelerForms; let i = index"
+            [value]="i"
+          >
+            <p-accordion-header>
+              {{ getTitlePasajero((i + 1).toString()) }}
+              {{ i === 0 ? "(Persona que hace la reserva)" : "" }}
+            </p-accordion-header>
+            <p-accordion-content>
+              <app-traveler-item
+                [form]="form"
+                [index]="i"
+                [traveler]="travelers[i]"
+                [sexoOptions]="sexoOptions"
+                [getAdultsOptionsFn]="getAdultsOptions.bind(this)"
+                [allFieldsMandatory]="allFieldsMandatory"
+              ></app-traveler-item>
+            </p-accordion-content>
+          </p-accordion-panel>
+        </p-accordion>
+        </div>
+        
+      </div>
     </div>
   </div>
 </div>
+

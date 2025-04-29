@@ -161,6 +161,8 @@ import { Amplify } from 'aws-amplify';
 import awsconfig from '../../src/aws-exports';
 import { TripTypesSectionComponent } from './pages/home/components/trip-types-section/trip-types-section.component';
 import { ConfirmationCodeComponent } from './shared/components/confirmation-code/confirmation-code.component';
+import { ScalapayService } from './core/services/checkout/payment/scalapay.service';
+
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -200,6 +202,7 @@ import { TravelerActivitySelectorComponent } from './pages/checkout/components/t
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { Nl2brPipe } from "./shared/pipes/nl2br.pipe";
 import { BookingListSectionComponent } from './pages/profile/components/booking-list-section/booking-list-section.component';
+import { BookingDocumentationComponent } from './pages/bookings/booking-documentation/booking-documentation.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -307,6 +310,7 @@ registerLocaleData(localeEs);
     SummaryTableComponent,
     TravelerActivitySelectorComponent,
     BookingListSectionComponent,
+    BookingDocumentationComponent,
 
   ],
   imports: [

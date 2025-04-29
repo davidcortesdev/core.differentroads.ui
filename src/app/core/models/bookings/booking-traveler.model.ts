@@ -1,4 +1,5 @@
 export interface BookingTraveler {
+  _id: string;
   lead: boolean;
   bookingSID: string;
   flightID?: string;

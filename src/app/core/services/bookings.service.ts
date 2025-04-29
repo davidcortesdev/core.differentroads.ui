@@ -15,6 +15,10 @@ import {
   VoucherReviewStatus,
 } from '../models/bookings/payment.model';
 import { Pagination } from '../models/commons/pagination.model';
+import { Document } from '../models/document/document.model';
+import { NotificationLog } from '../models/notification-log/notification-log.model';
+import { BookingNote } from '../models/bookings/booking-note.model';
+import { Activity } from '../models/tours/activity.model';
 
 @Injectable({
   providedIn: 'root',
@@ -312,11 +316,12 @@ export class BookingsService {
   addOptionalActivities(
     id: string,
     activityId: string,
-    travelers: string[]
+    travelers: string[],
+    activity: Activity
   ): Observable<any> {
-    return this.http.post<any>(
+    return this.http.put<any>(
       `${this.API_URL}/${id}/optional-activity/${activityId}`,
-      { travelers },
+      { travelers, activity },
       this.httpOptions
     );
   }
@@ -342,6 +347,41 @@ export class BookingsService {
   getBookingInconsistencies(id: string): Observable<any> {
     return this.http.get<any>(
       `${this.API_URL}/${id}/inconsistencies`,
+      this.httpOptions
+    );
+  }
+
+  /**
+   * Fetches booking documentation by booking ID.
+   * @param id - The booking ID.
+   * @returns Observable of Document array.
+   */
+  getBookingDocumentation(id: string): Observable<Document[]> {
+    return this.http.get<Document[]>(
+      `${this.API_URL}/${id}/documents`,
+      this.httpOptions
+    );
+  }
+
+  /**
+   * Fetches booking notifications logs by booking ID.
+   * @param id - The booking ID.
+   * @returns Observable of notification Logs array.
+   */
+  getBookingNotificationLog(id: string): Observable<NotificationLog[]> {
+    return this.http.get<NotificationLog[]>(
+      `${this.API_URL}/${id}/notifications`,
+      this.httpOptions
+    );
+  }
+  /**
+   * Fetches booking notes by booking ID.
+   * @param id - The booking ID.
+   * @returns Observable of notes  array.
+   */
+  getBookingNotes(id: string): Observable<BookingNote[]> {
+    return this.http.get<BookingNote[]>(
+      `${this.API_URL}/${id}/notes`,
       this.httpOptions
     );
   }

@@ -7,10 +7,35 @@
     font-size: 2rem;
     color: var(--background-azul);
     font-weight: 400;
+    margin-top: -90px;
+
+    // Ajustes para pantallas grandes pero no muy grandes
+    @media screen and (max-width: 1600px) {
+      margin-top: -90px;
+    }
+
+    @media screen and (max-width: 1440px) {
+      margin-top: -90px;
+    }
+
+    @media screen and (max-width: 1366px) {
+      margin-top: -90px;
+    }
+
+    @media screen and (max-width: 1024px) {
+      font-size: 1.75rem;
+      margin-bottom: 1.75rem;
+      margin-top: -80px;
+    }
 
     @media screen and (max-width: 768px) {
       font-size: 1.5rem;
       margin-bottom: 1.5rem;
+      margin-top: -30px;
+    }
+
+    @media screen and (max-width: 480px) {
+      margin-top: -40px;
     }
   }
 
@@ -86,15 +111,27 @@
     }
   }
 
+  @media screen and (max-width: 1600px) {
+    padding: 2rem 3rem;
+  }
+
+  @media screen and (max-width: 1440px) {
+    padding: 2rem 2.5rem;
+  }
+
   @media screen and (max-width: 1366px) {
-    padding: 4rem 1.2rem;
+    padding: 2rem 2rem;
   }
 
   @media screen and (max-width: 1024px) {
-    padding: 3rem 1.5rem;
+    padding: 2rem 1.5rem;
   }
 
   @media screen and (max-width: 768px) {
-    padding: 2rem 1rem;
+    padding: 1.5rem 1rem;
+  }
+
+  @media screen and (max-width: 480px) {
+    padding: 1rem 0.5rem;
   }
 }

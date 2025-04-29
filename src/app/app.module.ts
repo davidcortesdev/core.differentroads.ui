@@ -104,9 +104,6 @@ import { TourRelatedComponent } from './pages/tour/components/tour-related/tour-
 import { FluidModule } from 'primeng/fluid';
 import { SignUpComponent } from './pages/sign-up/sign-up.component';
 import { PointsSectionComponent } from './pages/profile/components/points-section/points-section.component';
-import { ActiveBookingsSectionComponent } from './pages/profile/components/active-bookings-section/active-bookings-section.component';
-import { TravelHistorySectionComponent } from './pages/profile/components/travel-history-section/travel-history-section.component';
-import { RecentBudgetSectionComponent } from './pages/profile/components/recent-budget-section/recent-budget-section.component';
 import { ReviewSectionComponent } from './pages/profile/components/review-section/review-section.component';
 import { ForgetPasswordComponent } from './pages/forget-password/forget-password.component';
 import { ReviewsComponent } from './shared/components/reviews/reviews.component';
@@ -204,6 +201,8 @@ import { SummaryTableComponent } from './components/summary-table/summary-table.
 import { TravelerActivitySelectorComponent } from './pages/checkout/components/traveler-activity-selector/traveler-activity-selector.component';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { Nl2brPipe } from "./shared/pipes/nl2br.pipe";
+import { BookingListSectionComponent } from './pages/profile/components/booking-list-section/booking-list-section.component';
+import { BookingDocumentationComponent } from './pages/bookings/booking-documentation/booking-documentation.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -256,9 +255,6 @@ registerLocaleData(localeEs);
     TourFaqComponent,
     TourRelatedComponent,
     PointsSectionComponent,
-    ActiveBookingsSectionComponent,
-    TravelHistorySectionComponent,
-    RecentBudgetSectionComponent,
     ReviewSectionComponent,
     ReviewsComponent,
     SecondFooterSectionComponent,
@@ -313,6 +309,8 @@ registerLocaleData(localeEs);
     AirportSearchComponent,
     SummaryTableComponent,
     TravelerActivitySelectorComponent,
+    BookingListSectionComponent,
+    BookingDocumentationComponent,
 
   ],
   imports: [

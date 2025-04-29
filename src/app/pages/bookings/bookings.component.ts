@@ -10,14 +10,14 @@ import {
   RetailersService,
   Retailer,
 } from '../../core/services/retailers.service';
-import { Activity } from '../../core/models/tours/activity.model';
 import { Flight } from '../../core/models/tours/flight.model';
 import { finalize } from 'rxjs/operators';
-import { catchError, of } from 'rxjs';
 import {
   Payment,
   PaymentStatus,
 } from '../../core/models/bookings/payment.model';
+import { NotificationsService } from '../../core/services/notifications.service';
+import { Booking } from '../../core/models/bookings/booking.model';
 
 interface BookingData {
   title: string;
@@ -31,7 +31,7 @@ interface BookingData {
 }
 
 interface BookingActivity {
-  id: number;
+  id: string;
   title: string;
   description: string;
   imageUrl: string;
@@ -108,7 +108,7 @@ export class BookingsComponent implements OnInit {
   // ID de la reserva actual
   bookingId: string = '';
   isLoading: boolean = false;
-  bookingComplete: any = null; // Objeto de booking completo
+  bookingComplete: Booking | null = null; // Objeto de booking completo
   availableActivities: BookingActivity[] = []; // Array para actividades disponibles
   currentRetailer: Retailer | null = null; // Para almacenar información del retailer
 
@@ -181,18 +181,13 @@ export class BookingsComponent implements OnInit {
     },
   };
 
-  bookingActivities: BookingActivity[] = [];
+  bookingActivities: any[] = [];
 
   paymentForm: FormGroup;
   displayPaymentModal: boolean = false;
 
   // Nueva propiedad para almacenar el total de la reserva
   bookingTotal: number = 0;
-
-  // Getter para combinar actividades incluidas y disponibles
-  get combinedActivities(): BookingActivity[] {
-    return [...this.availableActivities];
-  }
 
   constructor(
     private router: Router,
@@ -201,9 +196,9 @@ export class BookingsComponent implements OnInit {
     private fb: FormBuilder,
     private bookingsService: BookingsService,
     private bookingMappingService: BookingMappingService,
-    private periodsService: PeriodsService,
     private retailersService: RetailersService, // Nuevo servicio añadido
-    private toursService: ToursService
+    private toursService: ToursService,
+    private notificationsService: NotificationsService
   ) {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
@@ -270,11 +265,6 @@ export class BookingsComponent implements OnInit {
           ) {
             this.updateActivitiesData(booking);
           }
-
-          // Cargar actividades del período usando el externalID correcto
-          if (booking.periodData && booking.periodData['externalID']) {
-            this.loadPeriodActivities(booking.periodData['externalID']);
-          }
         },
         error: (error) => {
           this.messageService.add({
@@ -330,61 +320,6 @@ export class BookingsComponent implements OnInit {
         }
       },
     });
-  }
-
-  // Método para cargar actividades del período
-  loadPeriodActivities(externalId: string): void {
-    this.periodsService
-      .getActivities(externalId)
-      .pipe(
-        catchError((error) => {
-          this.messageService.add({
-            key: 'center',
-            severity: 'warn',
-            summary: 'Advertencia',
-            detail: 'No se pudieron cargar las actividades disponibles',
-            life: 3000,
-          });
-          return of([]);
-        })
-      )
-      .subscribe((activities) => {
-        // Convertir actividades de la API al formato del componente
-        this.availableActivities = activities
-          .map((activity: Activity, index: number) => {
-            // Verificar si esta actividad ya está incluida en las actividades actuales
-            const isAlreadyIncluded = this.bookingActivities.some(
-              (bookingActivity) => bookingActivity.title === activity.name
-            );
-
-            if (isAlreadyIncluded) {
-              return null; // Para filtrar después
-            }
-
-            // Extraer la URL de la imagen si existe
-            let imageUrl = 'https://picsum.photos/400/200'; // Imagen predeterminada
-            if (
-              activity.activityImage &&
-              activity.activityImage.length > 0 &&
-              activity.activityImage[0].url
-            ) {
-              imageUrl = activity.activityImage[0].url;
-            }
-
-            return {
-              id: 1000 + index, // ID arbitrario que no entre en conflicto con los existentes
-              title: activity.name || `Actividad ${index + 1}`,
-              description: activity.description || 'Sin descripción disponible',
-              imageUrl: imageUrl,
-              price: activity.price ? `+${activity.price}€` : '+0€',
-              priceValue: activity.price || 0,
-              isOptional: true,
-              perPerson: true, // Valor predeterminado ya que perPerson no está en Activity
-              isIncluded: false,
-            };
-          })
-          .filter((activity) => activity !== null); // Filtrar las actividades que ya están incluidas
-      });
   }
 
   // Método ACTUALIZADO para los datos de elementos del viaje
@@ -637,15 +572,8 @@ export class BookingsComponent implements OnInit {
     ) {
       booking.optionalActivitiesRef.forEach((activity: any, index: number) => {
         this.bookingActivities.push({
-          id: index + 1,
+          id: activity.id,
           title: activity.name || `Actividad ${index + 1}`,
-          description: activity.description || 'Sin descripción disponible',
-          imageUrl: activity.image || 'https://picsum.photos/400/200', // Imagen predeterminada
-          price: activity.price ? `+${activity.price}€` : '+0€',
-          priceValue: activity.price || 0,
-          isOptional: true,
-          perPerson: activity.perPerson || true,
-          isIncluded: true, // Si está en optionalActivitiesRef, ya está incluida
         });
       });
     }
@@ -684,7 +612,27 @@ export class BookingsComponent implements OnInit {
           travelerData.passportID ||
           travelerData.docNum ||
           '';
+        // Obtener la descripción de la habitación si está disponible
+        let roomDescription = 'Sin asignar';
 
+        // Intentar obtener la descripción de la habitación desde los datos del periodo
+        if (
+          booking.periodData?.textSummary?.rooms &&
+          traveler.periodReservationModeID
+        ) {
+          const roomInfo =
+            booking.periodData.textSummary.rooms[
+              traveler.periodReservationModeID
+            ];
+          if (roomInfo && roomInfo.description) {
+            roomDescription = roomInfo.description;
+          } else if (roomInfo && roomInfo.name) {
+            roomDescription = roomInfo.name;
+          }
+        } else if (traveler.roomType) {
+          // Si no hay información detallada, usar el tipo de habitación
+          roomDescription = traveler.roomType;
+        }
         // Mapear datos del pasajero - importante: ID debe ser number
         const passenger: PassengerData = {
           id: index + 1, // Convertir a number usando el índice
@@ -698,7 +646,7 @@ export class BookingsComponent implements OnInit {
             (travelerData.ageGroup || '').toLowerCase() === 'adultos'
               ? 'adult'
               : 'child',
-          room: traveler.roomType || 'Sin asignar', // Requerido por el componente hijo
+          room: roomDescription, // Requerido por el componente hijo
           gender: travelerData.sex || '',
           comfortPlan: 'Standard', // Campo necesario para el componente hijo
           insurance: 'Básico', // Campo necesario para el componente hijo
@@ -718,49 +666,8 @@ export class BookingsComponent implements OnInit {
     }
   }
 
-  // Método eliminateActivity adaptado para trabajar con el componente hijo
-  eliminateActivity(activityId: number): void {
-    const activityIndex = this.bookingActivities.findIndex(
-      (act) => act.id === activityId
-    );
-
-    if (activityIndex !== -1) {
-      const removedActivity = this.bookingActivities[activityIndex];
-
-      // Quitar la actividad de las incluidas
-      this.bookingActivities.splice(activityIndex, 1);
-
-      // Añadir a las disponibles si no está ya
-      if (
-        !this.availableActivities.some((a) => a.title === removedActivity.title)
-      ) {
-        this.availableActivities.push({
-          ...removedActivity,
-          isIncluded: false,
-        });
-      }
-
-      // Buscar y eliminar del resumen del viaje
-      const tripItemIndex = this.tripItems.findIndex(
-        (item) => item.description === removedActivity.title
-      );
-
-      if (tripItemIndex !== -1) {
-        this.tripItems.splice(tripItemIndex, 1);
-      }
-
-      this.messageService.add({
-        key: 'center',
-        severity: 'success',
-        summary: 'Actividad eliminada',
-        detail: `Se ha eliminado la actividad ${removedActivity.title}`,
-        life: 3000,
-      });
-    }
-  }
-
   // Método addActivity adaptado para trabajar con el componente hijo
-  addActivity(activityId: number): void {
+  addActivity(activityId: string): void {
     const activityIndex = this.availableActivities.findIndex(
       (act) => act.id === activityId
     );

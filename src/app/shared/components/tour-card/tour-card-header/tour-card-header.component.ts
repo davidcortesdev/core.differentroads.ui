@@ -33,7 +33,6 @@ export class TourCardHeaderComponent implements OnInit, OnDestroy {
 
   // Añadimos propiedades para el rating y conteo de reseñas
   averageRating?: number = undefined;
-  reviewCount: number = 0;
 
   private subscriptions = new Subscription();
 
@@ -43,13 +42,13 @@ export class TourCardHeaderComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    console.log('Tour data:', this.tourData);
     // Si tenemos un ID externo, cargamos el rating
     if (this.tourData.externalID) {
       this.loadRatingAndReviewCount(this.tourData.externalID);
     } else {
       console.error(
-        'No se ha proporcionado un ID externo para cargar el rating'
+        'No se ha proporcionado un ID externo para cargar el rating', 
+        this.tourData
       );
     }
   }
@@ -86,18 +85,6 @@ export class TourCardHeaderComponent implements OnInit, OnDestroy {
                 },
                 error: (error) => {
                   console.error('Error al cargar el rating promedio:', error);
-                },
-              })
-            );
-
-            // Obtenemos el conteo de reseñas
-            this.subscriptions.add(
-              this.reviewsService.getReviewCount(filter).subscribe({
-                next: (count) => {
-                  this.reviewCount = count || 0;
-                },
-                error: (error) => {
-                  console.error('Error al cargar el conteo de reseñas:', error);
                 },
               })
             );

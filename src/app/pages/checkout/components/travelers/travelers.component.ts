@@ -1,9 +1,17 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import {
+  Component,
+  Input,
+  OnInit,
+  ViewChild,
+  ViewChildren,
+  QueryList,
+} from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Select } from 'primeng/select';
 import { TravelersService } from '../../../../core/services/checkout/travelers.service';
 import { MessageService } from 'primeng/api';
 import { formatDate } from '@angular/common';
+import { TravelerItemComponent } from '../traveler-item/traveler-item.component';
 
 interface Traveler {
   firstName: string;
@@ -39,6 +47,8 @@ export class TravelersComponent implements OnInit {
   travelerForms: FormGroup[] = [];
 
   @ViewChild('sexoSelect') sexoSelect!: Select;
+  @ViewChildren(TravelerItemComponent)
+  travelerItems!: QueryList<TravelerItemComponent>;
   @Input() allFieldsMandatory: boolean = false;
   @Input() reservationFields: { id: number; name: string; key: string }[] = [];
   @Input() isAmadeusFlightSelected: boolean = false;
@@ -225,30 +235,16 @@ export class TravelersComponent implements OnInit {
   }
 
   areAllTravelersValid(): boolean {
-    // Forzar la validación de todos los formularios
-    this.travelerForms.forEach((form) => form.markAllAsTouched());
-    let allValid = true;
-    if (this.allFieldsMandatory) {
-      for (let i = 0; i < this.travelerForms.length; i++) {
-        const form = this.travelerForms[i];
-        if (!form || form.invalid) {
-          this.notifyMissingTravelers(i);
-          allValid = false;
-        }
-      }
-    } else {
-      for (let i = 0; i < this.travelerForms.length; i++) {
-        const form = this.travelerForms[i];
-        if (!form) continue;
-        const firstNameValid = form.get('firstName')?.valid ?? false;
-        const lastNameValid = form.get('lastName')?.valid ?? false;
-        const emailValid = form.get('email')?.valid ?? false;
-        if (!(firstNameValid && lastNameValid && emailValid)) {
-          this.notifyMissingTravelers(i);
-          allValid = false;
-        }
-      }
+    if (!this.travelerItems) {
+      console.error('No se encontraron componentes TravelerItem');
+      return false;
     }
+    let allValid = true;
+    this.travelerItems.forEach((item) => {
+      if (!item.isTravelerValid()) {
+        allValid = false;
+      }
+    });
     return allValid;
   }
 

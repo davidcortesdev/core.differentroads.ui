@@ -866,6 +866,7 @@ export class CheckoutComponent implements OnInit {
           });
           return false;
         }
+
         if (!travelersComponent.areAllTravelersValid()) {
           return false;
         }

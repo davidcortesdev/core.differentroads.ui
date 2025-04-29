@@ -25,7 +25,7 @@
         <label>Nombre{{ isFieldRequired("firstName") ? "*" : "" }}</label>
         <input
           pInputText
-          name="nombre"
+          name="name"
           placeholder="Introduce tu nombre"
           formControlName="firstName"
         />
@@ -34,7 +34,7 @@
         <label>Apellido{{ isFieldRequired("lastName") ? "*" : "" }}</label>
         <input
           pInputText
-          name="apellido"
+          name="surname"
           placeholder="Introduce Apellido"
           formControlName="lastName"
         />
@@ -48,15 +48,14 @@
         <label>Email*</label>
         <input
           pInputText
+          type="email"
+          name="email"
           formControlName="email"
           placeholder="Introduce tu email"
         />
       </div>
-      <div
-        class="form-column form-field half-width"
-        *ngIf="isFieldRequired('sexo')"
-      >
-        <label>Sexo*</label>
+      <div class="form-column form-field half-width">
+        <label>Sexo {{ isFieldRequired("sexo") ? "*" : "" }}</label>
         <p-select
           formControlName="sexo"
           [options]="sexoOptions"
@@ -102,6 +101,7 @@
         <input
           pInputText
           formControlName="phone"
+          name="phone"
           placeholder="Introduce tu teléfono"
         />
       </div>
@@ -127,6 +127,7 @@
         <input
           pInputText
           formControlName="passport"
+          name="passport"
           placeholder="Introduce tu pasaporte"
         />
       </div>
@@ -263,6 +264,7 @@
         <input
           pInputText
           formControlName="phone"
+          name="phone"
           placeholder="Introduce tu teléfono"
         />
       </div>
@@ -289,6 +291,7 @@
         <label>Pasaporte</label>
         <input
           pInputText
+          name="passport"
           formControlName="passport"
           placeholder="Introduce tu pasaporte"
         />

@@ -21,6 +21,7 @@ import { CountriesService } from '../../../../core/services/countries.service';
 import { Country } from '../../../../shared/models/country.model';
 import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 import { TravelersService } from '../../../../core/services/checkout/travelers.service';
+import { MessageService } from 'primeng/api';
 
 // Interfaces para mejorar la tipificación
 export interface TravelerData {
@@ -115,7 +116,8 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
 
   constructor(
     private countriesService: CountriesService,
-    private travelersService: TravelersService
+    private travelersService: TravelersService,
+    private messageService: MessageService
   ) {}
 
   ngOnInit(): void {
@@ -380,5 +382,55 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
         }
       }
     });
+  }
+
+  isTravelerValid(): boolean {
+    if (this.form) {
+      this.form.markAllAsTouched();
+      const isValid = this.form.valid;
+      if (!isValid) {
+        this.notifyMissingFields();
+      }
+      return isValid;
+    }
+    return false;
+  }
+
+  notifyMissingFields(): void {
+    const missingFields: string[] = [];
+
+    if (!this.form) return;
+
+    Object.keys(this.form.controls).forEach((key) => {
+      const control = this.form.get(key);
+      if (control && control.invalid && this.isFieldRequired(key)) {
+        if (key === 'firstName') missingFields.push('Nombre');
+        else if (key === 'lastName') missingFields.push('Apellido');
+        else if (key === 'email') missingFields.push('Email');
+        else if (key === 'phone') missingFields.push('Teléfono');
+        else if (key === 'passport') missingFields.push('Pasaporte');
+        else if (key === 'birthdate') missingFields.push('Fecha de nacimiento');
+        else if (key === 'sexo') missingFields.push('Sexo');
+        else if (key === 'documentType')
+          missingFields.push('Tipo de documento');
+        else if (key === 'nationality') missingFields.push('Nacionalidad');
+        else if (key === 'passportExpirationDate')
+          missingFields.push('Caducidad pasaporte');
+        else if (key === 'passportIssueDate')
+          missingFields.push('Emisión pasaporte');
+        else if (key === 'associatedAdult')
+          missingFields.push('Adulto asociado');
+        else missingFields.push(key);
+      }
+    });
+
+    if (missingFields.length > 0) {
+      this.messageService.add({
+        severity: 'error',
+        summary: `Faltan datos para pasajero ${this.index + 1}`,
+        detail: `Debes llenar los campos: ${missingFields.join(', ')}`,
+        life: 8000,
+      });
+    }
   }
 }

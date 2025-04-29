@@ -46,7 +46,8 @@ export class NotificationsService {
   }
 
   sendBookingNotificationEmail(
-    props: SendBudgetNotificationEmailServiceProps
+    props: SendBudgetNotificationEmailServiceProps,
+    bookState: string
   ): Observable<any> {
     const { id, email, products } = props;
     console.log(id);
@@ -57,7 +58,7 @@ export class NotificationsService {
         id,
         emailOverride: email,
         filters: {
-          bookState: 'Booked',
+          bookState,
         },
       },
     };
@@ -88,13 +89,20 @@ export class NotificationsService {
     fileUrl: string;
   }> {
     const url = `${environment.notificationsApiUrl}/documents/budget/${id}`;
-    return this.http.get<any>(url);
+    return this.http.get<{
+      fileUrl: string;
+    }>(url);
   }
 
-  getBookingDocument(id: string): Observable<{
+  getBookingDocument(
+    id: string,
+    force = false
+  ): Observable<{
     fileUrl: string;
   }> {
-    const url = `${environment.notificationsApiUrl}/documents/bookingBone/${id}`;
-    return this.http.get<any>(url);
+    const url = `${environment.notificationsApiUrl}/documents/bookingBone/${id}?force=${force}`;
+    return this.http.get<{
+      fileUrl: string;
+    }>(url);
   }
 }

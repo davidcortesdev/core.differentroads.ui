@@ -38,6 +38,9 @@ export class FlightSearchComponent implements OnInit {
 
   // Add new property to store consolidated airports filters
   airportsFilters: string[] = [];
+  
+  // Agregar solo este timeout para el debounce de búsqueda
+  private searchTimeout: any;
 
   flightForm: FormGroup;
 
@@ -223,6 +226,19 @@ export class FlightSearchComponent implements OnInit {
           },
         });
     }
+  }
+
+  // Agregar el método para limpiar los timeouts al destruir el componente
+  ngOnDestroy() {
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+  }
+
+  // Agregar este método para manejar la selección explícita de ciudades
+  onCitySelect(event: any) {
+    console.log('Ciudad seleccionada:', event);
+    // Solo registrar la selección, el framework se encarga del resto
   }
 
   buscar() {
@@ -724,53 +740,77 @@ export class FlightSearchComponent implements OnInit {
     );
   }
 
-  selectFlight(flight: Flight): void {
-    this.selectedFlightId = flight.externalID;
+ // En flight-search.component.ts
+// Agregar esta función al componente principal para recibir eventos del componente hijo
+selectFlight(flight: Flight): void {
+  this.selectedFlightId = flight.externalID;
 
-    // Add a flag to indicate this is an Amadeus flight
-    const flightWithSource = {
-      ...flight,
-      source: 'amadeus', // Add a source identifier
-      // Ensure required fields are present for the order
-      id: flight.id || flight.externalID,
-      externalID: flight.externalID,
-      name: flight.name || `$ ${flight.outbound.segments[0]?.flightNumber}`,
-    };
+  const flightWithSource = {
+    ...flight,
+    source: 'amadeus',
+    id: flight.id || flight.externalID,
+    externalID: flight.externalID,
+    name: flight.name || `$ ${flight.outbound.segments[0]?.flightNumber}`,
+  };
 
-    console.log('Flight selected in search component:', flightWithSource);
-
-    // Emit only the selected flight for the parent component to trigger auto-selection
-    this.filteredFlightsChange.emit([flightWithSource]);
-  }
+  console.log('Flight selected in search component:', flightWithSource);
+  this.filteredFlightsChange.emit([flightWithSource]);
+}
 
   isFlightSelected(flight: Flight): boolean {
     return flight.externalID === this.selectedFlightId;
   }
 
-  searchCities(event: any): void {
-    const query = event.query;
-    console.log('____', this.airportsFilters);
+  
 
-    this.airportService.searchAirports(query).subscribe((airports) => {
-      // Filtrar aeropuertos según airportsFilters (país, ciudad o IATA)
-      if (this.airportsFilters && this.airportsFilters.length) {
-        airports = airports.filter((airport) =>
-          this.airportsFilters.some((filter) => {
-            const lowerFilter = filter.toLowerCase();
-            return (
-              airport.city.toLowerCase().includes(lowerFilter) ||
-              airport.name.toLowerCase().includes(lowerFilter) ||
-              airport.iata.toLowerCase().includes(lowerFilter) ||
-              (airport.country &&
-                airport.country.toLowerCase().includes(lowerFilter))
-            );
-          })
-        );
-      }
-      this.filteredCities = airports.map((airport) => ({
-        nombre: airport.city + ' - ' + airport.name,
-        codigo: airport.iata,
-      }));
-    });
+  // Modificar solo esta función para mejorar la experiencia táctil
+ // Versión corregida de searchCities para mostrar todas las ciudades relevantes
+searchCities(event: any): void {
+  const query = event.query;
+  console.log('Buscando ciudades con:', query);
+
+  // Agregar un debounce simple para mejorar el rendimiento
+  if (this.searchTimeout) {
+    clearTimeout(this.searchTimeout);
   }
+
+  this.searchTimeout = setTimeout(() => {
+    this.airportService.searchAirports(query).subscribe({
+      next: (airports) => {
+        // Filtrar aeropuertos según airportsFilters (país, ciudad o IATA) si existen filtros
+        if (this.airportsFilters && this.airportsFilters.length > 0) {
+          airports = airports.filter((airport) =>
+            this.airportsFilters.some((filter) => {
+              const lowerFilter = filter.toLowerCase();
+              return (
+                airport.city.toLowerCase().includes(lowerFilter) ||
+                airport.name.toLowerCase().includes(lowerFilter) ||
+                airport.iata.toLowerCase().includes(lowerFilter) ||
+                (airport.country &&
+                  airport.country.toLowerCase().includes(lowerFilter))
+              );
+            })
+          );
+        }
+        
+        // No limitamos el número de resultados a menos que sea excesivo
+        // Solo si hay más de 50 resultados, limitamos para evitar problemas de rendimiento
+        if (airports.length > 50) {
+          airports = airports.slice(0, 50);
+        }
+        
+        this.filteredCities = airports.map((airport) => ({
+          nombre: airport.city + ' - ' + airport.name,
+          codigo: airport.iata,
+        }));
+        
+        console.log('Ciudades filtradas disponibles:', this.filteredCities.length);
+      },
+      error: (err) => {
+        console.error('Error al buscar aeropuertos:', err);
+        this.filteredCities = [];
+      }
+    });
+  }, 200); // Reducimos el debounce para una respuesta más rápida
 }
+}    

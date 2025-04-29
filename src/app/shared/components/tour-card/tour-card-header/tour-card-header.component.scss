@@ -97,7 +97,8 @@ $spacing-md: 1rem;
       padding: $spacing-xs $spacing-xs * 2;
       opacity: 0;
       animation: fadeIn 0.5s ease-in-out forwards;
-      
+      @include responsive-font(0.6rem, 0.65rem, 0.55rem);
+
       @keyframes fadeIn {
         from {
           opacity: 0;
@@ -108,8 +109,9 @@ $spacing-md: 1rem;
           transform: translateY(0);
         }
       }
-      
-      .short-text, .expanded-content {
+
+      .short-text,
+      .expanded-content {
         img {
           filter: brightness(0) invert(1);
           width: 1rem;
@@ -118,16 +120,16 @@ $spacing-md: 1rem;
           margin-right: 4px;
         }
       }
-      
+
       .expanded-content {
         display: none;
       }
-      
+
       &:hover {
         .short-text {
           display: none;
         }
-        
+
         .expanded-content {
           display: inline-block;
         }
@@ -253,7 +255,7 @@ $spacing-md: 1rem;
       .rating,
       .tag {
         padding: 0.3rem 0.6rem;
-        font-size: 0.9rem;
+        font-size: 0.8rem;
       }
 
       .title-overlay {

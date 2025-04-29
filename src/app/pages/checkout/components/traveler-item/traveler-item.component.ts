@@ -88,7 +88,6 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
   @Input() sexoOptions: SelectOption[] = [];
   @Input() getAdultsOptionsFn!: (index: number) => SelectOption[];
   @Input() allFieldsMandatory: boolean = false;
-  @Input() travelerId: string | null = null;
   @Input() reservationFields: { id: number; name: string; key: string }[] = [];
   @Input() isAmadeusFlightSelected: boolean = false;
 
@@ -98,6 +97,7 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
     id: null,
     _id: null,
   };
+  travelerId: string | null = null;
 
   showMoreFields: boolean = false;
   private documentOptionsCache: { [key: string]: SelectOption[] } = {};
@@ -281,6 +281,7 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
     console.log('ID:', currentTraveler?.id || 'No disponible');
     console.log('_ID:', currentTraveler?._id || 'No disponible');
     console.groupEnd();
+    this.travelerId = currentTraveler?._id || null;
   }
 
   getTitlePasajero(num: string): string {

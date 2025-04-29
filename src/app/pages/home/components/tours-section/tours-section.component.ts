@@ -132,6 +132,7 @@ export class ToursSectionComponent implements OnInit, OnDestroy {
                   tour.name?.toLowerCase().replace(/\s+/g, '-') ||
                   '',
                 tripType: tripType || [],
+                externalID: tour.externalID,
               };
             })
           )

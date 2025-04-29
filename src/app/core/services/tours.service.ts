@@ -287,6 +287,7 @@ export class ToursService {
       'country',
       'webSlug',
       'tourType',
+      'externalID',
     ]).pipe(map((tourData: Tour) => tourData));
   }
 

@@ -50,11 +50,17 @@ export class TourCardComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
-    // Validate that externalID exists and is not undefined or empty
-    if (!this.tourData?.externalID?.trim()) {
-      console.log('Missing or invalid externalID:', this.tourData);
+    // Validación más robusta
+    if (!this.tourData) {
+      console.error('TourData no proporcionado al componente TourCardComponent');
+      return;
     }
-
+  
+    // Validate that externalID exists and is not undefined or empty
+    if (!this.tourData.externalID?.trim()) {
+      console.warn('Missing or invalid externalID:', this.tourData);
+    }
+  
     // Pre-calculate monthly price to avoid recalculation in template
     this.monthlyPrice = this.calculateMonthlyPrice();
     // Generar ID único para el widget de Scalapay
@@ -82,21 +88,25 @@ export class TourCardComponent implements OnInit, AfterViewInit {
       const script = this.document.createElement('script');
       script.type = 'module';
       script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js';
+      
+      // Usar el evento onload en lugar de setTimeout
+      script.onload = () => this.configureScalapayWidget();
       this.document.head.appendChild(script);
+    } else {
+      // Si el script ya está cargado, configurar el widget directamente
+      this.configureScalapayWidget();
     }
-    
-    // Configurar el precio para este widget específico
-    // Esto debe ejecutarse independientemente de si el script se cargó antes o no
-    setTimeout(() => {
-      const priceContainerId = `price-container-${this.scalapayWidgetId}`;
-      const priceContainer = document.getElementById(priceContainerId);
-      if (priceContainer) {
-        priceContainer.textContent = `€ ${this.tourData.price.toFixed(2)}`;
-        
-        // Lanzar evento para que el widget de Scalapay se actualice
-        const event = new CustomEvent('scalapay-widget-reload');
-        window.dispatchEvent(event);
-      }
-    }, 500); // Aumentado el timeout para asegurar que el DOM esté listo
+  }
+
+  private configureScalapayWidget(): void {
+    const priceContainerId = `price-container-${this.scalapayWidgetId}`;
+    const priceContainer = this.document.getElementById(priceContainerId);
+    if (priceContainer) {
+      priceContainer.textContent = `€ ${this.tourData.price.toFixed(2)}`;
+      
+      // Lanzar evento para que el widget de Scalapay se actualice
+      const event = new CustomEvent('scalapay-widget-reload');
+      window.dispatchEvent(event);
+    }
   }
 }

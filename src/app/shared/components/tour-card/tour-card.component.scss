@@ -33,9 +33,14 @@ $spacing-md: 1rem;
   }
 }
 
+:root {
+  --tour-card-border-radius-lg: 1rem;
+  --tour-card-spacing-md: 1rem;
+}
+
 // Componente principal
 .tour-card {
-  padding: $spacing-sm;
+  padding: var(--tour-card-spacing-sm, 0.5rem);
   height: 100%;
   
   // Estilos para el wrapper

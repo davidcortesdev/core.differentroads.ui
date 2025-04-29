@@ -78,7 +78,7 @@ $spacing-md: 1rem;
     padding: $spacing-md;
     display: flex;
     flex-direction: column;
-    border-radius: $border-radius-lg;
+    border-radius: $border-radius-md; // Cambiado de $border-radius-lg a $border-radius-md para igualar con la imagen
 
     // Indicador de rating
     .rating {
@@ -123,11 +123,17 @@ $spacing-md: 1rem;
       .expanded-content {
         img {
           filter: brightness(0) invert(1);
-          width: 1rem;
-          height: 1rem;
+          width: 0.65rem;
+          height: auto; // Mantiene la proporción original
           vertical-align: middle;
           margin-right: 4px;
+          position: relative;
+          top: -1px; // Ajuste fino para centrar perfectamente con el texto
         }
+        
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
       }
 
       .expanded-content {
@@ -140,7 +146,8 @@ $spacing-md: 1rem;
         }
 
         .expanded-content {
-          display: inline-block;
+          display: flex; // Cambiado de inline-block a flex para mantener consistencia
+          align-items: center;
         }
       }
     }
@@ -205,12 +212,15 @@ $spacing-md: 1rem;
 
       // Texto corto para etiquetas expandibles
       .short-text {
-        display: inline-block;
+        display: flex;
+        align-items: center;
         transition: all 0.1s ease;
 
         img {
-          width: 1rem;
-          height: 1rem;
+          width: 0.65rem; // Unificado con el tamaño anterior
+          height: auto;
+          position: relative;
+          top: -1px;
         }
       }
 
@@ -220,7 +230,14 @@ $spacing-md: 1rem;
         opacity: 0;
         max-width: 0;
         overflow: hidden;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
+        
+        img {
+          width: 0.65rem; // Aseguramos que sea igual en todos lados
+          height: auto;
+          position: relative;
+          top: -1px;
+        }
       }
     }
 
@@ -257,10 +274,11 @@ $spacing-md: 1rem;
     }
 
     img {
-      border-radius: $border-radius-lg;
+      border-radius: $border-radius-md; // Cambiado de $border-radius-lg a $border-radius-md para mantener consistencia
     }
 
     .overlay {
+      border-radius: $border-radius-md; // Añadido para asegurar consistencia
       .rating,
       .tag {
         padding: 0.3rem 0.6rem;

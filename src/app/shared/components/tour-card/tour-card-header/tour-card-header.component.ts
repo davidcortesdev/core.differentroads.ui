@@ -48,7 +48,9 @@ export class TourCardHeaderComponent implements OnInit, OnDestroy {
     if (this.tourData.externalID) {
       this.loadRatingAndReviewCount(this.tourData.externalID);
     } else {
-        console.error('No se ha proporcionado un ID externo para cargar el rating');
+      console.error(
+        'No se ha proporcionado un ID externo para cargar el rating'
+      );
     }
   }
 
@@ -75,10 +77,12 @@ export class TourCardHeaderComponent implements OnInit, OnDestroy {
             this.subscriptions.add(
               this.reviewsService.getAverageRating(filter).subscribe({
                 next: (rating) => {
-                  this.averageRating = rating || 990;
+                  if (rating) {
+                    // Redondear al alza con un decimal
+                    this.averageRating = Math.ceil(rating * 10) / 10;
+                  }
                   console.log('Rating promedio:', this.averageRating);
                   // Actualizamos el rating en tourData para que se muestre en la plantilla
-                  this.tourData.rating = this.averageRating;
                 },
                 error: (error) => {
                   console.error('Error al cargar el rating promedio:', error);

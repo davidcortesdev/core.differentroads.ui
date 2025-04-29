@@ -11,6 +11,7 @@
             *ngFor="let type of getFilteredTripTypes()"
             class="trip-type"
             [styleClass]="getTripTypeClass(type)"
+            [title]="type"
           >
             {{ getTripTypeLabel(type) }}
           </p-tag>
@@ -27,10 +28,8 @@
     <ng-container *ngIf="showScalapayPrice">
       <div class="priceScalapay">
         <div class="widget" #widgetContainer>
-          <!-- El contenedor visible del precio actual -->
           <span class="amount" style="display: none;">{{ tourData.price }}</span>
           
-          <!-- Widget de Scalapay -->
           <scalapay-widget
             #scalapayWidget
             channel="travel"
@@ -52,7 +51,7 @@
         </div>
       </div>
     </ng-container>
-    <div class="months">
+    <div class="months" *ngIf="tourData.availableMonths?.length">
       <p-tag
         *ngFor="let month of tourData.availableMonths"
         class="month"

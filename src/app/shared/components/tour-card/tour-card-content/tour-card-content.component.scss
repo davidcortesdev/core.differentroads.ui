@@ -7,6 +7,7 @@ $border-radius-lg: 1rem;
 $spacing-xs: 0.2rem;
 $spacing-sm: 0.5rem;
 $spacing-md: 1rem;
+$color-primary: var(--background-azul);
 
 // Mixins
 @mixin trip-type-badge {
@@ -74,14 +75,14 @@ $spacing-md: 1rem;
       
       .desde {
         font-size: 0.9rem;
-        color: var(--background-azul);
+        color: $color-primary;
         margin-bottom: $spacing-xs;
       }
       
       .price {
         font-size: 1.5rem;
         font-weight: bold;
-        color: var(--background-azul);
+        color: $color-primary;
       }
     }
     
@@ -129,23 +130,6 @@ $spacing-md: 1rem;
       }
     }
     
-    img {
-      height: 1.3rem;
-      display: inline-block;
-      vertical-align: middle;
-      margin-left: 0.3rem;
-      
-      @include tablet {
-        height: 1.2rem;
-        margin-left: 0.25rem;
-      }
-      
-      @include mobile {
-        height: 1.1rem;
-        margin-left: 0.2rem;
-      }
-    }
-    
     .widget {
       width: 100%;
       margin-top: 0.3rem;
@@ -167,6 +151,12 @@ $spacing-md: 1rem;
     border-radius: 1.5rem;
     min-width: 7rem;
     margin-top: 13px;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
     
     @include tablet {
       min-width: 6rem;

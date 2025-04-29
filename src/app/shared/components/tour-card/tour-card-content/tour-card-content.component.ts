@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, OnInit } from '@angular/core';
 
 interface TourContentData {
   price: number;
@@ -12,13 +12,16 @@ interface TourContentData {
   standalone: false,
   templateUrl: './tour-card-content.component.html',
   styleUrls: ['./tour-card-content.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TourCardContentComponent {
+export class TourCardContentComponent implements OnInit {
   @Input() tourData!: TourContentData;
   @Input() showScalapayPrice = false;
   @Input() isLargeCard = false;
   @Input() scalapayWidgetId = '';
   @Output() tourClick = new EventEmitter<void>();
+
+  filteredTripTypes: string[] = [];
 
   readonly tripTypeMap: Record<string, { label: string, class: string }> = {
     'single': { label: 'S', class: 'trip-type-s' },
@@ -27,13 +30,24 @@ export class TourCardContentComponent {
     'fit': { label: 'F', class: 'trip-type-f' }
   };
 
-  // Método para filtrar los tipos de viaje (solo S, G, P)
-  getFilteredTripTypes(): string[] {
-    if (!this.tourData.tripType) return [];
-    return this.tourData.tripType.filter(type => {
+  ngOnInit(): void {
+    this.updateFilteredTripTypes();
+  }
+
+  private updateFilteredTripTypes(): void {
+    if (!this.tourData.tripType) {
+      this.filteredTripTypes = [];
+      return;
+    }
+    
+    this.filteredTripTypes = this.tourData.tripType.filter(type => {
       const lowerType = type.toLowerCase();
       return lowerType === 'single' || lowerType === 'grupo' || lowerType === 'propios';
     });
+  }
+
+  getFilteredTripTypes(): string[] {
+    return this.filteredTripTypes;
   }
 
   getTripTypeLabel(type: string): string {

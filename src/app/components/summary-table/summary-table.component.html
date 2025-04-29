@@ -1,54 +1,72 @@
 <div class="order-summary" [ngClass]="customClass">
-    <h3 *ngIf="showTitle">{{ title }}</h3>
-    <div class="summary-content">
-        <!-- Tour base info -->
-        <div class="tour-base-info">
-            <!-- Selected items list -->
-            <div class="selected-items">
-                <div *ngFor="let item of summary" class="item" [ngClass]="{'discount': isDiscount(item)}">
-                    <span class="description">{{ getDescription(item) }}</span>
-                    <span *ngIf="getValue(item) != 0" class="value-container">
-                        <span class="qty">{{ getQuantity(item) }}</span>
-                        <span class="operator">x</span>
-                        <span class="unit-price">{{ getValue(item) | currencyFormat : currency }}</span>
-                        <span class="operator">=</span>
-                        <span class="total-price">{{ calculateTotal(item) | currencyFormat : currency }}</span>
-                    </span>
-                    <span *ngIf="getValue(item) == 0" class="included-container">
-                        <span class="included-text">{{ includedText }}</span>
-                    </span>
-                </div>
-            </div>
-            
-            <!-- Points section -->
-            <br *ngIf="showPointsSection" /><br *ngIf="showPointsSection" />
-            <div class="points-section" *ngIf="showPointsSection">
-                <div *ngIf="isAuthenticated; else notAuthenticated">
-                    <p>Acumulas {{ getEarnedPoints() }} puntos con este viaje</p>
-                    <p-message severity="secondary" size="small" icon="pi pi-exclamation-circle">
-                        Se genera un abono del 3% del importe del viaje en puntos a
-                        descontar en futuras compras.
-                    </p-message>
-                </div>
-
-                <ng-template #notAuthenticated>
-                    <p-message severity="warn" size="small" icon="pi pi-info-circle">
-                        Para acumular puntos, es necesario iniciar sesión.
-                    </p-message>
-                </ng-template>
-            </div>
-            <!-- Total section -->
-            <div class="total-section" *ngIf="showTotalSection">
-                <div class="total">
-                    <span>{{ totalLabel }}</span>
-                    <span class="price">{{ total | currencyFormat : currency }}</span>
-                </div>
-            </div>
-            <!-- Flights info if selected -->
-            <app-flight-section 
-                *ngIf="showFlightSection && selectedFlight && !selectedFlight?.name?.toLowerCase()?.includes('sin ')" 
-                [flight]="selectedFlight">
-            </app-flight-section>
+  <h3 *ngIf="showTitle">{{ title }}</h3>
+  <div class="summary-content">
+    <!-- Tour base info -->
+    <div class="tour-base-info">
+      <!-- Selected items list -->
+      <div class="selected-items">
+        <div
+          *ngFor="let item of summary"
+          class="item"
+          [ngClass]="{ discount: isDiscount(item) }"
+        >
+          <span class="description">{{ getDescription(item) }}</span>
+          <span *ngIf="getValue(item) != 0" class="value-container">
+            <span class="qty">{{ getQuantity(item) }}</span>
+            <span class="operator">x</span>
+            <span class="unit-price">{{
+              getValue(item) | currencyFormat : currency
+            }}</span>
+            <span class="operator">=</span>
+            <span class="total-price">{{
+              calculateTotal(item) | currencyFormat : currency
+            }}</span>
+          </span>
+          <span *ngIf="getValue(item) == 0" class="included-container">
+            <span class="included-text">{{ includedText }}</span>
+          </span>
         </div>
+      </div>
+
+      <!-- Points section -->
+      <br *ngIf="showPointsSection" /><br *ngIf="showPointsSection" />
+      <div class="points-section" *ngIf="showPointsSection">
+        <div *ngIf="isAuthenticated; else notAuthenticated">
+          <p>Acumulas {{ getEarnedPoints() }} puntos con este viaje</p>
+          <p-message
+            severity="secondary"
+            size="small"
+            icon="pi pi-exclamation-circle"
+          >
+            Se genera un abono del 3% del importe del viaje en puntos a
+            descontar en futuras compras.
+          </p-message>
+        </div>
+
+        <ng-template #notAuthenticated>
+          <p-message severity="warn" size="small" icon="pi pi-info-circle">
+            Para acumular puntos, es necesario iniciar sesión.
+          </p-message>
+        </ng-template>
+      </div>
+      <!-- Total section -->
+      <div class="total-section" *ngIf="showTotalSection">
+        <div class="total">
+          <span>{{ totalLabel }}</span>
+          <span class="price">{{ total | currencyFormat : currency }}</span>
+        </div>
+      </div>
+      <!-- Flights info if selected -->
+      <app-flight-section
+        *ngIf="
+          showFlightSection &&
+          selectedFlight &&
+          !selectedFlight?.name?.toLowerCase()?.includes('sin ') &&
+          !selectedFlight?.name?.toLowerCase()?.includes('sinv')
+        "
+        [flight]="selectedFlight"
+      >
+      </app-flight-section>
     </div>
+  </div>
 </div>

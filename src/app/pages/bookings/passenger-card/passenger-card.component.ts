@@ -63,6 +63,10 @@ export class PassengerCardComponent implements OnInit, OnChanges {
       if (data['passenger']) {
         this.passenger = data['passenger'];
       }
+      // Normaliza el valor de documentType antes de inicializar el formulario
+      if (this.passenger && this.passenger.documentType) {
+        this.passenger.documentType = this.passenger.documentType.toLowerCase();
+      }
       this.initForm();
     });
 
@@ -105,6 +109,10 @@ export class PassengerCardComponent implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     // Actualizar el formulario si cambia el pasajero desde el componente padre
     if (changes['passenger'] && !changes['passenger'].firstChange) {
+      // Normaliza el valor de documentType antes de inicializar el formulario
+      if (this.passenger && this.passenger.documentType) {
+        this.passenger.documentType = this.passenger.documentType.toLowerCase();
+      }
       this.initForm();
     }
   }
@@ -118,7 +126,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
     return this.fb.group({
       id: [passenger.id],
       fullName: [passenger.fullName, [Validators.required, Validators.minLength(3)]],
-      documentType: [passenger.documentType, Validators.required],
+      documentType: [passenger.documentType || 'passport', Validators.required],
       documentNumber: [passenger.documentNumber, [Validators.required, Validators.minLength(3)]],
       birthDate: [passenger.birthDate, [Validators.required, this.birthDateValidator.bind(this)]],
       email: [passenger.email, Validators.email],
@@ -390,4 +398,14 @@ export class PassengerCardComponent implements OnInit, OnChanges {
         return '';
       }
     }
+
+  getGenderLabel(value: string): string {
+    const option = this.genderOptions.find(opt => opt.value === value);
+    return option ? option.label : value || 'Pendiente';
+  }
+
+  getDocumentTypeLabel(value: string): string {
+    const option = this.documentTypeOptions.find(opt => opt.value.toLowerCase() === (value || '').toLowerCase());
+    return option ? option.label : value || 'Pendiente';
+  }
 }

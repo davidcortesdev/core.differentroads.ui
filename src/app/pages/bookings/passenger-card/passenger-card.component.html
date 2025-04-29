@@ -31,7 +31,9 @@
 
       <div class="detail-row">
         <span class="detail-label">Sexo:</span>
-        <span class="detail-value" [ngClass]="{'pending-value': !passenger.gender}">{{passenger.gender || 'Pendiente'}}</span>
+        <span class="detail-value" [ngClass]="{'pending-value': !passenger.gender}">
+          {{ getGenderLabel(passenger.gender) }}
+        </span>
       </div>
 
       <div class="detail-row">
@@ -44,7 +46,9 @@
 
       <div class="detail-row">
         <span class="detail-label">Tipo de documento:</span>
-        <span class="detail-value" [ngClass]="{'pending-value': !passenger.documentType}">{{passenger.documentType || 'Pendiente'}}</span>
+        <span class="detail-value" [ngClass]="{'pending-value': !passenger.documentType}">
+          {{ getDocumentTypeLabel(passenger.documentType) }}
+        </span>
       </div>
 
       <div class="detail-row">

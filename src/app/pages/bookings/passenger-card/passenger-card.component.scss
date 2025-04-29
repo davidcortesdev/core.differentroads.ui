@@ -506,8 +506,7 @@ input.p-inputtext {
   min-height: 32px !important;
   height: 32px !important;
   font-size: 14px;
-  padding: 0 8px !important;
-  line-height: 32px !important;
+  padding: 0 0 !important;
 }
 
 .custom-dropdown .p-dropdown-label {
@@ -521,7 +520,7 @@ input.p-inputtext {
 }
 
 .custom-dropdown .p-inputtext {
-  padding: 4px 8px !important;
+  padding: 1px 8px !important;
   font-size: 14px;
   height: 24px !important;
 }

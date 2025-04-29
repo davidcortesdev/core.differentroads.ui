@@ -46,6 +46,12 @@ interface TravelerWithPoints {
   category?: string;
   type?: string;
 }
+import { ScalapayOrderRequest } from '../../../../core/models/scalapay/ScalapayOrderRequest';
+import { ScalapayConsumer } from '../../../../core/models/scalapay/ScalapayConsumer';
+import { ScalapayExtensions } from '../../../../core/models/scalapay/ScalapayExtensions';
+import { ScalapayItem } from '../../../../core/models/scalapay/ScalapayItem';
+import { ScalapayOrderResponse } from '../../../../core/models/scalapay/ScalapayOrderResponse';
+import { ScalapayService } from '../../../../core/services/checkout/payment/scalapay.service';
 
 @Component({
   selector: 'app-payment',
@@ -59,7 +65,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
   @Input() tourName: string = '';
   @Input() processBooking!: () => Promise<{
     bookingID: string;
-    ID: string;
+    code: string;
   }>;
   @Input() departureDate: string | null = null;
   @Output() goBackEvent = new EventEmitter<void>();
@@ -112,6 +118,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
   constructor(
     @Inject(DOCUMENT) private document: Document,
     private redsysService: RedsysService,
+    private scalapayService: ScalapayService,
     private bookingsService: BookingsService,
     private router: Router,
     private paymentOptionsService: PaymentOptionsService,
@@ -165,6 +172,35 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
+  // NUEVOS MÉTODOS PARA SELECCIÓN AL HACER CLIC EN CUALQUIER PARTE DEL PANEL
+  
+  // Método para seleccionar tipo de pago al hacer clic en el panel
+  selectPaymentType(type: string): void {
+    this.paymentType = type;
+    this.onPaymentTypeChange();
+  }
+
+  // Método para seleccionar método de pago al hacer clic en el panel
+  selectPaymentMethod(method: 'creditCard' | 'transfer'): void {
+    this.paymentMethod = method;
+    this.onPaymentMethodChange();
+  }
+
+  // Método para seleccionar opción de cuotas al hacer clic en el panel
+  selectInstallmentOption(option: string): void {
+    this.installmentOption = option;
+    this.onInstallmentOptionChange();
+  }
+
+  // Método para alternar puntos de viajero al hacer clic en la fila
+  toggleTravelerPoints(traveler: TravelerWithPoints): void {
+    if (traveler.points && traveler.points > 0) {
+      traveler.redeemCheckbox = !traveler.redeemCheckbox;
+      this.onRedeemCheckboxChange(traveler);
+    }
+  }
+
+  // Método original que permanece sin cambios
   updateCheckboxStates() {
     const activeDiscounts = this.discountsService.getSelectedDiscounts();
 
@@ -190,6 +226,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       .map((d) => d.source || '')
       .filter((s) => s);
   }
+  // Los siguientes métodos permanecen exactamente como estaban en el original
 
   loadScalapayScript() {
     if (
@@ -349,6 +386,104 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     form.submit();
   }
 
+  async processScalapay(bookingID: string, publicID: string) {
+      const createItem = (): ScalapayItem => ({
+        price: { currency: 'EUR', amount: this.totalPrice.toString() },
+        name: `Tour - ${new Date().toLocaleDateString()}`,
+        category: 'travel',
+        brand: 'Different Roads',
+        sku: `SKU-${bookingID}`,
+        quantity: 1,
+      });
+  
+      const createConsumer = (): ScalapayConsumer => ({
+        phoneNumber: '0400000001',
+        givenNames: 'Joe',
+        surname: 'Consumer',
+        email: 'test@scalapay.com',
+      });
+  
+      const createMerchant = () => ({
+        redirectCancelUrl: `${window.location.origin}/reservation/${bookingID}/error/${publicID}`,
+        redirectConfirmUrl: `${window.location.origin}/reservation/${bookingID}/success/${publicID}`,
+      });
+  
+      const createExtensions = (): ScalapayExtensions => ({
+        industry: {
+          travel: { startDate: '2023-11-30', endDate: '2023-12-18' },
+        },
+      });
+  
+      const createOrderData = (): ScalapayOrderRequest => ({
+        product: 'pay-in-3',
+        type: 'online',
+        orderExpiryMilliseconds: 600000,
+        consumer: createConsumer(),
+        extensions: createExtensions(),
+        merchant: createMerchant(),
+        frequency: { number: 1, frequencyType: 'monthly' },
+        totalAmount: { currency: 'EUR', amount: this.totalPrice.toString() },
+        items: [createItem()],
+        merchantReference: bookingID,
+        taxAmount: { currency: 'EUR', amount: '0' },
+        shippingAmount: { currency: 'EUR', amount: '0' },
+        channel: 'online',
+      });
+  
+      const orderDataWithTipo: ScalapayOrderRequest = createOrderData();
+  
+      try {
+        // Log the request for debugging
+        console.log('Sending Scalapay order request:', orderDataWithTipo);
+        
+        const data = await this.scalapayService.createOrder(orderDataWithTipo);
+        
+        console.log('Scalapay order created:', data);
+        console.log('PublicID:', publicID);
+        
+        if (data && data.token && data.token.trim() !== '') {
+          console.log('Scalapay token received:', data.token);
+          
+          // Add error handling for the payment update
+          this.bookingsService.updatePayment(publicID, {
+            externalID: data.token,
+            provider: 'Scalapay'
+          }).subscribe({
+            next: (updateResponse) => {
+              console.log('Payment updated with Scalapay token:', updateResponse);
+              console.log('Confirmed externalID value:', data.token);
+              
+              // Add a small delay before redirecting to ensure the update completes
+              setTimeout(() => {
+                window.location.href = data.checkoutUrl;
+              }, 500);
+            },
+            error: (updateError) => {
+              console.error('Error updating payment with Scalapay token:', updateError);
+              // Still redirect to Scalapay even if the update fails
+              window.location.href = data.checkoutUrl;
+            }
+          });
+        } else {
+          console.error('No valid token received from Scalapay:', data);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error de Scalapay',
+            detail: 'No se recibió un token válido de Scalapay. Por favor, inténtelo de nuevo.'
+          });
+          this.isLoading = false;
+        }
+      } catch (error) {
+        console.error('Error processing Scalapay payment:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error de Scalapay',
+          detail: 'Ocurrió un error al procesar el pago con Scalapay. Por favor, inténtelo de nuevo.'
+        });
+        this.isLoading = false;
+      }
+    }
+
   async submitPayment() {
     if (this.isLoading) return; // Prevent multiple submissions
 
@@ -363,7 +498,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     // Update payment option before proceeding
     this.updatePaymentOption();
 
-    let bookingID: string, ID: string;
+    let bookingID: string, code: string;
 
     // Log applied points discounts if any
     if (this.pointsDiscounts.length > 0) {
@@ -373,8 +508,9 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     try {
       const response = await this.processBooking();
       const bookingID = response.bookingID;
-      const ID = response.ID;
-
+      const code = response.code;
+      await this.createReservationPoints(code, this.tourName || '');
+      this.sendRedemptionPoints(code, this.tourName || '');
       console.log('Booking created successfully:', bookingID);
 
       // Determine the payment amount based on payment type
@@ -383,19 +519,30 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
 
       console.log(`Processing payment of ${paymentAmount}`);
 
+      // Determine the provider based on payment method/type
+      let provider: string | undefined;
+      if (this.paymentMethod === 'creditCard') {
+        provider = 'redsys';
+      } else if (this.paymentMethod === 'transfer') {
+        provider = 'transfer';
+      } else if (this.paymentType === 'installments') {
+        provider = 'scalapay';
+      }
+
       const payment = await this.createPayment(bookingID, {
         amount: paymentAmount,
         registerBy: this.authService.getCurrentUsername(),
         method: this.paymentMethod!,
+        provider: provider,
       });
-
+      
       const publicID = payment.publicID;
       console.log('Payment created:', payment);
 
       // Handle payment method redirect
       if (this.paymentMethod === 'creditCard') {
         console.log('Redirecting to credit card payment');
-        this.redirectToRedSys(ID, paymentAmount, bookingID, publicID);
+        this.redirectToRedSys(code, paymentAmount, bookingID, publicID);
         return;
       } else if (this.paymentMethod === 'transfer') {
         console.log('Redirecting to bank transfer page');
@@ -403,10 +550,18 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
           `/reservation/${bookingID}/transfer/${publicID}`,
         ]);
         return;
+      } else if (this.paymentType === 'installments') {
+        console.log('Processing Scalapay payment');
+        this.processScalapay(bookingID, publicID);
+        return;
       }
-
-      await this.createReservationPoints(bookingID, this.tourName || '');
-      this.sendRedemptionPoints(bookingID, this.tourName || '');
+      // If we reach here, it means the payment method was not recognized
+      console.error('Unknown payment method:', this.paymentMethod);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Método de pago desconocido',
+        detail: 'El método de pago seleccionado no es válido.',
+      })
     } catch (error: any) {
       console.error('Error in payment process:', error);
       this.messageService.add({
@@ -476,17 +631,19 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   // Add this method to handle the back button click
-
   goBack(): void {
     this.goBackEvent.emit();
   }
 
+  // Update the createPayment method to include provider and externalID
   createPayment(
     bookingID: string,
     payment: {
       amount: number;
       registerBy: string;
       method: 'creditCard' | 'transfer';
+      provider?: string;
+      externalID?: string;
     }
   ): Promise<Payment> {
     return new Promise((resolve, reject) => {
@@ -631,30 +788,16 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       next: (response) => {
         console.log(`Puntos obtenidos para ${email}:`, response);
         const points = response?.points ?? 0;
-        const travelerCategory = response?.typeTraveler?.toLowerCase() || 'default'
+        const travelerCategory =
+          response?.typeTraveler?.toLowerCase() || 'default';
         let maxRedeemableAmount = response?.maxpoints;
-      
-
-        switch (travelerCategory) {
-          case 'globetrotter': // Trotamundos
-            maxRedeemableAmount = 50; // 50€ máximo
-            break;
-          case 'traveler': // Viajante
-            maxRedeemableAmount = 75; // 75€ máximo
-            break;
-          case 'nomad':
-            maxRedeemableAmount = this.totalPrice * 0.05;
-            break;
-          default:
-            maxRedeemableAmount = 0;
-        }
 
         this.pointsCache.set(email, points);
 
         const traveler = emailMap.get(email);
         if (traveler) {
-          traveler.points =Math.min(points, maxRedeemableAmount);
-          traveler.category= travelerCategory;
+          traveler.points = Math.min(points, maxRedeemableAmount);
+          traveler.category = travelerCategory;
 
           const existingIndex = this.uniqueTravelers.findIndex(
             (t) => t.email === email
@@ -758,6 +901,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     console.log(
       'Iniciando proceso de redención para booking:',
       bookingID,
+
       'y tour:',
       tourName
     );
@@ -819,6 +963,12 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       (traveler) => traveler.type === 'Adultos'
     );
     if (adultTravelers.length === 0) return 0;
+    console.log(
+      'puntos totales',
+      this.pointsCalculator.calculateEarnedPoints(this.subtotalPrice),
+      ',totalprice',
+      this.subtotalPrice
+    );
     return this.pointsCalculator.calculateEarnedPoints(this.subtotalPrice);
   }
 
@@ -828,89 +978,48 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
   ): Promise<void> {
     console.log('Iniciando proceso de asignación de puntos por reserva');
 
-    const adultTravelers = this.uniqueTravelers.filter(
-      (traveler) => traveler.type === 'Adultos'
-    );
-    if (adultTravelers.length === 0) return;
-
     const totalPoints = this.getEarnedPoints();
-    const validTravelers: { email: string; userID: string }[] = [];
+    console.log(totalPoints);
 
-    for (const traveler of adultTravelers) {
-      if (!traveler.email) continue;
+    // Asignar todos los puntos al usuario logueado
 
-      try {
-        const user = await this.usersService
-          .getUserByEmail(traveler.email)
-          .toPromise();
-        if (user && user._id) {
-          validTravelers.push({ email: traveler.email, userID: user._id });
-        }
-      } catch (error) {
-        console.error(`Error verificando usuario ${traveler.email}:`, error);
-      }
-    }
-
-    if (validTravelers.length === 0) {
-      const currentUser = this.authService.getCurrentUsername();
-      try {
-        const user = await this.usersService
-          .getUserByEmail(currentUser)
-          .toPromise();
-        if (user && user._id) {
-          const pointsObject = {
-            travelerID: user._id,
-            type: 'income',
-            points: totalPoints,
-            extraData: {
-              bookingID: bookingID,
-              tourName: tourName,
-            },
-            category: 'Viaje',
-            concept: 'Reserva',
-            origin: 'System',
-            transactionEmail: currentUser,
-          };
-
-          this.pointsService.createPoints(pointsObject).subscribe({
-            next: (res) =>
-              console.log(
-                `Points created for logged user ${currentUser}:`,
-                res
-              ),
-            error: (err) =>
-              console.error(`Error creating points for ${currentUser}:`, err),
-          });
-        }
-      } catch (error) {
-        console.error('Error getting logged user:', error);
-      }
-      return;
-    }
-
-    const pointsPerTraveler = Math.floor(totalPoints / validTravelers.length);
-
-    validTravelers.forEach((traveler) => {
-      const pointsObject = {
-        travelerID: traveler.userID,
-        type: 'income',
-        points: pointsPerTraveler,
-        extraData: {
-          bookingID: bookingID,
-          tourName: tourName,
-        },
-        category: 'Viaje',
-        concept: 'Reserva',
-        origin: 'System',
-        transactionEmail: traveler.email,
-      };
-
-      this.pointsService.createPoints(pointsObject).subscribe({
-        next: (res) =>
-          console.log(`Points created for ${traveler.email}:`, res),
-        error: (err) =>
-          console.error(`Error creating points for ${traveler.email}:`, err),
-      });
+    const currentUser = this.authService.getCurrentUsername();
+    let userEmail: string = '';
+    this.authService.getUserEmail().subscribe((email) => {
+      userEmail = email;
+      console.log('Usuario logueado:', currentUser, 'email:', userEmail);
     });
+    try {
+      const user = await this.usersService
+        .getUserByEmail(userEmail)
+        .toPromise();
+      if (user && user._id) {
+        const pointsObject = {
+          travelerID: user._id,
+          type: 'income',
+          points: totalPoints,
+          extraData: {
+            bookingID: bookingID,
+            tourName: tourName,
+          },
+          category: 'Viaje',
+          concept: 'Reserva',
+          origin: 'System',
+          transactionEmail: userEmail,
+        };
+
+        this.pointsService.createPoints(pointsObject).subscribe({
+          next: (res) =>
+            console.log(
+              `Todos los puntos asignados al usuario logueado ${currentUser}:`,
+              res
+            ),
+          error: (err) =>
+            console.error(`Error creating points for ${currentUser}:`, err),
+        });
+      }
+    } catch (error) {
+      console.error('Error getting logged user:', error);
+    }
   }
 }

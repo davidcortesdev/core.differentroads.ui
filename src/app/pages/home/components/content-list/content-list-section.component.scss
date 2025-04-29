@@ -3,6 +3,7 @@
   width: 100%;
   max-width: 1920px;
   margin: 0 auto;
+  margin-top: -85px;
 
   @media (min-width: 1367px) {
     padding: 2rem 4rem;
@@ -14,6 +15,7 @@
 
   @media (max-width: 480px) {
     padding: 1rem;
+    margin-top: -30px;
   }
 
   @media (min-width: 2560px) {

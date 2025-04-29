@@ -36,14 +36,12 @@
   .form-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 15px;
 
     @media (max-width: 768px) {
       flex-direction: column;
 
       .form-column {
         margin-right: 0;
-        margin-bottom: 10px;
       }
     }
   }
@@ -100,6 +98,7 @@
         border-radius: 0;
         background: transparent;
         font-size: 14px;
+        padding-top: 0rem !important;
       }
 
       .p-datepicker {
@@ -108,10 +107,15 @@
 
       .p-select {
         cursor: pointer;
+        padding-bottom: 0rem !important;
       }
 
       .p-select-dropdown {
         color: var(--background-azul);
+      }
+
+      .p-select-label {
+        padding-top: inherit;
       }
     }
 
@@ -131,7 +135,8 @@
   }
 }
 .show-more-button {
-  margin-top: 10px;
+  margin-top: -10px;
+  margin-left: -1px;
   color: var(--background-azul);
   font-size: 0.9rem;
 

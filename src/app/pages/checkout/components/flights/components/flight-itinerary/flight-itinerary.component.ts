@@ -453,7 +453,7 @@ export class FlightItineraryComponent implements OnChanges {
         : stops === 1
         ? '1 escala'
         : stops + ' escalas';
-    const airlineName = departureSegment.airline?.name || '';
+    const airlineName = departureSegment.airline.name;
 
     let totalDuration: string;
     try {

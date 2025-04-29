@@ -9,4 +9,5 @@ export interface ProcessedTour {
   isByDr: boolean;
   webSlug: string;
   tripType?: string[];
+  externalID?: string;
 }

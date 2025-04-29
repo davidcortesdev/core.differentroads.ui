@@ -11,6 +11,7 @@ import { TourComponent } from '../../tour.component';
 import { TourDataService } from '../../../../core/services/tour-data/tour-data.service';
 import { Subscription } from 'rxjs';
 import { TourOrderService } from '../../../../core/services/tour-data/tour-order.service';
+import { MessageService } from 'primeng/api';
 import { TripType } from '../../../../shared/models/interfaces/trip-type.interface';
 import { TRIP_TYPES } from '../../../../shared/constants/trip-types.constants';
 
@@ -38,6 +39,7 @@ export type DepartureStatus = 'available' | 'complete';
   standalone: false,
   templateUrl: './tour-departures.component.html',
   styleUrls: ['./tour-departures.component.scss'],
+  providers: [MessageService]
 })
 export class TourDeparturesComponent implements OnInit, OnDestroy {
   departures: Departure[] = [];
@@ -77,14 +79,18 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
   selectedDepartureId: string | null = null;
   selectedFlightId: string | null = null;
 
-    // Constants
-    tripTypes: TripType[] = TRIP_TYPES;
+  // Nueva propiedad para verificar si los botones de niños y bebés deben estar bloqueados
+  shouldBlockKidsAndBabies: boolean = false;
+
+  // Constants
+  tripTypes: TripType[] = TRIP_TYPES;
 
   constructor(
     private route: ActivatedRoute,
     private toursService: ToursService,
     private tourDataService: TourDataService,
-    private tourOrderService: TourOrderService
+    private tourOrderService: TourOrderService,
+    private messageService: MessageService
   ) {}
 
   filterCities(event: { query: string }): void {
@@ -100,20 +106,82 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
     event.stopPropagation();
   }
 
+  // Verifica si se deben bloquear las opciones de niños y bebés
+  checkIfShouldBlockKids(): boolean {
+    // Si no hay salida seleccionada, no bloqueamos
+    if (!this.selectedDepartureId || this.filteredDepartures.length === 0) {
+      return false;
+    }
+
+    // Encontrar la salida seleccionada
+    const selectedDeparture = this.filteredDepartures.find(
+      d => d.externalID === this.selectedDepartureId && d.flightID === this.selectedFlightId
+    );
+
+    if (!selectedDeparture) {
+      return false;
+    }
+
+    // Si el precio es 0 o el tipo de viaje es 'single', bloqueamos
+    const isSingleTrip = selectedDeparture.group?.toLowerCase().includes('single') ||
+                          this.getTripTypeInfo(selectedDeparture.group)?.class === 'single';
+
+    return isSingleTrip || selectedDeparture.price === 0;
+  }
+
   updatePassengers(
     type: 'adults' | 'children' | 'babies',
     change: number
   ): void {
+    // Verificar si deberíamos bloquear niños y bebés
+    this.shouldBlockKidsAndBabies = this.checkIfShouldBlockKids();
+    
     if (type === 'adults') {
       this.travelers.adults = Math.max(1, this.travelers.adults + change);
     } else if (type === 'children') {
+      if (this.shouldBlockKidsAndBabies && change > 0) {
+        // Mostrar toast si se intenta agregar niños y está bloqueado
+        this.showBlockedPassengersToast();
+        return;
+      }
       this.travelers.children = Math.max(0, this.travelers.children + change);
     } else if (type === 'babies') {
+      if (this.shouldBlockKidsAndBabies && change > 0) {
+        // Mostrar toast si se intenta agregar bebés y está bloqueado
+        this.showBlockedPassengersToast();
+        return;
+      }
       this.travelers.babies = Math.max(0, this.travelers.babies + change);
     }
 
     this.tourOrderService.updateSelectedTravelers(this.travelers);
     this.updatePassengerText();
+  }
+  
+  // Método para mostrar el toast cuando se intenta agregar niños o bebés y está bloqueado
+  showBlockedPassengersToast(): void {
+    const selectedDeparture = this.filteredDepartures.find(
+      d => d.externalID === this.selectedDepartureId && d.flightID === this.selectedFlightId
+    );
+    
+    const isSingleTrip = selectedDeparture?.group?.toLowerCase().includes('single') || 
+                          this.getTripTypeInfo(selectedDeparture?.group)?.class === 'single';
+    
+    let message = '';
+    if (isSingleTrip) {
+      message = 'Este viaje es para Singles y solo permite pasajeros adultos';
+    } else if (selectedDeparture?.price === 0) {
+      message = 'Este viaje con precio 0€ no permite añadir niños o bebés';
+    } else {
+      message = 'No se pueden añadir niños o bebés a este viaje';
+    }
+    
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Pasajeros no permitidos',
+      detail: message,
+      life: 3000
+    });
   }
 
   applyPassengers(): void {
@@ -172,7 +240,6 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
     })}`;
 
     // Actualizar la información compartida
-
     this.tourOrderService.updateSelectedDateInfo(
       departure.externalID,
       departure.flightID
@@ -181,6 +248,18 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
     // Update our local tracking properties
     this.selectedDepartureId = departure.externalID;
     this.selectedFlightId = departure.flightID;
+
+    // Verificar si debemos bloquear niños y bebés para esta salida
+    this.shouldBlockKidsAndBabies = this.checkIfShouldBlockKids();
+    
+    // Si se deben bloquear y hay niños o bebés seleccionados, resetearlos
+    if (this.shouldBlockKidsAndBabies) {
+      if (this.travelers.children > 0 || this.travelers.babies > 0) {
+        this.travelers.children = 0;
+        this.travelers.babies = 0;
+        this.updatePassengerText();
+      }
+    }
 
     this.tourOrderService.updateSelectedTravelers(this.travelers);
 
@@ -361,6 +440,9 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
         this.setCheapestCityAsDefault();
         this.filterDepartures();
         this.filterDeparturesByMonth(); // Filtrar por el mes actual
+        
+        // Verificar si debemos bloquear niños y bebés para la salida seleccionada por defecto
+        this.shouldBlockKidsAndBabies = this.checkIfShouldBlockKids();
 
         // Ensure we have a selected departure after loading data
         if (!this.selectedDepartureId && this.filteredDepartures.length > 0) {
@@ -391,24 +473,24 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
     }
   }
 
-    // Trip type handling
-    getTripTypeInfo(tripType: string | undefined): TripType | undefined {
-      if (!tripType) return undefined;
-  
-      const type = tripType.toLowerCase();
-  
-      if (type.includes('single') || type.includes('singles')) {
-        return this.tripTypes.find((tt) => tt.class === 'single');
-      }
-  
-      if (type.includes('group') || type.includes('grupo')) {
-        return this.tripTypes.find((tt) => tt.class === 'group');
-      }
-  
-      if (type.includes('private') || type.includes('privado')) {
-        return this.tripTypes.find((tt) => tt.class === 'private');
-      }
-  
-      return undefined;
+  // Trip type handling
+  getTripTypeInfo(tripType: string | undefined): TripType | undefined {
+    if (!tripType) return undefined;
+
+    const type = tripType.toLowerCase();
+
+    if (type.includes('single') || type.includes('singles')) {
+      return this.tripTypes.find((tt) => tt.class === 'single');
     }
+
+    if (type.includes('group') || type.includes('grupo')) {
+      return this.tripTypes.find((tt) => tt.class === 'group');
+    }
+
+    if (type.includes('private') || type.includes('privado')) {
+      return this.tripTypes.find((tt) => tt.class === 'private');
+    }
+
+    return undefined;
+  }
 }

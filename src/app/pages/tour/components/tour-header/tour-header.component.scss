@@ -18,7 +18,7 @@ $tablet-breakpoint: 1024px;
   justify-content: space-between;
   align-items: center;
   background-color: white;
-  transition: box-shadow 0.3s ease;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
   border-bottom: 2px solid var(--p-menubar-background);
   color: var(--background-azul);
   gap: 38px;
@@ -61,6 +61,11 @@ $tablet-breakpoint: 1024px;
         color: var(--primary-color);
         text-decoration: underline;
         font-size: 0.9rem;
+        cursor: pointer;
+        
+        &:hover {
+          color: var(--primary-color-600);
+        }
       }
     }
 
@@ -120,6 +125,10 @@ $tablet-breakpoint: 1024px;
           cursor: pointer;
           text-decoration: underline;
           color: var(--primary-color);
+          
+          &:hover {
+            color: var(--primary-color-600);
+          }
         }
       }
 
@@ -155,6 +164,7 @@ $tablet-breakpoint: 1024px;
       &:hover:not(:disabled) {
         background-color: color.adjust($primary-button-color, $lightness: -10%);
         border-color: color.adjust($primary-button-color, $lightness: -10%);
+        transform: translateY(-2px);
       }
       
       &:disabled {

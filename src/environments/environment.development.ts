@@ -19,4 +19,11 @@ export const environment = {
     apiSecret: 'mD3dyC3tOF1i_nV0p-t9f-3_zKY',
     apiKey: '197192715793311',
   },
+
+  reviewsApiUrl: 'https://reviews-dev.differentroads.es/api',
+  tourApiUrl: 'https://tour-dev.differentroads.es/api',
+  travelersApiUrl: 'https://travelers-dev.differentroads.es/api',
+
+  scalapayApiUrl: 'https://fastapi-dev.differentroads.es/scalapay',
+  scalapayApiKey: 'qhtfs87hjnc12kkos',
 };

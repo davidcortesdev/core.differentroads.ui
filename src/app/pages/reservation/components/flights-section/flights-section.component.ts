@@ -13,7 +13,9 @@ export class FlightsSectionComponent {
   // Getter to filter out flights with 'sin ' in the airline name
   get filteredFlights(): Flight[] {
     return this.flights.filter(
-      (flight) => !flight.airline.name.toLowerCase().includes('sin ')
+      (flight) =>
+        !flight.airline.name.toLowerCase().includes('sin ') &&
+        !flight.airline.name.toLowerCase().includes('sinvue')
     );
   }
 

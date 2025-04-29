@@ -16,6 +16,11 @@ export interface User {
   passportExpirationDate?: string;
   profileImage?: string;
   passportID?: string;
+  city?: string;
+  postalCode?: string;
+  dniExpirationDate?: string;
+  dniIssueDate?: string;
+  passportCountry?: string;
 }
 
 export interface GetAllUsersParams {

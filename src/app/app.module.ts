@@ -104,9 +104,6 @@ import { TourRelatedComponent } from './pages/tour/components/tour-related/tour-
 import { FluidModule } from 'primeng/fluid';
 import { SignUpComponent } from './pages/sign-up/sign-up.component';
 import { PointsSectionComponent } from './pages/profile/components/points-section/points-section.component';
-import { ActiveBookingsSectionComponent } from './pages/profile/components/active-bookings-section/active-bookings-section.component';
-import { TravelHistorySectionComponent } from './pages/profile/components/travel-history-section/travel-history-section.component';
-import { RecentBudgetSectionComponent } from './pages/profile/components/recent-budget-section/recent-budget-section.component';
 import { ReviewSectionComponent } from './pages/profile/components/review-section/review-section.component';
 import { ForgetPasswordComponent } from './pages/forget-password/forget-password.component';
 import { ReviewsComponent } from './shared/components/reviews/reviews.component';
@@ -164,6 +161,8 @@ import { Amplify } from 'aws-amplify';
 import awsconfig from '../../src/aws-exports';
 import { TripTypesSectionComponent } from './pages/home/components/trip-types-section/trip-types-section.component';
 import { ConfirmationCodeComponent } from './shared/components/confirmation-code/confirmation-code.component';
+import { ScalapayService } from './core/services/checkout/payment/scalapay.service';
+
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -201,6 +200,11 @@ import { AirportSearchComponent } from './features/airports/airport-search/airpo
 import { SummaryTableComponent } from './components/summary-table/summary-table.component';
 import { TravelerActivitySelectorComponent } from './pages/checkout/components/traveler-activity-selector/traveler-activity-selector.component';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { Nl2brPipe } from "./shared/pipes/nl2br.pipe";
+import { BookingListSectionComponent } from './pages/profile/components/booking-list-section/booking-list-section.component';
+import { BookingDocumentationComponent } from './pages/bookings/booking-documentation/booking-documentation.component';
+import { TourCardHeaderComponent } from './shared/components/tour-card/tour-card-header/tour-card-header.component';
+import { TourCardContentComponent } from './shared/components/tour-card/tour-card-content/tour-card-content.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -253,9 +257,6 @@ registerLocaleData(localeEs);
     TourFaqComponent,
     TourRelatedComponent,
     PointsSectionComponent,
-    ActiveBookingsSectionComponent,
-    TravelHistorySectionComponent,
-    RecentBudgetSectionComponent,
     ReviewSectionComponent,
     ReviewsComponent,
     SecondFooterSectionComponent,
@@ -310,6 +311,10 @@ registerLocaleData(localeEs);
     AirportSearchComponent,
     SummaryTableComponent,
     TravelerActivitySelectorComponent,
+    BookingListSectionComponent,
+    BookingDocumentationComponent,
+    TourCardHeaderComponent,
+    TourCardContentComponent,
   ],
   imports: [
     // Angular Modules
@@ -372,16 +377,17 @@ registerLocaleData(localeEs);
     OverlayPanelModule,
     ToggleSwitchModule,
     TranslateModule.forRoot({
-      loader: {
-        provide: TranslateLoader,
-        useFactory: HttpLoaderFactory,
-        deps: [HttpClient],
-      },
-      defaultLanguage: 'es',
+        loader: {
+            provide: TranslateLoader,
+            useFactory: HttpLoaderFactory,
+            deps: [HttpClient],
+        },
+        defaultLanguage: 'es',
     }),
     CurrencyPipe,
     SortByPipe,
-  ],
+    Nl2brPipe
+],
   providers: [
     provideAnimationsAsync(),
     provideHttpClient(),

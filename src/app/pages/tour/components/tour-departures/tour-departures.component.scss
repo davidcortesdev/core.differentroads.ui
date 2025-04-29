@@ -1,5 +1,10 @@
 $azul: var(--background-azul);
 $primary: var(--p-primary-color);
+// Adding the paginator background variable
+:host {
+  --p-paginator-background: white;
+}
+
 @mixin flex($justify: center, $align: center) {
   display: flex;
   align-items: $align;
@@ -111,7 +116,6 @@ $primary: var(--p-primary-color);
       flex: 1;
     }
     ::ng-deep .p-button-text {
-
       @extend %txt-azul;
       .circle {
         background: $primary;
@@ -134,7 +138,10 @@ $primary: var(--p-primary-color);
       width: 100%;
     }
     .p-autocomplete {
+      border: 1px solid rgba(66, 65, 65, 0.24);
+      border-radius: 10px;
       .p-autocomplete-input {
+        border: none; // Remove the borde
         width: 100%;
         @extend %brd-rad;
         @extend %txt-azul;
@@ -229,7 +236,6 @@ $primary: var(--p-primary-color);
     .p-button {
       border-radius: 1.5rem;
       min-width: 7rem;
-
     }
     .p-dataview-content {
       background-color: transparent;

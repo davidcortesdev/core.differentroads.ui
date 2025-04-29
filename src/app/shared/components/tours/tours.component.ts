@@ -13,6 +13,7 @@ interface ITour {
   availableMonths: string[];
   isByDr: boolean;
   webSlug: string;
+  externalID?: string;
 }
 
 @Component({
@@ -183,6 +184,7 @@ export class ToursComponent implements OnInit {
               ) || [],
             isByDr: tour.tourType !== 'FIT',
             webSlug: tour.webSlug || '',
+            externalID: tour.externalID,
           };
         });
 

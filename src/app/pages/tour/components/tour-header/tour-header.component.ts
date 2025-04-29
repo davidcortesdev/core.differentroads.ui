@@ -16,6 +16,8 @@ import { Subscription } from 'rxjs';
 import { PeriodPricesService } from '../../../../core/services/tour-data/period-prices.service';
 import { TourOrderService } from '../../../../core/services/tour-data/tour-order.service';
 import { OptionalActivityRef } from '../../../../core/models/orders/order.model';
+import { ReviewsService } from '../../../../core/services/reviews.service';
+import { TourFilter, TourNetService } from '../../../../core/services/tourNet.service';
 
 @Component({
   selector: 'app-tour-header',
@@ -30,6 +32,10 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   tripType: string = '';
   departureCity: string = '';
   selectedActivities: OptionalActivityRef[] = [];
+
+  // Add new properties for rating and review count
+  averageRating: number = 0;
+  reviewCount: number = 0;
 
   // Passenger information
   adultsCount: number = 1;
@@ -52,7 +58,9 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     private tourComponent: TourComponent,
     private el: ElementRef,
     private renderer: Renderer2,
-    private tourOrderService: TourOrderService
+    private tourOrderService: TourOrderService,
+    private reviewsService: ReviewsService,
+    private tourNetService: TourNetService // Add this service
   ) {}
 
   ngOnInit() {
@@ -142,6 +150,7 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
         this.tripType = dateInfo.tripType;
         this.departureCity = dateInfo.departureCity || '';
         this.flightID = dateInfo.flightID;
+        this.calculateTotalPrice();
       })
     );
   }
@@ -157,10 +166,56 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
             this.basePrice = tourData.price;
             this.calculateTotalPrice();
           }
+          
+          // Load rating and review count data
+          this.loadRatingAndReviewCount(tourData.externalID);
         },
         error: (error) => {
           console.error('Error loading tour:', error);
         },
+      })
+    );
+  }
+  
+  // Add new method to load rating and review count
+  private loadRatingAndReviewCount(tkId: string) {
+    if (!tkId) return;
+    
+    // Subscribe to the Observable returned by getTourIdByTKId
+    this.subscriptions.add(
+      this.tourNetService.getTourIdByTKId(tkId).subscribe({
+        next: (id) => {
+          if (id) {
+            const filter = { tourId: id };
+            
+            // Get average rating
+            this.subscriptions.add(
+              this.reviewsService.getAverageRating(filter).subscribe({
+                next: (rating) => {
+                  this.averageRating = rating || 0;
+                },
+                error: (error) => {
+                  console.error('Error loading average rating:', error);
+                }
+              })
+            );
+            
+            // Get review count
+            this.subscriptions.add(
+              this.reviewsService.getReviewCount(filter).subscribe({
+                next: (count) => {
+                  this.reviewCount = count || 0;
+                },
+                error: (error) => {
+                  console.error('Error loading review count:', error);
+                }
+              })
+            );
+          }
+        },
+        error: (error) => {
+          console.error('Error getting tour ID:', error);
+        }
       })
     );
   }
@@ -211,3 +266,7 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 }
+
+
+
+

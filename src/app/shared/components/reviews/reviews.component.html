@@ -1,45 +1,114 @@
-<div *ngIf="reviews?.length" class="reviews-section" role="region" aria-label="Customer Reviews">
+<div class="reviews-section" role="region" aria-label="Customer Reviews">
+  <!-- Skeleton loader -->
+  <div *ngIf="loading" class="skeleton-container">
+    <p-carousel
+      [value]="skeletonArray"
+      [numVisible]="6"
+      [numScroll]="1"
+      [circular]="true"
+      [responsiveOptions]="responsiveOptions"
+      [showNavigators]="false"
+      [showIndicators]="false">
+      <ng-template let-item pTemplate="item">
+        <div class="padre">
+          <p-card class="review-card skeleton-card">
+            <ng-template #title>
+              <div class="skeleton-traveler-name"></div>
+            </ng-template>
+            <ng-template #subtitle>
+              <div class="skeleton-tour-name"></div>
+            </ng-template>
+            <ng-template #content>
+              <div class="skeleton-review-text"></div>
+            </ng-template>
+            <ng-template #footer>
+              <div class="skeleton-footer">
+                <div class="skeleton-date"></div>
+                <div class="skeleton-rating"></div>
+              </div>
+            </ng-template>
+          </p-card>
+        </div>
+      </ng-template>
+    </p-carousel>
+  </div>
+
+  <!-- Actual reviews -->
   <p-carousel
-    [value]="reviews"
+    *ngIf="!loading && enrichedReviews?.length"
+    [value]="enrichedReviews"
     [numVisible]="6"
     [numScroll]="1"
     [circular]="true"
     [responsiveOptions]="responsiveOptions"
     [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
     [showNavigators]="true"
-    [showIndicators]="true"
-  >
+    [showIndicators]="true">
     <ng-template let-review pTemplate="item">
       <div class="padre">
         <p-card class="review-card">
           <ng-template #title>
-            <span class="traveler-name">{{ review.traveler }}</span>
+            <span class="traveler-name" [title]="review.traveler">{{ review.traveler }}</span>
           </ng-template>
           <ng-template #subtitle>
-            <span class="tour-name">{{ review.tour }}</span>
+            <span 
+              class="tour-name" 
+              [title]="review.tour"
+              [class.clickable]="review.tourSlug"
+              (click)="review.tourSlug && navigateToTour(review.tourSlug, $event)">
+              {{ review.tour }}
+            </span>
           </ng-template>
           <ng-template #content>
             <div
               class="review-text-container"
               [attr.aria-label]="'Review by ' + review.traveler"
-            >
-              {{ review.review }}
+              [innerHTML]="review.review | nl2br"
+              [title]="review.review"
+              (click)="openFullReview(review)">
             </div>
           </ng-template>
           <ng-template #footer>
             <span
               class="date"
               [attr.aria-label]="'Review date: ' + review.date"
-              >{{ review.date }}</span
-            >
+              >{{ review.date | date : "dd/MM/yyyy" }}</span>
             <p-rating
               [ngModel]="review.score"
               [readonly]="true"
-              [stars]="5"
-            ></p-rating>
+              [stars]="5">
+            </p-rating>
           </ng-template>
         </p-card>
       </div>
     </ng-template>
   </p-carousel>
 </div>
+
+<!-- Modal de reseña completa -->
+<p-dialog 
+  [(visible)]="showFullReviewModal" 
+  [modal]="true"
+  [dismissableMask]="true"
+  [style]="{width: '90%', maxWidth: '600px'}"
+  [header]="'Reseña'"
+  [closeOnEscape]="true">
+  <div class="full-review-content">
+    <h3 class="traveler-name">{{ selectedReview?.traveler }}</h3>
+    <h4 
+      class="tour-name" 
+      [class.clickable]="selectedReview?.tourSlug"
+      (click)="selectedReview?.tourSlug && navigateToTour(selectedReview?.tourSlug || '', $event)">
+      {{ selectedReview?.tour }}
+    </h4>
+    <div class="review-text" [innerHTML]="selectedReview?.review ||'' | nl2br"></div>
+    <div class="review-footer">
+      <span class="date">{{ selectedReview?.date | date : "dd/MM/yyyy" }}</span>
+      <p-rating
+        [ngModel]="selectedReview?.score"
+        [readonly]="true"
+        [stars]="5">
+      </p-rating>
+    </div>
+  </div>
+</p-dialog>

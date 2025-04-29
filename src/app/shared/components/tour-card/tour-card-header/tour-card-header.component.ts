@@ -5,8 +5,9 @@ import {
   EventEmitter,
   OnInit,
   OnDestroy,
+  ChangeDetectionStrategy,
 } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Subscription, catchError, finalize, of, tap } from 'rxjs';
 import { ReviewsService } from '../../../../core/services/reviews.service';
 import { TourNetService } from '../../../../core/services/tourNet.service';
 
@@ -18,7 +19,7 @@ interface TourHeaderData {
   tag?: string;
   description: string;
   webSlug: string;
-  externalID?: string; // Añadimos el ID externo para poder obtener el rating
+  externalID?: string;
 }
 
 @Component({
@@ -31,8 +32,8 @@ export class TourCardHeaderComponent implements OnInit, OnDestroy {
   @Input() tourData!: TourHeaderData;
   @Output() tourClick = new EventEmitter<void>();
 
-  // Añadimos propiedades para el rating y conteo de reseñas
   averageRating?: number = undefined;
+  isLoadingRating = false;
 
   private subscriptions = new Subscription();
 
@@ -42,14 +43,8 @@ export class TourCardHeaderComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    // Si tenemos un ID externo, cargamos el rating
     if (this.tourData.externalID) {
       this.loadRatingAndReviewCount(this.tourData.externalID);
-    } else {
-      console.error(
-        'No se ha proporcionado un ID externo para cargar el rating', 
-        this.tourData
-      );
     }
   }
 
@@ -61,38 +56,45 @@ export class TourCardHeaderComponent implements OnInit, OnDestroy {
     this.tourClick.emit();
   }
 
-  // Método para cargar el rating y conteo de reseñas
   private loadRatingAndReviewCount(tkId: string) {
     if (!tkId) return;
 
-    // Obtenemos el ID del tour a partir del ID externo
+    this.isLoadingRating = true;
+    
     this.subscriptions.add(
-      this.tourNetService.getTourIdByTKId(tkId).subscribe({
-        next: (id) => {
-          if (id) {
-            const filter = { tourId: id };
-
-            // Obtenemos el rating promedio
-            this.subscriptions.add(
-              this.reviewsService.getAverageRating(filter).subscribe({
-                next: (rating) => {
-                  if (rating) {
-                    // Redondear al alza con un decimal
-                    this.averageRating = Math.ceil(rating * 10) / 10;
-                  }
-                  console.log('Rating promedio:', this.averageRating);
-                  // Actualizamos el rating en tourData para que se muestre en la plantilla
-                },
-                error: (error) => {
-                  console.error('Error al cargar el rating promedio:', error);
-                },
-              })
-            );
+      this.tourNetService.getTourIdByTKId(tkId).pipe(
+        tap(id => {
+          if (!id) {
+            console.warn('No se encontró ID para el tour con tkId:', tkId);
           }
-        },
-        error: (error) => {
+        }),
+        catchError(error => {
           console.error('Error al obtener el ID del tour:', error);
-        },
+          return of(null);
+        })
+      ).subscribe(id => {
+        if (id) {
+          const filter = { tourId: id };
+          
+          this.subscriptions.add(
+            this.reviewsService.getAverageRating(filter).pipe(
+              tap(rating => {
+                if (rating) {
+                  this.averageRating = Math.ceil(rating * 10) / 10;
+                }
+              }),
+              catchError(error => {
+                console.error('Error al cargar el rating promedio:', error);
+                return of(null);
+              }),
+              finalize(() => {
+                this.isLoadingRating = false;
+              })
+            ).subscribe()
+          );
+        } else {
+          this.isLoadingRating = false;
+        }
       })
     );
   }

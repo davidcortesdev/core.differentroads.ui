@@ -270,3 +270,21 @@ $spacing-md: 1rem;
     }
   }
 }
+
+// Añadir estilo para el estado de carga
+.rating.loading {
+  opacity: 0.7;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0.5;
+  }
+}

@@ -1,9 +1,13 @@
 <div class="img" (click)="handleTourClick()">
   <img [src]="tourData.imageUrl" [alt]="tourData.title" loading="lazy" />
   <div class="overlay">
-    <span class="rating p-button-primary">{{ averageRating }} ★</span>
-    <!-- Opcional: Mostrar el conteo de reseñas -->
-    <!-- <span class="review-count" *ngIf="reviewCount > 0">({{ reviewCount }})</span> -->
+    <ng-container *ngIf="averageRating !== undefined; else loadingRating">
+      <span class="rating p-button-primary">{{ averageRating }} ★</span>
+    </ng-container>
+    <ng-template #loadingRating>
+      <span *ngIf="isLoadingRating" class="rating p-button-primary loading">...</span>
+    </ng-template>
+    
     <span *ngIf="tourData.isByDr" class="tag expandable-tag by-dr-tag">
       <span class="short-text">
         <img

@@ -299,7 +299,7 @@ input.p-inputtext {
 }
 
 /* Responsive adjustments for mobile */
-@media (max-width: 768px) {
+@media (min-width: 768px) {
   .passenger-footer {
     padding: 0.5rem;
   }
@@ -408,22 +408,95 @@ input.p-inputtext {
     }
     
     .p-datepicker {
-      min-width: 326px;
+      width: 100% !important;
+      min-width: unset;
+      box-sizing: border-box;
     }
-    
-    // Asegura que el contenedor del input tenga posición relativa para el ícono
-    .detail-row:has(.full-width-datepicker) {
-      position: relative;
+    .p-inputtext {
+      width: 100% !important;
+      box-sizing: border-box;
+    }
+    .p-datepicker-trigger {
+      right: 0;
+    }
+  }
+}
+
+.update-passenger-details {
+  .form-field {
+      margin-bottom: 10px;
+
+      label {
+          display: block;
+          color: var(--background-azul);
+          font-size: 12px;
+          font-weight: 600;
+          margin-bottom: 8px;
+      }
+
+      .p-inputtext,
+      .p-dropdown,
+      .p-calendar,
+      .p-autocomplete,
+      .p-inputmask {
+          width: 100%;
+          border: none;
+          border-bottom: 1px solid var(--background-azul);
+          border-radius: 0;
+          padding: 4px 0;
+          font-size: 12px;
+          line-height: 1.2;
+      }
+
+      /* .p-dropdown {
+          &:enabled:focus {
+              border-color: var(--background-azul); // Cambia el color del borde cuando se selecciona
+              box-shadow: none;
+          }
+
+          &:enabled:hover {
+              border-color: var(--background-azul);
+          }
+
+          &.p-dropdown-open {
+              border-color: #ced4da; // Cambia el color del borde cuando está abierto
+          }
+      } */
+  }
+
+  .button-container {
       display: flex;
-      align-items: center;
-      
-      .detail-label {
-        min-width: 150px;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1rem;
+  }
+
+  .btn-save {
+      text-align: center;
+
+      ::ng-deep .p-button {
+          font-size: 12px;
+          background-color: var(--background-azul);
+          border: none;
+          width: 5rem;
+          color: #fff;
       }
-      
-      .p-datepicker {
-        flex: 1;
+  }
+
+  .btn-cancel {
+      text-align: center;
+
+      ::ng-deep .p-button {
+          font-size: 12px;
+          border: 1px solid var(--background-azul);
+          color: var(--background-azul);
+          width: 5rem;
+          background-color: transparent;
+
+          &:hover {
+              color: var(--p-primary-color);
+              border: 1px solid var(--p-primary-color);
+          }
       }
-    }
   }
 }

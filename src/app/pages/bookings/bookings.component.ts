@@ -695,10 +695,10 @@ export class BookingsComponent implements OnInit {
         // Intentar obtener la descripción de la habitación desde los datos del periodo
         if (booking.periodData?.textSummary?.rooms && traveler.periodReservationModeID) {
           const roomInfo = booking.periodData.textSummary.rooms[traveler.periodReservationModeID];
-          if (roomInfo && roomInfo.description) {
-            roomDescription = roomInfo.description;
-          } else if (roomInfo && roomInfo.name) {
+          if (roomInfo && roomInfo.name) {
             roomDescription = roomInfo.name;
+          } else if (roomInfo && roomInfo.description) {
+            roomDescription = roomInfo.description;
           }
         } else if (traveler.roomType) {
           // Si no hay información detallada, usar el tipo de habitación
@@ -714,6 +714,20 @@ export class BookingsComponent implements OnInit {
         }
         
         console.log(`Traveler ${index} birthDate:`, birthDate);
+
+        let comfortPlanName = '';
+        if (
+          booking?.periodData?.textSummary?.insurances &&
+          typeof booking.periodData.textSummary.insurances === 'object'
+        ) {
+          // Tomar el primer seguro (puedes ajustar la lógica si hay varios)
+          const insurancesObj = booking.periodData.textSummary.insurances;
+          const insuranceKeys = Object.keys(insurancesObj);
+          if (insuranceKeys.length > 0) {
+            const firstInsurance = insurancesObj[insuranceKeys[0]];
+            comfortPlanName = firstInsurance?.name || '';
+          }
+        }
         
         // Mapear datos del pasajero - importante: ID debe ser number
         const passenger: PassengerData = {
@@ -731,7 +745,7 @@ export class BookingsComponent implements OnInit {
               : 'child',
           room: roomDescription, // Requerido por el componente hijo
           gender: travelerData.sex || '',
-          comfortPlan: 'Standard', // Campo necesario para el componente hijo
+          comfortPlan: comfortPlanName, // Campo necesario para el componente hijo
           insurance: 'Básico', // Campo necesario para el componente hijo
           documentExpeditionDate: travelerData.passportIssueDate || travelerData.minorIdIssueDate || '',
           documentExpirationDate: travelerData.passportExpirationDate || travelerData.minorIdExpirationDate || '',

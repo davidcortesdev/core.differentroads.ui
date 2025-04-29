@@ -28,6 +28,11 @@ export class PassengerCardComponent implements OnInit, OnChanges {
   // Añadir propiedad para acceder al booking completo
   bookingComplete: any = null;
 
+  genderOptions = [
+    { label: 'Hombre', value: 'Hombre' },
+    { label: 'Mujer', value: 'Mujer' },
+  ];
+
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
@@ -137,6 +142,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
       documentExpeditionDate: this.passenger.documentExpeditionDate ? new Date(this.passenger.documentExpeditionDate) : null,
       documentExpirationDate: this.passenger.documentExpirationDate? new Date(this.passenger.documentExpirationDate) : null,
       birthDate: this.passenger.birthDate? new Date(this.passenger.birthDate) : null,
+      gender: this.passenger.gender || '',
     });
   }
 

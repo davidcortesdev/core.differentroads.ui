@@ -123,7 +123,7 @@ $spacing-md: 1rem;
       .expanded-content {
         img {
           filter: brightness(0) invert(1);
-          width: 0.8rem;
+          width: 0.7rem;
           height: auto; // Mantiene la proporción original
           vertical-align: middle;
           margin-right: 4px;
@@ -206,10 +206,10 @@ $spacing-md: 1rem;
       // Texto corto para etiquetas expandibles
       .short-text {
         display: inline-block;
-        transition: all 0.1s ease;
+        transition: all 0.3s ease;
 
         img {
-          width: 0.8rem;
+          width: 0.7rem;
           height: auto; // Mantiene la proporción original
         }
       }
@@ -220,7 +220,7 @@ $spacing-md: 1rem;
         opacity: 0;
         max-width: 0;
         overflow: hidden;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
       }
     }
 

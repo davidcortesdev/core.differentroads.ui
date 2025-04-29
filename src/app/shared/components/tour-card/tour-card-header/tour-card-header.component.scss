@@ -123,19 +123,19 @@ $spacing-md: 1rem;
       .expanded-content {
         img {
           filter: brightness(0) invert(1);
-          width: 0.7rem;
+          width: 0.65rem;
           height: auto; // Mantiene la proporción original
-          vertical-align: middle; // Alinea verticalmente con el texto
+          vertical-align: middle;
           margin-right: 4px;
-          position: relative; // Añadido para ajuste fino
+          position: relative;
           top: -1px; // Ajuste fino para centrar perfectamente con el texto
         }
         
-        // Añadimos estilos para alinear el contenido completo
         display: flex;
         align-items: center;
         justify-content: flex-start;
       }
+
       .expanded-content {
         display: none;
       }
@@ -146,7 +146,8 @@ $spacing-md: 1rem;
         }
 
         .expanded-content {
-          display: inline-block;
+          display: flex; // Cambiado de inline-block a flex para mantener consistencia
+          align-items: center;
         }
       }
     }
@@ -216,10 +217,10 @@ $spacing-md: 1rem;
         transition: all 0.1s ease;
 
         img {
-          width: 0.6rem;
-          height: auto; // Mantiene la proporción original
-          position: relative; // Añadido para ajuste fino
-          top: -1px; // Ajuste fino para centrar perfectamente con el texto
+          width: 0.65rem; // Unificado con el tamaño anterior
+          height: auto;
+          position: relative;
+          top: -1px;
         }
       }
 
@@ -230,6 +231,13 @@ $spacing-md: 1rem;
         max-width: 0;
         overflow: hidden;
         transition: all 0.3s ease;
+        
+        img {
+          width: 0.65rem; // Aseguramos que sea igual en todos lados
+          height: auto;
+          position: relative;
+          top: -1px;
+        }
       }
     }
 

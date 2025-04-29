@@ -96,34 +96,34 @@
         
         <div class="form-field">
           <label>Sexo:</label>
-          <p-autocomplete
+          <p-dropdown
             formControlName="gender"
             name="sexo"
-            field="label"
-            [style]="{ width: '100%' }"
-            [forceSelection]="true"
-            [dropdown]="true"
+            [options]="genderOptions"
+            optionLabel="label"
+            optionValue="value"
             placeholder="Seleccione su sexo"
-            styleClass="custom-autocomplete"
-            [readonly]="true"
-            >
-          </p-autocomplete>
+            [disabled]="!isEditing"
+            styleClass="custom-dropdown"
+            [showClear]="true"
+            [autoDisplayFirst]="false"
+          ></p-dropdown>
         </div>
         
         <div class="form-field">
           <label>Tipo de Documento:</label>
-          <p-autocomplete
-          formControlName="documentType"
-          name="Tipo de Documento"
-          field="label"
-          [style]="{ width: '100%' }"
-          [forceSelection]="true"
-          [dropdown]="true"
-          placeholder="Seleccione tipo de Documento"
-          styleClass="custom-autocomplete"
-          [readonly]="true"
-          >
-        </p-autocomplete>
+          <p-dropdown
+            formControlName="documentType"
+            name="Tipo de Documento"
+            [options]="documentTypeOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Seleccione tipo de Documento"
+            [disabled]="!isEditing"
+            styleClass="custom-dropdown"
+            [showClear]="true"
+            [autoDisplayFirst]="false"
+          ></p-dropdown>
         </div>
         
         <div class="form-field">

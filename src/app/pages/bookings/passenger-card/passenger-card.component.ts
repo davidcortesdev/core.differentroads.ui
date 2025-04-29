@@ -29,10 +29,15 @@ export class PassengerCardComponent implements OnInit, OnChanges {
   bookingComplete: any = null;
 
   genderOptions = [
-    { label: 'Hombre', value: 'Hombre' },
-    { label: 'Mujer', value: 'Mujer' },
+    { label: 'Masculino', value: 'Male' },
+    { label: 'Femenino', value: 'Female' }
   ];
 
+  documentTypeOptions = [
+    { label: 'Pasaporte', value: 'passport' },
+    { label: 'DNI', value: 'dni' }
+  
+  ];
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
@@ -143,6 +148,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
       documentExpirationDate: this.passenger.documentExpirationDate? new Date(this.passenger.documentExpirationDate) : null,
       birthDate: this.passenger.birthDate? new Date(this.passenger.birthDate) : null,
       gender: this.passenger.gender || '',
+      documentType: this.passenger.documentType || '',
     });
   }
 

@@ -416,6 +416,7 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
         'hotels',
         'activities',
         'name',
+        'externalID',
       ])
       .subscribe({
         next: (period) => {

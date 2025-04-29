@@ -98,7 +98,7 @@ export class TourOrderService {
     this.selectedDateInfoSource.next({
       date: selectedPeriod?.name || '',
       tripType: selectedPeriod?.tripType || 'Grupo',
-      departureCity: selectedFlight?.name || '',
+      departureCity: selectedFlight?.name || 'Sin vuelos',
       basePrice:
         this.tourDataService.getTourBasePrice() +
         (selectedPeriod?.basePrice || 0),

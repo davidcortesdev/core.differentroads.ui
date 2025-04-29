@@ -46,6 +46,12 @@ interface TravelerWithPoints {
   category?: string;
   type?: string;
 }
+import { ScalapayOrderRequest } from '../../../../core/models/scalapay/ScalapayOrderRequest';
+import { ScalapayConsumer } from '../../../../core/models/scalapay/ScalapayConsumer';
+import { ScalapayExtensions } from '../../../../core/models/scalapay/ScalapayExtensions';
+import { ScalapayItem } from '../../../../core/models/scalapay/ScalapayItem';
+import { ScalapayOrderResponse } from '../../../../core/models/scalapay/ScalapayOrderResponse';
+import { ScalapayService } from '../../../../core/services/checkout/payment/scalapay.service';
 
 @Component({
   selector: 'app-payment',
@@ -112,6 +118,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
   constructor(
     @Inject(DOCUMENT) private document: Document,
     private redsysService: RedsysService,
+    private scalapayService: ScalapayService,
     private bookingsService: BookingsService,
     private router: Router,
     private paymentOptionsService: PaymentOptionsService,
@@ -379,6 +386,104 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     form.submit();
   }
 
+  async processScalapay(bookingID: string, publicID: string) {
+      const createItem = (): ScalapayItem => ({
+        price: { currency: 'EUR', amount: this.totalPrice.toString() },
+        name: `Tour - ${new Date().toLocaleDateString()}`,
+        category: 'travel',
+        brand: 'Different Roads',
+        sku: `SKU-${bookingID}`,
+        quantity: 1,
+      });
+  
+      const createConsumer = (): ScalapayConsumer => ({
+        phoneNumber: '0400000001',
+        givenNames: 'Joe',
+        surname: 'Consumer',
+        email: 'test@scalapay.com',
+      });
+  
+      const createMerchant = () => ({
+        redirectCancelUrl: `${window.location.origin}/reservation/${bookingID}/error/${publicID}`,
+        redirectConfirmUrl: `${window.location.origin}/reservation/${bookingID}/success/${publicID}`,
+      });
+  
+      const createExtensions = (): ScalapayExtensions => ({
+        industry: {
+          travel: { startDate: '2023-11-30', endDate: '2023-12-18' },
+        },
+      });
+  
+      const createOrderData = (): ScalapayOrderRequest => ({
+        product: 'pay-in-3',
+        type: 'online',
+        orderExpiryMilliseconds: 600000,
+        consumer: createConsumer(),
+        extensions: createExtensions(),
+        merchant: createMerchant(),
+        frequency: { number: 1, frequencyType: 'monthly' },
+        totalAmount: { currency: 'EUR', amount: this.totalPrice.toString() },
+        items: [createItem()],
+        merchantReference: bookingID,
+        taxAmount: { currency: 'EUR', amount: '0' },
+        shippingAmount: { currency: 'EUR', amount: '0' },
+        channel: 'online',
+      });
+  
+      const orderDataWithTipo: ScalapayOrderRequest = createOrderData();
+  
+      try {
+        // Log the request for debugging
+        console.log('Sending Scalapay order request:', orderDataWithTipo);
+        
+        const data = await this.scalapayService.createOrder(orderDataWithTipo);
+        
+        console.log('Scalapay order created:', data);
+        console.log('PublicID:', publicID);
+        
+        if (data && data.token && data.token.trim() !== '') {
+          console.log('Scalapay token received:', data.token);
+          
+          // Add error handling for the payment update
+          this.bookingsService.updatePayment(publicID, {
+            externalID: data.token,
+            provider: 'Scalapay'
+          }).subscribe({
+            next: (updateResponse) => {
+              console.log('Payment updated with Scalapay token:', updateResponse);
+              console.log('Confirmed externalID value:', data.token);
+              
+              // Add a small delay before redirecting to ensure the update completes
+              setTimeout(() => {
+                window.location.href = data.checkoutUrl;
+              }, 500);
+            },
+            error: (updateError) => {
+              console.error('Error updating payment with Scalapay token:', updateError);
+              // Still redirect to Scalapay even if the update fails
+              window.location.href = data.checkoutUrl;
+            }
+          });
+        } else {
+          console.error('No valid token received from Scalapay:', data);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error de Scalapay',
+            detail: 'No se recibió un token válido de Scalapay. Por favor, inténtelo de nuevo.'
+          });
+          this.isLoading = false;
+        }
+      } catch (error) {
+        console.error('Error processing Scalapay payment:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error de Scalapay',
+          detail: 'Ocurrió un error al procesar el pago con Scalapay. Por favor, inténtelo de nuevo.'
+        });
+        this.isLoading = false;
+      }
+    }
+
   async submitPayment() {
     if (this.isLoading) return; // Prevent multiple submissions
 
@@ -414,12 +519,23 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
 
       console.log(`Processing payment of ${paymentAmount}`);
 
+      // Determine the provider based on payment method/type
+      let provider: string | undefined;
+      if (this.paymentMethod === 'creditCard') {
+        provider = 'redsys';
+      } else if (this.paymentMethod === 'transfer') {
+        provider = 'transfer';
+      } else if (this.paymentType === 'installments') {
+        provider = 'scalapay';
+      }
+
       const payment = await this.createPayment(bookingID, {
         amount: paymentAmount,
         registerBy: this.authService.getCurrentUsername(),
         method: this.paymentMethod!,
+        provider: provider,
       });
-
+      
       const publicID = payment.publicID;
       console.log('Payment created:', payment);
 
@@ -434,7 +550,18 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
           `/reservation/${bookingID}/transfer/${publicID}`,
         ]);
         return;
+      } else if (this.paymentType === 'installments') {
+        console.log('Processing Scalapay payment');
+        this.processScalapay(bookingID, publicID);
+        return;
       }
+      // If we reach here, it means the payment method was not recognized
+      console.error('Unknown payment method:', this.paymentMethod);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Método de pago desconocido',
+        detail: 'El método de pago seleccionado no es válido.',
+      })
     } catch (error: any) {
       console.error('Error in payment process:', error);
       this.messageService.add({
@@ -508,12 +635,15 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     this.goBackEvent.emit();
   }
 
+  // Update the createPayment method to include provider and externalID
   createPayment(
     bookingID: string,
     payment: {
       amount: number;
       registerBy: string;
       method: 'creditCard' | 'transfer';
+      provider?: string;
+      externalID?: string;
     }
   ): Promise<Payment> {
     return new Promise((resolve, reject) => {

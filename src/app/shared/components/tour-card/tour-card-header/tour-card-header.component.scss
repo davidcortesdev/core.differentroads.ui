@@ -1,0 +1,317 @@
+// Variables
+$breakpoint-tablet: 1024px;
+$breakpoint-mobile: 768px;
+$border-radius-sm: 4px;
+$border-radius-md: 9.586px;
+$border-radius-lg: 1rem;
+$spacing-xs: 0.2rem;
+$spacing-sm: 0.5rem;
+$spacing-md: 1rem;
+
+// Mixins
+@mixin responsive-font($mobile, $tablet, $desktop) {
+  font-size: $desktop;
+
+  @media screen and (max-width: $breakpoint-tablet) {
+    font-size: $tablet;
+  }
+
+  @media screen and (max-width: $breakpoint-mobile) {
+    font-size: $mobile;
+  }
+}
+
+@mixin tablet {
+  @media screen and (max-width: $breakpoint-tablet) {
+    @content;
+  }
+}
+
+@mixin mobile {
+  @media screen and (max-width: $breakpoint-mobile) {
+    @content;
+  }
+}
+
+// Contenedor de imagen
+.img {
+  cursor: pointer;
+  position: relative;
+  height: 230px;
+  overflow: hidden; // Mantiene el zoom dentro del contenedor
+  border-radius: $border-radius-md; // Añadimos el mismo border-radius al contenedor
+
+  @include tablet {
+    height: 220px;
+  }
+
+  @include mobile {
+    height: 240px;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: $border-radius-md;
+    transition: transform 0.3s ease;
+  }
+
+  &:hover {
+    img {
+      transform: scale(1.05);
+    }
+  }
+
+  // Overlay sobre la imagen
+  .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.2),
+      rgba(0, 0, 0, 0.7)
+    );
+    padding: $spacing-md;
+    display: flex;
+    flex-direction: column;
+    border-radius: $border-radius-md; // Cambiado de $border-radius-lg a $border-radius-md para igualar con la imagen
+
+    // Indicador de rating
+    .rating {
+      align-self: flex-start;
+      background: var(--p-primary-color);
+      color: var(--p-button-primary-color);
+      padding: $spacing-xs $spacing-xs * 2;
+      border-radius: $border-radius-sm;
+      margin-bottom: $spacing-xs;
+      @include responsive-font(0.8rem, 0.85rem, 0.7rem);
+    }
+
+    // Etiqueta By DR debajo del rating
+    .by-dr-tag {
+      align-self: flex-start;
+      position: relative;
+      margin-top: $spacing-xs;
+      transition: all 0.5s ease;
+      overflow: hidden;
+      white-space: nowrap;
+      cursor: pointer;
+      border-radius: $border-radius-sm;
+      background: var(--p-primary-color);
+      color: var(--p-button-primary-color);
+      padding: $spacing-xs $spacing-xs * 2;
+      opacity: 0;
+      animation: fadeIn 0.5s ease-in-out forwards;
+      @include responsive-font(0.6rem, 0.65rem, 0.55rem);
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-5px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .short-text,
+      .expanded-content {
+        img {
+          filter: brightness(0) invert(1);
+          width: 0.65rem;
+          height: auto; // Mantiene la proporción original
+          vertical-align: middle;
+          margin-right: 4px;
+          position: relative;
+          top: -1px; // Ajuste fino para centrar perfectamente con el texto
+        }
+        
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+      }
+
+      .expanded-content {
+        display: none;
+      }
+
+      &:hover {
+        .short-text {
+          display: none;
+        }
+
+        .expanded-content {
+          display: flex; // Cambiado de inline-block a flex para mantener consistencia
+          align-items: center;
+        }
+      }
+    }
+
+    // Indicador general
+    .indicator {
+      font-weight: 500;
+      text-align: start;
+      color: var(--p-primary-color);
+      @include responsive-font(0.7rem, 0.8rem, 0.75rem);
+    }
+
+    // Contenedor de etiquetas
+    .tags-container {
+      position: absolute;
+      top: $spacing-md;
+      right: $spacing-md;
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+      align-items: flex-end;
+
+      // Etiqueta individual
+      .tag {
+        background: var(--p-button-primary-color);
+        color: var(--background-azul);
+        padding: $spacing-xs $spacing-xs * 2;
+        border-radius: $border-radius-sm;
+        @include responsive-font(0.8rem, 0.85rem, 0.7rem);
+
+        // Etiqueta expandible
+        &.expandable-tag {
+          transition: all 0.3s ease;
+          max-width: 40px;
+          overflow: hidden;
+          white-space: nowrap;
+          cursor: pointer;
+          border-radius: 10px;
+          margin-bottom: 0.1rem;
+
+          &:hover {
+            max-width: none;
+            width: auto;
+            padding-right: $spacing-sm;
+
+            .short-text {
+              opacity: 0;
+              width: 0;
+              position: absolute;
+              overflow: hidden;
+            }
+
+            .expanded-content {
+              opacity: 1;
+              max-width: none;
+              width: auto;
+              margin-left: 0;
+            }
+          }
+        }
+      }
+
+      // Texto corto para etiquetas expandibles
+      .short-text {
+        display: flex;
+        align-items: center;
+        transition: all 0.1s ease;
+
+        img {
+          width: 0.65rem; // Unificado con el tamaño anterior
+          height: auto;
+          position: relative;
+          top: -1px;
+        }
+      }
+
+      // Contenido expandido
+      .expanded-content {
+        display: inline-block;
+        opacity: 0;
+        max-width: 0;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        
+        img {
+          width: 0.65rem; // Aseguramos que sea igual en todos lados
+          height: auto;
+          position: relative;
+          top: -1px;
+        }
+      }
+    }
+
+    // Título en el overlay
+    .title-overlay {
+      margin-top: auto;
+      color: white;
+
+      p {
+        margin-bottom: 0;
+        @include responsive-font(0.9rem, 0.95rem, 0.8rem);
+      }
+
+      h3 {
+        margin-top: 1px;
+        margin-bottom: 0.3rem;
+        @include responsive-font(1.2rem, 1.3rem, 1.2rem);
+      }
+    }
+  }
+}
+
+// Estilos para la variante grande
+:host-context(.isLarge) {
+  .img {
+    height: 280px;
+
+    @include tablet {
+      height: 220px;
+    }
+
+    @include mobile {
+      height: 240px;
+    }
+
+    img {
+      border-radius: $border-radius-md; // Cambiado de $border-radius-lg a $border-radius-md para mantener consistencia
+    }
+
+    .overlay {
+      border-radius: $border-radius-md; // Añadido para asegurar consistencia
+      .rating,
+      .tag {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.8rem;
+      }
+
+      .title-overlay {
+        h3 {
+          font-size: 1.5rem;
+        }
+
+        p {
+          font-size: 1rem;
+        }
+      }
+    }
+  }
+}
+
+// Añadir estilo para el estado de carga
+.rating.loading {
+  opacity: 0.7;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0.5;
+  }
+}

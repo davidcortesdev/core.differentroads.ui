@@ -3,18 +3,19 @@
     <!-- Resumen del viaje usando el componente summary-table -->
     <div class="payment-column-left">
       <p-panel header="Resumen del viaje">
-        <app-summary-table 
-        [summary]="tripItems" 
-        [descriptionField]="'description'" 
-        [qtyField]="'quantity'"
-        [valueField]="'unitPrice'" 
-        [showPointsSection]="false" 
-        [showTotalSection]="false" 
-        [showFlightSection]="false"
-        [title]="'Resumen del viaje'" 
-        [currency]="'EUR'" 
-        [customClass]="'booking-summary panel-background'"
-        [showTitle]="false">
+        <app-summary-table
+          [summary]="tripItems"
+          [descriptionField]="'description'"
+          [qtyField]="'quantity'"
+          [valueField]="'unitPrice'"
+          [showPointsSection]="false"
+          [showTotalSection]="false"
+          [showFlightSection]="false"
+          [title]="'Resumen del viaje'"
+          [currency]="'EUR'"
+          [customClass]="'booking-summary panel-background'"
+          [showTitle]="false"
+        >
         </app-summary-table>
       </p-panel>
     </div>
@@ -30,24 +31,28 @@
                 <span class="label">Precio total</span>
                 <span class="amount total">{{
                   formatCurrency(paymentInfo.totalPrice)
-                  }}</span>
+                }}</span>
               </div>
               <div class="payment-column">
                 <span class="label">Pendiente</span>
                 <span class="amount pending">{{
                   formatCurrency(paymentInfo.pendingAmount)
-                  }}</span>
+                }}</span>
               </div>
               <div class="payment-column">
                 <span class="label">Pagado</span>
                 <span class="amount paid">{{
                   formatCurrency(paymentInfo.paidAmount)
-                  }}</span>
+                }}</span>
               </div>
             </div>
             <div class="payment-buttons">
-              <p-button label="Realizar pago" icon="pi pi-dollar" styleClass="p-button-success"
-                (onClick)="navigateToPayment()"></p-button>
+              <p-button
+                label="Realizar pago"
+                icon="pi pi-dollar"
+                styleClass="p-button-success"
+                (onClick)="navigateToPayment()"
+              ></p-button>
             </div>
           </div>
         </div>
@@ -57,34 +62,57 @@
         <!-- Contenedor de columnas para pagos y historial -->
         <div class="payment-columns-container">
           <!-- Próximos pagos -->
-          <p-panel header="Próximo pago" [styleClass]="deadlines && deadlines.length > 0 ? '' : 'empty-panel'">
-            <div *ngFor="let payment of deadlines" class="upcoming-payment-item">
+          <!--   <p-panel
+            header="Próximo pago"
+            [styleClass]="
+              deadlines && deadlines.length > 0 ? '' : 'empty-panel'
+            "
+          >
+            <div
+              *ngFor="let payment of deadlines"
+              class="upcoming-payment-item"
+            >
               <span class="date">{{ payment.date }}</span>
               <span class="amount">{{ payment.amount | currencyFormat }}</span>
             </div>
-            <div *ngIf="!deadlines || deadlines.length === 0" class="empty-message">
+            <div
+              *ngIf="!deadlines || deadlines.length === 0"
+              class="empty-message"
+            >
               No hay pagos programados
             </div>
-          </p-panel>
+          </p-panel> -->
 
           <!-- Historial de pagos -->
-          <p-panel header="Historial de pago"
-            [styleClass]="paymentHistory && paymentHistory.length > 0 ? '' : 'empty-panel'">
+          <p-panel
+            header="Historial de pago"
+            [styleClass]="
+              paymentHistory && paymentHistory.length > 0 ? '' : 'empty-panel'
+            "
+          >
             <div *ngFor="let item of paymentHistory" class="history-item">
               <span class="date">{{ item.createdAt | date }}</span>
               <span class="status">
                 {{ getStatusText(item.status) }}
-                <button *ngIf="
+                <button
+                  *ngIf="
                     isTO &&
                     item.status === 'PENDING_REVIEW' &&
                     item?.vouchers?.length
-                  " type="button" class="p-button p-component p-button-text" (click)="showReviewModal(item)">
+                  "
+                  type="button"
+                  class="p-button p-component p-button-text"
+                  (click)="showReviewModal(item)"
+                >
                   Ver
                 </button>
               </span>
               <span class="amount">{{ item.amount | currencyFormat }}</span>
             </div>
-            <div *ngIf="!paymentHistory || paymentHistory.length === 0" class="empty-message">
+            <div
+              *ngIf="!paymentHistory || paymentHistory.length === 0"
+              class="empty-message"
+            >
               No hay ningun pago registrado
             </div>
           </p-panel>
@@ -95,41 +123,86 @@
 </div>
 
 <!-- Modal para registrar pago -->
-<p-dialog header="Registrar pago" [(visible)]="displayPaymentModal" [style]="{ width: '450px' }" [modal]="true"
-  [draggable]="false" [resizable]="false" styleClass="payment-dialog">
+<p-dialog
+  header="Registrar pago"
+  [(visible)]="displayPaymentModal"
+  [style]="{ width: '450px' }"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="payment-dialog"
+>
   <form [formGroup]="paymentForm" (ngSubmit)="onSubmitPayment()">
     <div class="p-field">
-      <label for="amount">Importe del pago<span class="required">*</span></label>
+      <label for="amount"
+        >Importe del pago<span class="required">*</span></label
+      >
       <div class="p-inputgroup">
-        <input type="number" pInputText formControlName="amount" id="amount" class="p-inputtext" />
+        <input
+          type="number"
+          pInputText
+          formControlName="amount"
+          id="amount"
+          class="p-inputtext"
+        />
         <span class="p-inputgroup-addon">€</span>
       </div>
     </div>
 
     <div class="p-dialog-footer">
-      <p-button label="Cancelar" icon="pi pi-times" (onClick)="hidePaymentModal()"
-        styleClass="p-button-outlined"></p-button>
-      <p-button label="Realizar pago" icon="pi pi-check" type="submit" styleClass="p-button-danger p-button-success"
-        [disabled]="paymentForm.invalid"></p-button>
+      <p-button
+        label="Cancelar"
+        icon="pi pi-times"
+        (onClick)="hidePaymentModal()"
+        styleClass="p-button-outlined"
+      ></p-button>
+      <p-button
+        label="Realizar pago"
+        icon="pi pi-check"
+        type="submit"
+        styleClass="p-button-danger p-button-success"
+        [disabled]="paymentForm.invalid"
+      ></p-button>
     </div>
   </form>
 </p-dialog>
 
 <!-- NUEVO: Modal de revisión de pago -->
-<p-dialog header="Revisión de pago" [(visible)]="displayReviewModal" [style]="{ width: '450px' }" [modal]="true"
-  [draggable]="false" [resizable]="false" styleClass="payment-dialog">
+<p-dialog
+  header="Revisión de pago"
+  [(visible)]="displayReviewModal"
+  [style]="{ width: '450px' }"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="payment-dialog"
+>
   <div class="p-dialog-content">
     <p>Tranferencia de {{ selectedPayment?.amount || 0 | currencyFormat }}</p>
-    <p-button label="Ver comprobante" icon="pi pi-external-link" (onClick)="viewPaymentReview()"
-      styleClass="p-button-info">
+    <p-button
+      label="Ver comprobante"
+      icon="pi pi-external-link"
+      (onClick)="viewPaymentReview()"
+      styleClass="p-button-info"
+    >
     </p-button>
   </div>
   <div class="p-dialog-footer">
-    <p-button label="Aprobar" icon="pi pi-check" (onClick)="approvePaymentReview()" styleClass="p-button-success"
-      [loading]="isReviewLoading">
+    <p-button
+      label="Aprobar"
+      icon="pi pi-check"
+      (onClick)="approvePaymentReview()"
+      styleClass="p-button-success"
+      [loading]="isReviewLoading"
+    >
     </p-button>
-    <p-button label="Rechazar" icon="pi pi-times" (onClick)="rejectPaymentReview()" styleClass="p-button-danger"
-      [loading]="isReviewLoading">
+    <p-button
+      label="Rechazar"
+      icon="pi pi-times"
+      (onClick)="rejectPaymentReview()"
+      styleClass="p-button-danger"
+      [loading]="isReviewLoading"
+    >
     </p-button>
   </div>
 </p-dialog>

@@ -14,6 +14,7 @@ interface ITour {
   availableMonths: string[];
   isByDr: boolean;
   webSlug: string;
+  externalID?: string;
 }
 
 @Component({
@@ -89,6 +90,7 @@ export class ToursListComponent implements OnInit {
                 tour.webSlug ||
                 tour.name?.toLowerCase().replace(/\s+/g, '-') ||
                 '',
+                externalID: tour.externalID,
             };
             this.tours = [...this.tours, processedTour];
             this.displayedTours = this.tours.slice(

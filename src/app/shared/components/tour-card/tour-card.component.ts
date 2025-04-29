@@ -13,6 +13,7 @@ interface TourData {
   availableMonths: string[];
   webSlug: string;
   tripType?: string[];
+  externalID?: string;
 }
 
 enum TripType {
@@ -49,6 +50,12 @@ export class TourCardComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
+    // Validate that externalID exists and is not undefined or empty
+    if (!this.tourData?.externalID?.trim()) {
+      console.log('Missing or invalid externalID:', this.tourData);
+      return;
+    }
+
     // Pre-calculate monthly price to avoid recalculation in template
     this.monthlyPrice = this.calculateMonthlyPrice();
     // Generar ID único para el widget de Scalapay

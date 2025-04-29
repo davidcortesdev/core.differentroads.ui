@@ -55,7 +55,9 @@ export class FlightsComponent implements OnInit {
         this.filteredFlights = this.flights
           .filter(
             (flight) =>
-              flight.name && !flight.name.toLowerCase().includes('sin ')
+              flight.name &&
+              !flight.name.toLowerCase().includes('sin ') &&
+              !flight.name.toLowerCase().includes('sinvue')
           )
           .map((flight) => {
             return {
@@ -68,7 +70,10 @@ export class FlightsComponent implements OnInit {
           });
 
         const flightless = this.flights.find(
-          (flight) => flight.name && flight.name.toLowerCase().includes('sin ')
+          (flight) =>
+            flight.name &&
+            (flight.name.toLowerCase().includes('sin ') ||
+              flight.name.toLowerCase().includes('sinvue'))
         );
         this.flightlessOption = flightless || null;
 
@@ -96,6 +101,7 @@ export class FlightsComponent implements OnInit {
         (flight) =>
           flight.name &&
           !flight.name.toLowerCase().includes('sin ') &&
+          !flight.name.toLowerCase().includes('sinvue') &&
           flight.outbound &&
           flight.outbound.segments &&
           flight.outbound.segments.length > 0

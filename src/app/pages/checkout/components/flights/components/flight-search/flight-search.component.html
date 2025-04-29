@@ -55,6 +55,7 @@
         </div>
         <div class="input origin">
           <i class="pi pi-plane"></i>
+          <!-- Componente de autocomplete mejorado para mostrar todas las ciudades -->
           <p-autocomplete
             formControlName="origen"
             [suggestions]="filteredCities"
@@ -63,7 +64,25 @@
             [forceSelection]="true"
             styleClass="w-full"
             [dropdown]="true"
+            [minLength]="1"
+            [delay]="0"
+            [appendTo]="'body'"
+            (onSelect)="onCitySelect($event)"
+            [showEmptyMessage]="true"
+            emptyMessage="No se encontraron ciudades"
           >
+            <!-- Plantilla personalizada para los elementos del dropdown -->
+            <ng-template pTemplate="item" let-city>
+              <div class="city-item">
+                {{ city.nombre }}
+              </div>
+            </ng-template>
+            <!-- Plantilla personalizada para el input cuando está seleccionado -->
+            <ng-template pTemplate="selectedItem" let-city>
+              <div class="selected-city">
+                {{ city.nombre }}
+              </div>
+            </ng-template>
           </p-autocomplete>
           <a href="#" class="change"></a>
         </div>
@@ -115,7 +134,9 @@
           [ngModelOptions]="{ standalone: true }"
           placeholder="Ordenar por"
           (onChange)="onSortChange($event)"
-          styleClass="p-button-outlined"
+          styleClass="p-button-outlined mobile-friendly-dropdown"
+          [showClear]="false"
+          appendTo="body"
         ></p-dropdown>
       </div>
       <div class="filter">
@@ -133,7 +154,12 @@
         ></p-dropdown> -->
       </div>
       <div class="btn-search">
-        <p-button label="Buscar" styleClass="" (click)="buscar()"></p-button>
+        <p-button 
+          label="Buscar" 
+          styleClass="mobile-friendly-button" 
+          (click)="buscar()"
+          [disabled]="isLoading"
+        ></p-button>
       </div>
     </div>
   </form>

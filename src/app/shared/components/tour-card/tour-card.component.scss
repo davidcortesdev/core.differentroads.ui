@@ -1,3 +1,4 @@
+// Variables
 $breakpoint-tablet: 1024px;
 $breakpoint-mobile: 768px;
 $border-radius-sm: 4px;
@@ -7,23 +8,14 @@ $spacing-xs: 0.2rem;
 $spacing-sm: 0.5rem;
 $spacing-md: 1rem;
 
-@mixin trip-type-badge {
-  color: white !important;
-  font-weight: bold;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: $border-radius-sm;
-  padding: 0;
-}
-
+// Mixins
 @mixin responsive-font($mobile, $tablet, $desktop) {
   font-size: $desktop;
+  
   @media screen and (max-width: $breakpoint-tablet) {
     font-size: $tablet;
   }
+  
   @media screen and (max-width: $breakpoint-mobile) {
     font-size: $mobile;
   }
@@ -34,15 +26,24 @@ $spacing-md: 1rem;
     @content;
   }
 }
+
 @mixin mobile {
   @media screen and (max-width: $breakpoint-mobile) {
     @content;
   }
 }
 
+:root {
+  --tour-card-border-radius-lg: 1rem;
+  --tour-card-spacing-md: 1rem;
+}
+
+// Componente principal
 .tour-card {
-  padding: $spacing-sm;
+  padding: var(--tour-card-spacing-sm, 0.5rem);
   height: 100%;
+  
+  // Estilos para el wrapper
   ::ng-deep .tour-card-wrapper {
     .p-card {
       border-radius: $border-radius-lg;
@@ -50,308 +51,21 @@ $spacing-md: 1rem;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      .p-card-body {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        padding: 0;
-      }
-      .p-card-content {
-        padding: $spacing-md;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-      }
-    }
-    .image-container {
-      cursor: pointer;
-      position: relative;
-      height: 230px;
-      @include tablet {
-        height: 220px;
-      }
-      @include mobile {
-        height: 240px;
-      }
-      img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        border-radius: $border-radius-md;
-      }
-      .overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.7));
-        padding: $spacing-md;
-        display: flex;
-        flex-direction: column;
-        border-radius: $border-radius-lg;
-        .rating {
-          align-self: flex-start;
-          background: var(--p-primary-color);
-          color: var(--p-button-primary-color);
-          padding: $spacing-xs $spacing-xs * 2;
-          border-radius: $border-radius-sm;
-          @include responsive-font(0.8rem, 0.85rem, 0.7rem);
-        }
-        .indicator {
-          font-weight: 500;
-          text-align: start;
-          color: var(--p-primary-color);
-          @include responsive-font(0.7rem, 0.8rem, 0.75rem);
-        }
-        .tags-container {
-          position: absolute;
-          top: $spacing-md;
-          right: $spacing-md;
-          display: flex;
-          flex-direction: column;
-          gap: 0.1rem;
-          align-items: flex-end;
-          .tag {
-            background: var(--p-button-primary-color);
-            color: var(--background-azul);
-            padding: $spacing-xs $spacing-xs * 2;
-            border-radius: $border-radius-sm;
-            @include responsive-font(0.8rem, 0.85rem, 0.7rem);
-            &.expandable-tag {
-              transition: all 0.3s ease;
-              max-width: 40px;
-              overflow: hidden;
-              white-space: nowrap;
-              cursor: pointer;
-              border-radius: 10px;
-              margin-bottom: 0.1rem;
-              &:hover {
-                max-width: none;
-                width: auto;
-                padding-right: $spacing-sm;
-                .short-text {
-                  opacity: 0;
-                  width: 0;
-                  position: absolute;
-                  overflow: hidden;
-                }
-                .expanded-content {
-                  opacity: 1;
-                  max-width: none;
-                  width: auto;
-                  margin-left: 0;
-                }
-              }
-            }
-          }
-          .short-text {
-            display: inline-block;
-            transition: all 0.1s ease;
-            img {
-              width: 1rem;
-              height: 1rem;
-            }
-          }
-          .expanded-content {
-            display: inline-block;
-            opacity: 0;
-            max-width: 0;
-            overflow: hidden;
-            transition: all 0.2s ease;
-          }
-        }
-        .title-overlay {
-          margin-top: auto;
-          color: white;
-          p {
-            margin-bottom: 0;
-            @include responsive-font(0.9rem, 0.95rem, 0.8rem);
-          }
-          h3 {
-            margin-top: 1px;
-            margin-bottom: 0.3rem;
-            @include responsive-font(1.2rem, 1.3rem, 1.2rem);
-          }
-        }
-      }
-    }
-    .card-footer {
-      margin: 0 -#{$spacing-md};
-      display: flex;
-      flex-direction: column;
-      gap: $spacing-md;
-      .price-content {
-        display: flex;
-        flex-direction: column;
-        gap: $spacing-sm;
-      }
-      .price-section {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        width: 100%;
-        .price-info {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-          .desde {
-            font-size: 0.9rem;
-            color: var(--background-azul);
-            margin-bottom: $spacing-xs;
-          }
-          .price {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--background-azul);
-          }
-        }
-        .button-container {
-          display: flex;
-          align-items: center;
-          gap: $spacing-sm;
-        }
-      }
-      .priceScalapay {
-        color: var(--p-primary-color);
-        font-size: 0.9rem;
-        display: flex;
-        align-items: center;
-        gap: 0.3rem;
-        margin-top: -0.5rem;
-        margin-bottom: 0.5rem;
-        img {
-          height: 1.3rem;
-          display: inline-block;
-          vertical-align: middle;
-        }
-      }
-      .buttonVertour ::ng-deep .p-button {
-        border-radius: 1.5rem;
-        min-width: 7rem;
-        margin-top: 13px;
-        @include tablet {
-          min-width: 6rem;
-        }
-        @include mobile {
-          min-width: 6rem;
-          height: 2.5rem;
-          font-size: 0.9rem;
-        }
-      }
-      .trip-type-container {
-        display: flex;
-        gap: 0.3rem;
-        margin-right: 8px;
-        margin-top: 13px;
-      }
-      .months {
-        display: flex;
-        gap: $spacing-sm;
-        flex-wrap: wrap;
-        width: 15rem;
-        height: 2.5rem;
-        align-items: center;
-        justify-content: flex-start;
-        margin-top: -15px;
-        @include tablet {
-          width: 12rem;
-          height: 2.2rem;
-          margin-top: -8px;
-        }
-        @include mobile {
-          width: 100%;
-          height: auto;
-          max-height: 3.5rem;
-          overflow-y: auto;
-          margin-top: -8px;
-        }
-        .month {
-          font-size: 0.7rem;
-        }
-      }
     }
   }
+  
+  // Variante grande de la tarjeta
   &.isLarge ::ng-deep .tour-card-wrapper {
     .p-card {
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      
       .p-card-body {
         padding: 10px;
       }
+      
       .p-card-content {
         padding: 0;
       }
     }
-    .image-container {
-      height: 280px;
-      @include tablet {
-        height: 220px;
-      }
-      @include mobile {
-        height: 240px;
-      }
-      img {
-        border-radius: $border-radius-lg;
-      }
-      .overlay {
-        .rating,
-        .tag {
-          padding: 0.3rem 0.6rem;
-          font-size: 0.9rem;
-        }
-        .title-overlay {
-          h3 {
-            font-size: 1.5rem;
-          }
-          p {
-            font-size: 1rem;
-          }
-        }
-      }
-    }
-    .card-footer .price-section .price-info {
-      .desde {
-        font-size: 0.9rem;
-        color: var(--background-azul);
-        @include tablet {
-          font-size: 0.85rem;
-          margin-top: 0.4rem;
-        }
-        @include mobile {
-          font-size: 0.8rem;
-          margin-top: 0.3rem;
-        }
-      }
-      .price {
-        font-size: 2rem;
-        font-weight: bold;
-        color: var(--background-azul);
-        line-height: 1.2rem;
-        margin-bottom: $spacing-sm;
-        @include tablet {
-          font-size: 1.4rem;
-        }
-        @include mobile {
-          font-size: 1.3rem;
-        }
-      }
-    }
-    .card-footer .priceScalapay {
-      margin-top: -0.2rem;
-    }
-  }
-}
-.trip-type {
-  &-s {
-    @include trip-type-badge;
-    background-color: var(--color-single) !important;
-  }
-  &-g {
-    @include trip-type-badge;
-    background-color: var(--color-group) !important;
-  }
-  &-p {
-    @include trip-type-badge;
-    background-color: var(--color-private) !important;
   }
 }

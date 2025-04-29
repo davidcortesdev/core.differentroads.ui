@@ -2,6 +2,7 @@
 :root {
   --form-spacing: 10px;
   --mobile-breakpoint: 768px;
+  --content-horizontal-padding: 16px; // Consistent horizontal padding
 }
 
 // Estilos base
@@ -9,23 +10,37 @@
   color: var(--background-azul);
 }
 
+.cont {
+  margin-top: -20px;
+}
 // Contenedor principal
 .content-form {
   padding: var(--form-spacing);
   border-radius: 8px;
-  margin-top: 20px;
-  margin-left: 23px;
+  margin-top: 15px; // Reduced from 20px
+  margin-left: 0; // Removed the 23px margin for consistency
+  width: 100%;
 
   @media (max-width: var(--mobile-breakpoint)) {
-    margin-left: 0;
-    padding: 5px;
+    padding: var(--content-horizontal-padding);
+  }
+  .travel-title {
+    margin-top: -10px;
+    .title {
+      font-size: 1.21rem;
+
+      @media screen and (max-width: 480px) {
+        margin-top: -10px;
+        font-size: 1.1rem;
+      }
+    }
   }
 }
 
 // Elementos de usuario
 .user {
   display: inline-block;
-  margin: 0 0 0 14px;
+  margin: 0 0 0 0; // Removed the 14px left margin
   padding: 0;
 }
 
@@ -43,14 +58,30 @@
   padding-bottom: 4px;
   border-bottom: 1px solid var(--background-azul);
   display: inline-block;
-  margin: 0 0 20px 0;
+  margin: 0 0 15px 0; // Reduced bottom margin from 20px to 15px
   font-weight: 600;
-  font-size: 15px;
+  font-size: 1.21rem;
+  @media screen and (max-width: 480px) {
+    margin-top: -10px;
+    font-size: 1.1rem;
+  }
+}
+
+// Top-level title specific adjustments
+h3.title {
+  margin-left: 0; // Remove any specific left margin
+  padding-left: var(--content-horizontal-padding);
+  padding-right: var(--content-horizontal-padding);
+  margin-bottom: 1px; // Increased space after main title
+
+  @media (max-width: var(--mobile-breakpoint)) {
+    margin-top: 15px; // Add some top margin for better spacing
+  }
 }
 
 // Formulario de viajeros
-.traveler-form {
-  margin-top: 20px;
+.traveler-forma {
+  margin-top: 15px; // Reduced from 20px
   width: 100%;
 
   .form-row {
@@ -160,10 +191,11 @@
     // Estilos de panel
     .p-panel {
       .p-panel-content {
-        padding: 10px 300px 10px 10px;
+        padding: 10px;
         border: 1px solid #d1c1c1;
-        display: inline-block;
         border-radius: 9px;
+        width: 100%;
+        display: block;
       }
 
       .p-panel-header {
@@ -172,13 +204,15 @@
     }
 
     // Estilos de acordeón
-    .p-accordionpanel:not(.p-disabled).p-accordionpanel-active
-      > .p-accordionheader {
+    .p-accordionpanel:not(.p-disabled).p-accordionpanel-active > .p-accordionheader {
       color: var(--background-azul);
+      background-color: transparent;
+      margin-top: -10px;
     }
 
     .p-accordionheader {
       font-size: 15px;
+      padding-left: 0; // Remove default padding
     }
 
     // Acordeón de viajeros
@@ -191,7 +225,37 @@
 
       .p-accordion-content {
         overflow: visible;
+        padding: 10px 0; // Remove horizontal padding, keep vertical
+        width: 100%;
+      }
+
+      .p-accordioncontent-content {
+        padding: 0px;
+      }
+
+      // Fix accordion header spacing
+      .p-accordion-header-link {
+        padding-left: 0; // Remove default padding
       }
     }
   }
+}
+
+// Ensure the root container is properly sized for mobile
+.flex.flex-col {
+  width: 100%;
+  overflow-x: hidden; // Prevent horizontal scrolling
+}
+
+// Ensure the border container doesn't overflow
+.border-2.border-dashed {
+  width: 100%;
+  padding: var(--content-horizontal-padding);
+  box-sizing: border-box;
+}
+
+// Fix for the Viajeros subtitle
+h3.title:not(:first-child) {
+  margin-top: 15px;
+  margin-bottom: 15px;
 }

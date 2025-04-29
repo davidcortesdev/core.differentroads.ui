@@ -11,7 +11,8 @@
   </div>
 
   <div *ngIf="isOpen" class="payment-panels">
-    <p-panel styleClass="payment-panel">
+    <!-- Panel para pago completo - Ahora clickeable completo -->
+    <p-panel styleClass="payment-panel" [ngClass]="{ 'selected': paymentType === 'complete' }" (click)="selectPaymentType('complete')">
       <div class="payment-option">
         <p-radioButton
           name="paymentType"
@@ -24,8 +25,8 @@
       </div>
     </p-panel>
 
-    <!-- New deposit payment option -->
-    <p-panel styleClass="payment-panel">
+    <!-- Panel para pago con depósito - Ahora clickeable completo -->
+    <p-panel styleClass="payment-panel" [ngClass]="{ 'selected': paymentType === 'deposit' }" (click)="selectPaymentType('deposit')">
       <div class="payment-option">
         <p-radioButton
           name="paymentType"
@@ -41,7 +42,8 @@
       </div>
     </p-panel>
 
-    <p-panel styleClass="payment-panel">
+    <!-- Panel para pago a plazos - Ahora clickeable completo -->
+    <p-panel styleClass="payment-panel" [ngClass]="{ 'selected': paymentType === 'installments' }" (click)="selectPaymentType('installments')">
       <div class="payment-option">
         <p-radioButton
           name="paymentType"
@@ -77,9 +79,11 @@
 
     <div *ngIf="isPaymentMethodsOpen" class="payment-methods-row">
       <div class="payment-method-container">
+        <!-- Panel para tarjeta bancaria - Ahora clickeable completo -->
         <p-panel
           styleClass="payment-panel payment-method-panel"
           [ngClass]="{ selected: paymentMethod === 'creditCard' }"
+          (click)="selectPaymentMethod('creditCard')"
         >
           <div class="payment-option">
             <p-radioButton
@@ -95,9 +99,11 @@
       </div>
 
       <div class="payment-method-container">
+        <!-- Panel para transferencia bancaria - Ahora clickeable completo -->
         <p-panel
           styleClass="payment-panel payment-method-panel"
           [ngClass]="{ selected: paymentMethod === 'transfer' }"
+          (click)="selectPaymentMethod('transfer')"
         >
           <div class="payment-option">
             <p-radioButton
@@ -129,9 +135,11 @@
 
     <div *ngIf="isInstallmentsOpen" class="installment-panels-row">
       <div class="installment-panel-container">
+        <!-- Panel para 3 cuotas - Ahora clickeable completo -->
         <p-panel
           styleClass="payment-panel installment-panel"
           [ngClass]="{ selected: installmentOption === 'three' }"
+          (click)="selectInstallmentOption('three')"
         >
           <div class="payment-option">
             <p-radioButton
@@ -170,9 +178,11 @@
       </div>
 
       <div class="installment-panel-container">
+        <!-- Panel para 4 cuotas - Ahora clickeable completo -->
         <p-panel
           styleClass="payment-panel installment-panel"
           [ngClass]="{ selected: installmentOption === 'four' }"
+          (click)="selectInstallmentOption('four')"
         >
           <div class="payment-option">
             <p-radioButton
@@ -219,24 +229,23 @@
         <div class="travelers-list">
           <div *ngFor="let traveler of uniqueTravelers" class="traveler-item">
             <div class="traveler-row">
-              <!-- Checkbox container -->
-              <div class="checkbox-container">
+              <!-- Checkbox container - Ahora el área clickeable incluye toda la fila -->
+              <div class="checkbox-container" *ngIf="(traveler.points || 0) > 0" (click)="toggleTravelerPoints(traveler)">
                 <p-checkbox
-                  *ngIf="(traveler.points || 0) > 0"
                   [binary]="true"
                   [(ngModel)]="traveler.redeemCheckbox"
                   (onChange)="onRedeemCheckboxChange(traveler)"
                   styleClass="points-checkbox"
                   [disabled]="isLoading"
                 ></p-checkbox>
-                <div
-                  *ngIf="!traveler.points || traveler.points <= 0"
-                  class="checkbox-placeholder"
-                ></div>
               </div>
+              <div
+                *ngIf="!traveler.points || traveler.points <= 0"
+                class="checkbox-placeholder"
+              ></div>
 
-              <!-- Traveler info with status indicators -->
-              <div class="traveler-info">
+              <!-- Traveler info with status indicators - Ahora también clickeable -->
+              <div class="traveler-info" *ngIf="(traveler.points || 0) > 0" (click)="toggleTravelerPoints(traveler)">
                 <span class="traveler-name"
                   >{{ traveler.firstName }} {{ traveler.lastName }}</span
                 >
@@ -258,6 +267,18 @@
                 <span class="points-badge" *ngIf="traveler.redeemCheckbox">
                   <span class="points-redeemed-label">
                     {{ traveler.points || 0 }} pts aplicados
+                  </span>
+                </span>
+              </div>
+              <!-- Versión no clickeable para viajeros sin puntos -->
+              <div class="traveler-info" *ngIf="!traveler.points || traveler.points <= 0">
+                <span class="traveler-name"
+                  >{{ traveler.firstName }} {{ traveler.lastName }}</span
+                >
+                <span>{{traveler.category}}</span>
+                <span class="points-badge">
+                  <span class="points-label">
+                    No hay puntos disponibles
                   </span>
                 </span>
               </div>

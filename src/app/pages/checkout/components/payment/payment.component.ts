@@ -165,6 +165,35 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
+  // NUEVOS MÉTODOS PARA SELECCIÓN AL HACER CLIC EN CUALQUIER PARTE DEL PANEL
+  
+  // Método para seleccionar tipo de pago al hacer clic en el panel
+  selectPaymentType(type: string): void {
+    this.paymentType = type;
+    this.onPaymentTypeChange();
+  }
+
+  // Método para seleccionar método de pago al hacer clic en el panel
+  selectPaymentMethod(method: 'creditCard' | 'transfer'): void {
+    this.paymentMethod = method;
+    this.onPaymentMethodChange();
+  }
+
+  // Método para seleccionar opción de cuotas al hacer clic en el panel
+  selectInstallmentOption(option: string): void {
+    this.installmentOption = option;
+    this.onInstallmentOptionChange();
+  }
+
+  // Método para alternar puntos de viajero al hacer clic en la fila
+  toggleTravelerPoints(traveler: TravelerWithPoints): void {
+    if (traveler.points && traveler.points > 0) {
+      traveler.redeemCheckbox = !traveler.redeemCheckbox;
+      this.onRedeemCheckboxChange(traveler);
+    }
+  }
+
+  // Método original que permanece sin cambios
   updateCheckboxStates() {
     const activeDiscounts = this.discountsService.getSelectedDiscounts();
 
@@ -190,6 +219,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       .map((d) => d.source || '')
       .filter((s) => s);
   }
+  // Los siguientes métodos permanecen exactamente como estaban en el original
 
   loadScalapayScript() {
     if (
@@ -374,8 +404,8 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
       const response = await this.processBooking();
       const bookingID = response.bookingID;
       const code = response.code;
-      await this.createReservationPoints(bookingID, this.tourName || '');
-      this.sendRedemptionPoints(bookingID, this.tourName || '');
+      await this.createReservationPoints(code, this.tourName || '');
+      this.sendRedemptionPoints(code, this.tourName || '');
       console.log('Booking created successfully:', bookingID);
 
       // Determine the payment amount based on payment type
@@ -474,7 +504,6 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   // Add this method to handle the back button click
-
   goBack(): void {
     this.goBackEvent.emit();
   }
@@ -742,6 +771,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     console.log(
       'Iniciando proceso de redención para booking:',
       bookingID,
+
       'y tour:',
       tourName
     );

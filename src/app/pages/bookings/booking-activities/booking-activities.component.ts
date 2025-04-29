@@ -49,6 +49,7 @@ export class BookingActivitiesComponent implements OnInit {
   pricesSource: {
     [key: string]: { priceData: PriceData[]; availability?: number };
   } = {};
+  isLoading = false;
 
   constructor(
     private sanitizer: DomSanitizer,
@@ -252,6 +253,8 @@ export class BookingActivitiesComponent implements OnInit {
       (act) => act.activityId === activityId
     );
 
+    this.isLoading = true; // Set loading state to true
+
     // Llamar al servicio para agregar la actividad opcional
     this.bookingsService
       .addOptionalActivities(
@@ -265,6 +268,7 @@ export class BookingActivitiesComponent implements OnInit {
           this.router.navigate([`/payment/${this.booking._id}`], {});
         },
         error: (error) => {
+          this.isLoading = false; // Reset loading state on error
           this.messageService.add({
             key: 'center',
             severity: 'error',

@@ -260,7 +260,7 @@ export class BookingsService {
    */
   updatePayment(paymentId: string, data: Partial<Payment>): Observable<any> {
     return this.http.put<any>(
-      `${environment.apiUrl}/payment/${paymentId}`,
+      `${this.API_URL}/payment/${paymentId}`,
       data,
       this.httpOptions
     );

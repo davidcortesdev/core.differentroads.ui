@@ -55,6 +55,7 @@
           flex: 1;
           display: flex;
           flex-direction: column;
+          padding: 0.5rem 1rem 1rem; // Añadido padding mínimo: 0.5rem arriba, 1rem a los lados, 1rem abajo
         }
 
         .card-header {

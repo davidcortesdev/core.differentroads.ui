@@ -97,6 +97,11 @@
           margin: 0.5rem 0;
           color: var(--background-azul);
           font-size: 1.25rem;
+          transition: color 0.2s ease;
+          
+          &:hover {
+            text-decoration: underline;
+          }
         }
 
         p {
@@ -105,6 +110,7 @@
           line-height: 1.5;
           font-size: 0.875rem;
           flex: 1;
+          transition: color 0.2s ease;
 
           // Truncate text after 4 lines
           display: -webkit-box;
@@ -113,6 +119,10 @@
           -webkit-box-orient: vertical;
           overflow: hidden;
           text-overflow: ellipsis;
+          
+          &:hover {
+            text-decoration: underline;
+          }
         }
       }
 

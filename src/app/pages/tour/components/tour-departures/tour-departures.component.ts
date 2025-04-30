@@ -132,10 +132,44 @@ export class TourDeparturesComponent implements OnInit, OnDestroy, AfterViewInit
   
   // Método para manejar cambio manual de ciudad
   onCityChange(newCity: string): void {
+    // Guardar la fecha de salida actual antes de filtrar
+    const currentDepartureId = this.selectedDepartureId;
+    const currentFlightId = this.selectedFlightId;
+    
     // Marcar que la ciudad ha sido seleccionada manualmente
     this.isCityManuallySelected = true;
     this.selectedCity = newCity;
-    this.filterDepartures();
+    
+    // Filtrar las salidas con la nueva ciudad
+    this.filteredDepartures = this.departures.filter(
+      (departure) =>
+        departure.destination === this.selectedCity ||
+        departure.flights === this.selectedCity
+    );
+    
+    // Ordenar las salidas filtradas por fecha de salida (ascendente)
+    this.filteredDepartures.sort((a, b) => {
+      return a.departureDate.getTime() - b.departureDate.getTime();
+    });
+    
+    // Intentar encontrar una salida con la misma fecha que estaba seleccionada
+    if (currentDepartureId && this.filteredDepartures.length > 0) {
+      // Primero buscar una salida con el mismo ID exacto (misma fecha)
+      const sameDateDeparture = this.filteredDepartures.find(
+        d => d.externalID === currentDepartureId
+      );
+      
+      if (sameDateDeparture) {
+        // Si encontramos una salida con la misma fecha, la seleccionamos
+        this.addToCart(sameDateDeparture);
+      } else {
+        // Si no encontramos la misma fecha, seleccionamos la primera disponible
+        this.addToCart(this.filteredDepartures[0]);
+      }
+    } else if (this.filteredDepartures.length > 0) {
+      // Si no había una salida seleccionada previamente, seleccionamos la primera
+      this.addToCart(this.filteredDepartures[0]);
+    }
     
     // Actualizar el precio base si hay salidas filtradas
     if (this.filteredDepartures.length > 0) {
@@ -330,6 +364,10 @@ export class TourDeparturesComponent implements OnInit, OnDestroy, AfterViewInit
   }
 
   filterDepartures(): void {
+    // Guardar la fecha de salida actual antes de filtrar
+    const currentDepartureId = this.selectedDepartureId;
+    const currentFlightId = this.selectedFlightId;
+    
     this.filteredDepartures = this.departures.filter(
       (departure) =>
         departure.destination === this.selectedCity ||
@@ -341,14 +379,24 @@ export class TourDeparturesComponent implements OnInit, OnDestroy, AfterViewInit
       return a.departureDate.getTime() - b.departureDate.getTime();
     });
 
-    // Automatically select the first departure if available
-    if (this.filteredDepartures.length > 0) {
-      // Si estamos actualizando manualmente, no llamamos a addToCart
-      // ya que eso podría interferir con la actualización manual
-      if (!this.isCityManuallySelected) {
-        this.addToCart(this.filteredDepartures[0]);
-      }
+    // Solo seleccionar automáticamente si no hay selección previa o si es la carga inicial
+    if (!currentDepartureId && this.filteredDepartures.length > 0 && !this.isCityManuallySelected) {
+      this.addToCart(this.filteredDepartures[0]);
       this.tourOrderService.updateBasePrice(this.filteredDepartures[0].price);
+    } else if (currentDepartureId && this.filteredDepartures.length > 0) {
+      // Intentar encontrar una salida con la misma fecha que estaba seleccionada
+      const sameDateDeparture = this.filteredDepartures.find(
+        d => d.externalID === currentDepartureId
+      );
+      
+      if (sameDateDeparture) {
+        // Si encontramos una salida con la misma fecha, actualizamos el precio
+        this.tourOrderService.updateBasePrice(sameDateDeparture.price);
+      } else if (!this.isCityManuallySelected) {
+        // Si no encontramos la misma fecha y no es selección manual, seleccionamos la primera
+        this.addToCart(this.filteredDepartures[0]);
+        this.tourOrderService.updateBasePrice(this.filteredDepartures[0].price);
+      }
     }
   }
 
@@ -431,6 +479,14 @@ export class TourDeparturesComponent implements OnInit, OnDestroy, AfterViewInit
     return this.filteredDepartures.findIndex(
       d => d.externalID === departureId && d.flightID === flightId
     );
+  }
+
+  // Método específico para usar cuando se necesita seleccionar por primera vez
+  private selectInitialDeparture() {
+    if (this.filteredDepartures.length > 0 && !this.selectedDepartureId) {
+      this.addToCart(this.filteredDepartures[0]);
+      this.tourOrderService.updateBasePrice(this.filteredDepartures[0].price);
+    }
   }
 
   ngOnInit() {
@@ -561,6 +617,11 @@ export class TourDeparturesComponent implements OnInit, OnDestroy, AfterViewInit
       const slug = params['slug'];
       if (slug) {
         this.loadTourData(slug);
+        
+        // Llamamos a selectInitialDeparture después de cargar los datos
+        setTimeout(() => {
+          this.selectInitialDeparture();
+        }, 100);
       }
     });
 
@@ -634,7 +695,7 @@ export class TourDeparturesComponent implements OnInit, OnDestroy, AfterViewInit
         // Verificar si debemos bloquear niños y bebés para la salida seleccionada por defecto
         this.shouldBlockKidsAndBabies = this.checkIfShouldBlockKids();
 
-        // Ensure we have a selected departure after loading data
+        // Seleccionamos la primera salida solo si no hay ninguna seleccionada
         if (!this.selectedDepartureId && this.filteredDepartures.length > 0) {
           this.addToCart(this.filteredDepartures[0]);
         }
@@ -669,6 +730,18 @@ export class TourDeparturesComponent implements OnInit, OnDestroy, AfterViewInit
       
       // Reiniciamos la bandera, ya que esta selección es automática
       this.isCityManuallySelected = false;
+      
+      // Solo filtramos las salidas pero no seleccionamos automáticamente
+      this.filteredDepartures = this.departures.filter(
+        (departure) =>
+          departure.destination === this.selectedCity ||
+          departure.flights === this.selectedCity
+      );
+      
+      // Ordenar las salidas filtradas
+      this.filteredDepartures.sort((a, b) => {
+        return a.departureDate.getTime() - b.departureDate.getTime();
+      });
     }
   }
 

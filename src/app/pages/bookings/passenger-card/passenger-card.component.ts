@@ -153,7 +153,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
     this.isEditing = true;
     this.passengerForm.patchValue({
       documentExpeditionDate: this.passenger.documentExpeditionDate ? new Date(this.passenger.documentExpeditionDate) : null,
-      documentExpirationDate: this.passenger.documentExpirationDate? new Date(this.passenger.documentExpirationDate) : null,
+      documentExpirationDate: this.passenger.documentExpirationDate ? new Date(this.passenger.documentExpirationDate) : null,
       birthDate: this.passenger.birthDate? new Date(this.passenger.birthDate) : null,
       gender: this.passenger.gender || '',
       documentType: this.passenger.documentType || '',

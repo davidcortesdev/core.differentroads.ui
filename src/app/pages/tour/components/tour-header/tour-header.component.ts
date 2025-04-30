@@ -156,8 +156,11 @@ export class TourHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private loadTourData(slug: string) {
+    // Obtener el parámetro filterByStatus de los query params
+    const filterByStatus = this.route.snapshot.queryParamMap.get('filterByStatus') !== 'false';
+    
     this.subscriptions.add(
-      this.toursService.getTourDetailBySlug(slug).subscribe({
+      this.toursService.getTourDetailBySlug(slug, undefined, filterByStatus).subscribe({
         next: (tourData) => {
           this.tour = { ...this.tour, ...tourData };
           this.marketingTag = tourData.marketingSection?.marketingTag || '';

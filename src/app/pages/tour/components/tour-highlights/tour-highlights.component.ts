@@ -114,8 +114,11 @@ export class TourHighlightsComponent implements OnInit, OnDestroy {
   }
 
   private fetchTourDetails(slug: string): void {
+    // Obtener el parámetro filterByStatus de los query params
+    const filterByStatus = this.route.snapshot.queryParamMap.get('filterByStatus') !== 'false';
+    
     this.toursService
-      .getTourDetailBySlug(slug, ['card-list', 'highlights-title'])
+      .getTourDetailBySlug(slug, ['card-list', 'highlights-title'], filterByStatus)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => this.isLoading = false)

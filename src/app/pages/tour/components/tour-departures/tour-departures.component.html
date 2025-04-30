@@ -16,7 +16,7 @@
           [dropdown]="true"
           placeholder="Sin vuelos"
           (completeMethod)="filterCities($event)"
-          (onSelect)="filterDepartures()"
+          (onSelect)="onCityChange(selectedCity)"
         ></p-autocomplete>
       </div>
     </div>

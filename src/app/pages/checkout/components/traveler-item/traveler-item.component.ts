@@ -108,6 +108,10 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
     sex: 'sexo',
     national_id: 'nationalId',
     birthdate: 'birthdate',
+    passport: 'passport',
+    passportexpiration: 'passportExpirationDate',
+    passportissue: 'passportIssueDate',
+    phone: 'phone',
   };
   private mandatoryFields: Set<string> = new Set();
 

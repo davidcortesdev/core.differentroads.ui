@@ -21,6 +21,7 @@ import { CountriesService } from '../../../../core/services/countries.service';
 import { Country } from '../../../../shared/models/country.model';
 import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 import { TravelersService } from '../../../../core/services/checkout/travelers.service';
+import { MessageService } from 'primeng/api';
 
 // Interfaces para mejorar la tipificación
 export interface TravelerData {
@@ -55,6 +56,24 @@ export function pastDateValidator(): ValidatorFn {
   };
 }
 
+const ALL_FIELDS = [
+  'firstName',
+  'lastName',
+  'email',
+  'sexo',
+  'birthdate',
+  'nationality',
+  'phone',
+  'documentType',
+  'passport',
+  'passportExpirationDate',
+  'passportIssueDate',
+  'dni',
+  'minorIdExpirationDate',
+  'minorIdIssueDate',
+  'associatedAdult',
+];
+
 @Component({
   selector: 'app-traveler-item',
   standalone: false,
@@ -69,39 +88,42 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
   @Input() sexoOptions: SelectOption[] = [];
   @Input() getAdultsOptionsFn!: (index: number) => SelectOption[];
   @Input() allFieldsMandatory: boolean = false;
-  @Input() travelerId: string | null = null;
+  @Input() reservationFields: { id: number; name: string; key: string }[] = [];
+  @Input() isAmadeusFlightSelected: boolean = false;
 
   @ViewChild('sexoSelect') sexoSelect!: Select;
 
-  // Propiedad para almacenar y mostrar los IDs
   travelerIds: { id: string | null; _id: string | null } = {
     id: null,
     _id: null,
   };
+  travelerId: string | null = null;
 
   showMoreFields: boolean = false;
   private documentOptionsCache: { [key: string]: SelectOption[] } = {};
   private destroy$ = new Subject<void>();
+  private reservationFieldMappings: { [key: string]: string } = {
+    name: 'firstName',
+    surname: 'lastName',
+    sex: 'sexo',
+    national_id: 'nationalId',
+    birthdate: 'birthdate',
+  };
+  private mandatoryFields: Set<string> = new Set();
 
-  // Propiedades para el autocompletado de países
   filteredCountries: Country[] = [];
-
-  // Formatos de fecha aceptados
   dateFormat: string = 'dd/mm/yy';
 
   constructor(
     private countriesService: CountriesService,
-    private travelersService: TravelersService
+    private travelersService: TravelersService,
+    private messageService: MessageService
   ) {}
 
   ngOnInit(): void {
-    // Inicializar el ID del viajero si no existe
     this.initializeTravelerId();
-
-    // Mostrar IDs en consola
     this.logTravelerIds();
-    const currentTraveler = this.travelersService.getTravelers()[this.index];
-    this.travelerId = currentTraveler?._id || null;
+    this.setupMandatoryFields();
 
     if (this.form) {
       this.form
@@ -114,40 +136,40 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
         ?.valueChanges.pipe(takeUntil(this.destroy$))
         .subscribe(() => this.clearDocumentOptionsCache());
 
-      // Initial validators setup
       this.updateValidators();
 
-      // Set passport as default document type if not already set
       if (!this.form.get('documentType')?.value) {
         this.form.get('documentType')?.setValue('passport');
       }
     }
+
     if (this.form && this.form.get('nationality')?.value) {
       const code = this.form.get('nationality')?.value;
       this.countriesService.getCountryByCode(code).subscribe((country) => {
         if (country) {
-          this.form.get('nationality')?.setValue(country.code); // mantiene el valor
-          this.filteredCountries = [country]; // necesario para que lo muestre
+          this.form.get('nationality')?.setValue(country.code);
+          this.filteredCountries = [country];
         }
       });
     }
 
-    // Convertir todos los campos de fecha string a objetos Date
     this.convertDateFields();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // React to input changes, particularly allFieldsMandatory
-    if (changes['allFieldsMandatory']) {
+    if (
+      changes['allFieldsMandatory'] ||
+      changes['reservationFields'] ||
+      changes['isAmadeusFlightSelected']
+    ) {
+      this.setupMandatoryFields();
       this.updateValidators();
 
-      // Set showMoreFields to true when allFieldsMandatory is true
       if (this.allFieldsMandatory) {
         this.showMoreFields = true;
       }
     }
 
-    // Si hay cambios en los datos del viajero, convertir fechas
     if (changes['traveler']) {
       this.convertDateFields();
     }
@@ -156,6 +178,82 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private setupMandatoryFields(): void {
+    this.mandatoryFields.clear();
+
+    if (this.isAmadeusFlightSelected) {
+      this.mandatoryFields.add('passportExpirationDate');
+      this.mandatoryFields.add('passportIssueDate');
+
+      ALL_FIELDS.forEach((field) => {
+        if (
+          field !== 'minorIdExpirationDate' &&
+          field !== 'minorIdIssueDate' &&
+          field !== 'associatedAdult'
+        ) {
+          this.mandatoryFields.add(field);
+        }
+      });
+    } else if (this.allFieldsMandatory) {
+      ALL_FIELDS.forEach((field) => this.mandatoryFields.add(field));
+    } else if (this.reservationFields?.length) {
+      this.reservationFields.forEach((field) => {
+        const mappedKey = this.reservationFieldMappings[field.key] || field.key;
+        this.mandatoryFields.add(mappedKey);
+      });
+
+      ['firstName', 'lastName', 'email'].forEach((field) =>
+        this.mandatoryFields.add(field)
+      );
+    } else {
+      ['firstName', 'lastName', 'email'].forEach((field) =>
+        this.mandatoryFields.add(field)
+      );
+    }
+
+    // Ensure 'associatedAdult' is required if the traveler is a child
+    if (this.traveler.ageGroup === 'Niños') {
+      this.mandatoryFields.add('associatedAdult');
+    }
+  }
+
+  private updateValidators(): void {
+    if (!this.form) return;
+
+    console.log('Mandatory fields:', Array.from(this.mandatoryFields));
+
+    Object.keys(this.form.controls).forEach((key) => {
+      const control = this.form.get(key);
+      if (!control) return;
+
+      if (
+        this.mandatoryFields.has(key) ||
+        (key === 'associatedAdult' && this.traveler.ageGroup === 'Niños')
+      ) {
+        if (key === 'email') {
+          control.setValidators([Validators.required, Validators.email]);
+        } else if (key === 'passportExpirationDate') {
+          control.setValidators([Validators.required, futureDateValidator()]);
+        } else if (key === 'passportIssueDate') {
+          control.setValidators([Validators.required, pastDateValidator()]);
+        } else {
+          control.setValidators([Validators.required]);
+        }
+      } else {
+        control.clearValidators();
+      }
+      control.updateValueAndValidity({ emitEvent: false });
+    });
+  }
+
+  isFieldRequired(fieldName: string): boolean {
+    return this.mandatoryFields.has(fieldName);
+  }
+
+  toggleMoreFields(): void {
+    this.showMoreFields = !this.showMoreFields;
   }
 
   private initializeTravelerId(): void {
@@ -183,76 +281,7 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
     console.log('ID:', currentTraveler?.id || 'No disponible');
     console.log('_ID:', currentTraveler?._id || 'No disponible');
     console.groupEnd();
-  }
-
-  toggleMoreFields(): void {
-    this.showMoreFields = !this.showMoreFields;
-  }
-
-  /**
-   * Actualiza los validadores basados en la bandera allFieldsMandatory
-   */
-  private updateValidators(): void {
-    if (!this.form) return;
-
-    const requiredFields = ['firstName', 'lastName', 'email'];
-
-    // For debugging
-    console.log(
-      `Updating validators: allFieldsMandatory=${this.allFieldsMandatory}`
-    );
-
-    // First, ensure name, surname and email are ALWAYS required
-    requiredFields.forEach((field) => {
-      const control = this.form.get(field);
-      if (control) {
-        if (field === 'email') {
-          control.setValidators([Validators.required, Validators.email]);
-        } else {
-          control.setValidators([Validators.required]);
-        }
-        control.updateValueAndValidity({ emitEvent: false });
-      }
-    });
-
-    // Then apply additional validators for other fields when allFieldsMandatory is true
-    if (this.allFieldsMandatory) {
-      Object.keys(this.form.controls).forEach((key) => {
-        // Skip already handled required fields
-        if (requiredFields.includes(key)) return;
-
-        const control = this.form.get(key);
-        if (control) {
-          // No aplicar validación requerida a "ageGroup"
-          if (key === 'ageGroup') {
-            control.clearValidators();
-          } else if (key === 'passportExpirationDate') {
-            control.setValidators([Validators.required, futureDateValidator()]);
-          } else if (key === 'passportIssueDate') {
-            control.setValidators([Validators.required, pastDateValidator()]);
-          } else if (
-            key !== 'minorIdExpirationDate' &&
-            key !== 'minorIdIssueDate' &&
-            key !== 'associatedAdult'
-          ) {
-            control.setValidators([Validators.required]);
-          }
-          control.updateValueAndValidity({ emitEvent: false });
-        }
-      });
-    } else {
-      // For non-required fields when not Amadeus flight
-      Object.keys(this.form.controls).forEach((key) => {
-        // Skip already handled required fields
-        if (requiredFields.includes(key)) return;
-
-        const control = this.form.get(key);
-        if (control) {
-          control.clearValidators();
-          control.updateValueAndValidity({ emitEvent: false });
-        }
-      });
-    }
+    this.travelerId = currentTraveler?._id || null;
   }
 
   getTitlePasajero(num: string): string {
@@ -354,5 +383,55 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
         }
       }
     });
+  }
+
+  isTravelerValid(): boolean {
+    if (this.form) {
+      this.form.markAllAsTouched();
+      const isValid = this.form.valid;
+      if (!isValid) {
+        this.notifyMissingFields();
+      }
+      return isValid;
+    }
+    return false;
+  }
+
+  notifyMissingFields(): void {
+    const missingFields: string[] = [];
+
+    if (!this.form) return;
+
+    Object.keys(this.form.controls).forEach((key) => {
+      const control = this.form.get(key);
+      if (control && control.invalid && this.isFieldRequired(key)) {
+        if (key === 'firstName') missingFields.push('Nombre');
+        else if (key === 'lastName') missingFields.push('Apellido');
+        else if (key === 'email') missingFields.push('Email');
+        else if (key === 'phone') missingFields.push('Teléfono');
+        else if (key === 'passport') missingFields.push('Pasaporte');
+        else if (key === 'birthdate') missingFields.push('Fecha de nacimiento');
+        else if (key === 'sexo') missingFields.push('Sexo');
+        else if (key === 'documentType')
+          missingFields.push('Tipo de documento');
+        else if (key === 'nationality') missingFields.push('Nacionalidad');
+        else if (key === 'passportExpirationDate')
+          missingFields.push('Caducidad pasaporte');
+        else if (key === 'passportIssueDate')
+          missingFields.push('Emisión pasaporte');
+        else if (key === 'associatedAdult')
+          missingFields.push('Adulto asociado');
+        else missingFields.push(key);
+      }
+    });
+
+    if (missingFields.length > 0) {
+      this.messageService.add({
+        severity: 'error',
+        summary: `Faltan datos para pasajero ${this.index + 1}`,
+        detail: `Debes llenar los campos: ${missingFields.join(', ')}`,
+        life: 8000,
+      });
+    }
   }
 }

@@ -1,0 +1,11 @@
+{
+  "/scalapay-api": {
+    "target": "https://integration.api.scalapay.com",
+    "secure": true,
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "pathRewrite": {
+      "^/scalapay-api": ""
+    }
+  }
+}

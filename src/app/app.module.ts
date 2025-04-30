@@ -161,6 +161,8 @@ import { Amplify } from 'aws-amplify';
 import awsconfig from '../../src/aws-exports';
 import { TripTypesSectionComponent } from './pages/home/components/trip-types-section/trip-types-section.component';
 import { ConfirmationCodeComponent } from './shared/components/confirmation-code/confirmation-code.component';
+import { ScalapayService } from './core/services/checkout/payment/scalapay.service';
+
 
 import { CookieService } from 'ngx-cookie-service';
 
@@ -203,6 +205,9 @@ import { TravelerActivitySelectorComponent } from './pages/checkout/components/t
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { Nl2brPipe } from './shared/pipes/nl2br.pipe';
 import { BookingListSectionComponent } from './pages/profile/components/booking-list-section/booking-list-section.component';
+import { BookingDocumentationComponent } from './pages/bookings/booking-documentation/booking-documentation.component';
+import { TourCardHeaderComponent } from './shared/components/tour-card/tour-card-header/tour-card-header.component';
+import { TourCardContentComponent } from './shared/components/tour-card/tour-card-content/tour-card-content.component';
 import { CookiesComponent } from './shared/components/cookies/cookies.component';
 import { CookiesConsentComponent } from './shared/components/cookies-consent/cookies-consent.component';
 // Register Spanish locale data
@@ -312,7 +317,9 @@ registerLocaleData(localeEs);
     SummaryTableComponent,
     TravelerActivitySelectorComponent,
     BookingListSectionComponent,
-    CookiesComponent,
+    BookingDocumentationComponent,
+    TourCardHeaderComponent,
+    TourCardContentComponent,    CookiesComponent,
     CookiesConsentComponent,
   ],
   imports: [

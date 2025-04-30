@@ -29,4 +29,11 @@ export interface Period extends CMSCollections {
     airportsFilters: string[];
     includeTourConfig: boolean;
   };
+  reservationFields?: [
+    {
+      id: number;
+      name: string;
+      key: string;
+    }
+  ];
 }

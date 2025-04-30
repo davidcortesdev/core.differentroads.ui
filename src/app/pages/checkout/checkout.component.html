@@ -62,7 +62,8 @@
                 "
                 [disabled]="
                   !selectedFlight ||
-                  selectedFlight.name.toLowerCase().includes('sin ')
+                  selectedFlight.name.toLowerCase().includes('sin ') ||
+                  selectedFlight.name.toLowerCase().includes('sinvue')
                 "
               ></p-button>
             </div>
@@ -72,6 +73,8 @@
           <div *ngSwitchCase="2">
             <app-travelers
               [allFieldsMandatory]="isAmadeusFlightSelected"
+              [reservationFields]="reservationFields"
+              [isAmadeusFlightSelected]="isAmadeusFlightSelected"
             ></app-travelers>
             <div class="flex pt-6 justify-between">
               <p-button

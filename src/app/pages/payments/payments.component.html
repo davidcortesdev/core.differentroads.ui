@@ -28,8 +28,11 @@
           </div>
         </p-panel>
 
-        <!-- New deposit payment option -->
-        <p-panel styleClass="payment-panel">
+        <!-- New deposit payment option - hidden during loading -->
+        <p-panel
+          styleClass="payment-panel"
+          *ngIf="!isLoading && depositAmount <= remainingAmount"
+        >
           <div class="payment-option">
             <p-radioButton
               name="paymentType"

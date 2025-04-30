@@ -133,18 +133,18 @@ export class PaymentsComponent implements OnInit {
       this.remainingAmount = this.totalPrice - totalPaid;
 
       // Agregar líneas al resumen: historial de pagos y pendiente de pago
-      this.summary.push({
+      /* this.summary.push({
         qty: 1,
         value: this.paidAmount,
         description: 'Historial de pagos',
-      });
-      if (this.remainingAmount > 0) {
+      }); */
+      /* if (this.remainingAmount > 0) {
         this.summary.push({
           qty: 1,
           value: this.remainingAmount,
           description: 'Pendiente de pago',
         });
-      }
+      } */
     });
   }
 

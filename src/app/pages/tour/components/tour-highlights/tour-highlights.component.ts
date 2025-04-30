@@ -18,6 +18,10 @@ export class TourHighlightsComponent implements OnInit, OnDestroy {
   protected carouselConfig = CAROUSEL_CONFIG;
   private destroy$ = new Subject<void>();
   isLoading = true;
+  
+  // Variables para el modal
+  showFullHighlightModal = false;
+  selectedHighlight: TourHighlight | null = null;
 
   responsiveOptions = [
     {
@@ -106,5 +110,11 @@ export class TourHighlightsComponent implements OnInit, OnDestroy {
 
   private sanitizeHtml(html: string): string {
     return html ? html.replace(/<[^>]*>/g, '') : '';
+  }
+  
+  // Método para abrir el modal con el highlight seleccionado
+  openFullHighlight(highlight: TourHighlight): void {
+    this.selectedHighlight = highlight;
+    this.showFullHighlightModal = true;
   }
 }

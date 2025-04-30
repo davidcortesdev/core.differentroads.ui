@@ -30,6 +30,7 @@
           border: 'none',
           boxShadow: 'none'
         }"
+        (click)="openFullHighlight(highlight)"
       >
         <ng-template pTemplate="header">
           <div class="card-header">
@@ -47,3 +48,23 @@
     </ng-template>
   </p-carousel>
 </div>
+
+<!-- Modal de highlight completo -->
+<p-dialog 
+  [(visible)]="showFullHighlightModal" 
+  [modal]="true"
+  [dismissableMask]="true"
+  [style]="{width: '90%', maxWidth: '800px'}"
+  [header]="'Detalle del Highlight'"
+  [closeOnEscape]="true">
+  <div class="full-highlight-content" *ngIf="selectedHighlight">
+    <div class="highlight-image">
+      <img [src]="selectedHighlight.image" [alt]="selectedHighlight.title" />
+      <span class="status-badge" [class.optional]="selectedHighlight.optional">
+        {{ selectedHighlight.optional ? "Opcional" : "Incluida" }}
+      </span>
+    </div>
+    <h3 class="highlight-title">{{ selectedHighlight.title }}</h3>
+    <div class="highlight-description">{{ selectedHighlight.description }}</div>
+  </div>
+</p-dialog>

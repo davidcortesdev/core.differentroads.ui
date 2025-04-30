@@ -128,3 +128,67 @@
     }
   }
 }
+
+
+// Estilos para el modal de highlight completo
+.full-highlight-content {
+  padding: 1rem;
+
+  .highlight-image {
+    position: relative;
+    margin-bottom: 1.5rem;
+    
+    img {
+      width: 100%;
+      max-height: 400px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    
+    .status-badge {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      padding: 0.3rem 0.6rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background: var(--p-button-primary-color);
+      color: var(--background-azul);
+
+      &.optional {
+        background: var(--p-primary-color);
+        color: #fff;
+      }
+    }
+  }
+
+  .highlight-title {
+    color: var(--background-azul);
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .highlight-description {
+    color: var(--background-azul);
+    font-size: 1rem;
+    line-height: 1.6;
+    white-space: pre-line;
+  }
+}
+
+// Hacer que las tarjetas sean clickeables
+.highlight-card {
+  cursor: pointer;
+}
+
+// Estilos para el diálogo
+::ng-deep .p-dialog {
+  .p-dialog-header {
+    background-color: var(--background-azul);
+    color: white;
+  }
+  
+  .p-dialog-header-icon {
+    color: white;
+  }
+}

@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ToursService } from '../../../../core/services/tours.service';
 import { ActivatedRoute } from '@angular/router';
-import { take } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { take, takeUntil } from 'rxjs/operators';
 import { CAROUSEL_CONFIG } from '../../../../shared/constants/carousel.constants';
+import { TourHighlight } from './tour-highlight.interface';
 
 @Component({
   selector: 'app-tour-highlights',
@@ -10,10 +12,12 @@ import { CAROUSEL_CONFIG } from '../../../../shared/constants/carousel.constants
   templateUrl: './tour-highlights.component.html',
   styleUrls: ['./tour-highlights.component.scss'],
 })
-export class TourHighlightsComponent implements OnInit {
-  highlights: any[] = [];
+export class TourHighlightsComponent implements OnInit, OnDestroy {
+  highlights: TourHighlight[] = [];
   highlightsTitle: string = 'Highlights';
   protected carouselConfig = CAROUSEL_CONFIG;
+  private destroy$ = new Subject<void>();
+  isLoading = true;
 
   responsiveOptions = [
     {
@@ -44,35 +48,63 @@ export class TourHighlightsComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.route.params.pipe(take(1)).subscribe((params) => {
-      const slug = params['slug'];
+    this.loadTourHighlights();
+  }
 
-      this.toursService
-        .getTourDetailBySlug(slug, ['card-list', 'highlights-title'])
-        .subscribe({
-          next: (tourData) => {
-            if (tourData['card-list']) {
-              this.highlights = tourData['card-list'].map((card) => {
-                const mappedCard = {
-                  title: card.title,
-                  description: card.subtitle.replace(/<[^>]*>/g, ''), // Sanitizamos el HTML
-                  image:
-                    card.cimage?.[0]?.url ||
-                    'https://picsum.photos/1000?random=8',
-                  optional: !card.included,
-                };
-                return mappedCard;
-              });
-            }
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
-            if (tourData['highlights-title']) {
-              this.highlightsTitle = tourData['highlights-title'];
-            }
-          },
-          error: (error) => {
-            console.error('Error al obtener detalles del tour:', error);
-          },
-        });
+  private loadTourHighlights(): void {
+    this.isLoading = true;
+    this.route.params.pipe(
+      take(1),
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (params) => {
+        const slug = params['slug'];
+        this.fetchTourDetails(slug);
+      },
+      error: (error) => {
+        console.error('Error al obtener parámetros de ruta:', error);
+        this.isLoading = false;
+      }
     });
+  }
+
+  private fetchTourDetails(slug: string): void {
+    this.toursService
+      .getTourDetailBySlug(slug, ['card-list', 'highlights-title'])
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (tourData) => {
+          this.processHighlightsData(tourData);
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error al obtener detalles del tour:', error);
+          this.isLoading = false;
+        },
+      });
+  }
+
+  private processHighlightsData(tourData: any): void {
+    if (tourData['card-list']) {
+      this.highlights = tourData['card-list'].map((card: any) => ({
+        title: card.title,
+        description: this.sanitizeHtml(card.subtitle),
+        image: card.cimage?.[0]?.url || 'assets/images/placeholder-image.jpg',
+        optional: !card.included,
+      }));
+    }
+
+    if (tourData['highlights-title']) {
+      this.highlightsTitle = tourData['highlights-title'];
+    }
+  }
+
+  private sanitizeHtml(html: string): string {
+    return html ? html.replace(/<[^>]*>/g, '') : '';
   }
 }

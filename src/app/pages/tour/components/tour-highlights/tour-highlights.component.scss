@@ -1,11 +1,27 @@
 .highlights-section {
   padding: 2rem 0;
+  position: relative;
+  min-height: 200px;
 
   h2 {
     text-align: center;
     color: var(--background-azul);
     margin-bottom: 2rem;
     font-size: 2rem;
+  }
+
+  .loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+  }
+
+  .no-data-message {
+    text-align: center;
+    padding: 2rem;
+    color: var(--background-azul);
+    font-style: italic;
   }
 
   ::ng-deep {
@@ -28,6 +44,12 @@
         display: flex;
         flex-direction: column;
         height: 100%;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+        &:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
 
         .p-card-body {
           flex: 1;
@@ -37,12 +59,18 @@
 
         .card-header {
           position: relative;
+          overflow: hidden;
 
           img {
             width: 100%;
             height: 200px;
             object-fit: cover;
             border-radius: 8px;
+            transition: transform 0.5s ease;
+          }
+
+          &:hover img {
+            transform: scale(1.05);
           }
 
           .status-badge {
@@ -89,6 +117,14 @@
       .p-carousel-next {
         color: var(--primary-color);
       }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .highlights-section {
+    h2 {
+      font-size: 1.5rem;
     }
   }
 }

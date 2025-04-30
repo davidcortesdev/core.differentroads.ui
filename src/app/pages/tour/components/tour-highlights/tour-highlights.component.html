@@ -1,7 +1,16 @@
 <div class="highlights-section">
   <h2>{{ highlightsTitle }}</h2>
 
+  <div *ngIf="isLoading" class="loading-container">
+    <p-progressSpinner></p-progressSpinner>
+  </div>
+
+  <div *ngIf="!isLoading && highlights.length === 0" class="no-data-message">
+    <p>No hay destacados disponibles para este tour.</p>
+  </div>
+
   <p-carousel
+    *ngIf="!isLoading && highlights.length > 0"
     [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
     [value]="highlights"
     [numVisible]="5"
@@ -24,15 +33,15 @@
       >
         <ng-template pTemplate="header">
           <div class="card-header">
-            <img [src]="highlight.image" [alt]="highlight.title" />
+            <img [src]="highlight.image" [alt]="highlight.title" loading="lazy" />
             <span class="status-badge" [class.optional]="highlight.optional">
               {{ highlight.optional ? "Opcional" : "Incluida" }}
             </span>
           </div>
         </ng-template>
         <ng-template pTemplate="content">
-          <h3>{{ highlight.title }}</h3>
-          <p>{{ highlight.description }}</p>
+          <h3 [title]="highlight.title">{{ highlight.title }}</h3>
+          <p [title]="highlight.description">{{ highlight.description }}</p>
         </ng-template>
       </p-card>
     </ng-template>

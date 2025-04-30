@@ -18,246 +18,350 @@
 
 <!-- Formulario del viajero -->
 <form [formGroup]="form" class="traveler-form">
-  <!-- Datos personales básicos (siempre visibles) -->
-  <div class="form-section">
-    <!-- Nombre y Apellido -->
+  <!-- Campos OBLIGATORIOS visibles siempre -->
+  <div class="form-section mandatory-fields">
     <div class="form-row">
-      <div class="form-column">
-        <div class="form-field">
-          <label>Nombre*</label>
-          <input
-            pInputText
-            name="nombre"
-            placeholder="Introduce tu nombre"
-            formControlName="firstName"
-          />
-        </div>
+      <div class="form-column form-field">
+        <label>Nombre{{ isFieldRequired("firstName") ? "*" : "" }}</label>
+        <input
+          pInputText
+          name="name"
+          placeholder="Introduce tu nombre"
+          formControlName="firstName"
+        />
       </div>
-      <div class="form-column">
-        <div class="form-field">
-          <label>Apellido*</label>
-          <input
-            pInputText
-            name="apellido"
-            placeholder="Introduce Apellido"
-            formControlName="lastName"
-          />
-        </div>
+      <div class="form-column form-field">
+        <label>Apellido{{ isFieldRequired("lastName") ? "*" : "" }}</label>
+        <input
+          pInputText
+          name="surname"
+          placeholder="Introduce Apellido"
+          formControlName="lastName"
+        />
       </div>
     </div>
-
-    <!-- Email -->
     <div class="form-row">
-      <div class="form-column half-width">
-        <div class="form-field">
-          <label>E-mail*</label>
-          <input
-            pInputText
-            name="email"
-            placeholder="e-mail"
-            formControlName="email"
-          />
-        </div>
+      <div
+        class="form-column form-field half-width"
+        *ngIf="isFieldRequired('email')"
+      >
+        <label>Email*</label>
+        <input
+          pInputText
+          type="email"
+          name="email"
+          formControlName="email"
+          placeholder="Introduce tu email"
+        />
       </div>
-      <div class="form-column half-width">
-        <div class="form-field">
-          <label>Sexo{{ allFieldsMandatory ? "*" : "" }}</label>
-          <p-select
-            #sexoSelect
-            formControlName="sexo"
-            [options]="sexoOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Seleccione"
-          >
-          </p-select>
-        </div>
+      <div class="form-column form-field half-width">
+        <label>Sexo {{ isFieldRequired("sexo") ? "*" : "" }}</label>
+        <p-select
+          formControlName="sexo"
+          [options]="sexoOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccione"
+        ></p-select>
       </div>
-    </div>
+      <div
+        class="form-column form-field half-width"
+        *ngIf="isFieldRequired('birthdate')"
+      >
+        <label>Fecha de nacimiento*</label>
+        <p-datepicker
+          formControlName="birthdate"
+          [dateFormat]="dateFormat"
+          showIcon
+          appendTo="body"
+        ></p-datepicker>
+      </div>
+      <div
+        class="form-column form-field half-width"
+        *ngIf="isFieldRequired('nationality')"
+      >
+        <label>Nacionalidad*</label>
+        <p-autocomplete
+          formControlName="nationality"
+          [suggestions]="filteredCountries"
+          (completeMethod)="filterCountries($event)"
+          (onSelect)="onCountrySelect($event)"
+          [optionValue]="'code'"
+          field="name"
+          placeholder="Introduce tu nacionalidad"
+          appendTo="body"
+          [dropdown]="true"
+        ></p-autocomplete>
+      </div>
+      <div
+        class="form-column form-field half-width"
+        *ngIf="isFieldRequired('phone')"
+      >
+        <label>Teléfono*</label>
+        <input
+          pInputText
+          formControlName="phone"
+          name="phone"
+          placeholder="Introduce tu teléfono"
+        />
+      </div>
+      <div
+        class="form-column form-field half-width"
+        *ngIf="isFieldRequired('documentType')"
+      >
+        <label>Tipo de documento*</label>
+        <p-select
+          formControlName="documentType"
+          [options]="getDocumentOptions()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccione"
+          appendTo="body"
+        ></p-select>
+      </div>
+      <div
+        class="form-column form-field half-width"
+        *ngIf="isFieldRequired('passport')"
+      >
+        <label>Pasaporte*</label>
+        <input
+          pInputText
+          formControlName="passport"
+          name="passport"
+          placeholder="Introduce tu pasaporte"
+        />
+      </div>
+      <div
+        class="form-column form-field half-width"
+        *ngIf="isFieldRequired('passportExpirationDate')"
+      >
+        <label>Fecha de expiración pasaporte*</label>
+        <p-datepicker
+          formControlName="passportExpirationDate"
+          [dateFormat]="dateFormat"
+          showIcon
+          appendTo="body"
+        ></p-datepicker>
+      </div>
 
-    <!-- Botón Ver más/menos -->
-    <div class="form-row">
-      <div class="form-column">
-        <button
-          pButton
-          type="button"
-          [label]="showMoreFields ? 'Ver menos' : 'Ver más'"
-          [icon]="showMoreFields ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
-          (click)="toggleMoreFields()"
-          class="p-button-text p-button-sm show-more-button"
-        ></button>
+      <div
+        class="form-column form-field half-width"
+        *ngIf="isFieldRequired('passportIssueDate')"
+      >
+        <label>Fecha de emisión pasaporte*</label>
+        <p-datepicker
+          formControlName="passportIssueDate"
+          [dateFormat]="dateFormat"
+          showIcon
+          appendTo="body"
+        ></p-datepicker>
+      </div>
+      <!--  <div
+        class="form-column form-field half-width"
+        *ngIf="isFieldRequired('dni')"
+      >
+        <label>DNI*</label>
+        <input
+          pInputText
+          formControlName="dni"
+          placeholder="Introduce tu DNI"
+        />
+      </div> -->
+      <!--  
+      <div
+        class="form-column form-field half-width"
+        *ngIf="isFieldRequired('minorIdExpirationDate')"
+      >
+        <label>Fecha de expiración ID menor*</label>
+        <p-datepicker
+          formControlName="minorIdExpirationDate"
+          [dateFormat]="dateFormat"
+          showIcon
+          appendTo="body"
+        ></p-datepicker>
+      </div>
+     <div
+        class="form-column form-field half-width"
+        *ngIf="isFieldRequired('minorIdIssueDate')"
+      >
+        <label>Fecha de emisión ID menor*</label>
+        <p-datepicker
+          formControlName="minorIdIssueDate"
+          [dateFormat]="dateFormat"
+          showIcon
+          appendTo="body"
+        ></p-datepicker>
+      </div> 
+      -->
+      <div
+        class="form-column form-field half-width"
+        *ngIf="isFieldRequired('associatedAdult')"
+      >
+        <label>Asociar reserva del menor a*</label>
+        <p-select
+          formControlName="associatedAdult"
+          [options]="getAdultsOptions()"
+          placeholder="Seleccione"
+          appendTo="body"
+        ></p-select>
       </div>
     </div>
   </div>
 
-  <!-- Campos adicionales (mostrados/ocultados con el botón) -->
+  <!-- Botón Ver más / Ver menos -->
+  <div class="form-row">
+    <div class="form-column">
+      <button
+        pButton
+        type="button"
+        [label]="showMoreFields ? 'Ver menos' : 'Ver más'"
+        [icon]="showMoreFields ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+        (click)="toggleMoreFields()"
+        class="p-button-text p-button-sm show-more-button"
+      ></button>
+    </div>
+  </div>
+
+  <!-- Campos NO obligatorios visibles al hacer Ver más -->
   <div class="additional-fields" *ngIf="showMoreFields">
-    <!-- Sexo y Fecha de nacimiento y nacionalidad -->
     <div class="form-row">
-      <div class="form-column half-width">
-        <div class="form-field">
-          <label>Fecha de nacimiento{{ allFieldsMandatory ? "*" : "" }}</label>
-          <p-datepicker
-            formControlName="birthdate"
-            placeholder="dd/mm/aaaa"
-            [iconDisplay]="'input'"
-            [showIcon]="true"
-            [dateFormat]="dateFormat"
-            appendTo="body"
-          >
-          </p-datepicker>
-        </div>
+      <div
+        class="form-column form-field half-width"
+        *ngIf="!isFieldRequired('birthdate')"
+      >
+        <label>Fecha de nacimiento</label>
+        <p-datepicker
+          formControlName="birthdate"
+          [dateFormat]="dateFormat"
+          showIcon
+          appendTo="body"
+        ></p-datepicker>
       </div>
-      <div class="form-column half-width">
-        <div class="form-field">
-          <label>Nacionalidad{{ allFieldsMandatory ? "*" : "" }}</label>
-          <p-autocomplete
-            formControlName="nationality"
-            [suggestions]="filteredCountries"
-            (completeMethod)="filterCountries($event)"
-            (onSelect)="onCountrySelect($event)"
-            [optionValue]="'code'"
-            [dropdown]="true"
-            [forceSelection]="true"
-            field="name"
-            placeholder="Introduce tu nacionalidad"
-            appendTo="body"
-          ></p-autocomplete>
-        </div>
+
+      <div
+        class="form-column form-field half-width"
+        *ngIf="!isFieldRequired('nationality')"
+      >
+        <label>Nacionalidad</label>
+        <p-autocomplete
+          formControlName="nationality"
+          [suggestions]="filteredCountries"
+          (completeMethod)="filterCountries($event)"
+          (onSelect)="onCountrySelect($event)"
+          [optionValue]="'code'"
+          field="name"
+          placeholder="Introduce tu nacionalidad"
+          appendTo="body"
+          [dropdown]="true"
+        ></p-autocomplete>
       </div>
+
+      <div
+        class="form-column form-field half-width"
+        *ngIf="!isFieldRequired('phone')"
+      >
+        <label>Teléfono</label>
+        <input
+          pInputText
+          formControlName="phone"
+          name="phone"
+          placeholder="Introduce tu teléfono"
+        />
+      </div>
+
+      <div
+        class="form-column form-field half-width"
+        *ngIf="!isFieldRequired('documentType')"
+      >
+        <label>Tipo de documento</label>
+        <p-select
+          formControlName="documentType"
+          [options]="getDocumentOptions()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccione"
+          appendTo="body"
+        ></p-select>
+      </div>
+
+      <div
+        class="form-column form-field half-width"
+        *ngIf="!isFieldRequired('passport')"
+      >
+        <label>Pasaporte</label>
+        <input
+          pInputText
+          name="passport"
+          formControlName="passport"
+          placeholder="Introduce tu pasaporte"
+        />
+      </div>
+
+      <div
+        class="form-column form-field half-width"
+        *ngIf="!isFieldRequired('passportExpirationDate')"
+      >
+        <label>Fecha de expiración pasaporte</label>
+        <p-datepicker
+          formControlName="passportExpirationDate"
+          [dateFormat]="dateFormat"
+          showIcon
+          appendTo="body"
+        ></p-datepicker>
+      </div>
+
+      <div
+        class="form-column form-field half-width"
+        *ngIf="!isFieldRequired('passportIssueDate')"
+      >
+        <label>Fecha de emisión pasaporte</label>
+        <p-datepicker
+          formControlName="passportIssueDate"
+          [dateFormat]="dateFormat"
+          showIcon
+          appendTo="body"
+        ></p-datepicker>
+      </div>
+      <!-- 
+      <div
+        class="form-column form-field half-width"
+        *ngIf="!isFieldRequired('dni')"
+      >
+        <label>DNI</label>
+        <input
+          pInputText
+          formControlName="dni"
+          placeholder="Introduce tu DNI"
+        />
+      </div> -->
+      <!-- 
+      <div
+        class="form-column form-field half-width"
+        *ngIf="!isFieldRequired('minorIdExpirationDate')"
+      >
+        <label>Fecha de expiración ID menor</label>
+        <p-datepicker
+          formControlName="minorIdExpirationDate"
+          [dateFormat]="dateFormat"
+          showIcon
+          appendTo="body"
+        ></p-datepicker>
+      </div>
+
+      <div
+        class="form-column form-field half-width"
+        *ngIf="!isFieldRequired('minorIdIssueDate')"
+      >
+        <label>Fecha de emisión ID menor</label>
+        <p-datepicker
+          formControlName="minorIdIssueDate"
+          [dateFormat]="dateFormat"
+          showIcon
+          appendTo="body"
+        ></p-datepicker>
+      </div>
+ -->
     </div>
-
-    <!-- Teléfono y Tipo documento -->
-    <div class="form-row">
-      <div class="form-column">
-        <div class="form-field">
-          <label>Teléfono {{ allFieldsMandatory ? "*" : "" }}</label>
-          <input
-            pInputText
-            name="telefono"
-            placeholder="Introduce teléfono"
-            formControlName="phone"
-          />
-        </div>
-      </div>
-      <div class="form-column">
-        <div class="form-field">
-          <label>Tipo documento {{ allFieldsMandatory ? "*" : "" }}</label>
-          <p-select
-            appendTo="body"
-            formControlName="documentType"
-            [options]="getDocumentOptions()"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Seleccione"
-          >
-          </p-select>
-        </div>
-      </div>
-    </div>
-
-    <!-- Campos condicionales para documentos -->
-    <ng-container [ngSwitch]="form.get('documentType')?.value">
-      <!-- Pasaporte -->
-      <div *ngSwitchCase="'passport'" class="document-section">
-        <div class="form-row">
-          <div class="form-column half-width">
-            <div class="form-field">
-              <label>Número de Pasaporte*</label>
-              <input
-                pInputText
-                formControlName="passport"
-                placeholder="Introduce el número del pasaporte"
-              />
-            </div>
-          </div>
-          <div class="form-column half-width">
-            <div class="form-row">
-              <div class="form-column half-width">
-                <div class="form-field">
-                  <label>Fecha de caducidad*</label>
-                  <p-datepicker
-                    formControlName="passportExpirationDate"
-                    placeholder="dd/mm/aaaa"
-                    [iconDisplay]="'input'"
-                    [showIcon]="true"
-                    [dateFormat]="dateFormat"
-                    appendTo="body"
-                  >
-                  </p-datepicker>
-                </div>
-              </div>
-              <div class="form-column half-width">
-                <div class="form-field">
-                  <label>Fecha de expedición*</label>
-                  <p-datepicker
-                    formControlName="passportIssueDate"
-                    placeholder="dd/mm/aaaa"
-                    [iconDisplay]="'input'"
-                    [showIcon]="true"
-                    appendTo="body"
-                  >
-                  </p-datepicker>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- DNI -->
-      <div *ngSwitchCase="'dni'" class="document-section">
-        <div class="form-field">
-          <label>Número de identificación*</label>
-          <input
-            pInputText
-            formControlName="dni"
-            placeholder="Introduce el número de identificación"
-          />
-        </div>
-
-        <!-- Campos adicionales para bebés -->
-        <ng-container *ngIf="form.get('ageGroup')?.value === 'Bebés'">
-          <div class="form-row">
-            <div class="form-column">
-              <div class="form-field">
-                <label>Fecha de caducidad (ID menor)*</label>
-                <p-datepicker
-                  formControlName="minorIdExpirationDate"
-                  placeholder="dd/mm/aaaa"
-                  [iconDisplay]="'input'"
-                  [showIcon]="true"
-                  appendTo="body"
-                >
-                </p-datepicker>
-              </div>
-            </div>
-            <div class="form-column">
-              <div class="form-field">
-                <label>Fecha de expedición (ID menor)*</label>
-                <p-datepicker
-                  formControlName="minorIdIssueDate"
-                  placeholder="dd/mm/aaaa"
-                  [iconDisplay]="'input'"
-                  [showIcon]="true"
-                  appendTo="body"
-                >
-                </p-datepicker>
-              </div>
-            </div>
-          </div>
-          <div class="form-field">
-            <label>Asociar reserva del menor a</label>
-            <p-select
-              formControlName="associatedAdult"
-              [options]="getAdultsOptions()"
-              placeholder="Seleccione"
-            >
-            </p-select>
-          </div>
-        </ng-container>
-      </div>
-    </ng-container>
   </div>
 
   <app-traveler-activity-selector *ngIf="travelerId" [travelerId]="travelerId">

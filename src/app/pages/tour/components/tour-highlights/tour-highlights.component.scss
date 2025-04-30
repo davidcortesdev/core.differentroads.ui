@@ -132,8 +132,12 @@
 
 // Estilos para el modal de highlight completo
 .full-highlight-content {
-  padding: 1rem;
+  padding: 1.5rem;  // Aumentado de 1rem a 1.5rem
 
+  padding-top: 0.5;
+padding-left: 1.5rem;
+padding-right: 1.5rem;
+padding-bottom: 1.5rem;
   .highlight-image {
     position: relative;
     margin-bottom: 1.5rem;
@@ -184,11 +188,22 @@
 // Estilos para el diálogo
 ::ng-deep .p-dialog {
   .p-dialog-header {
-    background-color: var(--background-azul);
-    color: white;
+    //background-color: white;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 0.75rem 1.5rem;  // Reducido el padding vertical a 0.75rem, manteniendo 1.5rem horizontal
+    
+    .p-dialog-title {
+      color: var(--background-azul);
+      font-weight: 600;
+    }
   }
   
   .p-dialog-header-icon {
-    color: white;
+    color: var(--background-azul);
+  }
+  
+  .p-dialog-content {
+    //background-color: white;
+    //padding: 0.5rem;  // Cambiado de 0 a 0.5rem para dar un poco de espacio alrededor
   }
 }

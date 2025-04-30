@@ -79,9 +79,12 @@
                     <button
                       pButton
                       type="button"
-                      label="Continuar"
+                      [label]="isLoading ? 'Cargando...' : 'Continuar'"
                       (click)="onContinueActivity(activity.id)"
                       class="p-button-rounded"
+                      [disabled]="isLoading"
+                      [icon]="isLoading ? 'pi pi-spin pi-spinner' : ''"
+                      [iconPos]="isLoading ? 'left' : 'right'"
                     ></button>
                   </div>
                 </div>

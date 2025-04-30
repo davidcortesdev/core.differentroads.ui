@@ -163,6 +163,9 @@ import { TripTypesSectionComponent } from './pages/home/components/trip-types-se
 import { ConfirmationCodeComponent } from './shared/components/confirmation-code/confirmation-code.component';
 import { ScalapayService } from './core/services/checkout/payment/scalapay.service';
 
+
+import { CookieService } from 'ngx-cookie-service';
+
 // Add this function outside the class
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -200,11 +203,13 @@ import { AirportSearchComponent } from './features/airports/airport-search/airpo
 import { SummaryTableComponent } from './components/summary-table/summary-table.component';
 import { TravelerActivitySelectorComponent } from './pages/checkout/components/traveler-activity-selector/traveler-activity-selector.component';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { Nl2brPipe } from "./shared/pipes/nl2br.pipe";
+import { Nl2brPipe } from './shared/pipes/nl2br.pipe';
 import { BookingListSectionComponent } from './pages/profile/components/booking-list-section/booking-list-section.component';
 import { BookingDocumentationComponent } from './pages/bookings/booking-documentation/booking-documentation.component';
 import { TourCardHeaderComponent } from './shared/components/tour-card/tour-card-header/tour-card-header.component';
 import { TourCardContentComponent } from './shared/components/tour-card/tour-card-content/tour-card-content.component';
+import { CookiesComponent } from './shared/components/cookies/cookies.component';
+import { CookiesConsentComponent } from './shared/components/cookies-consent/cookies-consent.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -314,7 +319,8 @@ registerLocaleData(localeEs);
     BookingListSectionComponent,
     BookingDocumentationComponent,
     TourCardHeaderComponent,
-    TourCardContentComponent,
+    TourCardContentComponent,    CookiesComponent,
+    CookiesConsentComponent,
   ],
   imports: [
     // Angular Modules
@@ -377,17 +383,17 @@ registerLocaleData(localeEs);
     OverlayPanelModule,
     ToggleSwitchModule,
     TranslateModule.forRoot({
-        loader: {
-            provide: TranslateLoader,
-            useFactory: HttpLoaderFactory,
-            deps: [HttpClient],
-        },
-        defaultLanguage: 'es',
+      loader: {
+        provide: TranslateLoader,
+        useFactory: HttpLoaderFactory,
+        deps: [HttpClient],
+      },
+      defaultLanguage: 'es',
     }),
     CurrencyPipe,
     SortByPipe,
-    Nl2brPipe
-],
+    Nl2brPipe,
+  ],
   providers: [
     provideAnimationsAsync(),
     provideHttpClient(),
@@ -414,6 +420,7 @@ registerLocaleData(localeEs);
       },
     }),
     MessageService,
+    CookieService,
   ],
   bootstrap: [AppComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],

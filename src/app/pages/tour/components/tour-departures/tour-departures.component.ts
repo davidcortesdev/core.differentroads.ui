@@ -4,6 +4,8 @@ import {
   OnDestroy,
   Output,
   EventEmitter,
+  ViewChild,
+  AfterViewInit,
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ToursService } from '../../../../core/services/tours.service';
@@ -14,6 +16,7 @@ import { TourOrderService } from '../../../../core/services/tour-data/tour-order
 import { MessageService } from 'primeng/api';
 import { TripType } from '../../../../shared/models/interfaces/trip-type.interface';
 import { TRIP_TYPES } from '../../../../shared/constants/trip-types.constants';
+import { DataView } from 'primeng/dataview';
 
 
 export interface Departure {
@@ -41,7 +44,9 @@ export type DepartureStatus = 'available' | 'complete';
   styleUrls: ['./tour-departures.component.scss'],
   providers: [MessageService]
 })
-export class TourDeparturesComponent implements OnInit, OnDestroy {
+export class TourDeparturesComponent implements OnInit, OnDestroy, AfterViewInit {
+  @ViewChild('dv') dataView!: DataView;
+
   departures: Departure[] = [];
   filteredDepartures: Departure[] = [];
   selectedCity: string = '';
@@ -84,6 +89,16 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
 
   // Constants
   tripTypes: TripType[] = TRIP_TYPES;
+  
+  // Bandera para controlar si estamos procesando una actualización externa
+  private isProcessingDateUpdate = false;
+  
+  // Flag para controlar si la ciudad ha sido seleccionada manualmente
+  private isCityManuallySelected = false;
+  
+  // Nuevas propiedades para manejar el paginador
+  private pendingNavigateToIndex: number | null = null;
+  private dataViewInitialized = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -92,12 +107,40 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
     private tourOrderService: TourOrderService,
     private messageService: MessageService
   ) {}
+  
+  ngAfterViewInit() {
+    this.dataViewInitialized = true;
+    
+    // Si hay una navegación pendiente, procesarla
+    if (this.pendingNavigateToIndex !== null) {
+      this.navigateToItemIndex(this.pendingNavigateToIndex);
+      this.pendingNavigateToIndex = null;
+    }
+  }
 
   filterCities(event: { query: string }): void {
     const query = event.query.toLowerCase();
     this.filteredCities = this.cities.filter((city) =>
       city.toLowerCase().includes(query)
     );
+  }
+  
+  // Evento para manejar la selección manual de ciudad
+  onSelectCity(event: any): void {
+    this.isCityManuallySelected = true;
+  }
+  
+  // Método para manejar cambio manual de ciudad
+  onCityChange(newCity: string): void {
+    // Marcar que la ciudad ha sido seleccionada manualmente
+    this.isCityManuallySelected = true;
+    this.selectedCity = newCity;
+    this.filterDepartures();
+    
+    // Actualizar el precio base si hay salidas filtradas
+    if (this.filteredDepartures.length > 0) {
+      this.tourOrderService.updateBasePrice(this.filteredDepartures[0].price);
+    }
   }
 
   // Métodos para el selector de pasajeros
@@ -226,6 +269,11 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
   }
 
   addToCart(departure: Departure): void {
+    // Si estamos procesando una actualización externa, evitar ciclos
+    if (this.isProcessingDateUpdate) {
+      return;
+    }
+    
     // Antes de redirigir, actualizamos la información en el servicio compartido
     const selectedDate = new Date(departure.departureDate);
     const returnDate = new Date(departure.returnDate);
@@ -288,15 +336,20 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
         departure.flights === this.selectedCity
     );
 
-    console.log('filteredDepartures', this.filteredDepartures);
+    // Ordenar las salidas filtradas por fecha de salida (ascendente)
+    this.filteredDepartures.sort((a, b) => {
+      return a.departureDate.getTime() - b.departureDate.getTime();
+    });
 
     // Automatically select the first departure if available
     if (this.filteredDepartures.length > 0) {
-      this.addToCart(this.filteredDepartures[0]);
+      // Si estamos actualizando manualmente, no llamamos a addToCart
+      // ya que eso podría interferir con la actualización manual
+      if (!this.isCityManuallySelected) {
+        this.addToCart(this.filteredDepartures[0]);
+      }
       this.tourOrderService.updateBasePrice(this.filteredDepartures[0].price);
     }
-
-    console.log('filteredDepartures', this.filteredDepartures);
   }
 
   // Métodos para la navegación del mes
@@ -319,45 +372,8 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
     // Mantenemos el año en la propiedad pero no lo mostramos en la interfaz
     this.year = this.currentMonth.getFullYear();
   }
-  /*
-  previousMonth(): void {
-    this.currentMonth = new Date(
-      this.currentMonth.getFullYear(),
-      this.currentMonth.getMonth() - 1,
-      1
-    );
-    this.updateMonthDisplay();
-    this.filterDeparturesByMonth();
-  }
-    */
-  /*
-  nextMonth(): void {
-    this.currentMonth = new Date(
-      this.currentMonth.getFullYear(),
-      this.currentMonth.getMonth() + 1,
-      1
-    );
-    this.updateMonthDisplay();
-    this.filterDeparturesByMonth();
-  }
-*/
-  filterDeparturesByMonth(): void {
-    /* const startOfMonth = new Date(
-      this.currentMonth.getFullYear(),
-      this.currentMonth.getMonth(),
-      1
-    );
-    const endOfMonth = new Date(
-      this.currentMonth.getFullYear(),
-      this.currentMonth.getMonth() + 1,
-      0
-    );*/
-    /*
-    this.filteredDepartures = this.departures.filter((departure) => {
-      const departureDate = new Date(departure.departureDate);
-      return departureDate >= startOfMonth && departureDate <= endOfMonth;
-    });*/
 
+  filterDeparturesByMonth(): void {
     // Actualizar precios con la primera salida filtrada si existe
     if (this.filteredDepartures.length > 0) {
       this.tourOrderService.updateBasePrice(this.filteredDepartures[0].price);
@@ -367,11 +383,180 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
       }
     }
   }
+  
+  // Método simplificado para navegar al elemento seleccionado en el DataView
+  navigateToItemIndex(index: number): void {
+    if (!this.dataViewInitialized || !this.dataView) {
+      // Si el dataView no está inicializado, guardamos la navegación para más tarde
+      this.pendingNavigateToIndex = index;
+      return;
+    }
+    
+    try {
+      // Obtener el tamaño de página
+      const rowsPerPage = this.dataView.rows || 5;
+      
+      // Calcular la página donde debería estar el elemento
+      const targetPage = Math.floor(index / rowsPerPage);
+      
+      // Actualizar la página del DataView
+      this.dataView.first = targetPage * rowsPerPage;
+      
+      // También intentar cambiar directamente la página del paginador
+      setTimeout(() => {
+        // Verificar si hay un paginador físico en la página
+        const paginatorElement = document.querySelector('.p-paginator');
+        if (paginatorElement) {
+          // Encontrar todos los botones de página
+          const pageButtons = paginatorElement.querySelectorAll('.p-paginator-page');
+          
+          // Buscar el botón de la página específica
+          for (let i = 0; i < pageButtons.length; i++) {
+            const button = pageButtons[i] as HTMLElement;
+            if (button.textContent?.trim() === (targetPage + 1).toString()) {
+              // Clickear el botón directamente
+              button.click();
+              break;
+            }
+          }
+        }
+      }, 0);
+    } catch (err) {
+      // Error handling without console.log
+    }
+  }
+  
+  // Método para buscar el índice de una salida en el array filtrado
+  findDepartureIndex(departureId: string, flightId: string): number {
+    return this.filteredDepartures.findIndex(
+      d => d.externalID === departureId && d.flightID === flightId
+    );
+  }
 
   ngOnInit() {
     this.updateMonthDisplay();
     this.updatePassengerText(); // Inicializa el texto de pasajeros
 
+    // Configurar la suscripción a cambios externos
+    this.subscriptions.add(
+      this.tourOrderService.selectedDateInfo$.subscribe(dateInfo => {
+        // No reaccionar a cambios durante la carga inicial
+        if (dateInfo.periodID && 
+            dateInfo.periodID !== this.selectedDepartureId &&
+            this.departures.length > 0 && 
+            this.selectedDepartureId !== null) { // Solo si ya hay algo seleccionado
+          
+          try {
+            this.isProcessingDateUpdate = true;
+            
+            // Buscar una salida que corresponda al periodID y a la ciudad actualmente seleccionada
+            // Si la ciudad incluye "Sin vuelos", queremos mantener esta selección
+            const isSinVuelosSelected = this.selectedCity.toLowerCase().includes('sin');
+            
+            // Primero intentamos encontrar una salida que coincida con el periodID y la ciudad actual
+            let matchingDeparture = null;
+            
+            // Si la ciudad actual es "Sin vuelos" o no ha sido seleccionada manualmente,
+            // intentamos encontrar una salida "Sin vuelos" para el nuevo período
+            if (isSinVuelosSelected || !this.isCityManuallySelected) {
+              matchingDeparture = this.departures.find(
+                d => d.externalID === dateInfo.periodID && 
+                    (d.destination?.toLowerCase().includes('sin') || 
+                     d.flights?.toLowerCase().includes('sin'))
+              );
+            }
+            
+            // Si no encontramos una salida "Sin vuelos" o la ciudad fue seleccionada manualmente,
+            // buscamos cualquier salida que coincida con el nuevo período y la ciudad actual
+            if (!matchingDeparture && this.isCityManuallySelected) {
+              matchingDeparture = this.departures.find(
+                d => d.externalID === dateInfo.periodID && 
+                    (d.destination === this.selectedCity || 
+                     d.flights === this.selectedCity)
+              );
+            }
+            
+            // Si aún no encontramos una salida, tomamos cualquiera con el periodID correcto
+            if (!matchingDeparture) {
+              matchingDeparture = this.departures.find(
+                d => d.externalID === dateInfo.periodID
+              );
+            }
+            
+            if (matchingDeparture) {
+              // Si la ciudad actual es "Sin vuelos" o no ha sido seleccionada manualmente,
+              // y tenemos una salida "Sin vuelos" disponible en el nuevo período,
+              // mantenemos "Sin vuelos" como la ciudad seleccionada
+              if (!this.isCityManuallySelected && 
+                  (isSinVuelosSelected || this.selectedCity === '') && 
+                  matchingDeparture.destination?.toLowerCase().includes('sin')) {
+                // No cambiamos la ciudad seleccionada, mantenemos "Sin vuelos"
+              }
+              // Solo cambiamos la ciudad si el usuario la seleccionó manualmente
+              // y la ciudad actual no coincide con la salida encontrada
+              else if (this.isCityManuallySelected && 
+                       matchingDeparture.destination !== this.selectedCity && 
+                       matchingDeparture.flights !== this.selectedCity) {
+                this.selectedCity = matchingDeparture.destination || matchingDeparture.flights || '';
+              }
+              
+              // Filtrar las salidas manualmente sin cambiar la selección automática
+              this.filteredDepartures = this.departures.filter(
+                (departure) =>
+                  departure.destination === this.selectedCity ||
+                  departure.flights === this.selectedCity
+              );
+              
+              // Ordenar las salidas filtradas por fecha (ascendente)
+              this.filteredDepartures.sort((a, b) => {
+                return a.departureDate.getTime() - b.departureDate.getTime();
+              });
+              
+              // Actualizar propiedades locales
+              this.selectedDepartureId = matchingDeparture.externalID;
+              this.selectedFlightId = matchingDeparture.flightID;
+              
+              // Verificar bloqueo de niños/bebés
+              this.shouldBlockKidsAndBabies = this.checkIfShouldBlockKids();
+              
+              // Resetear niños/bebés si es necesario
+              if (this.shouldBlockKidsAndBabies) {
+                if (this.travelers.children > 0 || this.travelers.babies > 0) {
+                  this.travelers.children = 0;
+                  this.travelers.babies = 0;
+                  this.updatePassengerText();
+                }
+              }
+              
+              // Actualizar viajeros
+              this.tourOrderService.updateSelectedTravelers(this.travelers);
+              
+              // Emitir cambio
+              this.passengerChange.emit({
+                adults: this.travelers.adults,
+                children: this.travelers.children,
+              });
+              
+              // Buscar el índice del elemento seleccionado
+              const index = this.findDepartureIndex(matchingDeparture.externalID, matchingDeparture.flightID);
+              
+              if (index !== -1) {
+                // Navegar a la página que contiene el elemento
+                setTimeout(() => {
+                  this.navigateToItemIndex(index);
+                }, 50);
+              }
+            }
+          } finally {
+            setTimeout(() => {
+              this.isProcessingDateUpdate = false;
+            }, 0);
+          }
+        }
+      })
+    );
+
+    // Continuar con la carga normal
     this.route.params.subscribe((params) => {
       const slug = params['slug'];
       if (slug) {
@@ -429,6 +614,11 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
             })
             .filter((departure) => departure !== null)
         );
+        
+        // Ordenar las salidas por fecha de salida (ascendente)
+        this.departures.sort((a, b) => {
+          return a.departureDate.getTime() - b.departureDate.getTime();
+        });
 
         this.cities = [
           ...new Set(
@@ -448,6 +638,9 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
         if (!this.selectedDepartureId && this.filteredDepartures.length > 0) {
           this.addToCart(this.filteredDepartures[0]);
         }
+        
+        // Reiniciamos la bandera después de la carga inicial
+        this.isCityManuallySelected = false;
       });
   }
 
@@ -457,9 +650,12 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
         (departure) =>
           departure.price === Math.min(...this.departures.map((d) => d.price))
       );
+      
+      // Preferencia por salidas "Sin vuelos"
       const preferredDeparture = cheapestDepartures.find((departure) =>
         departure.destination?.toLowerCase().includes('sin')
       );
+      
       this.selectedCity =
         preferredDeparture?.destination ||
         cheapestDepartures[0].destination ||
@@ -470,6 +666,9 @@ export class TourDeparturesComponent implements OnInit, OnDestroy {
         this.selectedCity,
         ...this.cities.filter((city) => city !== this.selectedCity),
       ];
+      
+      // Reiniciamos la bandera, ya que esta selección es automática
+      this.isCityManuallySelected = false;
     }
   }
 

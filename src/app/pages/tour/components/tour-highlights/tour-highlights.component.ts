@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ToursService } from '../../../../core/services/tours.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs';
-import { take, takeUntil } from 'rxjs/operators';
+import { take, takeUntil, catchError, finalize } from 'rxjs/operators';
 import { CAROUSEL_CONFIG } from '../../../../shared/constants/carousel.constants';
 import { TourHighlight } from './tour-highlight.interface';
 
@@ -22,6 +22,22 @@ export class TourHighlightsComponent implements OnInit, OnDestroy {
   // Variables para el modal
   showFullHighlightModal = false;
   selectedHighlight: TourHighlight | null = null;
+  
+  // Estilos extraídos como propiedades para mejorar rendimiento
+  cardStyle = {
+    'border-radius': '1rem',
+    overflow: 'hidden',
+    border: 'none',
+    boxShadow: 'none'
+  };
+  
+  dialogStyle = {
+    width: '90%', 
+    maxWidth: '800px'
+  };
+  
+  // Valor por defecto para numVisible
+  carouselNumVisible = 5;
 
   responsiveOptions = [
     {
@@ -53,6 +69,7 @@ export class TourHighlightsComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadTourHighlights();
+    this.adjustCarouselForScreenSize();
   }
 
   ngOnDestroy() {
@@ -60,18 +77,37 @@ export class TourHighlightsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  // Método para ajustar el carousel según el tamaño de pantalla inicial
+  private adjustCarouselForScreenSize(): void {
+    const width = window.innerWidth;
+    if (width <= 767) {
+      this.carouselNumVisible = 1;
+    } else if (width <= 991) {
+      this.carouselNumVisible = 2;
+    } else if (width <= 1199) {
+      this.carouselNumVisible = 3;
+    } else if (width <= 1750) {
+      this.carouselNumVisible = 4;
+    } else {
+      this.carouselNumVisible = 5;
+    }
+  }
+
   private loadTourHighlights(): void {
     this.isLoading = true;
     this.route.params.pipe(
       take(1),
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (params) => {
-        const slug = params['slug'];
-        this.fetchTourDetails(slug);
-      },
-      error: (error) => {
+      takeUntil(this.destroy$),
+      catchError(error => {
         console.error('Error al obtener parámetros de ruta:', error);
+        this.isLoading = false;
+        throw error;
+      })
+    ).subscribe(params => {
+      const slug = params['slug'];
+      if (slug) {
+        this.fetchTourDetails(slug);
+      } else {
         this.isLoading = false;
       }
     });
@@ -80,16 +116,13 @@ export class TourHighlightsComponent implements OnInit, OnDestroy {
   private fetchTourDetails(slug: string): void {
     this.toursService
       .getTourDetailBySlug(slug, ['card-list', 'highlights-title'])
-      .pipe(takeUntil(this.destroy$))
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => this.isLoading = false)
+      )
       .subscribe({
-        next: (tourData) => {
-          this.processHighlightsData(tourData);
-          this.isLoading = false;
-        },
-        error: (error) => {
-          console.error('Error al obtener detalles del tour:', error);
-          this.isLoading = false;
-        },
+        next: (tourData) => this.processHighlightsData(tourData),
+        error: (error) => console.error('Error al obtener detalles del tour:', error)
       });
   }
 

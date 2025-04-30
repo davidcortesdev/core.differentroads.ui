@@ -13,7 +13,7 @@
     *ngIf="!isLoading && highlights.length > 0"
     [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
     [value]="highlights"
-    [numVisible]="5"
+    [numVisible]="carouselNumVisible"
     [numScroll]="1"
     [circular]="true"
     [showNavigators]="true"
@@ -24,12 +24,7 @@
     <ng-template let-highlight pTemplate="item">
       <p-card
         styleClass="highlight-card"
-        [style]="{
-          'border-radius': '1rem',
-          overflow: 'hidden',
-          border: 'none',
-          boxShadow: 'none'
-        }"
+        [style]="cardStyle"
         (click)="openFullHighlight(highlight)"
       >
         <ng-template pTemplate="header">
@@ -54,12 +49,12 @@
   [(visible)]="showFullHighlightModal" 
   [modal]="true"
   [dismissableMask]="true"
-  [style]="{width: '90%', maxWidth: '800px'}"
+  [style]="dialogStyle"
   [header]="'Detalle'"
   [closeOnEscape]="true">
   <div class="full-highlight-content" *ngIf="selectedHighlight">
     <div class="highlight-image">
-      <img [src]="selectedHighlight.image" [alt]="selectedHighlight.title" loading="lazy" />
+      <img [src]="selectedHighlight.image" [alt]="selectedHighlight.title" />
       <span class="status-badge" [class.optional]="selectedHighlight.optional">
         {{ selectedHighlight.optional ? "Opcional" : "Incluida" }}
       </span>

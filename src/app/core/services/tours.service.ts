@@ -38,16 +38,51 @@ export class ToursService {
 
   constructor(private http: HttpClient) {}
 
+  // Método auxiliar para verificar si un tour está publicado (insensible a mayúsculas/minúsculas)
+  private isPublished(status: string | undefined): boolean {
+    return status?.toLowerCase() === 'published';
+  }
+
+  // Método auxiliar para asegurar que status esté incluido en selectedFields
+  private ensureStatusField(selectedFields: SelectedFields): SelectedFields {
+    if (selectedFields.includes('all')) {
+      return selectedFields;
+    }
+    
+    // Si no incluye 'all', asegurarse de que 'status' esté incluido
+    if (!selectedFields.includes('status' as keyof Tour)) {
+      return [...selectedFields, 'status' as keyof Tour];
+    }
+    
+    return selectedFields;
+  }
+
+  // Método auxiliar para filtrar tours por status published
+  private filterPublishedTours<T extends Tour[]>(data: T): T {
+    return data.filter(tour => this.isPublished(tour.status)) as T;
+  }
+
   getToursList(
     selectedFields: SelectedFields = ['all']
   ): Observable<TourListResponse> {
     let params = new HttpParams().set('limit', '1000');
+    
+    // Asegurar que status esté incluido
+    const fieldsWithStatus = this.ensureStatusField(selectedFields);
 
-    if (selectedFields && selectedFields.length) {
-      params = params.set('selectedFields', selectedFields.join(','));
+    if (fieldsWithStatus && fieldsWithStatus.length) {
+      params = params.set('selectedFields', fieldsWithStatus.join(','));
     }
 
-    return this.http.get<TourListResponse>(this.API_URL, { params });
+    return this.http.get<TourListResponse>(this.API_URL, { params }).pipe(
+      map((response: TourListResponse) => {
+        if (response && response.data) {
+          // Filtrar solo los tours con status published (insensible a mayúsculas/minúsculas)
+          response.data = response.data.filter(tour => this.isPublished(tour.status));
+        }
+        return response;
+      })
+    );
   }
 
   getFilteredToursList(filters: TourFilters): Observable<{
@@ -66,6 +101,7 @@ export class ToursService {
       'activePeriods',
       'tourType',
       'externalID',
+      'status', // Añadido status aquí
     ];
 
     const toursObservable = filters.destination
@@ -75,11 +111,14 @@ export class ToursService {
     return toursObservable.pipe(
       map((toursData: TourListResponse) => {
         const tours = toursData.data ? toursData.data : (toursData as any);
+        
+        // Filtrar solo tours publicados (insensible a mayúsculas/minúsculas)
+        const publishedTours = tours.filter((tour: any) => this.isPublished(tour.status));
 
         // Collect possible months and tags
         const monthSet = new Set<string>();
         const tagsSet = new Set<string>();
-        tours.forEach((tour: any) => {
+        publishedTours.forEach((tour: any) => {
           // Check if monthTags is an array before calling forEach
           if (Array.isArray(tour.monthTags)) {
             tour.monthTags.forEach((month: string) => {
@@ -107,7 +146,7 @@ export class ToursService {
         };
 
         // Apply filters to tours
-        let filteredTours = tours.filter((tour: any) => {
+        let filteredTours = publishedTours.filter((tour: any) => {
           const { price } = tour;
           const priceFilters = filters.price || [];
           const tourSeasonFilters = filters.tourSeason || [];
@@ -187,7 +226,6 @@ export class ToursService {
           );
         }
 
-        // Fix the incorrect assignment that's causing the error
         if (filters.externalID) {
           filteredTours = filteredTours.filter(
             (tour: any) => tour.externalID === filters.externalID
@@ -204,12 +242,22 @@ export class ToursService {
     selectedFields: SelectedFields = []
   ): Observable<Tour> {
     let params = new HttpParams();
+    
+    // Asegurar que status esté incluido
+    const fieldsWithStatus = this.ensureStatusField(selectedFields);
 
-    if (selectedFields && selectedFields.length) {
-      params = params.set('selectedFields', selectedFields.join(','));
+    if (fieldsWithStatus && fieldsWithStatus.length) {
+      params = params.set('selectedFields', fieldsWithStatus.join(','));
     }
 
-    return this.http.get<Tour>(`${this.API_URL}/${id}`, { params });
+    return this.http.get<Tour>(`${this.API_URL}/${id}`, { params }).pipe(
+      map((tour: Tour) => {
+        if (tour && !this.isPublished(tour.status)) {
+          throw new Error('Tour not found or not published');
+        }
+        return tour;
+      })
+    );
   }
 
   getTourDetailBySlug(
@@ -217,19 +265,23 @@ export class ToursService {
     selectedFields: SelectedFields = ['all']
   ): Observable<Tour> {
     let params = new HttpParams();
+    
+    // Asegurar que status esté incluido
+    const fieldsWithStatus = this.ensureStatusField(selectedFields);
 
-    if (selectedFields && selectedFields.length) {
-      params = params.set('selectedFields', selectedFields.join(','));
+    if (fieldsWithStatus && fieldsWithStatus.length) {
+      params = params.set('selectedFields', fieldsWithStatus.join(','));
     }
 
     return this.http
       .get<Tour[]>(`${this.API_URL}/filter-by/webSlug/${slug}`, { params })
       .pipe(
         map((tours: Tour[]) => {
-          if (tours.length > 0) {
-            return tours[0];
+          const publishedTours = tours.filter(tour => this.isPublished(tour.status));
+          if (publishedTours.length > 0) {
+            return publishedTours[0];
           } else {
-            throw new Error('No tour found with the given slug');
+            throw new Error('No published tour found with the given slug');
           }
         })
       );
@@ -240,19 +292,23 @@ export class ToursService {
     selectedFields: SelectedFields = ['all']
   ): Observable<Tour> {
     let params = new HttpParams();
+    
+    // Asegurar que status esté incluido
+    const fieldsWithStatus = this.ensureStatusField(selectedFields);
 
-    if (selectedFields && selectedFields.length) {
-      params = params.set('selectedFields', selectedFields.join(','));
+    if (fieldsWithStatus && fieldsWithStatus.length) {
+      params = params.set('selectedFields', fieldsWithStatus.join(','));
     }
 
     return this.http
       .get<Tour[]>(`${this.API_URL}/filter-by/externalID/${slug}`, { params })
       .pipe(
         map((tours: Tour[]) => {
-          if (tours.length > 0) {
-            return tours[0];
+          const publishedTours = tours.filter(tour => this.isPublished(tour.status));
+          if (publishedTours.length > 0) {
+            return publishedTours[0];
           } else {
-            throw new Error('No tour found with the given slug');
+            throw new Error('No published tour found with the given external ID');
           }
         })
       );
@@ -263,14 +319,25 @@ export class ToursService {
     selectedFields: SelectedFields = ['all']
   ): Observable<TourListResponse> {
     let params = new HttpParams();
+    
+    // Asegurar que status esté incluido
+    const fieldsWithStatus = this.ensureStatusField(selectedFields);
 
-    if (selectedFields && selectedFields.length) {
-      params = params.set('selectedFields', selectedFields.join(','));
+    if (fieldsWithStatus && fieldsWithStatus.length) {
+      params = params.set('selectedFields', fieldsWithStatus.join(','));
     }
 
     return this.http.get<TourListResponse>(
       `${this.API_URL}/filter-by/name,tags,vtags,cities,country,continent/${keyword}`,
       { params }
+    ).pipe(
+      map((response: TourListResponse) => {
+        if (response && response.data) {
+          // Filtrar solo los tours con status published (insensible a mayúsculas/minúsculas)
+          response.data = response.data.filter(tour => this.isPublished(tour.status));
+        }
+        return response;
+      })
     );
   }
 
@@ -288,6 +355,7 @@ export class ToursService {
       'webSlug',
       'tourType',
       'externalID',
+      'status', // Añadido status aquí
     ]).pipe(map((tourData: Tour) => tourData));
   }
 
@@ -295,6 +363,7 @@ export class ToursService {
     return new Observable((subscriber) => {
       const tourCards: ProcessedTour[] = [];
       let completed = 0;
+      let errors = 0;
 
       ids.forEach((id) => {
         this.getTourCardData(id).subscribe({
@@ -328,43 +397,49 @@ export class ToursService {
             });
             completed++;
 
-            if (completed === ids.length) {
+            if (completed + errors === ids.length) {
               subscriber.next(tourCards);
               subscriber.complete();
             }
           },
-          error: (error) => subscriber.error(error),
+          error: (error) => {
+            errors++;
+            if (completed + errors === ids.length) {
+              subscriber.next(tourCards);
+              subscriber.complete();
+            }
+          },
         });
       });
     });
   }
 
   getItinerarySection(id: string): Observable<Itinerary> {
-    return this.getTourDetail(id, ['itinerary-section']).pipe(
+    return this.getTourDetail(id, ['itinerary-section', 'status']).pipe(
       map((tourData: Tour) => tourData['itinerary-section'])
     );
   }
 
   getCardList(id: string): Observable<CardList[]> {
-    return this.getTourDetail(id, ['card-list']).pipe(
+    return this.getTourDetail(id, ['card-list', 'status']).pipe(
       map((tourData: Tour) => tourData['card-list'])
     );
   }
 
   getExtraInfoSection(id: string): Observable<ExtraInfoSection> {
-    return this.getTourDetail(id, ['extra-info-section']).pipe(
+    return this.getTourDetail(id, ['extra-info-section', 'status']).pipe(
       map((tourData: Tour) => tourData['extra-info-section'])
     );
   }
 
   getMarketingSection(id: string): Observable<MarketingSection> {
-    return this.getTourDetail(id, ['marketingSection']).pipe(
+    return this.getTourDetail(id, ['marketingSection', 'status']).pipe(
       map((tourData: Tour) => tourData.marketingSection)
     );
   }
 
   getSupportSection(id: string): Observable<SupportSection> {
-    return this.getTourDetail(id, ['supportSection']).pipe(
+    return this.getTourDetail(id, ['supportSection', 'status']).pipe(
       map((tourData: Tour) => tourData.supportSection)
     );
   }

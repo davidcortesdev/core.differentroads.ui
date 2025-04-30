@@ -13,6 +13,7 @@ export class FooterComponent implements OnInit, AfterViewInit {
   isSubscribed = false;
   formLoaded = false;
   private scriptLoaded = false;
+  emailValue: string = ''; // Nueva propiedad para almacenar el valor del email
 
   constructor(
     private generalConfigService: GeneralConfigService,
@@ -97,7 +98,7 @@ export class FooterComponent implements OnInit, AfterViewInit {
     
     if (submitBtn && loadingBtn) {
       this.renderer.setStyle(submitBtn, 'display', 'none');
-      this.renderer.setStyle(loadingBtn, 'display', 'inline-block');
+      this.renderer.setStyle(loadingBtn, 'display', 'inline-block'); // Cambiado a inline-block para mantener consistencia
     }
     
     // Get the form data
@@ -118,5 +119,10 @@ export class FooterComponent implements OnInit, AfterViewInit {
       
       this.isSubscribed = true;
     }, 2000);
+  }
+
+  // Método para actualizar el valor del email
+  updateEmailValue(value: string): void {
+    this.emailValue = value;
   }
 }

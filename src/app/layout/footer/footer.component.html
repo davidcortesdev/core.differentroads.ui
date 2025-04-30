@@ -36,14 +36,16 @@
                           class="inputGroup ml-validate-email ml-validate-required mlfieldemail"
                         >
                           <input
+                            #emailInput
                             type="email"
                             class="form-control"
                             data-inputmask=""
                             name="fields[email]"
                             placeholder="Escribe tu email"
                             autocomplete="email"
+                            (input)="updateEmailValue(emailInput.value)"
                           />
-                          <button type="submit" aria-label="Enviar">
+                          <button type="submit" aria-label="Enviar" [disabled]="!emailValue">
                             <i class="pi pi-arrow-right"></i>
                           </button>
                           <button

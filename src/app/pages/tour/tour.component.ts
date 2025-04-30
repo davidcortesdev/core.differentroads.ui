@@ -21,6 +21,7 @@ export class TourComponent implements OnInit, OnDestroy {
   loading: boolean = true;
   error: boolean = false;
   currentUserEmail: string = '';
+  filterByStatus: boolean = true; // Por defecto true para filtrar
 
   // Subject para comunicar cambios en los pasajeros
   passengerChanges = new Subject<{ adults: number; children: number }>();
@@ -44,10 +45,30 @@ export class TourComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.route.params.subscribe((params) => {
-      this.tourSlug = params['slug'];
-      this.loadTourDetails();
-    });
+    // Suscribirse a los parámetros de ruta y query params
+    this.subscriptions.add(
+      this.route.params.subscribe((params) => {
+        this.tourSlug = params['slug'];
+        // No cargar detalles aquí, esperar a los queryParams
+      })
+    );
+
+    // Suscribirse a los query params
+    this.subscriptions.add(
+      this.route.queryParams.subscribe((queryParams) => {
+        // Obtener el parámetro filterByStatus (por defecto es true)
+        // Solo será false si explícitamente viene como 'false' en los query params
+        this.filterByStatus = queryParams['filterByStatus'] !== 'false';
+        
+        // Actualizar el servicio con el valor de filterByStatus
+        this.tourDataService.setUnpublish(this.filterByStatus);
+        
+        // Cargar los detalles del tour después de tener todos los parámetros
+        if (this.tourSlug) {
+          this.loadTourDetails();
+        }
+      })
+    );
 
     // Suscribirse a los cambios de fecha del servicio compartido
     // para mantener sincronizado el componente principal también
@@ -91,8 +112,8 @@ export class TourComponent implements OnInit, OnDestroy {
         'activePeriods',
         'basePrice',
         'price',
-        'tags', // Add this line to ensure tags are fetched
-      ])
+        'tags',
+      ], this.filterByStatus) // Actualizado el nombre del parámetro
       .pipe(
         catchError((error) => {
           console.error('Error loading tour:', error);
@@ -107,20 +128,7 @@ export class TourComponent implements OnInit, OnDestroy {
           this.loading = false;
           this.tourDataService.updateTour(tourData);
   
-          // Add this line to debug
           console.log('Tour tags:', tourData.tags);
-
-          // if (tourData.activePeriods && tourData.activePeriods.length > 0) {
-          //   const firstPeriod = tourData.activePeriods[0];
-          //   this.tourDataService.getPeriodPrice(firstPeriod.externalID);
-
-          //   if (firstPeriod.name) {
-          //     this.tourOrderService.updateSelectedDateInfo(
-          //       firstPeriod.externalID,
-          //       undefined
-          //     );
-          //   }
-          // }
         },
         error: (error) => {
           console.error('Error loading tour:', error);
@@ -138,12 +146,14 @@ export class TourComponent implements OnInit, OnDestroy {
       .createOrder({
         periodID: periodID,
         status: 'AB',
-        owner: ownerEmail,
+        owner: ownerEmail
       })
       .subscribe({
         next: (createdOrder) => {
           console.log('Order created:', createdOrder);
-          this.router.navigate(['/checkout', createdOrder._id]);
+          this.router.navigate(['/checkout', createdOrder._id], {
+            queryParams: { filterByStatus: this.filterByStatus ? 'true' : 'false' }
+          });
         },
         error: (error) => {
           console.error('Error creating order:', error);

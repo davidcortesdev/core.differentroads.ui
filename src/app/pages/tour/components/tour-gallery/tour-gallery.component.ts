@@ -40,9 +40,12 @@ export class TourGalleryComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit() {
     const slug = this.route.snapshot.paramMap.get('slug');
+    
+    // Obtener el parámetro filterByStatus de los query params
+    const filterByStatus = this.route.snapshot.queryParamMap.get('filterByStatus') !== 'false';
 
     if (slug) {
-      this.toursService.getTourDetailBySlug(slug).subscribe({
+      this.toursService.getTourDetailBySlug(slug, undefined, filterByStatus).subscribe({
         next: (tour) => {
           if (tour['travelers-section']) {
             this.title = tour['travelers-section'].title;

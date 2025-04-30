@@ -1,0 +1,107 @@
+<div class="cookie-consent-container">
+  <div class="opacity-block-cookie" *ngIf="!cookiesAccepted"></div>
+
+  <!-- Vista principal: Primera capa -->
+  <section *ngIf="!cookiesAccepted && !showOptions" class="cookies-body">
+    <div class="content-wrapper">
+      <div class="cookie-text">
+        <div class="title" data-cy="cookies-title">Usamos cookies</div>
+        <div class="description">
+          Al hacer clic en «Aceptar todo», aceptas el almacenamiento de cookies
+          con fines funcionales, analíticos y publicitarios.
+        </div>
+      </div>
+
+      <div class="cookie-buttons">
+        <button
+          pButton
+          type="button"
+          label="Aceptar todas"
+          class="p-button-primary p-button-sm"
+          data-cy="button-accept-cookies"
+          (click)="acceptAllCookies()"
+        ></button>
+
+        <button
+          pButton
+          type="button"
+          label="Rechazar todas"
+          class="p-button-outlined p-button-sm p-button-primary"
+          data-cy="button-reject-cookies"
+          (click)="rejectAllCookies()"
+        ></button>
+
+        <button
+          pButton
+          type="button"
+          label="Más opciones"
+          class="p-button-outlined p-button-sm p-button-primary"
+          data-cy="button-more-options"
+          (click)="showOptions = true"
+        ></button>
+      </div>
+
+      <div class="policy-link">
+        <a
+          href="pages/politica-de-privacidad"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Consulta nuestra política de privacidad
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Vista secundaria: Más opciones -->
+  <section *ngIf="!cookiesAccepted && showOptions" class="cookies-body">
+    <div class="content-wrapper">
+      <div class="cookie-text">
+        <div class="title" data-cy="cookies-title">
+          ¿Para qué podemos usar tus datos?
+        </div>
+        <div class="description">
+          Puedes optar por permitir o rechazar las diferentes categorías de
+          cookies. Puedes ajustar estas configuraciones según tus preferencias
+          individuales.
+        </div>
+      </div>
+
+      <div class="cookie-switches">
+        <div class="switch-item">
+          <p-toggleswitch
+            [(ngModel)]="essentialCookies"
+            disabled="true"
+          ></p-toggleswitch>
+          <label class="switch-label">Esenciales</label>
+        </div>
+
+        <div class="switch-item">
+          <p-toggleswitch [(ngModel)]="necessaryCookies"></p-toggleswitch>
+          <label class="switch-label">Necesarias</label>
+        </div>
+
+        <div class="switch-item">
+          <p-toggleswitch [(ngModel)]="advertisingCookies"></p-toggleswitch>
+          <label class="switch-label">Publicidad</label>
+        </div>
+
+        <div class="switch-item">
+          <p-toggleswitch [(ngModel)]="analyticsCookies"></p-toggleswitch>
+          <label class="switch-label">Analítica</label>
+        </div>
+      </div>
+
+      <div class="cookie-buttons single-button">
+        <button
+          pButton
+          type="button"
+          label="Confirmar"
+          class="p-button-primary p-button-sm"
+          data-cy="button-confirm"
+          (click)="confirmCookiePreferences()"
+        ></button>
+      </div>
+    </div>
+  </section>
+</div>

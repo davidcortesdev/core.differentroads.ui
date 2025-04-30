@@ -11,4 +11,5 @@ export interface Press {
   image: CldImage[];
   seo: SEO;
   blocks: Block[];
+  status: string;
 }

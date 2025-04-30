@@ -177,12 +177,15 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
     this.route.params.subscribe((params) => {
       const slug = params['slug'];
       if (slug) {
+        // Obtener el parámetro filterByStatus de los query params
+        const filterByStatus = this.route.snapshot.queryParamMap.get('filterByStatus') !== 'false';
+        
         this.toursService
           .getTourDetailBySlug(slug, [
             'itinerary-section',
             'activePeriods',
             'basePrice',
-          ])
+          ], filterByStatus)
           .subscribe({
             next: (tourData) => {
               // Crear las opciones de fecha sin ordenar
@@ -230,7 +233,7 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
           });
 
         this.toursService
-          .getTourDetailBySlug(slug, ['cities'])
+          .getTourDetailBySlug(slug, ['cities'], filterByStatus)
           .subscribe((tour) => {
             this.cities = tour['cities'];
             // Replace direct service calls with the queue system

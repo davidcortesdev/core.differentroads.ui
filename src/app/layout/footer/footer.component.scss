@@ -172,7 +172,7 @@
         }
       }
 
-      button {
+      button[type="submit"] {
         position: absolute;
         right: 0;
         bottom: 0.75rem;
@@ -181,8 +181,9 @@
         color: white;
         cursor: pointer;
 
-        i {
-          font-size: 1.2rem;
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
         }
       }
     }

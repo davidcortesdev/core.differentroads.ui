@@ -92,4 +92,22 @@ export class TourDataService {
       .subscribe((value) => (price = value || 0));
     return price;
   }
+
+  // Añadir un nuevo método para establecer y obtener el valor de unpublish
+  // Asumiendo que el archivo ya existe con otros métodos
+  
+  // Añadir estas líneas al servicio existente:
+  
+  private unpublishSubject = new BehaviorSubject<boolean>(false);
+  unpublish$ = this.unpublishSubject.asObservable();
+  
+  // Método para establecer el valor de unpublish
+  setUnpublish(value: boolean): void {
+    this.unpublishSubject.next(value);
+  }
+  
+  // Método para obtener el valor actual de unpublish
+  getUnpublish(): boolean {
+    return this.unpublishSubject.value;
+  }
 }

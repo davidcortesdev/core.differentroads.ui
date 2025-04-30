@@ -1,5 +1,7 @@
 .highlights-section {
   padding: 2rem 0;
+  position: relative;
+  min-height: 200px;
 
   h2 {
     text-align: center;
@@ -8,11 +10,21 @@
     font-size: 2rem;
   }
 
-  ::ng-deep {
-    /*.custom-carousel .p-carousel-content .p-carousel-item {
-      max-width: 30rem !important;
-    }*/
+  .loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+  }
 
+  .no-data-message {
+    text-align: center;
+    padding: 2rem;
+    color: var(--background-azul);
+    font-style: italic;
+  }
+
+  ::ng-deep {
     .p-carousel {
       .p-card-body {
         padding: 0;
@@ -28,21 +40,37 @@
         display: flex;
         flex-direction: column;
         height: 100%;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+
+        &:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
 
         .p-card-body {
           flex: 1;
           display: flex;
           flex-direction: column;
+          padding: 0.5rem 1rem 1rem;
         }
 
         .card-header {
           position: relative;
+          overflow: hidden;
 
           img {
             width: 100%;
             height: 200px;
             object-fit: cover;
-            border-radius: 8px;
+            border-radius: 0;
+            transition: transform 0.5s ease;
+          }
+
+          &:hover img {
+            transform: scale(1.05);
           }
 
           .status-badge {
@@ -66,6 +94,11 @@
           margin: 0.5rem 0;
           color: var(--background-azul);
           font-size: 1.25rem;
+          transition: color 0.2s ease;
+          
+          &:hover {
+            text-decoration: underline;
+          }
         }
 
         p {
@@ -74,14 +107,17 @@
           line-height: 1.5;
           font-size: 0.875rem;
           flex: 1;
-
-          // Truncate text after 4 lines
+          transition: color 0.2s ease;
           display: -webkit-box;
           -webkit-line-clamp: 4;
           line-clamp: 4;
           -webkit-box-orient: vertical;
           overflow: hidden;
           text-overflow: ellipsis;
+          
+          &:hover {
+            text-decoration: underline;
+          }
         }
       }
 
@@ -90,5 +126,75 @@
         color: var(--primary-color);
       }
     }
+  }
+}
+
+@media (max-width: 768px) {
+  .highlights-section {
+    h2 {
+      font-size: 1.5rem;
+    }
+  }
+}
+
+// Estilos para el modal de highlight completo
+.full-highlight-content {
+  padding: 0.5rem 1.5rem 1.5rem;
+  
+  .highlight-image {
+    position: relative;
+    margin-bottom: 1.5rem;
+    
+    img {
+      width: 100%;
+      max-height: 400px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    
+    .status-badge {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      padding: 0.3rem 0.6rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background: var(--p-button-primary-color);
+      color: var(--background-azul);
+
+      &.optional {
+        background: var(--p-primary-color);
+        color: #fff;
+      }
+    }
+  }
+
+  .highlight-title {
+    color: var(--background-azul);
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .highlight-description {
+    color: var(--background-azul);
+    font-size: 1rem;
+    line-height: 1.6;
+    white-space: pre-line;
+  }
+}
+
+::ng-deep .p-dialog {
+  .p-dialog-header {
+    border-bottom: 1px solid #f0f0f0;
+    padding: 0.75rem 1.5rem;
+    
+    .p-dialog-title {
+      color: var(--background-azul);
+      font-weight: 600;
+    }
+  }
+  
+  .p-dialog-header-icon {
+    color: var(--background-azul);
   }
 }

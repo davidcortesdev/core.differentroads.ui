@@ -18,7 +18,9 @@ $tablet-breakpoint: 1024px;
   justify-content: space-between;
   align-items: center;
   background-color: white;
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.3s ease;
   border-bottom: 2px solid var(--p-menubar-background);
   color: var(--background-azul);
   gap: 38px;
@@ -62,7 +64,7 @@ $tablet-breakpoint: 1024px;
         text-decoration: underline;
         font-size: 0.9rem;
         cursor: pointer;
-        
+
         &:hover {
           color: var(--primary-color-600);
         }
@@ -119,13 +121,13 @@ $tablet-breakpoint: 1024px;
         text-align: right;
         font-size: 0.7rem;
         font-weight: 400;
-        
+
         .activities-badge {
           display: inline-block;
           cursor: pointer;
           text-decoration: underline;
           color: var(--primary-color);
-          
+
           &:hover {
             color: var(--primary-color-600);
           }
@@ -160,13 +162,13 @@ $tablet-breakpoint: 1024px;
       padding: 0.75rem 2rem;
       font-weight: 500;
       transition: all 0.2s ease;
-      
+
       &:hover:not(:disabled) {
         background-color: color.adjust($primary-button-color, $lightness: -10%);
         border-color: color.adjust($primary-button-color, $lightness: -10%);
         transform: translateY(-2px);
       }
-      
+
       &:disabled {
         opacity: 0.6;
       }
@@ -181,7 +183,7 @@ $tablet-breakpoint: 1024px;
 
     .tour-info {
       width: 100%;
-      margin-bottom: 1rem;
+      margin-bottom: -1rem;
 
       h1 {
         font-size: 1.25rem;
@@ -266,6 +268,7 @@ $tablet-breakpoint: 1024px;
       display: flex;
       flex-direction: column;
       align-items: flex-end;
+      margin-right: -35px;
 
       .badge {
         display: none;
@@ -273,14 +276,8 @@ $tablet-breakpoint: 1024px;
 
       .price-section {
         text-align: right;
-        margin-bottom: 0;
+        margin-bottom: -10px;
         width: 100%;
-
-        .price-info {
-          margin-bottom: -1.6rem;
-          margin-top: 2rem;
-          margin-right: 5px;
-        }
       }
 
       ::ng-deep .p-button {
@@ -290,7 +287,6 @@ $tablet-breakpoint: 1024px;
       }
 
       .booking-container {
-        width: 100%;
         display: flex;
         text-align: center;
       }
@@ -335,11 +331,12 @@ app-tour-header {
   .p-tooltip {
     position: absolute;
     max-width: var(--p-tooltip-max-width);
-    
-    &::before, &::after {
+
+    &::before,
+    &::after {
       box-sizing: border-box;
     }
-    
+
     &.p-component.p-tooltip-bottom .p-tooltip-text,
     &#pn_id_1188_tooltip.p-component.p-tooltip-bottom .p-tooltip-text {
       background-color: white !important;
@@ -350,7 +347,7 @@ app-tour-header {
       border-radius: 6px;
     }
   }
-  
+
   .p-tooltip-top .p-tooltip-arrow,
   .p-tooltip-bottom .p-tooltip-arrow {
     border-top-color: white !important;

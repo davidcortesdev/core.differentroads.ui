@@ -89,7 +89,6 @@ export class AmadeusService {
           age_group_name: ageGroup,
           category_name: 'amadeus',
           period_product: 'flight',
-          _id: tp.id || '',
         });
       });
     });

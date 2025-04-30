@@ -1,26 +1,20 @@
-// Variables
 $azul: var(--background-azul);
 $border-light: #d4d4d8;
-
 .container {
   width: 100%;
   padding: 0;
   margin-top: -20px;
-
-  // Encabezados y títulos
   .header-container {
     cursor: pointer;
     margin-bottom: 15px;
   }
-
   .title-with-icon {
     display: inline-flex;
     align-items: center;
     margin-bottom: 5px;
-    width: auto; // Se ajusta al contenido
-    position: relative; // Para posicionar la línea
-    padding-bottom: 10px; // Espacio para la línea
-
+    width: auto;
+    position: relative;
+    padding-bottom: 10px;
     .title {
       color: $azul;
       font-weight: 500;
@@ -29,14 +23,11 @@ $border-light: #d4d4d8;
         font-size: 1.1rem;
       }
     }
-
     .pi {
       color: $azul;
       margin-left: 8px;
     }
   }
-
-  // Línea debajo del título con longitud proporcional
   .title-underline {
     height: 1px;
     background-color: $azul;
@@ -44,35 +35,27 @@ $border-light: #d4d4d8;
     display: block;
     width: auto;
     max-width: 278px;
-
-    // Ajustes responsivos pero manteniendo proporción con título
     @media (max-width: 768px) {
-      max-width: 255px; // Tablets
+      max-width: 255px;
     }
-
     @media (max-width: 480px) {
-      max-width: 280px; // Móviles
+      max-width: 280px;
     }
   }
-
-  // Paneles y opciones de pago
   ::ng-deep .payment-panel {
     color: $azul;
     font-weight: 500;
     margin-bottom: 0.75rem;
     width: 100%;
     background: transparent;
-
     .p-panel-header {
       display: none;
     }
-
     .p-panel-content {
       border: 0.0625rem solid $border-light;
       border-radius: 0.75rem;
       padding: 1.25rem 1rem;
       background: transparent;
-
       @media (min-width: 768px) {
         padding: 1.75rem 1.5rem;
       }
@@ -80,44 +63,36 @@ $border-light: #d4d4d8;
         padding: 1rem 0.75rem;
       }
     }
-
     .p-radiobutton .p-radiobutton-box {
       border: 1px solid $azul;
       background: white;
     }
   }
-
   .payment-option {
     display: flex;
     align-items: center;
     flex-wrap: nowrap;
-
     @media (max-width: 480px) {
       flex-direction: row;
       justify-content: space-between;
     }
-
     .option-text {
       margin-left: 1rem;
       flex-grow: 1;
-
       @media (max-width: 480px) {
         margin-left: 0.5rem;
         font-size: 0.85rem;
         max-width: 70%;
       }
     }
-
     .option-price,
     .scalapay-logo {
       margin-left: auto;
-
       @media (max-width: 480px) {
         margin-left: 0;
         font-size: 0.95rem;
       }
     }
-
     .option-price {
       font-weight: bold;
       font-size: 1.125rem;
@@ -132,7 +107,6 @@ $border-light: #d4d4d8;
     }
   }
 
-  // Secciones de métodos de pago e instalaciones
   .payment-methods-section,
   .installments-section {
     margin-top: 2rem;
@@ -190,7 +164,6 @@ $border-light: #d4d4d8;
     }
   }
 
-  // Widget de Scalapay
   .scalapay-widget-container {
     width: 100%;
     text-align: center;
@@ -207,11 +180,9 @@ $border-light: #d4d4d8;
     }
   }
 
-  // SECCIÓN DE PUNTOS DE VIAJEROS - Optimizada para móvil
   .travelers-points-section {
-    // Aseguramos que el título tenga la misma proporción de línea
     .title-underline {
-      max-width: 200px; // Ajuste para "Puntos de viajeros"
+      max-width: 200px;
 
       @media (max-width: 480px) {
         max-width: 160px;
@@ -281,7 +252,6 @@ $border-light: #d4d4d8;
       height: 1.5rem;
     }
 
-    // Modificación para vista en una sola línea en móvil
     .traveler-info {
       display: flex;
       flex-direction: row;
@@ -323,7 +293,6 @@ $border-light: #d4d4d8;
     }
   }
 
-  // Términos y condiciones
   .terms-container {
     margin-top: 20px;
     display: flex;
@@ -343,11 +312,6 @@ $border-light: #d4d4d8;
 
       .p-checkbox-box {
         border: 2px solid $azul;
-
-        &.p-highlight {
-          border-color: var(--p-primary-color);
-          background: var(--p-primary-color);
-        }
       }
     }
   }
@@ -369,7 +333,6 @@ $border-light: #d4d4d8;
     }
   }
 
-  // Botones
   ::ng-deep .payment-button {
     margin: 10px 0 10px 0;
 
@@ -397,14 +360,35 @@ $border-light: #d4d4d8;
     .p-radiobutton .p-radiobutton-box {
       border-color: $azul;
 
+      &:hover {
+        background: #fff !important;
+        border-color: $azul !important;
+      }
+
       &.p-highlight {
         border-color: $azul !important;
         background: var(--background-azul-color-letra) !important;
+
+        &:hover {
+          background: #fff !important;
+          border-color: $azul !important;
+        }
       }
+    }
+
+    .p-radiobutton-checked .p-radiobutton-box {
+      border-color: $azul !important;
+      background: var(--background-azul-color-letra) !important;
     }
 
     .p-radiobutton-checked .p-radiobutton-icon {
       background-color: $azul !important;
+    }
+
+    @media (max-width: 480px) {
+      .p-radiobutton {
+        margin-right: 0.25rem;
+      }
     }
   }
 
@@ -435,7 +419,6 @@ $border-light: #d4d4d8;
   }
 }
 
-// Estilos globales
 .button-content {
   display: flex;
   align-items: center;

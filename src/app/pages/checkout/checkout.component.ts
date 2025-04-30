@@ -123,6 +123,8 @@ export class CheckoutComponent implements OnInit {
   // Add a new property to control the login modal visibility in checkout
   loginDialogVisible: boolean = false;
 
+  reservationFields: { id: number; name: string; key: string }[] = [];
+
   constructor(
     private ordersService: OrdersService,
     private periodsService: PeriodsService,
@@ -190,9 +192,11 @@ export class CheckoutComponent implements OnInit {
           'name',
           'dayOne',
           'returnDate',
+          'reservationFields',
         ])
         .subscribe((period) => {
           this.periodData = period;
+          this.reservationFields = period.reservationFields || [];
           this.tourName = period.tourName;
 
           this.tourID = period.tourID;
@@ -865,6 +869,7 @@ export class CheckoutComponent implements OnInit {
           });
           return false;
         }
+
         if (!travelersComponent.areAllTravelersValid()) {
           return false;
         }

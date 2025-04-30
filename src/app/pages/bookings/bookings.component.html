@@ -65,7 +65,7 @@
   <!-- Activities -->
   <app-booking-activities
     *ngIf="
-      bookingActivities.length > 0 && bookingComplete?.periodData?.['externalID']
+      bookingComplete?.periodData?.['externalID']
     "
     [bookingActivities]="bookingActivities"
     [booking]="bookingComplete!"

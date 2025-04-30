@@ -33,10 +33,13 @@ export class TourOverviewComponent implements OnInit {
         'subtitle',
         'continent',
         'country',
-      ]; // Add selected fields here
+      ];
+      
+      // Obtener el parámetro filterByStatus de los query params
+      const filterByStatus = this.route.snapshot.queryParamMap.get('filterByStatus') !== 'false';
+      
       this.toursService
-        .getTourDetailBySlug(slug, selectedFields)
-        //.getTourDetailBySlug(slug)
+        .getTourDetailBySlug(slug, selectedFields, filterByStatus)
         .subscribe((tour) => {
           this.tour = tour;
         });

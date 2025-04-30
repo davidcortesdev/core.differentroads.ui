@@ -181,8 +181,11 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   private loadTourData(): void {
     const slug = this.route.snapshot.paramMap.get('slug');
     if (slug) {
+      // Obtener el parámetro filterByStatus de los query params
+      const filterByStatus = this.route.snapshot.queryParamMap.get('filterByStatus') !== 'false';
+      
       const tourSubscription = this.toursService
-        .getTourDetailBySlug(slug, ['extra-info-section'])
+        .getTourDetailBySlug(slug, ['extra-info-section'], filterByStatus)
         .subscribe({
           next: (tour) => {
             if (tour && tour['extra-info-section']?.['info-card']) {

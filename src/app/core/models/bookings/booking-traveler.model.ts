@@ -33,5 +33,4 @@ export interface TravelerData {
   associatedAdult?: string;
   ciudad?: string;
   codigoPostal?: string;
-  documentNumber?: string;
 }

@@ -2,7 +2,7 @@ export interface PassengerData {
     id: number;
     fullName: string;
     documentType: string;
-    documentNumber: string;
+    passportID: string;
     birthDate: string;
     email: string;
     phone: string;

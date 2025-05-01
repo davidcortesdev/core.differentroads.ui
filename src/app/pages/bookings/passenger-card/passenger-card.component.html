@@ -82,7 +82,7 @@
 
       <div class="detail-row">
         <span class="detail-label">Pasaporte:</span>
-        <span class="detail-value" [ngClass]="{'pending-value': !passenger.documentNumber}">{{passenger.documentNumber || 'Pendiente'}}</span>
+        <span class="detail-value" [ngClass]="{'pending-value': !passenger.passportID}">{{passenger.passportID || 'Pendiente'}}</span>
       </div>
       
       <div class="detail-row">
@@ -239,7 +239,7 @@
           <label>Pasaporte:</label>
         <input
           pInputText
-          formControlName="documentNumber"
+          formControlName="passportID"
           placeholder="Ingrese N° pasaporte"
         />
         </div>

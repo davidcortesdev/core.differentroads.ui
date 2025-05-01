@@ -33,11 +33,6 @@ export class PassengerCardComponent implements OnInit, OnChanges {
     { label: 'Femenino', value: 'Female' }
   ];
 
-  documentTypeOptions = [
-    { label: 'Pasaporte', value: 'passport' },
-    { label: 'DNI', value: 'dni' }
-  
-  ];
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
@@ -99,7 +94,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
       email: [this.passenger.email || ''],
       phone: [this.passenger.phone || ''],
       documentType: [this.passenger.documentType || ''],
-      documentNumber: [this.passenger.documentNumber || ''],
+      passportID: [this.passenger.passportID || ''],
       birthDate: [this.passenger.birthDate || '', [Validators.required, this.birthDateValidator.bind(this)]],
       gender: [this.passenger.gender || ''],
       ciudad: [this.passenger.ciudad || ''],
@@ -134,7 +129,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
       id: [passenger.id],
       fullName: [passenger.fullName, [Validators.required, Validators.minLength(3)]],
       documentType: [passenger.documentType || 'passport', Validators.required],
-      documentNumber: [passenger.documentNumber, [Validators.required, Validators.minLength(3)]],
+      passportID: [passenger.passportID, [Validators.required, Validators.minLength(3)]],
       birthDate: [passenger.birthDate, [Validators.required, this.birthDateValidator.bind(this)]],
       email: [passenger.email, Validators.email],
       phone: [passenger.phone],
@@ -167,9 +162,10 @@ export class PassengerCardComponent implements OnInit, OnChanges {
     this.passengerForm.patchValue({
       documentExpeditionDate: this.passenger.documentExpeditionDate ? new Date(this.passenger.documentExpeditionDate) : null,
       documentExpirationDate: this.passenger.documentExpirationDate ? new Date(this.passenger.documentExpirationDate) : null,
+      minorIdExpirationDate: this.passenger.minorIdExpirationDate ? new Date(this.passenger.minorIdExpirationDate) : null,
+      minorIdIssueDate: this.passenger.minorIdIssueDate ? new Date(this.passenger.minorIdIssueDate) : null,
       birthDate: this.passenger.birthDate? new Date(this.passenger.birthDate) : null,
       gender: this.passenger.gender || '',
-      documentType: this.passenger.documentType || '',
     });
   }
 
@@ -227,7 +223,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
       const travelerData: TravelerData = {
         name: formValue.fullName,
         surname: '', 
-        documentNumber: formValue.documentNumber,
+        passportID: formValue.passportID,
         documentType: formValue.documentType,
         birthdate: formValue.birthDate, // Asegurarse de que se use el campo correcto
         email: formValue.email,
@@ -270,7 +266,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
             ...this.passenger,
             fullName: formValue.fullName,
             documentType: formValue.documentType,
-            documentNumber: formValue.documentNumber,
+            passportID: formValue.passportID,
             birthDate: formValue.birthDate, // Asegurarse de que se actualice correctamente
             email: formValue.email,
             phone: formValue.phone,
@@ -330,7 +326,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
     if (!this.passenger) return true;
     
     // Check required fields first
-    if (!this.passenger.fullName || !this.passenger.documentNumber || !this.passenger.documentType) {
+    if (!this.passenger.fullName || !this.passenger.passportID || !this.passenger.documentType) {
       return true;
     }
     
@@ -424,11 +420,6 @@ export class PassengerCardComponent implements OnInit, OnChanges {
 
   getGenderLabel(value: string): string {
     const option = this.genderOptions.find(opt => opt.value === value);
-    return option ? option.label : value || 'Pendiente';
-  }
-
-  getDocumentTypeLabel(value: string): string {
-    const option = this.documentTypeOptions.find(opt => opt.value.toLowerCase() === (value || '').toLowerCase());
     return option ? option.label : value || 'Pendiente';
   }
 }

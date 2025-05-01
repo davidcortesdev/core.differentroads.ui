@@ -82,7 +82,7 @@ export interface PassengerData {
   id: number;
   fullName: string;
   documentType: string;
-  documentNumber: string;
+  passportID: string;
   birthDate: string;
   email: string;
   phone: string;
@@ -104,6 +104,7 @@ export interface PassengerData {
   dni?: string;
   minorIdExpirationDate?: string;
   minorIdIssueDate?: string;
+  
 
 }
 
@@ -607,21 +608,21 @@ export class BookingsComponent implements OnInit {
 
         // Extraer tipo de documento
         let documentType = travelerData.documentType || '';
-        if (documentType.toLowerCase() === 'dni' || travelerData.dni) {
+        /* if (documentType.toLowerCase() === 'dni' || travelerData.dni) {
           documentType = 'DNI';
         } else if (
           documentType.toLowerCase().includes('passport') ||
           travelerData.passportID
         ) {
           documentType = 'Pasaporte';
-        }
+        } */
 
         // Obtener número de documento
-        const documentNumber =
+         /*const passportID =
           travelerData.dni ||
-          travelerData.passportID ||
+          travelerData.passportID || 
           travelerData.docNum ||
-          '';
+          '';*/
           
         // Obtener la descripción de la habitación si está disponible
         let roomDescription = 'Sin asignar';
@@ -669,7 +670,7 @@ export class BookingsComponent implements OnInit {
           _id: traveler._id || '', // Asegurarnos de incluir el _id del viajero
           fullName: fullName,
           documentType: documentType,
-          documentNumber: documentNumber,
+          passportID: travelerData.passportID,
           birthDate: birthDate,
           email: travelerData.email || '',
           phone: travelerData.phone || '',
@@ -681,8 +682,8 @@ export class BookingsComponent implements OnInit {
           gender: travelerData.sex || '',
           comfortPlan: comfortPlanName, // Campo necesario para el componente hijo
           insurance: 'Básico', // Campo necesario para el componente hijo
-          documentExpeditionDate: travelerData.passportIssueDate || travelerData.minorIdIssueDate || '',
-          documentExpirationDate: travelerData.passportExpirationDate || travelerData.minorIdExpirationDate || '',
+          documentExpeditionDate: travelerData.passportIssueDate || '',
+          documentExpirationDate: travelerData.passportExpirationDate || '',
           nationality: travelerData.nationality || '',
           ageGroup: travelerData.ageGroup || '',
           bookingID: this.bookingId, // Añadir el ID de la reserva

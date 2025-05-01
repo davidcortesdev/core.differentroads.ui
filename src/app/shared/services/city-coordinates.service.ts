@@ -41,30 +41,43 @@ export class CityCoordinatesService {
    * Busca las coordenadas de una ciudad, primero en la API de localizaciones
    * y si no se encuentra, utiliza el método alternativo actual
    */
+  /**
+   * Busca las coordenadas de una ciudad, primero en la API de localizaciones
+   * y si no se encuentra, utiliza el método alternativo actual
+   */
   getCityCoordinates(cityName: string): Observable<{ lat: number, lng: number } | null> {
-    // Verificar si ya tenemos las coordenadas en caché
-    if (this.coordinatesCache.has(cityName)) {
-      return of(this.coordinatesCache.get(cityName)!);
+    // Normalizar el nombre de la ciudad (trim)
+    const normalizedCityName = cityName.trim();
+    
+    // Si después de normalizar queda vacío, retornar null
+    if (!normalizedCityName) {
+      console.warn('Nombre de ciudad vacío después de normalizar');
+      return of(null);
     }
-
+    
+    // Verificar si ya tenemos las coordenadas en caché
+    if (this.coordinatesCache.has(normalizedCityName)) {
+      return of(this.coordinatesCache.get(normalizedCityName)!);
+    }
+  
     // Primero intentamos buscar en la API de ciudades
-    return this.locationsApiService.searchCityByName(cityName).pipe(
+    return this.locationsApiService.searchCityByName(normalizedCityName).pipe(
       switchMap(cities => {
         if (cities && cities.length > 0 && cities[0].lat && cities[0].lng) {
           // Si encontramos la ciudad en la API y tiene coordenadas, las usamos
           const coordinates = { lat: cities[0].lat, lng: cities[0].lng };
           
           // Guardar en caché para futuras consultas
-          this.coordinatesCache.set(cityName, coordinates);
+          this.coordinatesCache.set(normalizedCityName, coordinates);
           
           return of(coordinates);
         } else {
           // Si no encontramos en ciudades, intentamos con comunidades
-          return this.locationsApiService.searchCommunityByName(cityName).pipe(
+          return this.locationsApiService.searchCommunityByName(normalizedCityName).pipe(
             map(communities => {
               if (communities && communities.length > 0 && communities[0].lat && communities[0].lng) {
                 const coordinates = { lat: communities[0].lat, lng: communities[0].lng };
-                this.coordinatesCache.set(cityName, coordinates);
+                this.coordinatesCache.set(normalizedCityName, coordinates);
                 return coordinates;
               }
               return null;
@@ -73,7 +86,7 @@ export class CityCoordinatesService {
         }
       }),
       catchError(error => {
-        console.error(`Error al obtener coordenadas para ${cityName}:`, error);
+        console.error(`Error al obtener coordenadas para ${normalizedCityName}:`, error);
         return of(null);
       })
     );
@@ -122,41 +135,41 @@ export class CityCoordinatesService {
     callback: (city: string, lat: number, lng: number, index?: number) => void,
     index?: number
   ): void {
+    // Normalizar el nombre de la ciudad
+    const normalizedCity = city ? city.trim() : '';
+    
     // Omitir nombres de ciudad vacíos o inválidos
-    if (!city || typeof city !== 'string' || city.trim() === '') {
+    if (!normalizedCity || typeof normalizedCity !== 'string') {
       console.warn('Omitiendo nombre de ciudad inválido:', city);
       return;
     }
     
-    // Normalizar el nombre de la ciudad para evitar duplicados sensibles a mayúsculas/minúsculas
-    const normalizedCity = city.trim().toLowerCase();
-    
-    // Verificar si ya tenemos las coordenadas en caché
-    if (this.coordinatesCache.has(normalizedCity)) {
-      console.log(`Usando coordenadas en caché para "${city}"`);
-      const cachedCoordinates = this.coordinatesCache.get(normalizedCity)!;
-      callback(city, cachedCoordinates.lat, cachedCoordinates.lng, index);
+    // Verificar si ya tenemos las coordenadas en caché (usando el nombre normalizado)
+    if (this.coordinatesCache.has(normalizedCity.toLowerCase())) {
+      console.log(`Usando coordenadas en caché para "${normalizedCity}"`);
+      const cachedCoordinates = this.coordinatesCache.get(normalizedCity.toLowerCase())!;
+      callback(normalizedCity, cachedCoordinates.lat, cachedCoordinates.lng, index);
       return;
     }
   
     // Verificar si hemos excedido el número máximo de intentos fallidos
-    const attempts = this.failedAttempts.get(normalizedCity) || 0;
+    const attempts = this.failedAttempts.get(normalizedCity.toLowerCase()) || 0;
     if (attempts >= this.MAX_ATTEMPTS) {
       console.warn(
-        `Omitiendo geocodificación para "${city}" después de ${this.MAX_ATTEMPTS} intentos fallidos`
+        `Omitiendo geocodificación para "${normalizedCity}" después de ${this.MAX_ATTEMPTS} intentos fallidos`
       );
       return;
     }
   
     // Verificar si esta ciudad ya está en la cola pendiente
-    if (this.pendingCities.some(pending => pending.city.toLowerCase() === normalizedCity)) {
-      console.log(`La ciudad "${city}" ya está en la cola pendiente`);
+    if (this.pendingCities.some(pending => pending.city.toLowerCase() === normalizedCity.toLowerCase())) {
+      console.log(`La ciudad "${normalizedCity}" ya está en la cola pendiente`);
       return;
     }
   
     // Agregar a la cola pendiente y procesar
-    console.log(`Agregando "${city}" a la cola de geocodificación`);
-    this.pendingCities.push({ city, index, callback });
+    console.log(`Agregando "${normalizedCity}" a la cola de geocodificación`);
+    this.pendingCities.push({ city: normalizedCity, index, callback });
   
     // Comenzar a procesar la cola si aún no se está procesando
     if (!this.processingQueue) {
@@ -229,146 +242,107 @@ export class CityCoordinatesService {
               // Resetear contador de intentos fallidos
               this.failedAttempts.delete(normalizedCity);
               
-              // Procesar la siguiente ciudad inmediatamente
+              // Procesar la siguiente ciudad inmediatamente sin espera
               processNext();
             } else {
               // Si no encontramos coordenadas en CityCoordinates, intentamos con GeoService
               console.log(`No se encontraron coordenadas para "${nextCity.city}" en CityCoordinates, intentando con GeoService`);
               
-              // Aquí sí aplicamos la limitación de tiempo para GeoService
-              const now = Date.now();
-              const timeSinceLastRequest = now - this.lastRequestTime;
-  
-              // Si han pasado menos de 1.25 segundos desde la última solicitud, esperamos
-              if (timeSinceLastRequest < 1250 && this.lastRequestTime !== 0) {
-                setTimeout(() => {
-                  // Volvemos a añadir la ciudad a la cola y procesamos
-                  this.pendingCities.unshift(nextCity);
-                  processNext();
-                }, 1250 - timeSinceLastRequest);
-                return;
-              }
-  
-              this.lastRequestTime = now;
-              
-              this.geoService
-                .getCoordinates(nextCity.city)
-                .pipe(takeUntil(this.destroy$))
-                .subscribe({
-                  next: (geoCoordinates) => {
-                    if (geoCoordinates && geoCoordinates.lat && geoCoordinates.lon) {
-                      // Valid coordinates received, store in cache with normalized key
-                      this.coordinatesCache.set(normalizedCity, {
-                        lat: Number(geoCoordinates.lat),
-                        lng: Number(geoCoordinates.lon),
-                      });
-          
-                      // Call callback with coordinates
-                      nextCity.callback(
-                        nextCity.city,
-                        Number(geoCoordinates.lat),
-                        Number(geoCoordinates.lon),
-                        nextCity.index
-                      );
-          
-                      // Reset failed attempts counter on success
-                      this.failedAttempts.delete(normalizedCity);
-                    } else {
-                      // Invalid or empty coordinates, increment failed attempts
-                      const attempts =
-                        (this.failedAttempts.get(nextCity.city) || 0) + 1;
-                      this.failedAttempts.set(nextCity.city, attempts);
-                      console.warn(
-                        `Failed to get valid coordinates for "${nextCity.city}" (attempt ${attempts}/${this.MAX_ATTEMPTS})`
-                      );
-                    }
-  
-                    // Process the next city after a delay of 1.5 seconds
-                    setTimeout(processNext, 1500);
-                  },
-                  error: (error) => {
-                    // Increment failed attempts on error
-                    const attempts = (this.failedAttempts.get(nextCity.city) || 0) + 1;
-                    this.failedAttempts.set(nextCity.city, attempts);
-  
-                    console.error(
-                      `Error fetching coordinates for "${nextCity.city}" (attempt ${attempts}/${this.MAX_ATTEMPTS}):`,
-                      error
-                    );
-  
-                    // Continue processing even if there's an error, with a delay of 1.5 seconds
-                    setTimeout(processNext, 1500);
-                  },
-                });
+              // AQUÍ APLICAMOS LA LIMITACIÓN DE TIEMPO SOLO PARA GEOSERVICE
+              this.callGeoServiceWithRateLimit(nextCity, normalizedCity, processNext);
             }
           },
           error: (error) => {
             console.error(`Error al obtener coordenadas para "${nextCity.city}" desde CityCoordinates:`, error);
             
             // En caso de error, intentamos con GeoService
-            // Aplicamos la limitación de tiempo para GeoService
-            const now = Date.now();
-            const timeSinceLastRequest = now - this.lastRequestTime;
-  
-            // Si han pasado menos de 1.25 segundos desde la última solicitud, esperamos
-            if (timeSinceLastRequest < 1250 && this.lastRequestTime !== 0) {
-              setTimeout(() => {
-                // Volvemos a añadir la ciudad a la cola y procesamos
-                this.pendingCities.unshift(nextCity);
-                processNext();
-              }, 1250 - timeSinceLastRequest);
-              return;
-            }
-  
-            this.lastRequestTime = now;
-            
-            this.geoService
-              .getCoordinates(nextCity.city)
-              .pipe(takeUntil(this.destroy$))
-              .subscribe({
-                next: (geoCoordinates) => {
-                  if (geoCoordinates && geoCoordinates.lat && geoCoordinates.lon) {
-                    this.coordinatesCache.set(normalizedCity, {
-                      lat: Number(geoCoordinates.lat),
-                      lng: Number(geoCoordinates.lon),
-                    });
-          
-                    nextCity.callback(
-                      nextCity.city,
-                      Number(geoCoordinates.lat),
-                      Number(geoCoordinates.lon),
-                      nextCity.index
-                    );
-          
-                    this.failedAttempts.delete(normalizedCity);
-                  } else {
-                    const attempts =
-                      (this.failedAttempts.get(nextCity.city) || 0) + 1;
-                    this.failedAttempts.set(nextCity.city, attempts);
-                    console.warn(
-                      `Failed to get valid coordinates for "${nextCity.city}" (attempt ${attempts}/${this.MAX_ATTEMPTS})`
-                    );
-                  }
-  
-                  setTimeout(processNext, 1500);
-                },
-                error: (error) => {
-                  const attempts = (this.failedAttempts.get(nextCity.city) || 0) + 1;
-                  this.failedAttempts.set(nextCity.city, attempts);
-  
-                  console.error(
-                    `Error fetching coordinates for "${nextCity.city}" (attempt ${attempts}/${this.MAX_ATTEMPTS}):`,
-                    error
-                  );
-  
-                  setTimeout(processNext, 1500);
-                },
-              });
+            // AQUÍ APLICAMOS LA LIMITACIÓN DE TIEMPO SOLO PARA GEOSERVICE
+            this.callGeoServiceWithRateLimit(nextCity, normalizedCity, processNext);
           },
         });
     };
   
     processNext();
+  }
+
+  /**
+   * Método auxiliar para llamar al GeoService con limitación de velocidad
+   * Extrae la lógica común para evitar duplicación de código
+   */
+  private callGeoServiceWithRateLimit(
+    nextCity: PendingCity, 
+    normalizedCity: string, 
+    processNext: () => void
+  ): void {
+    // Aplicamos la limitación de tiempo para GeoService
+    const now = Date.now();
+    const timeSinceLastRequest = now - this.lastRequestTime;
+  
+    // Si han pasado menos de 1.25 segundos desde la última solicitud, esperamos
+    if (timeSinceLastRequest < 1250 && this.lastRequestTime !== 0) {
+      setTimeout(() => {
+        // Volvemos a añadir la ciudad a la cola y procesamos
+        this.pendingCities.unshift(nextCity);
+        processNext();
+      }, 1250 - timeSinceLastRequest);
+      return;
+    }
+  
+    // Actualizamos el tiempo de la última solicitud
+    this.lastRequestTime = now;
+    
+    // Asegurarnos de que el nombre de la ciudad esté normalizado antes de la llamada
+    const cityNameTrimmed = nextCity.city.trim();
+    
+    this.geoService
+      .getCoordinates(cityNameTrimmed)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (geoCoordinates) => {
+          if (geoCoordinates && geoCoordinates.lat && geoCoordinates.lon) {
+            // Coordenadas válidas recibidas, guardar en caché
+            this.coordinatesCache.set(normalizedCity, {
+              lat: Number(geoCoordinates.lat),
+              lng: Number(geoCoordinates.lon),
+            });
+  
+            // Llamar al callback con las coordenadas
+            nextCity.callback(
+              nextCity.city,
+              Number(geoCoordinates.lat),
+              Number(geoCoordinates.lon),
+              nextCity.index
+            );
+  
+            // Resetear contador de intentos fallidos
+            this.failedAttempts.delete(normalizedCity);
+          } else {
+            // Coordenadas inválidas o vacías, incrementar intentos fallidos
+            const attempts = (this.failedAttempts.get(nextCity.city) || 0) + 1;
+            this.failedAttempts.set(nextCity.city, attempts);
+            console.warn(
+              `No se pudieron obtener coordenadas válidas para "${nextCity.city}" (intento ${attempts}/${this.MAX_ATTEMPTS})`
+            );
+          }
+  
+          // Procesar la siguiente ciudad después de un retraso de 1.5 segundos
+          // Mantenemos este retraso para evitar sobrecargar el servicio GeoService
+          setTimeout(processNext, 1500);
+        },
+        error: (error) => {
+          // Incrementar intentos fallidos en caso de error
+          const attempts = (this.failedAttempts.get(nextCity.city) || 0) + 1;
+          this.failedAttempts.set(nextCity.city, attempts);
+  
+          console.error(
+            `Error al obtener coordenadas para "${nextCity.city}" (intento ${attempts}/${this.MAX_ATTEMPTS}):`,
+            error
+          );
+  
+          // Continuar procesando incluso si hay un error, con un retraso de 1.5 segundos
+          setTimeout(processNext, 1500);
+        },
+      });
   }
 
   /**

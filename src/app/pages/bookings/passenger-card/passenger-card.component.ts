@@ -280,6 +280,8 @@ export class PassengerCardComponent implements OnInit, OnChanges {
             codigoPostal: formValue.codigoPostal,
             nationality: formValue.nationality,
             dni: formValue.dni,
+            minorIdExpirationDate: formValue.minorIdExpirationDate,
+            minorIdIssueDate: formValue.minorIdIssueDate,
           };
           
           console.log('Updated passenger object:', this.passenger);

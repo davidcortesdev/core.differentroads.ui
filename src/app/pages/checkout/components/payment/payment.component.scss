@@ -217,10 +217,7 @@ $border-light: #d4d4d8;
       width: 1.5rem;
       cursor: pointer;
       @media (max-width: 480px) {
-        margin-right: 0.5rem;
-      }
-      ::ng-deep .p-checkbox .p-checkbox-box {
-        border: 2px solid $azul;
+        margin-right: 0.2rem;
       }
     }
     .checkbox-placeholder {
@@ -264,9 +261,6 @@ $border-light: #d4d4d8;
       margin: 0.125rem 0.75rem 0 0;
       @media (max-width: 480px) {
         margin-right: 0.5rem;
-      }
-      .p-checkbox-box {
-        border: 2px solid $azul;
       }
     }
   }

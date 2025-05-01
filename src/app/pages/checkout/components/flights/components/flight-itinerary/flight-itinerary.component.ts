@@ -17,9 +17,27 @@ interface Journey {
   segments: any[];
   timelineData: any[];
   stopsText: string;
-  airlineName: string;
   totalDuration: string;
 }
+
+/**
+ * Interfaz que define la estructura de un segmento de vuelo
+ */
+interface FlightSegment {
+  departureCity?: string;
+  departureIata?: string;
+  departureTime?: string;
+  arrivalCity?: string;
+  arrivalIata?: string;
+  arrivalTime?: string;
+  flightNumber?: string;
+  numNights?: number;
+  airline?: {
+    name: string;
+    code?: string;
+  };
+}
+
 
 @Component({
   selector: 'app-flight-itinerary',
@@ -453,7 +471,6 @@ export class FlightItineraryComponent implements OnChanges {
         : stops === 1
         ? '1 escala'
         : stops + ' escalas';
-    const airlineName = departureSegment.airline.name;
 
     let totalDuration: string;
     try {
@@ -483,7 +500,6 @@ export class FlightItineraryComponent implements OnChanges {
       segments,
       timelineData,
       stopsText,
-      airlineName,
       totalDuration,
     };
   }
@@ -492,6 +508,26 @@ export class FlightItineraryComponent implements OnChanges {
   isValidDate(date: any): boolean {
     return date instanceof Date && !isNaN(date.getTime());
   }
-
-  // ...existing code if any...
+  
+  /**
+   * Obtiene los nombres de las aerolíneas a partir de los números de vuelo de los segmentos
+   * @param segments Segmentos del viaje que contienen los números de vuelo
+   * @returns String con los nombres de las aerolíneas
+   */
+  getAirlineNamesByFlightNumbers(segments: FlightSegment[]): string {
+    if (!segments || segments.length === 0) {
+      return '';
+    }
+    
+    // Extraer nombres de aerolíneas únicos de los segmentos
+    const airlineNames = segments
+      .filter(segment => segment && segment.airline && segment.airline.name)
+      .map(segment => segment.airline?.name || '');
+    
+    // Eliminar duplicados
+    const uniqueAirlineNames = [...new Set(airlineNames)];
+    
+    // Unir los nombres con comas
+    return uniqueAirlineNames.join(', ');
+  }
 }

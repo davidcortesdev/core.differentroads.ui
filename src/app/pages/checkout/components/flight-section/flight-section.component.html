@@ -31,7 +31,7 @@
         </div>
         <div class="segment-connector">
           <i class="pi pi-send flight-path-icon" aria-hidden="true"></i>
-          <span class="name"> {{ segment.airline.name }}</span>
+          <span class="name">{{ getAirlineName(segment.flightNumber) }}</span>
         </div>
         <div class="segment-time arrival">
           <div class="time">
@@ -75,7 +75,7 @@
         </div>
         <div class="segment-connector">
           <i class="pi pi-send flight-path-icon" aria-hidden="true"></i>
-          <span class="name"> {{ segment.airline.name }}</span>
+          <span class="name"> {{ getAirlineName(segment.flightNumber) }}</span>
         </div>
         <div class="segment-time arrival">
           <div class="time">

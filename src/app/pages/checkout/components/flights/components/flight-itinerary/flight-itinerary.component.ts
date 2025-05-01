@@ -1,6 +1,9 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { Flight } from '../../../../../../core/models/tours/flight.model';
 import { PricesService } from '../../../../../../core/services/checkout/prices.service';
+import { AirlinesService, Airline } from '../../../../../../core/services/airlines/airlines.service';
+import { forkJoin, Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 
 interface Journey {
   type: 'outbound' | 'inbound';
@@ -17,9 +20,27 @@ interface Journey {
   segments: any[];
   timelineData: any[];
   stopsText: string;
-  airlineName: string;
   totalDuration: string;
 }
+
+/**
+ * Interfaz que define la estructura de un segmento de vuelo
+ */
+interface FlightSegment {
+  departureCity?: string;
+  departureIata?: string;
+  departureTime?: string;
+  arrivalCity?: string;
+  arrivalIata?: string;
+  arrivalTime?: string;
+  flightNumber?: string;
+  numNights?: number;
+  airline?: {
+    name: string;
+    code?: string;
+  };
+}
+
 
 @Component({
   selector: 'app-flight-itinerary',
@@ -34,7 +55,10 @@ export class FlightItineraryComponent implements OnChanges {
 
   journeys: Journey[] = [];
 
-  constructor(private pricesService: PricesService) {}
+  constructor(
+    private pricesService: PricesService,
+    private airlinesService: AirlinesService
+  ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['flight'] && this.flight) {
@@ -453,7 +477,6 @@ export class FlightItineraryComponent implements OnChanges {
         : stops === 1
         ? '1 escala'
         : stops + ' escalas';
-    const airlineName = departureSegment.airline.name;
 
     let totalDuration: string;
     try {
@@ -483,7 +506,6 @@ export class FlightItineraryComponent implements OnChanges {
       segments,
       timelineData,
       stopsText,
-      airlineName,
       totalDuration,
     };
   }
@@ -492,6 +514,100 @@ export class FlightItineraryComponent implements OnChanges {
   isValidDate(date: any): boolean {
     return date instanceof Date && !isNaN(date.getTime());
   }
-
-  // ...existing code if any...
+  
+  // Caché de aerolíneas a nivel de componente
+  private airlineCache: { [prefix: string]: string } = {};
+  // Control de solicitudes en curso
+  private pendingRequests: { [prefix: string]: Observable<string> } = {};
+  
+  /**
+   * Obtiene los nombres de las aerolíneas a partir de los números de vuelo de los segmentos
+   * @param segments Segmentos del viaje que contienen los números de vuelo
+   * @returns String con los nombres de las aerolíneas
+   */
+  getAirlineNamesByFlightNumbers(segments: FlightSegment[]): string {
+    if (!segments || segments.length === 0) {
+      return '';
+    }
+    
+    // Extraer prefijos IATA únicos de los números de vuelo
+    const prefixesIATA = segments
+      .filter(segment => segment && segment.flightNumber)
+      .map(segment => {
+        // Extraer las dos primeras letras del número de vuelo
+        const flightNumber = segment.flightNumber || '';
+        const prefixIATA = flightNumber.substring(0, 2);
+        return prefixIATA;
+      })
+      .filter(prefix => prefix.length === 2); // Asegurarse de que el prefijo tiene 2 caracteres
+    
+    // Eliminar duplicados
+    const uniquePrefixesIATA = [...new Set(prefixesIATA)];
+    
+    // Si no hay prefijos válidos, intentar usar los nombres de aerolíneas de los segmentos
+    if (uniquePrefixesIATA.length === 0) {
+      const airlineNames = segments
+        .filter(segment => segment && segment.airline && segment.airline.name)
+        .map(segment => segment.airline?.name || '');
+      
+      const uniqueAirlineNames = [...new Set(airlineNames)];
+      return uniqueAirlineNames.join(', ');
+    }
+    
+    // Verificar si tenemos todos los prefijos en caché
+    const cachedNames = uniquePrefixesIATA
+      .filter(prefix => this.airlineCache[prefix])
+      .map(prefix => this.airlineCache[prefix]);
+    
+    // Si tenemos todos los prefijos en caché, devolver los nombres
+    if (cachedNames.length === uniquePrefixesIATA.length) {
+      return cachedNames.join(', ');
+    }
+    
+    // Prefijos que necesitamos cargar
+    const prefixesToLoad = uniquePrefixesIATA.filter(prefix => !this.airlineCache[prefix]);
+    
+    // Crear observables para cada prefijo que necesitamos cargar
+    const requests: Observable<string>[] = prefixesToLoad.map(prefix => {
+      // Si ya hay una solicitud en curso para este prefijo, reutilizarla
+      if (this.pendingRequests[prefix]) {
+        return this.pendingRequests[prefix];
+      }
+      
+      // Crear una nueva solicitud
+      const request = this.airlinesService.getAirlines({ codeIATA: prefix }).pipe(
+        map(airlines => {
+          const airlineName = airlines && airlines.length > 0 ? airlines[0].name || prefix : prefix;
+          this.airlineCache[prefix] = airlineName;
+          return airlineName;
+        }),
+        catchError(() => {
+          this.airlineCache[prefix] = prefix;
+          return of(prefix);
+        })
+      );
+      
+      // Guardar la solicitud en el mapa de solicitudes pendientes
+      this.pendingRequests[prefix] = request;
+      
+      return request;
+    });
+    
+    // Si hay solicitudes para cargar, hacerlas en paralelo
+    if (requests.length > 0) {
+      forkJoin(requests).subscribe(
+        () => {
+          // Limpiar las solicitudes pendientes
+          prefixesToLoad.forEach(prefix => {
+            delete this.pendingRequests[prefix];
+          });
+        }
+      );
+    }
+    
+    // Devolver los nombres que tenemos en caché y los prefijos para los que no tenemos nombres
+    return uniquePrefixesIATA
+      .map(prefix => this.airlineCache[prefix] || prefix)
+      .join(', ');
+  }
 }

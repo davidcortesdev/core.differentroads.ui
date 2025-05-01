@@ -3,6 +3,7 @@ import {
   Flight,
   FlightSegment,
 } from '../../../../core/models/tours/flight.model';
+import { AirlinesService } from '../../../../core/services/airlines/airlines.service';
 
 interface TimelineItem {
   departureCity?: string;
@@ -43,9 +44,18 @@ export class FlightSectionComponent implements OnChanges {
   @Input() flight!: Flight;
   journeys: Journey[] = [];
 
+  // Caché para almacenar los nombres de aerolíneas ya consultados
+  private airlineNameCache: { [flightNumber: string]: string } = {};
+  
+  // Mapa para acceder directamente a los nombres de aerolíneas en la plantilla
+  airlineNames: { [flightNumber: string]: string } = {};
+
+  constructor(private airlinesService: AirlinesService) {}
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['flight'] && this.flight) {
       this.processFlightData();
+      this.preloadAirlineNames();
     }
   }
 
@@ -158,5 +168,80 @@ export class FlightSectionComponent implements OnChanges {
       } as TimelineItem);
     }
     return timelineItems;
+  }
+
+
+  // Método para precargar todos los nombres de aerolíneas de una vez
+  private preloadAirlineNames(): void {
+    const flightNumbers: string[] = [];
+    
+    // Recolectar todos los números de vuelo únicos
+    this.journeys.forEach(journey => {
+      journey.segments.forEach(segment => {
+        if (segment.flightNumber && !this.airlineNameCache[segment.flightNumber]) {
+          flightNumbers.push(segment.flightNumber);
+        }
+      });
+    });
+    
+    // Si no hay números de vuelo para cargar, salir
+    if (flightNumbers.length === 0) {
+      return;
+    }
+    
+    // Cargar todos los nombres de aerolíneas en paralelo
+    const promises = flightNumbers.map(flightNumber => 
+      this.fetchAirlineName(flightNumber)
+    );
+    
+    // Esperar a que todas las promesas se resuelvan
+    Promise.all(promises).then(() => {
+      // Actualizar el mapa de nombres para la plantilla
+      this.airlineNames = {...this.airlineNameCache};
+    });
+  }
+  
+  // Método para obtener un nombre de aerolínea individual
+  private fetchAirlineName(flightNumber: string): Promise<string> {
+    // Si no hay número de vuelo, devolver cadena vacía
+    if (!flightNumber) {
+      return Promise.resolve('');
+    }
+    
+    // Si ya tenemos el nombre en caché, devolverlo directamente
+    if (this.airlineNameCache[flightNumber]) {
+      return Promise.resolve(this.airlineNameCache[flightNumber]);
+    }
+    
+    // Si no, hacer la llamada al servicio
+    return new Promise<string>(resolve => {
+      this.airlinesService.getAirlineNameByFlightNumber(flightNumber).subscribe(
+        name => {
+          this.airlineNameCache[flightNumber] = name;
+          this.airlineNames[flightNumber] = name;
+          resolve(name);
+        },
+        () => {
+          // En caso de error, usar las dos primeras letras del número de vuelo como fallback
+          const fallbackName = flightNumber.substring(0, 2);
+          this.airlineNameCache[flightNumber] = fallbackName;
+          this.airlineNames[flightNumber] = fallbackName;
+          resolve(fallbackName);
+        }
+      );
+    });
+  }
+
+  // Método para obtener el nombre de la aerolínea desde la caché (para la plantilla)
+  getAirlineName(flightNumber: string): string {
+    return this.airlineNames[flightNumber] || flightNumber?.substring(0, 2) || '';
+  }
+
+  // Mantener el método original para compatibilidad, pero marcarlo como deprecated
+  /**
+   * @deprecated Use getAirlineName instead
+   */
+  getAirlineNameByFlightNumber(flightNumber: string): Promise<string> {
+    return this.fetchAirlineName(flightNumber);
   }
 }

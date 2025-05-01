@@ -517,6 +517,8 @@ export class FlightItineraryComponent implements OnChanges {
   
   // Caché de aerolíneas a nivel de componente
   private airlineCache: { [prefix: string]: string } = {};
+  // Control de solicitudes en curso
+  private pendingRequests: { [prefix: string]: Observable<string> } = {};
   
   /**
    * Obtiene los nombres de las aerolíneas a partir de los números de vuelo de los segmentos
@@ -562,26 +564,50 @@ export class FlightItineraryComponent implements OnChanges {
       return cachedNames.join(', ');
     }
     
-    // Si no tenemos todos los prefijos en caché, cargar los datos en segundo plano
-    // y devolver un valor temporal
-    uniquePrefixesIATA.forEach(prefix => {
-      if (!this.airlineCache[prefix]) {
-        this.airlinesService.getAirlines({ codeIATA: prefix }).subscribe(
-          airlines => {
-            if (airlines && airlines.length > 0) {
-              this.airlineCache[prefix] = airlines[0].name || prefix;
-            } else {
-              this.airlineCache[prefix] = prefix;
-            }
-          },
-          () => {
-            this.airlineCache[prefix] = prefix;
-          }
-        );
+    // Prefijos que necesitamos cargar
+    const prefixesToLoad = uniquePrefixesIATA.filter(prefix => !this.airlineCache[prefix]);
+    
+    // Crear observables para cada prefijo que necesitamos cargar
+    const requests: Observable<string>[] = prefixesToLoad.map(prefix => {
+      // Si ya hay una solicitud en curso para este prefijo, reutilizarla
+      if (this.pendingRequests[prefix]) {
+        return this.pendingRequests[prefix];
       }
+      
+      // Crear una nueva solicitud
+      const request = this.airlinesService.getAirlines({ codeIATA: prefix }).pipe(
+        map(airlines => {
+          const airlineName = airlines && airlines.length > 0 ? airlines[0].name || prefix : prefix;
+          this.airlineCache[prefix] = airlineName;
+          return airlineName;
+        }),
+        catchError(() => {
+          this.airlineCache[prefix] = prefix;
+          return of(prefix);
+        })
+      );
+      
+      // Guardar la solicitud en el mapa de solicitudes pendientes
+      this.pendingRequests[prefix] = request;
+      
+      return request;
     });
     
-    // Devolver los prefijos como valor temporal
-    return uniquePrefixesIATA.join(', ');
+    // Si hay solicitudes para cargar, hacerlas en paralelo
+    if (requests.length > 0) {
+      forkJoin(requests).subscribe(
+        () => {
+          // Limpiar las solicitudes pendientes
+          prefixesToLoad.forEach(prefix => {
+            delete this.pendingRequests[prefix];
+          });
+        }
+      );
+    }
+    
+    // Devolver los nombres que tenemos en caché y los prefijos para los que no tenemos nombres
+    return uniquePrefixesIATA
+      .map(prefix => this.airlineCache[prefix] || prefix)
+      .join(', ');
   }
 }

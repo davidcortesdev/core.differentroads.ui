@@ -41,10 +41,7 @@
       </div>
     </div>
     <div class="form-row">
-      <div
-        class="form-column form-field half-width"
-        *ngIf="isFieldRequired('email')"
-      >
+      <div class="form-column form-field half-width">
         <label>Email*</label>
         <input
           pInputText
@@ -95,6 +92,20 @@
       </div>
       <div
         class="form-column form-field half-width"
+        *ngIf="
+          isFieldRequired('nationality') &&
+          form.get('nationality')?.value === 'ES'
+        "
+      >
+        <label>DNI*</label>
+        <input
+          pInputText
+          formControlName="dni"
+          placeholder="Introduce tu DNI"
+        />
+      </div>
+      <div
+        class="form-column form-field half-width"
         *ngIf="isFieldRequired('phone')"
       >
         <label>Teléfono*</label>
@@ -105,7 +116,7 @@
           placeholder="Introduce tu teléfono"
         />
       </div>
-      <div
+      <!--  <div
         class="form-column form-field half-width"
         *ngIf="isFieldRequired('documentType')"
       >
@@ -118,7 +129,7 @@
           placeholder="Seleccione"
           appendTo="body"
         ></p-select>
-      </div>
+      </div> -->
       <div
         class="form-column form-field half-width"
         *ngIf="isFieldRequired('passport')"
@@ -156,17 +167,7 @@
           appendTo="body"
         ></p-datepicker>
       </div>
-      <!--  <div
-        class="form-column form-field half-width"
-        *ngIf="isFieldRequired('dni')"
-      >
-        <label>DNI*</label>
-        <input
-          pInputText
-          formControlName="dni"
-          placeholder="Introduce tu DNI"
-        />
-      </div> -->
+
       <!--  
       <div
         class="form-column form-field half-width"
@@ -255,7 +256,20 @@
           [dropdown]="true"
         ></p-autocomplete>
       </div>
-
+      <div
+        class="form-column form-field half-width"
+        *ngIf="
+          !isFieldRequired('nationality') &&
+          form.get('nationality')?.value === 'ES'
+        "
+      >
+        <label>DNI*</label>
+        <input
+          pInputText
+          formControlName="dni"
+          placeholder="Introduce tu DNI"
+        />
+      </div>
       <div
         class="form-column form-field half-width"
         *ngIf="!isFieldRequired('phone')"
@@ -269,7 +283,7 @@
         />
       </div>
 
-      <div
+      <!--  <div
         class="form-column form-field half-width"
         *ngIf="!isFieldRequired('documentType')"
       >
@@ -282,7 +296,7 @@
           placeholder="Seleccione"
           appendTo="body"
         ></p-select>
-      </div>
+      </div> -->
 
       <div
         class="form-column form-field half-width"

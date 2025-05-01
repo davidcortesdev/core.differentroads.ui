@@ -1,5 +1,8 @@
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { environment } from '../../../../environments/environment';
+import { CityCoordinatesService } from '../../services/city-coordinates.service';
+import { takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 export interface City {
   nombre: string;
@@ -156,15 +159,20 @@ export class TourMapComponent implements OnInit, OnDestroy {
     title: '',
   };
 
+  // Añadir la propiedad destroy$ que falta
+  private destroy$ = new Subject<void>();
   private scriptElement: HTMLScriptElement | null = null;
 
-  constructor() {
+  constructor(private cityCoordinatesService: CityCoordinatesService) {
     this.loadGoogleMapsScript();
   }
 
   ngOnInit(): void {
     if (this.citiesData.length > 0) {
       this.calculateMapCenter();
+    } else if (this.cities.length > 0) {
+      // Si tenemos nombres de ciudades pero no datos, buscar las coordenadas
+      this.loadCitiesData();
     }
   }
 
@@ -173,6 +181,10 @@ export class TourMapComponent implements OnInit, OnDestroy {
     if (this.scriptElement && this.scriptElement.parentNode) {
       this.scriptElement.parentNode.removeChild(this.scriptElement);
     }
+    
+    // Completar el subject para evitar memory leaks
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private loadGoogleMapsScript(): void {
@@ -374,5 +386,23 @@ export class TourMapComponent implements OnInit, OnDestroy {
       console.warn('Error getting primary color:', error);
       return '#FF0000';
     }
+  }
+
+  /**
+   * Carga los datos de las ciudades utilizando el servicio de coordenadas
+   */
+  private loadCitiesData(): void {
+    this.cityCoordinatesService.convertCitiesToCityObjects(this.cities)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(
+        (cityObjects: City[]) => {
+          if (cityObjects && cityObjects.length > 0) {
+            this.updateCitiesData(cityObjects);
+          }
+        },
+        (error: any) => {
+          console.error('Error al cargar datos de ciudades:', error);
+        }
+      );
   }
 }

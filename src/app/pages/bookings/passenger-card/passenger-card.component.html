@@ -115,18 +115,21 @@
   <!-- Edit Mode -->
   <div class="passenger-content edit-mode" *ngIf="isEditing">
     <form [formGroup]="passengerForm">
-      <div class="passenger-name">
-        <h3>
-          <input type="text" pInputText formControlName="fullName" class="w-full">
-        </h3>
+      <div class="detail-row hab">
+        <span class="detail-label hab">Habitación:</span>
+        <span class="detail-value hab" [ngClass]="{'pending-value': !passenger.room}">{{passenger.room || 'Pendiente'}}</span>
       </div>
-      
+
       <div class="update-passenger-details">
-        <div class="detail-row">
-          <span class="detail-label">Habitación:</span>
-          <span class="detail-value hab" [ngClass]="{'pending-value': !passenger.room}">{{passenger.room || 'Pendiente'}}</span>
+       
+        <div class="form-field">
+          <label>Nombre:</label>
+        <input
+            pInputText
+            formControlName="fullName"
+            placeholder="Ingrese su nombre completo"
+          />
         </div>
-        
         <div class="form-field">
           <label>Teléfono:</label>
         <input
@@ -197,7 +200,7 @@
           <input
           pInputText
           formControlName="nationality"
-          placeholder="Ingrese su código postal"
+          placeholder="Ingrese su nacionalidad"
         />
         </div>
         
@@ -206,7 +209,7 @@
         <input
           pInputText
           formControlName="dni"
-          placeholder="Ingrese documente de identidad"
+          placeholder="Ingrese documente de identificación"
         />
         </div>
         <div class="form-field">
@@ -270,14 +273,14 @@
         </div>
         
         <div class="detail-row">
-          <span class="detail-label">Comfort Plan:</span>
+          <span class="detail-label">Seguro:</span>
           <span class="detail-value" [ngClass]="{'pending-value': !passenger.comfortPlan}">{{passenger.comfortPlan || 'Pendiente'}}</span>
         </div>
         
-        <div class="detail-row">
+        <!-- <div class="detail-row">
           <span class="detail-label">Seguro:</span>
           <span class="detail-value" [ngClass]="{'pending-value': !passenger.insurance}">{{passenger.insurance || 'Pendiente'}}</span>
-        </div>
+        </div> -->
       </div>
     </form>
   </div>
@@ -313,7 +316,7 @@
         </p-button>
         <p-button 
           icon="pi pi-times" 
-          styleClass="p-button-text p-button-danger ml-2"
+          styleClass="p-button-text p-button-danger ml-2 p-button-rounded"
           (onClick)="onCancel()">
         </p-button>
       </div>

@@ -327,19 +327,24 @@ export class PassengerCardComponent implements OnInit, OnChanges {
   hasPendingFields(): boolean {
     if (!this.passenger) return true;
     
-    // Check required fields first
-    if (!this.passenger.fullName || !this.passenger.passportID || !this.passenger.documentType) {
-      return true;
-    }
-    
-    // Check other important fields
-    if (!this.passenger.birthDate || !this.passenger.gender || !this.passenger.email || 
-        !this.passenger.phone || !this.passenger.room) {
-      return true;
-    }
-    
-    // Check passport specific fields
-    if (!this.passenger.documentExpeditionDate || !this.passenger.documentExpirationDate) {
+    // Check if ANY field is missing to show the generic message
+    if (!this.passenger.fullName ||
+        !this.passenger.passportID ||
+        !this.passenger.documentType ||
+        !this.passenger.birthDate ||
+        !this.passenger.gender ||
+        !this.passenger.email ||
+        !this.passenger.phone ||
+        !this.passenger.room ||
+        !this.passenger.ciudad ||
+        !this.passenger.codigoPostal ||
+        !this.passenger.nationality ||
+        !this.passenger.dni ||
+        !this.passenger.minorIdIssueDate ||
+        !this.passenger.minorIdExpirationDate ||
+        !this.passenger.documentExpeditionDate ||
+        !this.passenger.documentExpirationDate ||
+        !this.passenger.comfortPlan) {
       return true;
     }
     

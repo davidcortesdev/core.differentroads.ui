@@ -61,7 +61,7 @@
       <p-divider></p-divider>
 
       <div class="detail-row">
-        <span class="detail-label">Documento de identidad:</span>
+        <span class="detail-label">Documento de identificación:</span>
         <span class="detail-value" [ngClass]="{'pending-value': !passenger.dni}">{{passenger.dni || 'Pendiente'}}</span>
       </div>
 
@@ -101,14 +101,14 @@
       <p-divider></p-divider>
       
       <div class="detail-row">
-        <span class="detail-label">Comfort Plan:</span>
+        <span class="detail-label">Seguro:</span>
         <span class="detail-value" [ngClass]="{'pending-value': !passenger.comfortPlan}">{{passenger.comfortPlan || 'Pendiente'}}</span>
       </div>
       
-      <div class="detail-row">
+     <!--  <div class="detail-row">
         <span class="detail-label">Seguro:</span>
         <span class="detail-value" [ngClass]="{'pending-value': !passenger.insurance}">{{passenger.insurance || 'Pendiente'}}</span>
-      </div>
+      </div> -->
     </div>
   </div>
   
@@ -202,7 +202,7 @@
         </div>
         
         <div class="form-field">
-          <label>Documento de identidad:</label>
+          <label>Documento de identificación:</label>
         <input
           pInputText
           formControlName="dni"

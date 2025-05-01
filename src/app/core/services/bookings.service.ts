@@ -15,7 +15,7 @@ import {
   VoucherReviewStatus,
 } from '../models/bookings/payment.model';
 import { Pagination } from '../models/commons/pagination.model';
-import { BookingTraveler, TravelerData  } from '../models/bookings/booking-traveler.model';
+import { BookingTraveler  } from '../models/bookings/booking-traveler.model';
 import { Document } from '../models/document/document.model';
 import { NotificationLog } from '../models/notification-log/notification-log.model';
 import { BookingNote } from '../models/bookings/booking-note.model';
@@ -186,7 +186,7 @@ export class BookingsService {
    * @param data - The travelers data to update.
    * @returns Observable of any.
    */
-  updateTravelers(bookingId: string, data: BookingTraveler): Observable<any> {
+  updateTravelers(data: BookingTraveler): Observable<any> {
     return this.http.put<any>(
       `${this.API_URL}/travelers/${data._id}`,//Api solo recibe /travelers/${}`
       data,

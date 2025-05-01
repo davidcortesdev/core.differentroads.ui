@@ -42,17 +42,46 @@
           {{passenger.birthDate ? formatDate(passenger.birthDate) : 'Pendiente'}}
         </span>
       </div>
-      <p-divider></p-divider>
 
       <div class="detail-row">
-        <span class="detail-label">Tipo de documento:</span>
-        <span class="detail-value" [ngClass]="{'pending-value': !passenger.documentType}">
-          {{ getDocumentTypeLabel(passenger.documentType) }}
-        </span>
+        <span class="detail-label">Ciudad:</span>
+        <span class="detail-value" [ngClass]="{'pending-value': !passenger.ciudad}">{{passenger.ciudad || 'Pendiente'}}</span>
       </div>
 
       <div class="detail-row">
-        <span class="detail-label">Número de documento:</span>
+        <span class="detail-label">Código postal:</span>
+        <span class="detail-value" [ngClass]="{'pending-value': !passenger.codigoPostal}">{{passenger.codigoPostal || 'Pendiente'}}</span>
+      </div>
+
+      <div class="detail-row">
+        <span class="detail-label">Nacionalidad:</span>
+        <span class="detail-value" [ngClass]="{'pending-value': !passenger.nationality}">{{passenger.nationality || 'Pendiente'}}</span>
+      </div>
+
+      <p-divider></p-divider>
+
+      <div class="detail-row">
+        <span class="detail-label">Documento de identidad:</span>
+        <span class="detail-value" [ngClass]="{'pending-value': !passenger.dni}">{{passenger.dni || 'Pendiente'}}</span>
+      </div>
+
+      <div class="detail-row">
+        <span class="detail-label">Fecha de expedición DNI:</span>
+        <span class="detail-value" [ngClass]="{'pending-value': !passenger.minorIdIssueDate}">
+          {{passenger.minorIdIssueDate? formatDate(passenger.minorIdIssueDate|| '') : 'Pendiente'}}
+        </span>
+      </div>
+      
+      <div class="detail-row">
+        <span class="detail-label">Fecha de caducidad DNI:</span>
+        <span class="detail-value" [ngClass]="{'pending-value': !passenger.minorIdExpirationDate}">
+          {{passenger.minorIdExpirationDate? formatDate(passenger.minorIdExpirationDate|| '') : 'Pendiente'}}
+        </span>
+      </div>
+      <p-divider></p-divider>
+
+      <div class="detail-row">
+        <span class="detail-label">Pasaporte:</span>
         <span class="detail-value" [ngClass]="{'pending-value': !passenger.documentNumber}">{{passenger.documentNumber || 'Pendiente'}}</span>
       </div>
       
@@ -99,6 +128,24 @@
         </div>
         
         <div class="form-field">
+          <label>Teléfono:</label>
+        <input
+            pInputText
+            formControlName="phone"
+            placeholder="Ingrese su teléfono"
+          />
+        </div>
+
+        <div class="form-field">
+          <label>Email:</label>
+        <input
+          pInputText
+          formControlName="email"
+          placeholder="Ingrese su email"
+        />
+        </div>
+
+        <div class="form-field">
           <label>Sexo:</label>
           <p-dropdown
             formControlName="gender"
@@ -113,29 +160,87 @@
             [autoDisplayFirst]="false"
           ></p-dropdown>
         </div>
-        
+
         <div class="form-field">
-          <label>Tipo de Documento:</label>
-          <p-dropdown
-            formControlName="documentType"
-            name="Tipo de Documento"
-            [options]="documentTypeOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Seleccione tipo de Documento"
-            [disabled]="!isEditing"
-            styleClass="custom-dropdown"
-            [showClear]="true"
-            [autoDisplayFirst]="false"
-          ></p-dropdown>
+          <label>Fecha de nacimiento:</label>
+            <p-datepicker
+            formControlName="birthDate"
+            placeholder="dd/mm/aaaa"
+            [showIcon]="true"
+            appendTo="body"
+            dateFormat="dd/mm/yy"
+            [maxDate]="today"
+            >
+            </p-datepicker>
+        </div>
+
+        <div class="form-field">
+          <label>Ciudad:</label>
+        <input
+          pInputText
+          formControlName="ciudad"
+          placeholder="Ingrese su ciudad"
+        />
+        </div>
+
+        <div class="form-field">
+          <label>Código postal:</label>
+          <input
+          pInputText
+          formControlName="codigoPostal"
+          placeholder="Ingrese su código postal"
+        />
+        </div>
+
+        <div class="form-field">
+          <label>Nacionalidad</label>
+          <input
+          pInputText
+          formControlName="nationality"
+          placeholder="Ingrese su código postal"
+        />
         </div>
         
         <div class="form-field">
-          <label>Número de Documento:</label>
+          <label>Documento de identidad:</label>
+        <input
+          pInputText
+          formControlName="dni"
+          placeholder="Ingrese documente de identidad"
+        />
+        </div>
+        <div class="form-field">
+          <label>Fecha de expedición DNI:</label>
+          <p-datepicker
+            formControlName="minorIdIssueDate"
+            placeholder="dd/mm/aaaa"
+            [showIcon]="true"
+            appendTo="body"
+            dateFormat="dd/mm/yy"
+            [maxDate]="today"
+          >
+        </p-datepicker>
+        </div>
+        
+        <div class="form-field">
+          <label>Fecha de caducidad DNI:</label>
+          <p-datepicker
+            formControlName="minorIdExpirationDate"
+            placeholder="dd/mm/aaaa"
+            [showIcon]="true"
+            appendTo="body"
+            dateFormat="dd/mm/yy"
+            [minDate]="today"
+          >
+          </p-datepicker>
+        </div>
+        
+        <div class="form-field">
+          <label>Pasaporte:</label>
         <input
           pInputText
           formControlName="documentNumber"
-          placeholder="Ingrese su teléfono"
+          placeholder="Ingrese N° pasaporte"
         />
         </div>
         
@@ -163,38 +268,6 @@
             [minDate]="today"
           >
           </p-datepicker>
-        </div>
-        
-        <div class="form-field">
-          <label>Fecha de nacimiento:</label>
-            <p-datepicker
-            formControlName="birthDate"
-            placeholder="dd/mm/aaaa"
-            [showIcon]="true"
-            appendTo="body"
-            dateFormat="dd/mm/yy"
-            [maxDate]="today"
-            >
-            </p-datepicker>
-        </div>
-      
-        
-        <div class="form-field">
-          <label>Email:</label>
-        <input
-          pInputText
-          formControlName="email"
-          placeholder="Ingrese su código email"
-        />
-        </div>
-        
-        <div class="form-field">
-          <label>Teléfono:</label>
-        <input
-        pInputText
-        formControlName="phone"
-        placeholder="Ingrese su teléfono"
-      />
         </div>
         
         <div class="detail-row">

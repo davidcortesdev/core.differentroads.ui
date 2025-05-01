@@ -28,8 +28,10 @@ export interface TravelerData {
   postalCode?: string;
   sex?: string;
   surname?: string;
-
   minorIdExpirationDate?: string;
   minorIdIssueDate?: string;
   associatedAdult?: string;
+  ciudad?: string;
+  codigoPostal?: string;
+  documentNumber?: string;
 }

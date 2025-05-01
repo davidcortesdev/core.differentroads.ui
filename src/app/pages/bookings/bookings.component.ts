@@ -99,6 +99,12 @@ export interface PassengerData {
   bookingID?: string;
   bookingSID?: string;
   lead?: boolean;
+  ciudad?: string;
+  codigoPostal?: string;
+  dni?: string;
+  minorIdExpirationDate?: string;
+  minorIdIssueDate?: string;
+
 }
 
 @Component({
@@ -682,6 +688,11 @@ export class BookingsComponent implements OnInit {
           bookingID: this.bookingId, // Añadir el ID de la reserva
           bookingSID: booking.bookingSID || this.bookingId, // Añadir el bookingSID
           lead: traveler.lead || false,
+          ciudad: travelerData.ciudad || '',
+          codigoPostal: travelerData.codigoPostal || '',
+          dni: travelerData.dni || '',
+          minorIdExpirationDate: travelerData.minorIdExpirationDate || '',
+          minorIdIssueDate: travelerData.minorIdIssueDate || '',
         };
 
         // Añadir al array de pasajeros

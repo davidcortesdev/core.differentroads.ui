@@ -101,7 +101,14 @@ export class PassengerCardComponent implements OnInit, OnChanges {
       documentType: [this.passenger.documentType || ''],
       documentNumber: [this.passenger.documentNumber || ''],
       birthDate: [this.passenger.birthDate || '', [Validators.required, this.birthDateValidator.bind(this)]],
-      gender: [this.passenger.gender || '']
+      gender: [this.passenger.gender || ''],
+      ciudad: [this.passenger.ciudad || ''],
+      codigoPostal: [this.passenger.ciudad || ''],
+      nationality: [this.passenger.nationality || ''],
+      dni: [this.passenger.dni || ''],
+      minorIdExpirationDate: [this.passenger.minorIdExpirationDate || ''],
+      minorIdIssueDate: [this.passenger.minorIdIssueDate || ''],
+
       // Agregá los campos reales que estés usando
     });
   }
@@ -138,6 +145,12 @@ export class PassengerCardComponent implements OnInit, OnChanges {
       documentExpirationDate: [passenger.documentExpirationDate],
       comfortPlan: [passenger.comfortPlan],
       insurance: [passenger.insurance],
+      ciudad: [passenger.ciudad],
+      codigoPostal: [passenger.codigoPostal],
+      nationality: [passenger.nationality],
+      dni: [passenger.dni],
+      minorIdExpirationDate: [passenger.minorIdExpirationDate],
+      minorIdIssueDate: [passenger.minorIdIssueDate],
     });
   }
 
@@ -214,7 +227,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
       const travelerData: TravelerData = {
         name: formValue.fullName,
         surname: '', 
-        dni: formValue.documentNumber,
+        documentNumber: formValue.documentNumber,
         documentType: formValue.documentType,
         birthdate: formValue.birthDate, // Asegurarse de que se use el campo correcto
         email: formValue.email,
@@ -222,6 +235,12 @@ export class PassengerCardComponent implements OnInit, OnChanges {
         sex: formValue.gender,
         passportIssueDate: formValue.documentExpeditionDate,
         passportExpirationDate: formValue.documentExpirationDate,
+        ciudad: formValue.ciudad,
+        codigoPostal: formValue.codigoPostal,
+        nationality: formValue.nationality,
+        dni: formValue.dni,
+        minorIdExpirationDate: formValue.minorIdExpirationDate,
+        minorIdIssueDate: formValue.minorIdIssueDate,
       };
       
       // Obtener bookingSID
@@ -242,7 +261,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
       
       console.log('Sending updatedTraveler:', updatedTraveler);
   
-      this.bookingService.updateTravelers(this.bookingId, updatedTraveler).subscribe({
+      this.bookingService.updateTravelers(updatedTraveler).subscribe({
         next: (response) => {
           console.log('Update successful:', response);
           
@@ -260,7 +279,11 @@ export class PassengerCardComponent implements OnInit, OnChanges {
             documentExpeditionDate: formValue.documentExpeditionDate,
             documentExpirationDate: formValue.documentExpirationDate,
             comfortPlan: formValue.comfortPlan,
-            insurance: formValue.insurance
+            insurance: formValue.insurance,
+            ciudad: formValue.ciudad,
+            codigoPostal: formValue.codigoPostal,
+            nationality: formValue.nationality,
+            dni: formValue.dni,
           };
           
           console.log('Updated passenger object:', this.passenger);

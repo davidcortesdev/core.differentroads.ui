@@ -14,4 +14,10 @@ export interface PassengerData {
     comfortPlan?: string;
     insurance?: string;
     _id?: string;
+    ciudad?: string;
+    codigoPostal?: string;
+    nationality?: string;
+    dni?: string;
+    minorIdExpirationDate?: string;
+    minorIdIssueDate?: string;
   }

@@ -55,7 +55,7 @@ $p: var(--p-primary-color);
             .booking-row {
                 &.top-row:first-child {
                     margin-bottom: 2px;
-                    margin-top: -5px; // Sube el título un poco
+                    margin-top: -5px;
                 }
 
                 &:not(:first-child) {

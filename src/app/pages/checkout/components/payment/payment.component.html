@@ -230,7 +230,7 @@
           <div *ngFor="let traveler of uniqueTravelers" class="traveler-item">
             <div class="traveler-row">
               <!-- Checkbox container - Ahora el área clickeable incluye toda la fila -->
-              <div class="checkbox-container" *ngIf="(traveler.points || 0) > 0" (click)="toggleTravelerPoints(traveler)">
+              <div class="checkbox-container checkbox-azul" *ngIf="(traveler.points || 0) > 0" (click)="toggleTravelerPoints(traveler)">
                 <p-checkbox
                   [binary]="true"
                   [(ngModel)]="traveler.redeemCheckbox"
@@ -290,7 +290,7 @@
   </div>
 
   <!-- The existing terms-container should come after our new section -->
-  <div class="terms-container">
+  <div class="terms-container checkbox-azul">
     <p-checkbox
       [(ngModel)]="termsAccepted"
       [binary]="true"

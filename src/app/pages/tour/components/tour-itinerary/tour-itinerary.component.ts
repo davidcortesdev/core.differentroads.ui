@@ -33,17 +33,7 @@ import { ActivitiesCarouselComponent } from '../../../../shared/components/activ
 import { MessageService } from 'primeng/api';
 // Importar el nuevo componente del mapa
 import { TourMapComponent, City } from '../../../../shared/components/tour-map/tour-map.component';
-
-// Add these interfaces for the coordinate queue system
-interface PendingCity {
-  city: string;
-  index?: number;
-}
-
-interface CachedCoordinates {
-  lat: number;
-  lng: number;
-}
+import { CityCoordinatesService } from '../../../../shared/services/city-coordinates.service';
 
 interface EventItem {
   status?: string;
@@ -64,14 +54,8 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
   @ViewChildren('itineraryPanel') itineraryPanels!: QueryList<Panel>;
   @ViewChild(TourMapComponent) tourMapComponent!: TourMapComponent;
   
-  // Add properties for the coordinate queue system
+  // Mantener solo el Subject para la limpieza
   private destroy$ = new Subject<void>();
-  private pendingCities: PendingCity[] = [];
-  private processingQueue = false;
-  private lastRequestTime = 0;
-  private coordinatesCache = new Map<string, CachedCoordinates>();
-  private failedAttempts = new Map<string, number>();
-  private readonly MAX_ATTEMPTS = 3;
   
   // Mantener solo las propiedades necesarias para el componente principal
   cities: string[] = [];
@@ -168,7 +152,8 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
     private tourDataService: TourDataService,
     private periodPricesService: PeriodPricesService,
     private hotelsService: HotelsService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private cityCoordinatesService: CityCoordinatesService
   ) {
     this.events = [];
   }
@@ -236,179 +221,36 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
           .getTourDetailBySlug(slug, ['cities'], filterByStatus)
           .subscribe((tour) => {
             this.cities = tour['cities'];
-            // Replace direct service calls with the queue system
+            // Usar el servicio actualizado para obtener coordenadas
             this.cities.forEach((city) => {
-              this.getCoordinatesWithCache(city);
+              this.cityCoordinatesService.getCoordinatesWithQueue(
+                city,
+                this.addCityToData.bind(this)
+              );
             });
           });
       }
     });
   }
 
-  // Add this method to handle component cleanup
+  // Método para manejar la limpieza del componente
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
 
-  // Add these new methods for the coordinate queue system
-  private getCoordinatesWithCache(city: string, index?: number): void {
-    // Skip empty or invalid city names
-    if (!city || typeof city !== 'string' || city.trim() === '') {
-      console.warn('Skipping invalid city name:', city);
-      return;
-    }
-    
-    // Normalize city name to avoid case-sensitive duplicates
-    const normalizedCity = city.trim().toLowerCase();
-    
-    // Check if we already have the coordinates in cache
-    if (this.coordinatesCache.has(normalizedCity)) {
-      console.log(`Using cached coordinates for "${city}"`);
-      const cachedCoordinates = this.coordinatesCache.get(normalizedCity)!;
-      this.addCityToData(
-        city,
-        cachedCoordinates.lat,
-        cachedCoordinates.lng,
-        index
-      );
-      return;
-    }
-  
-    // Check if we've exceeded the maximum number of failed attempts
-    const attempts = this.failedAttempts.get(normalizedCity) || 0;
-    if (attempts >= this.MAX_ATTEMPTS) {
-      console.warn(
-        `Skipping geocoding for "${city}" after ${this.MAX_ATTEMPTS} failed attempts`
-      );
-      return;
-    }
-  
-    // Check if this city is already in the pending queue
-    if (this.pendingCities.some(pending => pending.city.toLowerCase() === normalizedCity)) {
-      console.log(`City "${city}" is already in the pending queue`);
-      return;
-    }
-  
-    // Add to pending queue and process
-    console.log(`Adding "${city}" to geocoding queue`);
-    this.pendingCities.push({ city, index });
-  
-    // Start processing the queue if not already processing
-    if (!this.processingQueue) {
-      this.processCoordinateQueue();
-    }
-  }
-
-  private processCoordinateQueue(): void {
-    this.processingQueue = true;
-  
-    const processNext = () => {
-      if (this.pendingCities.length === 0) {
-        this.processingQueue = false;
-        return;
-      }
-
-      const now = Date.now();
-      const timeSinceLastRequest = now - this.lastRequestTime;
-
-      // If less than 1.25 seconds have passed since the last request, wait
-      if (timeSinceLastRequest < 1250 && this.lastRequestTime !== 0) {
-        setTimeout(processNext, 1250 - timeSinceLastRequest);
-        return;
-      }
-
-      // Process the next city in the queue
-      const nextCity = this.pendingCities.shift();
-      if (!nextCity) {
-        this.processingQueue = false;
-        return;
-      }
-
-      this.lastRequestTime = now;
-      const normalizedCity = nextCity.city.trim().toLowerCase();
-  
-      // Double-check cache before making the request (in case it was added while in queue)
-      if (this.coordinatesCache.has(normalizedCity)) {
-        console.log(`Using cached coordinates for "${nextCity.city}" (added while in queue)`);
-        const cachedCoordinates = this.coordinatesCache.get(normalizedCity)!;
-        this.addCityToData(
-          nextCity.city,
-          cachedCoordinates.lat,
-          cachedCoordinates.lng,
-          nextCity.index
-        );
-        
-        // Process the next city after a short delay
-        setTimeout(processNext, 100);
-        return;
-      }
-
-      this.geoService
-        .getCoordinates(nextCity.city)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (coordinates) => {
-            if (coordinates && coordinates.lat && coordinates.lon) {
-              // Valid coordinates received, store in cache with normalized key
-              this.coordinatesCache.set(normalizedCity, {
-                lat: Number(coordinates.lat),
-                lng: Number(coordinates.lon),
-              });
-  
-              // Add to city data
-              this.addCityToData(
-                nextCity.city,
-                Number(coordinates.lat),
-                Number(coordinates.lon),
-                nextCity.index
-              );
-  
-              // Reset failed attempts counter on success
-              this.failedAttempts.delete(normalizedCity);
-            } else {
-              // Invalid or empty coordinates, increment failed attempts
-              const attempts =
-                (this.failedAttempts.get(nextCity.city) || 0) + 1;
-              this.failedAttempts.set(nextCity.city, attempts);
-              console.warn(
-                `Failed to get valid coordinates for "${nextCity.city}" (attempt ${attempts}/${this.MAX_ATTEMPTS})`
-              );
-            }
-
-            // Process the next city after a delay of 1.5 seconds
-            setTimeout(processNext, 1500);
-          },
-          error: (error) => {
-            // Increment failed attempts on error
-            const attempts = (this.failedAttempts.get(nextCity.city) || 0) + 1;
-            this.failedAttempts.set(nextCity.city, attempts);
-
-            console.error(
-              `Error fetching coordinates for "${nextCity.city}" (attempt ${attempts}/${this.MAX_ATTEMPTS}):`,
-              error
-            );
-
-            // Continue processing even if there's an error, with a delay of 1.5 seconds
-            setTimeout(processNext, 1500);
-          },
-        });
-    };
-
-    // Start processing
-    processNext();
-  }
-
-  private addCityToData(city: string, lat: number, lng: number, index?: number): void {
-    const newCity = {
+  // Método para agregar una ciudad a los datos
+  addCityToData(city: string, lat: number, lng: number, index?: number): void {
+    const cityData: City = {
       nombre: city,
       lat: lat,
       lng: lng,
     };
-    
-    this.citiesData.push(newCity);
-    
-    // Actualizar el componente del mapa cuando esté disponible
+  
+    // Agregar la ciudad a los datos
+    this.citiesData.push(cityData);
+  
+    // Actualizar el mapa si está disponible
     if (this.tourMapComponent) {
       this.tourMapComponent.updateCitiesData(this.citiesData);
     }

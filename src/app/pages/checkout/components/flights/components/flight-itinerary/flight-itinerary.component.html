@@ -40,7 +40,7 @@
             <!-- Línea roja debajo del texto de escalas -->
             <div class="stops-underline"></div>
           </div>
-          <span class="journey-airline">{{ journey.airlineName }}</span>
+          <span class="journey-airline">{{ getAirlineNamesByFlightNumbers(journey.segments) || 'Cargando...' }}</span>
           <span class="journey-duration">{{ journey.totalDuration }}</span>
           
           <p-overlayPanel #op>

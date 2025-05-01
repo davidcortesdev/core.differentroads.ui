@@ -1,6 +1,9 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { Flight } from '../../../../../../core/models/tours/flight.model';
 import { PricesService } from '../../../../../../core/services/checkout/prices.service';
+import { AirlinesService, Airline } from '../../../../../../core/services/airlines/airlines.service';
+import { forkJoin, Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 
 interface Journey {
   type: 'outbound' | 'inbound';
@@ -52,7 +55,10 @@ export class FlightItineraryComponent implements OnChanges {
 
   journeys: Journey[] = [];
 
-  constructor(private pricesService: PricesService) {}
+  constructor(
+    private pricesService: PricesService,
+    private airlinesService: AirlinesService
+  ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['flight'] && this.flight) {
@@ -509,6 +515,9 @@ export class FlightItineraryComponent implements OnChanges {
     return date instanceof Date && !isNaN(date.getTime());
   }
   
+  // Caché de aerolíneas a nivel de componente
+  private airlineCache: { [prefix: string]: string } = {};
+  
   /**
    * Obtiene los nombres de las aerolíneas a partir de los números de vuelo de los segmentos
    * @param segments Segmentos del viaje que contienen los números de vuelo
@@ -519,15 +528,60 @@ export class FlightItineraryComponent implements OnChanges {
       return '';
     }
     
-    // Extraer nombres de aerolíneas únicos de los segmentos
-    const airlineNames = segments
-      .filter(segment => segment && segment.airline && segment.airline.name)
-      .map(segment => segment.airline?.name || '');
+    // Extraer prefijos IATA únicos de los números de vuelo
+    const prefixesIATA = segments
+      .filter(segment => segment && segment.flightNumber)
+      .map(segment => {
+        // Extraer las dos primeras letras del número de vuelo
+        const flightNumber = segment.flightNumber || '';
+        const prefixIATA = flightNumber.substring(0, 2);
+        return prefixIATA;
+      })
+      .filter(prefix => prefix.length === 2); // Asegurarse de que el prefijo tiene 2 caracteres
     
     // Eliminar duplicados
-    const uniqueAirlineNames = [...new Set(airlineNames)];
+    const uniquePrefixesIATA = [...new Set(prefixesIATA)];
     
-    // Unir los nombres con comas
-    return uniqueAirlineNames.join(', ');
+    // Si no hay prefijos válidos, intentar usar los nombres de aerolíneas de los segmentos
+    if (uniquePrefixesIATA.length === 0) {
+      const airlineNames = segments
+        .filter(segment => segment && segment.airline && segment.airline.name)
+        .map(segment => segment.airline?.name || '');
+      
+      const uniqueAirlineNames = [...new Set(airlineNames)];
+      return uniqueAirlineNames.join(', ');
+    }
+    
+    // Verificar si tenemos todos los prefijos en caché
+    const cachedNames = uniquePrefixesIATA
+      .filter(prefix => this.airlineCache[prefix])
+      .map(prefix => this.airlineCache[prefix]);
+    
+    // Si tenemos todos los prefijos en caché, devolver los nombres
+    if (cachedNames.length === uniquePrefixesIATA.length) {
+      return cachedNames.join(', ');
+    }
+    
+    // Si no tenemos todos los prefijos en caché, cargar los datos en segundo plano
+    // y devolver un valor temporal
+    uniquePrefixesIATA.forEach(prefix => {
+      if (!this.airlineCache[prefix]) {
+        this.airlinesService.getAirlines({ codeIATA: prefix }).subscribe(
+          airlines => {
+            if (airlines && airlines.length > 0) {
+              this.airlineCache[prefix] = airlines[0].name || prefix;
+            } else {
+              this.airlineCache[prefix] = prefix;
+            }
+          },
+          () => {
+            this.airlineCache[prefix] = prefix;
+          }
+        );
+      }
+    });
+    
+    // Devolver los prefijos como valor temporal
+    return uniquePrefixesIATA.join(', ');
   }
 }

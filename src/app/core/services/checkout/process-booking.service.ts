@@ -6,10 +6,14 @@ import { TextsService } from './texts.service';
 import { PricesService } from './prices.service';
 import { TravelersService } from './travelers.service';
 import { AmadeusService } from '../amadeus.service';
-import { BookingCreateInput } from '../../models/bookings/booking.model';
+import {
+  Booking,
+  BookingCreateInput,
+} from '../../models/bookings/booking.model';
 import { Order } from '../../models/orders/order.model';
 import { Flight } from '../../models/tours/flight.model';
 import { Period } from '../../models/tours/period.model';
+import { ActivitiesService } from './activities.service';
 
 @Injectable({
   providedIn: 'root',
@@ -35,7 +39,8 @@ export class ProcessBookingService {
     private textsService: TextsService,
     private pricesService: PricesService,
     private travelersService: TravelersService,
-    private amadeusService: AmadeusService
+    private amadeusService: AmadeusService,
+    private activityService: ActivitiesService
   ) {}
 
   async processBooking(
@@ -89,6 +94,13 @@ export class ProcessBookingService {
         this.currentBookingSID = response.code;
         this.currentOrder = response.order;
         this.stepsCompleted.bookingCreated = true;
+      } else {
+        // Actualizar booking existente
+        const response = await this.updateBooking(this.currentBookingID, {
+          periodData: bookingData,
+          optionalActivitiesRef: this.activityService.getSelectedActivities(),
+          flights: selectedFlight ? [selectedFlight] : [],
+        });
       }
 
       // Paso 5: manejar vuelo
@@ -119,6 +131,19 @@ export class ProcessBookingService {
           this.currentOrder
         );
         this.stepsCompleted.travelersSaved = true;
+      } else {
+        // Actualizar viajeros si ya están guardados
+        const travelers = this.travelersService.getTravelers();
+        this.bookingsService
+          .updateTravelers(this.currentBookingID!, travelers)
+          .subscribe({
+            next: () => {
+              console.log('Travelers updated successfully');
+            },
+            error: (error) => {
+              console.error('Error updating travelers:', error);
+            },
+          });
       }
 
       // Paso 7: reservar orden
@@ -231,6 +256,24 @@ export class ProcessBookingService {
               payment:
                 this.paymentOptionsService.getPaymentOption() || undefined,
             },
+          });
+        },
+        error: (error) => {
+          reject(error);
+        },
+      });
+    });
+  }
+
+  private async updateBooking(
+    bookingID: string,
+    bookingData: Partial<Booking>
+  ): Promise<{ code: string }> {
+    return new Promise((resolve, reject) => {
+      this.bookingsService.updateBooking(bookingID, bookingData).subscribe({
+        next: (response) => {
+          resolve({
+            code: response.code,
           });
         },
         error: (error) => {

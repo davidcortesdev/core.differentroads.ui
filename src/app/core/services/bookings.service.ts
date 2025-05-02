@@ -110,7 +110,7 @@ export class BookingsService {
    * @param data - The booking data to update.
    * @returns Observable of Booking.
    */
-  updateBooking(id: string, data: any): Observable<Booking> {
+  updateBooking(id: string, data: Partial<Booking>): Observable<Booking> {
     return this.http.put<Booking>(
       `${this.API_URL}/${id}`,
       data,

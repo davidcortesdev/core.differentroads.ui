@@ -271,7 +271,7 @@ export class PaymentsComponent implements OnInit {
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
-        detail: 'Por favor ingrese un monto válido a abonar.',
+        detail: 'Por favor ingrese un importe válido a abonar.',
       });
       return;
     }
@@ -280,7 +280,7 @@ export class PaymentsComponent implements OnInit {
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
-        detail: 'El monto ingresado excede el saldo restante.',
+        detail: 'El importe ingresado excede el saldo restante.',
       });
       return;
     }

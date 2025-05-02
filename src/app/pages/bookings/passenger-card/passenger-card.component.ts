@@ -1,9 +1,11 @@
 import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChanges } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 
 import { ActivatedRoute } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { PassengerData } from '../passengerData';
+import { BookingsService } from '../../../core/services/bookings.service';
+import { BookingTraveler, TravelerData } from '../../../core/models/bookings/booking-traveler.model';
 
 @Component({
   selector: 'app-passenger-card',
@@ -12,18 +14,42 @@ import { PassengerData } from '../passengerData';
   styleUrls: ['./passenger-card.component.scss']
 })
 export class PassengerCardComponent implements OnInit, OnChanges {
-  @Input() passenger!: PassengerData;
-  @Output() passengerUpdated = new EventEmitter<PassengerData>();
+  @Input() passenger!: any;
+  @Input() bookingId!: string;
+  @Input() travelerId!: string;
   
+  @Output() passengerUpdated = new EventEmitter<any>();
+
   isEditing: boolean = false;
   passengerForm: FormGroup;
+  form!: FormGroup;
+  today: Date = new Date();
+
+  // Añadir propiedad para acceder al booking completo
+  bookingComplete: any = null;
+
+  genderOptions = [
+    { label: 'Masculino', value: 'Male' },
+    { label: 'Femenino', value: 'Female' }
+  ];
 
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private bookingService: BookingsService
   ) {
     this.passengerForm = this.createPassengerForm({} as PassengerData);
+    
+    // Intentar obtener el booking completo si estamos en una ruta de booking
+    this.route.params.subscribe(params => {
+      if (params['id']) {
+        this.bookingId = params['id'];
+        this.bookingService.getBookingById(this.bookingId).subscribe(booking => {
+          this.bookingComplete = booking;
+        });
+      }
+    });
   }
 
   ngOnInit(): void {
@@ -32,13 +58,63 @@ export class PassengerCardComponent implements OnInit, OnChanges {
       if (data['passenger']) {
         this.passenger = data['passenger'];
       }
+      // Normaliza el valor de documentType antes de inicializar el formulario
+      if (this.passenger && this.passenger.documentType) {
+        this.passenger.documentType = this.passenger.documentType.toLowerCase();
+      }
       this.initForm();
+    });
+
+    console.log('Initial bookingId:', this.bookingId);
+    console.log('Initial travelerId:', this.travelerId);
+    console.log('Passenger data:', this.passenger);
+
+    // Intentar obtener bookingId de múltiples fuentes
+    if (!this.bookingId) {
+      if (this.passenger && this.passenger.bookingID) {
+        this.bookingId = this.passenger.bookingID;
+      } else if (this.passenger && this.passenger.bookingSID) {
+        this.bookingId = this.passenger.bookingSID;
+      }
+      console.log('Extracted bookingId:', this.bookingId);
+    }
+
+    // Intentar obtener travelerId de múltiples fuentes
+    if (!this.travelerId) {
+      if (this.passenger && this.passenger._id) {
+        this.travelerId = this.passenger._id;
+      } else if (this.passenger && this.passenger.id) {
+        this.travelerId = this.passenger.id.toString();
+      }
+      console.log('Extracted travelerId:', this.travelerId);
+    }
+    
+    this.form = this.fb.group({
+      fullName: [this.passenger.fullName || '', Validators.required],
+      email: [this.passenger.email || ''],
+      phone: [this.passenger.phone || ''],
+      documentType: [this.passenger.documentType || ''],
+      passportID: [this.passenger.passportID || ''],
+      birthDate: [this.passenger.birthDate || '', [Validators.required, this.birthDateValidator.bind(this)]],
+      gender: [this.passenger.gender || ''],
+      ciudad: [this.passenger.ciudad || ''],
+      codigoPostal: [this.passenger.ciudad || ''],
+      nationality: [this.passenger.nationality || ''],
+      dni: [this.passenger.dni || ''],
+      minorIdExpirationDate: [this.passenger.minorIdExpirationDate || ''],
+      minorIdIssueDate: [this.passenger.minorIdIssueDate || ''],
+
+      // Agregá los campos reales que estés usando
     });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     // Actualizar el formulario si cambia el pasajero desde el componente padre
     if (changes['passenger'] && !changes['passenger'].firstChange) {
+      // Normaliza el valor de documentType antes de inicializar el formulario
+      if (this.passenger && this.passenger.documentType) {
+        this.passenger.documentType = this.passenger.documentType.toLowerCase();
+      }
       this.initForm();
     }
   }
@@ -52,9 +128,9 @@ export class PassengerCardComponent implements OnInit, OnChanges {
     return this.fb.group({
       id: [passenger.id],
       fullName: [passenger.fullName, [Validators.required, Validators.minLength(3)]],
-      documentType: [passenger.documentType, Validators.required],
-      documentNumber: [passenger.documentNumber, [Validators.required, Validators.minLength(3)]],
-      birthDate: [passenger.birthDate],
+      documentType: [passenger.documentType || 'passport', Validators.required],
+      passportID: [passenger.passportID, [Validators.required, Validators.minLength(3)]],
+      birthDate: [passenger.birthDate, [Validators.required, this.birthDateValidator.bind(this)]],
       email: [passenger.email, Validators.email],
       phone: [passenger.phone],
       type: [passenger.type],
@@ -64,52 +140,182 @@ export class PassengerCardComponent implements OnInit, OnChanges {
       documentExpirationDate: [passenger.documentExpirationDate],
       comfortPlan: [passenger.comfortPlan],
       insurance: [passenger.insurance],
+      ciudad: [passenger.ciudad],
+      codigoPostal: [passenger.codigoPostal],
+      nationality: [passenger.nationality],
+      dni: [passenger.dni],
+      minorIdExpirationDate: [passenger.minorIdExpirationDate],
+      minorIdIssueDate: [passenger.minorIdIssueDate],
     });
+  }
+
+  birthDateValidator(control: AbstractControl): { [key: string]: boolean } | null {
+    const selectedDate = new Date(control.value);
+    if (selectedDate >= this.today) {
+      return { invalidBirthDate: true };
+    }
+    return null;
   }
 
   onEdit(): void {
     this.isEditing = true;
+    this.passengerForm.patchValue({
+      documentExpeditionDate: this.passenger.documentExpeditionDate ? new Date(this.passenger.documentExpeditionDate) : null,
+      documentExpirationDate: this.passenger.documentExpirationDate ? new Date(this.passenger.documentExpirationDate) : null,
+      minorIdExpirationDate: this.passenger.minorIdExpirationDate ? new Date(this.passenger.minorIdExpirationDate) : null,
+      minorIdIssueDate: this.passenger.minorIdIssueDate ? new Date(this.passenger.minorIdIssueDate) : null,
+      birthDate: this.passenger.birthDate? new Date(this.passenger.birthDate) : null,
+      gender: this.passenger.gender || '',
+    });
   }
 
   onSave(): void {
     if (this.passengerForm.valid) {
-      const formValue = this.passengerForm.getRawValue(); // Gets values including disabled fields
+      const formValue = this.passengerForm.getRawValue();
       
-      // Crear una copia del pasajero con los valores actualizados
-      const updatedPassenger: PassengerData = {
-        ...this.passenger,
-        ...formValue
+      // Debug logs
+      console.log('bookingId:', this.bookingId);
+      console.log('travelerId:', this.travelerId);
+      console.log('passenger:', this.passenger);
+      console.log('Form values:', formValue);
+      
+      // Intentar obtener bookingId y travelerId si no están definidos
+      if (!this.bookingId) {
+        if (this.passenger && this.passenger.bookingID) {
+          this.bookingId = this.passenger.bookingID;
+        } else if (this.passenger && this.passenger.bookingSID) {
+          this.bookingId = this.passenger.bookingSID;
+        }
+      }
+      
+      // Intentar obtener travelerId de múltiples fuentes si aún no está definido
+      if (!this.travelerId) {
+        if (this.passenger && this.passenger._id) {
+          this.travelerId = this.passenger._id;
+        } else if (this.passenger && this.passenger.id) {
+          this.travelerId = this.passenger.id.toString();
+        }
+      }
+      
+      // Verificar si tenemos los IDs necesarios
+      if (!this.bookingId) {
+        console.error('bookingId is undefined or empty');
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'ID de reserva no válido. Por favor, inténtelo de nuevo.',
+          life: 3000
+        });
+        return;
+      }
+      
+      if (!this.travelerId) {
+        console.error('travelerId is undefined or empty');
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'ID de viajero no válido. Por favor, inténtelo de nuevo.',
+          life: 3000
+        });
+        return;
+      }
+  
+      const travelerData: TravelerData = {
+        name: formValue.fullName,
+        surname: '', 
+        passportID: formValue.passportID,
+        documentType: formValue.documentType,
+        birthdate: formValue.birthDate, // Asegurarse de que se use el campo correcto
+        email: formValue.email,
+        phone: formValue.phone,
+        sex: formValue.gender,
+        passportIssueDate: formValue.documentExpeditionDate,
+        passportExpirationDate: formValue.documentExpirationDate,
+        ciudad: formValue.ciudad,
+        codigoPostal: formValue.codigoPostal,
+        nationality: formValue.nationality,
+        dni: formValue.dni,
+        minorIdExpirationDate: formValue.minorIdExpirationDate,
+        minorIdIssueDate: formValue.minorIdIssueDate,
       };
       
-      // Emitir el pasajero actualizado al componente padre
-      this.passengerUpdated.emit(updatedPassenger);
+      // Obtener bookingSID
+      let bookingSID = '';
+      if (this.passenger && this.passenger.bookingSID) {
+        bookingSID = this.passenger.bookingSID;
+      } else {
+        bookingSID = this.bookingId;
+      }
+  
+      const updatedTraveler: BookingTraveler = {
+        _id: this.travelerId,
+        bookingID: this.bookingId,
+        lead: this.passenger.lead || false,
+        bookingSID: bookingSID,
+        travelerData
+      };
       
-      // Mostrar un mensaje toast de éxito
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Datos actualizados',
-        detail: `La información de ${updatedPassenger.fullName} ha sido actualizada correctamente`,
-        life: 3000
+      console.log('Sending updatedTraveler:', updatedTraveler);
+  
+      this.bookingService.updateTravelers(updatedTraveler).subscribe({
+        next: (response) => {
+          console.log('Update successful:', response);
+          
+          // Actualizar el objeto passenger con los nuevos valores del formulario
+          this.passenger = {
+            ...this.passenger,
+            fullName: formValue.fullName,
+            documentType: formValue.documentType,
+            passportID: formValue.passportID,
+            birthDate: formValue.birthDate, // Asegurarse de que se actualice correctamente
+            email: formValue.email,
+            phone: formValue.phone,
+            gender: formValue.gender,
+            room: formValue.room,
+            documentExpeditionDate: formValue.documentExpeditionDate,
+            documentExpirationDate: formValue.documentExpirationDate,
+            comfortPlan: formValue.comfortPlan,
+            insurance: formValue.insurance,
+            ciudad: formValue.ciudad,
+            codigoPostal: formValue.codigoPostal,
+            nationality: formValue.nationality,
+            dni: formValue.dni,
+            minorIdExpirationDate: formValue.minorIdExpirationDate,
+            minorIdIssueDate: formValue.minorIdIssueDate,
+          };
+          
+          console.log('Updated passenger object:', this.passenger);
+          
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Datos actualizados',
+            detail: `La información de ${formValue.fullName} ha sido actualizada correctamente`,
+            life: 3000
+          });
+  
+          this.passengerUpdated.emit(this.passenger); // Emitimos el viajero actualizado al padre
+          this.isEditing = false;
+        },
+        error: (error) => {
+          console.error('Update failed:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: `No se pudo actualizar la información del pasajero: ${error.message || error}`,
+            life: 3000
+          });
+        }
       });
-      
-      // Salir del modo de edición
-      this.isEditing = false;
     } else {
-      // Mostrar un mensaje toast de error
       this.messageService.add({
-        severity: 'error',
-        summary: 'Error de validación',
-        detail: 'Por favor, complete correctamente todos los campos requeridos',
+        severity: 'warn',
+        summary: 'Formulario inválido',
+        detail: 'Por favor completá los campos requeridos.',
         life: 3000
-      });
-      
-      // Marcar todos los campos como tocados para mostrar errores de validación
-      Object.keys(this.passengerForm.controls).forEach(key => {
-        const control = this.passengerForm.get(key);
-        control?.markAsTouched();
       });
     }
   }
+  
 
   onCancel(): void {
     // Restaurar el formulario a los valores originales antes de salir del modo edición
@@ -121,19 +327,24 @@ export class PassengerCardComponent implements OnInit, OnChanges {
   hasPendingFields(): boolean {
     if (!this.passenger) return true;
     
-    // Check required fields first
-    if (!this.passenger.fullName || !this.passenger.documentNumber || !this.passenger.documentType) {
-      return true;
-    }
-    
-    // Check other important fields
-    if (!this.passenger.birthDate || !this.passenger.gender || !this.passenger.email || 
-        !this.passenger.phone || !this.passenger.room) {
-      return true;
-    }
-    
-    // Check passport specific fields
-    if (!this.passenger.documentExpeditionDate || !this.passenger.documentExpirationDate) {
+    // Check if ANY field is missing to show the generic message
+    if (!this.passenger.fullName ||
+        !this.passenger.passportID ||
+        !this.passenger.documentType ||
+        !this.passenger.birthDate ||
+        !this.passenger.gender ||
+        !this.passenger.email ||
+        !this.passenger.phone ||
+        !this.passenger.room ||
+        !this.passenger.ciudad ||
+        !this.passenger.codigoPostal ||
+        !this.passenger.nationality ||
+        !this.passenger.dni ||
+        !this.passenger.minorIdIssueDate ||
+        !this.passenger.minorIdExpirationDate ||
+        !this.passenger.documentExpeditionDate ||
+        !this.passenger.documentExpirationDate ||
+        !this.passenger.comfortPlan) {
       return true;
     }
     
@@ -153,26 +364,69 @@ export class PassengerCardComponent implements OnInit, OnChanges {
     return types[type.toLowerCase()] || type;
   }
 
-  formatDate(date: string): string {
-    if (!date) return '';
-
+  formatDate(dateStr: string | Date): string {
+    if (!dateStr) return 'Pendiente';
+    
     try {
-      // Si la fecha ya está en formato dd/mm/yyyy
-      if (date.includes('/')) {
-        return date;
+      // Si es un objeto Date, convertirlo a string
+      if (dateStr instanceof Date) {
+        const day = dateStr.getDate().toString().padStart(2, '0');
+        const month = (dateStr.getMonth() + 1).toString().padStart(2, '0');
+        const year = dateStr.getFullYear();
+        return `${day}/${month}/${year}`;
       }
-
-      // Si la fecha está en formato yyyy-mm-dd
-      if (date.includes('-')) {
-        const parts = date.split('-');
-        if (parts.length === 3) {
-          return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      
+      // A partir de aquí, tratamos dateStr como string
+      const dateString = String(dateStr);
+      
+      // Si la fecha ya está en formato dd/mm/yyyy
+      if (dateString.includes('/')) {
+        return dateString;
+      }
+      
+      // Si la fecha está en formato ISO (yyyy-mm-dd)
+      if (dateString.includes('-')) {
+        const parts = dateString.split('-');
+        if (parts.length >= 3) {
+          return `${parts[2].substring(0,2)}/${parts[1]}/${parts[0]}`;
         }
       }
-    } catch (error) {
-      console.error('Error formatting date:', error);
+      
+      // Intentar crear un objeto Date y formatear
+      const date = new Date(dateString);
+      if (!isNaN(date.getTime())) {
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+      }
+      
+      return dateString;
+    } catch (e) {
+      console.error('Error formatting date:', e);
+      return String(dateStr) || 'Pendiente';
+    }
+  }
+
+      // Convierte un objeto Date a string en formato yyyy-mm-dd
+    formatDateToString(date: Date): string {
+      if (!date) return '';
+      
+      try {
+        const year = date.getFullYear();
+        // Asegurarse de que el mes y día tengan dos dígitos
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        
+        return `${year}-${month}-${day}`;
+      } catch (error) {
+        console.error('Error converting Date to string:', error);
+        return '';
+      }
     }
 
-    return date;
+  getGenderLabel(value: string): string {
+    const option = this.genderOptions.find(opt => opt.value === value);
+    return option ? option.label : value || 'Pendiente';
   }
 }

@@ -72,11 +72,13 @@ export class ConfirmationCodeComponent implements OnInit {
 
     this.setLoading(true);
     this.setErrorMessage('');
-    
+    const confirmationCode = this.confirmForm.value.confirmationCode.toString().trim();
+    console.log('Enviando código de confirmación:', confirmationCode);
+
     this.authService
       .confirmSignUp(
         this.confirmForm.value.username,
-        `${this.confirmForm.value.confirmationCode}`
+        confirmationCode
       )
       .then(() => {
         this.setLoading(false);
@@ -88,6 +90,30 @@ export class ConfirmationCodeComponent implements OnInit {
       .catch((error) => {
         this.setLoading(false);
         this.setErrorMessage(error.message || 'Confirmación fallida');
+      });
+  }
+
+  resendConfirmationCode(): void {
+    if (!this.username) {
+      this.setErrorMessage('No se ha proporcionado un correo electrónico.');
+      return;
+    }
+
+    this.setLoading(true);
+    this.setErrorMessage('');
+    
+    this.authService
+      .resendConfirmationCode(this.username)
+      .then(() => {
+        this.setLoading(false);
+        this.setSuccessMessage('Se ha enviado un nuevo código de verificación a tu correo electrónico.');
+        setTimeout(() => {
+          this.setSuccessMessage('');
+        }, 5000);
+      })
+      .catch((error) => {
+        this.setLoading(false);
+        this.setErrorMessage(error.message || 'Error al reenviar el código');
       });
   }
 

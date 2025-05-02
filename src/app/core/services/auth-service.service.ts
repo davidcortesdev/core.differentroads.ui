@@ -159,6 +159,7 @@ export class AuthenticateService {
           } else if (error.code === 'UserNotConfirmedException') {
             errorMessage =
               'El usuario no ha sido confirmado. Por favor, verifica tu correo electrónico';
+              this.resendConfirmationCode(emailaddress);
           } else if (error.code === 'TooManyFailedAttemptsException') {
             errorMessage =
               'Demasiados intentos fallidos. Intenta de nuevo más tarde';
@@ -206,6 +207,21 @@ export class AuthenticateService {
           resolve();
         }
       );
+    });
+  }
+
+  resendConfirmationCode(username: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.cognitoUser = this.getUserData(username);
+      this.cognitoUser.resendConfirmationCode((err, result) => {
+        if (err) {
+          console.error('Error al reenviar código de confirmación:', err);
+          reject(err);
+          return;
+        }
+        console.log('Código reenviado con éxito:', result);
+        resolve();
+      });
     });
   }
 

@@ -161,6 +161,7 @@
 
       ::ng-deep .p-button {
         color: var(--background-azul-color-letra);
+        
       }
     }
 
@@ -168,6 +169,7 @@
       border: .0625rem solid var(--p-primary-color);
       color: var(--background-azul);
       width: 100%;
+      margin-bottom: 0.5rem;
 
       @media screen and (max-width: 480px) {
         font-size: .75rem;
@@ -221,4 +223,5 @@
     display: flex;
     justify-content: center;
   }
+
 }

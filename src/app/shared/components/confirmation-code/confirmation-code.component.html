@@ -20,9 +20,10 @@
         {{ getErrorMessage('username', confirmForm.get('username')?.errors) }}
       </small>
     </div>
+
     <div class="input-group mt-4 col-span-2">
       <input
-        type="number"
+        type="text"
         id="confirmationCode"
         pInputText
         formControlName="confirmationCode"
@@ -49,14 +50,30 @@
       </small>
     </div>
 
-    <p-button
-      type="submit"
-      label="Verificar código"
-      [loading]="isLoading"
-      [disabled]="isLoading || isRedirecting"
-      [rounded]="true"
-      size="large"
-      class="p-button-primary p-button-block mt-4 col-span-2"
-    ></p-button>
+    <!-- Botones de acción -->
+    <div class="button-container mt-4 col-span-2">
+      <!-- Botón principal para confirmar -->
+      <p-button
+        type="submit"
+        label="Verificar código"
+        [loading]="isLoading"
+        [disabled]="isLoading || isRedirecting || confirmForm.invalid"
+        [rounded]="true"
+        size="large"
+        class="p-button-primary p-button-block mb-3"
+      ></p-button>
+
+      <!-- Botón para reenviar código -->
+      <p-button
+        type="button"
+        label="Reenviar código"
+        [loading]="isLoading"
+        [disabled]="isLoading || isRedirecting"
+        [rounded]="true"
+        size="large"
+        (onClick)="resendConfirmationCode()"
+        class="p-button-outlined p-button-secondary p-button-block"
+      ></p-button>
+    </div>
   </form>
 </div>

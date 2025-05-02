@@ -61,7 +61,7 @@
       <p-divider></p-divider>
 
       <div class="detail-row">
-        <span class="detail-label">Documento de identificación:</span>
+        <span class="detail-label">DNI:</span>
         <span class="detail-value" [ngClass]="{'pending-value': !passenger.dni}">{{passenger.dni || 'Pendiente'}}</span>
       </div>
 
@@ -205,11 +205,11 @@
         </div>
         
         <div class="form-field">
-          <label>Documento de identificación:</label>
+          <label>DNI:</label>
         <input
           pInputText
           formControlName="dni"
-          placeholder="Ingrese documente de identificación"
+          placeholder="Ingrese su DNI"
         />
         </div>
         <div class="form-field">

@@ -2,7 +2,7 @@ export interface PassengerData {
     id: number;
     fullName: string;
     documentType: string;
-    documentNumber: string;
+    passportID: string;
     birthDate: string;
     email: string;
     phone: string;
@@ -13,4 +13,11 @@ export interface PassengerData {
     documentExpirationDate?: string;
     comfortPlan?: string;
     insurance?: string;
+    _id?: string;
+    ciudad?: string;
+    codigoPostal?: string;
+    nationality?: string;
+    dni?: string;
+    minorIdExpirationDate?: string;
+    minorIdIssueDate?: string;
   }

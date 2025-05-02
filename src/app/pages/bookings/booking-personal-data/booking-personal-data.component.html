@@ -6,6 +6,8 @@
         <div *ngFor="let pass of passengers" class="passenger-card">
           <app-passenger-card 
             [passenger]="pass"
+            [bookingId]="bookingId"
+            [travelerId]="pass._id || ''"    
             (passengerUpdated)="updatePassenger($event)">
           </app-passenger-card>
         </div>

@@ -186,7 +186,7 @@ export class BookingsService {
    * @param data - The travelers data to update.
    * @returns Observable of any.
    */
-  updateTravelers(bookingId: string, data: BookingTraveler): Observable<any> {
+  updateTravelers(data: BookingTraveler): Observable<any> {
     return this.http.put<any>(
       `${this.API_URL}/travelers/${data._id}`,//Api solo recibe /travelers/${}`
       data,

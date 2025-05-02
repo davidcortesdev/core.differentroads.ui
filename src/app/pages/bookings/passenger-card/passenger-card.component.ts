@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChanges } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 
 import { ActivatedRoute } from '@angular/router';
 import { MessageService } from 'primeng/api';
@@ -23,9 +23,15 @@ export class PassengerCardComponent implements OnInit, OnChanges {
   isEditing: boolean = false;
   passengerForm: FormGroup;
   form!: FormGroup;
+  today: Date = new Date();
 
   // Añadir propiedad para acceder al booking completo
   bookingComplete: any = null;
+
+  genderOptions = [
+    { label: 'Masculino', value: 'Male' },
+    { label: 'Femenino', value: 'Female' }
+  ];
 
   constructor(
     private fb: FormBuilder,
@@ -51,6 +57,10 @@ export class PassengerCardComponent implements OnInit, OnChanges {
     this.route.data.subscribe(data => {
       if (data['passenger']) {
         this.passenger = data['passenger'];
+      }
+      // Normaliza el valor de documentType antes de inicializar el formulario
+      if (this.passenger && this.passenger.documentType) {
+        this.passenger.documentType = this.passenger.documentType.toLowerCase();
       }
       this.initForm();
     });
@@ -84,9 +94,16 @@ export class PassengerCardComponent implements OnInit, OnChanges {
       email: [this.passenger.email || ''],
       phone: [this.passenger.phone || ''],
       documentType: [this.passenger.documentType || ''],
-      documentNumber: [this.passenger.documentNumber || ''],
-      birthDate: [this.passenger.birthDate || ''],
-      gender: [this.passenger.gender || '']
+      passportID: [this.passenger.passportID || ''],
+      birthDate: [this.passenger.birthDate || '', [Validators.required, this.birthDateValidator.bind(this)]],
+      gender: [this.passenger.gender || ''],
+      ciudad: [this.passenger.ciudad || ''],
+      codigoPostal: [this.passenger.ciudad || ''],
+      nationality: [this.passenger.nationality || ''],
+      dni: [this.passenger.dni || ''],
+      minorIdExpirationDate: [this.passenger.minorIdExpirationDate || ''],
+      minorIdIssueDate: [this.passenger.minorIdIssueDate || ''],
+
       // Agregá los campos reales que estés usando
     });
   }
@@ -94,6 +111,10 @@ export class PassengerCardComponent implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     // Actualizar el formulario si cambia el pasajero desde el componente padre
     if (changes['passenger'] && !changes['passenger'].firstChange) {
+      // Normaliza el valor de documentType antes de inicializar el formulario
+      if (this.passenger && this.passenger.documentType) {
+        this.passenger.documentType = this.passenger.documentType.toLowerCase();
+      }
       this.initForm();
     }
   }
@@ -107,9 +128,9 @@ export class PassengerCardComponent implements OnInit, OnChanges {
     return this.fb.group({
       id: [passenger.id],
       fullName: [passenger.fullName, [Validators.required, Validators.minLength(3)]],
-      documentType: [passenger.documentType, Validators.required],
-      documentNumber: [passenger.documentNumber, [Validators.required, Validators.minLength(3)]],
-      birthDate: [passenger.birthDate],
+      documentType: [passenger.documentType || 'passport', Validators.required],
+      passportID: [passenger.passportID, [Validators.required, Validators.minLength(3)]],
+      birthDate: [passenger.birthDate, [Validators.required, this.birthDateValidator.bind(this)]],
       email: [passenger.email, Validators.email],
       phone: [passenger.phone],
       type: [passenger.type],
@@ -119,15 +140,32 @@ export class PassengerCardComponent implements OnInit, OnChanges {
       documentExpirationDate: [passenger.documentExpirationDate],
       comfortPlan: [passenger.comfortPlan],
       insurance: [passenger.insurance],
+      ciudad: [passenger.ciudad],
+      codigoPostal: [passenger.codigoPostal],
+      nationality: [passenger.nationality],
+      dni: [passenger.dni],
+      minorIdExpirationDate: [passenger.minorIdExpirationDate],
+      minorIdIssueDate: [passenger.minorIdIssueDate],
     });
+  }
+
+  birthDateValidator(control: AbstractControl): { [key: string]: boolean } | null {
+    const selectedDate = new Date(control.value);
+    if (selectedDate >= this.today) {
+      return { invalidBirthDate: true };
+    }
+    return null;
   }
 
   onEdit(): void {
     this.isEditing = true;
     this.passengerForm.patchValue({
       documentExpeditionDate: this.passenger.documentExpeditionDate ? new Date(this.passenger.documentExpeditionDate) : null,
-      documentExpirationDate: this.passenger.documentExpirationDate? new Date(this.passenger.documentExpirationDate) : null,
+      documentExpirationDate: this.passenger.documentExpirationDate ? new Date(this.passenger.documentExpirationDate) : null,
+      minorIdExpirationDate: this.passenger.minorIdExpirationDate ? new Date(this.passenger.minorIdExpirationDate) : null,
+      minorIdIssueDate: this.passenger.minorIdIssueDate ? new Date(this.passenger.minorIdIssueDate) : null,
       birthDate: this.passenger.birthDate? new Date(this.passenger.birthDate) : null,
+      gender: this.passenger.gender || '',
     });
   }
 
@@ -185,7 +223,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
       const travelerData: TravelerData = {
         name: formValue.fullName,
         surname: '', 
-        dni: formValue.documentNumber,
+        passportID: formValue.passportID,
         documentType: formValue.documentType,
         birthdate: formValue.birthDate, // Asegurarse de que se use el campo correcto
         email: formValue.email,
@@ -193,6 +231,12 @@ export class PassengerCardComponent implements OnInit, OnChanges {
         sex: formValue.gender,
         passportIssueDate: formValue.documentExpeditionDate,
         passportExpirationDate: formValue.documentExpirationDate,
+        ciudad: formValue.ciudad,
+        codigoPostal: formValue.codigoPostal,
+        nationality: formValue.nationality,
+        dni: formValue.dni,
+        minorIdExpirationDate: formValue.minorIdExpirationDate,
+        minorIdIssueDate: formValue.minorIdIssueDate,
       };
       
       // Obtener bookingSID
@@ -213,7 +257,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
       
       console.log('Sending updatedTraveler:', updatedTraveler);
   
-      this.bookingService.updateTravelers(this.bookingId, updatedTraveler).subscribe({
+      this.bookingService.updateTravelers(updatedTraveler).subscribe({
         next: (response) => {
           console.log('Update successful:', response);
           
@@ -222,7 +266,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
             ...this.passenger,
             fullName: formValue.fullName,
             documentType: formValue.documentType,
-            documentNumber: formValue.documentNumber,
+            passportID: formValue.passportID,
             birthDate: formValue.birthDate, // Asegurarse de que se actualice correctamente
             email: formValue.email,
             phone: formValue.phone,
@@ -231,7 +275,13 @@ export class PassengerCardComponent implements OnInit, OnChanges {
             documentExpeditionDate: formValue.documentExpeditionDate,
             documentExpirationDate: formValue.documentExpirationDate,
             comfortPlan: formValue.comfortPlan,
-            insurance: formValue.insurance
+            insurance: formValue.insurance,
+            ciudad: formValue.ciudad,
+            codigoPostal: formValue.codigoPostal,
+            nationality: formValue.nationality,
+            dni: formValue.dni,
+            minorIdExpirationDate: formValue.minorIdExpirationDate,
+            minorIdIssueDate: formValue.minorIdIssueDate,
           };
           
           console.log('Updated passenger object:', this.passenger);
@@ -277,19 +327,24 @@ export class PassengerCardComponent implements OnInit, OnChanges {
   hasPendingFields(): boolean {
     if (!this.passenger) return true;
     
-    // Check required fields first
-    if (!this.passenger.fullName || !this.passenger.documentNumber || !this.passenger.documentType) {
-      return true;
-    }
-    
-    // Check other important fields
-    if (!this.passenger.birthDate || !this.passenger.gender || !this.passenger.email || 
-        !this.passenger.phone || !this.passenger.room) {
-      return true;
-    }
-    
-    // Check passport specific fields
-    if (!this.passenger.documentExpeditionDate || !this.passenger.documentExpirationDate) {
+    // Check if ANY field is missing to show the generic message
+    if (!this.passenger.fullName ||
+        !this.passenger.passportID ||
+        !this.passenger.documentType ||
+        !this.passenger.birthDate ||
+        !this.passenger.gender ||
+        !this.passenger.email ||
+        !this.passenger.phone ||
+        !this.passenger.room ||
+        !this.passenger.ciudad ||
+        !this.passenger.codigoPostal ||
+        !this.passenger.nationality ||
+        !this.passenger.dni ||
+        !this.passenger.minorIdIssueDate ||
+        !this.passenger.minorIdExpirationDate ||
+        !this.passenger.documentExpeditionDate ||
+        !this.passenger.documentExpirationDate ||
+        !this.passenger.comfortPlan) {
       return true;
     }
     
@@ -369,4 +424,9 @@ export class PassengerCardComponent implements OnInit, OnChanges {
         return '';
       }
     }
+
+  getGenderLabel(value: string): string {
+    const option = this.genderOptions.find(opt => opt.value === value);
+    return option ? option.label : value || 'Pendiente';
+  }
 }

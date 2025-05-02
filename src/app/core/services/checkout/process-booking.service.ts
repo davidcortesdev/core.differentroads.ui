@@ -131,19 +131,6 @@ export class ProcessBookingService {
           this.currentOrder
         );
         this.stepsCompleted.travelersSaved = true;
-      } else {
-        // Actualizar viajeros si ya están guardados
-        const travelers = this.travelersService.getTravelers();
-        this.bookingsService
-          .updateTravelers(this.currentBookingID!, travelers)
-          .subscribe({
-            next: () => {
-              console.log('Travelers updated successfully');
-            },
-            error: (error) => {
-              console.error('Error updating travelers:', error);
-            },
-          });
       }
 
       // Paso 7: reservar orden

@@ -76,8 +76,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 16px;
-    flex-wrap: nowrap;
+    gap: 1.5rem;
+    padding: 1rem 0;
 
     .payment-info-columns {
       display: flex;

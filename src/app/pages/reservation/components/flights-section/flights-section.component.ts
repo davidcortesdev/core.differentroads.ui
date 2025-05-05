@@ -34,6 +34,15 @@ export class FlightsSectionComponent {
     segments: FlightSegment[];
     name: string;
   }) {
+    // Check if flight name contains "sinvue" or "sin vue"
+    if (
+      flightData.name &&
+      (flightData.name.toLowerCase().includes('sinvue') ||
+        flightData.name.toLowerCase().includes('sin vue'))
+    ) {
+      return null;
+    }
+
     if (!flightData || !flightData.segments || flightData.segments.length === 0)
       return null;
 

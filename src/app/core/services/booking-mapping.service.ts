@@ -27,7 +27,7 @@ export class BookingMappingService {
     const travelers: TravelerInfo[] =
       booking.travelers?.map((t: BookingTraveler) => {
         // Get room name from periodData if available
-        let roomName = t.periodReservationModeID || 'Individual';
+        let roomName = t.periodReservationModeID || 'Hab. incluida';
 
         // Check if we have room information in periodData
         if (

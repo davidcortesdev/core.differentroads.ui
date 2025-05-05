@@ -58,7 +58,8 @@ export class BookingPaymentHistoryComponent implements OnInit {
     },
   ];
 
-  isReviewLoading: boolean = false;
+  isApproveLoading: boolean = false;
+  isRejectLoading: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -190,7 +191,7 @@ export class BookingPaymentHistoryComponent implements OnInit {
     ) {
       return;
     }
-    this.isReviewLoading = true;
+    this.isApproveLoading = true;
     this.bookingsService
       .reviewVoucher(
         this.bookingID,
@@ -203,13 +204,13 @@ export class BookingPaymentHistoryComponent implements OnInit {
           if (this.selectedPayment) {
             this.selectedPayment.status = PaymentStatus.COMPLETED;
           }
-          this.isReviewLoading = false;
+          this.isApproveLoading = false;
           this.displayReviewModal = false;
           this.refreshPayments();
         },
         error: (error) => {
           console.error('Error al aprobar revisión de pago:', error);
-          this.isReviewLoading = false;
+          this.isApproveLoading = false;
         },
       });
   }
@@ -222,7 +223,7 @@ export class BookingPaymentHistoryComponent implements OnInit {
     ) {
       return;
     }
-    this.isReviewLoading = true;
+    this.isRejectLoading = true;
     this.bookingsService
       .reviewVoucher(
         this.bookingID,
@@ -235,13 +236,13 @@ export class BookingPaymentHistoryComponent implements OnInit {
           if (this.selectedPayment) {
             this.selectedPayment.status = PaymentStatus.FAILED;
           }
-          this.isReviewLoading = false;
+          this.isRejectLoading = false;
           this.displayReviewModal = false;
           this.refreshPayments();
         },
         error: (error) => {
           console.error('Error al rechazar revisión de pago:', error);
-          this.isReviewLoading = false;
+          this.isRejectLoading = false;
         },
       });
   }

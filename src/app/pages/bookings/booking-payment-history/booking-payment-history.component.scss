@@ -303,6 +303,9 @@
     flex: 1;
     color: #666;
     text-align: center;
+    .status-text {
+      padding-right: 10px;
+    }
   }
 
   .amount {
@@ -399,6 +402,38 @@
 
       &:hover {
         background-color: #fff0f0 !important;
+      }
+    }
+    &.p-button-danger {
+      background: transparent !important;
+      border-color: var(--primary-color-300) !important;
+      color: #ff6b6b !important;
+      border-radius: 50px !important;
+
+      .p-button-icon {
+        color: #ff6b6b !important;
+      }
+
+      &:hover {
+        background-color: var(--primary-color-50) !important;
+      }
+    }
+    &.p-button-info {
+      background-color: var(--background-azul);
+      border-color: var(--background-azul) !important;
+      color: #fff !important;
+      border-radius: 22px !important;
+
+      .p-button-icon {
+        color: #fff !important;
+      }
+
+      &:hover {
+        background-color: transparent !important;
+        color: var(--background-azul) !important;
+        .p-button-icon {
+          color: var(--background-azul) !important;
+        }
       }
     }
   }
@@ -553,6 +588,70 @@
       background-color: transparent !important;
       padding: 0;
       margin: 0;
+    }
+  }
+}
+.p-button-text {
+  background: transparent;
+  border-color: var(--p-button-primary-border-color);
+  color: var(--primary-color-500);
+
+  &.p-button {
+    background: transparent;
+    border-radius: var(--p-button-border-radius);
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+    border-bottom-left-radius: 20px;
+    padding-left: 12px;
+  }
+  &:hover {
+    background-color: var(--primary-color-50) !important;
+    border-color: var(--p-button-primary-border-color);
+    color: var(--primary-color-500) !important;
+  }
+}
+
+:host ::ng-deep {
+  .payment-dialog .p-dialog-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+
+    p {
+      width: 100%;
+      text-align: center;
+    }
+
+    .p-button {
+      margin-top: 1.5rem;
+      align-self: center;
+    }
+  }
+
+  .payment-dialog .p-dialog-header {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+    position: relative;
+
+    .p-dialog-title {
+      flex: 1;
+      text-align: center;
+      margin-left: 2.3rem;
+    }
+
+    .p-dialog-header-icons {
+      position: absolute;
+      right: 1.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
     }
   }
 }

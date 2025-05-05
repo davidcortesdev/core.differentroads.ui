@@ -1,4 +1,9 @@
-<div class="flights-container">
+<div
+  class="flights-container"
+  *ngIf="
+    formattedFlights && (formattedFlights.outbound || formattedFlights.inbound)
+  "
+>
   <!-- Encabezado con icono de avión -->
   <div class="flight-header">
     <span class="plane-icon">
@@ -17,7 +22,7 @@
     <span class="header-text">Información sobre los vuelos</span>
   </div>
 
-  <ng-container *ngIf="formattedFlights; else noFlights">
+  <ng-container *ngIf="formattedFlights">
     <!-- Ida -->
     <ng-container *ngIf="formattedFlights.outbound">
       <div class="flight-section">
@@ -170,11 +175,4 @@
       </div>
     </ng-container>
   </ng-container>
-
-  <!-- Mensaje si no hay vuelos disponibles -->
-  <ng-template #noFlights>
-    <div class="no-flights">
-      <p>La información de vuelos estará disponible próximamente.</p>
-    </div>
-  </ng-template>
 </div>

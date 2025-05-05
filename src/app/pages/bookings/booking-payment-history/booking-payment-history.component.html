@@ -46,7 +46,7 @@
                 }}</span>
               </div>
             </div>
-            <div class="payment-buttons">
+            <div class="payment-buttons" *ngIf="paymentInfo.pendingAmount > 0">
               <p-button
                 label="Realizar pago"
                 icon="pi pi-dollar"

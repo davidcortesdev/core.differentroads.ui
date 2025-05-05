@@ -232,10 +232,14 @@ export class BookingMappingService {
       departure: {
         time: firstSegment.departureTime || '',
         airport: firstSegment.departureIata || '',
+        city: firstSegment.departureCity || '',
+        iata: firstSegment.departureIata || '',
       },
       arrival: {
         time: lastSegment.arrivalTime || '',
         airport: lastSegment.arrivalIata || '',
+        city: lastSegment.arrivalCity || '',
+        iata: lastSegment.arrivalIata || '',
       },
       flightNumber: firstSegment.flightNumber || '',
       type: hasLayover ? 'layover' : 'direct',

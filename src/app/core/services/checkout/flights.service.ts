@@ -19,7 +19,6 @@ export class FlightsService {
   constructor(private textsService: TextsService) {}
 
   updateSelectedFlight(flight: Flight | null): void {
-    console.log('Flight being stored in service:', flight);
     this.selectedFlightSubject.next(flight);
 
     // Update the order flights based on selection
@@ -28,9 +27,6 @@ export class FlightsService {
     // Store selected flight in TextsService
     if (flight) {
       const flightKey = flight.externalID || 'selected';
-
-      // Additional logging for flight data integration
-      console.log('Flight being stored in service:', flight);
 
       // Ensure consistent format regardless of flight source
       const flightToStore = {
@@ -58,6 +54,9 @@ export class FlightsService {
   private updateOrderFlights(selectedFlight: Flight | null): void {
     const flightlessOption = this.flightlessOptionSubject.getValue();
     const orderFlights: Flight[] = [];
+
+    console.log('Updating order flights with selected flight:', selectedFlight);
+    console.log('Current flightless option:', flightlessOption);
 
     if (selectedFlight) {
       // If it's an Amadeus flight and we have a flightless option, include both

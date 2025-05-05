@@ -1,5 +1,6 @@
 .checkout {
-  background-color: var(--accent-white);
+  --p-steps-item-number-background: var(--background-azul-color-letra);
+  background-color: var(--light-blue-500);
   color: var(--background-azul);
 
   &-title {

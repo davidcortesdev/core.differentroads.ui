@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { Booking } from '../models/bookings/booking.model';
 import {
   ReservationInfo,
-  Flight,
   PriceDetail,
   PaymentInfo,
   TravelerInfo,
@@ -108,31 +107,6 @@ export class BookingMappingService {
     return reservationInfo;
   }
 
-  mapToFlights(booking: Booking): Flight[] {
-    const flights: Flight[] = [];
-
-    if (booking.flights && Array.isArray(booking.flights)) {
-      booking.flights.forEach((flight) => {
-        if (
-          flight.outbound &&
-          flight.outbound.segments &&
-          flight.outbound.segments.length > 0
-        ) {
-          this.addFlightFromSegments(flights, flight.outbound, 'outbound');
-        }
-        if (
-          flight.inbound &&
-          flight.inbound.segments &&
-          flight.inbound.segments.length > 0
-        ) {
-          this.addFlightFromSegments(flights, flight.inbound, 'inbound');
-        }
-      });
-    }
-
-    return flights;
-  }
-
   mapToPriceDetails(booking: Booking): PriceDetail[] {
     if (booking.periodData && booking.periodData['extendedTotal']) {
       return booking.periodData['extendedTotal'].map((item: any) => ({
@@ -193,57 +167,5 @@ export class BookingMappingService {
     }
 
     return `${amount}€`;
-  }
-
-  private addFlightFromSegments(
-    flights: Flight[],
-    journeyData: any,
-    direction: 'outbound' | 'inbound'
-  ) {
-    const segments = journeyData.segments;
-    if (!segments || segments.length === 0) return;
-
-    const firstSegment = segments[0];
-    const lastSegment = segments[segments.length - 1];
-
-    // Format date
-    const flightDate = journeyData.date
-      ? new Date(journeyData.date).toLocaleDateString('es-ES')
-      : new Date().toLocaleDateString('es-ES');
-
-    // Determine if it has layovers
-    const hasLayover = segments.length > 1;
-    let layoverCity = undefined;
-
-    if (hasLayover) {
-      layoverCity = segments
-        .slice(0, -1)
-        .map((seg: any) => seg.arrivalCity)
-        .join(', ');
-    }
-
-    flights.push({
-      date: flightDate,
-      airline: {
-        name: firstSegment.airline.name,
-        logo: firstSegment.airline.logo,
-        code: firstSegment.airline.code,
-      },
-      departure: {
-        time: firstSegment.departureTime || '',
-        airport: firstSegment.departureIata || '',
-        city: firstSegment.departureCity || '',
-        iata: firstSegment.departureIata || '',
-      },
-      arrival: {
-        time: lastSegment.arrivalTime || '',
-        airport: lastSegment.arrivalIata || '',
-        city: lastSegment.arrivalCity || '',
-        iata: lastSegment.arrivalIata || '',
-      },
-      flightNumber: firstSegment.flightNumber || '',
-      type: hasLayover ? 'layover' : 'direct',
-      layoverCity: layoverCity,
-    });
   }
 }

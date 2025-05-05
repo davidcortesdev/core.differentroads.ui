@@ -6,7 +6,6 @@ import { BookingsService } from '../../core/services/bookings.service';
 import {
   ReservationInfo,
   BankInfo,
-  Flight,
   PriceDetail,
 } from '../../core/models/reservation/reservation.model';
 import { BookingMappingService } from '../../core/services/booking-mapping.service';
@@ -16,6 +15,7 @@ import {
 } from '../../core/models/bookings/payment.model';
 import { Booking } from '../../core/models/bookings/booking.model';
 import { CloudinaryResponse } from '../../core/services/file-upload.service';
+import { Flight } from '../../core/models/tours/flight.model';
 
 @Component({
   selector: 'app-reservation',
@@ -119,7 +119,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
           this.paymentInfo
         );
 
-        this.flights = this.bookingMapper.mapToFlights(booking);
+        this.flights = booking.flights?.[0] ? [booking.flights[0]] : [];
         this.priceDetails = this.bookingMapper.mapToPriceDetails(booking);
 
         // Actualizar bankInfo con datos específicos del booking.

@@ -1,5 +1,8 @@
 import { Component, Input } from '@angular/core';
-import { Flight } from '../../../../core/models/reservation/reservation.model';
+import {
+  Flight,
+  FlightSegment,
+} from '../../../../core/models/tours/flight.model';
 
 @Component({
   selector: 'app-flights-section',
@@ -10,43 +13,69 @@ import { Flight } from '../../../../core/models/reservation/reservation.model';
 export class FlightsSectionComponent {
   @Input() flights: Flight[] = [];
 
-  // Getter to filter out flights with 'sin ' in the airline name
-  get filteredFlights(): Flight[] {
-    return this.flights.filter(
-      (flight) =>
-        !flight.airline.name.toLowerCase().includes('sin ') &&
-        !flight.airline.name.toLowerCase().includes('sinvue')
-    );
-  }
-
-  // For simplicity, if we don't have a way to distinguish outbound vs inbound flights,
-  // we'll assume they're split evenly, with outbound flights coming first, then inbound
-  get outboundFlights(): Flight[] {
-    // We'll assume the first half (or slightly more) of the flights are outbound
-    if (this.filteredFlights.length <= 1) {
-      return this.filteredFlights;
+  // New adapter for template format - provides flight data in the format expected by the template
+  get formattedFlights() {
+    if (!this.flights || this.flights.length === 0) {
+      return null;
     }
 
-    return this.filteredFlights.slice(
-      0,
-      Math.ceil(this.filteredFlights.length / 2)
-    );
+    // Use the first flight in the array
+    const flight = this.flights[0];
+
+    return {
+      outbound: flight.outbound ? this.formatFlightInfo(flight.outbound) : null,
+      inbound: flight.inbound ? this.formatFlightInfo(flight.inbound) : null,
+    };
   }
 
-  get inboundFlights(): Flight[] {
-    // We'll assume the second half of the flights are inbound
-    if (this.filteredFlights.length <= 1) {
-      return [];
+  // Helper method to format flight info from segments
+  private formatFlightInfo(flightData: {
+    date: string;
+    segments: FlightSegment[];
+    name: string;
+  }) {
+    if (!flightData || !flightData.segments || flightData.segments.length === 0)
+      return null;
+
+    const segments = flightData.segments;
+    const firstSegment = segments[0];
+    const lastSegment = segments[segments.length - 1];
+
+    // Define if it has stops
+    const hasStops = segments.length > 1;
+    const stops = segments.length - 1;
+
+    // Calculate stopover city if applicable
+    let stopCity = '';
+    if (hasStops && segments.length > 1) {
+      // Use arrival city of first segment as stopover
+      stopCity = segments[0].arrivalCity;
     }
 
-    return this.filteredFlights.slice(
-      Math.ceil(this.filteredFlights.length / 2)
-    );
-  }
-
-  // Check if we have both outbound and inbound flights
-  get hasRoundTrip(): boolean {
-    return this.filteredFlights.length > 1;
+    return {
+      departureTime: firstSegment.departureTime,
+      arrivalTime: lastSegment.arrivalTime,
+      date: flightData.date,
+      departureAirport: `${firstSegment.departureCity} (${firstSegment.departureIata})`,
+      arrivalAirport: `${lastSegment.arrivalCity} (${lastSegment.arrivalIata})`,
+      duration: this.calculateFlightDuration(
+        firstSegment.departureTime,
+        lastSegment.arrivalTime
+      ),
+      hasStops: hasStops,
+      stops: stops,
+      stopCity: stopCity,
+      segments: segments.map((segment) => ({
+        airline: segment.airline,
+        flightNumber: segment.flightNumber,
+        departureTime: segment.departureTime,
+        arrivalTime: segment.arrivalTime,
+        departureCity: segment.departureCity,
+        arrivalCity: segment.arrivalCity,
+        departureIata: segment.departureIata,
+        arrivalIata: segment.arrivalIata,
+      })),
+    };
   }
 
   // Method to format time string to Date object

@@ -71,4 +71,12 @@ export class GeneralConfigService {
       map((configData: GeneralConfigSchema) => configData['partners-section'])
     );
   }
+
+  getFlightsConfig(): Observable<{
+    enableConsolidator: boolean;
+  }> {
+    return this.getGeneralConfigData(['flights-section']).pipe(
+      map((configData: GeneralConfigSchema) => configData['flights-section'])
+    );
+  }
 }

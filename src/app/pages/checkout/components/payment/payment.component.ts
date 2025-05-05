@@ -445,25 +445,27 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
           console.log('Scalapay token received:', data.token);
           
           // Add error handling for the payment update
-          this.bookingsService.updatePayment(publicID, {
-            externalID: data.token,
-            provider: 'Scalapay'
-          }).subscribe({
-            next: (updateResponse) => {
-              console.log('Payment updated with Scalapay token:', updateResponse);
-              console.log('Confirmed externalID value:', data.token);
-              
-              // Add a small delay before redirecting to ensure the update completes
-              setTimeout(() => {
-                window.location.href = data.checkoutUrl;
-              }, 500);
-            },
-            error: (updateError) => {
-              console.error('Error updating payment with Scalapay token:', updateError);
-              // Still redirect to Scalapay even if the update fails
-              window.location.href = data.checkoutUrl;
-            }
-          });
+          try {
+            const updateResponse = await this.bookingsService.updatePayment(publicID, {
+              externalID: data.token,
+              provider: 'Scalapay'
+            }).toPromise();
+            
+            console.log('Payment updated with Scalapay token:', updateResponse);
+            console.log('Confirmed externalID value:', data.token);
+            
+            // Only redirect after successful update
+            window.location.href = data.checkoutUrl;
+            
+          } catch (updateError) {
+            console.error('Error updating payment with Scalapay token:', updateError);
+            this.messageService.add({
+              severity: 'error', 
+              summary: 'Error de Actualización',
+              detail: 'Error al actualizar el pago. Por favor, inténtelo de nuevo.'
+            });
+            this.isLoading = false;
+          }
         } else {
           console.error('No valid token received from Scalapay:', data);
           this.messageService.add({

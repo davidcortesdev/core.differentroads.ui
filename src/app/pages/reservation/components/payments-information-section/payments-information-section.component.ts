@@ -23,6 +23,8 @@ export class PaymentsInformationSectionComponent implements OnInit {
   @Input() bookingID!: string;
   @Input() bookingData!: Booking;
   @Input() currentPayment!: Payment;
+
+  payments: Payment[] = [];
   paymentInfo: PaymentInfo = {
     totalAmount: 0,
     paidAmount: 0,
@@ -73,6 +75,10 @@ export class PaymentsInformationSectionComponent implements OnInit {
       }, 0);
       this.paymentInfo.paidAmount = totalPaid;
       this.paymentInfo.remainingAmount = this.totalAmount - totalPaid;
+
+      this.payments = payments.filter(
+        (payment) => payment.status === 'COMPLETED'
+      );
 
       // Calculate next payment date (30 days before departure)
       this.updateNextPaymentDetails();

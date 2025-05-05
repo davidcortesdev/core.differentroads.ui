@@ -1,16 +1,17 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, from } from 'rxjs';
 import { ScalapayOrderRequest } from '../../../models/scalapay/ScalapayOrderRequest';
 import { ScalapayOrderResponse } from '../../../models/scalapay/ScalapayOrderResponse';
+import { ScalapayGetOrdersDetailsResponse } from '../../../models/scalapay/ScalapayGetOrdersDetailsResponse';
+import { ScalapayCaptureOrderRequest } from '../../../models/scalapay/ScalapayCaptureOrderRequest';
+import { ScalapayCaptureOrderRespone } from '../../../models/scalapay/ScalapayCaptureOrderRespone';
 import { environment } from '../../../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ScalapayService {
-  //private readonly API_URL = environment.scalapayApiUrl;
-  //private readonly API_KEY = environment.scalapayApiKey;
-
   private readonly API_URL = environment.scalapayApiUrl;
   private readonly API_KEY = environment.scalapayApiKey;
 
@@ -37,9 +38,9 @@ export class ScalapayService {
   private validateEnvironment(): Promise<void> {
     if (!this.API_URL || !this.API_KEY) {
       console.error(
-        'Environment variables scalapayApiUrl or scalapayApiKey are not defined'
+        'Variables de entorno scalapayApiUrl o scalapayApiKey no definidas'
       );
-      return Promise.reject('Environment variables not defined');
+      return Promise.reject('Variables de entorno no definidas');
     }
     return Promise.resolve();
   }
@@ -53,25 +54,25 @@ export class ScalapayService {
     this.validateEnvironment();
 
     const url = `${this.API_URL}/v2/orders`;
-    console.log('Requesting Scalapay URL:', url);
-    console.log('Request payload:', JSON.stringify(orderData, null, 2));
+    console.log('Solicitando URL de Scalapay:', url);
+    console.log('Payload de la solicitud:', JSON.stringify(orderData, null, 2));
 
     return this.http
       .post<ScalapayOrderResponse>(url, orderData, this.getHttpOptions())
       .toPromise()
       .then((response) => {
-        console.log('Successful response:', response);
+        console.log('Respuesta exitosa:', response);
         if (!response) {
-          throw new Error('No response received');
+          throw new Error('No se recibió respuesta');
         }
         return response;
       })
       .catch((error) => {
-        console.error('Error details:', error);
-        console.error('Error status:', error.status);
-        console.error('Error message:', error.message);
+        console.error('Detalles del error:', error);
+        console.error('Estado del error:', error.status);
+        console.error('Mensaje de error:', error.message);
         if (error.error) {
-          console.error('Server response:', error.error);
+          console.error('Respuesta del servidor:', error.error);
         }
         throw error;
       });
@@ -79,49 +80,54 @@ export class ScalapayService {
 
   /**
    * Captura un pago en Scalapay
-   * @param paymentData Datos del pago a capturar
-   * @returns Promise con la respuesta de la captura del pago
+   * @param captureData Datos para capturar la orden
+   * @returns Observable con la respuesta de la captura del pago
    */
-  capturePayment(paymentData: any): Promise<any> {
+  captureOrder(captureData: ScalapayCaptureOrderRequest): Observable<ScalapayCaptureOrderRespone> {
     this.validateEnvironment();
 
     const url = `${this.API_URL}/v2/payments/capture`;
-    return this.http
-      .post<any>(url, paymentData, this.getHttpOptions())
-      .toPromise()
-      .then((response) => {
-        if (!response) {
-          throw new Error('No response received');
-        }
-        return response;
-      })
-      .catch((error) => {
-        console.error('Error processing order:', error);
-        throw error;
-      });
+    return from(
+      this.http
+        .post<ScalapayCaptureOrderRespone>(url, captureData, this.getHttpOptions())
+        .toPromise()
+        .then((response) => {
+          if (!response) {
+            throw new Error('No se recibió respuesta');
+          }
+          return response;
+        })
+        .catch((error) => {
+          console.error('Error al procesar la orden:', error);
+          throw error;
+        })
+    );
   }
 
   /**
-   * Obtiene los detalles de un pago específico
-   * @param paymentId ID del pago a consultar
-   * @returns Promise con los detalles del pago
+   * Obtiene los detalles de una orden específica
+   * @param orderToken Token de la orden a consultar
+   * @returns Observable con los detalles de la orden
    */
-  getPaymentDetails(paymentId: string): Promise<any> {
+  getOrderDetails(orderToken: string): Observable<ScalapayGetOrdersDetailsResponse> {
     this.validateEnvironment();
 
-    const url = `${this.API_URL}/v2/payments/${paymentId}`;
-    return this.http
-      .get<any>(url, this.getHttpOptions())
-      .toPromise()
-      .then((response) => {
-        if (!response) {
-          throw new Error('No response received');
-        }
-        return response;
-      })
-      .catch((error) => {
-        console.error('Error processing order:', error);
-        throw error;
-      });
+    const url = `${this.API_URL}/v2/payments/${orderToken}`;
+    return from(
+      this.http
+        .get<ScalapayGetOrdersDetailsResponse>(url, this.getHttpOptions())
+        .toPromise()
+        .then((response) => {
+          if (!response) {
+            throw new Error('No se recibió respuesta');
+          }
+          return response;
+        })
+        .catch((error) => {
+          console.error('Error al obtener detalles de la orden:', error);
+          throw error;
+        })
+    );
   }
+
 }

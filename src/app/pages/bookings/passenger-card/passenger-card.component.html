@@ -102,7 +102,7 @@
       
       <div class="detail-row">
         <span class="detail-label">Seguro:</span>
-        <span class="detail-value" [ngClass]="{'pending-value': !passenger.comfortPlan}">{{passenger.comfortPlan || 'Pendiente'}}</span>
+        <span class="detail-value">{{getComfortPlanValue()}}</span>
       </div>
       
      <!--  <div class="detail-row">
@@ -274,7 +274,7 @@
         
         <div class="detail-row">
           <span class="detail-label">Seguro:</span>
-          <span class="detail-value" [ngClass]="{'pending-value': !passenger.comfortPlan}">{{passenger.comfortPlan || 'Pendiente'}}</span>
+          <span class="detail-value">{{getComfortPlanValue()}}</span>
         </div>
         
         <!-- <div class="detail-row">

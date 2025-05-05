@@ -179,18 +179,12 @@ export class FlightsComponent implements OnInit {
       })
       .filter((flight) => flight !== null); // Filter out any null values
 
-    console.log('Transformed flights for display:', this.searchedFlights);
-
     // If we receive exactly one flight, it means the user selected a specific flight
     // in the flight search component, so we should automatically select it
     if (
       this.searchedFlights.length === 1 &&
       this.searchedFlights[0].source === 'amadeus'
     ) {
-      console.log(
-        'Auto-selecting flight from search:',
-        this.searchedFlights[0]
-      );
       this.selectFlightWithAuthCheck(this.searchedFlights[0]);
     }
   }
@@ -229,11 +223,6 @@ export class FlightsComponent implements OnInit {
     }
     this.selectedFlight = flight;
     this.flightsService.updateSelectedFlight(flight); // This will now handle the order flights update as well
-
-    // Add logging to confirm what's happening
-    console.log('Selected flight in FlightsComponent:', flight);
-    console.log('Flight has source "amadeus":', flight?.source === 'amadeus');
-    console.log('Flightless option available:', this.flightlessOption);
   }
 
   // Verifica si un vuelo está seleccionado

@@ -19,6 +19,36 @@ export class FlightsSectionComponent {
     );
   }
 
+  // For simplicity, if we don't have a way to distinguish outbound vs inbound flights,
+  // we'll assume they're split evenly, with outbound flights coming first, then inbound
+  get outboundFlights(): Flight[] {
+    // We'll assume the first half (or slightly more) of the flights are outbound
+    if (this.filteredFlights.length <= 1) {
+      return this.filteredFlights;
+    }
+
+    return this.filteredFlights.slice(
+      0,
+      Math.ceil(this.filteredFlights.length / 2)
+    );
+  }
+
+  get inboundFlights(): Flight[] {
+    // We'll assume the second half of the flights are inbound
+    if (this.filteredFlights.length <= 1) {
+      return [];
+    }
+
+    return this.filteredFlights.slice(
+      Math.ceil(this.filteredFlights.length / 2)
+    );
+  }
+
+  // Check if we have both outbound and inbound flights
+  get hasRoundTrip(): boolean {
+    return this.filteredFlights.length > 1;
+  }
+
   // Method to format time string to Date object
   formatTime(timeString: string): Date {
     const [hours, minutes] = timeString.split(':').map(Number);

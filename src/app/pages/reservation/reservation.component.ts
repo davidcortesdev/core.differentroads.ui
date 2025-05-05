@@ -10,7 +10,7 @@ import {
   of,
   switchMap,
   Observable,
-  tap
+  tap,
 } from 'rxjs';
 import { BookingsService } from '../../core/services/bookings.service';
 import {
@@ -36,7 +36,12 @@ import { ScalapayCaptureOrderRespone } from '../../core/models/scalapay/Scalapay
 type PaymentMethod = 'payin' | 'transfer' | 'card';
 
 // Definición de tipos para el componente
-type ReservationPaymentStatus = 'confirm' | 'rq' | 'transfer' | 'scalapay' | undefined;
+type ReservationPaymentStatus =
+  | 'confirm'
+  | 'rq'
+  | 'transfer'
+  | 'scalapay'
+  | undefined;
 type ScalapayPaymentStatus = 'success' | 'error' | null;
 
 // Interfaz para la respuesta de completar pago
@@ -114,25 +119,31 @@ export class ReservationComponent implements OnInit, OnDestroy {
           this.orderToken = params['orderToken'];
         }
         if (params['paymentStatus']) {
+          // Almacenar el valor original, la comparación se hará con toLowerCase()
           this.scalapayPaymentStatus = params['paymentStatus'] as ScalapayPaymentStatus;
+          console.log('[Scalapay Debug] Estado de pago recibido:', this.scalapayPaymentStatus);
         }
       });
 
-    this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params: Params) => {
-      this.bookingId = params['id'];
-      if (this.bookingId) {
-        this.getBookingData();
-      } else {
-        this.error = true;
-        this.loading = false;
-        this.showErrorMessage('No se pudo encontrar el ID de reserva en la URL.');
-      }
+    this.route.params
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((params: Params) => {
+        this.bookingId = params['id'];
+        if (this.bookingId) {
+          this.getBookingData();
+        } else {
+          this.error = true;
+          this.loading = false;
+          this.showErrorMessage(
+            'No se pudo encontrar el ID de reserva en la URL.'
+          );
+        }
 
-      this.paymentID = params['paymentID'];
-      if (this.paymentID) {
-        this.getPaymentData();
-      }
-    });
+        this.paymentID = params['paymentID'];
+        if (this.paymentID) {
+          this.getPaymentData();
+        }
+      });
   }
 
   /**
@@ -226,7 +237,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
         if (
           this.orderToken &&
           this.scalapayPaymentStatus &&
-          this.paymentInfo?.provider === 'Scalapay'
+          this.paymentInfo?.provider?.toLowerCase() === 'scalapay'
         ) {
           this.processScalapayPayment();
         }
@@ -238,14 +249,11 @@ export class ReservationComponent implements OnInit, OnDestroy {
    * @param payment Información del pago
    */
   private updatePaymentStatus(payment: Payment): void {
-    if (
-      payment.status === 'PENDING' &&
-      payment.method === 'transfer'
-    ) {
+    if (payment.status === 'PENDING' && payment.method === 'transfer') {
       this.paymentStatus = 'transfer';
     } else if (
       payment.status === 'PENDING' &&
-      payment.provider === 'Scalapay'
+      payment.provider?.toLowerCase() === 'scalapay'
     ) {
       this.paymentStatus = 'scalapay';
     } else {
@@ -261,7 +269,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
       console.log('[Scalapay Debug] Falta información para procesar el pago:', {
         paymentID: this.paymentID,
         orderToken: this.orderToken,
-        paymentStatus: this.scalapayPaymentStatus
+        paymentStatus: this.scalapayPaymentStatus,
       });
       return;
     }
@@ -269,7 +277,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
     console.log('[Scalapay Debug] Iniciando procesamiento de pago Scalapay', {
       paymentID: this.paymentID,
       orderToken: this.orderToken,
-      paymentStatus: this.scalapayPaymentStatus
+      paymentStatus: this.scalapayPaymentStatus,
     });
 
     this.loading = true;
@@ -280,7 +288,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$),
         switchMap((paymentData: Payment) => {
           console.log('[Scalapay Debug] Datos de pago obtenidos:', paymentData);
-          
+
           // Si el pago está pendiente y tenemos un estado de éxito o error
           if (
             paymentData &&
@@ -291,60 +299,114 @@ export class ReservationComponent implements OnInit, OnDestroy {
             // Obtener detalles de la orden de Scalapay
             const externalId = paymentData.externalID || this.orderToken;
             console.log('[Scalapay Debug] ID externo a utilizar:', externalId);
-            
             if (!externalId) {
-              console.error('[Scalapay Debug] No se encontró ID externo para la orden');
+              console.error(
+                '[Scalapay Debug] No se encontró ID externo para la orden'
+              );
               return of(null);
             }
 
             return this.scalapayService.getOrderDetails(externalId).pipe(
               switchMap((orderDetails: ScalapayGetOrdersDetailsResponse) => {
-                console.log('[Scalapay Debug] Detalles de la orden obtenidos:', orderDetails);
+                console.log(
+                  '[Scalapay Debug] Detalles de la orden obtenidos:',
+                  orderDetails
+                );
                 const providerResponse = JSON.stringify(orderDetails);
 
                 // Si la orden está autorizada, capturarla
                 if (
                   orderDetails.status === 'authorized' &&
-                  this.scalapayPaymentStatus === 'success'
+                  this.scalapayPaymentStatus?.toLowerCase() === 'success'
                 ) {
-                  console.log('[Scalapay Debug] Orden autorizada, procediendo a capturar');
+                  console.log(
+                    '[Scalapay Debug] Orden autorizada, procediendo a capturar'
+                  );
                   return this.scalapayService
                     .captureOrder({ token: externalId })
                     .pipe(
-                      switchMap((captureResponse: ScalapayCaptureOrderRespone) => {
-                        console.log('[Scalapay Debug] Respuesta de captura:', captureResponse);
-                        // Actualizar el estado del pago en nuestra base de datos
-                        return this.completeScalapayPayment(externalId, providerResponse);
-                      }),
-                      catchError(error => {
-                        console.error('[Scalapay Debug] Error al capturar la orden:', error);
-                        return of(null);
+                      switchMap(
+                        (captureResponse: ScalapayCaptureOrderRespone) => {
+                          console.log(
+                            '[Scalapay Debug] Respuesta de captura:',
+                            captureResponse
+                          );
+                          // Actualizar el estado del pago en nuestra base de datos
+                          return this.completeScalapayPayment(
+                            externalId,
+                            JSON.stringify(captureResponse)
+                          );
+                        }
+                      ),
+                      catchError((error) => {
+                        console.error(
+                          '[Scalapay Debug] Error al capturar la orden:',
+                          error
+                        );
+                        // Si hay un error en la captura, registramos el pago como fallido
+                        return this.completeScalapayPayment(
+                          externalId,
+                          JSON.stringify({
+                            error: error.message || 'Error en la captura del pago',
+                            timestamp: new Date().toISOString(),
+                            orderDetails
+                          })
+                        );
                       })
                     );
+                } else if (this.scalapayPaymentStatus?.toLowerCase() === 'error') {
+                  console.log(
+                    '[Scalapay Debug] Pago fallido, registrando error'
+                  );
+                  // Registrar explícitamente el error del pago
+                  return this.completeScalapayPayment(
+                    externalId,
+                    JSON.stringify({
+                      error: 'Pago rechazado por Scalapay',
+                      status: orderDetails.status,
+                      timestamp: new Date().toISOString(),
+                      orderDetails
+                    })
+                  );
                 } else {
-                  console.log('[Scalapay Debug] Orden no autorizada o pago fallido, actualizando estado');
+                  console.log(
+                    '[Scalapay Debug] Orden no autorizada o pago fallido, actualizando estado'
+                  );
                   // Actualizar el estado del pago sin capturar
-                  return this.completeScalapayPayment(externalId, providerResponse);
+                  return this.completeScalapayPayment(
+                    externalId,
+                    providerResponse
+                  );
                 }
               }),
-              catchError(error => {
-                console.error('[Scalapay Debug] Error al obtener detalles de la orden:', error);
+              catchError((error) => {
+                console.error(
+                  '[Scalapay Debug] Error al obtener detalles de la orden:',
+                  error
+                );
                 return of(null);
               })
             );
           }
-          console.log('[Scalapay Debug] No se cumplen condiciones para procesar el pago');
+          console.log(
+            '[Scalapay Debug] No se cumplen condiciones para procesar el pago'
+          );
           return of(null);
         }),
         catchError((error) => {
-          console.error('[Scalapay Debug] Error procesando el pago de Scalapay:', error);
+          console.error(
+            '[Scalapay Debug] Error procesando el pago de Scalapay:',
+            error
+          );
           this.showErrorMessage(
             'Error al procesar el pago con Scalapay. Por favor, contacta con atención al cliente.'
           );
           return of(null);
         }),
         finalize(() => {
-          console.log('[Scalapay Debug] Finalizado el proceso de pago Scalapay');
+          console.log(
+            '[Scalapay Debug] Finalizado el proceso de pago Scalapay'
+          );
           this.loading = false;
         })
       )
@@ -352,7 +414,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
         console.log('[Scalapay Debug] Resultado del proceso de pago:', result);
         if (result) {
           this.showPaymentResultMessage();
-          
+
           // Refrescar los datos de la reserva y del pago
           this.getBookingData();
           this.getPaymentData();
@@ -366,41 +428,58 @@ export class ReservationComponent implements OnInit, OnDestroy {
    * @param providerResponse Respuesta del proveedor
    * @returns Observable con la respuesta de completar el pago
    */
-  private completeScalapayPayment(externalId: string, providerResponse: string): Observable<any> {
-    console.log('[Scalapay Debug] Completando pago con externalId:', externalId);
-    
+  private completeScalapayPayment(
+    externalId: string,
+    providerResponse: string
+  ): Observable<any> {
+    console.log(
+      '[Scalapay Debug] Completando pago con externalId:',
+      externalId
+    );
+
     const paymentRequest: CompletePaymentRequest = {
       publicID: this.paymentID,
       method: 'payin',
       provider: 'Scalapay',
       providerResponse,
       externalId,
-      status: this.scalapayPaymentStatus === 'success' ? PaymentStatus.COMPLETED : PaymentStatus.CANCELLED
+      status:
+        this.scalapayPaymentStatus?.toLowerCase() === 'success'
+          ? PaymentStatus.COMPLETED
+          : PaymentStatus.CANCELLED,
     };
-    
-    console.log('[Scalapay Debug] Datos de la solicitud de completar pago:', paymentRequest);
-    
-    // Corregir la llamada para incluir el tercer argumento (data)
-    return this.bookingsService.completePayment(
-      this.bookingId, 
-      this.paymentID, 
-      paymentRequest as unknown as Payment
-    ).pipe(
-      tap(response => {
-        console.log('[Scalapay Debug] Respuesta de completar pago:', response);
-      }),
-      catchError(error => {
-        console.error('[Scalapay Debug] Error al completar el pago:', error);
-        throw error;
-      })
+
+    console.log(
+      '[Scalapay Debug] Datos de la solicitud de completar pago:',
+      paymentRequest
     );
+
+    // Corregir la llamada para incluir el tercer argumento (data)
+    return this.bookingsService
+      .completePayment(
+        this.bookingId,
+        this.paymentID,
+        paymentRequest as unknown as Payment
+      )
+      .pipe(
+        tap((response) => {
+          console.log(
+            '[Scalapay Debug] Respuesta de completar pago:',
+            response
+          );
+        }),
+        catchError((error) => {
+          console.error('[Scalapay Debug] Error al completar el pago:', error);
+          throw error;
+        })
+      );
   }
 
   /**
    * Muestra un mensaje con el resultado del pago
    */
   private showPaymentResultMessage(): void {
-    if (this.scalapayPaymentStatus === 'success') {
+    if (this.scalapayPaymentStatus?.toLowerCase() === 'success') {
       this.messageService.add({
         severity: 'success',
         summary: 'Pago completado',
@@ -433,7 +512,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
    */
   handleVoucherUpload(response: CloudinaryResponse): void {
     this.uploadedVoucher = response;
-    
+
     if (this.bookingId && response) {
       this.bookingsService
         .uploadVoucher(this.bookingId, this.paymentID, {
@@ -498,18 +577,28 @@ export class ReservationComponent implements OnInit, OnDestroy {
    */
   parseBookingCreatedAt(date: string): string {
     if (!date) return '';
-    
+
     const dateObj = new Date(date);
     const day = dateObj.getDate();
     const year = dateObj.getFullYear();
-    
+
     // Obtener el nombre del mes en español
     const months = [
-      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
     ];
     const month = months[dateObj.getMonth()];
-    
+
     return `${day} de ${month}, ${year}`;
   }
 

@@ -336,22 +336,23 @@
       display: flex;
       flex-direction: column;
       font-size: 14px;
+      padding: 1rem;
     }
-  }
 
-  .p-panel .p-panel-header {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    height: 50px;
-    padding-left: 1rem;
-    border-radius: 10px;
-    margin-bottom: -10px;
-    border-bottom: 1px solid #66666627;
+    .p-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      height: 50px;
+      padding-left: 1rem;
+      border-radius: 10px;
+      margin-bottom: -10px;
+      border-bottom: 1px solid #66666627;
 
-    .p-panel-title {
-      font-weight: 600;
-      font-size: 16px;
+      .p-panel-title {
+        font-weight: 600;
+        font-size: 16px;
+      }
     }
   }
 

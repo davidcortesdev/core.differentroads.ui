@@ -1,0 +1,293 @@
+<div class="background-banner">
+  <img src="assets/images/BannerPrueba.png" alt="Banner de viajes" class="banner-image">
+  <div class="banner-overlay"></div>
+</div>
+
+<div class="reviews-container">
+  <h2>¿Como ha ido tu viaje? Déjanos tu opinión</h2>
+
+  <div class="trip-header">
+    <div class="trip-title"><i class="pi pi-send"></i> {{ tripInfo.title }}</div>
+    <div class="trip-date">Fecha de inicio: {{ tripInfo.date }}</div>
+  </div>
+  
+  <div class="secondary-text">
+    <label>
+      <p class="secondary-text">Esperamos que el viaje que acabas de disfrutar haya sido una experiencia maravillosa. 
+        En Different Roads trabajamos con el objetivo de que disfrutes de nuestros viajes tanto 
+        como nos gustaria disfrutarlos a nosortos mismos. Nos encataría conocer tu opinión para seguir mejorando. 
+        Por ello, te agradeceríamos que completaras estas preguntas. ¡Gracias por tu tiempo y confianza!</p>
+    </label>
+  </div>
+
+
+
+
+  <div class="p-fluid p-grid p-formgrid p-mb-4">
+    <div class="p-field p-col-12 p-mb-3">
+      <!-- Nombre y apellidos -->
+      <label for="nombre" class="input-label">
+        <i class="pi pi-send input-icon"></i> Nombre y apellidos<span>*</span>
+      </label>
+
+      <input id="nombre" type="text" class="input-text" autocomplete="off" />
+    </div>
+
+    <div class="p-field p-col-12">
+      <!-- Email (ya está correcto) -->
+      <label for="email" class="input-label">
+        <i class="pi pi-envelope input-icon"></i> E-mail<span>*</span>
+      </label>
+
+      <input id="email" type="email" class="input-text" autocomplete="off" />
+    </div>
+  </div>
+
+
+  <div class="stars-container">
+    <div class="stars-row">
+      <div class="star-item">
+        <p class="review-label"><i class="pi pi-map p-mr-1"></i> Tour<span>*</span></p>
+        <div class="stars">
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('destinos', 1, true)"
+              [class.active]="isHalfStar('destinos', 1)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('destinos', 1, false)"
+              [class.active]="isFullStar('destinos', 1)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('destinos', 2, true)"
+              [class.active]="isHalfStar('destinos', 2)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('destinos', 2, false)"
+              [class.active]="isFullStar('destinos', 2)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('destinos', 3, true)"
+              [class.active]="isHalfStar('destinos', 3)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('destinos', 3, false)"
+              [class.active]="isFullStar('destinos', 3)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('destinos', 4, true)"
+              [class.active]="isHalfStar('destinos', 4)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('destinos', 4, false)"
+              [class.active]="isFullStar('destinos', 4)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('destinos', 5, true)"
+              [class.active]="isHalfStar('destinos', 5)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('destinos', 5, false)"
+              [class.active]="isFullStar('destinos', 5)" aria-hidden="true"></i>
+          </span>
+        </div>
+      </div>
+
+      <div class="star-item">
+        <p class="review-label"><i class="pi pi-map-marker p-mr-1"></i> Destinos<span>*</span></p>
+        <div class="stars">
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('tour', 1, true)" [class.active]="isHalfStar('tour', 1)"
+              aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('tour', 1, false)" [class.active]="isFullStar('tour', 1)"
+              aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('tour', 2, true)" [class.active]="isHalfStar('tour', 2)"
+              aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('tour', 2, false)" [class.active]="isFullStar('tour', 2)"
+              aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('tour', 3, true)" [class.active]="isHalfStar('tour', 3)"
+              aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('tour', 3, false)" [class.active]="isFullStar('tour', 3)"
+              aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('tour', 4, true)" [class.active]="isHalfStar('tour', 4)"
+              aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('tour', 4, false)" [class.active]="isFullStar('tour', 4)"
+              aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('tour', 5, true)" [class.active]="isHalfStar('tour', 5)"
+              aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('tour', 5, false)" [class.active]="isFullStar('tour', 5)"
+              aria-hidden="true"></i>
+          </span>
+        </div>
+      </div>
+
+      <div class="star-item">
+        <p class="review-label"><i class="pi pi-euro p-mr-1"></i> Calidad-precio<span>*</span></p>
+        <div class="stars">
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('calidadPrecio', 1, true)"
+              [class.active]="isHalfStar('calidadPrecio', 1)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('calidadPrecio', 1, false)"
+              [class.active]="isFullStar('calidadPrecio', 1)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('calidadPrecio', 2, true)"
+              [class.active]="isHalfStar('calidadPrecio', 2)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('calidadPrecio', 2, false)"
+              [class.active]="isFullStar('calidadPrecio', 2)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('calidadPrecio', 3, true)"
+              [class.active]="isHalfStar('calidadPrecio', 3)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('calidadPrecio', 3, false)"
+              [class.active]="isFullStar('calidadPrecio', 3)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('calidadPrecio', 4, true)"
+              [class.active]="isHalfStar('calidadPrecio', 4)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('calidadPrecio', 4, false)"
+              [class.active]="isFullStar('calidadPrecio', 4)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('calidadPrecio', 5, true)"
+              [class.active]="isHalfStar('calidadPrecio', 5)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('calidadPrecio', 5, false)"
+              [class.active]="isFullStar('calidadPrecio', 5)" aria-hidden="true"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Segunda fila de estrellas -->
+    <div class="stars-row">
+      <div class="star-item">
+        <p class="review-label"><i class="pi pi-flag p-mr-1"></i> Actividades<span>*</span></p>
+        <div class="stars">
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('actividades', 1, true)"
+              [class.active]="isHalfStar('actividades', 1)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('actividades', 1, false)"
+              [class.active]="isFullStar('actividades', 1)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('actividades', 2, true)"
+              [class.active]="isHalfStar('actividades', 2)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('actividades', 2, false)"
+              [class.active]="isFullStar('actividades', 2)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('actividades', 3, true)"
+              [class.active]="isHalfStar('actividades', 3)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('actividades', 3, false)"
+              [class.active]="isFullStar('actividades', 3)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('actividades', 4, true)"
+              [class.active]="isHalfStar('actividades', 4)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('actividades', 4, false)"
+              [class.active]="isFullStar('actividades', 4)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('actividades', 5, true)"
+              [class.active]="isHalfStar('actividades', 5)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('actividades', 5, false)"
+              [class.active]="isFullStar('actividades', 5)" aria-hidden="true"></i>
+          </span>
+        </div>
+      </div>
+
+      <div class="star-item">
+        <p class="review-label"><i class="pi pi-user p-mr-1"></i> Guía<span>*</span></p>
+        <div class="stars">
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('guias', 1, true)"
+              [class.active]="isHalfStar('guias', 1)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('guias', 1, false)" [class.active]="isFullStar('guias', 1)"
+              aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('guias', 2, true)"
+              [class.active]="isHalfStar('guias', 2)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('guias', 2, false)" [class.active]="isFullStar('guias', 2)"
+              aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('guias', 3, true)"
+              [class.active]="isHalfStar('guias', 3)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('guias', 3, false)" [class.active]="isFullStar('guias', 3)"
+              aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('guias', 4, true)"
+              [class.active]="isHalfStar('guias', 4)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('guias', 4, false)" [class.active]="isFullStar('guias', 4)"
+              aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('guias', 5, true)"
+              [class.active]="isHalfStar('guias', 5)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('guias', 5, false)" [class.active]="isFullStar('guias', 5)"
+              aria-hidden="true"></i>
+          </span>
+        </div>
+      </div>
+
+      <div class="star-item">
+        <p class="review-label"><i class="pi pi-home p-mr-1"></i> Alojamientos<span>*</span></p>
+        <div class="stars">
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('alojamientos', 1, true)"
+              [class.active]="isHalfStar('alojamientos', 1)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('alojamientos', 1, false)"
+              [class.active]="isFullStar('alojamientos', 1)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('alojamientos', 2, true)"
+              [class.active]="isHalfStar('alojamientos', 2)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('alojamientos', 2, false)"
+              [class.active]="isFullStar('alojamientos', 2)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('alojamientos', 3, true)"
+              [class.active]="isHalfStar('alojamientos', 3)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('alojamientos', 3, false)"
+              [class.active]="isFullStar('alojamientos', 3)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('alojamientos', 4, true)"
+              [class.active]="isHalfStar('alojamientos', 4)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('alojamientos', 4, false)"
+              [class.active]="isFullStar('alojamientos', 4)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper">
+            <i class="fa fa-star-half-o" (click)="setHalfRating('alojamientos', 5, true)"
+              [class.active]="isHalfStar('alojamientos', 5)" aria-hidden="true"></i>
+            <i class="fa fa-star" (click)="setHalfRating('alojamientos', 5, false)"
+              [class.active]="isFullStar('alojamientos', 5)" aria-hidden="true"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <div class="textarea-container">
+    <label for="nombre" class="input-label">
+      <i class="pi pi-inbox input-icon"></i> Cuéntanos más sobre tu viaje<span>*</span>
+    </label>
+    <textarea></textarea>
+  </div>
+
+  <div class="review-text">
+    <label for="nombre" class="input-label">
+      <i class="pi pi-camera input-icon"></i> ¿Quieres compartir tu viaje con nosotros?
+    </label>
+    <div class="upload-button-container">
+      <button class="upload-button">
+        Cargar fotos <i class="pi pi-upload"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="submit-review-container">
+    <button class="submit-review">Enviar opinión</button>
+  </div>
+</div>

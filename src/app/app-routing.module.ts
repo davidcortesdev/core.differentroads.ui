@@ -18,6 +18,8 @@ import { ReservationComponent } from './pages/reservation/reservation.component'
 import { BookingsComponent } from './pages/bookings/bookings.component';
 import { PaymentsComponent } from './pages/payments/payments.component';
 import { AirportSearchComponent } from './features/airports/airport-search/airport-search.component';
+import { ReviewsComponent } from './pages/reviews/reviews.component';
+import { ReviewSectionComponent } from './pages/profile/components/review-section/review-section.component';
 
 const routes: Routes = [
   {
@@ -49,6 +51,7 @@ const routes: Routes = [
       },
       { path: 'bookings/:id', component: BookingsComponent },
       { path: 'aeropuertos', component: AirportSearchComponent },
+      {path: 'reviews', component: ReviewSectionComponent},
       { path: '**', component: NotFoundComponent },
     ],
   },

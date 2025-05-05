@@ -343,8 +343,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
         !this.passenger.minorIdIssueDate ||
         !this.passenger.minorIdExpirationDate ||
         !this.passenger.documentExpeditionDate ||
-        !this.passenger.documentExpirationDate ||
-        !this.passenger.comfortPlan) {
+        !this.passenger.documentExpirationDate) {
       return true;
     }
     
@@ -408,25 +407,30 @@ export class PassengerCardComponent implements OnInit, OnChanges {
     }
   }
 
-      // Convierte un objeto Date a string en formato yyyy-mm-dd
-    formatDateToString(date: Date): string {
-      if (!date) return '';
+  // Convierte un objeto Date a string en formato yyyy-mm-dd
+  formatDateToString(date: Date): string {
+    if (!date) return '';
+    
+    try {
+      const year = date.getFullYear();
+      // Asegurarse de que el mes y día tengan dos dígitos
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
       
-      try {
-        const year = date.getFullYear();
-        // Asegurarse de que el mes y día tengan dos dígitos
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        
-        return `${year}-${month}-${day}`;
-      } catch (error) {
-        console.error('Error converting Date to string:', error);
-        return '';
-      }
+      return `${year}-${month}-${day}`;
+    } catch (error) {
+      console.error('Error converting Date to string:', error);
+      return '';
     }
+  }
 
   getGenderLabel(value: string): string {
     const option = this.genderOptions.find(opt => opt.value === value);
     return option ? option.label : value || 'Pendiente';
+  }
+  
+  // Método para obtener el valor del comfort plan
+  getComfortPlanValue(): string {
+    return this.passenger.comfortPlan || 'Básico';
   }
 }

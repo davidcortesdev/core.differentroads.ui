@@ -70,14 +70,14 @@
 
         <!-- Only show the input when the deposit option is selected -->
         <div *ngIf="paymentType === 'deposit'" class="form-group">
-          <label for="amountToPay">Monto a abonar</label>
+          <label for="amountToPay">Importe a abonar</label>
           <p-inputNumber
             id="amountToPay"
             [(ngModel)]="amountToPay"
             [min]="depositAmount"
             [max]="remainingAmount"
             [step]="50"
-            placeholder="Ingrese el monto a abonar"
+            placeholder="Ingrese el importe a abonar"
             mode="decimal"
             [showButtons]="true"
             class="form-control"

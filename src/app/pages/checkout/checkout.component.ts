@@ -268,8 +268,10 @@ export class CheckoutComponent implements OnInit {
 
     this.flightsService.selectedFlight$.subscribe((flight) => {
       this.selectedFlight = flight;
-      // Update Amadeus flight status
       this.isAmadeusFlightSelected = flight?.source === 'amadeus';
+    });
+
+    this.flightsService.orderFlights$.subscribe(() => {
       this.updateOrderSummary();
     });
 
@@ -685,9 +687,10 @@ export class CheckoutComponent implements OnInit {
       }
 
       // Use all flights from the service instead of just the selected one
+      console.log('_______Order flights:', orderFlights);
+
       tempOrderData['flights'] =
         orderFlights.length > 0 ? orderFlights : [this.selectedFlight];
-      tempOrderData['flights'] = [this.selectedFlight];
     }
 
     if (this.selectedInsurances.length === 0) {

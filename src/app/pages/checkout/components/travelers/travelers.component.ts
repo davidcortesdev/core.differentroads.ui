@@ -86,8 +86,8 @@ export class TravelersComponent implements OnInit {
       passportIssueDate: [''],
       ageGroup: [''],
       category: [''],
-      /*       dni: [''],
-       */ // Campos adicionales para viajeros bebés
+      dni: [''],
+      // Campos adicionales para viajeros bebés
       minorIdExpirationDate: [''],
       minorIdIssueDate: [''],
       associatedAdult: [''],
@@ -122,8 +122,8 @@ export class TravelersComponent implements OnInit {
             traveler.travelerData?.passportExpirationDate || '',
           passportIssueDate: traveler.travelerData?.passportIssueDate || '',
           ageGroup: traveler.travelerData?.ageGroup || '',
-          /*           dni: traveler.travelerData?.dni || '',
-           */ minorIdExpirationDate:
+          dni: traveler.travelerData?.dni || '',
+          minorIdExpirationDate:
             traveler.travelerData?.minorIdExpirationDate || '',
           minorIdIssueDate: traveler.travelerData?.minorIdIssueDate || '',
           associatedAdult: traveler.travelerData?.associatedAdult || '',
@@ -154,6 +154,7 @@ export class TravelersComponent implements OnInit {
       passportExpirationDate: [''],
       passportIssueDate: [''],
       ageGroup: [''],
+      dni: [''],
       // Campos adicionales para viajeros bebés
       minorIdExpirationDate: [''],
       minorIdIssueDate: [''],
@@ -218,8 +219,8 @@ export class TravelersComponent implements OnInit {
           passportExpirationDate: traveler.passportExpirationDate,
           passportIssueDate: traveler.passportIssueDate,
           ageGroup: traveler.ageGroup,
-          /*           dni: traveler.dni,
-           */ sex: traveler.sexo,
+          dni: traveler.dni,
+          sex: traveler.sexo,
           documentType: traveler.documentType,
           // Campos adicionales para bebés:
           minorIdExpirationDate: traveler.minorIdExpirationDate,

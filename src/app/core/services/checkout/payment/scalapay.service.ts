@@ -112,7 +112,7 @@ export class ScalapayService {
   getOrderDetails(orderToken: string): Observable<ScalapayGetOrdersDetailsResponse> {
     this.validateEnvironment();
 
-    const url = `${this.API_URL}/v2/orders/${orderToken}`;
+    const url = `${this.API_URL}/v2/payments/${orderToken}`;
     return from(
       this.http
         .get<ScalapayGetOrdersDetailsResponse>(url, this.getHttpOptions())
@@ -130,27 +130,4 @@ export class ScalapayService {
     );
   }
 
-  /**
-   * Obtiene los detalles de un pago específico
-   * @param paymentId ID del pago a consultar
-   * @returns Promise con los detalles del pago
-   */
-  getPaymentDetails(paymentId: string): Promise<any> {
-    this.validateEnvironment();
-
-    const url = `${this.API_URL}/v2/payments/${paymentId}`;
-    return this.http
-      .get<any>(url, this.getHttpOptions())
-      .toPromise()
-      .then((response) => {
-        if (!response) {
-          throw new Error('No se recibió respuesta');
-        }
-        return response;
-      })
-      .catch((error) => {
-        console.error('Error al procesar la orden:', error);
-        throw error;
-      });
-  }
 }

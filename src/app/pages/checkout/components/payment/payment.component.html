@@ -239,10 +239,14 @@
                   [disabled]="isLoading"
                 ></p-checkbox>
               </div>
-              <div
-                *ngIf="!traveler.points || traveler.points <= 0"
-                class="checkbox-placeholder"
-              ></div>
+              <!-- Agregamos checkbox deshabilitado cuando no hay puntos -->
+              <div class="checkbox-container checkbox-azul" *ngIf="!traveler.points || traveler.points <= 0">
+                <p-checkbox
+                  [binary]="true"
+                  [disabled]="true"
+                  styleClass="points-checkbox"
+                ></p-checkbox>
+              </div>
 
               <!-- Traveler info with status indicators - Ahora también clickeable -->
               <div class="traveler-info" *ngIf="(traveler.points || 0) > 0" (click)="toggleTravelerPoints(traveler)">

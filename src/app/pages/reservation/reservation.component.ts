@@ -178,38 +178,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
           // Si no hay paymentID, terminamos el flujo
           this.loading = false;
           return EMPTY;
-        })
-      )
-      .subscribe((booking) => {
-        // Mapear la reserva utilizando booking y, de estar disponible, paymentInfo.
-        this.reservationInfo = this.bookingMapper.mapToReservationInfo(
-          booking,
-          this.paymentInfo
-        );
-
-        this.flights = booking.flights?.[0] ? [booking.flights[0]] : [];
-        this.priceDetails = this.bookingMapper.mapToPriceDetails(booking);
-
-        // Actualizar bankInfo con datos específicos del booking.
-        if (booking.code) {
-          this.bankInfo.forEach((bank) => {
-            bank.concept = `${booking.code} ${
-              this.reservationInfo?.customerName || ''
-            }`;
-          });
-        }
-
-        this.bookingData = booking;
-        console.log('Booking data:', booking);
-      });
-  }
-
-  getPaymentData() {
-    this.loading = true;
-    this.bookingsService
-      .getPaymentsByPublicID(this.paymentID)
-      .pipe(
-        takeUntil(this.destroy$),
+        }),
         catchError((err) => {
           this.error = true;
           this.showErrorMessage('Error al cargar los datos del pago.');
@@ -258,7 +227,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
       this.paymentInfo
     );
 
-    this.flights = this.bookingMapper.mapToFlights(booking);
+    this.flights = booking.flights?.[0] ? [booking.flights[0]] : [];
     this.priceDetails = this.bookingMapper.mapToPriceDetails(booking);
 
     // Actualizar bankInfo con datos específicos del booking.

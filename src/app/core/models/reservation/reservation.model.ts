@@ -16,10 +16,14 @@ export interface Flight {
   departure: {
     time: string;
     airport: string;
+    city: string;
+    iata: string;
   };
   arrival: {
     time: string;
     airport: string;
+    city: string;
+    iata: string;
   };
   flightNumber: string;
   type: 'direct' | 'layover';

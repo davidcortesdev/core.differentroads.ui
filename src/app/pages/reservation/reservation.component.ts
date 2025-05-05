@@ -118,9 +118,9 @@ export class ReservationComponent implements OnInit, OnDestroy {
         if (params['orderToken']) {
           this.orderToken = params['orderToken'];
         }
-        if (params['paymentStatus']) {
+        if (params['status']) {
           // Almacenar el valor original, la comparación se hará con toLowerCase()
-          this.scalapayPaymentStatus = params['paymentStatus'] as ScalapayPaymentStatus;
+          this.scalapayPaymentStatus = params['status'] as ScalapayPaymentStatus;
           console.log('[Scalapay Debug] Estado de pago recibido:', this.scalapayPaymentStatus);
         }
       });

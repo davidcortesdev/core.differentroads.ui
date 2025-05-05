@@ -51,7 +51,7 @@ const routes: Routes = [
       },
       { path: 'bookings/:id', component: BookingsComponent },
       { path: 'aeropuertos', component: AirportSearchComponent },
-      {path: 'reviews', component: ReviewSectionComponent},
+      {path: 'reviews', component: ReviewsComponent},
       { path: '**', component: NotFoundComponent },
     ],
   },

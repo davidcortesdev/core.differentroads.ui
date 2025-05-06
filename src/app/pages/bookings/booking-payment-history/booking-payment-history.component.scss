@@ -5,7 +5,6 @@
   .payment-row {
     display: flex;
     flex-direction: row;
-
     .payment-column-left,
     .payment-column-right {
       padding: 0;
@@ -13,11 +12,9 @@
       flex-direction: column;
       flex: 1;
     }
-
     .payment-column-right {
       flex: 1.5;
     }
-
     p-panel {
       height: 100%;
       display: flex;
@@ -25,24 +22,20 @@
       flex: 1;
     }
   }
-
   @media (max-width: 768px) {
     .payment-row {
       flex-direction: column;
     }
   }
 }
-
 .trip-summary {
   font-size: 14px;
-
   .trip-item {
     display: grid;
     grid-template-columns: 1fr repeat(5, auto);
     gap: 1rem;
     align-items: center;
     padding: 0.75rem 0;
-
     .description {
       grid-column: 1;
       text-align: left;
@@ -51,18 +44,15 @@
       white-space: nowrap;
       padding-right: 1rem;
     }
-
     .quantity,
     .unit-price,
     .price {
       text-align: right;
       min-width: 1.5rem;
     }
-
     .price {
       font-weight: 600;
     }
-
     span:nth-child(3),
     span:nth-child(5) {
       text-align: center;
@@ -70,10 +60,8 @@
     }
   }
 }
-
 .payment-info {
   font-size: 14px;
-
   .payment-unified-row {
     display: flex;
     justify-content: space-between;
@@ -499,8 +487,6 @@
     }
   }
 }
-
-// Add this to your existing styles
 :host ::ng-deep {
   .panel-background {
     &.order-summary {
@@ -530,7 +516,6 @@
     color: var(--primary-color-500) !important;
   }
 }
-
 :host ::ng-deep {
   .payment-dialog .p-dialog-content {
     display: flex;
@@ -538,18 +523,15 @@
     align-items: center;
     justify-content: center;
     text-align: center;
-
     p {
       width: 100%;
       text-align: center;
     }
-
     .p-button {
       margin-top: 1.5rem;
       align-self: center;
     }
   }
-
   .payment-dialog .p-dialog-header {
     display: flex !important;
     justify-content: center !important;
@@ -557,13 +539,11 @@
     text-align: center;
     width: 100%;
     position: relative;
-
     .p-dialog-title {
       flex: 1;
       text-align: center;
       margin-left: 2.3rem;
     }
-
     .p-dialog-header-icons {
       position: absolute;
       right: 1.5rem;

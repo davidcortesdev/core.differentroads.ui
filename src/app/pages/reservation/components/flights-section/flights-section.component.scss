@@ -8,34 +8,26 @@ $border: #ea685c;
 }
 
 .flights-container {
-  border: 1px solid $border;
+  border: 2px solid $border;
   padding: 12px;
-  border-radius: 8px;
+  border-radius: 11.434px;
   margin-bottom: 15px;
+  background-color: white;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
 .flight-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-  margin-top: -5px;
-
-  .plane-icon {
-    margin-right: 5px;
-  }
-
-  .header-text {
-    color: $azul;
-    font-size: 16px;
-    font-weight: bold;
-  }
+  padding: 0.5rem 0.5rem 0.5rem 0rem;
+  color: $azul;
+  font-weight: 600;
+  font-size: 1.1rem;
 }
 
 .flight-section {
   margin-bottom: 15px;
 
   .section-title {
-    margin-bottom: 8px;
+    margin-bottom: 3px;
 
     span {
       color: $coral;
@@ -71,35 +63,32 @@ $border: #ea685c;
 
   .time-date {
     color: $azul;
-    font-size: 16px;
+    font-size: 0.9rem;
     white-space: nowrap;
-    font-weight: bold;
 
     span {
       color: $azul;
-      font-size: 16px;
-      font-weight: bold;
+      font-size: 0.9rem;
     }
   }
 
   .airport {
     color: $azul;
-    font-size: 16px;
-    margin-top: 2px;
-    font-weight: bold;
+    font-size: 0.9rem;
+    margin-top: 0.5px;
   }
 }
 
 .flight-duration-container {
-  width: 220px;
-  min-width: 220px;
+  width: 280px;
+  min-width: 280px;
   position: relative;
   text-align: center;
   margin: 0 10px;
 
   .duration {
     color: $azul;
-    font-size: 16px;
+    font-size: 0.6rem;
     margin-bottom: 3px;
   }
 
@@ -133,13 +122,13 @@ $border: #ea685c;
 
   .flight-type {
     color: $coral;
-    font-size: 16px;
+    font-size: 0.6rem;
     margin-top: 3px;
   }
 }
 
 .flight-details {
-  margin-top: 8px;
+  margin-top: 4px;
   font-size: 0.65rem;
   color: $azul;
   line-height: 1.4;
@@ -147,7 +136,7 @@ $border: #ea685c;
   padding: 0 20px;
 
   .flight-segment {
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     font-size: 0.65rem;
   }
 }

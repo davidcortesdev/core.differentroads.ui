@@ -93,7 +93,9 @@
             <div *ngFor="let item of paymentHistory" class="history-item">
               <span class="date">{{ item.createdAt | date }}</span>
               <span class="status">
-                {{ getStatusText(item.status) }}
+                <span class="status-text">
+                  {{ getStatusText(item.status) }}
+                </span>
                 <button
                   *ngIf="
                     isTO &&
@@ -193,15 +195,15 @@
       icon="pi pi-check"
       (onClick)="approvePaymentReview()"
       styleClass="p-button-success"
-      [loading]="isReviewLoading"
+      [loading]="isApproveLoading"
     >
     </p-button>
     <p-button
       label="Rechazar"
-      icon="pi pi-times"
+      icon="pi pi-times-circle"
       (onClick)="rejectPaymentReview()"
       styleClass="p-button-danger"
-      [loading]="isReviewLoading"
+      [loading]="isRejectLoading"
     >
     </p-button>
   </div>

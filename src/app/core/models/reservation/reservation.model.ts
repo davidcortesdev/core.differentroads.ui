@@ -6,30 +6,6 @@ export interface TravelerInfo {
   room: string;
 }
 
-export interface Flight {
-  date: string;
-  airline: {
-    name: string;
-    logo: string;
-    code: string;
-  };
-  departure: {
-    time: string;
-    airport: string;
-    city: string;
-    iata: string;
-  };
-  arrival: {
-    time: string;
-    airport: string;
-    city: string;
-    iata: string;
-  };
-  flightNumber: string;
-  type: 'direct' | 'layover';
-  layoverCity?: string;
-}
-
 export interface PriceDetail {
   description: string;
   amount: number;

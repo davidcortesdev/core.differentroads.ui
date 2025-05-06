@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, from, Subject } from 'rxjs';
 import { catchError, map, switchMap, takeUntil } from 'rxjs/operators';
-import { LocationsApiService, LocationMunicipality } from './locations-api.service';
+import { LocationsApiService, LocationMunicipality, CityResponse, CityFilter } from './locations-api.service';
 import { City } from '../components/tour-map/tour-map.component';
 import { GeoService } from '../../core/services/geo.service';
 
@@ -46,44 +46,25 @@ export class CityCoordinatesService {
    * y si no se encuentra, utiliza el método alternativo actual
    */
   getCityCoordinates(cityName: string): Observable<{ lat: number, lng: number } | null> {
-    // Normalizar el nombre de la ciudad (trim)
     const normalizedCityName = cityName.trim();
-    
-    // Si después de normalizar queda vacío, retornar null
+  
     if (!normalizedCityName) {
       console.warn('Nombre de ciudad vacío después de normalizar');
       return of(null);
     }
-    
-    // Verificar si ya tenemos las coordenadas en caché
+  
     if (this.coordinatesCache.has(normalizedCityName)) {
       return of(this.coordinatesCache.get(normalizedCityName)!);
     }
   
-    // Primero intentamos buscar en la API de ciudades
     return this.locationsApiService.searchCityByName(normalizedCityName).pipe(
-      switchMap(cities => {
+      map(cities => {
         if (cities && cities.length > 0 && cities[0].lat && cities[0].lng) {
-          // Si encontramos la ciudad en la API y tiene coordenadas, las usamos
           const coordinates = { lat: cities[0].lat, lng: cities[0].lng };
-          
-          // Guardar en caché para futuras consultas
           this.coordinatesCache.set(normalizedCityName, coordinates);
-          
-          return of(coordinates);
-        } else {
-          // Si no encontramos en ciudades, intentamos con comunidades
-          return this.locationsApiService.searchCommunityByName(normalizedCityName).pipe(
-            map(communities => {
-              if (communities && communities.length > 0 && communities[0].lat && communities[0].lng) {
-                const coordinates = { lat: communities[0].lat, lng: communities[0].lng };
-                this.coordinatesCache.set(normalizedCityName, coordinates);
-                return coordinates;
-              }
-              return null;
-            })
-          );
+          return coordinates;
         }
+        return null;
       }),
       catchError(error => {
         console.error(`Error al obtener coordenadas para ${normalizedCityName}:`, error);
@@ -91,7 +72,7 @@ export class CityCoordinatesService {
       })
     );
   }
-
+  
   /**
    * Convierte un array de nombres de ciudades a objetos City con coordenadas
    */
@@ -352,4 +333,15 @@ export class CityCoordinatesService {
     this.destroy$.next();
     this.destroy$.complete();
   }
+
+getCityByName(cityName: string): Observable<CityResponse[]> {
+  const filter: CityFilter = { name: cityName.trim() };
+
+  return this.locationsApiService.searchCityByName(filter).pipe(
+    catchError(error => {
+      console.error(`Error al obtener ciudad por nombre ${cityName}:`, error);
+      return of([]);
+    })
+  );
+}
 }

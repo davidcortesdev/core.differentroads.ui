@@ -28,38 +28,7 @@
     }
   }
 }
-.trip-summary {
-  font-size: 14px;
-  .trip-item {
-    display: grid;
-    grid-template-columns: 1fr repeat(5, auto);
-    gap: 1rem;
-    align-items: center;
-    padding: 0.75rem 0;
-    .description {
-      grid-column: 1;
-      text-align: left;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      padding-right: 1rem;
-    }
-    .quantity,
-    .unit-price,
-    .price {
-      text-align: right;
-      min-width: 1.5rem;
-    }
-    .price {
-      font-weight: 600;
-    }
-    span:nth-child(3),
-    span:nth-child(5) {
-      text-align: center;
-      justify-self: center;
-    }
-  }
-}
+
 .payment-info {
   font-size: 14px;
   .payment-unified-row {

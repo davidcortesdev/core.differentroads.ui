@@ -1,4 +1,8 @@
 :host {
+  --p-card-color: var(--background-azul);
+  --p-fileupload-background: transparent;
+  --p-inputtext-background: transparent;
+  --p-inputtext-hover-border-color: none;
   display: block;
   width: 100%;
 }
@@ -408,6 +412,7 @@ input.p-inputtext {
   }
 }
 .custom-dropdown.p-dropdown {
+  background: var(--background-azul-texto);
   min-height: 32px !important;
   height: 32px !important;
   font-size: 14px;

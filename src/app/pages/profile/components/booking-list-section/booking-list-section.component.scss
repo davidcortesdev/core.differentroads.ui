@@ -20,7 +20,6 @@ $orange-red: #f66b5b;
 }
 .active {
     --p-paginator-background: var(--background-azul-color-letra);
-
     margin: 0 15px;
     .header {
         @include f(row, space-between, center);
@@ -45,7 +44,7 @@ $orange-red: #f66b5b;
         }
     }
     .item {
-        background: #fff;
+        background: var(--background-azul-color-letra);
         border-radius: 10px;
         margin-bottom: 1rem;
         padding: 0.6rem;

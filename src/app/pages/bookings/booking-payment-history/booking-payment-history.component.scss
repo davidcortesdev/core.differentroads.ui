@@ -1,4 +1,7 @@
 .payment-history-container {
+  --p-panel-background: var(--background-azul-color-letra);
+  --p-panel-color: var(--background-azul);
+  --p-panel-header-color: var(--background-azul);
   .payment-row {
     display: flex;
     flex-direction: row;
@@ -91,7 +94,7 @@
 
         .label {
           font-size: 0.875rem;
-          color: #666;
+          color: var(--background-azul);
         }
 
         .amount {
@@ -219,6 +222,7 @@
 
     .status-text {
       padding-right: 10px;
+      color: var(--background-azul);
     }
   }
 
@@ -417,15 +421,15 @@
   .p-datatable-borderless .p-datatable-tbody > tr > td {
     border: none;
   }
-  
+
   .p-datatable-sm .p-datatable-tbody > tr > td {
     padding: 0.5rem 0.5rem;
   }
-  
+
   .text-right {
     text-align: right;
   }
-  
+
   .text-center {
     text-align: center;
   }
@@ -436,34 +440,34 @@
     padding-left: 6px !important;
     padding-right: 6px !important;
   }
-  
+
   .p-datatable-tbody > tr > td.quantity {
     width: 45px;
     padding-left: 6px !important;
     padding-right: 6px !important;
   }
-  
+
   .p-datatable-tbody > tr > td.unit-price {
     width: auto;
     padding-left: 6px !important;
     padding-right: 6px !important;
   }
-  
+
   .p-datatable-tbody > tr > td.price {
     width: auto;
     font-weight: bold;
     padding-left: 6px !important;
-    
+
     &.discount {
       color: green;
     }
   }
-  
+
   .p-datatable-tbody > tr > td.description {
     width: 100%;
     padding-right: 1rem !important;
   }
-  
+
   // Mobile responsive styles
   @media (max-width: 768px) {
     .p-datatable-responsive .p-datatable-tbody > tr {
@@ -472,23 +476,23 @@
       padding: 0.5rem 0;
       border-bottom: 1px solid #eee;
     }
-    
+
     .p-datatable-responsive .p-datatable-tbody > tr > td.description {
       width: 100%;
       font-weight: 600;
       padding-bottom: 0.5rem;
     }
-    
+
     .p-datatable-responsive .p-datatable-tbody > tr > td.operator:nth-child(5) {
       display: none; // Hide the "=" operator on mobile
     }
-    
+
     .p-datatable-responsive .p-datatable-tbody > tr > td.quantity,
     .p-datatable-responsive .p-datatable-tbody > tr > td.operator,
     .p-datatable-responsive .p-datatable-tbody > tr > td.unit-price {
       padding: 0.25rem 2px;
     }
-    
+
     .p-datatable-responsive .p-datatable-tbody > tr > td.price {
       margin-left: auto;
       padding-left: 0.5rem;

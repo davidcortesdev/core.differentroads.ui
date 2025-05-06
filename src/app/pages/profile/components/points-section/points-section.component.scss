@@ -307,7 +307,7 @@
             }
 
             &.current-card {
-                background: white;
+                background: var(--background-azul-color-letra);
                 border: 2px solid var(--background-azul);
             }
         }

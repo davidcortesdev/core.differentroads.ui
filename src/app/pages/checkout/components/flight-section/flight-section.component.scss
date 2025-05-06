@@ -7,7 +7,7 @@
     margin-right: 1rem;
     min-width: 90px;
   }
-  
+
   .flights-content {
     display: flex;
     flex-direction: column;
@@ -59,7 +59,7 @@
         color: var(--primary-color-500);
         font-size: 1rem;
       }
-      
+
       .duration-info {
         margin-left: auto;
         font-weight: 600;
@@ -88,8 +88,9 @@
 
         &.arrival {
           margin-left: 0.5rem;
-          
-          .time, .airport {
+
+          .time,
+          .airport {
             text-align: right;
             justify-content: flex-end;
           }
@@ -98,7 +99,7 @@
         .time {
           font-size: 1rem;
           font-weight: 600;
-          
+
           margin-bottom: 0.25rem;
           display: flex;
           align-items: center;
@@ -130,6 +131,12 @@
           font-size: 0.9rem;
           transform: rotate(0deg);
           background-color: white;
+        }
+        .airline-logo {
+          width: 24px;
+          height: 24px;
+          margin-right: 4px;
+          vertical-align: middle;
         }
         span {
           margin: 0 0.3rem;

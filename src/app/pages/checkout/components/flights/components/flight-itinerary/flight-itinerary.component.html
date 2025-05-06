@@ -71,7 +71,14 @@
                       ? (item.departureDateTime | date : "dd-MM-yyyy" : "UTC")
                       : (journey.departure.date | date : "dd-MM-yyyy" : "UTC")
                   }}
-                  {{ item.flightNumber || "No flight number" }}
+                   {{ item.flightNumber || "No flight number" }}
+                  <!-- Añadido: Logo de aerolínea en detalles -->
+                  <img *ngIf="item.flightNumber" 
+                       [src]="getAirlineLogoUrl(item.flightNumber)" 
+                       class="airline-logo-small"
+                       alt="Airline"
+                       onerror="this.style.display='none'" />
+                 
                 </span>
                 <span *ngIf="item.type === 'arrival'">
                   {{
@@ -91,6 +98,13 @@
                       : (journey.arrival.date | date : "dd-MM-yyyy" : "UTC")
                   }}
                   {{ item.flightNumber || "No flight number" }}
+                  <!-- Añadido: Logo de aerolínea en detalles -->
+                  <img *ngIf="item.flightNumber" 
+                       [src]="getAirlineLogoUrl(item.flightNumber)" 
+                       class="airline-logo-small"
+                       alt="Airline"
+                       onerror="this.style.display='none'" />
+                
                 </span>
               </ng-template>
             </p-timeline>

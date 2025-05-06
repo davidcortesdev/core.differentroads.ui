@@ -30,7 +30,11 @@
           </div>
         </div>
         <div class="segment-connector">
-          <i class="pi pi-send flight-path-icon" aria-hidden="true"></i>
+          <img [src]="getAirlineLogoUrl(segment.flightNumber)"
+               [alt]="getAirlineName(segment.flightNumber)"
+               class="airline-logo"
+               onerror="this.style.display='none'" />
+          <!-- <i class="pi pi-send flight-path-icon" aria-hidden="true"></i> -->
           <span class="name">{{ getAirlineName(segment.flightNumber) }}</span>
         </div>
         <div class="segment-time arrival">
@@ -74,8 +78,12 @@
           </div>
         </div>
         <div class="segment-connector">
-          <i class="pi pi-send flight-path-icon" aria-hidden="true"></i>
-          <span class="name"> {{ getAirlineName(segment.flightNumber) }}</span>
+          <img [src]="getAirlineLogoUrl(segment.flightNumber)"
+               [alt]="getAirlineName(segment.flightNumber)"
+               class="airline-logo"
+               onerror="this.style.display='none'" />
+          <!-- <i class="pi pi-send flight-path-icon" aria-hidden="true"></i> -->
+          <span class="name">{{ getAirlineName(segment.flightNumber) }}</span>
         </div>
         <div class="segment-time arrival">
           <div class="time">

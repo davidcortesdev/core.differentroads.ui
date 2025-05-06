@@ -9,7 +9,6 @@
       display: flex;
       flex-direction: column;
       flex: 1;
-      min-width: 0;
     }
 
     .payment-column-right {
@@ -76,23 +75,23 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 1.5rem;
-    padding: 1rem 0;
+    gap: 10rem;
+    padding: 0.1rem 0;
 
     .payment-info-columns {
       display: flex;
       flex: 1;
-      gap: 16px;
+      justify-content: space-between;
 
       .payment-column {
         display: flex;
         flex-direction: column;
-        flex: 1;
+        align-items: center;
+        text-align: center;
 
         .label {
           font-size: 0.875rem;
           color: #666;
-          margin-bottom: 0.25rem;
         }
 
         .amount {
@@ -111,7 +110,6 @@
       gap: 10px;
 
       .p-button {
-        margin: 0;
         font-size: 0.85rem;
         padding: 0.5rem 0.75rem;
       }
@@ -123,7 +121,6 @@
       flex-direction: column;
 
       .payment-info-columns {
-        width: 100%;
         text-align: center;
         margin-bottom: 1rem;
 
@@ -136,7 +133,6 @@
       }
 
       .payment-buttons {
-        width: 100%;
         justify-content: space-between;
 
         .p-button {
@@ -154,7 +150,6 @@
 
         .payment-column {
           flex: 1;
-          font-size: 0.9rem;
 
           .amount {
             font-size: 1.2rem;
@@ -197,42 +192,6 @@
 
     p-panel {
       margin-bottom: 1rem;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
-    }
-  }
-
-  ::ng-deep {
-    .p-panel .p-panel-header {
-      padding: 0.75rem 1rem;
-      cursor: pointer;
-
-      .p-panel-title {
-        font-size: 0.9rem;
-        font-weight: 600;
-      }
-
-      .p-panel-header-icon {
-        font-size: 0.9rem;
-        transition: transform 0.3s;
-      }
-    }
-
-    .p-panel-collapsed .p-panel-header-icon {
-      transform: rotate(-180deg);
-    }
-
-    .p-panel .p-panel-content {
-      height: auto;
-      min-height: 50px;
-      padding: 0.75rem 1rem;
-    }
-
-    .p-panel.empty-panel .p-panel-header {
-      cursor: default;
-      opacity: 0.7;
     }
   }
 }
@@ -251,7 +210,6 @@
   .date {
     flex: 1;
     font-weight: 500;
-    text-align: left;
   }
 
   .status {

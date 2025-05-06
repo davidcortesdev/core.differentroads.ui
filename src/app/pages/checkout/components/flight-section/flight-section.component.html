@@ -33,9 +33,11 @@
           <img [src]="getAirlineLogoUrl(segment.flightNumber)"
                [alt]="getAirlineName(segment.flightNumber)"
                class="airline-logo"
-               onerror="this.style.display='none'" />
+               onerror="this.style.display='none'"
+               pTooltip="{{getAirlineName(segment.flightNumber)}}"
+               tooltipPosition="top" />
           <!-- <i class="pi pi-send flight-path-icon" aria-hidden="true"></i> -->
-          <span class="name">{{ getAirlineName(segment.flightNumber) }}</span>
+          <!-- <span class="name">{{ getAirlineName(segment.flightNumber) }}</span> -->
         </div>
         <div class="segment-time arrival">
           <div class="time">
@@ -48,7 +50,7 @@
         </div>
       </div>
     </div>
-
+    
     <!-- VUELTA -->
     <div class="flight-direction" *ngIf="journeys[1]">
       <div class="direction-header">
@@ -81,9 +83,11 @@
           <img [src]="getAirlineLogoUrl(segment.flightNumber)"
                [alt]="getAirlineName(segment.flightNumber)"
                class="airline-logo"
-               onerror="this.style.display='none'" />
+               onerror="this.style.display='none'"
+               pTooltip="{{getAirlineName(segment.flightNumber)}}"
+               tooltipPosition="top" />
           <!-- <i class="pi pi-send flight-path-icon" aria-hidden="true"></i> -->
-          <span class="name">{{ getAirlineName(segment.flightNumber) }}</span>
+          <!-- <span class="name">{{ getAirlineName(segment.flightNumber) }}</span> -->
         </div>
         <div class="segment-time arrival">
           <div class="time">

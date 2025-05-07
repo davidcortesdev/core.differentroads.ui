@@ -20,9 +20,8 @@
             <div class="departure">
               <div class="flight-first-line">
                 <span class="time-block">
-                  <span class="flight-date">{{ flight.date | date: 'dd/MM/yy' }}</span>
-                  <span>-</span>
-                  <span class="time">{{ flight.departureTime }}</span>
+                  <span class="">{{ flight.date | date: 'dd/MM/yy' }}</span>
+                  <span class="">{{ flight.departureTime }}</span>
                 </span>
               </div>
               <div class="flight-second-line">
@@ -42,8 +41,8 @@
             <div class="arrival">
               <div class="flight-first-line">
                 <span class="time-block">
-                  <span class="flight-date">{{ flight.date | date: 'dd/MM/yy' }}</span>
-                  <span class="time">
+                  <span class="">{{ flight.date | date: 'dd/MM/yy' }}</span>
+                  <span class="">
                     {{ flight.arrivalTime }}
                     <span class="next-day" *ngIf="flight.isNextDay">+1</span>
                   </span>

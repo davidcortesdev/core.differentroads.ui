@@ -127,6 +127,22 @@ $font-size: (
         }
       }
       
+      .departure {
+        text-align: left;
+        
+        .flight-first-line, .flight-second-line {
+          align-items: flex-start;
+        }
+      }
+      
+      .arrival {
+        text-align: right;
+        
+        .flight-first-line, .flight-second-line {
+          align-items: flex-end;
+        }
+      }
+      
       .arrival {
         text-align: right;
         
@@ -266,8 +282,6 @@ $font-size: (
     
     // Bloque de tiempo
     .time-block {
-      display: flex;
-      align-items: center;
 
     }
   }
@@ -286,12 +300,12 @@ $font-size: (
     
     .flight-route-integrated {
       flex-direction: column;
-      
-      .flight-type-container {
-        margin-bottom: spacing('sm');
-        text-align: center;
-        width: 100%;
-      }
+    }
+    
+    .flight-type-container {
+      margin-bottom: spacing('sm');
+      text-align: center;
+      width: 100%;
     }
     
     .flight-route {
@@ -301,19 +315,21 @@ $font-size: (
       
       .departure, .arrival {
         padding: spacing('xs') 0;
-        text-align: center;
+      }
+      
+      .departure {
+        text-align: left;
         
-        
-        .flight-second-line .airport {
-          margin-bottom: spacing('xs');
+        .flight-first-line, .flight-second-line {
+          align-items: flex-start;
         }
       }
       
       .arrival {
-        text-align: center;
+        text-align: right;
         
         .flight-first-line, .flight-second-line {
-          align-items: center;
+          align-items: flex-end;
         }
       }
     }

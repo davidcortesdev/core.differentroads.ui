@@ -86,22 +86,33 @@ $border-radius: 11.434px;
       
       .departure, .arrival {
         flex: 1;
+        display: flex;
+        flex-direction: column;
         
-        .time {
-          font-size: 1.2rem;
-          font-weight: 600;
-          color: $azul;
+        .flight-first-line {
+          margin-bottom: $spacing-xs;
+          
+          .time {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: $azul;
+          }
         }
         
-        .airport {
-          color: $text-secondary;
-          font-size: 0.85rem;
-          margin-bottom: $spacing-xs;
+        .flight-second-line {
+          .airport {
+            color: $text-secondary;
+            font-size: 0.85rem;
+          }
         }
       }
       
       .arrival {
         text-align: right;
+        
+        .flight-first-line, .flight-second-line {
+          align-items: flex-end;
+        }
       }
       
       .flight-details {
@@ -258,17 +269,21 @@ $border-radius: 11.434px;
         padding: $spacing-xs 0;
         text-align: center;
         
-        .time {
+        .flight-first-line .time {
           font-size: 1.3rem;
         }
         
-        .airport {
+        .flight-second-line .airport {
           margin-bottom: $spacing-xs;
         }
       }
       
       .arrival {
         text-align: center;
+        
+        .flight-first-line, .flight-second-line {
+          align-items: center;
+        }
       }
     }
     

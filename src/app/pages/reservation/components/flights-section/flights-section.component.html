@@ -13,8 +13,14 @@
         
         <div class="flight-route">
           <div class="departure">
-            <div class="time">{{ flight.departureTime }}</div>
-            <div class="airport">{{ flight.departureAirport }}</div>
+            <!-- Primera línea: Tipo y Hora -->
+            <div class="flight-first-line">
+              <span class="time">{{ flight.departureTime }}</span>
+            </div>
+            <!-- Segunda línea: Ciudad y código -->
+            <div class="flight-second-line">
+              <div class="airport">{{ flight.departureAirport }}</div>
+            </div>
           </div>
           
           <div class="flight-details">
@@ -27,11 +33,17 @@
           </div>
           
           <div class="arrival">
-            <div class="time">
-              {{ flight.arrivalTime }}
-              <span class="next-day" *ngIf="flight.isNextDay">+1</span>
+            <!-- Primera línea: Tipo y Hora -->
+            <div class="flight-first-line">
+              <span class="time">
+                {{ flight.arrivalTime }}
+                <span class="next-day" *ngIf="flight.isNextDay">+1</span>
+              </span>
             </div>
-            <div class="airport">{{ flight.arrivalAirport }}</div>
+            <!-- Segunda línea: Ciudad y código -->
+            <div class="flight-second-line">
+              <div class="airport">{{ flight.arrivalAirport }}</div>
+            </div>
           </div>
         </div>
         

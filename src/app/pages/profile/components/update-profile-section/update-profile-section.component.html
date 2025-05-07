@@ -105,15 +105,15 @@
 
         <div class="form-field">
           <label>Fecha de nacimiento:</label>
-          <p-calendar
+          <p-datepicker 
             [(ngModel)]="personalInfo.fechaNacimiento"
             name="fechaNacimiento"
             dateFormat="dd/mm/yy"
             placeholder="Seleccione una fecha"
-            styleClass="p-calendar-sm custom-calendar"
+            styleClass="p-datepicker -sm custom-calendar"
             [showIcon]="true"
           >
-          </p-calendar>
+          </p-datepicker >
         </div>
 
         <div class="form-field">
@@ -162,28 +162,28 @@
 
         <div class="form-field">
           <label>Fecha de expedición (DNI):</label>
-          <p-calendar
+          <p-datepicker 
             [(ngModel)]="personalInfo.fechaExpedicionDni"
             name="fechaExpedicionDni"
             dateFormat="dd/mm/yy"
             placeholder="Seleccione una fecha"
-            styleClass="p-calendar-sm custom-calendar"
+            styleClass="p-datepicker -sm custom-calendar"
             [showIcon]="true"
           >
-          </p-calendar>
+          </p-datepicker >
         </div>
 
         <div class="form-field">
           <label>Fecha de caducidad (DNI):</label>
-          <p-calendar
+          <p-datepicker 
             [(ngModel)]="personalInfo.fechaCaducidadDni"
             name="fechaCaducidadDni"
             dateFormat="dd/mm/yy"
             placeholder="Seleccione una fecha"
-            styleClass="p-calendar-sm custom-calendar"
+            styleClass="p-datepicker -sm custom-calendar"
             [showIcon]="true"
           >
-          </p-calendar>
+          </p-datepicker >
         </div>
 
         <!-- Datos Pasaporte -->
@@ -211,28 +211,28 @@
 
         <div class="form-field">
           <label>Fecha de expedición (Pasaporte):</label>
-          <p-calendar
+          <p-datepicker 
             [(ngModel)]="personalInfo.fechaExpedicionPasaporte"
             name="fechaExpedicion"
             dateFormat="dd/mm/yy"
             placeholder="Seleccione una fecha"
-            styleClass="p-calendar-sm custom-calendar"
+            styleClass="p-datepicker -sm custom-calendar"
             [showIcon]="true"
           >
-          </p-calendar>
+          </p-datepicker >
         </div>
 
         <div class="form-field">
           <label>Fecha de vencimiento (Pasaporte):</label>
-          <p-calendar
+          <p-datepicker 
             [(ngModel)]="personalInfo.fechaVencimientoPasaporte"
             name="fechaVencimiento"
             dateFormat="dd/mm/yy"
             placeholder="Seleccione una fecha"
-            styleClass="p-calendar-sm custom-calendar"
+            styleClass="p-datepicker -sm custom-calendar"
             [showIcon]="true"
           >
-          </p-calendar>
+          </p-datepicker>
         </div>
 
         <!-- Botones -->

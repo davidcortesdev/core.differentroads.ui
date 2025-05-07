@@ -1,7 +1,10 @@
 .points-section {
+    --p-datatable-row-background: var(--background-azul-color-letra);
+    --p-paginator-background: var(--background-azul-color-letra);
     margin-left: 1rem;
     margin-right: 1rem; // Agregado margen derecho
     font-size: 12px;
+    margin-top: -15px;
 
     @media screen and (max-width: 768px) {
         margin-left: 0.5rem;
@@ -97,7 +100,6 @@
 
         .table-container {
             margin-bottom: 2rem;
-            background-color: white;
             border-radius: 8px;
             overflow: hidden;
 
@@ -305,7 +307,7 @@
             }
 
             &.current-card {
-                background: white;
+                background: var(--background-azul-color-letra);
                 border: 2px solid var(--background-azul);
             }
         }

@@ -1,6 +1,7 @@
 $p: var(--p-primary-color);
 $a: var(--background-azul);
 $orange-red: #f66b5b;
+
 @mixin f($d: row, $j: flex-start, $a: stretch, $g: 0) {
     display: flex;
     flex-direction: $d;
@@ -18,6 +19,7 @@ $orange-red: #f66b5b;
     @include f(row, center, center);
 }
 .active {
+    --p-paginator-background: var(--background-azul-color-letra);
     margin: 0 15px;
     .header {
         @include f(row, space-between, center);
@@ -41,11 +43,8 @@ $orange-red: #f66b5b;
             }
         }
     }
-    .content.hidden {
-        display: none;
-    }
     .item {
-        background: #fff;
+        background: var(--background-azul-color-letra);
         border-radius: 10px;
         margin-bottom: 1rem;
         padding: 0.6rem;
@@ -123,9 +122,6 @@ $orange-red: #f66b5b;
                 font-size: 16px;
                 color: $a;
             }
-            /* strong {
-                margin-left: 15px;
-            } */
             .state {
                 margin-left: 5px;
                 background-color: $a;

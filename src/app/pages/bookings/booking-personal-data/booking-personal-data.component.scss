@@ -1,4 +1,7 @@
 .personal-data-container {
+    --p-panel-background: var(--background-azul-color-letra);
+    --p-panel-color: var(--background-azul);
+    --p-panel-header-color: var(--background-azul);
     margin: 0.75rem;
 
     .passengers-container {

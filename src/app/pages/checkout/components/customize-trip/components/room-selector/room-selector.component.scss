@@ -1,4 +1,6 @@
 .room-selector {
+  --p-inputnumber-button-background: var(--background-azul-color-letra);
+  --p-inputtext-background: var(--background-azul-color-letra);
   display: grid;
   grid-template-rows: 1fr;
   grid-template-columns: repeat(2, 1fr);
@@ -10,6 +12,7 @@
   }
 
   .room-item {
+    background: white;
     color: var(--background-azul);
     display: flex;
     flex-direction: column;
@@ -70,8 +73,6 @@
     }
 
     ::ng-deep .p-inputnumber {
-      background-color: var(--accent-white);
-
       // Compactar los botones
       .p-inputnumber-button {
         width: 1.5rem !important;

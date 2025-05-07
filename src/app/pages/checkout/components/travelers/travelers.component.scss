@@ -15,6 +15,11 @@
 }
 // Contenedor principal
 .content-form {
+  --p-panel-background: var(--background-azul-color-letra) !important;
+  --p-accordion-content-background: var(--background-azul-color-letra) !important;
+  --p-accordion-content-padding: 15px !important;
+  --p-accordion-content-border-radius: 10px !important;
+
   padding: var(--form-spacing);
   border-radius: 8px;
   margin-top: 15px; // Reduced from 20px
@@ -136,6 +141,12 @@ h3.title {
       width: 100%;
     }
   }
+}
+.p-accordion .p-accordioncontent {
+  background: var(--p-accordion-content-background);
+  padding: var(--p-accordion-content-padding);
+  border-radius: var(--p-accordion-content-border-radius) !important;
+  overflow: hidden;
 }
 
 .content-form {

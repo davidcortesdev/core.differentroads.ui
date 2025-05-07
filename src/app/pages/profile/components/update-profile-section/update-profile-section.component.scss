@@ -1,5 +1,9 @@
 :host {
     display: block;
+    --p-panel-background: var(--background-azul-color-letra);
+    --p-fileupload-background: transparent;
+    --p-inputtext-background: transparent;
+    --p-inputtext-hover-border-color: none;
 
     ::ng-deep {
         .p-panel {
@@ -8,7 +12,6 @@
 
             .p-panel-header {
                 padding: 1.4rem 1.4rem 0.7rem;
-                background: white;
                 border: none;
                 border-radius: 0.875rem 0.875rem 0 0;
             }
@@ -161,6 +164,7 @@
         .p-calendar,
         .p-autocomplete,
         .p-inputmask {
+            background: transparent;
             width: 100%;
             border: none;
             border-bottom: 1px solid var(--background-azul);

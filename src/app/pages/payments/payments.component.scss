@@ -1,79 +1,54 @@
-// Variables and mixins to reduce size
 $primary: var(--background-azul);
 $accent: var(--p-primary-color);
 $bd-light: 1px solid #eee;
-$bd-med: 1px solid #d4d4d8;
 $bd-prim: 2px solid $primary;
 $xs: 0.5rem;
 $sm: 1rem;
 $md: 1.5rem;
 $lg: 2rem;
 $radius: 0.75rem;
-
-// Responsive mixins
-@mixin resp($size) {
-  @if $size == mob {
-    @media (max-width: 480px) {
-      @content;
-    }
-  } @else if $size == tab {
-    @media (max-width: 768px) {
-      @content;
-    }
-  } @else if $size == lap {
-    @media (max-width: 1024px) {
-      @content;
-    }
-  } @else if $size == sm-mob {
-    @media (max-width: 425px) {
-      @content;
-    }
+@mixin mobile {
+  @media (max-width: 480px) {
+    @content;
   }
 }
-
-// Common styling patterns
-@mixin flex($jc: flex-start, $ai: center, $dir: row) {
-  display: flex;
-  justify-content: $jc;
-  align-items: $ai;
-  flex-direction: $dir;
+@mixin tablet {
+  @media (min-width: 481px) and (max-width: 900px) {
+    @content;
+  }
 }
-
-@mixin panel-base {
-  border: $bd-med;
-  border-radius: $radius;
-  background: transparent;
+@mixin desktop {
+  @media (min-width: 901px) {
+    @content;
+  }
 }
-
-@mixin panel-selected {
-  border: $bd-prim;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
 .single-payment-content {
-  background-color: var(--accent-white);
+  background-color: var(--light-blue-500);
+  color: var(--background-azul);
+  --p-inputtext-background: var(--background-azul-color-letra);
+  --p-inputtext-color: var(--background-azul);
+  --p-inputtext-placeholder: var(--background-azul);
+  --p-inputtext-border-color: var(--background-azul);
+  --p-inputtext-hover-border-color: none;
   padding: $md 0;
-
-  // Grid layout container
   &-container {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: $lg;
     padding: 0 $lg;
     margin: 0 auto;
-
-    @include resp(mob) {
-      grid-template-columns: 1fr;
+    @include tablet {
+      grid-template-columns: 1.5fr 1fr !important;
+      gap: $sm;
+      padding: 0 $sm;
     }
-    @include resp(lap) {
+    @include mobile {
       grid-template-columns: 1fr;
-      .right-column {
-        position: static;
-      }
+      gap: $md;
+      padding: 0 $xs;
+      font-size: 14px;
     }
   }
-
-  // Order summary
   .order-summary {
     position: sticky;
     top: $lg;
@@ -83,27 +58,30 @@ $radius: 0.75rem;
     border-radius: 8px;
     padding: $md;
     font-size: 0.9rem;
-
+    @include tablet {
+      padding: $sm;
+      font-size: 0.8rem;
+    }
     h3 {
       margin-bottom: $md;
       padding-bottom: $sm;
       border-bottom: $bd-light;
+      position: relative;
     }
-
     .tour-base-info {
       margin-bottom: $md;
     }
-
-    // Grid for items
     .selected-items {
       display: grid;
       grid-template-columns: 60% 35%;
       gap: $xs;
       justify-content: space-between;
-
+      @include tablet {
+        grid-template-columns: 55% 40%;
+        gap: 4px;
+      }
       .item {
         display: contents;
-
         > span {
           &:nth-child(1) {
             grid-column: 1;
@@ -114,7 +92,10 @@ $radius: 0.75rem;
             gap: 0.2em;
             grid-template-columns: auto auto 3em auto 3.5em;
             text-align: right;
-
+            @include tablet {
+              grid-template-columns: auto auto 2.5em auto 3em;
+              gap: 0.1em;
+            }
             > span {
               text-align: right;
             }
@@ -122,26 +103,15 @@ $radius: 0.75rem;
         }
       }
     }
-
-    // Total section
     .total-section {
       margin-top: $md;
       color: $primary;
-
-      @include resp(tab) {
-        margin-top: 1.2rem;
-      }
-      @include resp(sm-mob) {
-        margin-top: $sm;
-      }
-
       .subtotal,
       .total {
         display: flex;
         justify-content: space-between;
         margin-bottom: $xs;
       }
-
       .total {
         font-weight: bold;
         font-size: 1.2rem;
@@ -149,311 +119,330 @@ $radius: 0.75rem;
         padding-top: $xs;
         border-top: 1px solid $primary;
         border-bottom: 1px solid $primary;
-
-        @include resp(tab) {
-          font-size: 1rem;
+        @include tablet {
+          font-size: 0.95rem;
         }
-        @include resp(sm-mob) {
-          font-size: 0.9rem;
-        }
-
         .price {
           color: var(--primary-color-500);
         }
       }
     }
   }
-
-  // Main container
   .container {
     width: 100%;
     padding: 0 $sm;
     max-width: 1200px;
     margin: 0 auto;
-
-    @include resp(tab) {
-      padding: 0 0.75rem;
+    @include tablet {
+      padding: 0 $xs;
     }
-
-    // Header elements
+    @include mobile {
+      padding: 0 $xs;
+    }
     .header-container {
       cursor: pointer;
     }
-
     .title-with-icon {
       display: inline-flex;
       align-items: center;
       margin-bottom: 5px;
-      width: 100%;
+      border-bottom: 1px solid $primary;
+
+      position: relative;
+
+      @include desktop {
+        width: 33%;
+      }
+
+      @include tablet {
+        width: 52%;
+        font-size: 0.9rem;
+      }
+
+      @include mobile {
+        width: 60%;
+      }
+
+      &::after {
+        content: "";
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background-color: $primary;
+      }
 
       .title {
         color: $primary;
         font-weight: 500;
         font-size: 1rem;
+        @include tablet {
+          font-size: 0.9rem;
+        }
+        @include mobile {
+          font-size: 0.85rem;
+        }
       }
-
       .pi {
         color: $primary;
         margin-left: 8px;
       }
     }
-
     .title-underline {
       height: 1.5px;
       background-color: $primary;
-      width: 24.2%;
+      width: fit-content;
       margin-bottom: 15px;
 
       &.pay {
-        width: 25.5%;
-      }
-      @include resp(tab) {
-        width: 50%;
-      }
-      @include resp(mob) {
-        width: 100%;
+        width: fit-content;
       }
     }
-
-    // Payment options
     .payment-panels {
       margin-top: $sm;
     }
-
     .payment-option {
-      @include flex(flex-start, center);
       flex-wrap: nowrap;
-
-      @include resp(mob) {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
+      display: flex;
+      align-items: center;
       .option-text {
         margin-left: $sm;
         flex-grow: 1;
-
-        @include resp(mob) {
-          margin-left: 0;
-          margin-top: $xs;
-          width: 100%;
+        @include tablet {
+          margin-left: $xs;
+          font-size: 0.9rem;
         }
       }
-
       .option-price {
         font-weight: bold;
         font-size: 1.125rem;
         margin-left: auto;
-
-        @include resp(mob) {
-          margin-left: 0;
-          margin-top: $xs;
-          align-self: flex-end;
+        white-space: nowrap;
+        @include tablet {
+          font-size: 0.95rem;
         }
       }
     }
-
-    // Payment methods section
     .payment-methods-section {
       margin-top: $lg;
+      @include tablet {
+        margin-top: $md;
+      }
     }
-
     .payment-methods-row {
-      @include flex(null, null, row);
+      // Añadir display: flex para que se muestren en línea
+      display: flex;
+      // Mantener el gap
       gap: $sm;
       margin-top: $sm;
 
-      @include resp(tab) {
+      // En tablets también mantener flex con gap más pequeño
+      @include tablet {
+        display: flex;
+        gap: $xs;
+      }
+
+      // Solo en móvil cambiamos a columna
+      @include mobile {
+        display: flex;
         flex-direction: column;
-        gap: 0.75rem;
+        gap: $xs;
       }
     }
-
     .payment-method-container {
       flex: 1;
+
+      // Asegurar que en mobile ocupe todo el ancho
+      @include mobile {
+        width: 100%;
+      }
     }
   }
-
-  // Terms section
   .terms-container {
     margin-top: $lg;
-    @include flex(null, flex-start);
-
-    @include resp(mob) {
-      flex-direction: column;
+    @include tablet {
+      margin-top: $md;
     }
   }
-
   .terms-text {
     color: $primary;
     font-weight: 500;
+    @include tablet {
+      font-size: 0.85rem;
+    }
   }
-
   .terms-details {
     font-size: 0.875rem;
     color: #64748b;
     font-weight: 400;
     margin-top: $xs;
     line-height: 1.25rem;
-
-    @include resp(tab) {
-      font-size: 0.8125rem;
+    padding-left: 2rem;
+    @include tablet {
+      font-size: 0.8rem;
+      line-height: 1.2rem;
     }
   }
-
-  // Buttons section
   .buttons-container {
-    @include flex(space-between);
     margin-top: $lg;
+    display: flex;
+    justify-content: right;
 
     .payment-button {
-      flex-grow: 1;
-      max-width: 300px;
+      flex-grow: 0;
+      max-width: 200px;
+      @include tablet {
+        max-width: 180px;
+      }
+      @include mobile {
+        flex-grow: 1;
+        padding: 10px;
+      }
     }
   }
-
-  // Utilities
   .button-content {
-    @include flex(center, center);
     width: 100%;
   }
-
   .ml-2 {
     margin-left: $xs;
   }
-
-  // PrimeNG overrides - consolidated
   ::ng-deep {
-    // Panel styling
+    .p-inputtext {
+      margin-left: 10px;
+      @include tablet {
+        margin-left: 8px;
+      }
+    }
     .payment-panel {
       color: $primary;
       font-weight: 500;
       margin-bottom: 0.75rem;
       width: 100%;
-      background: transparent;
-
+      --p-panel-background: var(--background-azul-color-letra);
+      --p-panel-border-radius: 10px;
       .p-panel-header {
         display: none;
       }
-
       .p-panel-content {
-        @include panel-base;
         padding: 1.25rem $sm;
-
-        @include resp(tab) {
-          padding: 1.75rem $md;
+        @include tablet {
+          padding: 1rem $xs;
         }
       }
-
-      &.selected .p-panel-content {
-        @include panel-selected;
-      }
     }
-
-    // Radio buttons
     .p-radiobutton {
       .p-radiobutton-box {
         border: $bd-prim;
       }
-
-      .p-radiobutton-box.p-highlight {
-        border-color: $primary;
-        background: #fff;
-
-        .p-radiobutton-icon {
-          background-color: $primary;
-          width: 10px;
-          height: 10px;
-        }
-      }
     }
-
-    // Payment method panels
     .payment-method-panel {
       transition: all 0.2s ease;
       cursor: pointer;
-
       &.selected .p-panel-content {
         border: $bd-prim;
       }
     }
-
     .payment-method-container .p-panel-content {
-      @include panel-base;
       padding: $md $sm;
       width: 100%;
       height: 100%;
-
-      @include resp(tab) {
-        padding: $lg $md;
+      @include tablet {
+        padding: $sm $xs;
       }
     }
-
-    // Checkbox styling
     .p-checkbox {
       margin: 0.125rem 0.75rem 0 0;
       flex-shrink: 0;
-
-      @include resp(mob) {
-        margin-bottom: $xs;
-      }
-
       .p-checkbox-box {
         border: $bd-prim;
-
         &.p-highlight {
           border-color: $primary;
           background: $primary;
         }
       }
     }
-
-    // Radio button checked state
     .p-radiobutton-checked {
       .p-radiobutton-box {
         border-color: $primary !important;
         background: var(--background-azul-color-letra) !important;
       }
-
       .p-radiobutton-icon {
         background-color: $primary !important;
       }
     }
-
-    // Payment button
     .payment-button {
       margin: 10px 0;
-
       &.p-button {
-        width: 100%;
+        width: 200px;
         border-radius: 100px;
         height: 50px;
         background-color: $accent;
         border-color: #ff6b6b;
         margin-top: -20px;
-
+        @include tablet {
+          width: 180px;
+          height: 45px;
+        }
         &.p-disabled,
         &.payment-button-disabled {
           opacity: 0.6;
           cursor: not-allowed;
         }
-
         .p-button-label {
           font-weight: 500;
           font-size: 1rem;
-          @include flex(center, center);
           width: 100%;
+          @include tablet {
+            font-size: 0.9rem;
+          }
         }
       }
-
       .p-button {
         border-radius: 50px;
         height: 50px;
+        @include tablet {
+          height: 45px;
+        }
       }
-
       &.p-disabled {
         opacity: 0.6;
       }
+    }
+  }
+  .checkbox-azul {
+    ::ng-deep .p-checkbox {
+      margin: 0.125rem 0.75rem 0 0;
+      .p-checkbox-box {
+        border-color: $primary;
+        &:hover {
+          background: #fff !important;
+          border-color: $primary !important;
+        }
+        &.p-highlight {
+          border-color: $primary !important;
+          background: $primary !important;
+        }
+      }
+    }
+    ::ng-deep .p-checkbox-checked .p-checkbox-box {
+      border-color: $primary !important;
+      background: $primary !important;
+    }
+    ::ng-deep .p-checkbox-checked .p-checkbox-icon {
+      color: white !important;
+    }
+    ::ng-deep .p-checkbox.ng-dirty .p-highlight,
+    ::ng-deep .p-checkbox.ng-touched .p-highlight {
+      background: $primary !important;
+      border-color: $primary !important;
+    }
+    ::ng-deep .p-checkbox .p-checkbox-box.p-focus {
+      box-shadow: 0 0 0 0.2rem rgba($primary, 0.25) !important;
+    }
+    ::ng-deep .p-checkbox .p-checkbox-box.p-indeterminate {
+      background: $primary !important;
+      border-color: $primary !important;
     }
   }
 }

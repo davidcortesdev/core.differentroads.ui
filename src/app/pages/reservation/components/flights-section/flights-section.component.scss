@@ -63,22 +63,22 @@ $border: #f59188;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    margin-bottom: 1rem;
+                    margin-bottom: 0.75rem;  // Reducido de 1rem
                     text-align: center;
                     
                     .departure, .arrival {
                         flex: 1;
                         
                         .time {
-                            font-size: 1.5rem;
+                            font-size: 1.2rem;  // Reducido de 1.5rem
                             font-weight: 600;
                             color: $azul;
                         }
                         
                         .airport {
                             color: #6c757d;
-                            font-size: 0.9rem;
-                            margin-bottom: 0.5rem;
+                            font-size: 0.85rem;  // Reducido de 0.9rem
+                            margin-bottom: 0.3rem;  // Reducido de 0.5rem
                         }
                     }
                     
@@ -134,8 +134,8 @@ $border: #f59188;
                 .segments {
                     background-color: rgba($coral, 0.05);
                     border-radius: 4px;
-                    padding: 1rem;
-                    margin-top: 1rem;
+                    padding: 0.75rem;  // Reducido de 1rem
+                    margin-top: 0.75rem;  // Reducido de 1rem
                     text-align: center;
                     
                     .segment {
@@ -310,20 +310,50 @@ $border: #f59188;
 }
 
 .segment-connector {
-    height: 1rem;
-    width: 1px;
+    height: 1.5rem;
+    width: 2px;
     background-color: $border;
-    margin-left: 1rem;
+    margin: 0 auto;  // Centrado
     position: relative;
     
-    &:before {
+    &:before, &:after {
         content: '';
         position: absolute;
         width: 6px;
         height: 6px;
         border-radius: 50%;
         background-color: $border;
-        left: -2.5px;
-        bottom: 0;
+        left: -2px;  // Ajustado para centrar
     }
+    
+    &:before {
+        top: -3px;
+    }
+    
+    &:after {
+        bottom: -3px;
+    }
+}
+
+.segment {
+    display: flex;
+    flex-direction: column;
+    align-items: center;  // Centrado
+    position: relative;
+    margin-bottom: 0.5rem;  // Espacio entre segmentos
+    
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.segment-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem;  // Reducido de 0.5rem
+    background-color: rgba($coral, 0.03);
+    border-radius: 4px;
+    width: 100%;  // Asegurar que ocupe todo el ancho
+    font-size: 0.85rem;  // Texto más pequeño
 }

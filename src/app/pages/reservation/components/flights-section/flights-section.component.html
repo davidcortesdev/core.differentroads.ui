@@ -38,9 +38,9 @@
         <!-- Detalles de segmentos (compactados) -->
         <div class="segments" *ngIf="flight.segments.length > 1">
           <div class="segment-list">
-            <div class="segment" *ngFor="let segment of flight.segments; let last = last">
+            <div class="segment" *ngFor="let segment of flight.segments; let last = last; let first = first">
               <div class="segment-info">
-                <div class="segment-airline">{{ segment.airline }} {{ segment.flightNumber }}</div>
+                <div class="segment-airline">{{ segment.airline.name }} {{ segment.flightNumber }}</div>
                 <div class="segment-times">
                   {{ segment.departureTime }} {{ segment.departureIata }} → 
                   {{ segment.arrivalTime }}
@@ -48,7 +48,7 @@
                   {{ segment.arrivalIata }}
                 </div>
               </div>
-              <div class="segment-connector" *ngIf="!last"></div>
+              <!-- Se ha eliminado el conector de segmentos -->
             </div>
           </div>
         </div>

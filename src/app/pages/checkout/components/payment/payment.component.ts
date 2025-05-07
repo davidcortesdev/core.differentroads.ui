@@ -52,6 +52,7 @@ import { ScalapayExtensions } from '../../../../core/models/scalapay/ScalapayExt
 import { ScalapayItem } from '../../../../core/models/scalapay/ScalapayItem';
 import { ScalapayOrderResponse } from '../../../../core/models/scalapay/ScalapayOrderResponse';
 import { ScalapayService } from '../../../../core/services/checkout/payment/scalapay.service';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-payment',
@@ -372,7 +373,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
 
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = 'https://sis-t.redsys.es:25443/sis/realizarPago';
+    form.action = environment.redsysUrl;
 
     Object.entries(formData).forEach(([key, value]) => {
       const input = document.createElement('input');

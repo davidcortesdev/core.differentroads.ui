@@ -610,4 +610,48 @@ export class FlightItineraryComponent implements OnChanges {
       .map(prefix => this.airlineCache[prefix] || prefix)
       .join(', ');
   }
+  
+  /**
+   * Obtiene la URL del logo de la aerolínea a partir del código IATA
+   * @param flightNumber Número de vuelo del que se extraerá el código IATA
+   * @returns URL del logo de la aerolínea
+   */
+  getAirlineLogoUrl(flightNumber: string): string {
+    if (!flightNumber || flightNumber.length < 2) {
+      return '';
+    }
+    
+    // Extraer el código IATA (generalmente las primeras 2 letras del número de vuelo)
+    const iataCode = flightNumber.substring(0, 2);
+    
+    // Construir la URL del logo usando el servicio de Kiwi.com
+    return `https://images.kiwi.com/airlines/32x32/${iataCode}.png`;
+  }
+  
+  /**
+   * Obtiene todos los logos de aerolíneas para un conjunto de segmentos
+   * @param segments Segmentos del viaje
+   * @returns Array con las URLs de los logos de aerolíneas
+   */
+  getAirlineLogos(segments: FlightSegment[]): string[] {
+    if (!segments || segments.length === 0) {
+      return [];
+    }
+    
+    // Extraer prefijos IATA únicos de los números de vuelo
+    const uniquePrefixesIATA = [...new Set(
+      segments
+        .filter(segment => segment && segment.flightNumber)
+        .map(segment => {
+          const flightNumber = segment.flightNumber || '';
+          return flightNumber.substring(0, 2);
+        })
+        .filter(prefix => prefix.length === 2)
+    )];
+    
+    // Crear URLs para los logos
+    return uniquePrefixesIATA.map(iataCode => 
+      `https://images.kiwi.com/airlines/32x32/${iataCode}.png`
+    );
+  }
 }

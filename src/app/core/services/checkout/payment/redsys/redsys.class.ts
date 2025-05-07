@@ -8,6 +8,7 @@ import { APPROVAL_CODES } from './constants/APPROVAL_CODES';
 import { CURRENCIES } from './constants/CURRENCIES';
 import { SIS_ERROR_CODES } from './constants/SIS_ERROR_CODES';
 import { PaymentParams } from './interfaces/PaymentParams';
+import { environment } from '../../../../../../environments/environment';
 
 // Utility functions
 function toBuffer(payload: string | Buffer, blockSize = 8): Buffer {
@@ -50,7 +51,7 @@ class RedSys {
       merchantCode,
       currency = CURRENCIES['EUR'],
       transactionType,
-      terminal = '1',
+      terminal = environment.redsysMerchantTerminal,
       merchantURL = '',
       successURL,
       errorURL,

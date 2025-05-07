@@ -1,6 +1,9 @@
 :host ::ng-deep {
     /* Estilos para el contenedor principal de los vuelos */
     .flight-container {
+        --p-panel-background: var(--background-azul-color-letra);
+        --p-panel-color: var(--background-azul);
+        --p-panel-header-color: var(--background-azul);
         display: flex;
         flex-direction: row;
         gap: 20px;

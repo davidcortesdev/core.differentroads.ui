@@ -1,8 +1,6 @@
 <div
   class="flights-container"
-  *ngIf="
-    formattedFlights && (formattedFlights.outbound || formattedFlights.inbound)
-  "
+  *ngIf="formattedFlights && (formattedFlights.outbound || formattedFlights.inbound)"
 >
   <!-- Encabezado con icono de avión -->
   <div class="flight-header">
@@ -24,155 +22,93 @@
 
   <ng-container *ngIf="formattedFlights">
     <!-- Ida -->
-    <ng-container *ngIf="formattedFlights.outbound">
+    <ng-template [ngIf]="formattedFlights.outbound">
       <div class="flight-section">
         <!-- Título Ida como subtítulo -->
         <div class="section-title">
           <span>Ida</span>
         </div>
 
-        <!-- Contenido del vuelo de ida - Nueva estructura -->
-        <div class="flight-route">
-          <!-- Columna izquierda (Origen) -->
-          <div class="flight-column origin">
-            <div class="time-date">
-              {{ formattedFlights.outbound.departureTime }}
-              <span>{{ formattedFlights.outbound.date }}</span>
-            </div>
-            <div class="airport">
-              {{ formattedFlights.outbound.departureAirport }}
-            </div>
-          </div>
-
-          <!-- Línea central con duración -->
-          <div class="flight-duration-container">
-            <div class="duration">
-              {{ formattedFlights.outbound.duration }}
-            </div>
-            <div class="flight-line">
-              <div class="dot left"></div>
-              <div class="line"></div>
-              <div class="dot right"></div>
-            </div>
-            <div class="flight-type">
-              <ng-container *ngIf="formattedFlights.outbound.hasStops">
-                {{ formattedFlights.outbound.stops }}
-                <ng-container *ngIf="formattedFlights.outbound.stops === 1"
-                  >ESCALA</ng-container
-                >
-                <ng-container *ngIf="formattedFlights.outbound.stops > 1"
-                  >ESCALAS</ng-container
-                >
-                {{ formattedFlights.outbound.stopCity }}
-              </ng-container>
-              <ng-container *ngIf="!formattedFlights.outbound.hasStops">
-                DIRECTO
-              </ng-container>
-            </div>
-          </div>
-
-          <!-- Columna derecha (Destino) -->
-          <div class="flight-column destination">
-            <div class="time-date">
-              {{ formattedFlights.outbound.arrivalTime }}
-              <span>{{ formattedFlights.outbound.date }}</span>
-            </div>
-            <div class="airport">
-              {{ formattedFlights.outbound.arrivalAirport }}
-            </div>
-          </div>
-        </div>
-
-        <!-- Detalle de escalas para vuelo de ida -->
-        <ng-container *ngIf="formattedFlights.outbound.hasStops">
-          <div class="flight-details">
-            <div
-              class="flight-segment"
-              *ngFor="let segment of formattedFlights.outbound.segments"
-            >
-              {{ segment.airline.name }} ({{ segment.flightNumber }})
-              {{ segment.departureTime }} {{ segment.departureCity }} ({{
-                segment.departureIata
-              }}) - {{ segment.arrivalTime }} {{ segment.arrivalCity }} ({{
-                segment.arrivalIata
-              }})
-            </div>
-          </div>
-        </ng-container>
+        <!-- Contenido del vuelo -->
+        <ng-container *ngTemplateOutlet="flightRouteTemplate; context: {$implicit: formattedFlights.outbound, type: 'outbound'}"></ng-container>
       </div>
-    </ng-container>
+    </ng-template>
 
     <!-- Vuelta -->
-    <ng-container *ngIf="formattedFlights.inbound">
+    <ng-template [ngIf]="formattedFlights.inbound">
       <div class="flight-section">
         <!-- Título Vuelta como subtítulo -->
         <div class="section-title">
           <span>Vuelta</span>
         </div>
 
-        <!-- Contenido del vuelo de vuelta - Nueva estructura -->
-        <div class="flight-route">
-          <!-- Columna izquierda (Origen) -->
-          <div class="flight-column origin">
-            <div class="time-date">
-              {{ formattedFlights.inbound.departureTime }}
-              <span>{{ formattedFlights.inbound.date }}</span>
-            </div>
-            <div class="airport">
-              {{ formattedFlights.inbound.departureAirport }}
-            </div>
-          </div>
-
-          <!-- Línea central con duración -->
-          <div class="flight-duration-container">
-            <div class="duration">
-              {{ formattedFlights.inbound.duration }}
-            </div>
-            <div class="flight-line">
-              <div class="dot left"></div>
-              <div class="line"></div>
-              <div class="dot right"></div>
-            </div>
-            <div class="flight-type">
-              <ng-container *ngIf="formattedFlights.inbound.hasStops">
-                {{ formattedFlights.inbound.stops }} ESCALA
-                {{ formattedFlights.inbound.stopCity }}
-              </ng-container>
-              <ng-container *ngIf="!formattedFlights.inbound.hasStops">
-                DIRECTO
-              </ng-container>
-            </div>
-          </div>
-
-          <!-- Columna derecha (Destino) -->
-          <div class="flight-column destination">
-            <div class="time-date">
-              {{ formattedFlights.inbound.arrivalTime }}
-              <span>{{ formattedFlights.inbound.date }}</span>
-            </div>
-            <div class="airport">
-              {{ formattedFlights.inbound.arrivalAirport }}
-            </div>
-          </div>
-        </div>
-
-        <!-- Detalle de escalas para vuelo de vuelta -->
-        <ng-container *ngIf="formattedFlights.inbound.hasStops">
-          <div class="flight-details">
-            <div
-              class="flight-segment"
-              *ngFor="let segment of formattedFlights.inbound.segments"
-            >
-              {{ segment.airline.name }} ({{ segment.flightNumber }})
-              {{ segment.departureTime }} {{ segment.departureCity }} ({{
-                segment.departureIata
-              }}) - {{ segment.arrivalTime }} {{ segment.arrivalCity }} ({{
-                segment.arrivalIata
-              }})
-            </div>
-          </div>
-        </ng-container>
+        <!-- Contenido del vuelo -->
+        <ng-container *ngTemplateOutlet="flightRouteTemplate; context: {$implicit: formattedFlights.inbound, type: 'inbound'}"></ng-container>
       </div>
-    </ng-container>
+    </ng-template>
   </ng-container>
 </div>
+
+<!-- Template reutilizable para la ruta de vuelo -->
+<ng-template #flightRouteTemplate let-flight let-type="type">
+  <div class="flight-route">
+    <!-- Columna izquierda (Origen) -->
+    <div class="flight-column origin">
+      <div class="time-date">
+        {{ flight.departureTime }}
+        <span>{{ flight.date }}</span>
+      </div>
+      <div class="airport">
+        {{ flight.departureAirport }}
+      </div>
+    </div>
+
+    <!-- Línea central con duración -->
+    <div class="flight-duration-container">
+      <div class="duration">
+        {{ flight.duration }}
+      </div>
+      <div class="flight-line">
+        <div class="dot left"></div>
+        <div class="line"></div>
+        <div class="dot right"></div>
+      </div>
+      <div class="flight-type">
+        <ng-container *ngIf="flight.hasStops">
+          {{ flight.stops }}
+          <ng-container *ngIf="flight.stops === 1">ESCALA</ng-container>
+          <ng-container *ngIf="flight.stops > 1">ESCALAS</ng-container>
+          {{ flight.stopCity }}
+        </ng-container>
+        <ng-container *ngIf="!flight.hasStops">
+          DIRECTO
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- Columna derecha (Destino) -->
+    <div class="flight-column destination">
+      <div class="time-date">
+        {{ flight.arrivalTime }}
+        <span>{{ flight.date }}</span>
+      </div>
+      <div class="airport">
+        {{ flight.arrivalAirport }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Detalle de escalas -->
+  <ng-container *ngIf="flight.hasStops">
+    <div class="flight-details">
+      <div
+        class="flight-segment"
+        *ngFor="let segment of flight.segments"
+      >
+        {{ segment.airline.name }} ({{ segment.flightNumber }})
+        {{ segment.departureTime }} {{ segment.departureCity }} ({{ segment.departureIata }}) - 
+        {{ segment.arrivalTime }} {{ segment.arrivalCity }} ({{ segment.arrivalIata }})
+      </div>
+    </div>
+  </ng-container>
+</ng-template>

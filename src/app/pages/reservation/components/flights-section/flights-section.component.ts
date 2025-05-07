@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import {
   Flight,
   FlightSegment,
@@ -9,13 +9,14 @@ import {
   standalone: false,
   templateUrl: './flights-section.component.html',
   styleUrls: ['./flights-section.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FlightsSectionComponent {
   @Input() flights: Flight[] = [];
 
   // New adapter for template format - provides flight data in the format expected by the template
   get formattedFlights() {
-    if (!this.flights || this.flights.length === 0) {
+    if (!this.flights?.length) {
       return null;
     }
 
@@ -37,14 +38,12 @@ export class FlightsSectionComponent {
     // Check if flight name contains "sinvue" or "sin vue"
     if (
       flightData.name &&
-      (flightData.name.toLowerCase().includes('sinvue') ||
-        flightData.name.toLowerCase().includes('sin vue'))
+      flightData.name.toLowerCase().match(/sin\s*vue/)
     ) {
       return null;
     }
 
-    if (!flightData || !flightData.segments || flightData.segments.length === 0)
-      return null;
+    if (!flightData?.segments?.length) return null;
 
     const segments = flightData.segments;
     const firstSegment = segments[0];
@@ -55,11 +54,7 @@ export class FlightsSectionComponent {
     const stops = segments.length - 1;
 
     // Calculate stopover city if applicable
-    let stopCity = '';
-    if (hasStops && segments.length > 1) {
-      // Use arrival city of first segment as stopover
-      stopCity = segments[0].arrivalCity;
-    }
+    let stopCity = hasStops ? segments[0].arrivalCity : '';
 
     return {
       departureTime: firstSegment.departureTime,
@@ -71,9 +66,9 @@ export class FlightsSectionComponent {
         firstSegment.departureTime,
         lastSegment.arrivalTime
       ),
-      hasStops: hasStops,
-      stops: stops,
-      stopCity: stopCity,
+      hasStops,
+      stops,
+      stopCity,
       segments: segments.map((segment) => ({
         airline: segment.airline,
         flightNumber: segment.flightNumber,
@@ -88,7 +83,7 @@ export class FlightsSectionComponent {
   }
 
   // Method to format time string to Date object
-  formatTime(timeString: string): Date {
+  private formatTime(timeString: string): Date {
     const [hours, minutes] = timeString.split(':').map(Number);
     const date = new Date();
     date.setHours(hours, minutes, 0);
@@ -96,7 +91,7 @@ export class FlightsSectionComponent {
   }
 
   // Method to calculate flight duration
-  calculateFlightDuration(departureTime: string, arrivalTime: string): string {
+  private calculateFlightDuration(departureTime: string, arrivalTime: string): string {
     const departure = this.formatTime(departureTime);
     const arrival = this.formatTime(arrivalTime);
     if (arrival < departure) {

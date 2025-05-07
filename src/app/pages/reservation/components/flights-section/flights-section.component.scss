@@ -2,6 +2,14 @@ $azul: #002b57;
 $coral: #f05a4c;
 $border: #ea685c;
 
+// Variables para tamaños y espaciados
+$border-radius: 11.434px;
+$padding-container: 12px;
+$margin-bottom-standard: 15px;
+$font-size-small: 0.6rem;
+$font-size-normal: 0.9rem;
+$font-size-title: 1.1rem;
+
 :host {
   display: block;
   margin-bottom: 1.5rem;
@@ -9,22 +17,22 @@ $border: #ea685c;
 
 .flights-container {
   border: 2px solid $border;
-  padding: 12px;
-  border-radius: 11.434px;
-  margin-bottom: 15px;
+  padding: $padding-container;
+  border-radius: $border-radius;
+  margin-bottom: $margin-bottom-standard;
   background-color: white;
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
 .flight-header {
-  padding: 0.5rem 0.5rem 0.5rem 0rem;
+  padding: 0.5rem 0.5rem 0.5rem 0;
   color: $azul;
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: $font-size-title;
 }
 
 .flight-section {
-  margin-bottom: 15px;
+  margin-bottom: $margin-bottom-standard;
 
   .section-title {
     margin-bottom: 3px;
@@ -63,18 +71,18 @@ $border: #ea685c;
 
   .time-date {
     color: $azul;
-    font-size: 0.9rem;
+    font-size: $font-size-normal;
     white-space: nowrap;
 
     span {
       color: $azul;
-      font-size: 0.9rem;
+      font-size: $font-size-normal;
     }
   }
 
   .airport {
     color: $azul;
-    font-size: 0.9rem;
+    font-size: $font-size-normal;
     margin-top: 0.5px;
   }
 }
@@ -88,7 +96,7 @@ $border: #ea685c;
 
   .duration {
     color: $azul;
-    font-size: 0.6rem;
+    font-size: $font-size-small;
     margin-bottom: 3px;
   }
 
@@ -122,14 +130,14 @@ $border: #ea685c;
 
   .flight-type {
     color: $coral;
-    font-size: 0.6rem;
+    font-size: $font-size-small;
     margin-top: 3px;
   }
 }
 
 .flight-details {
   margin-top: 4px;
-  font-size: 0.65rem;
+  font-size: $font-size-small;
   color: $azul;
   line-height: 1.4;
   text-align: center;
@@ -137,7 +145,7 @@ $border: #ea685c;
 
   .flight-segment {
     margin-bottom: 2px;
-    font-size: 0.65rem;
+    font-size: $font-size-small;
   }
 }
 

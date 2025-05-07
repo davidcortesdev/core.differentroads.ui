@@ -156,54 +156,54 @@ $border-radius: 11.434px;
       border-radius: 4px;
       padding: $spacing-md;
       margin-top: $spacing-md;
+      max-width: 90%;
+      margin-left: auto;
+      margin-right: auto;
       
-      .segment-list {
-        display: flex;
-        flex-direction: column;
-        gap: $spacing-sm;
+      .segment-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8rem;
+        
+        th {
+          text-align: left;
+          padding: $spacing-xs $spacing-sm;
+          color: $text-secondary;
+          font-weight: 500;
+          border-bottom: 1px solid rgba($coral, 0.2);
+        }
+        
+        td {
+          padding: $spacing-xs $spacing-sm;
+          vertical-align: middle;
+          border-bottom: 1px solid rgba($coral, 0.1);
+          
+          &:last-child {
+            text-align: right;
+          }
+        }
+        
+        tr:last-child td {
+          border-bottom: none;
+        }
+        
+        tr:hover {
+          background-color: rgba($coral, 0.03);
+        }
       }
-    }
-    
-    // Segmento individual
-    .segment {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      position: relative;
-      margin-bottom: $spacing-sm;
-      
-      &:last-child {
-        margin-bottom: 0;
-        padding-bottom: 0;
-        border-bottom: none;
-      }
-      
-      &.ng-star-inserted {
-        margin: 0;
-      }
-    }
-    
-    // Información del segmento
-    .segment-info {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: $spacing-xs;
-      background-color: rgba($coral, 0.03);
-      border-radius: 4px;
-      width: 100%;
-      font-size: 0.85rem;
     }
     
     // Aerolínea del segmento
     .segment-airline {
       font-weight: 500;
       color: $azul;
+      display: flex;
+      align-items: center;
+      gap: $spacing-xs;
     }
     
     // Horarios del segmento
     .segment-times {
-      font-size: 0.9rem;
       color: $text-secondary;
     }
     
@@ -211,7 +211,6 @@ $border-radius: 11.434px;
     .airline-logo {
       width: 16px;
       height: 16px;
-      margin-right: 5px;
       vertical-align: middle;
       display: inline-block;
       will-change: transform;
@@ -272,13 +271,39 @@ $border-radius: 11.434px;
         text-align: center;
       }
     }
+    
+    .segments {
+      max-width: 95%;
+      padding: $spacing-xs;
+      
+      .segment-table {
+        font-size: 0.75rem;
+        
+        th, td {
+          padding: $spacing-xs;
+        }
+      }
+    }
   }
 }
 
 @media (max-width: 480px) {
-  :host ::ng-deep .flight-pan .segments {
-    padding: $spacing-sm;
-    font-size: 0.85rem;
-    line-height: 1.2;
+  :host ::ng-deep .flight-pan {
+    .segments {
+      padding: $spacing-sm;
+      max-width: 100%;
+      
+      .segment-table {
+        font-size: 0.7rem;
+        
+        th {
+          font-size: 0.65rem;
+        }
+        
+        .segment-times {
+          font-size: 0.65rem;
+        }
+      }
+    }
   }
 }

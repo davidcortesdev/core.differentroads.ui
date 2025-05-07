@@ -18,6 +18,22 @@ export interface LocationMunicipality {
   population?: number;
   isCapital?: boolean;
 }
+ // Interfaz para los filtros de búsqueda de ciudad
+ export interface CityFilter {
+  name?: string;
+  countryId?: number;
+  stateId?: number;
+}
+
+// Interfaz para la respuesta de búsqueda de ciudad
+export interface CityResponse {
+  id: number;
+  name: string;
+  lat?: number;
+  lng?: number;
+  countryId?: number;
+  stateId?: number;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -25,7 +41,7 @@ export interface LocationMunicipality {
 export class LocationsApiService {
   private baseUrl = environment.localizacionesApiUrl || '';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   /**
    * Busca una comunidad/municipio por nombre
@@ -56,15 +72,28 @@ export class LocationsApiService {
     );
   }
 
+ 
+
+  
   /**
    * Busca una ciudad por nombre
    */
-  /**
-   * Busca una ciudad por nombre
-   */
-  searchCityByName(name: string): Observable<LocationMunicipality[]> {
+  searchCityByFilter(cityFilter: CityFilter): Observable<LocationMunicipality[]> {
     const url = `${this.baseUrl}/City`;
-    const params = { Name: name };
+
+    const params: {[key: string]: string | number} = {};
+    
+    if (cityFilter.name !== undefined) {
+      params['Name'] = cityFilter.name;
+    }
+    
+    if (cityFilter.countryId !== undefined) {
+      params['CountryId'] = cityFilter.countryId;
+    }
+    
+    if (cityFilter.stateId !== undefined) {
+      params['StateId'] = cityFilter.stateId;
+    }
   
     return this.http.get<LocationMunicipality[]>(url, { params }).pipe(
       catchError(error => {

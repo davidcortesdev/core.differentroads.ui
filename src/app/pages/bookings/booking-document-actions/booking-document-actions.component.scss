@@ -1,5 +1,6 @@
 /* app.component.scss */
 :host ::ng-deep {
+    --p-panel-background: var(--background-azul-color-letra);
     /* Estilos para el panel de referencia de reserva */
     .container {
         border: 1px solid #eaeaea;

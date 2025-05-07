@@ -3,25 +3,36 @@ $border-light: #d4d4d8;
 
 // Mixins para reducir código repetitivo
 @mixin mobile {
-  @media (max-width: 480px) { @content; }
+  @media (max-width: 480px) {
+    @content;
+  }
 }
 @mixin tablet {
-  @media (max-width: 768px) { @content; }
+  @media (max-width: 768px) {
+    @content;
+  }
 }
 @mixin desktop {
-  @media (min-width: 768px) { @content; }
+  @media (min-width: 768px) {
+    @content;
+  }
 }
 
 .container {
+  --p-panel-background: var(--background-azul-color-letra);
+  --p-panel-border-radius: 10px;
+  --p-accordion-content-background: transparent !important;
+  --p-accordion-header-background: transparent !important;
+
   width: 100%;
   padding: 0;
   margin-top: -20px;
-  
+
   .header-container {
     cursor: pointer;
     margin-bottom: 15px;
   }
-  
+
   .title-with-icon {
     display: inline-flex;
     align-items: center;
@@ -40,12 +51,12 @@ $border-light: #d4d4d8;
         font-size: 1.1rem;
       }
     }
-    
+
     .pi {
       margin-left: 8px;
     }
   }
-  
+
   .title-underline {
     height: 1px;
     background-color: $azul;
@@ -53,46 +64,49 @@ $border-light: #d4d4d8;
     display: block;
     width: auto;
     max-width: 278px;
-    @include tablet { max-width: 255px; }
-    @include mobile { max-width: 280px; }
+    @include tablet {
+      max-width: 255px;
+    }
+    @include mobile {
+      max-width: 280px;
+    }
   }
-  
+
   ::ng-deep .payment-panel {
-    color: $azul;
     font-weight: 500;
     margin-bottom: 0.75rem;
-    width: 100%;
-    background: transparent;
 
     .p-panel-header {
       display: none;
     }
     .p-panel-content {
-      border: 0.0625rem solid $border-light;
-      border-radius: 0.75rem;
       padding: 1.25rem 1rem;
       background: transparent;
-      @include desktop { padding: 1.75rem 1.5rem; }
-      @include mobile { padding: 1rem 0.75rem; }
+      @include desktop {
+        padding: 1.75rem 1.5rem;
+      }
+      @include mobile {
+        padding: 1rem 0.75rem;
+      }
     }
-    
+
     .p-radiobutton .p-radiobutton-box {
       border: 1px solid $azul;
       background: white;
     }
   }
-  
+
   // Estilos para opciones de pago
   .payment-option {
     display: flex;
     align-items: center;
     flex-wrap: nowrap;
-    
+
     @include mobile {
       flex-direction: row;
       justify-content: space-between;
     }
-    
+
     .option-text {
       margin-left: 1rem;
       flex-grow: 1;
@@ -102,14 +116,15 @@ $border-light: #d4d4d8;
         max-width: 70%;
       }
     }
-    
-    .option-price, .scalapay-logo {
+
+    .option-price,
+    .scalapay-logo {
       margin-left: auto;
       @include mobile {
         margin-left: 0;
       }
     }
-    
+
     .option-price {
       font-weight: bold;
       font-size: 1.125rem;
@@ -120,7 +135,9 @@ $border-light: #d4d4d8;
     }
     .scalapay-logo {
       height: 24px;
-      @include mobile { height: 20px; }
+      @include mobile {
+        height: 20px;
+      }
     }
   }
   .payment-methods-section,
@@ -142,8 +159,6 @@ $border-light: #d4d4d8;
   .installment-panel-container {
     flex: 1;
     ::ng-deep .p-panel-content {
-      border: 0.0625rem solid $border-light;
-      border-radius: 0.75rem;
       padding: 1.5rem 1rem;
       width: 100%;
       height: 100%;
@@ -176,7 +191,9 @@ $border-light: #d4d4d8;
     font-size: 14px;
   }
   ::ng-deep scalapay-widget {
-    .info-container p.installment-info { display: none !important; }
+    .info-container p.installment-info {
+      display: none !important;
+    }
     img.logo {
       max-width: 120px !important;
       margin: 0 auto;
@@ -190,14 +207,23 @@ $border-light: #d4d4d8;
       }
     }
     ::ng-deep .p-accordion {
-      .p-accordioncontent-content { padding: 0; }
-      .p-accordioncontent { margin-top: -15px; }
+      .p-accordioncontent-content {
+        padding: 0;
+      }
+      .p-accordioncontent {
+        margin-top: -15px;
+      }
       .p-accordionheader {
         padding: 0;
         color: $azul;
+        background: transparent;
       }
-      .p-accordion-header-text { font-size: 1rem; }
-      .p-accordion-toggle-icon { color: $azul; }
+      .p-accordion-header-text {
+        font-size: 1rem;
+      }
+      .p-accordion-toggle-icon {
+        color: $azul;
+      }
     }
   }
   .travelers-list {
@@ -205,7 +231,9 @@ $border-light: #d4d4d8;
     .traveler-item {
       padding: 0.75rem 0;
       border-bottom: 1px solid #e2e8f0;
-      &:last-child { border-bottom: none; }
+      &:last-child {
+        border-bottom: none;
+      }
     }
     .traveler-row {
       display: flex;
@@ -288,7 +316,8 @@ $border-light: #d4d4d8;
       background-color: var(--p-primary-color);
       margin-top: 20px;
 
-      &.p-disabled, &.payment-button-disabled {
+      &.p-disabled,
+      &.payment-button-disabled {
         opacity: 0.6;
         cursor: not-allowed;
       }

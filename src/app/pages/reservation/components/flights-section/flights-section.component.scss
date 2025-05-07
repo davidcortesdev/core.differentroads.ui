@@ -2,19 +2,56 @@ $azul: var(--background-azul);
 $coral: #ea685c;
 $border: #f59188;
 
+// Variables para tamaños y espaciados
+$spacing-xs: 0.25rem;
+$spacing-sm: 0.5rem;
+$spacing-md: 0.75rem;
+$spacing-lg: 1rem;
+$spacing-xl: 1.5rem;
+$border-radius: 11.434px;
+
 :host {
     display: block;
-    margin-bottom: 1.5rem;
+    margin-bottom: $spacing-xl;
 
     ::ng-deep {
+        // Estilos de panel
         .p-panel,
         .flight-pan {
-            margin-bottom: 1.5rem;
-            border-radius: 11.434px;
+            margin-bottom: $spacing-xl;
+            border-radius: $border-radius;
             overflow: hidden;
             border: 2px solid $border;
         }
 
+        // Simplificar anidamiento
+        .p-panel-header,
+        .p-panel-content {
+            color: $azul;
+            background: white;
+            border: 0;
+            padding: $spacing-lg;
+        }
+
+        .pan-hdr {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        // Estilos de vuelo
+        .flight-info {
+            margin-bottom: $spacing-xl;
+            padding-bottom: $spacing-xl;
+            border-bottom: 1px solid #e9ecef;
+            
+            &:last-child {
+                margin-bottom: 0;
+                padding-bottom: 0;
+                border-bottom: none;
+            }
+        }
+        
+        // Resto de estilos con menor anidamiento
         .p-panel {
             .p-panel-header,
             .p-panel-content {
@@ -194,6 +231,7 @@ $border: #f59188;
     }
 }
 
+// Optimizar media queries agrupándolas
 @media (max-width: 1024px) {
     :host {
         ::ng-deep {
@@ -263,6 +301,7 @@ $border: #f59188;
     }
 }
 
+// Extraer clases comunes
 .next-day {
     display: inline-block;
     color: $coral;
@@ -366,4 +405,6 @@ $border: #f59188;
   margin-right: 5px;
   vertical-align: middle;
   display: inline-block;
+  will-change: transform; // Mejora rendimiento en navegadores modernos
+  object-fit: contain; // Asegura que la imagen se ajuste correctamente
 }

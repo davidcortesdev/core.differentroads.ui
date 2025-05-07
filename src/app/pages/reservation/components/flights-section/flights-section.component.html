@@ -38,10 +38,11 @@
         <!-- Detalles de segmentos (compactados) -->
         <div class="segments" *ngIf="flight.segments.length > 1">
           <div class="segment-list">
-            <div class="segment" *ngFor="let segment of flight.segments; let last = last; let first = first">
+            <div class="segment" *ngFor="let segment of flight.segments; let last = last; let first = first; trackBy: trackByFlightNumber">
               <div class="segment-info">
                 <div class="segment-airline">
-                  <img *ngIf="segment.flightNumber" [src]="getAirlineLogoUrl(segment.flightNumber)" class="airline-logo" alt="Logo aerolínea">
+                  <img *ngIf="segment.flightNumber" [src]="getAirlineLogoUrl(segment.flightNumber)" 
+                       class="airline-logo" alt="Logo aerolínea" loading="lazy">
                   {{ getAirlineNamesByFlightNumbers([segment.flightNumber]) }} {{ segment.flightNumber }}
                 </div>
                 <div class="segment-times">

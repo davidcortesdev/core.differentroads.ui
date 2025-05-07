@@ -1,4 +1,4 @@
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy, OnChanges, SimpleChanges } from '@angular/core';
 import {
   Flight,
   FlightSegment,
@@ -12,25 +12,45 @@ import { map, catchError } from 'rxjs/operators';
   standalone: false,
   templateUrl: './flights-section.component.html',
   styleUrls: ['./flights-section.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class FlightsSectionComponent {
+export class FlightsSectionComponent implements OnChanges {
   @Input() flights: Flight[] = [];
-
+  
+  // Propiedad para almacenar vuelos formateados
+  private _formattedFlights: any = null;
+  
   constructor(private airlinesService: AirlinesService) {}
 
   // New adapter for template format - provides flight data in the format expected by the template
-  get formattedFlights() {
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['flights']) {
+      // Solo recalcular cuando cambian los vuelos
+      this._formattedFlights = this.formatFlights();
+      
+      // Limpiar cachés cuando cambian los datos de entrada
+      this._flightNumbersCache = {};
+      this._logoUrlCache = {};
+    }
+  }
+  
+  // Método para formatear vuelos
+  private formatFlights() {
     if (!this.flights?.length) {
       return null;
     }
 
-    // Use the first flight in the array
     const flight = this.flights[0];
-
+    
     return {
       outbound: flight.outbound ? this.formatFlightInfo(flight.outbound) : null,
       inbound: flight.inbound ? this.formatFlightInfo(flight.inbound) : null,
     };
+  }
+  
+  // Getter para acceder a los vuelos formateados
+  get formattedFlights() {
+    return this._formattedFlights;
   }
 
   // Helper method to format flight info from segments
@@ -130,14 +150,21 @@ export class FlightsSectionComponent {
 
   /**
    * Obtiene los nombres de las aerolíneas a partir de los números de vuelo
-   * @param flightNumbers Array de números de vuelo
-   * @returns String con los nombres de las aerolíneas
+   * Implementa memoización para evitar cálculos repetidos
    */
   getAirlineNamesByFlightNumbers(flightNumbers: string[]): string {
     if (!flightNumbers || flightNumbers.length === 0) {
       return '';
     }
 
+    // Crear una clave única para este conjunto de números de vuelo
+    const cacheKey = flightNumbers.sort().join('|');
+    
+    // Verificar si ya tenemos el resultado en caché
+    if (this._flightNumbersCache[cacheKey]) {
+      return this._flightNumbersCache[cacheKey];
+    }
+    
     // Extraer prefijos IATA únicos de los números de vuelo
     const prefixesIATA = flightNumbers
       .filter((flightNumber) => flightNumber)
@@ -213,19 +240,41 @@ export class FlightsSectionComponent {
     }
 
     // Devolver los nombres que tenemos en caché y los prefijos para los que no tenemos nombres
-    return uniquePrefixesIATA
+    // Almacenar el resultado en caché antes de devolverlo
+    const result = uniquePrefixesIATA
       .map((prefix) => this.airlineCache[prefix] || prefix)
       .join(', ');
+      
+    this._flightNumbersCache[cacheKey] = result;
+    return result;
   }
+  
+  // Caché para resultados de getAirlineNamesByFlightNumbers
+  private _flightNumbersCache: { [key: string]: string } = {};
+  // Caché para URLs de logos
+  private _logoUrlCache: { [flightNumber: string]: string } = {};
+  
   getAirlineLogoUrl(flightNumber: string): string {
     if (!flightNumber || flightNumber.length < 2) {
-      return ''; // Si no hay número de vuelo o es muy corto, retornar vacío
+      return ''; 
     }
     
-    // Extraer el código IATA (generalmente las primeras 2 letras del número de vuelo)
+    // Verificar caché
+    if (this._logoUrlCache[flightNumber]) {
+      return this._logoUrlCache[flightNumber];
+    }
+    
+    // Extraer el código IATA
     const iataCode = flightNumber.substring(0, 2);
     
-    // Construir la URL del logo usando el servicio de Kiwi.com
-    return `https://images.kiwi.com/airlines/32x32/${iataCode}.png`;
+    // Construir la URL y guardar en caché
+    const url = `https://images.kiwi.com/airlines/32x32/${iataCode}.png`;
+    this._logoUrlCache[flightNumber] = url;
+    
+    return url;
+  }
+  
+  trackByFlightNumber(index: number, segment: any): string {
+    return segment.flightNumber || index;
   }
 }

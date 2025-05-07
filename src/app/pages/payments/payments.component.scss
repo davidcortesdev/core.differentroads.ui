@@ -22,7 +22,7 @@ $radius: 0.75rem;
     @content;
   }
 }
-.single-payment-content {
+.single {
   background-color: var(--light-blue-500);
   color: var(--background-azul);
   --p-inputtext-background: var(--background-azul-color-letra);
@@ -142,7 +142,7 @@ $radius: 0.75rem;
     .header-container {
       cursor: pointer;
     }
-    .title-with-icon {
+    .title-icon {
       display: inline-flex;
       align-items: center;
       margin-bottom: 5px;
@@ -189,16 +189,6 @@ $radius: 0.75rem;
         margin-left: 8px;
       }
     }
-    .title-underline {
-      height: 1.5px;
-      background-color: $primary;
-      width: fit-content;
-      margin-bottom: 15px;
-
-      &.pay {
-        width: fit-content;
-      }
-    }
     .payment-panels {
       margin-top: $sm;
     }
@@ -231,19 +221,13 @@ $radius: 0.75rem;
       }
     }
     .payment-methods-row {
-      // Añadir display: flex para que se muestren en línea
       display: flex;
-      // Mantener el gap
       gap: $sm;
       margin-top: $sm;
-
-      // En tablets también mantener flex con gap más pequeño
       @include tablet {
         display: flex;
         gap: $xs;
       }
-
-      // Solo en móvil cambiamos a columna
       @include mobile {
         display: flex;
         flex-direction: column;
@@ -252,8 +236,6 @@ $radius: 0.75rem;
     }
     .payment-method-container {
       flex: 1;
-
-      // Asegurar que en mobile ocupe todo el ancho
       @include mobile {
         width: 100%;
       }
@@ -288,7 +270,6 @@ $radius: 0.75rem;
     margin-top: $lg;
     display: flex;
     justify-content: right;
-
     .payment-button {
       flex-grow: 0;
       max-width: 200px;
@@ -405,44 +386,12 @@ $radius: 0.75rem;
           height: 45px;
         }
       }
-      &.p-disabled {
-        opacity: 0.6;
-      }
     }
   }
   .checkbox-azul {
-    ::ng-deep .p-checkbox {
-      margin: 0.125rem 0.75rem 0 0;
-      .p-checkbox-box {
-        border-color: $primary;
-        &:hover {
-          background: #fff !important;
-          border-color: $primary !important;
-        }
-        &.p-highlight {
-          border-color: $primary !important;
-          background: $primary !important;
-        }
-      }
-    }
     ::ng-deep .p-checkbox-checked .p-checkbox-box {
       border-color: $primary !important;
       background: $primary !important;
-    }
-    ::ng-deep .p-checkbox-checked .p-checkbox-icon {
-      color: white !important;
-    }
-    ::ng-deep .p-checkbox.ng-dirty .p-highlight,
-    ::ng-deep .p-checkbox.ng-touched .p-highlight {
-      background: $primary !important;
-      border-color: $primary !important;
-    }
-    ::ng-deep .p-checkbox .p-checkbox-box.p-focus {
-      box-shadow: 0 0 0 0.2rem rgba($primary, 0.25) !important;
-    }
-    ::ng-deep .p-checkbox .p-checkbox-box.p-indeterminate {
-      background: $primary !important;
-      border-color: $primary !important;
     }
   }
 }

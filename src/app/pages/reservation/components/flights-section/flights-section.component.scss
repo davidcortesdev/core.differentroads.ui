@@ -147,6 +147,10 @@ $font-size: (
         .flight-second-line {
           align-items: flex-end;
         }
+        
+        .time-block {
+          justify-content: flex-end;
+        }
       }
 
       .flight-details {

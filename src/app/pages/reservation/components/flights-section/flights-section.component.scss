@@ -90,18 +90,6 @@ $font-size: (
       }
     }
     
-    // Cabecera de vuelo
-    .flight-header {
-      @include flex-between;
-      margin-bottom: spacing('sm');
-      
-      .flight-type {
-        font-weight: 600;
-        color: $azul;
-        font-size: font-size('lg');
-      }
-    }
-    
     // Ruta de vuelo
     .flight-route {
       @include flex-between;
@@ -114,7 +102,6 @@ $font-size: (
         
         .flight-first-line {
           margin-bottom: spacing('xs');
-          
           
           .flight-date {
             font-size: font-size('sm');
@@ -132,14 +119,6 @@ $font-size: (
         
         .flight-first-line, .flight-second-line {
           align-items: flex-start;
-        }
-      }
-      
-      .arrival {
-        text-align: right;
-        
-        .flight-first-line, .flight-second-line {
-          align-items: flex-end;
         }
       }
       
@@ -279,15 +258,10 @@ $font-size: (
       font-style: italic;
       font-size: font-size('lg');
     }
-    
-    // Bloque de tiempo
-    .time-block {
-
-    }
   }
 }
 
-// Media queries optimizados y consolidados
+// Media queries optimizados
 @media (max-width: 1024px) {
   :host ::ng-deep .flight-pan .flight-route {
     gap: 1.5rem;

@@ -9,7 +9,7 @@ $spacing-xs: 0.25rem;
 $spacing-sm: 0.5rem;
 $spacing-md: 0.75rem;
 $spacing-lg: 1rem;
-$spacing-xl: 1.5rem;
+$spacing-xl: 0.5rem;
 $border-radius: 11.434px;
 
 // Mixins para reutilizar estilos
@@ -259,6 +259,16 @@ $border-radius: 11.434px;
 @media (max-width: 768px) {
   :host ::ng-deep .flight-pan {
     font-size: 12px;
+    
+    .flight-route-integrated {
+      flex-direction: column;
+      
+      .flight-type-container {
+        margin-bottom: $spacing-sm;
+        text-align: center;
+        width: 100%;
+      }
+    }
     
     .flight-route {
       flex-direction: column;

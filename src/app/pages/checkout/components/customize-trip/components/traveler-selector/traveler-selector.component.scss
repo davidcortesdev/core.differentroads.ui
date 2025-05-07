@@ -1,4 +1,5 @@
 .traveler-selector {
+  --p-inputtext-background: transparent;
   border-bottom: 0.0625rem solid var(--background-azul);
   color: var(--background-azul);
   margin-top: -1.5rem;
@@ -45,10 +46,6 @@
       display: flex;
       gap: 0.5rem;
       justify-content: space-between;
-
-      ::ng-deep .p-inputnumber {
-        background-color: var(--accent-white);
-      }
 
       ::ng-deep .p-inputtext {
         border: 0;

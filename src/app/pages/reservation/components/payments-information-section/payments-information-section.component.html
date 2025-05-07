@@ -25,18 +25,17 @@
       </div>
     </div>
     <div class="pay-sch">
-      <!--  
-      <p class="pay-date">
-        {{ paymentInfo.lastPaymentDate }}: {{ paymentInfo.lastPaymentDetails }}
-      </p><p class="next-pay">
-        Tu próximo pago: {{ paymentInfo.nextPaymentDetails }}
-      </p>
-     -->
+      <div *ngFor="let payment of payments">
+        {{ payment.createdAt | date : "dd/MM/yyyy" }}: Pago de
+        {{ payment.amount | currencyFormat }} a través de
+        {{
+          payment.method === "credit_card"
+            ? "tarjeta de crédito"
+            : payment.method === "transfer"
+            ? "transferencia bancaria"
+            : "la web"
+        }}
+      </div>
     </div>
-    <p class="pay-note" style="font-style: italic">
-      *Te avisaremos 40 días antes del inicio del viaje para abonar el resto del
-      importe o cuando el cupo de vuelos de tu ciudad esté lleno para abonar el
-      25% del importe
-    </p>
   </div>
 </p-panel>

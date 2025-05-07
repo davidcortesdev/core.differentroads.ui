@@ -1,4 +1,6 @@
 :host ::ng-deep {
+    --p-panel-background: var(--background-azul-color-letra);
+    --p-panel-color: var(--background-azul);
     /* Estilos para el panel de referencia de reserva */
     .booking-reference {
         border: 1px solid #eaeaea;

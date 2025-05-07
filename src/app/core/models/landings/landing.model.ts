@@ -9,7 +9,7 @@ export interface Landing extends CMSCollections {
   bannerTitle: string;
   banner: CldImage[];
   seo: SEO;
-  content: string;
+  description: string;
   blocks: Block[];
   titleContent: string;
 }

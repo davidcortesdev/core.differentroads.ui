@@ -80,7 +80,20 @@ export class LocationsApiService {
    */
   searchCityByFilter(cityFilter: CityFilter): Observable<LocationMunicipality[]> {
     const url = `${this.baseUrl}/City`;
-    const params = { Name: name };
+
+    const params: {[key: string]: string | number} = {};
+    
+    if (cityFilter.name !== undefined) {
+      params['Name'] = cityFilter.name;
+    }
+    
+    if (cityFilter.countryId !== undefined) {
+      params['CountryId'] = cityFilter.countryId;
+    }
+    
+    if (cityFilter.stateId !== undefined) {
+      params['StateId'] = cityFilter.stateId;
+    }
   
     return this.http.get<LocationMunicipality[]>(url, { params }).pipe(
       catchError(error => {

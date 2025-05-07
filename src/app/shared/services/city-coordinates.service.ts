@@ -57,7 +57,10 @@ export class CityCoordinatesService {
       return of(this.coordinatesCache.get(normalizedCityName)!);
     }
   
-    return this.locationsApiService.searchCityByName(normalizedCityName).pipe(
+    // Create a CityFilter object instead of passing the string directly
+    const filter: CityFilter = { name: normalizedCityName };
+    
+    return this.locationsApiService.searchCityByFilter(filter).pipe(
       map(cities => {
         if (cities && cities.length > 0 && cities[0].lat && cities[0].lng) {
           const coordinates = { lat: cities[0].lat, lng: cities[0].lng };
@@ -337,7 +340,7 @@ export class CityCoordinatesService {
 getCityByName(cityName: string): Observable<CityResponse[]> {
   const filter: CityFilter = { name: cityName.trim() };
 
-  return this.locationsApiService.searchCityByName(filter).pipe(
+  return this.locationsApiService.searchCityByFilter(filter).pipe(
     catchError(error => {
       console.error(`Error al obtener ciudad por nombre ${cityName}:`, error);
       return of([]);

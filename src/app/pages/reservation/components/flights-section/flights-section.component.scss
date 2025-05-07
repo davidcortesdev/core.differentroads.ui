@@ -388,6 +388,10 @@ $border-radius: 11.434px;
     }
 }
 
+.segments .segment-list .segment.ng-star-inserted {
+  margin: 0;
+}
+
 .segment-info {
     display: flex;
     justify-content: space-between;

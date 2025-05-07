@@ -4,18 +4,35 @@ $coral: #ea685c;
 $border: #f59188;
 $text-secondary: #6c757d;
 
-// Variables para tamaños y espaciados
-$spacing-xs: 0.25rem;
-$spacing-sm: 0.5rem;
-$spacing-md: 0.75rem;
-$spacing-lg: 1rem;
-$spacing-xl: 0.5rem;
-$border-radius: 11.434px;
+// Sistema de espaciado unificado
+$spacing: (
+  'xs': 0.25rem,
+  'sm': 0.5rem,
+  'md': 0.75rem,
+  'lg': 1rem,
+  'xl': 1.25rem
+);
+
+// Variables para tamaños
+$border-radius: 8px;
+$font-size: (
+  'xs': 0.65rem,
+  'sm': 0.75rem,
+  'md': 0.85rem,
+  'lg': 0.9rem,
+  'xl': 1rem
+);
 
 // Mixins para reutilizar estilos
 @mixin flex-between {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+}
+
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
   align-items: center;
 }
 
@@ -25,16 +42,26 @@ $border-radius: 11.434px;
   border: 2px solid $border;
 }
 
+// Función para acceder al sistema de espaciado
+@function spacing($key) {
+  @return map-get($spacing, $key);
+}
+
+// Función para acceder al sistema de tamaños de fuente
+@function font-size($key) {
+  @return map-get($font-size, $key);
+}
+
 :host {
   display: block;
-  margin-bottom: $spacing-xl;
+  margin-bottom: spacing('md');
 
   ::ng-deep {
     // Estilos de panel
     .p-panel,
     .flight-pan {
       @include card-style;
-      margin-bottom: $spacing-xl;
+      margin-bottom: spacing('md');
     }
 
     .p-panel-header,
@@ -42,18 +69,18 @@ $border-radius: 11.434px;
       color: $azul;
       background: white;
       border: 0;
-      padding: $spacing-lg;
+      padding: spacing('md');
     }
 
     .pan-hdr {
       font-weight: 600;
-      font-size: 1.1rem;
+      font-size: font-size('xl');
     }
 
     // Estilos de vuelo
     .flight-info {
-      margin-bottom: $spacing-xl;
-      padding-bottom: $spacing-xl;
+      margin-bottom: spacing('md');
+      padding-bottom: spacing('md');
       border-bottom: 1px solid #e9ecef;
       
       &:last-child {
@@ -66,23 +93,19 @@ $border-radius: 11.434px;
     // Cabecera de vuelo
     .flight-header {
       @include flex-between;
-      margin-bottom: $spacing-lg;
+      margin-bottom: spacing('sm');
       
       .flight-type {
         font-weight: 600;
         color: $azul;
-      }
-      
-      .flight-date {
-        color: $text-secondary;
+        font-size: font-size('lg');
       }
     }
     
     // Ruta de vuelo
     .flight-route {
       @include flex-between;
-      margin-bottom: $spacing-md;
-      text-align: center;
+      margin-bottom: spacing('sm');
       
       .departure, .arrival {
         flex: 1;
@@ -90,20 +113,17 @@ $border-radius: 11.434px;
         flex-direction: column;
         
         .flight-first-line {
-          margin-bottom: $spacing-xs;
+          margin-bottom: spacing('xs');
           
-          .time {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: $azul;
+          
+          .flight-date {
+            font-size: font-size('sm');
           }
         }
         
-        .flight-second-line {
-          .airport {
-            color: $text-secondary;
-            font-size: 0.85rem;
-          }
+        .flight-second-line .airport {
+          color: $text-secondary;
+          font-size: font-size('sm');
         }
       }
       
@@ -119,19 +139,20 @@ $border-radius: 11.434px;
         flex: 2;
         text-align: center;
         position: relative;
-        padding: 0 $spacing-lg;
+        padding: 0 spacing('md');
         
         .duration {
           font-weight: 500;
           color: $azul;
-          margin-bottom: $spacing-sm;
+          margin-bottom: spacing('xs');
+          font-size: font-size('md');
         }
         
         .line {
           height: 2px;
           background-color: $border;
           position: relative;
-          margin: $spacing-sm 0;
+          margin: spacing('sm') 0;
           
           &:before, &:after {
             content: '';
@@ -143,49 +164,44 @@ $border-radius: 11.434px;
             top: -3px;
           }
           
-          &:before {
-            left: 0;
-          }
-          
-          &:after {
-            right: 0;
-          }
+          &:before { left: 0; }
+          &:after { right: 0; }
         }
       }
     }
     
     // Información compacta
     .flight-info-compact {
-      font-size: 0.85rem;
+      font-size: font-size('sm');
       color: $text-secondary;
-      margin-top: $spacing-sm;
+      margin-top: spacing('xs');
     }
     
     // Segmentos de vuelo
     .segments {
       background-color: rgba($coral, 0.05);
       border-radius: 4px;
-      padding: $spacing-md;
-      margin-top: $spacing-md;
-      max-width: 90%;
+      padding: spacing('sm');
+      margin-top: spacing('sm');
+      max-width: 95%;
       margin-left: auto;
       margin-right: auto;
       
       .segment-table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 0.8rem;
+        font-size: font-size('sm');
         
         th {
           text-align: left;
-          padding: $spacing-xs $spacing-sm;
+          padding: spacing('xs');
           color: $text-secondary;
           font-weight: 500;
           border-bottom: 1px solid rgba($coral, 0.2);
         }
         
         td {
-          padding: $spacing-xs $spacing-sm;
+          padding: spacing('xs');
           vertical-align: middle;
           border-bottom: 1px solid rgba($coral, 0.1);
           
@@ -210,18 +226,19 @@ $border-radius: 11.434px;
       color: $azul;
       display: flex;
       align-items: center;
-      gap: $spacing-xs;
+      gap: spacing('xs');
+      font-size: font-size('sm');
     }
     
     // Horarios del segmento
     .segment-times {
-      color: $text-secondary;
+      font-size: font-size('sm');
     }
     
     // Logo de aerolínea
     .airline-logo {
-      width: 16px;
-      height: 16px;
+      width: 14px;
+      height: 14px;
       vertical-align: middle;
       display: inline-block;
       will-change: transform;
@@ -241,15 +258,22 @@ $border-radius: 11.434px;
     // Mensaje de no hay vuelos
     .no-flights {
       text-align: center;
-      padding: $spacing-xl;
+      padding: spacing('md');
       color: $text-secondary;
       font-style: italic;
-      font-size: 0.9rem;
+      font-size: font-size('lg');
+    }
+    
+    // Bloque de tiempo
+    .time-block {
+      display: flex;
+      align-items: center;
+
     }
   }
 }
 
-// Media queries optimizados
+// Media queries optimizados y consolidados
 @media (max-width: 1024px) {
   :host ::ng-deep .flight-pan .flight-route {
     gap: 1.5rem;
@@ -258,13 +282,13 @@ $border-radius: 11.434px;
 
 @media (max-width: 768px) {
   :host ::ng-deep .flight-pan {
-    font-size: 12px;
+    font-size: 11px;
     
     .flight-route-integrated {
       flex-direction: column;
       
       .flight-type-container {
-        margin-bottom: $spacing-sm;
+        margin-bottom: spacing('sm');
         text-align: center;
         width: 100%;
       }
@@ -272,19 +296,16 @@ $border-radius: 11.434px;
     
     .flight-route {
       flex-direction: column;
-      gap: $spacing-sm;
-      margin-bottom: $spacing-lg;
+      gap: spacing('xs');
+      margin-bottom: spacing('md');
       
       .departure, .arrival {
-        padding: $spacing-xs 0;
+        padding: spacing('xs') 0;
         text-align: center;
         
-        .flight-first-line .time {
-          font-size: 1.3rem;
-        }
         
         .flight-second-line .airport {
-          margin-bottom: $spacing-xs;
+          margin-bottom: spacing('xs');
         }
       }
       
@@ -298,14 +319,14 @@ $border-radius: 11.434px;
     }
     
     .segments {
-      max-width: 95%;
-      padding: $spacing-xs;
+      max-width: 100%;
+      padding: spacing('xs');
       
       .segment-table {
-        font-size: 0.75rem;
+        font-size: font-size('xs');
         
-        th, td {
-          padding: $spacing-xs;
+        th, .segment-times {
+          font-size: font-size('xs');
         }
       }
     }
@@ -313,21 +334,14 @@ $border-radius: 11.434px;
 }
 
 @media (max-width: 480px) {
-  :host ::ng-deep .flight-pan {
-    .segments {
-      padding: $spacing-sm;
-      max-width: 100%;
+  :host ::ng-deep .flight-pan .segments {
+    padding: spacing('xs');
+    
+    .segment-table {
+      font-size: 0.6rem;
       
-      .segment-table {
-        font-size: 0.7rem;
-        
-        th {
-          font-size: 0.65rem;
-        }
-        
-        .segment-times {
-          font-size: 0.65rem;
-        }
+      th, .segment-times {
+        font-size: 0.6rem;
       }
     }
   }

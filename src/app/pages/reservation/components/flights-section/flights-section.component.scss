@@ -309,11 +309,12 @@ $border: #f59188;
     color: #6c757d;
 }
 
+/* Eliminar o comentar estos estilos
 .segment-connector {
     height: 1.5rem;
     width: 2px;
     background-color: $border;
-    margin: 0 auto;  // Centrado
+    margin: 0 auto;
     position: relative;
     
     &:before, &:after {
@@ -323,7 +324,7 @@ $border: #f59188;
         height: 6px;
         border-radius: 50%;
         background-color: $border;
-        left: -2px;  // Ajustado para centrar
+        left: -2px;
     }
     
     &:before {
@@ -334,6 +335,7 @@ $border: #f59188;
         bottom: -3px;
     }
 }
+*/
 
 .segment {
     display: flex;

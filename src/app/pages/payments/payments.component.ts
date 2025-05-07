@@ -9,6 +9,7 @@ import { PaymentOptionsService } from '../../core/services/checkout/paymentOptio
 import { PaymentOption } from '../../core/models/orders/order.model';
 import { SummaryService } from '../../core/services/checkout/summary.service';
 import { AuthenticateService } from '../../core/services/auth-service.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-payments',
@@ -252,7 +253,7 @@ export class PaymentsComponent implements OnInit {
 
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = 'https://sis-t.redsys.es:25443/sis/realizarPago';
+    form.action = environment.redsysUrl;
 
     Object.entries(formData).forEach(([key, value]) => {
       const input = document.createElement('input');

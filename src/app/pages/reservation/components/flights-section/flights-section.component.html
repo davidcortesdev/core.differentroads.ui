@@ -40,7 +40,10 @@
           <div class="segment-list">
             <div class="segment" *ngFor="let segment of flight.segments; let last = last; let first = first">
               <div class="segment-info">
-                <div class="segment-airline">{{ getAirlineNamesByFlightNumbers([segment.flightNumber]) }} {{ segment.flightNumber }}</div>
+                <div class="segment-airline">
+                  <img *ngIf="segment.flightNumber" [src]="getAirlineLogoUrl(segment.flightNumber)" class="airline-logo" alt="Logo aerolínea">
+                  {{ getAirlineNamesByFlightNumbers([segment.flightNumber]) }} {{ segment.flightNumber }}
+                </div>
                 <div class="segment-times">
                   {{ segment.departureTime }} {{ segment.departureIata }} → 
                   {{ segment.arrivalTime }}

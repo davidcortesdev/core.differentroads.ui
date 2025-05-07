@@ -217,4 +217,15 @@ export class FlightsSectionComponent {
       .map((prefix) => this.airlineCache[prefix] || prefix)
       .join(', ');
   }
+  getAirlineLogoUrl(flightNumber: string): string {
+    if (!flightNumber || flightNumber.length < 2) {
+      return ''; // Si no hay número de vuelo o es muy corto, retornar vacío
+    }
+    
+    // Extraer el código IATA (generalmente las primeras 2 letras del número de vuelo)
+    const iataCode = flightNumber.substring(0, 2);
+    
+    // Construir la URL del logo usando el servicio de Kiwi.com
+    return `https://images.kiwi.com/airlines/32x32/${iataCode}.png`;
+  }
 }

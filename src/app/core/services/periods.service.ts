@@ -117,4 +117,18 @@ export class PeriodsService {
       })
     );
   }
+
+  /**
+   * Obtiene el nombre y la fecha de salida (dayOne) de un periodo por su externalId.
+   * @param externalId - El ID externo del periodo.
+   * @returns Observable con un objeto { name, dayOne }
+   */
+  getPeriodNameAndDepartureDate(externalId: string): Observable<{ tourName: string; dayOne: string }> {
+    return this.getPeriodDetail(externalId, ['tourName', 'dayOne']).pipe(
+      map((period: Period) => ({
+        tourName: period.tourName,
+        dayOne: period.dayOne
+      }))
+    );
+  }
 }

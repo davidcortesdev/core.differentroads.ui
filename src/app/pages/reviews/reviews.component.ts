@@ -3,6 +3,9 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { ReviewsService } from '../../core/services/reviews.service';
+import { PeriodsService } from '../../core/services/periods.service';
+import { CommonModule } from '@angular/common';
 
 type RatingCategory = 'tour' | 'destinos' | 'calidadPrecio' | 'actividades' | 'guias' | 'alojamientos';
 
@@ -13,7 +16,8 @@ interface TripInfo {
 
 @Component({
   selector: 'app-reviews',
-  standalone: false,
+  standalone: true, // <-- set to true if you want to use standalone
+  imports: [CommonModule, InputTextModule], // <-- add CommonModule here
   templateUrl: './reviews.component.html',
   styleUrl: './reviews.component.scss'
 })
@@ -34,35 +38,40 @@ export class ReviewsComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private http: HttpClient
+    private periodsService: PeriodsService
   ) {}
 
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.loadTripInfo(params['id']);
+        this.loadTripInfoFromPeriod(params['id']);
       }
     });
   }
 
-  // Método para cargar la información del viaje desde el servidor
-  loadTripInfo(id: string): void {
-    const url = `${environment.apiUrl}/trips/${id}`;
-    this.http.get<any>(url).subscribe({
-      next: (response) => {
+
+  // Método para cargar la información del viaje desde el periodo
+  loadTripInfoFromPeriod(externalId: string): void {
+    this.periodsService.getPeriodNameAndDepartureDate(externalId).subscribe({
+      next: (info) => {
         this.tripInfo = {
-          title: response.title || 'Título no disponible',
-          date: response.startDate || 'Fecha no disponible'
+          title: info.tourName || 'Título no disponible',
+          date: info.dayOne || 'Fecha no disponible'
         };
       },
       error: (error) => {
-        console.error('Error al cargar la información del viaje:', error);
-        this.tripInfo = {
-          title: 'Error al cargar el título',
-          date: 'Error al cargar la fecha'
-        };
+        console.error('Error al cargar la información del periodo:', error);
+        this.setErrorTripInfo();
       }
     });
+  }
+
+  // Método para establecer información de error
+  private setErrorTripInfo(): void {
+    this.tripInfo = {
+      title: 'Error al cargar el título',
+      date: 'Error al cargar la fecha'
+    };
   }
 
   // Método para obtener la información del título y la fecha

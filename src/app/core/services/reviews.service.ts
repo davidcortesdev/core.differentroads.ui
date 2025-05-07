@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map, switchMap, of, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { PeriodsService } from './periods.service';
+import { Period } from '../models/tours/period.model';
 
 export interface ReviewFilter {
   id?: number;
@@ -47,11 +49,13 @@ export interface Review {
 export class ReviewsService {
   private readonly API_URL = `${environment.reviewsApiUrl}/Review`;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private periodsService: PeriodsService
+  ) {}
 
   /**
    * Get reviews with optional filters
-   * @param count Number of reviews to retrieve
    * @param filter Optional filter criteria
    * @returns Observable of Review array
    */
@@ -64,6 +68,42 @@ export class ReviewsService {
     }
 
     return this.http.get<Review[]>(`${this.API_URL}`, { params });
+  }
+
+  /**
+   * Get reviews by period external ID
+   * @param externalId External ID of the period
+   * @returns Observable of Review array with period information
+   */
+  getReviewsByPeriodExternalId(externalId: string): Observable<Review[]> {
+    return this.periodsService.getPeriodDetail(externalId).pipe(
+      tap(period => console.log('Periodo obtenido:', period)), // Para depuración
+      switchMap((period: Period) => {
+        if (!period) {
+          console.error('No se encontró el periodo con externalId:', externalId);
+          return of([]);
+        }
+        
+        // Usar el tourId del periodo para filtrar las reseñas si está disponible
+        const filter: ReviewFilter = {
+          externalId: externalId
+        };
+        
+        return this.getReviews(filter).pipe(
+          tap(reviews => console.log('Reseñas obtenidas:', reviews)), // Para depuración
+          map(reviews => {
+            // Enriquecer las reseñas con información del periodo
+            return reviews.map(review => ({
+              ...review,
+              tourName: period.tourName, // Usar directamente el nombre del tour del periodo
+              reviewDate: period.dayOne, // Usar directamente la fecha del periodo
+              // Mantener el nombre del viajero si existe
+              travelerName: review.travelerName || 'Viajero Anónimo'
+            }));
+          })
+        );
+      })
+    );
   }
 
   /**

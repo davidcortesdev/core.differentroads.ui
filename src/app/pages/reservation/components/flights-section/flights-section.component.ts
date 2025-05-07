@@ -55,6 +55,30 @@ export class FlightsSectionComponent {
 
     // Calculate stopover city if applicable
     let stopCity = hasStops ? segments[0].arrivalCity : '';
+    
+    // Check if arrival is next day
+    const departure = this.formatTime(firstSegment.departureTime);
+    const arrival = this.formatTime(lastSegment.arrivalTime);
+    const isNextDay = arrival < departure;
+    
+    // Format segments with next day indicator
+    const formattedSegments = segments.map((segment) => {
+      const segDeparture = this.formatTime(segment.departureTime);
+      const segArrival = this.formatTime(segment.arrivalTime);
+      const segIsNextDay = segArrival < segDeparture;
+      
+      return {
+        airline: segment.airline,
+        flightNumber: segment.flightNumber,
+        departureTime: segment.departureTime,
+        arrivalTime: segment.arrivalTime,
+        departureCity: segment.departureCity,
+        arrivalCity: segment.arrivalCity,
+        departureIata: segment.departureIata,
+        arrivalIata: segment.arrivalIata,
+        isNextDay: segIsNextDay
+      };
+    });
 
     return {
       departureTime: firstSegment.departureTime,
@@ -69,16 +93,8 @@ export class FlightsSectionComponent {
       hasStops,
       stops,
       stopCity,
-      segments: segments.map((segment) => ({
-        airline: segment.airline,
-        flightNumber: segment.flightNumber,
-        departureTime: segment.departureTime,
-        arrivalTime: segment.arrivalTime,
-        departureCity: segment.departureCity,
-        arrivalCity: segment.arrivalCity,
-        departureIata: segment.departureIata,
-        arrivalIata: segment.arrivalIata,
-      })),
+      isNextDay,
+      segments: formattedSegments,
     };
   }
 

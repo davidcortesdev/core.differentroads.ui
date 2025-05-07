@@ -262,3 +262,12 @@ $border: #f59188;
         }
     }
 }
+
+.next-day {
+    display: inline-block;
+    color: $coral;
+    font-size: 0.7em;
+    font-weight: bold;
+    vertical-align: super;
+    margin-left: 2px;
+}

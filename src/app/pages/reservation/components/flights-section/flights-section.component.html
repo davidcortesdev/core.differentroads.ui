@@ -3,101 +3,60 @@
     <div class="pan-hdr">Información de vuelos</div>
   </ng-template>
   <div class="flight-det">
-    <!-- Vuelo de ida -->
-    <div class="flight-info" *ngIf="formattedFlights.outbound">
-      <div class="flight-header">
-        <span class="flight-type">Vuelo de ida</span>
-        <span class="flight-date">{{ formattedFlights.outbound.date | date: 'dd/MM/yyyy' }}</span>
-      </div>
-      
-      <div class="flight-route">
-        <div class="departure">
-          <div class="time">{{ formattedFlights.outbound.departureTime }}</div>
-          <div class="airport">{{ formattedFlights.outbound.departureAirport }}</div>
+    <!-- Vuelos (ida y vuelta) -->
+    <ng-container *ngFor="let flight of [formattedFlights.outbound, formattedFlights.inbound]; let i = index">
+      <div class="flight-info" *ngIf="flight">
+        <div class="flight-header">
+          <span class="flight-type">{{ i === 0 ? 'Vuelo de ida' : 'Vuelo de vuelta' }}</span>
+          <span class="flight-date">{{ flight.date | date: 'dd/MM/yyyy' }}</span>
         </div>
         
-        <div class="flight-details">
-          <div class="duration">{{ formattedFlights.outbound.duration }}</div>
-          <div class="line"></div>
-          <div class="stops" *ngIf="formattedFlights.outbound.hasStops">
-            {{ formattedFlights.outbound.stops }} escala{{ formattedFlights.outbound.stops > 1 ? 's' : '' }} 
-            en {{ formattedFlights.outbound.stopCity }}
+        <div class="flight-route">
+          <div class="departure">
+            <div class="time">{{ flight.departureTime }}</div>
+            <div class="airport">{{ flight.departureAirport }}</div>
           </div>
-          <div class="direct" *ngIf="!formattedFlights.outbound.hasStops">Directo</div>
-        </div>
-        
-        <div class="arrival">
-          <div class="time">{{ formattedFlights.outbound.arrivalTime }}</div>
-          <div class="airport">{{ formattedFlights.outbound.arrivalAirport }}</div>
-        </div>
-      </div>
-      
-      <!-- Detalles de segmentos -->
-      <div class="segments" *ngIf="formattedFlights.outbound.segments.length > 0">
-        <div class="segment" *ngFor="let segment of formattedFlights.outbound.segments">
-          <div class="segment-header">
-            <span class="airline">{{ segment.airline }}</span>
-            <span class="flight-number">Vuelo {{ segment.flightNumber }}</span>
-          </div>
-          <div class="segment-route">
-            <div class="segment-departure">
-              {{ segment.departureTime }} - {{ segment.departureCity }} ({{ segment.departureIata }})
+          
+          <div class="flight-details">
+            <div class="duration">{{ flight.duration }}</div>
+            <div class="line"></div>
+            <div class="stops" *ngIf="flight.hasStops">
+              {{ flight.stops }} escala{{ flight.stops > 1 ? 's' : '' }} 
+              en {{ flight.stopCity }}
             </div>
-            <div class="segment-arrival">
-              {{ segment.arrivalTime }} - {{ segment.arrivalCity }} ({{ segment.arrivalIata }})
-            </div>
+            <div class="direct" *ngIf="!flight.hasStops">Directo</div>
           </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Vuelo de vuelta -->
-    <div class="flight-info" *ngIf="formattedFlights.inbound">
-      <div class="flight-header">
-        <span class="flight-type">Vuelo de vuelta</span>
-        <span class="flight-date">{{ formattedFlights.inbound.date | date: 'dd/MM/yyyy' }}</span>
-      </div>
-      
-      <div class="flight-route">
-        <div class="departure">
-          <div class="time">{{ formattedFlights.inbound.departureTime }}</div>
-          <div class="airport">{{ formattedFlights.inbound.departureAirport }}</div>
+          
+          <div class="arrival">
+            <div class="time">
+              {{ flight.arrivalTime }}
+              <span class="next-day" *ngIf="flight.isNextDay">+1</span>
+            </div>
+            <div class="airport">{{ flight.arrivalAirport }}</div>
+          </div>
         </div>
         
-        <div class="flight-details">
-          <div class="duration">{{ formattedFlights.inbound.duration }}</div>
-          <div class="line"></div>
-          <div class="stops" *ngIf="formattedFlights.inbound.hasStops">
-            {{ formattedFlights.inbound.stops }} escala{{ formattedFlights.inbound.stops > 1 ? 's' : '' }} 
-            en {{ formattedFlights.inbound.stopCity }}
-          </div>
-          <div class="direct" *ngIf="!formattedFlights.inbound.hasStops">Directo</div>
-        </div>
-        
-        <div class="arrival">
-          <div class="time">{{ formattedFlights.inbound.arrivalTime }}</div>
-          <div class="airport">{{ formattedFlights.inbound.arrivalAirport }}</div>
-        </div>
-      </div>
-      
-      <!-- Detalles de segmentos -->
-      <div class="segments" *ngIf="formattedFlights.inbound.segments.length > 0">
-        <div class="segment" *ngFor="let segment of formattedFlights.inbound.segments">
-          <div class="segment-header">
-            <span class="airline">{{ segment.airline }}</span>
-            <span class="flight-number">Vuelo {{ segment.flightNumber }}</span>
-          </div>
-          <div class="segment-route">
-            <div class="segment-departure">
-              {{ segment.departureTime }} - {{ segment.departureCity }} ({{ segment.departureIata }})
+        <!-- Detalles de segmentos (compactados) -->
+        <div class="segments" *ngIf="flight.segments.length > 0">
+          <div class="segment" *ngFor="let segment of flight.segments">
+            <div class="segment-header">
+              <span class="airline">{{ segment.airline }}</span>
+              <span class="flight-number">Vuelo {{ segment.flightNumber }}</span>
             </div>
-            <div class="segment-arrival">
-              {{ segment.arrivalTime }} - {{ segment.arrivalCity }} ({{ segment.arrivalIata }})
+            <div class="segment-route">
+              <div class="segment-departure">
+                {{ segment.departureTime }} - {{ segment.departureCity }} ({{ segment.departureIata }})
+              </div>
+              <div class="segment-arrival">
+                {{ segment.arrivalTime }}
+                <span class="next-day" *ngIf="segment.isNextDay">+1</span>
+                - {{ segment.arrivalCity }} ({{ segment.arrivalIata }})
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </ng-container>
     
     <!-- Mensaje si no hay vuelos -->
     <div class="no-flights" *ngIf="!formattedFlights.outbound && !formattedFlights.inbound">

@@ -1,185 +1,264 @@
-$azul: #002b57;
-$coral: #f05a4c;
-$border: #ea685c;
-
-// Variables para tamaños y espaciados
-$border-radius: 11.434px;
-$padding-container: 12px;
-$margin-bottom-standard: 15px;
-$font-size-small: 0.6rem;
-$font-size-normal: 0.9rem;
-$font-size-title: 1.1rem;
+$azul: var(--background-azul);
+$coral: #ea685c;
+$border: #f59188;
 
 :host {
-  display: block;
-  margin-bottom: 1.5rem;
-}
+    display: block;
+    margin-bottom: 1.5rem;
 
-.flights-container {
-  border: 2px solid $border;
-  padding: $padding-container;
-  border-radius: $border-radius;
-  margin-bottom: $margin-bottom-standard;
-  background-color: white;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-}
+    ::ng-deep {
+        .p-panel,
+        .flight-pan {
+            margin-bottom: 1.5rem;
+            border-radius: 11.434px;
+            overflow: hidden;
+            border: 2px solid $border;
+        }
 
-.flight-header {
-  padding: 0.5rem 0.5rem 0.5rem 0;
-  color: $azul;
-  font-weight: 600;
-  font-size: $font-size-title;
-}
+        .p-panel {
+            .p-panel-header,
+            .p-panel-content {
+                color: $azul;
+                background: white;
+                border: 0;
+                padding: 1rem;
+            }
 
-.flight-section {
-  margin-bottom: $margin-bottom-standard;
+            .pan-hdr {
+                font-weight: 600;
+                font-size: 1.1rem;
+            }
+        }
 
-  .section-title {
-    margin-bottom: 3px;
-
-    span {
-      color: $coral;
-      font-size: 16px;
-      font-weight: bold;
+        .flight-pan {
+            .flight-det {
+                .flight-info {
+                    margin-bottom: 1.5rem;
+                    padding-bottom: 1.5rem;
+                    border-bottom: 1px solid #e9ecef;
+                    
+                    &:last-child {
+                        margin-bottom: 0;
+                        padding-bottom: 0;
+                        border-bottom: none;
+                    }
+                }
+                
+                .flight-header {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 1rem;
+                    
+                    .flight-type {
+                        font-weight: 600;
+                        color: $azul;
+                    }
+                    
+                    .flight-date {
+                        color: #6c757d;
+                    }
+                }
+                
+                .flight-route {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 1rem;
+                    text-align: center;
+                    
+                    .departure, .arrival {
+                        flex: 1;
+                        
+                        .time {
+                            font-size: 1.5rem;
+                            font-weight: 600;
+                            color: $azul;
+                        }
+                        
+                        .airport {
+                            color: #6c757d;
+                            font-size: 0.9rem;
+                            margin-bottom: 0.5rem;
+                        }
+                    }
+                    
+                    .arrival {
+                        text-align: right;
+                    }
+                    
+                    .flight-details {
+                        flex: 2;
+                        text-align: center;
+                        position: relative;
+                        padding: 0 1rem;
+                        
+                        .duration {
+                            font-weight: 500;
+                            color: $azul;
+                            margin-bottom: 0.5rem;
+                        }
+                        
+                        .line {
+                            height: 2px;
+                            background-color: $border;
+                            position: relative;
+                            margin: 0.5rem 0;
+                            
+                            &:before, &:after {
+                                content: '';
+                                position: absolute;
+                                width: 8px;
+                                height: 8px;
+                                border-radius: 50%;
+                                background-color: $coral;
+                                top: -3px;
+                            }
+                            
+                            &:before {
+                                left: 0;
+                            }
+                            
+                            &:after {
+                                right: 0;
+                            }
+                        }
+                        
+                        .stops, .direct {
+                            font-size: 0.85rem;
+                            color: #6c757d;
+                            margin-top: 0.5rem;
+                        }
+                    }
+                }
+                
+                .segments {
+                    background-color: rgba($coral, 0.05);
+                    border-radius: 4px;
+                    padding: 1rem;
+                    margin-top: 1rem;
+                    text-align: center;
+                    
+                    .segment {
+                        margin-bottom: 1rem;
+                        padding-bottom: 1rem;
+                        border-bottom: 1px dashed $border;
+                        
+                        &:last-child {
+                            margin-bottom: 0;
+                            padding-bottom: 0;
+                            border-bottom: none;
+                        }
+                        
+                        .segment-header {
+                            display: flex;
+                            justify-content: space-between;
+                            margin-bottom: 0.5rem;
+                            
+                            .airline {
+                                font-weight: 500;
+                                color: $azul;
+                            }
+                            
+                            .flight-number {
+                                color: #6c757d;
+                                font-size: 0.9rem;
+                            }
+                        }
+                        
+                        .segment-route {
+                            display: flex;
+                            justify-content: space-between;
+                            font-size: 0.9rem;
+                            color: #6c757d;
+                            
+                            .segment-departure, .segment-arrival {
+                                flex: 1;
+                            }
+                            
+                            .segment-arrival {
+                                text-align: right;
+                            }
+                        }
+                    }
+                }
+                
+                .no-flights {
+                    text-align: center;
+                    padding: 2rem;
+                    color: #6c757d;
+                    font-style: italic;
+                    font-size: 0.9rem;
+                }
+            }
+        }
     }
-  }
 }
 
-.flight-info {
-  margin-bottom: 10px;
-}
-
-.flight-route {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1px;
-}
-
-.flight-column {
-  flex: 1;
-  min-width: 0;
-
-  &.origin {
-    padding-right: 10px;
-  }
-
-  &.destination {
-    padding-left: 10px;
-    text-align: right;
-  }
-
-  .time-date {
-    color: $azul;
-    font-size: $font-size-normal;
-    white-space: nowrap;
-
-    span {
-      color: $azul;
-      font-size: $font-size-normal;
+@media (max-width: 1024px) {
+    :host {
+        ::ng-deep {
+            .flight-pan {
+                .flight-route {
+                    gap: 1.5rem;
+                }
+            }
+        }
     }
-  }
-
-  .airport {
-    color: $azul;
-    font-size: $font-size-normal;
-    margin-top: 0.5px;
-  }
-}
-
-.flight-duration-container {
-  width: 280px;
-  min-width: 280px;
-  position: relative;
-  text-align: center;
-  margin: 0 10px;
-
-  .duration {
-    color: $azul;
-    font-size: $font-size-small;
-    margin-bottom: 3px;
-  }
-
-  .flight-line {
-    position: relative;
-    height: 6px;
-    display: flex;
-    align-items: center;
-
-    .dot {
-      width: 6px;
-      height: 6px;
-      background-color: $coral;
-      border-radius: 50%;
-
-      &.left {
-        margin-right: -3px;
-      }
-
-      &.right {
-        margin-left: -3px;
-      }
-    }
-
-    .line {
-      flex: 1;
-      height: 2px;
-      background-color: $coral;
-    }
-  }
-
-  .flight-type {
-    color: $coral;
-    font-size: $font-size-small;
-    margin-top: 3px;
-  }
-}
-
-.flight-details {
-  margin-top: 4px;
-  font-size: $font-size-small;
-  color: $azul;
-  line-height: 1.4;
-  text-align: center;
-  padding: 0 20px;
-
-  .flight-segment {
-    margin-bottom: 2px;
-    font-size: $font-size-small;
-  }
-}
-
-.no-flights {
-  text-align: center;
-  padding: 20px;
-
-  p {
-    color: $azul;
-    font-size: 0.7rem;
-  }
 }
 
 @media (max-width: 768px) {
-  .flight-route {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
+    :host {
+        ::ng-deep {
+            .flight-pan {
+                font-size: 12px;
 
-  .flight-column {
-    &.origin,
-    &.destination {
-      width: 100%;
-      padding: 0;
+                .flight-det {
+                    .flight-route {
+                        flex-direction: column;
+                        gap: 0.5rem;
+                        margin-bottom: 1rem;
+
+                        .departure, .arrival {
+                            padding: 0.25rem 0;
+                            text-align: center;
+
+                            .time {
+                                font-size: 1.3rem;
+                            }
+
+                            .airport {
+                                margin-bottom: 0.25rem;
+                            }
+                        }
+
+                        .arrival {
+                            text-align: center;
+                        }
+                    }
+
+                    .flight-details {
+                        margin-bottom: 0.5rem;
+
+                        .duration, .stops, .direct {
+                            margin-bottom: 0.25rem;
+                        }
+                    }
+                }
+            }
+        }
     }
+}
 
-    &.destination {
-      text-align: left;
+@media (max-width: 480px) {
+    :host {
+        ::ng-deep {
+            .flight-pan {
+                .segments {
+                    padding: 0.5rem;
+                    font-size: 0.85rem;
+                    line-height: 1.2;
+                }
+            }
+        }
     }
-  }
-
-  .flight-duration-container {
-    width: 100%;
-    margin: 0;
-  }
 }

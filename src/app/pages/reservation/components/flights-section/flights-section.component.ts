@@ -152,9 +152,9 @@ export class FlightsSectionComponent implements OnChanges {
    * Obtiene los nombres de las aerolíneas a partir de los números de vuelo
    * Implementa memoización para evitar cálculos repetidos
    */
-  getAirlineNamesByFlightNumbers(flightNumbers: string[]): string {
+  getAirlineNamesByFlightNumbers(flightNumbers: string[]): Observable<string> {
     if (!flightNumbers || flightNumbers.length === 0) {
-      return '';
+      return of('');
     }
 
     // Crear una clave única para este conjunto de números de vuelo
@@ -162,7 +162,7 @@ export class FlightsSectionComponent implements OnChanges {
     
     // Verificar si ya tenemos el resultado en caché
     if (this._flightNumbersCache[cacheKey]) {
-      return this._flightNumbersCache[cacheKey];
+      return of(this._flightNumbersCache[cacheKey]);
     }
     
     // Extraer prefijos IATA únicos de los números de vuelo
@@ -180,7 +180,7 @@ export class FlightsSectionComponent implements OnChanges {
 
     // Si no hay prefijos válidos, devolver cadena vacía
     if (uniquePrefixesIATA.length === 0) {
-      return '';
+      return of('');
     }
 
     // Verificar si tenemos todos los prefijos en caché
@@ -190,7 +190,9 @@ export class FlightsSectionComponent implements OnChanges {
 
     // Si tenemos todos los prefijos en caché, devolver los nombres
     if (cachedNames.length === uniquePrefixesIATA.length) {
-      return cachedNames.join(', ');
+      const result = cachedNames.join(', ');
+      this._flightNumbersCache[cacheKey] = result;
+      return of(result);
     }
 
     // Prefijos que necesitamos cargar
@@ -229,24 +231,34 @@ export class FlightsSectionComponent implements OnChanges {
       return request;
     });
 
-    // Si hay solicitudes para cargar, hacerlas en paralelo
+    // Si hay solicitudes para cargar, hacerlas en paralelo y devolver el resultado
     if (requests.length > 0) {
-      forkJoin(requests).subscribe(() => {
-        // Limpiar las solicitudes pendientes
-        prefixesToLoad.forEach((prefix) => {
-          delete this.pendingRequests[prefix];
-        });
-      });
+      return forkJoin(requests).pipe(
+        map(() => {
+          // Limpiar las solicitudes pendientes
+          prefixesToLoad.forEach((prefix) => {
+            delete this.pendingRequests[prefix];
+          });
+          
+          // Construir el resultado final
+          const result = uniquePrefixesIATA
+            .map((prefix) => this.airlineCache[prefix] || prefix)
+            .join(', ');
+            
+          // Guardar en caché
+          this._flightNumbersCache[cacheKey] = result;
+          return result;
+        })
+      );
     }
 
-    // Devolver los nombres que tenemos en caché y los prefijos para los que no tenemos nombres
-    // Almacenar el resultado en caché antes de devolverlo
+    // Si no hay solicitudes, devolver lo que tenemos
     const result = uniquePrefixesIATA
       .map((prefix) => this.airlineCache[prefix] || prefix)
       .join(', ');
       
     this._flightNumbersCache[cacheKey] = result;
-    return result;
+    return of(result);
   }
   
   // Caché para resultados de getAirlineNamesByFlightNumbers

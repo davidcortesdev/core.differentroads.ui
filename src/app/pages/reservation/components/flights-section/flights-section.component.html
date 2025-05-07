@@ -43,7 +43,7 @@
                 <div class="segment-airline">
                   <img *ngIf="segment.flightNumber" [src]="getAirlineLogoUrl(segment.flightNumber)" 
                        class="airline-logo" alt="Logo aerolínea" loading="lazy">
-                  {{ getAirlineNamesByFlightNumbers([segment.flightNumber]) }} {{ segment.flightNumber }}
+                  {{ getAirlineNamesByFlightNumbers([segment.flightNumber]) | async }} {{ segment.flightNumber }}
                 </div>
                 <div class="segment-times">
                   {{ segment.departureTime }} {{ segment.departureIata }} → 

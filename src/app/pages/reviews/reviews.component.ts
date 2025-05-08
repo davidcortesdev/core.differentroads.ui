@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core'; // Asegúrate de importar ViewChild y ElementRef
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ReviewsService } from '../../core/services/reviews.service';
 import { PeriodsService } from '../../core/services/periods.service';
@@ -6,18 +6,35 @@ import { DatePipe } from '@angular/common';
 import { TourFilter, TourNetService } from '../../core/services/tourNet.service';
 import { switchMap, take, of } from 'rxjs';
 
-type RatingCategory = 'tour' | 'destinos' | 'calidadPrecio' | 'actividades' | 'guias' | 'alojamientos';
+// Definición de la nueva estructura para el payload de la reseña
+interface ReviewPayload {
+  text: string;
+  accommodationRating: number;
+  activitiesRating: number;
+  destinationRating: number;
+  guideRating: number;
+  priceQualityRating: number;
+  showOnHomePage: boolean;
+  showOnTourPage: boolean;
+  tourId: number;
+  travelerId: number;
+  departureId: number;
+  externalId: string;
+  status: number;
+  reviewDate: string;
+}
+
+// Actualización de las categorías de calificación
+type RatingCategory = 'accommodationRating' | 'activitiesRating' | 'destinationRating' | 'guideRating' | 'priceQualityRating';
 
 interface TripInfo {
   title: string;
   date: string;
-  tourId?: string; // Añadimos el tourId para guardarlo
+  tourId?: string;
 }
 
-// Define the Period interface to match what the service returns
 interface Period {
   tourExternalID?: string;
-  // Add other properties as needed
 }
 
 @Component({
@@ -27,24 +44,17 @@ interface Period {
   styleUrl: './reviews.component.scss',
 })
 export class ReviewsComponent implements OnInit {
-  // ViewChild para acceder a los inputs del template
   @ViewChild('nombreInput') nombreInputRef!: ElementRef<HTMLInputElement>;
   @ViewChild('emailInput') emailInputRef!: ElementRef<HTMLInputElement>;
-  @ViewChild('comentarioInput') comentarioInputRef!: ElementRef<HTMLTextAreaElement>; // Asumiendo que tienes #comentarioInput en tu textarea
+  @ViewChild('comentarioInput') comentarioInputRef!: ElementRef<HTMLTextAreaElement>; 
 
-  // Estas propiedades ya no se vinculan automáticamente con [(ngModel)]
-  // Se llenarán manualmente en submitReview o puedes eliminarlas si no las usas en otro lugar.
-  // nombre: string = ''; // Puedes mantenerlas o quitarlas
-  // email: string = '';
-  // comentario: string = ''; 
-  
-  ratings = {
-    tour: 0,
-    destinos: 0,
-    calidadPrecio: 0,
-    actividades: 0,
-    guias: 0,
-    alojamientos: 0
+  // Actualización del objeto ratings para coincidir con la nueva estructura y RatingCategory
+  ratings: { [key in RatingCategory]: number } = {
+    accommodationRating: 0,
+    activitiesRating: 0,
+    destinationRating: 0,
+    guideRating: 0,
+    priceQualityRating: 0
   };
 
   tripInfo: TripInfo = {
@@ -72,7 +82,6 @@ export class ReviewsComponent implements OnInit {
     });
   }
 
-  // Método para cargar la información del viaje desde el periodo
   loadTripInfoFromPeriod(externalId: string): void {
     this.periodsService.getPeriodNameAndDepartureDate(externalId).subscribe({
       next: (info) => {
@@ -81,7 +90,6 @@ export class ReviewsComponent implements OnInit {
           date: info.dayOne || 'Fecha no disponible'
         };
         
-        // Formatear la fecha usando DatePipe
         if (this.tripInfo.date && this.tripInfo.date !== 'Fecha no disponible') {
           this.formattedDate = this.datePipe.transform(this.tripInfo.date, 'dd/MM/yyyy') || 'dd/MM/yyyy';
         } else {
@@ -96,40 +104,28 @@ export class ReviewsComponent implements OnInit {
     });
   }
 
-  // Método para obtener el tourId a partir del externalId
   getTourIdFromExternalId(externalId: string): void {
-    // Usamos el método que sí existe en el servicio
     this.periodsService.getPeriodNameAndDepartureDate(externalId).pipe(
       take(1),
       switchMap(periodInfo => {
-        // Verificamos si hay algún identificador del tour en la respuesta
-        // Si no existe, podemos intentar obtenerlo de otra manera
-        
-        // Podemos intentar obtener el tour por el nombre del tour
-        if (!periodInfo.tourName) {
-          console.error('No se pudo obtener el nombre del tour');
+        if (!periodInfo.tourId) {
+          console.error('No se pudo obtener el tourId');
           return of(null);
         }
-        
-        // Usamos el nombre del tour para buscar el tour
-        const filter: TourFilter = {
-          name: periodInfo.tourName
-        };
-        
-        return this.tourNetService.getTours(filter).pipe(
-          take(1),
-          switchMap(tours => {
-            if (!tours || tours.length === 0) {
-              console.error('No se encontró el tour con el nombre:', periodInfo.tourName);
-              return of(null);
-            }
-            
-            // Guardamos el tourId en tripInfo, asegurándonos de que sea string
-            this.tripInfo.tourId = tours[0].id.toString();
-            console.log('Tour ID obtenido:', this.tripInfo.tourId);
-            return of(tours[0].id.toString());
-          })
-        );
+        this.tripInfo.tourId = periodInfo.tourId.toString();
+        console.log('Tour ID obtenido:', this.tripInfo.tourId);
+  
+        // Llamada a getDepartures usando el tourId obtenido y mostrar el resultado en consola
+        this.periodsService.getDepartures(this.tripInfo.tourId).subscribe({
+          next: (departures) => {
+            console.log('Departures obtenidos:', departures);
+          },
+          error: (error) => {
+            console.error('Error en getDepartures:', error);
+          }
+        });
+  
+        return of(this.tripInfo.tourId);
       })
     ).subscribe({
       error: (error: any) => {
@@ -138,7 +134,6 @@ export class ReviewsComponent implements OnInit {
     });
   }
 
-  // Método para establecer información de error
   private setErrorTripInfo(): void {
     this.tripInfo = {
       title: 'Error al cargar el título',
@@ -146,7 +141,6 @@ export class ReviewsComponent implements OnInit {
     };
   }
 
-  // Método para obtener la información del título y la fecha
   getTripInfo(): TripInfo {
     return this.tripInfo;
   }
@@ -164,44 +158,53 @@ export class ReviewsComponent implements OnInit {
   }
 
   isHalfStar(tipo: RatingCategory, index: number): boolean {
-    return false; // Ya no usamos medias estrellas
+    return false;
   }
 
   submitReview(): void {
-    // Obtener los valores directamente de los elementos del DOM
     const nombreValue = this.nombreInputRef.nativeElement.value;
     const emailValue = this.emailInputRef.nativeElement.value;
     const comentarioValue = this.comentarioInputRef.nativeElement.value;
 
-    // Validación básica (puedes mejorarla)
     if (!nombreValue || !emailValue || !comentarioValue) {
       alert('Por favor, completa todos los campos: Nombre, Email y Comentario.');
       return;
     }
+    // Validar que todas las nuevas categorías de rating han sido valoradas
     if (Object.values(this.ratings).some(rating => rating === 0)) {
         alert('Por favor, valora todas las categorías con estrellas.');
         return;
     }
 
-    const review = {
-      nombre: nombreValue,
-      email: emailValue,
-      comentario: comentarioValue,
-      ratings: this.ratings,
-      tripInfo: this.tripInfo // Asegúrate que tripInfo tenga el tourId si es necesario
+    // Construir el payload de la reseña según la nueva estructura
+    const reviewPayload: ReviewPayload = {
+      text: comentarioValue,
+      accommodationRating: this.ratings.accommodationRating,
+      activitiesRating: this.ratings.activitiesRating,
+      destinationRating: this.ratings.destinationRating,
+      guideRating: this.ratings.guideRating,
+      priceQualityRating: this.ratings.priceQualityRating,
+      showOnHomePage: true, // Valor por defecto o tomar de un nuevo control de formulario
+      showOnTourPage: true,  // Valor por defecto o tomar de un nuevo control de formulario
+      tourId: this.tripInfo.tourId ? parseInt(this.tripInfo.tourId, 10) : 0, // Asegurar que tourId es un número
+      travelerId: 0, // Placeholder, considerar cómo obtener este ID (ej: servicio de autenticación, o derivado de nombre/email)
+      departureId: 0, // Placeholder, similar a travelerId, this.periodExternalId se usa para externalId
+      externalId: this.periodExternalId,
+      status: 0, // Valor por defecto para el estado (ej: pendiente de aprobación)
+      reviewDate: new Date().toISOString()
     };
 
-    console.log('Enviando reseña:', review); // Para depuración
+    console.log('Enviando reseña (nueva estructura):', reviewPayload); 
 
-    this.reviewsService.saveReview(review).subscribe({
+    this.reviewsService.saveReview(reviewPayload).subscribe({
       next: (resp) => {
         alert('¡Opinión enviada con éxito!');
-        // Opcional: Limpiar los campos después de enviar
         this.nombreInputRef.nativeElement.value = '';
         this.emailInputRef.nativeElement.value = '';
         this.comentarioInputRef.nativeElement.value = '';
-        Object.keys(this.ratings).forEach(key => {
-            this.ratings[key as RatingCategory] = 0;
+        // Resetear los ratings a 0 usando las nuevas claves
+        (Object.keys(this.ratings) as RatingCategory[]).forEach(key => {
+            this.ratings[key] = 0;
         });
       },
       error: (err: any) => {

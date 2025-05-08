@@ -46,6 +46,7 @@
 
   <div class="stars-container">
     <div class="stars-row">
+      <!--
       <div class="star-item">
         <p class="review-label"><i class="pi pi-map p-mr-1"></i> Tour<span>*</span></p>
         <div class="stars">
@@ -81,75 +82,77 @@
           </span>
         </div>
       </div>
+      -->
 
       <div class="star-item">
         <p class="review-label"><i class="pi pi-map-marker p-mr-1"></i> Destinos<span>*</span></p>
         <div class="stars">
-          <span class="star-wrapper" (click)="setRating('destinos', 1)">
+          <span class="star-wrapper" (click)="setRating('destinationRating', 1)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('destinos', 1)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('destinationRating', 1)" aria-hidden="true"></i>
             <i class="pi pi-star" 
-              [class.active]="isFullStar('destinos', 1)" aria-hidden="true"></i>
+              [class.active]="isFullStar('destinationRating', 1)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('destinos', 2)">
+          <span class="star-wrapper" (click)="setRating('destinationRating', 2)">
             <i class="pi pi-star"
-              [class.active]="isHalfStar('destinos', 2)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('destinationRating', 2)" aria-hidden="true"></i>
             <i class="pi pi-star"
-              [class.active]="isFullStar('destinos', 2)" aria-hidden="true"></i>
+              [class.active]="isFullStar('destinationRating', 2)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('destinos', 3)">
+          <span class="star-wrapper" (click)="setRating('destinationRating', 3)">
             <i class="pi pi-star"
-              [class.active]="isHalfStar('destinos', 3)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('destinationRating', 3)" aria-hidden="true"></i>
             <i class="pi pi-star"
-              [class.active]="isFullStar('destinos', 3)" aria-hidden="true"></i>
+              [class.active]="isFullStar('destinationRating', 3)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('destinos', 4)">
+          <span class="star-wrapper" (click)="setRating('destinationRating', 4)">
             <i class="pi pi-star"
-              [class.active]="isHalfStar('destinos', 4)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('destinationRating', 4)" aria-hidden="true"></i>
             <i class="pi pi-star"
-              [class.active]="isFullStar('destinos', 4)" aria-hidden="true"></i>
+              [class.active]="isFullStar('destinationRating', 4)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('destinos', 5)">
+          <span class="star-wrapper" (click)="setRating('destinationRating', 5)">
             <i class="pi pi-star"
-              [class.active]="isHalfStar('destinos', 5)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('destinationRating', 5)" aria-hidden="true"></i>
             <i class="pi pi-star"
-              [class.active]="isFullStar('destinos', 5)" aria-hidden="true"></i>
+              [class.active]="isFullStar('destinationRating', 5)" aria-hidden="true"></i>
           </span>
         </div>
       </div>
+      
 
       <div class="star-item">
         <p class="review-label"><i class="pi pi-euro p-mr-1"></i> Calidad-precio<span>*</span></p>
         <div class="stars">
-          <span class="star-wrapper" (click)="setRating('calidadPrecio', 1)">
+          <span class="star-wrapper" (click)="setRating('priceQualityRating', 1)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('calidadPrecio', 1)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('priceQualityRating', 1)" aria-hidden="true"></i>
             <i class="pi pi-star" 
-              [class.active]="isFullStar('calidadPrecio', 1)" aria-hidden="true"></i>
+              [class.active]="isFullStar('priceQualityRating', 1)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('calidadPrecio', 2)">
+          <span class="star-wrapper" (click)="setRating('priceQualityRating', 2)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('calidadPrecio', 2)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('priceQualityRating', 2)" aria-hidden="true"></i>
             <i class="pi pi-star" 
-              [class.active]="isFullStar('calidadPrecio', 2)" aria-hidden="true"></i>
+              [class.active]="isFullStar('priceQualityRating', 2)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('calidadPrecio', 3)">
+          <span class="star-wrapper" (click)="setRating('priceQualityRating', 3)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('calidadPrecio', 3)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('priceQualityRating', 3)" aria-hidden="true"></i>
             <i class="pi pi-star" 
-              [class.active]="isFullStar('calidadPrecio', 3)" aria-hidden="true"></i>
+              [class.active]="isFullStar('priceQualityRating', 3)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('calidadPrecio', 4)">
+          <span class="star-wrapper" (click)="setRating('priceQualityRating', 4)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('calidadPrecio', 4)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('priceQualityRating', 4)" aria-hidden="true"></i>
             <i class="pi pi-star"
-              [class.active]="isFullStar('calidadPrecio', 4)" aria-hidden="true"></i>
+              [class.active]="isFullStar('priceQualityRating', 4)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('calidadPrecio', 5)">
+          <span class="star-wrapper" (click)="setRating('priceQualityRating', 5)">
             <i class="pi pi-star"
-              [class.active]="isHalfStar('calidadPrecio', 5)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('priceQualityRating', 5)" aria-hidden="true"></i>
             <i class="pi pi-star" 
-              [class.active]="isFullStar('calidadPrecio', 5)" aria-hidden="true"></i>
+              [class.active]="isFullStar('priceQualityRating', 5)" aria-hidden="true"></i>
           </span>
         </div>
       </div>
@@ -160,35 +163,35 @@
       <div class="star-item">
         <p class="review-label"><i class="pi pi-flag p-mr-1"></i> Actividades<span>*</span></p>
         <div class="stars">
-          <span class="star-wrapper" (click)="setRating('actividades', 1)">
+          <span class="star-wrapper" (click)="setRating('activitiesRating', 1)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('actividades', 1)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('activitiesRating', 1)" aria-hidden="true"></i>
             <i class="pi pi-star" 
-              [class.active]="isFullStar('actividades', 1)" aria-hidden="true"></i>
+              [class.active]="isFullStar('activitiesRating', 1)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('actividades', 2)">
+          <span class="star-wrapper" (click)="setRating('activitiesRating', 2)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('actividades', 2)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('activitiesRating', 2)" aria-hidden="true"></i>
             <i class="pi pi-star" 
-              [class.active]="isFullStar('actividades', 2)" aria-hidden="true"></i>
+              [class.active]="isFullStar('activitiesRating', 2)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('actividades', 3)">
+          <span class="star-wrapper" (click)="setRating('activitiesRating', 3)">
             <i class="pi pi-star"
-              [class.active]="isHalfStar('actividades', 3)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('activitiesRating', 3)" aria-hidden="true"></i>
             <i class="pi pi-star"
-              [class.active]="isFullStar('actividades', 3)" aria-hidden="true"></i>
+              [class.active]="isFullStar('activitiesRating', 3)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('actividades', 4)">
+          <span class="star-wrapper" (click)="setRating('activitiesRating', 4)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('actividades', 4)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('activitiesRating', 4)" aria-hidden="true"></i>
             <i class="pi pi-star"
-              [class.active]="isFullStar('actividades', 4)" aria-hidden="true"></i>
+              [class.active]="isFullStar('activitiesRating', 4)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('actividades', 5)">
+          <span class="star-wrapper" (click)="setRating('activitiesRating', 5)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('actividades', 5)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('activitiesRating', 5)" aria-hidden="true"></i>
             <i class="pi pi-star"
-              [class.active]="isFullStar('actividades', 5)" aria-hidden="true"></i>
+              [class.active]="isFullStar('activitiesRating', 5)" aria-hidden="true"></i>
           </span>
         </div>
       </div>
@@ -196,35 +199,35 @@
       <div class="star-item">
         <p class="review-label"><i class="pi pi-user p-mr-1"></i> Guía<span>*</span></p>
         <div class="stars">
-          <span class="star-wrapper" (click)="setRating('guias', 1)">
+          <span class="star-wrapper" (click)="setRating('guideRating', 1)">
             <i class="pi pi-star"
-              [class.active]="isHalfStar('guias', 1)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('guideRating', 1)" aria-hidden="true"></i>
             <i class="pi pi-star" 
-              [class.active]="isFullStar('guias', 1)" aria-hidden="true"></i>
+              [class.active]="isFullStar('guideRating', 1)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('guias', 2)">
+          <span class="star-wrapper" (click)="setRating('guideRating', 2)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('guias', 2)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('guideRating', 2)" aria-hidden="true"></i>
             <i class="pi pi-star" 
-              [class.active]="isFullStar('guias', 2)" aria-hidden="true"></i>
+              [class.active]="isFullStar('guideRating', 2)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('guias', 3)">
+          <span class="star-wrapper" (click)="setRating('guideRating', 3)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('guias', 3)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('guideRating', 3)" aria-hidden="true"></i>
             <i class="pi pi-star" 
-              [class.active]="isFullStar('guias', 3)" aria-hidden="true"></i>
+              [class.active]="isFullStar('guideRating', 3)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('guias', 4)">
+          <span class="star-wrapper" (click)="setRating('guideRating', 4)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('guias', 4)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('guideRating', 4)" aria-hidden="true"></i>
             <i class="pi pi-star" 
-              [class.active]="isFullStar('guias', 4)" aria-hidden="true"></i>
+              [class.active]="isFullStar('guideRating', 4)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('guias', 5)">
+          <span class="star-wrapper" (click)="setRating('guideRating', 5)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('guias', 5)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('guideRating', 5)" aria-hidden="true"></i>
             <i class="pi pi-star" 
-              [class.active]="isFullStar('guias', 5)" aria-hidden="true"></i>
+              [class.active]="isFullStar('guideRating', 5)" aria-hidden="true"></i>
           </span>
         </div>
       </div>
@@ -232,35 +235,35 @@
       <div class="star-item">
         <p class="review-label"><i class="pi pi-home p-mr-1"></i> Alojamientos<span>*</span></p>
         <div class="stars">
-          <span class="star-wrapper" (click)="setRating('alojamientos', 1)">
+          <span class="star-wrapper" (click)="setRating('accommodationRating', 1)">
             <i class="pi pi-star"
-              [class.active]="isHalfStar('alojamientos', 1)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('accommodationRating', 1)" aria-hidden="true"></i>
             <i class="pi pi-star"
-              [class.active]="isFullStar('alojamientos', 1)" aria-hidden="true"></i>
+              [class.active]="isFullStar('accommodationRating', 1)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('alojamientos', 2)">
+          <span class="star-wrapper" (click)="setRating('accommodationRating', 2)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('alojamientos', 2)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('accommodationRating', 2)" aria-hidden="true"></i>
             <i class="pi pi-star" 
-              [class.active]="isFullStar('alojamientos', 2)" aria-hidden="true"></i>
+              [class.active]="isFullStar('accommodationRating', 2)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('alojamientos', 3)">
+          <span class="star-wrapper" (click)="setRating('accommodationRating', 3)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('alojamientos', 3)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('accommodationRating', 3)" aria-hidden="true"></i>
             <i class="pi pi-star" 
-              [class.active]="isFullStar('alojamientos', 3)" aria-hidden="true"></i>
+              [class.active]="isFullStar('accommodationRating', 3)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('alojamientos', 4)">
+          <span class="star-wrapper" (click)="setRating('accommodationRating', 4)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('alojamientos', 4)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('accommodationRating', 4)" aria-hidden="true"></i>
             <i class="pi pi-star" 
-              [class.active]="isFullStar('alojamientos', 4)" aria-hidden="true"></i>
+              [class.active]="isFullStar('accommodationRating', 4)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('alojamientos', 5)">
+          <span class="star-wrapper" (click)="setRating('accommodationRating', 5)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('alojamientos', 5)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('accommodationRating', 5)" aria-hidden="true"></i>
             <i class="pi pi-star"
-              [class.active]="isFullStar('alojamientos', 5)" aria-hidden="true"></i>
+              [class.active]="isFullStar('accommodationRating', 5)" aria-hidden="true"></i>
           </span>
         </div>
       </div>

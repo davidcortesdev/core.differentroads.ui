@@ -123,12 +123,18 @@ export class PeriodsService {
    * @param externalId - El ID externo del periodo.
    * @returns Observable con un objeto { name, dayOne }
    */
-  getPeriodNameAndDepartureDate(externalId: string): Observable<{ tourName: string; dayOne: string }> {
-    return this.getPeriodDetail(externalId, ['tourName', 'dayOne']).pipe(
+  getPeriodNameAndDepartureDate(externalId: string): Observable<{ tourName: string; dayOne: string; tourId?: string }> {
+    return this.getPeriodDetail(externalId, ['tourName', 'dayOne', 'tourID']).pipe(
       map((period: Period) => ({
         tourName: period.tourName,
-        dayOne: period.dayOne
+        dayOne: period.dayOne,
+        tourId: period.tourID // Asegúrate que este campo existe en el modelo y la respuesta del backend
       }))
     );
+  }
+
+  getDepartures(tourId: string) {
+
+    return this.http.get<any[]>(`/api/departures/by-tour/${tourId}`);
   }
 }

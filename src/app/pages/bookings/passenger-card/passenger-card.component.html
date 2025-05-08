@@ -20,19 +20,28 @@
       </div>
       <div class="detail-row">
         <span class="detail-label">Teléfono:</span>
-        <span class="detail-value" [ngClass]="{'pending-value': !passenger.phone}">{{passenger.phone || 'Pendiente'}}</span>
+        <span class="detail-value" *ngIf="passenger.phone">{{passenger.phone}}</span>
+        <span class="detail-value" *ngIf="!passenger.phone">
+          <i class="pi pi-info-circle" pTooltip="Este dato no es obligatorio para realizar la reserva"></i>
+        </span>
       </div>
 
       <div class="detail-row">
         <span class="detail-label">Email:</span>
-        <span class="detail-value" [ngClass]="{'pending-value': !passenger.email}">{{passenger.email || 'Pendiente'}}</span>
+        <span class="detail-value" *ngIf="passenger.email">{{passenger.email}}</span>
+        <span class="detail-value" *ngIf="!passenger.email">
+          <i class="pi pi-info-circle" pTooltip="Este dato no es obligatorio para realizar la reserva"></i>
+        </span>
       </div>
       <p-divider></p-divider>
 
       <div class="detail-row">
         <span class="detail-label">Sexo:</span>
-        <span class="detail-value" [ngClass]="{'pending-value': !passenger.gender}">
+        <span class="detail-value" *ngIf="passenger.gender">
           {{ getGenderLabel(passenger.gender) }}
+        </span>
+        <span class="detail-value" *ngIf="!passenger.gender">
+          <i class="pi pi-info-circle" pTooltip="Este dato no es obligatorio para realizar la reserva"></i>
         </span>
       </div>
 
@@ -45,12 +54,18 @@
 
       <div class="detail-row">
         <span class="detail-label">Ciudad:</span>
-        <span class="detail-value" [ngClass]="{'pending-value': !passenger.ciudad}">{{passenger.ciudad || 'Pendiente'}}</span>
+        <span class="detail-value" *ngIf="passenger.ciudad">{{passenger.ciudad}}</span>
+        <span class="detail-value" *ngIf="!passenger.ciudad">
+          <i class="pi pi-info-circle" pTooltip="Este dato no es obligatorio para realizar la reserva"></i>
+        </span>
       </div>
 
       <div class="detail-row">
         <span class="detail-label">Código postal:</span>
-        <span class="detail-value" [ngClass]="{'pending-value': !passenger.codigoPostal}">{{passenger.codigoPostal || 'Pendiente'}}</span>
+        <span class="detail-value" *ngIf="passenger.codigoPostal">{{passenger.codigoPostal}}</span>
+        <span class="detail-value" *ngIf="!passenger.codigoPostal">
+          <i class="pi pi-info-circle" pTooltip="Este dato no es obligatorio para realizar la reserva"></i>
+        </span>
       </div>
 
       <div class="detail-row">
@@ -62,27 +77,39 @@
 
       <div class="detail-row">
         <span class="detail-label">DNI:</span>
-        <span class="detail-value" [ngClass]="{'pending-value': !passenger.dni}">{{passenger.dni || 'Pendiente'}}</span>
+        <span class="detail-value" *ngIf="passenger.dni">{{passenger.dni}}</span>
+        <span class="detail-value" *ngIf="!passenger.dni">
+          <i class="pi pi-info-circle" pTooltip="Este dato no es obligatorio para realizar la reserva"></i>
+        </span>
       </div>
 
       <div class="detail-row">
         <span class="detail-label">Fecha de expedición DNI:</span>
-        <span class="detail-value" [ngClass]="{'pending-value': !passenger.minorIdIssueDate}">
-          {{passenger.minorIdIssueDate? formatDate(passenger.minorIdIssueDate|| '') : 'Pendiente'}}
+        <span class="detail-value" *ngIf="passenger.minorIdIssueDate">
+          {{formatDate(passenger.minorIdIssueDate|| '')}}
+        </span>
+        <span class="detail-value" *ngIf="!passenger.minorIdIssueDate">
+          <i class="pi pi-info-circle" pTooltip="Este dato no es obligatorio para realizar la reserva"></i>
         </span>
       </div>
       
       <div class="detail-row">
         <span class="detail-label">Fecha de caducidad DNI:</span>
-        <span class="detail-value" [ngClass]="{'pending-value': !passenger.minorIdExpirationDate}">
-          {{passenger.minorIdExpirationDate? formatDate(passenger.minorIdExpirationDate|| '') : 'Pendiente'}}
+        <span class="detail-value" *ngIf="passenger.minorIdExpirationDate">
+          {{formatDate(passenger.minorIdExpirationDate|| '')}}
+        </span>
+        <span class="detail-value" *ngIf="!passenger.minorIdExpirationDate">
+          <i class="pi pi-info-circle" pTooltip="Este dato no es obligatorio para realizar la reserva"></i>
         </span>
       </div>
       <p-divider></p-divider>
 
       <div class="detail-row">
         <span class="detail-label">Pasaporte:</span>
-        <span class="detail-value" [ngClass]="{'pending-value': !passenger.passportID}">{{passenger.passportID || 'Pendiente'}}</span>
+        <span class="detail-value" *ngIf="passenger.passportID">{{passenger.passportID}}</span>
+        <span class="detail-value" *ngIf="!passenger.passportID">
+          <i class="pi pi-info-circle" pTooltip="Este dato no es obligatorio para realizar la reserva"></i>
+        </span>
       </div>
       
       <div class="detail-row">
@@ -94,8 +121,11 @@
       
       <div class="detail-row">
         <span class="detail-label">Fecha de caducidad:</span>
-        <span class="detail-value" [ngClass]="{'pending-value': !passenger.documentExpirationDate}">
-          {{passenger.documentExpirationDate ? formatDate(passenger.documentExpirationDate || '') : 'Pendiente'}}
+        <span class="detail-value" *ngIf="passenger.documentExpirationDate">
+          {{formatDate(passenger.documentExpirationDate || '')}}
+        </span>
+        <span class="detail-value" *ngIf="!passenger.documentExpirationDate">
+          <i class="pi pi-info-circle" pTooltip="Este dato no es obligatorio para realizar la reserva"></i>
         </span>
       </div>
       <p-divider></p-divider>
@@ -104,11 +134,6 @@
         <span class="detail-label">Seguro:</span>
         <span class="detail-value">{{getComfortPlanValue()}}</span>
       </div>
-      
-     <!--  <div class="detail-row">
-        <span class="detail-label">Seguro:</span>
-        <span class="detail-value" [ngClass]="{'pending-value': !passenger.insurance}">{{passenger.insurance || 'Pendiente'}}</span>
-      </div> -->
     </div>
   </div>
   
@@ -276,11 +301,6 @@
           <span class="detail-label">Seguro:</span>
           <span class="detail-value">{{getComfortPlanValue()}}</span>
         </div>
-        
-        <!-- <div class="detail-row">
-          <span class="detail-label">Seguro:</span>
-          <span class="detail-value" [ngClass]="{'pending-value': !passenger.insurance}">{{passenger.insurance || 'Pendiente'}}</span>
-        </div> -->
       </div>
     </form>
   </div>
@@ -289,7 +309,7 @@
     <div class="passenger-footer">
       <div *ngIf="!isEditing && hasPendingFields()" class="pending-fields-indicator">
         <i class="pi pi-info-circle"></i>
-        <span>Completa tus datos personales pendientes antes de tu viaje.</span>
+        <span>Completa tus datos antes de tu viaje.</span>
       </div>
       
       <!-- This spacer ensures the edit button is always on the right, even if no pending indicator -->

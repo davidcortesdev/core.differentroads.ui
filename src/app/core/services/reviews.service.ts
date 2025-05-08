@@ -185,4 +185,13 @@ export class ReviewsService {
     });
     return params;
   }
+
+  /**
+   * Save a new review
+   * @param review Review data to save
+   * @returns Observable of the saved review or response
+   */
+  saveReview(review: any): Observable<any> {
+    return this.http.post<any>(`${this.API_URL}`, review);
+  }
 }

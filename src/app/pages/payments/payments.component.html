@@ -1,8 +1,8 @@
-<div class="single-payment-content">
-  <div class="single-payment-content-container">
+<div class="single">
+  <div class="single-container">
     <div class="container">
       <div class="header-container" (click)="toggleDropdown()">
-        <div class="title-with-icon">
+        <div class="title-icon">
           <span class="title">Selecciona la forma de pago</span>
           <i
             class="pi"
@@ -13,7 +13,11 @@
       </div>
 
       <div *ngIf="isOpen" class="payment-panels">
-        <p-panel styleClass="payment-panel">
+        <p-panel 
+          styleClass="payment-panel" 
+          [ngClass]="{ 'selected': paymentType === 'complete' }" 
+          (click)="selectPaymentType('complete')"
+        >
           <div class="payment-option">
             <p-radioButton
               name="paymentType"
@@ -22,15 +26,14 @@
               (onChange)="onPaymentTypeChange()"
             ></p-radioButton>
             <span class="option-text">Paga tu viaje al completo</span>
-            <span class="option-price">{{
-              remainingAmount | currencyFormat
-            }}</span>
+            <span class="option-price">{{ remainingAmount | currencyFormat }}</span>
           </div>
         </p-panel>
 
-        <!-- New deposit payment option - hidden during loading -->
-        <p-panel
-          styleClass="payment-panel"
+        <p-panel 
+          styleClass="payment-panel" 
+          [ngClass]="{ 'selected': paymentType === 'deposit' }" 
+          (click)="selectPaymentType('deposit')"
           *ngIf="!isLoading && depositAmount <= remainingAmount"
         >
           <div class="payment-option">
@@ -44,8 +47,7 @@
               Realiza un abono al saldo pendiente
             </span>
             <span class="option-price">
-              desde {{ depositAmount | currencyFormat }}</span
-            >
+              desde {{ depositAmount | currencyFormat }}</span>
           </div>
         </p-panel>
       </div>
@@ -56,7 +58,7 @@
         class="payment-methods-section"
       >
         <div class="header-container" (click)="togglePaymentMethodsDropdown()">
-          <div class="title-with-icon">
+          <div class="title-icon">
             <span class="title">Selecciona el método de pago</span>
             <i
               class="pi"
@@ -90,6 +92,7 @@
             <p-panel
               styleClass="payment-panel payment-method-panel"
               [ngClass]="{ selected: paymentMethod === 'creditCard' }"
+              (click)="selectPaymentMethod('creditCard')"
             >
               <div class="payment-option">
                 <p-radioButton
@@ -108,6 +111,7 @@
             <p-panel
               styleClass="payment-panel payment-method-panel"
               [ngClass]="{ selected: paymentMethod === 'transfer' }"
+              (click)="selectPaymentMethod('transfer')"
             >
               <div class="payment-option">
                 <p-radioButton
@@ -125,7 +129,7 @@
       </div>
 
       <!-- The existing terms-container should come after our new section -->
-      <div class="terms-container">
+      <div class="terms-container checkbox-azul">
         <p-checkbox
           [(ngModel)]="termsAccepted"
           [binary]="true"
@@ -134,10 +138,9 @@
         <label for="terms" class="terms-text">
           Acepto términos de privacidad y compra
           <div class="terms-details">
-            He revisado los trayectos, itinerario y destinos de la reserva.
-            Siendo estos correctos. He leído y acepto la política de privacidad,
-            condiciones generales, condiciones de cancelación y las formas de
-            pago.
+            He revisado los trayectos, itinerario y destinos de la reserva. Siendo
+            estos correctos. He leído y acepto la política de privacidad,
+            condiciones generales, condiciones de cancelación y las formas de pago.
           </div>
         </label>
       </div>

@@ -20,29 +20,29 @@
     </label>
   </div>
 
+  <!-- Etiqueta <form> eliminada, se mantiene el div contenedor -->
+  <div>
+    <div class="p-fluid p-grid p-formgrid p-mb-4">
+      <div class="p-field p-col-12 p-mb-3">
+        <!-- Nombre y apellidos -->
+        <label for="nombre" class="input-label">
+          <i class="pi pi-send input-icon"></i> Nombre y apellidos<span>*</span>
+        </label>
 
+        <!-- Se mantiene #nombreInput, sin [(ngModel)] ni name -->
+        <input id="nombre" type="text" class="input-text" autocomplete="off" #nombreInput />
+      </div>
 
+      <div class="p-field p-col-12">
+        <!-- Email -->
+        <label for="email" class="input-label">
+          <i class="pi pi-envelope input-icon"></i> E-mail<span>*</span>
+        </label>
 
-  <div class="p-fluid p-grid p-formgrid p-mb-4">
-    <div class="p-field p-col-12 p-mb-3">
-      <!-- Nombre y apellidos -->
-      <label for="nombre" class="input-label">
-        <i class="pi pi-send input-icon"></i> Nombre y apellidos<span>*</span>
-      </label>
-
-      <input id="nombre" type="text" class="input-text" autocomplete="off" />
+        <!-- Se mantiene #emailInput, sin [(ngModel)] ni name -->
+        <input id="email" type="email" class="input-text" autocomplete="off" #emailInput />
+      </div>
     </div>
-
-    <div class="p-field p-col-12">
-      <!-- Email (ya está correcto) -->
-      <label for="email" class="input-label">
-        <i class="pi pi-envelope input-icon"></i> E-mail<span>*</span>
-      </label>
-
-      <input id="email" type="email" class="input-text" autocomplete="off" />
-    </div>
-  </div>
-
 
   <div class="stars-container">
     <div class="stars-row">
@@ -270,10 +270,12 @@
 
 
   <div class="textarea-container">
-    <label for="nombre" class="input-label">
+    <!-- Corregido label for="comentario" -->
+    <label for="comentario" class="input-label">
       <i class="pi pi-inbox input-icon"></i> Cuéntanos más sobre tu viaje<span>*</span>
     </label>
-    <textarea></textarea>
+    <!-- Se mantiene #comentarioInput -->
+    <textarea id="comentario" #comentarioInput></textarea>
   </div>
 
   <div class="review-text">
@@ -288,6 +290,8 @@
   </div>
 
   <div class="submit-review-container">
-    <button class="submit-review">Enviar opinión</button>
+    <!-- El botón ya llama a handleManualSubmit() en el evento (click) -->
+    <button type="button" class="submit-review" (click)="submitReview()">Enviar opinión</button>
   </div>
+  </div> <!-- Cierre del div contenedor principal de los campos -->
 </div>

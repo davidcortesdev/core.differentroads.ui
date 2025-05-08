@@ -8,7 +8,6 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 
 import { registerLocaleData } from '@angular/common';
 import localeEs from '@angular/common/locales/es';
-
 import { HttpClient } from '@angular/common/http';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -331,7 +330,7 @@ registerLocaleData(localeEs);
     CommonModule,
     NgComponentOutlet,
     NewsLetterSectionComponent,
-    ConfirmationCodeComponent,
+    // ConfirmationCodeComponent, <-- Eliminar o comentar esta línea
     MenubarModule,
     RippleModule,
     AvatarModule,

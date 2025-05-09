@@ -262,113 +262,73 @@ export class FlightItineraryComponent implements OnChanges {
    * usando la misma lógica de getSegmentsArrivalDate.
    */
   getTimelineData(baseDate: string, segments: any[]): any[] {
-    if (!baseDate || !segments || segments.length === 0) {
-      console.warn('Invalid base date or segments:', {
-        baseDate,
-        segmentsLength: segments?.length,
-      });
-      return [];
-    }
+    if (!baseDate || !segments?.length) return [];
 
-    console.log('Building timeline with baseDate:', baseDate);
-    console.log('Segments:', JSON.stringify(segments, null, 2));
+    // Validar formato de fecha una sola vez
+    if (!baseDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      console.warn('Base date is not in YYYY-MM-DD format:', baseDate);
+      baseDate = new Date().toISOString().split('T')[0];
+    }
 
     const timelineItems = [];
     let currentArrival: Date;
 
     try {
-      // Ensure the base date is valid
-      if (!baseDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        console.warn('Base date is not in YYYY-MM-DD format:', baseDate);
-        baseDate = new Date().toISOString().split('T')[0]; // Use today as fallback
-      }
-
-      // Create the initial date from the first segment's departure time
-      if (!segments[0].departureTime) {
-        console.warn('First segment has no departureTime:', segments[0]);
-        segments[0].departureTime = '00:00'; // Use default time
-      }
-
-      currentArrival = this.parseLocalDateTime(
-        baseDate,
-        segments[0].departureTime
-      );
-      console.log('Initial currentArrival:', currentArrival);
-    } catch (e) {
-      console.warn('Error creating date for timeline:', e);
-      currentArrival = new Date();
-    }
-
-    for (const [index, seg] of segments.entries()) {
-      if (!seg) {
-        console.warn(`Segment ${index} is undefined`);
-        continue;
-      }
-
-      if (!seg.departureTime) {
-        console.warn(`Segment ${index} has no departureTime:`, seg);
-        seg.departureTime = '00:00'; // Use default time
-      }
-
-      if (!seg.arrivalTime) {
-        console.warn(`Segment ${index} has no arrivalTime:`, seg);
-        seg.arrivalTime = '00:00'; // Use default time
-      }
-
-      let departure: Date;
-      if (index === 0) {
-        departure = this.parseLocalDateTime(baseDate, seg.departureTime);
-      } else {
-        const baseForDeparture = this.formatDate(currentArrival);
-        departure = this.parseLocalDateTime(
-          baseForDeparture,
-          seg.departureTime
-        );
-        if (departure < currentArrival) {
-          departure.setDate(departure.getDate() + 1);
+      // Inicializar con el primer segmento
+      const firstSegmentDepartureTime = segments[0].departureTime || '00:00';
+      currentArrival = this.parseLocalDateTime(baseDate, firstSegmentDepartureTime);
+      
+      // Procesar cada segmento
+      for (const [index, seg] of segments.entries()) {
+        if (!seg) continue;
+        
+        const departureTime = seg.departureTime || '00:00';
+        const arrivalTime = seg.arrivalTime || '00:00';
+        
+        // Calcular fechas de salida y llegada
+        let departure: Date;
+        if (index === 0) {
+          departure = this.parseLocalDateTime(baseDate, departureTime);
+        } else {
+          const baseForDeparture = this.formatDate(currentArrival);
+          departure = this.parseLocalDateTime(baseForDeparture, departureTime);
+          if (departure < currentArrival) {
+            departure.setDate(departure.getDate() + 1);
+          }
         }
+      
+        let arrival = this.parseLocalDateTime(this.formatDate(departure), arrivalTime);
+        if (arrival < departure) {
+          arrival.setDate(arrival.getDate() + 1);
+        } else if (seg.numNights > 0) {
+          arrival.setDate(arrival.getDate() + seg.numNights);
+        }
+      
+        // Añadir eventos al timeline
+        timelineItems.push({
+          departureCity: seg.departureCity || 'Unknown',
+          departureIata: seg.departureIata || '---',
+          departureDateTime: departure,
+          type: 'departure',
+          flightNumber: seg.flightNumber || 'Unknown',
+        });
+      
+        timelineItems.push({
+          arrivalCity: seg.arrivalCity || 'Unknown',
+          arrivalIata: seg.arrivalIata || '---',
+          arrivalDateTime: arrival,
+          type: 'arrival',
+          flightNumber: seg.flightNumber || 'Unknown',
+        });
+      
+        currentArrival = arrival;
       }
-
-      let arrival = this.parseLocalDateTime(
-        this.formatDate(departure),
-        seg.arrivalTime
-      );
-      if (arrival < departure) {
-        arrival.setDate(arrival.getDate() + 1);
-      } else if (seg.numNights > 0) {
-        arrival.setDate(arrival.getDate() + seg.numNights);
-      }
-
-      console.log(`Segment ${index} times:`, {
-        departureTime: seg.departureTime,
-        arrivalTime: seg.arrivalTime,
-        parsedDeparture: departure.toISOString(),
-        parsedArrival: arrival.toISOString(),
-      });
-
-      // Añadir evento de salida
-      timelineItems.push({
-        departureCity: seg.departureCity || 'Unknown',
-        departureIata: seg.departureIata || '---',
-        departureDateTime: departure,
-        type: 'departure',
-        flightNumber: seg.flightNumber || 'Unknown',
-      });
-
-      // Añadir evento de llegada
-      timelineItems.push({
-        arrivalCity: seg.arrivalCity || 'Unknown',
-        arrivalIata: seg.arrivalIata || '---',
-        arrivalDateTime: arrival,
-        type: 'arrival',
-        flightNumber: seg.flightNumber || 'Unknown',
-      });
-
-      currentArrival = arrival;
+      
+      return timelineItems;
+    } catch (e) {
+      console.warn('Error generating timeline:', e);
+      return [];
     }
-
-    console.log('Timeline data generated:', timelineItems);
-    return timelineItems;
   }
 
   getPrice(): number {

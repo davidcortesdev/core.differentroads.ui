@@ -30,6 +30,7 @@ interface MapMarker {
 export class TourMapComponent implements OnInit, OnDestroy {
   @Input() cities: string[] = [];
   @Input() citiesData: City[] = [];
+  @Input() country: string |undefined;
 
   // Map configuration
   mapTypeId: google.maps.MapTypeId | undefined;
@@ -392,7 +393,8 @@ export class TourMapComponent implements OnInit, OnDestroy {
    * Carga los datos de las ciudades utilizando el servicio de coordenadas
    */
   private loadCitiesData(): void {
-    this.cityCoordinatesService.convertCitiesToCityObjects(this.cities)
+    console.log('pais',this.country,'ciudades',this.cities,'apiLoaded',this.apiLoaded);
+    this.cityCoordinatesService.convertCitiesToCityObjects(this.cities,this.country)
       .pipe(takeUntil(this.destroy$))
       .subscribe(
         (cityObjects: City[]) => {

@@ -1,0 +1,5281 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "core.differentroads.locations.API",
+    "description": "API para el proyecto core.differentroads.locations.API",
+    "version": "v1"
+  },
+  "paths": {
+    "/api/LocationArea": {
+      "get": {
+        "tags": [
+          "LocationArea"
+        ],
+        "summary": "Obtiene áreas geográficas basadas en criterios de filtro",
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ParentAreaId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationAreaResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationAreaResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationAreaResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "LocationArea"
+        ],
+        "summary": "Crea una nueva área geográfica",
+        "requestBody": {
+          "description": "Los datos de creación del área",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaCreate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaCreate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationArea/{id}": {
+      "get": {
+        "tags": [
+          "LocationArea"
+        ],
+        "summary": "Obtiene un área geográfica específica por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del área a recuperar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "LocationArea"
+        ],
+        "summary": "Actualiza un área geográfica existente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del área a actualizar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Los datos de actualización del área",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaUpdate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaUpdate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "LocationArea"
+        ],
+        "summary": "Elimina un área geográfica por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del área a eliminar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationAreaCity": {
+      "get": {
+        "tags": [
+          "LocationAreaCity"
+        ],
+        "summary": "Obtiene relaciones entre áreas y ciudades basadas en criterios de filtro",
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "AreaId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "CityId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationAreaCityResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationAreaCityResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationAreaCityResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "LocationAreaCity"
+        ],
+        "summary": "Crea una nueva relación entre un área y una ciudad",
+        "requestBody": {
+          "description": "Los datos de creación de la relación",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaCityCreate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaCityCreate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaCityCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaCityResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaCityResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaCityResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationAreaCity/{id}": {
+      "get": {
+        "tags": [
+          "LocationAreaCity"
+        ],
+        "summary": "Obtiene una relación específica entre un área y una ciudad por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID de la relación a recuperar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaCityResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaCityResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaCityResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "LocationAreaCity"
+        ],
+        "summary": "Actualiza una relación existente entre un área y una ciudad",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID de la relación a actualizar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Los datos de actualización de la relación",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaCityUpdate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaCityUpdate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaCityUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "LocationAreaCity"
+        ],
+        "summary": "Elimina una relación entre un área y una ciudad por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID de la relación a eliminar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationAreaCountry": {
+      "get": {
+        "tags": [
+          "LocationAreaCountry"
+        ],
+        "summary": "Obtiene relaciones entre áreas y países basadas en criterios de filtro",
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "AreaId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "CountryId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationAreaCountryResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationAreaCountryResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationAreaCountryResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "LocationAreaCountry"
+        ],
+        "summary": "Crea una nueva relación entre un área y un país",
+        "requestBody": {
+          "description": "Los datos de creación de la relación",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaCountryCreate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaCountryCreate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaCountryCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaCountryResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaCountryResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaCountryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationAreaCountry/{id}": {
+      "get": {
+        "tags": [
+          "LocationAreaCountry"
+        ],
+        "summary": "Obtiene una relación específica entre un área y un país por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID de la relación a recuperar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaCountryResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaCountryResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaCountryResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "LocationAreaCountry"
+        ],
+        "summary": "Actualiza una relación existente entre un área y un país",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID de la relación a actualizar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Los datos de actualización de la relación",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaCountryUpdate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaCountryUpdate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaCountryUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "LocationAreaCountry"
+        ],
+        "summary": "Elimina una relación entre un área y un país por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID de la relación a eliminar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationAreaState": {
+      "get": {
+        "tags": [
+          "LocationAreaState"
+        ],
+        "summary": "Obtiene relaciones entre áreas y estados basadas en criterios de filtro",
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "AreaId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "StateId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationAreaStateResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationAreaStateResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationAreaStateResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "LocationAreaState"
+        ],
+        "summary": "Crea una nueva relación entre un área y un estado",
+        "requestBody": {
+          "description": "Los datos de creación de la relación",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaStateCreate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaStateCreate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaStateCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaStateResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaStateResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaStateResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationAreaState/{id}": {
+      "get": {
+        "tags": [
+          "LocationAreaState"
+        ],
+        "summary": "Obtiene una relación específica entre un área y un estado por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID de la relación a recuperar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaStateResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaStateResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationAreaStateResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "LocationAreaState"
+        ],
+        "summary": "Actualiza una relación existente entre un área y un estado",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID de la relación a actualizar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Los datos de actualización de la relación",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaStateUpdate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaStateUpdate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationAreaStateUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "LocationAreaState"
+        ],
+        "summary": "Elimina una relación entre un área y un estado por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID de la relación a eliminar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationCity": {
+      "get": {
+        "tags": [
+          "LocationCity"
+        ],
+        "summary": "Obtiene ciudades basadas en criterios de filtro",
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "CountryId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "StateId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "CountyId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "MunicipalityId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationCityResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationCityResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationCityResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "LocationCity"
+        ],
+        "summary": "Crea una nueva ciudad",
+        "requestBody": {
+          "description": "Los datos de creación de la ciudad",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationCityCreate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationCityCreate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationCityCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationCityResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationCityResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationCityResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationCity/{id}": {
+      "get": {
+        "tags": [
+          "LocationCity"
+        ],
+        "summary": "Obtiene una ciudad específica por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID de la ciudad a recuperar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationCityResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationCityResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationCityResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "LocationCity"
+        ],
+        "summary": "Actualiza una ciudad existente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID de la ciudad a actualizar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Los datos de actualización de la ciudad",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationCityUpdate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationCityUpdate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationCityUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "LocationCity"
+        ],
+        "summary": "Elimina una ciudad por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID de la ciudad a eliminar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationContinent": {
+      "get": {
+        "tags": [
+          "LocationContinent"
+        ],
+        "summary": "Obtiene continentes basados en criterios de filtro",
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationContinentResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationContinentResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationContinentResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "LocationContinent"
+        ],
+        "summary": "Crea un nuevo continente",
+        "requestBody": {
+          "description": "Los datos de creación del continente",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationContinentCreate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationContinentCreate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationContinentCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationContinentResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationContinentResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationContinentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationContinent/{id}": {
+      "get": {
+        "tags": [
+          "LocationContinent"
+        ],
+        "summary": "Obtiene un continente específico por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del continente a recuperar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationContinentResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationContinentResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationContinentResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "LocationContinent"
+        ],
+        "summary": "Actualiza un continente existente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del continente a actualizar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Los datos de actualización del continente",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationContinentUpdate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationContinentUpdate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationContinentUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "LocationContinent"
+        ],
+        "summary": "Elimina un continente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del continente a eliminar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationCountry": {
+      "get": {
+        "tags": [
+          "LocationCountry"
+        ],
+        "summary": "Obtiene países basados en criterios de filtrado",
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ContinentId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationCountryResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationCountryResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationCountryResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "LocationCountry"
+        ],
+        "summary": "Crea un nuevo país",
+        "requestBody": {
+          "description": "Los datos del país a crear",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationCountryCreate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationCountryCreate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationCountryCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationCountryResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationCountryResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationCountryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationCountry/{id}": {
+      "get": {
+        "tags": [
+          "LocationCountry"
+        ],
+        "summary": "Obtiene un país específico por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del país a recuperar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationCountryResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationCountryResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationCountryResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "LocationCountry"
+        ],
+        "summary": "Actualiza un país existente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del país a actualizar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Los datos actualizados del país",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationCountryUpdate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationCountryUpdate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationCountryUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "LocationCountry"
+        ],
+        "summary": "Elimina un país por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del país a eliminar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationCounty": {
+      "get": {
+        "tags": [
+          "LocationCounty"
+        ],
+        "summary": "Obtiene provincias basadas en criterios de filtro",
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "LocationStateId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationCountyResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationCountyResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationCountyResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "LocationCounty"
+        ],
+        "summary": "Crea una nueva provincia",
+        "requestBody": {
+          "description": "Los datos de creación de la provincia",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationCountyCreate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationCountyCreate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationCountyCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationCountyResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationCountyResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationCountyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationCounty/{id}": {
+      "get": {
+        "tags": [
+          "LocationCounty"
+        ],
+        "summary": "Obtiene una provincia específica por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID de la provincia a recuperar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationCountyResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationCountyResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationCountyResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "LocationCounty"
+        ],
+        "summary": "Actualiza una provincia existente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID de la provincia a actualizar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Los datos de actualización de la provincia",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationCountyUpdate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationCountyUpdate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationCountyUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "LocationCounty"
+        ],
+        "summary": "Elimina una provincia por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID de la provincia a eliminar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationMunicipality": {
+      "get": {
+        "tags": [
+          "LocationMunicipality"
+        ],
+        "summary": "Obtiene municipios basados en criterios de filtro",
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "LocationCountyId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationMunicipalityResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationMunicipalityResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationMunicipalityResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "LocationMunicipality"
+        ],
+        "summary": "Crea un nuevo municipio",
+        "requestBody": {
+          "description": "Los datos de creación del municipio",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationMunicipalityCreate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationMunicipalityCreate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationMunicipalityCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationMunicipalityResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationMunicipalityResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationMunicipalityResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationMunicipality/{id}": {
+      "get": {
+        "tags": [
+          "LocationMunicipality"
+        ],
+        "summary": "Obtiene un municipio específico por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del municipio a recuperar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationMunicipalityResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationMunicipalityResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationMunicipalityResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "LocationMunicipality"
+        ],
+        "summary": "Actualiza un municipio existente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del municipio a actualizar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Los datos de actualización del municipio",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationMunicipalityUpdate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationMunicipalityUpdate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationMunicipalityUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "LocationMunicipality"
+        ],
+        "summary": "Elimina un municipio por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del municipio a eliminar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationPointOfInterest": {
+      "get": {
+        "tags": [
+          "LocationPointOfInterest"
+        ],
+        "summary": "Obtiene puntos de interés basados en criterios de filtro",
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "LocationPointOfInterestTypeId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "CountryId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "StateId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "CountyId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "MunicipalityId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "CityId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "AreaId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Latitude",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "Longitude",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "RadiusKm",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationPointOfInterestResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationPointOfInterestResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationPointOfInterestResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "LocationPointOfInterest"
+        ],
+        "summary": "Crea un nuevo punto de interés",
+        "requestBody": {
+          "description": "Los datos de creación del punto de interés",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationPointOfInterestCreate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationPointOfInterestCreate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationPointOfInterestCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationPointOfInterestResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationPointOfInterestResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationPointOfInterestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationPointOfInterest/{id}": {
+      "get": {
+        "tags": [
+          "LocationPointOfInterest"
+        ],
+        "summary": "Obtiene un punto de interés específico por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del punto de interés a recuperar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationPointOfInterestResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationPointOfInterestResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationPointOfInterestResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "LocationPointOfInterest"
+        ],
+        "summary": "Actualiza un punto de interés existente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del punto de interés a actualizar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Los datos de actualización del punto de interés",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationPointOfInterestUpdate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationPointOfInterestUpdate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationPointOfInterestUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "LocationPointOfInterest"
+        ],
+        "summary": "Elimina un punto de interés",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del punto de interés a eliminar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationPointOfInterestType": {
+      "get": {
+        "tags": [
+          "LocationPointOfInterestType"
+        ],
+        "summary": "Obtiene tipos de puntos de interés basados en criterios de filtro",
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationPointOfInterestTypeResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationPointOfInterestTypeResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationPointOfInterestTypeResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "LocationPointOfInterestType"
+        ],
+        "summary": "Crea un nuevo tipo de punto de interés",
+        "requestBody": {
+          "description": "Los datos de creación del tipo de punto de interés",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationPointOfInterestTypeCreate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationPointOfInterestTypeCreate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationPointOfInterestTypeCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationPointOfInterestTypeResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationPointOfInterestTypeResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationPointOfInterestTypeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationPointOfInterestType/{id}": {
+      "get": {
+        "tags": [
+          "LocationPointOfInterestType"
+        ],
+        "summary": "Obtiene un tipo de punto de interés específico por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del tipo de punto de interés a recuperar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationPointOfInterestTypeResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationPointOfInterestTypeResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationPointOfInterestTypeResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "LocationPointOfInterestType"
+        ],
+        "summary": "Actualiza un tipo de punto de interés existente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del tipo de punto de interés a actualizar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Los datos de actualización del tipo de punto de interés",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationPointOfInterestTypeUpdate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationPointOfInterestTypeUpdate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationPointOfInterestTypeUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "LocationPointOfInterestType"
+        ],
+        "summary": "Elimina un tipo de punto de interés por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del tipo de punto de interés a eliminar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationPostalCode": {
+      "get": {
+        "tags": [
+          "LocationPostalCode"
+        ],
+        "summary": "Obtiene códigos postales basados en criterios de filtro",
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "LocationCityId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationPostalCodeResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationPostalCodeResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationPostalCodeResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "LocationPostalCode"
+        ],
+        "summary": "Crea un nuevo código postal",
+        "requestBody": {
+          "description": "Los datos de creación del código postal",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationPostalCodeCreate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationPostalCodeCreate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationPostalCodeCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationPostalCodeResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationPostalCodeResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationPostalCodeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationPostalCode/{id}": {
+      "get": {
+        "tags": [
+          "LocationPostalCode"
+        ],
+        "summary": "Obtiene un código postal específico por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del código postal a recuperar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationPostalCodeResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationPostalCodeResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationPostalCodeResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "LocationPostalCode"
+        ],
+        "summary": "Actualiza un código postal existente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del código postal a actualizar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Los datos de actualización del código postal",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationPostalCodeUpdate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationPostalCodeUpdate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationPostalCodeUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "LocationPostalCode"
+        ],
+        "summary": "Elimina un código postal por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del código postal a eliminar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationState": {
+      "get": {
+        "tags": [
+          "LocationState"
+        ],
+        "summary": "Obtiene estados o comunidades autónomas basados en criterios de filtro",
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "LocationCountryId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationStateResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationStateResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationStateResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "LocationState"
+        ],
+        "summary": "Crea un nuevo estado o comunidad autónoma",
+        "requestBody": {
+          "description": "Los datos de creación del estado o comunidad autónoma",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationStateCreate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationStateCreate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationStateCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationStateResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationStateResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationStateResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationState/{id}": {
+      "get": {
+        "tags": [
+          "LocationState"
+        ],
+        "summary": "Obtiene un estado o comunidad autónoma específico por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del estado o comunidad autónoma a recuperar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationStateResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationStateResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationStateResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "LocationState"
+        ],
+        "summary": "Actualiza un estado o comunidad autónoma existente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del estado o comunidad autónoma a actualizar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Los datos de actualización del estado o comunidad autónoma",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationStateUpdate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationStateUpdate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationStateUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "LocationState"
+        ],
+        "summary": "Elimina un estado o comunidad autónoma por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del estado o comunidad autónoma a eliminar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationUnlocode": {
+      "get": {
+        "tags": [
+          "LocationUnlocode"
+        ],
+        "summary": "Obtiene códigos UNLOCODE basados en criterios de filtro",
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Iata",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "LocationCountryId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "LocationCityId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "FunctionType",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationUnlocodeResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationUnlocodeResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ILocationUnlocodeResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "LocationUnlocode"
+        ],
+        "summary": "Crea un nuevo código UNLOCODE",
+        "requestBody": {
+          "description": "Los datos de creación del código UNLOCODE",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationUnlocodeCreate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationUnlocodeCreate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationUnlocodeCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationUnlocodeResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationUnlocodeResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationUnlocodeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LocationUnlocode/{id}": {
+      "get": {
+        "tags": [
+          "LocationUnlocode"
+        ],
+        "summary": "Obtiene un código UNLOCODE específico por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del código UNLOCODE a recuperar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationUnlocodeResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationUnlocodeResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ILocationUnlocodeResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "LocationUnlocode"
+        ],
+        "summary": "Actualiza un código UNLOCODE existente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del código UNLOCODE a actualizar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Los datos de actualización del código UNLOCODE",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationUnlocodeUpdate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationUnlocodeUpdate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationUnlocodeUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "LocationUnlocode"
+        ],
+        "summary": "Elimina un código UNLOCODE por su ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "El ID del código UNLOCODE a eliminar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/WeatherForecast": {
+      "get": {
+        "tags": [
+          "WeatherForecast"
+        ],
+        "summary": "Obtiene los pronósticos del clima",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ILocationAreaCityResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "areaId": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "cityId": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "areaName": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "cityName": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ILocationAreaCountryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "areaId": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "countryId": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "areaName": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "countryName": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ILocationAreaResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "readOnly": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "readOnly": true
+          },
+          "parentAreaId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ILocationAreaStateResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "areaId": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "stateId": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "areaName": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "stateName": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ILocationCityResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "readOnly": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "readOnly": true
+          },
+          "countryId": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "stateId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "countyId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "municipalityId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ILocationContinentResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ILocationCountryResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "continentId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "continentName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ILocationCountyResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "locationStateId": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ILocationMunicipalityResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "locationCountyId": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ILocationPointOfInterestResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "locationPointOfInterestTypeId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "altitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "countryId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "stateId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "countyId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "municipalityId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "cityId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "areaId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "locationPointOfInterestTypeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "countryName": {
+            "type": "string",
+            "nullable": true
+          },
+          "stateName": {
+            "type": "string",
+            "nullable": true
+          },
+          "countyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "municipalityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "cityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "areaName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ILocationPointOfInterestTypeResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ILocationPostalCodeResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "locationCityId": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ILocationStateResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "locationCountryId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ILocationUnlocodeResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "iata": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "readOnly": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "readOnly": true
+          },
+          "isFunctionNotSpecified": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "isPort": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "isRailTerminal": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "isRoadTerminal": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "isAirport": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "isPostalOffice": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "isMultimodalFunction": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "isFixedTransport": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "isBorderCrossing": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "locationCountryId": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "locationCityId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationAreaCityCreate": {
+        "type": "object",
+        "properties": {
+          "areaId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cityId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationAreaCityUpdate": {
+        "type": "object",
+        "properties": {
+          "areaId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cityId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationAreaCountryCreate": {
+        "type": "object",
+        "properties": {
+          "areaId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countryId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationAreaCountryUpdate": {
+        "type": "object",
+        "properties": {
+          "areaId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countryId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationAreaCreate": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "parentAreaId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationAreaStateCreate": {
+        "type": "object",
+        "properties": {
+          "areaId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "stateId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationAreaStateUpdate": {
+        "type": "object",
+        "properties": {
+          "areaId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "stateId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationAreaUpdate": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "parentAreaId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationCityCreate": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "countryId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "stateId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "countyId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "municipalityId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationCityUpdate": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "countryId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "stateId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "countyId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "municipalityId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationContinentCreate": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationContinentUpdate": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationCountryCreate": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "continentId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationCountryUpdate": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "continentId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationCountyCreate": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "locationStateId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationCountyUpdate": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "locationStateId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationMunicipalityCreate": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "locationCountyId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationMunicipalityUpdate": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "locationCountyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationPointOfInterestCreate": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "locationPointOfInterestTypeId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "altitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "countryId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "stateId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "countyId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "municipalityId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "cityId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "areaId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationPointOfInterestTypeCreate": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationPointOfInterestTypeUpdate": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationPointOfInterestUpdate": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "locationPointOfInterestTypeId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "altitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "countryId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "stateId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "countyId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "municipalityId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "cityId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "areaId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationPostalCodeCreate": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "locationCityId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationPostalCodeUpdate": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "locationCityId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationStateCreate": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "locationCountryId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationStateUpdate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "locationCountryId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationUnlocodeCreate": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "iata": {
+            "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "isFunctionNotSpecified": {
+            "type": "boolean"
+          },
+          "isPort": {
+            "type": "boolean"
+          },
+          "isRailTerminal": {
+            "type": "boolean"
+          },
+          "isRoadTerminal": {
+            "type": "boolean"
+          },
+          "isAirport": {
+            "type": "boolean"
+          },
+          "isPostalOffice": {
+            "type": "boolean"
+          },
+          "isMultimodalFunction": {
+            "type": "boolean"
+          },
+          "isFixedTransport": {
+            "type": "boolean"
+          },
+          "isBorderCrossing": {
+            "type": "boolean"
+          },
+          "locationCountryId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "locationCityId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocationUnlocodeUpdate": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "iata": {
+            "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "isFunctionNotSpecified": {
+            "type": "boolean"
+          },
+          "isPort": {
+            "type": "boolean"
+          },
+          "isRailTerminal": {
+            "type": "boolean"
+          },
+          "isRoadTerminal": {
+            "type": "boolean"
+          },
+          "isAirport": {
+            "type": "boolean"
+          },
+          "isPostalOffice": {
+            "type": "boolean"
+          },
+          "isMultimodalFunction": {
+            "type": "boolean"
+          },
+          "isFixedTransport": {
+            "type": "boolean"
+          },
+          "isBorderCrossing": {
+            "type": "boolean"
+          },
+          "locationCountryId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "locationCityId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

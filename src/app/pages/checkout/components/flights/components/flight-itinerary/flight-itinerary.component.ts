@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { Flight } from '../../../../../../core/models/tours/flight.model';
 import { PricesService } from '../../../../../../core/services/checkout/prices.service';
-import { AirlinesService, Airline } from '../../../../../../core/services/airlines/airlines.service';
+import { AirlinesService, Airline, AirlineFilter } from '../../../../../../core/services/airlines/airlines.service';
 import { forkJoin, Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 
@@ -49,6 +49,7 @@ interface FlightSegment {
   styleUrls: ['./flight-itinerary.component.scss'],
 })
 export class FlightItineraryComponent implements OnChanges {
+
   @Input() flight!: Flight;
   @Input() selectFlight!: (flight: any) => void;
   @Input() isFlightSelected!: (flight: any) => boolean;
@@ -514,103 +515,7 @@ export class FlightItineraryComponent implements OnChanges {
   isValidDate(date: any): boolean {
     return date instanceof Date && !isNaN(date.getTime());
   }
-  
-  // Caché de aerolíneas a nivel de componente
-  private airlineCache: { [prefix: string]: string } = {};
-  // Control de solicitudes en curso
-  private pendingRequests: { [prefix: string]: Observable<string> } = {};
-  
-  /**
-   * Obtiene los nombres de las aerolíneas a partir de los números de vuelo de los segmentos
-   * @param segments Segmentos del viaje que contienen los números de vuelo
-   * @returns String con los nombres de las aerolíneas
-   */
-  getAirlineNamesByFlightNumbers(segments: FlightSegment[]): string {
-    if (!segments || segments.length === 0) {
-      return '';
-    }
-    
-    // Extraer prefijos IATA únicos de los números de vuelo
-    const prefixesIATA = segments
-      .filter(segment => segment && segment.flightNumber)
-      .map(segment => {
-        // Extraer las dos primeras letras del número de vuelo
-        const flightNumber = segment.flightNumber || '';
-        const prefixIATA = flightNumber.substring(0, 2);
-        return prefixIATA;
-      })
-      .filter(prefix => prefix.length === 2); // Asegurarse de que el prefijo tiene 2 caracteres
-    
-    // Eliminar duplicados
-    const uniquePrefixesIATA = [...new Set(prefixesIATA)];
-    
-    // Si no hay prefijos válidos, intentar usar los nombres de aerolíneas de los segmentos
-    if (uniquePrefixesIATA.length === 0) {
-      const airlineNames = segments
-        .filter(segment => segment && segment.airline && segment.airline.name)
-        .map(segment => segment.airline?.name || '');
-      
-      const uniqueAirlineNames = [...new Set(airlineNames)];
-      return uniqueAirlineNames.join(', ');
-    }
-    
-    // Verificar si tenemos todos los prefijos en caché
-    const cachedNames = uniquePrefixesIATA
-      .filter(prefix => this.airlineCache[prefix])
-      .map(prefix => this.airlineCache[prefix]);
-    
-    // Si tenemos todos los prefijos en caché, devolver los nombres
-    if (cachedNames.length === uniquePrefixesIATA.length) {
-      return cachedNames.join(', ');
-    }
-    
-    // Prefijos que necesitamos cargar
-    const prefixesToLoad = uniquePrefixesIATA.filter(prefix => !this.airlineCache[prefix]);
-    
-    // Crear observables para cada prefijo que necesitamos cargar
-    const requests: Observable<string>[] = prefixesToLoad.map(prefix => {
-      // Si ya hay una solicitud en curso para este prefijo, reutilizarla
-      if (this.pendingRequests[prefix]) {
-        return this.pendingRequests[prefix];
-      }
-      
-      // Crear una nueva solicitud
-      const request = this.airlinesService.getAirlines({ codeIATA: prefix }).pipe(
-        map(airlines => {
-          const airlineName = airlines && airlines.length > 0 ? airlines[0].name || prefix : prefix;
-          this.airlineCache[prefix] = airlineName;
-          return airlineName;
-        }),
-        catchError(() => {
-          this.airlineCache[prefix] = prefix;
-          return of(prefix);
-        })
-      );
-      
-      // Guardar la solicitud en el mapa de solicitudes pendientes
-      this.pendingRequests[prefix] = request;
-      
-      return request;
-    });
-    
-    // Si hay solicitudes para cargar, hacerlas en paralelo
-    if (requests.length > 0) {
-      forkJoin(requests).subscribe(
-        () => {
-          // Limpiar las solicitudes pendientes
-          prefixesToLoad.forEach(prefix => {
-            delete this.pendingRequests[prefix];
-          });
-        }
-      );
-    }
-    
-    // Devolver los nombres que tenemos en caché y los prefijos para los que no tenemos nombres
-    return uniquePrefixesIATA
-      .map(prefix => this.airlineCache[prefix] || prefix)
-      .join(', ');
-  }
-  
+
   /**
    * Obtiene la URL del logo de la aerolínea a partir del código IATA
    * @param flightNumber Número de vuelo del que se extraerá el código IATA
@@ -652,6 +557,50 @@ export class FlightItineraryComponent implements OnChanges {
     // Crear URLs para los logos
     return uniquePrefixesIATA.map(iataCode => 
       `https://images.kiwi.com/airlines/32x32/${iataCode}.png`
+    );
+  }
+
+  getAirlineNamesByFlightNumbers(segments: any[]): Observable<string> {
+
+    // Validar si existe la propiedad flightNumber y si es string y almacenarla en un array de vuelos
+    const flightNumbers = segments
+      .filter(segment => segment && typeof segment.flightNumber === 'string' && segment.flightNumber.trim() !== '')
+      .map(segment => segment.flightNumber);
+
+    if (flightNumbers.length === 0) {
+      return of('');
+    }
+
+    // Obtener los códigos de las aerolíneas y almacenarlos en un array de códigos únicos
+    const uniqueAirlineCodes = [...new Set(
+      flightNumbers.map(flightNumber => flightNumber.substring(0, 2))
+    )].filter(code => code.length === 2);
+
+    if (uniqueAirlineCodes.length === 0) {
+      return of('');
+    }
+
+    // Obtener los nombres de las aerolíneas a partir de los códigos realizando llamadas al airlineService
+    const airlineRequests = uniqueAirlineCodes.map(code => {
+      const filter: AirlineFilter = {
+        codeIATA: code,
+      };
+      return this.airlinesService.getAirlines(filter).pipe(
+        map(airline => airline[0]?.name || code),
+        catchError(() => of(code)) // Si hay error, devolver el código como nombre
+      );
+    });
+
+    // Combinar todas las respuestas y devolver un array de nombres de aerolíneas
+    return forkJoin(airlineRequests).pipe(
+      map(airlineNames => {
+        console.log('Nombres de aerolíneas obtenidos:', airlineNames);
+        return airlineNames.join(', ');
+      }),
+      catchError(error => {
+        console.error('Error al obtener nombres de aerolíneas:', error);
+        return of(uniqueAirlineCodes.join(', ')); // En caso de error, devolver los códigos como nombres
+      })
     );
   }
 }

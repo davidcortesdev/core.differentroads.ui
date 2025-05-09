@@ -390,125 +390,64 @@ export class FlightItineraryComponent implements OnChanges {
     }
   }
 
+  // Método optimizado para reducir la complejidad y mejorar el rendimiento
   private computeJourney(type: 'outbound' | 'inbound'): Journey | null {
     if (!this.flight) return null;
-
+  
     const journeyData = this.flight[type];
-
-    if (
-      !journeyData ||
-      !journeyData.segments ||
-      journeyData.segments.length === 0
-    ) {
-      return null;
-    }
-
-    if (type === 'inbound') {
-      if (!journeyData.date || journeyData.segments.length === 0) {
-        return null;
-      }
-      if (journeyData.name === 'No return flight') {
-        return null;
-      }
-    }
-
+  
+    // Validación temprana para evitar procesamiento innecesario
+    if (!journeyData?.segments?.length) return null;
+    if (type === 'inbound' && (!journeyData.date || journeyData.name === 'No return flight')) return null;
+  
     const segments = journeyData.segments;
-    if (!segments || segments.length === 0) return null;
-
     const departureSegment = segments[0];
     const arrivalSegment = segments[segments.length - 1];
-
+  
     if (!departureSegment || !arrivalSegment) return null;
-
-    let journeyDate: Date;
+  
+    // Usar try/catch solo para la lógica compleja, no para cada operación
     try {
-      journeyDate = new Date(journeyData.date);
-      if (!this.isValidDate(journeyDate)) {
-        console.warn(`Invalid date for ${type} journey:`, journeyData.date);
-        journeyDate = new Date();
-      }
+      const journeyDate = new Date(journeyData.date);
+      if (!this.isValidDate(journeyDate)) throw new Error(`Invalid date for ${type} journey`);
+      
+      const departureTime = this.formatTime(departureSegment.departureTime);
+      if (!this.isValidDate(departureTime)) throw new Error(`Invalid departure time for ${type} journey`);
+      
+      const departure = {
+        iata: departureSegment.departureIata || '',
+        time: departureTime,
+        date: journeyDate,
+      };
+  
+      const arrivalDate = this.getSegmentsArrivalDate(journeyData.date, segments);
+      if (!this.isValidDate(arrivalDate)) throw new Error(`Invalid arrival date for ${type} journey`);
+      
+      const arrival = {
+        iata: arrivalSegment.arrivalIata || '',
+        time: arrivalDate,
+        date: arrivalDate,
+      };
+  
+      const stops = segments.length - 1;
+      const stopsText = stops === 0 ? 'vuelo directo' : stops === 1 ? '1 escala' : `${stops} escalas`;
+      
+      const totalDuration = this.getTotalDuration(type === 'outbound') || '';
+      const timelineData = journeyData.date ? this.getTimelineData(journeyData.date, segments) : [];
+  
+      return {
+        type,
+        departure,
+        arrival,
+        segments,
+        timelineData,
+        stopsText,
+        totalDuration,
+      };
     } catch (e) {
-      console.warn(`Error creating date for ${type} journey:`, e);
-      journeyDate = new Date();
+      console.warn(`Error computing ${type} journey:`, e);
+      return null;
     }
-
-    let departureTime: Date;
-    try {
-      departureTime = this.formatTime(departureSegment.departureTime);
-      if (!this.isValidDate(departureTime)) {
-        console.warn(
-          `Invalid departure time for ${type} journey:`,
-          departureSegment.departureTime
-        );
-        departureTime = new Date();
-      }
-    } catch (e) {
-      console.warn(`Error creating departure time for ${type} journey:`, e);
-      departureTime = new Date();
-    }
-
-    const departure = {
-      iata: departureSegment.departureIata || '',
-      time: departureTime,
-      date: journeyDate,
-    };
-
-    let arrivalDate: Date;
-    try {
-      arrivalDate = this.getSegmentsArrivalDate(journeyData.date, segments);
-      if (!this.isValidDate(arrivalDate)) {
-        console.warn(`Invalid arrival date for ${type} journey`);
-        arrivalDate = new Date();
-      }
-    } catch (e) {
-      console.warn(`Error calculating arrival date for ${type} journey:`, e);
-      arrivalDate = new Date();
-    }
-
-    const arrival = {
-      iata: arrivalSegment.arrivalIata || '',
-      time: arrivalDate,
-      date: arrivalDate,
-    };
-
-    const stops = segments.length - 1;
-    const stopsText =
-      stops === 0
-        ? 'vuelo directo'
-        : stops === 1
-        ? '1 escala'
-        : stops + ' escalas';
-
-    let totalDuration: string;
-    try {
-      totalDuration = this.getTotalDuration(type === 'outbound');
-      if (!totalDuration) {
-        totalDuration = '';
-      }
-    } catch (e) {
-      console.warn(`Error calculating duration for ${type} journey:`, e);
-      totalDuration = '';
-    }
-
-    let timelineData: any[];
-    try {
-      timelineData = journeyData.date
-        ? this.getTimelineData(journeyData.date, segments)
-        : [];
-    } catch (e) {
-      console.warn(`Error generating timeline for ${type} journey:`, e);
-      timelineData = [];
-    }
-
-    return {
-      type,
-      departure,
-      arrival,
-      segments,
-      timelineData,
-      stopsText,
-      totalDuration,
-    };
   }
 
   // Nuevo método helper para validar fechas

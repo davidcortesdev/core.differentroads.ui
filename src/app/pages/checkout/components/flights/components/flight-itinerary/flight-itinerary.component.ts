@@ -459,46 +459,51 @@ export class FlightItineraryComponent implements OnChanges {
     );
   }
 
-  getAirlineNamesByFlightNumbers(segments: any[]): Observable<string> {
+  // Caché para almacenar resultados de consultas previas de aerolíneas
+  private airlineNamesCache: Record<string, string> = {};
 
-    // Validar si existe la propiedad flightNumber y si es string y almacenarla en un array de vuelos
+  getAirlineNamesByFlightNumbers(segments: any[]): Observable<string> {
+    // Validar y extraer números de vuelo
     const flightNumbers = segments
       .filter(segment => segment && typeof segment.flightNumber === 'string' && segment.flightNumber.trim() !== '')
       .map(segment => segment.flightNumber);
-
-    if (flightNumbers.length === 0) {
-      return of('');
-    }
-
-    // Obtener los códigos de las aerolíneas y almacenarlos en un array de códigos únicos
+  
+    if (!flightNumbers.length) return of('');
+  
+    // Extraer códigos IATA únicos
     const uniqueAirlineCodes = [...new Set(
       flightNumbers.map(flightNumber => flightNumber.substring(0, 2))
     )].filter(code => code.length === 2);
-
-    if (uniqueAirlineCodes.length === 0) {
-      return of('');
+  
+    if (!uniqueAirlineCodes.length) return of('');
+  
+    // Crear clave para caché
+    const cacheKey = uniqueAirlineCodes.sort().join(',');
+    
+    // Verificar si ya tenemos el resultado en caché
+    if (this.airlineNamesCache[cacheKey]) {
+      return of(this.airlineNamesCache[cacheKey]);
     }
-
-    // Obtener los nombres de las aerolíneas a partir de los códigos realizando llamadas al airlineService
+  
+    // Obtener nombres de aerolíneas
     const airlineRequests = uniqueAirlineCodes.map(code => {
-      const filter: AirlineFilter = {
-        codeIATA: code,
-      };
+      const filter: AirlineFilter = { codeIATA: code };
       return this.airlinesService.getAirlines(filter).pipe(
         map(airline => airline[0]?.name || code),
-        catchError(() => of(code)) // Si hay error, devolver el código como nombre
+        catchError(() => of(code))
       );
     });
-
-    // Combinar todas las respuestas y devolver un array de nombres de aerolíneas
+  
+    // Combinar resultados y guardar en caché
     return forkJoin(airlineRequests).pipe(
       map(airlineNames => {
-        console.log('Nombres de aerolíneas obtenidos:', airlineNames);
-        return airlineNames.join(', ');
+        const result = airlineNames.join(', ');
+        this.airlineNamesCache[cacheKey] = result; // Guardar en caché
+        return result;
       }),
       catchError(error => {
         console.error('Error al obtener nombres de aerolíneas:', error);
-        return of(uniqueAirlineCodes.join(', ')); // En caso de error, devolver los códigos como nombres
+        return of(uniqueAirlineCodes.join(', '));
       })
     );
   }

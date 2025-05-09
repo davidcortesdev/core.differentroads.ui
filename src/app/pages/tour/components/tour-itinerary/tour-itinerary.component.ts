@@ -1,4 +1,11 @@
-import { Component, OnInit, ViewChildren, QueryList, ViewChild, OnDestroy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  ViewChildren,
+  QueryList,
+  ViewChild,
+  OnDestroy,
+} from '@angular/core';
 import { ToursService } from '../../../../core/services/tours.service';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -32,7 +39,10 @@ import {
 import { ActivitiesCarouselComponent } from '../../../../shared/components/activities-carousel/activities-carousel.component';
 import { MessageService } from 'primeng/api';
 // Importar el nuevo componente del mapa
-import { TourMapComponent, City } from '../../../../shared/components/tour-map/tour-map.component';
+import {
+  TourMapComponent,
+  City,
+} from '../../../../shared/components/tour-map/tour-map.component';
 import { CityCoordinatesService } from '../../../../shared/services/city-coordinates.service';
 
 interface EventItem {
@@ -53,10 +63,10 @@ interface EventItem {
 export class TourItineraryComponent implements OnInit, OnDestroy {
   @ViewChildren('itineraryPanel') itineraryPanels!: QueryList<Panel>;
   @ViewChild(TourMapComponent) tourMapComponent!: TourMapComponent;
-  
+
   // Mantener solo el Subject para la limpieza
   private destroy$ = new Subject<void>();
-  
+
   // Mantener solo las propiedades necesarias para el componente principal
   cities: string[] = [];
   citiesData: City[] = [];
@@ -157,42 +167,45 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
   ) {
     this.events = [];
   }
-  
+
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
       const slug = params['slug'];
       if (slug) {
         // Obtener el parámetro filterByStatus de los query params
-        const filterByStatus = this.route.snapshot.queryParamMap.get('filterByStatus') !== 'false';
-        
+        const filterByStatus =
+          this.route.snapshot.queryParamMap.get('filterByStatus') !== 'false';
+
         this.toursService
-          .getTourDetailBySlug(slug, [
-            'itinerary-section',
-            'activePeriods',
-            'basePrice',
-          ], filterByStatus)
+          .getTourDetailBySlug(
+            slug,
+            ['itinerary-section', 'activePeriods', 'basePrice'],
+            filterByStatus
+          )
           .subscribe({
             next: (tourData) => {
               // Crear las opciones de fecha sin ordenar
-              const unsortedDateOptions = tourData.activePeriods.map((period) => {
-                let iti = tourData['itinerary-section'].itineraries;
-                return {
-                  id: period.id,
-                  label: period.name,
-                  value: period.externalID + '',
-                  price: (period.basePrice || 0) + (tourData.basePrice || 0),
-                  isGroup: true,
-                  tripType: period.tripType,
-                  itineraryId: iti.filter((f) =>
-                    f.periods.some((p) => p.includes(period.id + ''))
-                  )[0]?.id,
-                  itineraryName: iti.filter((f) =>
-                    f.periods.some((p) => p.includes(period.id + ''))
-                  )[0]?.iname,
-                  dayOne: period.dayOne,
-                };
-              });
-              
+              const unsortedDateOptions = tourData.activePeriods.map(
+                (period) => {
+                  let iti = tourData['itinerary-section'].itineraries;
+                  return {
+                    id: period.id,
+                    label: period.name,
+                    value: period.externalID + '',
+                    price: (period.basePrice || 0) + (tourData.basePrice || 0),
+                    isGroup: true,
+                    tripType: period.tripType,
+                    itineraryId: iti.filter((f) =>
+                      f.periods.some((p) => p.includes(period.id + ''))
+                    )[0]?.id,
+                    itineraryName: iti.filter((f) =>
+                      f.periods.some((p) => p.includes(period.id + ''))
+                    )[0]?.iname,
+                    dayOne: period.dayOne,
+                  };
+                }
+              );
+
               // Ordenar las opciones de fecha por dayOne (fecha de inicio) de forma ascendente
               this.dateOptions = unsortedDateOptions.sort((a, b) => {
                 const dateA = new Date(a.dayOne).getTime();
@@ -246,10 +259,10 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
       lat: lat,
       lng: lng,
     };
-  
+
     // Agregar la ciudad a los datos
     this.citiesData.push(cityData);
-  
+
     // Actualizar el mapa si está disponible
     if (this.tourMapComponent) {
       this.tourMapComponent.updateCitiesData(this.citiesData);
@@ -273,6 +286,8 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
       ])
       .subscribe({
         next: (period) => {
+          console.log('Period details:', period);
+
           this.currentPeriod = period;
           this.tripType = period.tripType || '';
           this.hotels = period.hotels;
@@ -283,37 +298,13 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
             ...(period.activities || []),
             ...(period.includedActivities || []),
           ];
+          console.log('periodallActivities:', allActivities);
 
           // Create a temporary array to store activities
           this.activities = allActivities.map((activity) => ({
             ...activity,
             price: 0, // Initialize with 0, will be updated when prices load
           }));
-
-          // Fetch additional activities using getActivitiesByPeriodId
-          this.periodsService.getActivitiesByPeriodId(this.selectedOption.value)
-            .pipe(takeUntil(this.destroy$))
-            .subscribe({
-              next: (additionalActivities) => {
-                
-                // Add additional activities to the activities array if they don't already exist
-                if (additionalActivities && additionalActivities.length > 0) {
-                  additionalActivities.forEach(activity => {
-                    // Add new activity with price initialized to 0
-                    this.activities.push({
-                      ...activity,
-                      price: 0
-                    });
-                  });
-                  
-                  // Update the itinerary with the new activities
-                  this.updateItinerary();
-                }
-              },
-              error: (error) => {
-                console.error('Error fetching additional activities:', error);
-              }
-            });
 
           // For each activity, get its price and update the activities array
           allActivities.forEach((activity) => {
@@ -391,12 +382,13 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
       );
 
       // Fix: Safely check if hotel.days exists before using includes
-      const hotelByDay = this.hotels?.find((hotel) =>
-        hotel.days && hotel.days.includes(`${index + 1}`)
+      const hotelByDay = this.hotels?.find(
+        (hotel) => hotel.days && hotel.days.includes(`${index + 1}`)
       );
-      
+
       const hotel = this.hotelsData.find(
-        (hotelData) => hotelData.externalID === hotelByDay?.hotels?.[0]?.externalID
+        (hotelData) =>
+          hotelData.externalID === hotelByDay?.hotels?.[0]?.externalID
       );
 
       return {
@@ -505,24 +497,24 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
   }
 
   // Add these methods after handlePanelClick method
-  
+
   /**
    * Expands all day panels in the itinerary
    */
   expandAllPanels(): void {
     if (this.itinerary && this.itinerary.length > 0) {
-      this.itinerary.forEach(item => {
+      this.itinerary.forEach((item) => {
         item.collapsed = false;
       });
     }
   }
-  
+
   /**
    * Collapses all day panels in the itinerary
    */
   collapseAllPanels(): void {
     if (this.itinerary && this.itinerary.length > 0) {
-      this.itinerary.forEach(item => {
+      this.itinerary.forEach((item) => {
         item.collapsed = true;
       });
     }

@@ -67,12 +67,34 @@
             text-align: right;
             align-items: flex-end;
           }
+          // Usar will-change para elementos que cambian frecuentemente
           .journey-time {
             font-size: 1.5rem;
             font-weight: 600;
             line-height: 1.2;
+            will-change: contents;
+            
             @media (max-width: 425px) {
               font-size: 1.25rem;
+            }
+          }
+          
+          // Optimizar selectores CSS para evitar anidamiento profundo
+          .flight-itinerary-price-wrapper-price {
+            font-size: 2rem;
+            font-weight: 600;
+            line-height: 1;
+            
+            @media (max-width: 992px) and (min-width: 577px) {
+              font-size: 1.5rem;
+            }
+            
+            @media (max-width: 576px) and (min-width: 426px) {
+              font-size: 1.25rem;
+            }
+            
+            @media (max-width: 425px) {
+              font-size: 1.3rem;
             }
           }
           .journey-date {

@@ -293,8 +293,10 @@
   </div>
 
   <div class="submit-review-container">
-    <!-- El botón ya llama a handleManualSubmit() en el evento (click) -->
-    <button type="button" class="submit-review" (click)="submitReview()">Enviar opinión</button>
+    <button type="button" class="submit-review" (click)="submitReview()" [disabled]="isSubmitting">
+      {{ isSubmitting ? 'Enviando...' : 'Enviar opinión' }}
+      <i class="pi" [class.pi-spin]="isSubmitting" [class.pi-spinner]="isSubmitting" [class.pi-send]="!isSubmitting"></i>
+    </button>
   </div>
   </div> <!-- Cierre del div contenedor principal de los campos -->
 </div>

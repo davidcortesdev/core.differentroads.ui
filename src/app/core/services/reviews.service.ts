@@ -97,7 +97,7 @@ export class ReviewsService {
               ...review,
               tourName: period.tourName, // Usar directamente el nombre del tour del periodo
               reviewDate: period.dayOne, // Usar directamente la fecha del periodo
-              // Mantener el nombre del viajero si existe
+              
               travelerName: review.travelerName || 'Viajero Anónimo'
             }));
           })
@@ -117,12 +117,9 @@ export class ReviewsService {
     filter?: ReviewFilter
   ): Observable<Review[]> {
     let params = new HttpParams();
-
-    // Add filter parameters if provided
     if (filter) {
       params = this.addFilterParams(params, filter);
     }
-
     return this.http.get<Review[]>(`${this.API_URL}/top/${count}`, { params });
   }
 
@@ -134,7 +131,6 @@ export class ReviewsService {
   getReviewCount(filter?: ReviewFilter): Observable<number> {
     let params = new HttpParams();
 
-    // Add filter parameters if provided
     if (filter) {
       params = this.addFilterParams(params, filter);
     }
@@ -150,7 +146,6 @@ export class ReviewsService {
   getAverageRating(filter?: ReviewFilter): Observable<number> {
     let params = new HttpParams();
 
-    // Add filter parameters if provided
     if (filter) {
       params = this.addFilterParams(params, filter);
     }
@@ -170,13 +165,11 @@ export class ReviewsService {
   ): HttpParams {
     Object.entries(filter).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
-        // Handle arrays (tourIds, travelerIds)
         if (Array.isArray(value)) {
           value.forEach((item) => {
             params = params.append(key, item.toString());
           });
         } else if (value instanceof Date) {
-          // Format dates to ISO string
           params = params.set(key, value.toISOString());
         } else {
           params = params.set(key, value.toString());
@@ -192,6 +185,19 @@ export class ReviewsService {
    * @returns Observable of the saved review or response
    */
   saveReview(review: any): Observable<any> {
-    return this.http.post<any>(`${this.API_URL}`, review);
+    // Crear una copia del objeto para no modificar el original
+    const reviewToSend = { ...review };
+    
+    // Eliminar la transformación de tourId a tour_id
+    // No hacer ninguna transformación, mantener tourId como está
+    
+    console.log('Review a guardar (con tourId):', reviewToSend);
+    
+    return this.http.post<any>(`${this.API_URL}`, reviewToSend, {
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'text/plain',
+      },
+    });
   }
 }

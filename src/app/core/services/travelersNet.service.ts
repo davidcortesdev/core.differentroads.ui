@@ -1,90 +1,77 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, catchError, map, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-
-export interface TravelerFilter {
-  id?: number;
-  code?: string;
-  name?: string;
-  tkId?: string;
-  email?: string;
-}
 
 export interface Traveler {
   id: number;
-  code: string;
   name: string;
-  tkId?: string;
+  email: string;
+  code?: string;
+  // Otros campos que pueda tener un viajero
+}
+
+export interface TravelerFilter {
   email?: string;
+  name?: string;
+  code?: string;
+  // Otros campos para filtrar viajeros
 }
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
 export class TravelersNetService {
-  private readonly API_URL = `${environment.travelersApiUrl}/Travelers`;
+  private apiUrl = environment.apiUrl + '/api/travelers';
+  private tourApiUrl = environment.apiUrl + '/api/tours';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   /**
-   * Get travelers by filter criteria
-   * @param filter Filter criteria for travelers
-   * @returns Observable of Traveler array
+   * Obtiene un viajero por su ID
+   * @param id ID del viajero
+   * @returns Observable con los datos del viajero
    */
-  getTravelers(filter?: TravelerFilter): Observable<Traveler[]> {
-    let params = new HttpParams();
-
-    // Add filter parameters if provided
-    if (filter) {
-      Object.entries(filter).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          params = params.set(
-            key.charAt(0).toUpperCase() + key.slice(1),
-            value.toString()
-          );
-        }
-      });
-    }
-
-    return this.http.get<Traveler[]>(this.API_URL, {
-      params,
-      headers: {
-        Accept: 'text/plain',
-      },
-    });
+  getTravelerById(id: number): Observable<Traveler> {
+    return this.http.get<Traveler>(`${this.apiUrl}/${id}`);
   }
 
   /**
-   * Get a specific traveler by ID
-   * @param id Traveler ID
-   * @returns Observable of Traveler
+   * Obtiene viajeros según un filtro
+   * @param filter Filtro para buscar viajeros
+   * @returns Observable con la lista de viajeros que coinciden con el filtro
    */
-  getTravelerById(id: number): Observable<Traveler> {
-    return this.http
-      .get<Traveler>(`${this.API_URL}/${id}`, {
-        headers: {
-          Accept: 'text/plain',
-        },
-      })
-      .pipe(
-        map((traveler) => {
-          // Process any string fields that might contain \n characters
-          const processedTraveler = { ...traveler };
+  getTravelers(filter: TravelerFilter): Observable<Traveler[]> {
+    let params = new HttpParams();
+    
+    if (filter.email) {
+      params = params.set('email', filter.email);
+    }
+    if (filter.name) {
+      params = params.set('name', filter.name);
+    }
+    if (filter.code) {
+      params = params.set('code', filter.code);
+    }
+    
+    return this.http.get<Traveler[]>(this.apiUrl, { params });
+  }
 
-          return processedTraveler;
-        }),
-        catchError((error) => {
-          console.error(`Error fetching traveler with ID ${id}:`, error);
-          // Return a default traveler object on error
-          return of({
-            id: id,
-            code: 'unknown',
-            name: `Traveler ${id}`,
-            tkId: '',
-            email: '',
-          });
-        })
-      );
+  /**
+   * Crea un nuevo viajero
+   * @param traveler Datos del viajero a crear
+   * @returns Observable con los datos del viajero creado
+   */
+  createTraveler(traveler: Partial<Traveler>): Observable<Traveler> {
+    return this.http.post<Traveler>(this.apiUrl, traveler);
+  }
+
+  /**
+   * Obtiene el ID del tour a partir del ID del período
+   * @param periodId ID del período
+   * @returns Observable con el ID del tour
+   */
+  getTourIdByPeriodId(periodId: string): Observable<number> {
+    return this.http.get<number>(`${this.tourApiUrl}/byPeriod/${periodId}`);
   }
 }

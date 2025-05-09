@@ -38,11 +38,16 @@ export class TourNetService {
   getTours(filter?: TourFilter): Observable<Tour[]> {
     let params = new HttpParams();
 
-    // Add filter parameters if provided
+    // Añadir parámetros de filtro si se proporcionan
     if (filter) {
       Object.entries(filter).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          params = params.set(key.charAt(0).toUpperCase() + key.slice(1), value.toString());
+          // Si el filtro es tour_id, usar exactamente ese nombre
+          if (key === 'tour_id') {
+            params = params.set('tour_id', value.toString());
+          } else {
+            params = params.set(key.charAt(0).toUpperCase() + key.slice(1), value.toString());
+          }
         }
       });
     }
@@ -121,5 +126,51 @@ export class TourNetService {
         return of(0); // Return 0 on error
       })
     );
+  }
+
+  /**
+   * Obtiene el tourId a partir del tourId
+   * @param tourId Identificador del tour
+   * @returns Observable con el ID del tour
+   */
+  getTourIdByPeriodId(tourId: string): Observable<number> {
+    console.log('Llamando a la API con tourId:', tourId);
+    console.log('URL completa:', `${environment.dataApiUrl}/periods/${tourId}`);
+    
+    return this.http.get<any>(`${environment.tourApiUrl}/Tour?TKid=${tourId}`)
+      .pipe(
+        map(response => {
+          console.log('Respuesta completa de periods API:', response);
+          console.log('Tipo de respuesta:', typeof response);
+          console.log('Propiedades de la respuesta:', Object.keys(response));
+          
+          // Si la respuesta es un array, tomar el primer elemento
+          const period = Array.isArray(response) ? response[0] : response;
+          
+          // Verificar si la respuesta tiene el campo tour_id
+          if (period && period.tour_id !== undefined) {
+            console.log('ID del tour extraído (tour_id):', period.tour_id);
+            return period.tour_id;
+          }
+          
+          // Verificar si la respuesta tiene el campo tourId como alternativa
+          if (period && period.tourId !== undefined) {
+            console.log('ID del tour extraído (tourId):', period.tourId);
+            return period.tourId;
+          }
+          
+          // Buscar en propiedades anidadas
+          if (period && period.tour && period.tour.id) {
+            console.log('ID del tour extraído (tour.id):', period.tour.id);
+            return period.tour.id;
+          }
+          
+          throw new Error(`No se pudo obtener el tourId para el tourId: ${tourId}`);
+        }),
+        catchError(error => {
+          console.error(`Error al obtener el tourId para el tourId ${tourId}:`, error);
+          return of(0); // Devolver 0 en caso de error
+        })
+      );
   }
 }

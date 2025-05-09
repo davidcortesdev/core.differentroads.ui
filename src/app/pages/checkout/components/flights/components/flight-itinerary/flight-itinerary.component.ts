@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { Flight } from '../../../../../../core/models/tours/flight.model';
 import { PricesService } from '../../../../../../core/services/checkout/prices.service';
-import { AirlinesService, Airline } from '../../../../../../core/services/airlines/airlines.service';
+import { AirlinesService, Airline, AirlineFilter } from '../../../../../../core/services/airlines/airlines.service';
 import { forkJoin, Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 
@@ -49,6 +49,7 @@ interface FlightSegment {
   styleUrls: ['./flight-itinerary.component.scss'],
 })
 export class FlightItineraryComponent implements OnChanges {
+
   @Input() flight!: Flight;
   @Input() selectFlight!: (flight: any) => void;
   @Input() isFlightSelected!: (flight: any) => boolean;
@@ -261,113 +262,73 @@ export class FlightItineraryComponent implements OnChanges {
    * usando la misma lógica de getSegmentsArrivalDate.
    */
   getTimelineData(baseDate: string, segments: any[]): any[] {
-    if (!baseDate || !segments || segments.length === 0) {
-      console.warn('Invalid base date or segments:', {
-        baseDate,
-        segmentsLength: segments?.length,
-      });
-      return [];
-    }
+    if (!baseDate || !segments?.length) return [];
 
-    console.log('Building timeline with baseDate:', baseDate);
-    console.log('Segments:', JSON.stringify(segments, null, 2));
+    // Validar formato de fecha una sola vez
+    if (!baseDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      console.warn('Base date is not in YYYY-MM-DD format:', baseDate);
+      baseDate = new Date().toISOString().split('T')[0];
+    }
 
     const timelineItems = [];
     let currentArrival: Date;
 
     try {
-      // Ensure the base date is valid
-      if (!baseDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        console.warn('Base date is not in YYYY-MM-DD format:', baseDate);
-        baseDate = new Date().toISOString().split('T')[0]; // Use today as fallback
-      }
-
-      // Create the initial date from the first segment's departure time
-      if (!segments[0].departureTime) {
-        console.warn('First segment has no departureTime:', segments[0]);
-        segments[0].departureTime = '00:00'; // Use default time
-      }
-
-      currentArrival = this.parseLocalDateTime(
-        baseDate,
-        segments[0].departureTime
-      );
-      console.log('Initial currentArrival:', currentArrival);
-    } catch (e) {
-      console.warn('Error creating date for timeline:', e);
-      currentArrival = new Date();
-    }
-
-    for (const [index, seg] of segments.entries()) {
-      if (!seg) {
-        console.warn(`Segment ${index} is undefined`);
-        continue;
-      }
-
-      if (!seg.departureTime) {
-        console.warn(`Segment ${index} has no departureTime:`, seg);
-        seg.departureTime = '00:00'; // Use default time
-      }
-
-      if (!seg.arrivalTime) {
-        console.warn(`Segment ${index} has no arrivalTime:`, seg);
-        seg.arrivalTime = '00:00'; // Use default time
-      }
-
-      let departure: Date;
-      if (index === 0) {
-        departure = this.parseLocalDateTime(baseDate, seg.departureTime);
-      } else {
-        const baseForDeparture = this.formatDate(currentArrival);
-        departure = this.parseLocalDateTime(
-          baseForDeparture,
-          seg.departureTime
-        );
-        if (departure < currentArrival) {
-          departure.setDate(departure.getDate() + 1);
+      // Inicializar con el primer segmento
+      const firstSegmentDepartureTime = segments[0].departureTime || '00:00';
+      currentArrival = this.parseLocalDateTime(baseDate, firstSegmentDepartureTime);
+      
+      // Procesar cada segmento
+      for (const [index, seg] of segments.entries()) {
+        if (!seg) continue;
+        
+        const departureTime = seg.departureTime || '00:00';
+        const arrivalTime = seg.arrivalTime || '00:00';
+        
+        // Calcular fechas de salida y llegada
+        let departure: Date;
+        if (index === 0) {
+          departure = this.parseLocalDateTime(baseDate, departureTime);
+        } else {
+          const baseForDeparture = this.formatDate(currentArrival);
+          departure = this.parseLocalDateTime(baseForDeparture, departureTime);
+          if (departure < currentArrival) {
+            departure.setDate(departure.getDate() + 1);
+          }
         }
+      
+        let arrival = this.parseLocalDateTime(this.formatDate(departure), arrivalTime);
+        if (arrival < departure) {
+          arrival.setDate(arrival.getDate() + 1);
+        } else if (seg.numNights > 0) {
+          arrival.setDate(arrival.getDate() + seg.numNights);
+        }
+      
+        // Añadir eventos al timeline
+        timelineItems.push({
+          departureCity: seg.departureCity || 'Unknown',
+          departureIata: seg.departureIata || '---',
+          departureDateTime: departure,
+          type: 'departure',
+          flightNumber: seg.flightNumber || 'Unknown',
+        });
+      
+        timelineItems.push({
+          arrivalCity: seg.arrivalCity || 'Unknown',
+          arrivalIata: seg.arrivalIata || '---',
+          arrivalDateTime: arrival,
+          type: 'arrival',
+          flightNumber: seg.flightNumber || 'Unknown',
+        });
+      
+        currentArrival = arrival;
       }
-
-      let arrival = this.parseLocalDateTime(
-        this.formatDate(departure),
-        seg.arrivalTime
-      );
-      if (arrival < departure) {
-        arrival.setDate(arrival.getDate() + 1);
-      } else if (seg.numNights > 0) {
-        arrival.setDate(arrival.getDate() + seg.numNights);
-      }
-
-      console.log(`Segment ${index} times:`, {
-        departureTime: seg.departureTime,
-        arrivalTime: seg.arrivalTime,
-        parsedDeparture: departure.toISOString(),
-        parsedArrival: arrival.toISOString(),
-      });
-
-      // Añadir evento de salida
-      timelineItems.push({
-        departureCity: seg.departureCity || 'Unknown',
-        departureIata: seg.departureIata || '---',
-        departureDateTime: departure,
-        type: 'departure',
-        flightNumber: seg.flightNumber || 'Unknown',
-      });
-
-      // Añadir evento de llegada
-      timelineItems.push({
-        arrivalCity: seg.arrivalCity || 'Unknown',
-        arrivalIata: seg.arrivalIata || '---',
-        arrivalDateTime: arrival,
-        type: 'arrival',
-        flightNumber: seg.flightNumber || 'Unknown',
-      });
-
-      currentArrival = arrival;
+      
+      return timelineItems;
+    } catch (e) {
+      console.warn('Error generating timeline:', e);
+      return [];
     }
-
-    console.log('Timeline data generated:', timelineItems);
-    return timelineItems;
   }
 
   getPrice(): number {
@@ -389,228 +350,71 @@ export class FlightItineraryComponent implements OnChanges {
     }
   }
 
+  // Método optimizado para reducir la complejidad y mejorar el rendimiento
   private computeJourney(type: 'outbound' | 'inbound'): Journey | null {
     if (!this.flight) return null;
-
+  
     const journeyData = this.flight[type];
-
-    if (
-      !journeyData ||
-      !journeyData.segments ||
-      journeyData.segments.length === 0
-    ) {
-      return null;
-    }
-
-    if (type === 'inbound') {
-      if (!journeyData.date || journeyData.segments.length === 0) {
-        return null;
-      }
-      if (journeyData.name === 'No return flight') {
-        return null;
-      }
-    }
-
+  
+    // Validación temprana para evitar procesamiento innecesario
+    if (!journeyData?.segments?.length) return null;
+    if (type === 'inbound' && (!journeyData.date || journeyData.name === 'No return flight')) return null;
+  
     const segments = journeyData.segments;
-    if (!segments || segments.length === 0) return null;
-
     const departureSegment = segments[0];
     const arrivalSegment = segments[segments.length - 1];
-
+  
     if (!departureSegment || !arrivalSegment) return null;
-
-    let journeyDate: Date;
+  
+    // Usar try/catch solo para la lógica compleja, no para cada operación
     try {
-      journeyDate = new Date(journeyData.date);
-      if (!this.isValidDate(journeyDate)) {
-        console.warn(`Invalid date for ${type} journey:`, journeyData.date);
-        journeyDate = new Date();
-      }
+      const journeyDate = new Date(journeyData.date);
+      if (!this.isValidDate(journeyDate)) throw new Error(`Invalid date for ${type} journey`);
+      
+      const departureTime = this.formatTime(departureSegment.departureTime);
+      if (!this.isValidDate(departureTime)) throw new Error(`Invalid departure time for ${type} journey`);
+      
+      const departure = {
+        iata: departureSegment.departureIata || '',
+        time: departureTime,
+        date: journeyDate,
+      };
+  
+      const arrivalDate = this.getSegmentsArrivalDate(journeyData.date, segments);
+      if (!this.isValidDate(arrivalDate)) throw new Error(`Invalid arrival date for ${type} journey`);
+      
+      const arrival = {
+        iata: arrivalSegment.arrivalIata || '',
+        time: arrivalDate,
+        date: arrivalDate,
+      };
+  
+      const stops = segments.length - 1;
+      const stopsText = stops === 0 ? 'vuelo directo' : stops === 1 ? '1 escala' : `${stops} escalas`;
+      
+      const totalDuration = this.getTotalDuration(type === 'outbound') || '';
+      const timelineData = journeyData.date ? this.getTimelineData(journeyData.date, segments) : [];
+  
+      return {
+        type,
+        departure,
+        arrival,
+        segments,
+        timelineData,
+        stopsText,
+        totalDuration,
+      };
     } catch (e) {
-      console.warn(`Error creating date for ${type} journey:`, e);
-      journeyDate = new Date();
+      console.warn(`Error computing ${type} journey:`, e);
+      return null;
     }
-
-    let departureTime: Date;
-    try {
-      departureTime = this.formatTime(departureSegment.departureTime);
-      if (!this.isValidDate(departureTime)) {
-        console.warn(
-          `Invalid departure time for ${type} journey:`,
-          departureSegment.departureTime
-        );
-        departureTime = new Date();
-      }
-    } catch (e) {
-      console.warn(`Error creating departure time for ${type} journey:`, e);
-      departureTime = new Date();
-    }
-
-    const departure = {
-      iata: departureSegment.departureIata || '',
-      time: departureTime,
-      date: journeyDate,
-    };
-
-    let arrivalDate: Date;
-    try {
-      arrivalDate = this.getSegmentsArrivalDate(journeyData.date, segments);
-      if (!this.isValidDate(arrivalDate)) {
-        console.warn(`Invalid arrival date for ${type} journey`);
-        arrivalDate = new Date();
-      }
-    } catch (e) {
-      console.warn(`Error calculating arrival date for ${type} journey:`, e);
-      arrivalDate = new Date();
-    }
-
-    const arrival = {
-      iata: arrivalSegment.arrivalIata || '',
-      time: arrivalDate,
-      date: arrivalDate,
-    };
-
-    const stops = segments.length - 1;
-    const stopsText =
-      stops === 0
-        ? 'vuelo directo'
-        : stops === 1
-        ? '1 escala'
-        : stops + ' escalas';
-
-    let totalDuration: string;
-    try {
-      totalDuration = this.getTotalDuration(type === 'outbound');
-      if (!totalDuration) {
-        totalDuration = '';
-      }
-    } catch (e) {
-      console.warn(`Error calculating duration for ${type} journey:`, e);
-      totalDuration = '';
-    }
-
-    let timelineData: any[];
-    try {
-      timelineData = journeyData.date
-        ? this.getTimelineData(journeyData.date, segments)
-        : [];
-    } catch (e) {
-      console.warn(`Error generating timeline for ${type} journey:`, e);
-      timelineData = [];
-    }
-
-    return {
-      type,
-      departure,
-      arrival,
-      segments,
-      timelineData,
-      stopsText,
-      totalDuration,
-    };
   }
 
   // Nuevo método helper para validar fechas
   isValidDate(date: any): boolean {
     return date instanceof Date && !isNaN(date.getTime());
   }
-  
-  // Caché de aerolíneas a nivel de componente
-  private airlineCache: { [prefix: string]: string } = {};
-  // Control de solicitudes en curso
-  private pendingRequests: { [prefix: string]: Observable<string> } = {};
-  
-  /**
-   * Obtiene los nombres de las aerolíneas a partir de los números de vuelo de los segmentos
-   * @param segments Segmentos del viaje que contienen los números de vuelo
-   * @returns String con los nombres de las aerolíneas
-   */
-  getAirlineNamesByFlightNumbers(segments: FlightSegment[]): string {
-    if (!segments || segments.length === 0) {
-      return '';
-    }
-    
-    // Extraer prefijos IATA únicos de los números de vuelo
-    const prefixesIATA = segments
-      .filter(segment => segment && segment.flightNumber)
-      .map(segment => {
-        // Extraer las dos primeras letras del número de vuelo
-        const flightNumber = segment.flightNumber || '';
-        const prefixIATA = flightNumber.substring(0, 2);
-        return prefixIATA;
-      })
-      .filter(prefix => prefix.length === 2); // Asegurarse de que el prefijo tiene 2 caracteres
-    
-    // Eliminar duplicados
-    const uniquePrefixesIATA = [...new Set(prefixesIATA)];
-    
-    // Si no hay prefijos válidos, intentar usar los nombres de aerolíneas de los segmentos
-    if (uniquePrefixesIATA.length === 0) {
-      const airlineNames = segments
-        .filter(segment => segment && segment.airline && segment.airline.name)
-        .map(segment => segment.airline?.name || '');
-      
-      const uniqueAirlineNames = [...new Set(airlineNames)];
-      return uniqueAirlineNames.join(', ');
-    }
-    
-    // Verificar si tenemos todos los prefijos en caché
-    const cachedNames = uniquePrefixesIATA
-      .filter(prefix => this.airlineCache[prefix])
-      .map(prefix => this.airlineCache[prefix]);
-    
-    // Si tenemos todos los prefijos en caché, devolver los nombres
-    if (cachedNames.length === uniquePrefixesIATA.length) {
-      return cachedNames.join(', ');
-    }
-    
-    // Prefijos que necesitamos cargar
-    const prefixesToLoad = uniquePrefixesIATA.filter(prefix => !this.airlineCache[prefix]);
-    
-    // Crear observables para cada prefijo que necesitamos cargar
-    const requests: Observable<string>[] = prefixesToLoad.map(prefix => {
-      // Si ya hay una solicitud en curso para este prefijo, reutilizarla
-      if (this.pendingRequests[prefix]) {
-        return this.pendingRequests[prefix];
-      }
-      
-      // Crear una nueva solicitud
-      const request = this.airlinesService.getAirlines({ codeIATA: prefix }).pipe(
-        map(airlines => {
-          const airlineName = airlines && airlines.length > 0 ? airlines[0].name || prefix : prefix;
-          this.airlineCache[prefix] = airlineName;
-          return airlineName;
-        }),
-        catchError(() => {
-          this.airlineCache[prefix] = prefix;
-          return of(prefix);
-        })
-      );
-      
-      // Guardar la solicitud en el mapa de solicitudes pendientes
-      this.pendingRequests[prefix] = request;
-      
-      return request;
-    });
-    
-    // Si hay solicitudes para cargar, hacerlas en paralelo
-    if (requests.length > 0) {
-      forkJoin(requests).subscribe(
-        () => {
-          // Limpiar las solicitudes pendientes
-          prefixesToLoad.forEach(prefix => {
-            delete this.pendingRequests[prefix];
-          });
-        }
-      );
-    }
-    
-    // Devolver los nombres que tenemos en caché y los prefijos para los que no tenemos nombres
-    return uniquePrefixesIATA
-      .map(prefix => this.airlineCache[prefix] || prefix)
-      .join(', ');
-  }
-  
+
   /**
    * Obtiene la URL del logo de la aerolínea a partir del código IATA
    * @param flightNumber Número de vuelo del que se extraerá el código IATA
@@ -653,5 +457,59 @@ export class FlightItineraryComponent implements OnChanges {
     return uniquePrefixesIATA.map(iataCode => 
       `https://images.kiwi.com/airlines/32x32/${iataCode}.png`
     );
+  }
+
+  // Caché para almacenar resultados de consultas previas de aerolíneas
+  private airlineNamesCache: Record<string, string> = {};
+
+  getAirlineNamesByFlightNumbers(segments: any[]): Observable<string> {
+    // Validar y extraer números de vuelo
+    const flightNumbers = segments
+      .filter(segment => segment && typeof segment.flightNumber === 'string' && segment.flightNumber.trim() !== '')
+      .map(segment => segment.flightNumber);
+  
+    if (!flightNumbers.length) return of('');
+  
+    // Extraer códigos IATA únicos
+    const uniqueAirlineCodes = [...new Set(
+      flightNumbers.map(flightNumber => flightNumber.substring(0, 2))
+    )].filter(code => code.length === 2);
+  
+    if (!uniqueAirlineCodes.length) return of('');
+  
+    // Crear clave para caché
+    const cacheKey = uniqueAirlineCodes.sort().join(',');
+    
+    // Verificar si ya tenemos el resultado en caché
+    if (this.airlineNamesCache[cacheKey]) {
+      return of(this.airlineNamesCache[cacheKey]);
+    }
+  
+    // Obtener nombres de aerolíneas
+    const airlineRequests = uniqueAirlineCodes.map(code => {
+      const filter: AirlineFilter = { codeIATA: code };
+      return this.airlinesService.getAirlines(filter).pipe(
+        map(airline => airline[0]?.name || code),
+        catchError(() => of(code))
+      );
+    });
+  
+    // Combinar resultados y guardar en caché
+    return forkJoin(airlineRequests).pipe(
+      map(airlineNames => {
+        const result = airlineNames.join(', ');
+        this.airlineNamesCache[cacheKey] = result; // Guardar en caché
+        return result;
+      }),
+      catchError(error => {
+        console.error('Error al obtener nombres de aerolíneas:', error);
+        return of(uniqueAirlineCodes.join(', '));
+      })
+    );
+  }
+  
+  // Función trackBy para mejorar rendimiento de ngFor
+  trackByJourneyType(index: number, journey: Journey): string {
+    return journey.type;
   }
 }

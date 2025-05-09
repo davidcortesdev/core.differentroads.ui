@@ -10,7 +10,7 @@
 <div class="flight-itinerary">
   <div class="flight-itinerary-journey">
     <!-- Iteramos sobre cada journey (outbound e inbound) -->
-    <div class="journey-item" *ngFor="let journey of journeys; let i = index">
+    <div class="journey-item" *ngFor="let journey of journeys; let i = index; trackBy: trackByJourneyType">
       <!-- Etiqueta de IDA/VUELTA -->
       <div class="journey-direction">
         <span class="direction-text">{{i === 0 ? "IDA" : "VUELTA"}}</span>

@@ -507,4 +507,9 @@ export class FlightItineraryComponent implements OnChanges {
       })
     );
   }
+  
+  // Función trackBy para mejorar rendimiento de ngFor
+  trackByJourneyType(index: number, journey: Journey): string {
+    return journey.type;
+  }
 }

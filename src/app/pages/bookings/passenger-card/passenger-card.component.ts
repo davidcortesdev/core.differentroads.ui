@@ -90,12 +90,12 @@ export class PassengerCardComponent implements OnInit, OnChanges {
     }
     
     this.form = this.fb.group({
-      fullName: [this.passenger.fullName || '', Validators.required],
+      fullName: [this.passenger.fullName || ''],
       email: [this.passenger.email || ''],
       phone: [this.passenger.phone || ''],
       documentType: [this.passenger.documentType || ''],
       passportID: [this.passenger.passportID || ''],
-      birthDate: [this.passenger.birthDate || '', [Validators.required, this.birthDateValidator.bind(this)]],
+      birthDate: [this.passenger.birthDate || '', [this.birthDateValidator.bind(this)]],
       gender: [this.passenger.gender || ''],
       ciudad: [this.passenger.ciudad || ''],
       codigoPostal: [this.passenger.ciudad || ''],
@@ -127,10 +127,10 @@ export class PassengerCardComponent implements OnInit, OnChanges {
   createPassengerForm(passenger: PassengerData): FormGroup {
     return this.fb.group({
       id: [passenger.id],
-      fullName: [passenger.fullName, [Validators.required, Validators.minLength(3)]],
-      documentType: [passenger.documentType || 'passport', Validators.required],
-      passportID: [passenger.passportID, [Validators.required, Validators.minLength(3)]],
-      birthDate: [passenger.birthDate, [Validators.required, this.birthDateValidator.bind(this)]],
+      fullName: [passenger.fullName, [Validators.minLength(3)]],
+      documentType: [passenger.documentType || 'passport'],
+      passportID: [passenger.passportID, [Validators.minLength(3)]],
+      birthDate: [passenger.birthDate, [this.birthDateValidator.bind(this)]],
       email: [passenger.email, Validators.email],
       phone: [passenger.phone],
       type: [passenger.type],
@@ -150,6 +150,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
   }
 
   birthDateValidator(control: AbstractControl): { [key: string]: boolean } | null {
+    if (!control.value) return null; // Si no hay fecha, no validamos
     const selectedDate = new Date(control.value);
     if (selectedDate >= this.today) {
       return { invalidBirthDate: true };
@@ -170,6 +171,8 @@ export class PassengerCardComponent implements OnInit, OnChanges {
   }
 
   onSave(): void {
+    // Ahora verificamos solo si el formulario es válido según las reglas de validación
+    // que quedarán (como el email válido o el minLength), pero no si está completo
     if (this.passengerForm.valid) {
       const formValue = this.passengerForm.getRawValue();
       
@@ -225,7 +228,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
         surname: '', 
         passportID: formValue.passportID,
         documentType: formValue.documentType,
-        birthdate: formValue.birthDate, // Asegurarse de que se use el campo correcto
+        birthdate: formValue.birthDate,
         email: formValue.email,
         phone: formValue.phone,
         sex: formValue.gender,
@@ -267,7 +270,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
             fullName: formValue.fullName,
             documentType: formValue.documentType,
             passportID: formValue.passportID,
-            birthDate: formValue.birthDate, // Asegurarse de que se actualice correctamente
+            birthDate: formValue.birthDate,
             email: formValue.email,
             phone: formValue.phone,
             gender: formValue.gender,
@@ -289,7 +292,7 @@ export class PassengerCardComponent implements OnInit, OnChanges {
           this.messageService.add({
             severity: 'success',
             summary: 'Datos actualizados',
-            detail: `La información de ${formValue.fullName} ha sido actualizada correctamente`,
+            detail: `La información de ${formValue.fullName || 'pasajero'} ha sido actualizada correctamente`,
             life: 3000
           });
   
@@ -307,15 +310,16 @@ export class PassengerCardComponent implements OnInit, OnChanges {
         }
       });
     } else {
+      // Mostramos mensaje de advertencia si hay errores de validación
+      // (como email inválido o campos con longitud mínima no cumplida)
       this.messageService.add({
         severity: 'warn',
         summary: 'Formulario inválido',
-        detail: 'Por favor completá los campos requeridos.',
+        detail: 'Por favor corrige los errores en el formulario.',
         life: 3000
       });
     }
   }
-  
 
   onCancel(): void {
     // Restaurar el formulario a los valores originales antes de salir del modo edición

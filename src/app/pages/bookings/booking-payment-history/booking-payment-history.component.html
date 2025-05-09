@@ -189,6 +189,9 @@
     >
     </p-button>
   </div>
+  <p *ngIf="approveMessage">
+    {{ approveMessage }}
+  </p>
   <div class="p-dialog-footer">
     <p-button
       label="Aprobar"

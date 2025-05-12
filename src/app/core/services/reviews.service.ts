@@ -179,14 +179,7 @@ export class ReviewsService {
    * @returns Observable of the saved review or response
    */
   saveReview(review: any): Observable<any> {
-    // Crear una copia del objeto para no modificar el original
     const reviewToSend = { ...review };
-    
-    // Eliminar la transformación de tourId a tour_id
-    // No hacer ninguna transformación, mantener tourId como está
-    
-    console.log('Review a guardar (con tourId):', reviewToSend);
-    
     return this.http.post<any>(`${this.API_URL}`, reviewToSend, {
       headers: {
         'Content-Type': 'application/json',

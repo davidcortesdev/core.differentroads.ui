@@ -19,7 +19,6 @@ export interface Tour {
   description?: string;
   tkId?: string;
   slug?:string;
-  // Add other tour properties as needed based on the API response
 }
 
 @Injectable({
@@ -37,12 +36,9 @@ export class TourNetService {
    */
   getTours(filter?: TourFilter): Observable<Tour[]> {
     let params = new HttpParams();
-
-    // Añadir parámetros de filtro si se proporcionan
     if (filter) {
       Object.entries(filter).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          // Si el filtro es TKid, usar exactamente ese nombre
           if (key === 'TKid' || key === 'tkId') {
             params = params.set('TKid', value.toString());
           } else if (key === 'tour_id') {
@@ -77,23 +73,18 @@ export class TourNetService {
       }
     }).pipe(
       map(response => {
-        // Check if response is an array and take the first item
         if (Array.isArray(response) && response.length > 0) {
           return response[0];
         }
-        // If it's a single object, return it directly
         return response;
       }),
       map(tour => {
-        // Ensure we have a default name if it's missing
         return {
           ...tour,
           name: tour.name
         };
       }),
       catchError(error => {
-        console.error(`Error fetching tour with ID ${id}:`, error);
-        // Return a default tour object on error
         return of({
           id: id,
           code: 'unknown',
@@ -121,11 +112,11 @@ export class TourNetService {
           console.log('Tour ID:', id);
           return id;
         }
-        return 0; // Return 0 if no tour is found
+        return 0; 
       }),
       catchError(error => {
         console.error('Error fetching tours:', error);
-        return of(0); // Return 0 on error
+        return of(0); 
       })
     );
   }
@@ -140,19 +131,14 @@ export class TourNetService {
     return this.http.get<any>(`${environment.tourApiUrl}/Tour?TKid=${tourId}`)
       .pipe(
         map(response => {
-          console.log('Respuesta completa de periods API:', response);
-          // Si la respuesta es un array, tomar el primer elemento
           const period = Array.isArray(response) ? response[0] : response;
-          // Usar la propiedad id directamente
           if (period && period.id !== undefined) {
-            console.log('ID del tour extraído (id):', period.id);
             return period.id;
           }
           throw new Error(`No se pudo obtener el tourId para el tourId: ${tourId}`);
         }),
         catchError(error => {
-          console.error(`Error al obtener el tourId para el tourId ${tourId}:`, error);
-          return of(0); // Devolver 0 en caso de error
+          return of(0); 
         })
       );
   }

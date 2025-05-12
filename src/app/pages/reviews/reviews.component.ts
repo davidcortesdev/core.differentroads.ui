@@ -7,7 +7,6 @@ import { TourFilter, TourNetService } from '../../core/services/tourNet.service'
 import { switchMap, take, of } from 'rxjs';
 import { TravelersNetService, Traveler } from '../../core/services/travelersNet.service';
 
-// Definición de la nueva estructura para el payload de la reseña
 interface ReviewPayload {
   text: string;
   accommodationRating: number;
@@ -281,7 +280,7 @@ export class ReviewsComponent implements OnInit {
         externalId: this.periodExternalId,
         reviewDate: new Date().toISOString()
       };
-      
+
       this.reviewsService.saveReview(reviewPayload).subscribe({
         next: (resp) => {
           this.nombreInputRef.nativeElement.value = '';

@@ -17,6 +17,16 @@ export class ActivitiesCarouselComponent {
   
   protected carouselConfig = CAROUSEL_CONFIG;
   
+  // Variables para el modal
+  showFullActivityModal = false;
+  selectedActivity: ActivityHighlight | null = null;
+  
+  // Estilos para el diálogo
+  dialogStyle = {
+    width: '90%', 
+    maxWidth: '800px'
+  };
+  
   responsiveOptions = [
     {
       breakpoint: '1920px',
@@ -57,5 +67,11 @@ export class ActivitiesCarouselComponent {
 
   trackByFn(index: number, item: ActivityHighlight): string | number {
     return item.id || index;
+  }
+  
+  // Método para abrir el modal con la actividad seleccionada
+  openFullActivity(activity: ActivityHighlight): void {
+    this.selectedActivity = activity;
+    this.showFullActivityModal = true;
   }
 }

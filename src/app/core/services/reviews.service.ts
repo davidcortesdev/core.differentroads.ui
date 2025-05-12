@@ -20,7 +20,6 @@ export interface ReviewFilter {
   createdTo?: Date | string;
   tourIds?: number[];
   travelerIds?: number[];
-  // Added new properties to match the C# model
   reviewDate?: Date | string;
   status?: string;
 }
@@ -62,11 +61,9 @@ export class ReviewsService {
   getReviews(filter?: ReviewFilter): Observable<Review[]> {
     let params = new HttpParams();
 
-    // Add filter parameters if provided
     if (filter) {
       params = this.addFilterParams(params, filter);
     }
-
     return this.http.get<Review[]>(`${this.API_URL}`, { params });
   }
 
@@ -77,26 +74,23 @@ export class ReviewsService {
    */
   getReviewsByPeriodExternalId(externalId: string): Observable<Review[]> {
     return this.periodsService.getPeriodDetail(externalId).pipe(
-      tap(period => console.log('Periodo obtenido:', period)), // Para depuración
+      tap(period => console.log('Periodo obtenido:', period)), 
       switchMap((period: Period) => {
         if (!period) {
-          console.error('No se encontró el periodo con externalId:', externalId);
           return of([]);
         }
-        
-        // Usar el tourId del periodo para filtrar las reseñas si está disponible
+      
         const filter: ReviewFilter = {
           externalId: externalId
         };
         
         return this.getReviews(filter).pipe(
-          tap(reviews => console.log('Reseñas obtenidas:', reviews)), // Para depuración
+          tap(reviews => console.log('Reseñas obtenidas:', reviews)), 
           map(reviews => {
-            // Enriquecer las reseñas con información del periodo
             return reviews.map(review => ({
               ...review,
-              tourName: period.tourName, // Usar directamente el nombre del tour del periodo
-              reviewDate: period.dayOne, // Usar directamente la fecha del periodo
+              tourName: period.tourName, 
+              reviewDate: period.dayOne, 
               
               travelerName: review.travelerName || 'Viajero Anónimo'
             }));

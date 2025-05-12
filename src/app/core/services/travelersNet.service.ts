@@ -8,14 +8,12 @@ export interface Traveler {
   name: string;
   email: string;
   code?: string;
-  // Otros campos que pueda tener un viajero
 }
 
 export interface TravelerFilter {
   email?: string;
   name?: string;
   code?: string;
-  // Otros campos para filtrar viajeros
 }
 
 @Injectable({
@@ -45,16 +43,16 @@ export class TravelersNetService {
     let params = new HttpParams();
     
     if (filter.email) {
-      params = params.set('email', filter.email);
+      params = params.set('Email', filter.email); 
     }
     if (filter.name) {
-      params = params.set('name', filter.name);
+      params = params.set('Name', filter.name); 
     }
     if (filter.code) {
       params = params.set('code', filter.code);
     }
     
-    return this.http.get<Traveler[]>(this.apiUrl, { params });
+    return this.http.get<Traveler[]>(environment.travelersApiUrl+'/travelers?', { params });
   }
 
   /**
@@ -63,7 +61,7 @@ export class TravelersNetService {
    * @returns Observable con los datos del viajero creado
    */
   createTraveler(traveler: Partial<Traveler>): Observable<Traveler> {
-    return this.http.post<Traveler>(this.apiUrl, traveler);
+    return this.http.post<Traveler>(environment.travelersApiUrl+'/travelers', traveler);
   }
 
   /**

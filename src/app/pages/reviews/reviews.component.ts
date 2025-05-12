@@ -15,25 +15,24 @@ interface ReviewPayload {
   destinationRating: number;
   guideRating: number;
   priceQualityRating: number;
+  tripRating: number;
   showOnHomePage: boolean;
   showOnTourPage: boolean;
   tourId: number;
   travelerId: number;
   departureId: number;
   externalId: string;
-  status: number;
   reviewDate: string;
-  title?: string; // Añadido campo opcional para título
 }
 
-// Actualización de las categorías de calificación
-type RatingCategory = 'accommodationRating' | 'activitiesRating' | 'destinationRating' | 'guideRating' | 'priceQualityRating';
+type RatingCategory = 'accommodationRating' |'tripRating'|'activitiesRating' | 'destinationRating' | 'guideRating' | 'priceQualityRating';
 
 interface TripInfo {
   title: string;
   date: string;
-  tourId?: number; // <-- Cambia a number
+  tourId?: number;
   departureId?: number;
+
 }
 
 interface Period {
@@ -51,13 +50,13 @@ export class ReviewsComponent implements OnInit {
   @ViewChild('emailInput') emailInputRef!: ElementRef<HTMLInputElement>;
   @ViewChild('comentarioInput') comentarioInputRef!: ElementRef<HTMLTextAreaElement>; 
 
-  // Actualización del objeto ratings para coincidir con la nueva estructura y RatingCategory
   ratings: { [key in RatingCategory]: number } = {
     accommodationRating: 0,
     activitiesRating: 0,
     destinationRating: 0,
     guideRating: 0,
-    priceQualityRating: 0
+    priceQualityRating: 0,
+    tripRating: 0
   };
 
   tripInfo: TripInfo = {
@@ -79,7 +78,7 @@ export class ReviewsComponent implements OnInit {
     private travelersNetService: TravelersNetService
   ) {}
 
-  rawDepartureInfo: any = null; // Nueva propiedad para almacenar la info completa
+  rawDepartureInfo: any = null; 
 
   ngOnInit(): void {
     this.route.params.subscribe(params => {
@@ -87,12 +86,9 @@ export class ReviewsComponent implements OnInit {
         this.periodExternalId = params['id'];
         this.loadTripInfoFromPeriod(this.periodExternalId);
         this.getTourIdFromExternalId(this.periodExternalId);
-
-        // Llama aquí para obtener toda la información de la departure
         this.loadRawDepartureInfo(this.periodExternalId);
       }
       
-      // Verificar si hay un ID de viajero en los parámetros de consulta
       this.route.queryParams.subscribe(queryParams => {
         if (queryParams['travelerId']) {
           this.travelerId = parseInt(queryParams['travelerId'], 10);
@@ -113,15 +109,12 @@ export class ReviewsComponent implements OnInit {
           console.log('Viajero no encontrado o ID no coincide');
           return;
         }
-        
         this.travelerData = traveler;
-        
-        // Rellenar los campos con los datos del viajero
         if (this.nombreInputRef && this.emailInputRef) {
           this.nombreInputRef.nativeElement.value = traveler.name || '';
           this.emailInputRef.nativeElement.value = traveler.email || '';
+         
         } else {
-          // Si las referencias no están disponibles, intentar después
           setTimeout(() => {
             if (this.nombreInputRef && this.emailInputRef) {
               this.nombreInputRef.nativeElement.value = traveler.name || '';
@@ -135,7 +128,6 @@ export class ReviewsComponent implements OnInit {
       }
     });
   }
-
   /**
    * Obtiene toda la información cruda de la departure usando el TKId (externalId)
    */
@@ -157,7 +149,7 @@ export class ReviewsComponent implements OnInit {
         this.tripInfo = {
           title: info.tourName || 'Título no disponible',
           date: info.dayOne || 'Fecha no disponible',
-          tourId: info.tourId ? Number(info.tourId) : undefined // <-- Asegura que sea número
+          tourId: info.tourId ? Number(info.tourId) : undefined 
         };
         
         if (this.tripInfo.date && this.tripInfo.date !== 'Fecha no disponible') {
@@ -183,13 +175,9 @@ export class ReviewsComponent implements OnInit {
         console.log('Tipo de tourId:', typeof tourId);
         
         if (tourId) {
-          this.tripInfo.tourId = Number(tourId); // <-- Asegura que sea número
+          this.tripInfo.tourId = Number(tourId); 
           console.log('Tour ID asignado a tripInfo:', this.tripInfo.tourId);
-          
-          // Obtenemos el tkid del externalId (asumiendo que son el mismo valor)
           const tkid = externalId;
-    
-          // Llamada al método para obtener las salidas (usando la nueva función)
           this.periodsService.getRawDepartureByTkId(tkid).subscribe({
             next: (salidas) => {
               console.log('Salidas obtenidas:', salidas);
@@ -254,8 +242,6 @@ export class ReviewsComponent implements OnInit {
       return; 
     }
   
-  
-  
     this.isSubmitting = true;
     
     const nombreValue = this.nombreInputRef.nativeElement.value;
@@ -270,17 +256,12 @@ export class ReviewsComponent implements OnInit {
         alert('Por favor, valora todas las categorías con estrellas.');
         return;
     }
-  
-    // Extrae el id de la salida y guárdalo en departureId antes de guardar la reseña
+
     if (this.rawDepartureInfo) {
-      // Si la respuesta es un array, toma el primer elemento
       const salida = Array.isArray(this.rawDepartureInfo) ? this.rawDepartureInfo[0] : this.rawDepartureInfo;
       this.tripInfo.departureId = salida?.id || salida?.departureId || 0;
     }
-  
-    // Función para continuar con el envío de la reseña
     const continueWithReview = (travelerId: number) => {
-      // Calcular el rating promedio
       const ratingValues = Object.values(this.ratings);
       const averageRating = ratingValues.reduce((sum, rating) => sum + rating, 0) / ratingValues.length;
       
@@ -291,21 +272,18 @@ export class ReviewsComponent implements OnInit {
         destinationRating: this.ratings.destinationRating,
         guideRating: this.ratings.guideRating,
         priceQualityRating: this.ratings.priceQualityRating,
-        showOnHomePage: true, 
-        showOnTourPage: true,  
+        tripRating: this.ratings.tripRating,
+        showOnHomePage: false, 
+        showOnTourPage: false,  
         tourId: this.tripInfo.tourId ?? 0, 
         travelerId: travelerId, 
         departureId: this.tripInfo.departureId || 0,
         externalId: this.periodExternalId,
-        status: 0, 
         reviewDate: new Date().toISOString()
       };
-  
-      console.log('Enviando reseña con tourId (desde tour_id):', reviewPayload.tourId);
-  
+      
       this.reviewsService.saveReview(reviewPayload).subscribe({
         next: (resp) => {
-          alert('¡Opinión enviada con éxito!');
           this.nombreInputRef.nativeElement.value = '';
           this.emailInputRef.nativeElement.value = '';
           this.comentarioInputRef.nativeElement.value = '';
@@ -315,40 +293,34 @@ export class ReviewsComponent implements OnInit {
           this.isSubmitting = false;
         },
         error: (err: any) => {
-          console.error('Error al enviar la opinión:', err);
-          alert('Ha ocurrido un error al enviar tu opinión. Por favor, inténtalo de nuevo más tarde.');
           this.isSubmitting = false;
         }
       });
     };
-  
-    // Primero verificamos si existe un viajero con el email proporcionado
+
     const travelerFilter = {
-      email: emailValue
+      email: emailValue,
+      name: nombreValue
     };
   
     this.travelersNetService.getTravelers(travelerFilter).subscribe({
       next: (travelers) => {
-        if (travelers && travelers.length > 0) {
-          // Si existe un viajero con ese email, usamos su ID
-          console.log('Viajero encontrado con el email:', travelers[0]);
-          continueWithReview(travelers[0].id);
+        const travelerMatch = travelers.find(
+          t => t.email === emailValue && t.name === nombreValue
+        );
+        if (travelerMatch) {
+          continueWithReview(travelerMatch.id);
         } else {
-          // Si no existe un viajero con ese email, creamos uno nuevo
           const newTraveler: Partial<Traveler> = {
             name: nombreValue,
-            email: emailValue
-            // No incluimos el código para que sea asignado automáticamente por la BD
+            email: emailValue,
+            code: emailValue.split('@')[0] 
           };
-  
           this.travelersNetService.createTraveler(newTraveler).subscribe({
             next: (traveler) => {
-              console.log('Nuevo viajero creado:', traveler);
               continueWithReview(traveler.id);
             },
             error: (error) => {
-              console.error('Error al crear el viajero:', error);
-              // En caso de error, intentamos enviar la reseña con ID 0
               continueWithReview(0);
               this.isSubmitting = false;
             }
@@ -356,23 +328,15 @@ export class ReviewsComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error al verificar el viajero por email:', error);
-        
-        // En caso de error en la verificación, intentamos crear un nuevo viajero
         const newTraveler: Partial<Traveler> = {
           name: nombreValue,
           email: emailValue
-          // No incluimos el código para que sea asignado automáticamente por la BD
         };
-  
         this.travelersNetService.createTraveler(newTraveler).subscribe({
           next: (traveler) => {
-            console.log('Nuevo viajero creado:', traveler);
             continueWithReview(traveler.id);
           },
           error: (createError) => {
-            console.error('Error al crear el viajero:', createError);
-            // En caso de error, intentamos enviar la reseña con ID 0
             continueWithReview(0);
             this.isSubmitting = false;
           }

@@ -2,13 +2,13 @@ import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-
-export interface City {
-  nombre: string;
-  lat: number;
-  lng: number;
-  country: string;
-}
+import {
+  ILocationCityResponse,
+  LocationsService,
+  ICountryFilters,
+  ICityFilters,
+} from '../../../core/services/locations.service';
+import { ToursService } from '../../../core/services/tours.service'; // Añadir esta importación
 
 interface MapMarker {
   position: google.maps.LatLngLiteral;
@@ -29,9 +29,10 @@ interface MapMarker {
 })
 export class TourMapComponent implements OnInit, OnDestroy {
   @Input() cities: string[] = [];
-  @Input() citiesData: City[] = [];
-  @Input() country: string |undefined;
+  @Input() country: string | undefined;
+  @Input() tourSlug: string | undefined;
 
+  citiesData: ILocationCityResponse[] = [];
   // Map configuration
   mapTypeId: google.maps.MapTypeId | undefined;
   mapId: string | undefined;
@@ -47,7 +48,7 @@ export class TourMapComponent implements OnInit, OnDestroy {
   };
   advancedMarkerPositions: google.maps.LatLngLiteral[] = [];
   apiLoaded: boolean = false;
-  
+
   // Polyline configuration
   polylinePath: google.maps.LatLngLiteral[] = [];
   polylineOptions: google.maps.PolylineOptions = {
@@ -57,7 +58,7 @@ export class TourMapComponent implements OnInit, OnDestroy {
     clickable: false,
     strokeWeight: 3,
   };
-  
+
   // Map styling and options
   mapOptions: google.maps.MapOptions = {
     zoomControl: true,
@@ -65,96 +66,8 @@ export class TourMapComponent implements OnInit, OnDestroy {
     disableDoubleClickZoom: true,
     maxZoom: 15,
     minZoom: 1,
-    /*styles: [
-      {
-        elementType: 'geometry',
-        stylers: [{ color: '#f5f5f5' }],
-      },
-      {
-        elementType: 'labels.icon',
-        stylers: [{ visibility: 'off' }],
-      },
-      {
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#616161' }],
-      },
-      {
-        elementType: 'labels.text.stroke',
-        stylers: [{ color: '#f5f5f5' }],
-      },
-      {
-        featureType: 'administrative.land_parcel',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#bdbdbd' }],
-      },
-      {
-        featureType: 'poi',
-        elementType: 'geometry',
-        stylers: [{ color: '#eeeeee' }],
-      },
-      {
-        featureType: 'poi',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#757575' }],
-      },
-      {
-        featureType: 'poi.park',
-        elementType: 'geometry',
-        stylers: [{ color: '#e5e5e5' }],
-      },
-      {
-        featureType: 'poi.park',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#9e9e9e' }],
-      },
-      {
-        featureType: 'road',
-        elementType: 'geometry',
-        stylers: [{ color: '#ffffff' }],
-      },
-      {
-        featureType: 'road.arterial',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#757575' }],
-      },
-      {
-        featureType: 'road.highway',
-        elementType: 'geometry',
-        stylers: [{ color: '#dadada' }],
-      },
-      {
-        featureType: 'road.highway',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#616161' }],
-      },
-      {
-        featureType: 'road.local',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#9e9e9e' }],
-      },
-      {
-        featureType: 'transit.line',
-        elementType: 'geometry',
-        stylers: [{ color: '#e5e5e5' }],
-      },
-      {
-        featureType: 'transit.station',
-        elementType: 'geometry',
-        stylers: [{ color: '#eeeeee' }],
-      },
-      {
-        featureType: 'water',
-        elementType: 'geometry',
-        stylers: [{ color: '#c9c9c9' }],
-      },
-      {
-        featureType: 'water',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#9e9e9e' }],
-      },
-    ],*/
   };
-  
+
   markerOptions: google.maps.marker.AdvancedMarkerElementOptions = {
     gmpDraggable: false,
     title: '',
@@ -164,12 +77,29 @@ export class TourMapComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private scriptElement: HTMLScriptElement | null = null;
 
-  constructor() {
+  constructor(
+    private locationsService: LocationsService,
+    private toursService: ToursService // Añadir el servicio de tours
+  ) {
     this.loadGoogleMapsScript();
   }
 
   ngOnInit(): void {
-    if (this.citiesData.length > 0) {
+    console.log(
+      'tourSlug',
+      this.tourSlug,
+      'pais',
+      this.country,
+      'ciudades',
+      this.cities,
+      'apiLoaded',
+      this.apiLoaded
+    );
+
+    // Si tenemos un ID de tour, obtener los datos del tour
+    if (this.tourSlug) {
+      this.loadTourData();
+    } else if (this.citiesData.length > 0) {
       this.calculateMapCenter();
     } else if (this.cities.length > 0) {
       // Si tenemos nombres de ciudades pero no datos, buscar las coordenadas
@@ -177,12 +107,38 @@ export class TourMapComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Nuevo método para cargar datos del tour
+  private loadTourData(): void {
+    const filterByStatus = true; // Puedes ajustar esto según tus necesidades
+
+    this.toursService
+      .getTourDetailBySlug(
+        this.tourSlug!,
+        ['cities', 'country'],
+        filterByStatus
+      )
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (tour) => {
+          this.cities = tour['cities'] || [];
+          this.country = tour['country'];
+
+          if (this.cities.length > 0) {
+            this.loadCitiesData();
+          }
+        },
+        error: (err) => {
+          console.error('Error al obtener datos del tour:', err);
+        },
+      });
+  }
+
   ngOnDestroy(): void {
     // Clean up the script element if component is destroyed
     if (this.scriptElement && this.scriptElement.parentNode) {
       this.scriptElement.parentNode.removeChild(this.scriptElement);
     }
-    
+
     // Completar el subject para evitar memory leaks
     this.destroy$.next();
     this.destroy$.complete();
@@ -190,7 +146,9 @@ export class TourMapComponent implements OnInit, OnDestroy {
 
   private loadGoogleMapsScript(): void {
     // Check if script is already loaded
-    if (document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]')) {
+    if (
+      document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]')
+    ) {
       this.initializeMap();
       return;
     }
@@ -201,22 +159,22 @@ export class TourMapComponent implements OnInit, OnDestroy {
     this.scriptElement.defer = true;
     // Add loading attribute to follow best practices
     this.scriptElement.setAttribute('loading', 'async');
-    
+
     this.scriptElement.addEventListener('load', () => {
       this.initializeMap();
     });
-    
+
     this.scriptElement.addEventListener('error', () => {
       console.error('Failed to load Google Maps API');
     });
-    
+
     document.head.appendChild(this.scriptElement);
   }
 
   private initializeMap(): void {
     this.mapTypeId = google.maps.MapTypeId.ROADMAP;
     // Replace DEMO_MAP_ID with your actual Map ID from Google Cloud Console
-    this.mapId = "7f7a264cb58d0536"; // Get this from Google Cloud Console
+    this.mapId = '7f7a264cb58d0536'; // Get this from Google Cloud Console
     this.apiLoaded = true;
 
     // Initialize polyline options with the primary color
@@ -227,23 +185,25 @@ export class TourMapComponent implements OnInit, OnDestroy {
     };
   }
 
-  getLatLog(city: City): google.maps.LatLngLiteral {
-    return { lat: city.lat, lng: city.lng };
-  }
-
   calculateMapCenter(): void {
     if (!this.citiesData?.length) return;
-    
+
     const bounds = new google.maps.LatLngBounds();
     this.citiesData.forEach((city) => {
-      bounds.extend({ lat: city.lat, lng: city.lng });
+      if (!city.latitude || !city.longitude) {
+        console.warn(
+          `No se encontraron coordenadas para la ciudad ${city.name}`
+        );
+        return;
+      }
+      bounds.extend({ lat: city.latitude, lng: city.longitude });
     });
-    
+
     this.center = {
       lat: bounds.getCenter().lat(),
       lng: bounds.getCenter().lng(),
     };
-    
+
     const PADDING = 10;
     if (this.mapOptions.maxZoom) {
       this.zoom = Math.min(
@@ -253,40 +213,28 @@ export class TourMapComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Método para actualizar los datos de ciudades desde el componente padre
-  updateCitiesData(citiesData: City[]): void {
-    this.citiesData = citiesData;
-    this.markers = [];
-    // We're not using polylinePath anymore
-    // this.polylinePath = []; 
-    
-    // Add markers for each city
-    citiesData.forEach((city) => this.addMarker(city));
-  
-    // Removed polyline creation code
-    // if (this.polylinePath.length > 1) {
-    //   this.polylinePath = this.createSmoothPath(this.polylinePath);
-    // }
-  
-    this.calculateMapCenter();
-  }
+  addMarker(ciudad: ILocationCityResponse): void {
+    if (!ciudad.latitude || !ciudad.longitude) {
+      console.warn(
+        `No se encontraron coordenadas para la ciudad ${ciudad.name}`
+      );
+      return;
+    }
+    const position = { lat: ciudad.latitude, lng: ciudad.longitude };
 
-  addMarker(ciudad: City): void {
-    const position = { lat: ciudad.lat, lng: ciudad.lng };
-    
     // Create marker options with title
     const markerOptions: google.maps.marker.AdvancedMarkerElementOptions = {
       gmpDraggable: false,
-      title: ciudad.nombre,
+      title: ciudad.name,
     };
-    
+
     this.markers.push({
       position,
-      title: ciudad.nombre,
-      info: ciudad.nombre,
+      title: ciudad.name,
+      info: ciudad.name,
       options: markerOptions,
     });
-    
+
     // Removed adding position to polyline path
     // this.polylinePath.push(position);
   }
@@ -354,17 +302,17 @@ export class TourMapComponent implements OnInit, OnDestroy {
   ): number {
     const WORLD_DIM = { height: 256, width: 256 };
     const ZOOM_MAX = 21;
-    
+
     const latRad = (lat: number): number => {
       const sin = Math.sin((lat * Math.PI) / 180);
       const radX2 = Math.log((1 + sin) / (1 - sin)) / 2;
       return Math.max(Math.min(radX2, Math.PI), -Math.PI) / 2;
     };
-    
+
     const zoom = (mapPx: number, worldPx: number, fraction: number): number => {
       return Math.floor(Math.log(mapPx / worldPx / fraction) / Math.LN2);
     };
-    
+
     const ne = bounds.getNorthEast();
     const sw = bounds.getSouthWest();
     const latFraction = (latRad(ne.lat()) - latRad(sw.lat())) / Math.PI;
@@ -372,7 +320,7 @@ export class TourMapComponent implements OnInit, OnDestroy {
     const lngFraction = (lngDiff < 0 ? lngDiff + 360 : lngDiff) / 360;
     const latZoom = zoom(400 - padding * 2, WORLD_DIM.height, latFraction);
     const lngZoom = zoom(800 - padding * 2, WORLD_DIM.width, lngFraction);
-    
+
     return Math.min(latZoom, lngZoom, ZOOM_MAX);
   }
 
@@ -390,21 +338,128 @@ export class TourMapComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga los datos de las ciudades utilizando el servicio de coordenadas
+   * Carga los datos de las ciudades utilizando el servicio de locations
    */
   private loadCitiesData(): void {
-    console.log('pais',this.country,'ciudades',this.cities,'apiLoaded',this.apiLoaded);
-    /*this.cityCoordinatesService.convertCitiesToCityObjects(this.cities,this.country || '')
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(
-        (cityObjects: City[]) => {
-          if (cityObjects && cityObjects.length > 0) {
-            this.updateCitiesData(cityObjects);
-          }
-        },
-        (error: any) => {
-          console.error('Error al cargar datos de ciudades:', error);
+    console.log(
+      'pais',
+      this.country,
+      'ciudades',
+      this.cities,
+      'apiLoaded',
+      this.apiLoaded
+    );
+
+    // Obtener información del país si está definido
+    if (this.country) {
+      const countryFilters: ICountryFilters = {
+        name: this.country,
+      };
+
+      this.locationsService
+        .getCountries(countryFilters)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (countries) => {
+            console.log('Países encontrados:', countries);
+            if (countries && countries.length > 0) {
+              const countryId = countries[0].id;
+
+              // Una vez que tenemos el país, buscamos las ciudades
+              if (this.cities && this.cities.length > 0) {
+                // Crear un array para almacenar todas las suscripciones de ciudades
+                const cityRequests: Promise<void>[] = [];
+
+                // Para cada nombre de ciudad, buscar su información
+                this.cities.forEach((cityName) => {
+                  const cityFilters: ICityFilters = {
+                    name: cityName,
+                    countryId: countryId,
+                  };
+
+                  // Crear una promesa para cada solicitud de ciudad
+                  const cityRequest = new Promise<void>((resolve) => {
+                    this.locationsService
+                      .getCities(cityFilters)
+                      .pipe(takeUntil(this.destroy$))
+                      .subscribe({
+                        next: (cities) => {
+                          console.log(
+                            `Ciudades encontradas para ${cityName}:`,
+                            cities
+                          );
+                          if (cities && cities.length > 0) {
+                            // Añadir la ciudad a nuestro array de datos
+                            this.citiesData.push(...cities);
+                          }
+                          resolve();
+                        },
+                        error: (err) => {
+                          console.error(
+                            `Error al obtener la ciudad ${cityName}:`,
+                            err
+                          );
+                          resolve();
+                        },
+                      });
+                  });
+
+                  cityRequests.push(cityRequest);
+                });
+
+                // Cuando todas las solicitudes de ciudades se completen
+                Promise.all(cityRequests).then(() => {
+                  if (this.citiesData.length > 0) {
+                    // Añadir marcadores para cada ciudad
+                    this.citiesData.forEach((city) => this.addMarker(city));
+
+                    // Calcular el centro del mapa basado en las ciudades
+                    this.calculateMapCenter();
+                  }
+                });
+              }
+            }
+          },
+          error: (err) => {
+            console.error('Error al obtener información del país:', err);
+          },
+        });
+    } else if (this.cities && this.cities.length > 0) {
+      // Si no tenemos país pero sí ciudades, buscar las ciudades por nombre
+      const cityRequests: Promise<void>[] = [];
+
+      this.cities.forEach((cityName) => {
+        const cityFilters: ICityFilters = {
+          name: cityName,
+        };
+
+        const cityRequest = new Promise<void>((resolve) => {
+          this.locationsService
+            .getCities(cityFilters)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: (cities) => {
+                if (cities && cities.length > 0) {
+                  this.citiesData.push(...cities);
+                }
+                resolve();
+              },
+              error: (err) => {
+                console.error(`Error al obtener la ciudad ${cityName}:`, err);
+                resolve();
+              },
+            });
+        });
+
+        cityRequests.push(cityRequest);
+      });
+
+      Promise.all(cityRequests).then(() => {
+        if (this.citiesData.length > 0) {
+          this.citiesData.forEach((city) => this.addMarker(city));
+          this.calculateMapCenter();
         }
-      );*/
+      });
+    }
   }
 }

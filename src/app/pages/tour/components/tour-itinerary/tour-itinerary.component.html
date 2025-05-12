@@ -50,7 +50,7 @@
     </div>
   </div>
   <div class="map-section">
-    <!-- Usar el nuevo componente de mapa -->
-    <app-tour-map [cities]="cities" [country]="country"></app-tour-map>
+    <!-- Pasar el ID del tour al componente de mapa -->
+    <app-tour-map [tourSlug]="tourId"></app-tour-map>
   </div>
 </div>

@@ -16,7 +16,13 @@ export interface ILocationCityResponse {
   id: number;
   name: string;
   code: string;
+  description?: string;
+  latitude?: number;
+  longitude?: number;
   countryId: number;
+  stateId?: number;
+  countyId?: number;
+  municipalityId?: number;
   country: ILocationCountryResponse;
   isActive: boolean;
 }
@@ -147,7 +153,7 @@ export interface IAreaCityFilters {
   providedIn: 'root'
 })
 export class LocationsService {
-  private readonly API_URL = `${environment.apiUrl}/api`;
+  private readonly API_URL = `${environment.locationsApiUrl}`;
 
   constructor(private http: HttpClient) {}
 

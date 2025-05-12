@@ -1,12 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { CollectionsService } from '../../core/services/collections.service';
 import { LandingsService } from '../../core/services/landings.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { BlogsService } from '../../core/services/blogs.service';
 import { PressService } from '../../core/services/press.service';
 import { Blog } from '../../core/models/blogs/blog.model';
-import { Observable, Subject, takeUntil } from 'rxjs';
+import { filter, Observable, Subject, takeUntil } from 'rxjs';
 import { Press } from '../../core/models/press/press.model';
 import { Collection } from '../../core/models/collections/collection.model';
 import { Landing } from '../../core/models/landings/landing.model';
@@ -72,6 +72,7 @@ export class ContentPageComponent implements OnInit, OnDestroy {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private landingsService: LandingsService,
     private collectionsService: CollectionsService,
     private blogService: BlogsService,
@@ -81,8 +82,11 @@ export class ContentPageComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.route.params.subscribe((params) => {
-      this.slug = params['slug'];
+    // Detectar cambios de ruta, incluso a la misma URL
+    this.router.events.pipe(
+      takeUntil(this.destroy$),
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
       this.determineContentType();
       this.fetchBlocks();
     });

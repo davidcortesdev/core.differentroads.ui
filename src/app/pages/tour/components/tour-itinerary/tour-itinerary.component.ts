@@ -43,7 +43,6 @@ import {
   TourMapComponent,
   City,
 } from '../../../../shared/components/tour-map/tour-map.component';
-import { CityCoordinatesService } from '../../../../shared/services/city-coordinates.service';
 
 interface EventItem {
   status?: string;
@@ -164,7 +163,6 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
     private periodPricesService: PeriodPricesService,
     private hotelsService: HotelsService,
     private messageService: MessageService,
-    private cityCoordinatesService: CityCoordinatesService
   ) {
     this.events = [];
   }
@@ -236,17 +234,13 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
           .subscribe((tour) => {
             this.cities = tour['cities'];
             this.country = tour['country'];
-            // Usar el servicio actualizado para obtener coordenadas
-            this.cities.forEach((city) => {
-              this.cityCoordinatesService.getCoordinatesWithQueue(
-                city,
-                this.addCityToData.bind(this)
-              );
-            });
+            // Eliminamos la lógica de procesamiento de ciudades
           });
       }
     });
   }
+
+  // Eliminamos el método addCityToData ya que no lo necesitamos más
 
   // Método para manejar la limpieza del componente
   ngOnDestroy(): void {
@@ -255,11 +249,12 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
   }
 
   // Método para agregar una ciudad a los datos
-  addCityToData(city: string, lat: number, lng: number, index?: number): void {
+  addCityToData(city: string,country:string, lat: number, lng: number, index?: number): void {
     const cityData: City = {
       nombre: city,
       lat: lat,
       lng: lng,
+      country: country,
     };
 
     // Agregar la ciudad a los datos

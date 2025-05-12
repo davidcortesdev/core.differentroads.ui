@@ -1,6 +1,5 @@
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { environment } from '../../../../environments/environment';
-import { CityCoordinatesService } from '../../services/city-coordinates.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
@@ -8,6 +7,7 @@ export interface City {
   nombre: string;
   lat: number;
   lng: number;
+  country: string;
 }
 
 interface MapMarker {
@@ -164,7 +164,7 @@ export class TourMapComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private scriptElement: HTMLScriptElement | null = null;
 
-  constructor(private cityCoordinatesService: CityCoordinatesService) {
+  constructor() {
     this.loadGoogleMapsScript();
   }
 
@@ -394,7 +394,7 @@ export class TourMapComponent implements OnInit, OnDestroy {
    */
   private loadCitiesData(): void {
     console.log('pais',this.country,'ciudades',this.cities,'apiLoaded',this.apiLoaded);
-    this.cityCoordinatesService.convertCitiesToCityObjects(this.cities,this.country)
+    /*this.cityCoordinatesService.convertCitiesToCityObjects(this.cities,this.country || '')
       .pipe(takeUntil(this.destroy$))
       .subscribe(
         (cityObjects: City[]) => {
@@ -405,6 +405,6 @@ export class TourMapComponent implements OnInit, OnDestroy {
         (error: any) => {
           console.error('Error al cargar datos de ciudades:', error);
         }
-      );
+      );*/
   }
 }

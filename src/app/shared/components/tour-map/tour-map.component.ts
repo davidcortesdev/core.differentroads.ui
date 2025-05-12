@@ -1,7 +1,7 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { environment } from '../../../../environments/environment';
-import { takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { takeUntil, catchError } from 'rxjs/operators';
+import { Subject, forkJoin, of } from 'rxjs';
 import {
   ILocationCityResponse,
   LocationsService,
@@ -77,9 +77,15 @@ export class TourMapComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private scriptElement: HTMLScriptElement | null = null;
 
+  // Propiedades para memoización
+  private lastCitiesKey: string = '';
+  private lastPathKey: string = '';
+  private cachedSmoothPath: google.maps.LatLngLiteral[] = [];
+  
   constructor(
     private locationsService: LocationsService,
-    private toursService: ToursService // Añadir el servicio de tours
+    private toursService: ToursService,
+    private cdr: ChangeDetectorRef
   ) {
     this.loadGoogleMapsScript();
   }
@@ -222,9 +228,6 @@ export class TourMapComponent implements OnInit, OnDestroy {
     }
   }
   
-  // Añadir esta propiedad para memoización
-  private lastCitiesKey: string = '';
-
   addMarker(ciudad: ILocationCityResponse): void {
     if (!ciudad.latitude || !ciudad.longitude) {
       console.warn(
@@ -361,16 +364,7 @@ export class TourMapComponent implements OnInit, OnDestroy {
    * Carga los datos de las ciudades utilizando el servicio de locations
    */
   private loadCitiesData(): void {
-    console.log(
-      'pais',
-      this.country,
-      'ciudades',
-      this.cities,
-      'apiLoaded',
-      this.apiLoaded
-    );
-
-    // Obtener información del país si está definido
+    // Eliminar logs innecesarios
     if (this.country) {
       const countryFilters: ICountryFilters = {
         name: this.country,
@@ -378,108 +372,89 @@ export class TourMapComponent implements OnInit, OnDestroy {
 
       this.locationsService
         .getCountries(countryFilters)
-        .pipe(takeUntil(this.destroy$))
+        .pipe(
+          takeUntil(this.destroy$),
+          // Añadir operadores para manejo más eficiente
+          catchError(err => {
+            console.error('Error al obtener información del país:', err);
+            return of([]);
+          })
+        )
         .subscribe({
           next: (countries) => {
-            console.log('Países encontrados:', countries);
             if (countries && countries.length > 0) {
               const countryId = countries[0].id;
-
-              // Una vez que tenemos el país, buscamos las ciudades
-              if (this.cities && this.cities.length > 0) {
-                // Crear un array para almacenar todas las suscripciones de ciudades
-                const cityRequests: Promise<void>[] = [];
-
-                // Para cada nombre de ciudad, buscar su información
-                this.cities.forEach((cityName) => {
-                  const cityFilters: ICityFilters = {
-                    name: cityName,
-                    countryId: countryId,
-                  };
-
-                  // Crear una promesa para cada solicitud de ciudad
-                  const cityRequest = new Promise<void>((resolve) => {
-                    this.locationsService
-                      .getCities(cityFilters)
-                      .pipe(takeUntil(this.destroy$))
-                      .subscribe({
-                        next: (cities) => {
-                          console.log(
-                            `Ciudades encontradas para ${cityName}:`,
-                            cities
-                          );
-                          if (cities && cities.length > 0) {
-                            // Añadir la ciudad a nuestro array de datos
-                            this.citiesData.push(...cities);
-                          }
-                          resolve();
-                        },
-                        error: (err) => {
-                          console.error(
-                            `Error al obtener la ciudad ${cityName}:`,
-                            err
-                          );
-                          resolve();
-                        },
-                      });
-                  });
-
-                  cityRequests.push(cityRequest);
-                });
-
-                // Cuando todas las solicitudes de ciudades se completen
-                Promise.all(cityRequests).then(() => {
-                  if (this.citiesData.length > 0) {
-                    // Añadir marcadores para cada ciudad
-                    this.citiesData.forEach((city) => this.addMarker(city));
-
-                    // Calcular el centro del mapa basado en las ciudades
-                    this.calculateMapCenter();
-                  }
-                });
-              }
+              this.loadCitiesByCountry(countryId);
             }
-          },
-          error: (err) => {
-            console.error('Error al obtener información del país:', err);
-          },
+          }
         });
     } else if (this.cities && this.cities.length > 0) {
-      // Si no tenemos país pero sí ciudades, buscar las ciudades por nombre
-      const cityRequests: Promise<void>[] = [];
+      this.loadCitiesByName();
+    }
+  }
 
-      this.cities.forEach((cityName) => {
-        const cityFilters: ICityFilters = {
-          name: cityName,
-        };
-
-        const cityRequest = new Promise<void>((resolve) => {
-          this.locationsService
-            .getCities(cityFilters)
-            .pipe(takeUntil(this.destroy$))
-            .subscribe({
-              next: (cities) => {
-                if (cities && cities.length > 0) {
-                  this.citiesData.push(...cities);
-                }
-                resolve();
-              },
-              error: (err) => {
-                console.error(`Error al obtener la ciudad ${cityName}:`, err);
-                resolve();
-              },
-            });
+  // Extraer la lógica de carga de ciudades a métodos separados
+  private loadCitiesByCountry(countryId: number): void {
+    if (!this.cities || this.cities.length === 0) return;
+    
+    // Usar forkJoin para manejar múltiples solicitudes en paralelo
+    const requests = this.cities.map(cityName => {
+      const cityFilters: ICityFilters = {
+        name: cityName,
+        countryId: countryId,
+      };
+      
+      return this.locationsService.getCities(cityFilters).pipe(
+        catchError(err => {
+          console.error(`Error al obtener la ciudad ${cityName}:`, err);
+          return of([]);
+        })
+      );
+    });
+    
+    forkJoin(requests)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(results => {
+        results.forEach(cities => {
+          if (cities && cities.length > 0) {
+            this.citiesData.push(...cities);
+          }
         });
-
-        cityRequests.push(cityRequest);
-      });
-
-      Promise.all(cityRequests).then(() => {
+        
         if (this.citiesData.length > 0) {
-          this.citiesData.forEach((city) => this.addMarker(city));
+          this.citiesData.forEach(city => this.addMarker(city));
           this.calculateMapCenter();
         }
       });
-    }
+  }
+
+  private loadCitiesByName(): void {
+    const requests = this.cities.map(cityName => {
+      const cityFilters: ICityFilters = {
+        name: cityName,
+      };
+      
+      return this.locationsService.getCities(cityFilters).pipe(
+        catchError(err => {
+          console.error(`Error al obtener la ciudad ${cityName}:`, err);
+          return of([]);
+        })
+      );
+    });
+    
+    forkJoin(requests)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(results => {
+        results.forEach(cities => {
+          if (cities && cities.length > 0) {
+            this.citiesData.push(...cities);
+          }
+        });
+        
+        if (this.citiesData.length > 0) {
+          this.citiesData.forEach(city => this.addMarker(city));
+          this.calculateMapCenter();
+        }
+      });
   }
 }

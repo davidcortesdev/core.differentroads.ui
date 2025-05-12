@@ -39,11 +39,6 @@ import {
 import { ActivitiesCarouselComponent } from '../../../../shared/components/activities-carousel/activities-carousel.component';
 import { MessageService } from 'primeng/api';
 // Importar el nuevo componente del mapa
-import {
-  TourMapComponent,
-  City,
-} from '../../../../shared/components/tour-map/tour-map.component';
-import { CityCoordinatesService } from '../../../../shared/services/city-coordinates.service';
 
 interface EventItem {
   status?: string;
@@ -62,14 +57,12 @@ interface EventItem {
 })
 export class TourItineraryComponent implements OnInit, OnDestroy {
   @ViewChildren('itineraryPanel') itineraryPanels!: QueryList<Panel>;
-  @ViewChild(TourMapComponent) tourMapComponent!: TourMapComponent;
 
   // Mantener solo el Subject para la limpieza
   private destroy$ = new Subject<void>();
 
   // Mantener solo las propiedades necesarias para el componente principal
   cities: string[] = [];
-  citiesData: City[] = [];
   events: EventItem[];
   title: string = 'Itinerario';
   dateOptions: DateOption[] = [];
@@ -164,15 +157,20 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
     private periodPricesService: PeriodPricesService,
     private hotelsService: HotelsService,
     private messageService: MessageService,
-    private cityCoordinatesService: CityCoordinatesService
   ) {
     this.events = [];
   }
 
+  // Añadir una propiedad para almacenar el ID del tour
+  tourId: string | undefined;
+  
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
       const slug = params['slug'];
       if (slug) {
+        // Guardar el slug como ID del tour
+        this.tourId = slug;
+        
         // Obtener el parámetro filterByStatus de los query params
         const filterByStatus =
           this.route.snapshot.queryParamMap.get('filterByStatus') !== 'false';
@@ -230,23 +228,11 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
             },
             error: (error) => console.error('Error itinerary section:', error),
           });
-
-        this.toursService
-          .getTourDetailBySlug(slug, ['cities','country'], filterByStatus)
-          .subscribe((tour) => {
-            this.cities = tour['cities'];
-            this.country = tour['country'];
-            // Usar el servicio actualizado para obtener coordenadas
-            this.cities.forEach((city) => {
-              this.cityCoordinatesService.getCoordinatesWithQueue(
-                city,
-                this.addCityToData.bind(this)
-              );
-            });
-          });
       }
     });
   }
+
+  // Eliminamos el método addCityToData ya que no lo necesitamos más
 
   // Método para manejar la limpieza del componente
   ngOnDestroy(): void {
@@ -254,22 +240,6 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // Método para agregar una ciudad a los datos
-  addCityToData(city: string, lat: number, lng: number, index?: number): void {
-    const cityData: City = {
-      nombre: city,
-      lat: lat,
-      lng: lng,
-    };
-
-    // Agregar la ciudad a los datos
-    this.citiesData.push(cityData);
-
-    // Actualizar el mapa si está disponible
-    if (this.tourMapComponent) {
-      this.tourMapComponent.updateCitiesData(this.citiesData);
-    }
-  }
 
   onDateChange(event: any): void {
     this.selectedOption =

@@ -1,7 +1,16 @@
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CarouselModule } from 'primeng/carousel';
-import { ActivityCardComponent, ActivityHighlight } from '../activity-card/activity-card.component';
+import {
+  ActivityCardComponent,
+  ActivityHighlight,
+} from '../activity-card/activity-card.component';
 import { CAROUSEL_CONFIG } from '../../../shared/constants/carousel.constants';
 
 @Component({
@@ -9,12 +18,12 @@ import { CAROUSEL_CONFIG } from '../../../shared/constants/carousel.constants';
   standalone: false,
   templateUrl: './activities-carousel.component.html',
   styleUrls: ['./activities-carousel.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ActivitiesCarouselComponent {
   @Input() highlights: ActivityHighlight[] = [];
   @Output() addActivity = new EventEmitter<ActivityHighlight>();
-  
+
   protected carouselConfig = CAROUSEL_CONFIG;
   
   // Variables para el modal
@@ -26,7 +35,7 @@ export class ActivitiesCarouselComponent {
     width: '90%', 
     maxWidth: '800px'
   };
-  
+
   responsiveOptions = [
     {
       breakpoint: '1920px',
@@ -60,14 +69,19 @@ export class ActivitiesCarouselComponent {
     },
   ];
 
-
   onAddActivity(highlight: ActivityHighlight): void {
     this.addActivity.emit(highlight);
   }
 
   trackByFn(index: number, item: ActivityHighlight): string | number {
-    return item.id || index;
+    return index;
   }
+
+  ngOnInit(): void {
+    console.log('____ActivitiesCarouselComponent initialized', this.highlights);
+  }
+  
+
   
   // Método para abrir el modal con la actividad seleccionada
   openFullActivity(activity: ActivityHighlight): void {

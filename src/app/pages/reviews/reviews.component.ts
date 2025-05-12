@@ -220,7 +220,7 @@ export class ReviewsComponent implements OnInit {
   }
 
   isHalfStar(tipo: RatingCategory, index: number): boolean {
-    return false; // No implementamos estrellas a medias por ahora
+    return false; 
   }
 
   submitReview(): void {
@@ -228,12 +228,7 @@ export class ReviewsComponent implements OnInit {
       return; 
     }
   
-    // Verificar que tenemos un tourId antes de continuar
-    // Verificar que tenemos un tourId antes de continuar
-    if (!this.tripInfo.tourId) {
-      alert('No se ha podido obtener el ID del tour. Por favor, inténtalo de nuevo más tarde.');
-      return;
-    }
+  
   
     this.isSubmitting = true;
     

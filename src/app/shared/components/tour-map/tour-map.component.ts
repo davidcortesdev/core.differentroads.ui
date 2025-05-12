@@ -220,23 +220,26 @@ export class TourMapComponent implements OnInit, OnDestroy {
       );
       return;
     }
+
+    // Crear el marcador solo si no existe ya uno con las mismas coordenadas
     const position = { lat: ciudad.latitude, lng: ciudad.longitude };
+    const markerExists = this.markers.some(
+      (m) => m.position.lat === position.lat && m.position.lng === position.lng
+    );
 
-    // Create marker options with title
-    const markerOptions: google.maps.marker.AdvancedMarkerElementOptions = {
-      gmpDraggable: false,
-      title: ciudad.name,
-    };
+    if (!markerExists) {
+      const markerOptions: google.maps.marker.AdvancedMarkerElementOptions = {
+        gmpDraggable: false,
+        title: ciudad.name,
+      };
 
-    this.markers.push({
-      position,
-      title: ciudad.name,
-      info: ciudad.name,
-      options: markerOptions,
-    });
-
-    // Removed adding position to polyline path
-    // this.polylinePath.push(position);
+      this.markers.push({
+        position,
+        title: ciudad.name,
+        info: ciudad.name,
+        options: markerOptions,
+      });
+    }
   }
 
   // Create a smooth curved path between points using quadratic Bézier curves
@@ -335,6 +338,11 @@ export class TourMapComponent implements OnInit, OnDestroy {
       console.warn('Error getting primary color:', error);
       return '#FF0000';
     }
+  }
+
+  // Añadir este método para optimizar el renderizado de marcadores
+  trackByPosition(index: number, marker: MapMarker): string {
+    return `${marker.position.lat}-${marker.position.lng}`;
   }
 
   /**

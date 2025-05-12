@@ -1,5 +1,5 @@
 <div class="map-placeholder">
-  <p *ngIf="!apiLoaded">Loading map...</p>
+  <p *ngIf="!apiLoaded" class="loading-message">Cargando mapa...</p>
   <div class="map-loaded" *ngIf="apiLoaded">
     <google-map
       [center]="center"
@@ -10,18 +10,23 @@
       [mapTypeId]="mapTypeId"
       [mapId]="mapId"
     >
+      <!-- Usar trackBy para optimizar el renderizado de marcadores -->
       <map-advanced-marker
         #markerElem
-        *ngFor="let marker of markers"
+        *ngFor="let marker of markers; trackBy: trackByPosition"
         [position]="marker.position"
         [title]="marker.title || ''"
         [options]="marker.options"
       >
       </map-advanced-marker>
       
-      <!-- Removed polyline component -->
+      <map-polyline
+        *ngIf="polylinePath.length > 1"
+        [path]="polylinePath"
+        [options]="polylineOptions"
+      ></map-polyline>
       
-      <map-info-window>Hello Google Maps</map-info-window>
+      <map-info-window>{{ infoContent }}</map-info-window>
     </google-map>
   </div>
 </div>

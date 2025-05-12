@@ -56,16 +56,20 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
 
   // Optimización: Getters para simplificar la plantilla
   get infoCards(): any[] {
-    console.log('tourinfocards',this.tour);
-    console.log('infoCards:', this.tour?.['extra-info-section']?.['info-card']);
     
-    // Crear un array base con las tarjetas de información existentes
-    let cards = this.tour?.['extra-info-section']?.['info-card'] || [];
+    // Crear un array vacío para las tarjetas de información
+    let cards = [];
     
-    // Verificar si existe la propiedad tipIncludes en info-practica
+    // Verificar si existe la propiedad tripIncludes en info-practica
     const tripIncludes = this.tour?.['info-practica']?.['tripIncludes'];
     
-    // Si existe tipIncludes, crear un nuevo objeto y añadirlo al principio del array
+    // Verificar si existe la propiedad extraInformation en info-practica
+    const extraInfo = this.tour?.['info-practica']?.['extraInformation'];
+    
+    // Array para almacenar las nuevas tarjetas
+    const newCards = [];
+    
+    // Si existe tripIncludes, crear un nuevo objeto y añadirlo
     if (tripIncludes) {
       const includesCard = {
         title: "¿Que incluye el viaje?",
@@ -73,9 +77,22 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
         order: 1
       };
       
-      // Añadir la nueva tarjeta al principio del array
-      cards = [includesCard, ...cards];
+      newCards.push(includesCard);
     }
+    
+    // Si existe extraInformation, crear un nuevo objeto y añadirlo
+    if (extraInfo) {
+      const extraInfoCard = {
+        title: "Información del viaje",
+        content: extraInfo,
+        order: 2
+      };
+      
+      newCards.push(extraInfoCard);
+    }
+    
+    // Usar solo las nuevas tarjetas
+    cards = newCards;
     
     return cards;
   }

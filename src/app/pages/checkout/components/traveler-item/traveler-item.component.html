@@ -6,7 +6,7 @@
   </p-panel>
   <p class="user-description">
     <i class="pi pi-exclamation-circle info-icon"></i>
-    Introduce el nombre y el apellido tal y como aparecen en el DNI.
+    Introduce el nombre y el apellido tal y como aparecen en el documento de identificación. 
     <strong>Los campos marcados con * son obligatorios.</strong>
     {{
       allFieldsMandatory
@@ -21,7 +21,7 @@
   <!-- Campos OBLIGATORIOS visibles siempre -->
   <div class="form-section mandatory-fields">
     <div class="form-row">
-      <div class="form-column form-field">
+      <div class="form-column form-field half-width">
         <label>Nombre{{ isFieldRequired("firstName") ? "*" : "" }}</label>
         <input
           pInputText
@@ -30,7 +30,7 @@
           formControlName="firstName"
         />
       </div>
-      <div class="form-column form-field">
+      <div class="form-column form-field half-width">
         <label>Apellido{{ isFieldRequired("lastName") ? "*" : "" }}</label>
         <input
           pInputText
@@ -61,42 +61,9 @@
           placeholder="Seleccione"
         ></p-select>
       </div>
-      <div
-        class="form-column form-field half-width"
-        *ngIf="isFieldRequired('birthdate')"
-      >
-        <label>Fecha de nacimiento*</label>
-        <p-datepicker
-          formControlName="birthdate"
-          [dateFormat]="dateFormat"
-          showIcon
-          appendTo="body"
-        ></p-datepicker>
-      </div>
-      <div
-        class="form-column form-field half-width"
-        *ngIf="isFieldRequired('nationality')"
-      >
-        <label>Nacionalidad*</label>
-        <p-autocomplete
-          formControlName="nationality"
-          [suggestions]="filteredCountries"
-          (completeMethod)="filterCountries($event)"
-          (onSelect)="onCountrySelect($event)"
-          [optionValue]="'code'"
-          field="name"
-          placeholder="Introduce tu nacionalidad"
-          appendTo="body"
-          [dropdown]="true"
-        ></p-autocomplete>
-      </div>
-      <div
-        class="form-column form-field half-width"
-        *ngIf="
-          isFieldRequired('nationality') &&
-          form.get('nationality')?.value === 'ES'
-        "
-      >
+      
+      <!-- DNI obligatorio para todos - sin condición de nacionalidad -->
+      <div class="form-column form-field half-width">
         <label>DNI*</label>
         <input
           pInputText
@@ -104,6 +71,7 @@
           placeholder="Introduce tu DNI"
         />
       </div>
+      
       <div
         class="form-column form-field half-width"
         *ngIf="isFieldRequired('phone')"
@@ -222,14 +190,22 @@
       ></button>
     </div>
   </div>
+  
+  <!-- Mensaje debajo del botón Ver más / Ver menos con clases independientes -->
+  <div class="datos-adicionales-info">
+    <p class="mensaje-info">
+      <i class="pi pi-exclamation-circle icono-info"></i>
+      Completa tus datos pendientes antes de tu viaje. 
+      <strong>Puedes rellenarlos más tarde desde tu perfil.</strong>
+
+    </p>
+  </div>
 
   <!-- Campos NO obligatorios visibles al hacer Ver más -->
   <div class="additional-fields" *ngIf="showMoreFields">
     <div class="form-row">
-      <div
-        class="form-column form-field half-width"
-        *ngIf="!isFieldRequired('birthdate')"
-      >
+      <!-- Fecha de nacimiento siempre en "Ver más" -->
+      <div class="form-column form-field half-width">
         <label>Fecha de nacimiento</label>
         <p-datepicker
           formControlName="birthdate"
@@ -239,10 +215,8 @@
         ></p-datepicker>
       </div>
 
-      <div
-        class="form-column form-field half-width"
-        *ngIf="!isFieldRequired('nationality')"
-      >
+      <!-- Nacionalidad siempre en "Ver más" -->
+      <div class="form-column form-field half-width">
         <label>Nacionalidad</label>
         <p-autocomplete
           formControlName="nationality"
@@ -256,20 +230,7 @@
           [dropdown]="true"
         ></p-autocomplete>
       </div>
-      <div
-        class="form-column form-field half-width"
-        *ngIf="
-          !isFieldRequired('nationality') &&
-          form.get('nationality')?.value === 'ES'
-        "
-      >
-        <label>DNI*</label>
-        <input
-          pInputText
-          formControlName="dni"
-          placeholder="Introduce tu DNI"
-        />
-      </div>
+      
       <div
         class="form-column form-field half-width"
         *ngIf="!isFieldRequired('phone')"

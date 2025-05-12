@@ -1,6 +1,7 @@
 :host {
   display: block;
   width: 100%;
+  --p-datepicker-panel-background: #fff !important;
 }
 
 // Estilos del encabezado
@@ -40,12 +41,12 @@
     flex-wrap: wrap;
     gap: 10px;
 
-    @media (max-width: 768px) {
-      flex-direction: column;
+    // Garantizar que siempre sea flex-row excepto en móviles muy pequeños
+    flex-direction: row;
 
-      .form-column {
-        margin-right: 0;
-      }
+    @media (max-width: 480px) {
+      // Solo para móviles muy pequeños
+      flex-direction: column;
     }
   }
 
@@ -57,12 +58,19 @@
     }
 
     &.half-width {
-      flex: 49%;
-      max-width: 50%;
+      flex: 0 0 48%; // Ajustado para evitar desbordamiento
+      max-width: 48%;
 
-      @media (max-width: 768px) {
-        flex: 1 1 100%;
-        margin-right: 0;
+      // Mantener el layout de dos columnas en tablets
+      @media (min-width: 577px) and (max-width: 991px) {
+        flex: 0 0 48%;
+        max-width: 48%;
+      }
+
+      // Solo cambiar a una columna en móviles muy pequeños
+      @media (max-width: 480px) {
+        flex: 0 0 100%;
+        max-width: 100%;
       }
     }
   }
@@ -85,9 +93,32 @@
     }
   }
 }
+
+// Estilos adicionales para forzar dos columnas en tablets
+@media (min-width: 577px) {
+  .traveler-form .form-row {
+    display: flex;
+    flex-direction: row !important;
+    flex-wrap: wrap;
+  }
+
+  .traveler-form .form-column.half-width {
+    flex: 0 0 48% !important;
+    max-width: 48% !important;
+  }
+}
+
 .traveler-form {
   // Estilos globales para componentes PrimeNG
   ::ng-deep {
+    .p-datepicker-dropdown {
+      background: transparent;
+      border-bottom: 1px solid var(--background-azul);
+      border-radius: 0;
+      border-top: none;
+      border-right: none;
+    }
+
     .form-field {
       .p-inputtext,
       .p-dropdown,
@@ -122,6 +153,20 @@
       }
     }
 
+    .datos-adicionales-info {
+      margin-bottom: 1rem;
+      margin-top: -30px;
+    }
+
+    .mensaje-info {
+      font-size: 12px;
+    }
+
+    .icono-info {
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
     .p-panel {
       &.user-button .p-panel-content {
         padding: 10px;
@@ -137,6 +182,7 @@
     }
   }
 }
+
 .show-more-button {
   margin-top: -10px;
   margin-left: -1px;

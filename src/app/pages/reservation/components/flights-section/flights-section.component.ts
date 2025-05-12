@@ -1,31 +1,56 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy, OnChanges, SimpleChanges } from '@angular/core';
 import {
   Flight,
   FlightSegment,
 } from '../../../../core/models/tours/flight.model';
+import { forkJoin, Observable, of } from 'rxjs';
+import { AirlinesService } from '../../../../core/services/airlines/airlines.service';
+import { map, catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-flights-section',
   standalone: false,
   templateUrl: './flights-section.component.html',
   styleUrls: ['./flights-section.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class FlightsSectionComponent {
+export class FlightsSectionComponent implements OnChanges {
   @Input() flights: Flight[] = [];
+  
+  // Propiedad para almacenar vuelos formateados
+  private _formattedFlights: any = null;
+  
+  constructor(private airlinesService: AirlinesService) {}
 
   // New adapter for template format - provides flight data in the format expected by the template
-  get formattedFlights() {
-    if (!this.flights || this.flights.length === 0) {
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['flights']) {
+      // Solo recalcular cuando cambian los vuelos
+      this._formattedFlights = this.formatFlights();
+      
+      // Limpiar cachés cuando cambian los datos de entrada
+      this._flightNumbersCache = {};
+      this._logoUrlCache = {};
+    }
+  }
+  
+  // Método para formatear vuelos
+  private formatFlights() {
+    if (!this.flights?.length) {
       return null;
     }
 
-    // Use the first flight in the array
     const flight = this.flights[0];
-
+    
     return {
       outbound: flight.outbound ? this.formatFlightInfo(flight.outbound) : null,
       inbound: flight.inbound ? this.formatFlightInfo(flight.inbound) : null,
     };
+  }
+  
+  // Getter para acceder a los vuelos formateados
+  get formattedFlights() {
+    return this._formattedFlights;
   }
 
   // Helper method to format flight info from segments
@@ -35,16 +60,11 @@ export class FlightsSectionComponent {
     name: string;
   }) {
     // Check if flight name contains "sinvue" or "sin vue"
-    if (
-      flightData.name &&
-      (flightData.name.toLowerCase().includes('sinvue') ||
-        flightData.name.toLowerCase().includes('sin vue'))
-    ) {
+    if (flightData.name && flightData.name.toLowerCase().match(/sin\s*vue/)) {
       return null;
     }
 
-    if (!flightData || !flightData.segments || flightData.segments.length === 0)
-      return null;
+    if (!flightData?.segments?.length) return null;
 
     const segments = flightData.segments;
     const firstSegment = segments[0];
@@ -55,11 +75,31 @@ export class FlightsSectionComponent {
     const stops = segments.length - 1;
 
     // Calculate stopover city if applicable
-    let stopCity = '';
-    if (hasStops && segments.length > 1) {
-      // Use arrival city of first segment as stopover
-      stopCity = segments[0].arrivalCity;
-    }
+    let stopCity = hasStops ? segments[0].arrivalCity : '';
+
+    // Check if arrival is next day
+    const departure = this.formatTime(firstSegment.departureTime);
+    const arrival = this.formatTime(lastSegment.arrivalTime);
+    const isNextDay = arrival < departure;
+
+    // Format segments with next day indicator
+    const formattedSegments = segments.map((segment) => {
+      const segDeparture = this.formatTime(segment.departureTime);
+      const segArrival = this.formatTime(segment.arrivalTime);
+      const segIsNextDay = segArrival < segDeparture;
+
+      return {
+        airline: segment.airline,
+        flightNumber: segment.flightNumber,
+        departureTime: segment.departureTime,
+        arrivalTime: segment.arrivalTime,
+        departureCity: segment.departureCity,
+        arrivalCity: segment.arrivalCity,
+        departureIata: segment.departureIata,
+        arrivalIata: segment.arrivalIata,
+        isNextDay: segIsNextDay,
+      };
+    });
 
     return {
       departureTime: firstSegment.departureTime,
@@ -71,24 +111,16 @@ export class FlightsSectionComponent {
         firstSegment.departureTime,
         lastSegment.arrivalTime
       ),
-      hasStops: hasStops,
-      stops: stops,
-      stopCity: stopCity,
-      segments: segments.map((segment) => ({
-        airline: segment.airline,
-        flightNumber: segment.flightNumber,
-        departureTime: segment.departureTime,
-        arrivalTime: segment.arrivalTime,
-        departureCity: segment.departureCity,
-        arrivalCity: segment.arrivalCity,
-        departureIata: segment.departureIata,
-        arrivalIata: segment.arrivalIata,
-      })),
+      hasStops,
+      stops,
+      stopCity,
+      isNextDay,
+      segments: formattedSegments,
     };
   }
 
   // Method to format time string to Date object
-  formatTime(timeString: string): Date {
+  private formatTime(timeString: string): Date {
     const [hours, minutes] = timeString.split(':').map(Number);
     const date = new Date();
     date.setHours(hours, minutes, 0);
@@ -96,7 +128,10 @@ export class FlightsSectionComponent {
   }
 
   // Method to calculate flight duration
-  calculateFlightDuration(departureTime: string, arrivalTime: string): string {
+  private calculateFlightDuration(
+    departureTime: string,
+    arrivalTime: string
+  ): string {
     const departure = this.formatTime(departureTime);
     const arrival = this.formatTime(arrivalTime);
     if (arrival < departure) {
@@ -106,5 +141,152 @@ export class FlightsSectionComponent {
     const hours = Math.floor(duration / 60);
     const minutes = Math.floor(duration % 60);
     return `${hours}h ${minutes}m`;
+  }
+
+  // Caché de aerolíneas a nivel de componente
+  private airlineCache: { [prefix: string]: string } = {};
+  // Control de solicitudes en curso
+  private pendingRequests: { [prefix: string]: Observable<string> } = {};
+
+  /**
+   * Obtiene los nombres de las aerolíneas a partir de los números de vuelo
+   * Implementa memoización para evitar cálculos repetidos
+   */
+  getAirlineNamesByFlightNumbers(flightNumbers: string[]): Observable<string> {
+    if (!flightNumbers || flightNumbers.length === 0) {
+      return of('');
+    }
+
+    // Crear una clave única para este conjunto de números de vuelo
+    const cacheKey = flightNumbers.sort().join('|');
+    
+    // Verificar si ya tenemos el resultado en caché
+    if (this._flightNumbersCache[cacheKey]) {
+      return of(this._flightNumbersCache[cacheKey]);
+    }
+    
+    // Extraer prefijos IATA únicos de los números de vuelo
+    const prefixesIATA = flightNumbers
+      .filter((flightNumber) => flightNumber)
+      .map((flightNumber) => {
+        // Extraer las dos primeras letras del número de vuelo
+        const prefixIATA = flightNumber.substring(0, 2);
+        return prefixIATA;
+      })
+      .filter((prefix) => prefix.length === 2); // Asegurarse de que el prefijo tiene 2 caracteres
+
+    // Eliminar duplicados
+    const uniquePrefixesIATA = [...new Set(prefixesIATA)];
+
+    // Si no hay prefijos válidos, devolver cadena vacía
+    if (uniquePrefixesIATA.length === 0) {
+      return of('');
+    }
+
+    // Verificar si tenemos todos los prefijos en caché
+    const cachedNames = uniquePrefixesIATA
+      .filter((prefix) => this.airlineCache[prefix])
+      .map((prefix) => this.airlineCache[prefix]);
+
+    // Si tenemos todos los prefijos en caché, devolver los nombres
+    if (cachedNames.length === uniquePrefixesIATA.length) {
+      const result = cachedNames.join(', ');
+      this._flightNumbersCache[cacheKey] = result;
+      return of(result);
+    }
+
+    // Prefijos que necesitamos cargar
+    const prefixesToLoad = uniquePrefixesIATA.filter(
+      (prefix) => !this.airlineCache[prefix]
+    );
+
+    // Crear observables para cada prefijo que necesitamos cargar
+    const requests: Observable<string>[] = prefixesToLoad.map((prefix) => {
+      // Si ya hay una solicitud en curso para este prefijo, reutilizarla
+      if (this.pendingRequests[prefix]) {
+        return this.pendingRequests[prefix];
+      }
+
+      // Crear una nueva solicitud
+      const request = this.airlinesService
+        .getAirlines({ codeIATA: prefix })
+        .pipe(
+          map((airlines) => {
+            const airlineName =
+              airlines && airlines.length > 0
+                ? airlines[0].name || prefix
+                : prefix;
+            this.airlineCache[prefix] = airlineName;
+            return airlineName;
+          }),
+          catchError(() => {
+            this.airlineCache[prefix] = prefix;
+            return of(prefix);
+          })
+        );
+
+      // Guardar la solicitud en el mapa de solicitudes pendientes
+      this.pendingRequests[prefix] = request;
+
+      return request;
+    });
+
+    // Si hay solicitudes para cargar, hacerlas en paralelo y devolver el resultado
+    if (requests.length > 0) {
+      return forkJoin(requests).pipe(
+        map(() => {
+          // Limpiar las solicitudes pendientes
+          prefixesToLoad.forEach((prefix) => {
+            delete this.pendingRequests[prefix];
+          });
+          
+          // Construir el resultado final
+          const result = uniquePrefixesIATA
+            .map((prefix) => this.airlineCache[prefix] || prefix)
+            .join(', ');
+            
+          // Guardar en caché
+          this._flightNumbersCache[cacheKey] = result;
+          return result;
+        })
+      );
+    }
+
+    // Si no hay solicitudes, devolver lo que tenemos
+    const result = uniquePrefixesIATA
+      .map((prefix) => this.airlineCache[prefix] || prefix)
+      .join(', ');
+      
+    this._flightNumbersCache[cacheKey] = result;
+    return of(result);
+  }
+  
+  // Caché para resultados de getAirlineNamesByFlightNumbers
+  private _flightNumbersCache: { [key: string]: string } = {};
+  // Caché para URLs de logos
+  private _logoUrlCache: { [flightNumber: string]: string } = {};
+  
+  getAirlineLogoUrl(flightNumber: string): string {
+    if (!flightNumber || flightNumber.length < 2) {
+      return ''; 
+    }
+    
+    // Verificar caché
+    if (this._logoUrlCache[flightNumber]) {
+      return this._logoUrlCache[flightNumber];
+    }
+    
+    // Extraer el código IATA
+    const iataCode = flightNumber.substring(0, 2);
+    
+    // Construir la URL y guardar en caché
+    const url = `https://images.kiwi.com/airlines/32x32/${iataCode}.png`;
+    this._logoUrlCache[flightNumber] = url;
+    
+    return url;
+  }
+  
+  trackByFlightNumber(index: number, segment: any): string {
+    return segment.flightNumber || index;
   }
 }

@@ -56,7 +56,45 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
 
   // Optimización: Getters para simplificar la plantilla
   get infoCards(): any[] {
-    return this.tour?.['extra-info-section']?.['info-card'] || [];
+    
+    // Crear un array vacío para las tarjetas de información
+    let cards = [];
+    
+    // Verificar si existe la propiedad tripIncludes en info-practica
+    const tripIncludes = this.tour?.['info-practica']?.['tripIncludes'];
+    
+    // Verificar si existe la propiedad extraInformation en info-practica
+    const extraInfo = this.tour?.['info-practica']?.['extraInformation'];
+    
+    // Array para almacenar las nuevas tarjetas
+    const newCards = [];
+    
+    // Si existe tripIncludes, crear un nuevo objeto y añadirlo
+    if (tripIncludes) {
+      const includesCard = {
+        title: "¿Que incluye el viaje?",
+        content: tripIncludes,
+        order: 1
+      };
+      
+      newCards.push(includesCard);
+    }
+    
+    // Si existe extraInformation, crear un nuevo objeto y añadirlo
+    if (extraInfo) {
+      const extraInfoCard = {
+        title: "Información del viaje",
+        content: extraInfo,
+        order: 2
+      };
+      
+      newCards.push(extraInfoCard);
+    }
+    
+    // Usar solo las nuevas tarjetas
+    cards = newCards;
+    
+    return cards;
   }
 
   get hasInfoCards(): boolean {
@@ -185,7 +223,7 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
       const filterByStatus = this.route.snapshot.queryParamMap.get('filterByStatus') !== 'false';
       
       const tourSubscription = this.toursService
-        .getTourDetailBySlug(slug, ['extra-info-section'], filterByStatus)
+        .getTourDetailBySlug(slug, ['extra-info-section','info-practica'], filterByStatus)
         .subscribe({
           next: (tour) => {
             if (tour && tour['extra-info-section']?.['info-card']) {

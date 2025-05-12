@@ -38,6 +38,7 @@ export class PeriodsService {
     if (selectedFields && selectedFields.length > 0) {
       params = params.set('selectedFields', selectedFields.join(','));
     }
+
     return this.http.get<Period>(`${this.API_URL}/${id}/full`, { params });
   }
 
@@ -104,20 +105,24 @@ export class PeriodsService {
   getActivitiesByPeriodId(periodId: string): Observable<Activity[]> {
     const directUrl = `${environment.apiUrl}/data/cms/collections/es/activities/filter-by/activityId/${periodId}?selectedFields=all`;
     return this.http.get<any>(directUrl).pipe(
-      tap(response => {
-      }),
-      map(response => {
+      tap((response) => {}),
+      map((response) => {
         let activities: Activity[] = [];
         if (Array.isArray(response)) {
           activities = response;
         } else if (response && response.data && Array.isArray(response.data)) {
           activities = response.data;
-        } else if (response && response.items && Array.isArray(response.items)) {
+        } else if (
+          response &&
+          response.items &&
+          Array.isArray(response.items)
+        ) {
           activities = response.items;
         }
         return activities;
       }),
-      catchError(error => {      return of([]);
+      catchError((error) => {
+        return of([]);
       })
     );
   }

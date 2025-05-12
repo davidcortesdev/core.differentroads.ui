@@ -62,6 +62,7 @@ const routerOptions: ExtraOptions = {
   scrollPositionRestoration: 'enabled',
   anchorScrolling: 'enabled',
   scrollOffset: [0, 0],
+  onSameUrlNavigation: 'reload'  // Añadir esta línea para forzar recarga en la misma URL
 };
 
 @NgModule({

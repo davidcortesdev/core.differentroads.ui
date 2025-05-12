@@ -82,9 +82,9 @@ export class ToursListComponent implements OnInit {
               tag: tour.marketingSection?.marketingSeasonTag || '',
               price: tour.basePrice || 0,
               availableMonths:
-                tour.monthTags?.map((month) =>
-                  month.substring(0, 3).toUpperCase()
-                ) || [],
+                Array.isArray(tour.monthTags) 
+                  ? tour.monthTags.map((month) => month.substring(0, 3).toUpperCase()) 
+                  : [],
               isByDr: tour.tourType !== 'FIT',
               webSlug:
                 tour.webSlug ||

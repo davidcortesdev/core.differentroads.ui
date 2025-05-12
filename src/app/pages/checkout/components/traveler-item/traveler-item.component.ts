@@ -621,7 +621,11 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
    */
   shouldShowInOptionalSection(fieldKey: string): boolean {
     // Birthdate y nationality siempre van en opcional
-    if (fieldKey === 'birthdate' /* || fieldKey === 'nationality' */) {
+    if (
+      fieldKey === 'birthdate'
+      /*
+       */
+    ) {
       return true;
     }
 

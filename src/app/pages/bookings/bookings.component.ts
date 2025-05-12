@@ -80,7 +80,8 @@ interface UpcomingPayment {
 // Interfaz actualizada para los datos de pasajeros compatible con el componente hijo
 export interface PassengerData {
   id: number;
-  fullName: string;
+  name: string;
+  surname: string;
   documentType: string;
   passportID: string;
   birthDate: string;
@@ -104,8 +105,6 @@ export interface PassengerData {
   dni?: string;
   minorIdExpirationDate?: string;
   minorIdIssueDate?: string;
-  
-
 }
 
 @Component({
@@ -601,11 +600,6 @@ export class BookingsComponent implements OnInit {
         // Extraer los datos del viajero
         const travelerData = traveler.travelerData || {};
 
-        // Construir el nombre completo
-        const firstName = travelerData.name || '';
-        const lastName = travelerData.surname || '';
-        const fullName = `${firstName} ${lastName}`.trim();
-
         // Extraer tipo de documento
         let documentType = travelerData.documentType || '';
         /* if (documentType.toLowerCase() === 'dni' || travelerData.dni) {
@@ -618,18 +612,24 @@ export class BookingsComponent implements OnInit {
         } */
 
         // Obtener número de documento
-         /*const passportID =
+        /*const passportID =
           travelerData.dni ||
           travelerData.passportID || 
           travelerData.docNum ||
           '';*/
-          
+
         // Obtener la descripción de la habitación si está disponible
         let roomDescription = 'Sin asignar';
-      
+
         // Intentar obtener la descripción de la habitación desde los datos del periodo
-        if (booking.periodData?.textSummary?.rooms && traveler.periodReservationModeID) {
-          const roomInfo = booking.periodData.textSummary.rooms[traveler.periodReservationModeID];
+        if (
+          booking.periodData?.textSummary?.rooms &&
+          traveler.periodReservationModeID
+        ) {
+          const roomInfo =
+            booking.periodData.textSummary.rooms[
+              traveler.periodReservationModeID
+            ];
           if (roomInfo && roomInfo.name) {
             roomDescription = roomInfo.name;
           } else if (roomInfo && roomInfo.description) {
@@ -639,7 +639,7 @@ export class BookingsComponent implements OnInit {
           // Si no hay información detallada, usar el tipo de habitación
           roomDescription = traveler.roomType;
         }
-        
+
         // Manejar la fecha de nacimiento - verificar ambos campos posibles
         let birthDate = '';
         if (travelerData.birthDate) {
@@ -647,8 +647,6 @@ export class BookingsComponent implements OnInit {
         } else if (travelerData.birthdate) {
           birthDate = travelerData.birthdate;
         }
-        
-        console.log(`Traveler ${index} birthDate:`, birthDate);
 
         let comfortPlanName = '';
         if (
@@ -663,12 +661,13 @@ export class BookingsComponent implements OnInit {
             comfortPlanName = firstInsurance?.name || '';
           }
         }
-        
+
         // Mapear datos del pasajero - importante: ID debe ser number
         const passenger: PassengerData = {
           id: index + 1, // Convertir a number usando el índice
           _id: traveler._id || '', // Asegurarnos de incluir el _id del viajero
-          fullName: fullName,
+          name: travelerData.name || '',
+          surname: travelerData.surname || '',
           documentType: documentType,
           passportID: travelerData.passportID,
           birthDate: birthDate,
@@ -698,9 +697,6 @@ export class BookingsComponent implements OnInit {
 
         // Añadir al array de pasajeros
         this.passengers.push(passenger);
-        
-        // Debug para verificar que los IDs se están pasando correctamente
-        console.log(`Passenger ${index} - _id: ${passenger._id}, bookingID: ${passenger.bookingID}, bookingSID: ${passenger.bookingSID}, birthDate: ${passenger.birthDate}`);
       });
     }
   }

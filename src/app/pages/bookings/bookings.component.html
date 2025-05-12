@@ -1,14 +1,13 @@
-
 <div class="container">
-<!-- Loading Indicator -->
-<div *ngIf="isLoading" class="loading-container">
-  <p-progressSpinner></p-progressSpinner>
-</div>
+  <!-- Loading Indicator -->
+  <div *ngIf="isLoading" class="loading-container">
+    <p-progressSpinner></p-progressSpinner>
+  </div>
 
-<!-- Contenido principal - solo se muestra cuando no está cargando -->
-<div *ngIf="!isLoading">
-  <!-- Header booking section -->
-  <!--  <app-booking-header-section
+  <!-- Contenido principal - solo se muestra cuando no está cargando -->
+  <div *ngIf="!isLoading">
+    <!-- Header booking section -->
+    <!--  <app-booking-header-section
     [title]="bookingData.title"
     [date]="bookingData.date"
     [retailerInfo]="retailerInfo"
@@ -16,120 +15,121 @@
     (backEvent)="goBack()">
   </app-booking-header-section> -->
 
-  <!-- Code booking section -->
-  <app-booking-code-section
-    [bookingCode]="bookingData.bookingCode"
-    [bookingReference]="bookingData.bookingReference"
-    [status]="bookingData.status"
-    (cancelBooking)="cancelBooking()"
-    (backEvent)="goBack()"
-  >
-  </app-booking-code-section>
+    <!-- Code booking section -->
+    <app-booking-code-section
+      [bookingCode]="bookingData.bookingCode"
+      [bookingReference]="bookingData.bookingReference"
+      [status]="bookingData.status"
+      (cancelBooking)="cancelBooking()"
+      (backEvent)="goBack()"
+    >
+    </app-booking-code-section>
 
-  <!-- Documents booking section -->
-  <app-booking-document-actions
-    [isVisible]="false"
-    (sendReminder)="sendReminder()"
-    (reprintInfo)="reprintInfo()"
-    (reprintVoucher)="reprintVoucher()"
-    (reprintPaymentReminder)="reprintPaymentReminder()"
-    (reprintETickets)="reprintETickets()"
-    [bookingId]="bookingId"
-  >
-  </app-booking-document-actions>
+    <!-- Documents booking section -->
+    <app-booking-document-actions
+      [isVisible]="false"
+      (sendReminder)="sendReminder()"
+      (reprintInfo)="reprintInfo()"
+      (reprintVoucher)="reprintVoucher()"
+      (reprintPaymentReminder)="reprintPaymentReminder()"
+      (reprintETickets)="reprintETickets()"
+      [bookingId]="bookingId"
+    >
+    </app-booking-document-actions>
 
-  <!-- Componente de vista de detalles -->
-  <app-booking-details-view
-    [bookingImages]="bookingImages"
-    [tourName]="bookingData.title"
-  >
-  </app-booking-details-view>
+    <!-- Componente de vista de detalles -->
+    <app-booking-details-view
+      [bookingImages]="bookingImages"
+      [tourName]="bookingData.title"
+    >
+    </app-booking-details-view>
 
-  <!-- Payment History - Versión actualizada que solo usa tripItems -->
-  <app-booking-payment-history
-    [bookingID]="bookingId"
-    [tripItems]="tripItems"
-    [bookingTotal]="bookingTotal"
-    [isTO]="isTO"
-    (registerPayment)="registerPayment($event)"
-    (fileUploaded)="handleFileUploaded($event)"
-  >
-  </app-booking-payment-history>
+    <!-- Payment History - Versión actualizada que solo usa tripItems -->
+    <app-booking-payment-history
+      [bookingID]="bookingId"
+      [tripItems]="tripItems"
+      [bookingTotal]="bookingTotal"
+      [isTO]="isTO"
+      (registerPayment)="registerPayment($event)"
+      (fileUploaded)="handleFileUploaded($event)"
+    >
+    </app-booking-payment-history>
 
-  <!-- Personal Data -->
-  <app-booking-personal-data 
-    [passengers]="passengers"
-    [bookingId]="bookingId">
-  </app-booking-personal-data>
+    <!-- Personal Data -->
+    <app-booking-personal-data
+      [passengers]="passengers"
+      [bookingId]="bookingId"
+      [periodId]="bookingComplete?.periodData?.['externalID']"
+    />
 
-  <!-- Flights -->
-  <app-booking-flights *ngIf="adaptedFlightData" [flight]="adaptedFlightData">
-  </app-booking-flights>
+    <!-- Flights -->
+    <app-booking-flights *ngIf="adaptedFlightData" [flight]="adaptedFlightData">
+    </app-booking-flights>
 
-  <!-- Activities -->
-  <app-booking-activities
-    *ngIf="
+    <!-- Activities -->
+    <app-booking-activities
+      *ngIf="
       bookingComplete?.periodData?.['externalID']
     "
-    [bookingActivities]="bookingActivities"
-    [booking]="bookingComplete!"
-    (addActivity)="addActivity($event)"
-    [periodId]="bookingComplete?.periodData?.['externalID']"
+      [bookingActivities]="bookingActivities"
+      [booking]="bookingComplete!"
+      (addActivity)="addActivity($event)"
+      [periodId]="bookingComplete?.periodData?.['externalID']"
+    >
+    </app-booking-activities>
+
+    <app-booking-documentation
+      [bookingId]="bookingId"
+    ></app-booking-documentation>
+  </div>
+
+  <!-- Toast para mostrar mensajes -->
+  <p-toast key="center" [baseZIndex]="9999" position="top-right"></p-toast>
+
+  <!-- Modal de pago (mantenerlo fuera del div condicional) -->
+  <p-dialog
+    header="Registrar pago"
+    [(visible)]="displayPaymentModal"
+    [modal]="true"
+    [style]="{ width: '450px' }"
+    [draggable]="false"
+    [resizable]="false"
   >
-  </app-booking-activities>
-
-  <app-booking-documentation
-    [bookingId]="bookingId"
-  ></app-booking-documentation>
-</div>
-
-<!-- Toast para mostrar mensajes -->
-<p-toast key="center" [baseZIndex]="9999" position="top-right"></p-toast>
-
-<!-- Modal de pago (mantenerlo fuera del div condicional) -->
-<p-dialog
-  header="Registrar pago"
-  [(visible)]="displayPaymentModal"
-  [modal]="true"
-  [style]="{ width: '450px' }"
-  [draggable]="false"
-  [resizable]="false"
->
-  <form [formGroup]="paymentForm" (ngSubmit)="onSubmitPayment()">
-    <div class="field">
-      <label for="amount">Cantidad (€)</label>
-      <input
-        type="number"
-        pInputText
-        id="amount"
-        formControlName="amount"
-        class="w-full"
-      />
-      <small
-        *ngIf="
-          paymentForm.get('amount')?.invalid &&
-          paymentForm.get('amount')?.touched
-        "
-        class="p-error"
-      >
-        Cantidad requerida, debe ser mayor que 0
-      </small>
-    </div>
-    <div class="flex justify-content-end mt-4">
-      <button
-        pButton
-        type="button"
-        label="Cancelar"
-        class="p-button-text"
-        (click)="hidePaymentModal()"
-      ></button>
-      <button
-        pButton
-        type="submit"
-        label="Registrar pago"
-        [disabled]="paymentForm.invalid"
-      ></button>
-    </div>
-  </form>
-</p-dialog>
+    <form [formGroup]="paymentForm" (ngSubmit)="onSubmitPayment()">
+      <div class="field">
+        <label for="amount">Cantidad (€)</label>
+        <input
+          type="number"
+          pInputText
+          id="amount"
+          formControlName="amount"
+          class="w-full"
+        />
+        <small
+          *ngIf="
+            paymentForm.get('amount')?.invalid &&
+            paymentForm.get('amount')?.touched
+          "
+          class="p-error"
+        >
+          Cantidad requerida, debe ser mayor que 0
+        </small>
+      </div>
+      <div class="flex justify-content-end mt-4">
+        <button
+          pButton
+          type="button"
+          label="Cancelar"
+          class="p-button-text"
+          (click)="hidePaymentModal()"
+        ></button>
+        <button
+          pButton
+          type="submit"
+          label="Registrar pago"
+          [disabled]="paymentForm.invalid"
+        ></button>
+      </div>
+    </form>
+  </p-dialog>
 </div>

@@ -4,11 +4,13 @@
       <div class="passenger-row">
         <!-- Tarjetas de pasajeros -->
         <div *ngFor="let pass of passengers" class="passenger-card">
-          <app-passenger-card 
+          <app-passenger-card
             [passenger]="pass"
             [bookingId]="bookingId"
-            [travelerId]="pass._id || ''"    
-            (passengerUpdated)="updatePassenger($event)">
+            [travelerId]="pass._id || ''"
+            [reservationFields]="reservationFields"
+            (passengerUpdated)="updatePassenger($event)"
+          >
           </app-passenger-card>
         </div>
       </div>

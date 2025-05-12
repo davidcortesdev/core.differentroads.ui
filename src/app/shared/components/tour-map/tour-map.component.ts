@@ -187,31 +187,43 @@ export class TourMapComponent implements OnInit, OnDestroy {
 
   calculateMapCenter(): void {
     if (!this.citiesData?.length) return;
-
+  
+    // Usar memoización para evitar recalcular si los datos no han cambiado
+    const citiesKey = this.citiesData.map(c => `${c.latitude}-${c.longitude}`).join('|');
+    if (this.lastCitiesKey === citiesKey) return;
+    this.lastCitiesKey = citiesKey;
+  
     const bounds = new google.maps.LatLngBounds();
+    let validCoordinates = 0;
+    
     this.citiesData.forEach((city) => {
       if (!city.latitude || !city.longitude) {
-        console.warn(
-          `No se encontraron coordenadas para la ciudad ${city.name}`
-        );
+        console.warn(`No se encontraron coordenadas para la ciudad ${city.name}`);
         return;
       }
       bounds.extend({ lat: city.latitude, lng: city.longitude });
+      validCoordinates++;
     });
-
-    this.center = {
-      lat: bounds.getCenter().lat(),
-      lng: bounds.getCenter().lng(),
-    };
-
-    const PADDING = 10;
-    if (this.mapOptions.maxZoom) {
-      this.zoom = Math.min(
-        this.getZoomLevel(bounds, PADDING),
-        this.mapOptions.maxZoom
-      );
+  
+    // Solo actualizar si hay coordenadas válidas
+    if (validCoordinates > 0) {
+      this.center = {
+        lat: bounds.getCenter().lat(),
+        lng: bounds.getCenter().lng(),
+      };
+  
+      const PADDING = 10;
+      if (this.mapOptions.maxZoom) {
+        this.zoom = Math.min(
+          this.getZoomLevel(bounds, PADDING),
+          this.mapOptions.maxZoom
+        );
+      }
     }
   }
+  
+  // Añadir esta propiedad para memoización
+  private lastCitiesKey: string = '';
 
   addMarker(ciudad: ILocationCityResponse): void {
     if (!ciudad.latitude || !ciudad.longitude) {

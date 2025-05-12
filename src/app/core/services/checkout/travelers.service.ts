@@ -138,7 +138,7 @@ export class TravelersService {
     let travelerIndex = 0;
 
     rooms.forEach((room) => {
-      for (let i = 0; i < (room?.places || 0); i++) {
+      for (let i = 0; i < (room?.places * (room?.qty || 0) || 0); i++) {
         if (travelerIndex < travelers.length) {
           travelers[travelerIndex].periodReservationModeID = room.externalID;
           travelerIndex++;
@@ -151,19 +151,19 @@ export class TravelersService {
 
   getTravelers(): OrderTraveler[] {
     const travelers = this.travelersSource.getValue();
-    
+
     // Verificar si algún viajero no tiene ID
-    const needsUpdate = travelers.some(t => !t._id);
-    
+    const needsUpdate = travelers.some((t) => !t._id);
+
     if (needsUpdate) {
-      const updatedTravelers = travelers.map(t => ({
+      const updatedTravelers = travelers.map((t) => ({
         ...t,
-        _id: t._id || this.generateHexID()
+        _id: t._id || this.generateHexID(),
       }));
       this.travelersSource.next(updatedTravelers);
       return updatedTravelers;
     }
-    
+
     return travelers;
   }
 

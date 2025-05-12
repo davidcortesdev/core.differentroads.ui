@@ -61,8 +61,6 @@ const ALL_FIELDS = [
   'lastName',
   'email',
   'sexo',
-  'birthdate',
-  'nationality',
   'phone',
   'documentType',
   'passport',
@@ -187,6 +185,9 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
   private setupMandatoryFields(): void {
     this.mandatoryFields.clear();
 
+    // Añadir DNI como campo obligatorio siempre
+    this.mandatoryFields.add('dni');
+
     if (this.isAmadeusFlightSelected) {
       this.mandatoryFields.add('passportExpirationDate');
       this.mandatoryFields.add('passportIssueDate');
@@ -201,11 +202,15 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
         }
       });
     } else if (this.allFieldsMandatory) {
-      ALL_FIELDS.forEach((field) => this.mandatoryFields.add(field));
+      ALL_FIELDS.forEach((field) => {
+        this.mandatoryFields.add(field);
+      });
     } else if (this.reservationFields?.length) {
       this.reservationFields.forEach((field) => {
         const mappedKey = this.reservationFieldMappings[field.key] || field.key;
-        this.mandatoryFields.add(mappedKey);
+        if (mappedKey !== 'birthdate' && mappedKey !== 'nationality') {
+          this.mandatoryFields.add(mappedKey);
+        }
       });
 
       ['firstName', 'lastName', 'email'].forEach((field) =>
@@ -221,6 +226,10 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
     if (this.traveler.ageGroup === 'Niños') {
       this.mandatoryFields.add('associatedAdult');
     }
+    
+    // Asegurar que birthdate y nationality nunca sean obligatorios
+    this.mandatoryFields.delete('birthdate');
+    this.mandatoryFields.delete('nationality');
   }
 
   private updateValidators(): void {
@@ -307,10 +316,8 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
       options.push({ label: 'Libro de Familia', value: 'family-book' });
     }
 
-    if (nationality === 'Español') {
-      options.push({ label: 'DNI', value: 'dni' });
-    }
-
+    // Quitamos la condición de nacionalidad española para el DNI ya que ahora es obligatorio para todos
+    options.push({ label: 'DNI', value: 'dni' });
     options.push({ label: 'Pasaporte', value: 'passport' });
 
     this.documentOptionsCache[cacheKey] = options;
@@ -425,6 +432,8 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
           missingFields.push('Emisión pasaporte');
         else if (key === 'associatedAdult')
           missingFields.push('Adulto asociado');
+        else if (key === 'dni')
+          missingFields.push('DNI');
         else missingFields.push(key);
       }
     });

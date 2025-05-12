@@ -139,10 +139,10 @@ export class ContentPageComponent implements OnInit, OnDestroy {
           this.bannerImage = data.banner[0]?.url || '';
           this.bannerImageAlt = data.banner[0]?.alt || '';
           this.bannerTitle = data.title || '';
-          this.bannerSubtitle = data.titleContent || '';
-          this.bannerDescription = data.content || '';
+          this.bannerSubtitle = data.description || '';
+          this.bannerDescription = data.description || '';
           this.contentTitle = data.titleContent || '';
-          this.contentDescription = data.content || '';
+          this.contentDescription = data.description || '';
           this.updatePageTitle(data.title);
         },
         error: (error: any) => {

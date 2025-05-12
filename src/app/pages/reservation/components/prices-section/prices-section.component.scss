@@ -50,10 +50,16 @@ $border-interno: rgba(69, 64, 64, 0.136); // Color más suave para bordes intern
                     border-right: none; // Eliminar borde derecho de la última columna
                 }
 
-                &:nth-child(2),
-                &:nth-child(3),
-                &:nth-child(4) {
+                
+                &:nth-child(3){
+                
                     text-align: center;
+                }
+
+
+                &:nth-child(2),
+                &:nth-child(4) {
+                    text-align: right;
                 }
 
                 &:first-child {
@@ -70,6 +76,7 @@ $border-interno: rgba(69, 64, 64, 0.136); // Color más suave para bordes intern
 
                 &:last-child {
                     border-top-right-radius: 8px;
+                    text-align: center;
                 }
             }
 
@@ -79,12 +86,12 @@ $border-interno: rgba(69, 64, 64, 0.136); // Color más suave para bordes intern
 
                 &:first-child {
                     border-bottom-left-radius: 8px;
-                    text-align: right;
+                    text-align: center;
                 }
 
                 &:last-child {
                     border-bottom-right-radius: 8px;
-                    text-align: center;
+                    text-align: right;
                     border-right: none; // Asegurar que no haya borde derecho
                 }
             }

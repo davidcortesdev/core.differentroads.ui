@@ -1,4 +1,8 @@
 :host {
+  --p-card-color: var(--background-azul);
+  --p-fileupload-background: transparent;
+  --p-inputtext-background: transparent;
+  --p-inputtext-hover-border-color: none;
   display: block;
   width: 100%;
 }
@@ -206,6 +210,13 @@
   }
 }
 :host ::ng-deep {
+  .p-datepicker-dropdown {
+    background: transparent;
+    border-bottom: 1px solid var(--background-azul);
+    border-radius: 0;
+    border-top: none;
+    border-right: none;
+  }
   .p-button {
     border: 1px solid var(--p-primary-color);
     &.p-button-text {
@@ -334,6 +345,9 @@ input.p-inputtext {
       font-size: 13px;
       padding: 4px 8px;
       box-sizing: border-box;
+      border: none;
+      border-bottom: 1px solid var(--background-azul);
+      border-radius: 0;
     }
     .p-datepicker-trigger,
     .p-inputtext + .p-datepicker-trigger {
@@ -408,6 +422,7 @@ input.p-inputtext {
   }
 }
 .custom-dropdown.p-dropdown {
+  background: var(--background-azul-texto);
   min-height: 32px !important;
   height: 32px !important;
   font-size: 14px;

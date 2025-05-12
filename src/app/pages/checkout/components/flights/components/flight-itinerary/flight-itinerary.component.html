@@ -10,7 +10,7 @@
 <div class="flight-itinerary">
   <div class="flight-itinerary-journey">
     <!-- Iteramos sobre cada journey (outbound e inbound) -->
-    <div class="journey-item" *ngFor="let journey of journeys; let i = index">
+    <div class="journey-item" *ngFor="let journey of journeys; let i = index; trackBy: trackByJourneyType">
       <!-- Etiqueta de IDA/VUELTA -->
       <div class="journey-direction">
         <span class="direction-text">{{i === 0 ? "IDA" : "VUELTA"}}</span>
@@ -40,7 +40,7 @@
             <!-- Línea roja debajo del texto de escalas -->
             <div class="stops-underline"></div>
           </div>
-          <span class="journey-airline">{{ getAirlineNamesByFlightNumbers(journey.segments) || 'Cargando...' }}</span>
+          <span class="journey-airline">{{ getAirlineNamesByFlightNumbers(journey.segments) | async }}</span>
           <span class="journey-duration">{{ journey.totalDuration }}</span>
           
           <p-overlayPanel #op>
@@ -71,7 +71,16 @@
                       ? (item.departureDateTime | date : "dd-MM-yyyy" : "UTC")
                       : (journey.departure.date | date : "dd-MM-yyyy" : "UTC")
                   }}
-                  {{ item.flightNumber || "No flight number" }}
+                   {{ item.flightNumber || "No flight number" }}
+                  <!-- Añadido: Logo de aerolínea en detalles con tooltip -->
+                  <img *ngIf="item.flightNumber" 
+                       [src]="getAirlineLogoUrl(item.flightNumber)" 
+                       class="airline-logo-small"
+                       alt="Airline"
+                       pTooltip="{{getAirlineNamesByFlightNumbers([{flightNumber: item.flightNumber}])}}"
+                       tooltipPosition="top"
+                       onerror="this.style.display='none'" />
+                 
                 </span>
                 <span *ngIf="item.type === 'arrival'">
                   {{
@@ -91,6 +100,15 @@
                       : (journey.arrival.date | date : "dd-MM-yyyy" : "UTC")
                   }}
                   {{ item.flightNumber || "No flight number" }}
+                  <!-- Añadido: Logo de aerolínea en detalles con tooltip -->
+                  <img *ngIf="item.flightNumber" 
+                       [src]="getAirlineLogoUrl(item.flightNumber)" 
+                       class="airline-logo-small"
+                       alt="Airline"
+                       pTooltip="{{getAirlineNamesByFlightNumbers([{flightNumber: item.flightNumber}])}}"
+                       tooltipPosition="top"
+                       onerror="this.style.display='none'" />
+                
                 </span>
               </ng-template>
             </p-timeline>

@@ -244,4 +244,17 @@ export class FlightSectionComponent implements OnChanges {
   getAirlineNameByFlightNumber(flightNumber: string): Promise<string> {
     return this.fetchAirlineName(flightNumber);
   }
+  
+  // Método para obtener la URL del logo de la aerolínea por el código IATA
+  getAirlineLogoUrl(flightNumber: string): string {
+    if (!flightNumber || flightNumber.length < 2) {
+      return ''; // Si no hay número de vuelo o es muy corto, retornar vacío
+    }
+    
+    // Extraer el código IATA (generalmente las primeras 2 letras del número de vuelo)
+    const iataCode = flightNumber.substring(0, 2);
+    
+    // Construir la URL del logo usando el servicio de Kiwi.com
+    return `https://images.kiwi.com/airlines/32x32/${iataCode}.png`;
+  }
 }

@@ -40,12 +40,10 @@ export class CityCoordinatesService {
   /**
    * Busca las coordenadas de una ciudad, primero en la API de localizaciones
    * y si no se encuentra, utiliza el método alternativo actual
+   * @param cityName Nombre de la ciudad
+   * @param country Nombre del país (opcional)
    */
-  /**
-   * Busca las coordenadas de una ciudad, primero en la API de localizaciones
-   * y si no se encuentra, utiliza el método alternativo actual
-   */
-  getCityCoordinates(cityName: string): Observable<{ lat: number, lng: number } | null> {
+  getCityCoordinates(cityName: string, country?: string): Observable<{ lat: number, lng: number } | null> {
     const normalizedCityName = cityName.trim();
   
     if (!normalizedCityName) {
@@ -57,9 +55,56 @@ export class CityCoordinatesService {
       return of(this.coordinatesCache.get(normalizedCityName)!);
     }
   
-    // Create a CityFilter object instead of passing the string directly
+    // Create a CityFilter object with optional country parameter
     const filter: CityFilter = { name: normalizedCityName };
     
+    // Si se proporciona un país, buscar su ID y añadirlo al filtro
+    if (country) {
+      return this.locationsApiService.searchCountryByFilter({ name: country.trim() }).pipe(
+        switchMap(countries => {
+          if (countries && countries.length > 0) {
+            // Añadir el countryId al filtro
+            filter.countryId = countries[0].id;
+          }
+          
+          // Continuar con la búsqueda de la ciudad usando el filtro actualizado
+          return this.locationsApiService.searchCityByFilter(filter).pipe(
+            map(cities => {
+              if (cities && cities.length > 0 && cities[0].lat && cities[0].lng) {
+                const coordinates = { lat: cities[0].lat, lng: cities[0].lng };
+                this.coordinatesCache.set(normalizedCityName, coordinates);
+                return coordinates;
+              }
+              return null;
+            }),
+            catchError(error => {
+              console.error(`Error al obtener coordenadas para ${normalizedCityName}:`, error);
+              return of(null);
+            })
+          );
+        }),
+        catchError(error => {
+          console.error(`Error al buscar país ${country}:`, error);
+          // Si falla la búsqueda del país, intentar buscar la ciudad sin filtro de país
+          return this.locationsApiService.searchCityByFilter(filter).pipe(
+            map(cities => {
+              if (cities && cities.length > 0 && cities[0].lat && cities[0].lng) {
+                const coordinates = { lat: cities[0].lat, lng: cities[0].lng };
+                this.coordinatesCache.set(normalizedCityName, coordinates);
+                return coordinates;
+              }
+              return null;
+            }),
+            catchError(error => {
+              console.error(`Error al obtener coordenadas para ${normalizedCityName}:`, error);
+              return of(null);
+            })
+          );
+        })
+      );
+    }
+    
+    // Si no se proporciona país, continuar con la búsqueda normal
     return this.locationsApiService.searchCityByFilter(filter).pipe(
       map(cities => {
         if (cities && cities.length > 0 && cities[0].lat && cities[0].lng) {
@@ -79,14 +124,14 @@ export class CityCoordinatesService {
   /**
    * Convierte un array de nombres de ciudades a objetos City con coordenadas
    */
-  convertCitiesToCityObjects(cityNames: string[]): Observable<City[]> {
+  convertCitiesToCityObjects(cityNames: string[],country?: string): Observable<City[]> {
     if (!cityNames || cityNames.length === 0) {
       return of([]);
     }
 
     // Crear un array de observables para cada ciudad
     const cityObservables = cityNames.map(cityName => 
-      this.getCityCoordinates(cityName).pipe(
+      this.getCityCoordinates(cityName,country).pipe(
         map(coordinates => {
           if (coordinates) {
             return {

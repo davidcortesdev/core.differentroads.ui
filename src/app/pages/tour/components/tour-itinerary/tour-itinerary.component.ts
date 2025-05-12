@@ -77,6 +77,7 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
   hotels: Period['hotels'] | undefined;
   hotelsData: Hotel[] = [];
   showPlaceholder: boolean = true;
+  country: string | undefined;
 
   currentPeriod: Period | undefined;
   itinerariesData: Itinerary | undefined;
@@ -218,9 +219,10 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
           });
 
         this.toursService
-          .getTourDetailBySlug(slug, ['cities'], filterByStatus)
+          .getTourDetailBySlug(slug, ['cities','country'], filterByStatus)
           .subscribe((tour) => {
             this.cities = tour['cities'];
+            this.country = tour['country'];
             // Usar el servicio actualizado para obtener coordenadas
             this.cities.forEach((city) => {
               this.cityCoordinatesService.getCoordinatesWithQueue(

@@ -14,7 +14,46 @@
       <app-activity-card
         [highlight]="highlight"
         (addActivity)="onAddActivity($event)"
+        (viewDetails)="openFullActivity($event)"
       ></app-activity-card>
     </ng-template>
   </p-carousel>
+  
+  <!-- Modal de actividad completa -->
+  <p-dialog 
+    [(visible)]="showFullActivityModal" 
+    [modal]="true"
+    [dismissableMask]="true"
+    [style]="dialogStyle"
+    [header]="'Detalle'"
+    [closeOnEscape]="true">
+    <div class="full-activity-content" *ngIf="selectedActivity">
+      <div class="activity-image">
+        <img [src]="selectedActivity.image" [alt]="selectedActivity.title" />
+        <span class="status-badge" [class.optional]="selectedActivity.optional">
+          {{ 
+            selectedActivity.recommended
+              ? "Recomendada"
+              : selectedActivity.optional
+              ? "Opcional"
+              : "Incluida"
+          }}
+        </span>
+      </div>
+      <h3 class="activity-title">{{ selectedActivity.title }}</h3>
+      <div class="activity-description" [innerHTML]="selectedActivity.description"></div>
+      
+      <div class="activity-actions" *ngIf="selectedActivity.optional">
+        <p-button
+          (click)="onAddActivity(selectedActivity)"
+          [label]="selectedActivity.added ? 'Eliminar actividad' : 'Añadir actividad'"
+          styleClass="p-button-rounded"
+          [outlined]="selectedActivity.added"
+        ></p-button>
+        <div class="price" *ngIf="selectedActivity.price">
+          +{{ selectedActivity.price | currencyFormat : "EUR" }}
+        </div>
+      </div>
+    </div>
+  </p-dialog>
 </div>

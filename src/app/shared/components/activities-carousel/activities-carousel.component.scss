@@ -57,6 +57,66 @@ $colors: (
   }
 }
 
+// Estilos para el modal de actividad completa
+.full-activity-content {
+  padding: 0.5rem 1.5rem 1.5rem;
+  
+  .activity-image {
+    position: relative;
+    margin-bottom: 1.5rem;
+    
+    img {
+      width: 100%;
+      max-height: 400px;
+      object-fit: cover;
+      border-radius: map.get($border-radius, md);
+    }
+    
+    .status-badge {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      padding: 0.3rem 0.6rem;
+      border-radius: map.get($border-radius, sm);
+      font-size: 0.9rem;
+      background: map.get($colors, secondary);
+      color: map.get($colors, background);
+
+      &.optional {
+        background: map.get($colors, primary);
+        color: #fff;
+      }
+    }
+  }
+
+  .activity-title {
+    color: map.get($colors, text);
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .activity-description {
+    color: map.get($colors, text);
+    font-size: 1rem;
+    line-height: 1.6;
+    white-space: pre-line;
+    margin-bottom: 1.5rem;
+  }
+  
+  .activity-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    
+    .price {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: map.get($colors, primary);
+    }
+  }
+}
+
 :host ::ng-deep {
   .p-carousel {
     width: 100%;
@@ -89,6 +149,22 @@ $colors: (
         flex: 1 1 100%;
         max-width: 100%;
       }
+    }
+  }
+
+  .p-dialog {
+    .p-dialog-header {
+      border-bottom: 1px solid map.get($colors, border-light);
+      padding: 0.75rem 1.5rem;
+      
+      .p-dialog-title {
+        color: map.get($colors, text);
+        font-weight: 600;
+      }
+    }
+    
+    .p-dialog-header-icon {
+      color: map.get($colors, text);
     }
   }
 }

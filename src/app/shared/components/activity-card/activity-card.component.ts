@@ -34,6 +34,7 @@ export interface ActivityHighlight {
 export class ActivityCardComponent implements OnInit, OnChanges {
   @Input() highlight!: ActivityHighlight;
   @Output() addActivity = new EventEmitter<ActivityHighlight>();
+  @Output() viewDetails = new EventEmitter<ActivityHighlight>();
 
   ngOnInit(): void {
     // Removed console.log for production
@@ -45,5 +46,10 @@ export class ActivityCardComponent implements OnInit, OnChanges {
 
   onAddActivity(highlight: ActivityHighlight): void {
     this.addActivity.emit(highlight);
+  }
+  
+  onViewDetails(event: Event, highlight: ActivityHighlight): void {
+    event.stopPropagation();
+    this.viewDetails.emit(highlight);
   }
 }

@@ -32,7 +32,7 @@ type RatingCategory = 'accommodationRating' | 'activitiesRating' | 'destinationR
 interface TripInfo {
   title: string;
   date: string;
-  tourId?: string;
+  tourId?: number; // <-- Cambia a number
   departureId?: number;
 }
 
@@ -136,8 +136,8 @@ export class ReviewsComponent implements OnInit {
       next: (info) => {
         this.tripInfo = {
           title: info.tourName || 'Título no disponible',
-          date: info.dayOne || 'Fecha no disponible'
-         
+          date: info.dayOne || 'Fecha no disponible',
+          tourId: info.tourId ? Number(info.tourId) : undefined // <-- Asegura que sea número
         };
         
         if (this.tripInfo.date && this.tripInfo.date !== 'Fecha no disponible') {
@@ -163,7 +163,7 @@ export class ReviewsComponent implements OnInit {
         console.log('Tipo de tourId:', typeof tourId);
         
         if (tourId) {
-          this.tripInfo.tourId = tourId.toString();
+          this.tripInfo.tourId = Number(tourId); // <-- Asegura que sea número
           console.log('Tour ID asignado a tripInfo:', this.tripInfo.tourId);
           
           // Obtenemos el tkid del externalId (asumiendo que son el mismo valor)
@@ -262,7 +262,7 @@ export class ReviewsComponent implements OnInit {
         priceQualityRating: this.ratings.priceQualityRating,
         showOnHomePage: true, 
         showOnTourPage: true,  
-        tourId: this.tripInfo.tourId ? parseInt(this.tripInfo.tourId, 10) : 0, 
+        tourId: this.tripInfo.tourId ?? 0, 
         travelerId: travelerId, 
         departureId: this.tripInfo.departureId || 0,
         externalId: this.periodExternalId,

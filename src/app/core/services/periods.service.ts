@@ -150,7 +150,7 @@ export class PeriodsService {
             return {
               ...periodData,
               tourNetId,
-              tourId: this.tourNetService.getTourIdByPeriodId(period.tourID)
+              tourId: tourNetId !== undefined && tourNetId !== null ? String(tourNetId) : undefined
             };
           }),
           catchError(error => {

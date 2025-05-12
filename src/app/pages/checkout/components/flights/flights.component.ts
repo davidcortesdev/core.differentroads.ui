@@ -7,6 +7,7 @@ import { Order } from '../../../../core/models/orders/order.model';
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
 import { Router } from '@angular/router';
 import { Period } from '../../../../core/models/tours/period.model';
+import { GeneralConfigService } from '../../../../core/services/general-config.service';
 
 @Component({
   selector: 'app-flights',
@@ -24,6 +25,7 @@ export class FlightsComponent implements OnInit {
   searchedFlights: Flight[] = []; // New property to store search results
   flightlessOption: Flight | null = null;
   showFlightSearch: boolean = false; // Add this property
+  enableConsolidatorFlights: boolean = false; // Add property for consolidator flights toggle
 
   // Add property to store tour destination
   tourDestination: any = { nombre: '', codigo: '' };
@@ -35,10 +37,16 @@ export class FlightsComponent implements OnInit {
     private periodsService: PeriodsService,
     private flightsService: FlightsService,
     private authService: AuthenticateService,
-    private router: Router
+    private router: Router,
+    private generalConfigService: GeneralConfigService // Add GeneralConfigService
   ) {}
 
   ngOnInit(): void {
+    // Get consolidator configuration
+    this.generalConfigService.getFlightsConfig().subscribe((config) => {
+      this.enableConsolidatorFlights = config.enableConsolidator;
+    });
+
     if (this.orderDetails) {
       const periodID = this.orderDetails.periodID;
       const dayOne = this.periodData?.dayOne || null;

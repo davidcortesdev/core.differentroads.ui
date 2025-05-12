@@ -14,8 +14,8 @@
     </app-flight-itinerary>
   </div>
 
-  <!-- Add the button to toggle flight search -->
-  <div class="flight-search-toggle">
+  <!-- Add the button to toggle flight search only when consolidator is enabled -->
+  <div class="flight-search-toggle" *ngIf="enableConsolidatorFlights">
     <p-button
       label="Ver otras opciones de vuelos"
       styleClass="p-button-outlined"

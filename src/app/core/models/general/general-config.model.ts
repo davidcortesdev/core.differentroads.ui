@@ -15,4 +15,7 @@ export interface GeneralConfigSchema {
   'points-section': PointsSection;
   'filters-section': FiltersSection;
   'partners-section': PartnersSection;
+  'flights-section': {
+    enableConsolidator: boolean;
+  };
 }

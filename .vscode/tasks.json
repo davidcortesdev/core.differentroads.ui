@@ -1,10 +1,46 @@
 {
-  // For more information, visit: https://go.microsoft.com/fwlink/?LinkId=733558
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=733558
   "version": "2.0.0",
   "tasks": [
     {
       "type": "npm",
       "script": "start",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "typescript",
+        "pattern": "$tsc",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": {
+            "regexp": "(.*?)"
+          },
+          "endsPattern": {
+            "regexp": "bundle generation complete"
+          }
+        }
+      }
+    },
+    {
+      "type": "npm",
+      "script": "start:pre",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "typescript",
+        "pattern": "$tsc",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": {
+            "regexp": "(.*?)"
+          },
+          "endsPattern": {
+            "regexp": "bundle generation complete"
+          }
+        }
+      }
+    },
+    {
+      "type": "npm",
+      "script": "start:prod",
       "isBackground": true,
       "problemMatcher": {
         "owner": "typescript",

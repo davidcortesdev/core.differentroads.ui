@@ -162,70 +162,17 @@ export class PeriodsService {
     );
   }
 
-  getDepartures(periodId: string): Observable<any[]> {
-    const params = new HttpParams()
-      .set('full', 'true')
-      .set('includeDetails', 'true');
-    
-    return this.http.get<any>(`${environment.tourApiUrl}/salidas/${periodId}`, { params })
-      .pipe(
-        tap(response => {
-          console.log('Respuesta completa de salidas:', response);
-        }),
-        map(response => {
-          if (Array.isArray(response)) {
-            return response;
-          } else if (response && response.data && Array.isArray(response.data)) {
-            return response.data;
-          } else if (response && response.items && Array.isArray(response.items)) {
-            return response.items;
-          } else if (response && typeof response === 'object') {
-            return [response];
-          }
-          return [];
-        }),
-        catchError(error => {
-          console.error('Error al obtener las salidas:', error);
-          return of([]);
-        })
-      );
-  }
+
 
 /**
- * Obtiene las salidas asociadas a un periodo usando el tkid
+ * Obtiene toda la información de la departure asociada a un periodo usando el tkid.
  * @param tkid - El ID de TK del periodo
- * @returns Observable con la información de salidas
+ * @returns Observable con toda la información de la departure (sin transformar)
  */
-getDeparturesByTkId(tkid: string): Observable<any[]> {
-  const params = new HttpParams()
-    .set('tkid', tkid);
-  
-  return this.http.get<any>(`${environment.tourApiUrl}/salidas`, { params })
-    .pipe(
-      tap(response => {
-        console.log('Respuesta completa de salidas por tkid:', response);
-      }),
-      map(response => {
-        if (Array.isArray(response)) {
-          return response;
-        } else if (response && response.data && Array.isArray(response.data)) {
-          return response.data;
-        } else if (response && response.items && Array.isArray(response.items)) {
-          return response.items;
-        } else if (response && typeof response === 'object') {
-          return [response];
-        }
-        return [];
-      }),
-      catchError(error => {
-        console.error('Error al obtener las salidas por tkid:', error);
-        console.error('Detalles del error:', error.message);
-        if (error.error && typeof error.error === 'string' && error.error.includes('DateOnly')) {
-          console.warn('Posible problema de conversión de fecha en el servidor');
-        }
-        return of([]);
-      })
-    );
+getRawDepartureByTkId(externalId: string): Observable<any> {
+  // Llama a la misma URL pero devuelve el JSON tal cual lo recibe, sin map ni transformación
+  return this.http.get<any>(`${environment.tourApiUrl}/salidas?TKId=${externalId}`);
 }
+
 
 }

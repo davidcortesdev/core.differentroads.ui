@@ -79,12 +79,17 @@ export class ReviewsComponent implements OnInit {
     private travelersNetService: TravelersNetService
   ) {}
 
+  rawDepartureInfo: any = null; // Nueva propiedad para almacenar la info completa
+
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       if (params['id']) {
         this.periodExternalId = params['id'];
         this.loadTripInfoFromPeriod(this.periodExternalId);
         this.getTourIdFromExternalId(this.periodExternalId);
+
+        // Llama aquí para obtener toda la información de la departure
+        this.loadRawDepartureInfo(this.periodExternalId);
       }
       
       // Verificar si hay un ID de viajero en los parámetros de consulta
@@ -131,6 +136,21 @@ export class ReviewsComponent implements OnInit {
     });
   }
 
+  /**
+   * Obtiene toda la información cruda de la departure usando el TKId (externalId)
+   */
+  loadRawDepartureInfo(externalId: string): void {
+    this.periodsService.getRawDepartureByTkId(externalId).subscribe({
+      next: (info) => {
+        this.rawDepartureInfo = info;
+        console.log('Información completa de la departure:', info);
+      },
+      error: (error) => {
+        console.error('Error al obtener la información completa de la departure:', error);
+      }
+    });
+  }
+
   loadTripInfoFromPeriod(externalId: string): void {
     this.periodsService.getPeriodNameAndDepartureDate(externalId).subscribe({
       next: (info) => {
@@ -169,13 +189,19 @@ export class ReviewsComponent implements OnInit {
           // Obtenemos el tkid del externalId (asumiendo que son el mismo valor)
           const tkid = externalId;
     
-          // Llamada al método para obtener las salidas
-          this.periodsService.getDeparturesByTkId(tkid).subscribe({
+          // Llamada al método para obtener las salidas (usando la nueva función)
+          this.periodsService.getRawDepartureByTkId(tkid).subscribe({
             next: (salidas) => {
               console.log('Salidas obtenidas:', salidas);
-              
-              if (salidas && salidas.length > 0) {
-                const departureId = salidas[0].id || salidas[0].departureId;
+              if (!Array.isArray(salidas) || salidas.length === 0) {
+                console.warn('No se encontraron salidas para el tkid:', tkid);
+                return;
+              }
+              const salida = salidas[0];
+              const departureId = salida.id || salida.departureId;
+              if (!departureId) {
+                console.warn('La salida no contiene id ni departureId:', salida);
+              } else {
                 console.log('DepartureId obtenido:', departureId);
                 this.tripInfo.departureId = departureId;
               }
@@ -245,7 +271,12 @@ export class ReviewsComponent implements OnInit {
         return;
     }
   
-    this.isSubmitting = true;
+    // Extrae el id de la salida y guárdalo en departureId antes de guardar la reseña
+    if (this.rawDepartureInfo) {
+      // Si la respuesta es un array, toma el primer elemento
+      const salida = Array.isArray(this.rawDepartureInfo) ? this.rawDepartureInfo[0] : this.rawDepartureInfo;
+      this.tripInfo.departureId = salida?.id || salida?.departureId || 0;
+    }
   
     // Función para continuar con el envío de la reseña
     const continueWithReview = (travelerId: number) => {

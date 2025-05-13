@@ -80,6 +80,9 @@ export class BudgetDialogComponent implements OnInit, OnDestroy, OnChanges {
   
   // Subscripción para gestionar todas las suscripciones
   private subscription: Subscription = new Subscription();
+  
+  // Bandera para controlar cuándo se deben enviar correos
+  private shouldSendEmails: boolean = false;
 
   constructor(
     private sanitizer: DomSanitizer,
@@ -95,6 +98,9 @@ export class BudgetDialogComponent implements OnInit, OnDestroy, OnChanges {
 
   ngOnInit(): void {
     this.initialized = true;
+    
+    // La bandera comienza en false (no enviar correos)
+    this.shouldSendEmails = false;
     
     // Cargar datos del tour y periodo seleccionado
     this.loadTourData();
@@ -244,6 +250,9 @@ export class BudgetDialogComponent implements OnInit, OnDestroy, OnChanges {
       return;
     }
     this.loading = true;
+    
+    // Activar la bandera para permitir el envío de correos
+    this.shouldSendEmails = true;
 
     if (this.existingOrderId) {
       this.updateExistingOrder();
@@ -302,39 +311,69 @@ export class BudgetDialogComponent implements OnInit, OnDestroy, OnChanges {
     // Update only the budget-specific fields
     orderToUpdate.status = 'Budget';
 
+    // Calcular el precio total a partir del resumen
+    if (orderToUpdate.summary && orderToUpdate.summary.length > 0) {
+      const totalPrice = orderToUpdate.summary.reduce((sum, item) => {
+        return sum + (item.value * item.qty);
+      }, 0);
+      
+      // Asegurarse de que el precio se actualice
+      orderToUpdate.price = totalPrice;
+    }
+
     // Use the same pattern as checkout.updateOrder()
     this.ordersService.updateOrder(orderToUpdate._id, orderToUpdate).subscribe({
       next: (response) => {
         // Construir los productos a partir del summary de la orden
         const products = this.buildProductsFromOrder(orderToUpdate);
 
-        // Send budget notification email with the constructed products
-        this.notificationsService
-          .sendBudgetNotificationEmail({
-            id: this.existingOrderId!,
-            email: this.traveler.email,
-            products: products,
-          })
-          .subscribe({
-            next: (response) => {
-              this.loading = false;
-              this.showSuccessToast('¡Presupuesto enviado correctamente a tu correo!');
-              setTimeout(() => {
-                if (this.handleCloseModal) {
-                  this.handleCloseModal();
-                }
-                this.close.emit();
-              }, 1500);
-            },
-            error: (error) => {
-              this.loading = false;
-              this.showErrorToast('Error al enviar la notificación del presupuesto');
-            },
-          });
+        // Solo enviar correo si la bandera está activa
+        if (this.shouldSendEmails) {
+          // Send budget notification email with the constructed products
+          this.notificationsService
+            .sendBudgetNotificationEmail({
+              id: this.existingOrderId!,
+              email: this.traveler.email,
+              products: products,
+            })
+            .subscribe({
+              next: (response) => {
+                this.loading = false;
+                this.showSuccessToast('¡Presupuesto enviado correctamente a tu correo!');
+                setTimeout(() => {
+                  if (this.handleCloseModal) {
+                    this.handleCloseModal();
+                  }
+                  this.close.emit();
+                }, 1500);
+                
+                // Resetear la bandera después del envío
+                this.shouldSendEmails = false;
+              },
+              error: (error) => {
+                this.loading = false;
+                this.showErrorToast('Error al enviar la notificación del presupuesto');
+                // Resetear la bandera en caso de error
+                this.shouldSendEmails = false;
+              },
+            });
+        } else {
+          // Si no debemos enviar correos, simplemente finalizamos
+          this.loading = false;
+          // Cerramos el modal sin mostrar mensaje
+          setTimeout(() => {
+            if (this.handleCloseModal) {
+              this.handleCloseModal();
+            }
+            this.close.emit();
+          }, 500);
+        }
       },
       error: (error) => {
         this.loading = false;
         this.showErrorToast('Error al actualizar la orden');
+        // Resetear la bandera en caso de error
+        this.shouldSendEmails = false;
       },
     });
   }
@@ -363,55 +402,89 @@ export class BudgetDialogComponent implements OnInit, OnDestroy, OnChanges {
     }
     this.loading = true;
 
-    this.tourOrderService
-      .createOrder({
-        periodID: this.selectedPeriod?.periodID || '',
-        status: 'Budget',
-        owner: this.traveler.email,
-        traveler: this.traveler,
-      })
-      .subscribe({
-        next: (createdOrder) => {
-          // Use the new method to build products
-          this.tourOrderService
-            .buildOrderProducts(this.travelers, this.selectedPeriod)
-            .subscribe({
-              next: (products) => {
-                // Send budget notification email
-                this.notificationsService
-                  .sendBudgetNotificationEmail({
-                    id: createdOrder._id,
-                    email: this.traveler.email,
-                    products,
-                  })
-                  .subscribe({
-                    next: (response) => {
+    // Primero calculamos el precio total de los productos
+    this.tourOrderService.getTotalPrice().subscribe({
+      next: (totalPrice) => {
+        // Ahora creamos la orden con el precio total calculado
+        this.tourOrderService
+          .createOrder({
+            periodID: this.selectedPeriod?.periodID || '',
+            status: 'Budget',
+            owner: this.traveler.email,
+            traveler: this.traveler,
+            price: totalPrice, // Añadimos el precio total aquí
+          })
+          .subscribe({
+            next: (createdOrder) => {
+              // Use the new method to build products
+              this.tourOrderService
+                .buildOrderProducts(this.travelers, this.selectedPeriod)
+                .subscribe({
+                  next: (products) => {
+                    // Solo enviar correo si la bandera está activa
+                    if (this.shouldSendEmails) {
+                      // Send budget notification email
+                      this.notificationsService
+                        .sendBudgetNotificationEmail({
+                          id: createdOrder._id,
+                          email: this.traveler.email,
+                          products,
+                        })
+                        .subscribe({
+                          next: (response) => {
+                            this.loading = false;
+                            this.showSuccessToast('¡Presupuesto enviado correctamente a tu correo!');
+                            setTimeout(() => {
+                              if (this.handleCloseModal) {
+                                this.handleCloseModal();
+                              }
+                              this.close.emit();
+                            }, 1500);
+                            
+                            // Resetear la bandera después del envío
+                            this.shouldSendEmails = false;
+                          },
+                          error: (error) => {
+                            this.loading = false;
+                            this.showErrorToast('Error al enviar la notificación del presupuesto');
+                            // Resetear la bandera en caso de error
+                            this.shouldSendEmails = false;
+                          },
+                        });
+                    } else {
+                      // Si no debemos enviar correos, simplemente finalizamos
                       this.loading = false;
-                      this.showSuccessToast('¡Presupuesto enviado correctamente a tu correo!');
+                      // Cerramos el modal sin mostrar mensaje
                       setTimeout(() => {
                         if (this.handleCloseModal) {
                           this.handleCloseModal();
                         }
                         this.close.emit();
-                      }, 1500);
-                    },
-                    error: (error) => {
-                      this.loading = false;
-                      this.showErrorToast('Error al enviar la notificación del presupuesto');
-                    },
-                  });
-              },
-              error: (error) => {
-                this.loading = false;
-                this.showErrorToast('Error al construir los productos para el presupuesto');
-              }
-            });
-        },
-        error: (error) => {
-          this.loading = false;
-          this.showErrorToast('Error al crear la orden');
-        },
-      });
+                      }, 500);
+                    }
+                  },
+                  error: (error) => {
+                    this.loading = false;
+                    this.showErrorToast('Error al construir los productos para el presupuesto');
+                    // Resetear la bandera en caso de error
+                    this.shouldSendEmails = false;
+                  }
+                });
+            },
+            error: (error) => {
+              this.loading = false;
+              this.showErrorToast('Error al crear la orden');
+              // Resetear la bandera en caso de error
+              this.shouldSendEmails = false;
+            },
+          });
+      },
+      error: (error) => {
+        this.loading = false;
+        this.showErrorToast('Error al calcular el precio total');
+        this.shouldSendEmails = false;
+      }
+    });
   }
 
   getTravelersText() {

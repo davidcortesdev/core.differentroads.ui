@@ -404,7 +404,7 @@ export class TourMapComponent implements OnInit, OnDestroy {
         countryId: countryId,
       };
       
-      return this.locationsService.getCities(cityFilters).pipe(
+      return this.locationsService.getCities(cityFilters,true).pipe(
         catchError(err => {
           console.error(`Error al obtener la ciudad ${cityName}:`, err);
           return of([]);
@@ -434,7 +434,7 @@ export class TourMapComponent implements OnInit, OnDestroy {
         name: cityName,
       };
       
-      return this.locationsService.getCities(cityFilters).pipe(
+      return this.locationsService.getCities(cityFilters,true).pipe(
         catchError(err => {
           console.error(`Error al obtener la ciudad ${cityName}:`, err);
           return of([]);

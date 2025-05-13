@@ -126,31 +126,22 @@
         <div class="stars">
           <span class="star-wrapper" (click)="setRating('priceQualityRating', 1)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('priceQualityRating', 1)" aria-hidden="true"></i>
-            <i class="pi pi-star" 
               [class.active]="isFullStar('priceQualityRating', 1)" aria-hidden="true"></i>
           </span>
           <span class="star-wrapper" (click)="setRating('priceQualityRating', 2)">
-            <i class="pi pi-star" 
-              [class.active]="isHalfStar('priceQualityRating', 2)" aria-hidden="true"></i>
             <i class="pi pi-star" 
               [class.active]="isFullStar('priceQualityRating', 2)" aria-hidden="true"></i>
           </span>
           <span class="star-wrapper" (click)="setRating('priceQualityRating', 3)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('priceQualityRating', 3)" aria-hidden="true"></i>
-            <i class="pi pi-star" 
               [class.active]="isFullStar('priceQualityRating', 3)" aria-hidden="true"></i>
           </span>
           <span class="star-wrapper" (click)="setRating('priceQualityRating', 4)">
-            <i class="pi pi-star" 
-              [class.active]="isHalfStar('priceQualityRating', 4)" aria-hidden="true"></i>
             <i class="pi pi-star"
               [class.active]="isFullStar('priceQualityRating', 4)" aria-hidden="true"></i>
           </span>
           <span class="star-wrapper" (click)="setRating('priceQualityRating', 5)">
-            <i class="pi pi-star"
-              [class.active]="isHalfStar('priceQualityRating', 5)" aria-hidden="true"></i>
+
             <i class="pi pi-star" 
               [class.active]="isFullStar('priceQualityRating', 5)" aria-hidden="true"></i>
           </span>
@@ -278,7 +269,7 @@
       <i class="pi pi-inbox input-icon"></i> Cuéntanos más sobre tu viaje<span>*</span>
     </label>
     <!-- Se mantiene #comentarioInput -->
-    <textarea id="comentario" #comentarioInput></textarea>
+    <textarea id="comentario" #comentarioInput style="resize: none;"></textarea>
   </div>
 
   <div class="review-text">

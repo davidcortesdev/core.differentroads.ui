@@ -15,6 +15,7 @@ interface ReviewPayload {
   guideRating: number;
   priceQualityRating: number;
   tripRating: number;
+  rating: number; // Añadimos el campo rating
   showOnHomePage: boolean;
   showOnTourPage: boolean;
   tourId: number;
@@ -249,11 +250,22 @@ export class ReviewsComponent implements OnInit {
   
     if (!nombreValue || !emailValue || !comentarioValue) {
       alert('Por favor, completa todos los campos: Nombre, Email y Comentario.');
+      this.isSubmitting = false;
       return;
     }
+    
+    // Verificar que todas las calificaciones tengan un valor
     if (Object.values(this.ratings).some(rating => rating === 0)) {
         alert('Por favor, valora todas las categorías con estrellas.');
+        this.isSubmitting = false;
         return;
+    }
+
+    // Verificar específicamente el tripRating
+    if (this.ratings.tripRating === 0) {
+        console.log('El tripRating es 0, asegúrate de que se esté asignando correctamente');
+        // Puedes descomentar la siguiente línea si quieres forzar un valor para pruebas
+        // this.ratings.tripRating = 5;
     }
 
     if (this.rawDepartureInfo) {
@@ -264,6 +276,8 @@ export class ReviewsComponent implements OnInit {
       const ratingValues = Object.values(this.ratings);
       const averageRating = ratingValues.reduce((sum, rating) => sum + rating, 0) / ratingValues.length;
       
+      console.log('Valores de calificación antes de enviar:', this.ratings);
+      
       const reviewPayload: ReviewPayload = {
         text: comentarioValue,
         accommodationRating: this.ratings.accommodationRating,
@@ -272,6 +286,7 @@ export class ReviewsComponent implements OnInit {
         guideRating: this.ratings.guideRating,
         priceQualityRating: this.ratings.priceQualityRating,
         tripRating: this.ratings.tripRating,
+        rating: averageRating, // Añadimos el campo rating con el promedio calculado
         showOnHomePage: false, 
         showOnTourPage: false,  
         tourId: this.tripInfo.tourId ?? 0, 

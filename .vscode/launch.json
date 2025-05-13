@@ -3,10 +3,24 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "ng serve",
+      "name": "ng serve (development)",
       "type": "chrome",
       "request": "launch",
       "preLaunchTask": "npm: start",
+      "url": "http://localhost:4200/"
+    },
+    {
+      "name": "ng serve (pre)",
+      "type": "chrome",
+      "request": "launch",
+      "preLaunchTask": "npm: start:pre",
+      "url": "http://localhost:4200/"
+    },
+    {
+      "name": "ng serve (production)",
+      "type": "chrome",
+      "request": "launch",
+      "preLaunchTask": "npm: start:prod",
       "url": "http://localhost:4200/"
     },
     {

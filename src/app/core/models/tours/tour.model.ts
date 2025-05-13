@@ -29,6 +29,7 @@ export interface Tour extends CMSCollections {
   supportSection: SupportSection;
   continent: string;
   tourType: string;
+  'info-practica': InfoPractica;
   consolidator: {
     airportsFilters: string[];
   };
@@ -146,4 +147,16 @@ export interface SupportSection {
   fileLink: string;
   posterLink: string;
   socialLink: string;
+}
+
+export interface InfoPractica {
+  afterTrip: string;
+  arrivalToDestination: string;
+  beforeTrip: string;
+  discover: string;
+  emergencyContacts: string;
+  extraInformation: string;
+  includedServices: string;
+  notIncludedServices: string;
+  tripIncludes: string;
 }

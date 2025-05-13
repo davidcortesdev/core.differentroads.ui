@@ -280,9 +280,12 @@ export class ReviewsComponent implements OnInit {
         externalId: this.periodExternalId,
         reviewDate: new Date().toISOString()
       };
-
+  
+      console.log('Payload que se envía:', reviewPayload);
+  
       this.reviewsService.saveReview(reviewPayload).subscribe({
         next: (resp) => {
+          console.log('Respuesta del backend:', resp);
           this.nombreInputRef.nativeElement.value = '';
           this.emailInputRef.nativeElement.value = '';
           this.comentarioInputRef.nativeElement.value = '';
@@ -292,6 +295,7 @@ export class ReviewsComponent implements OnInit {
           this.isSubmitting = false;
         },
         error: (err: any) => {
+          console.error('Error al guardar la review:', err);
           this.isSubmitting = false;
         }
       });

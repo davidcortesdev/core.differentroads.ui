@@ -44,7 +44,8 @@ export class ActivityCardComponent implements OnInit, OnChanges {
     // Removed console.log for production
   }
 
-  onAddActivity(highlight: ActivityHighlight): void {
+  onAddActivity(event: Event, highlight: ActivityHighlight): void {
+    event.stopPropagation();
     this.addActivity.emit(highlight);
   }
   

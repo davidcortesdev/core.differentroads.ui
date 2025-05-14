@@ -125,6 +125,18 @@ $colors: (
     .p-carousel-content {
       padding: 0;
     }
+    
+    // Añadir efecto de subrayado al pasar el cursor por encima
+    app-activity-card {
+      cursor: pointer;
+      
+      &:hover {
+        .divContent {
+          text-decoration: underline;
+          text-underline-offset: 2px;
+        }
+      }
+    }
   }
 
   // Responsive carousel adjustments

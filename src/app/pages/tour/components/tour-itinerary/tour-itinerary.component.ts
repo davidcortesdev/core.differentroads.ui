@@ -258,8 +258,6 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
       ])
       .subscribe({
         next: (period) => {
-          console.log('Period details:', period);
-
           this.currentPeriod = period;
           this.tripType = period.tripType || '';
           this.hotels = period.hotels;
@@ -270,7 +268,6 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
             ...(period.activities || []),
             ...(period.includedActivities || []),
           ];
-          console.log('periodallActivities:', allActivities);
 
           // Create a temporary array to store activities
           this.activities = allActivities.map((activity) => ({

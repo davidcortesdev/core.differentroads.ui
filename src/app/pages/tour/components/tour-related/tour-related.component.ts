@@ -27,7 +27,6 @@ export class TourRelatedComponent implements OnInit, OnChanges {
   }
 
   checkAndLoadTours() {
-    console.log('Destinations in related component:', this.destinations);
     if (this.destinations && this.destinations.length > 0) {
       this.loadTours();
     } else {
@@ -43,8 +42,6 @@ export class TourRelatedComponent implements OnInit, OnChanges {
     const trimmedDestinations = this.destinations
       ?.map(dest => dest.trim())
       .filter(dest => dest.length > 0) || [];
-    
-    console.log('Trimmed destinations:', trimmedDestinations);
     
     if (trimmedDestinations.length === 0) {
       this.isLoading = false;
@@ -86,7 +83,6 @@ export class TourRelatedComponent implements OnInit, OnChanges {
         'featured-tours': uniqueTourIds.slice(0, 10) // Limit to 10 tours total
       };
       
-      console.log('Created section content:', this.sectionContent);
       this.isLoading = false;
     });
   }

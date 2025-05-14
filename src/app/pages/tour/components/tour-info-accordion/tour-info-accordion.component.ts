@@ -9,10 +9,11 @@ import {
   SimpleChanges,
   ChangeDetectorRef,
   OnDestroy,
+  OnInit,
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Subject } from 'rxjs';
-import { takeUntil, debounceTime } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 
 export interface InfoCard {
   title: string;
@@ -28,38 +29,53 @@ export interface InfoCard {
   styleUrl: './tour-info-accordion.component.scss',
 })
 export class TourInfoAccordionComponent
-  implements AfterViewInit, OnChanges, OnDestroy
-{
+  implements OnInit, AfterViewInit, OnChanges, OnDestroy {
   @Input() infoCards: InfoCard[] = [];
   @ViewChildren('contentDiv') contentDivs!: QueryList<ElementRef>;
 
-  private contentHeightCheck$ = new Subject<void>();
+  // Eliminamos el debounce que causaba retraso
   private destroy$ = new Subject<void>();
-  private readonly MAX_HEIGHT = 300; // Extract magic number to constant
+  private readonly MAX_HEIGHT = 300;
 
   constructor(
     private sanitizer: DomSanitizer,
     private cdr: ChangeDetectorRef
   ) {}
+  
+  ngOnInit() {
+    // Inicializar todas las tarjetas con showFullContent en false
+    if (this.infoCards) {
+      this.infoCards.forEach(card => {
+        card.showFullContent = false;
+      });
+    }
+  }
 
   ngAfterViewInit() {
-    // Setup debounced content height check
-    this.contentHeightCheck$
-      .pipe(debounceTime(100), takeUntil(this.destroy$))
-      .subscribe(() => this.checkContentHeight());
-
-    // Initial check
-    this.contentHeightCheck$.next();
-
-    // Listen for changes to the view children
+    // Verificación inmediata de altura sin debounce
+    setTimeout(() => {
+      this.checkContentHeight();
+      // Forzar detección de cambios
+      this.cdr.detectChanges();
+    }, 0);
+    
+    // Observar cambios en los divs y verificar altura inmediatamente
     this.contentDivs.changes
       .pipe(takeUntil(this.destroy$))
-      .subscribe(() => this.contentHeightCheck$.next());
+      .subscribe(() => {
+        setTimeout(() => {
+          this.checkContentHeight();
+          this.cdr.detectChanges();
+        }, 0);
+      });
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['infoCards']) {
-      this.contentHeightCheck$.next();
+      // Ejecutar inmediatamente la verificación de altura
+      setTimeout(() => {
+        this.checkContentHeight();
+      }, 0);
     }
   }
 
@@ -68,7 +84,6 @@ export class TourInfoAccordionComponent
     this.destroy$.complete();
   }
 
-  // Función trackBy para mejorar el rendimiento de ngFor
   trackByFn(index: number, item: InfoCard): string {
     return `${index}-${item.order}`;
   }
@@ -77,16 +92,17 @@ export class TourInfoAccordionComponent
     return this.sanitizer.bypassSecurityTrustHtml(html || '');
   }
 
-  // Call this when toggling content
   toggleContent(card: InfoCard): void {
+    // Simplemente invertir el valor
     card.showFullContent = !card.showFullContent;
-    this.contentHeightCheck$.next();
+    
+    // Forzar la detección de cambios inmediatamente
     this.cdr.detectChanges();
   }
 
-  // Make sure to call this method when accordion panels are expanded
   onAccordionTabOpen() {
-    this.contentHeightCheck$.next();
+    // Verificar altura inmediatamente al abrir
+    this.checkContentHeight();
   }
 
   private checkContentHeight() {
@@ -106,5 +122,8 @@ export class TourInfoAccordionComponent
         parentElement.classList.remove('content-overflow');
       }
     });
+    
+    // Forzar la detección de cambios después de aplicar las clases
+    this.cdr.detectChanges();
   }
 }

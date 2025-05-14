@@ -1,5 +1,9 @@
+// variables
+$margin: 20px 0px 20px 0px;
+
 .tours-section {
   padding: 2rem 4rem;
+  margin: $margin;
 
   .title {
     text-align: center;

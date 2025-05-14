@@ -268,7 +268,6 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
             ...(period.activities || []),
             ...(period.includedActivities || []),
           ];
-          console.log('periodallActivities:', allActivities);
 
           // Create a temporary array to store activities
           this.activities = allActivities.map((activity) => ({

@@ -258,8 +258,6 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
       ])
       .subscribe({
         next: (period) => {
-          console.log('Period details:', period);
-
           this.currentPeriod = period;
           this.tripType = period.tripType || '';
           this.hotels = period.hotels;

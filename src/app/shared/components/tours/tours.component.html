@@ -26,24 +26,7 @@
     
     <span class="space"></span>
     
-    <!-- Tag filter, visible when tag options available but not selected by input -->
-    <p-floatlabel *ngIf="tagOptions.length > 0 && initialTags.length === 0" class="w-full md:w-56 min-width" variant="on">
-      <p-multiselect
-        id="tag_label"
-        class="filter-box"
-        [options]="tagOptions"
-        [(ngModel)]="selectedTagOption"
-        (ngModelChange)="onTagFilterChange()"
-        optionLabel="name"
-        optionValue="value"
-        filter="false"
-        [maxSelectedLabels]="1"
-        [displaySelectedLabel]="true"
-        selectedItemsLabel="{0} items"
-        [showToggleAll]="false"
-      />
-      <label for="tag_label">Categoría</label>
-    </p-floatlabel>
+    <!-- Eliminado el filtro de categoría (tag) -->
     
     <p-floatlabel class="w-full md:w-56 min-width" variant="on">
       <p-multiselect

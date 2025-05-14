@@ -78,7 +78,6 @@ export class ActivitiesCarouselComponent {
   }
 
   ngOnInit(): void {
-    console.log('____ActivitiesCarouselComponent initialized', this.highlights);
   }
   
 

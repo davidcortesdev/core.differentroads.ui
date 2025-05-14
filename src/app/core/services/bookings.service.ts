@@ -15,7 +15,7 @@ import {
   VoucherReviewStatus,
 } from '../models/bookings/payment.model';
 import { Pagination } from '../models/commons/pagination.model';
-import { BookingTraveler  } from '../models/bookings/booking-traveler.model';
+import { BookingTraveler, TravelerData  } from '../models/bookings/booking-traveler.model';
 import { Document } from '../models/document/document.model';
 import { NotificationLog } from '../models/notification-log/notification-log.model';
 import { BookingNote } from '../models/bookings/booking-note.model';

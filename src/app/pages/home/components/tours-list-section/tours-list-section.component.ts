@@ -66,7 +66,7 @@ export class ToursListComponent implements OnInit {
         .getTourCardData(id)
         .pipe(
           catchError((error: Error) => {
-            console.error(`Error loading tour with ID ${id}:`, error);
+            //console.error(`Error loading tour with ID ${id}:`, error);
             return [];
           })
         )

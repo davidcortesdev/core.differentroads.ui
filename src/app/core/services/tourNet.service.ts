@@ -111,7 +111,7 @@ export class TourNetService {
       map(tours => {
         if (tours.length > 0) {
           const id = tours[0].id;
-          console.log('Tour ID:', id);
+          
           return id;
         }
         return 0; // Return 0 if no tour is found

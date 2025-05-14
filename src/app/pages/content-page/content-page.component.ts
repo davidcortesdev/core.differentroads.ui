@@ -1,12 +1,12 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnDestroy, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { CollectionsService } from '../../core/services/collections.service';
 import { LandingsService } from '../../core/services/landings.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { BlogsService } from '../../core/services/blogs.service';
 import { PressService } from '../../core/services/press.service';
 import { Blog } from '../../core/models/blogs/blog.model';
-import { Observable, Subject, takeUntil } from 'rxjs';
+import { filter, Observable, Subject, takeUntil } from 'rxjs';
 import { Press } from '../../core/models/press/press.model';
 import { Collection } from '../../core/models/collections/collection.model';
 import { Landing } from '../../core/models/landings/landing.model';
@@ -32,7 +32,7 @@ type ContentType = 'landing' | 'collection' | 'press' | 'blog' | 'none';
   templateUrl: './content-page.component.html',
   styleUrls: ['./content-page.component.scss'],
 })
-export class ContentPageComponent implements OnInit, OnDestroy {
+export class ContentPageComponent implements OnInit, OnChanges, OnDestroy {
   contentType: ContentType = 'none';
   contentTitle: string = '';
   contentDescription: string = '';
@@ -72,6 +72,7 @@ export class ContentPageComponent implements OnInit, OnDestroy {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private landingsService: LandingsService,
     private collectionsService: CollectionsService,
     private blogService: BlogsService,
@@ -81,11 +82,37 @@ export class ContentPageComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.route.params.subscribe((params) => {
-      this.slug = params['slug'];
+    // Inicialización inicial
+    this.determineContentType();
+    this.fetchBlocks();
+    
+    // Detectar cambios en los parámetros de la ruta
+    this.route.paramMap.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(params => {
+      const newSlug = params.get('slug') || '';
+      if (newSlug !== this.slug) {
+        this.slug = newSlug;
+        this.determineContentType();
+        this.fetchBlocks();
+      }
+    });
+    
+    // Detectar cambios de ruta, incluso a la misma URL
+    this.router.events.pipe(
+      takeUntil(this.destroy$),
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
       this.determineContentType();
       this.fetchBlocks();
     });
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Este método se ejecutará cuando cambien las propiedades de entrada
+    // Aunque no tenemos @Input directos, podemos usarlo para forzar actualizaciones
+    this.determineContentType();
+    this.fetchBlocks();
   }
 
   ngOnDestroy(): void {

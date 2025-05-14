@@ -191,6 +191,26 @@ export class TourMapComponent implements OnInit, OnDestroy {
     };
   }
 
+  // Eliminar la función calculateMapCenter duplicada en la línea 469
+  // Solo mantener la implementación original que está en la línea 142
+
+  // Corregir el método updatePolylinePath para manejar correctamente los tipos
+  private updatePolylinePath(): void {
+    // Crear un array de puntos para el polyline asegurando que no hay valores undefined
+    const points: google.maps.LatLngLiteral[] = this.citiesData
+      .filter(city => city.latitude !== undefined && city.longitude !== undefined)
+      .map(city => ({ 
+        lat: city.latitude as number, 
+        lng: city.longitude as number 
+      }));
+    
+    if (points.length > 1) {
+      // Actualizar la polylinePath con los puntos filtrados
+      this.polylinePath = this.createSmoothPath(points);
+    }
+  }
+
+  // Añadir una llamada a updatePolylinePath en calculateMapCenter
   calculateMapCenter(): void {
     if (!this.citiesData?.length) return;
   
@@ -224,6 +244,11 @@ export class TourMapComponent implements OnInit, OnDestroy {
           this.getZoomLevel(bounds, PADDING),
           this.mapOptions.maxZoom
         );
+      }
+      
+      // Actualizar el polylinePath si hay más de una ciudad
+      if (this.citiesData.length > 1) {
+        this.updatePolylinePath();
       }
     }
   }
@@ -397,64 +422,71 @@ export class TourMapComponent implements OnInit, OnDestroy {
   private loadCitiesByCountry(countryId: number): void {
     if (!this.cities || this.cities.length === 0) return;
     
-    // Usar forkJoin para manejar múltiples solicitudes en paralelo
-    const requests = this.cities.map(cityName => {
+    // Limpiar los datos de ciudades antes de cargar nuevas
+    this.citiesData = [];
+    
+    // Procesar cada ciudad individualmente en lugar de usar forkJoin
+    this.cities.forEach(cityName => {
       const cityFilters: ICityFilters = {
         name: cityName,
         countryId: countryId,
       };
       
-      return this.locationsService.getCities(cityFilters).pipe(
+      this.locationsService.getCities(cityFilters, true).pipe(
+        takeUntil(this.destroy$),
         catchError(err => {
           console.error(`Error al obtener la ciudad ${cityName}:`, err);
           return of([]);
         })
-      );
-    });
-    
-    forkJoin(requests)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(results => {
-        results.forEach(cities => {
-          if (cities && cities.length > 0) {
-            this.citiesData.push(...cities);
-          }
-        });
-        
-        if (this.citiesData.length > 0) {
-          this.citiesData.forEach(city => this.addMarker(city));
+      ).subscribe(cities => {
+        if (cities && cities.length > 0) {
+          // Añadir la ciudad a los datos
+          this.citiesData.push(...cities);
+          
+          // Añadir marcadores para las nuevas ciudades
+          cities.forEach(city => this.addMarker(city));
+          
+          // Recalcular el centro del mapa con cada nueva ciudad
           this.calculateMapCenter();
+          
+          // Forzar la detección de cambios para actualizar la vista
+          this.cdr.detectChanges();
         }
       });
+    });
   }
 
   private loadCitiesByName(): void {
-    const requests = this.cities.map(cityName => {
+    // Limpiar los datos de ciudades antes de cargar nuevas
+    this.citiesData = [];
+    
+    // Procesar cada ciudad individualmente
+    this.cities.forEach(cityName => {
       const cityFilters: ICityFilters = {
         name: cityName,
       };
       
-      return this.locationsService.getCities(cityFilters).pipe(
+      this.locationsService.getCities(cityFilters, true).pipe(
+        takeUntil(this.destroy$),
         catchError(err => {
           console.error(`Error al obtener la ciudad ${cityName}:`, err);
           return of([]);
         })
-      );
-    });
-    
-    forkJoin(requests)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(results => {
-        results.forEach(cities => {
-          if (cities && cities.length > 0) {
-            this.citiesData.push(...cities);
-          }
-        });
-        
-        if (this.citiesData.length > 0) {
-          this.citiesData.forEach(city => this.addMarker(city));
+      ).subscribe(cities => {
+        if (cities && cities.length > 0) {
+          // Añadir la ciudad a los datos
+          this.citiesData.push(...cities);
+          
+          // Añadir marcadores para las nuevas ciudades
+          cities.forEach(city => this.addMarker(city));
+          
+          // Recalcular el centro del mapa con cada nueva ciudad
           this.calculateMapCenter();
+          
+          // Forzar la detección de cambios para actualizar la vista
+          this.cdr.detectChanges();
         }
       });
+    });
   }
 }

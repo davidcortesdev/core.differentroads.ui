@@ -61,6 +61,9 @@ export class BookingPaymentHistoryComponent implements OnInit {
   isApproveLoading: boolean = false;
   isRejectLoading: boolean = false;
 
+  approveMessage: string | null = null;
+  isApproveSuccess: boolean = false;
+
   constructor(
     private fb: FormBuilder,
     private bookingsService: BookingsService,
@@ -192,6 +195,7 @@ export class BookingPaymentHistoryComponent implements OnInit {
       return;
     }
     this.isApproveLoading = true;
+    this.approveMessage = null;
     this.bookingsService
       .reviewVoucher(
         this.bookingID,
@@ -211,6 +215,8 @@ export class BookingPaymentHistoryComponent implements OnInit {
         error: (error) => {
           console.error('Error al aprobar revisión de pago:', error);
           this.isApproveLoading = false;
+          this.isApproveSuccess = false;
+          this.approveMessage = 'No se pudo conectar con el servidor. Por favor, inténtalo de nuevo.';
         },
       });
   }

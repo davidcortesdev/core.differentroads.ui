@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
 import { catchError } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { ToursService } from '../../../core/services/tours.service';
@@ -127,9 +127,10 @@ export class ToursComponent implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     // Verificar si initialTags ha cambiado
     if (changes['initialTags'] && !changes['initialTags'].firstChange) {
-      // Actualizar los tags seleccionados
+      // Actualizar selectedTagOption con los nuevos tags
       this.selectedTagOption = [...this.initialTags];
-      // Recargar los tours
+      
+      // Recargar los tours con los nuevos filtros
       this.loadTours();
     }
   }

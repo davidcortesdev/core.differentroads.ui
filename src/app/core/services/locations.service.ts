@@ -188,7 +188,7 @@ export class LocationsService {
   }
 
   // Métodos para Cities
-  getCities(filters?: ICityFilters): Observable<ILocationCityResponse[]> {
+  getCities(filters?: ICityFilters, useExactMatchForStrings: boolean = false): Observable<ILocationCityResponse[]> {
     let params = new HttpParams();
     
     if (filters) {
@@ -197,6 +197,8 @@ export class LocationsService {
       if (filters.code) params = params.set('Code', filters.code);
       if (filters.countryId) params = params.set('CountryId', filters.countryId.toString());
     }
+    
+    params = params.set('UseExactMatchForStrings', useExactMatchForStrings.toString());
     
     return this.http.get<ILocationCityResponse[]>(`${this.API_URL}/LocationCity`, { params });
   }

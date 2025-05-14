@@ -54,7 +54,7 @@
 
   <ng-template pTemplate="footer" *ngIf="highlight.optional">
     <p-button
-      (click)="onAddActivity(highlight)"
+      (click)="onAddActivity($event, highlight)"
       [label]="highlight.added ? 'Eliminar' : 'Añadir'"
       styleClass="p-button-rounded"
       [outlined]="highlight.added"

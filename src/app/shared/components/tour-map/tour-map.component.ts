@@ -126,8 +126,9 @@ export class TourMapComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (tour) => {
-          this.cities = tour['cities'] || [];
-          this.country = tour['country'];
+          // Aplicar trim a cada ciudad si es un array
+          this.cities = (tour['cities'] || []).map((city: string) => city.trim());
+          this.country = tour['country'] ? tour['country'].trim() : undefined;
 
           if (this.cities.length > 0) {
             this.loadCitiesData();
@@ -437,7 +438,7 @@ export class TourMapComponent implements OnInit, OnDestroy {
     // Procesar cada ciudad individualmente en lugar de usar forkJoin
     this.cities.forEach(cityName => {
       const cityFilters: ICityFilters = {
-        name: cityName,
+        name: cityName.trim(), // Aplicar trim al nombre de la ciudad
         countryId: countryId,
       };
       
@@ -472,7 +473,7 @@ export class TourMapComponent implements OnInit, OnDestroy {
     // Procesar cada ciudad individualmente
     this.cities.forEach(cityName => {
       const cityFilters: ICityFilters = {
-        name: cityName,
+        name: cityName.trim(), // Aplicar trim al nombre de la ciudad
       };
       
       this.locationsService.getCities(cityFilters, true).pipe(

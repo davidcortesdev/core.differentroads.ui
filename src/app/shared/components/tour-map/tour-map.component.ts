@@ -154,7 +154,8 @@ export class TourMapComponent implements OnInit, OnDestroy {
   private loadGoogleMapsScript(): void {
     // Check if script is already loaded
     if (
-      document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]')
+      document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]') &&
+      typeof google !== 'undefined'
     ) {
       this.initializeMap();
       return;
@@ -168,7 +169,14 @@ export class TourMapComponent implements OnInit, OnDestroy {
     this.scriptElement.setAttribute('loading', 'async');
 
     this.scriptElement.addEventListener('load', () => {
-      this.initializeMap();
+      // Añadir un pequeño retraso para asegurar que el objeto google esté disponible
+      setTimeout(() => {
+        if (typeof google !== 'undefined') {
+          this.initializeMap();
+        } else {
+          console.warn('Google Maps API no está disponible después de cargar el script');
+        }
+      }, 100);
     });
 
     this.scriptElement.addEventListener('error', () => {
@@ -214,6 +222,12 @@ export class TourMapComponent implements OnInit, OnDestroy {
   // Añadir una llamada a updatePolylinePath en calculateMapCenter
   calculateMapCenter(): void {
     if (!this.citiesData?.length) return;
+    if (typeof google === 'undefined') {
+      console.warn('Google Maps API aún no está cargada. Reintentando más tarde...');
+      // Programar un reintento después de un breve retraso
+      setTimeout(() => this.calculateMapCenter(), 500);
+      return;
+    }
   
     // Usar memoización para evitar recalcular si los datos no han cambiado
     const citiesKey = this.citiesData.map(c => `${c.latitude}-${c.longitude}`).join('|');
@@ -344,6 +358,11 @@ export class TourMapComponent implements OnInit, OnDestroy {
     bounds: google.maps.LatLngBounds,
     padding: number
   ): number {
+    if (typeof google === 'undefined') {
+      console.warn('Google Maps API no está disponible');
+      return 8; // Valor predeterminado
+    }
+    
     const WORLD_DIM = { height: 256, width: 256 };
     const ZOOM_MAX = 21;
 

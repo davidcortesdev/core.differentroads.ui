@@ -286,7 +286,7 @@ export class ReviewsComponent implements OnInit {
         guideRating: this.ratings.guideRating,
         priceQualityRating: this.ratings.priceQualityRating,
         tripRating: this.ratings.tripRating,
-        rating: averageRating, // Añadimos el campo rating con el promedio calculado
+        rating: Math.floor(averageRating), 
         showOnHomePage: false, 
         showOnTourPage: false,  
         tourId: this.tripInfo.tourId ?? 0, 

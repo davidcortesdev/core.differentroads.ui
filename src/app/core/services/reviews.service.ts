@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, map, switchMap, of, tap } from 'rxjs';
+import { Observable, map, switchMap, of, tap, catchError, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { PeriodsService } from './periods.service';
 import { Period } from '../models/tours/period.model';
@@ -180,11 +180,20 @@ export class ReviewsService {
    */
   saveReview(review: any): Observable<any> {
     const reviewToSend = { ...review };
+    console.log('URL de la API para guardar reseña:', `${this.API_URL}`);
+    console.log('Datos que se envían a la API:', JSON.stringify(reviewToSend));
+    
     return this.http.post<any>(`${this.API_URL}`, reviewToSend, {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'text/plain',
       },
-    });
+    }).pipe(
+      tap(response => console.log('Respuesta exitosa de la API:', response)),
+      catchError(error => {
+        console.error('Error detallado al guardar la reseña:', error);
+        return throwError(() => error);
+      })
+    );
   }
 }

@@ -8,6 +8,7 @@ import { Order } from '../../core/models/orders/order.model';
 import { TourDataService } from '../../core/services/tour-data/tour-data.service';
 import { TourOrderService } from '../../core/services/tour-data/tour-order.service';
 import { AuthenticateService } from '../../core/services/auth-service.service';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-tour',
@@ -42,7 +43,8 @@ export class TourComponent implements OnInit, OnDestroy {
     private router: Router,
     private tourOrderService: TourOrderService,
     private tourDataService: TourDataService,
-    private authenticateService: AuthenticateService
+    private authenticateService: AuthenticateService,
+    private titleService: Title
   ) {}
 
   ngOnInit(): void {
@@ -153,10 +155,13 @@ export class TourComponent implements OnInit, OnDestroy {
         next: (tourData: Tour) => {
           this.tour = tourData;
           this.loading = false;
+
+          if (this.tour && this.tour.name) {
+            this.titleService.setTitle(`${this.tour.name} - Different Roads`);
+          }
+
           this.tourDataService.updateTour(tourData);
-  
-          console.log('Tour tags:', tourData.tags);
-        },
+          },
         error: (error) => {
           console.error('Error loading tour:', error);
           this.error = true;

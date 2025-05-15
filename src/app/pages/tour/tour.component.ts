@@ -31,6 +31,7 @@ export class TourComponent implements OnInit, OnDestroy {
   tripType: string = '';
   departureCity: string = '';
 
+  private isInitialLoad = true;
   // Suscripciones para limpiar al destruir el componente
   private subscriptions: Subscription = new Subscription();
 
@@ -52,6 +53,32 @@ export class TourComponent implements OnInit, OnDestroy {
         // No cargar detalles aquí, esperar a los queryParams
       })
     );
+
+    
+  // Modified fragment subscription
+  this.subscriptions.add(
+    this.route.fragment.subscribe(fragment => {
+      // Skip scrolling on initial load
+      if (fragment && !this.isInitialLoad) {
+        setTimeout(() => {
+          const element = document.getElementById(fragment);
+          if (element) {
+            const headerHeight = document.querySelector('.tour-header')?.clientHeight || 0;
+            const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+            const offsetPosition = elementPosition - headerHeight;
+            
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'auto'
+            });
+          }
+        }, 10);
+      }
+      
+      // Set flag to false after first load
+      this.isInitialLoad = false;
+    })
+  );
 
     // Suscribirse a los query params
     this.subscriptions.add(

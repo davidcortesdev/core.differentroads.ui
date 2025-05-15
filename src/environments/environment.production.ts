@@ -13,7 +13,7 @@ export const environment = {
   redsysMerchantTerminal: '2',
 
   googleMapsApiKey: 'AIzaSyB6sxlxeTVlRllpGPyDPbKmaZPQJsb8YAs',
-  notificationsApiUrl: 'https://api.differentroads.co/pre/v3/notification',
+  notificationsApiUrl: 'https://api.differentroads.co/release/v3/notification',
 
   cloudinary: {
     uploadPreset: 'dr_uploads',

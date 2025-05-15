@@ -1,144 +1,72 @@
+$margin: -30px 0px 20px 0px;
 .content {
   padding: 2rem;
   width: 100%;
   max-width: 1920px;
   margin: 0 auto;
-  margin-top: -85px;
-
+  margin: $margin;
   @media (min-width: 1367px) {
     padding: 2rem 4rem;
   }
-
   @media (max-width: 768px) {
     padding: 2rem;
   }
-
   @media (max-width: 480px) {
     padding: 1rem;
     margin-top: -30px;
   }
-
   @media (min-width: 2560px) {
     padding: 3rem 6rem;
     max-width: none;
   }
-
   @media (min-width: 3840px) {
     padding: 4rem 8rem;
   }
-
   &Title {
     text-align: center;
     color: var(--background-azul);
     font-weight: 400;
     font-size: 2rem;
     margin-bottom: 2rem;
-
     @media (max-width: 1024px) {
       font-size: 1.75rem;
     }
-
     @media (max-width: 768px) {
       font-size: 1.5rem;
     }
-
     @media (min-width: 1920px) {
       font-size: 2.5rem;
     }
-
     @media (min-width: 2560px) {
       font-size: 3rem;
       margin-bottom: 3rem;
     }
-
     @media (min-width: 3840px) {
       font-size: 3.5rem;
       margin-bottom: 4rem;
     }
   }
-
   &Grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1.5rem;
-
     @media (max-width: 1366px) {
       gap: 1rem;
     }
-
     @media (max-width: 1024px) {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
     @media (max-width: 768px) {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
     @media (max-width: 480px) {
       grid-template-columns: 1fr;
     }
-
     @media (min-width: 2560px) {
       gap: 2rem;
     }
-
     @media (min-width: 3840px) {
       gap: 2.5rem;
-    }
-  }
-
-  &More {
-    display: flex;
-    justify-content: center;
-    margin-top: 3rem;
-
-    @media (min-width: 2560px) {
-      margin-top: 4rem;
-    }
-
-    ::ng-deep .main-btn-circle {
-      font-size: 13px;
-      width: 100px !important;
-      height: 100px !important;
-      border-radius: 50% !important;
-      background: transparent;
-      color: var(--p-primary-color);
-
-      &:hover {
-        background-color: var(--background-azul);
-        border: var(--background-azul);
-        color: white;
-      }
-
-      @media (max-width: 1024px) {
-        font-size: 14px;
-        width: 90px !important;
-        height: 90px !important;
-      }
-
-      @media (max-width: 768px) {
-        font-size: 14px;
-        width: 90px !important;
-        height: 90px !important;
-      }
-
-      @media (min-width: 1920px) {
-        font-size: 16px;
-        width: 120px !important;
-        height: 120px !important;
-      }
-
-      @media (min-width: 2560px) {
-        font-size: 18px;
-        width: 140px !important;
-        height: 140px !important;
-      }
-
-      @media (min-width: 3840px) {
-        font-size: 20px;
-        width: 160px !important;
-        height: 160px !important;
-      }
     }
   }
 }
@@ -151,12 +79,45 @@
     border-radius: 0;
     overflow: hidden;
     box-shadow: none !important;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 
     .p-card-body {
       padding: 0.3rem;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
 
       @media (min-width: 2560px) {
         padding: 1rem;
+      }
+    }
+
+    .p-card-content {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+    }
+
+    .contentCardContent {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 150px; // Reducido aún más
+      justify-content: space-between;
+
+      @media (max-width: 768px) {
+        min-height: 140px;
+      }
+
+      @media (min-width: 1920px) {
+        min-height: 170px;
+      }
+
+      @media (min-width: 2560px) {
+        min-height: 200px;
       }
     }
 
@@ -206,27 +167,42 @@
       display: block;
       color: var(--background-azul);
       font-size: 13px;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.25rem; // Reducido de 0.5rem a 0.25rem para acercar al título
+      min-height: 1.5em; // Reducido para minimizar el espacio
+      max-height: 3em;
+      line-height: 1.2; // Reducido para comprimir más el texto
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
 
       @media (max-width: 1024px) {
         font-size: 12px;
+        min-height: 1.4em;
+        margin-bottom: 0.2rem;
       }
 
       @media (max-width: 768px) {
         font-size: 12px;
+        min-height: 1.4em;
+        margin-bottom: 0.2rem;
       }
 
       @media (min-width: 1920px) {
         font-size: 16px;
+        min-height: 1.6em;
+        margin-bottom: -0.7rem;
       }
 
       @media (min-width: 2560px) {
         font-size: 18px;
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.4rem;
+        min-height: 1.8em;
       }
 
       @media (min-width: 3840px) {
         font-size: 20px;
+        min-height: 2em;
       }
     }
 
@@ -234,28 +210,46 @@
       font-size: 1rem;
       color: var(--background-azul);
       font-weight: 600;
-      line-height: 1.5;
-      margin-bottom: 1rem;
+      line-height: 1.3; // Reducido de 1.5 para acercar las líneas
+      margin-top: 0; // Asegurar que no haya espacio extra arriba
+      margin-bottom: 0.5rem; // Reducido aún más
+      min-height: 2.6rem; // Reducido para minimizar espacio
+      max-height: 3.9rem;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      flex-grow: 0;
 
       @media (max-width: 1024px) {
         font-size: 0.9rem;
+        min-height: 2.4rem;
+        margin-bottom: 0.4rem;
+        line-height: 1.2;
       }
 
       @media (max-width: 768px) {
         font-size: 0.9rem;
+        min-height: 2.4rem;
+        margin-bottom: 0.4rem;
+        line-height: 1.2;
       }
 
       @media (min-width: 1920px) {
         font-size: 1.25rem;
+        min-height: 3rem;
+        line-height: 1.4;
       }
 
       @media (min-width: 2560px) {
         font-size: 1.5rem;
-        margin-bottom: 1.5rem;
+        margin-bottom: 0.6rem;
+        min-height: 3.2rem;
       }
 
       @media (min-width: 3840px) {
         font-size: 1.75rem;
+        min-height: 3.5rem;
       }
     }
 
@@ -263,6 +257,7 @@
       display: flex;
       gap: 0.5rem;
       flex-wrap: nowrap;
+      margin-top: 0; // Mantener cerca del título
 
       @media (max-width: 1366px) {
         min-width: 0;
@@ -271,24 +266,11 @@
       }
 
       .p-button {
-        font-size: 13px;
-        background-color: var(--p-primary-color);
-        border-color: var(--p-primary-color);
-        color: white;
-        white-space: nowrap;
-        padding: 0.5rem 1rem;
-
         @media (max-width: 1366px) {
           min-width: auto;
           flex-shrink: 0;
           font-size: 12px;
           padding: 0.5rem 0.75rem;
-        }
-
-        &:hover {
-          background-color: var(--background-azul);
-          border-color: var(--background-azul);
-          color: white;
         }
 
         @media (max-width: 1024px) {

@@ -27,6 +27,7 @@
                 target="_blank"
                 rel="noopener noreferrer"
                 (submit)="handleFormSubmit($event)"
+                [formGroup]="emailForm"
               >
                 <div class="ml-form-formContent horozintalForm">
                   <div class="ml-form-horizontalRow mlformhorizontalRow">
@@ -43,9 +44,9 @@
                             name="fields[email]"
                             placeholder="Escribe tu email"
                             autocomplete="email"
-                            (input)="updateEmailValue(emailInput.value)"
+                            formControlName="email"
                           />
-                          <button type="submit" aria-label="Enviar" [disabled]="!emailValue">
+                          <button type="submit" aria-label="Enviar" [disabled]="emailForm.invalid">
                             <i class="pi pi-arrow-right"></i>
                           </button>
                           <button

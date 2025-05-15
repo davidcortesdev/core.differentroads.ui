@@ -391,28 +391,37 @@ export class TourMapComponent implements OnInit, OnDestroy {
   private loadCitiesData(): void {
     // Eliminar logs innecesarios
     if (this.country) {
-      const countryFilters: ICountryFilters = {
-        name: this.country,
-      };
+      // Dividir la cadena de países por comas y procesar cada uno
+      const countries = this.country.split(',').map(c => c.trim());
+      
+      // Limpiar los datos de ciudades antes de cargar nuevas
+      this.citiesData = [];
+      
+      // Procesar cada país
+      countries.forEach(countryName => {
+        const countryFilters: ICountryFilters = {
+          name: countryName,
+        };
 
-      this.locationsService
-        .getCountries(countryFilters)
-        .pipe(
-          takeUntil(this.destroy$),
-          // Añadir operadores para manejo más eficiente
-          catchError(err => {
-            console.error('Error al obtener información del país:', err);
-            return of([]);
-          })
-        )
-        .subscribe({
-          next: (countries) => {
-            if (countries && countries.length > 0) {
-              const countryId = countries[0].id;
-              this.loadCitiesByCountry(countryId);
+        this.locationsService
+          .getCountries(countryFilters)
+          .pipe(
+            takeUntil(this.destroy$),
+            // Añadir operadores para manejo más eficiente
+            catchError(err => {
+              console.error(`Error al obtener información del país ${countryName}:`, err);
+              return of([]);
+            })
+          )
+          .subscribe({
+            next: (countries) => {
+              if (countries && countries.length > 0) {
+                const countryId = countries[0].id;
+                this.loadCitiesByCountry(countryId);
+              }
             }
-          }
-        });
+          });
+      });
     } else if (this.cities && this.cities.length > 0) {
       this.loadCitiesByName();
     }

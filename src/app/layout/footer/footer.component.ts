@@ -1,6 +1,7 @@
-import { Component, OnInit, AfterViewInit, ElementRef, Renderer2 } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ElementRef, Renderer2, OnDestroy } from '@angular/core';
 import { GeneralConfigService } from '../../core/services/general-config.service';
 import { FooterSection, Link } from '../../core/models/general/footer.model';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-footer',
@@ -8,12 +9,13 @@ import { FooterSection, Link } from '../../core/models/general/footer.model';
   styleUrls: ['./footer.component.scss'],
   standalone: false,
 })
-export class FooterComponent implements OnInit, AfterViewInit {
+export class FooterComponent implements OnInit, AfterViewInit, OnDestroy {
   footerSection: FooterSection | null = null;
   isSubscribed = false;
   formLoaded = false;
   private scriptLoaded = false;
-  emailValue: string = ''; // Nueva propiedad para almacenar el valor del email
+  emailValue: string = '';
+  private subscription: Subscription = new Subscription();
 
   constructor(
     private generalConfigService: GeneralConfigService,
@@ -30,14 +32,16 @@ export class FooterComponent implements OnInit, AfterViewInit {
   }
 
   fetchFooterConfig() {
-    this.generalConfigService
-      .getFooterSection()
-      .subscribe({
-        next: (footerSection: FooterSection) => {
-          this.footerSection = footerSection;
-        },
-        error: (error) => console.error('Error fetching footer config:', error)
-      });
+    this.subscription.add(
+      this.generalConfigService
+        .getFooterSection()
+        .subscribe({
+          next: (footerSection: FooterSection) => {
+            this.footerSection = footerSection;
+          },
+          error: (error) => console.error('Error fetching footer config:', error)
+        })
+    );
   }
 
   // Optimize script loading with better error handling and performance
@@ -124,5 +128,9 @@ export class FooterComponent implements OnInit, AfterViewInit {
   // Método para actualizar el valor del email
   updateEmailValue(value: string): void {
     this.emailValue = value;
+  }
+
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
   }
 }

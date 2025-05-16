@@ -424,7 +424,7 @@ export class TourMapComponent implements OnInit, OnDestroy {
         };
 
         this.locationsService
-          .getCountries(countryFilters)
+          .getCountries(countryFilters,true)
           .pipe(
             takeUntil(this.destroy$),
             // Añadir operadores para manejo más eficiente

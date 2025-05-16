@@ -6,7 +6,7 @@
   &-title {
     font-size: 1.3rem;
     font-weight: 700;
-    padding: 0 2rem 0 1.5rem;
+    padding: 0 2rem ;
     padding-top: 2rem;
     margin: 0;
 
@@ -417,5 +417,64 @@ p-button.continue-button ::ng-deep .p-button {
       width: 300px;
     }
   }
+}
+
+/* Estilos para el botón del título del tour */
+.checkout-title {
+  p-button.tour-link ::ng-deep .p-button {
+    background-color: transparent;
+    border: none;
+    color: var(--background-azul);
+    font-size: 1.3rem;
+    font-weight: 700;
+    padding: 0;
+    text-align: left;
+    position: relative;
+    margin: 0;
+    
+    &:hover {
+      background-color: transparent;
+      color: var(--background-azul);
+      
+      &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: -2px; 
+        width: 100%;
+        height: 2px;
+        background-color: var(--secondary-color-500);
+        transition: width 0.3s ease;
+      }
+    }
+    
+    &:focus {
+      box-shadow: none;
+    }
+    
+    .p-button-label {
+      font-weight: 700;
+    }
+    
+    @media screen and (min-width: 481px) and (max-width: 1024px) {
+      font-size: 1.2rem;
+    }
+    
+    @media screen and (max-width: 480px) {
+      font-size: 1.2rem;
+    }
+  }
+}
+
+/* Alineación para el título del tour y las fechas */
+.checkout-title, .checkout-subtitle {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.checkout-subtitle {
+  margin-top: 0.1rem;
 }
 

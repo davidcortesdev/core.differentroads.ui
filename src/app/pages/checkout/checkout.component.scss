@@ -14,24 +14,14 @@
     .tour-link {
       color: inherit;
       text-decoration: none;
-      cursor: pointer; /* Cambiado de 'text' a 'pointer' para indicar que es clickeable */
       background: none;
       border: none;
-      padding: 0;
-      margin: 0;
       font: inherit;
       outline: none;
       display: inline;
       text-align: left;
       position: relative;
-      
-      &:hover, &:focus, &:active {
-        background: none;
-        color: inherit;
-        text-decoration: none;
-        box-shadow: none;
-      }
-      
+
       &:hover::after {
         content: '';
         position: absolute;

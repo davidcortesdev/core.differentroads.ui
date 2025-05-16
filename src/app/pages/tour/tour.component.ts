@@ -201,7 +201,6 @@ export class TourComponent implements OnInit, OnDestroy {
     if (this.tour && this.tour.name) {
       // Actualizar título
       this.titleService.setTitle(`${this.tour.name} - Different Roads`);
-      console.log('updateMetaData',this.tour);
       // Actualizar meta tags
       this.metaService.updateTag({ name: 'description', content: this.tour.seo.description || `Descubre ${this.tour.seo.title} con Different Roads` });
       

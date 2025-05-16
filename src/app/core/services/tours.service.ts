@@ -50,21 +50,24 @@ export class ToursService {
     if (selectedFields.includes('all')) {
       return selectedFields;
     }
-    
+
     // Si no incluye 'all', asegurarse de que 'status' esté incluido
     if (!selectedFields.includes('status' as keyof Tour)) {
       return [...selectedFields, 'status' as keyof Tour];
     }
-    
+
     return selectedFields;
   }
 
   // Método auxiliar para filtrar tours por status published
-  private filterPublishedTours<T extends Tour[]>(data: T, filterByStatus: boolean = true): T {
+  private filterPublishedTours<T extends Tour[]>(
+    data: T,
+    filterByStatus: boolean = true
+  ): T {
     if (!filterByStatus) {
       return data; // Retornar todos los tours sin filtrar si filterByStatus es false
     }
-    return data.filter(tour => this.isPublished(tour.status)) as T;
+    return data.filter((tour) => this.isPublished(tour.status)) as T;
   }
 
   getToursList(
@@ -72,9 +75,11 @@ export class ToursService {
     filterByStatus: boolean = true
   ): Observable<TourListResponse> {
     let params = new HttpParams().set('limit', '1000');
-    
+
     // Asegurar que status esté incluido si vamos a filtrar por él o si se solicitan todos los campos
-    const fieldsWithStatus = filterByStatus ? this.ensureStatusField(selectedFields) : selectedFields;
+    const fieldsWithStatus = filterByStatus
+      ? this.ensureStatusField(selectedFields)
+      : selectedFields;
 
     if (fieldsWithStatus && fieldsWithStatus.length) {
       params = params.set('selectedFields', fieldsWithStatus.join(','));
@@ -84,7 +89,9 @@ export class ToursService {
       map((response: TourListResponse) => {
         if (response && response.data && filterByStatus) {
           // Filtrar solo los tours con status published si filterByStatus es true
-          response.data = response.data.filter(tour => this.isPublished(tour.status));
+          response.data = response.data.filter((tour) =>
+            this.isPublished(tour.status)
+          );
         }
         return response;
       })
@@ -111,22 +118,27 @@ export class ToursService {
     ];
 
     // Extraer el parámetro filterByStatus de los filtros, con valor predeterminado true
-    const filterByStatus = filters.filterByStatus !== undefined ? filters.filterByStatus : true;
+    const filterByStatus =
+      filters.filterByStatus !== undefined ? filters.filterByStatus : true;
     // Extraer el parámetro unpublish, que es lo opuesto a filterByStatus
     const unpublish = filters.unpublish === true;
     const effectiveFilterByStatus = !unpublish && filterByStatus;
 
     const toursObservable = filters.destination
-      ? this.getToursFilterByKeyword(filters.destination, selectedFields, effectiveFilterByStatus)
+      ? this.getToursFilterByKeyword(
+          filters.destination,
+          selectedFields,
+          effectiveFilterByStatus
+        )
       : this.getToursList(selectedFields, effectiveFilterByStatus);
 
     return toursObservable.pipe(
       map((toursData: TourListResponse) => {
         const tours = toursData.data ? toursData.data : (toursData as any);
-        
+
         // Filtrar solo tours publicados si filterByStatus es true y unpublish es false
-        const filteredTours = effectiveFilterByStatus 
-          ? tours.filter((tour: any) => this.isPublished(tour.status)) 
+        const filteredTours = effectiveFilterByStatus
+          ? tours.filter((tour: any) => this.isPublished(tour.status))
           : tours;
 
         // Collect possible months and tags
@@ -257,9 +269,11 @@ export class ToursService {
     filterByStatus: boolean = true
   ): Observable<Tour> {
     let params = new HttpParams();
-    
+
     // Asegurar que status esté incluido si vamos a filtrar por él
-    const fieldsWithStatus = filterByStatus ? this.ensureStatusField(selectedFields) : selectedFields;
+    const fieldsWithStatus = filterByStatus
+      ? this.ensureStatusField(selectedFields)
+      : selectedFields;
 
     if (fieldsWithStatus && fieldsWithStatus.length) {
       params = params.set('selectedFields', fieldsWithStatus.join(','));
@@ -281,9 +295,11 @@ export class ToursService {
     filterByStatus: boolean = true
   ): Observable<Tour> {
     let params = new HttpParams();
-    
+
     // Asegurar que status esté incluido si vamos a filtrar por él
-    const fieldsWithStatus = filterByStatus ? this.ensureStatusField(selectedFields) : selectedFields;
+    const fieldsWithStatus = filterByStatus
+      ? this.ensureStatusField(selectedFields)
+      : selectedFields;
 
     if (fieldsWithStatus && fieldsWithStatus.length) {
       params = params.set('selectedFields', fieldsWithStatus.join(','));
@@ -294,16 +310,18 @@ export class ToursService {
       .pipe(
         map((tours: Tour[]) => {
           // Si filterByStatus es true, filtrar solo tours publicados
-          const filteredTours = filterByStatus 
-            ? tours.filter(tour => this.isPublished(tour.status))
+          const filteredTours = filterByStatus
+            ? tours.filter((tour) => this.isPublished(tour.status))
             : tours;
-            
+
           if (filteredTours.length > 0) {
             return filteredTours[0];
           } else {
-            throw new Error(filterByStatus 
-              ? 'No published tour found with the given slug'
-              : 'No tour found with the given slug');
+            throw new Error(
+              filterByStatus
+                ? 'No published tour found with the given slug'
+                : 'No tour found with the given slug'
+            );
           }
         })
       );
@@ -315,9 +333,11 @@ export class ToursService {
     filterByStatus: boolean = true
   ): Observable<Tour> {
     let params = new HttpParams();
-    
+
     // Asegurar que status esté incluido si vamos a filtrar por él
-    const fieldsWithStatus = filterByStatus ? this.ensureStatusField(selectedFields) : selectedFields;
+    const fieldsWithStatus = filterByStatus
+      ? this.ensureStatusField(selectedFields)
+      : selectedFields;
 
     if (fieldsWithStatus && fieldsWithStatus.length) {
       params = params.set('selectedFields', fieldsWithStatus.join(','));
@@ -328,16 +348,18 @@ export class ToursService {
       .pipe(
         map((tours: Tour[]) => {
           // Si filterByStatus es true, filtrar solo tours publicados
-          const filteredTours = filterByStatus 
-            ? tours.filter(tour => this.isPublished(tour.status))
+          const filteredTours = filterByStatus
+            ? tours.filter((tour) => this.isPublished(tour.status))
             : tours;
-            
+
           if (filteredTours.length > 0) {
             return filteredTours[0];
           } else {
-            throw new Error(filterByStatus 
-              ? 'No published tour found with the given external ID'
-              : 'No tour found with the given external ID');
+            throw new Error(
+              filterByStatus
+                ? 'No published tour found with the given external ID'
+                : 'No tour found with the given external ID'
+            );
           }
         })
       );
@@ -349,47 +371,63 @@ export class ToursService {
     filterByStatus: boolean = true
   ): Observable<TourListResponse> {
     let params = new HttpParams();
-    
+
     // Asegurar que status esté incluido si vamos a filtrar por él
-    const fieldsWithStatus = filterByStatus ? this.ensureStatusField(selectedFields) : selectedFields;
+    const fieldsWithStatus = filterByStatus
+      ? this.ensureStatusField(selectedFields)
+      : selectedFields;
 
     if (fieldsWithStatus && fieldsWithStatus.length) {
       params = params.set('selectedFields', fieldsWithStatus.join(','));
     }
 
-    return this.http.get<TourListResponse>(
-      `${this.API_URL}/filter-by/name,tags,vtags,cities,country,continent/${keyword}`,
-      { params }
-    ).pipe(
-      map((response: TourListResponse) => {
-        if (response && response.data && filterByStatus) {
-          // Filtrar solo los tours con status published si filterByStatus es true
-          response.data = response.data.filter(tour => this.isPublished(tour.status));
-        }
-        return response;
-      })
-    );
+    return this.http
+      .get<TourListResponse>(
+        `${this.API_URL}/filter-by/name,tags,vtags,cities,country,continent/${keyword}`,
+        { params }
+      )
+      .pipe(
+        map((response: TourListResponse) => {
+          if (response && response.data && filterByStatus) {
+            // Filtrar solo los tours con status published si filterByStatus es true
+            response.data = response.data.filter((tour) =>
+              this.isPublished(tour.status)
+            );
+          }
+          return response;
+        })
+      );
   }
 
-  getTourCardData(id: string, filterByStatus: boolean = true): Observable<Partial<Tour>> {
-    return this.getTourDetail(id, [
-      'activePeriods',
-      'price',
-      'monthTags',
-      'marketingSection',
-      'nextDeparture',
-      'basePrice',
-      'name',
-      'image',
-      'country',
-      'webSlug',
-      'tourType',
-      'externalID',
-      'status',
-    ], filterByStatus).pipe(map((tourData: Tour) => tourData));
+  getTourCardData(
+    id: string,
+    filterByStatus: boolean = true
+  ): Observable<Partial<Tour>> {
+    return this.getTourDetail(
+      id,
+      [
+        'activePeriods',
+        'price',
+        'monthTags',
+        'marketingSection',
+        'nextDeparture',
+        'basePrice',
+        'name',
+        'image',
+        'country',
+        'webSlug',
+        'tourType',
+        'externalID',
+        'status',
+      ],
+      filterByStatus
+    ).pipe(map((tourData: Tour) => tourData));
   }
 
-  getMultipleTourCardData(ids: string[], filterByStatus: boolean = true): Observable<ProcessedTour[]> {
+  getMultipleTourCardData(
+    ids: string[],
+    filterByStatus: boolean = true
+  ): Observable<ProcessedTour[]> {
     return new Observable((subscriber) => {
       const tourCards: ProcessedTour[] = [];
       let completed = 0;
@@ -414,7 +452,7 @@ export class ToursService {
                   : tour.description || '',
               rating: 5,
               tag: tour.marketingSection?.marketingSeasonTag || '',
-              price: tour.basePrice || 0,
+              price: tour.price || 0,
               availableMonths: (tour.monthTags || []).map(
                 (month: string): string => month.toLocaleUpperCase().slice(0, 3)
               ),
@@ -444,33 +482,56 @@ export class ToursService {
     });
   }
 
-  getItinerarySection(id: string, filterByStatus: boolean = true): Observable<Itinerary> {
-    return this.getTourDetail(id, ['itinerary-section', 'status'], filterByStatus).pipe(
-      map((tourData: Tour) => tourData['itinerary-section'])
-    );
+  getItinerarySection(
+    id: string,
+    filterByStatus: boolean = true
+  ): Observable<Itinerary> {
+    return this.getTourDetail(
+      id,
+      ['itinerary-section', 'status'],
+      filterByStatus
+    ).pipe(map((tourData: Tour) => tourData['itinerary-section']));
   }
 
-  getCardList(id: string, filterByStatus: boolean = true): Observable<CardList[]> {
+  getCardList(
+    id: string,
+    filterByStatus: boolean = true
+  ): Observable<CardList[]> {
     return this.getTourDetail(id, ['card-list', 'status'], filterByStatus).pipe(
       map((tourData: Tour) => tourData['card-list'])
     );
   }
 
-  getExtraInfoSection(id: string, filterByStatus: boolean = true): Observable<ExtraInfoSection> {
-    return this.getTourDetail(id, ['extra-info-section', 'status'], filterByStatus).pipe(
-      map((tourData: Tour) => tourData['extra-info-section'])
-    );
+  getExtraInfoSection(
+    id: string,
+    filterByStatus: boolean = true
+  ): Observable<ExtraInfoSection> {
+    return this.getTourDetail(
+      id,
+      ['extra-info-section', 'status'],
+      filterByStatus
+    ).pipe(map((tourData: Tour) => tourData['extra-info-section']));
   }
 
-  getMarketingSection(id: string, filterByStatus: boolean = true): Observable<MarketingSection> {
-    return this.getTourDetail(id, ['marketingSection', 'status'], filterByStatus).pipe(
-      map((tourData: Tour) => tourData.marketingSection)
-    );
+  getMarketingSection(
+    id: string,
+    filterByStatus: boolean = true
+  ): Observable<MarketingSection> {
+    return this.getTourDetail(
+      id,
+      ['marketingSection', 'status'],
+      filterByStatus
+    ).pipe(map((tourData: Tour) => tourData.marketingSection));
   }
 
-  getSupportSection(id: string, filterByStatus: boolean = true): Observable<SupportSection> {
-    return this.getTourDetail(id, ['supportSection', 'status'], filterByStatus).pipe(
-      map((tourData: Tour) => tourData.supportSection)
-    );
+  getSupportSection(
+    id: string,
+    filterByStatus: boolean = true
+  ): Observable<SupportSection> {
+    return this.getTourDetail(
+      id,
+      ['supportSection', 'status'],
+      filterByStatus
+    ).pipe(map((tourData: Tour) => tourData.supportSection));
   }
 }

@@ -29,7 +29,7 @@
     [closeOnEscape]="true">
     <div class="full-activity-content" *ngIf="selectedActivity">
       <div class="activity-image">
-        <img [src]="selectedActivity.image" [alt]="selectedActivity.title" />
+        <img [src]="selectedActivity.image" [alt]="selectedActivity.title" loading="lazy"/>
         <span class="status-badge" [class.optional]="selectedActivity.optional">
           {{ 
             selectedActivity.recommended

@@ -4,7 +4,7 @@
       <div class="booking-details-container">
         <div *ngFor="let item of items" class="booking-info-item">
           <div class="booking-image">
-            <img [src]="item.imageUrl" [alt]="item.name" />
+            <img [src]="item.imageUrl" [alt]="item.name" loading="lazy"/>
           </div>
           <div class="booking-details">
             <div class="booking-row top-row">

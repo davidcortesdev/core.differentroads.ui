@@ -6,7 +6,7 @@
           <div *ngFor="let activity of items" class="activity-item">
             <div class="activity-content">
               <div class="activity-image">
-                <img [src]="activity.imageUrl" [alt]="activity.title" />
+                <img [src]="activity.imageUrl" [alt]="activity.title"  loading="lazy"/>
               </div>
               <div class="activity-details">
                 <div class="activity-header">

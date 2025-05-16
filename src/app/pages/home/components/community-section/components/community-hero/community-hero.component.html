@@ -50,7 +50,8 @@
 
   <div class="featured-content">
     <div *ngFor="let card of data.featured.images" class="featured-images">
-      <img [src]="card" [alt]="card" />
+      <img [src]="card" [alt]="card" 
+      loading="lazy"/>
     </div>
     <div class="featured-text">
       <div [innerHTML]="data.featured.content" class="content"></div>

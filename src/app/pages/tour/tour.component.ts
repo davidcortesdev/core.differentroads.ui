@@ -2,12 +2,12 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToursService } from '../../core/services/tours.service';
 import { Tour } from '../../core/models/tours/tour.model';
-import { catchError, Subject, Subscription } from 'rxjs';
+import { catchError, Subject, Subscription, finalize } from 'rxjs';
 import { OrdersService } from '../../core/services/orders.service';
-import { Order } from '../../core/models/orders/order.model';
 import { TourDataService } from '../../core/services/tour-data/tour-data.service';
 import { TourOrderService } from '../../core/services/tour-data/tour-order.service';
 import { AuthenticateService } from '../../core/services/auth-service.service';
+import { Title, Meta } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-tour',
@@ -21,18 +21,18 @@ export class TourComponent implements OnInit, OnDestroy {
   loading: boolean = true;
   error: boolean = false;
   currentUserEmail: string = '';
-  filterByStatus: boolean = true; // Por defecto true para filtrar
+  filterByStatus: boolean = true;
 
   // Subject para comunicar cambios en los pasajeros
   passengerChanges = new Subject<{ adults: number; children: number }>();
 
-  // Información de itinerario que podemos compartir
+  // Información de itinerario compartida
   selectedDate: string = '';
   tripType: string = '';
   departureCity: string = '';
 
-  // Suscripciones para limpiar al destruir el componente
-  private subscriptions: Subscription = new Subscription();
+  private isInitialLoad = true;
+  private subscriptions = new Subscription();
 
   constructor(
     private route: ActivatedRoute,
@@ -41,116 +41,46 @@ export class TourComponent implements OnInit, OnDestroy {
     private router: Router,
     private tourOrderService: TourOrderService,
     private tourDataService: TourDataService,
-    private authenticateService: AuthenticateService
+    private authenticateService: AuthenticateService,
+    private titleService: Title,
+    private metaService: Meta
   ) {}
 
   ngOnInit(): void {
-    // Suscribirse a los parámetros de ruta y query params
-    this.subscriptions.add(
-      this.route.params.subscribe((params) => {
-        this.tourSlug = params['slug'];
-        // No cargar detalles aquí, esperar a los queryParams
-      })
-    );
-
-    // Suscribirse a los query params
-    this.subscriptions.add(
-      this.route.queryParams.subscribe((queryParams) => {
-        // Obtener el parámetro filterByStatus (por defecto es true)
-        // Solo será false si explícitamente viene como 'false' en los query params
-        this.filterByStatus = queryParams['filterByStatus'] !== 'false';
-        
-        // Actualizar el servicio con el valor de filterByStatus
-        this.tourDataService.setUnpublish(this.filterByStatus);
-        
-        // Cargar los detalles del tour después de tener todos los parámetros
-        if (this.tourSlug) {
-          this.loadTourDetails();
-        }
-      })
-    );
-
-    // Suscribirse a los cambios de fecha del servicio compartido
-    // para mantener sincronizado el componente principal también
-    this.subscriptions.add(
-      this.tourOrderService.selectedDateInfo$.subscribe((dateInfo) => {
-        this.selectedDate = dateInfo.date;
-        this.tripType = dateInfo.tripType;
-        this.departureCity = dateInfo.departureCity || '';
-      })
-    );
-
-    // Suscribirse al email del usuario autenticado
-    this.subscriptions.add(
-      this.authenticateService.getUserEmail().subscribe((email) => {
-        this.currentUserEmail = email;
-      })
-    );
+    this.initializeRouteSubscriptions();
+    this.initializeServiceSubscriptions();
   }
 
   ngOnDestroy(): void {
-    // Limpiar todas las suscripciones al destruir el componente
     this.subscriptions.unsubscribe();
     this.passengerChanges.complete();
-    
-    // Limpiar el estado del servicio
     this.tourOrderService.resetState();
   }
 
-  // Método para recibir actualizaciones de pasajeros desde tour-departures
   onPassengerChange(data: { adults: number; children: number }): void {
-    console.log('Passenger change received:', data);
     this.passengerChanges.next(data);
   }
 
-  private loadTourDetails(): void {
-    this.loading = true;
-    this.error = false;
-
-    this.toursService
-      .getTourDetailBySlug(this.tourSlug, [
-        'activePeriods',
-        'basePrice',
-        'price',
-        'tags',
-      ], this.filterByStatus) // Actualizado el nombre del parámetro
-      .pipe(
-        catchError((error) => {
-          console.error('Error loading tour:', error);
-          this.error = true;
-          this.loading = false;
-          return [];
-        })
-      )
-      .subscribe({
-        next: (tourData: Tour) => {
-          this.tour = tourData;
-          this.loading = false;
-          this.tourDataService.updateTour(tourData);
-  
-          console.log('Tour tags:', tourData.tags);
-        },
-        error: (error) => {
-          console.error('Error loading tour:', error);
-          this.error = true;
-          this.loading = false;
-        },
-      });
-  }
-
   createOrderAndRedirect(periodID: string): void {
-    const ownerEmail = this.currentUserEmail
-      ? this.currentUserEmail
-      : 'anonymous';
+    if (!periodID) {
+      console.error('No se proporcionó un ID de periodo válido');
+      return;
+    }
+    
+    this.loading = true;
+    const ownerEmail = this.currentUserEmail || 'anonymous';
+    
     this.tourOrderService
       .createOrder({
         periodID: periodID,
         status: 'AB',
         owner: ownerEmail
       })
+      .pipe(
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: (createdOrder) => {
-          console.log('Order created:', createdOrder);
           this.router.navigate(['/checkout', createdOrder._id], {
             queryParams: { filterByStatus: this.filterByStatus ? 'true' : 'false' }
           });
@@ -164,5 +94,122 @@ export class TourComponent implements OnInit, OnDestroy {
   getDuration(days: number | undefined): string {
     if (!days) return '';
     return `${days} días, ${days - 1} noches`;
+  }
+
+  private initializeRouteSubscriptions(): void {
+    // Suscripción a parámetros de ruta
+    this.subscriptions.add(
+      this.route.params.subscribe((params) => {
+        this.tourSlug = params['slug'];
+      })
+    );
+
+    // Suscripción a fragmentos para navegación
+    this.subscriptions.add(
+      this.route.fragment.subscribe(fragment => {
+        if (fragment && !this.isInitialLoad) {
+          this.scrollToFragment(fragment);
+        }
+        this.isInitialLoad = false;
+      })
+    );
+
+    // Suscripción a query params
+    this.subscriptions.add(
+      this.route.queryParams.subscribe((queryParams) => {
+        this.filterByStatus = queryParams['filterByStatus'] !== 'false';
+        this.tourDataService.setUnpublish(this.filterByStatus);
+        
+        if (this.tourSlug) {
+          this.loadTourDetails();
+        }
+      })
+    );
+  }
+
+  private initializeServiceSubscriptions(): void {
+    // Suscripción a cambios de fecha
+    this.subscriptions.add(
+      this.tourOrderService.selectedDateInfo$.subscribe((dateInfo) => {
+        this.selectedDate = dateInfo.date;
+        this.tripType = dateInfo.tripType;
+        this.departureCity = dateInfo.departureCity || '';
+      })
+    );
+
+    // Suscripción al email del usuario
+    this.subscriptions.add(
+      this.authenticateService.getUserEmail().subscribe((email) => {
+        this.currentUserEmail = email;
+      })
+    );
+  }
+
+  private scrollToFragment(fragment: string): void {
+    setTimeout(() => {
+      const element = document.getElementById(fragment);
+      if (element) {
+        const headerHeight = document.querySelector('.tour-header')?.clientHeight || 0;
+        const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+        const offsetPosition = elementPosition - headerHeight;
+        
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'auto'
+        });
+      }
+    }, 10);
+  }
+
+  private loadTourDetails(): void {
+    this.loading = true;
+    this.error = false;
+
+    this.toursService
+      .getTourDetailBySlug(this.tourSlug, [
+        'activePeriods',
+        'basePrice',
+        'price',
+        'tags',
+        'name',
+        'description',
+        'seo'
+      ], this.filterByStatus)
+      .pipe(
+        catchError((error) => {
+          console.error('Error loading tour:', error);
+          this.error = true;
+          this.loading = false;
+          return [];
+        }),
+        finalize(() => this.loading = false)
+      )
+      .subscribe({
+        next: (tourData: Tour) => {
+          this.tour = tourData;
+          this.updateMetadata();
+          this.tourDataService.updateTour(tourData);
+        },
+        error: (error) => {
+          console.error('Error loading tour:', error);
+          this.error = true;
+        },
+      });
+  }
+
+  private updateMetadata(): void {
+    if (this.tour && this.tour.name) {
+      // Actualizar título
+      this.titleService.setTitle(`${this.tour.name} - Different Roads`);
+      // Actualizar meta tags
+      this.metaService.updateTag({ name: 'description', content: this.tour.seo.description || `Descubre ${this.tour.seo.title} con Different Roads` });
+      
+      // Añadir meta tags para redes sociales si hay imagen disponible
+      if (this.tour.image && this.tour.image[0]?.url) {
+        this.metaService.updateTag({ property: 'og:image', content: this.tour.image[0].url });
+        this.metaService.updateTag({ property: 'og:title', content: this.tour.name });
+        this.metaService.updateTag({ property: 'og:description', content: this.tour.seo.description || `Descubre ${this.tour.seo.title} con Different Roads` });
+      }
+    }
   }
 }

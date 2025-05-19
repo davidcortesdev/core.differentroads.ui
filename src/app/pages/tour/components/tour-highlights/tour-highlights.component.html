@@ -54,7 +54,7 @@
   [closeOnEscape]="true">
   <div class="full-highlight-content" *ngIf="selectedHighlight">
     <div class="highlight-image">
-      <img [src]="selectedHighlight.image" [alt]="selectedHighlight.title" />
+      <img [src]="selectedHighlight.image" [alt]="selectedHighlight.title" loading="lazy"/>
       <span class="status-badge" [class.optional]="selectedHighlight.optional">
         {{ selectedHighlight.optional ? "Opcional" : "Incluida" }}
       </span>

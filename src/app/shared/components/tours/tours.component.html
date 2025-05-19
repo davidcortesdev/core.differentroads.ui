@@ -7,7 +7,7 @@
     [initialReturnDate]="maxDate"
     [initialTripType]="tourType"
   ></app-hero-section>
-  
+
   <!-- Combined filters section from both components -->
   <div class="tours-filters">
     <p-floatlabel class="w-full md:w-56 min-width" variant="on">
@@ -23,11 +23,11 @@
       />
       <label for="order_label">Ordenar por</label>
     </p-floatlabel>
-    
+
     <span class="space"></span>
-    
+
     <!-- Eliminado el filtro de categoría (tag) -->
-    
+
     <p-floatlabel class="w-full md:w-56 min-width" variant="on">
       <p-multiselect
         id="season_label"
@@ -45,7 +45,7 @@
       />
       <label for="season_label">Temporada</label>
     </p-floatlabel>
-    
+
     <p-floatlabel class="w-full md:w-56 min-width" variant="on">
       <p-multiselect
         id="month_label"
@@ -62,7 +62,7 @@
       />
       <label for="month_label">Mes</label>
     </p-floatlabel>
-    
+
     <p-floatlabel class="w-full md:w-56 min-width" variant="on">
       <p-multiselect
         id="price_label"
@@ -80,7 +80,7 @@
       <label for="price_label">Precio</label>
     </p-floatlabel>
   </div>
-  
+
   <!-- Tours list section -->
   <div class="tours-list">
     <p-dataView #dv [value]="displayedTours" [layout]="layout">
@@ -90,7 +90,10 @@
             *ngFor="let tour of displayedTours"
             class="col-12 sm:col-6 lg:col-3"
           >
-            <app-tour-card [tourData]="tour" [showScalapayPrice]="true"></app-tour-card>
+            <app-tour-card
+              [tourData]="tour"
+              [showScalapayPrice]="true"
+            ></app-tour-card>
           </div>
         </div>
       </ng-template>

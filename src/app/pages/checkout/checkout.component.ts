@@ -26,6 +26,7 @@ import { AuthenticateService } from '../../core/services/auth-service.service';
 import { TextsService } from '../../core/services/checkout/texts.service';
 import { AmadeusService } from '../../core/services/amadeus.service';
 import { ProcessBookingService } from '../../core/services/checkout/process-booking.service';
+import { ToursService } from '../../core/services/tours.service';
 
 import { Subscription } from 'rxjs';
 @Component({
@@ -42,6 +43,7 @@ export class CheckoutComponent implements OnInit {
   private subscription: Subscription = new Subscription();
   isAuthenticated: boolean = false;
   isAmadeusFlightSelected: boolean = false;
+  tourSlug: string = '';
 
   // PrimeNG Steps
   activeIndex: number = 0;
@@ -76,6 +78,7 @@ export class CheckoutComponent implements OnInit {
   tourName: string = '';
   tourDates: string = '';
   travelers: number = 0;
+
   travelersSelected = {
     adults: 0,
     childs: 0,
@@ -144,7 +147,8 @@ export class CheckoutComponent implements OnInit {
     private discountsService: DiscountsService,
     private textsService: TextsService,
     private amadeusService: AmadeusService, // <-- Nueva inyección
-    private processBookingService: ProcessBookingService // New service injection
+    private processBookingService: ProcessBookingService, // New service injection
+    private toursService: ToursService
   ) {}
 
   ngOnInit() {
@@ -212,6 +216,14 @@ export class CheckoutComponent implements OnInit {
               timeZone: 'UTC',
             })}
           `;
+          this.toursService.getTourDetailByExternalID(period.tourID, ['webSlug']).subscribe({
+            next: (tourData) => {
+              this.tourSlug = tourData.webSlug || '';
+            },
+            error: (error) => {
+              console.error('Error al obtener el slug del tour:', error);
+            }
+          });
 
           // Save tour information to TextsService
           this.textsService.updateTextsForCategory('tour', {
@@ -938,7 +950,6 @@ export class CheckoutComponent implements OnInit {
       if (isLoggedIn) {
         // User is logged in, proceed normally
         if (useFlightless) {
-          // Handle "Lo quiero sin vuelos" button
           if (this.flightlessOption) {
             this.flightsService.updateSelectedFlight(this.flightlessOption);
             if (this.nextStep(nextStep)) {
@@ -946,38 +957,31 @@ export class CheckoutComponent implements OnInit {
             }
           }
         } else {
-          // Handle "Continuar" button
           if (this.nextStep(nextStep)) {
             activateCallback(nextStep);
           }
         }
       } else {
-        // User is not logged in, save URL and show login dialog
         sessionStorage.setItem('redirectUrl', window.location.pathname);
-        // Show the login modal instead of redirecting
         this.loginDialogVisible = true;
       }
     });
   }
 
-  // Add method to close the login modal
   closeLoginModal(): void {
     this.loginDialogVisible = false;
   }
 
-  // Add method to navigate to login page
   navigateToLogin(): void {
     this.closeLoginModal();
     this.router.navigate(['/login']);
   }
 
-  // Add method to navigate to register page
   navigateToRegister(): void {
     this.closeLoginModal();
     this.router.navigate(['/sign-up']); // Changed from '/register' to '/sign-up'
   }
 
-  // Remove authentication check from here since it's now handled in checkAuthAndContinue
   selectFlightlessAndContinue(): boolean {
     if (this.flightlessOption) {
       this.flightsService.updateSelectedFlight(this.flightlessOption);

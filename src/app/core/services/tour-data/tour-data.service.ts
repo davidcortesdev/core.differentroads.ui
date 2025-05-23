@@ -42,8 +42,6 @@ export class TourDataService {
       return 0;
     }
 
-    console.log('Getting period price for:', periodID);
-
     if (withTourPrice) {
       let price = 0;
       this.periodPricesService

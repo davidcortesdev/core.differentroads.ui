@@ -7,7 +7,7 @@
     [initialReturnDate]="maxDate"
     [initialTripType]="tourType"
   ></app-hero-section>
-  
+
   <!-- Combined filters section from both components -->
   <div class="tours-filters">
     <p-floatlabel class="w-full md:w-56 min-width" variant="on">
@@ -23,28 +23,11 @@
       />
       <label for="order_label">Ordenar por</label>
     </p-floatlabel>
-    
+
     <span class="space"></span>
-    
-    <!-- Tag filter, visible when tag options available but not selected by input -->
-    <p-floatlabel *ngIf="tagOptions.length > 0 && initialTags.length === 0" class="w-full md:w-56 min-width" variant="on">
-      <p-multiselect
-        id="tag_label"
-        class="filter-box"
-        [options]="tagOptions"
-        [(ngModel)]="selectedTagOption"
-        (ngModelChange)="onTagFilterChange()"
-        optionLabel="name"
-        optionValue="value"
-        filter="false"
-        [maxSelectedLabels]="1"
-        [displaySelectedLabel]="true"
-        selectedItemsLabel="{0} items"
-        [showToggleAll]="false"
-      />
-      <label for="tag_label">Categoría</label>
-    </p-floatlabel>
-    
+
+    <!-- Eliminado el filtro de categoría (tag) -->
+
     <p-floatlabel class="w-full md:w-56 min-width" variant="on">
       <p-multiselect
         id="season_label"
@@ -62,7 +45,7 @@
       />
       <label for="season_label">Temporada</label>
     </p-floatlabel>
-    
+
     <p-floatlabel class="w-full md:w-56 min-width" variant="on">
       <p-multiselect
         id="month_label"
@@ -79,7 +62,7 @@
       />
       <label for="month_label">Mes</label>
     </p-floatlabel>
-    
+
     <p-floatlabel class="w-full md:w-56 min-width" variant="on">
       <p-multiselect
         id="price_label"
@@ -97,7 +80,7 @@
       <label for="price_label">Precio</label>
     </p-floatlabel>
   </div>
-  
+
   <!-- Tours list section -->
   <div class="tours-list">
     <p-dataView #dv [value]="displayedTours" [layout]="layout">
@@ -107,7 +90,10 @@
             *ngFor="let tour of displayedTours"
             class="col-12 sm:col-6 lg:col-3"
           >
-            <app-tour-card [tourData]="tour" [showScalapayPrice]="true"></app-tour-card>
+            <app-tour-card
+              [tourData]="tour"
+              [showScalapayPrice]="true"
+            ></app-tour-card>
           </div>
         </div>
       </ng-template>

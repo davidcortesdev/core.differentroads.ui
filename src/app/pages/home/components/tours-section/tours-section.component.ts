@@ -99,7 +99,7 @@ export class ToursSectionComponent implements OnInit, OnDestroy {
         concatMap((id: string) =>
           this.toursService.getTourCardData(id).pipe(
             catchError((error: Error) => {
-              console.error(`Error loading tour with ID ${id}:`, error);
+              //console.error(`Error loading tour with ID ${id}:`, error);
               return of(null);
             }),
             map((tour: Partial<Tour> | null): ProcessedTour | null => {
@@ -121,7 +121,7 @@ export class ToursSectionComponent implements OnInit, OnDestroy {
                     : '',
                 rating: 5,
                 tag: tour.marketingSection?.marketingSeasonTag || '',
-                price: tour.basePrice || 0,
+                price: tour.price || 0,
                 availableMonths: (tour.monthTags || []).map(
                   (month: string): string =>
                     month.toLocaleUpperCase().slice(0, 3)

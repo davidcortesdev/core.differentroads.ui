@@ -258,19 +258,64 @@ export class TourItineraryComponent implements OnInit, OnDestroy {
       ])
       .subscribe({
         next: (period) => {
-          console.log('Period details:', period);
-
           this.currentPeriod = period;
           this.tripType = period.tripType || '';
           this.hotels = period.hotels;
           this.fetchHotels();
 
+          this.periodsService.getActivitiesByPeriodId(period.externalID).subscribe({
+            next: (activities) => {
+              // Usar las actividades obtenidas del servicio
+              const allActivities = activities;
+              
+              // Crear una copia temporal de las actividades
+              this.activities = allActivities.map((activity) => ({
+                ...activity,
+                price: 0, // Inicializar con 0, se actualizará cuando se carguen los precios
+              }));
+              
+              // Para cada actividad, obtener su precio y actualizar el array de actividades
+              allActivities.forEach((activity) => {
+                this.periodPricesService
+                  .getPeriodPriceById(
+                    this.selectedOption.value,
+                    activity.activityId
+                  )
+                  .subscribe({
+                    next: (price) => {
+                      // Encontrar y actualizar el precio de la actividad en el array de actividades
+                      const activityIndex = this.activities.findIndex(
+                        (a) => a.activityId === activity.activityId
+                      );
+                      if (activityIndex !== -1) {
+                        this.activities[activityIndex].price = price;
+                      
+                        // Actualizar el itinerario si ya está poblado
+                        if (this.itinerary.length > 0) {
+                          this.updateItinerary();
+                        }
+                      }
+                    },
+                    error: (error) => {
+                      console.error(
+                        `Error getting price for activity ${activity.activityId}:`,
+                        error
+                      );
+                    },
+                  });
+              });
+              
+              this.updateItinerary();
+            },
+            error: (error) => {
+              console.error('Error fetching activities:', error);
+            },
+          });
           // Get activities from period details
           const allActivities = [
             ...(period.activities || []),
             ...(period.includedActivities || []),
           ];
-          console.log('periodallActivities:', allActivities);
 
           // Create a temporary array to store activities
           this.activities = allActivities.map((activity) => ({

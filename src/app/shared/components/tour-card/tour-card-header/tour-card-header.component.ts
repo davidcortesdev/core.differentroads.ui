@@ -65,7 +65,7 @@ export class TourCardHeaderComponent implements OnInit, OnDestroy {
       this.tourNetService.getTourIdByTKId(tkId).pipe(
         tap(id => {
           if (!id) {
-            console.warn('No se encontró ID para el tour con tkId:', tkId);
+            //console.warn('No se encontró ID para el tour con tkId:', tkId);
           }
         }),
         catchError(error => {

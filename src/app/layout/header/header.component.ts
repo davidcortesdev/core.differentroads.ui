@@ -18,6 +18,7 @@ import {
   debounceTime,
   distinctUntilChanged,
 } from 'rxjs';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-header',
@@ -56,7 +57,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private authService: AuthenticateService,
     private usersService: UsersService,
     private elementRef: ElementRef,
-    private renderer: Renderer2
+    private renderer: Renderer2,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -265,6 +267,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
       routerLink: item['custom-link']
         ? this.createLink(item['custom-link'], item.subtype || '')
         : undefined,
+        command: () => {
+          if (item['custom-link']) {
+            this.navigateTo(item['custom-link'], item.subtype || '');
+          }
+        },
       items: item['link-menu']
         ? this.mapLinkMenuToItems(item['link-menu'])
         : undefined,
@@ -336,5 +343,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
             },
           });
       });
+  }
+
+  private navigateTo(slug: string, type: string): void {
+    const route = this.createLink(slug, type);
+    if (route) {
+      this.router.navigate([route]).then(() => {
+        console.log(`Navigated to ${route}`);
+      }).catch((error) => {
+        console.error('Navigation error:', error);
+      });
+    }
   }
 }

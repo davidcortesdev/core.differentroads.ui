@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
 import { catchError } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { ToursService } from '../../../core/services/tours.service';
@@ -22,7 +22,7 @@ interface ITour {
   templateUrl: './tours.component.html',
   styleUrl: './tours.component.scss',
 })
-export class ToursComponent implements OnInit {
+export class ToursComponent implements OnInit, OnChanges {
   // Inputs from ContentPageComponent
   @Input() initialTags: string[] = [];
   @Input() showTours: boolean = true;
@@ -122,6 +122,17 @@ export class ToursComponent implements OnInit {
 
       this.loadTours();
     });
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Verificar si initialTags ha cambiado
+    if (changes['initialTags'] && !changes['initialTags'].firstChange) {
+      // Actualizar selectedTagOption con los nuevos tags
+      this.selectedTagOption = [...this.initialTags];
+      
+      // Recargar los tours con los nuevos filtros
+      this.loadTours();
+    }
   }
 
   loadTours() {

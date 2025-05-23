@@ -37,7 +37,6 @@ export class TourItineraryPanelComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    console.log('event:', this.event);
-    console.log('index:', this.index);
+
   }
 }

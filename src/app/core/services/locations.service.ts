@@ -158,7 +158,7 @@ export class LocationsService {
   constructor(private http: HttpClient) {}
 
   // Métodos para Countries
-  getCountries(filters?: ICountryFilters): Observable<ILocationCountryResponse[]> {
+  getCountries(filters?: ICountryFilters, useExactMatchForStrings: boolean = false): Observable<ILocationCountryResponse[]> {
     let params = new HttpParams();
     
     if (filters) {
@@ -167,6 +167,8 @@ export class LocationsService {
       if (filters.code) params = params.set('Code', filters.code);
       if (filters.continent) params = params.set('Continent', filters.continent);
     }
+
+    params = params.set('UseExactMatchForStrings', useExactMatchForStrings.toString());
     
     return this.http.get<ILocationCountryResponse[]>(`${this.API_URL}/LocationCountry`, { params });
   }
@@ -188,7 +190,7 @@ export class LocationsService {
   }
 
   // Métodos para Cities
-  getCities(filters?: ICityFilters): Observable<ILocationCityResponse[]> {
+  getCities(filters?: ICityFilters, useExactMatchForStrings: boolean = false): Observable<ILocationCityResponse[]> {
     let params = new HttpParams();
     
     if (filters) {
@@ -197,6 +199,8 @@ export class LocationsService {
       if (filters.code) params = params.set('Code', filters.code);
       if (filters.countryId) params = params.set('CountryId', filters.countryId.toString());
     }
+    
+    params = params.set('UseExactMatchForStrings', useExactMatchForStrings.toString());
     
     return this.http.get<ILocationCityResponse[]>(`${this.API_URL}/LocationCity`, { params });
   }

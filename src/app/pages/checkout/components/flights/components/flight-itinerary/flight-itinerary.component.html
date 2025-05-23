@@ -79,7 +79,8 @@
                        alt="Airline"
                        pTooltip="{{getAirlineNamesByFlightNumbers([{flightNumber: item.flightNumber}])}}"
                        tooltipPosition="top"
-                       onerror="this.style.display='none'" />
+                       onerror="this.style.display='none'" 
+                       loading="lazy"/>
                  
                 </span>
                 <span *ngIf="item.type === 'arrival'">
@@ -107,7 +108,8 @@
                        alt="Airline"
                        pTooltip="{{getAirlineNamesByFlightNumbers([{flightNumber: item.flightNumber}])}}"
                        tooltipPosition="top"
-                       onerror="this.style.display='none'" />
+                       onerror="this.style.display='none'" 
+                       loading="lazy"/>
                 
                 </span>
               </ng-template>

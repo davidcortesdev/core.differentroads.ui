@@ -16,7 +16,10 @@ import { Flight } from '../../core/models/tours/flight.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BookingsService } from '../../core/services/bookings.service';
 import { BookingCreateInput } from '../../core/models/bookings/booking.model';
-import { Period } from '../../core/models/tours/period.model';
+import {
+  Period,
+  ReservationFieldMandatory,
+} from '../../core/models/tours/period.model';
 import { InsurancesService } from '../../core/services/checkout/insurances.service';
 import { Insurance } from '../../core/models/tours/insurance.model';
 import { PaymentOptionsService } from '../../core/services/checkout/paymentOptions.service';
@@ -126,7 +129,12 @@ export class CheckoutComponent implements OnInit {
   // Add a new property to control the login modal visibility in checkout
   loginDialogVisible: boolean = false;
 
-  reservationFields: { id: number; name: string; key: string }[] = [];
+  reservationFields: {
+    id: number;
+    name: string;
+    key: string;
+    mandatory: ReservationFieldMandatory;
+  }[] = [];
 
   constructor(
     private ordersService: OrdersService,

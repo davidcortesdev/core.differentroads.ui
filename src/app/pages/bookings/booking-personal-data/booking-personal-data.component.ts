@@ -1,7 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { PassengerData } from '../passengerData';
-
+import { PeriodsService } from '../../../core/services/periods.service';
+import { ReservationFieldMandatory } from '../../../core/models/tours/period.model';
 
 @Component({
   selector: 'app-booking-personal-data',
@@ -12,13 +13,48 @@ import { PassengerData } from '../passengerData';
 export class BookingPersonalDataComponent implements OnInit {
   @Input() passengers: PassengerData[] = [];
   @Input() bookingId!: string;
+  @Input() periodId!: string;
 
   // Número máximo de pasajeros por fila
   maxPassengersPerRow: number = 3;
 
-  constructor(private fb: FormBuilder) {}
+  // Array para almacenar los campos de reserva
+  reservationFields: {
+    id: number;
+    name: string;
+    key: string;
+    mandatory: ReservationFieldMandatory;
+  }[] = [];
 
-  ngOnInit(): void {}
+  constructor(
+    private fb: FormBuilder,
+    private periodsService: PeriodsService
+  ) {}
+
+  ngOnInit(): void {
+    if (this.periodId) {
+      this.getReservationFields();
+    }
+  }
+
+  /**
+   * Obtiene los campos de reserva del período
+   */
+  getReservationFields(): void {
+    this.periodsService
+      .getPeriodDetail(this.periodId, ['reservationFields'])
+      .subscribe({
+        next: (period) => {
+          if (period && period.reservationFields) {
+            this.reservationFields = period.reservationFields;
+            console.log('Reservation fields loaded:', this.reservationFields);
+          }
+        },
+        error: (error) => {
+          console.error('Error loading reservation fields:', error);
+        },
+      });
+  }
 
   /**
    * Devuelve pasajeros agrupados en filas de 3
@@ -71,7 +107,9 @@ export class BookingPersonalDataComponent implements OnInit {
    * Actualiza los datos del pasajero
    */
   updatePassenger(updatedPassenger: PassengerData): void {
-    const index = this.passengers.findIndex(p => p._id === updatedPassenger._id);
+    const index = this.passengers.findIndex(
+      (p) => p._id === updatedPassenger._id
+    );
     if (index !== -1) {
       this.passengers[index] = updatedPassenger;
     }

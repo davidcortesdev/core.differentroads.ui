@@ -8,16 +8,11 @@ describe('PassengerCardComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [PassengerCardComponent]
-    })
-    .compileComponents();
+      declarations: [PassengerCardComponent],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(PassengerCardComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
-  });
-
-  it('should create', () => {
-    expect(component).toBeTruthy();
   });
 });

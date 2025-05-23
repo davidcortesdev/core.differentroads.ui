@@ -12,6 +12,7 @@ import { TravelersService } from '../../../../core/services/checkout/travelers.s
 import { MessageService } from 'primeng/api';
 import { formatDate } from '@angular/common';
 import { TravelerItemComponent } from '../traveler-item/traveler-item.component';
+import { ReservationFieldMandatory } from '../../../../core/models/tours/period.model';
 
 interface Traveler {
   firstName: string;
@@ -50,7 +51,12 @@ export class TravelersComponent implements OnInit {
   @ViewChildren(TravelerItemComponent)
   travelerItems!: QueryList<TravelerItemComponent>;
   @Input() allFieldsMandatory: boolean = false;
-  @Input() reservationFields: { id: number; name: string; key: string }[] = [];
+  @Input() reservationFields: {
+    id: number;
+    name: string;
+    key: string;
+    mandatory: ReservationFieldMandatory;
+  }[] = [];
   @Input() isAmadeusFlightSelected: boolean = false;
 
   // Se agrega la propiedad 'sexoOptions' para el select de sexo

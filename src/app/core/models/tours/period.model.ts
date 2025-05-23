@@ -4,7 +4,12 @@ import { ReservationMode } from './reservation-mode.model';
 import { Flight } from './flight.model';
 import { CMSCollections } from '../commons/cms-collections.model';
 import { PeriodHotel } from './tour.model';
-
+ 
+export enum ReservationFieldMandatory {
+  ALL = 'ALL',
+  LEAD = 'LEAD',
+  NONE = 'NONE',
+}
 export interface Period extends CMSCollections {
   dayOne: string;
   externalID: string;
@@ -34,6 +39,7 @@ export interface Period extends CMSCollections {
       id: number;
       name: string;
       key: string;
+      mandatory: ReservationFieldMandatory;
     }
   ];
 }

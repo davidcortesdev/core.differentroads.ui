@@ -18,6 +18,7 @@ import { ReservationComponent } from './pages/reservation/reservation.component'
 import { BookingsComponent } from './pages/bookings/bookings.component';
 import { PaymentsComponent } from './pages/payments/payments.component';
 import { AirportSearchComponent } from './features/airports/airport-search/airport-search.component';
+import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
 
 const routes: Routes = [
   {
@@ -35,6 +36,8 @@ const routes: Routes = [
       { path: 'tours', component: ToursComponent },
       { path: 'tour/:slug', component: TourComponent },
       { path: 'pages/:slug', component: BasicPageComponent },
+      // Nueva ruta para previsualización
+      { path: 'preview/pages', component: BasicPagePreviewComponent },
       { path: 'checkout', component: CheckoutComponent },
       { path: 'checkout/:id', component: CheckoutComponent },
       { path: 'payment/:id', component: PaymentsComponent },

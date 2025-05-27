@@ -210,6 +210,7 @@ import { TourCardHeaderComponent } from './shared/components/tour-card/tour-card
 import { TourCardContentComponent } from './shared/components/tour-card/tour-card-content/tour-card-content.component';
 import { CookiesComponent } from './shared/components/cookies/cookies.component';
 import { CookiesConsentComponent } from './shared/components/cookies-consent/cookies-consent.component';
+import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -321,6 +322,7 @@ registerLocaleData(localeEs);
     TourCardHeaderComponent,
     TourCardContentComponent,    CookiesComponent,
     CookiesConsentComponent,
+    BasicPagePreviewComponent,
   ],
   imports: [
     // Angular Modules

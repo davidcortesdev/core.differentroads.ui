@@ -1,0 +1,28 @@
+.preview-banner {
+  background-color: #f05a4c;
+  color: white;
+  padding: 10px 20px;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  
+  .preview-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    
+    span {
+      font-weight: bold;
+    }
+  }
+}
+
+.error-message {
+  text-align: center;
+  padding: 2rem;
+  color: #f05a4c;
+  font-weight: bold;
+}

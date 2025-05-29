@@ -1,0 +1,28 @@
+<div class="tour-v2-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading">
+    <p>Cargando información del tour...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error">
+    <p>{{ error }}</p>
+  </div>
+
+  <!-- Tour Content -->
+  <div *ngIf="!loading && !error && tour" class="tour-content">
+    <h1>Tour V2</h1>
+    <div class="tour-info">
+      <h2>Información del Tour</h2>
+      <p><strong>ID:</strong> {{ tour.id }}</p>
+      <p><strong>Código:</strong> {{ tour.code }}</p>
+      <p><strong>Nombre:</strong> {{ tour.name }}</p>
+      <p *ngIf="tour.description"><strong>Descripción:</strong> {{ tour.description }}</p>
+      <p *ngIf="tour.tkId"><strong>TK ID:</strong> {{ tour.tkId }}</p>
+      <p><strong>Slug:</strong> {{ tour.slug }}</p>
+    </div>
+    
+    <!-- TODO: Add more tour details here -->
+    <app-tour-overview-v2 [tourId]="tour.id"></app-tour-overview-v2>
+  </div>
+</div>

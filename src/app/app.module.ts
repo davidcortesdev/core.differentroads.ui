@@ -211,6 +211,8 @@ import { TourCardContentComponent } from './shared/components/tour-card/tour-car
 import { CookiesComponent } from './shared/components/cookies/cookies.component';
 import { CookiesConsentComponent } from './shared/components/cookies-consent/cookies-consent.component';
 import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
+import { TourV2Component } from './pages/tour-v2/tour-v2.component';
+import { TourOverviewV2Component } from './pages/tour-v2/components/tour-overview-v2/tour-overview-v2.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -323,6 +325,9 @@ registerLocaleData(localeEs);
     TourCardContentComponent,    CookiesComponent,
     CookiesConsentComponent,
     BasicPagePreviewComponent,
+
+    TourV2Component,
+    TourOverviewV2Component
   ],
   imports: [
     // Angular Modules

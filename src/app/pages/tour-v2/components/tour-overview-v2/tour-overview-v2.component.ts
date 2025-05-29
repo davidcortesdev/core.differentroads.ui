@@ -3,8 +3,32 @@ import { MenuItem } from 'primeng/api';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TourNetService } from '../../../../core/services/tourNet.service';
 import { CMSTourService, ICMSTourResponse } from '../../../../core/services/cms/cms-tour.service';
-import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { CMSCreatorService } from '../../../../core/services/cms/cms-creator.service';
+import { forkJoin, of, Observable } from 'rxjs';
+import { catchError, switchMap, map } from 'rxjs/operators';
+
+interface TourData {
+  id?: number;
+  name?: string;
+  [key: string]: any;
+}
+
+interface CMSTourData {
+  creatorId?: number;
+  creatorComments?: string;
+  imageUrl?: string;
+  imageAlt?: string;
+  [key: string]: any;
+}
+
+interface CreatorData {
+  id?: number;
+  name?: string;
+  description?: string;
+  imageUrl?: string;
+  imageAlt?: string;
+  [key: string]: any;
+}
 
 @Component({
   selector: 'app-tour-overview-v2',
@@ -37,7 +61,8 @@ export class TourOverviewV2Component implements OnInit {
   constructor(
     private sanitizer: DomSanitizer,
     private tourNetService: TourNetService,
-    private cmsTourService: CMSTourService
+    private cmsTourService: CMSTourService,
+    private cmsCreatorService: CMSCreatorService
   ) {}
 
   ngOnInit(): void {
@@ -47,24 +72,50 @@ export class TourOverviewV2Component implements OnInit {
   }
 
   private loadTour(id: number): void {
-    // Fetch both tour data and CMS data in parallel
+    // First, fetch tour data and CMS tour data in parallel
     forkJoin([
       this.tourNetService.getTourById(id).pipe(
         catchError(error => {
           console.error('Error loading tour data:', error);
           return of(null);
         })
-      ),
+      ) as Observable<TourData | null>,
       this.cmsTourService.getAllTours({ tourId: id }).pipe(
         catchError(error => {
           console.error('Error loading CMS tour data:', error);
           return of([]);
         })
-      )
-    ]).subscribe(([tourData, cmsTourData]) => {
-      // Get the first CMS tour data (if any)
-      const cmsTour = Array.isArray(cmsTourData) && cmsTourData.length > 0 ? cmsTourData[0] : null;
-      
+      ) as Observable<CMSTourData[]>
+    ]).pipe(
+      // Once we have the initial data, fetch creator information if available
+      switchMap(([tourData, cmsTourData]) => {
+        const cmsTour: CMSTourData | null = Array.isArray(cmsTourData) && cmsTourData.length > 0 ? cmsTourData[0] : null;
+        const creatorId = cmsTour?.creatorId;
+        
+        // If we have a creator ID, fetch creator details
+        if (creatorId) {
+          return (this.cmsCreatorService.getById(creatorId) as Observable<CreatorData>).pipe(
+            catchError(error => {
+              console.error('Error loading creator data:', error);
+              // Return null for creator if there's an error
+              return of(null);
+            }),
+            map((creator: CreatorData | null) => ({
+              tourData,
+              cmsTour,
+              creator
+            }))
+          );
+        }
+        
+        // If no creator ID, just return the data we have
+        return of({
+          tourData,
+          cmsTour,
+          creator: null as CreatorData | null
+        });
+      })
+    ).subscribe(({ tourData, cmsTour, creator }: { tourData: TourData | null; cmsTour: CMSTourData | null; creator: CreatorData | null }) => {
       // Merge all data sources
       this.tour = {
         ...this.tour, // Default values
@@ -77,9 +128,16 @@ export class TourOverviewV2Component implements OnInit {
           }],
           expert: {
             ...this.tour.expert,
+            // Use creator data if available, otherwise fall back to CMS tour data or defaults
+            name: creator?.name || this.tour.expert.name,
+            charge: creator?.description || this.tour.expert.charge,
             opinion: cmsTour.creatorComments || this.tour.expert.opinion,
-            // Add creator ID to expert object if needed
-            creatorId: cmsTour.creatorId
+            creatorId: cmsTour.creatorId,
+            // Use creator image if available, otherwise use default
+            ephoto: creator?.imageUrl ? [{
+              url: creator.imageUrl,
+              alt: creator.imageAlt || 'Creator Image'
+            }] : this.tour.expert.ephoto
           }
         } : {}),
         // Keep the example cities and tags

@@ -2,6 +2,9 @@ import { Component, Input, OnInit } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TourNetService } from '../../../../core/services/tourNet.service';
+import { CMSTourService, ICMSTourResponse } from '../../../../core/services/cms/cms-tour.service';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-tour-overview-v2',
@@ -25,14 +28,16 @@ export class TourOverviewV2Component implements OnInit {
       name: 'Expert Name',
       charge: 'Travel Expert',
       opinion: 'This is a sample expert opinion about the tour.',
-      ephoto: [{ url: 'assets/images/placeholder-avatar.png' }]
+      ephoto: [{ url: 'assets/images/placeholder-avatar.png' }],
+      creatorId: undefined
     },
     image: [{ url: 'assets/images/placeholder-tour.jpg', alt: 'Tour Image' }]
   };
 
   constructor(
     private sanitizer: DomSanitizer,
-    private tourNetService: TourNetService
+    private tourNetService: TourNetService,
+    private cmsTourService: CMSTourService
   ) {}
 
   ngOnInit(): void {
@@ -42,20 +47,45 @@ export class TourOverviewV2Component implements OnInit {
   }
 
   private loadTour(id: number): void {
-    this.tourNetService.getTourById(id).subscribe({
-      next: (tourData) => {
-        this.tour = {
-          ...this.tour, // Keep default values
-          ...tourData,  // Override with API data
-          // Map API fields to expected format if needed
-          cities: ['Ejemplo','Ejemplo2'], //TODO:Example mapping, adjust as needed
-          vtags: ['Tag1','Tag2']   //TODO:Example mapping, adjust as needed
-        };
-      },
-      error: (error) => {
-        console.error('Error loading tour:', error);
-        // Keep the default tour data on error
-      }
+    // Fetch both tour data and CMS data in parallel
+    forkJoin([
+      this.tourNetService.getTourById(id).pipe(
+        catchError(error => {
+          console.error('Error loading tour data:', error);
+          return of(null);
+        })
+      ),
+      this.cmsTourService.getAllTours({ tourId: id }).pipe(
+        catchError(error => {
+          console.error('Error loading CMS tour data:', error);
+          return of([]);
+        })
+      )
+    ]).subscribe(([tourData, cmsTourData]) => {
+      // Get the first CMS tour data (if any)
+      const cmsTour = Array.isArray(cmsTourData) && cmsTourData.length > 0 ? cmsTourData[0] : null;
+      
+      // Merge all data sources
+      this.tour = {
+        ...this.tour, // Default values
+        ...tourData,  // Tour data from TourNetService
+        // Map CMS data if available
+        ...(cmsTour ? {
+          image: [{
+            url: cmsTour.imageUrl || '',
+            alt: cmsTour.imageAlt || 'Tour Image'
+          }],
+          expert: {
+            ...this.tour.expert,
+            opinion: cmsTour.creatorComments || this.tour.expert.opinion,
+            // Add creator ID to expert object if needed
+            creatorId: cmsTour.creatorId
+          }
+        } : {}),
+        // Keep the example cities and tags
+        cities: ['Ejemplo', 'Ejemplo2'], //TODO: Replace with actual data as needed
+        vtags: ['Tag1', 'Tag2']   //TODO: Replace with actual data as needed
+      };
     });
   }
 

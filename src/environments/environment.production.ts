@@ -23,7 +23,7 @@ export const environment = {
   },
 
   reviewsApiUrl: 'https://reviews.differentroads.es/api',
-  tourApiUrl: 'https://tour.differentroads.es/api',
+  toursApiUrl: 'https://tour.differentroads.es/api',
   travelersApiUrl: 'https://travelers.differentroads.es/api',
   hotelsApiUrl: 'https://hotels.differentroads.es/api',
   locationsApiUrl: 'https://locations.differentroads.es/api',

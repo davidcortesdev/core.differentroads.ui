@@ -6,8 +6,7 @@ import { catchError, of } from 'rxjs';
 
 @Component({
   selector: 'app-tour-v2',
-  standalone: true,
-  imports: [CommonModule],
+  standalone: false,
   templateUrl: './tour-v2.component.html',
   styleUrls: ['./tour-v2.component.scss']
 })

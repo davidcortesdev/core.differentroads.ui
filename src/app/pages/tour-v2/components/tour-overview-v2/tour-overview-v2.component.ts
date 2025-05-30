@@ -141,7 +141,7 @@ export class TourOverviewV2Component implements OnInit {
           }
         } : {}),
         // Keep the example cities and tags
-        cities: ['Ejemplo', 'Ejemplo2'], //TODO: Replace with actual data as needed
+        cities: ['Ejemplo', 'Ejemplo2'], //TODO: Ajustar para llamar a este metodo getByTourAndType
         vtags: ['Tag1', 'Tag2']   //TODO: Replace with actual data as needed
       };
     });

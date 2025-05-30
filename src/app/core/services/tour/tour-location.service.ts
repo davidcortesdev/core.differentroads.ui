@@ -44,6 +44,16 @@ export class TourLocationService {
     return this.http.get<ITourLocationResponse>(`${this.API_URL}/${id}`);
   }
 
+  /**
+   * Obtiene relaciones tour-localización por ID del tour y código de tipo de relación.
+   * @param tourId ID del tour
+   * @param typeCode Código del tipo de relación
+   * @returns Lista de relaciones tour-localización
+   */
+  getByTourAndType(tourId: number, typeCode: string): Observable<ITourLocationResponse> {
+    return this.http.get<ITourLocationResponse>(`${this.API_URL}/bytourandtype/${tourId}/${typeCode}`);
+  }
+
   create(data: TourLocationCreate): Observable<ITourLocationResponse> {
     return this.http.post<ITourLocationResponse>(this.API_URL, data, {
       headers: new HttpHeaders({ 'Content-Type': 'application/json' }),

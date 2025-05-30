@@ -2,7 +2,43 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, catchError, map, of } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { Location, LocationType, LocationRelationship, LocationRelationshipType } from '../../models/location/location.model';
+
+export interface Location {
+  id: number;
+  code: string;
+  name: string;
+  description?: string;
+  tkId?: string;
+  latitude: number;
+  longitude: number;
+  locationTypeId: number;
+}
+
+export interface LocationType {
+  id: number;
+  name: string;
+  isActive: boolean;
+  tkId?: string;
+}
+
+// CORREGIDO: Quité locationTypeId y agregué isActive
+export interface LocationRelationship {
+  id: number;
+  relationshipTypeId: number;
+  parentLocationId: number;
+  childLocationId: number;
+  isActive: boolean; // Esta propiedad faltaba
+}
+
+export interface LocationRelationshipType {
+  id: number;
+  code: string;
+  description: string;
+  name: string;
+  isActive: boolean;
+  parentLocationTypeId: number;
+  childLocationTypeId: number;
+}
 
 @Injectable({
   providedIn: 'root'

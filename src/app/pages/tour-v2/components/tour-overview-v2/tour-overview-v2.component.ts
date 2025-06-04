@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TourNetService } from '../../../../core/services/tourNet.service';
@@ -52,7 +53,6 @@ interface ProcessedLocation {
 export class TourOverviewV2Component implements OnInit {
   @Input() tourId: number | undefined;
   
-  // ✅ SOLUCION 1: Controlar correctamente el estado de carga
   loading = true;
   
   // Propiedades para manejar las ubicaciones
@@ -84,6 +84,7 @@ export class TourOverviewV2Component implements OnInit {
   };
 
   constructor(
+    private router: Router,
     private sanitizer: DomSanitizer,
     private tourNetService: TourNetService,
     private cmsTourService: CMSTourService,
@@ -98,22 +99,17 @@ export class TourOverviewV2Component implements OnInit {
       this.loadTour(this.tourId);
     } else {
       console.warn('⚠️ No se proporcionó tourId');
-      // ✅ SOLUCION: Establecer loading false si no hay tourId
       this.loading = false;
     }
   }
 
   private loadTour(id: number): void {
     this.loading = true;
-    
-    // ✅ OPTIMIZACION 1: Cargar datos esenciales primero
     this.loadEssentialData(id);
   }
 
   private loadEssentialData(id: number): void {
-    // ✅ OPTIMIZACION 2: Dividir la carga en dos fases para mostrar contenido más rápido
-    
-    // FASE 1: Cargar solo datos esenciales del tour
+    // FASE 1: Cargar datos esenciales del tour
     forkJoin([
       this.tourNetService.getTourById(id).pipe(
         catchError(error => {
@@ -129,15 +125,11 @@ export class TourOverviewV2Component implements OnInit {
         })
       ) as Observable<CMSTourData[]>
     ]).pipe(
-      // ✅ SOLUCION 2: Usar finalize para asegurar que loading se establezca en false
       finalize(() => {
-        console.log('🔄 Finalizando carga esencial');
-        this.loading = false; // ✅ CRITICO: Establecer loading false aquí
+        this.loading = false;
       })
     ).subscribe(([tourData, cmsTourData]) => {
-      
-      console.log('📊 Datos esenciales cargados:', { tourData, cmsTourData });
-      
+            
       // Aplicar datos básicos inmediatamente
       this.applyBasicTourData(tourData, cmsTourData);
       
@@ -149,7 +141,6 @@ export class TourOverviewV2Component implements OnInit {
   private applyBasicTourData(tourData: TourData | null, cmsTourData: CMSTourData[]): void {
     const cmsTour: CMSTourData | null = Array.isArray(cmsTourData) && cmsTourData.length > 0 ? cmsTourData[0] : null;
     
-    // ✅ OPTIMIZACION 3: Aplicar datos básicos inmediatamente para mostrar contenido
     this.tour = {
       ...this.tour,
       ...tourData,
@@ -172,15 +163,14 @@ export class TourOverviewV2Component implements OnInit {
       } : {})
     };
     
-    console.log('✅ Datos básicos aplicados al tour');
   }
 
   private loadAdditionalData(id: number, cmsTourData: CMSTourData[]): void {
     const cmsTour: CMSTourData | null = Array.isArray(cmsTourData) && cmsTourData.length > 0 ? cmsTourData[0] : null;
     
-    // ✅ OPTIMIZACION 4: Cargar datos adicionales en paralelo sin bloquear la UI
+    // 🚀 OPTIMIZACIÓN: Cargar solo los datos que necesitamos en paralelo
     forkJoin([
-      // Ubicaciones del tour
+      // Ubicaciones del tour - filtrar directamente
       this.tourLocationService.getAll().pipe(
         map(allLocations => allLocations.filter(location => location.tourId === id)),
         catchError(error => {
@@ -189,7 +179,7 @@ export class TourOverviewV2Component implements OnInit {
         })
       ) as Observable<ITourLocationResponse[]>,
       
-      // Tipos de ubicaciones de tour  
+      // Tipos de ubicaciones - cache
       this.tourLocationTypeService.getAll().pipe(
         catchError(error => {
           console.error('❌ Error loading tour location types:', error);
@@ -197,7 +187,7 @@ export class TourOverviewV2Component implements OnInit {
         })
       ) as Observable<ITourLocationTypeResponse[]>,
       
-      // Todas las ubicaciones
+      // Ubicaciones - cache
       this.locationNetService.getLocations().pipe(
         catchError(error => {
           console.error('❌ Error loading locations:', error);
@@ -208,6 +198,9 @@ export class TourOverviewV2Component implements OnInit {
       switchMap(([tourLocations, locationTypes, allLocations]) => {
         // Procesar ubicaciones
         this.processLocationsWithDetails(tourLocations, locationTypes, allLocations);
+        
+        // Cargar país y continente
+        this.loadCountryAndContinent(id, tourLocations, locationTypes, allLocations);
         
         const creatorId = cmsTour?.creatorId;
         
@@ -224,10 +217,8 @@ export class TourOverviewV2Component implements OnInit {
         return of(null as CreatorData | null);
       })
     ).subscribe((creator: CreatorData | null) => {
-      
-      console.log('📊 Datos adicionales cargados:', { creator });
-      
-      // ✅ Actualizar tour con datos completos
+            
+      // Actualizar tour con datos completos
       this.tour = {
         ...this.tour,
         
@@ -246,13 +237,80 @@ export class TourOverviewV2Component implements OnInit {
         cities: this.headerLocations.length > 0 ? this.headerLocations : this.cities,
         vtags: this.tags
       };
-      
-      console.log('✅ Tour completamente cargado:', this.tour);
     });
   }
 
   /**
-   * ✅ OPTIMIZACION 5: Procesar ubicaciones de forma más eficiente
+   * 🚀 OPTIMIZACIÓN: Procesar país y continente usando datos ya cargados
+   */
+  private loadCountryAndContinent(
+    tourId: number, 
+    tourLocations: ITourLocationResponse[],
+    locationTypes: ITourLocationTypeResponse[], 
+    allLocations: Location[]
+  ): void {
+    
+    // Buscar tipos que podrían ser país o continente
+    const countryTypeId = this.findLocationTypeId(locationTypes, ['país', 'country', 'pais']);
+    const continentTypeId = this.findLocationTypeId(locationTypes, ['continente', 'continent']);
+        
+    if (countryTypeId || continentTypeId) {
+      // 🚀 OPTIMIZACIÓN: Filtrar en memoria en lugar de hacer otra llamada HTTP
+      const geographicTourLocations = tourLocations.filter(location => 
+        location.tourLocationTypeId === countryTypeId || location.tourLocationTypeId === continentTypeId
+      );
+            
+      // Mapear las ubicaciones para obtener nombres
+      const locationsMap = new Map<number, Location>();
+      allLocations.forEach(location => {
+        locationsMap.set(location.id, location);
+      });
+      
+      const countries: string[] = [];
+      const continents: string[] = [];
+      
+      // Ordenar por displayOrder para mantener el orden correcto
+      const sortedGeographicLocations = geographicTourLocations.sort((a, b) => a.displayOrder - b.displayOrder);
+      
+      sortedGeographicLocations.forEach(tourLocation => {
+        const location = locationsMap.get(tourLocation.locationId);
+        if (location) {
+          if (tourLocation.tourLocationTypeId === countryTypeId) {
+            countries.push(location.name);
+          } else if (tourLocation.tourLocationTypeId === continentTypeId) {
+            continents.push(location.name);
+          }
+        }
+      });
+      
+      // Unir múltiples países/continentes con comas
+      this.tour.country = countries.join(', ');
+      this.tour.continent = continents.join(', ');
+      
+    } else {
+      console.warn('⚠️ No se encontraron tipos de ubicación para país o continente');
+    }
+  }
+
+  /**
+   * Buscar ID de tipo de ubicación por nombres posibles
+   */
+  private findLocationTypeId(locationTypes: ITourLocationTypeResponse[], possibleNames: string[]): number | null {
+    for (const type of locationTypes) {
+      if (type.name) {
+        const typeName = type.name.toLowerCase();
+        for (const possibleName of possibleNames) {
+          if (typeName.includes(possibleName.toLowerCase())) {
+            return type.id;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * 🚀 OPTIMIZACIÓN: Procesar ubicaciones de forma más eficiente
    */
   private processLocationsWithDetails(
     tourLocations: ITourLocationResponse[],
@@ -268,7 +326,7 @@ export class TourOverviewV2Component implements OnInit {
     this.headerLocations = [];
     this.processedLocations = [];
     
-    // ✅ OPTIMIZACION: Usar Map para búsquedas O(1) en lugar de O(n)
+    // 🚀 OPTIMIZACIÓN: Usar Map para búsquedas O(1) en lugar de O(n)
     const locationTypesMap = new Map<number, ITourLocationTypeResponse>();
     locationTypes.forEach(type => {
       locationTypesMap.set(type.id, type);
@@ -279,7 +337,7 @@ export class TourOverviewV2Component implements OnInit {
       locationsMap.set(location.id, location);
     });
     
-    // Procesar ubicaciones
+    // 🚀 OPTIMIZACIÓN: Procesar ubicaciones en un solo bucle
     const mapLocationsList: { order: number; name: string }[] = [];
     const headerLocationsList: { order: number; name: string }[] = [];
     
@@ -312,7 +370,7 @@ export class TourOverviewV2Component implements OnInit {
       }
     });
     
-    // ✅ OPTIMIZACION: Ordenar una sola vez al final
+    // Ordenar una sola vez al final
     this.mapLocations = mapLocationsList
       .sort((a, b) => a.order - b.order)
       .map(item => item.name);
@@ -321,11 +379,6 @@ export class TourOverviewV2Component implements OnInit {
       .sort((a, b) => a.order - b.order)
       .map(item => item.name);
     
-    console.log('📍 Ubicaciones procesadas:', {
-      mapLocations: this.mapLocations,
-      headerLocations: this.headerLocations,
-      cities: this.cities
-    });
   }
 
   sanitizeHtml(html: string = ''): SafeHtml {
@@ -338,27 +391,105 @@ export class TourOverviewV2Component implements OnInit {
     })) || [];
   }
 
+  // Manejar clic en país específico
+  onCountryClick(event: MouseEvent, fullCountryText: string): void {
+    event.preventDefault();
+    
+    const clickedCountry = this.getClickedCountry(event, fullCountryText);
+    if (clickedCountry) {
+      // Navegar a la búsqueda con el país específico
+      this.router.navigate(['/tours'], {
+        queryParams: {
+          destination: clickedCountry
+        }
+      });
+    }
+  }
+
+  // Detectar qué país se clickeó basado en la posición del clic
+  private getClickedCountry(event: MouseEvent, fullText: string): string | null {
+    const target = event.target as HTMLElement;
+    const countries = fullText.split(',').map(c => c.trim()).filter(c => c);
+    
+    if (countries.length === 1) {
+      return countries[0];
+    }
+
+    // Obtener la posición del clic dentro del elemento
+    const rect = target.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const elementWidth = rect.width;
+    
+    // Crear un elemento temporal para medir el ancho de cada país
+    const tempElement = document.createElement('span');
+    tempElement.style.visibility = 'hidden';
+    tempElement.style.position = 'absolute';
+    tempElement.style.fontSize = window.getComputedStyle(target).fontSize;
+    tempElement.style.fontFamily = window.getComputedStyle(target).fontFamily;
+    document.body.appendChild(tempElement);
+    
+    let currentX = 0;
+    let clickedCountry: string | null = null;
+    
+    for (let i = 0; i < countries.length; i++) {
+      const country = countries[i];
+      const separator = i < countries.length - 1 ? ', ' : '';
+      const textToMeasure = country + separator;
+      
+      tempElement.textContent = textToMeasure;
+      const textWidth = tempElement.offsetWidth;
+      
+      if (clickX >= currentX && clickX <= currentX + textWidth) {
+        // Verificar si el clic está específicamente en el nombre del país (no en la coma)
+        tempElement.textContent = country;
+        const countryWidth = tempElement.offsetWidth;
+        
+        if (clickX <= currentX + countryWidth) {
+          clickedCountry = country;
+          break;
+        }
+      }
+      
+      currentX += textWidth;
+    }
+    
+    document.body.removeChild(tempElement);
+    return clickedCountry;
+  }
+
   get breadcrumbItems(): MenuItem[] {
-    return [
-      {
-        label: this.tour?.continent,
+    const items: MenuItem[] = [];
+    
+    if (this.tour?.continent) {
+      items.push({
+        label: this.tour.continent,
+        command: (event) => {
+          if (event.originalEvent) {
+            this.onCountryClick(event.originalEvent as MouseEvent, this.tour.continent);
+          }
+        },
         routerLink: ['/tours'],
-        queryParams: {
-          destination: typeof this.tour?.continent === 'string' 
-            ? this.tour.continent.trim() 
-            : this.tour?.continent || ''
-        }
-      },
-      {
-        label: this.tour?.country,
+        queryParams: { destination: this.tour.continent },
+        queryParamsHandling: 'merge'
+      });
+    }
+    
+    if (this.tour?.country) {
+      items.push({
+        label: this.tour.country,
+        command: (event) => {
+          if (event.originalEvent) {
+            this.onCountryClick(event.originalEvent as MouseEvent, this.tour.country);
+          }
+        },
         routerLink: ['/tours'],
-        queryParams: {
-          destination: typeof this.tour?.country === 'string' 
-            ? this.tour.country.trim() 
-            : this.tour?.country || ''
-        }
-      },
-      { label: this.tour?.name || 'Tour Details' }
-    ];
+        queryParams: { destination: this.tour.country },
+        queryParamsHandling: 'merge'
+      });
+    }
+    
+    items.push({ label: this.tour?.name || 'Tour Details' });
+    
+    return items;
   }
 }

@@ -1,34 +1,38 @@
 <div class="tour-header">
-    <!-- Tour Information Section -->
-    <div class="tour-info">
-      <h1>{{ tour.name || '' }}</h1>
-     
-    </div>
-  
-    <!-- Tour Actions Section -->
-    <div class="tour-actions">
-      <!-- Tour Details -->
-      <div class="tour-details">
-        <div class="detail-item" *ngIf="tour.code">
-          <span class="label">Código:</span>
-          <span class="value">{{ tour.code }}</span>
-        </div>
-        <div class="detail-item" *ngIf="tour.tkId">
-          <span class="label">TK ID:</span>
-          <span class="value">{{ tour.tkId }}</span>
-        </div>
-        <div class="detail-item" *ngIf="tour.slug">
-          <span class="label">Slug:</span>
-          <span class="value">{{ tour.slug }}</span>
-        </div>
-      </div>
-  
-      <!-- Booking Button -->
-      <div class="booking-container">
-        <p-button 
-          label="Reservar mi tour"
-          styleClass="p-button-rounded">
-        </p-button>
-      </div>
+  <!-- Tour Information Section -->
+  <div class="tour-info">
+    <h1>{{ tour.name || '' }}</h1>
+    
+    <!-- ✅ NUEVA SECCIÓN: Mostrar país debajo del nombre con evento de clic -->
+    <div class="tour-location" *ngIf="country">
+      <span class="country" (click)="onCountryClick($event, country)" style="cursor: pointer;">{{ country }}</span>
     </div>
   </div>
+     
+  <!-- Tour Actions Section -->
+  <div class="tour-actions">
+    <!-- Tour Details -->
+    <div class="tour-details">
+      <div class="detail-item" *ngIf="tour.code">
+        <span class="label">Código:</span>
+        <span class="value">{{ tour.code }}</span>
+      </div>
+      <div class="detail-item" *ngIf="tour.tkId">
+        <span class="label">TK ID:</span>
+        <span class="value">{{ tour.tkId }}</span>
+      </div>
+      <div class="detail-item" *ngIf="tour.slug">
+        <span class="label">Slug:</span>
+        <span class="value">{{ tour.slug }}</span>
+      </div>
+    </div>
+       
+    <!-- Booking Button -->
+    <div class="booking-container">
+      <p-button 
+        label="Reservar mi tour"
+        styleClass="p-button-rounded">
+      </p-button>
+    </div>
+  </div>
+</div>

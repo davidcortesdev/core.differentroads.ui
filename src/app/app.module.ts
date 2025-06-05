@@ -213,6 +213,7 @@ import { CookiesConsentComponent } from './shared/components/cookies-consent/coo
 import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
 import { TourV2Component } from './pages/tour-v2/tour-v2.component';
 import { TourOverviewV2Component } from './pages/tour-v2/components/tour-overview-v2/tour-overview-v2.component';
+import { TourHeaderV2Component } from './pages/tour-v2/components/tour-header-v2/tour-header-v2.component';
 import { TourItineraryV2Component } from './pages/tour-v2/components/tour-itinerary-v2/tour-itinerary-v2.component';
 import { TourMapV2Component } from './shared/components/tour-map-v2/tour-map-v2.component';
 // Register Spanish locale data
@@ -330,6 +331,7 @@ registerLocaleData(localeEs);
 
     TourV2Component,
     TourOverviewV2Component,
+    TourHeaderV2Component,
     TourItineraryV2Component,
     TourMapV2Component
   ],

@@ -11,20 +11,10 @@
  
   <!-- Tour Content -->
   <div *ngIf="!loading && !error && tour" class="tour-content">
-    <h1>Tour V2</h1>
-    <div class="tour-info">
-      <h2>Información del Tour</h2>
-      <p><strong>ID:</strong> {{ tour.id }}</p>
-      <p><strong>Código:</strong> {{ tour.code }}</p>
-      <p><strong>Nombre:</strong> {{ tour.name }}</p>
-      <p *ngIf="tour.description"><strong>Descripción:</strong> {{ tour.description }}</p>
-      <p *ngIf="tour.tkId"><strong>TK ID:</strong> {{ tour.tkId }}</p>
-      <p><strong>Slug:</strong> {{ tour.slug }}</p>
-    </div>
-       
+   
     <!-- Tour Overview Section -->
     <section class="tour-section tour-overview-section">
-      <h2>Resumen del Tour</h2>
+    <app-tour-header-v2 [tourId]="tour.id"></app-tour-header-v2>
       <app-tour-overview-v2 [tourId]="tour.id"></app-tour-overview-v2>
     </section>
 

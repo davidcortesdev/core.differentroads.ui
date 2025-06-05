@@ -1,6 +1,6 @@
 // CSS optimizado manteniendo responsive exacto del original
 .tour-overview {
-  margin: 0px 40px 0px 40px;
+  margin: 0px 30px 0px 30px;
 
   @media (max-width: 576px) {
     margin: 0px 20px 0px 20px;
@@ -11,7 +11,6 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 2rem;
-    margin-top: 2rem;
 
     @media (max-width: 991px) {
       grid-template-columns: 1fr;
@@ -280,7 +279,6 @@
 // Estilos para los skeletons
 :host ::ng-deep {
   .destinations-breadcrumb {
-    margin-bottom: 1.5rem;
     border: none;
     background: transparent;
   }

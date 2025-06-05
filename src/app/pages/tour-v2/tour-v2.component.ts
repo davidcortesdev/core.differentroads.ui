@@ -56,10 +56,5 @@ export class TourV2Component implements OnInit {
         }
         this.loading = false;
       });
-
-      //TODO: Quitar solo ejemplo
-      this.ItineraryService.getAll({ id: 335 }).subscribe(itineraries => {
-        console.log('itineraries', itineraries);
-      });
   }
 }

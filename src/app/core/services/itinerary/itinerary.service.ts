@@ -1,7 +1,22 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+
+/**
+ * Interfaz para los filtros disponibles en el método getAll.
+ */
+export interface ItineraryFilters {
+  id?: number;
+  code?: string;
+  name?: string;
+  description?: string;
+  tkId?: string;
+  tourId?: number;
+  isVisibleOnWeb?: boolean;
+  isBookable?: boolean;
+  itineraryStatusId?: number;
+}
 
 /**
  * Modelo para crear un itinerario.
@@ -56,10 +71,25 @@ export class ItineraryService {
 
   /**
    * Obtiene todos los itinerarios disponibles.
+   * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de itinerarios.
    */
-  getAll(): Observable<IItineraryResponse[]> {
-    return this.http.get<IItineraryResponse[]>(this.API_URL);
+  getAll(filter?: ItineraryFilters): Observable<IItineraryResponse[]> {
+    let params = new HttpParams();
+
+    // Add filter parameters if provided
+    if (filter) {
+      Object.entries(filter).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params = params.set(
+            key.charAt(0).toUpperCase() + key.slice(1),
+            value.toString()
+          );
+        }
+      });
+    }
+
+    return this.http.get<IItineraryResponse[]>(this.API_URL, { params });
   }
 
   /**

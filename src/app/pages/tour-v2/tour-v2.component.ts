@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { TourNetService, Tour } from '../../core/services/tourNet.service';
 import { catchError, of } from 'rxjs';
+import { ItineraryService } from '../../core/services/itinerary/itinerary.service';
 
 @Component({
   selector: 'app-tour-v2',
@@ -18,7 +19,8 @@ export class TourV2Component implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private tourNetService: TourNetService
+    private tourNetService: TourNetService,
+    private ItineraryService: ItineraryService
   ) {}
 
   ngOnInit(): void {
@@ -53,6 +55,11 @@ export class TourV2Component implements OnInit {
           this.error = 'No se encontró el tour solicitado';
         }
         this.loading = false;
+      });
+
+      //TODO: Quitar solo ejemplo
+      this.ItineraryService.getAll({ id: 335 }).subscribe(itineraries => {
+        console.log('itineraries', itineraries);
       });
   }
 }

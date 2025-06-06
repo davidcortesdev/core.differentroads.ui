@@ -74,10 +74,11 @@ export class ItineraryDayComponent implements OnInit {
   }
 
   /**
-   * 📅 MÉTODO PRINCIPAL: Cargar datos del itinerario usando solo tourId
+   * 📅 MÉTODO PRINCIPAL: Cargar datos del itinerario usando solo tourId (OPTIMIZADO)
    */
   private loadItineraryData(tourId: number): void {
-    this.loading = true;    
+    this.loading = true;
+    
     // Definir filtros para obtener itinerarios del tour con las condiciones requeridas
     const itineraryFilters: ItineraryFilters = {
       tourId: tourId,
@@ -85,61 +86,107 @@ export class ItineraryDayComponent implements OnInit {
       isBookable: true
     };
     
-    forkJoin([
-      // Cargar itinerarios del tour con filtros específicos
-      this.itineraryService.getAll(itineraryFilters).pipe(
-        map(itineraries => {
-          // Filtrar además por tkId no vacío si es necesario
-          const validItineraries = itineraries.filter(itinerary => 
-            itinerary.tkId && 
-            itinerary.tkId.trim() !== ''
-          );
-          
-          return validItineraries;
-        }),
+    // PASO 1: Primero obtenemos los itinerarios válidos del tour
+    this.itineraryService.getAll(itineraryFilters).pipe(
+      map(itineraries => {
+        // Filtrar además por tkId no vacío si es necesario
+        const validItineraries = itineraries.filter(itinerary => 
+          itinerary.tkId && 
+          itinerary.tkId.trim() !== ''
+        );
+        return validItineraries;
+      }),
+      catchError(error => {
+        console.error('❌ Error loading itineraries:', error);
+        return of([]);
+      })
+    ).subscribe(tourItineraries => {
+      
+      if (tourItineraries.length === 0) {
+        console.warn('⚠️ No se encontraron itinerarios válidos para el tour', tourId);
+        this.loading = false;
+        return;
+      }
+
+      // Obtener los IDs de los itinerarios válidos
+      const validItineraryIds = tourItineraries.map(itinerary => itinerary.id);
+      
+      // PASO 2: Ahora cargamos solo los días que pertenecen a estos itinerarios
+      this.loadItineraryDaysData(validItineraryIds);
+    });
+  }
+
+  /**
+   * 📋 MÉTODO AUXILIAR: Cargar días de itinerario filtrados por itineraryIds
+   */
+  private loadItineraryDaysData(itineraryIds: number[]): void {
+    // Crear observables para cada itineraryId y combinar los resultados
+    const itineraryDaysObservables = itineraryIds.map(itineraryId => 
+      this.itineraryDayService.getAll({ itineraryId }).pipe(
         catchError(error => {
-          console.error('❌ Error loading itineraries:', error);
+          console.error(`❌ Error loading days for itinerary ${itineraryId}:`, error);
           return of([]);
         })
-      ) as Observable<IItineraryResponse[]>,
+      )
+    );
+
+    // Primero cargar todos los días de itinerario
+    forkJoin(itineraryDaysObservables).pipe(
+      map(daysArrays => daysArrays.flat()), // Aplanar el array de arrays
+      catchError(error => {
+        console.error('❌ Error loading itinerary days:', error);
+        return of([]);
+      })
+    ).subscribe(filteredItineraryDays => {
       
-      // Cargar TODOS los días de itinerario
-      this.itineraryDayService.getAll().pipe(
+      // Ahora cargar el CMS usando los IDs de los días obtenidos
+      this.loadItineraryDaysCMS(filteredItineraryDays);
+    });
+  }
+
+  /**
+   * 📄 MÉTODO AUXILIAR: Cargar CMS de días usando itineraryDayId
+   */
+  private loadItineraryDaysCMS(itineraryDays: IItineraryDayResponse[]): void {
+    if (itineraryDays.length === 0) {
+      // No hay días, finalizar carga
+      this.itineraryDays = [];
+      this.itineraryDaysCMS = [];
+      this.processedDays = [];
+      this.itineraryItems = [];
+      this.loading = false;
+      return;
+    }
+
+    // Obtener los IDs de los días para filtrar el CMS
+    const dayIds = itineraryDays.map(day => day.id);
+    
+    // Crear observables para obtener CMS de cada día
+    const itineraryDaysCMSObservables = dayIds.map(dayId => 
+      this.itineraryDayCMSService.getAll({ itineraryDayId: dayId }).pipe(
         catchError(error => {
-          console.error('❌ Error loading itinerary days:', error);
+          console.error(`❌ Error loading CMS for day ${dayId}:`, error);
           return of([]);
         })
-      ) as Observable<IItineraryDayResponse[]>,
-      
-      // Cargar TODO el contenido CMS de los días
-      this.itineraryDayCMSService.getAll().pipe(
-        catchError(error => {
-          console.error('❌ Error loading itinerary days CMS:', error);
-          return of([]);
-        })
-      ) as Observable<IItineraryDayCMSResponse[]>
-      
-    ]).pipe(
+      )
+    );
+
+    // Combinar todas las llamadas de CMS
+    forkJoin(itineraryDaysCMSObservables).pipe(
+      map(cmsArrays => cmsArrays.flat()), // Aplanar el array de arrays
       finalize(() => {
         this.loading = false;
       })
-    ).subscribe(([tourItineraries, allItineraryDays, allItineraryDaysCMS]) => {
-
-      // Filtrar los días que pertenecen a los itinerarios válidos del tour
-      const validItineraryIds = tourItineraries.map(itinerary => itinerary.id);
-      const filteredItineraryDays = allItineraryDays.filter(day => 
-        validItineraryIds.includes(day.itineraryId)
-      );
-
-      // Almacenar los datos filtrados
-      this.itineraryDays = filteredItineraryDays;
-      this.itineraryDaysCMS = allItineraryDaysCMS;
+    ).subscribe(filteredItineraryDaysCMS => {
+      
+      // Almacenar los datos ya filtrados
+      this.itineraryDays = itineraryDays;
+      this.itineraryDaysCMS = filteredItineraryDaysCMS;
 
       // Procesar datos del itinerario
-      this.createDaysCMSMap(allItineraryDaysCMS);
+      this.createDaysCMSMap(filteredItineraryDaysCMS);
       this.processItineraryDays();
-      this.createItineraryItemsFromDays();
-      
+      this.createItineraryItemsFromDays();      
     });
   }
 
@@ -218,11 +265,9 @@ export class ItineraryDayComponent implements OnInit {
         additionalInfoTitle: cms?.additionalInfoTitle || undefined,
         additionalInfoContent: additionalInfoContent,
         hasAdditionalInfo: hasAdditionalInfo,
-        icon: 'pi-map-marker'
-         // Icono de ubicación para todos los días
+        icon: 'pi-map-marker' // Icono de ubicación para todos los días
       } as ItineraryItem;
     });
-    
   }
 
   // Métodos para manejar los paneles del timeline

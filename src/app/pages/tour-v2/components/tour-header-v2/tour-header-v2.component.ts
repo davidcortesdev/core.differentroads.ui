@@ -15,7 +15,7 @@ import { TourLocationService, ITourLocationResponse } from '../../../../core/ser
 import { TourLocationTypeService, ITourLocationTypeResponse } from '../../../../core/services/tour/tour-location-type.service';
 import { LocationNetService, Location } from '../../../../core/services/locations/locationNet.service';
 import { Subscription, forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 
 @Component({
@@ -46,7 +46,7 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
     private locationNetService: LocationNetService,
     private el: ElementRef,
     private renderer: Renderer2,
-    private router: Router // Agregar Router para la navegación
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -86,8 +86,8 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
 
           this.tour = { ...tourData };
 
-          // ✅ NUEVA FUNCIONALIDAD: Cargar país y continente
-          this.loadCountryAndContinent(tourId);
+          // ✅ NUEVA FUNCIONALIDAD OPTIMIZADA: Cargar país y continente
+          this.loadCountryAndContinentOptimized(tourId);
         },
         error: (error) => {
           console.error('❌ ======= ERROR CARGANDO TOUR =======');
@@ -99,9 +99,9 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
   }
 
   /**
-   * ✅ NUEVA FUNCIÓN: Obtener país y continente usando los servicios existentes
+   * ✅ FUNCIÓN OPTIMIZADA: Obtener país y continente sin cargar todas las ubicaciones
    */
-  private loadCountryAndContinent(tourId: number): void {
+  private loadCountryAndContinentOptimized(tourId: number): void {
     this.subscriptions.add(
       forkJoin([
         // Tipos de ubicaciones de tour  
@@ -112,67 +112,76 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
           })
         ),
         
-        // Todas las ubicaciones
-        this.locationNetService.getLocations().pipe(
+        // Todas las tour locations de este tour
+        this.tourLocationService.getAll().pipe(
+          map(allTourLocations => allTourLocations.filter(location => location.tourId === tourId)),
           catchError(error => {
-            console.error('❌ Error loading locations:', error);
+            console.error('❌ Error loading tour locations:', error);
             return of([]);
           })
         )
-      ]).subscribe(([locationTypes, allLocations]) => {
-        
+      ]).pipe(
+        switchMap(([locationTypes, tourLocations]) => {
+          
+          // Buscar tipos que podrían ser país o continente
+          const countryTypeId = this.findLocationTypeId(locationTypes, ['país', 'country', 'pais']);
+          const continentTypeId = this.findLocationTypeId(locationTypes, ['continente', 'continent']);
+                    
+          // Filtrar tour locations que sean país o continente
+          const geographicTourLocations = tourLocations.filter(location => 
+            location.tourLocationTypeId === countryTypeId || location.tourLocationTypeId === continentTypeId
+          );
+                    
+          if (geographicTourLocations.length === 0) {
+            console.warn('⚠️ No se encontraron ubicaciones geográficas para el tour');
+            return of({ locationTypes, tourLocations: geographicTourLocations, locations: [] });
+          }
+
+          // OPTIMIZACIÓN: Extraer solo los locationId que necesitamos
+          const locationIds = [...new Set(geographicTourLocations.map(tl => tl.locationId))];
+                    
+          // Cargar solo las ubicaciones específicas que necesitamos
+          return this.locationNetService.getLocationsByIds(locationIds).pipe(
+            map(locations => ({ locationTypes, tourLocations: geographicTourLocations, locations })),
+            catchError(error => {
+              console.error('❌ Error loading specific geographic locations:', error);
+              return of({ locationTypes, tourLocations: geographicTourLocations, locations: [] });
+            })
+          );
+        })
+      ).subscribe(({ locationTypes, tourLocations, locations }) => {
+
         // Buscar tipos que podrían ser país o continente
         const countryTypeId = this.findLocationTypeId(locationTypes, ['país', 'country', 'pais']);
         const continentTypeId = this.findLocationTypeId(locationTypes, ['continente', 'continent']);
-                
-        // Si encontramos los tipos, buscar las ubicaciones correspondientes
-        if (countryTypeId || continentTypeId) {
-          
-          // Obtener relaciones del tour para país y continente
-          this.subscriptions.add(
-            this.tourLocationService.getAll().pipe(
-              map(allTourLocations => allTourLocations.filter(location => 
-                location.tourId === tourId && 
-                (location.tourLocationTypeId === countryTypeId || location.tourLocationTypeId === continentTypeId)
-              )),
-              catchError(error => {
-                console.error('❌ Error loading country/continent tour locations:', error);
-                return of([]);
-              })
-            ).subscribe((geographicTourLocations: ITourLocationResponse[]) => {
-                            
-              // Mapear las ubicaciones para obtener nombres
-              const locationsMap = new Map<number, Location>();
-              allLocations.forEach(location => {
-                locationsMap.set(location.id, location);
-              });
-              
-              // Arrays para manejar múltiples países y continentes
-              const countries: string[] = [];
-              const continents: string[] = [];
-              
-              // Ordenar por displayOrder para mantener el orden correcto
-              const sortedGeographicLocations = geographicTourLocations.sort((a, b) => a.displayOrder - b.displayOrder);
-              
-              sortedGeographicLocations.forEach(tourLocation => {
-                const location = locationsMap.get(tourLocation.locationId);
-                if (location) {
-                  if (tourLocation.tourLocationTypeId === countryTypeId) {
-                    countries.push(location.name);
-                  } else if (tourLocation.tourLocationTypeId === continentTypeId) {
-                    continents.push(location.name);
-                  }
-                }
-              });
-              
-              // Unir múltiples países/continentes con comas
-              this.country = countries.join(', ');
-              this.continent = continents.join(', ');
-            })
-          );
-        } else {
-          console.warn('⚠️ No se encontraron tipos de ubicación para país o continente en header');
-        }
+                        
+        // Mapear las ubicaciones para obtener nombres
+        const locationsMap = new Map<number, Location>();
+        locations.forEach(location => {
+          locationsMap.set(location.id, location);
+        });
+        
+        // Arrays para manejar múltiples países y continentes
+        const countries: string[] = [];
+        const continents: string[] = [];
+        
+        // Ordenar por displayOrder para mantener el orden correcto
+        const sortedGeographicLocations = tourLocations.sort((a, b) => a.displayOrder - b.displayOrder);
+        
+        sortedGeographicLocations.forEach(tourLocation => {
+          const location = locationsMap.get(tourLocation.locationId);
+          if (location) {
+            if (tourLocation.tourLocationTypeId === countryTypeId) {
+              countries.push(location.name);
+            } else if (tourLocation.tourLocationTypeId === continentTypeId) {
+              continents.push(location.name);
+            }
+          }
+        });
+        
+        // Unir múltiples países/continentes con comas
+        this.country = countries.join(', ');
+        this.continent = continents.join(', ');
       })
     );
   }
@@ -228,8 +237,6 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
     }
   }
 
-  // Agregar estas funciones al final del componente, antes del último cierre de llave
-  
   // ✅ NUEVA FUNCIÓN: Manejar clic en país específico
   onCountryClick(event: MouseEvent, fullCountryText: string): void {
     event.preventDefault();

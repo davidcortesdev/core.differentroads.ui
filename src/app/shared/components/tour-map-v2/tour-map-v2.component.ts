@@ -156,7 +156,7 @@ export class TourMapV2Component implements OnInit, OnChanges, OnDestroy {
 
     // Timeout de seguridad
     this.loadTimeout = setTimeout(() => {
-      console.warn('⏰ Timeout en carga de Google Maps');
+     /*  console.warn('⏰ Timeout en carga de Google Maps'); */
       this.retryLoad();
     }, 10000); // 10 segundos
 

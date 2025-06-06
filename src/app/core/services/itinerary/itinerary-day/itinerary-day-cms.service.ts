@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams  } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 
@@ -41,6 +41,17 @@ export interface IItineraryDayCMSResponse {
   updatedAt?: string | null;
 }
 
+
+/**
+ * Filtros disponibles para consultar entradas CMS.
+ */
+export interface ItineraryDayCMSFilters {
+    id?: number;
+    itineraryDayId?: number;
+    longTitle?: string;
+    imageAlt?: string;
+  }  
+
 @Injectable({
   providedIn: 'root',
 })
@@ -49,12 +60,27 @@ export class ItineraryDayCMSService {
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * Obtiene todas las entradas CMS de días de itinerario.
-   */
-  getAll(): Observable<IItineraryDayCMSResponse[]> {
-    return this.http.get<IItineraryDayCMSResponse[]>(this.API_URL);
-  }
+  
+/**
+   * Obtiene todas las entradas CMS de días de itinerario, con opción de aplicar filtros.
+   * @param filters Filtros opcionales para la búsqueda.
+   */
+  getAll(filters?: ItineraryDayCMSFilters): Observable<IItineraryDayCMSResponse[]> {
+      let params = new HttpParams();
+  
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            params = params.set(
+              key.charAt(0).toUpperCase() + key.slice(1),
+              value.toString()
+            );
+          }
+        });
+      }
+  
+      return this.http.get<IItineraryDayCMSResponse[]>(this.API_URL, { params });
+    }  
 
   /**
    * Obtiene una entrada CMS específica por su ID.

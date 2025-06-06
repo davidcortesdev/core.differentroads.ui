@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { forkJoin, of, Observable } from 'rxjs';
-import { catchError, map, finalize } from 'rxjs/operators';
+import { catchError, map, finalize, switchMap } from 'rxjs/operators';
 
 // Importar servicios para el mapa
 import { TourLocationService, ITourLocationResponse } from '../../../../core/services/tour/tour-location.service';
@@ -71,47 +71,55 @@ export class TourItineraryV2Component implements OnInit {
   }
 
   /**
-   * 🗺️ MÉTODO: Cargar datos del mapa
+   * 🗺️ MÉTODO: Cargar datos del mapa usando getByTourAndType con optimización
    */
   private loadMapData(tourId: number): void {
-    this.loading = true;    
-    forkJoin([
-      // Cargar ubicaciones del tour (para el mapa)
-      this.tourLocationService.getAll().pipe(
-        map(allLocations => allLocations.filter(location => location.tourId === tourId)),
-        catchError(error => {
-          console.error('❌ Error loading tour locations:', error);
-          return of([]);
-        })
-      ) as Observable<ITourLocationResponse[]>,
+    this.loading = true;
+    
+    // Solo cargar ubicaciones MAP del tour
+    this.tourLocationService.getByTourAndType(tourId, "MAP").pipe(
+      map(response => {
+        // Si es un array, devolverlo como está; si es un objeto, convertir a array
+        return Array.isArray(response) ? response : (response ? [response] : []);
+      }),
+      catchError(error => {
+        console.warn(`⚠️ No se encontraron ubicaciones para tipo MAP:`, error);
+        return of([]);
+      }),
+      switchMap((mapLocations: ITourLocationResponse[]) => {        
+        // Filtrar objetos vacíos y obtener solo ubicaciones válidas
+        const validMapLocations = mapLocations.filter(loc => loc && loc.id && loc.locationId);
       
-      // Cargar tipos de ubicaciones
-      this.tourLocationTypeService.getAll().pipe(
-        catchError(error => {
-          console.error('❌ Error loading tour location types:', error);
-          return of([]);
-        })
-      ) as Observable<ITourLocationTypeResponse[]>,
-      
-      // Cargar todas las ubicaciones
-      this.locationNetService.getLocations().pipe(
-        catchError(error => {
-          console.error('❌ Error loading locations:', error);
-          return of([]);
-        })
-      ) as Observable<Location[]>
-      
-    ]).pipe(
+        // Extraer los IDs únicos de las ubicaciones que necesitamos
+        const locationIds = [...new Set(validMapLocations.map(tl => tl.locationId))];
+                
+        if (locationIds.length === 0) {
+          console.warn('⚠️ No se encontraron locationIds para cargar');
+          return of({ tourLocations: validMapLocations, locations: [] });
+        }
+
+        // OPTIMIZACIÓN: Cargar solo las ubicaciones específicas que necesitamos
+        return this.locationNetService.getLocationsByIds(locationIds).pipe(
+          map(locations => {
+            return { tourLocations: validMapLocations, locations };
+          }),
+          catchError(error => {
+            console.error('❌ Error loading specific locations:', error);
+            return of({ tourLocations: validMapLocations, locations: [] });
+          })
+        );
+      }),
       finalize(() => {
         this.loading = false;
       })
-    ).subscribe(([tourLocations, locationTypes, allLocations]) => {
-
-      // Procesar datos del mapa
-      this.createLocationMaps(locationTypes, allLocations);
-      this.processItineraryLocationsWithMaps(tourLocations);
-      this.filterMapLocations();
+    ).subscribe((data) => {
+      const { tourLocations, locations } = data;
+      
+      // Procesar datos del mapa (sin tipos, ya sabemos que son MAP)
+      this.createLocationMaps([], locations); // Array vacío para tipos
+      this.processMapLocationsDirectly(tourLocations, locations);
       this.prepareMapLocationsForV2();
+
     });
   }
 
@@ -136,31 +144,35 @@ export class TourItineraryV2Component implements OnInit {
     allLocations.forEach(location => {
       this.locationsMap.set(location.id, location);
     });
-    
   }
 
   /**
-   * 🔑 MÉTODO: Procesar ubicaciones usando Maps para O(1) lookup
+   * 🔑 MÉTODO: Procesar ubicaciones MAP directamente (sin tipos complejos)
    */
-  private processItineraryLocationsWithMaps(tourLocations: ITourLocationResponse[]): void {
+  private processMapLocationsDirectly(tourLocations: ITourLocationResponse[], locations: Location[]): void {
     
     this.processedLocations = [];
+    this.locationsMap.clear();
+    
+    // Crear map de ubicaciones para búsqueda O(1)
+    locations.forEach(location => {
+      this.locationsMap.set(location.id, location);
+    });
         
     tourLocations.forEach((tourLocation) => {
-      // Búsqueda O(1) usando Maps
-      const locationType = this.locationTypesMap.get(tourLocation.tourLocationTypeId);
+      // Búsqueda O(1) de la ubicación real
       const realLocation = this.locationsMap.get(tourLocation.locationId);
       
-      if (realLocation && locationType) {
+      if (realLocation) {
         const processedLocation: ProcessedItineraryLocation = {
           id: tourLocation.id,
           name: realLocation.name,
-          type: locationType.name || 'Desconocido',
+          type: 'MAP', // Sabemos que es MAP
           typeId: tourLocation.tourLocationTypeId,
           displayOrder: tourLocation.displayOrder,
-          isMapLocation: tourLocation.tourLocationTypeId === 1, // Tipo 1 = ubicaciones de mapa
-          isHeaderLocation: tourLocation.tourLocationTypeId === 2, // Tipo 2 = ubicaciones de header
-          isItineraryLocation: true,
+          isMapLocation: true, // Todas son MAP
+          isHeaderLocation: false,
+          isItineraryLocation: false,
           latitude: realLocation.latitude,
           longitude: realLocation.longitude,
           locationData: realLocation,
@@ -168,11 +180,20 @@ export class TourItineraryV2Component implements OnInit {
         };
         
         this.processedLocations.push(processedLocation);
+      } else {
+        console.warn(`⚠️ No se encontró ubicación para tourLocation:`, {
+          tourLocationId: tourLocation.id,
+          locationId: tourLocation.locationId
+        });
       }
     });
     
     // Ordenar por displayOrder
     this.processedLocations.sort((a, b) => a.displayOrder - b.displayOrder);
+    
+    // Para MAP, todas las ubicaciones procesadas son mapLocations
+    this.mapLocations = [...this.processedLocations];
+    
   }
 
   /**
@@ -186,22 +207,24 @@ export class TourItineraryV2Component implements OnInit {
   /**
    * 🗺️ MÉTODO: Preparar ubicaciones para el componente tour-map-v2
    */
-  private prepareMapLocationsForV2(): void {
+  private prepareMapLocationsForV2(): void {    
     this.mapLocationsList = this.mapLocations
-      .filter(location => 
-        location.latitude !== null && 
-        location.latitude !== undefined && 
-        location.longitude !== null && 
-        location.longitude !== undefined &&
-        location.latitude !== 0 &&
-        location.longitude !== 0
-      )
+      .filter(location => {
+        const hasValidCoords = location.latitude !== null && 
+                              location.latitude !== undefined && 
+                              location.longitude !== null && 
+                              location.longitude !== undefined &&
+                              location.latitude !== 0 &&
+                              location.longitude !== 0;
+        
+        return hasValidCoords;
+      })
       .map(location => ({
         latitude: location.latitude!,
         longitude: location.longitude!,
         title: location.name,
         displayOrder: location.displayOrder
-      }));
+      }));   
   }
 
   /**

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 
@@ -34,6 +34,18 @@ export interface IItineraryDayResponse {
   dayNumber: number;
 }
 
+
+/**
+ * Filtros disponibles para consultar días de itinerario.
+ */
+export interface ItineraryDayFilters {
+    id?: number;
+    name?: string;
+    itineraryId?: number;
+    dayNumber?: number;
+  }
+  
+
 @Injectable({
   providedIn: 'root',
 })
@@ -42,13 +54,29 @@ export class ItineraryDayService {
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * Obtiene todos los días de itinerario.
-   * @returns Lista de días de itinerario.
-   */
-  getAll(): Observable<IItineraryDayResponse[]> {
-    return this.http.get<IItineraryDayResponse[]>(this.API_URL);
-  }
+ 
+/**
+   * Obtiene todos los días de itinerario, con opción de aplicar filtros.
+   * @param filters Filtros opcionales para la búsqueda.
+   * @returns Lista de días de itinerario.
+   */
+  getAll(filters?: ItineraryDayFilters): Observable<IItineraryDayResponse[]> {
+      let params = new HttpParams();
+  
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            params = params.set(
+              key.charAt(0).toUpperCase() + key.slice(1),
+              value.toString()
+            );
+          }
+        });
+      }
+  
+      return this.http.get<IItineraryDayResponse[]>(this.API_URL, { params });
+    }
+  
 
   /**
    * Obtiene un día de itinerario por su ID.

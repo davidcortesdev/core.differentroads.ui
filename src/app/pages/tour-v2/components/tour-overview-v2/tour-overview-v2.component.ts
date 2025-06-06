@@ -134,7 +134,7 @@ export class TourOverviewV2Component implements OnInit {
       this.applyBasicTourData(tourData, cmsTourData);
       
       // Cargar datos adicionales en segundo plano
-      this.loadAdditionalData(id, cmsTourData);
+      this.loadAdditionalDataOptimized(id, cmsTourData);
     });
   }
 
@@ -162,13 +162,12 @@ export class TourOverviewV2Component implements OnInit {
         }
       } : {})
     };
-    
   }
 
-  private loadAdditionalData(id: number, cmsTourData: CMSTourData[]): void {
+  private loadAdditionalDataOptimized(id: number, cmsTourData: CMSTourData[]): void {
     const cmsTour: CMSTourData | null = Array.isArray(cmsTourData) && cmsTourData.length > 0 ? cmsTourData[0] : null;
     
-    // 🚀 OPTIMIZACIÓN: Cargar solo los datos que necesitamos en paralelo
+    // 🚀 OPTIMIZACIÓN: Cargar solo las ubicaciones del tour específico y tipos
     forkJoin([
       // Ubicaciones del tour - filtrar directamente
       this.tourLocationService.getAll().pipe(
@@ -179,28 +178,40 @@ export class TourOverviewV2Component implements OnInit {
         })
       ) as Observable<ITourLocationResponse[]>,
       
-      // Tipos de ubicaciones - cache
+      // Tipos de ubicaciones
       this.tourLocationTypeService.getAll().pipe(
         catchError(error => {
           console.error('❌ Error loading tour location types:', error);
           return of([]);
         })
-      ) as Observable<ITourLocationTypeResponse[]>,
-      
-      // Ubicaciones - cache
-      this.locationNetService.getLocations().pipe(
-        catchError(error => {
-          console.error('❌ Error loading locations:', error);
-          return of([]);
-        })
-      ) as Observable<Location[]>
+      ) as Observable<ITourLocationTypeResponse[]>
     ]).pipe(
-      switchMap(([tourLocations, locationTypes, allLocations]) => {
-        // Procesar ubicaciones
-        this.processLocationsWithDetails(tourLocations, locationTypes, allLocations);
+      switchMap(([tourLocations, locationTypes]) => {        
+        // Extraer los IDs únicos de ubicaciones que necesitamos
+        const locationIds = [...new Set(tourLocations.map(tl => tl.locationId))];
+                
+        if (locationIds.length === 0) {
+          console.warn('⚠️ No se encontraron locationIds para cargar');
+          return of({ tourLocations, locationTypes, locations: [] });
+        }
+
+        // 🚀 OPTIMIZACIÓN: Cargar solo las ubicaciones específicas que necesitamos
+        return this.locationNetService.getLocationsByIds(locationIds).pipe(
+          map(locations => {
+            return { tourLocations, locationTypes, locations };
+          }),
+          catchError(error => {
+            console.error('❌ Error loading specific locations:', error);
+            return of({ tourLocations, locationTypes, locations: [] });
+          })
+        );
+      }),
+      switchMap(({ tourLocations, locationTypes, locations }) => {
+        // Procesar ubicaciones con los datos optimizados
+        this.processLocationsWithDetailsOptimized(tourLocations, locationTypes, locations);
         
-        // Cargar país y continente
-        this.loadCountryAndContinent(id, tourLocations, locationTypes, allLocations);
+        // Cargar país y continente con datos ya cargados
+        this.loadCountryAndContinentOptimized(id, tourLocations, locationTypes, locations);
         
         const creatorId = cmsTour?.creatorId;
         
@@ -241,13 +252,13 @@ export class TourOverviewV2Component implements OnInit {
   }
 
   /**
-   * 🚀 OPTIMIZACIÓN: Procesar país y continente usando datos ya cargados
+   * 🚀 OPTIMIZACIÓN: Procesar país y continente usando datos ya cargados específicos
    */
-  private loadCountryAndContinent(
+  private loadCountryAndContinentOptimized(
     tourId: number, 
     tourLocations: ITourLocationResponse[],
     locationTypes: ITourLocationTypeResponse[], 
-    allLocations: Location[]
+    specificLocations: Location[]
   ): void {
     
     // Buscar tipos que podrían ser país o continente
@@ -260,9 +271,9 @@ export class TourOverviewV2Component implements OnInit {
         location.tourLocationTypeId === countryTypeId || location.tourLocationTypeId === continentTypeId
       );
             
-      // Mapear las ubicaciones para obtener nombres
+      // Mapear las ubicaciones específicas para obtener nombres
       const locationsMap = new Map<number, Location>();
-      allLocations.forEach(location => {
+      specificLocations.forEach(location => {
         locationsMap.set(location.id, location);
       });
       
@@ -310,12 +321,12 @@ export class TourOverviewV2Component implements OnInit {
   }
 
   /**
-   * 🚀 OPTIMIZACIÓN: Procesar ubicaciones de forma más eficiente
+   * 🚀 OPTIMIZACIÓN: Procesar ubicaciones específicas de forma más eficiente
    */
-  private processLocationsWithDetails(
+  private processLocationsWithDetailsOptimized(
     tourLocations: ITourLocationResponse[],
     locationTypes: ITourLocationTypeResponse[],
-    allLocations: Location[]
+    specificLocations: Location[]
   ): void {
     
     // Resetear arrays
@@ -333,7 +344,7 @@ export class TourOverviewV2Component implements OnInit {
     });
     
     const locationsMap = new Map<number, Location>();
-    allLocations.forEach(location => {
+    specificLocations.forEach(location => {
       locationsMap.set(location.id, location);
     });
     
@@ -378,7 +389,6 @@ export class TourOverviewV2Component implements OnInit {
     this.headerLocations = headerLocationsList
       .sort((a, b) => a.order - b.order)
       .map(item => item.name);
-    
   }
 
   sanitizeHtml(html: string = ''): SafeHtml {

@@ -67,6 +67,26 @@ export class LocationNetService {
       );
   }
 
+  // NUEVO: Método para obtener múltiples ubicaciones por IDs
+  getLocationsByIds(ids: number[]): Observable<Location[]> {
+    if (!ids || ids.length === 0) {
+      return of([]);
+    }
+
+    let params = new HttpParams();
+    ids.forEach(id => {
+      params = params.append('Id', id.toString());
+    });
+
+    return this.http.get<Location[]>(`${this.apiUrl}/location`, { params })
+      .pipe(
+        catchError(error => {
+          console.error('Error obteniendo ubicaciones por IDs:', error);
+          return of([]);
+        })
+      );
+  }
+
   getLocationById(id: number): Observable<Location> {
     return this.http.get<Location>(`${this.apiUrl}/location/${id}`)
       .pipe(
@@ -220,7 +240,6 @@ export class LocationNetService {
         })
       );
   }
-  // Agregar estos métodos al final de la clase LocationNetService
 
   // CRUD para LocationRelationship
   createLocationRelationship(relationship: LocationRelationship): Observable<LocationRelationship> {
@@ -270,5 +289,3 @@ export class LocationNetService {
       );
   }
 }
-
-

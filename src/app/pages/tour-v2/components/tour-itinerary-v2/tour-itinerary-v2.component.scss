@@ -1,3 +1,4 @@
+// tour-itinerary-v2.component.scss (COMPONENTE PADRE) - RESPONSIVE ARREGLADO
 @use "sass:map";
 
 // Variables
@@ -14,6 +15,13 @@ $border-radius: (
     lg: 18px
 );
 
+$spaces: (
+    xs: 0.5rem,
+    sm: 0.75rem,
+    base: 1rem,
+    lg: 1.5rem
+);
+
 // Mixins
 @mixin resp($bp) {
     @media (max-width: map.get($breakpoints, $bp)) {
@@ -23,8 +31,17 @@ $border-radius: (
 
 // ===== LAYOUT PRINCIPAL =====
 .tour-itinerary {
-    padding: 1rem;
+    margin: 30px;
     height: 100%;
+
+    // 📱 RESPONSIVE: Reducir márgenes en móvil
+    @include resp(md) {
+        margin: 1rem;
+    }
+
+    @include resp(sm) {
+        margin: 0.5rem;
+    }
 
     .itinerary-content {
         height: 100%;
@@ -37,35 +54,115 @@ $border-radius: (
     gap: 2rem;
     height: 400px;
 
+    // 📱 RESPONSIVE: Stack vertical en móvil
+    @include resp(lg) {
+        grid-template-columns: 1fr;
+        height: auto;
+        gap: 1rem;
+    }
+
     .loading-map,
     .loading-locations {
         background: #f8fafc;
         border-radius: 16px;
         padding: 1rem;
+
+        @include resp(sm) {
+            border-radius: map.get($border-radius, sm);
+            padding: 0.75rem;
+        }
     }
 }
 
+// Layout principal con flexbox
 .main-layout {
-    display: grid;
-    grid-template-columns: 0.7fr 1fr;
+    display: flex;
+    flex-direction: row-reverse;
     gap: 2rem;
-    height: calc(100vh - 200px); //aca se coloca el alto del
-    min-height: 500px;
+    min-height: calc(100vh - 200px);
+
+    // 📱 RESPONSIVE: Cambiar a columna en tablet/móvil
+    @include resp(lg) {
+        flex-direction: column;
+        min-height: auto;
+        gap: 1.5rem;
+    }
+
+    @include resp(md) {
+        gap: 1rem;
+    }
+
+    @include resp(sm) {
+        gap: 0.75rem;
+    }
 }
 
-// ===== SECCIÓN MAPA =====
+// ===== SECCIÓN TIMELINE (contendrá el componente hijo) =====
+.timeline-section {
+    flex: 3;
+    max-width: 60%;
+
+    @include resp(xl) {
+        max-width: 65%;
+    }
+
+    // 📱 RESPONSIVE: Orden y tamaños para móvil/tablet
+    @include resp(lg) {
+        max-width: 100%;
+        order: 2; // Timeline va debajo del mapa
+        margin-top: 15px;
+    }
+}
+
+// ===== SECCIÓN MAPA (manejada por el padre) =====
 .map-section {
-    display: flex;
-    flex-direction: column;
+    flex: 2;
+    position: sticky;
+    top: 2rem;
+    height: calc(100vh - 200px);
+    align-self: flex-start;
+    margin-top: 35px;
+
+    // 📱 RESPONSIVE: Ajustes para tablet
+    @include resp(xl) {
+        height: calc(100vh - 150px);
+        margin-top: 30px;
+    }
+
+    // 📱 RESPONSIVE: Cambios para tablet y móvil
+    @include resp(lg) {
+        flex: none;
+        position: static; // Quitar sticky
+        height: 400px; // Altura fija más grande
+        order: 1; // Mapa va arriba
+        margin-top: 0;
+        align-self: stretch;
+    }
+
+    @include resp(md) {
+        height: 350px;
+    }
+
+    @include resp(sm) {
+        height: 280px; // Altura mínima razonable para móvil
+    }
 
     .map-container {
-        flex: 1;
-        border: 2px solid #e5e7eb;
+        height: 100%;
         border-radius: 16px;
         overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        background-color: #f8fafc;
-        min-height: 400px;
+        margin-top: 20px;
+
+        // 📱 RESPONSIVE: Border radius más pequeño en móvil
+        @include resp(md) {
+            border-radius: map.get($border-radius, md);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        @include resp(sm) {
+            border-radius: map.get($border-radius, sm);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+        }
 
         app-tour-map-v2 {
             display: block;
@@ -75,159 +172,111 @@ $border-radius: (
     }
 }
 
-// ===== SECCIÓN CIUDADES =====
-.cities-section {
+// Estados sin datos del mapa
+.no-map-data {
     display: flex;
-    flex-direction: column;
-    background: white;
+    justify-content: center;
+    align-items: center;
+    background: #f8f9fa;
     border-radius: 16px;
-    border: 1px solid #e5e7eb;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+    @include resp(sm) {
+        border-radius: map.get($border-radius, sm);
+    }
+
+    .no-map-message {
+        text-align: center;
+        color: #6c757d;
+        padding: 2rem;
+
+        // 📱 RESPONSIVE: Reducir padding en móvil
+        @include resp(md) {
+            padding: 1.5rem;
+        }
+
+        @include resp(sm) {
+            padding: 1rem;
+        }
+
+        i {
+            @include resp(sm) {
+                font-size: 1.5rem !important;
+            }
+        }
+
+        p {
+            margin: 0.5rem 0 0 0;
+            font-size: 0.9rem;
+
+            @include resp(sm) {
+                font-size: 0.8rem;
+                margin: 0.25rem 0 0 0;
+            }
+        }
+    }
 }
 
-// ===== RESPONSIVE =====
+// ===== RESPONSIVE ADICIONAL =====
+
+// 💻 Desktop grande
 @include resp(xl) {
     .main-layout {
-        grid-template-columns: 1.5fr 1fr;
+        gap: map.get($spaces, lg);
+    }
+
+    .tour-itinerary {
+        margin: 2rem;
     }
 }
 
+// 📱 Tablet
 @include resp(lg) {
-    .main-layout {
-        grid-template-columns: 1fr;
-        height: auto;
-        gap: 1.5rem;
-    }
-
-    .map-container {
-        height: 350px;
-    }
-
-    .cities-list {
-        max-height: 400px;
+    .tour-itinerary {
+        margin: 1.5rem;
     }
 }
 
+// 📱 Móvil grande
 @include resp(md) {
     .tour-itinerary {
-        padding: 0.5rem;
-    }
+        margin: 1rem;
 
-    .loading-container {
-        grid-template-columns: 1fr;
-        height: auto;
-        gap: 1rem;
+        // Asegurar que no haya overflow horizontal
+        overflow-x: hidden;
     }
 
     .main-layout {
-        gap: 1rem;
-    }
-
-    .map-section {
-        .map-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 1rem;
-
-            h3 {
-                font-size: 1.25rem;
-            }
-        }
-
-        .map-container {
-            height: 300px;
-        }
-    }
-
-    .cities-section {
-        .cities-header {
-            padding: 1rem;
-
-            h3 {
-                font-size: 1.1rem;
-            }
-
-            .cities-summary {
-                flex-wrap: wrap;
-            }
-        }
-
-        .cities-list {
-            padding: 0.75rem;
-        }
-
-        .city-card {
-            padding: 0.75rem;
-
-            .city-header {
-                .city-order {
-                    min-width: 2rem;
-                    min-height: 2rem;
-                    font-size: 0.75rem;
-                }
-
-                .city-info {
-                    .city-name {
-                        font-size: 0.9rem;
-                    }
-                }
-            }
-
-            .city-coordinates {
-                grid-template-columns: 1fr;
-                gap: 0.25rem;
-
-                .coordinate-item {
-                    padding: 0.375rem;
-                    font-size: 0.7rem;
-                }
-            }
-        }
+        // Asegurar que el contenido no se desborde
+        width: 100%;
+        box-sizing: border-box;
     }
 }
 
+// 📱 Móvil pequeño
 @include resp(sm) {
     .tour-itinerary {
-        padding: 0.25rem;
+        margin: 0.5rem;
+
+        // Padding interno para evitar que el contenido toque los bordes
+        .itinerary-content {
+            padding: 0 0.25rem;
+        }
     }
 
+    .main-layout {
+        // Espacio mínimo entre secciones
+        gap: 0.5rem;
+    }
+
+    // Optimizar el mapa para pantallas muy pequeñas
     .map-section {
         .map-container {
-            height: 250px;
-            border-radius: map.get($border-radius, sm);
-        }
-    }
+            // Altura mínima para que el mapa sea usable
+            min-height: 250px;
 
-    .cities-section {
-        border-radius: map.get($border-radius, sm);
-
-        .cities-header {
-            padding: 0.75rem;
-        }
-
-        .cities-list {
-            padding: 0.5rem;
-        }
-
-        .city-card {
-            border-radius: map.get($border-radius, sm);
-            padding: 0.5rem;
-
-            .city-header {
-                gap: 0.5rem;
-                margin-bottom: 0.75rem;
-
-                .city-order {
-                    min-width: 1.75rem;
-                    min-height: 1.75rem;
-                    font-size: 0.7rem;
-                }
-            }
-
-            .city-coordinates {
-                margin-bottom: 0.75rem;
-            }
+            // Asegurar que el mapa ocupe todo el ancho disponible
+            width: 100%;
+            margin: 0;
         }
     }
 }

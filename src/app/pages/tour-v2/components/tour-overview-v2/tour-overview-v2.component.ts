@@ -6,7 +6,6 @@ import { TourNetService } from '../../../../core/services/tourNet.service';
 import { CMSTourService, ICMSTourResponse } from '../../../../core/services/cms/cms-tour.service';
 import { CMSCreatorService } from '../../../../core/services/cms/cms-creator.service';
 import { TourLocationService, ITourLocationResponse } from '../../../../core/services/tour/tour-location.service';
-import { TourLocationTypeService, ITourLocationTypeResponse } from '../../../../core/services/tour/tour-location-type.service';
 import { LocationNetService, Location } from '../../../../core/services/locations/locationNet.service';
 import { forkJoin, of, Observable } from 'rxjs';
 import { catchError, switchMap, map, finalize } from 'rxjs/operators';
@@ -90,7 +89,6 @@ export class TourOverviewV2Component implements OnInit {
     private cmsTourService: CMSTourService,
     private cmsCreatorService: CMSCreatorService,
     private tourLocationService: TourLocationService,
-    private tourLocationTypeService: TourLocationTypeService,
     private locationNetService: LocationNetService
   ) {}
 
@@ -134,7 +132,7 @@ export class TourOverviewV2Component implements OnInit {
       this.applyBasicTourData(tourData, cmsTourData);
       
       // Cargar datos adicionales en segundo plano
-      this.loadAdditionalData(id, cmsTourData);
+      this.loadAdditionalDataOptimized(id, cmsTourData);
     });
   }
 
@@ -162,45 +160,86 @@ export class TourOverviewV2Component implements OnInit {
         }
       } : {})
     };
-    
   }
 
-  private loadAdditionalData(id: number, cmsTourData: CMSTourData[]): void {
+  private loadAdditionalDataOptimized(id: number, cmsTourData: CMSTourData[]): void {
     const cmsTour: CMSTourData | null = Array.isArray(cmsTourData) && cmsTourData.length > 0 ? cmsTourData[0] : null;
     
-    // 🚀 OPTIMIZACIÓN: Cargar solo los datos que necesitamos en paralelo
+    // ✅ OPTIMIZACIÓN MÁXIMA: Usar getByTourAndType para tipos específicos
     forkJoin([
-      // Ubicaciones del tour - filtrar directamente
-      this.tourLocationService.getAll().pipe(
-        map(allLocations => allLocations.filter(location => location.tourId === id)),
+      // Solo cargar COUNTRY del tour específico
+      this.tourLocationService.getByTourAndType(id, "COUNTRY").pipe(
+        map(response => Array.isArray(response) ? response : (response ? [response] : [])),
         catchError(error => {
-          console.error('❌ Error loading tour locations:', error);
+          console.warn('⚠️ No se encontraron ubicaciones COUNTRY:', error);
           return of([]);
         })
-      ) as Observable<ITourLocationResponse[]>,
-      
-      // Tipos de ubicaciones - cache
-      this.tourLocationTypeService.getAll().pipe(
+      ),
+      // Solo cargar HEADER del tour específico  
+      this.tourLocationService.getByTourAndType(id, "HEADER").pipe(
+        map(response => Array.isArray(response) ? response : (response ? [response] : [])),
         catchError(error => {
-          console.error('❌ Error loading tour location types:', error);
+          console.warn('⚠️ No se encontraron ubicaciones HEADER:', error);
           return of([]);
         })
-      ) as Observable<ITourLocationTypeResponse[]>,
-      
-      // Ubicaciones - cache
-      this.locationNetService.getLocations().pipe(
+      ),
+      // Solo cargar CONTINENT del tour específico
+      this.tourLocationService.getByTourAndType(id, "CONTINENT").pipe(
+        map(response => Array.isArray(response) ? response : (response ? [response] : [])),
         catchError(error => {
-          console.error('❌ Error loading locations:', error);
+          console.warn('⚠️ No se encontraron ubicaciones CONTINENT:', error);
           return of([]);
         })
-      ) as Observable<Location[]>
+      )
     ]).pipe(
-      switchMap(([tourLocations, locationTypes, allLocations]) => {
-        // Procesar ubicaciones
-        this.processLocationsWithDetails(tourLocations, locationTypes, allLocations);
-        
-        // Cargar país y continente
-        this.loadCountryAndContinent(id, tourLocations, locationTypes, allLocations);
+      switchMap(([countryLocations, headerLocations, continentLocations]) => {        
+        // Filtrar objetos vacíos y obtener solo ubicaciones válidas
+        const validCountryLocations = countryLocations.filter(loc => loc && loc.id && loc.locationId);
+        const validHeaderLocations = headerLocations.filter(loc => loc && loc.id && loc.locationId);
+        const validContinentLocations = continentLocations.filter(loc => loc && loc.id && loc.locationId);
+
+        // Combinar todas las ubicaciones para el procesamiento
+        const allTourLocations = [
+          ...validCountryLocations,
+          ...validHeaderLocations,
+          ...validContinentLocations
+        ];
+
+        // Extraer los IDs únicos de ubicaciones que necesitamos
+        const locationIds = [...new Set(allTourLocations.map(tl => tl.locationId))];
+                
+        if (locationIds.length === 0) {
+          console.warn('⚠️ No se encontraron locationIds para cargar');
+          return of({ 
+            countryLocations: validCountryLocations,
+            headerLocations: validHeaderLocations, 
+            continentLocations: validContinentLocations,
+            locations: [] 
+          });
+        }
+
+        // ✅ OPTIMIZACIÓN: Cargar solo las ubicaciones específicas que necesitamos
+        return this.locationNetService.getLocationsByIds(locationIds).pipe(
+          map(locations => ({
+            countryLocations: validCountryLocations,
+            headerLocations: validHeaderLocations,
+            continentLocations: validContinentLocations,
+            locations
+          })),
+          catchError(error => {
+            console.error('❌ Error loading specific locations:', error);
+            return of({ 
+              countryLocations: validCountryLocations,
+              headerLocations: validHeaderLocations, 
+              continentLocations: validContinentLocations,
+              locations: [] 
+            });
+          })
+        );
+      }),
+      switchMap(({ countryLocations, headerLocations, continentLocations, locations }) => {
+        // Procesar ubicaciones con los datos optimizados
+        this.processLocationsOptimized(countryLocations, headerLocations, continentLocations, locations);
         
         const creatorId = cmsTour?.creatorId;
         
@@ -241,81 +280,13 @@ export class TourOverviewV2Component implements OnInit {
   }
 
   /**
-   * 🚀 OPTIMIZACIÓN: Procesar país y continente usando datos ya cargados
+   * ✅ OPTIMIZACIÓN: Procesar ubicaciones específicas usando datos ya filtrados
    */
-  private loadCountryAndContinent(
-    tourId: number, 
-    tourLocations: ITourLocationResponse[],
-    locationTypes: ITourLocationTypeResponse[], 
-    allLocations: Location[]
-  ): void {
-    
-    // Buscar tipos que podrían ser país o continente
-    const countryTypeId = this.findLocationTypeId(locationTypes, ['país', 'country', 'pais']);
-    const continentTypeId = this.findLocationTypeId(locationTypes, ['continente', 'continent']);
-        
-    if (countryTypeId || continentTypeId) {
-      // 🚀 OPTIMIZACIÓN: Filtrar en memoria en lugar de hacer otra llamada HTTP
-      const geographicTourLocations = tourLocations.filter(location => 
-        location.tourLocationTypeId === countryTypeId || location.tourLocationTypeId === continentTypeId
-      );
-            
-      // Mapear las ubicaciones para obtener nombres
-      const locationsMap = new Map<number, Location>();
-      allLocations.forEach(location => {
-        locationsMap.set(location.id, location);
-      });
-      
-      const countries: string[] = [];
-      const continents: string[] = [];
-      
-      // Ordenar por displayOrder para mantener el orden correcto
-      const sortedGeographicLocations = geographicTourLocations.sort((a, b) => a.displayOrder - b.displayOrder);
-      
-      sortedGeographicLocations.forEach(tourLocation => {
-        const location = locationsMap.get(tourLocation.locationId);
-        if (location) {
-          if (tourLocation.tourLocationTypeId === countryTypeId) {
-            countries.push(location.name);
-          } else if (tourLocation.tourLocationTypeId === continentTypeId) {
-            continents.push(location.name);
-          }
-        }
-      });
-      
-      // Unir múltiples países/continentes con comas
-      this.tour.country = countries.join(', ');
-      this.tour.continent = continents.join(', ');
-      
-    } else {
-      console.warn('⚠️ No se encontraron tipos de ubicación para país o continente');
-    }
-  }
-
-  /**
-   * Buscar ID de tipo de ubicación por nombres posibles
-   */
-  private findLocationTypeId(locationTypes: ITourLocationTypeResponse[], possibleNames: string[]): number | null {
-    for (const type of locationTypes) {
-      if (type.name) {
-        const typeName = type.name.toLowerCase();
-        for (const possibleName of possibleNames) {
-          if (typeName.includes(possibleName.toLowerCase())) {
-            return type.id;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  /**
-   * 🚀 OPTIMIZACIÓN: Procesar ubicaciones de forma más eficiente
-   */
-  private processLocationsWithDetails(
-    tourLocations: ITourLocationResponse[],
-    locationTypes: ITourLocationTypeResponse[],
-    allLocations: Location[]
+  private processLocationsOptimized(
+    countryLocations: ITourLocationResponse[],
+    headerLocations: ITourLocationResponse[],
+    continentLocations: ITourLocationResponse[],
+    specificLocations: Location[]
   ): void {
     
     // Resetear arrays
@@ -326,59 +297,67 @@ export class TourOverviewV2Component implements OnInit {
     this.headerLocations = [];
     this.processedLocations = [];
     
-    // 🚀 OPTIMIZACIÓN: Usar Map para búsquedas O(1) en lugar de O(n)
-    const locationTypesMap = new Map<number, ITourLocationTypeResponse>();
-    locationTypes.forEach(type => {
-      locationTypesMap.set(type.id, type);
-    });
-    
+    // Crear map de ubicaciones para búsqueda O(1)
     const locationsMap = new Map<number, Location>();
-    allLocations.forEach(location => {
+    specificLocations.forEach(location => {
       locationsMap.set(location.id, location);
     });
+
+    // Procesar países
+    const countries = countryLocations
+      .sort((a, b) => a.displayOrder - b.displayOrder)
+      .map(tl => locationsMap.get(tl.locationId)?.name)
+      .filter(name => name) as string[];
+
+    // Procesar ubicaciones header (ciudades)
+    const headerLocationsList = headerLocations
+      .sort((a, b) => a.displayOrder - b.displayOrder)
+      .map(tl => locationsMap.get(tl.locationId)?.name)
+      .filter(name => name) as string[];
+
+    // Procesar continentes
+    const continents = continentLocations
+      .sort((a, b) => a.displayOrder - b.displayOrder)
+      .map(tl => locationsMap.get(tl.locationId)?.name)
+      .filter(name => name) as string[];
+
+    // Asignar resultados
+    this.countries = countries;
+    this.headerLocations = headerLocationsList;
+    this.cities = headerLocationsList; // Fallback
     
-    // 🚀 OPTIMIZACIÓN: Procesar ubicaciones en un solo bucle
-    const mapLocationsList: { order: number; name: string }[] = [];
-    const headerLocationsList: { order: number; name: string }[] = [];
-    
-    tourLocations.forEach((tourLocation) => {
-      const locationType = locationTypesMap.get(tourLocation.tourLocationTypeId);
+    // Asignar país y continente al tour
+    this.tour.country = countries.join(', ');
+    this.tour.continent = continents.join(', ');
+
+    // Crear processed locations para compatibilidad
+    const allLocations = [
+      ...countryLocations.map(tl => ({ ...tl, type: 'COUNTRY' })),
+      ...headerLocations.map(tl => ({ ...tl, type: 'HEADER' })),
+      ...continentLocations.map(tl => ({ ...tl, type: 'CONTINENT' }))
+    ];
+
+    allLocations.forEach((tourLocation) => {
       const realLocation = locationsMap.get(tourLocation.locationId);
       
-      if (realLocation && locationType) {
+      if (realLocation) {
         const processedLocation: ProcessedLocation = {
           id: tourLocation.id,
           name: realLocation.name,
-          type: locationType.name || 'Desconocido',
+          type: tourLocation.type,
           typeId: tourLocation.tourLocationTypeId,
           displayOrder: tourLocation.displayOrder,
-          isMapLocation: tourLocation.tourLocationTypeId === 1,
-          isHeaderLocation: tourLocation.tourLocationTypeId === 2
+          isMapLocation: false, // No procesamos MAP aquí
+          isHeaderLocation: tourLocation.type === 'HEADER'
         };
         
         this.processedLocations.push(processedLocation);
-        
-        // Clasificar por tipo
-        if (tourLocation.tourLocationTypeId === 1) {
-          mapLocationsList.push({ order: tourLocation.displayOrder, name: realLocation.name });
-        } else if (tourLocation.tourLocationTypeId === 2) {
-          headerLocationsList.push({ order: tourLocation.displayOrder, name: realLocation.name });
-        }
-        
-        // También agregar a cities para fallback
-        this.cities.push(realLocation.name);
       }
     });
-    
-    // Ordenar una sola vez al final
-    this.mapLocations = mapLocationsList
-      .sort((a, b) => a.order - b.order)
-      .map(item => item.name);
-      
-    this.headerLocations = headerLocationsList
-      .sort((a, b) => a.order - b.order)
-      .map(item => item.name);
-    
+
+    console.log('✅ Países:', this.tour.country);
+    console.log('✅ Continentes:', this.tour.continent);
+    console.log('✅ Ciudades Header:', this.headerLocations);
   }
 
   sanitizeHtml(html: string = ''): SafeHtml {
@@ -418,7 +397,6 @@ export class TourOverviewV2Component implements OnInit {
     // Obtener la posición del clic dentro del elemento
     const rect = target.getBoundingClientRect();
     const clickX = event.clientX - rect.left;
-    const elementWidth = rect.width;
     
     // Crear un elemento temporal para medir el ancho de cada país
     const tempElement = document.createElement('span');

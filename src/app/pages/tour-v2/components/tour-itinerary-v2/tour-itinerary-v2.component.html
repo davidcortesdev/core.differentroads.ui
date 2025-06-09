@@ -1,95 +1,54 @@
-<!-- tour-itinerary-v2.component.html -->
+<!-- tour-itinerary-v2.component.html (COMPONENTE PADRE) -->
 <div class="tour-itinerary">
-    <!-- Loading State -->
-    <div *ngIf="loading" class="itinerary-loading">
-      <div class="loading-container">
-        <div class="loading-map">
-          <p-skeleton width="100%" height="400px"></p-skeleton>
-        </div>
-        <div class="loading-locations">
-          <p-skeleton width="100%" height="30px" styleClass="mb-3"></p-skeleton>
-          <div *ngFor="let i of [1,2,3]" class="location-skeleton mb-3">
-            <p-skeleton width="80%" height="60px"></p-skeleton>
-          </div>
-        </div>
+  <!-- Loading State -->
+  <div *ngIf="loading" class="itinerary-loading">
+    <div class="loading-container">
+      <div class="loading-map">
+        <p-skeleton width="100%" height="400px"></p-skeleton>
       </div>
-    </div>
-  
-    <!-- Main Content -->
-    <div *ngIf="!loading" class="itinerary-content">
-      
-  
-      <!-- Layout Principal: Mapa + Ciudades -->
-      <div class="main-layout">
-        
-        <!-- Sección Izquierda: Mapa -->
-        <div class="map-section">
-         <!--  <div class="map-header">
-            <h3>🗺️ Mapa del Tour</h3>
-            <div class="map-stats">
-              <span class="stat-badge">
-                <i class="pi pi-map-marker"></i>
-                {{ mapLocationsWithCoordinates.length }} ubicaciones
-              </span>
-            </div>
-          </div> -->
-          
-          <div class="map-container">
-            <!-- Componente de mapa compartido -->
-            <app-tour-map-v2
-              [mapLocations]="mapLocationsList"
-              [zoom]="15"
-              [title]="'Mapa del Tour'"
-            ></app-tour-map-v2>
-          </div>
-        </div>
-  
-        <!-- Sección Derecha: Lista de Ciudades -->
-        <div class="cities-section">
-          <!-- <div class="cities-header">
-            <h3>📍 Ciudades del Tour</h3>
-            <div class="cities-summary">
-              <span class="summary-badge total">
-                Total: {{ processedLocations.length }}
-              </span>
-              <span class="summary-badge map">
-                En mapa: {{ mapLocationsWithCoordinates.length }}
-              </span>
-            </div>
-          </div> -->
-  
-          <!-- Lista de Ciudades -->
-          <div class="cities-list" *ngIf="mapLocationsWithCoordinates.length > 0">
-            <div 
-              *ngFor="let location of mapLocationsWithCoordinates; let i = index"
-              class="city-card"
-            >
-              <!-- Header de la Ciudad -->
-              <!-- <div class="city-header">
-                <div class="city-order">{{ location.displayOrder }}</div>
-                <div class="city-info">
-                  <h4 class="city-name">{{ location.name }}</h4>
-                  <span class="city-type">{{ location.type }}</span>
-                </div>
-              </div> -->
-  
-              <!-- Coordenadas -->
-             <!--  <div class="city-coordinates">
-                <div class="coordinate-item">
-                  <i class="pi pi-globe"></i>
-                  <span class="coord-label">Lat:</span>
-                  <span class="coord-value">{{ location.latitude | number:'1.6-6' }}</span>
-                </div>
-                <div class="coordinate-item">
-                  <i class="pi pi-compass"></i>
-                  <span class="coord-label">Lng:</span>
-                  <span class="coord-value">{{ location.longitude | number:'1.6-6' }}</span>
-                </div>
-              </div> -->
-            </div>
-          </div>
-  
+      <div class="loading-locations">
+        <p-skeleton width="100%" height="30px" styleClass="mb-3"></p-skeleton>
+        <div *ngFor="let i of [1,2,3]" class="location-skeleton mb-3">
+          <p-skeleton width="80%" height="60px"></p-skeleton>
         </div>
       </div>
     </div>
   </div>
+  
+  <!-- Main Content -->
+  <div *ngIf="!loading" class="itinerary-content">
+    
+    <!-- Layout Principal: Timeline + Mapa -->
+    <div class="main-layout">
+      
+      <!-- Sección Izquierda: Timeline de Días (COMPONENTE HIJO) -->
+      <div class="timeline-section">
+        <app-itinerary-day [tourId]="tourId"></app-itinerary-day>
+      </div>
+      
+      <!-- Sección Derecha: Mapa (MANEJADO POR EL PADRE) -->
+      <div class="map-section" *ngIf="hasValidMapData">
+        <div class="map-container">
+          <!-- Componente de mapa compartido -->
+          <app-tour-map-v2
+            [mapLocations]="mapLocationsList"
+            [zoom]="15"
+            [title]="'Mapa del Tour'"
+          ></app-tour-map-v2>
+        </div>
+      </div>
+      
+      <!-- Mensaje cuando no hay datos del mapa -->
+      <div class="map-section" *ngIf="!hasValidMapData">
+        <div class="map-container no-map-data">
+          <div class="no-map-message">
+            <i class="pi pi-map" style="font-size: 2rem; color: #9e9e9e;"></i>
+            <p>No hay ubicaciones de mapa disponibles para este itinerario</p>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+    
+  </div>
+</div>

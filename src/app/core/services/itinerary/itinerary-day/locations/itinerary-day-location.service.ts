@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams  } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../../../environments/environment';
 
@@ -40,6 +40,19 @@ export interface IItineraryDayLocationResponse {
   displayOrder: number;
 }
 
+/**
+ * Filtros disponibles para consultar relaciones entre días de itinerario y localizaciones.
+ */
+export interface ItineraryDayLocationFilters {
+    id?: number;
+    name?: string;
+    itineraryDayId?: number;
+    locationId?: number;
+    locationTypeId?: number;
+    displayOrder?: number;
+  }
+  
+
 @Injectable({
   providedIn: 'root',
 })
@@ -48,12 +61,28 @@ export class ItineraryDayLocationService {
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * Obtiene todas las relaciones entre días de itinerario y localizaciones.
-   */
-  getAll(): Observable<IItineraryDayLocationResponse[]> {
-    return this.http.get<IItineraryDayLocationResponse[]>(this.API_URL);
-  }
+
+    /**
+      * Obtiene todas las relaciones entre días de itinerario y localizaciones, con opción de aplicar filtros.
+      * @param filters Filtros opcionales para la búsqueda.
+      */
+     getAll(filters?: ItineraryDayLocationFilters): Observable<IItineraryDayLocationResponse[]> {
+       let params = new HttpParams();
+   
+       if (filters) {
+         Object.entries(filters).forEach(([key, value]) => {
+           if (value !== undefined && value !== null) {
+             params = params.set(
+               key.charAt(0).toUpperCase() + key.slice(1),
+               value.toString()
+             );
+           }
+         });
+       }
+   
+       return this.http.get<IItineraryDayLocationResponse[]>(this.API_URL, { params });
+     }
+   
 
   /**
    * Obtiene una relación específica por su ID.

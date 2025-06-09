@@ -110,7 +110,7 @@ $spaces: (
     @include resp(lg) {
         max-width: 100%;
         order: 2; // Timeline va debajo del mapa
-        margin-top: 0; // Eliminar margen extra
+        margin-top: 15px;
     }
 }
 

@@ -253,13 +253,16 @@ export class ItineraryDayComponent implements OnInit {
         additionalInfoContent = this.sanitizer.bypassSecurityTrustHtml(cms.additionalInfoContent);
       }
       
+      // CAMBIO: Mejorar el alt de la imagen para incluir "Día" + número + nombre
+      const imageAlt = `Día ${day.dayNumber} ${dayTitle}`;
+      
       return {
         dayId: day.id,
         dayNumber: day.dayNumber,
         title: dayTitle,
         description: this.sanitizer.bypassSecurityTrustHtml(description),
         image: cms?.imageUrl || '',
-        imageAlt: cms?.imageAlt || dayTitle,
+        imageAlt: imageAlt, // Mejorado: "Día X Nombre del día"
         collapsed: index !== 0, // El primer día estará expandido
         color: '#ea685c', // Color rojo para el icono
         additionalInfoTitle: cms?.additionalInfoTitle || undefined,
@@ -277,49 +280,17 @@ export class ItineraryDayComponent implements OnInit {
     if (index !== null) {
       const itemIndex = parseInt(index, 10);
       this.itineraryItems[itemIndex].collapsed = !this.itineraryItems[itemIndex].collapsed;
-      if (!this.itineraryItems[itemIndex].collapsed) {
-        setTimeout(() => {
-          this.scrollToPanel(itemIndex);
-        }, 100);
-      }
+      // CAMBIO: Removido el scroll automático
     }
   }
 
   handlePanelClick(index: number): void {
     this.itineraryItems[index].collapsed = !this.itineraryItems[index].collapsed;
-    if (!this.itineraryItems[index].collapsed) {
-      setTimeout(() => {
-        this.scrollToPanel(index);
-      }, 100);
-    }
+    // CAMBIO: Removido el scroll automático
   }
 
-  scrollToPanel(index: number): void {
-    if (this.itineraryPanels && this.itineraryPanels?.length > index) {
-      const panelArray = this.itineraryPanels.toArray();
-      if (panelArray[index]) {
-        const el = panelArray[index].el.nativeElement;
-        let container = this.findScrollableParent(el);
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }
-  }
-
-  private findScrollableParent(element: HTMLElement): HTMLElement | Window {
-    if (!element) {
-      return window;
-    }
-    const computedStyle = getComputedStyle(element);
-    const overflowY = computedStyle.getPropertyValue('overflow-y');
-    const isScrollable = overflowY !== 'visible' && overflowY !== 'hidden';
-    if (isScrollable && element.scrollHeight > element.clientHeight) {
-      return element;
-    }
-    if (element.parentElement) {
-      return this.findScrollableParent(element.parentElement);
-    }
-    return window;
-  }
+  // CAMBIO: Métodos de scroll eliminados ya que no se usan
+  // scrollToPanel y findScrollableParent ya no son necesarios
 
   /**
    * Expands all day panels in the itinerary

@@ -1,0 +1,293 @@
+<div class="background-banner">
+  <img src="assets/images/BannerPrueba.png" alt="Banner de viajes" class="banner-image">
+  <div class="banner-overlay"></div>
+</div>
+
+<div class="reviews-container">
+  <h2>¿Como ha ido tu viaje? Déjanos tu opinión</h2>
+
+  <div class="trip-header">
+    <div class="trip-title"><i class="pi pi-send"></i> {{ tripInfo.title }}</div>
+    <div class="trip-date">Fecha de inicio: {{ formattedDate }}</div>
+  </div>
+  
+  <div class="secondary-text">
+    <label>
+      <p class="secondary-text">Esperamos que el viaje que acabas de disfrutar haya sido una experiencia maravillosa. 
+        En Different Roads trabajamos con el objetivo de que disfrutes de nuestros viajes tanto 
+        como nos gustaria disfrutarlos a nosortos mismos. Nos encataría conocer tu opinión para seguir mejorando. 
+        Por ello, te agradeceríamos que completaras estas preguntas. ¡Gracias por tu tiempo y confianza!</p>
+    </label>
+  </div>
+
+  <!-- Etiqueta <form> eliminada, se mantiene el div contenedor -->
+  <div>
+    <div class="p-fluid p-grid p-formgrid p-mb-4">
+      <div class="p-field p-col-12 p-mb-3">
+        <!-- Nombre y apellidos -->
+        <label for="nombre" class="input-label">
+          <i class="pi pi-send input-icon"></i> Nombre y apellidos<span>*</span>
+        </label>
+
+        <!-- Se mantiene #nombreInput, sin [(ngModel)] ni name -->
+        <input id="nombre" type="text" class="input-text" autocomplete="off" #nombreInput />
+      </div>
+
+      <div class="p-field p-col-12">
+        <!-- Email -->
+        <label for="email" class="input-label">
+          <i class="pi pi-envelope input-icon"></i> E-mail<span>*</span>
+        </label>
+
+        <!-- Se mantiene #emailInput, sin [(ngModel)] ni name -->
+        <input id="email" type="email" class="input-text" autocomplete="off" #emailInput />
+      </div>
+    </div>
+
+  <div class="stars-container">
+    <div class="stars-row">
+
+      <div class="star-item">
+        <p class="review-label"><i class="pi pi-map p-mr-1"></i> Tour<span>*</span></p>
+        <div class="stars">
+          <span class="star-wrapper" (click)="setRating('tripRating', 1)">
+            <i class="pi pi-star" 
+              [class.active]="isHalfStar('tripRating', 1)" aria-hidden="true"></i>
+            <i class="pi pi-star" 
+              [class.active]="isFullStar('tripRating', 1)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('tripRating', 2)">
+            <i class="pi pi-star"
+              [class.active]="isHalfStar('tripRating', 2)" aria-hidden="true"></i>
+            <i class="pi pi-star" 
+              [class.active]="isFullStar('tripRating', 2)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('tripRating', 3)">
+            <i class="pi pi-star" 
+              [class.active]="isHalfStar('tripRating', 3)" aria-hidden="true"></i>
+            <i class="pi pi-star" 
+              [class.active]="isFullStar('tripRating', 3)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('tripRating', 4)">
+            <i class="pi pi-star" 
+              [class.active]="isHalfStar('tripRating', 4)" aria-hidden="true"></i>
+            <i class="pi pi-star" 
+              [class.active]="isFullStar('tripRating', 4)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('tripRating', 5)">
+            <i class="pi pi-star"
+              [class.active]="isHalfStar('tripRating', 5)" aria-hidden="true"></i>
+            <i class="pi pi-star"
+              [class.active]="isFullStar('tripRating', 5)" aria-hidden="true"></i>
+          </span>
+        </div>
+      </div>
+
+
+      <div class="star-item">
+        <p class="review-label"><i class="pi pi-map-marker p-mr-1"></i> Destinos<span>*</span></p>
+        <div class="stars">
+          <span class="star-wrapper" (click)="setRating('destinationRating', 1)">
+            <i class="pi pi-star" 
+              [class.active]="isHalfStar('destinationRating', 1)" aria-hidden="true"></i>
+            <i class="pi pi-star" 
+              [class.active]="isFullStar('destinationRating', 1)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('destinationRating', 2)">
+            <i class="pi pi-star"
+              [class.active]="isHalfStar('destinationRating', 2)" aria-hidden="true"></i>
+            <i class="pi pi-star"
+              [class.active]="isFullStar('destinationRating', 2)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('destinationRating', 3)">
+            <i class="pi pi-star"
+              [class.active]="isHalfStar('destinationRating', 3)" aria-hidden="true"></i>
+            <i class="pi pi-star"
+              [class.active]="isFullStar('destinationRating', 3)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('destinationRating', 4)">
+            <i class="pi pi-star"
+              [class.active]="isHalfStar('destinationRating', 4)" aria-hidden="true"></i>
+            <i class="pi pi-star"
+              [class.active]="isFullStar('destinationRating', 4)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('destinationRating', 5)">
+            <i class="pi pi-star"
+              [class.active]="isHalfStar('destinationRating', 5)" aria-hidden="true"></i>
+            <i class="pi pi-star"
+              [class.active]="isFullStar('destinationRating', 5)" aria-hidden="true"></i>
+          </span>
+        </div>
+      </div>
+      
+
+      <div class="star-item">
+        <p class="review-label"><i class="pi pi-euro p-mr-1"></i> Calidad-precio<span>*</span></p>
+        <div class="stars">
+          <span class="star-wrapper" (click)="setRating('priceQualityRating', 1)">
+            <i class="pi pi-star" 
+              [class.active]="isFullStar('priceQualityRating', 1)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('priceQualityRating', 2)">
+            <i class="pi pi-star" 
+              [class.active]="isFullStar('priceQualityRating', 2)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('priceQualityRating', 3)">
+            <i class="pi pi-star" 
+              [class.active]="isFullStar('priceQualityRating', 3)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('priceQualityRating', 4)">
+            <i class="pi pi-star"
+              [class.active]="isFullStar('priceQualityRating', 4)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('priceQualityRating', 5)">
+
+            <i class="pi pi-star" 
+              [class.active]="isFullStar('priceQualityRating', 5)" aria-hidden="true"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Segunda fila de estrellas -->
+    <div class="stars-row">
+      <div class="star-item">
+        <p class="review-label"><i class="pi pi-flag p-mr-1"></i> Actividades<span>*</span></p>
+        <div class="stars">
+          <span class="star-wrapper" (click)="setRating('activitiesRating', 1)">
+            <i class="pi pi-star" 
+              [class.active]="isHalfStar('activitiesRating', 1)" aria-hidden="true"></i>
+            <i class="pi pi-star" 
+              [class.active]="isFullStar('activitiesRating', 1)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('activitiesRating', 2)">
+            <i class="pi pi-star" 
+              [class.active]="isHalfStar('activitiesRating', 2)" aria-hidden="true"></i>
+            <i class="pi pi-star" 
+              [class.active]="isFullStar('activitiesRating', 2)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('activitiesRating', 3)">
+            <i class="pi pi-star"
+              [class.active]="isHalfStar('activitiesRating', 3)" aria-hidden="true"></i>
+            <i class="pi pi-star"
+              [class.active]="isFullStar('activitiesRating', 3)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('activitiesRating', 4)">
+            <i class="pi pi-star" 
+              [class.active]="isHalfStar('activitiesRating', 4)" aria-hidden="true"></i>
+            <i class="pi pi-star"
+              [class.active]="isFullStar('activitiesRating', 4)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('activitiesRating', 5)">
+            <i class="pi pi-star" 
+              [class.active]="isHalfStar('activitiesRating', 5)" aria-hidden="true"></i>
+            <i class="pi pi-star"
+              [class.active]="isFullStar('activitiesRating', 5)" aria-hidden="true"></i>
+          </span>
+        </div>
+      </div>
+
+      <div class="star-item">
+        <p class="review-label"><i class="pi pi-user p-mr-1"></i> Guía<span>*</span></p>
+        <div class="stars">
+          <span class="star-wrapper" (click)="setRating('guideRating', 1)">
+            <i class="pi pi-star"
+              [class.active]="isHalfStar('guideRating', 1)" aria-hidden="true"></i>
+            <i class="pi pi-star" 
+              [class.active]="isFullStar('guideRating', 1)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('guideRating', 2)">
+            <i class="pi pi-star" 
+              [class.active]="isHalfStar('guideRating', 2)" aria-hidden="true"></i>
+            <i class="pi pi-star" 
+              [class.active]="isFullStar('guideRating', 2)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('guideRating', 3)">
+            <i class="pi pi-star" 
+              [class.active]="isHalfStar('guideRating', 3)" aria-hidden="true"></i>
+            <i class="pi pi-star" 
+              [class.active]="isFullStar('guideRating', 3)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('guideRating', 4)">
+            <i class="pi pi-star" 
+              [class.active]="isHalfStar('guideRating', 4)" aria-hidden="true"></i>
+            <i class="pi pi-star" 
+              [class.active]="isFullStar('guideRating', 4)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('guideRating', 5)">
+            <i class="pi pi-star" 
+              [class.active]="isHalfStar('guideRating', 5)" aria-hidden="true"></i>
+            <i class="pi pi-star" 
+              [class.active]="isFullStar('guideRating', 5)" aria-hidden="true"></i>
+          </span>
+        </div>
+      </div>
+
+      <div class="star-item">
+        <p class="review-label"><i class="pi pi-home p-mr-1"></i> Alojamientos<span>*</span></p>
+        <div class="stars">
+          <span class="star-wrapper" (click)="setRating('accommodationRating', 1)">
+            <i class="pi pi-star"
+              [class.active]="isHalfStar('accommodationRating', 1)" aria-hidden="true"></i>
+            <i class="pi pi-star"
+              [class.active]="isFullStar('accommodationRating', 1)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('accommodationRating', 2)">
+            <i class="pi pi-star" 
+              [class.active]="isHalfStar('accommodationRating', 2)" aria-hidden="true"></i>
+            <i class="pi pi-star" 
+              [class.active]="isFullStar('accommodationRating', 2)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('accommodationRating', 3)">
+            <i class="pi pi-star" 
+              [class.active]="isHalfStar('accommodationRating', 3)" aria-hidden="true"></i>
+            <i class="pi pi-star" 
+              [class.active]="isFullStar('accommodationRating', 3)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('accommodationRating', 4)">
+            <i class="pi pi-star" 
+              [class.active]="isHalfStar('accommodationRating', 4)" aria-hidden="true"></i>
+            <i class="pi pi-star" 
+              [class.active]="isFullStar('accommodationRating', 4)" aria-hidden="true"></i>
+          </span>
+          <span class="star-wrapper" (click)="setRating('accommodationRating', 5)">
+            <i class="pi pi-star" 
+              [class.active]="isHalfStar('accommodationRating', 5)" aria-hidden="true"></i>
+            <i class="pi pi-star"
+              [class.active]="isFullStar('accommodationRating', 5)" aria-hidden="true"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <div class="textarea-container">
+    <!-- Corregido label for="comentario" -->
+    <label for="comentario" class="input-label">
+      <i class="pi pi-inbox input-icon"></i> Cuéntanos más sobre tu viaje<span>*</span>
+    </label>
+    <!-- Se mantiene #comentarioInput -->
+    <textarea id="comentario" #comentarioInput style="resize: none;"></textarea>
+  </div>
+
+  <div class="review-text">
+    <label for="nombre" class="input-label">
+      <i class="pi pi-camera input-icon"></i> ¿Quieres compartir tu viaje con nosotros?
+    </label>
+    <div class="upload-button-container">
+      <button class="upload-button">
+        Cargar fotos <i class="pi pi-upload"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="submit-review-container">
+    <button type="button" class="submit-review" (click)="submitReview()" [disabled]="isSubmitting">
+      {{ isSubmitting ? 'Enviando...' : 'Enviar opinión' }}
+      <i class="pi" [class.pi-spin]="isSubmitting" [class.pi-spinner]="isSubmitting" [class.pi-send]="!isSubmitting"></i>
+    </button>
+  </div>
+  </div> <!-- Cierre del div contenedor principal de los campos -->
+</div>

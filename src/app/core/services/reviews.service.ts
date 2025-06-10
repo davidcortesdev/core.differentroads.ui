@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map, switchMap, of, tap, catchError, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { PeriodsService } from './periods.service';
+import { Period } from '../models/tours/period.model';
 
 export interface ReviewFilter {
   id?: number;
@@ -18,7 +20,6 @@ export interface ReviewFilter {
   createdTo?: Date | string;
   tourIds?: number[];
   travelerIds?: number[];
-  // Added new properties to match the C# model
   reviewDate?: Date | string;
   status?: string;
 }
@@ -47,23 +48,56 @@ export interface Review {
 export class ReviewsService {
   private readonly API_URL = `${environment.reviewsApiUrl}/Review`;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private periodsService: PeriodsService
+  ) {}
 
   /**
    * Get reviews with optional filters
-   * @param count Number of reviews to retrieve
    * @param filter Optional filter criteria
    * @returns Observable of Review array
    */
   getReviews(filter?: ReviewFilter): Observable<Review[]> {
     let params = new HttpParams();
 
-    // Add filter parameters if provided
     if (filter) {
       params = this.addFilterParams(params, filter);
     }
-
     return this.http.get<Review[]>(`${this.API_URL}`, { params });
+  }
+
+  /**
+   * Get reviews by period external ID
+   * @param externalId External ID of the period
+   * @returns Observable of Review array with period information
+   */
+  getReviewsByPeriodExternalId(externalId: string): Observable<Review[]> {
+    return this.periodsService.getPeriodDetail(externalId).pipe(
+      tap(period => console.log('Periodo obtenido:', period)), 
+      switchMap((period: Period) => {
+        if (!period) {
+          return of([]);
+        }
+      
+        const filter: ReviewFilter = {
+          externalId: externalId
+        };
+        
+        return this.getReviews(filter).pipe(
+          tap(reviews => console.log('Reseñas obtenidas:', reviews)), 
+          map(reviews => {
+            return reviews.map(review => ({
+              ...review,
+              tourName: period.tourName, 
+              reviewDate: period.dayOne, 
+              
+              travelerName: review.travelerName || 'Viajero Anónimo'
+            }));
+          })
+        );
+      })
+    );
   }
 
   /**
@@ -77,12 +111,9 @@ export class ReviewsService {
     filter?: ReviewFilter
   ): Observable<Review[]> {
     let params = new HttpParams();
-
-    // Add filter parameters if provided
     if (filter) {
       params = this.addFilterParams(params, filter);
     }
-
     return this.http.get<Review[]>(`${this.API_URL}/top/${count}`, { params });
   }
 
@@ -94,7 +125,6 @@ export class ReviewsService {
   getReviewCount(filter?: ReviewFilter): Observable<number> {
     let params = new HttpParams();
 
-    // Add filter parameters if provided
     if (filter) {
       params = this.addFilterParams(params, filter);
     }
@@ -110,7 +140,6 @@ export class ReviewsService {
   getAverageRating(filter?: ReviewFilter): Observable<number> {
     let params = new HttpParams();
 
-    // Add filter parameters if provided
     if (filter) {
       params = this.addFilterParams(params, filter);
     }
@@ -130,13 +159,11 @@ export class ReviewsService {
   ): HttpParams {
     Object.entries(filter).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
-        // Handle arrays (tourIds, travelerIds)
         if (Array.isArray(value)) {
           value.forEach((item) => {
             params = params.append(key, item.toString());
           });
         } else if (value instanceof Date) {
-          // Format dates to ISO string
           params = params.set(key, value.toISOString());
         } else {
           params = params.set(key, value.toString());
@@ -144,5 +171,29 @@ export class ReviewsService {
       }
     });
     return params;
+  }
+
+  /**
+   * Save a new review
+   * @param review Review data to save
+   * @returns Observable of the saved review or response
+   */
+  saveReview(review: any): Observable<any> {
+    const reviewToSend = { ...review };
+    console.log('URL de la API para guardar reseña:', `${this.API_URL}`);
+    console.log('Datos que se envían a la API:', JSON.stringify(reviewToSend));
+    
+    return this.http.post<any>(`${this.API_URL}`, reviewToSend, {
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'text/plain',
+      },
+    }).pipe(
+      tap(response => console.log('Respuesta exitosa de la API:', response)),
+      catchError(error => {
+        console.error('Error detallado al guardar la reseña:', error);
+        return throwError(() => error);
+      })
+    );
   }
 }

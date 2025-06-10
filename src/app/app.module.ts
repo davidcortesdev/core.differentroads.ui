@@ -8,7 +8,6 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 
 import { registerLocaleData } from '@angular/common';
 import localeEs from '@angular/common/locales/es';
-
 import { HttpClient } from '@angular/common/http';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -74,7 +73,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DataViewModule } from 'primeng/dataview';
 import { DynamicComponentsComponent } from './pages/home/components/dynamic-components/dynamic-components.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
-import { CommonModule, NgComponentOutlet } from '@angular/common';
+import { CommonModule, NgComponentOutlet, DatePipe } from '@angular/common';
 import { PartnersSectionComponent } from './pages/home/components/partners-section/partners-section.component';
 import { TourComponent } from './pages/tour/tour.component';
 import { TourHeaderComponent } from './pages/tour/components/tour-header/tour-header.component';
@@ -348,7 +347,7 @@ registerLocaleData(localeEs);
     CommonModule,
     NgComponentOutlet,
     NewsLetterSectionComponent,
-    ConfirmationCodeComponent,
+    // ConfirmationCodeComponent, <-- Eliminar o comentar esta línea
     MenubarModule,
     RippleModule,
     AvatarModule,
@@ -438,6 +437,7 @@ registerLocaleData(localeEs);
     }),
     MessageService,
     CookieService,
+    DatePipe, // Añadimos DatePipe a los providers
   ],
   bootstrap: [AppComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],

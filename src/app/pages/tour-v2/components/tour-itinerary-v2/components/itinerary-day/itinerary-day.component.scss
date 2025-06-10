@@ -121,13 +121,11 @@
             margin-bottom: 1rem;
 
             .p-panel-header {
-                padding: 1rem 1.5rem;
                 border-radius: 12px 12px 0 0;
                 border-bottom: none !important;
             }
 
             .p-panel-content {
-                padding: 1.5rem;
                 border-top: none;
                 border-radius: 0 0 12px 12px;
             }
@@ -159,6 +157,13 @@
             color: var(--background-azul); // Azul navy
             line-height: 1.2;
         }
+    }
+}
+
+// CAMBIO: Agregar cursor pointer al icono de ubicación en el timeline
+.timeline-marker-wrapper {
+    .pi {
+        cursor: pointer !important; // Cambia el cursor a pointer para el icono
     }
 }
 
@@ -200,6 +205,7 @@
         font-size: 1rem;
         line-height: 1.6;
         color: var(--background-azul);
+        margin-top: -20px;
 
         p {
             margin-bottom: 1rem;

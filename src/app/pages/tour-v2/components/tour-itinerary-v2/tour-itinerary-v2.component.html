@@ -1,0 +1,54 @@
+<!-- tour-itinerary-v2.component.html (COMPONENTE PADRE) -->
+<div class="tour-itinerary">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="itinerary-loading">
+    <div class="loading-container">
+      <div class="loading-map">
+        <p-skeleton width="100%" height="400px"></p-skeleton>
+      </div>
+      <div class="loading-locations">
+        <p-skeleton width="100%" height="30px" styleClass="mb-3"></p-skeleton>
+        <div *ngFor="let i of [1,2,3]" class="location-skeleton mb-3">
+          <p-skeleton width="80%" height="60px"></p-skeleton>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Main Content -->
+  <div *ngIf="!loading" class="itinerary-content">
+    
+    <!-- Layout Principal: Timeline + Mapa -->
+    <div class="main-layout">
+      
+      <!-- Sección Izquierda: Timeline de Días (COMPONENTE HIJO) -->
+      <div class="timeline-section">
+        <app-itinerary-day [tourId]="tourId"></app-itinerary-day>
+      </div>
+      
+      <!-- Sección Derecha: Mapa (MANEJADO POR EL PADRE) -->
+      <div class="map-section" *ngIf="hasValidMapData">
+        <div class="map-container">
+          <!-- Componente de mapa compartido -->
+          <app-tour-map-v2
+            [mapLocations]="mapLocationsList"
+            [zoom]="15"
+            [title]="'Mapa del Tour'"
+          ></app-tour-map-v2>
+        </div>
+      </div>
+      
+      <!-- Mensaje cuando no hay datos del mapa -->
+      <div class="map-section" *ngIf="!hasValidMapData">
+        <div class="map-container no-map-data">
+          <div class="no-map-message">
+            <i class="pi pi-map" style="font-size: 2rem; color: #9e9e9e;"></i>
+            <p>No hay ubicaciones de mapa disponibles para este itinerario</p>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+    
+  </div>
+</div>

@@ -3,7 +3,7 @@
     <!-- Logo Section -->
     <div class="section logo-section">
       <div class="logo">
-        <img src="assets/images/white-logo.svg" alt="Different Roads" />
+        <img src="assets/images/white-logo.svg" alt="Different Roads" loading="lazy" />
       </div>
     </div>
 
@@ -27,6 +27,7 @@
                 target="_blank"
                 rel="noopener noreferrer"
                 (submit)="handleFormSubmit($event)"
+                [formGroup]="emailForm"
               >
                 <div class="ml-form-formContent horozintalForm">
                   <div class="ml-form-horizontalRow mlformhorizontalRow">
@@ -43,9 +44,9 @@
                             name="fields[email]"
                             placeholder="Escribe tu email"
                             autocomplete="email"
-                            (input)="updateEmailValue(emailInput.value)"
+                            formControlName="email"
                           />
-                          <button type="submit" aria-label="Enviar" [disabled]="!emailValue">
+                          <button type="submit" aria-label="Enviar" [disabled]="emailForm.invalid">
                             <i class="pi pi-arrow-right"></i>
                           </button>
                           <button
@@ -170,11 +171,11 @@
       {{ footerSection?.copyright?.text }} {{ footerSection?.copyright?.year }}
     </div>
     <div class="payment">
-      <img src="assets/images/scalapay.svg" alt="Scalapay" style="filter: invert(1)" />
-      <img src="assets/images/visa.svg" alt="Visa" />
-      <img src="assets/images/master.svg" alt="Mastercard" />
-      <img src="assets/images/confianzaonline.svg" alt="confianzaonline" />
-      <img src="assets/images/ssl.svg" alt="SSL" />
+      <img src="assets/images/scalapay.svg" alt="Scalapay" style="filter: invert(1)" loading="lazy" />
+      <img src="assets/images/visa.svg" alt="Visa"  loading="lazy"/>
+      <img src="assets/images/master.svg" alt="Mastercard"  loading="lazy"/>
+      <img src="assets/images/confianzaonline.svg" alt="confianzaonline"  loading="lazy"/>
+      <img src="assets/images/ssl.svg" alt="SSL"  loading="lazy"/>
     </div>
     <div class="cookie-preferences" style="text-align: center; margin-top: 10px; font-size: 11px;">
       <a href="#" class="termly-display-preferences" style="color: #999; text-decoration: underline;">Preferencias de Cookies</a>

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -14,6 +14,7 @@ import { CognitoUserPool } from 'amazon-cognito-identity-js';
 import { Order } from '../../../../core/models/orders/order.model';
 import { OrdersService } from '../../../../core/services/orders.service';
 import { SummaryService } from '../../../../core/services/checkout/summary.service';
+import { InfoCard } from '../tour-info-accordion/tour-info-accordion.component';
 
 @Component({
   selector: 'app-tour-additional-info',
@@ -22,7 +23,7 @@ import { SummaryService } from '../../../../core/services/checkout/summary.servi
   styleUrl: './tour-additional-info.component.scss',
   providers: [MessageService] // Añadir MessageService al componente
 })
-export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
+export class TourAdditionalInfoComponent implements OnInit, OnChanges, OnDestroy {
   @ViewChild(BudgetDialogComponent) budgetDialog!: BudgetDialogComponent;
   
   // Nuevos inputs para poder recibir datos del checkout si está disponible
@@ -42,6 +43,9 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   userEmail: string = '';
   loading: boolean = false;
   
+  // Nueva propiedad para reemplazar el getter infoCards
+  formattedInfoCards: InfoCard[] = [];
+  
   // Flag para indicar si limpiar los campos del formulario
   shouldClearFields: boolean = false;
 
@@ -54,51 +58,9 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
   dialogBreakpoints = { '1199px': '80vw', '575px': '90vw' };
   dialogStyle = { width: '50vw' };
 
-  // Optimización: Getters para simplificar la plantilla
-  get infoCards(): any[] {
-    
-    // Crear un array vacío para las tarjetas de información
-    let cards = [];
-    
-    // Verificar si existe la propiedad tripIncludes en info-practica
-    const tripIncludes = this.tour?.['info-practica']?.['tripIncludes'];
-    
-    // Verificar si existe la propiedad extraInformation en info-practica
-    const extraInfo = this.tour?.['info-practica']?.['extraInformation'];
-    
-    // Array para almacenar las nuevas tarjetas
-    const newCards = [];
-    
-    // Si existe tripIncludes, crear un nuevo objeto y añadirlo
-    if (tripIncludes) {
-      const includesCard = {
-        title: "¿Que incluye el viaje?",
-        content: tripIncludes,
-        order: 1
-      };
-      
-      newCards.push(includesCard);
-    }
-    
-    // Si existe extraInformation, crear un nuevo objeto y añadirlo
-    if (extraInfo) {
-      const extraInfoCard = {
-        title: "Información del viaje",
-        content: extraInfo,
-        order: 2
-      };
-      
-      newCards.push(extraInfoCard);
-    }
-    
-    // Usar solo las nuevas tarjetas
-    cards = newCards;
-    
-    return cards;
-  }
-
+  // Getter auxiliar para determinar si hay tarjetas disponibles
   get hasInfoCards(): boolean {
-    return this.infoCards.length > 0;
+    return this.formattedInfoCards.length > 0;
   }
 
   constructor(
@@ -149,6 +111,52 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
     });
 
     this.subscription.add(authSubscription);
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    // Si la propiedad tour cambia, reinicializar las tarjetas
+    if (changes['tour'] && changes['tour'].currentValue) {
+      this.initializeInfoCards();
+    }
+  }
+
+  // Método para inicializar las tarjetas de información
+  private initializeInfoCards(): void {
+    // Limpiar array actual
+    this.formattedInfoCards = [];
+    
+    // Verificar si existe la propiedad tripIncludes en info-practica
+    const tripIncludes = this.tour?.['info-practica']?.['tripIncludes'];
+    
+    // Verificar si existe la propiedad extraInformation en info-practica
+    const extraInfo = this.tour?.['info-practica']?.['extraInformation'];
+    
+    // Si existe tripIncludes, crear un nuevo objeto y añadirlo
+    if (tripIncludes) {
+      const includesCard: InfoCard = {
+        title: "¿Que incluye el viaje?",
+        content: tripIncludes,
+        order: "1",
+        showFullContent: false // Inicializar explícitamente
+      };
+      
+      this.formattedInfoCards.push(includesCard);
+    }
+    
+    // Si existe extraInformation, crear un nuevo objeto y añadirlo
+    if (extraInfo) {
+      const extraInfoCard: InfoCard = {
+        title: "Información del viaje",
+        content: extraInfo,
+        order: "2",
+        showFullContent: false // Inicializar explícitamente
+      };
+      
+      this.formattedInfoCards.push(extraInfoCard);
+    }
+    
+    // Imprimir para depuración
+    console.log('Tarjetas inicializadas:', this.formattedInfoCards);
   }
 
   // Método para obtener el email del usuario
@@ -232,6 +240,9 @@ export class TourAdditionalInfoComponent implements OnInit, OnDestroy {
               );
             }
             this.tour = tour;
+            
+            // Inicializar las tarjetas de información después de cargar el tour
+            this.initializeInfoCards();
           },
           error: (error) => {
             // Manejo silencioso del error

@@ -126,8 +126,9 @@ export class TourMapComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (tour) => {
-          this.cities = tour['cities'] || [];
-          this.country = tour['country'];
+          // Aplicar trim a cada ciudad si es un array
+          this.cities = (tour['cities'] || []).map((city: string) => city.trim());
+          this.country = tour['country'] ? tour['country'].trim() : undefined;
 
           if (this.cities.length > 0) {
             this.loadCitiesData();
@@ -153,7 +154,8 @@ export class TourMapComponent implements OnInit, OnDestroy {
   private loadGoogleMapsScript(): void {
     // Check if script is already loaded
     if (
-      document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]')
+      document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]') &&
+      typeof google !== 'undefined'
     ) {
       this.initializeMap();
       return;
@@ -167,7 +169,14 @@ export class TourMapComponent implements OnInit, OnDestroy {
     this.scriptElement.setAttribute('loading', 'async');
 
     this.scriptElement.addEventListener('load', () => {
-      this.initializeMap();
+      // Añadir un pequeño retraso para asegurar que el objeto google esté disponible
+      setTimeout(() => {
+        if (typeof google !== 'undefined') {
+          this.initializeMap();
+        } else {
+          console.warn('Google Maps API no está disponible después de cargar el script');
+        }
+      }, 100);
     });
 
     this.scriptElement.addEventListener('error', () => {
@@ -191,8 +200,34 @@ export class TourMapComponent implements OnInit, OnDestroy {
     };
   }
 
+  // Eliminar la función calculateMapCenter duplicada en la línea 469
+  // Solo mantener la implementación original que está en la línea 142
+
+  // Corregir el método updatePolylinePath para manejar correctamente los tipos
+  private updatePolylinePath(): void {
+    // Crear un array de puntos para el polyline asegurando que no hay valores undefined
+    const points: google.maps.LatLngLiteral[] = this.citiesData
+      .filter(city => city.latitude !== undefined && city.longitude !== undefined)
+      .map(city => ({ 
+        lat: city.latitude as number, 
+        lng: city.longitude as number 
+      }));
+    
+    if (points.length > 1) {
+      // Actualizar la polylinePath con los puntos filtrados
+      this.polylinePath = this.createSmoothPath(points);
+    }
+  }
+
+  // Añadir una llamada a updatePolylinePath en calculateMapCenter
   calculateMapCenter(): void {
     if (!this.citiesData?.length) return;
+    if (typeof google === 'undefined') {
+      console.warn('Google Maps API aún no está cargada. Reintentando más tarde...');
+      // Programar un reintento después de un breve retraso
+      setTimeout(() => this.calculateMapCenter(), 500);
+      return;
+    }
   
     // Usar memoización para evitar recalcular si los datos no han cambiado
     const citiesKey = this.citiesData.map(c => `${c.latitude}-${c.longitude}`).join('|');
@@ -224,6 +259,11 @@ export class TourMapComponent implements OnInit, OnDestroy {
           this.getZoomLevel(bounds, PADDING),
           this.mapOptions.maxZoom
         );
+      }
+      
+      // Actualizar el polylinePath si hay más de una ciudad
+      if (this.citiesData.length > 1) {
+        this.updatePolylinePath();
       }
     }
   }
@@ -318,6 +358,11 @@ export class TourMapComponent implements OnInit, OnDestroy {
     bounds: google.maps.LatLngBounds,
     padding: number
   ): number {
+    if (typeof google === 'undefined') {
+      console.warn('Google Maps API no está disponible');
+      return 8; // Valor predeterminado
+    }
+    
     const WORLD_DIM = { height: 256, width: 256 };
     const ZOOM_MAX = 21;
 
@@ -366,28 +411,37 @@ export class TourMapComponent implements OnInit, OnDestroy {
   private loadCitiesData(): void {
     // Eliminar logs innecesarios
     if (this.country) {
-      const countryFilters: ICountryFilters = {
-        name: this.country,
-      };
+      // Dividir la cadena de países por comas y procesar cada uno
+      const countries = this.country.split(',').map(c => c.trim());
+      
+      // Limpiar los datos de ciudades antes de cargar nuevas
+      this.citiesData = [];
+      
+      // Procesar cada país
+      countries.forEach(countryName => {
+        const countryFilters: ICountryFilters = {
+          name: countryName,
+        };
 
-      this.locationsService
-        .getCountries(countryFilters)
-        .pipe(
-          takeUntil(this.destroy$),
-          // Añadir operadores para manejo más eficiente
-          catchError(err => {
-            console.error('Error al obtener información del país:', err);
-            return of([]);
-          })
-        )
-        .subscribe({
-          next: (countries) => {
-            if (countries && countries.length > 0) {
-              const countryId = countries[0].id;
-              this.loadCitiesByCountry(countryId);
+        this.locationsService
+          .getCountries(countryFilters,true)
+          .pipe(
+            takeUntil(this.destroy$),
+            // Añadir operadores para manejo más eficiente
+            catchError(err => {
+              console.error(`Error al obtener información del país ${countryName}:`, err);
+              return of([]);
+            })
+          )
+          .subscribe({
+            next: (countries) => {
+              if (countries && countries.length > 0) {
+                const countryId = countries[0].id;
+                this.loadCitiesByCountry(countryId);
+              }
             }
-          }
-        });
+          });
+      });
     } else if (this.cities && this.cities.length > 0) {
       this.loadCitiesByName();
     }
@@ -397,64 +451,71 @@ export class TourMapComponent implements OnInit, OnDestroy {
   private loadCitiesByCountry(countryId: number): void {
     if (!this.cities || this.cities.length === 0) return;
     
-    // Usar forkJoin para manejar múltiples solicitudes en paralelo
-    const requests = this.cities.map(cityName => {
+    // Limpiar los datos de ciudades antes de cargar nuevas
+    this.citiesData = [];
+    
+    // Procesar cada ciudad individualmente en lugar de usar forkJoin
+    this.cities.forEach(cityName => {
       const cityFilters: ICityFilters = {
-        name: cityName,
+        name: cityName.trim(), // Aplicar trim al nombre de la ciudad
         countryId: countryId,
       };
       
-      return this.locationsService.getCities(cityFilters).pipe(
+      this.locationsService.getCities(cityFilters, true).pipe(
+        takeUntil(this.destroy$),
         catchError(err => {
           console.error(`Error al obtener la ciudad ${cityName}:`, err);
           return of([]);
         })
-      );
-    });
-    
-    forkJoin(requests)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(results => {
-        results.forEach(cities => {
-          if (cities && cities.length > 0) {
-            this.citiesData.push(...cities);
-          }
-        });
-        
-        if (this.citiesData.length > 0) {
-          this.citiesData.forEach(city => this.addMarker(city));
+      ).subscribe(cities => {
+        if (cities && cities.length > 0) {
+          // Añadir la ciudad a los datos
+          this.citiesData.push(...cities);
+          
+          // Añadir marcadores para las nuevas ciudades
+          cities.forEach(city => this.addMarker(city));
+          
+          // Recalcular el centro del mapa con cada nueva ciudad
           this.calculateMapCenter();
+          
+          // Forzar la detección de cambios para actualizar la vista
+          this.cdr.detectChanges();
         }
       });
+    });
   }
 
   private loadCitiesByName(): void {
-    const requests = this.cities.map(cityName => {
+    // Limpiar los datos de ciudades antes de cargar nuevas
+    this.citiesData = [];
+    
+    // Procesar cada ciudad individualmente
+    this.cities.forEach(cityName => {
       const cityFilters: ICityFilters = {
-        name: cityName,
+        name: cityName.trim(), // Aplicar trim al nombre de la ciudad
       };
       
-      return this.locationsService.getCities(cityFilters).pipe(
+      this.locationsService.getCities(cityFilters, true).pipe(
+        takeUntil(this.destroy$),
         catchError(err => {
           console.error(`Error al obtener la ciudad ${cityName}:`, err);
           return of([]);
         })
-      );
-    });
-    
-    forkJoin(requests)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(results => {
-        results.forEach(cities => {
-          if (cities && cities.length > 0) {
-            this.citiesData.push(...cities);
-          }
-        });
-        
-        if (this.citiesData.length > 0) {
-          this.citiesData.forEach(city => this.addMarker(city));
+      ).subscribe(cities => {
+        if (cities && cities.length > 0) {
+          // Añadir la ciudad a los datos
+          this.citiesData.push(...cities);
+          
+          // Añadir marcadores para las nuevas ciudades
+          cities.forEach(city => this.addMarker(city));
+          
+          // Recalcular el centro del mapa con cada nueva ciudad
           this.calculateMapCenter();
+          
+          // Forzar la detección de cambios para actualizar la vista
+          this.cdr.detectChanges();
         }
       });
+    });
   }
 }

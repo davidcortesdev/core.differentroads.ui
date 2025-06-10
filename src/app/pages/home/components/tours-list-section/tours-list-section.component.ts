@@ -38,7 +38,7 @@ export class ToursListComponent implements OnInit {
   constructor(
     private router: Router,
     private readonly toursService: ToursService
-  ) { }
+  ) {}
 
   ngOnInit() {
     this.loadTours();
@@ -66,7 +66,7 @@ export class ToursListComponent implements OnInit {
         .getTourCardData(id)
         .pipe(
           catchError((error: Error) => {
-            console.error(`Error loading tour with ID ${id}:`, error);
+            //console.error(`Error loading tour with ID ${id}:`, error);
             return [];
           })
         )
@@ -80,17 +80,18 @@ export class ToursListComponent implements OnInit {
                 tour.country && days ? `${tour.country} en: ${days} dias` : '',
               rating: 5,
               tag: tour.marketingSection?.marketingSeasonTag || '',
-              price: tour.basePrice || 0,
-              availableMonths:
-                Array.isArray(tour.monthTags) 
-                  ? tour.monthTags.map((month) => month.substring(0, 3).toUpperCase()) 
-                  : [],
+              price: tour.price || 0,
+              availableMonths: Array.isArray(tour.monthTags)
+                ? tour.monthTags.map((month) =>
+                    month.substring(0, 3).toUpperCase()
+                  )
+                : [],
               isByDr: tour.tourType !== 'FIT',
               webSlug:
                 tour.webSlug ||
                 tour.name?.toLowerCase().replace(/\s+/g, '-') ||
                 '',
-                externalID: tour.externalID,
+              externalID: tour.externalID,
             };
             this.tours = [...this.tours, processedTour];
             this.displayedTours = this.tours.slice(

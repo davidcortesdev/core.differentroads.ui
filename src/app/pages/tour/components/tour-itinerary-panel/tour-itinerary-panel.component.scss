@@ -153,6 +153,27 @@ $colors: (
   }
 }
 
+// Estilo para el título de comidas
+.meals-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--p-primary-color);
+  position: relative;
+  padding-left: 1.5rem;
+  
+  &:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0.8rem;
+    height: 0.8rem;
+    background-color: var(--p-primary-color);
+    border-radius: 2px;
+  }
+}
+
 // Add spacing between sections
 app-hotel-card,
 app-activities-carousel {

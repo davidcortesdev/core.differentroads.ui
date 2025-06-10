@@ -103,7 +103,7 @@ export class PeriodsService {
   }
 
   getActivitiesByPeriodId(periodId: string): Observable<Activity[]> {
-    const directUrl = `${environment.apiUrl}/data/cms/collections/es/activities/filter-by/activityId/${periodId}?selectedFields=all`;
+    const directUrl = `${environment.apiUrl}/data/cms/collections/es/activities/filter-by/periodId/${periodId}?selectedFields=all`;
     return this.http.get<any>(directUrl).pipe(
       tap((response) => {}),
       map((response) => {

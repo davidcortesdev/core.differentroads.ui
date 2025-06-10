@@ -1,0 +1,117 @@
+<div class="tour-overview">
+  <!-- Breadcrumb skeleton -->
+  <div *ngIf="loading" class="breadcrumb-skeleton">
+    <p-skeleton width="100%" height="30px"></p-skeleton>
+  </div>
+  
+  <!-- Breadcrumb real -->
+  <p-breadcrumb
+    *ngIf="!loading"
+    [model]="breadcrumbItems"
+    [home]="{ icon: 'pi pi-home', routerLink: ['/'] }"
+    styleClass="destinations-breadcrumb"
+  ></p-breadcrumb>
+
+  <div class="tour-content">
+    <!-- Tour image skeleton -->
+    <div *ngIf="loading" class="tour-image">
+      <p-skeleton width="100%" height="400px" styleClass="tour-image-skeleton"></p-skeleton>
+      <div class="tour-content-image-tags">
+        <p-skeleton *ngFor="let i of [1,2,3]" width="80px" height="30px" styleClass="tag-skeleton"></p-skeleton>
+      </div>
+    </div>
+    
+    <!-- Tour image real -->
+    <div *ngIf="!loading" class="tour-image">
+      <p-image
+        [src]="tour?.image?.[0]?.url"
+        [alt]="tour?.image?.[0]?.alt || 'Tour image'"
+        [preview]="true"
+      ></p-image>
+
+      <div class="tour-content-image-tags">
+        <div
+          *ngFor="let tag of tour?.vtags; let i = index"
+          class="tag is-rounded p-16"
+        >
+          {{ tag }}
+        </div>
+      </div>
+    </div>
+    
+    <!-- Tour details skeleton -->
+    <div *ngIf="loading" class="tour-details">
+      <div class="overview-header">
+        <p-skeleton width="70%" height="32px" styleClass="mb-2"></p-skeleton>
+        <div class="tour-content-countries-section">
+          <p-skeleton *ngFor="let i of [1,2]" width="120px" height="24px" styleClass="mr-2"></p-skeleton>
+        </div>
+      </div>
+      <div class="formated-content">
+        <div class="tour-content-highlights">
+          <p-skeleton width="100%" height="20px" styleClass="mb-2"></p-skeleton>
+          <p-skeleton width="100%" height="20px" styleClass="mb-2"></p-skeleton>
+          <p-skeleton width="100%" height="20px" styleClass="mb-2"></p-skeleton>
+          <p-skeleton width="90%" height="20px" styleClass="mb-2"></p-skeleton>
+          <p-skeleton width="95%" height="20px" styleClass="mb-2"></p-skeleton>
+        </div>
+      </div>
+      <div class="expert-section">
+        <div class="expert-avatar">
+          <p-skeleton shape="circle" size="70px"></p-skeleton>
+        </div>
+        <div class="expert-details">
+          <p-skeleton width="150px" height="24px" styleClass="mb-2"></p-skeleton>
+          <p-skeleton width="100px" height="16px"></p-skeleton>
+        </div>
+        <div class="expert-opinion">
+          <p-skeleton width="90%" height="80px" styleClass="expert-panel-skeleton"></p-skeleton>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Tour details real -->
+    <div *ngIf="!loading" class="tour-details">
+      <div class="overview-header">
+        <h2>{{ tour?.subtitle || 'Tour Overview' }}</h2>
+
+        <div class="tour-content-countries-section">
+          <div
+            *ngFor="let country of tour?.cities; let i = index"
+            class="tag is-ghost"
+          >
+            <i class="pi pi-map-marker"></i>
+            {{ country }}
+          </div>
+        </div>
+      </div>
+      <div class="formated-content">
+        <div
+          class="tour-content-highlights"
+          [innerHTML]="sanitizeHtml(tour?.description || '')"
+        ></div>
+      </div>
+      <div class="expert-section">
+        <div class="expert-avatar">
+          <p-avatar
+            [image]="tour?.expert?.ephoto?.[0]?.url"
+            shape="circle"
+            size="xlarge"
+          ></p-avatar>
+        </div>
+        <div class="expert-details">
+          <h4>{{ tour?.expert?.name || 'Tour Expert' }}</h4>
+          <span class="expert-role">{{ tour?.expert?.charge || 'Travel Specialist' }}</span>
+        </div>
+        <div class="expert-opinion">
+          <p-panel styleClass="expert-panel">
+            <ng-template #content>
+              <div [innerHTML]="sanitizeHtml(tour?.expert?.opinion || 'Our expert is here to make your journey unforgettable.')"></div>
+            </ng-template>
+          </p-panel>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+ 

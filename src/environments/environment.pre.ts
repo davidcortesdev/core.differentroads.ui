@@ -13,7 +13,7 @@ export const environment = {
   redsysMerchantTerminal: '2',
 
   googleMapsApiKey: 'AIzaSyB6sxlxeTVlRllpGPyDPbKmaZPQJsb8YAs',
-  notificationsApiUrl: 'https://api.differentroads.co/pre/v3/notification',
+  notificationsApiUrl: 'https://api.differentroads.co/release/v3/notification',
 
   cloudinary: {
     uploadPreset: 'dr_uploads',
@@ -23,10 +23,12 @@ export const environment = {
   },
 
   reviewsApiUrl: 'https://reviews-pre.differentroads.es/api',
-  tourApiUrl: 'https://tour-pre.differentroads.es/api',
+  toursApiUrl: 'https://tour-pre.differentroads.es/api',
   travelersApiUrl: 'https://travelers-pre.differentroads.es/api',
   hotelsApiUrl: 'https://hotels-pre.differentroads.es/api',
   locationsApiUrl: 'https://locations-pre.differentroads.es/api',
+  cmsApiUrl: 'https://cms-pre.differentroads.es/api',
+
 
   scalapayApiUrl: 'https://fastapi-pre.differentroads.es/scalapay',
   scalapayApiKey: 'qhtfs87hjnc12kkos',

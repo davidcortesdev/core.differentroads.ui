@@ -372,7 +372,6 @@ export class AuthenticateService {
       if (user) {
         const attributes = await fetchUserAttributes();
         if (attributes && attributes.email) {
-          console.log('Usuario autenticado con email:', attributes.email);
           this.isAuthenticated.next(true);
           this.currentUserEmail.next(attributes.email);
           await this.createUserIfNotExists(attributes.email);

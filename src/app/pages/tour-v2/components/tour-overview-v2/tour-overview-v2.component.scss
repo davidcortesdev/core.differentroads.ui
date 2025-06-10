@@ -1,0 +1,388 @@
+// CSS optimizado manteniendo responsive exacto del original
+.tour-overview {
+  margin: 0px 30px 0px 30px;
+
+  @media (max-width: 576px) {
+    margin: 0px 20px 0px 20px;
+  }
+
+  // Layout principal
+  .tour-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+
+    @media (max-width: 991px) {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+  }
+}
+
+// ===== IMAGEN DEL TOUR =====
+.tour-image {
+  height: fit-content;
+  position: relative;
+  width: 100%;
+
+  ::ng-deep {
+    .p-image {
+      width: 100%;
+      display: block;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 8px;
+      }
+    }
+  }
+
+  .tour-content-image-tags {
+    height: fit-content;
+    justify-content: center;
+    align-items: flex-end;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    background-color: transparent;
+    position: absolute;
+    bottom: 5%;
+    left: 0;
+    right: 0;
+
+    @media (max-width: 991px) {
+      gap: 0.3rem;
+      width: 100%;
+      justify-content: space-around;
+    }
+
+    .tag.is-rounded {
+      color: var(--background-azul-color-letra);
+      background-color: var(--gray);
+      border-radius: 3rem;
+      font-size: 0.75rem;
+      padding: 0.5rem;
+
+      @media (max-width: 991px) {
+        font-size: 0.7rem;
+        padding: 0.4rem;
+        flex: 0 0 22%;
+        text-align: center;
+      }
+    }
+  }
+}
+
+// ===== DETALLES DEL TOUR =====
+.tour-details {
+  color: var(--background-azul);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  .overview-header {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    h2 {
+      font-size: 1.5rem;
+      color: #2c3e50;
+      margin: 0;
+
+      @media (max-width: 576px) {
+        font-size: 1.2rem;
+      }
+    }
+
+    .tour-content-countries-section {
+      margin-top: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      font-weight: 500;
+
+      .tag.is-ghost {
+        color: var(--background-azul);
+        padding: 0.3rem 1.6rem 0.3rem 0rem;
+
+        & > i {
+          color: var(--p-primary-color);
+        }
+      }
+    }
+  }
+
+  .formated-content {
+    .tour-content-highlights {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      line-height: 1.7;
+      color: #4b5563;
+
+      ::ng-deep {
+        p {
+          margin-bottom: 1rem;
+        }
+
+        ul,
+        ol {
+          margin: 1rem 0;
+          padding-left: 1.5rem;
+        }
+
+        li {
+          margin-bottom: 0.5rem;
+        }
+
+        strong {
+          color: #1f2937;
+        }
+      }
+    }
+  }
+
+  // ===== SECCIÓN DEL EXPERTO =====
+  .expert-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+
+    @media (max-width: 991px) {
+      flex-direction: row;
+      align-items: center;
+      text-align: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .expert-avatar {
+      flex: 0 0 auto;
+
+      @media (max-width: 991px) {
+        margin-right: 0.75rem;
+
+        ::ng-deep {
+          .p-avatar {
+            width: 60px !important;
+            height: 60px !important;
+          }
+        }
+      }
+
+      ::ng-deep {
+        .p-avatar {
+          border-radius: 50% !important;
+          overflow: hidden !important;
+          width: 70px !important;
+          height: 70px !important;
+          aspect-ratio: 1 / 1 !important;
+          display: block !important;
+
+          img {
+            object-fit: cover !important;
+            width: 100% !important;
+            height: 100% !important;
+            border-radius: 50% !important;
+          }
+        }
+      }
+    }
+
+    .expert-details {
+      flex: 0 0 auto;
+
+      @media (max-width: 991px) {
+        flex: 0 0 auto;
+        text-align: center;
+      }
+
+      h4 {
+        margin: 0;
+        color: var(--text-color);
+        font-size: 1.1rem;
+      }
+
+      .expert-role {
+        color: var(--text-color-secondary);
+        font-size: 0.75rem;
+      }
+    }
+
+    .expert-opinion {
+      flex: 1;
+      position: relative;
+      margin-left: auto;
+
+      @media (max-width: 991px) {
+        width: 100%;
+        margin-top: 0.75rem;
+        margin-left: 0;
+        flex-basis: 100%;
+      }
+
+      ::ng-deep {
+        .p-panel {
+          border-radius: 1rem !important;
+          width: 90%;
+          margin: 0 0 0 auto;
+
+          @media (max-width: 991px) {
+            width: 100%;
+            margin: 0;
+          }
+
+          .p-panel-header {
+            display: none !important;
+          }
+
+          .p-panel-content {
+            border-radius: 1rem !important;
+            background-color: #f5f7f9 !important;
+            border: none !important;
+            font-size: 0.75rem !important;
+            padding: 1rem !important;
+            color: var(--text-color) !important;
+            line-height: 1.5 !important;
+            box-shadow: none !important;
+            position: relative;
+
+            p {
+              margin: 0;
+            }
+
+            @media (min-width: 992px) {
+              &::before {
+                content: "";
+                position: absolute;
+                width: 25px;
+                height: 40px;
+                background-color: #f5f7f9;
+                bottom: 3%;
+                left: -3px;
+                transform: rotate(45deg);
+                z-index: -1;
+                border-radius: 0.2rem !important;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// ===== BREADCRUMB STYLES =====
+// Estilos para los skeletons
+:host ::ng-deep {
+  .destinations-breadcrumb {
+    border: none;
+    background: transparent;
+  }
+  .breadcrumb-skeleton {
+    margin-bottom: 1.5rem;
+  }
+
+  .tour-image-skeleton {
+    border-radius: 8px;
+  }
+
+  .tag-skeleton {
+    border-radius: 3rem;
+    margin-right: 0.5rem;
+  }
+
+  .expert-panel-skeleton {
+    border-radius: 1rem;
+    background-color: #f5f7f9;
+  }
+
+  .p-skeleton {
+    background-color: #e9ecef;
+
+    &::after {
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0));
+    }
+  }
+}
+
+.destinations-breadcrumb {
+  margin-bottom: 1.5rem;
+  border: none;
+  background: transparent;
+
+  @media (max-width: 576px) {
+    margin-bottom: 0.5rem;
+    padding: 0.5rem 0;
+
+    .p-breadcrumb-list {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    /* Selecciona el último elemento del breadcrumb */
+    .p-menuitem:last-child {
+      flex-basis: 100%;
+      margin-top: 0.25rem;
+
+      /* Añade un pequeño margen izquierdo para alinear con el nivel anterior */
+      margin-left: 1rem;
+
+      /* Agrega un indicador visual que muestre que es una continuación */
+      &::before {
+        content: "→";
+        display: inline-block;
+        margin-right: 0.3rem;
+        color: #64748b;
+      }
+    }
+
+    /* Oculta el chevron antes del último elemento */
+    .p-menuitem:nth-last-child(2) + .p-breadcrumb-chevron {
+      display: none;
+    }
+
+    .p-menuitem {
+      white-space: nowrap; /* Mantiene el texto en una línea */
+    }
+
+    .p-menuitem-text {
+      font-size: 0.75rem; /* Texto más pequeño en móvil */
+    }
+
+    .p-breadcrumb-chevron {
+      font-size: 0.75rem;
+      margin: 0 0.25rem;
+    }
+
+    .p-breadcrumb-home {
+      font-size: 0.75rem;
+    }
+  }
+
+  .expert-panel {
+    .p-panel-header {
+      display: none !important;
+    }
+
+    .p-panel-content {
+      background-color: #f5f7f9 !important;
+      border: none !important;
+      border-radius: 1rem !important;
+      padding: 1rem !important;
+    }
+  }
+}
+
+// ===== RESPONSIVE EXACTO DEL ORIGINAL =====
+@media (min-width: 577px) and (max-width: 991px) {
+  .tour-overview {
+    .tour-content {
+      gap: 1.5rem;
+    }
+  }
+}

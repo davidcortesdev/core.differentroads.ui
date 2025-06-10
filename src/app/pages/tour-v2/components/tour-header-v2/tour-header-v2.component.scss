@@ -1,0 +1,208 @@
+@use "sass:color";
+
+// Variables
+$primary-button-color: #e85d4c;
+$rating-star-color: #ffa41c;
+$shadow-color: rgba(0, 0, 0, 0.1);
+$mobile-breakpoint: 767px;
+$tablet-breakpoint: 1024px;
+
+// Main component styles
+.tour-header {
+    position: relative;
+    width: 100%;
+    top: 0;
+    z-index: 100;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: white;
+    transition:
+        box-shadow 0.3s ease,
+        transform 0.3s ease;
+    border-bottom: 2px solid var(--p-menubar-background);
+    color: var(--background-azul);
+    gap: 38px;
+
+    &.scrolled {
+        position: fixed;
+        box-shadow: 0 2px 10px $shadow-color;
+        left: 0;
+        right: 0;
+    }
+
+    // Tour Info Section
+    .tour-info {
+        flex: 1;
+
+        h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.75rem;
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        .tour-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            color: var(--text-color);
+            font-size: 0.9rem;
+
+            .subtitle {
+                font-weight: 500;
+                color: var(--text-color-secondary);
+            }
+
+            .description {
+                color: var(--text-color-secondary);
+                font-size: 0.85rem;
+                line-height: 1.4;
+            }
+        }
+    }
+
+    // Tour Actions Section
+    .tour-actions {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+
+        .tour-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            text-align: right;
+
+            .detail-item {
+                display: flex;
+                gap: 0.5rem;
+                font-size: 0.8rem;
+
+                .label {
+                    color: var(--text-color-secondary);
+                    font-weight: 500;
+                    min-width: 60px;
+                }
+
+                .value {
+                    color: var(--text-color);
+                    font-weight: 600;
+                }
+            }
+        }
+
+        .booking-container {
+            flex-shrink: 0;
+
+            ::ng-deep .p-button {
+                background-color: $primary-button-color;
+                border-color: $primary-button-color;
+                padding: 0.75rem 2rem;
+                font-weight: 500;
+                transition: all 0.2s ease;
+
+                &:hover:not(:disabled) {
+                    background-color: color.adjust($primary-button-color, $lightness: -10%);
+                    border-color: color.adjust($primary-button-color, $lightness: -10%);
+                    transform: translateY(-2px);
+                }
+
+                &:disabled {
+                    opacity: 0.6;
+                }
+            }
+        }
+    }
+
+    // Mobile Styles
+    @media (max-width: $mobile-breakpoint) {
+        padding: 1rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+
+        .tour-info {
+            width: 100%;
+
+            h1 {
+                font-size: 1.25rem;
+                margin-bottom: 0.25rem;
+            }
+
+            .tour-meta {
+                font-size: 0.85rem;
+            }
+        }
+
+        .tour-actions {
+            width: 100%;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+
+            .tour-details {
+                width: 100%;
+                text-align: left;
+
+                .detail-item {
+                    justify-content: space-between;
+                    width: 100%;
+                }
+            }
+
+            .booking-container {
+                width: 100%;
+
+                ::ng-deep .p-button {
+                    width: 100%;
+                    border-radius: 2rem;
+                }
+            }
+        }
+    }
+
+    // Tablet Styles
+    @media (min-width: #{$mobile-breakpoint + 1px}) and (max-width: $tablet-breakpoint) {
+        padding: 1.25rem;
+        gap: 2rem;
+
+        .tour-info {
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 0.4rem;
+            }
+        }
+
+        .tour-actions {
+            gap: 1.5rem;
+
+            .tour-details {
+                gap: 0.75rem;
+            }
+
+            .booking-container {
+                ::ng-deep .p-button {
+                    padding: 0.65rem 1.5rem;
+                }
+            }
+        }
+    }
+}
+
+// Component wrapper styles
+app-tour-header-v2 {
+    display: block;
+
+    &::after {
+        content: "";
+        display: block;
+        height: 0;
+        transition: height 0.1s ease;
+    }
+
+    &.header-fixed::after {
+        height: var(--header-height, 0);
+    }
+}

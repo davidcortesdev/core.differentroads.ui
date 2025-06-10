@@ -25,7 +25,7 @@ export interface Tour {
   providedIn: 'root',
 })
 export class TourNetService {
-  private readonly API_URL = `${environment.tourApiUrl}/Tour`;
+  private readonly API_URL = `${environment.toursApiUrl}/Tour`;
 
   constructor(private http: HttpClient) {}
 
@@ -109,7 +109,7 @@ export class TourNetService {
       map(tours => {
         if (tours.length > 0) {
           const id = tours[0].id;
-          console.log('Tour ID:', id);
+          
           return id;
         }
         return 0; 

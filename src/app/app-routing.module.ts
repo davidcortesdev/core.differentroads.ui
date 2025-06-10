@@ -4,6 +4,7 @@ import { MainComponent } from './layout/main/main.component';
 import { HomeComponent } from './pages/home/home.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { TourComponent } from './pages/tour/tour.component';
+import { TourV2Component } from './pages/tour-v2/tour-v2.component';
 import { ProfileComponent } from './pages/profile/profile.component';
 import { PersonalInfoSectionComponent } from './pages/profile/components/personal-info-section/personal-info-section.component';
 import { UpdateProfileSectionComponent } from './pages/profile/components/update-profile-section/update-profile-section.component';
@@ -18,6 +19,7 @@ import { ReservationComponent } from './pages/reservation/reservation.component'
 import { BookingsComponent } from './pages/bookings/bookings.component';
 import { PaymentsComponent } from './pages/payments/payments.component';
 import { AirportSearchComponent } from './features/airports/airport-search/airport-search.component';
+import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
 import { ReviewsComponent } from './pages/reviews/reviews.component';
 import { ReviewSectionComponent } from './pages/profile/components/review-section/review-section.component';
 
@@ -36,7 +38,10 @@ const routes: Routes = [
       { path: 'forget-password', component: ForgetPasswordComponent },
       { path: 'tours', component: ToursComponent },
       { path: 'tour/:slug', component: TourComponent },
+      { path: 'tour-v2/:slug', component: TourV2Component },
       { path: 'pages/:slug', component: BasicPageComponent },
+      // Nueva ruta para previsualización
+      { path: 'preview/pages', component: BasicPagePreviewComponent },
       { path: 'checkout', component: CheckoutComponent },
       { path: 'checkout/:id', component: CheckoutComponent },
       { path: 'payment/:id', component: PaymentsComponent },

@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { GeneralConfigService } from '../../../../core/services/general-config.service';
 import { FooterSection } from '../../../../core/models/general/footer.model';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-second-footer-section',
@@ -9,32 +10,34 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
   styleUrls: ['./second-footer-section.component.scss'],
   standalone: false,
 })
-export class SecondFooterSectionComponent implements OnInit {
+export class SecondFooterSectionComponent implements OnInit, OnDestroy {
   safeInfoText: SafeHtml = '';
-  isVisible: boolean = true;
   mostrarDiv: boolean = false;
+  private subscription: Subscription = new Subscription();
 
   constructor(
     private generalConfigService: GeneralConfigService,
     private sanitizer: DomSanitizer
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.fetchFooterConfig();
   }
 
-  fetchFooterConfig() {
-    this.generalConfigService
-      .getFooterSection()
-      .subscribe((footerSection: FooterSection) => {
-        this.safeInfoText = this.sanitizer.bypassSecurityTrustHtml(
-          footerSection.info.text
-        );
-        this.verificarTexto(footerSection.info.text);
-      });
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
   }
 
-  verificarTexto(texto: string) {
-    this.mostrarDiv = texto !== '<p><br></p>';
+  fetchFooterConfig(): void {
+    this.subscription = this.generalConfigService
+      .getFooterSection()
+      .subscribe((footerSection: FooterSection) => {
+        if (footerSection?.info?.text) {
+          this.safeInfoText = this.sanitizer.bypassSecurityTrustHtml(
+            footerSection.info.text
+          );
+          this.mostrarDiv = footerSection.info.text !== '<p><br></p>';
+        }
+      });
   }
 }

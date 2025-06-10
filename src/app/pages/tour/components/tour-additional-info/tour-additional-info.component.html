@@ -50,9 +50,10 @@
 </div>
 
 <!-- Resto del componente sin cambios -->
-<app-tour-info-accordion
+<!-- En tour-additional-info.component.html -->
+<app-tour-info-accordion 
   *ngIf="hasInfoCards"
-  [infoCards]="infoCards"
+  [infoCards]="formattedInfoCards"
 ></app-tour-info-accordion>
 
 <p-toast position="top-right"></p-toast>

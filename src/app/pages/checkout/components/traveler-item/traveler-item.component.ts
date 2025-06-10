@@ -22,6 +22,7 @@ import { Country } from '../../../../shared/models/country.model';
 import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 import { TravelersService } from '../../../../core/services/checkout/travelers.service';
 import { MessageService } from 'primeng/api';
+import { ReservationFieldMandatory } from '../../../../core/models/tours/period.model';
 
 // Interfaces para mejorar la tipificación
 export interface TravelerData {
@@ -86,7 +87,12 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
   @Input() sexoOptions: SelectOption[] = [];
   @Input() getAdultsOptionsFn!: (index: number) => SelectOption[];
   @Input() allFieldsMandatory: boolean = false;
-  @Input() reservationFields: { id: number; name: string; key: string }[] = [];
+  @Input() reservationFields: {
+    id: number;
+    name: string;
+    key: string;
+    mandatory: ReservationFieldMandatory;
+  }[] = [];
   @Input() isAmadeusFlightSelected: boolean = false;
 
   @ViewChild('sexoSelect') sexoSelect!: Select;
@@ -104,7 +110,7 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
     name: 'firstName',
     surname: 'lastName',
     sex: 'sexo',
-    national_id: 'nationalId',
+    national_id: 'dni', // Cambiado de 'nationalId' a 'dni'
     birthdate: 'birthdate',
     passport: 'passport',
     passportexpiration: 'passportExpirationDate',
@@ -185,51 +191,95 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
   private setupMandatoryFields(): void {
     this.mandatoryFields.clear();
 
-    // Añadir DNI como campo obligatorio siempre
-    this.mandatoryFields.add('dni');
+    // Importante: Eliminar esta línea que añade DNI como obligatorio siempre
+    // this.mandatoryFields.add('dni');
 
-    if (this.isAmadeusFlightSelected) {
-      this.mandatoryFields.add('passportExpirationDate');
-      this.mandatoryFields.add('passportIssueDate');
+    console.log('=== RESERVATION FIELDS DEBUG ===');
+    console.log('All fields mandatory flag:', this.allFieldsMandatory);
+    console.log('Is Amadeus flight selected:', this.isAmadeusFlightSelected);
 
-      ALL_FIELDS.forEach((field) => {
-        if (
-          field !== 'minorIdExpirationDate' &&
-          field !== 'minorIdIssueDate' &&
-          field !== 'associatedAdult'
-        ) {
-          this.mandatoryFields.add(field);
+    // Imprimir el enum para referencia
+    console.log('ReservationFieldMandatory enum values:', {
+      ALL: ReservationFieldMandatory.ALL,
+      LEAD: ReservationFieldMandatory.LEAD,
+      NONE: ReservationFieldMandatory.NONE,
+    });
+
+    if (this.reservationFields?.length) {
+      console.log('Reservation fields received:');
+      this.reservationFields.forEach((field, index) => {
+        console.log(`Field ${index + 1}: ${field.name} (${field.key})`);
+        console.log(`  - mandatory value: ${field.mandatory}`);
+        console.log(
+          `  - mapped to: ${
+            this.reservationFieldMappings[field.key] || field.key
+          }`
+        );
+
+        // Verificar si el mandatory coincide con los valores del enum
+        if (field.mandatory === ReservationFieldMandatory.ALL) {
+          console.log('  - This field is mandatory for ALL travelers');
+        } else if (field.mandatory === ReservationFieldMandatory.LEAD) {
+          console.log('  - This field is mandatory only for LEAD traveler');
+        } else if (field.mandatory === ReservationFieldMandatory.NONE) {
+          console.log('  - This field is NOT mandatory');
+        } else {
+          console.log(
+            `  - WARNING: Unrecognized mandatory value: ${field.mandatory}`
+          );
         }
       });
+    } else {
+      console.log('No reservation fields received');
+    }
+
+    // Ahora correctamente procesa los campos basados en su mandatory
+    if (this.isAmadeusFlightSelected) {
+      // Si es vuelo Amadeus, todos los campos son obligatorios
+      ALL_FIELDS.forEach((field) => {
+        this.mandatoryFields.add(field);
+      });
     } else if (this.allFieldsMandatory) {
+      // Si allFieldsMandatory está activado, todos los campos son obligatorios
       ALL_FIELDS.forEach((field) => {
         this.mandatoryFields.add(field);
       });
     } else if (this.reservationFields?.length) {
+      // Procesar campos según sus valores mandatory
       this.reservationFields.forEach((field) => {
         const mappedKey = this.reservationFieldMappings[field.key] || field.key;
         if (mappedKey !== 'birthdate' && mappedKey !== 'nationality') {
-          this.mandatoryFields.add(mappedKey);
+          // Añadir lógica basada en el valor mandatory
+          if (field.mandatory === ReservationFieldMandatory.ALL) {
+            console.log(`Adding ${mappedKey} as mandatory for ALL travelers`);
+            this.mandatoryFields.add(mappedKey);
+          } else if (
+            field.mandatory === ReservationFieldMandatory.LEAD &&
+            this.index === 0
+          ) {
+            console.log(
+              `Adding ${mappedKey} as mandatory for LEAD traveler (index 0)`
+            );
+            this.mandatoryFields.add(mappedKey);
+          } else if (field.mandatory === ReservationFieldMandatory.NONE) {
+            console.log(`Field ${mappedKey} is NOT mandatory`);
+          }
         }
       });
 
-      ['firstName', 'lastName', 'email'].forEach((field) =>
-        this.mandatoryFields.add(field)
-      );
+      // Campos siempre obligatorios
+      ['firstName', 'lastName', 'email'].forEach((field) => {
+        this.mandatoryFields.add(field);
+      });
     } else {
-      ['firstName', 'lastName', 'email'].forEach((field) =>
-        this.mandatoryFields.add(field)
-      );
+      // Caso base: solo nombre, apellido y email son obligatorios
+      ['firstName', 'lastName', 'email'].forEach((field) => {
+        this.mandatoryFields.add(field);
+      });
     }
 
-    // Ensure 'associatedAdult' is required if the traveler is a child
-    if (this.traveler.ageGroup === 'Niños') {
-      this.mandatoryFields.add('associatedAdult');
-    }
-    
-    // Asegurar que birthdate y nationality nunca sean obligatorios
-    this.mandatoryFields.delete('birthdate');
-    this.mandatoryFields.delete('nationality');
+    console.log('Final mandatory fields:', Array.from(this.mandatoryFields));
+    console.log('=== END DEBUG ===');
   }
 
   private updateValidators(): void {
@@ -432,8 +482,7 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
           missingFields.push('Emisión pasaporte');
         else if (key === 'associatedAdult')
           missingFields.push('Adulto asociado');
-        else if (key === 'dni')
-          missingFields.push('DNI');
+        else if (key === 'dni') missingFields.push('DNI');
         else missingFields.push(key);
       }
     });
@@ -446,5 +495,239 @@ export class TravelerItemComponent implements OnInit, OnDestroy, OnChanges {
         life: 8000,
       });
     }
+  }
+
+  /**
+   * Verifica si un campo debe mostrarse en general basado en su mandatory
+   */
+  shouldShowField(fieldKey: string): boolean {
+    // Campos base que siempre se muestran independientemente
+    if (
+      fieldKey === 'firstName' ||
+      fieldKey === 'lastName' ||
+      fieldKey === 'email' ||
+      fieldKey === 'birthdate' /* || fieldKey === 'nationality' */
+    ) {
+      return true;
+    }
+
+    // Para niños, associatedAdult siempre se muestra
+    if (fieldKey === 'associatedAdult' && this.traveler.ageGroup === 'Niños') {
+      return true;
+    }
+
+    // Si todos son obligatorios o hay vuelo Amadeus, mostrar todos
+    if (this.allFieldsMandatory || this.isAmadeusFlightSelected) {
+      return true;
+    }
+
+    // Buscar el field en reservationFields por su clave original
+    const originalKey = this.getOriginalKey(fieldKey);
+    if (!originalKey) {
+      // Si es un campo que no tiene mapeo inverso pero podría estar en reservationFields directamente
+      // (como podría ser el caso de 'dni' que viene como 'national_id')
+      const directField = this.findDirectFieldByMappedKey(fieldKey);
+      if (directField) {
+        return (
+          directField.mandatory === ReservationFieldMandatory.ALL ||
+          directField.mandatory === ReservationFieldMandatory.LEAD ||
+          directField.mandatory === ReservationFieldMandatory.NONE
+        );
+      }
+      return false;
+    }
+
+    const field = this.findReservationFieldByKey(originalKey);
+    if (!field) {
+      return false;
+    }
+
+    // Solo mostrar campos con valores LEAD, ALL o NONE
+    return (
+      field.mandatory === ReservationFieldMandatory.ALL ||
+      field.mandatory === ReservationFieldMandatory.LEAD ||
+      field.mandatory === ReservationFieldMandatory.NONE
+    );
+  }
+
+  /**
+   * Verifica si un campo debe mostrarse en la sección obligatoria
+   */
+  shouldShowInMandatorySection(fieldKey: string): boolean {
+    // Campos bases siempre obligatorios
+    if (
+      fieldKey === 'firstName' ||
+      fieldKey === 'lastName' ||
+      fieldKey === 'email'
+    ) {
+      return true;
+    }
+
+    // Birthdate y nationality siempre van en opcional
+    if (fieldKey === 'birthdate' /* || fieldKey === 'nationality' */) {
+      return false;
+    }
+
+    // Para niños, associatedAdult siempre obligatorio
+    if (fieldKey === 'associatedAdult' && this.traveler.ageGroup === 'Niños') {
+      return true;
+    }
+
+    // Si todos son obligatorios o hay vuelo Amadeus
+    if (this.allFieldsMandatory || this.isAmadeusFlightSelected) {
+      return true;
+    }
+
+    // Buscar por clave original
+    const originalKey = this.getOriginalKey(fieldKey);
+    if (!originalKey) {
+      // Si es un campo que no tiene mapeo inverso pero podría estar en reservationFields directamente
+      const directField = this.findDirectFieldByMappedKey(fieldKey);
+      if (directField) {
+        if (directField.mandatory === ReservationFieldMandatory.ALL) {
+          return true;
+        }
+        if (
+          directField.mandatory === ReservationFieldMandatory.LEAD &&
+          this.index === 0
+        ) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    const field = this.findReservationFieldByKey(originalKey);
+    if (!field) return false;
+
+    // ALL siempre va en obligatorios
+    if (field.mandatory === ReservationFieldMandatory.ALL) {
+      return true;
+    }
+
+    // LEAD solo obligatorio para index=0
+    if (
+      field.mandatory === ReservationFieldMandatory.LEAD &&
+      this.index === 0
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Verifica si un campo debe mostrarse en la sección opcional
+   */
+  shouldShowInOptionalSection(fieldKey: string): boolean {
+    // Birthdate y nationality siempre van en opcional
+    if (
+      fieldKey === 'birthdate'
+      /*
+       */
+    ) {
+      return true;
+    }
+
+    // Si es obligatorio, no va en opcional
+    if (this.shouldShowInMandatorySection(fieldKey)) {
+      return false;
+    }
+
+    // Si todos son obligatorios o hay vuelo Amadeus, no hay opcionales
+    if (this.allFieldsMandatory || this.isAmadeusFlightSelected) {
+      return false;
+    }
+
+    // Buscar por clave original
+    const originalKey = this.getOriginalKey(fieldKey);
+    if (!originalKey) {
+      // Si es un campo que no tiene mapeo inverso pero podría estar en reservationFields directamente
+      const directField = this.findDirectFieldByMappedKey(fieldKey);
+      if (directField) {
+        if (directField.mandatory === ReservationFieldMandatory.NONE) {
+          return true;
+        }
+        if (
+          directField.mandatory === ReservationFieldMandatory.LEAD &&
+          this.index !== 0
+        ) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    const field = this.findReservationFieldByKey(originalKey);
+    if (!field) return false;
+
+    // NONE siempre va en opcionales
+    if (field.mandatory === ReservationFieldMandatory.NONE) {
+      return true;
+    }
+
+    // LEAD para viajeros que no son index=0
+    if (
+      field.mandatory === ReservationFieldMandatory.LEAD &&
+      this.index !== 0
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Encuentra un campo de reserva por su clave
+   */
+  private findReservationFieldByKey(fieldKey: string):
+    | {
+        id: number;
+        name: string;
+        key: string;
+        mandatory: ReservationFieldMandatory;
+      }
+    | undefined {
+    return this.reservationFields.find((field) => field.key === fieldKey);
+  }
+
+  /**
+   * Obtiene la clave mapeada para un campo
+   */
+  private getMappedFieldKey(fieldKey: string): string {
+    return this.reservationFieldMappings[fieldKey] || fieldKey;
+  }
+
+  /**
+   * Convierte la clave mapeada a la original
+   */
+  private getOriginalKey(mappedKey: string): string | null {
+    for (const [key, value] of Object.entries(this.reservationFieldMappings)) {
+      if (value === mappedKey) {
+        return key;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Nueva función para buscar un campo directamente por su clave mapeada
+   * (para manejar casos especiales como 'dni')
+   */
+  private findDirectFieldByMappedKey(mappedKey: string):
+    | {
+        id: number;
+        name: string;
+        key: string;
+        mandatory: ReservationFieldMandatory;
+      }
+    | undefined {
+    for (const [key, value] of Object.entries(this.reservationFieldMappings)) {
+      if (value === mappedKey) {
+        const field = this.findReservationFieldByKey(key);
+        if (field) return field;
+      }
+    }
+    return undefined;
   }
 }

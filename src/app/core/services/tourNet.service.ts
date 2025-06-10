@@ -128,7 +128,7 @@ export class TourNetService {
    */
   getTourIdByPeriodId(tourId: string): Observable<number> {
     
-    return this.http.get<any>(`${environment.tourApiUrl}/Tour?TKid=${tourId}`)
+    return this.http.get<any>(`${environment.toursApiUrl}/Tour?TKid=${tourId}`)
       .pipe(
         map(response => {
           const period = Array.isArray(response) ? response[0] : response;

@@ -176,7 +176,7 @@ export class PeriodsService {
  */
 getRawDepartureByTkId(externalId: string): Observable<any> {
   // Llama a la misma URL pero devuelve el JSON tal cual lo recibe, sin map ni transformación
-  return this.http.get<any>(`${environment.tourApiUrl}/salidas?TKId=${externalId}`);
+  return this.http.get<any>(`${environment.toursApiUrl}/salidas?TKId=${externalId}`);
 }
 
 

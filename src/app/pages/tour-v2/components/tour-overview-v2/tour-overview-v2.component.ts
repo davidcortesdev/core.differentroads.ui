@@ -354,10 +354,6 @@ export class TourOverviewV2Component implements OnInit {
         this.processedLocations.push(processedLocation);
       }
     });
-
-    console.log('✅ Países:', this.tour.country);
-    console.log('✅ Continentes:', this.tour.continent);
-    console.log('✅ Ciudades Header:', this.headerLocations);
   }
 
   sanitizeHtml(html: string = ''): SafeHtml {

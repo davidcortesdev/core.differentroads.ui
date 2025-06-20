@@ -107,11 +107,6 @@ export class SelectorItineraryComponent implements OnInit, OnDestroy {
         this.itinerariesWithDepartures = itinerariesData;
         this.createDateOptions();
         this.loading = false;
-        console.log('✅ Datos del selector cargados correctamente:', {
-          tourId,
-          itinerariesCount: itinerariesData.length,
-          dateOptionsCount: this.dateOptions.length
-        });
       },
       error: (error) => {
         console.error('❌ Error cargando datos del selector:', error);
@@ -244,9 +239,7 @@ export class SelectorItineraryComponent implements OnInit, OnDestroy {
    * Manejar selección de departure
    */
   onDepartureChange(event: any): void {
-    this.selectedDeparture = this.dateOptions.find(option => option.value === event.value);
-    console.log('Departure seleccionado:', this.selectedDeparture);
-    
+    this.selectedDeparture = this.dateOptions.find(option => option.value === event.value);    
     // ✅ EMITIR EVENTO: Cuando el usuario cambia la selección
     this.emitDepartureSelected();
   }

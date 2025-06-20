@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChildren, QueryList } from '@angular/core';
+import { Component, Input, OnInit, ViewChildren, QueryList, OnChanges, SimpleChanges } from '@angular/core';
 import { forkJoin, of, Observable } from 'rxjs';
 import { catchError, map, finalize } from 'rxjs/operators';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -22,7 +22,7 @@ interface ItineraryItem {
   additionalInfoTitle?: string;
   additionalInfoContent?: SafeHtml;
   hasAdditionalInfo: boolean;
-  icon: string; // Agregado para manejar diferentes iconos
+  icon: string;
 }
 
 // Interface para datos procesados de días
@@ -38,8 +38,10 @@ interface ProcessedItineraryDay {
   templateUrl: './itinerary-day.component.html',
   styleUrl: './itinerary-day.component.scss'
 })
-export class ItineraryDayComponent implements OnInit {
+export class ItineraryDayComponent implements OnInit, OnChanges {
   @Input() tourId: number | undefined;
+  @Input() itineraryId: number | undefined;
+  
   @ViewChildren('itineraryPanel') itineraryPanels!: QueryList<Panel>;
   
   // Estados del componente
@@ -64,62 +66,58 @@ export class ItineraryDayComponent implements OnInit {
     private sanitizer: DomSanitizer
   ) {}
 
-  ngOnInit(): void {    
-    if (this.tourId) {
-      this.loadItineraryData(this.tourId);
+  ngOnInit(): void {
+    // NO cargar nada en ngOnInit - esperar a que llegue itineraryId
+    if (this.itineraryId) {
+      this.loadInitialData();
     } else {
-      console.warn('⚠️ No se proporcionó tourId para el itinerario');
+      // Si no hay itineraryId, mostrar estado vacío
       this.loading = false;
+      this.clearData();
     }
   }
 
-  /**
-   * 📅 MÉTODO PRINCIPAL: Cargar datos del itinerario usando solo tourId (OPTIMIZADO)
-   */
-  private loadItineraryData(tourId: number): void {
-    this.loading = true;
+  ngOnChanges(changes: SimpleChanges): void {
     
-    // Definir filtros para obtener itinerarios del tour con las condiciones requeridas
-    const itineraryFilters: ItineraryFilters = {
-      tourId: tourId,
-      isVisibleOnWeb: true,
-      isBookable: true
-    };
-    
-    // PASO 1: Primero obtenemos los itinerarios válidos del tour
-    this.itineraryService.getAll(itineraryFilters).pipe(
-      map(itineraries => {
-        // Filtrar además por tkId no vacío si es necesario
-        const validItineraries = itineraries.filter(itinerary => 
-          itinerary.tkId && 
-          itinerary.tkId.trim() !== ''
-        );
-        return validItineraries;
-      }),
-      catchError(error => {
-        console.error('❌ Error loading itineraries:', error);
-        return of([]);
-      })
-    ).subscribe(tourItineraries => {
-      
-      if (tourItineraries.length === 0) {
-        console.warn('⚠️ No se encontraron itinerarios válidos para el tour', tourId);
-        this.loading = false;
-        return;
+    // Si cambió el itineraryId
+    if (changes['itineraryId']) {
+      const currentItineraryId = changes['itineraryId'].currentValue;
+      const previousItineraryId = changes['itineraryId'].previousValue;
+            
+      if (currentItineraryId && currentItineraryId !== previousItineraryId) {
+        this.loadInitialData();
+      } else if (!currentItineraryId) {
+        // Si no hay itineraryId, limpiar datos
+        this.clearData();
       }
+    }
+  }
 
-      // Obtener los IDs de los itinerarios válidos
-      const validItineraryIds = tourItineraries.map(itinerary => itinerary.id);
-      
-      // PASO 2: Ahora cargamos solo los días que pertenecen a estos itinerarios
-      this.loadItineraryDaysData(validItineraryIds);
-    });
+  private loadInitialData(): void {
+    if (this.itineraryId) {
+      this.loadItineraryDaysData([this.itineraryId]);
+    } else {
+      console.warn('⚠️ No se proporcionó itineraryId específico');
+      this.loading = false;
+      this.clearData();
+    }
+  }
+
+  private clearData(): void {
+    this.itineraryDays = [];
+    this.itineraryDaysCMS = [];
+    this.processedDays = [];
+    this.itineraryItems = [];
+    this.daysCMSMap.clear();
+    this.loading = false;
   }
 
   /**
-   * 📋 MÉTODO AUXILIAR: Cargar días de itinerario filtrados por itineraryIds
+   * 📋 MÉTODO: Cargar días de itinerario filtrados por itineraryIds específicos
    */
   private loadItineraryDaysData(itineraryIds: number[]): void {
+    this.loading = true;
+        
     // Crear observables para cada itineraryId y combinar los resultados
     const itineraryDaysObservables = itineraryIds.map(itineraryId => 
       this.itineraryDayService.getAll({ itineraryId }).pipe(
@@ -137,24 +135,18 @@ export class ItineraryDayComponent implements OnInit {
         console.error('❌ Error loading itinerary days:', error);
         return of([]);
       })
-    ).subscribe(filteredItineraryDays => {
-      
+    ).subscribe(filteredItineraryDays => {      
       // Ahora cargar el CMS usando los IDs de los días obtenidos
       this.loadItineraryDaysCMS(filteredItineraryDays);
     });
   }
 
   /**
-   * 📄 MÉTODO AUXILIAR: Cargar CMS de días usando itineraryDayId
+   * 📄 MÉTODO: Cargar CMS de días usando itineraryDayId
    */
   private loadItineraryDaysCMS(itineraryDays: IItineraryDayResponse[]): void {
     if (itineraryDays.length === 0) {
-      // No hay días, finalizar carga
-      this.itineraryDays = [];
-      this.itineraryDaysCMS = [];
-      this.processedDays = [];
-      this.itineraryItems = [];
-      this.loading = false;
+      this.clearData();
       return;
     }
 
@@ -177,8 +169,7 @@ export class ItineraryDayComponent implements OnInit {
       finalize(() => {
         this.loading = false;
       })
-    ).subscribe(filteredItineraryDaysCMS => {
-      
+    ).subscribe(filteredItineraryDaysCMS => {      
       // Almacenar los datos ya filtrados
       this.itineraryDays = itineraryDays;
       this.itineraryDaysCMS = filteredItineraryDaysCMS;
@@ -253,7 +244,6 @@ export class ItineraryDayComponent implements OnInit {
         additionalInfoContent = this.sanitizer.bypassSecurityTrustHtml(cms.additionalInfoContent);
       }
       
-      // CAMBIO: Mejorar el alt de la imagen para incluir "Día" + número + nombre
       const imageAlt = `Día ${day.dayNumber} ${dayTitle}`;
       
       return {
@@ -262,13 +252,13 @@ export class ItineraryDayComponent implements OnInit {
         title: dayTitle,
         description: this.sanitizer.bypassSecurityTrustHtml(description),
         image: cms?.imageUrl || '',
-        imageAlt: imageAlt, // Mejorado: "Día X Nombre del día"
-        collapsed: index !== 0, // El primer día estará expandido
-        color: '#ea685c', // Color rojo para el icono
+        imageAlt: imageAlt,
+        collapsed: index !== 0,
+        color: '#ea685c',
         additionalInfoTitle: cms?.additionalInfoTitle || undefined,
         additionalInfoContent: additionalInfoContent,
         hasAdditionalInfo: hasAdditionalInfo,
-        icon: 'pi-map-marker' // Icono de ubicación para todos los días
+        icon: 'pi-map-marker'
       } as ItineraryItem;
     });
   }
@@ -280,17 +270,12 @@ export class ItineraryDayComponent implements OnInit {
     if (index !== null) {
       const itemIndex = parseInt(index, 10);
       this.itineraryItems[itemIndex].collapsed = !this.itineraryItems[itemIndex].collapsed;
-      // CAMBIO: Removido el scroll automático
     }
   }
 
   handlePanelClick(index: number): void {
     this.itineraryItems[index].collapsed = !this.itineraryItems[index].collapsed;
-    // CAMBIO: Removido el scroll automático
   }
-
-  // CAMBIO: Métodos de scroll eliminados ya que no se usan
-  // scrollToPanel y findScrollableParent ya no son necesarios
 
   /**
    * Expands all day panels in the itinerary
@@ -337,8 +322,6 @@ export class ItineraryDayComponent implements OnInit {
    * 🔄 MÉTODO: Refrescar datos del itinerario
    */
   refreshItinerary(): void {
-    if (this.tourId) {
-      this.loadItineraryData(this.tourId);
-    }
+    this.loadInitialData();
   }
 }

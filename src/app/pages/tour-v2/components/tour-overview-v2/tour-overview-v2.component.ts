@@ -7,6 +7,9 @@ import { CMSTourService, ICMSTourResponse } from '../../../../core/services/cms/
 import { CMSCreatorService } from '../../../../core/services/cms/cms-creator.service';
 import { TourLocationService, ITourLocationResponse } from '../../../../core/services/tour/tour-location.service';
 import { LocationNetService, Location } from '../../../../core/services/locations/locationNet.service';
+import { TagService, ITagResponse } from '../../../../core/services/tag/tag.service';
+import { TourTagService, ITourTagResponse } from '../../../../core/services/tag/tour-tag.service';
+import { TourTagRelationTypeService } from '../../../../core/services/tag/tour-tag-relation-type.service';
 import { forkJoin, of, Observable } from 'rxjs';
 import { catchError, switchMap, map, finalize } from 'rxjs/operators';
 
@@ -63,6 +66,10 @@ export class TourOverviewV2Component implements OnInit {
   mapLocations: string[] = [];
   headerLocations: string[] = [];
   
+  // Propiedades para manejar los tags
+  tourTags: ITourTagResponse[] = [];
+  visibleTags: ITagResponse[] = [];
+  
   tour: any = {
     id: 0,
     name: '',
@@ -89,7 +96,10 @@ export class TourOverviewV2Component implements OnInit {
     private cmsTourService: CMSTourService,
     private cmsCreatorService: CMSCreatorService,
     private tourLocationService: TourLocationService,
-    private locationNetService: LocationNetService
+    private locationNetService: LocationNetService,
+    private tagService: TagService,
+    private tourTagService: TourTagService,
+    private tourTagRelationTypeService: TourTagRelationTypeService
   ) {}
 
   ngOnInit(): void {
@@ -165,9 +175,9 @@ export class TourOverviewV2Component implements OnInit {
   private loadAdditionalDataOptimized(id: number, cmsTourData: CMSTourData[]): void {
     const cmsTour: CMSTourData | null = Array.isArray(cmsTourData) && cmsTourData.length > 0 ? cmsTourData[0] : null;
     
-    // ✅ OPTIMIZACIÓN MÁXIMA: Usar getByTourAndType para tipos específicos
+    // ✅ OPTIMIZACIÓN MÁXIMA: Cargar ubicaciones y tags en paralelo
     forkJoin([
-      // Solo cargar COUNTRY del tour específico
+      // Cargar ubicaciones (existente)
       this.tourLocationService.getByTourAndType(id, "COUNTRY").pipe(
         map(response => Array.isArray(response) ? response : (response ? [response] : [])),
         catchError(error => {
@@ -175,7 +185,6 @@ export class TourOverviewV2Component implements OnInit {
           return of([]);
         })
       ),
-      // Solo cargar HEADER del tour específico  
       this.tourLocationService.getByTourAndType(id, "HEADER").pipe(
         map(response => Array.isArray(response) ? response : (response ? [response] : [])),
         catchError(error => {
@@ -183,80 +192,128 @@ export class TourOverviewV2Component implements OnInit {
           return of([]);
         })
       ),
-      // Solo cargar CONTINENT del tour específico
       this.tourLocationService.getByTourAndType(id, "CONTINENT").pipe(
         map(response => Array.isArray(response) ? response : (response ? [response] : [])),
         catchError(error => {
           console.warn('⚠️ No se encontraron ubicaciones CONTINENT:', error);
           return of([]);
         })
+      ),
+      
+      // ✅ NUEVO: Cargar tipos de relación visibles para la web
+      this.tourTagRelationTypeService.getAll({ isVisible: true }).pipe(
+        catchError(error => {
+          console.error('❌ Error loading visible tag relation types:', error);
+          return of([]);
+        })
       )
     ]).pipe(
-      switchMap(([countryLocations, headerLocations, continentLocations]) => {        
-        // Filtrar objetos vacíos y obtener solo ubicaciones válidas
+      switchMap(([countryLocations, headerLocations, continentLocations, visibleRelationTypes]) => {        
+        // Procesar ubicaciones (código existente)
         const validCountryLocations = countryLocations.filter(loc => loc && loc.id && loc.locationId);
         const validHeaderLocations = headerLocations.filter(loc => loc && loc.id && loc.locationId);
         const validContinentLocations = continentLocations.filter(loc => loc && loc.id && loc.locationId);
 
-        // Combinar todas las ubicaciones para el procesamiento
         const allTourLocations = [
           ...validCountryLocations,
           ...validHeaderLocations,
           ...validContinentLocations
         ];
 
-        // Extraer los IDs únicos de ubicaciones que necesitamos
         const locationIds = [...new Set(allTourLocations.map(tl => tl.locationId))];
-                
-        if (locationIds.length === 0) {
-          console.warn('⚠️ No se encontraron locationIds para cargar');
-          return of({ 
-            countryLocations: validCountryLocations,
-            headerLocations: validHeaderLocations, 
-            continentLocations: validContinentLocations,
-            locations: [] 
-          });
+        
+        // ✅ NUEVO: Obtener tags del tour basados en tipos de relación visibles
+        const visibleRelationTypeIds = visibleRelationTypes.map(rt => rt.id);
+        const tagObservables: Observable<any>[] = [];
+        
+        // Cargar ubicaciones
+        if (locationIds.length > 0) {
+          tagObservables.push(
+            this.locationNetService.getLocationsByIds(locationIds).pipe(
+              catchError(error => {
+                console.error('❌ Error loading specific locations:', error);
+                return of([]);
+              })
+            )
+          );
+        } else {
+          tagObservables.push(of([]));
         }
+        
+        // Cargar tags para cada tipo de relación visible
+        visibleRelationTypeIds.forEach(relationTypeId => {
+          tagObservables.push(
+            this.tourTagService.getAll({ tourId: id, tourTagRelationTypeId: relationTypeId }).pipe(
+              catchError(error => {
+                console.warn(`⚠️ No se encontraron tags para relationTypeId ${relationTypeId}:`, error);
+                return of([]);
+              })
+            )
+          );
+        });
 
-        // ✅ OPTIMIZACIÓN: Cargar solo las ubicaciones específicas que necesitamos
-        return this.locationNetService.getLocationsByIds(locationIds).pipe(
-          map(locations => ({
-            countryLocations: validCountryLocations,
-            headerLocations: validHeaderLocations,
-            continentLocations: validContinentLocations,
-            locations
-          })),
-          catchError(error => {
-            console.error('❌ Error loading specific locations:', error);
-            return of({ 
+        return forkJoin(tagObservables).pipe(
+          map(results => {
+            const locations = results[0] || [];
+            const allTourTagsArrays = results.slice(1);
+            const allTourTags = allTourTagsArrays.flat();
+            
+            return {
               countryLocations: validCountryLocations,
-              headerLocations: validHeaderLocations, 
+              headerLocations: validHeaderLocations,
               continentLocations: validContinentLocations,
-              locations: [] 
-            });
+              locations,
+              tourTags: allTourTags
+            };
           })
         );
       }),
-      switchMap(({ countryLocations, headerLocations, continentLocations, locations }) => {
+      switchMap(({ countryLocations, headerLocations, continentLocations, locations, tourTags }) => {
         // Procesar ubicaciones con los datos optimizados
         this.processLocationsOptimized(countryLocations, headerLocations, continentLocations, locations);
         
-        const creatorId = cmsTour?.creatorId;
+        // ✅ NUEVO: Procesar tags
+        this.tourTags = tourTags;
         
-        // Cargar creator si existe
-        if (creatorId) {
-          return (this.cmsCreatorService.getById(creatorId) as Observable<CreatorData>).pipe(
-            catchError(error => {
-              console.error('❌ Error loading creator data:', error);
-              return of(null);
-            })
+        // Obtener detalles de los tags si existen
+        if (tourTags.length > 0) {
+          const tagIds = [...new Set(tourTags.map(tt => tt.tagId))];
+          
+          // ✅ OPTIMIZADO: Cargar solo los tags específicos del tour
+          const tagDetailObservables = tagIds.map(tagId => 
+            this.tagService.getById(tagId).pipe(
+              catchError(error => {
+                console.warn(`⚠️ Error loading tag ${tagId}:`, error);
+                return of(null);
+              })
+            )
           );
+          
+          return forkJoin([
+            // Cargar creator si existe
+            this.loadCreator(cmsTour?.creatorId),
+            // Cargar detalles específicos de los tags del tour
+            forkJoin(tagDetailObservables).pipe(
+              map(tagDetails => tagDetails.filter(tag => tag !== null && tag.isActive)),
+              catchError(error => {
+                console.error('❌ Error loading tag details:', error);
+                return of([]);
+              })
+            )
+          ]);
+        } else {
+          return forkJoin([
+            this.loadCreator(cmsTour?.creatorId),
+            of([])
+          ]);
         }
-        
-        return of(null as CreatorData | null);
       })
-    ).subscribe((creator: CreatorData | null) => {
-            
+    ).subscribe(([creator, tagDetails]: [CreatorData | null, (ITagResponse | null)[]]) => {
+      // Procesar tags visibles - filtrar nulls y convertir a ITagResponse[]
+      const validTags = tagDetails.filter((tag): tag is ITagResponse => tag !== null);
+      this.visibleTags = validTags;
+      this.tags = validTags.map(tag => tag.name);
+      
       // Actualizar tour con datos completos
       this.tour = {
         ...this.tour,
@@ -274,9 +331,22 @@ export class TourOverviewV2Component implements OnInit {
         
         // Usar ubicaciones procesadas
         cities: this.headerLocations.length > 0 ? this.headerLocations : this.cities,
+        // ✅ NUEVO: Usar tags reales en lugar de vtags
         vtags: this.tags
       };
     });
+  }
+
+  private loadCreator(creatorId?: number): Observable<CreatorData | null> {
+    if (creatorId) {
+      return (this.cmsCreatorService.getById(creatorId) as Observable<CreatorData>).pipe(
+        catchError(error => {
+          console.error('❌ Error loading creator data:', error);
+          return of(null);
+        })
+      );
+    }
+    return of(null);
   }
 
   /**
@@ -292,7 +362,6 @@ export class TourOverviewV2Component implements OnInit {
     // Resetear arrays
     this.cities = [];
     this.countries = [];
-    this.tags = [];
     this.mapLocations = [];
     this.headerLocations = [];
     this.processedLocations = [];
@@ -347,17 +416,13 @@ export class TourOverviewV2Component implements OnInit {
           type: tourLocation.type,
           typeId: tourLocation.tourLocationTypeId,
           displayOrder: tourLocation.displayOrder,
-          isMapLocation: false, // No procesamos MAP aquí
+          isMapLocation: false,
           isHeaderLocation: tourLocation.type === 'HEADER'
         };
         
         this.processedLocations.push(processedLocation);
       }
     });
-
-    console.log('✅ Países:', this.tour.country);
-    console.log('✅ Continentes:', this.tour.continent);
-    console.log('✅ Ciudades Header:', this.headerLocations);
   }
 
   sanitizeHtml(html: string = ''): SafeHtml {

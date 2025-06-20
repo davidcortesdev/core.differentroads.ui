@@ -107,12 +107,33 @@ $spaces: (
     width: 100%;
 
     &-text {
+        flex-shrink: 0;
+        text-align: start;
+        width: 85px; // Ancho fijo para la fecha
+        min-width: 85px; // Asegurar ancho mínimo
+    }
+
+    .itinerary-name {
         flex-grow: 1;
         text-align: start;
+        margin-left: 0.5rem;
+        overflow: hidden; // Evitar desbordamiento
+        text-overflow: ellipsis; // Mostrar "..." si es muy largo
+        white-space: nowrap; // No permitir salto de línea
     }
 
     .trip-type {
         @include trip-type-badge;
+        flex-shrink: 0;
+        width: 24px;
+    }
+
+    // Espacio reservado para mantener alineación
+    .trip-type-placeholder {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+        visibility: hidden;
     }
 }
 

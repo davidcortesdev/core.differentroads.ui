@@ -52,18 +52,23 @@
           <span class="date-option-item-text">
             {{ option.departureDate | date : "dd/MM/yyyy" }}
           </span>
-          <span
-          *ngIf="option.tripType === 'S'"
-          class="trip-type"
-          [ngClass]="getTripTypeClass(option.tripTypeId)"
-          [title]="getTripTypeFullName(option.tripTypeId)"
-        >
-            {{ option.tripType }}
-          </span>
           <span class="itinerary-name">
             {{ option.itineraryName }}
           </span>
-         
+          <!-- Mostrar la "S" si es tipo Single -->
+          <span
+            *ngIf="option.tripType === 'S'"
+            class="trip-type"
+            [ngClass]="getTripTypeClass(option.tripTypeId)"
+            [title]="getTripTypeFullName(option.tripTypeId)"
+          >
+            {{ option.tripType }}
+          </span>
+          <!-- Placeholder invisible para mantener alineación cuando no hay "S" -->
+          <span
+            *ngIf="option.tripType !== 'S'"
+            class="trip-type-placeholder"
+          ></span>
         </div>
       </ng-template>
     </p-dropdown>

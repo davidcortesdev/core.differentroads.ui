@@ -1,0 +1,64 @@
+<div class="itinerary-section">
+  
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-state">
+      <p>Cargando itinerarios...</p>
+    </div>
+  
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="error-state">
+      <p>Error: {{ error }}</p>
+      <button type="button" (click)="refreshSelector()">Reintentar</button>
+    </div>
+  
+    <!-- Main Content -->
+    <div *ngIf="hasValidData">
+      
+      <h2>Configura tu viaje con fechas y actividades</h2>
+      
+      <p class="date" *ngIf="selectedDeparture">
+        Resumen de tu itinerario - 
+        {{ selectedDeparture.departureDate | date : "dd/MM/yyyy" }} - 
+        {{ selectedDeparture.itineraryName }}
+      </p>
+      
+      <p-dropdown
+        class="date"
+        [options]="dateOptions"
+        optionLabel="label"
+        optionValue="value"
+        [value]="selectedDeparture?.value"
+        (onChange)="onDepartureChange($event)"
+        placeholder="Elige fecha"
+        [disabled]="dateOptions.length === 0"
+      >
+        <ng-template pTemplate="selectedItem">
+          <div class="date-option-item">
+            <span>{{ selectedDeparture ? selectedDeparture.departureName : "Elige fecha" }}</span>
+          </div>
+        </ng-template>
+        
+        <ng-template let-option pTemplate="item">
+          <div class="date-option-item">
+            <span class="date-option-item-text">{{
+              option.departureDate | date : "dd/MM/yyyy"
+            }}</span>
+            <span
+              class="trip-type"
+              [ngClass]="getTripTypeClass(option.tripTypeId)"
+              [title]="getTripTypeFullName(option.tripTypeId)"
+            >
+              {{ option.tripType }}
+            </span>
+          </div>
+        </ng-template>
+      </p-dropdown>
+      
+    </div>
+  
+    <!-- Empty State -->
+    <div *ngIf="!loading && !error && !hasValidData" class="empty-state">
+      <p>No hay departures disponibles para este tour</p>
+    </div>
+  
+  </div>

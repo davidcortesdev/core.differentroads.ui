@@ -1,0 +1,364 @@
+@use "sass:map";
+
+$breakpoints: (
+    sm: 576px,
+    md: 768px,
+    lg: 992px,
+    xl: 1366px
+);
+
+$spaces: (
+    xs: 0.5rem,
+    sm: 0.75rem,
+    base: 1rem,
+    lg: 1.5rem
+);
+
+@mixin resp($bp) {
+    @media (max-width: map.get($breakpoints, $bp)) {
+        @content;
+    }
+}
+
+@mixin flex($dir: row, $just: flex-start, $align: stretch, $gap: 0) {
+    display: flex;
+    flex-direction: $dir;
+    justify-content: $just;
+    align-items: $align;
+    @if $gap > 0 {
+        gap: $gap;
+    }
+}
+
+// Trip type badges
+@mixin trip-type-badge {
+    color: white !important;
+    font-weight: bold;
+    width: 24px;
+    height: 24px;
+    @include flex(row, center, center);
+    border-radius: 4px;
+    padding: 0;
+    cursor: help;
+}
+
+.trip-type-s {
+    @include trip-type-badge;
+    background-color: var(--color-single) !important;
+}
+
+.trip-type-g {
+    @include trip-type-badge;
+    background-color: var(--color-group) !important;
+}
+
+.trip-type-p {
+    @include trip-type-badge;
+    background-color: var(--color-private) !important;
+}
+
+.trip-type-i {
+    @include trip-type-badge;
+    background-color: var(--color-individual, #6c757d) !important;
+}
+
+.trip-type-f {
+    @include trip-type-badge;
+    background-color: var(--color-family, #28a745) !important;
+}
+
+.trip-type-default {
+    @include trip-type-badge;
+    background-color: #6c757d !important;
+}
+
+// Main container styles
+.itinerary-section {
+    color: var(--background-azul);
+    text-align: center;
+    padding: map.get($spaces, lg) 0;
+    margin-top: -44px;
+
+    h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+
+        @include resp(md) {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            padding: 0 map.get($spaces, base);
+        }
+    }
+
+    p {
+        margin-top: -20px;
+        font-size: 1rem;
+
+        @include resp(md) {
+            font-size: 0.9rem;
+            padding: 0 map.get($spaces, base);
+            margin-top: -10px;
+        }
+    }
+}
+
+.date-option-item {
+    @include flex(row, space-between, center, 0.5em);
+    width: 100%;
+
+    &-text {
+        flex-grow: 1;
+        text-align: start;
+    }
+
+    .trip-type {
+        @include trip-type-badge;
+    }
+}
+
+:host ::ng-deep {
+    .itinerary-section {
+        .p-dropdown {
+            background-color: var(--background-azul);
+            color: #fff;
+            width: 280px;
+            height: 56px;
+            margin: 0 auto;
+            margin-top: -10px;
+            border: 1px solid var(--background-azul);
+            border-radius: 50px;
+            transition: all 0.2s ease;
+            @include flex(row, center, center);
+
+            // Responsive para móvil
+            @include resp(md) {
+                width: 90%;
+                max-width: 280px;
+                min-width: 250px;
+                height: 52px;
+                margin: 0 auto;
+                margin-top: -5px;
+            }
+
+            @include resp(sm) {
+                width: 95%;
+                height: 48px;
+                font-size: 0.9rem;
+            }
+
+            &:hover {
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            }
+
+            .p-dropdown-label {
+                @include flex(row, center, center);
+                height: 100%;
+                padding: 0 1rem;
+                flex-grow: 1;
+                text-align: center;
+                line-height: 1;
+
+                @include resp(sm) {
+                    padding: 0 0.75rem;
+                    font-size: 0.9rem;
+                }
+            }
+
+            .p-dropdown-trigger {
+                @include flex(row, center, center);
+                height: 100%;
+                padding: 0 1rem;
+
+                @include resp(sm) {
+                    padding: 0 0.75rem;
+                }
+            }
+
+            .p-element {
+                @include flex(row, center, center);
+                width: 100%;
+                height: 100%;
+            }
+
+            .p-dropdown-item {
+                padding: 0.75rem 1rem;
+
+                @include resp(sm) {
+                    padding: 0.6rem 0.75rem;
+                    font-size: 0.9rem;
+                }
+
+                &.p-highlight {
+                    background-color: rgba(var(--background-azul-rgb), 0.1);
+                }
+            }
+        }
+
+        .p-select-label {
+            color: #fff;
+            margin-left: 10px;
+
+            @include resp(sm) {
+                margin-left: 5px;
+            }
+        }
+
+        .p-icon {
+            color: #fff;
+            margin-right: 10px;
+
+            @include resp(sm) {
+                margin-right: 5px;
+            }
+        }
+
+        .p-dropdown-panel {
+            @include resp(md) {
+                width: 90% !important;
+                max-width: 280px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+            }
+
+            .p-dropdown-items {
+                padding: 0.5rem 0;
+
+                @include resp(sm) {
+                    padding: 0.25rem 0;
+                }
+            }
+        }
+    }
+}
+
+.loading-state {
+    text-align: center;
+    padding: map.get($spaces, lg);
+    color: var(--background-azul);
+
+    @include resp(md) {
+        padding: map.get($spaces, base);
+    }
+
+    p {
+        margin-top: map.get($spaces, sm);
+        font-size: 1rem;
+
+        @include resp(md) {
+            font-size: 0.9rem;
+        }
+    }
+}
+
+.error-state {
+    text-align: center;
+    padding: map.get($spaces, lg);
+
+    @include resp(md) {
+        padding: map.get($spaces, base);
+    }
+
+    p {
+        color: #dc3545;
+        margin-bottom: map.get($spaces, base);
+
+        @include resp(md) {
+            font-size: 0.9rem;
+            margin-bottom: map.get($spaces, sm);
+        }
+    }
+
+    button {
+        background-color: var(--background-azul);
+        color: white;
+        border: none;
+        padding: map.get($spaces, sm) map.get($spaces, base);
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        @include resp(md) {
+            padding: map.get($spaces, xs) map.get($spaces, sm);
+            font-size: 0.9rem;
+        }
+
+        &:hover {
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+    }
+}
+
+.empty-state {
+    text-align: center;
+    padding: map.get($spaces, lg);
+    color: #6c757d;
+
+    @include resp(md) {
+        padding: map.get($spaces, base);
+        font-size: 0.9rem;
+    }
+}
+
+.date-option-item {
+    @include flex(row, space-between, center, 0.5em);
+    width: 100%;
+
+    &-text {
+        flex-grow: 1;
+        text-align: start;
+    }
+
+    .date-price {
+        font-weight: bold;
+        color: var(--background-azul);
+        width: 3rem;
+        text-align: right;
+    }
+}
+
+:host ::ng-deep {
+    .itinerary-section {
+        .p-dropdown {
+            background-color: var(--background-azul);
+            color: #fff;
+            width: 280px;
+            margin: 0 auto;
+            margin-top: -10px;
+            border: 1px solid var(--background-azul);
+            border-radius: 50px;
+            transition: all 0.2s ease;
+
+            &:hover {
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            }
+
+            .p-dropdown-label {
+                @include flex(row, center, center);
+            }
+
+            .p-dropdown-item {
+                padding: 0.75rem 1rem;
+
+                &.p-highlight {
+                    background-color: rgba(var(--background-azul-rgb), 0.1);
+                }
+            }
+        }
+
+        .p-select-label {
+            color: #fff;
+            margin-left: 10px;
+        }
+
+        .p-icon {
+            color: #fff;
+            margin-right: 10px;
+        }
+
+        .p-dropdown-panel {
+            .p-dropdown-items {
+                padding: 0.5rem 0;
+            }
+        }
+    }
+}

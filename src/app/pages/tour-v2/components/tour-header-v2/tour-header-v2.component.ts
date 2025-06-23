@@ -171,9 +171,6 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
         // Asignar resultados finales
         this.country = countries.join(', ');
         this.continent = continents.join(', ');
-
-        console.log('✅ Final country:', this.country);
-        console.log('✅ Final continent:', this.continent);
       })
     );
   }

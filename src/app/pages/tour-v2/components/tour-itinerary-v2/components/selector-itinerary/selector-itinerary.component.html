@@ -1,0 +1,87 @@
+<div class="itinerary-section">
+  
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <p-skeleton width="60%" height="36px" styleClass="mb-4"></p-skeleton>
+    <p-skeleton width="100%" height="48px"></p-skeleton>
+  </div>
+  
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <div class="error-content">
+      <i class="pi pi-exclamation-triangle" style="font-size: 2rem; color: #e74c3c;"></i>
+      <h3>Error al cargar los datos</h3>
+      <p>{{ error }}</p>
+      <button pButton type="button" label="Reintentar" 
+              icon="pi pi-refresh" 
+              class="p-button-outlined"
+              (click)="refreshSelector()">
+      </button>
+    </div>
+  </div>
+  
+  <!-- Main Content -->
+  <div *ngIf="hasValidData" class="selector-content">
+    
+    <h2>Configura tu viaje con fechas y actividades</h2>
+    
+    <p class="date-summary" *ngIf="selectedDeparture">
+      Resumen de tu itinerario - 
+      {{ selectedDeparture.departureDate | date : "dd/MM/yyyy" }} - 
+      {{ selectedDeparture.itineraryName }}
+    </p>
+    
+    <p-dropdown
+      class="date-selector"
+      [options]="dateOptions"
+      optionLabel="label"
+      optionValue="value"
+      [value]="selectedDeparture?.value"
+      (onChange)="onDepartureChange($event)"
+      placeholder="Elige fecha"
+      [disabled]="dateOptions.length === 0"
+    >
+      <ng-template pTemplate="selectedItem">
+        <div class="date-option-item">
+          <span>{{ selectedDeparture ? selectedDeparture.departureName : "Elige fecha" }}</span>
+        </div>
+      </ng-template>
+      
+      <ng-template let-option pTemplate="item">
+        <div class="date-option-item">
+          <span class="date-option-item-text">
+            {{ option.departureDate | date : "dd/MM/yyyy" }}
+          </span>
+          <span class="itinerary-name">
+            {{ option.itineraryName }}
+          </span>
+          <!-- Mostrar la "S" si es tipo Single -->
+          <span
+            *ngIf="option.tripType === 'S'"
+            class="trip-type"
+            [ngClass]="getTripTypeClass(option.tripTypeId)"
+            [title]="getTripTypeFullName(option.tripTypeId)"
+          >
+            {{ option.tripType }}
+          </span>
+          <!-- Placeholder invisible para mantener alineación cuando no hay "S" -->
+          <span
+            *ngIf="option.tripType !== 'S'"
+            class="trip-type-placeholder"
+          ></span>
+        </div>
+      </ng-template>
+    </p-dropdown>
+    
+  </div>
+  
+  <!-- Empty State -->
+  <div *ngIf="!loading && !error && !hasValidData" class="empty-state">
+    <div class="empty-content">
+      <i class="pi pi-calendar-times" style="font-size: 3rem; color: #9e9e9e;"></i>
+      <h3>No hay departures disponibles</h3>
+      <p>Este tour no tiene fechas de salida configuradas actualmente.</p>
+    </div>
+  </div>
+  
+</div>

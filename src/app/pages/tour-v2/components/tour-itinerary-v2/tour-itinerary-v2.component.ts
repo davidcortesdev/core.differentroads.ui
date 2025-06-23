@@ -7,6 +7,9 @@ import { TourLocationService, ITourLocationResponse } from '../../../../core/ser
 import { TourLocationTypeService, ITourLocationTypeResponse } from '../../../../core/services/tour/tour-location-type.service';
 import { LocationNetService, Location } from '../../../../core/services/locations/locationNet.service';
 
+// Interface del selector
+import { SelectedDepartureEvent } from './components/selector-itinerary/selector-itinerary.component';
+
 interface ProcessedItineraryLocation {
   id: number;
   name: string;
@@ -51,6 +54,10 @@ export class TourItineraryV2Component implements OnInit {
   // Propiedades para el mapa v2
   mapLocationsList: MapLocation[] = [];
   
+  // Propiedades para el selector
+  selectedDeparture: SelectedDepartureEvent | null = null;
+  selectedItineraryId: number | undefined;
+  
   // Maps para optimización de búsquedas O(1)
   private locationTypesMap = new Map<number, ITourLocationTypeResponse>();
   private locationsMap = new Map<number, Location>();
@@ -68,6 +75,15 @@ export class TourItineraryV2Component implements OnInit {
       console.warn('⚠️ No se proporcionó tourId para el itinerario');
       this.loading = false;
     }
+  }
+
+  /**
+   * MÉTODO CRÍTICO: Manejar selección de departure - ASEGURAR ASIGNACIÓN CORRECTA
+   */
+  onDepartureSelected(event: SelectedDepartureEvent): void {    
+    // CRÍTICO: Asegurar que selectedItineraryId se asigna correctamente
+    this.selectedDeparture = event;
+    this.selectedItineraryId = event.itinerary.id;
   }
 
   /**
@@ -119,7 +135,6 @@ export class TourItineraryV2Component implements OnInit {
       this.createLocationMaps([], locations); // Array vacío para tipos
       this.processMapLocationsDirectly(tourLocations, locations);
       this.prepareMapLocationsForV2();
-
     });
   }
 
@@ -193,7 +208,6 @@ export class TourItineraryV2Component implements OnInit {
     
     // Para MAP, todas las ubicaciones procesadas son mapLocations
     this.mapLocations = [...this.processedLocations];
-    
   }
 
   /**

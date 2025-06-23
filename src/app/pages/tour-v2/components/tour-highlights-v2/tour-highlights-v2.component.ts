@@ -75,13 +75,11 @@ export class TourHighlightsV2Component implements OnInit, OnChanges {
   constructor(private tourHighlightsService: TourHighlightsService) { }
 
   ngOnInit(): void {
-    console.log('🚀 Iniciando componente tour-highlights-v2');
     this.adjustCarouselForScreenSize();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['tourId'] && changes['tourId'].currentValue) {
-      console.log('✅ tourId actualizado en ngOnChanges:', changes['tourId'].currentValue);
       this.loadHighlights();
     }
   }
@@ -107,8 +105,6 @@ export class TourHighlightsV2Component implements OnInit, OnChanges {
       console.warn('⚠️ No hay tourId disponible');
       return;
     }
-
-    console.log('🔄 Cargando highlights para tourId:', this.tourId);
     
     this.isLoading = true;
 
@@ -117,8 +113,6 @@ export class TourHighlightsV2Component implements OnInit, OnChanges {
       isActive: true 
     }).subscribe({
       next: (data) => {
-        console.log('✅ Highlights cargados exitosamente:', data);
-        console.log('📊 Cantidad de highlights:', data.length);
         
         // Transformar la data del API al formato que necesita el template
         this.highlights = this.transformHighlightsData(data);
@@ -168,7 +162,6 @@ export class TourHighlightsV2Component implements OnInit, OnChanges {
    * Abre el modal con el highlight completo
    */
   openFullHighlight(highlight: HighlightDisplay): void {
-    console.log('📖 Abriendo highlight completo:', highlight);
     this.selectedHighlight = highlight;
     this.showFullHighlightModal = true;
   }

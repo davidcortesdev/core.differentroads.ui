@@ -243,31 +243,20 @@
     }
 
     .additional-info-section {
-        padding: 1.5rem;
-        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-        border-radius: 12px;
-        border-left: 4px solid var(--primary-color, #007bff);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-
         .additional-info-title {
             margin: 0 0 1rem 0;
             font-weight: 600;
             font-size: 1.1rem;
-            color: #2c3e50;
+            color: var(--background-azul);
             display: flex;
             align-items: center;
             gap: 0.5rem;
-
-            &:before {
-                content: "💡";
-                font-size: 1.2rem;
-            }
         }
 
         .additional-info-content {
             font-size: 0.95rem;
             line-height: 1.6;
-            color: #495057;
+            color: var(--background-azul);
 
             p {
                 margin-bottom: 0.75rem;

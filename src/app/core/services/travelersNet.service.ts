@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 export interface Traveler {
@@ -11,6 +12,8 @@ export interface Traveler {
 }
 
 export interface TravelerFilter {
+  id?: number;
+  ids?: number[]; // Para consultar múltiples IDs
   email?: string;
   name?: string;
   code?: string;
@@ -20,10 +23,81 @@ export interface TravelerFilter {
   providedIn: 'root'
 })
 export class TravelersNetService {
-  private apiUrl = environment.apiUrl + '/api/travelers';
+  private apiUrl = environment.travelersApiUrl || environment.apiUrl + '/api/travelers';
   private tourApiUrl = environment.apiUrl + '/api/tours';
 
   constructor(private http: HttpClient) { }
+
+  /**
+   * Obtiene todos los viajeros según los criterios de filtrado.
+   * @param filters Filtros para aplicar en la búsqueda.
+   * @returns Lista de viajeros.
+   */
+  getAll(filters?: TravelerFilter): Observable<Traveler[]> {
+    // Si se solicitan múltiples IDs específicos, usar forkJoin
+    if (filters?.ids && filters.ids.length > 0) {
+      return this.getTravelersByIds(filters.ids);
+    }
+
+    let params = new HttpParams();
+
+    // Add filter parameters if provided
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && key !== 'ids') {
+          params = params.set(
+            key.charAt(0).toUpperCase() + key.slice(1),
+            value.toString()
+          );
+        }
+      });
+    }
+
+    return this.http.get<Traveler[]>(`${this.apiUrl}/travelers`, { params });
+  }
+
+  /**
+   * Obtiene múltiples viajeros por sus IDs usando forkJoin
+   * @param ids Array de IDs de viajeros
+   * @returns Observable con la lista de viajeros
+   */
+  private getTravelersByIds(ids: number[]): Observable<Traveler[]> {
+    console.log(`🔍 Getting travelers for IDs: ${ids.join(', ')}`);
+    
+    // Remover duplicados
+    const uniqueIds = [...new Set(ids)];
+    
+    if (uniqueIds.length === 0) {
+      return of([]);
+    }
+    
+    if (uniqueIds.length === 1) {
+      // Si solo es un ID, usar getTravelerById y convertir a array
+      console.log(`👤 Getting single traveler: ${uniqueIds[0]}`);
+      return this.getTravelerById(uniqueIds[0]).pipe(
+        catchError(error => {
+          console.error(`❌ Error getting traveler ${uniqueIds[0]}:`, error);
+          return of({ id: uniqueIds[0], name: 'Usuario desconocido', email: '' } as Traveler);
+        }),
+        // Convertir el resultado individual a array
+        map(traveler => [traveler])
+      );
+    }
+    
+    // Para múltiples IDs, usar forkJoin
+    console.log(`📡 Making ${uniqueIds.length} parallel requests for travelers`);
+    const requests = uniqueIds.map(id => 
+      this.getTravelerById(id).pipe(
+        catchError(error => {
+          console.error(`❌ Error getting traveler ${id}:`, error);
+          // Retornar un traveler por defecto en caso de error
+          return of({ id, name: 'Usuario desconocido', email: '' } as Traveler);
+        })
+      )
+    );
+    
+    return forkJoin(requests);
+  }
 
   /**
    * Obtiene un viajero por su ID
@@ -31,7 +105,7 @@ export class TravelersNetService {
    * @returns Observable con los datos del viajero
    */
   getTravelerById(id: number): Observable<Traveler> {
-    return this.http.get<Traveler>(`${this.apiUrl}/${id}`);
+    return this.http.get<Traveler>(`${this.apiUrl}/travelers/${id}`);
   }
 
   /**
@@ -52,7 +126,7 @@ export class TravelersNetService {
       params = params.set('code', filter.code);
     }
     
-    return this.http.get<Traveler[]>(environment.travelersApiUrl+'/travelers?', { params });
+    return this.http.get<Traveler[]>(`${this.apiUrl}/travelers`, { params });
   }
 
   /**
@@ -61,7 +135,7 @@ export class TravelersNetService {
    * @returns Observable con los datos del viajero creado
    */
   createTraveler(traveler: Partial<Traveler>): Observable<Traveler> {
-    return this.http.post<Traveler>(environment.travelersApiUrl+'/travelers', traveler);
+    return this.http.post<Traveler>(`${this.apiUrl}/travelers`, traveler);
   }
 
   /**

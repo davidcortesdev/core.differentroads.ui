@@ -8,8 +8,10 @@ import {
 import { CAROUSEL_CONFIG } from '../../constants/carousel.constants';
 import { ReviewsService } from '../../../core/services/reviews.service';
 import { TourNetService } from '../../../core/services/tourNet.service';
+import { TravelersNetService } from '../../../core/services/travelersNet.service';
 import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-reviews',
@@ -74,6 +76,7 @@ export class ReviewsComponent implements OnInit {
   constructor(
     private reviewsService: ReviewsService,
     private tourNetService: TourNetService,
+    private travelersNetService: TravelersNetService,
     private cdr: ChangeDetectorRef,
     private router: Router
   ) {}
@@ -111,8 +114,13 @@ export class ReviewsComponent implements OnInit {
       ? this.reviewsService.getTopReviews(this.limit, filter)
       : this.reviewsService.getReviews(filter);
 
-    reviewsObservable.subscribe({
-      next: (reviews) => {
+    reviewsObservable.pipe(
+      switchMap(reviews => {
+        if (reviews.length === 0) {
+          return of([]);
+        }
+
+        // Mapear reviews al formato esperado
         const mappedReviews = reviews.map(review => ({
           ...review,
           traveler: review.travelerName,
@@ -121,15 +129,66 @@ export class ReviewsComponent implements OnInit {
           score: review.rating,
           date: review.reviewDate || review.createdAt
         }));
-        this.enrichReviewsWithTourData(mappedReviews);
+
+        // Si las reviews no tienen travelerName, obtener nombres de travelers
+        if (reviews.some(review => !review.travelerName)) {
+          return this.enrichWithTravelerNames(mappedReviews);
+        }
+
+        return of(mappedReviews);
+      }),
+      catchError(error => {
+        console.error('Error loading reviews:', error);
+        return of([]);
+      })
+    ).subscribe({
+      next: (reviewsWithTravelers) => {
+        this.enrichReviewsWithTourData(reviewsWithTravelers);
       },
       error: (error) => {
-        console.error('Error loading reviews:', error);
+        console.error('Error in loadReviews:', error);
         this.enrichedReviews = [];
         this.loading = false;
         this.cdr.markForCheck();
       }
     });
+  }
+
+  private enrichWithTravelerNames(reviews: any[]) {
+    // Extraer todos los traveler IDs únicos para reviews que no tienen travelerName
+    const travelerIds = [...new Set(reviews
+      .filter(review => !review.traveler || review.traveler === 'Usuario desconocido')
+      .map(review => review.travelerId)
+      .filter(id => id)
+    )];
+
+    if (travelerIds.length === 0) {
+      return of(reviews);
+    }
+
+    // Obtener todos los travelers en una sola consulta
+    return this.travelersNetService.getAll({
+      id: travelerIds
+    }).pipe(
+      map(travelers => {
+        // Crear un mapa para acceso rápido a los travelers por ID
+        const travelersMap = new Map(travelers.map(t => [t.id, t]));
+
+        // Mapear reviews con nombres de travelers
+        return reviews.map(review => ({
+          ...review,
+          traveler: review.traveler || travelersMap.get(review.travelerId)?.name || 'Usuario desconocido'
+        }));
+      }),
+      catchError(error => {
+        console.error('❌ Error fetching travelers:', error);
+        // Fallback: mantener nombres existentes o asignar por defecto
+        return of(reviews.map(review => ({
+          ...review,
+          traveler: review.traveler || 'Usuario desconocido'
+        })));
+      })
+    );
   }
 
   private enrichReviewsWithTourData(reviews: any[]): void {

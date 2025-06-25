@@ -5,23 +5,11 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
 } from '@angular/core';
-import { ReviewCard } from '../../models/reviews/review-card.model';
 import { CAROUSEL_CONFIG } from '../../constants/carousel.constants';
+import { ReviewsService } from '../../../core/services/reviews.service';
 import { TourNetService } from '../../../core/services/tourNet.service';
-import { TravelersNetService } from '../../../core/services/travelersNet.service';
-import { ToursService } from '../../../core/services/tours.service';
-import { forkJoin, Observable, of } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
-import { Router } from '@angular/router'; // Add this import
-
-// Update the EnrichedReviewData interface to include tourSlug
-interface EnrichedReviewData {
-  tourId: string | number;
-  travelerId: string | number;
-  tourName: string;
-  travelerName: string;
-  tourSlug?: string; // Add this property
-}
+import { Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-reviews',
@@ -31,13 +19,17 @@ interface EnrichedReviewData {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReviewsComponent implements OnInit {
-  @Input() reviews: ReviewCard[] = [];
+  @Input() reviews: any[] = []; // Para recibir reviews desde el componente padre
+  @Input() tourId?: number;
+  @Input() showOnHomePage?: boolean;
+  @Input() showOnTourPage?: boolean;
+  @Input() limit?: number;
 
-  enrichedReviews: ReviewCard[] = [];
+  enrichedReviews: any[] = []; // Mantener el nombre que usa el template
   loading = true;
   skeletonArray = Array(6).fill({});
   showFullReviewModal = false;
-  selectedReview: ReviewCard | null = null;
+  selectedReview: any = null;
 
   readonly responsiveOptions = [
     {
@@ -66,7 +58,12 @@ export class ReviewsComponent implements OnInit {
       numScroll: 1,
     },
     {
-      breakpoint: '850px',
+      breakpoint: '1024px', // Tablet - 2 reviews
+      numVisible: 2,
+      numScroll: 1,
+    },
+    {
+      breakpoint: '768px', // Móvil - 1 review
       numVisible: 1,
       numScroll: 1,
     },
@@ -75,151 +72,116 @@ export class ReviewsComponent implements OnInit {
   protected carouselConfig = CAROUSEL_CONFIG;
 
   constructor(
+    private reviewsService: ReviewsService,
     private tourNetService: TourNetService,
-    private travelersNetService: TravelersNetService,
-    private toursService: ToursService,
     private cdr: ChangeDetectorRef,
     private router: Router
   ) {}
 
   ngOnInit(): void {
-    if (this.reviews?.length) {
-      this.loading = true;
-      // Initialize with reviews that don't need enrichment
-      this.initializeReviews();
+    // Si recibe reviews desde el padre, las usa directamente pero las enriquece
+    if (this.reviews && this.reviews.length > 0) {
+      this.enrichReviewsWithTourData(this.reviews);
     } else {
-      this.loading = false;
+      // Si no, carga las reviews desde el servicio
+      this.loadReviews();
     }
   }
 
-  initializeReviews(): void {
-    if (!this.reviews?.length) {
-      this.loading = false;
-      return;
+  loadReviews(): void {
+    this.loading = true;
+    
+    // Construir filtros basados en los inputs
+    const filter: any = {};
+    
+    if (this.tourId) {
+      filter.tourId = this.tourId;
+    }
+    
+    if (this.showOnHomePage !== undefined) {
+      filter.showOnHomePage = this.showOnHomePage;
+    }
+    
+    if (this.showOnTourPage !== undefined) {
+      filter.showOnTourPage = this.showOnTourPage;
     }
 
-    const reviewsToProcess = [...this.reviews];
-    
-    // Immediately show reviews that don't need enrichment
-    const completeReviews = reviewsToProcess.filter(
-      review => (review.tourId && review.tour && review.travelerId && review.traveler)
-    );
-    
-    const reviewsNeedingEnrichment = reviewsToProcess.filter(
-      review => (review.tourId && !review.tour) || (review.travelerId && !review.traveler)
-    );
-    
-    // If we have complete reviews, show them immediately and remove loading state
-    if (completeReviews.length > 0) {
-      this.enrichedReviews = completeReviews;
-      this.loading = false; // Remove loading state as soon as we have at least one review
-      this.cdr.markForCheck();
-    }
-    
-    // If we have reviews that need enrichment, process them individually
-    if (reviewsNeedingEnrichment.length > 0) {
-      this.processReviewsIncrementally(reviewsNeedingEnrichment);
-    } else if (completeReviews.length === 0) {
-      // Only if we have no complete reviews and no reviews to enrich
-      this.loading = false;
-      this.cdr.markForCheck();
-    }
-  }
+    // Usar getTopReviews si hay límite, sino getReviews
+    const reviewsObservable = this.limit 
+      ? this.reviewsService.getTopReviews(this.limit, filter)
+      : this.reviewsService.getReviews(filter);
 
-  processReviewsIncrementally(reviewsToEnrich: ReviewCard[]): void {
-    // Process each review individually to update UI incrementally
-    reviewsToEnrich.forEach(review => {
-      this.enrichReviewData(review).subscribe({
-        next: (enrichedData) => {
-          const enrichedReview = this.createEnrichedReview(review, enrichedData);
-          // Add the enriched review to our array
-          this.enrichedReviews = [...this.enrichedReviews, enrichedReview];
-          
-          // As soon as we have at least one review, remove the loading state
-          if (this.enrichedReviews.length > 0) {
-            this.loading = false;
-          }
-          
-          this.cdr.markForCheck();
-        },
-        error: () => {
-          // Even on error, add the original review
-          this.enrichedReviews = [...this.enrichedReviews, review];
-          
-          // As soon as we have at least one review, remove the loading state
-          if (this.enrichedReviews.length > 0) {
-            this.loading = false;
-          }
-          
-          this.cdr.markForCheck();
-        }
-      });
+    reviewsObservable.subscribe({
+      next: (reviews) => {
+        const mappedReviews = reviews.map(review => ({
+          ...review,
+          traveler: review.travelerName,
+          tour: review.tourName,
+          review: review.text,
+          score: review.rating,
+          date: review.reviewDate || review.createdAt
+        }));
+        this.enrichReviewsWithTourData(mappedReviews);
+      },
+      error: (error) => {
+        console.error('Error loading reviews:', error);
+        this.enrichedReviews = [];
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
     });
   }
 
-  private createEnrichedReview(review: ReviewCard, enrichedData: EnrichedReviewData): ReviewCard {
-    return {
-      ...review,
-      tour: enrichedData.tourName || review.tour || 'Unknown Tour',
-      traveler: enrichedData.travelerName || review.traveler || 'Unknown Traveler',
-      tourSlug: enrichedData.tourSlug
-    };
-  }
-
-  // Keep the existing enrichReviewData method
-  private enrichReviewData(review: ReviewCard): Observable<EnrichedReviewData> {
-    const reviewData: EnrichedReviewData = {
-      tourId: review.tourId || '',
-      travelerId: review.travelerId || '',
-      tourName: review.tour || '',
-      travelerName: review.traveler || '',
-    };
-
-    let observable = of(reviewData);
-
-    if (review.tourId && !review.tour) {
-      observable = this.tourNetService.getTourById(review.tourId).pipe(
-        switchMap((tour) => {
-          // Removed the call to getTourDetailByExternalID
-          return of({
-            ...reviewData,
-            tourName: tour?.name || 'Unknown Tour',
-            tourSlug: tour?.slug || '',
-          });
-        }),
-        catchError(() =>
-          of({
-            ...reviewData,
-            tourName: 'Unknown Tour',
-          })
-        )
-      );
+  private enrichReviewsWithTourData(reviews: any[]): void {
+    // Obtener IDs únicos de tours
+    const uniqueTourIds = [...new Set(reviews.map(review => review.tourId).filter(id => id))];
+    
+    if (uniqueTourIds.length === 0) {
+      this.enrichedReviews = reviews;
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
     }
 
-    return observable.pipe(
-      switchMap((data) => {
-        if (review.travelerId && !review.traveler) {
-          return this.travelersNetService
-            .getTravelerById(review.travelerId)
-            .pipe(
-              map((traveler) => ({
-                ...data,
-                travelerName: traveler?.name || 'Unknown Traveler',
-              })),
-              catchError(() =>
-                of({
-                  ...data,
-                  travelerName: 'Unknown Traveler',
-                })
-              )
-            );
-        }
-        return of(data);
-      })
+    // Crear observables para obtener información de cada tour
+    const tourObservables = uniqueTourIds.map(tourId => 
+      this.tourNetService.getTourById(tourId)
     );
+
+    forkJoin(tourObservables).subscribe({
+      next: (tours) => {
+        // Crear un mapa de tourId -> tour info
+        const tourMap = new Map();
+        uniqueTourIds.forEach((tourId, index) => {
+          if (tours[index]) {
+            tourMap.set(tourId, tours[index]);
+          }
+        });
+
+        // Enriquecer las reviews con la información del tour
+        this.enrichedReviews = reviews.map(review => {
+          const tourInfo = tourMap.get(review.tourId);
+          return {
+            ...review,
+            tour: tourInfo?.name || review.tour || review.tourName || 'Tour Desconocido',
+            tourSlug: tourInfo?.slug || review.tourSlug
+          };
+        });
+
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Error enriching reviews with tour data:', error);
+        // En caso de error, usar las reviews sin enriquecer
+        this.enrichedReviews = reviews;
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
-  openFullReview(review: ReviewCard): void {
+  openFullReview(review: any): void {
     this.selectedReview = review;
     this.showFullReviewModal = true;
   }
@@ -227,7 +189,7 @@ export class ReviewsComponent implements OnInit {
   navigateToTour(tourSlug: string, event: MouseEvent): void {
     event.stopPropagation();
     if (tourSlug) {
-      this.router.navigate(['/tour', tourSlug]);
+      this.router.navigate(['/tour-v2', tourSlug]);
     }
   }
 }

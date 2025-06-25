@@ -62,7 +62,6 @@ export class TravelersNetService {
    * @returns Observable con la lista de viajeros
    */
   private getTravelersByIds(ids: number[]): Observable<Traveler[]> {
-    console.log(`🔍 Getting travelers for IDs: ${ids.join(', ')}`);
     
     // Remover duplicados
     const uniqueIds = [...new Set(ids)];
@@ -73,7 +72,6 @@ export class TravelersNetService {
     
     if (uniqueIds.length === 1) {
       // Si solo es un ID, usar getTravelerById y convertir a array
-      console.log(`👤 Getting single traveler: ${uniqueIds[0]}`);
       return this.getTravelerById(uniqueIds[0]).pipe(
         catchError(error => {
           console.error(`❌ Error getting traveler ${uniqueIds[0]}:`, error);
@@ -85,7 +83,6 @@ export class TravelersNetService {
     }
     
     // Para múltiples IDs, usar forkJoin
-    console.log(`📡 Making ${uniqueIds.length} parallel requests for travelers`);
     const requests = uniqueIds.map(id => 
       this.getTravelerById(id).pipe(
         catchError(error => {

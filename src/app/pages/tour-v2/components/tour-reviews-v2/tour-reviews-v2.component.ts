@@ -42,7 +42,6 @@ export class TourReviewsV2Component implements OnInit {
     }
 
     this.loading = true;
-    console.log(`🚀 Loading reviews for tour ID: ${this.tourId}`);
             
     // Cargar reviews directamente usando el tourId
     this.reviewsService.getTopReviews(25, {
@@ -52,7 +51,6 @@ export class TourReviewsV2Component implements OnInit {
     }).pipe(
       take(1),
       switchMap(reviews => {
-        console.log(`📝 Found ${reviews.length} reviews`);
         
         if (reviews.length === 0) {
           return of([]);
@@ -60,14 +58,12 @@ export class TourReviewsV2Component implements OnInit {
 
         // Extraer todos los traveler IDs únicos para evitar duplicados
         const travelerIds = [...new Set(reviews.map(review => review.travelerId))];
-        console.log(`👥 Unique traveler IDs: ${travelerIds.length}`, travelerIds);
         
         // Hacer UNA SOLA consulta para obtener todos los travelers
         return this.travelersNetService.getAll({ 
           ids: travelerIds  // Pasar todos los IDs en una sola consulta
         }).pipe(
           map(travelers => {
-            console.log(`✅ Retrieved ${travelers.length} travelers in single request`);
             
             // Crear un mapa para acceso rápido a los travelers por ID
             const travelersMap = new Map(travelers.map(t => [t.id, t]));
@@ -94,7 +90,6 @@ export class TourReviewsV2Component implements OnInit {
       })
     ).subscribe({
       next: (reviewsWithTravelers) => {
-        console.log(`🎉 Successfully processed ${reviewsWithTravelers.length} reviews`);
         
         // Map the API reviews to ReviewCard format with traveler names
         this.reviewsCards = reviewsWithTravelers.map(review => ({

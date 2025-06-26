@@ -1,0 +1,67 @@
+<div>
+  <div *ngIf="loading">
+    Cargando...
+  </div>
+
+  <div *ngIf="!loading">
+    <h3>Información del Itinerario</h3>
+    <p><strong>ID del Itinerario:</strong> {{ itinerary?.id || 'No disponible' }}</p>
+    <p><strong>Nombre del Itinerario:</strong> {{ itinerary?.name || 'No disponible' }}</p>
+    
+    <h4>IDs de Departures:</h4>
+    <div *ngIf="departures && departures.length > 0">
+      <p *ngFor="let departure of departures">
+        <ng-container *ngIf="departure">
+          <strong>Departure ID:</strong> {{ departure.id }} - <strong>Código:</strong> {{ departure.code }}
+        </ng-container>
+      </p>
+    </div>
+    <div *ngIf="!departures || departures.length === 0">
+      <p>No hay departures</p>
+    </div>
+
+    <h4>IDs de Departure Days:</h4>
+    <div *ngIf="departureDays && departureDays.length > 0">
+      <p *ngFor="let departureDay of departureDays">
+        <ng-container *ngIf="departureDay">
+          <strong>Departure Day ID:</strong> {{ departureDay.id }} - <strong>Departure ID:</strong> {{ departureDay.departureId }} - <strong>Día #:</strong> {{ departureDay.dayNumber }}
+        </ng-container>
+      </p>
+    </div>
+    <div *ngIf="!departureDays || departureDays.length === 0">
+      <p>No hay departure days</p>
+    </div>
+
+    <h4>IDs de Departure Hotels:</h4>
+    <div *ngIf="departureHotels && departureHotels.length > 0">
+      <p *ngFor="let departureHotel of departureHotels">
+        <ng-container *ngIf="departureHotel">
+          <strong>Departure Hotel ID:</strong> {{ departureHotel.id }} - <strong>Hotel ID:</strong> {{ departureHotel.hotelId }} - <strong>Departure Day ID:</strong> {{ departureHotel.departureDayId }}
+        </ng-container>
+      </p>
+    </div>
+    <div *ngIf="!departureHotels || departureHotels.length === 0">
+      <p>No hay departure hotels</p>
+    </div>
+
+    <h4>Nombres de Hoteles:</h4>
+    <div *ngIf="hotels && hotels.length > 0">
+      <p *ngFor="let hotel of hotels">
+        <ng-container *ngIf="hotel">
+          <strong>Hotel ID:</strong> {{ hotel.id }} - <strong>Nombre:</strong> {{ hotel.name }} - <strong>Código:</strong> {{ hotel.code }}
+        </ng-container>
+      </p>
+    </div>
+    <div *ngIf="!hotels || hotels.length === 0">
+      <p>No hay hoteles obtenidos</p>
+      <p><strong>Debug:</strong> hotels.length = {{ hotels?.length || 0 }}</p>
+    </div>
+
+    <h4>Debug Info:</h4>
+    <p><strong>Total Departures:</strong> {{ departures?.length || 0 }}</p>
+    <p><strong>Total Departure Days:</strong> {{ departureDays?.length || 0 }}</p>
+    <p><strong>Total Departure Hotels:</strong> {{ departureHotels?.length || 0 }}</p>
+    <p><strong>Total Hotels:</strong> {{ hotels?.length || 0 }}</p>
+
+  </div>
+</div>

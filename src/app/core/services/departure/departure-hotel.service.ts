@@ -7,6 +7,7 @@ export interface DepartureHotelCreate {
   id: number;
   departureId: number;
   itineraryDayId: number;
+  departureDayId?: number;
   hotelId: number;
   notes: string;
   isPrimary: boolean;
@@ -16,6 +17,7 @@ export interface DepartureHotelUpdate {
   id: number;
   departureId: number;
   itineraryDayId: number;
+  departureDayId?: number;
   hotelId: number;
   notes: string;
   isPrimary: boolean;
@@ -25,6 +27,7 @@ export interface IDepartureHotelResponse {
   id: number;
   departureId: number;
   itineraryDayId: number;
+  departureDayId?: number;
   hotelId: number;
   notes: string;
   isPrimary: boolean;
@@ -37,6 +40,7 @@ export interface DepartureHotelFilters {
   id?: number;
   departureId?: number;
   itineraryDayId?: number;
+  departureDayId?: number;
   hotelId?: number;
   notes?: string;
   isPrimary?: boolean;

@@ -1,4 +1,3 @@
-
 <div class="itinerary-day-container">
   
   <!-- Loading State - EXACTAMENTE IGUAL -->
@@ -121,5 +120,10 @@
       <p>Este tour aún no tiene días configurados en el itinerario.</p>
     </div>
   </div>
+
+  <!-- Componente hijo simple -->
+  <app-hotel-details 
+    [itineraryId]="itineraryId">
+  </app-hotel-details>
   
 </div>

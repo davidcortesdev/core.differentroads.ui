@@ -1,67 +1,71 @@
-<div>
-  <div *ngIf="loading">
-    Cargando...
-  </div>
-
-  <div *ngIf="!loading">
-    <h3>Información del Itinerario</h3>
-    <p><strong>ID del Itinerario:</strong> {{ itinerary?.id || 'No disponible' }}</p>
-    <p><strong>Nombre del Itinerario:</strong> {{ itinerary?.name || 'No disponible' }}</p>
+<div *ngIf="!loading && hasHotels">
+  
+  <!-- Cada hotel usando el estilo exacto simplificado -->
+  <div *ngFor="let hotel of uniqueHotels" class="hotel-card">
     
-    <h4>IDs de Departures:</h4>
-    <div *ngIf="departures && departures.length > 0">
-      <p *ngFor="let departure of departures">
-        <ng-container *ngIf="departure">
-          <strong>Departure ID:</strong> {{ departure.id }} - <strong>Código:</strong> {{ departure.code }}
-        </ng-container>
+    <!-- Imagen del hotel -->
+    <img
+      [src]="hotel.imageUrl || ''"
+      [alt]="hotel.imageAlt || hotel.name"
+      class="hotel-card-image"
+      loading="lazy"
+      width="300"
+      height="150"
+    />
+    
+    <!-- Contenido principal del hotel -->
+    <div class="hotel-card-content">
+      <!-- Rating usando la categoría del hotel (número exacto de estrellas) -->
+      <span>
+        <p-rating
+          [ngModel]="hotel.category || 0"
+          [readonly]="true"
+          [stars]="hotel.category || 0"
+        ></p-rating>
+      </span>
+      
+      <!-- Nombre del hotel -->
+      <h4 class="hotel-card-name">
+        <a *ngIf="hotel.website" [href]="hotel.website" target="_blank" rel="noopener" class="hotel-link">
+          {{ hotel.name }}
+        </a>
+        <span *ngIf="!hotel.website">{{ hotel.name }}</span>
+      </h4>
+      
+      <!-- Dirección del hotel -->
+      <p class="hotel-card-location">
+        <i class="pi pi-map-marker" aria-hidden="true"></i> 
+        {{ hotel.address || 'No address available' }}
       </p>
     </div>
-    <div *ngIf="!departures || departures.length === 0">
-      <p>No hay departures</p>
+    
+    <!-- Sección de booking -->
+    <div class="hotel-card-bookings-section" *ngIf="hotel.bookingRating || hotel.bookingUrl">
+      <ng-container *ngIf="hotel.bookingUrl; else noBookingLink">
+        <a [href]="hotel.bookingUrl" target="_blank" rel="noopener" class="booking-link">
+          <img
+            [src]="bookingLogoSrc"
+            alt="Booking Logo"
+            class="logo"
+            height="60"
+            width="100"
+            loading="lazy"
+          />
+          <p>{{ hotel.bookingRating || '-' }}</p>
+        </a>
+      </ng-container>
+      <ng-template #noBookingLink>
+        <img
+          [src]="bookingLogoSrc"
+          alt="Booking Logo"
+          class="logo"
+          height="60"
+          loading="lazy"
+          width="100"
+        />
+        <p>{{ hotel.bookingRating || '-' }}</p>
+      </ng-template>
     </div>
-
-    <h4>IDs de Departure Days:</h4>
-    <div *ngIf="departureDays && departureDays.length > 0">
-      <p *ngFor="let departureDay of departureDays">
-        <ng-container *ngIf="departureDay">
-          <strong>Departure Day ID:</strong> {{ departureDay.id }} - <strong>Departure ID:</strong> {{ departureDay.departureId }} - <strong>Día #:</strong> {{ departureDay.dayNumber }}
-        </ng-container>
-      </p>
-    </div>
-    <div *ngIf="!departureDays || departureDays.length === 0">
-      <p>No hay departure days</p>
-    </div>
-
-    <h4>IDs de Departure Hotels:</h4>
-    <div *ngIf="departureHotels && departureHotels.length > 0">
-      <p *ngFor="let departureHotel of departureHotels">
-        <ng-container *ngIf="departureHotel">
-          <strong>Departure Hotel ID:</strong> {{ departureHotel.id }} - <strong>Hotel ID:</strong> {{ departureHotel.hotelId }} - <strong>Departure Day ID:</strong> {{ departureHotel.departureDayId }}
-        </ng-container>
-      </p>
-    </div>
-    <div *ngIf="!departureHotels || departureHotels.length === 0">
-      <p>No hay departure hotels</p>
-    </div>
-
-    <h4>Nombres de Hoteles:</h4>
-    <div *ngIf="hotels && hotels.length > 0">
-      <p *ngFor="let hotel of hotels">
-        <ng-container *ngIf="hotel">
-          <strong>Hotel ID:</strong> {{ hotel.id }} - <strong>Nombre:</strong> {{ hotel.name }} - <strong>Código:</strong> {{ hotel.code }}
-        </ng-container>
-      </p>
-    </div>
-    <div *ngIf="!hotels || hotels.length === 0">
-      <p>No hay hoteles obtenidos</p>
-      <p><strong>Debug:</strong> hotels.length = {{ hotels?.length || 0 }}</p>
-    </div>
-
-    <h4>Debug Info:</h4>
-    <p><strong>Total Departures:</strong> {{ departures?.length || 0 }}</p>
-    <p><strong>Total Departure Days:</strong> {{ departureDays?.length || 0 }}</p>
-    <p><strong>Total Departure Hotels:</strong> {{ departureHotels?.length || 0 }}</p>
-    <p><strong>Total Hotels:</strong> {{ hotels?.length || 0 }}</p>
-
   </div>
+  
 </div>

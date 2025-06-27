@@ -57,6 +57,7 @@ export class TourItineraryV2Component implements OnInit {
   // Propiedades para el selector
   selectedDeparture: SelectedDepartureEvent | null = null;
   selectedItineraryId: number | undefined;
+  selectedDepartureId: number | undefined; // NUEVO: Para pasar al componente hijo
   
   // Maps para optimización de búsquedas O(1)
   private locationTypesMap = new Map<number, ITourLocationTypeResponse>();
@@ -81,9 +82,10 @@ export class TourItineraryV2Component implements OnInit {
    * MÉTODO CRÍTICO: Manejar selección de departure - ASEGURAR ASIGNACIÓN CORRECTA
    */
   onDepartureSelected(event: SelectedDepartureEvent): void {    
-    // CRÍTICO: Asegurar que selectedItineraryId se asigna correctamente
+    // CRÍTICO: Asegurar que selectedItineraryId y selectedDepartureId se asignan correctamente
     this.selectedDeparture = event;
     this.selectedItineraryId = event.itinerary.id;
+    this.selectedDepartureId = event.departure.id; // NUEVO: Guardar el ID del departure
   }
 
   /**

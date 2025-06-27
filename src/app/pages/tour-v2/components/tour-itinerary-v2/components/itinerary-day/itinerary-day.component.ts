@@ -41,6 +41,7 @@ interface ProcessedItineraryDay {
 export class ItineraryDayComponent implements OnInit, OnChanges {
   @Input() tourId: number | undefined;
   @Input() itineraryId: number | undefined;
+  @Input() departureId: number | undefined; // NUEVO: Recibir el departure ID seleccionado
   
   @ViewChildren('itineraryPanel') itineraryPanels!: QueryList<Panel>;
   
@@ -79,14 +80,14 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     
-    // Si cambió el itineraryId
-    if (changes['itineraryId']) {
-      const currentItineraryId = changes['itineraryId'].currentValue;
-      const previousItineraryId = changes['itineraryId'].previousValue;
+    // Si cambió el itineraryId o departureId
+    if (changes['itineraryId'] || changes['departureId']) {
+      const currentItineraryId = this.itineraryId;
+      const currentDepartureId = this.departureId;
             
-      if (currentItineraryId && currentItineraryId !== previousItineraryId) {
+      if (currentItineraryId) {
         this.loadInitialData();
-      } else if (!currentItineraryId) {
+      } else {
         // Si no hay itineraryId, limpiar datos
         this.clearData();
       }

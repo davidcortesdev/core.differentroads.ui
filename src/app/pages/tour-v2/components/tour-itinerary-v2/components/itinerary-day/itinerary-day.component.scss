@@ -1,4 +1,4 @@
-// itinerary-day.component.scss (COMPONENTE HIJO)
+// itinerary-day.component.scss (COMPONENTE COMPLETO)
 // MANTIENE EXACTAMENTE LOS MISMOS ESTILOS ORIGINALES CON NG-DEEP ESPECÍFICO
 
 .itinerary-day-container {
@@ -178,7 +178,22 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 1.5rem;
+
+        // ===== ESTILOS ESPECÍFICOS PARA HOTEL-DETAILS DENTRO DEL PANEL =====
+        app-hotel-details {
+            width: 100%;
+            display: block;
+            margin-top: 10px; // Reducir espacio superior
+
+            // Forzar que los hoteles ocupen todo el ancho disponible
+            ::ng-deep .hotel-card {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+                box-sizing: border-box;
+            }
+        }
     }
 
     // Imagen a la derecha
@@ -289,6 +304,14 @@
 
         .text-content {
             order: 2;
+
+            // En móviles, asegurar que el hotel ocupe todo el ancho
+            app-hotel-details {
+                ::ng-deep .hotel-card {
+                    width: 100% !important;
+                    margin: 0.5rem 0 !important;
+                }
+            }
         }
     }
 }

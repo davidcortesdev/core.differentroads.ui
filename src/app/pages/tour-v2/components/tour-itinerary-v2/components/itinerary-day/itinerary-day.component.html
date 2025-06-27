@@ -92,6 +92,7 @@
                     <h4 class="additional-info-title">{{ event.additionalInfoTitle }}</h4>
                     <div class="additional-info-content" [innerHTML]="event.additionalInfoContent"></div>
                   </div>
+                  
                 </div>
                 
                 <!-- Imagen del día (de itinerary_day_cms) - Movida a la derecha -->
@@ -105,6 +106,12 @@
                 </div>
                 
               </div>
+                  <!-- COMPONENTE HOTEL-DETAILS: Más cerca del contenido -->
+                  <app-hotel-details 
+                    [itineraryDayId]="event.dayId"
+                    [departureId]="departureId"
+                    style="margin-top: 10px; display: block; width: 100%;">
+                  </app-hotel-details>
             </ng-template>
           </p-panel>
         </ng-template>
@@ -120,10 +127,5 @@
       <p>Este tour aún no tiene días configurados en el itinerario.</p>
     </div>
   </div>
-
-  <!-- Componente hijo simple -->
-  <app-hotel-details 
-    [itineraryId]="itineraryId">
-  </app-hotel-details>
   
 </div>

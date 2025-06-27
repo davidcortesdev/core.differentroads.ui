@@ -1,13 +1,18 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
-import { forkJoin, of } from 'rxjs';
-import { catchError, finalize } from 'rxjs/operators';
+import { forkJoin, of, Observable } from 'rxjs';
+import { catchError, finalize, switchMap, map } from 'rxjs/operators';
 
 // Servicios necesarios
-import { HotelService, IHotelResponse } from '../../../../../../../core/services/hotels/hotel.service';
-import { ItineraryService, IItineraryResponse } from '../../../../../../../core/services/itinerary/itinerary.service';
-import { DepartureService, IDepartureResponse } from '../../../../../../../core/services/departure/departure.service';
 import { DepartureDayService, IDepartureDayResponse } from '../../../../../../../core/services/departure/departure-day.service';
 import { DepartureHotelService, IDepartureHotelResponse } from '../../../../../../../core/services/departure/departure-hotel.service';
+import { HotelService, IHotelResponse } from '../../../../../../../core/services/hotels/hotel.service';
+
+// Interface optimizada
+interface OptimizedHotelInfo {
+  departureHotelId: number;
+  departureDayId: number;
+  hotel: IHotelResponse;
+}
 
 @Component({
   selector: 'app-hotel-details',
@@ -17,180 +22,261 @@ import { DepartureHotelService, IDepartureHotelResponse } from '../../../../../.
 })
 export class HotelDetailsComponent implements OnInit, OnChanges {
   
-  // Inputs que recibirá desde el componente padre
-  @Input() itineraryId: number | undefined;
+  // Inputs del componente
+  @Input() itineraryDayId: number | undefined;
+  @Input() departureId: number | undefined;
   
   // Estados del componente
   loading = true;
   
-  // Datos del componente
-  departures: IDepartureResponse[] = [];
-  itinerary: IItineraryResponse | undefined;
-  departureDays: IDepartureDayResponse[] = [];
-  departureHotels: IDepartureHotelResponse[] = [];
-  hotels: IHotelResponse[] = [];
+  // Datos optimizados
+  hotelsForThisDay: OptimizedHotelInfo[] = [];
+  
+  // NUEVO: Propiedad para el logo de booking (igual que hotel-card)
+  readonly bookingLogoSrc: string = 'assets/images/booking-logo.png';
+  
+  // NUEVO: Cache para evitar consultas duplicadas
+  private lastQuery: string = '';
+  private isLoadingData = false;
   
   constructor(
-    private itineraryService: ItineraryService,
-    private departureService: DepartureService,
     private departureDayService: DepartureDayService,
     private departureHotelService: DepartureHotelService,
     private hotelService: HotelService
   ) {}
 
   ngOnInit(): void {
-    this.loadData();
+    this.loadDataWithFilters();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['itineraryId']) {
-      this.loadData();
+    // OPTIMIZACIÓN: Solo recargar si realmente cambió algo importante
+    const itineraryDayChanged = changes['itineraryDayId'] && 
+                               changes['itineraryDayId'].currentValue !== changes['itineraryDayId'].previousValue;
+    const departureChanged = changes['departureId'] && 
+                            changes['departureId'].currentValue !== changes['departureId'].previousValue;
+    
+    if (itineraryDayChanged || departureChanged) {
+      this.loadDataWithFilters();
     }
   }
 
-  private loadData(): void {
-    if (!this.itineraryId) {
+  /**
+   * MÉTODO OPTIMIZADO: Obtener múltiples hoteles usando el servicio actual
+   */
+  private getMultipleHotelsByIds(hotelIds: number[]): Observable<IHotelResponse[]> {
+    if (hotelIds.length === 0) {
+      return of([]);
+    }
+
+    if (hotelIds.length === 1) {
+      // Un solo hotel - usar getById
+      return this.hotelService.getById(hotelIds[0]).pipe(
+        map(hotel => [hotel]),
+        catchError(error => {
+          console.error(`Error hotel ${hotelIds[0]}:`, error);
+          return of([]);
+        })
+      );
+    }
+
+    // ESTRATEGIA OPTIMIZADA: Consultas paralelas limitadas en lotes    
+    const batchSize = 3; // Máximo 3 consultas paralelas por lote
+    const batches: number[][] = [];
+    
+    // Dividir en lotes
+    for (let i = 0; i < hotelIds.length; i += batchSize) {
+      batches.push(hotelIds.slice(i, i + batchSize));
+    }
+
+    // Procesar lotes secuencialmente para no sobrecargar el servidor
+    const batchObservables = batches.map(batch => 
+      forkJoin(batch.map(hotelId =>
+        this.hotelService.getById(hotelId).pipe(
+          catchError(error => {
+            console.error(`Error hotel ${hotelId}:`, error);
+            return of(null);
+          })
+        )
+      ))
+    );
+
+    return forkJoin(batchObservables).pipe(
+      map(batchResults => {
+        const allHotels = batchResults.flat().filter(hotel => hotel !== null) as IHotelResponse[];
+        return allHotels;
+      }),
+      catchError(error => {
+        console.error('Error en consulta de múltiples hoteles:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * MÉTODO OPTIMIZADO: Evitar consultas duplicadas
+   */
+  private loadDataWithFilters(): void {
+    if (!this.itineraryDayId || !this.departureId) {
       this.loading = false;
+      this.hotelsForThisDay = [];
       return;
     }
 
+    // OPTIMIZACIÓN: Crear clave única para evitar consultas duplicadas
+    const queryKey = `${this.itineraryDayId}-${this.departureId}`;
+    if (this.lastQuery === queryKey || this.isLoadingData) {
+      return;
+    }
+
+    this.lastQuery = queryKey;
+    this.isLoadingData = true;
     this.loading = true;
-
-    const observables = [];
-
-    // Departures by itinerary
-    observables.push(
-      this.departureService.getByItinerary(this.itineraryId).pipe(
-        catchError(() => of([]))
-      )
-    );
-
-    // Itinerary
-    observables.push(
-      this.itineraryService.getById(this.itineraryId).pipe(
-        catchError(() => of(undefined))
-      )
-    );
-
-    forkJoin(observables).pipe(
-      finalize(() => this.loading = false)
-    ).subscribe((results: any[]) => {
-      this.departures = (results[0] || []).filter((d: any) => d && d.id);
-      this.itinerary = results[1];
-      
-      console.log('Departures obtenidos (filtrados):', this.departures);
-      console.log('Itinerary obtenido:', this.itinerary);
-      
-      // Si hay departures, cargar departure days
-      if (this.departures && this.departures.length > 0) {
-        this.loadDepartureDays();
-      }
-    });
-  }
-
-  private loadDepartureDays(): void {
-    console.log('Cargando departure days para departures:', this.departures);
-    
-    // Crear observables para obtener departure days de cada departure
-    const departureDayObservables = this.departures.map(departure => {
-      console.log('Obteniendo departure days para departureId:', departure.id);
-      return this.departureDayService.getByDepartureId(departure.id).pipe(
-        catchError((error) => {
-          console.error('Error obteniendo departure days para departure', departure.id, error);
+    // CONSULTA 1: Departure days filtrados directamente por el servicio
+    this.departureDayService.getByItineraryDayId(this.itineraryDayId).pipe(
+      map((departureDays: IDepartureDayResponse[]) => {
+        // Filtrar solo los del departure seleccionado
+        const filteredDepartureDays = departureDays.filter(dd => 
+          dd && dd.id && dd.departureId === this.departureId
+        );
+        
+        return filteredDepartureDays.map(dd => dd.id);
+      }),
+      switchMap((departureDayIds: number[]) => {
+        if (departureDayIds.length === 0) {
           return of([]);
-        })
-      );
-    });
+        }
 
-    forkJoin(departureDayObservables).subscribe((results: any[]) => {
-      console.log('Resultados departure days RAW:', results);
-      // Aplanar todos los departure days en un solo array y filtrar nulos
-      this.departureDays = results.flat().filter((dd: any) => dd && dd.id);
-      console.log('Departure days finales (filtrados):', this.departureDays);
+        // CONSULTA 2: Departure hotels filtrados POR CADA departureDayId específico
+        // Usar el filtro del servicio directamente
+        const departureHotelObservables = departureDayIds.map(departureDayId => 
+          this.departureHotelService.getAll({ departureDayId }).pipe(
+            catchError(error => {
+              console.error(`Error departure hotels para departureDayId ${departureDayId}:`, error);
+              return of([]);
+            })
+          )
+        );
+
+        return forkJoin(departureHotelObservables).pipe(
+          map(results => results.flat())
+        );
+      }),
+      switchMap((departureHotels: IDepartureHotelResponse[]) => {
+        const validDepartureHotels = departureHotels.filter(dh => dh && dh.id && dh.hotelId);
+
+        if (validDepartureHotels.length === 0) {
+          return of({ departureHotels: [], hotels: [] });
+        }
+
+        // CONSULTA 3 OPTIMIZADA: UNA SOLA petición con todos los hotel IDs
+        const uniqueHotelIds = [...new Set(validDepartureHotels.map(dh => dh.hotelId))];
+        
+        if (uniqueHotelIds.length === 0) {
+          return of({ departureHotels: validDepartureHotels, hotels: [] });
+        }
+
+        // MÉTODO OPTIMIZADO: Usar consulta optimizada para múltiples hoteles
+        return this.getMultipleHotelsByIds(uniqueHotelIds).pipe(
+          map(hotels => ({
+            departureHotels: validDepartureHotels,
+            hotels: hotels // Ya viene como array de IHotelResponse[]
+          }))
+        );
+      }),
+      catchError(error => {
+        console.error('❌ Error en carga con filtros:', error);
+        return of({ departureHotels: [], hotels: [] });
+      }),
+      finalize(() => {
+        this.loading = false;
+        this.isLoadingData = false; // NUEVO: Permitir futuras consultas
+      })
+    ).subscribe(({ departureHotels, hotels }) => {
+      // Construir resultado final
+      this.hotelsForThisDay = [];
       
-      // Si hay departure days, cargar departure hotels
-      if (this.departureDays && this.departureDays.length > 0) {
-        this.loadDepartureHotels();
-      }
+      // Map para búsquedas eficientes
+      const hotelMap = new Map<number, IHotelResponse>();
+      hotels.forEach((hotelResult: any) => {
+        if (hotelResult.hotel) {
+          hotelMap.set(hotelResult.hotel.id, hotelResult.hotel);
+        } else {
+          // Si viene directamente del método optimizado
+          hotelMap.set(hotelResult.id, hotelResult);
+        }
+      });
+
+      // Resultado final
+      departureHotels.forEach((departureHotel: IDepartureHotelResponse) => {
+        const hotel = hotelMap.get(departureHotel.hotelId!);
+        if (hotel && departureHotel.departureDayId) {
+          this.hotelsForThisDay.push({
+            departureHotelId: departureHotel.id,
+            departureDayId: departureHotel.departureDayId,
+            hotel: hotel
+          });
+        }
+      });
+
     });
   }
 
-  private loadDepartureHotels(): void {
-    console.log('Cargando departure hotels para departure days:', this.departureDays);
+  /**
+   * MÉTODO HELPER: Convertir estrellas string a número para p-rating
+   */
+  getHotelStarsAsNumber(stars: string): number {
+    if (!stars) return 0;
     
-    // Crear observables para obtener departure hotels usando departureDayId
-    const departureHotelObservables = this.departureDays.map(departureDay => {
-      console.log('Obteniendo departure hotels para departureDayId:', departureDay.id);
-      return this.departureHotelService.getAll({ departureDayId: departureDay.id }).pipe(
-        catchError((error) => {
-          console.error('Error obteniendo departure hotels para departure day', departureDay.id, error);
-          return of([]);
-        })
-      );
-    });
-
-    forkJoin(departureHotelObservables).subscribe((results: any[]) => {
-      console.log('Resultados departure hotels RAW:', results);
-      // Aplanar todos los departure hotels en un solo array y filtrar nulos
-      this.departureHotels = results.flat().filter((dh: any) => dh && dh.id && dh.hotelId);
-      console.log('Departure hotels finales (filtrados):', this.departureHotels);
-      
-      // Si hay departure hotels, cargar hoteles
-      if (this.departureHotels && this.departureHotels.length > 0) {
-        this.loadHotels();
-      }
-    });
-  }
-
-  private loadHotels(): void {
-    console.log('Cargando hoteles para departure hotels:', this.departureHotels);
-    
-    // Obtener IDs únicos de hoteles
-    const uniqueHotelIds = [...new Set(this.departureHotels.map(dh => dh.hotelId))];
-    console.log('IDs únicos de hoteles:', uniqueHotelIds);
-    
-    if (uniqueHotelIds.length === 0) {
-      console.log('No hay IDs de hoteles para cargar');
-      return;
+    // Convertir string a número, manejar formatos como "4", "4.5", "****"
+    const parsed = parseFloat(stars);
+    if (!isNaN(parsed)) {
+      return Math.min(Math.max(parsed, 0), 5); // Entre 0 y 5
     }
     
-    // PRUEBA: Cargar un hotel específico primero
-    console.log('PRUEBA: Intentando cargar hotel ID 340...');
-    this.hotelService.getById(340).subscribe({
-      next: (hotel) => {
-        console.log('PRUEBA: Hotel 340 obtenido:', hotel);
-      },
-      error: (error) => {
-        console.error('PRUEBA: Error obteniendo hotel 340:', error);
+    // Si son asteriscos, contar la cantidad
+    if (stars.includes('*')) {
+      return Math.min(stars.length, 5);
+    }
+    
+    return 0;
+  }
+
+  /**
+   * MÉTODO HELPER: Obtener hoteles únicos
+   */
+  get uniqueHotels(): IHotelResponse[] {
+    const hotelMap = new Map<number, IHotelResponse>();
+    
+    this.hotelsForThisDay.forEach(info => {
+      if (!hotelMap.has(info.hotel.id)) {
+        hotelMap.set(info.hotel.id, info.hotel);
       }
     });
     
-    // Crear observables para obtener información de cada hotel
-    const hotelObservables = uniqueHotelIds.map(hotelId => {
-      console.log('Obteniendo hotel para hotelId:', hotelId);
-      return this.hotelService.getById(hotelId).pipe(
-        catchError((error) => {
-          console.error('Error obteniendo hotel', hotelId, error);
-          return of(undefined);
-        })
-      );
-    });
+    return Array.from(hotelMap.values());
+  }
 
-    if (hotelObservables.length === 0) {
-      console.log('No se crearon observables para hoteles');
-      return;
-    }
+  /**
+   * MÉTODO HELPER: Verificar si hay datos
+   */
+  get hasHotels(): boolean {
+    return this.hotelsForThisDay.length > 0;
+  }
 
-    forkJoin(hotelObservables).subscribe({
-      next: (results: any[]) => {
-        console.log('Resultados hoteles RAW:', results);
-        // Filtrar hoteles válidos (no undefined)
-        this.hotels = results.filter(hotel => hotel !== undefined);
-        console.log('Hoteles finales filtrados:', this.hotels);
-      },
-      error: (error) => {
-        console.error('Error en forkJoin de hoteles:', error);
-      }
-    });
+  /**
+   * MÉTODO HELPER: Contar departure hotels por hotel
+   */
+  getDepartureHotelsCountForHotel(hotelId: number): number {
+    return this.hotelsForThisDay.filter(info => info.hotel.id === hotelId).length;
+  }
+
+  /**
+   * MÉTODO HELPER: Obtener departure hotel IDs para un hotel específico
+   */
+  getDepartureHotelIdsForHotel(hotelId: number): number[] {
+    return this.hotelsForThisDay
+      .filter(info => info.hotel.id === hotelId)
+      .map(info => info.departureHotelId);
   }
 }

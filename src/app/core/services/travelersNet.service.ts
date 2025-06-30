@@ -43,7 +43,6 @@ export class TravelersNetService {
             if (Array.isArray(value)) {
               // Si es un array, agregar cada ID como parámetro 'id' separado
               const uniqueIds = [...new Set(value)]; // Remover duplicados
-              console.log('🔍 Fetching travelers for IDs:', uniqueIds);
               
               uniqueIds.forEach(id => {
                 params = params.append('id', id.toString());
@@ -67,7 +66,6 @@ export class TravelersNetService {
         
         // Si hay múltiples IDs y falla, intentar método fallback
         if (filters?.id && Array.isArray(filters.id)) {
-          console.log('🔄 Using fallback method for travelers:', filters.id);
           return this.getFallbackTravelers(filters.id);
         }
         
@@ -79,9 +77,7 @@ export class TravelersNetService {
   /**
    * Fallback: obtener travelers usando múltiples llamadas individuales
    */
-  private getFallbackTravelers(ids: number[]): Observable<Traveler[]> {
-    console.log('🔄 Using fallback method for travelers:', ids);
-    
+  private getFallbackTravelers(ids: number[]): Observable<Traveler[]> {    
     if (ids.length === 0) {
       return of([]);
     }

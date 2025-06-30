@@ -1,6 +1,6 @@
 <!-- tour-itinerary-v2.component.html (COMPONENTE PADRE MODIFICADO) -->
 <div class="tour-itinerary">
-
+   
   <!-- ===== NUEVA SECCIÓN: SELECTOR DE ITINERARIOS ===== -->
   <div class="selector-section">
     <app-selector-itinerary 
@@ -8,7 +8,7 @@
       (departureSelected)="onDepartureSelected($event)">
     </app-selector-itinerary>
   </div>
-
+   
   <!-- Loading State -->
   <div *ngIf="loading" class="itinerary-loading">
     <div class="loading-container">
@@ -23,33 +23,34 @@
       </div>
     </div>
   </div>
-   
+      
   <!-- Main Content -->
   <div *ngIf="!loading" class="itinerary-content">
-       
+            
     <!-- Layout Principal: Timeline + Mapa -->
     <div class="main-layout">
-           
-      <!-- Sección Izquierda: Timeline de Días (COMPONENTE HIJO CON PARÁMETRO DINÁMICO) -->
+                  
+      <!-- Sección Izquierda: Timeline de Días (COMPONENTE HIJO CON PARÁMETROS DINÁMICOS) -->
       <div class="timeline-section">
         <app-itinerary-day 
           [tourId]="tourId"
-          [itineraryId]="selectedItineraryId">
+          [itineraryId]="selectedItineraryId"
+          [departureId]="selectedDepartureId">
         </app-itinerary-day>
       </div>
-           
+                  
       <!-- Sección Derecha: Mapa (MANEJADO POR EL PADRE) -->
       <div class="map-section" *ngIf="hasValidMapData">
         <div class="map-container">
           <!-- Componente de mapa compartido -->
-          <app-tour-map-v2
+          <app-tour-map-v2 
             [mapLocations]="mapLocationsList"
             [zoom]="15"
-            [title]="'Mapa del Tour'"
-          ></app-tour-map-v2>
+            [title]="'Mapa del Tour'">
+          </app-tour-map-v2>
         </div>
       </div>
-           
+                  
       <!-- Mensaje cuando no hay datos del mapa -->
       <div class="map-section" *ngIf="!hasValidMapData">
         <div class="map-container no-map-data">
@@ -59,8 +60,8 @@
           </div>
         </div>
       </div>
-         
+              
     </div>
-     
+        
   </div>
 </div>

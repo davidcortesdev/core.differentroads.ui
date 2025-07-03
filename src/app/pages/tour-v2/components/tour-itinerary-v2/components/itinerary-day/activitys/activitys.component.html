@@ -1,1 +1,57 @@
-<p>activitys works!</p>
+<div class="activities-container">
+  
+  <!-- Loading State -->
+  <div *ngIf="loading" class="activities-loading">
+    <p>Cargando activities...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="activities-error">
+    <p>{{ error }}</p>
+  </div>
+
+  <!-- Contenido principal -->
+  <div *ngIf="!loading && hasValidData" class="activities-content">
+    <!-- <div class="activities-info">
+      <p>Itinerary ID: {{ itineraryId }}</p>
+      <p>Departure ID: {{ departureId }}</p>
+      <p>Itinerary Day ID: {{ itineraryDayId }}</p>
+      
+      <div *ngIf="activityItineraryDays.length > 0" class="activity-itinerary-day-info">
+        <h4>ActivityItineraryDay encontrados ({{ activityItineraryDays.length }}):</h4>
+        <ul>
+          <li *ngFor="let aid of activityItineraryDays">
+            <div class="activity-itinerary-day-item">
+              <p><strong>ActivityItineraryDay ID:</strong> {{ aid.id }}</p>
+              <p><strong>Activity ID:</strong> {{ aid.activityId }}</p>
+              <p><strong>Display Order:</strong> {{ aid.displayOrder }}</p>
+              <p *ngIf="aid.notes"><strong>Notes:</strong> {{ aid.notes }}</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div> -->
+    
+    <!-- Lista de actividades -->
+    <div class="activities-list">
+      <h3>Actividades para este día:</h3>
+      <ul>
+        <li *ngFor="let activity of activities">
+          <div class="activity-item">
+            <h4>{{ activity.name || 'Sin nombre' }}</h4>
+            <p>{{ activity.description || 'Sin descripción' }}</p>
+            <p *ngIf="activity.isOptional" class="optional-badge">Opcional</p>
+            <p *ngIf="activity.isRecommended" class="recommended-badge">Recomendado</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+  
+  <!-- Mensaje cuando no hay datos válidos -->
+  <div *ngIf="!loading && !hasValidData" class="no-data-message">
+    <p *ngIf="itineraryId && itineraryDayId && departureId">No hay actividades disponibles para este día.</p>
+    <p *ngIf="!itineraryId || !itineraryDayId || !departureId">Faltan datos necesarios para cargar las actividades.</p>
+  </div>
+
+</div>

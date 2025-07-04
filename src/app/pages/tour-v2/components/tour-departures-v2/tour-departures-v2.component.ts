@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, OnChanges, SimpleChanges, Output, EventEmitter } from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
@@ -33,6 +33,11 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   @Input() tourId: number | undefined;
   @Input() selectedDepartureEvent: SelectedDepartureEvent | null = null;
 
+  // ✅ OUTPUTS
+  @Output() priceUpdate = new EventEmitter<number>();
+  @Output() cityUpdate = new EventEmitter<string>();
+  @Output() departureUpdate = new EventEmitter<any>();
+
   // Control de destrucción del componente
   private destroy$ = new Subject<void>();
 
@@ -60,6 +65,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
   // Datos de ejemplo: Solo ciudades
   cities: City[] = [
+    { name: 'Sin vuelos', code: 'NO_FLIGHT' },
     { name: 'Madrid', code: 'MAD' },
     { name: 'Barcelona', code: 'BCN' }
   ];
@@ -88,6 +94,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   ) {
     this.filteredCities = [...this.cities];
     this.updatePassengerText();
+    // ✅ AÑADIDO: Establecer "Sin vuelos" como valor inicial
+    this.selectedCity = this.cities[0]; // "Sin vuelos"
   }
 
   ngOnInit(): void {
@@ -95,6 +103,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       console.warn('⚠️ No se proporcionó tourId para tour-departures-v2');
       this.error = 'ID del tour no proporcionado';
     }
+    
+    // ✅ CORREGIDO: NO emitir aquí, esperar a que haya datos del departure
+    // this.emitCityUpdate();
   }
 
   ngOnDestroy(): void {
@@ -105,14 +116,13 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['selectedDepartureEvent'] && changes['selectedDepartureEvent'].currentValue) {
       const departureEvent = changes['selectedDepartureEvent'].currentValue;
-      console.log('🎯 Departure seleccionado recibido en tour-departures-v2:', departureEvent);
       this.handleDepartureSelection(departureEvent);
     }
   }
 
   private handleDepartureSelection(event: SelectedDepartureEvent): void {
     this.selectedDeparture = event;
-    this.selectedDepartureId = event.departure.id;
+    this.selectedDepartureId = null; // Reset selection cuando cambia departure
     this.loadDepartureDetails(event.departure.id);
   }
 
@@ -163,14 +173,15 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       }
     }
 
-    // AÑADIR AUTOMÁTICAMENTE EL PRIMER DEPARTURE
+    // ✅ MANTENER FUNCIONALIDAD ORIGINAL: AÑADIR AUTOMÁTICAMENTE EL PRIMER DEPARTURE
     setTimeout(() => {
       if (this.filteredDepartures.length > 0) {
         this.addToCart(this.filteredDepartures[0]);
+        // ✅ AÑADIDO: Emitir ciudad cuando se añade el departure automáticamente
+        this.emitCityUpdate();
       }
     }, 0);
 
-    console.log('📊 Información del departure actualizada:', this.departureInfo);
   }
 
   private formatDate(dateString: string): string {
@@ -278,7 +289,14 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
   onCityChange(event: any): void {
     this.selectedCity = event;
-    console.log('Ciudad seleccionada:', event);
+    // ✅ AÑADIDO: Emitir cambio de ciudad
+    this.emitCityUpdate();
+  }
+
+  // ✅ AÑADIDO: Método para emitir estado de ciudad
+  private emitCityUpdate(): void {
+    const cityText = this.selectedCity ? this.selectedCity.name : 'Sin vuelos';
+    this.cityUpdate.emit(cityText);
   }
 
   togglePassengersPanel(event: Event): void {
@@ -306,6 +324,11 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     }
 
     this.updatePassengerText();
+    
+    // ✅ AÑADIDO: Si hay departure seleccionado, actualizar precio
+    if (this.selectedDepartureId) {
+      this.calculateAndEmitPrice();
+    }
   }
 
   updatePassengerText(): void {
@@ -340,7 +363,11 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
   applyPassengers(): void {
     this.showPassengersPanel = false;
-    console.log('Pasajeros aplicados:', this.travelers);
+    
+    // ✅ AÑADIDO: Actualizar precio si hay departure seleccionado
+    if (this.selectedDepartureId) {
+      this.calculateAndEmitPrice();
+    }
   }
 
   getTripTypeInfo(group: string): any {
@@ -364,10 +391,33 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   }
 
   addToCart(item: any): void {
-    console.log('Añadir al carrito:', item);
     
     // Marcar como seleccionado para cambiar el botón
     this.selectedDepartureId = item.id;
+    
+    // ✅ AÑADIDO: Calcular y emitir precio total
+    this.calculateAndEmitPrice();
+    
+    // ✅ AÑADIDO: Emitir departure seleccionado
+    this.departureUpdate.emit(item);
+  }
+
+  // ✅ AÑADIDO: Método para calcular y emitir precio
+  private calculateAndEmitPrice(): void {
+    if (!this.selectedDepartureId) return;
+
+    const selectedDeparture = this.filteredDepartures.find(
+      d => d.id === this.selectedDepartureId
+    );
+
+    if (!selectedDeparture) return;
+
+    // Calcular precio total: adultos + niños (bebés gratis)
+    const basePrice = selectedDeparture.price;
+    const totalPassengers = this.travelers.adults + this.travelers.children;
+    const totalPrice = basePrice * totalPassengers;
+
+    this.priceUpdate.emit(totalPrice);
   }
 
   // Verificar si el departure está seleccionado - EXACTO COMO EL EJEMPLO

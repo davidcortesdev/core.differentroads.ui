@@ -3,28 +3,34 @@
   <div *ngIf="loading" class="loading">
     <p>Cargando información del tour...</p>
   </div>
- 
+  
   <!-- Error State -->
   <div *ngIf="error" class="error">
     <p>{{ error }}</p>
   </div>
- 
+  
   <!-- Tour Content -->
   <div *ngIf="!loading && !error && tour" class="tour-content">
+    <!-- Tour Header Section -->
+    <section class="tour-section tour-header-section"> 
+      <app-tour-header-v2 
+        [tourId]="tour.id"
+        [totalPrice]="totalPrice"
+        [selectedCity]="selectedCity"
+        [selectedDeparture]="selectedDepartureData">
+      </app-tour-header-v2>
+    </section>
     
-   
     <!-- Tour Overview Section -->
     <section class="tour-section tour-overview-section">
-    <app-tour-header-v2 [tourId]="tour.id"></app-tour-header-v2>
       <app-tour-overview-v2 [tourId]="tour.id"></app-tour-overview-v2>
     </section>
-
-
+    
     <!-- Tour Highlights Section -->
     <section class="tour-section tour-highlights-section">
       <app-tour-highlights-v2 [tourId]="tour.id"></app-tour-highlights-v2>
     </section>
-
+   
     <!-- Tour Itinerary Section -->
     <section class="tour-section tour-itinerary-section">
       <app-tour-itinerary-v2 
@@ -32,19 +38,22 @@
         (departureSelected)="onDepartureSelected($event)">
       </app-tour-itinerary-v2>
     </section>
-
+   
     <!-- Tour departure Section -->
     <section class="tour-section tour-departures-section">
       <app-tour-departures-v2 
         [tourId]="tour.id"
-        [selectedDepartureEvent]="selectedDepartureEvent">
+        [selectedDepartureEvent]="selectedDepartureEvent"
+        (priceUpdate)="onPriceUpdate($event)"
+        (cityUpdate)="onCityUpdate($event)"
+        (departureUpdate)="onDepartureUpdate($event)">
       </app-tour-departures-v2>
     </section>
-
+   
     <!-- Tour Reviews Section -->
     <section class="tour-section tour-reviews-section">
       <app-tour-reviews-v2 [tourId]="tour.id"></app-tour-reviews-v2>
     </section>
-       
+        
   </div>
 </div>

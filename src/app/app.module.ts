@@ -221,6 +221,7 @@ import { SelectorItineraryComponent } from './pages/tour-v2/components/tour-itin
 import { TourReviewsV2Component } from './pages/tour-v2/components/tour-reviews-v2/tour-reviews-v2.component';
 import { HotelDetailsComponent } from './pages/tour-v2/components/tour-itinerary-v2/components/itinerary-day/hotel-details/hotel-details.component';
 import { ActivitysComponent } from './pages/tour-v2/components/tour-itinerary-v2/components/itinerary-day/activitys/activitys.component';
+import { TourDeparturesV2Component } from './pages/tour-v2/components/tour-departures-v2/tour-departures-v2.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -344,7 +345,8 @@ registerLocaleData(localeEs);
     SelectorItineraryComponent,
     TourReviewsV2Component,
     HotelDetailsComponent,
-    ActivitysComponent
+    ActivitysComponent,
+    TourDeparturesV2Component
   ],
   imports: [
     // Angular Modules

@@ -25,6 +25,15 @@ import { Router } from '@angular/router';
 })
 export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, OnChanges {
   @Input() tourId: number | undefined;
+  
+  // ✅ AÑADIDO: Input para recibir precio total
+  @Input() totalPrice: number = 0;
+  
+  // ✅ CORREGIDO: Input para recibir ciudad seleccionada - sin valor por defecto
+  @Input() selectedCity: string = '';
+  
+  // ✅ AÑADIDO: Input para recibir departure seleccionado
+  @Input() selectedDeparture: any = null;
 
   // Tour data
   tour: Partial<Tour> = {};
@@ -72,7 +81,68 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
     this.handleScrollEffect();
   }
 
-  // ===== PRIVATE METHODS =====
+  // ✅ AÑADIDO: Verificar si hay precio
+  get hasPrice(): boolean {
+    return this.totalPrice > 0;
+  }
+
+  // ✅ AÑADIDO: Precio formateado
+  get formattedPrice(): string {
+    if (this.totalPrice <= 0) return '';
+    return new Intl.NumberFormat('es-ES', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(this.totalPrice);
+  }
+
+  // ✅ CORREGIDO: Texto formateado para vuelos - manejar string vacío
+  get formattedFlights(): string {
+    if (!this.selectedCity || this.selectedCity === 'Sin vuelos') {
+      return 'Sin vuelos';
+    }
+    return `Vuelos desde ${this.selectedCity}`;
+  }
+
+  // ✅ CORREGIDO: Fecha formateada con indicador de Single - SIN CAMBIAR EL DÍA
+  get formattedDepartureWithType(): string {
+    if (!this.selectedDeparture || !this.selectedDeparture.departureDate) return '';
+    
+    try {
+      // ✅ IMPORTANTE: Usar la fecha tal como viene, sin conversión UTC
+      const dateString = this.selectedDeparture.departureDate;
+      const dateParts = dateString.split('-'); // Ejemplo: "2025-07-23" -> ["2025", "07", "23"]
+      
+      if (dateParts.length !== 3) return dateString; // Si no es formato esperado, devolver tal como viene
+      
+      const year = parseInt(dateParts[0]);
+      const month = parseInt(dateParts[1]) - 1; // Los meses en JS van de 0-11
+      const day = parseInt(dateParts[2]);
+      
+      // Crear fecha SIN zona horaria para evitar cambios de día
+      const date = new Date(year, month, day);
+      
+      const formattedDate = date.toLocaleDateString('es-ES', {
+        day: 'numeric',
+        month: 'long'
+      });
+      
+      // Verificar si es Single
+      const isSingle = this.selectedDeparture.group?.toLowerCase().includes('single');
+      
+      if (isSingle) {
+        return `${formattedDate} (S) - Single`;
+      }
+      
+      return formattedDate;
+    } catch {
+      // Si hay error, devolver la fecha tal como viene
+      return this.selectedDeparture.departureDate;
+    }
+  }
+
+  // ===== MÉTODOS PRIVADOS EXISTENTES (SIN CAMBIOS) =====
 
   private loadTourData(tourId: number) {
     this.subscriptions.add(

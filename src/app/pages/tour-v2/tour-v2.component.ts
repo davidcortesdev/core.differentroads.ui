@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TourNetService, Tour } from '../../core/services/tourNet.service';
 import { catchError, of } from 'rxjs';
 import { ItineraryService } from '../../core/services/itinerary/itinerary.service';
+import { SelectedDepartureEvent } from './components/tour-itinerary-v2/components/selector-itinerary/selector-itinerary.component';
 
 @Component({
   selector: 'app-tour-v2',
@@ -16,6 +17,16 @@ export class TourV2Component implements OnInit {
   tour: Tour | null = null;
   loading: boolean = true;
   error: string | null = null;
+  selectedDepartureEvent: SelectedDepartureEvent | null = null;
+  
+  // ✅ AÑADIDO: Total del carrito
+  totalPrice: number = 0;
+  
+  // ✅ CORREGIDO: Ciudad seleccionada - no debe tener valor inicial
+  selectedCity: string = '';
+  
+  // ✅ AÑADIDO: Departure seleccionado
+  selectedDepartureData: any = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -56,5 +67,26 @@ export class TourV2Component implements OnInit {
         }
         this.loading = false;
       });
+  }
+
+  onDepartureSelected(event: SelectedDepartureEvent): void {
+    this.selectedDepartureEvent = event;
+    // ✅ AÑADIDO: Reset precio al cambiar departure
+    this.totalPrice = 0;
+  }
+
+  // ✅ AÑADIDO: Recibir actualización de precio
+  onPriceUpdate(price: number): void {
+    this.totalPrice = price;
+  }
+
+  // ✅ AÑADIDO: Recibir actualización de ciudad
+  onCityUpdate(city: string): void {
+    this.selectedCity = city;
+  }
+
+  // ✅ AÑADIDO: Recibir actualización de departure
+  onDepartureUpdate(departure: any): void {
+    this.selectedDepartureData = departure;
   }
 }

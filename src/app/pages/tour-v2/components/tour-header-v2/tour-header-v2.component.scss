@@ -72,8 +72,8 @@ $tablet-breakpoint: 1024px;
         .tour-details {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
-            text-align: right;
+            align-items: flex-end; // ✅ AÑADIDO: Alinear a la derecha
+            text-align: right; // ✅ AÑADIDO: Texto alineado a la derecha
 
             .detail-item {
                 display: flex;
@@ -82,13 +82,20 @@ $tablet-breakpoint: 1024px;
 
                 .label {
                     color: var(--text-color-secondary);
-                    font-weight: 500;
-                    min-width: 60px;
+                    font-weight: 700;
+                    font-size: 1.1rem;
                 }
 
                 .value {
                     color: var(--text-color);
-                    font-weight: 600;
+                    font-weight: 700;
+                    font-size: 1.1rem;
+                }
+                .val {
+                    color: var(--text-color);
+                    text-align: right;
+                    font-size: 0.7rem;
+                    font-weight: 400;
                 }
             }
         }
@@ -144,6 +151,7 @@ $tablet-breakpoint: 1024px;
 
             .tour-details {
                 width: 100%;
+                align-items: flex-start; // ✅ MANTENIDO: En móvil alinear a la izquierda
                 text-align: left;
 
                 .detail-item {

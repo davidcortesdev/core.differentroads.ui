@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { forkJoin, of, Observable } from 'rxjs';
 import { catchError, map, finalize, switchMap } from 'rxjs/operators';
 
@@ -41,6 +41,8 @@ interface MapLocation {
 })
 export class TourItineraryV2Component implements OnInit {
   @Input() tourId: number | undefined;
+   @Output() departureSelected = new EventEmitter<SelectedDepartureEvent>();
+
 
   // Estados del componente
   loading = true;
@@ -86,6 +88,7 @@ export class TourItineraryV2Component implements OnInit {
     this.selectedDeparture = event;
     this.selectedItineraryId = event.itinerary.id;
     this.selectedDepartureId = event.departure.id; // NUEVO: Guardar el ID del departure
+    this.departureSelected.emit(event);
   }
 
   /**

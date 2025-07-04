@@ -124,7 +124,6 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
           const uniqueLocationIds = [...new Set(allLocationIds)];
 
           if (uniqueLocationIds.length === 0) {
-            console.warn('⚠️ No se encontraron locationIds para cargar');
             return of({ 
               countryLocations: validCountryLocations, 
               continentLocations: validContinentLocations, 

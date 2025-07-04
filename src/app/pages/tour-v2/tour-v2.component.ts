@@ -4,6 +4,8 @@ import { ActivatedRoute } from '@angular/router';
 import { TourNetService, Tour } from '../../core/services/tourNet.service';
 import { catchError, of } from 'rxjs';
 import { ItineraryService } from '../../core/services/itinerary/itinerary.service';
+import { SelectedDepartureEvent } from './components/tour-itinerary-v2/components/selector-itinerary/selector-itinerary.component';
+
 
 @Component({
   selector: 'app-tour-v2',
@@ -16,6 +18,7 @@ export class TourV2Component implements OnInit {
   tour: Tour | null = null;
   loading: boolean = true;
   error: string | null = null;
+  selectedDepartureEvent: SelectedDepartureEvent | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -56,5 +59,9 @@ export class TourV2Component implements OnInit {
         }
         this.loading = false;
       });
+  }
+   onDepartureSelected(event: SelectedDepartureEvent): void {
+    console.log('🎯 Departure seleccionado en tour-v2 (padre):', event);
+    this.selectedDepartureEvent = event;
   }
 }

@@ -1,5 +1,4 @@
-// itinerary-day.component.scss (COMPONENTE COMPLETO)
-// MANTIENE EXACTAMENTE LOS MISMOS ESTILOS ORIGINALES CON NG-DEEP ESPECÍFICO
+// itinerary-day.component.scss - SOLO AGREGANDO CONTROL DE OVERFLOW PARA ACTIVITIES
 
 .itinerary-day-container {
     width: 100%;
@@ -109,6 +108,9 @@
         }
 
         .p-timeline-event-content {
+            @media (max-width: 768px) {
+                margin-left: -9px;
+            }
             width: 100%;
             margin-left: 1rem;
             padding: 0 0 1.5rem 0.5rem;
@@ -128,12 +130,26 @@
             .p-panel-content {
                 border-top: none;
                 border-radius: 0 0 12px 12px;
+                // SOLO ESTO: Controlar overflow del contenido del panel
+                overflow-x: hidden;
+                @media (max-width: 768px) {
+                    margin-right: 5px;
+                }
             }
         }
 
         .p-timeline-event-connector {
             width: 3px !important;
         }
+    }
+
+    // SOLO ESTO: Controlar específicamente el componente app-activity
+    app-activity {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+        box-sizing: border-box;
     }
 }
 

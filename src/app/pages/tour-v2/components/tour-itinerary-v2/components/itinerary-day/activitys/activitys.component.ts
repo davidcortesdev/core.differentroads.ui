@@ -3,6 +3,7 @@ import { ActivityService, IActivityResponse } from '../../../../../../../core/se
 import { DepartureActivityService, IDepartureActivityResponse } from '../../../../../../../core/services/departure/departure-activity.service';
 import { ActivityItineraryDayService, IActivityItineraryDayResponse } from '../../../../../../../core/services/activity/activity-itinerary-day.service';
 import { catchError, forkJoin, of, switchMap } from 'rxjs';
+import { ActivityHighlight } from '../../../../../../../shared/components/activity-card/activity-card.component';
 
 @Component({
   selector: 'app-activity',
@@ -19,6 +20,9 @@ export class ActivitysComponent implements OnInit, OnChanges {
   activities: IActivityResponse[] = [];
   activityItineraryDays: IActivityItineraryDayResponse[] = [];
   error: string | null = null;
+
+  // Datos para el carousel
+  highlights: ActivityHighlight[] = [];
 
   private lastQuery: string = '';
   private isLoadingData = false;
@@ -63,26 +67,20 @@ export class ActivitysComponent implements OnInit, OnChanges {
     this.error = null;
     this.activities = [];
     this.activityItineraryDays = [];
+    this.highlights = [];
 
-    // PASO 1: Obtener ActivityItineraryDay usando el servicio real
+    // Tu lógica original
     this.activityItineraryDayService.getByItineraryDayId(this.itineraryDayId).pipe(
       switchMap((activityItineraryDays: IActivityItineraryDayResponse[]) => {
-        // Guardar los ActivityItineraryDay obtenidos
         this.activityItineraryDays = activityItineraryDays;
-        
-        console.log('ActivityItineraryDays obtenidos:', activityItineraryDays);
-        
+                
         if (activityItineraryDays.length === 0) {
           return of([[], []]);
         }
 
-        // Extraer los activityIds de los ActivityItineraryDay
         const activityIds = activityItineraryDays.map(aid => aid.activityId);
-        console.log('Activity IDs extraídos:', activityIds);
         
-        // PASO 2: Hacer las consultas en paralelo
         return forkJoin([
-          // Obtener las actividades usando los IDs extraídos
           forkJoin(activityIds.map(activityId => 
             this.activityService.getById(activityId).pipe(
               catchError(err => {
@@ -96,7 +94,6 @@ export class ActivitysComponent implements OnInit, OnChanges {
               return of([]);
             })
           ),
-          // Obtener departure activities
           this.departureActivityService.getByDeparture(this.departureId!).pipe(
             catchError(err => {
               console.error('Error loading departure activities:', err);
@@ -114,18 +111,17 @@ export class ActivitysComponent implements OnInit, OnChanges {
       next: (result: any) => {
         const [activities, departureActivities] = result;
         
-        // Filtrar actividades nulas
         const validActivities = (activities || [])
           .filter((activity: any) => activity !== null) as IActivityResponse[];
         
-        // Filtrar actividades que están en el departure
         const departureActivityIds = (departureActivities || []).map((da: any) => da.activityId);
         this.activities = validActivities.filter((activity: IActivityResponse) => 
           departureActivityIds.includes(activity.id)
         );
         
-        console.log('Actividades finales:', this.activities);
-        console.log('ActivityItineraryDays:', this.activityItineraryDays);
+        // Transformar datos para el carousel
+        this.transformActivitiesToHighlights();
+
       },
       error: (err) => {
         console.error('Error loading activities:', err);
@@ -138,10 +134,39 @@ export class ActivitysComponent implements OnInit, OnChanges {
     });
   }
 
+  private transformActivitiesToHighlights(): void {
+    this.highlights = this.activities.map((activity: IActivityResponse) => ({
+      id: activity.id.toString(),
+      title: activity.name || 'Sin título',
+      description: activity.description || 'Sin descripción',
+      image: activity.imageUrl || '',
+      recommended: activity.isRecommended || false,
+      optional: activity.isOptional || false,
+      added: false,
+      price: 0
+    } as ActivityHighlight));
+  }
+
+  onAddActivity(highlight: ActivityHighlight): void {
+    
+    const index = this.highlights.findIndex(h => h.id === highlight.id);
+    if (index !== -1) {
+      this.highlights[index] = { ...highlight, added: !highlight.added };
+    }
+  }
+
+  trackByActivityId(index: number, activity: IActivityResponse): number {
+    return activity.id;
+  }
+
   get hasValidData(): boolean {
     return !this.loading && 
            this.itineraryId !== undefined && 
            this.itineraryDayId !== undefined && 
            this.departureId !== undefined;
+  }
+
+  get hasActivities(): boolean {
+    return this.hasValidData && this.highlights.length > 0;
   }
 }

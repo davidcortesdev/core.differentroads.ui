@@ -3,20 +3,20 @@ $breakpoints: (
   sm: 576px,
   md: 768px,
   lg: 992px,
-  xl: 1366px,
+  xl: 1366px
 );
 
 $spaces: (
   xs: 0.5rem,
   sm: 0.75rem,
   base: 1rem,
-  lg: 1.5rem,
+  lg: 1.5rem
 );
 
 $border-radius: (
   sm: 8px,
   md: 14px,
-  lg: 18px,
+  lg: 18px
 );
 
 $colors: (
@@ -26,7 +26,7 @@ $colors: (
   text: var(--background-azul),
   text-light: var(--background-azul-color-letra),
   border: #d9d9d9,
-  border-light: #f0f0f0,
+  border-light: #f0f0f0
 );
 
 // Import Sass modules
@@ -58,7 +58,9 @@ $colors: (
     height: 100%;
     max-width: 20rem;
     position: relative;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
     padding: 0;
     will-change: transform; // Optimize for GPU acceleration
 

@@ -41,7 +41,7 @@
         </span>
       </div>
       <h3 class="activity-title">{{ selectedActivity.title }}</h3>
-      <div class="activity-description" [innerHTML]="selectedActivity.description"></div>
+      <div class="activity-description" [innerHTML]="sanitizedActivityDescription"></div>
       
       <div class="activity-actions" *ngIf="selectedActivity.optional">
         <p-button

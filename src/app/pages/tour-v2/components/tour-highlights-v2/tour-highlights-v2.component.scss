@@ -98,6 +98,17 @@
                     font-size: 1.25rem;
                     transition: color 0.2s ease;
 
+                    /* Altura fija para 2 líneas - más espacio */
+                    height: 3.75rem; /* Más altura para 2 líneas completas */
+                    line-height: 1.5;
+
+                    /* Truncar texto con puntos suspensivos después de 2 líneas */
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+
                     &:hover {
                         text-decoration: underline;
                     }
@@ -135,6 +146,12 @@
     .highlights-section {
         h2 {
             font-size: 1.5rem;
+        }
+
+        ::ng-deep .highlight-card h3 {
+            /* En móviles, ajustar la altura del título si es necesario */
+            height: 3.5rem;
+            font-size: 1.1rem;
         }
     }
 }

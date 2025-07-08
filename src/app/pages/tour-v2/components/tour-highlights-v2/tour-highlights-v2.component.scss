@@ -20,7 +20,6 @@
     .no-data-message {
         text-align: center;
         padding: 2rem;
-        color: var(--background-azul);
         font-style: italic;
     }
 
@@ -83,7 +82,6 @@
                         border-radius: 8px;
                         font-size: 0.9rem;
                         background: var(--p-button-primary-color);
-                        color: var(--background-azul);
 
                         &.optional {
                             background: var(--p-primary-color);
@@ -94,7 +92,6 @@
 
                 h3 {
                     margin: 0.5rem 0;
-                    color: var(--background-azul);
                     font-size: 1.25rem;
                     transition: color 0.2s ease;
 
@@ -116,7 +113,6 @@
 
                 p {
                     margin: 0;
-                    color: var(--background-azul);
                     line-height: 1.5;
                     font-size: 0.875rem;
                     flex: 1;
@@ -179,7 +175,6 @@
             border-radius: 8px;
             font-size: 0.9rem;
             background: var(--p-button-primary-color);
-            color: var(--background-azul);
 
             &.optional {
                 background: var(--p-primary-color);
@@ -189,31 +184,13 @@
     }
 
     .highlight-title {
-        color: var(--background-azul);
         font-size: 1.5rem;
         margin-bottom: 1rem;
     }
 
     .highlight-description {
-        color: var(--background-azul);
         font-size: 1rem;
         line-height: 1.6;
         white-space: pre-line;
-    }
-}
-
-::ng-deep .p-dialog {
-    .p-dialog-header {
-        border-bottom: 1px solid #f0f0f0;
-        padding: 0.75rem 1.5rem;
-
-        .p-dialog-title {
-            color: var(--background-azul);
-            font-weight: 600;
-        }
-    }
-
-    .p-dialog-header-icon {
-        color: var(--background-azul);
     }
 }

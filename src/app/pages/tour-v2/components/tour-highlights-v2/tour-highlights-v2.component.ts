@@ -1,14 +1,16 @@
-// tour-highlights-v2.component.ts - Configuración del carrusel corregida
+// tour-highlights-v2.component.ts - Con validación de líneas
 import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TourHighlightsService, ITourHighlightResponse } from '../../../../core/services/tour/tour-highlights.service';
 
-// Interfaz para el highlight transformado
 interface HighlightDisplay {
   id: number;
   title: string;
   description: string;
+  sanitizedDescription: SafeHtml;
   image: string;
   optional: boolean;
+  hasLongDescription: boolean; // Nueva propiedad para validar si necesita puntos suspensivos
 }
 
 @Component({
@@ -20,21 +22,18 @@ interface HighlightDisplay {
 export class TourHighlightsV2Component implements OnInit, OnChanges {
   @Input() tourId: number | undefined;
 
-  // Data para el template
   highlights: HighlightDisplay[] = [];
   highlightsTitle = 'Highlights';
   isLoading = true;
   
-  // Modal data
   showFullHighlightModal = false;
   selectedHighlight: HighlightDisplay | null = null;
 
-  // Carousel configuration
   carouselConfig = {
     DEFAULT_AUTOPLAY_INTERVAL: 3000
   };
   
-  carouselNumVisible = 5; // Cambiar a 5 como el componente original
+  carouselNumVisible = 5;
   
   responsiveOptions = [
     {
@@ -59,7 +58,6 @@ export class TourHighlightsV2Component implements OnInit, OnChanges {
     },
   ];
 
-  // Styles - copiando exactamente del componente original
   cardStyle = {
     'border-radius': '1rem',
     overflow: 'hidden',
@@ -72,7 +70,10 @@ export class TourHighlightsV2Component implements OnInit, OnChanges {
     maxWidth: '800px'
   };
 
-  constructor(private tourHighlightsService: TourHighlightsService) { }
+  constructor(
+    private tourHighlightsService: TourHighlightsService,
+    private sanitizer: DomSanitizer
+  ) { }
 
   ngOnInit(): void {
     this.adjustCarouselForScreenSize();
@@ -84,7 +85,10 @@ export class TourHighlightsV2Component implements OnInit, OnChanges {
     }
   }
 
-  // Método para ajustar el carousel según el tamaño de pantalla inicial
+  sanitizeHtml(html: string = ''): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
   private adjustCarouselForScreenSize(): void {
     const width = window.innerWidth;
     if (width <= 767) {
@@ -113,8 +117,6 @@ export class TourHighlightsV2Component implements OnInit, OnChanges {
       isActive: true 
     }).subscribe({
       next: (data) => {
-        
-        // Transformar la data del API al formato que necesita el template
         this.highlights = this.transformHighlightsData(data);
         this.isLoading = false;
       },
@@ -127,40 +129,56 @@ export class TourHighlightsV2Component implements OnInit, OnChanges {
   }
 
   /**
-   * Transforma la data del API al formato que necesita el template
+   * Cuenta aproximadamente cuántas líneas tendría el texto
+   * basándose en caracteres por línea y estructura HTML
    */
-  private transformHighlightsData(apiData: ITourHighlightResponse[]): HighlightDisplay[] {
-    return apiData.map(highlight => ({
-      id: highlight.id,
-      title: highlight.name || 'Sin título',
-      description: highlight.description || 'Sin descripción',
-      image: this.getHighlightImage(highlight),
-      optional: this.isOptionalHighlight(highlight)
-    }));
+  private estimateTextLines(html: string): number {
+    // Remover tags HTML para contar solo texto
+    const textOnly = html.replace(/<[^>]*>/g, ' ').trim();
+    
+    // Caracteres aproximados por línea (basado en font-size: 0.875rem)
+    const charsPerLine = 45; // Ajusta según tu diseño
+    const maxLinesInPreview = 4;
+    
+    // Contar saltos de línea explícitos
+    const explicitBreaks = (textOnly.match(/\n|\r\n|\r/g) || []).length;
+    
+    // Estimar líneas por longitud de texto
+    const estimatedLinesByLength = Math.ceil(textOnly.length / charsPerLine);
+    
+    // Total de líneas estimadas
+    const totalLines = estimatedLinesByLength + explicitBreaks;
+    
+    return totalLines;
   }
 
-  /**
-   * Obtiene la imagen del highlight (usa imagen por defecto si no tiene)
-   */
+  private transformHighlightsData(apiData: ITourHighlightResponse[]): HighlightDisplay[] {
+    return apiData.map(highlight => {
+      const description = highlight.description || 'Sin descripción';
+      const estimatedLines = this.estimateTextLines(description);
+      
+      return {
+        id: highlight.id,
+        title: highlight.name || 'Sin título',
+        description: description,
+        sanitizedDescription: this.sanitizeHtml(description),
+        image: this.getHighlightImage(highlight),
+        optional: this.isOptionalHighlight(highlight),
+        hasLongDescription: estimatedLines > 4 // Si tiene más de 4 líneas, mostrar puntos suspensivos
+      };
+    });
+  }
+
   private getHighlightImage(highlight: ITourHighlightResponse): string {
-    // Si el API tiene imageUrl, úsala, sino imagen por defecto
     const defaultImage = 'https://via.placeholder.com/300x200/4CAF50/white?text=Highlight';
     return (highlight as any).imageUrl || defaultImage;
   }
 
-  /**
-   * Determina si el highlight es opcional basado en isIncluded
-   * Si isIncluded es true = "Incluida", si es false = "Opcional"
-   */
   private isOptionalHighlight(highlight: ITourHighlightResponse): boolean {
-    // Si tiene el campo isIncluded, usarlo; sino asumir que está incluido
     const isIncluded = (highlight as any).isIncluded;
-    return isIncluded === false; // Solo es opcional si isIncluded es explícitamente false
+    return isIncluded === false;
   }
 
-  /**
-   * Abre el modal con el highlight completo
-   */
   openFullHighlight(highlight: HighlightDisplay): void {
     this.selectedHighlight = highlight;
     this.showFullHighlightModal = true;

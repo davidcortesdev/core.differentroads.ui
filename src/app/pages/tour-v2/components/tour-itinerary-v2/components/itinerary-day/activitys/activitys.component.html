@@ -1,0 +1,34 @@
+<div class="activities-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="activities-loading">
+    <p>Cargando activities...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="activities-error">
+    <p>{{ error }}</p>
+  </div>
+
+  <!-- Contenido principal -->
+  <div *ngIf="!loading && hasValidData" class="activities-content">
+    
+    <!-- Carousel de actividades -->
+    <div *ngIf="hasActivities" class="activities-carousel">
+      <app-activities-carousel 
+        [highlights]="highlights"
+        (addActivity)="onAddActivity($event)">
+      </app-activities-carousel>
+    </div>
+  </div>
+
+  <!-- Mensaje cuando no hay datos válidos -->
+  <div *ngIf="!loading && !hasValidData" class="no-data-message">
+    <p *ngIf="itineraryId && itineraryDayId && departureId">No hay actividades disponibles para este día.</p>
+    <p *ngIf="!itineraryId || !itineraryDayId || !departureId">Faltan datos necesarios para cargar las actividades.</p>
+  </div>
+
+  <!-- Mensaje cuando no hay actividades -->
+  <div *ngIf="!loading && hasValidData && !hasActivities" class="no-activities-message">
+    <p>No se encontraron actividades para este día del itinerario.</p>
+  </div>
+</div>

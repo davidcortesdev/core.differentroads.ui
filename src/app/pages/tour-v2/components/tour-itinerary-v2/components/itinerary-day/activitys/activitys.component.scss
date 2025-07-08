@@ -1,0 +1,89 @@
+// activities.component.scss - BÁSICO + FIX OVERFLOW MÓVIL
+
+.activities-container {
+    .activities-loading {
+        text-align: center;
+        color: #666;
+        font-style: italic;
+    }
+
+    .activities-error {
+        background-color: #fee;
+        border: 1px solid #fcc;
+        border-radius: 4px;
+        padding: 10px;
+        margin-bottom: 15px;
+
+        p {
+            color: #c33;
+            margin: 0;
+            font-weight: 500;
+        }
+    }
+
+    .activities-content {
+        .activities-carousel {
+            margin-bottom: 2rem;
+
+            h3 {
+                color: #333;
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+                border-bottom: 2px solid var(--p-primary-color);
+                padding-bottom: 0.5rem;
+            }
+
+            app-activities-carousel {
+                width: 100%;
+                display: block;
+            }
+        }
+    }
+
+    .no-data-message,
+    .no-activities-message {
+        text-align: center;
+        color: #999;
+        font-style: italic;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        border: 1px dashed #ccc;
+
+        p {
+            margin: 0;
+        }
+    }
+}
+
+// SOLO EL MÍNIMO NECESARIO PARA EVITAR OVERFLOW EN MÓVIL
+:host ::ng-deep {
+    // Solo en móvil, ajustar márgenes de las cards para evitar overflow
+    @media (max-width: 768px) {
+        .activities-container {
+            padding: 5px;
+        }
+
+        .highlight-card {
+            margin: 0.25rem 0.1rem !important;
+        }
+
+        .p-carousel-item {
+            padding: 0.1rem !important;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .activities-container {
+            padding: 2px;
+        }
+
+        .highlight-card {
+            margin: 0.125rem 0.05rem !important;
+        }
+
+        .p-carousel-item {
+            padding: 0.05rem !important;
+        }
+    }
+}

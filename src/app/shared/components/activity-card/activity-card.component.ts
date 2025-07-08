@@ -11,6 +11,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 // Define a proper interface for the highlight data
 export interface ActivityHighlight {
@@ -36,12 +37,26 @@ export class ActivityCardComponent implements OnInit, OnChanges {
   @Output() addActivity = new EventEmitter<ActivityHighlight>();
   @Output() viewDetails = new EventEmitter<ActivityHighlight>();
 
+  sanitizedDescription: SafeHtml = '';
+
+  constructor(private sanitizer: DomSanitizer) {}
+
   ngOnInit(): void {
-    // Removed console.log for production
+    this.updateSanitizedDescription();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // Removed console.log for production
+    if (changes['highlight'] && changes['highlight'].currentValue) {
+      this.updateSanitizedDescription();
+    }
+  }
+
+  private updateSanitizedDescription(): void {
+    if (this.highlight?.description) {
+      this.sanitizedDescription = this.sanitizer.bypassSecurityTrustHtml(this.highlight.description);
+    } else {
+      this.sanitizedDescription = '';
+    }
   }
 
   onAddActivity(event: Event, highlight: ActivityHighlight): void {

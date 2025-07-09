@@ -37,8 +37,8 @@ const routes: Routes = [
       { path: 'sign-up', component: SignUpComponent },
       { path: 'forget-password', component: ForgetPasswordComponent },
       { path: 'tours', component: ToursComponent },
-      { path: 'tour/:slug', component: TourComponent },
-      { path: 'tour-v2/:slug', component: TourV2Component },
+      { path: 'tour-old/:slug', component: TourComponent },
+      { path: 'tour/:slug', component: TourV2Component },
       { path: 'pages/:slug', component: BasicPageComponent },
       // Nueva ruta para previsualización
       { path: 'preview/pages', component: BasicPagePreviewComponent },

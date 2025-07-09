@@ -1,14 +1,14 @@
 <div class="highlights-section">
   <h2>{{ highlightsTitle }}</h2>
-  
+
   <div *ngIf="isLoading" class="loading-container">
     <p-progressSpinner></p-progressSpinner>
   </div>
-  
+
   <div *ngIf="!isLoading && highlights.length === 0" class="no-data-message">
     <p>No hay destacados disponibles para este tour.</p>
   </div>
-  
+
   <p-carousel
     *ngIf="!isLoading && highlights.length > 0"
     [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
@@ -37,10 +37,11 @@
         </ng-template>
         <ng-template pTemplate="content">
           <h3 [title]="highlight.title">{{ highlight.title }}</h3>
-          <!-- CAMBIO: Usar innerHTML para renderizar HTML con estilos -->
-          <div 
-            class="highlight-description-preview" 
-            [innerHTML]="highlight.description"
+          <!-- Aplicar clase condicional para mostrar puntos suspensivos -->
+          <div
+            class="highlight-description-preview"
+            [class.show-ellipsis]="highlight.hasLongDescription"
+            [innerHTML]="highlight.sanitizedDescription"
             [title]="highlight.description">
           </div>
         </ng-template>
@@ -50,7 +51,7 @@
 </div>
 
 <!-- Modal de highlight completo -->
-<p-dialog 
+<p-dialog
   [(visible)]="showFullHighlightModal"
   [modal]="true"
   [dismissableMask]="true"
@@ -65,10 +66,9 @@
       </span>
     </div>
     <h3 class="highlight-title">{{ selectedHighlight.title }}</h3>
-    <!-- CAMBIO: Usar innerHTML para renderizar HTML con estilos -->
-    <div 
-      class="highlight-description" 
-      [innerHTML]="selectedHighlight.description">
+    <div
+      class="highlight-description"
+      [innerHTML]="selectedHighlight.sanitizedDescription">
     </div>
   </div>
 </p-dialog>

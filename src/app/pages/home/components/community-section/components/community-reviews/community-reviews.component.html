@@ -1,13 +1,10 @@
 <div class="community-reviews">
   <h3>{{ reviews?.title }}</h3>
   
-  <div *ngIf="reviewsCards.length > 0" class="community-reviews-container">
+  <div class="community-reviews-container">
     <app-reviews 
-      [reviews]="reviewsCards">
+      [showOnHomePage]="true"
+      [limit]="25">
     </app-reviews>
-  </div>
-
-  <div *ngIf="loading" class="community-reviews-container loading">
-    <div class="loading-indicator">Cargando reseñas...</div>
   </div>
 </div>

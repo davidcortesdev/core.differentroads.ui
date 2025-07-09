@@ -1,0 +1,18 @@
+.tour-reviews-container {
+    background-color: var(--background-azul);
+    padding: 5rem 0rem;
+    margin-top: 60px;
+
+    &.loading {
+        min-height: 200px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+    }
+
+    .loading-indicator {
+        color: var(--text-color);
+        font-size: 1.2rem;
+    }
+}

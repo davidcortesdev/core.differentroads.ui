@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams  } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../../../environments/environment';
 
@@ -37,6 +37,18 @@ export interface IItineraryDayLocationTypeResponse {
   tkId: string | null;
 }
 
+/**
+ * Filtros disponibles para consultar tipos de localización.
+ */
+export interface ItineraryDayLocationTypeFilters {
+    id?: number;
+    name?: string;
+    code?: string;
+    isActive?: boolean;
+    tkId?: string;
+  }
+  
+
 @Injectable({
   providedIn: 'root',
 })
@@ -45,12 +57,26 @@ export class ItineraryDayLocationTypeService {
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * Obtiene todos los tipos de localización de día de itinerario.
-   */
-  getAll(): Observable<IItineraryDayLocationTypeResponse[]> {
-    return this.http.get<IItineraryDayLocationTypeResponse[]>(this.API_URL);
-  }
+    /**
+      * Obtiene todos los tipos de localización de día de itinerario, con opción de aplicar filtros.
+      * @param filters Filtros opcionales para la búsqueda.
+      */
+     getAll(filters?: ItineraryDayLocationTypeFilters): Observable<IItineraryDayLocationTypeResponse[]> {
+       let params = new HttpParams();
+   
+       if (filters) {
+         Object.entries(filters).forEach(([key, value]) => {
+           if (value !== undefined && value !== null) {
+             params = params.set(
+               key.charAt(0).toUpperCase() + key.slice(1),
+               value.toString()
+             );
+           }
+         });
+       }
+   
+       return this.http.get<IItineraryDayLocationTypeResponse[]>(this.API_URL, { params });
+     }   
 
   /**
    * Obtiene un tipo de localización por su ID.

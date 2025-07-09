@@ -1,0 +1,282 @@
+// tour-itinerary-v2.component.scss (COMPONENTE PADRE) - RESPONSIVE ARREGLADO
+@use "sass:map";
+
+// Variables
+$breakpoints: (
+    sm: 576px,
+    md: 768px,
+    lg: 992px,
+    xl: 1366px
+);
+
+$border-radius: (
+    sm: 8px,
+    md: 14px,
+    lg: 18px
+);
+
+$spaces: (
+    xs: 0.5rem,
+    sm: 0.75rem,
+    base: 1rem,
+    lg: 1.5rem
+);
+
+// Mixins
+@mixin resp($bp) {
+    @media (max-width: map.get($breakpoints, $bp)) {
+        @content;
+    }
+}
+
+// ===== LAYOUT PRINCIPAL =====
+.tour-itinerary {
+    margin: 30px;
+    height: 100%;
+
+    // 📱 RESPONSIVE: Reducir márgenes en móvil
+    @include resp(md) {
+        margin: 1rem;
+    }
+
+    @include resp(sm) {
+        margin: 0.5rem;
+    }
+
+    .itinerary-content {
+        height: 100%;
+    }
+}
+
+.loading-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    height: 400px;
+
+    // 📱 RESPONSIVE: Stack vertical en móvil
+    @include resp(lg) {
+        grid-template-columns: 1fr;
+        height: auto;
+        gap: 1rem;
+    }
+
+    .loading-map,
+    .loading-locations {
+        background: #f8fafc;
+        border-radius: 16px;
+        padding: 1rem;
+
+        @include resp(sm) {
+            border-radius: map.get($border-radius, sm);
+            padding: 0.75rem;
+        }
+    }
+}
+
+// Layout principal con flexbox
+.main-layout {
+    display: flex;
+    flex-direction: row-reverse;
+    gap: 2rem;
+    min-height: calc(100vh - 200px);
+
+    // 📱 RESPONSIVE: Cambiar a columna en tablet/móvil
+    @include resp(lg) {
+        flex-direction: column;
+        min-height: auto;
+        gap: 1.5rem;
+    }
+
+    @include resp(md) {
+        gap: 1rem;
+    }
+
+    @include resp(sm) {
+        gap: 0.75rem;
+    }
+}
+
+// ===== SECCIÓN TIMELINE (contendrá el componente hijo) =====
+.timeline-section {
+    flex: 3;
+    max-width: 60%;
+
+    @include resp(xl) {
+        max-width: 65%;
+    }
+
+    // 📱 RESPONSIVE: Orden y tamaños para móvil/tablet
+    @include resp(lg) {
+        max-width: 100%;
+        order: 2; // Timeline va debajo del mapa
+        margin-top: 15px;
+    }
+}
+
+// ===== SECCIÓN MAPA (manejada por el padre) =====
+.map-section {
+    flex: 2;
+    position: sticky;
+    top: 2rem;
+    height: calc(100vh - 200px);
+    align-self: flex-start;
+    margin-top: 35px;
+
+    // 📱 RESPONSIVE: Ajustes para tablet
+    @include resp(xl) {
+        height: calc(100vh - 150px);
+        margin-top: 30px;
+    }
+
+    // 📱 RESPONSIVE: Cambios para tablet y móvil
+    @include resp(lg) {
+        flex: none;
+        position: static; // Quitar sticky
+        height: 400px; // Altura fija más grande
+        order: 1; // Mapa va arriba
+        margin-top: 0;
+        align-self: stretch;
+    }
+
+    @include resp(md) {
+        height: 350px;
+    }
+
+    @include resp(sm) {
+        height: 280px; // Altura mínima razonable para móvil
+    }
+
+    .map-container {
+        height: 100%;
+        border-radius: 16px;
+        overflow: hidden;
+        margin-top: 20px;
+
+        // 📱 RESPONSIVE: Border radius más pequeño en móvil
+        @include resp(md) {
+            border-radius: map.get($border-radius, md);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        @include resp(sm) {
+            border-radius: map.get($border-radius, sm);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+        }
+
+        app-tour-map-v2 {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    }
+}
+
+// Estados sin datos del mapa
+.no-map-data {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f8f9fa;
+    border-radius: 16px;
+
+    @include resp(sm) {
+        border-radius: map.get($border-radius, sm);
+    }
+
+    .no-map-message {
+        text-align: center;
+        color: #6c757d;
+        padding: 2rem;
+
+        // 📱 RESPONSIVE: Reducir padding en móvil
+        @include resp(md) {
+            padding: 1.5rem;
+        }
+
+        @include resp(sm) {
+            padding: 1rem;
+        }
+
+        i {
+            @include resp(sm) {
+                font-size: 1.5rem !important;
+            }
+        }
+
+        p {
+            margin: 0.5rem 0 0 0;
+            font-size: 0.9rem;
+
+            @include resp(sm) {
+                font-size: 0.8rem;
+                margin: 0.25rem 0 0 0;
+            }
+        }
+    }
+}
+
+// ===== RESPONSIVE ADICIONAL =====
+
+// 💻 Desktop grande
+@include resp(xl) {
+    .main-layout {
+        gap: map.get($spaces, lg);
+    }
+
+    .tour-itinerary {
+        margin: 2rem;
+    }
+}
+
+// 📱 Tablet
+@include resp(lg) {
+    .tour-itinerary {
+        margin: 1.5rem;
+    }
+}
+
+// 📱 Móvil grande
+@include resp(md) {
+    .tour-itinerary {
+        margin: 1rem;
+
+        // Asegurar que no haya overflow horizontal
+        overflow-x: hidden;
+    }
+
+    .main-layout {
+        // Asegurar que el contenido no se desborde
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
+
+// 📱 Móvil pequeño
+@include resp(sm) {
+    .tour-itinerary {
+        margin: 0.5rem;
+
+        // Padding interno para evitar que el contenido toque los bordes
+        .itinerary-content {
+            padding: 0 0.25rem;
+        }
+    }
+
+    .main-layout {
+        // Espacio mínimo entre secciones
+        gap: 0.5rem;
+    }
+
+    // Optimizar el mapa para pantallas muy pequeñas
+    .map-section {
+        .map-container {
+            // Altura mínima para que el mapa sea usable
+            min-height: 250px;
+
+            // Asegurar que el mapa ocupe todo el ancho disponible
+            width: 100%;
+            margin: 0;
+        }
+    }
+}

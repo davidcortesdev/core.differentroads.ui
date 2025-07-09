@@ -19,7 +19,6 @@ export interface Tour {
   description?: string;
   tkId?: string;
   slug?:string;
-  // Add other tour properties as needed based on the API response
 }
 
 @Injectable({
@@ -37,12 +36,16 @@ export class TourNetService {
    */
   getTours(filter?: TourFilter): Observable<Tour[]> {
     let params = new HttpParams();
-
-    // Add filter parameters if provided
     if (filter) {
       Object.entries(filter).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          params = params.set(key.charAt(0).toUpperCase() + key.slice(1), value.toString());
+          if (key === 'TKid' || key === 'tkId') {
+            params = params.set('TKid', value.toString());
+          } else if (key === 'tour_id') {
+            params = params.set('tour_id', value.toString());
+          } else {
+            params = params.set(key.charAt(0).toUpperCase() + key.slice(1), value.toString());
+          }
         }
       });
     }
@@ -70,23 +73,18 @@ export class TourNetService {
       }
     }).pipe(
       map(response => {
-        // Check if response is an array and take the first item
         if (Array.isArray(response) && response.length > 0) {
           return response[0];
         }
-        // If it's a single object, return it directly
         return response;
       }),
       map(tour => {
-        // Ensure we have a default name if it's missing
         return {
           ...tour,
           name: tour.name
         };
       }),
       catchError(error => {
-        console.error(`Error fetching tour with ID ${id}:`, error);
-        // Return a default tour object on error
         return of({
           id: id,
           code: 'unknown',
@@ -114,12 +112,34 @@ export class TourNetService {
           
           return id;
         }
-        return 0; // Return 0 if no tour is found
+        return 0; 
       }),
       catchError(error => {
         console.error('Error fetching tours:', error);
-        return of(0); // Return 0 on error
+        return of(0); 
       })
     );
+  }
+
+  /**
+   * Obtiene el tourId a partir del tourId
+   * @param tourId Identificador del tour
+   * @returns Observable con el ID del tour
+   */
+  getTourIdByPeriodId(tourId: string): Observable<number> {
+    
+    return this.http.get<any>(`${environment.toursApiUrl}/Tour?TKid=${tourId}`)
+      .pipe(
+        map(response => {
+          const period = Array.isArray(response) ? response[0] : response;
+          if (period && period.id !== undefined) {
+            return period.id;
+          }
+          throw new Error(`No se pudo obtener el tourId para el tourId: ${tourId}`);
+        }),
+        catchError(error => {
+          return of(0); 
+        })
+      );
   }
 }

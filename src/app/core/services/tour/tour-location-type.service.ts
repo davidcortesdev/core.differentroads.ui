@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
@@ -25,6 +25,17 @@ export interface ITourLocationTypeResponse {
   displayOrder: number;
 }
 
+/**
+ * Interfaz para los filtros disponibles en el método getAll.
+ */
+export interface TourLocationTypeFilters {
+  id?: number;
+  code?: string;
+  name?: string;
+  description?: string;
+  displayOrder?: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -33,8 +44,27 @@ export class TourLocationTypeService {
 
   constructor(private http: HttpClient) {}
 
-  getAll(): Observable<ITourLocationTypeResponse[]> {
-    return this.http.get<ITourLocationTypeResponse[]>(this.API_URL);
+   /**
+   * Obtiene todos los tipos de ubicación de tour disponibles.
+   * @param filters Filtros para aplicar en la búsqueda.
+   * @returns Lista de tipos de ubicación de tour.
+   */
+   getAll(filter?: TourLocationTypeFilters): Observable<ITourLocationTypeResponse[]> {
+    let params = new HttpParams();
+
+    // Add filter parameters if provided
+    if (filter) {
+      Object.entries(filter).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params = params.set(
+            key.charAt(0).toUpperCase() + key.slice(1),
+            value.toString()
+          );
+        }
+      });
+    }
+
+    return this.http.get<ITourLocationTypeResponse[]>(this.API_URL, { params });
   }
 
   getById(id: number): Observable<ITourLocationTypeResponse> {

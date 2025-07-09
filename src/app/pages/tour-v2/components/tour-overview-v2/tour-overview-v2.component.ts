@@ -6,8 +6,10 @@ import { TourNetService } from '../../../../core/services/tourNet.service';
 import { CMSTourService, ICMSTourResponse } from '../../../../core/services/cms/cms-tour.service';
 import { CMSCreatorService } from '../../../../core/services/cms/cms-creator.service';
 import { TourLocationService, ITourLocationResponse } from '../../../../core/services/tour/tour-location.service';
-import { TourLocationTypeService, ITourLocationTypeResponse } from '../../../../core/services/tour/tour-location-type.service';
 import { LocationNetService, Location } from '../../../../core/services/locations/locationNet.service';
+import { TagService, ITagResponse } from '../../../../core/services/tag/tag.service';
+import { TourTagService, ITourTagResponse } from '../../../../core/services/tag/tour-tag.service';
+import { TourTagRelationTypeService } from '../../../../core/services/tag/tour-tag-relation-type.service';
 import { forkJoin, of, Observable } from 'rxjs';
 import { catchError, switchMap, map, finalize } from 'rxjs/operators';
 
@@ -64,6 +66,10 @@ export class TourOverviewV2Component implements OnInit {
   mapLocations: string[] = [];
   headerLocations: string[] = [];
   
+  // Propiedades para manejar los tags
+  tourTags: ITourTagResponse[] = [];
+  visibleTags: ITagResponse[] = [];
+  
   tour: any = {
     id: 0,
     name: '',
@@ -90,8 +96,10 @@ export class TourOverviewV2Component implements OnInit {
     private cmsTourService: CMSTourService,
     private cmsCreatorService: CMSCreatorService,
     private tourLocationService: TourLocationService,
-    private tourLocationTypeService: TourLocationTypeService,
-    private locationNetService: LocationNetService
+    private locationNetService: LocationNetService,
+    private tagService: TagService,
+    private tourTagService: TourTagService,
+    private tourTagRelationTypeService: TourTagRelationTypeService
   ) {}
 
   ngOnInit(): void {
@@ -134,7 +142,7 @@ export class TourOverviewV2Component implements OnInit {
       this.applyBasicTourData(tourData, cmsTourData);
       
       // Cargar datos adicionales en segundo plano
-      this.loadAdditionalData(id, cmsTourData);
+      this.loadAdditionalDataOptimized(id, cmsTourData);
     });
   }
 
@@ -162,62 +170,150 @@ export class TourOverviewV2Component implements OnInit {
         }
       } : {})
     };
-    
   }
 
-  private loadAdditionalData(id: number, cmsTourData: CMSTourData[]): void {
+  private loadAdditionalDataOptimized(id: number, cmsTourData: CMSTourData[]): void {
     const cmsTour: CMSTourData | null = Array.isArray(cmsTourData) && cmsTourData.length > 0 ? cmsTourData[0] : null;
     
-    // 🚀 OPTIMIZACIÓN: Cargar solo los datos que necesitamos en paralelo
+    // ✅ OPTIMIZACIÓN MÁXIMA: Cargar ubicaciones y tags en paralelo
     forkJoin([
-      // Ubicaciones del tour - filtrar directamente
-      this.tourLocationService.getAll().pipe(
-        map(allLocations => allLocations.filter(location => location.tourId === id)),
+      // Cargar ubicaciones (existente)
+      this.tourLocationService.getByTourAndType(id, "COUNTRY").pipe(
+        map(response => Array.isArray(response) ? response : (response ? [response] : [])),
         catchError(error => {
-          console.error('❌ Error loading tour locations:', error);
+          console.warn('⚠️ No se encontraron ubicaciones COUNTRY:', error);
           return of([]);
         })
-      ) as Observable<ITourLocationResponse[]>,
+      ),
+      this.tourLocationService.getByTourAndType(id, "HEADER").pipe(
+        map(response => Array.isArray(response) ? response : (response ? [response] : [])),
+        catchError(error => {
+          console.warn('⚠️ No se encontraron ubicaciones HEADER:', error);
+          return of([]);
+        })
+      ),
+      this.tourLocationService.getByTourAndType(id, "CONTINENT").pipe(
+        map(response => Array.isArray(response) ? response : (response ? [response] : [])),
+        catchError(error => {
+          console.warn('⚠️ No se encontraron ubicaciones CONTINENT:', error);
+          return of([]);
+        })
+      ),
       
-      // Tipos de ubicaciones - cache
-      this.tourLocationTypeService.getAll().pipe(
+      // ✅ NUEVO: Cargar tipos de relación visibles para la web
+      this.tourTagRelationTypeService.getAll({ isVisible: true }).pipe(
         catchError(error => {
-          console.error('❌ Error loading tour location types:', error);
+          console.error('❌ Error loading visible tag relation types:', error);
           return of([]);
         })
-      ) as Observable<ITourLocationTypeResponse[]>,
-      
-      // Ubicaciones - cache
-      this.locationNetService.getLocations().pipe(
-        catchError(error => {
-          console.error('❌ Error loading locations:', error);
-          return of([]);
-        })
-      ) as Observable<Location[]>
+      )
     ]).pipe(
-      switchMap(([tourLocations, locationTypes, allLocations]) => {
-        // Procesar ubicaciones
-        this.processLocationsWithDetails(tourLocations, locationTypes, allLocations);
+      switchMap(([countryLocations, headerLocations, continentLocations, visibleRelationTypes]) => {        
+        // Procesar ubicaciones (código existente)
+        const validCountryLocations = countryLocations.filter(loc => loc && loc.id && loc.locationId);
+        const validHeaderLocations = headerLocations.filter(loc => loc && loc.id && loc.locationId);
+        const validContinentLocations = continentLocations.filter(loc => loc && loc.id && loc.locationId);
+
+        const allTourLocations = [
+          ...validCountryLocations,
+          ...validHeaderLocations,
+          ...validContinentLocations
+        ];
+
+        const locationIds = [...new Set(allTourLocations.map(tl => tl.locationId))];
         
-        // Cargar país y continente
-        this.loadCountryAndContinent(id, tourLocations, locationTypes, allLocations);
+        // ✅ NUEVO: Obtener tags del tour basados en tipos de relación visibles
+        const visibleRelationTypeIds = visibleRelationTypes.map(rt => rt.id);
+        const tagObservables: Observable<any>[] = [];
         
-        const creatorId = cmsTour?.creatorId;
-        
-        // Cargar creator si existe
-        if (creatorId) {
-          return (this.cmsCreatorService.getById(creatorId) as Observable<CreatorData>).pipe(
-            catchError(error => {
-              console.error('❌ Error loading creator data:', error);
-              return of(null);
-            })
+        // Cargar ubicaciones
+        if (locationIds.length > 0) {
+          tagObservables.push(
+            this.locationNetService.getLocationsByIds(locationIds).pipe(
+              catchError(error => {
+                console.error('❌ Error loading specific locations:', error);
+                return of([]);
+              })
+            )
           );
+        } else {
+          tagObservables.push(of([]));
         }
         
-        return of(null as CreatorData | null);
-      })
-    ).subscribe((creator: CreatorData | null) => {
+        // Cargar tags para cada tipo de relación visible
+        visibleRelationTypeIds.forEach(relationTypeId => {
+          tagObservables.push(
+            this.tourTagService.getAll({ tourId: id, tourTagRelationTypeId: relationTypeId }).pipe(
+              catchError(error => {
+                console.warn(`⚠️ No se encontraron tags para relationTypeId ${relationTypeId}:`, error);
+                return of([]);
+              })
+            )
+          );
+        });
+
+        return forkJoin(tagObservables).pipe(
+          map(results => {
+            const locations = results[0] || [];
+            const allTourTagsArrays = results.slice(1);
+            const allTourTags = allTourTagsArrays.flat();
             
+            return {
+              countryLocations: validCountryLocations,
+              headerLocations: validHeaderLocations,
+              continentLocations: validContinentLocations,
+              locations,
+              tourTags: allTourTags
+            };
+          })
+        );
+      }),
+      switchMap(({ countryLocations, headerLocations, continentLocations, locations, tourTags }) => {
+        // Procesar ubicaciones con los datos optimizados
+        this.processLocationsOptimized(countryLocations, headerLocations, continentLocations, locations);
+        
+        // ✅ NUEVO: Procesar tags
+        this.tourTags = tourTags;
+        
+        // Obtener detalles de los tags si existen
+        if (tourTags.length > 0) {
+          const tagIds = [...new Set(tourTags.map(tt => tt.tagId))];
+          
+          // ✅ OPTIMIZADO: Cargar solo los tags específicos del tour
+          const tagDetailObservables = tagIds.map(tagId => 
+            this.tagService.getById(tagId).pipe(
+              catchError(error => {
+                console.warn(`⚠️ Error loading tag ${tagId}:`, error);
+                return of(null);
+              })
+            )
+          );
+          
+          return forkJoin([
+            // Cargar creator si existe
+            this.loadCreator(cmsTour?.creatorId),
+            // Cargar detalles específicos de los tags del tour
+            forkJoin(tagDetailObservables).pipe(
+              map(tagDetails => tagDetails.filter(tag => tag !== null && tag.isActive)),
+              catchError(error => {
+                console.error('❌ Error loading tag details:', error);
+                return of([]);
+              })
+            )
+          ]);
+        } else {
+          return forkJoin([
+            this.loadCreator(cmsTour?.creatorId),
+            of([])
+          ]);
+        }
+      })
+    ).subscribe(([creator, tagDetails]: [CreatorData | null, (ITagResponse | null)[]]) => {
+      // Procesar tags visibles - filtrar nulls y convertir a ITagResponse[]
+      const validTags = tagDetails.filter((tag): tag is ITagResponse => tag !== null);
+      this.visibleTags = validTags;
+      this.tags = validTags.map(tag => tag.name);
+      
       // Actualizar tour con datos completos
       this.tour = {
         ...this.tour,
@@ -235,150 +331,98 @@ export class TourOverviewV2Component implements OnInit {
         
         // Usar ubicaciones procesadas
         cities: this.headerLocations.length > 0 ? this.headerLocations : this.cities,
+        // ✅ NUEVO: Usar tags reales en lugar de vtags
         vtags: this.tags
       };
     });
   }
 
-  /**
-   * 🚀 OPTIMIZACIÓN: Procesar país y continente usando datos ya cargados
-   */
-  private loadCountryAndContinent(
-    tourId: number, 
-    tourLocations: ITourLocationResponse[],
-    locationTypes: ITourLocationTypeResponse[], 
-    allLocations: Location[]
-  ): void {
-    
-    // Buscar tipos que podrían ser país o continente
-    const countryTypeId = this.findLocationTypeId(locationTypes, ['país', 'country', 'pais']);
-    const continentTypeId = this.findLocationTypeId(locationTypes, ['continente', 'continent']);
-        
-    if (countryTypeId || continentTypeId) {
-      // 🚀 OPTIMIZACIÓN: Filtrar en memoria en lugar de hacer otra llamada HTTP
-      const geographicTourLocations = tourLocations.filter(location => 
-        location.tourLocationTypeId === countryTypeId || location.tourLocationTypeId === continentTypeId
+  private loadCreator(creatorId?: number): Observable<CreatorData | null> {
+    if (creatorId) {
+      return (this.cmsCreatorService.getById(creatorId) as Observable<CreatorData>).pipe(
+        catchError(error => {
+          console.error('❌ Error loading creator data:', error);
+          return of(null);
+        })
       );
-            
-      // Mapear las ubicaciones para obtener nombres
-      const locationsMap = new Map<number, Location>();
-      allLocations.forEach(location => {
-        locationsMap.set(location.id, location);
-      });
-      
-      const countries: string[] = [];
-      const continents: string[] = [];
-      
-      // Ordenar por displayOrder para mantener el orden correcto
-      const sortedGeographicLocations = geographicTourLocations.sort((a, b) => a.displayOrder - b.displayOrder);
-      
-      sortedGeographicLocations.forEach(tourLocation => {
-        const location = locationsMap.get(tourLocation.locationId);
-        if (location) {
-          if (tourLocation.tourLocationTypeId === countryTypeId) {
-            countries.push(location.name);
-          } else if (tourLocation.tourLocationTypeId === continentTypeId) {
-            continents.push(location.name);
-          }
-        }
-      });
-      
-      // Unir múltiples países/continentes con comas
-      this.tour.country = countries.join(', ');
-      this.tour.continent = continents.join(', ');
-      
-    } else {
-      console.warn('⚠️ No se encontraron tipos de ubicación para país o continente');
     }
+    return of(null);
   }
 
   /**
-   * Buscar ID de tipo de ubicación por nombres posibles
+   * ✅ OPTIMIZACIÓN: Procesar ubicaciones específicas usando datos ya filtrados
    */
-  private findLocationTypeId(locationTypes: ITourLocationTypeResponse[], possibleNames: string[]): number | null {
-    for (const type of locationTypes) {
-      if (type.name) {
-        const typeName = type.name.toLowerCase();
-        for (const possibleName of possibleNames) {
-          if (typeName.includes(possibleName.toLowerCase())) {
-            return type.id;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  /**
-   * 🚀 OPTIMIZACIÓN: Procesar ubicaciones de forma más eficiente
-   */
-  private processLocationsWithDetails(
-    tourLocations: ITourLocationResponse[],
-    locationTypes: ITourLocationTypeResponse[],
-    allLocations: Location[]
+  private processLocationsOptimized(
+    countryLocations: ITourLocationResponse[],
+    headerLocations: ITourLocationResponse[],
+    continentLocations: ITourLocationResponse[],
+    specificLocations: Location[]
   ): void {
     
     // Resetear arrays
     this.cities = [];
     this.countries = [];
-    this.tags = [];
     this.mapLocations = [];
     this.headerLocations = [];
     this.processedLocations = [];
     
-    // 🚀 OPTIMIZACIÓN: Usar Map para búsquedas O(1) en lugar de O(n)
-    const locationTypesMap = new Map<number, ITourLocationTypeResponse>();
-    locationTypes.forEach(type => {
-      locationTypesMap.set(type.id, type);
-    });
-    
+    // Crear map de ubicaciones para búsqueda O(1)
     const locationsMap = new Map<number, Location>();
-    allLocations.forEach(location => {
+    specificLocations.forEach(location => {
       locationsMap.set(location.id, location);
     });
+
+    // Procesar países
+    const countries = countryLocations
+      .sort((a, b) => a.displayOrder - b.displayOrder)
+      .map(tl => locationsMap.get(tl.locationId)?.name)
+      .filter(name => name) as string[];
+
+    // Procesar ubicaciones header (ciudades)
+    const headerLocationsList = headerLocations
+      .sort((a, b) => a.displayOrder - b.displayOrder)
+      .map(tl => locationsMap.get(tl.locationId)?.name)
+      .filter(name => name) as string[];
+
+    // Procesar continentes
+    const continents = continentLocations
+      .sort((a, b) => a.displayOrder - b.displayOrder)
+      .map(tl => locationsMap.get(tl.locationId)?.name)
+      .filter(name => name) as string[];
+
+    // Asignar resultados
+    this.countries = countries;
+    this.headerLocations = headerLocationsList;
+    this.cities = headerLocationsList; // Fallback
     
-    // 🚀 OPTIMIZACIÓN: Procesar ubicaciones en un solo bucle
-    const mapLocationsList: { order: number; name: string }[] = [];
-    const headerLocationsList: { order: number; name: string }[] = [];
-    
-    tourLocations.forEach((tourLocation) => {
-      const locationType = locationTypesMap.get(tourLocation.tourLocationTypeId);
+    // Asignar país y continente al tour
+    this.tour.country = countries.join(', ');
+    this.tour.continent = continents.join(', ');
+
+    // Crear processed locations para compatibilidad
+    const allLocations = [
+      ...countryLocations.map(tl => ({ ...tl, type: 'COUNTRY' })),
+      ...headerLocations.map(tl => ({ ...tl, type: 'HEADER' })),
+      ...continentLocations.map(tl => ({ ...tl, type: 'CONTINENT' }))
+    ];
+
+    allLocations.forEach((tourLocation) => {
       const realLocation = locationsMap.get(tourLocation.locationId);
       
-      if (realLocation && locationType) {
+      if (realLocation) {
         const processedLocation: ProcessedLocation = {
           id: tourLocation.id,
           name: realLocation.name,
-          type: locationType.name || 'Desconocido',
+          type: tourLocation.type,
           typeId: tourLocation.tourLocationTypeId,
           displayOrder: tourLocation.displayOrder,
-          isMapLocation: tourLocation.tourLocationTypeId === 1,
-          isHeaderLocation: tourLocation.tourLocationTypeId === 2
+          isMapLocation: false,
+          isHeaderLocation: tourLocation.type === 'HEADER'
         };
         
         this.processedLocations.push(processedLocation);
-        
-        // Clasificar por tipo
-        if (tourLocation.tourLocationTypeId === 1) {
-          mapLocationsList.push({ order: tourLocation.displayOrder, name: realLocation.name });
-        } else if (tourLocation.tourLocationTypeId === 2) {
-          headerLocationsList.push({ order: tourLocation.displayOrder, name: realLocation.name });
-        }
-        
-        // También agregar a cities para fallback
-        this.cities.push(realLocation.name);
       }
     });
-    
-    // Ordenar una sola vez al final
-    this.mapLocations = mapLocationsList
-      .sort((a, b) => a.order - b.order)
-      .map(item => item.name);
-      
-    this.headerLocations = headerLocationsList
-      .sort((a, b) => a.order - b.order)
-      .map(item => item.name);
-    
   }
 
   sanitizeHtml(html: string = ''): SafeHtml {
@@ -418,7 +462,6 @@ export class TourOverviewV2Component implements OnInit {
     // Obtener la posición del clic dentro del elemento
     const rect = target.getBoundingClientRect();
     const clickX = event.clientX - rect.left;
-    const elementWidth = rect.width;
     
     // Crear un elemento temporal para medir el ancho de cada país
     const tempElement = document.createElement('span');

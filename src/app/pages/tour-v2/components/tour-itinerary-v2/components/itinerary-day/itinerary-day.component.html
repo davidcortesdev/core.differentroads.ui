@@ -1,0 +1,140 @@
+<div class="itinerary-day-container">
+  
+  <!-- Loading State - EXACTAMENTE IGUAL -->
+  <div *ngIf="loading" class="itinerary-day-loading">
+    <p-skeleton width="60%" height="36px" styleClass="mb-4"></p-skeleton>
+    
+    <div *ngFor="let i of [1,2,3]" class="day-skeleton">
+      <div class="skeleton-header">
+        <div class="skeleton-marker">
+          <p-skeleton shape="circle" size="24px"></p-skeleton>
+        </div>
+        <p-skeleton width="40%" height="24px"></p-skeleton>
+      </div>
+      
+      <div class="skeleton-content">
+        <div class="skeleton-text">
+          <p-skeleton width="90%" height="20px"></p-skeleton>
+          <p-skeleton width="85%" height="20px"></p-skeleton>
+          <p-skeleton width="70%" height="20px"></p-skeleton>
+        </div>
+        
+        <div class="skeleton-image">
+          <p-skeleton width="100%" height="200px" borderRadius="12px"></p-skeleton>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel Controls - EXACTAMENTE IGUAL -->
+  <div *ngIf="!loading && hasValidData" class="panel-controls-container">
+    <div class="panel-controls">
+      <button pButton type="button" icon="pi pi-plus" class="p-button-rounded p-button-outlined"
+              pTooltip="Expandir todos" tooltipPosition="top" (click)="expandAllPanels()"></button>
+      <button pButton type="button" icon="pi pi-minus" class="p-button-rounded p-button-outlined"
+              pTooltip="Contraer todos" tooltipPosition="top" (click)="collapseAllPanels()"></button>
+    </div>
+  </div>
+
+  <!-- Timeline de Días del Itinerario - MANTIENE MISMA ESTRUCTURA -->
+  <div *ngIf="!loading && hasValidData" class="itinerary-days-content">
+    <div class="card">
+      <p-timeline
+        [value]="itineraryItems"
+        align="left"
+        styleClass="customized-timeline"
+      >
+        <!-- Template del marcador - EXACTAMENTE IGUAL -->
+        <ng-template pTemplate="marker" let-event>
+          <div class="timeline-marker-wrapper">
+            <span
+              class="pi"
+              [ngClass]="event.icon"
+              style="font-size: 1.5rem"
+              [style.color]="event.color"
+              [attr.data-index]="itineraryItems.indexOf(event)"
+              (click)="markerClicked($event)"
+            ></span>
+          </div>
+        </ng-template>
+        
+        <!-- Template del contenido - MANTIENE P-PANEL ORIGINAL -->
+        <ng-template pTemplate="content" let-event>
+          <p-panel
+            [toggleable]="true"
+            styleClass="custom-panel"
+            [(collapsed)]="event.collapsed"
+            #itineraryPanel
+          >
+            <ng-template pTemplate="header">
+              <div
+                class="panel-header-content"
+                [attr.data-index]="itineraryItems.indexOf(event)"
+                (click)="handlePanelClick(itineraryItems.indexOf(event))"
+              >
+                <div class="day-info">
+                  <!-- Solo el título del día, sin el número -->
+                  <h3 class="day-title">{{ event.title }}</h3>
+                </div>
+              </div>
+            </ng-template>
+            
+            <ng-template pTemplate="content">
+              <div class="itinerary-content">
+                
+                <!-- Contenedor de texto -->
+                <div class="text-content">
+                  <!-- Descripción web del día (webDescription del CMS) -->
+                  <div class="day-description" [innerHTML]="event.description"></div>
+                  
+                  <!-- Información adicional (si existe) -->
+                  <div *ngIf="event.hasAdditionalInfo" class="additional-info-section">
+                    <h4 class="additional-info-title">{{ event.additionalInfoTitle }}</h4>
+                    <div class="additional-info-content" [innerHTML]="event.additionalInfoContent"></div>
+                  </div>
+                  
+                </div>
+                
+                <!-- Imagen del día (de itinerary_day_cms) - Movida a la derecha -->
+                <div *ngIf="event.image" class="day-image-container">
+                  <img
+                    [src]="event.image"
+                    [alt]="event.imageAlt"
+                    loading="lazy"
+                    class="day-image"
+                  />
+                </div>
+                
+              </div>
+                  <!-- COMPONENTE HOTEL-DETAILS: Más cerca del contenido -->
+                  <app-hotel-details 
+                    [itineraryDayId]="event.dayId"
+                    [departureId]="departureId"
+                    style="margin-top: 10px; display: block; width: 100%;">
+                  </app-hotel-details>
+
+                 <!-- COMPONENTE ACTIVITY - NUEVO -->
+                  <app-activity 
+                    [itineraryId]="itineraryId"
+                    [itineraryDayId]="event.dayId"
+                    [departureId]="departureId"
+                    style="margin-top: 10px; display: block; width: 100%;">
+                  </app-activity>
+                  
+            </ng-template>
+          </p-panel>
+        </ng-template>
+      </p-timeline>
+    </div>
+  </div>
+  
+  <!-- Mensaje cuando no hay datos válidos - EXACTAMENTE IGUAL -->
+  <div *ngIf="!loading && !hasValidData" class="no-data-message">
+    <div class="no-data-content">
+      <i class="pi pi-calendar-times" style="font-size: 3rem; color: #9e9e9e;"></i>
+      <h3>No hay días programados</h3>
+      <p>Este tour aún no tiene días configurados en el itinerario.</p>
+    </div>
+  </div>
+  
+</div>

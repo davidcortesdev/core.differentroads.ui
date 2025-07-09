@@ -8,10 +8,9 @@
   --skeleton-bg: #e0e0e0;
   --skeleton-highlight: #f0f0f0;
   --transition-duration: 0.3s;
-  --p-card-background: white; // Added new variable for card background
+  --p-card-background: white;
 }
 
-// Update the skeleton styles to match the actual card dimensions
 .reviews-section {
   // Skeleton styles
   .skeleton-container {
@@ -90,9 +89,7 @@
           padding: var(--card-padding);
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
           transition: box-shadow var(--transition-duration) ease;
-          background-color: var(
-            --p-card-background
-          ); // Added this line to use the new variable
+          background-color: var(--p-card-background);
 
           &:hover {
             box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
@@ -167,6 +164,65 @@
   }
 }
 
+/* Responsive adjustments */
+// Tablet - mantener configuración actual
+@media (max-width: 1024px) and (min-width: 769px) {
+  .reviews-section {
+    ::ng-deep {
+      .p-carousel .padre {
+        // Mantener estilos actuales para tablet
+      }
+    }
+  }
+}
+
+// Móvil - quitar margen bottom y ajustar espaciado
+@media (max-width: 768px) {
+  .reviews-section {
+    margin-bottom: 0 !important; // Quitar margen bottom en móvil
+
+    ::ng-deep {
+      .p-carousel {
+        margin-bottom: 0;
+
+        .p-carousel-content {
+          margin-bottom: 0;
+        }
+
+        .padre {
+          margin-bottom: 0;
+
+          .p-card {
+            margin-bottom: 0;
+
+            .p-card-title {
+              font-size: calc(var(--traveler-name-size) * 0.9); // Slightly smaller on mobile
+            }
+
+            .p-card-content {
+              height: calc(var(--content-height) * 0.9); // Slightly shorter on mobile
+
+              .review-text-container {
+                max-height: calc(var(--content-height) * 0.9);
+              }
+            }
+          }
+        }
+
+        // Ajustar indicadores en móvil
+        .p-carousel-indicators {
+          margin-top: 0.5rem;
+          margin-bottom: 0;
+
+          .p-carousel-indicator {
+            margin: 0 0.2rem;
+          }
+        }
+      }
+    }
+  }
+}
+
 /* Estilos para el modal de reseña completa */
 .full-review-content {
   padding: 1rem;
@@ -211,8 +267,7 @@
   }
 }
 
-// Add this to your existing styles
-// Update the tour-name clickable styles
+// Tour name clickable styles
 .tour-name {
   &.clickable {
     cursor: pointer;
@@ -221,6 +276,31 @@
       text-decoration: underline;
       color: var(--p-primary-color-dark, #005a87);
       opacity: 0.8;
+    }
+  }
+}
+
+// Responsive modal adjustments
+@media (max-width: 768px) {
+  ::ng-deep .p-dialog {
+    .p-dialog-header {
+      padding: 1rem;
+    }
+
+    .full-review-content {
+      padding: 0rem 0.5rem;
+
+      .traveler-name {
+        font-size: calc(var(--traveler-name-size) * 0.9);
+      }
+
+      .tour-name {
+        font-size: calc(var(--review-text-size) * 0.95);
+      }
+
+      .review-text {
+        font-size: calc(var(--review-text-size) * 0.95);
+      }
     }
   }
 }

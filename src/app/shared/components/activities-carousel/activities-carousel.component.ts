@@ -12,6 +12,7 @@ import {
   ActivityHighlight,
 } from '../activity-card/activity-card.component';
 import { CAROUSEL_CONFIG } from '../../../shared/constants/carousel.constants';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-activities-carousel',
@@ -25,14 +26,15 @@ export class ActivitiesCarouselComponent {
   @Output() addActivity = new EventEmitter<ActivityHighlight>();
 
   protected carouselConfig = CAROUSEL_CONFIG;
-  
+
   // Variables para el modal
   showFullActivityModal = false;
   selectedActivity: ActivityHighlight | null = null;
-  
+  sanitizedActivityDescription: SafeHtml = '';
+
   // Estilos para el diálogo
   dialogStyle = {
-    width: '90%', 
+    width: '90%',
     maxWidth: '800px'
   };
 
@@ -69,6 +71,8 @@ export class ActivitiesCarouselComponent {
     },
   ];
 
+  constructor(private sanitizer: DomSanitizer) {}
+
   onAddActivity(highlight: ActivityHighlight): void {
     this.addActivity.emit(highlight);
   }
@@ -79,12 +83,17 @@ export class ActivitiesCarouselComponent {
 
   ngOnInit(): void {
   }
-  
 
-  
   // Método para abrir el modal con la actividad seleccionada
   openFullActivity(activity: ActivityHighlight): void {
     this.selectedActivity = activity;
     this.showFullActivityModal = true;
+    
+    // Sanitizar la descripción de la actividad seleccionada
+    if (activity.description) {
+      this.sanitizedActivityDescription = this.sanitizer.bypassSecurityTrustHtml(activity.description);
+    } else {
+      this.sanitizedActivityDescription = '';
+    }
   }
 }

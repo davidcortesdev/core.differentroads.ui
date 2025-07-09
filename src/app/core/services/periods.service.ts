@@ -8,6 +8,7 @@ import { Period } from '../models/tours/period.model';
 import { ReservationMode } from '../models/tours/reservation-mode.model';
 import { Flight } from '../models/tours/flight.model';
 import { PriceData } from '../models/commons/price-data.model';
+import { TourNetService } from './tourNet.service';
 
 type SelectedFields = Partial<Array<keyof Period | 'all'>>;
 
@@ -18,7 +19,10 @@ export class PeriodsService {
   private readonly API_URL = `${environment.apiUrl}/data/cms/collections/es/periods`;
   private readonly DATA_API_URL = `${environment.dataApiUrl}/periods`;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private tourNetService: TourNetService
+  ) {}
 
   /**
    * Fetches the details of a period by its external ID.
@@ -122,4 +126,58 @@ export class PeriodsService {
       })
     );
   }
+
+  /**
+   * Obtiene el nombre y la fecha de salida (dayOne) de un periodo por su externalId.
+   * @param externalId - El ID externo del periodo.
+   * @returns Observable con un objeto { name, dayOne }
+   */
+  /**
+   * Obtiene el nombre y la fecha de salida (dayOne) de un periodo por su externalId.
+   * @param externalId - El ID externo del periodo.
+   * @returns Observable con un objeto { tourName, dayOne, tourId, tourNetId, id }
+   */
+  getPeriodNameAndDepartureDate(externalId: string): Observable<{ tourName: string; dayOne: string; tourId?: string; tourNetId?: number }> {
+    return this.getPeriodDetail(externalId, [ 'tourName', 'dayOne', 'tourID']).pipe(
+      switchMap((period: Period) => {
+        const periodData = {
+          tourName: period.tourName,
+          dayOne: period.dayOne
+        };
+  
+        if (!period.tourID) {
+          return of({ ...periodData });
+        }
+  
+        return this.tourNetService.getTourIdByPeriodId(period.tourID).pipe(
+          map(tourNetId => {
+            console.log('El id de tourNetId es:', tourNetId);
+            return {
+              ...periodData,
+              tourNetId,
+              tourId: tourNetId !== undefined && tourNetId !== null ? String(tourNetId) : undefined
+            };
+          }),
+          catchError(error => {
+            console.error(`Error al obtener el tourNetId para el tourID ${period.tourID}:`, error);
+            return of({ ...periodData });
+          })
+        );
+      })
+    );
+  }
+
+
+
+/**
+ * Obtiene toda la información de la departure asociada a un periodo usando el tkid.
+ * @param tkid - El ID de TK del periodo
+ * @returns Observable con toda la información de la departure (sin transformar)
+ */
+getRawDepartureByTkId(externalId: string): Observable<any> {
+  // Llama a la misma URL pero devuelve el JSON tal cual lo recibe, sin map ni transformación
+  return this.http.get<any>(`${environment.toursApiUrl}/salidas?TKId=${externalId}`);
+}
+
+
 }

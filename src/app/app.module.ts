@@ -8,7 +8,6 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 
 import { registerLocaleData } from '@angular/common';
 import localeEs from '@angular/common/locales/es';
-
 import { HttpClient } from '@angular/common/http';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -74,7 +73,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DataViewModule } from 'primeng/dataview';
 import { DynamicComponentsComponent } from './pages/home/components/dynamic-components/dynamic-components.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
-import { CommonModule, NgComponentOutlet } from '@angular/common';
+import { CommonModule, NgComponentOutlet, DatePipe } from '@angular/common';
 import { PartnersSectionComponent } from './pages/home/components/partners-section/partners-section.component';
 import { TourComponent } from './pages/tour/tour.component';
 import { TourHeaderComponent } from './pages/tour/components/tour-header/tour-header.component';
@@ -214,6 +213,14 @@ import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview
 import { TourV2Component } from './pages/tour-v2/tour-v2.component';
 import { TourOverviewV2Component } from './pages/tour-v2/components/tour-overview-v2/tour-overview-v2.component';
 import { TourHeaderV2Component } from './pages/tour-v2/components/tour-header-v2/tour-header-v2.component';
+import { TourItineraryV2Component } from './pages/tour-v2/components/tour-itinerary-v2/tour-itinerary-v2.component';
+import { TourMapV2Component } from './shared/components/tour-map-v2/tour-map-v2.component';
+import { ItineraryDayComponent } from './pages/tour-v2/components/tour-itinerary-v2/components/itinerary-day/itinerary-day.component';
+import { TourHighlightsV2Component } from './pages/tour-v2/components/tour-highlights-v2/tour-highlights-v2.component';
+import { SelectorItineraryComponent } from './pages/tour-v2/components/tour-itinerary-v2/components/selector-itinerary/selector-itinerary.component';
+import { TourReviewsV2Component } from './pages/tour-v2/components/tour-reviews-v2/tour-reviews-v2.component';
+import { HotelDetailsComponent } from './pages/tour-v2/components/tour-itinerary-v2/components/itinerary-day/hotel-details/hotel-details.component';
+import { ActivitysComponent } from './pages/tour-v2/components/tour-itinerary-v2/components/itinerary-day/activitys/activitys.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -329,7 +336,15 @@ registerLocaleData(localeEs);
 
     TourV2Component,
     TourOverviewV2Component,
-    TourHeaderV2Component
+    TourHeaderV2Component,
+    TourItineraryV2Component,
+    TourMapV2Component,
+    ItineraryDayComponent,
+    TourHighlightsV2Component,
+    SelectorItineraryComponent,
+    TourReviewsV2Component,
+    HotelDetailsComponent,
+    ActivitysComponent
   ],
   imports: [
     // Angular Modules
@@ -340,7 +355,7 @@ registerLocaleData(localeEs);
     CommonModule,
     NgComponentOutlet,
     NewsLetterSectionComponent,
-    ConfirmationCodeComponent,
+    // ConfirmationCodeComponent, <-- Eliminar o comentar esta línea
     MenubarModule,
     RippleModule,
     AvatarModule,
@@ -430,6 +445,7 @@ registerLocaleData(localeEs);
     }),
     MessageService,
     CookieService,
+    DatePipe, // Añadimos DatePipe a los providers
   ],
   bootstrap: [AppComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],

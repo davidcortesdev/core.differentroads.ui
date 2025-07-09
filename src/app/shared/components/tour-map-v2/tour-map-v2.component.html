@@ -1,0 +1,47 @@
+<div class="map-placeholder">
+    <!-- Loading Message -->
+    <p *ngIf="isLoading && !errorMessage" class="loading-message">
+      Cargando mapa...
+    </p>
+    
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="error-message">
+      <p>❌ {{ errorMessage }}</p>
+      <p>Verifica la configuración de Google Maps API</p>
+    </div>
+    
+    <!-- No Locations Message -->
+    <div *ngIf="!isLoading && !errorMessage && !hasLocations" class="no-location-message">
+      <p>🗺️ No hay ubicaciones para mostrar en el mapa</p>
+    </div>
+    
+    <!-- Map Loaded -->
+    <div *ngIf="!isLoading && !errorMessage && hasLocations && apiLoaded" class="map-loaded">
+      <google-map
+        [center]="center"
+        [zoom]="zoom"
+        [options]="mapOptions"
+        [width]="sizeMapaWidth"
+        [height]="sizeMapaHeight"
+        [mapTypeId]="mapTypeId"
+        [mapId]="mapId"
+      >
+        <!-- Marcadores con trackBy para optimización -->
+        <map-advanced-marker
+          #markerElem
+          *ngFor="let marker of markers; trackBy: trackByPosition"
+          [position]="marker.position"
+          [title]="marker.title || ''"
+          [options]="marker.options"
+        >
+          <!-- Contenido personalizado del marcador -->
+          <div class="custom-marker">
+            <span class="marker-number">{{ marker.label?.text }}</span>
+          </div>
+        </map-advanced-marker>
+        
+        <!-- Info Window -->
+        <map-info-window>{{ infoContent }}</map-info-window>
+      </google-map>
+    </div>
+  </div>

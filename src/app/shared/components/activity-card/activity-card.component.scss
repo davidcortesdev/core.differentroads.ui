@@ -90,10 +90,12 @@ $colors: (
       }
     }
 
+    // CAMBIO PRINCIPAL: Asegurar altura fija para la descripción
     &-description {
-      /* Altura fija para exactamente 4 líneas */
-      height: 4.48rem; /* 0.8rem * 1.4 line-height * 4 líneas */
-      max-height: 4.48rem;
+      /* Altura fija para exactamente 4 líneas - SIEMPRE */
+      height: 4.48rem !important; /* 0.8rem * 1.4 line-height * 4 líneas */
+      min-height: 4.48rem !important;
+      max-height: 4.48rem !important;
       overflow: hidden;
       text-overflow: ellipsis;
       font-size: 0.8rem;
@@ -105,7 +107,9 @@ $colors: (
       -webkit-box-orient: vertical;
 
       @include resp(md) {
-        height: 4.2rem; /* Ajuste para móviles */
+        height: 4.2rem !important; /* Ajuste para móviles */
+        min-height: 4.2rem !important;
+        max-height: 4.2rem !important;
         font-size: 0.75rem;
       }
     }
@@ -116,17 +120,24 @@ $colors: (
       flex-direction: column;
       padding: 0.5rem;
       font-size: 0.9rem;
+      // CAMBIO: Asegurar que el body tenga altura mínima consistente
+      min-height: calc(2.4rem + 4.48rem + 1rem); /* título + descripción + padding */
+
+      @include resp(md) {
+        min-height: calc(2.64rem + 4.2rem + 1rem);
+      }
     }
 
     .p-card-footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.5rem;
       border-top: 1px solid map.get($colors, border-light);
       font-size: 1.2rem;
       color: map.get($colors, primary);
       font-weight: 600;
+      // CAMBIO: Asegurar que el footer se mantenga en la parte inferior
+      margin-top: auto;
 
       div.price {
         font-size: 1rem;
@@ -180,8 +191,10 @@ $colors: (
       font-size: 1rem;
       font-weight: 600;
 
-      /* Altura fija para exactamente 2 líneas */
-      height: 2.4rem; /* 1rem * 1.2 line-height * 2 líneas */
+      /* Altura fija para exactamente 2 líneas - SIEMPRE */
+      height: 2.4rem !important; /* 1rem * 1.2 line-height * 2 líneas */
+      min-height: 2.4rem !important;
+      max-height: 2.4rem !important;
       line-height: 1.2;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -193,7 +206,9 @@ $colors: (
 
       @include resp(md) {
         font-size: 1.1rem;
-        height: 2.64rem; /* 1.1rem * 1.2 * 2 */
+        height: 2.64rem !important; /* 1.1rem * 1.2 * 2 */
+        min-height: 2.64rem !important;
+        max-height: 2.64rem !important;
         margin: 0.25rem 0;
       }
     }
@@ -218,20 +233,39 @@ $colors: (
       }
     }
 
-    // Asegurar que el contenido se distribuya correctamente
+    // CAMBIO PRINCIPAL: Restructurar el contenido para altura fija
     .divContent {
       display: flex;
       flex-direction: column;
       height: 100%;
+      // CAMBIO: Asegurar altura mínima fija para el contenido
+      min-height: calc(2.4rem + 4.48rem + 0.5rem); /* título + descripción + margin */
+
+      @include resp(md) {
+        min-height: calc(2.64rem + 4.2rem + 0.25rem);
+      }
 
       h3 {
         flex-shrink: 0; // El título no se encoge
+        margin-bottom: 0.5rem;
       }
 
       .highlight-card-description {
-        flex: 1; // La descripción toma el espacio restante
-        margin-top: 0.5rem;
+        flex-shrink: 0; // CAMBIO: La descripción tampoco se encoge
+        margin-top: 0;
       }
+    }
+
+    // CAMBIO: Asegurar que las tarjetas tengan altura consistente
+    .p-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    // CAMBIO: Para tarjetas sin footer, agregar padding inferior
+    &:not(:has(.p-card-footer)) .p-card-body {
+      padding-bottom: 3rem; // Simular altura del footer
     }
   }
 }

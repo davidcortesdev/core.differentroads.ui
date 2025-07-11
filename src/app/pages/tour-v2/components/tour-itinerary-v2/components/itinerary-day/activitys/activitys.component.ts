@@ -116,7 +116,7 @@ export class ActivitysComponent implements OnInit, OnChanges {
         
         const departureActivityIds = (departureActivities || []).map((da: any) => da.activityId);
         this.activities = validActivities.filter((activity: IActivityResponse) => 
-          departureActivityIds.includes(activity.id)
+          departureActivityIds.includes(activity.id) && activity.isVisibleOnWeb === true
         );
         
         // Transformar datos para el carousel

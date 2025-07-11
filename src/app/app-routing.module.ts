@@ -13,6 +13,7 @@ import { SignUpComponent } from './pages/sign-up/sign-up.component';
 import { ForgetPasswordComponent } from './pages/forget-password/forget-password.component';
 import { BasicPageComponent } from './pages/basic-page/basic-page.component';
 import { CheckoutComponent } from './pages/checkout/checkout.component';
+import { CheckoutV2Component } from './pages/checkout-v2/checkout-v2.component';
 import { ContentPageComponent } from './pages/content-page/content-page.component';
 import { ToursComponent } from './shared/components/tours/tours.component';
 import { ReservationComponent } from './pages/reservation/reservation.component';
@@ -44,6 +45,8 @@ const routes: Routes = [
       { path: 'preview/pages', component: BasicPagePreviewComponent },
       { path: 'checkout', component: CheckoutComponent },
       { path: 'checkout/:id', component: CheckoutComponent },
+      { path: 'checkout-v2', component: CheckoutV2Component },
+      { path: 'checkout-v2/:departureId', component: CheckoutV2Component },
       { path: 'payment/:id', component: PaymentsComponent },
       { path: 'landing/:slug', component: ContentPageComponent },
       { path: 'collection/:slug', component: ContentPageComponent },

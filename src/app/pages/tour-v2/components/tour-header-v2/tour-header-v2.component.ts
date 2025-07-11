@@ -1,7 +1,9 @@
 import {
   Component,
   Input,
+  Output,
   OnInit,
+  EventEmitter,
   HostListener,
   ElementRef,
   Renderer2,
@@ -13,6 +15,8 @@ import {
 import { TourNetService, Tour } from '../../../../core/services/tourNet.service';
 import { TourLocationService, ITourLocationResponse } from '../../../../core/services/tour/tour-location.service';
 import { LocationNetService, Location } from '../../../../core/services/locations/locationNet.service';
+import { ReservationService, ReservationCreate, IReservationResponse } from '../../../../core/services/reservation/reservation.service';
+import { ReservationTravelerService } from '../../../../core/services/reservation/reservation-traveler.service'; // ✅ AÑADIDO
 import { Subscription, forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { Router } from '@angular/router';
@@ -25,15 +29,10 @@ import { Router } from '@angular/router';
 })
 export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, OnChanges {
   @Input() tourId: number | undefined;
-  
-  // ✅ AÑADIDO: Input para recibir precio total
   @Input() totalPrice: number = 0;
-  
-  // ✅ CORREGIDO: Input para recibir ciudad seleccionada - sin valor por defecto
   @Input() selectedCity: string = '';
-  
-  // ✅ AÑADIDO: Input para recibir departure seleccionado
   @Input() selectedDeparture: any = null;
+  @Input() totalPassengers: number = 1;
 
   // Tour data
   tour: Partial<Tour> = {};
@@ -47,10 +46,15 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
   private headerHeight = 0;
   private subscriptions = new Subscription();
 
+  // Estado para controlar el proceso de reservación
+  isCreatingReservation = false;
+
   constructor(
     private tourNetService: TourNetService,
     private tourLocationService: TourLocationService,
     private locationNetService: LocationNetService,
+    private reservationService: ReservationService,
+    private reservationTravelerService: ReservationTravelerService, // ✅ AÑADIDO
     private el: ElementRef,
     private renderer: Renderer2,
     private router: Router
@@ -65,6 +69,18 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['tourId'] && changes['tourId'].currentValue) {
       this.loadTourData(changes['tourId'].currentValue);
+    }
+    
+    if (changes['totalPrice']) {
+      console.log('💰 Header recibió precio actualizado:', this.totalPrice);
+    }
+    
+    if (changes['selectedCity']) {
+      console.log('✈️ Header recibió ciudad actualizada:', this.selectedCity);
+    }
+    
+    if (changes['selectedDeparture']) {
+      console.log('🚀 Header recibió departure actualizado:', this.selectedDeparture);
     }
   }
 
@@ -81,12 +97,10 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
     this.handleScrollEffect();
   }
 
-  // ✅ AÑADIDO: Verificar si hay precio
   get hasPrice(): boolean {
     return this.totalPrice > 0;
   }
 
-  // ✅ AÑADIDO: Precio formateado
   get formattedPrice(): string {
     if (this.totalPrice <= 0) return '';
     return new Intl.NumberFormat('es-ES', {
@@ -97,7 +111,6 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
     }).format(this.totalPrice);
   }
 
-  // ✅ CORREGIDO: Texto formateado para vuelos - manejar string vacío
   get formattedFlights(): string {
     if (!this.selectedCity || this.selectedCity === 'Sin vuelos') {
       return 'Sin vuelos';
@@ -105,22 +118,19 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
     return `Vuelos desde ${this.selectedCity}`;
   }
 
-  // ✅ CORREGIDO: Fecha formateada con indicador de Single - SIN CAMBIAR EL DÍA
   get formattedDepartureWithType(): string {
     if (!this.selectedDeparture || !this.selectedDeparture.departureDate) return '';
     
     try {
-      // ✅ IMPORTANTE: Usar la fecha tal como viene, sin conversión UTC
       const dateString = this.selectedDeparture.departureDate;
-      const dateParts = dateString.split('-'); // Ejemplo: "2025-07-23" -> ["2025", "07", "23"]
+      const dateParts = dateString.split('-');
       
-      if (dateParts.length !== 3) return dateString; // Si no es formato esperado, devolver tal como viene
+      if (dateParts.length !== 3) return dateString;
       
       const year = parseInt(dateParts[0]);
-      const month = parseInt(dateParts[1]) - 1; // Los meses en JS van de 0-11
+      const month = parseInt(dateParts[1]) - 1;
       const day = parseInt(dateParts[2]);
       
-      // Crear fecha SIN zona horaria para evitar cambios de día
       const date = new Date(year, month, day);
       
       const formattedDate = date.toLocaleDateString('es-ES', {
@@ -128,7 +138,6 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
         month: 'long'
       });
       
-      // Verificar si es Single
       const isSingle = this.selectedDeparture.group?.toLowerCase().includes('single');
       
       if (isSingle) {
@@ -137,12 +146,29 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
       
       return formattedDate;
     } catch {
-      // Si hay error, devolver la fecha tal como viene
       return this.selectedDeparture.departureDate;
     }
   }
 
-  // ===== MÉTODOS PRIVADOS EXISTENTES (SIN CAMBIOS) =====
+  private getTripTypeInfoForConsole(group: string): any {
+    if (!group) return undefined;
+
+    const type = group.toLowerCase();
+
+    if (type.includes('single') || type.includes('singles')) {
+      return { title: 'Single', description: 'Viaje individual', class: 'single' };
+    }
+
+    if (type.includes('group') || type.includes('grupo')) {
+      return { title: 'Group', description: 'Viaje en grupo', class: 'group' };
+    }
+
+    if (type.includes('private') || type.includes('privado')) {
+      return { title: 'Private', description: 'Viaje privado', class: 'private' };
+    }
+
+    return undefined;
+  }
 
   private loadTourData(tourId: number) {
     this.subscriptions.add(
@@ -158,13 +184,9 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
     );
   }
 
-  /**
-   * ✅ OPTIMIZACIÓN MÁXIMA: Usar getByTourAndType igual que el componente MAP
-   */
   private loadCountryAndContinent(tourId: number): void {
     this.subscriptions.add(
       forkJoin([
-        // ✅ Solo cargar COUNTRY del tour específico
         this.tourLocationService.getByTourAndType(tourId, "COUNTRY").pipe(
           map(response => Array.isArray(response) ? response : (response ? [response] : [])),
           catchError(error => {
@@ -172,7 +194,6 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
             return of([]);
           })
         ),
-        // ✅ Solo cargar CONTINENT del tour específico  
         this.tourLocationService.getByTourAndType(tourId, "CONTINENT").pipe(
           map(response => Array.isArray(response) ? response : (response ? [response] : [])),
           catchError(error => {
@@ -182,11 +203,9 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
         )
       ]).pipe(
         switchMap(([countryLocations, continentLocations]) => {
-          // Filtrar objetos vacíos y obtener solo ubicaciones válidas
           const validCountryLocations = countryLocations.filter(loc => loc && loc.id && loc.locationId);
           const validContinentLocations = continentLocations.filter(loc => loc && loc.id && loc.locationId);
 
-          // Extraer todos los locationIds únicos que necesitamos
           const allLocationIds = [
             ...validCountryLocations.map(tl => tl.locationId),
             ...validContinentLocations.map(tl => tl.locationId)
@@ -194,6 +213,7 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
           const uniqueLocationIds = [...new Set(allLocationIds)];
 
           if (uniqueLocationIds.length === 0) {
+            console.warn('⚠️ No se encontraron locationIds para cargar');
             return of({ 
               countryLocations: validCountryLocations, 
               continentLocations: validContinentLocations, 
@@ -201,7 +221,6 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
             });
           }
 
-          // ✅ OPTIMIZACIÓN: Cargar solo las ubicaciones específicas que necesitamos
           return this.locationNetService.getLocationsByIds(uniqueLocationIds).pipe(
             map(locations => ({
               countryLocations: validCountryLocations,
@@ -219,25 +238,21 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
           );
         })
       ).subscribe(({ countryLocations, continentLocations, locations }) => {
-        // Crear map de ubicaciones para búsqueda O(1)
         const locationsMap = new Map<number, Location>();
         locations.forEach(location => {
           locationsMap.set(location.id, location);
         });
 
-        // Procesar países
         const countries = countryLocations
           .sort((a, b) => a.displayOrder - b.displayOrder)
           .map(tl => locationsMap.get(tl.locationId)?.name)
           .filter(name => name) as string[];
 
-        // Procesar continentes
         const continents = continentLocations
           .sort((a, b) => a.displayOrder - b.displayOrder)
           .map(tl => locationsMap.get(tl.locationId)?.name)
           .filter(name => name) as string[];
 
-        // Asignar resultados finales
         this.country = countries.join(', ');
         this.continent = continents.join(', ');
       })
@@ -335,5 +350,138 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
     
     document.body.removeChild(tempElement);
     return clickedCountry;
+  }
+
+  @Output() bookingClick = new EventEmitter<void>();
+  
+  // ✅ MODIFICADO: Método para crear reservación, travelers y luego navegar
+  onBookingClick(): void {
+    console.log('🚀 INICIANDO PROCESO DE RESERVACIÓN');
+    console.log('📋 Datos disponibles:');
+    console.log('  - Tour ID:', this.tourId);
+    console.log('  - Selected Departure:', this.selectedDeparture);
+    console.log('  - Total Price:', this.totalPrice);
+    console.log('  - Total Passengers:', this.totalPassengers);
+    
+    // Validar que tenemos los datos necesarios
+    if (!this.selectedDeparture || !this.selectedDeparture.id) {
+      console.error('❌ VALIDACIÓN FALLIDA: No se ha seleccionado una fecha de salida');
+      alert('Por favor, selecciona una fecha de salida antes de continuar.');
+      return;
+    }
+
+    if (!this.tourId) {
+      console.error('❌ VALIDACIÓN FALLIDA: No se encontró el ID del tour');
+      alert('Error: No se pudo identificar el tour.');
+      return;
+    }
+
+    console.log('✅ VALIDACIONES PASADAS - Procediendo a crear reservación');
+
+    // Indicar que se está creando la reservación
+    this.isCreatingReservation = true;
+
+    // Crear objeto de reservación
+    const reservationData: ReservationCreate = {
+      id: 0,
+      tkId: '',
+      reservationStatusId: 1,
+      retailerId: 1,
+      tourId: this.tourId,
+      departureId: this.selectedDeparture.id,
+      userId: 1,
+      totalPassengers: this.totalPassengers || 1,
+      totalAmount: this.totalPrice || 0,
+      budgetAt: '',
+      cartAt: new Date().toISOString(),
+      abandonedAt: '',
+      reservedAt: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    console.log('📝 DATOS DE RESERVACIÓN A ENVIAR:');
+    console.log(JSON.stringify(reservationData, null, 2));
+    console.log('🔄 ENVIANDO PETICIÓN AL BACKEND...');
+
+    // Crear la reservación
+    this.subscriptions.add(
+      this.reservationService.create(reservationData).pipe(
+        switchMap((createdReservation: IReservationResponse) => {
+          console.log('🎉 ¡RESERVACIÓN CREADA EXITOSAMENTE!');
+          console.log('📊 RESPUESTA DEL BACKEND:');
+          console.log(JSON.stringify(createdReservation, null, 2));
+          console.log('🔑 ID DE RESERVACIÓN GENERADO:', createdReservation.id);
+          console.log('🎫 TK ID GENERADO:', createdReservation.tkId);
+          
+          console.log('👥 INICIANDO CREACIÓN DE TRAVELERS...');
+          console.log('📊 Número total de pasajeros:', this.totalPassengers);
+          
+          // Crear travelers de forma secuencial con numeración manual
+          const travelerObservables = [];
+          
+          for (let i = 0; i < this.totalPassengers; i++) {
+            const travelerNumber = i + 1; // Numeración manual: 1, 2, 3, etc.
+            const isLeadTraveler = i === 0; // Solo el primer traveler es lead
+            console.log(`🧳 Creando traveler ${travelerNumber}/${this.totalPassengers} - Lead: ${isLeadTraveler}`);
+            
+            const travelerData = {
+              id: 0,
+              reservationId: createdReservation.id,
+              travelerNumber: travelerNumber,
+              isLeadTraveler: isLeadTraveler,
+              tkId: ''
+            };
+            
+            const travelerObservable = this.reservationTravelerService.create(travelerData);
+            travelerObservables.push(travelerObservable);
+          }
+          
+          // Ejecutar todas las creaciones de travelers en paralelo
+          return forkJoin(travelerObservables).pipe(
+            map(createdTravelers => {
+              console.log('✅ TODOS LOS TRAVELERS CREADOS EXITOSAMENTE:');
+              createdTravelers.forEach((traveler, index) => {
+                console.log(`  Traveler ${index + 1}:`, {
+                  id: traveler.id,
+                  travelerNumber: traveler.travelerNumber,
+                  isLeadTraveler: traveler.isLeadTraveler
+                });
+              });
+              return createdReservation;
+            })
+          );
+        })
+      ).subscribe({
+        next: (createdReservation: IReservationResponse) => {
+          console.log('🧭 NAVEGANDO AL CHECKOUT...');
+          // Navegar al checkout con la reservación creada
+          this.router.navigate(['/checkout-v2', this.selectedDeparture.id], {
+            state: {
+              tourName: this.tour.name,
+              departureDate: this.selectedDeparture.departureDate,
+              returnDate: this.selectedDeparture.returnDate,
+              departureId: this.selectedDeparture.id,
+              reservationId: createdReservation.id,
+              totalAmount: this.totalPrice
+            }
+          });
+          console.log('✅ PROCESO COMPLETADO - Usuario dirigido al checkout');
+        },
+        error: (error) => {
+          console.error('💥 ERROR EN EL PROCESO:');
+          console.error('📋 Detalles del error:', error);
+          console.error('🌐 Status:', error.status);
+          console.error('📄 Message:', error.message);
+          console.error('📦 Full error object:', JSON.stringify(error, null, 2));
+          alert('Error al crear la reservación o los travelers. Por favor, inténtalo de nuevo.');
+        },
+        complete: () => {
+          console.log('🏁 OBSERVABLE COMPLETADO');
+          this.isCreatingReservation = false;
+          console.log('🔄 Estado de carga reseteado');
+        }
+      })
+    );
   }
 }

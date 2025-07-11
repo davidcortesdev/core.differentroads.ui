@@ -37,6 +37,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   @Output() priceUpdate = new EventEmitter<number>();
   @Output() cityUpdate = new EventEmitter<string>();
   @Output() departureUpdate = new EventEmitter<any>();
+  
+  // ✅ AÑADIR ESTE OUTPUT al componente tour-departures-v2
+  @Output() passengersUpdate = new EventEmitter<any>();
 
   // Control de destrucción del componente
   private destroy$ = new Subject<void>();
@@ -88,15 +91,20 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   passengerText: string = '1 Adulto';
 
   constructor(
-    private departureService: DepartureService,
-    private itineraryService: ItineraryService,
-    private messageService: MessageService
-  ) {
-    this.filteredCities = [...this.cities];
-    this.updatePassengerText();
-    // ✅ AÑADIDO: Establecer "Sin vuelos" como valor inicial
-    this.selectedCity = this.cities[0]; // "Sin vuelos"
-  }
+  private departureService: DepartureService,
+  private itineraryService: ItineraryService,
+  private messageService: MessageService
+) {
+  this.filteredCities = [...this.cities];
+  this.updatePassengerText();
+  // ✅ AÑADIDO: Establecer "Sin vuelos" como valor inicial
+  this.selectedCity = this.cities[0]; // "Sin vuelos"
+  
+  // ✅ AÑADIDO: Emitir estado inicial de pasajeros
+  setTimeout(() => {
+    this.emitPassengersUpdate();
+  }, 0);
+}
 
   ngOnInit(): void {
     if (!this.tourId) {
@@ -304,32 +312,36 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     event.stopPropagation();
   }
 
-  updatePassengers(type: keyof Travelers, change: number): void {
-    this.shouldBlockKidsAndBabies = this.checkIfShouldBlockKids();
-    
-    if (type === 'adults') {
-      this.travelers.adults = Math.max(1, this.travelers.adults + change);
-    } else if (type === 'children') {
-      if (this.shouldBlockKidsAndBabies && change > 0) {
-        this.showBlockedPassengersToast();
-        return;
-      }
-      this.travelers.children = Math.max(0, this.travelers.children + change);
-    } else if (type === 'babies') {
-      if (this.shouldBlockKidsAndBabies && change > 0) {
-        this.showBlockedPassengersToast();
-        return;
-      }
-      this.travelers.babies = Math.max(0, this.travelers.babies + change);
+  // ✅ MODIFICAR el método updatePassengers para emitir cambios
+updatePassengers(type: keyof Travelers, change: number): void {
+  this.shouldBlockKidsAndBabies = this.checkIfShouldBlockKids();
+  
+  if (type === 'adults') {
+    this.travelers.adults = Math.max(1, this.travelers.adults + change);
+  } else if (type === 'children') {
+    if (this.shouldBlockKidsAndBabies && change > 0) {
+      this.showBlockedPassengersToast();
+      return;
     }
-
-    this.updatePassengerText();
-    
-    // ✅ AÑADIDO: Si hay departure seleccionado, actualizar precio
-    if (this.selectedDepartureId) {
-      this.calculateAndEmitPrice();
+    this.travelers.children = Math.max(0, this.travelers.children + change);
+  } else if (type === 'babies') {
+    if (this.shouldBlockKidsAndBabies && change > 0) {
+      this.showBlockedPassengersToast();
+      return;
     }
+    this.travelers.babies = Math.max(0, this.travelers.babies + change);
   }
+
+  this.updatePassengerText();
+  
+  // ✅ AÑADIDO: Emitir cambio de pasajeros
+  this.emitPassengersUpdate();
+  
+  // ✅ AÑADIDO: Si hay departure seleccionado, actualizar precio
+  if (this.selectedDepartureId) {
+    this.calculateAndEmitPrice();
+  }
+}
 
   updatePassengerText(): void {
     const parts = [];
@@ -362,13 +374,24 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   }
 
   applyPassengers(): void {
-    this.showPassengersPanel = false;
-    
-    // ✅ AÑADIDO: Actualizar precio si hay departure seleccionado
-    if (this.selectedDepartureId) {
-      this.calculateAndEmitPrice();
-    }
+  this.showPassengersPanel = false;
+  
+  // ✅ AÑADIDO: Emitir cambio de pasajeros
+  this.emitPassengersUpdate();
+  
+  // ✅ AÑADIDO: Actualizar precio si hay departure seleccionado
+  if (this.selectedDepartureId) {
+    this.calculateAndEmitPrice();
   }
+}
+private emitPassengersUpdate(): void {
+  this.passengersUpdate.emit({
+    adults: this.travelers.adults,
+    children: this.travelers.children,
+    babies: this.travelers.babies,
+    total: this.travelers.adults + this.travelers.children + this.travelers.babies
+  });
+}
 
   getTripTypeInfo(group: string): any {
     if (!group) return undefined;

@@ -1,0 +1,29 @@
+<div class="checkout-container">
+  <div class="tour-info-section">
+    <h1>Reserva tu viaje</h1>
+    
+    <div class="tour-details" *ngIf="tourName">
+      <h2>{{ tourName }}</h2>
+      
+      <div class="dates-info" *ngIf="departureDate || returnDate">
+        <div class="date-item" *ngIf="departureDate">
+          <span class="label">Fecha de salida:</span>
+          <span class="value">{{ formatDate(departureDate) }}</span>
+        </div>
+        
+        <div class="date-item" *ngIf="returnDate">
+          <span class="label">Fecha de regreso:</span>
+          <span class="value">{{ formatDate(returnDate) }}</span>
+        </div>
+      </div>
+      
+      <div class="departure-id" *ngIf="departureId">
+        <span class="label">ID de salida:</span>
+        <span class="value">{{ departureId }}</span>
+      </div>
+    </div>
+    
+    <!-- Aquí puedes añadir el resto del formulario de checkout -->
+  </div>
+</div>
+<p>checkout-v2 works!</p>

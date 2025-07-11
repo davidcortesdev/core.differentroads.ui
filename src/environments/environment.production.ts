@@ -29,6 +29,7 @@ export const environment = {
   locationsApiUrl: 'https://locations.differentroads.es/api',
   cmsApiUrl: 'https://cms.differentroads.es/api',
   masterdataApiUrl:'https://masterdata.differentroads.es/api',
+  reservationsApiUrl: 'https://reservations.differentroads.es/api',
 
 
   scalapayApiUrl: 'https://fastapi.differentroads.es/scalapay',

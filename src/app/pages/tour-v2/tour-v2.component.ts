@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TourNetService, Tour } from '../../core/services/tourNet.service';
 import { catchError, of } from 'rxjs';
 import { ItineraryService } from '../../core/services/itinerary/itinerary.service';
@@ -18,18 +18,22 @@ export class TourV2Component implements OnInit {
   loading: boolean = true;
   error: string | null = null;
   selectedDepartureEvent: SelectedDepartureEvent | null = null;
-  
+
   // ✅ AÑADIDO: Total del carrito
   totalPrice: number = 0;
-  
+
   // ✅ CORREGIDO: Ciudad seleccionada - no debe tener valor inicial
   selectedCity: string = '';
-  
+
   // ✅ AÑADIDO: Departure seleccionado
   selectedDepartureData: any = null;
+  
+  // ✅ AÑADIDO: Total de pasajeros
+  totalPassengers: number = 1;
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private tourNetService: TourNetService,
     private ItineraryService: ItineraryService
   ) {}
@@ -50,7 +54,7 @@ export class TourV2Component implements OnInit {
   private loadTourBySlug(slug: string): void {
     this.loading = true;
     this.error = null;
-    
+
     this.tourNetService.getTours({ slug })
       .pipe(
         catchError(err => {
@@ -88,5 +92,31 @@ export class TourV2Component implements OnInit {
   // ✅ AÑADIDO: Recibir actualización de departure
   onDepartureUpdate(departure: any): void {
     this.selectedDepartureData = departure;
+  }
+  
+  // ✅ AÑADIDO: Recibir actualización del total de pasajeros
+  onPassengersUpdate(passengersData: any): void {
+    // Calcular total de pasajeros (adultos + niños + bebés)
+    this.totalPassengers = passengersData.adults + passengersData.children + passengersData.babies;
+    console.log('👥 Total de pasajeros actualizado en padre:', this.totalPassengers, passengersData);
+  }
+
+  // Añadir método para manejar el evento de clic en el botón de reserva
+  onBookingButtonClick(): void {
+    if (this.selectedDepartureData && this.selectedDepartureData.id && this.tour) {
+      // Navegar al componente checkout-v2 con el departureId
+      this.router.navigate(['/checkout-v2', this.selectedDepartureData.id], {
+        state: {
+          tourName: this.tour.name,
+          departureDate: this.selectedDepartureData.departureDate,
+          returnDate: this.selectedDepartureData.returnDate,
+          departureId: this.selectedDepartureData.id,
+          totalPassengers: this.totalPassengers
+        }
+      });
+    } else {
+      console.error('No se ha seleccionado una fecha de salida o no hay datos del tour');
+      // Opcionalmente, mostrar un mensaje al usuario
+    }
   }
 }

@@ -1,65 +1,74 @@
 <div class="highlights-section">
-    <h2>{{ highlightsTitle }}</h2>
-  
-    <div *ngIf="isLoading" class="loading-container">
-      <p-progressSpinner></p-progressSpinner>
-    </div>
-  
-    <div *ngIf="!isLoading && highlights.length === 0" class="no-data-message">
-      <p>No hay destacados disponibles para este tour.</p>
-    </div>
-  
-    <p-carousel
-      *ngIf="!isLoading && highlights.length > 0"
-      [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
-      [value]="highlights"
-      [numVisible]="carouselNumVisible"
-      [numScroll]="1"
-      [circular]="true"
-      [showNavigators]="true"
-      [responsiveOptions]="responsiveOptions"
-      [showIndicators]="true"
-      class="custom-carousel"
-    >
-      <ng-template let-highlight pTemplate="item">
-        <p-card
-          styleClass="highlight-card"
-          [style]="cardStyle"
-          (click)="openFullHighlight(highlight)"
-        >
-          <ng-template pTemplate="header">
-            <div class="card-header">
-              <img [src]="highlight.image" [alt]="highlight.title" loading="lazy" />
-              <span class="status-badge" [class.optional]="highlight.optional">
-                {{ highlight.optional ? "Opcional" : "Incluida" }}
-              </span>
-            </div>
-          </ng-template>
-          <ng-template pTemplate="content">
-            <h3 [title]="highlight.title">{{ highlight.title }}</h3>
-            <p [title]="highlight.description">{{ highlight.description }}</p>
-          </ng-template>
-        </p-card>
-      </ng-template>
-    </p-carousel>
+  <h2>{{ highlightsTitle }}</h2>
+
+  <div *ngIf="isLoading" class="loading-container">
+    <p-progressSpinner></p-progressSpinner>
   </div>
-  
-  <!-- Modal de highlight completo -->
-  <p-dialog 
-    [(visible)]="showFullHighlightModal"
-    [modal]="true"
-    [dismissableMask]="true"
-    [style]="dialogStyle"
-    [header]="'Detalle'"
-    [closeOnEscape]="true">
-    <div class="full-highlight-content" *ngIf="selectedHighlight">
-      <div class="highlight-image">
-        <img [src]="selectedHighlight.image" [alt]="selectedHighlight.title" loading="lazy"/>
-        <span class="status-badge" [class.optional]="selectedHighlight.optional">
-          {{ selectedHighlight.optional ? "Opcional" : "Incluida" }}
-        </span>
-      </div>
-      <h3 class="highlight-title">{{ selectedHighlight.title }}</h3>
-      <div class="highlight-description">{{ selectedHighlight.description }}</div>
+
+  <div *ngIf="!isLoading && highlights.length === 0" class="no-data-message">
+    <p>No hay destacados disponibles para este tour.</p>
+  </div>
+
+  <p-carousel
+    *ngIf="!isLoading && highlights.length > 0"
+    [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
+    [value]="highlights"
+    [numVisible]="carouselNumVisible"
+    [numScroll]="1"
+    [circular]="true"
+    [showNavigators]="true"
+    [responsiveOptions]="responsiveOptions"
+    [showIndicators]="true"
+    class="custom-carousel"
+  >
+    <ng-template let-highlight pTemplate="item">
+      <p-card
+        styleClass="highlight-card"
+        [style]="cardStyle"
+        (click)="openFullHighlight(highlight)"
+      >
+        <ng-template pTemplate="header">
+          <div class="card-header">
+            <img [src]="highlight.image" [alt]="highlight.title" loading="lazy" />
+            <span class="status-badge" [class.optional]="highlight.optional">
+              {{ highlight.optional ? "Opcional" : "Incluida" }}
+            </span>
+          </div>
+        </ng-template>
+        <ng-template pTemplate="content">
+          <h3 [title]="highlight.title">{{ highlight.title }}</h3>
+          <!-- Aplicar clase condicional para mostrar puntos suspensivos -->
+          <div
+            class="highlight-description-preview"
+            [class.show-ellipsis]="highlight.hasLongDescription"
+            [innerHTML]="highlight.sanitizedDescription"
+            [title]="highlight.description">
+          </div>
+        </ng-template>
+      </p-card>
+    </ng-template>
+  </p-carousel>
+</div>
+
+<!-- Modal de highlight completo -->
+<p-dialog
+  [(visible)]="showFullHighlightModal"
+  [modal]="true"
+  [dismissableMask]="true"
+  [style]="dialogStyle"
+  [header]="'Detalle'"
+  [closeOnEscape]="true">
+  <div class="full-highlight-content" *ngIf="selectedHighlight">
+    <div class="highlight-image">
+      <img [src]="selectedHighlight.image" [alt]="selectedHighlight.title" loading="lazy"/>
+      <span class="status-badge" [class.optional]="selectedHighlight.optional">
+        {{ selectedHighlight.optional ? "Opcional" : "Incluida" }}
+      </span>
     </div>
-  </p-dialog>
+    <h3 class="highlight-title">{{ selectedHighlight.title }}</h3>
+    <div
+      class="highlight-description"
+      [innerHTML]="selectedHighlight.sanitizedDescription">
+    </div>
+  </div>
+</p-dialog>

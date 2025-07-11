@@ -46,7 +46,7 @@
     <div class="divContent">
       <h3 [title]="highlight.title">{{ highlight.title }}</h3>
       <div
-        [innerHTML]="highlight.description"
+        [innerHTML]="sanitizedDescription"
         class="highlight-card-description"
       ></div>
     </div>

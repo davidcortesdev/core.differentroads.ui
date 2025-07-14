@@ -46,7 +46,7 @@ const routes: Routes = [
       { path: 'checkout', component: CheckoutComponent },
       { path: 'checkout/:id', component: CheckoutComponent },
       { path: 'checkout-v2', component: CheckoutV2Component },
-      { path: 'checkout-v2/:departureId', component: CheckoutV2Component },
+      { path: 'checkout-v2/:reservationId', component: CheckoutV2Component },
       { path: 'payment/:id', component: PaymentsComponent },
       { path: 'landing/:slug', component: ContentPageComponent },
       { path: 'collection/:slug', component: ContentPageComponent },

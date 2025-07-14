@@ -101,22 +101,4 @@ export class TourV2Component implements OnInit {
     console.log('👥 Total de pasajeros actualizado en padre:', this.totalPassengers, passengersData);
   }
 
-  // Añadir método para manejar el evento de clic en el botón de reserva
-  onBookingButtonClick(): void {
-    if (this.selectedDepartureData && this.selectedDepartureData.id && this.tour) {
-      // Navegar al componente checkout-v2 con el departureId
-      this.router.navigate(['/checkout-v2', this.selectedDepartureData.id], {
-        state: {
-          tourName: this.tour.name,
-          departureDate: this.selectedDepartureData.departureDate,
-          returnDate: this.selectedDepartureData.returnDate,
-          departureId: this.selectedDepartureData.id,
-          totalPassengers: this.totalPassengers
-        }
-      });
-    } else {
-      console.error('No se ha seleccionado una fecha de salida o no hay datos del tour');
-      // Opcionalmente, mostrar un mensaje al usuario
-    }
-  }
 }

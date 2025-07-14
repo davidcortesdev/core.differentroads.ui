@@ -68,10 +68,12 @@
 
           <p-overlay [(visible)]="showPassengersPanel" styleClass="p-ovl">
             <div class="p-panel p-3">
-              <div class="p-type">
+              
+              <!-- ✅ SECCIÓN ADULTOS - Solo mostrar si están permitidos -->
+              <div class="p-type" *ngIf="allowedPassengerTypes.adults">
                 <div class="p-info">
                   <div class="p-cat">Adultos</div>
-                  <div class="p-age">+12 años</div>
+                  <div class="p-age">+18 años</div>
                 </div>
                 <div class="p-ctrl">
                   <p-button
@@ -89,7 +91,8 @@
                 </div>
               </div>
 
-              <div class="p-type">
+              <!-- ✅ SECCIÓN NIÑOS - Solo mostrar si están permitidos -->
+              <div class="p-type" *ngIf="allowedPassengerTypes.children">
                 <div class="p-info">
                   <div class="p-cat">
                     Niños
@@ -99,7 +102,7 @@
                       styleClass="ml-2"
                     ></p-badge>
                   </div>
-                  <div class="p-age">2-12 años</div>
+                  <div class="p-age">2-17 años</div>
                 </div>
                 <div class="p-ctrl">
                   <p-button
@@ -117,7 +120,8 @@
                 </div>
               </div>
 
-              <div class="p-type">
+              <!-- ✅ SECCIÓN BEBÉS - Solo mostrar si están permitidos -->
+              <div class="p-type" *ngIf="allowedPassengerTypes.babies">
                 <div class="p-info">
                   <div class="p-cat">
                     Bebés
@@ -127,7 +131,7 @@
                       styleClass="ml-2"
                     ></p-badge>
                   </div>
-                  <div class="p-age">-2 años</div>
+                  <div class="p-age">0-1 años</div>
                 </div>
                 <div class="p-ctrl">
                   <p-button

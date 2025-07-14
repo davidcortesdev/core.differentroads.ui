@@ -98,7 +98,6 @@ export class TourV2Component implements OnInit {
   onPassengersUpdate(passengersData: any): void {
     // Calcular total de pasajeros (adultos + niños + bebés)
     this.totalPassengers = passengersData.adults + passengersData.children + passengersData.babies;
-    console.log('👥 Total de pasajeros actualizado en padre:', this.totalPassengers, passengersData);
   }
 
 }

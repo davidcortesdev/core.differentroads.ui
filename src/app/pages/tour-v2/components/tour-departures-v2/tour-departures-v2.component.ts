@@ -12,6 +12,7 @@ import { ItineraryService, IItineraryResponse } from '../../../../core/services/
 import { TourDepartureCitiesService, ITourDepartureCityResponse } from '../../../../core/services/tour/tour-departure-cities.service';
 import { TourAgeGroupsService } from '../../../../core/services/tour/tour-age-groups.service';
 import { AgeGroupService, IAgeGroupResponse } from '../../../../core/services/agegroup/age-group.service';
+import { TourDeparturesPricesService, ITourDeparturesPriceResponse } from '../../../../core/services/tour/tour-departures-prices.service';
 
 // Interfaces para los datos
 interface City {
@@ -37,7 +38,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   @Input() tourId: number | undefined;
   @Input() selectedDepartureEvent: SelectedDepartureEvent | null = null;
 
-  // ✅ OUTPUTS
   @Output() priceUpdate = new EventEmitter<number>();
   @Output() cityUpdate = new EventEmitter<string>();
   @Output() departureUpdate = new EventEmitter<any>();
@@ -51,7 +51,20 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   error: string | undefined;
   citiesLoading = false;
 
-  // ✅ AÑADIDO: Propiedades para grupos de edad
+  // Propiedades para precios
+  departuresPrices: ITourDeparturesPriceResponse[] = [];
+  adultAgeGroupId: number | null = null;
+  childAgeGroupId: number | null = null;
+  babyAgeGroupId: number | null = null;
+
+  // Propiedades para rangos de edad específicos
+  ageGroupCategories = {
+    adults: { id: null as number | null, lowerAge: null as number | null, upperAge: null as number | null },
+    children: { id: null as number | null, lowerAge: null as number | null, upperAge: null as number | null },
+    babies: { id: null as number | null, lowerAge: null as number | null, upperAge: null as number | null }
+  };
+
+  // Propiedades para grupos de edad
   tourAgeGroups: IAgeGroupResponse[] = [];
   allowedPassengerTypes = {
     adults: true,
@@ -102,6 +115,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     private tourDepartureCitiesService: TourDepartureCitiesService,
     private tourAgeGroupsService: TourAgeGroupsService,
     private ageGroupService: AgeGroupService,
+    private tourDeparturesPricesService: TourDeparturesPricesService,
     private messageService: MessageService
   ) {
     this.updatePassengerText();
@@ -114,13 +128,12 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
   ngOnInit(): void {
     if (!this.tourId) {
-      console.warn('⚠️ No se proporcionó tourId para tour-departures-v2');
       this.error = 'ID del tour no proporcionado';
       return;
     }
     
     this.loadCities();
-    this.loadAgeGroups(); // ✅ AÑADIDO: Cargar grupos de edad
+    this.loadAgeGroups();
   }
 
   ngOnDestroy(): void {
@@ -136,7 +149,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     
     if (changes['tourId'] && changes['tourId'].currentValue && !changes['tourId'].firstChange) {
       this.loadCities();
-      this.loadAgeGroups(); // ✅ AÑADIDO: Recargar grupos de edad si cambia el tourId
+      this.loadAgeGroups();
     }
   }
 
@@ -156,7 +169,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           activityId: city.activityId
         }));
         
-        // ✅ ORDENAR: "Sin Vuelos" primero, luego el resto alfabéticamente
+        // Ordenar: "Sin Vuelos" primero, luego el resto alfabéticamente
         this.cities = mappedCities.sort((a, b) => {
           const aIsSinVuelos = a.name.toLowerCase().includes('sin vuelos') || a.name.toLowerCase().includes('sin vuelo');
           const bIsSinVuelos = b.name.toLowerCase().includes('sin vuelos') || b.name.toLowerCase().includes('sin vuelo');
@@ -182,10 +195,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         }
         
         this.citiesLoading = false;
-        console.log('✅ Ciudades cargadas:', this.cities);
       },
       error: (error) => {
-        console.error('❌ Error cargando ciudades:', error);
+        console.error('Error cargando ciudades:', error);
         // Fallback a lista vacía en caso de error
         this.cities = [];
         this.filteredCities = [];
@@ -202,19 +214,36 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     });
   }
 
-  // ✅ AÑADIDO: Método para cargar grupos de edad del tour
+  private loadDeparturesPrices(activityId: number, departureId: number): void {
+    if (!activityId || !departureId) return;
+    
+    this.tourDeparturesPricesService.getAll(activityId).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (pricesResponse: ITourDeparturesPriceResponse[]) => {
+        // Filtrar solo los precios del departure seleccionado
+        const filteredPrices = pricesResponse.filter(price => price.departureId === departureId);
+        
+        this.departuresPrices = filteredPrices;
+        
+        // Calcular precio cuando los precios ya están cargados
+        if (this.selectedDepartureId) {
+          this.calculateAndEmitPrice();
+        }
+      },
+      error: (error) => {
+        console.error('Error cargando precios:', error);
+      }
+    });
+  }
+
   private loadAgeGroups(): void {
     if (!this.tourId) return;
-
-    console.log('🔍 Cargando grupos de edad para el tour:', this.tourId);
     
     this.tourAgeGroupsService.getAll(this.tourId).pipe(
       takeUntil(this.destroy$),
       switchMap((ageGroupIds: number[]) => {
-        console.log('✅ IDs DE GRUPOS DE EDAD OBTENIDOS:', ageGroupIds);
-        
         if (ageGroupIds.length === 0) {
-          console.log('⚠️ Este tour no tiene grupos de edad asignados - Permitiendo todos los tipos de pasajeros');
           this.tourAgeGroups = [];
           this.allowedPassengerTypes = {
             adults: true,
@@ -228,7 +257,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         const ageGroupRequests = ageGroupIds.map(id => 
           this.ageGroupService.getById(id).pipe(
             catchError(error => {
-              console.error(`❌ Error obteniendo Age Group ${id}:`, error);
+              console.error(`Error obteniendo Age Group ${id}:`, error);
               return of(null);
             })
           )
@@ -241,23 +270,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         // Filtrar grupos válidos
         this.tourAgeGroups = ageGroups.filter(group => group !== null) as IAgeGroupResponse[];
         
-        console.log('✅ DETALLES DE GRUPOS DE EDAD OBTENIDOS:');
-        console.log('📊 Tour ID:', this.tourId);
-        console.log('🔢 Cantidad de grupos:', this.tourAgeGroups.length);
-        
         if (this.tourAgeGroups.length > 0) {
-          console.log('📋 DETALLES COMPLETOS:');
-          this.tourAgeGroups.forEach((group, index) => {
-            console.log(`  ${index + 1}. ${group.name} (${group.code})`);
-            console.log(`     📅 Edades: ${group.lowerLimitAge} - ${group.upperLimitAge} años`);
-            console.log(`     📝 Descripción: ${group.description}`);
-            console.log(`     🆔 ID: ${group.id}`);
-            console.log(`     🎫 TK ID: ${group.tkId}`);
-            console.log(`     📊 Orden: ${group.displayOrder}`);
-            console.log('     ---');
-          });
-
-          // ✅ DETERMINAR QUÉ TIPOS DE PASAJEROS ESTÁN PERMITIDOS
+          // Determinar qué tipos de pasajeros están permitidos
           this.determineAllowedPassengerTypes();
         }
 
@@ -265,12 +279,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         this.getAdditionalAgeGroupInfo();
       },
       error: (error) => {
-        console.error('❌ Error cargando grupos de edad:', error);
-        console.error('📋 Detalles del error:', {
-          status: error.status,
-          message: error.message,
-          url: error.url
-        });
+        console.error('Error cargando grupos de edad:', error);
         
         // En caso de error, permitir todos los tipos
         this.allowedPassengerTypes = {
@@ -282,10 +291,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     });
   }
 
-  // ✅ AÑADIDO: Método para determinar qué tipos de pasajeros están permitidos
   private determineAllowedPassengerTypes(): void {
-    console.log('🔍 DETERMINANDO TIPOS DE PASAJEROS PERMITIDOS...');
-    
     // Inicializar como no permitidos
     this.allowedPassengerTypes = {
       adults: false,
@@ -293,63 +299,115 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       babies: false
     };
 
+    // Resetear IDs de categorías
+    this.ageGroupCategories.adults.id = null;
+    this.ageGroupCategories.children.id = null;
+    this.ageGroupCategories.babies.id = null;
+
     // Revisar cada grupo de edad para determinar qué categorías están permitidas
     this.tourAgeGroups.forEach(group => {
-      console.log(`📊 Analizando grupo: ${group.name} (${group.lowerLimitAge}-${group.upperLimitAge} años)`);
-      
-      // Adultos: típicamente 18+ años (ajustar según necesidades)
-      if (group.upperLimitAge >= 18) {
-        this.allowedPassengerTypes.adults = true;
-        console.log('  ✅ Permite ADULTOS');
-      }
-      
-      // Niños: típicamente 2-17 años (ajustar según necesidades)
-      if (group.lowerLimitAge <= 17 && group.upperLimitAge >= 2) {
-        this.allowedPassengerTypes.children = true;
-        console.log('  ✅ Permite NIÑOS');
-      }
-      
-      // Bebés: típicamente 0-1 años (ajustar según necesidades)
-      if (group.lowerLimitAge <= 1) {
-        this.allowedPassengerTypes.babies = true;
-        console.log('  ✅ Permite BEBÉS');
-      }
+      // Determinar categoría basada en rangos de edad del grupo
+      this.categorizeAgeGroup(group);
     });
 
-    console.log('🎯 RESULTADO FINAL DE TIPOS PERMITIDOS:');
-    console.log('  👨‍💼 Adultos:', this.allowedPassengerTypes.adults ? '✅ SÍ' : '❌ NO');
-    console.log('  👶 Niños:', this.allowedPassengerTypes.children ? '✅ SÍ' : '❌ NO');
-    console.log('  🍼 Bebés:', this.allowedPassengerTypes.babies ? '✅ SÍ' : '❌ NO');
+    // Actualizar propiedades legacy para compatibilidad
+    this.adultAgeGroupId = this.ageGroupCategories.adults.id;
+    this.childAgeGroupId = this.ageGroupCategories.children.id;
+    this.babyAgeGroupId = this.ageGroupCategories.babies.id;
 
     // Si ningún tipo está permitido, permitir adultos por defecto
     if (!this.allowedPassengerTypes.adults && !this.allowedPassengerTypes.children && !this.allowedPassengerTypes.babies) {
-      console.log('⚠️ NINGÚN TIPO DETECTADO - Permitiendo adultos por defecto');
       this.allowedPassengerTypes.adults = true;
     }
 
-    // ✅ RESETEAR PASAJEROS SI ALGUNOS TIPOS NO ESTÁN PERMITIDOS
+    // Resetear pasajeros si algunos tipos no están permitidos
     this.resetDisallowedPassengers();
   }
 
-  // ✅ AÑADIDO: Método para resetear pasajeros no permitidos
+  private categorizeAgeGroup(group: IAgeGroupResponse): void {
+    // Determinar categoría basándose en el código o nombre del grupo
+    const groupCode = group.code?.toLowerCase() || '';
+    const groupName = group.name?.toLowerCase() || '';
+    
+    // Intentar identificar por código o nombre
+    if (this.isAdultGroup(groupCode, groupName)) {
+      this.allowedPassengerTypes.adults = true;
+      this.ageGroupCategories.adults.id = group.id;
+      this.ageGroupCategories.adults.lowerAge = group.lowerLimitAge;
+      this.ageGroupCategories.adults.upperAge = group.upperLimitAge;
+    } else if (this.isChildGroup(groupCode, groupName)) {
+      this.allowedPassengerTypes.children = true;
+      this.ageGroupCategories.children.id = group.id;
+      this.ageGroupCategories.children.lowerAge = group.lowerLimitAge;
+      this.ageGroupCategories.children.upperAge = group.upperLimitAge;
+    } else if (this.isBabyGroup(groupCode, groupName)) {
+      this.allowedPassengerTypes.babies = true;
+      this.ageGroupCategories.babies.id = group.id;
+      this.ageGroupCategories.babies.lowerAge = group.lowerLimitAge;
+      this.ageGroupCategories.babies.upperAge = group.upperLimitAge;
+    } else {
+      // Si no se puede categorizar por código/nombre, usar rangos de edad como fallback
+      this.categorizeByAgeRange(group);
+    }
+  }
+
+  private isAdultGroup(code: string, name: string): boolean {
+    const adultKeywords = ['adult', 'adulto', 'adultos', 'mayor', 'mayores', 'grown', 'senior'];
+    return adultKeywords.some(keyword => code.includes(keyword) || name.includes(keyword));
+  }
+
+  private isChildGroup(code: string, name: string): boolean {
+    const childKeywords = ['child', 'children', 'niño', 'niños', 'menor', 'menores', 'kid', 'kids', 'junior'];
+    return childKeywords.some(keyword => code.includes(keyword) || name.includes(keyword));
+  }
+
+  private isBabyGroup(code: string, name: string): boolean {
+    const babyKeywords = ['baby', 'babies', 'bebé', 'bebés', 'infant', 'infants', 'toddler'];
+    return babyKeywords.some(keyword => code.includes(keyword) || name.includes(keyword));
+  }
+
+  private categorizeByAgeRange(group: IAgeGroupResponse): void {
+    // Ordenar grupos por edad mínima para asignar categorías lógicamente
+    const sortedGroups = [...this.tourAgeGroups].sort((a, b) => a.lowerLimitAge - b.lowerLimitAge);
+    const currentIndex = sortedGroups.findIndex(g => g.id === group.id);
+    
+    // Asignar categorías basándose en la posición en la lista ordenada
+    if (currentIndex === 0 && group.lowerLimitAge === 0) {
+      // Primer grupo que empieza en 0 = bebés
+      this.allowedPassengerTypes.babies = true;
+      this.ageGroupCategories.babies.id = group.id;
+      this.ageGroupCategories.babies.lowerAge = group.lowerLimitAge;
+      this.ageGroupCategories.babies.upperAge = group.upperLimitAge;
+    } else if (currentIndex === sortedGroups.length - 1) {
+      // Último grupo = adultos
+      this.allowedPassengerTypes.adults = true;
+      this.ageGroupCategories.adults.id = group.id;
+      this.ageGroupCategories.adults.lowerAge = group.lowerLimitAge;
+      this.ageGroupCategories.adults.upperAge = group.upperLimitAge;
+    } else {
+      // Grupos intermedios = niños
+      this.allowedPassengerTypes.children = true;
+      this.ageGroupCategories.children.id = group.id;
+      this.ageGroupCategories.children.lowerAge = group.lowerLimitAge;
+      this.ageGroupCategories.children.upperAge = group.upperLimitAge;
+    }
+  }
+
   private resetDisallowedPassengers(): void {
     let changed = false;
 
     if (!this.allowedPassengerTypes.children && this.travelers.children > 0) {
-      console.log('🔄 Reseteando niños (no permitidos por grupos de edad)');
       this.travelers.children = 0;
       changed = true;
     }
 
     if (!this.allowedPassengerTypes.babies && this.travelers.babies > 0) {
-      console.log('🔄 Reseteando bebés (no permitidos por grupos de edad)');
       this.travelers.babies = 0;
       changed = true;
     }
 
     // Asegurar que siempre haya al menos 1 adulto si están permitidos
     if (this.allowedPassengerTypes.adults && this.travelers.adults < 1) {
-      console.log('🔄 Asegurando al menos 1 adulto');
       this.travelers.adults = 1;
       changed = true;
     }
@@ -360,7 +418,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  // ✅ AÑADIDO: Método para obtener información adicional de los grupos de edad
   private getAdditionalAgeGroupInfo(): void {
     if (!this.tourId) return;
 
@@ -369,10 +426,10 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       takeUntil(this.destroy$)
     ).subscribe({
       next: (count) => {
-        console.log('🔢 CONTEO DE GRUPOS DE EDAD:', count);
+        // Conteo obtenido
       },
       error: (error) => {
-        console.error('❌ Error obteniendo conteo:', error);
+        console.error('Error obteniendo conteo:', error);
       }
     });
 
@@ -381,10 +438,10 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       takeUntil(this.destroy$)
     ).subscribe({
       next: (hasAgeGroups) => {
-        console.log('❓ ¿TIENE GRUPOS DE EDAD?:', hasAgeGroups);
+        // Información de grupos obtenida
       },
       error: (error) => {
-        console.error('❌ Error verificando grupos de edad:', error);
+        console.error('Error verificando grupos de edad:', error);
       }
     });
   }
@@ -408,7 +465,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         this.loading = false;
       },
       error: (error) => {
-        console.error('❌ Error cargando detalles del departure:', error);
+        console.error('Error cargando detalles del departure:', error);
         this.error = 'Error al cargar los detalles del departure';
         this.loading = false;
       }
@@ -442,13 +499,19 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       }
     }
 
-    // Mantener funcionalidad original: añadir automáticamente el primer departure
+    // Cargar precios primero, luego ejecutar addToCart
+    if (this.selectedCity && this.selectedCity.activityId && this.departureDetails) {
+      // Cargar precios primero
+      this.loadDeparturesPrices(this.selectedCity.activityId, this.departureDetails.id);
+    }
+    
+    // Ejecutar addToCart después de un pequeño delay para que carguen los precios
     setTimeout(() => {
       if (this.filteredDepartures.length > 0) {
         this.addToCart(this.filteredDepartures[0]);
         this.emitCityUpdate();
       }
-    }, 0);
+    }, 100);
   }
 
   private formatDate(dateString: string): string {
@@ -529,15 +592,28 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     });
   }
 
+  private getPriceByPassengerType(passengerType: 'adults' | 'children' | 'babies'): number {
+    if (!this.departuresPrices || this.departuresPrices.length === 0) return 0;
+    
+    const ageGroupId = this.ageGroupCategories[passengerType].id;
+    if (!ageGroupId) return 0;
+    
+    const priceData = this.departuresPrices.find(price => price.ageGroupId === ageGroupId);
+    return priceData ? priceData.total : 0;
+  }
+
   // Convertir el departure actual en formato para la tabla
   get filteredDepartures(): any[] {
     if (!this.departureDetails) return [];
+    
+    // Obtener el precio de adultos para mostrar en la tabla (precio base)
+    const adultPrice = this.getPriceByPassengerType('adults');
     
     const departure = {
       id: this.departureDetails.id,
       departureDate: this.departureDetails.departureDate,
       returnDate: this.departureDetails.arrivalDate,
-      price: 1495.00, // Precio del ejemplo 
+      price: adultPrice, // Usar precio real del servicio para adultos
       status: 'available',
       waitingList: false,
       group: this.selectedDeparture?.tripType?.name || 'group'
@@ -556,6 +632,12 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
   onCityChange(event: any): void {
     this.selectedCity = event;
+    
+    // Cargar precios cuando se selecciona una ciudad y hay departure seleccionado
+    if (this.selectedCity && this.selectedCity.activityId && this.departureDetails) {
+      this.loadDeparturesPrices(this.selectedCity.activityId, this.departureDetails.id);
+    }
+    
     this.emitCityUpdate();
   }
 
@@ -565,7 +647,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       return;
     }
     
-    // ✅ FORMATO CONDICIONAL: Solo mostrar "Sin Vuelos" o "Vuelo desde [ciudad]"
+    // Formato condicional: Solo mostrar "Sin Vuelos" o "Vuelo desde [ciudad]"
     const isSinVuelos = this.selectedCity.name.toLowerCase().includes('sin vuelos') || 
                         this.selectedCity.name.toLowerCase().includes('sin vuelo');
     
@@ -583,14 +665,14 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     this.shouldBlockKidsAndBabies = this.checkIfShouldBlockKids();
     
     if (type === 'adults') {
-      // ✅ VERIFICAR SI LOS ADULTOS ESTÁN PERMITIDOS
+      // Verificar si los adultos están permitidos
       if (!this.allowedPassengerTypes.adults && change > 0) {
         this.showPassengerTypeNotAllowedToast('adultos');
         return;
       }
       this.travelers.adults = Math.max(1, this.travelers.adults + change);
     } else if (type === 'children') {
-      // ✅ VERIFICAR SI LOS NIÑOS ESTÁN PERMITIDOS
+      // Verificar si los niños están permitidos
       if (!this.allowedPassengerTypes.children && change > 0) {
         this.showPassengerTypeNotAllowedToast('niños');
         return;
@@ -601,7 +683,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       }
       this.travelers.children = Math.max(0, this.travelers.children + change);
     } else if (type === 'babies') {
-      // ✅ VERIFICAR SI LOS BEBÉS ESTÁN PERMITIDOS
+      // Verificar si los bebés están permitidos
       if (!this.allowedPassengerTypes.babies && change > 0) {
         this.showPassengerTypeNotAllowedToast('bebés');
         return;
@@ -622,7 +704,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  // ✅ AÑADIDO: Método para mostrar toast cuando un tipo de pasajero no está permitido
   private showPassengerTypeNotAllowedToast(passengerType: string): void {
     this.messageService.add({
       severity: 'warn',
@@ -721,10 +802,16 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
     if (!selectedDeparture) return;
 
-    // Calcular precio total: adultos + niños (bebés gratis)
-    const basePrice = selectedDeparture.price;
-    const totalPassengers = this.travelers.adults + this.travelers.children;
-    const totalPrice = basePrice * totalPassengers;
+    // Calcular precio total con precios diferenciados por tipo de pasajero
+    const adultPrice = this.getPriceByPassengerType('adults');
+    const childPrice = this.getPriceByPassengerType('children');
+    const babyPrice = this.getPriceByPassengerType('babies');
+
+    // Calcular precio total
+    const totalPrice = 
+      (this.travelers.adults * adultPrice) + 
+      (this.travelers.children * childPrice) + 
+      (this.travelers.babies * babyPrice);
 
     this.priceUpdate.emit(totalPrice);
   }

@@ -577,9 +577,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     
     let message = '';
     if (isSingleTrip) {
-      message = 'Este viaje es para Singles y solo permite pasajeros adultos';
+      message = 'Esta salida es para Singles y solo permite pasajeros adultos';
     } else if (selectedDeparture?.price === 0) {
-      message = 'Este viaje con precio 0€ no permite añadir niños o bebés';
+      message = 'Esta salida con precio 0€ no permite añadir niños o bebés';
     } else {
       message = 'No se pueden añadir niños o bebés a este viaje';
     }

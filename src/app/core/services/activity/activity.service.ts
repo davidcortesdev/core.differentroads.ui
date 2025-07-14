@@ -83,6 +83,8 @@ export interface IActivityResponse {
   imageUrl: string | null;
   imageAlt: string | null;
   activityCompetitionGroupId: number | null;
+  isTKOrigin: boolean;
+  isVisibleOnWeb: boolean;
 }
 
 @Injectable({

@@ -1,8 +1,6 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { ActivityService, IActivityResponse } from '../../../../../../../core/services/activity/activity.service';
-import { DepartureActivityService, IDepartureActivityResponse } from '../../../../../../../core/services/departure/departure-activity.service';
-import { ActivityItineraryDayService, IActivityItineraryDayResponse } from '../../../../../../../core/services/activity/activity-itinerary-day.service';
-import { catchError, forkJoin, of, switchMap } from 'rxjs';
+import { catchError, of } from 'rxjs';
 import { ActivityHighlight } from '../../../../../../../shared/components/activity-card/activity-card.component';
 
 @Component({
@@ -18,20 +16,12 @@ export class ActivitysComponent implements OnInit, OnChanges {
 
   loading = true;
   activities: IActivityResponse[] = [];
-  activityItineraryDays: IActivityItineraryDayResponse[] = [];
   error: string | null = null;
 
   // Datos para el carousel
   highlights: ActivityHighlight[] = [];
 
-  private lastQuery: string = '';
-  private isLoadingData = false;
-
-  constructor(
-    private activityService: ActivityService,
-    private departureActivityService: DepartureActivityService,
-    private activityItineraryDayService: ActivityItineraryDayService
-  ) {}
+  constructor(private activityService: ActivityService) {}
 
   ngOnInit(): void {
     this.loadDataWithFilters();
@@ -90,7 +80,6 @@ export class ActivitysComponent implements OnInit, OnChanges {
   }
 
   onAddActivity(highlight: ActivityHighlight): void {
-    
     const index = this.highlights.findIndex(h => h.id === highlight.id);
     if (index !== -1) {
       this.highlights[index] = { ...highlight, added: !highlight.added };
@@ -102,10 +91,7 @@ export class ActivitysComponent implements OnInit, OnChanges {
   }
 
   get hasValidData(): boolean {
-    return !this.loading && 
-           this.itineraryId !== undefined && 
-           this.itineraryDayId !== undefined && 
-           this.departureId !== undefined;
+    return !this.loading && this.itineraryId !== undefined;
   }
 
   get hasActivities(): boolean {

@@ -75,7 +75,8 @@ export class ActivitysComponent implements OnInit, OnChanges {
       recommended: activity.isRecommended || false,
       optional: activity.isOptional || false,
       added: false,
-      price: 0
+      price: 0,
+      imageAlt: activity.imageAlt || activity.name || 'Sin título'
     } as ActivityHighlight));
   }
 

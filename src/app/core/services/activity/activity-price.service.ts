@@ -4,49 +4,61 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 /**
- * Interfaz para los filtros disponibles en el método getAll.
+ * Filtros disponibles para el método getAll (query params).
  */
 export interface ActivityPriceFilters {
-  id?: number;
-  name?: string;
-  description?: string;
-  code?: string;
-  tkId?: string;
-  isActive?: boolean;
+  Id?: number[];
+  TkId?: string;
+  ActivityId?: number[];
+  AgeGroupId?: number;
+  CampaignId?: number;
+  PriceCategoryId?: number;
+  PriceRateId?: number;
+  CurrencyId?: number;
+  RetailerId?: number;
+  DepartureId?: number;
 }
 
 /**
  * Modelo para crear un precio de actividad.
  */
 export interface ActivityPriceCreate {
-  name: string | null;
-  description: string | null;
-  code: string | null;
-  tkId: string | null;
-  isActive: boolean;
+  tkId?: string | null;
+  activityId: number;
+  ageGroupId: number;
+  campaignId?: number | null;
+  priceCategoryId: number;
+  priceRateId: number;
+  currencyId: number;
+  retailerId: number;
+  basePrice: number;
+  campaignPrice?: number | null;
+  departureId: number;
 }
 
 /**
  * Modelo para actualizar un precio de actividad existente.
  */
-export interface ActivityPriceUpdate {
-  name: string | null;
-  description: string | null;
-  code: string | null;
-  tkId: string | null;
-  isActive: boolean;
+export interface ActivityPriceUpdate extends ActivityPriceCreate {
+  id: number;
 }
 
 /**
  * Respuesta del backend para un precio de actividad.
  */
 export interface IActivityPriceResponse {
+  tkId?: string | null;
   id: number;
-  name: string | null;
-  description: string | null;
-  code: string | null;
-  tkId: string | null;
-  isActive: boolean;
+  activityId: number;
+  ageGroupId: number;
+  campaignId?: number | null;
+  priceCategoryId: number;
+  priceRateId: number;
+  currencyId: number;
+  retailerId: number;
+  basePrice: number;
+  campaignPrice?: number | null;
+  departureId: number;
 }
 
 @Injectable({
@@ -58,25 +70,25 @@ export class ActivityPriceService {
   constructor(private http: HttpClient) {}
 
   /**
-   * Obtiene todos los precios de actividad disponibles.
+   * Obtiene todos los precios de actividad disponibles, con filtros opcionales.
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de precios de actividad.
    */
-  getAll(filter?: ActivityPriceFilters): Observable<IActivityPriceResponse[]> {
+  getAll(filters?: ActivityPriceFilters): Observable<IActivityPriceResponse[]> {
     let params = new HttpParams();
-
-    // Add filter parameters if provided
-    if (filter) {
-      Object.entries(filter).forEach(([key, value]) => {
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          params = params.set(
-            key.charAt(0).toUpperCase() + key.slice(1),
-            value.toString()
-          );
+          if (Array.isArray(value)) {
+            value.forEach(v => {
+              params = params.append(key, v.toString());
+            });
+          } else {
+            params = params.set(key, value.toString());
+          }
         }
       });
     }
-
     return this.http.get<IActivityPriceResponse[]>(this.API_URL, { params });
   }
 
@@ -87,49 +99,6 @@ export class ActivityPriceService {
    */
   getById(id: number): Observable<IActivityPriceResponse> {
     return this.http.get<IActivityPriceResponse>(`${this.API_URL}/${id}`);
-  }
-
-  /**
-   * Obtiene precios de actividad activos únicamente.
-   * @returns Lista de precios de actividad activos.
-   */
-  getActive(): Observable<IActivityPriceResponse[]> {
-    return this.getAll({ isActive: true });
-  }
-
-  /**
-   * Obtiene precios de actividad inactivos únicamente.
-   * @returns Lista de precios de actividad inactivos.
-   */
-  getInactive(): Observable<IActivityPriceResponse[]> {
-    return this.getAll({ isActive: false });
-  }
-
-  /**
-   * Obtiene un precio de actividad por su código.
-   * @param code Código del precio de actividad.
-   * @returns Lista de precios con el código especificado.
-   */
-  getByCode(code: string): Observable<IActivityPriceResponse[]> {
-    return this.getAll({ code });
-  }
-
-  /**
-   * Obtiene un precio de actividad por su código TK.
-   * @param tkId Código TK del precio de actividad.
-   * @returns Lista de precios con el código TK especificado.
-   */
-  getByTkId(tkId: string): Observable<IActivityPriceResponse[]> {
-    return this.getAll({ tkId });
-  }
-
-  /**
-   * Busca precios de actividad por nombre (búsqueda parcial).
-   * @param name Nombre a buscar.
-   * @returns Lista de precios que coinciden con el nombre.
-   */
-  searchByName(name: string): Observable<IActivityPriceResponse[]> {
-    return this.getAll({ name });
   }
 
   /**
@@ -162,49 +131,5 @@ export class ActivityPriceService {
    */
   delete(id: number): Observable<boolean> {
     return this.http.delete<boolean>(`${this.API_URL}/${id}`);
-  }
-
-  /**
-   * Activa o desactiva un precio de actividad.
-   * @param id ID del precio de actividad.
-   * @param isActive Estado activo/inactivo.
-   * @returns `true` si la operación fue exitosa.
-   */
-  toggleActive(id: number, isActive: boolean): Observable<boolean> {
-    return this.http.patch<boolean>(`${this.API_URL}/${id}/toggle-active`, { isActive }, {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-    });
-  }
-
-  /**
-   * Actualiza solo la información básica (nombre y descripción).
-   * @param id ID del precio de actividad.
-   * @param name Nuevo nombre.
-   * @param description Nueva descripción.
-   * @returns `true` si la operación fue exitosa.
-   */
-  updateBasicInfo(id: number, name: string | null, description: string | null): Observable<boolean> {
-    return this.http.patch<boolean>(`${this.API_URL}/${id}/basic-info`, { name, description }, {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-    });
-  }
-
-  /**
-   * Crea múltiples precios de actividad en lote.
-   * @param prices Array de precios a crear.
-   * @returns Lista de precios creados.
-   */
-  createBatch(prices: ActivityPriceCreate[]): Observable<IActivityPriceResponse[]> {
-    return this.http.post<IActivityPriceResponse[]>(`${this.API_URL}/batch`, prices, {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-    });
-  }
-
-  /**
-   * Obtiene estadísticas de precios de actividad.
-   * @returns Objeto con estadísticas (total, activos, inactivos).
-   */
-  getStatistics(): Observable<{ total: number; active: number; inactive: number }> {
-    return this.http.get<{ total: number; active: number; inactive: number }>(`${this.API_URL}/statistics`);
   }
 }

@@ -1,7 +1,9 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { ActivityService, IActivityResponse } from '../../../../../../../core/services/activity/activity.service';
-import { catchError, of } from 'rxjs';
+import { ActivityPriceService, IActivityPriceResponse } from '../../../../../../../core/services/activity/activity-price.service';
+import { catchError, of, forkJoin } from 'rxjs';
 import { ActivityHighlight } from '../../../../../../../shared/components/activity-card/activity-card.component';
+import { environment } from '../../../../../../../../environments/environment';
 
 @Component({
   selector: 'app-activity',
@@ -21,7 +23,10 @@ export class ActivitysComponent implements OnInit, OnChanges {
   // Datos para el carousel
   highlights: ActivityHighlight[] = [];
 
-  constructor(private activityService: ActivityService) {}
+  constructor(
+    private activityService: ActivityService,
+    private activityPriceService: ActivityPriceService
+  ) {}
 
   ngOnInit(): void {
     this.loadDataWithFilters();
@@ -67,7 +72,7 @@ export class ActivitysComponent implements OnInit, OnChanges {
   }
 
   private transformActivitiesToHighlights(): void {
-    this.highlights = this.activities.map((activity: IActivityResponse) => ({
+    const highlights: ActivityHighlight[] = this.activities.map((activity: IActivityResponse) => ({
       id: activity.id.toString(),
       title: activity.name || 'Sin título',
       description: activity.description || 'Sin descripción',
@@ -78,6 +83,26 @@ export class ActivitysComponent implements OnInit, OnChanges {
       price: 0,
       imageAlt: activity.imageAlt || activity.name || 'Sin título'
     } as ActivityHighlight));
+
+    // Si hay actividades opcionales, buscar el precio de adulto (ageGroupId=1) para todas en una sola petición
+    const optionalActivities = this.activities.filter(a => a.isOptional);
+    if (optionalActivities.length > 0) {
+      const activityIds = optionalActivities.map(a => a.id);
+      this.activityPriceService.getAll({ ActivityId: activityIds, AgeGroupId: 1, RetailerId: environment.retaileriddefault })
+        .subscribe((prices: IActivityPriceResponse[]) => {
+          optionalActivities.forEach(activity => {
+            const priceObj = prices.find(p => p.activityId === activity.id && p.ageGroupId === 1);
+            const price = priceObj ? priceObj.basePrice : 0;
+            const highlightIdx = highlights.findIndex(h => h.id === activity.id.toString());
+            if (highlightIdx !== -1) {
+              highlights[highlightIdx].price = price;
+            }
+          });
+          this.highlights = highlights;
+        });
+    } else {
+      this.highlights = highlights;
+    }
   }
 
   onAddActivity(highlight: ActivityHighlight): void {

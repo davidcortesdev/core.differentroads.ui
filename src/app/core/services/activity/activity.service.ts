@@ -179,4 +179,22 @@ export class ActivityService {
       headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
     });
   }
+
+  /**
+   * Obtiene las actividades filtradas para la sección de itinerario.
+   * @param itineraryId ID del itinerario (obligatorio)
+   * @param departureId ID de la salida (opcional)
+   * @param itineraryDayId ID del día de itinerario (opcional)
+   * @returns Lista de actividades filtradas
+   */
+  getForItinerary(itineraryId: number, departureId?: number, itineraryDayId?: number): Observable<IActivityResponse[]> {
+    let params = new HttpParams().set('itineraryId', itineraryId.toString());
+    if (departureId !== undefined) {
+      params = params.set('departureId', departureId.toString());
+    }
+    if (itineraryDayId !== undefined) {
+      params = params.set('itineraryDayId', itineraryDayId.toString());
+    }
+    return this.http.get<IActivityResponse[]>(`${this.API_URL}/for-itinerary`, { params });
+  }
 }

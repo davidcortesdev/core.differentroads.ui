@@ -31,7 +31,7 @@ export interface ActivityCreate {
   code: string | null;
   name: string | null;
   description: string | null;
-  skId: string | null;
+  TkId: string | null;
   activityTypeId: number;
   serviceTypeId: number;
   activitySubtypeId: number;
@@ -51,7 +51,7 @@ export interface ActivityUpdate {
   code: string | null;
   name: string | null;
   description: string | null;
-  skId: string | null;
+  TkId: string | null;
   activityTypeId: number;
   serviceTypeId: number;
   activitySubtypeId: number;
@@ -72,7 +72,7 @@ export interface IActivityResponse {
   code: string | null;
   name: string | null;
   description: string | null;
-  skId: string | null;
+  TkId: string | null;
   activityTypeId: number;
   serviceTypeId: number;
   activitySubtypeId: number;

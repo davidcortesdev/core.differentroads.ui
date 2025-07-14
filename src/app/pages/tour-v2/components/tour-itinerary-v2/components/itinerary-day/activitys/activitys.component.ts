@@ -1,8 +1,6 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { ActivityService, IActivityResponse } from '../../../../../../../core/services/activity/activity.service';
-import { DepartureActivityService, IDepartureActivityResponse } from '../../../../../../../core/services/departure/departure-activity.service';
-import { ActivityItineraryDayService, IActivityItineraryDayResponse } from '../../../../../../../core/services/activity/activity-itinerary-day.service';
-import { catchError, forkJoin, of, switchMap } from 'rxjs';
+import { catchError, of } from 'rxjs';
 import { ActivityHighlight } from '../../../../../../../shared/components/activity-card/activity-card.component';
 
 @Component({
@@ -18,20 +16,12 @@ export class ActivitysComponent implements OnInit, OnChanges {
 
   loading = true;
   activities: IActivityResponse[] = [];
-  activityItineraryDays: IActivityItineraryDayResponse[] = [];
   error: string | null = null;
 
   // Datos para el carousel
   highlights: ActivityHighlight[] = [];
 
-  private lastQuery: string = '';
-  private isLoadingData = false;
-
-  constructor(
-    private activityService: ActivityService,
-    private departureActivityService: DepartureActivityService,
-    private activityItineraryDayService: ActivityItineraryDayService
-  ) {}
+  constructor(private activityService: ActivityService) {}
 
   ngOnInit(): void {
     this.loadDataWithFilters();
@@ -51,87 +41,29 @@ export class ActivitysComponent implements OnInit, OnChanges {
   }
 
   private loadDataWithFilters(): void {
-    if (!this.itineraryId || !this.itineraryDayId || !this.departureId) {
+    if (!this.itineraryId) {
       this.loading = false;
       return;
     }
 
-    const queryKey = `${this.itineraryId}-${this.itineraryDayId}-${this.departureId}`;
-    if (this.lastQuery === queryKey || this.isLoadingData) {
-      return;
-    }
-
-    this.lastQuery = queryKey;
-    this.isLoadingData = true;
     this.loading = true;
     this.error = null;
     this.activities = [];
-    this.activityItineraryDays = [];
     this.highlights = [];
 
-    // Tu lógica original
-    this.activityItineraryDayService.getByItineraryDayId(this.itineraryDayId).pipe(
-      switchMap((activityItineraryDays: IActivityItineraryDayResponse[]) => {
-        this.activityItineraryDays = activityItineraryDays;
-                
-        if (activityItineraryDays.length === 0) {
-          return of([[], []]);
-        }
-
-        const activityIds = activityItineraryDays.map(aid => aid.activityId);
-        
-        return forkJoin([
-          forkJoin(activityIds.map(activityId => 
-            this.activityService.getById(activityId).pipe(
-              catchError(err => {
-                console.error(`Error loading activity ${activityId}:`, err);
-                return of(null);
-              })
-            )
-          )).pipe(
-            catchError(err => {
-              console.error('Error loading activities:', err);
-              return of([]);
-            })
-          ),
-          this.departureActivityService.getByDeparture(this.departureId!).pipe(
-            catchError(err => {
-              console.error('Error loading departure activities:', err);
-              return of([] as IDepartureActivityResponse[]);
-            })
-          )
-        ]);
-      }),
-      catchError(err => {
-        console.error('Error loading ActivityItineraryDay:', err);
-        this.error = 'Error al cargar ActivityItineraryDay.';
-        return of([[], []]);
-      })
-    ).subscribe({
-      next: (result: any) => {
-        const [activities, departureActivities] = result;
-        
-        const validActivities = (activities || [])
-          .filter((activity: any) => activity !== null) as IActivityResponse[];
-        
-        const departureActivityIds = (departureActivities || []).map((da: any) => da.activityId);
-        this.activities = validActivities.filter((activity: IActivityResponse) => 
-          departureActivityIds.includes(activity.id) && activity.isVisibleOnWeb === true
-        );
-        
-        // Transformar datos para el carousel
+    this.activityService.getForItinerary(this.itineraryId, this.departureId, this.itineraryDayId)
+      .pipe(
+        catchError(err => {
+          console.error('Error al cargar actividades:', err);
+          this.error = 'Error al cargar las actividades. Por favor intente nuevamente.';
+          return of([]);
+        })
+      )
+      .subscribe((activities: IActivityResponse[]) => {
+        this.activities = activities;
         this.transformActivitiesToHighlights();
-
-      },
-      error: (err) => {
-        console.error('Error loading activities:', err);
-        this.error = 'Error al cargar las actividades. Por favor intente nuevamente.';
-      },
-      complete: () => {
         this.loading = false;
-        this.isLoadingData = false;
-      }
-    });
+      });
   }
 
   private transformActivitiesToHighlights(): void {
@@ -143,12 +75,12 @@ export class ActivitysComponent implements OnInit, OnChanges {
       recommended: activity.isRecommended || false,
       optional: activity.isOptional || false,
       added: false,
-      price: 0
+      price: 0,
+      imageAlt: activity.imageAlt || activity.name || 'Sin título'
     } as ActivityHighlight));
   }
 
   onAddActivity(highlight: ActivityHighlight): void {
-    
     const index = this.highlights.findIndex(h => h.id === highlight.id);
     if (index !== -1) {
       this.highlights[index] = { ...highlight, added: !highlight.added };
@@ -160,10 +92,7 @@ export class ActivitysComponent implements OnInit, OnChanges {
   }
 
   get hasValidData(): boolean {
-    return !this.loading && 
-           this.itineraryId !== undefined && 
-           this.itineraryDayId !== undefined && 
-           this.departureId !== undefined;
+    return !this.loading && this.itineraryId !== undefined;
   }
 
   get hasActivities(): boolean {

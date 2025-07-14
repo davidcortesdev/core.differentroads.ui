@@ -11,7 +11,7 @@ export interface ActivityTypeFilters {
   code?: string;
   name?: string;
   description?: string;
-  skId?: string;
+  tkId?: string;
   isActive?: boolean;
 }
 
@@ -22,7 +22,7 @@ export interface ActivityTypeCreate {
   code: string | null;
   name: string | null;
   description: string | null;
-  skId: string | null;
+  tkId: string | null;
   isActive: boolean;
 }
 
@@ -33,7 +33,7 @@ export interface ActivityTypeUpdate {
   code: string | null;
   name: string | null;
   description: string | null;
-  skId: string | null;
+  tkId: string | null;
   isActive: boolean;
 }
 
@@ -45,7 +45,7 @@ export interface IActivityTypeResponse {
   code: string | null;
   name: string | null;
   description: string | null;
-  skId: string | null;
+  tkId: string | null;
   isActive: boolean;
 }
 
@@ -116,11 +116,11 @@ export class ActivityTypeService {
 
   /**
    * Obtiene un tipo de actividad por su código SK.
-   * @param skId Código SK del tipo de actividad.
+   * @param tkId Código SK del tipo de actividad.
    * @returns Lista de tipos con el código SK especificado.
    */
-  getBySkId(skId: string): Observable<IActivityTypeResponse[]> {
-    return this.getAll({ skId });
+  getBytkId(tkId: string): Observable<IActivityTypeResponse[]> {
+    return this.getAll({ tkId });
   }
 
   /**

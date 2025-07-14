@@ -1,0 +1,263 @@
+<div class="tour-departures-container">
+  <!-- ===== AGREGADO: Toast para mostrar notificaciones ===== -->
+  <p-toast></p-toast>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="departure-loading">
+    <div class="loading-container">
+      <p-skeleton width="100%" height="200px" styleClass="mb-3"></p-skeleton>
+      <p-skeleton width="80%" height="30px" styleClass="mb-2"></p-skeleton>
+      <p-skeleton width="60%" height="30px"></p-skeleton>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="departure-error">
+    <div class="error-content">
+      <i class="pi pi-exclamation-triangle error-icon"></i>
+      <h3>Error al cargar la información</h3>
+      <p>{{ error }}</p>
+    </div>
+  </div>
+
+  <!-- Empty State - Sin departure seleccionado -->
+  <div *ngIf="!hasSelectedDeparture && !loading && !error" class="departure-empty">
+    <div class="empty-content">
+      <i class="pi pi-calendar-plus empty-icon"></i>
+      <h3>Selecciona una fecha de salida</h3>
+      <p>Elige una fecha en el selector de arriba para ver los detalles del viaje.</p>
+    </div>
+  </div>
+
+  <!-- TABLA DE VUELOS CON DATOS REALES DEL DEPARTURE -->
+  <div *ngIf="hasValidData" class="t-dep">
+    <p-toast></p-toast>
+    <h1>Selecciona vuelos y acompañantes</h1>
+
+    <!-- Sección de filtros con labels dentro de inputs -->
+    <div class="f-hdr">
+      <div class="f-box">
+        <div class="f-lbl">Ciudad de origen</div>
+        <div class="f-cnt">
+          <span class="input-label">Ciudad de origen</span>
+          <p-autocomplete
+            [suggestions]="filteredCities"
+            [(ngModel)]="selectedCity"
+            [dropdown]="true"
+            placeholder="Sin vuelos"
+            (completeMethod)="filterCities($event)"
+            (onSelect)="onCityChange($event.value)"
+            optionLabel="name"
+          ></p-autocomplete>
+        </div>
+      </div>
+
+      <div class="f-box">
+        <div class="f-lbl">Pasajeros</div>
+        <div class="f-cnt">
+          <span class="input-label">Pasajeros</span>
+          <button
+            #passengerButton
+            type="button"
+            class="p-autocomplete p-btn"
+            (click)="togglePassengersPanel($event)"
+          >
+            {{ passengerText }}
+            <i class="pi pi-chevron-down ml-auto"></i>
+          </button>
+
+          <p-overlay [(visible)]="showPassengersPanel" styleClass="p-ovl">
+            <div class="p-panel p-3">
+              
+              <!-- ✅ SECCIÓN ADULTOS - Solo mostrar si están permitidos -->
+              <div class="p-type" *ngIf="allowedPassengerTypes.adults">
+                <div class="p-info">
+                  <div class="p-cat">Adultos</div>
+                  <div class="p-age">+18 años</div>
+                </div>
+                <div class="p-ctrl">
+                  <p-button
+                    icon="pi pi-minus"
+                    styleClass="p-button-rounded p-button-outlined"
+                    [disabled]="travelers.adults <= 1"
+                    (onClick)="updatePassengers('adults', -1)"
+                  ></p-button>
+                  <span class="p-count">{{ travelers.adults }}</span>
+                  <p-button
+                    icon="pi pi-plus"
+                    styleClass="p-button-rounded p-button-outlined"
+                    (onClick)="updatePassengers('adults', 1)"
+                  ></p-button>
+                </div>
+              </div>
+
+              <!-- ✅ SECCIÓN NIÑOS - Solo mostrar si están permitidos -->
+              <div class="p-type" *ngIf="allowedPassengerTypes.children">
+                <div class="p-info">
+                  <div class="p-cat">
+                    Niños
+                    <p-badge
+                      icon="pi pi-info-circle"
+                      severity="info"
+                      styleClass="ml-2"
+                    ></p-badge>
+                  </div>
+                  <div class="p-age">2-17 años</div>
+                </div>
+                <div class="p-ctrl">
+                  <p-button
+                    icon="pi pi-minus"
+                    styleClass="p-button-rounded p-button-outlined"
+                    [disabled]="travelers.children <= 0"
+                    (onClick)="updatePassengers('children', -1)"
+                  ></p-button>
+                  <span class="p-count">{{ travelers.children }}</span>
+                  <p-button
+                    icon="pi pi-plus"
+                    styleClass="p-button-rounded p-button-outlined"
+                    (onClick)="updatePassengers('children', 1)"
+                  ></p-button>
+                </div>
+              </div>
+
+              <!-- ✅ SECCIÓN BEBÉS - Solo mostrar si están permitidos -->
+              <div class="p-type" *ngIf="allowedPassengerTypes.babies">
+                <div class="p-info">
+                  <div class="p-cat">
+                    Bebés
+                    <p-badge
+                      icon="pi pi-info-circle"
+                      severity="info"
+                      styleClass="ml-2"
+                    ></p-badge>
+                  </div>
+                  <div class="p-age">0-1 años</div>
+                </div>
+                <div class="p-ctrl">
+                  <p-button
+                    icon="pi pi-minus"
+                    styleClass="p-button-rounded p-button-outlined"
+                    [disabled]="travelers.babies <= 0"
+                    (onClick)="updatePassengers('babies', -1)"
+                  ></p-button>
+                  <span class="p-count">{{ travelers.babies }}</span>
+                  <p-button
+                    icon="pi pi-plus"
+                    styleClass="p-button-rounded p-button-outlined"
+                    (onClick)="updatePassengers('babies', 1)"
+                  ></p-button>
+                </div>
+              </div>
+
+              <div class="p-actions">
+                <p-button
+                  label="Aplicar"
+                  styleClass="p-button-rounded"
+                  (onClick)="applyPassengers()"
+                ></p-button>
+              </div>
+            </div>
+          </p-overlay>
+        </div>
+      </div>
+    </div>
+
+    <!-- DataView con datos REALES del departure -->
+    <p-dataView
+      #dv
+      [value]="filteredDepartures"
+      [rows]="5"
+      [paginator]="false"
+      styleClass="paginator-transparent"
+      layout="list"
+    >
+      <ng-template #header>
+        <div class="dep-hdr">
+          <div class="hdr-cols">
+            <span>Salida <i class="pi pi-arrow-right header"></i> Regreso</span>
+            <span>Información</span>
+            <span>Precio</span>
+            <span></span>
+          </div>
+        </div>
+      </ng-template>
+
+      <ng-template #list let-departures>
+        <div class="dep-list">
+          <ng-container *ngFor="let item of departures; let i = index">
+            <div class="dep-item">
+              <div class="dates">
+                <div class="d-date">
+                  <span class="d-name">{{
+                    item.departureDate | date : "EEEE" : "UTC"
+                  }}</span>
+                  <span class="d-day">{{
+                    item.departureDate | date : "dd MMM" : "UTC"
+                  }}</span>
+                </div>
+                <i class="pi pi-arrow-right"></i>
+                <div class="d-date">
+                  <span class="d-name">{{
+                    item.returnDate | date : "EEEE" : "UTC"
+                  }}</span>
+                  <span class="d-day">{{
+                    item.returnDate | date : "dd MMM" : "UTC"
+                  }}</span>
+                </div>
+              </div>
+
+              <div class="info">
+                <span
+                  *ngIf="
+                    getTripTypeInfo(item.group) &&
+                    getTripTypeInfo(item.group)?.class === 'single'
+                  "
+                  [pTooltip]="getTripTypeInfo(item.group)?.description"
+                  tooltipPosition="top"
+                  class="trip-type-tag"
+                  [ngClass]="
+                    'trip-type-tag-' + getTripTypeInfo(item.group)?.class
+                  "
+                >
+                  {{ getTripTypeInfo(item.group)?.title }}
+                </span>
+
+                <p-tag
+                  severity="warn"
+                  value="Lista de espera"
+                  *ngIf="item.waitingList"
+                  ><i class="pi pi-clock" style="font-size: 0.7rem"></i>
+                </p-tag>
+              </div>
+
+              <div class="f-price">
+                <div class="p-container">
+                  <span>desde</span>
+                  <span class="amount">{{ item.price | currency:'EUR':'symbol':'1.0-0' }}</span>
+                </div>
+              </div>
+
+              <div class="actions">
+                <p-button
+                  [label]="
+                    item.status === 'complete'
+                      ? 'COMPLETO'
+                      : isDepartureSelected(item)
+                      ? 'Añadido'
+                      : 'Añadir'
+                  "
+                  [disabled]="item.status === 'complete'"
+                  (onClick)="addToCart(item)"
+                  styleClass="p-button-rounded"
+                  [outlined]="isDepartureSelected(item)"
+                  [raised]="true"
+                ></p-button>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+      </ng-template>
+    </p-dataView>
+  </div>
+
+</div>

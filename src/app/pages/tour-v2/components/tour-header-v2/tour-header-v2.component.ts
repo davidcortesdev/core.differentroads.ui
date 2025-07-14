@@ -1,7 +1,9 @@
 import {
   Component,
   Input,
+  Output,
   OnInit,
+  EventEmitter,
   HostListener,
   ElementRef,
   Renderer2,
@@ -13,6 +15,8 @@ import {
 import { TourNetService, Tour } from '../../../../core/services/tourNet.service';
 import { TourLocationService, ITourLocationResponse } from '../../../../core/services/tour/tour-location.service';
 import { LocationNetService, Location } from '../../../../core/services/locations/locationNet.service';
+import { ReservationService, ReservationCreate, IReservationResponse } from '../../../../core/services/reservation/reservation.service';
+import { ReservationTravelerService } from '../../../../core/services/reservation/reservation-traveler.service';
 import { Subscription, forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { Router } from '@angular/router';
@@ -25,6 +29,10 @@ import { Router } from '@angular/router';
 })
 export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, OnChanges {
   @Input() tourId: number | undefined;
+  @Input() totalPrice: number = 0;
+  @Input() selectedCity: string = '';
+  @Input() selectedDeparture: any = null;
+  @Input() totalPassengers: number = 1;
 
   // Tour data
   tour: Partial<Tour> = {};
@@ -38,10 +46,15 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
   private headerHeight = 0;
   private subscriptions = new Subscription();
 
+  // Estado para controlar el proceso de reservación
+  isCreatingReservation = false;
+
   constructor(
     private tourNetService: TourNetService,
     private tourLocationService: TourLocationService,
     private locationNetService: LocationNetService,
+    private reservationService: ReservationService,
+    private reservationTravelerService: ReservationTravelerService,
     private el: ElementRef,
     private renderer: Renderer2,
     private router: Router
@@ -72,7 +85,76 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
     this.handleScrollEffect();
   }
 
-  // ===== PRIVATE METHODS =====
+  get hasPrice(): boolean {
+    return this.totalPrice > 0;
+  }
+
+  get formattedPrice(): string {
+    if (this.totalPrice <= 0) return '';
+    
+    return new Intl.NumberFormat('de-DE', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(this.totalPrice);
+  }
+
+  get formattedFlights(): string {
+    return this.selectedCity || '';
+  }
+
+  get formattedDepartureWithType(): string {
+    if (!this.selectedDeparture || !this.selectedDeparture.departureDate) return '';
+    
+    try {
+      const dateString = this.selectedDeparture.departureDate;
+      const dateParts = dateString.split('-');
+      
+      if (dateParts.length !== 3) return dateString;
+      
+      const year = parseInt(dateParts[0]);
+      const month = parseInt(dateParts[1]) - 1;
+      const day = parseInt(dateParts[2]);
+      
+      const date = new Date(year, month, day);
+      
+      const formattedDate = date.toLocaleDateString('es-ES', {
+        day: 'numeric',
+        month: 'long'
+      });
+      
+      const isSingle = this.selectedDeparture.group?.toLowerCase().includes('single');
+      
+      if (isSingle) {
+        return `${formattedDate} (S) - Single`;
+      }
+      
+      return formattedDate;
+    } catch {
+      return this.selectedDeparture.departureDate;
+    }
+  }
+
+  private getTripTypeInfoForConsole(group: string): any {
+    if (!group) return undefined;
+
+    const type = group.toLowerCase();
+
+    if (type.includes('single') || type.includes('singles')) {
+      return { title: 'Single', description: 'Viaje individual', class: 'single' };
+    }
+
+    if (type.includes('group') || type.includes('grupo')) {
+      return { title: 'Group', description: 'Viaje en grupo', class: 'group' };
+    }
+
+    if (type.includes('private') || type.includes('privado')) {
+      return { title: 'Private', description: 'Viaje privado', class: 'private' };
+    }
+
+    return undefined;
+  }
 
   private loadTourData(tourId: number) {
     this.subscriptions.add(
@@ -82,41 +164,32 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
           this.loadCountryAndContinent(tourId);
         },
         error: (error) => {
-          console.error('❌ Error cargando tour:', error);
+          console.error('Error cargando tour:', error);
         }
       })
     );
   }
 
-  /**
-   * ✅ OPTIMIZACIÓN MÁXIMA: Usar getByTourAndType igual que el componente MAP
-   */
   private loadCountryAndContinent(tourId: number): void {
     this.subscriptions.add(
       forkJoin([
-        // ✅ Solo cargar COUNTRY del tour específico
         this.tourLocationService.getByTourAndType(tourId, "COUNTRY").pipe(
           map(response => Array.isArray(response) ? response : (response ? [response] : [])),
           catchError(error => {
-            console.warn('⚠️ No se encontraron ubicaciones COUNTRY:', error);
             return of([]);
           })
         ),
-        // ✅ Solo cargar CONTINENT del tour específico  
         this.tourLocationService.getByTourAndType(tourId, "CONTINENT").pipe(
           map(response => Array.isArray(response) ? response : (response ? [response] : [])),
           catchError(error => {
-            console.warn('⚠️ No se encontraron ubicaciones CONTINENT:', error);
             return of([]);
           })
         )
       ]).pipe(
         switchMap(([countryLocations, continentLocations]) => {
-          // Filtrar objetos vacíos y obtener solo ubicaciones válidas
           const validCountryLocations = countryLocations.filter(loc => loc && loc.id && loc.locationId);
           const validContinentLocations = continentLocations.filter(loc => loc && loc.id && loc.locationId);
 
-          // Extraer todos los locationIds únicos que necesitamos
           const allLocationIds = [
             ...validCountryLocations.map(tl => tl.locationId),
             ...validContinentLocations.map(tl => tl.locationId)
@@ -131,7 +204,6 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
             });
           }
 
-          // ✅ OPTIMIZACIÓN: Cargar solo las ubicaciones específicas que necesitamos
           return this.locationNetService.getLocationsByIds(uniqueLocationIds).pipe(
             map(locations => ({
               countryLocations: validCountryLocations,
@@ -139,7 +211,6 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
               locations
             })),
             catchError(error => {
-              console.error('❌ Error loading specific locations:', error);
               return of({ 
                 countryLocations: validCountryLocations, 
                 continentLocations: validContinentLocations, 
@@ -149,25 +220,21 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
           );
         })
       ).subscribe(({ countryLocations, continentLocations, locations }) => {
-        // Crear map de ubicaciones para búsqueda O(1)
         const locationsMap = new Map<number, Location>();
         locations.forEach(location => {
           locationsMap.set(location.id, location);
         });
 
-        // Procesar países
         const countries = countryLocations
           .sort((a, b) => a.displayOrder - b.displayOrder)
           .map(tl => locationsMap.get(tl.locationId)?.name)
           .filter(name => name) as string[];
 
-        // Procesar continentes
         const continents = continentLocations
           .sort((a, b) => a.displayOrder - b.displayOrder)
           .map(tl => locationsMap.get(tl.locationId)?.name)
           .filter(name => name) as string[];
 
-        // Asignar resultados finales
         this.country = countries.join(', ');
         this.continent = continents.join(', ');
       })
@@ -265,5 +332,80 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
     
     document.body.removeChild(tempElement);
     return clickedCountry;
+  }
+
+  @Output() bookingClick = new EventEmitter<void>();
+
+  onBookingClick(): void {
+    if (!this.selectedDeparture || !this.selectedDeparture.id) {
+      alert('Por favor, selecciona una fecha de salida antes de continuar.');
+      return;
+    }
+
+    if (!this.tourId) {
+      alert('Error: No se pudo identificar el tour.');
+      return;
+    }
+
+    this.isCreatingReservation = true;
+
+    const reservationData: ReservationCreate = {
+      id: 0,
+      tkId: '',
+      reservationStatusId: 1,
+      retailerId: 7,
+      tourId: this.tourId,
+      departureId: this.selectedDeparture.id,
+      userId: 1,
+      totalPassengers: this.totalPassengers || 1,
+      totalAmount: this.totalPrice || 0,
+      budgetAt: '',
+      cartAt: new Date().toISOString(),
+      abandonedAt: '',
+      reservedAt: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    this.subscriptions.add(
+      this.reservationService.create(reservationData).pipe(
+        switchMap((createdReservation: IReservationResponse) => {
+          const travelerObservables = [];
+          
+          for (let i = 0; i < this.totalPassengers; i++) {
+            const travelerNumber = i + 1;
+            const isLeadTraveler = i === 0;
+            
+            const travelerData = {
+              id: 0,
+              reservationId: createdReservation.id,
+              travelerNumber: travelerNumber,
+              isLeadTraveler: isLeadTraveler,
+              tkId: ''
+            };
+            
+            const travelerObservable = this.reservationTravelerService.create(travelerData);
+            travelerObservables.push(travelerObservable);
+          }
+          
+          return forkJoin(travelerObservables).pipe(
+            map(createdTravelers => {
+              return createdReservation;
+            })
+          );
+        })
+      ).subscribe({
+        next: (createdReservation: IReservationResponse) => {
+          this.router.navigate(['/checkout-v2', createdReservation.id]);
+        },
+        error: (error) => {
+          console.error('Error en el proceso:', error);
+          alert('Error al crear la reservación o los travelers. Por favor, inténtalo de nuevo.');
+        },
+        complete: () => {
+          this.isCreatingReservation = false;
+        }
+      })
+    );
   }
 }

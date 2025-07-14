@@ -31,6 +31,8 @@ export const environment = {
   masterdataApiUrl:'https://masterdata.differentroads.es/api',
 
 
+
   scalapayApiUrl: 'https://fastapi.differentroads.es/scalapay',
   scalapayApiKey: 'qhtfs87hjnc12kkos',
+  retaileriddefault: 7,
 };

@@ -11,7 +11,7 @@ export interface ActivityItineraryDayFilters {
   code?: string;
   name?: string;
   description?: string;
-  skId?: string;
+  tkId?: string;
   itineraryId?: number;
   isOptional?: boolean;
   imageUrl?: string;
@@ -25,7 +25,7 @@ export interface ActivityItineraryDayCreate {
   code: string | null;
   name: string | null;
   description: string | null;
-  skId: string | null;
+  tkId: string | null;
   itineraryId: number;
   isOptional: boolean;
   imageUrl?: string | null;
@@ -39,7 +39,7 @@ export interface ActivityItineraryDayUpdate {
   code: string | null;
   name: string | null;
   description: string | null;
-  skId: string | null;
+  tkId: string | null;
   itineraryId: number;
   isOptional: boolean;
   imageUrl?: string | null;
@@ -54,7 +54,7 @@ export interface IActivityItineraryDayResponse {
   code: string | null;
   name: string | null;
   description: string | null;
-  skId: string | null;
+  tkId: string | null;
   itineraryId: number;
   isOptional: boolean;
   imageUrl: string | null;
@@ -112,11 +112,11 @@ export class ActivityItineraryDayService {
 
   /**
    * Obtiene un día de itinerario por su código SK.
-   * @param skId Código SK del día de itinerario.
+   * @param tkId Código SK del día de itinerario.
    * @returns Días de itinerario correspondientes.
    */
-  getBySkId(skId: string): Observable<IActivityItineraryDayResponse[]> {
-    return this.getAll({ skId });
+  getBytkId(tkId: string): Observable<IActivityItineraryDayResponse[]> {
+    return this.getAll({ tkId });
   }
 
   /**

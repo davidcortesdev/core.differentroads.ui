@@ -34,4 +34,5 @@ export const environment = {
 
   scalapayApiUrl: 'https://fastapi-dev.differentroads.es/scalapay',
   scalapayApiKey: 'qhtfs87hjnc12kkos',
+  retaileriddefault: 7,
 };

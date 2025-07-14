@@ -19,6 +19,7 @@ export interface ActivityHighlight {
   title: string;
   description: string;
   image?: string;
+  imageAlt?: string;
   recommended?: boolean;
   optional?: boolean;
   added?: boolean;

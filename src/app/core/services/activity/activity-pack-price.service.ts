@@ -8,7 +8,7 @@ import { environment } from '../../../../environments/environment';
  */
 export interface ActivityPackPriceFilters {
   id?: number;
-  skId?: string;
+  tkId?: string;
   activityPackId?: number;
   ageGroupId?: number;
   campaignId?: number;
@@ -25,7 +25,7 @@ export interface ActivityPackPriceFilters {
  * Modelo para crear un precio de pack de actividad.
  */
 export interface ActivityPackPriceCreate {
-  skId: string | null;
+  tkId: string | null;
   activityPackId: number;
   ageGroupId: number;
   campaignId: number;
@@ -42,7 +42,7 @@ export interface ActivityPackPriceCreate {
  * Modelo para actualizar un precio de pack de actividad existente.
  */
 export interface ActivityPackPriceUpdate {
-  skId: string | null;
+  tkId: string | null;
   activityPackId: number;
   ageGroupId: number;
   campaignId: number;
@@ -60,7 +60,7 @@ export interface ActivityPackPriceUpdate {
  */
 export interface IActivityPackPriceResponse {
   id: number;
-  skId: string | null;
+  tkId: string | null;
   activityPackId: number;
   ageGroupId: number;
   campaignId: number;

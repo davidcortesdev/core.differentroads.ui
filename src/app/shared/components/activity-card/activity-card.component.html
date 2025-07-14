@@ -12,7 +12,7 @@
     <div class="image-container">
       <img
         [src]="highlight.image || ''"
-        [alt]="highlight.title"
+        [alt]="highlight.imageAlt || highlight.title"
         loading="lazy"
       />
       <span

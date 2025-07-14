@@ -40,6 +40,8 @@ export interface IDepartureAccommodationPriceResponse {
   currencyId: number;
   retailerId: number;
   departureId: number;
+  basePrice: number; // Campo agregado que viene en la respuesta de la API
+  campaignPrice: number; // Campo adicional que también se ve en la API
 }
 
 /**

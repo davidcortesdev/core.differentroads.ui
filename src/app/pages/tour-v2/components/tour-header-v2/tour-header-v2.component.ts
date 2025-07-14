@@ -111,12 +111,12 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
     }).format(this.totalPrice);
   }
 
-  get formattedFlights(): string {
-    if (!this.selectedCity || this.selectedCity === 'Sin vuelos') {
-      return 'Sin vuelos';
-    }
-    return `Vuelos desde ${this.selectedCity}`;
-  }
+  
+get formattedFlights(): string {
+  // ✅ CORREGIDO: Simplemente retornar el texto tal como viene desde tour-departures-v2
+  // que ya tiene el formato correcto: "Sin Vuelos" o "Vuelo desde [ciudad]"
+  return this.selectedCity || '';
+}
 
   get formattedDepartureWithType(): string {
     if (!this.selectedDeparture || !this.selectedDeparture.departureDate) return '';
@@ -355,133 +355,125 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
   @Output() bookingClick = new EventEmitter<void>();
   
   // ✅ MODIFICADO: Método para crear reservación, travelers y luego navegar
-  onBookingClick(): void {
-    console.log('🚀 INICIANDO PROCESO DE RESERVACIÓN');
-    console.log('📋 Datos disponibles:');
-    console.log('  - Tour ID:', this.tourId);
-    console.log('  - Selected Departure:', this.selectedDeparture);
-    console.log('  - Total Price:', this.totalPrice);
-    console.log('  - Total Passengers:', this.totalPassengers);
-    
-    // Validar que tenemos los datos necesarios
-    if (!this.selectedDeparture || !this.selectedDeparture.id) {
-      console.error('❌ VALIDACIÓN FALLIDA: No se ha seleccionado una fecha de salida');
-      alert('Por favor, selecciona una fecha de salida antes de continuar.');
-      return;
-    }
-
-    if (!this.tourId) {
-      console.error('❌ VALIDACIÓN FALLIDA: No se encontró el ID del tour');
-      alert('Error: No se pudo identificar el tour.');
-      return;
-    }
-
-    console.log('✅ VALIDACIONES PASADAS - Procediendo a crear reservación');
-
-    // Indicar que se está creando la reservación
-    this.isCreatingReservation = true;
-
-    // Crear objeto de reservación
-    const reservationData: ReservationCreate = {
-      id: 0,
-      tkId: '',
-      reservationStatusId: 1,
-      retailerId: 1,
-      tourId: this.tourId,
-      departureId: this.selectedDeparture.id,
-      userId: 1,
-      totalPassengers: this.totalPassengers || 1,
-      totalAmount: this.totalPrice || 0,
-      budgetAt: '',
-      cartAt: new Date().toISOString(),
-      abandonedAt: '',
-      reservedAt: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    console.log('📝 DATOS DE RESERVACIÓN A ENVIAR:');
-    console.log(JSON.stringify(reservationData, null, 2));
-    console.log('🔄 ENVIANDO PETICIÓN AL BACKEND...');
-
-    // Crear la reservación
-    this.subscriptions.add(
-      this.reservationService.create(reservationData).pipe(
-        switchMap((createdReservation: IReservationResponse) => {
-          console.log('🎉 ¡RESERVACIÓN CREADA EXITOSAMENTE!');
-          console.log('📊 RESPUESTA DEL BACKEND:');
-          console.log(JSON.stringify(createdReservation, null, 2));
-          console.log('🔑 ID DE RESERVACIÓN GENERADO:', createdReservation.id);
-          console.log('🎫 TK ID GENERADO:', createdReservation.tkId);
-          
-          console.log('👥 INICIANDO CREACIÓN DE TRAVELERS...');
-          console.log('📊 Número total de pasajeros:', this.totalPassengers);
-          
-          // Crear travelers de forma secuencial con numeración manual
-          const travelerObservables = [];
-          
-          for (let i = 0; i < this.totalPassengers; i++) {
-            const travelerNumber = i + 1; // Numeración manual: 1, 2, 3, etc.
-            const isLeadTraveler = i === 0; // Solo el primer traveler es lead
-            console.log(`🧳 Creando traveler ${travelerNumber}/${this.totalPassengers} - Lead: ${isLeadTraveler}`);
-            
-            const travelerData = {
-              id: 0,
-              reservationId: createdReservation.id,
-              travelerNumber: travelerNumber,
-              isLeadTraveler: isLeadTraveler,
-              tkId: ''
-            };
-            
-            const travelerObservable = this.reservationTravelerService.create(travelerData);
-            travelerObservables.push(travelerObservable);
-          }
-          
-          // Ejecutar todas las creaciones de travelers en paralelo
-          return forkJoin(travelerObservables).pipe(
-            map(createdTravelers => {
-              console.log('✅ TODOS LOS TRAVELERS CREADOS EXITOSAMENTE:');
-              createdTravelers.forEach((traveler, index) => {
-                console.log(`  Traveler ${index + 1}:`, {
-                  id: traveler.id,
-                  travelerNumber: traveler.travelerNumber,
-                  isLeadTraveler: traveler.isLeadTraveler
-                });
-              });
-              return createdReservation;
-            })
-          );
-        })
-      ).subscribe({
-        next: (createdReservation: IReservationResponse) => {
-          console.log('🧭 NAVEGANDO AL CHECKOUT...');
-          // Navegar al checkout con la reservación creada
-          this.router.navigate(['/checkout-v2', this.selectedDeparture.id], {
-            state: {
-              tourName: this.tour.name,
-              departureDate: this.selectedDeparture.departureDate,
-              returnDate: this.selectedDeparture.returnDate,
-              departureId: this.selectedDeparture.id,
-              reservationId: createdReservation.id,
-              totalAmount: this.totalPrice
-            }
-          });
-          console.log('✅ PROCESO COMPLETADO - Usuario dirigido al checkout');
-        },
-        error: (error) => {
-          console.error('💥 ERROR EN EL PROCESO:');
-          console.error('📋 Detalles del error:', error);
-          console.error('🌐 Status:', error.status);
-          console.error('📄 Message:', error.message);
-          console.error('📦 Full error object:', JSON.stringify(error, null, 2));
-          alert('Error al crear la reservación o los travelers. Por favor, inténtalo de nuevo.');
-        },
-        complete: () => {
-          console.log('🏁 OBSERVABLE COMPLETADO');
-          this.isCreatingReservation = false;
-          console.log('🔄 Estado de carga reseteado');
-        }
-      })
-    );
+  // ✅ MODIFICADO: Método para crear reservación, travelers y luego navegar
+onBookingClick(): void {
+  console.log('🚀 INICIANDO PROCESO DE RESERVACIÓN');
+  console.log('📋 Datos disponibles:');
+  console.log('  - Tour ID:', this.tourId);
+  console.log('  - Selected Departure:', this.selectedDeparture);
+  console.log('  - Total Price:', this.totalPrice);
+  console.log('  - Total Passengers:', this.totalPassengers);
+  
+  // Validar que tenemos los datos necesarios
+  if (!this.selectedDeparture || !this.selectedDeparture.id) {
+    console.error('❌ VALIDACIÓN FALLIDA: No se ha seleccionado una fecha de salida');
+    alert('Por favor, selecciona una fecha de salida antes de continuar.');
+    return;
   }
+
+  if (!this.tourId) {
+    console.error('❌ VALIDACIÓN FALLIDA: No se encontró el ID del tour');
+    alert('Error: No se pudo identificar el tour.');
+    return;
+  }
+
+  console.log('✅ VALIDACIONES PASADAS - Procediendo a crear reservación');
+
+  // Indicar que se está creando la reservación
+  this.isCreatingReservation = true;
+
+  // Crear objeto de reservación
+  const reservationData: ReservationCreate = {
+    id: 0,
+    tkId: '',
+    reservationStatusId: 1,
+    retailerId: 1,
+    tourId: this.tourId,
+    departureId: this.selectedDeparture.id,
+    userId: 1,
+    totalPassengers: this.totalPassengers || 1,
+    totalAmount: this.totalPrice || 0,
+    budgetAt: '',
+    cartAt: new Date().toISOString(),
+    abandonedAt: '',
+    reservedAt: '',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  console.log('📝 DATOS DE RESERVACIÓN A ENVIAR:');
+  console.log(JSON.stringify(reservationData, null, 2));
+  console.log('🔄 ENVIANDO PETICIÓN AL BACKEND...');
+
+  // Crear la reservación
+  this.subscriptions.add(
+    this.reservationService.create(reservationData).pipe(
+      switchMap((createdReservation: IReservationResponse) => {
+        console.log('🎉 ¡RESERVACIÓN CREADA EXITOSAMENTE!');
+        console.log('📊 RESPUESTA DEL BACKEND:');
+        console.log(JSON.stringify(createdReservation, null, 2));
+        console.log('🔑 ID DE RESERVACIÓN GENERADO:', createdReservation.id);
+        console.log('🎫 TK ID GENERADO:', createdReservation.tkId);
+        
+        console.log('👥 INICIANDO CREACIÓN DE TRAVELERS...');
+        console.log('📊 Número total de pasajeros:', this.totalPassengers);
+        
+        // Crear travelers de forma secuencial con numeración manual
+        const travelerObservables = [];
+        
+        for (let i = 0; i < this.totalPassengers; i++) {
+          const travelerNumber = i + 1; // Numeración manual: 1, 2, 3, etc.
+          const isLeadTraveler = i === 0; // Solo el primer traveler es lead
+          console.log(`🧳 Creando traveler ${travelerNumber}/${this.totalPassengers} - Lead: ${isLeadTraveler}`);
+          
+          const travelerData = {
+            id: 0,
+            reservationId: createdReservation.id,
+            travelerNumber: travelerNumber,
+            isLeadTraveler: isLeadTraveler,
+            tkId: ''
+          };
+          
+          const travelerObservable = this.reservationTravelerService.create(travelerData);
+          travelerObservables.push(travelerObservable);
+        }
+        
+        // Ejecutar todas las creaciones de travelers en paralelo
+        return forkJoin(travelerObservables).pipe(
+          map(createdTravelers => {
+            console.log('✅ TODOS LOS TRAVELERS CREADOS EXITOSAMENTE:');
+            createdTravelers.forEach((traveler, index) => {
+              console.log(`  Traveler ${index + 1}:`, {
+                id: traveler.id,
+                travelerNumber: traveler.travelerNumber,
+                isLeadTraveler: traveler.isLeadTraveler
+              });
+            });
+            return createdReservation;
+          })
+        );
+      })
+    ).subscribe({
+      next: (createdReservation: IReservationResponse) => {
+        console.log('🧭 NAVEGANDO AL CHECKOUT...');
+        // ✅ MODIFICADO: Navegar al checkout con el ID de reservación, sin enviar datos en state
+        this.router.navigate(['/checkout-v2', createdReservation.id]);
+        console.log('✅ PROCESO COMPLETADO - Usuario dirigido al checkout con reservationId:', createdReservation.id);
+      },
+      error: (error) => {
+        console.error('💥 ERROR EN EL PROCESO:');
+        console.error('📋 Detalles del error:', error);
+        console.error('🌐 Status:', error.status);
+        console.error('📄 Message:', error.message);
+        console.error('📦 Full error object:', JSON.stringify(error, null, 2));
+        alert('Error al crear la reservación o los travelers. Por favor, inténtalo de nuevo.');
+      },
+      complete: () => {
+        console.log('🏁 OBSERVABLE COMPLETADO');
+        this.isCreatingReservation = false;
+        console.log('🔄 Estado de carga reseteado');
+      }
+    })
+  );
+}
 }

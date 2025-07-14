@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TourNetService } from '../../core/services/tourNet.service';
+import { ReservationService } from '../../core/services/reservation/reservation.service';
+import { DepartureService } from '../../core/services/departure/departure.service';
+import { MenuItem } from 'primeng/api';
 
 @Component({
   selector: 'app-checkout-v2',
@@ -14,61 +17,157 @@ export class CheckoutV2Component implements OnInit {
   departureDate: string = '';
   returnDate: string = '';
   departureId: number | null = null;
+  reservationId: number | null = null;
+  totalAmount: number = 0;
   loading: boolean = false;
   error: string | null = null;
+
+  // ✅ AÑADIDO: Variables adicionales para mostrar información completa
+  tourId: number | null = null;
+  totalPassengers: number = 0;
+
+  // Steps configuration
+  items: MenuItem[] = [];
+  activeIndex: number = 0;
+
+  // Tour slug para navegación
+  tourSlug: string = '';
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private tourNetService: TourNetService
+    private tourNetService: TourNetService,
+    private reservationService: ReservationService,
+    private departureService: DepartureService
   ) {}
 
   ngOnInit(): void {
-    // Obtener el departureId de la URL
+    // Configurar los steps
+    this.initializeSteps();
+
+    // ✅ MODIFICADO: Obtener el reservationId de la URL
     this.route.paramMap.subscribe(params => {
-      const departureIdParam = params.get('departureId');
-      if (departureIdParam) {
-        this.departureId = +departureIdParam;
+      const reservationIdParam = params.get('reservationId');
+      if (reservationIdParam) {
+        this.reservationId = +reservationIdParam;
         
-        // Intentar obtener datos del history state
-        const state = window.history.state;
-        if (state && state.tourName) {
-          this.tourName = state.tourName || '';
-          this.departureDate = state.departureDate || '';
-          this.returnDate = state.returnDate || '';
-        } else {
-          // Si no hay datos en el history state, cargarlos desde un servicio
-          this.loadTourDataByDepartureId(this.departureId);
-        }
+        console.log('🔍 CHECKOUT-V2 INICIADO');
+        console.log('📋 Reservation ID desde URL:', this.reservationId);
+        
+        // ✅ MODIFICADO: Cargar datos de la reservación desde el backend
+        this.loadReservationData(this.reservationId);
+      } else {
+        console.error('❌ No se encontró reservationId en la URL');
+        this.error = 'No se proporcionó un ID de reservación válido';
       }
     });
   }
 
-  // Método para cargar datos del tour por departureId
-  private loadTourDataByDepartureId(departureId: number): void {
+  // Inicializar los pasos del checkout
+  private initializeSteps(): void {
+    this.items = [
+      {
+        label: 'Personalizar viaje',
+        command: () => this.onActiveIndexChange(0)
+      },
+      {
+        label: 'Vuelos',
+        command: () => this.onActiveIndexChange(1)
+      },
+      {
+        label: 'Viajeros',
+        command: () => this.onActiveIndexChange(2)
+      },
+      {
+        label: 'Pago',
+        command: () => this.onActiveIndexChange(3)
+      }
+    ];
+  }
+
+  // ✅ NUEVO: Método para cargar datos de la reservación
+  private loadReservationData(reservationId: number): void {
     this.loading = true;
     this.error = null;
     
-    // Aquí implementarías la llamada al servicio para obtener los datos del tour
-    // por el departureId. Por ejemplo:
+    console.log('🔄 Cargando datos de la reservación ID:', reservationId);
     
-    // this.tourNetService.getDepartureById(departureId).subscribe(
-    //   (departure) => {
-    //     this.tourName = departure.tourName;
-    //     this.departureDate = departure.departureDate;
-    //     this.returnDate = departure.returnDate;
-    //     this.loading = false;
-    //   },
-    //   (error) => {
-    //     console.error('Error al cargar los datos del tour:', error);
-    //     this.error = 'Error al cargar los datos del tour. Por favor, inténtalo de nuevo más tarde.';
-    //     this.loading = false;
-    //   }
-    // );
+    this.reservationService.getById(reservationId).subscribe({
+      next: (reservation) => {
+        console.log('✅ Datos de reservación cargados:', reservation);
+        
+        // Extraer datos de la reservación
+        this.departureId = reservation.departureId;
+        this.totalAmount = reservation.totalAmount;
+        this.tourId = reservation.tourId;
+        this.totalPassengers = reservation.totalPassengers;
+        
+        console.log('📊 Datos extraídos de la reservación:');
+        console.log('  - Tour ID:', reservation.tourId);
+        console.log('  - Departure ID:', reservation.departureId);
+        console.log('  - Total Passengers:', reservation.totalPassengers);
+        console.log('  - Total Amount:', reservation.totalAmount);
+        
+        // Cargar datos del tour usando reservation.tourId
+        this.loadTourData(reservation.tourId);
+        
+        // ✅ NUEVO: Cargar datos del departure usando reservation.departureId
+        this.loadDepartureData(reservation.departureId);
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar los datos de la reservación:', error);
+        this.error = 'Error al cargar los datos de la reservación. Por favor, inténtalo de nuevo más tarde.';
+        this.loading = false;
+      }
+    });
+  }
+
+  // ✅ NUEVO: Método para cargar datos del tour
+  private loadTourData(tourId: number): void {
+    console.log('🔄 Cargando datos del tour ID:', tourId);
     
-    // Por ahora, simplemente mostramos un mensaje en la consola
-    console.log('Cargando datos del tour para departureId:', departureId);
-    this.loading = false;
+    this.tourNetService.getTourById(tourId).subscribe({
+      next: (tour) => {
+        console.log('✅ Datos del tour cargados:', tour);
+        
+        this.tourName = tour.name || '';
+        this.tourSlug = this.generateTourSlug(this.tourName);
+        
+        console.log('📝 Datos del tour procesados:');
+        console.log('  - Tour Name:', this.tourName);
+        console.log('  - Tour Slug:', this.tourSlug);
+        
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar los datos del tour:', error);
+        this.error = 'Error al cargar los datos del tour. Por favor, inténtalo de nuevo más tarde.';
+        this.loading = false;
+      }
+    });
+  }
+
+  // ✅ NUEVO: Método para cargar datos del departure
+  private loadDepartureData(departureId: number): void {
+    console.log('🔄 Cargando datos del departure ID:', departureId);
+    
+    this.departureService.getById(departureId).subscribe({
+      next: (departure) => {
+        console.log('✅ Datos del departure cargados:', departure);
+        
+        this.departureDate = departure.departureDate;
+        this.returnDate = departure.arrivalDate;
+        
+        console.log('📅 Fechas del departure procesadas:');
+        console.log('  - Departure Date:', this.departureDate);
+        console.log('  - Return Date:', this.returnDate);
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar los datos del departure:', error);
+        // No establecemos error general aquí porque el tour ya se cargó
+        console.warn('⚠️ Continuando sin fechas del departure');
+      }
+    });
   }
 
   // Método para formatear la fecha
@@ -95,5 +194,47 @@ export class CheckoutV2Component implements OnInit {
     } catch {
       return dateString;
     }
+  }
+
+  // Generar fechas formateadas para el subtítulo
+  get tourDates(): string {
+    if (!this.departureDate && !this.returnDate) return '';
+    
+    const departure = this.formatDate(this.departureDate);
+    const returnFormatted = this.formatDate(this.returnDate);
+    
+    if (departure && returnFormatted) {
+      // ✅ MODIFICADO: Formato específico solicitado
+      return `${departure} - ${returnFormatted}`;
+    } else if (departure) {
+      return `Salida: ${departure}`;
+    } else if (returnFormatted) {
+      return `Regreso: ${returnFormatted}`;
+    }
+    
+    return '';
+  }
+
+  // Generar slug del tour para navegación
+  private generateTourSlug(tourName: string): string {
+    if (!tourName) return '';
+    
+    return tourName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  // Manejar cambio de paso activo
+  onActiveIndexChange(index: number): void {
+    this.activeIndex = index;
+    console.log('Paso activo cambiado a:', index);
+  }
+
+  // Método para navegar al siguiente paso con validación
+  nextStepWithValidation(targetStep: number): void {
+    // Aquí puedes añadir validaciones específicas para cada paso
+    console.log('Navegando al paso:', targetStep);
+    this.onActiveIndexChange(targetStep);
   }
 }

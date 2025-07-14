@@ -84,24 +84,22 @@ export class ActivitysComponent implements OnInit, OnChanges {
       imageAlt: activity.imageAlt || activity.name || 'Sin título'
     } as ActivityHighlight));
 
-    // Si hay actividades opcionales, buscar el precio de adulto (ageGroupId=1)
+    // Si hay actividades opcionales, buscar el precio de adulto (ageGroupId=1) para todas en una sola petición
     const optionalActivities = this.activities.filter(a => a.isOptional);
     if (optionalActivities.length > 0) {
-      // Llamadas paralelas para cada actividad opcional
-      const priceRequests = optionalActivities.map(activity =>
-        this.activityPriceService.getAll({ ActivityId: activity.id, AgeGroupId: 1, RetailerId: environment.retaileriddefault })
-      );
-      forkJoin(priceRequests).subscribe((results: IActivityPriceResponse[][]) => {
-        optionalActivities.forEach((activity, idx) => {
-          const prices = results[idx];
-          const price = prices && prices.length > 0 ? prices[0].basePrice : 0;
-          const highlightIdx = highlights.findIndex(h => h.id === activity.id.toString());
-          if (highlightIdx !== -1) {
-            highlights[highlightIdx].price = price;
-          }
+      const activityIds = optionalActivities.map(a => a.id);
+      this.activityPriceService.getAll({ ActivityId: activityIds, AgeGroupId: 1, RetailerId: environment.retaileriddefault })
+        .subscribe((prices: IActivityPriceResponse[]) => {
+          optionalActivities.forEach(activity => {
+            const priceObj = prices.find(p => p.activityId === activity.id && p.ageGroupId === 1);
+            const price = priceObj ? priceObj.basePrice : 0;
+            const highlightIdx = highlights.findIndex(h => h.id === activity.id.toString());
+            if (highlightIdx !== -1) {
+              highlights[highlightIdx].price = price;
+            }
+          });
+          this.highlights = highlights;
         });
-        this.highlights = highlights;
-      });
     } else {
       this.highlights = highlights;
     }

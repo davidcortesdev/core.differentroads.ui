@@ -9,7 +9,7 @@ import { environment } from '../../../../environments/environment';
 export interface ActivityPriceFilters {
   Id?: number[];
   TkId?: string;
-  ActivityId?: number;
+  ActivityId?: number[];
   AgeGroupId?: number;
   CampaignId?: number;
   PriceCategoryId?: number;

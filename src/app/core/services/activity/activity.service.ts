@@ -11,7 +11,7 @@ export interface ActivityFilters {
   code?: string;
   name?: string;
   description?: string;
-  skId?: string;
+  tkId?: string;
   activityTypeId?: number;
   serviceTypeId?: number;
   activitySubtypeId?: number;
@@ -31,7 +31,7 @@ export interface ActivityCreate {
   code: string | null;
   name: string | null;
   description: string | null;
-  TkId: string | null;
+  tkId: string | null;
   activityTypeId: number;
   serviceTypeId: number;
   activitySubtypeId: number;
@@ -51,7 +51,7 @@ export interface ActivityUpdate {
   code: string | null;
   name: string | null;
   description: string | null;
-  TkId: string | null;
+  tkId: string | null;
   activityTypeId: number;
   serviceTypeId: number;
   activitySubtypeId: number;
@@ -72,7 +72,7 @@ export interface IActivityResponse {
   code: string | null;
   name: string | null;
   description: string | null;
-  TkId: string | null;
+  tkId: string | null;
   activityTypeId: number;
   serviceTypeId: number;
   activitySubtypeId: number;

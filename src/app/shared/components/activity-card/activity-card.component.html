@@ -8,7 +8,7 @@
   }"
   (click)="onViewDetails($event, highlight)"
 >
-  <ng-template pTemplate="header">
+  <ng-template #header>
     <div class="image-container">
       <img
         [src]="highlight.image || ''"
@@ -42,7 +42,7 @@
     </div>
   </ng-template>
 
-  <ng-template pTemplate="content">
+  <ng-template #content>
     <div class="divContent">
       <h3 [title]="highlight.title">{{ highlight.title }}</h3>
       <div
@@ -52,7 +52,7 @@
     </div>
   </ng-template>
 
-  <ng-template pTemplate="footer" *ngIf="highlight.optional">
+  <ng-template #footer *ngIf="highlight.optional">
     <p-button
       (click)="onAddActivity($event, highlight)"
       [label]="highlight.added ? 'Eliminar' : 'Añadir'"

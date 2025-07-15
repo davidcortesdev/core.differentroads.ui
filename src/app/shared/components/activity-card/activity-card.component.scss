@@ -62,7 +62,7 @@ $colors: (
       transform 0.2s ease,
       box-shadow 0.2s ease;
     padding: 0;
-    will-change: transform; // Optimize for GPU acceleration
+    will-change: transform;
 
     &:hover {
       transform: translateY(-3px);
@@ -90,9 +90,8 @@ $colors: (
       }
     }
 
-    // CAMBIO PRINCIPAL: Asegurar altura fija para la descripción
+    // ALTURA FIJA PARA LA DESCRIPCIÓN - 4 LÍNEAS SIEMPRE
     &-description {
-      /* Altura fija para exactamente 4 líneas - SIEMPRE */
       height: 4.48rem !important; /* 0.8rem * 1.4 line-height * 4 líneas */
       min-height: 4.48rem !important;
       max-height: 4.48rem !important;
@@ -100,6 +99,8 @@ $colors: (
       text-overflow: ellipsis;
       font-size: 0.8rem;
       line-height: 1.4;
+      margin: 0;
+      padding: 0;
 
       /* Truncar con puntos suspensivos después de 4 líneas */
       display: -webkit-box;
@@ -107,7 +108,7 @@ $colors: (
       -webkit-box-orient: vertical;
 
       @include resp(md) {
-        height: 4.2rem !important; /* Ajuste para móviles */
+        height: 4.2rem !important;
         min-height: 4.2rem !important;
         max-height: 4.2rem !important;
         font-size: 0.75rem;
@@ -120,11 +121,11 @@ $colors: (
       flex-direction: column;
       padding: 0.5rem;
       font-size: 0.9rem;
-      // CAMBIO: Asegurar que el body tenga altura mínima consistente
-      min-height: calc(2.4rem + 4.48rem + 1rem); /* título + descripción + padding */
+      // ALTURA MÍNIMA CONSISTENTE PARA EL BODY
+      min-height: 8rem; /* Altura fija para consistencia */
 
       @include resp(md) {
-        min-height: calc(2.64rem + 4.2rem + 1rem);
+        min-height: 7.5rem;
       }
     }
 
@@ -136,8 +137,10 @@ $colors: (
       font-size: 1.2rem;
       color: map.get($colors, primary);
       font-weight: 600;
-      // CAMBIO: Asegurar que el footer se mantenga en la parte inferior
       margin-top: auto;
+      // ALTURA FIJA PARA EL FOOTER
+      min-height: 3.5rem;
+      padding: 0.75rem 1rem;
 
       div.price {
         font-size: 1rem;
@@ -185,14 +188,15 @@ $colors: (
       }
     }
 
+    // ALTURA FIJA PARA EL TÍTULO - 2 LÍNEAS SIEMPRE
     h3 {
       margin: 0.5rem 0;
       color: map.get($colors, text);
       font-size: 1rem;
       font-weight: 600;
 
-      /* Altura fija para exactamente 2 líneas - SIEMPRE */
-      height: 2.4rem !important; /* 1rem * 1.2 line-height * 2 líneas */
+      /* Altura fija para exactamente 2 líneas */
+      height: 2.4rem !important;
       min-height: 2.4rem !important;
       max-height: 2.4rem !important;
       line-height: 1.2;
@@ -206,7 +210,7 @@ $colors: (
 
       @include resp(md) {
         font-size: 1.1rem;
-        height: 2.64rem !important; /* 1.1rem * 1.2 * 2 */
+        height: 2.64rem !important;
         min-height: 2.64rem !important;
         max-height: 2.64rem !important;
         margin: 0.25rem 0;
@@ -221,7 +225,7 @@ $colors: (
       border-radius: map.get($border-radius, md);
       background-color: #f5f5f5;
       transition: transform 0.3s ease;
-      will-change: transform; // Optimize for GPU acceleration
+      will-change: transform;
 
       &:hover {
         transform: scale(1.03);
@@ -233,39 +237,52 @@ $colors: (
       }
     }
 
-    // CAMBIO PRINCIPAL: Restructurar el contenido para altura fija
+    // ESTRUCTURA DEL CONTENIDO CON ALTURAS FIJAS
     .divContent {
       display: flex;
       flex-direction: column;
       height: 100%;
-      // CAMBIO: Asegurar altura mínima fija para el contenido
-      min-height: calc(2.4rem + 4.48rem + 0.5rem); /* título + descripción + margin */
-
-      @include resp(md) {
-        min-height: calc(2.64rem + 4.2rem + 0.25rem);
-      }
+      flex: 1; // Ocupa el espacio disponible
 
       h3 {
-        flex-shrink: 0; // El título no se encoge
+        flex-shrink: 0; // El título mantiene su altura fija
         margin-bottom: 0.5rem;
       }
 
       .highlight-card-description {
-        flex-shrink: 0; // CAMBIO: La descripción tampoco se encoge
+        flex-shrink: 0; // La descripción mantiene su altura fija
         margin-top: 0;
+        margin-bottom: auto; // Empuja el contenido hacia arriba
       }
     }
 
-    // CAMBIO: Asegurar que las tarjetas tengan altura consistente
+    // ASEGURAR QUE TODAS LAS CARDS TENGAN LA MISMA ALTURA
     .p-card {
       height: 100%;
       display: flex;
       flex-direction: column;
+      // ALTURA TOTAL FIJA PARA CONSISTENCIA
+      min-height: 400px; // Altura mínima total de la card
+
+      @include resp(md) {
+        min-height: 380px;
+      }
     }
 
-    // CAMBIO: Para tarjetas sin footer, agregar padding inferior
+    // PARA CARDS SIN FOOTER - SIMULAR ESPACIO DEL FOOTER
     &:not(:has(.p-card-footer)) .p-card-body {
-      padding-bottom: 3rem; // Simular altura del footer
+      padding-bottom: 4.25rem; // Simular altura del footer + padding
+
+      @include resp(md) {
+        padding-bottom: 4rem;
+      }
+    }
+
+    // ASEGURAR QUE EL FOOTER ESTÉ SIEMPRE AL FONDO
+    .p-card-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
   }
 }

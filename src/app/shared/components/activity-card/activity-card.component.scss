@@ -62,7 +62,7 @@ $colors: (
       transform 0.2s ease,
       box-shadow 0.2s ease;
     padding: 0;
-    will-change: transform; // Optimize for GPU acceleration
+    will-change: transform;
 
     &:hover {
       transform: translateY(-3px);
@@ -90,27 +90,77 @@ $colors: (
       }
     }
 
-    // CAMBIO PRINCIPAL: Asegurar altura fija para la descripción
+    // DESCRIPCIÓN CON ALTURA VARIABLE SEGÚN TIPO DE ACTIVIDAD
     &-description {
-      /* Altura fija para exactamente 4 líneas - SIEMPRE */
-      height: 4.48rem !important; /* 0.8rem * 1.4 line-height * 4 líneas */
-      min-height: 4.48rem !important;
-      max-height: 4.48rem !important;
       overflow: hidden;
       text-overflow: ellipsis;
       font-size: 0.8rem;
       line-height: 1.4;
-
-      /* Truncar con puntos suspensivos después de 4 líneas */
+      margin: 0;
+      padding: 0;
       display: -webkit-box;
-      -webkit-line-clamp: 4;
       -webkit-box-orient: vertical;
+      word-wrap: break-word;
+
+      // POR DEFECTO: 5 líneas para actividades recomendadas e incluidas
+      height: 5.2rem !important; /* 0.8rem * 1.4 line-height * 5 líneas */
+      min-height: 5.2rem !important;
+      max-height: 5.2rem !important;
+      -webkit-line-clamp: 4;
 
       @include resp(md) {
-        height: 4.2rem !important; /* Ajuste para móviles */
-        min-height: 4.2rem !important;
-        max-height: 4.2rem !important;
+        height: 5.25rem !important;
+        min-height: 5.25rem !important;
+        max-height: 5.25rem !important;
         font-size: 0.75rem;
+      }
+    }
+
+    // AJUSTE PARA ACTIVIDADES OPCIONALES (tienen footer, menos espacio)
+    &:has(.p-card-footer) {
+      .highlight-card-description {
+        height: 5.2rem !important; /* 0.8rem * 1.4 line-height * 5 líneas */
+        min-height: 5.2rem !important;
+        max-height: 5.2rem !important;
+        -webkit-line-clamp: 4;
+
+        @include resp(md) {
+          height: 4.2rem !important;
+          min-height: 4.2rem !important;
+          max-height: 4.2rem !important;
+        }
+      }
+
+      .p-card-body {
+        min-height: 8rem;
+        @include resp(md) {
+          min-height: 7.5rem;
+        }
+      }
+
+      .p-card {
+        min-height: 400px;
+        @include resp(md) {
+          min-height: 380px;
+        }
+      }
+    }
+
+    // FALLBACK: Si :has() no funciona, usar el badge como selector
+    .status-badge.optional {
+      ~ .p-card-content {
+        .highlight-card-description {
+          height: 4.48rem !important;
+          min-height: 4.48rem !important;
+          max-height: 4.48rem !important;
+          -webkit-line-clamp: 4;
+
+          @include resp(md) {
+            height: 4.2rem !important;
+            min-height: 4.2rem !important;
+            max-height: 4.2rem !important;
+          }
+        }
       }
     }
 
@@ -120,11 +170,10 @@ $colors: (
       flex-direction: column;
       padding: 0.5rem;
       font-size: 0.9rem;
-      // CAMBIO: Asegurar que el body tenga altura mínima consistente
-      min-height: calc(2.4rem + 4.48rem + 1rem); /* título + descripción + padding */
+      min-height: 9rem; /* Más espacio para actividades sin footer */
 
       @include resp(md) {
-        min-height: calc(2.64rem + 4.2rem + 1rem);
+        min-height: 8.5rem;
       }
     }
 
@@ -136,8 +185,7 @@ $colors: (
       font-size: 1.2rem;
       color: map.get($colors, primary);
       font-weight: 600;
-      // CAMBIO: Asegurar que el footer se mantenga en la parte inferior
-      margin-top: auto;
+      min-height: 3.5rem;
 
       div.price {
         font-size: 1rem;
@@ -185,28 +233,25 @@ $colors: (
       }
     }
 
+    // TÍTULO CON ALTURA FIJA
     h3 {
       margin: 0.5rem 0;
       color: map.get($colors, text);
       font-size: 1rem;
       font-weight: 600;
-
-      /* Altura fija para exactamente 2 líneas - SIEMPRE */
-      height: 2.4rem !important; /* 1rem * 1.2 line-height * 2 líneas */
+      height: 2.4rem !important;
       min-height: 2.4rem !important;
       max-height: 2.4rem !important;
       line-height: 1.2;
       overflow: hidden;
       text-overflow: ellipsis;
-
-      /* Truncar con puntos suspensivos después de 2 líneas */
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
 
       @include resp(md) {
         font-size: 1.1rem;
-        height: 2.64rem !important; /* 1.1rem * 1.2 * 2 */
+        height: 2.64rem !important;
         min-height: 2.64rem !important;
         max-height: 2.64rem !important;
         margin: 0.25rem 0;
@@ -221,7 +266,7 @@ $colors: (
       border-radius: map.get($border-radius, md);
       background-color: #f5f5f5;
       transition: transform 0.3s ease;
-      will-change: transform; // Optimize for GPU acceleration
+      will-change: transform;
 
       &:hover {
         transform: scale(1.03);
@@ -233,39 +278,39 @@ $colors: (
       }
     }
 
-    // CAMBIO PRINCIPAL: Restructurar el contenido para altura fija
     .divContent {
       display: flex;
       flex-direction: column;
       height: 100%;
-      // CAMBIO: Asegurar altura mínima fija para el contenido
-      min-height: calc(2.4rem + 4.48rem + 0.5rem); /* título + descripción + margin */
-
-      @include resp(md) {
-        min-height: calc(2.64rem + 4.2rem + 0.25rem);
-      }
+      flex: 1;
 
       h3 {
-        flex-shrink: 0; // El título no se encoge
+        flex-shrink: 0;
         margin-bottom: 0.5rem;
       }
 
       .highlight-card-description {
-        flex-shrink: 0; // CAMBIO: La descripción tampoco se encoge
+        flex-shrink: 0;
         margin-top: 0;
+        margin-bottom: auto;
       }
     }
 
-    // CAMBIO: Asegurar que las tarjetas tengan altura consistente
     .p-card {
       height: 100%;
       display: flex;
       flex-direction: column;
+      min-height: 450px; /* Más altura para actividades sin footer */
+
+      @include resp(md) {
+        min-height: 430px;
+      }
     }
 
-    // CAMBIO: Para tarjetas sin footer, agregar padding inferior
-    &:not(:has(.p-card-footer)) .p-card-body {
-      padding-bottom: 3rem; // Simular altura del footer
+    .p-card-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
   }
 }

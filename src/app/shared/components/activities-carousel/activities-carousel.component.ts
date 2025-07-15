@@ -38,20 +38,21 @@ export class ActivitiesCarouselComponent {
     maxWidth: '800px'
   };
 
+  // Configuración responsiva corregida
   responsiveOptions = [
     {
       breakpoint: '1920px',
-      numVisible: 6,
+      numVisible: 3, // Cambiado de 6 a 3
       numScroll: 1,
     },
     {
       breakpoint: '1800px',
-      numVisible: 5,
+      numVisible: 3, // Cambiado de 5 a 3
       numScroll: 1,
     },
     {
       breakpoint: '1680px',
-      numVisible: 4,
+      numVisible: 3, // Cambiado de 4 a 3
       numScroll: 1,
     },
     {
@@ -73,6 +74,11 @@ export class ActivitiesCarouselComponent {
 
   constructor(private sanitizer: DomSanitizer) {}
 
+  // Método para calcular numVisible dinámicamente
+  get numVisible(): number {
+    return Math.min(3, this.highlights.length);
+  }
+
   onAddActivity(highlight: ActivityHighlight): void {
     this.addActivity.emit(highlight);
   }
@@ -88,7 +94,7 @@ export class ActivitiesCarouselComponent {
   openFullActivity(activity: ActivityHighlight): void {
     this.selectedActivity = activity;
     this.showFullActivityModal = true;
-    
+        
     // Sanitizar la descripción de la actividad seleccionada
     if (activity.description) {
       this.sanitizedActivityDescription = this.sanitizer.bypassSecurityTrustHtml(activity.description);

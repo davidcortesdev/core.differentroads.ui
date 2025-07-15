@@ -113,11 +113,12 @@
                     style="margin-top: 10px; display: block; width: 100%;">
                   </app-hotel-details>
 
-                 <!-- COMPONENTE ACTIVITY - NUEVO -->
+                 <!-- COMPONENTE ACTIVITY - MODIFICADO PARA EMITIR EVENTOS -->
                   <app-activity 
                     [itineraryId]="itineraryId"
                     [itineraryDayId]="event.dayId"
                     [departureId]="departureId"
+                    (activitySelected)="onActivitySelected($event)"
                     style="margin-top: 10px; display: block; width: 100%;">
                   </app-activity>
                   

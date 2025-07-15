@@ -1,8 +1,9 @@
-import { Component, Input, OnInit, ViewChildren, QueryList, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, ViewChildren, QueryList, OnChanges, SimpleChanges, Output, EventEmitter } from '@angular/core';
 import { forkJoin, of, Observable } from 'rxjs';
 import { catchError, map, finalize } from 'rxjs/operators';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Panel } from 'primeng/panel';
+import { ActivityHighlight } from '../../../../../../shared/components/activity-card/activity-card.component';
 
 // Importar servicios para itinerary, itinerary days y CMS
 import { ItineraryService, IItineraryResponse, ItineraryFilters } from '../../../../../../core/services/itinerary/itinerary.service';
@@ -42,6 +43,9 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
   @Input() tourId: number | undefined;
   @Input() itineraryId: number | undefined;
   @Input() departureId: number | undefined; // NUEVO: Recibir el departure ID seleccionado
+  
+  // NUEVO: Output para emitir actividades seleccionadas
+  @Output() activitySelected = new EventEmitter<ActivityHighlight>();
   
   @ViewChildren('itineraryPanel') itineraryPanels!: QueryList<Panel>;
   
@@ -92,6 +96,11 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
         this.clearData();
       }
     }
+  }
+
+  // NUEVO: Manejar selección de actividad y reenviar al padre
+  onActivitySelected(activityHighlight: ActivityHighlight): void {
+    this.activitySelected.emit(activityHighlight);
   }
 
   private loadInitialData(): void {

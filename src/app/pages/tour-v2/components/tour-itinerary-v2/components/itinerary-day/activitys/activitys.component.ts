@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, Output, EventEmitter } from '@angular/core';
 import { ActivityService, IActivityResponse } from '../../../../../../../core/services/activity/activity.service';
 import { ActivityPriceService, IActivityPriceResponse } from '../../../../../../../core/services/activity/activity-price.service';
 import { catchError, of, forkJoin } from 'rxjs';
@@ -15,6 +15,9 @@ export class ActivitysComponent implements OnInit, OnChanges {
   @Input() itineraryId: number | undefined;
   @Input() itineraryDayId: number | undefined;
   @Input() departureId: number | undefined;
+
+  // NUEVO: Output para emitir actividades seleccionadas
+  @Output() activitySelected = new EventEmitter<ActivityHighlight>();
 
   loading = true;
   activities: IActivityResponse[] = [];
@@ -109,6 +112,9 @@ export class ActivitysComponent implements OnInit, OnChanges {
     const index = this.highlights.findIndex(h => h.id === highlight.id);
     if (index !== -1) {
       this.highlights[index] = { ...highlight, added: !highlight.added };
+      
+      // NUEVO: Emitir evento al componente padre
+      this.activitySelected.emit(this.highlights[index]);
     }
   }
 

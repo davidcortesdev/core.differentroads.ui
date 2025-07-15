@@ -5,6 +5,7 @@ import { TourNetService, Tour } from '../../core/services/tourNet.service';
 import { catchError, of } from 'rxjs';
 import { ItineraryService } from '../../core/services/itinerary/itinerary.service';
 import { SelectedDepartureEvent } from './components/tour-itinerary-v2/components/selector-itinerary/selector-itinerary.component';
+import { ActivityHighlight } from '../../shared/components/activity-card/activity-card.component';
 
 @Component({
   selector: 'app-tour-v2',
@@ -27,9 +28,15 @@ export class TourV2Component implements OnInit {
 
   // ✅ AÑADIDO: Departure seleccionado
   selectedDepartureData: any = null;
-  
+    
   // ✅ AÑADIDO: Total de pasajeros
   totalPassengers: number = 1;
+
+  // ✅ NUEVO: Array para almacenar actividades seleccionadas
+  selectedActivities: ActivityHighlight[] = [];
+  
+  // ✅ NUEVO: Flag para controlar cuándo mostrar el estado de actividades
+  showActivitiesStatus: boolean = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -77,6 +84,29 @@ export class TourV2Component implements OnInit {
     this.selectedDepartureEvent = event;
     // ✅ AÑADIDO: Reset precio al cambiar departure
     this.totalPrice = 0;
+    
+    // ✅ NUEVO: Limpiar actividades y activar la visualización del estado
+    this.selectedActivities = [];
+    this.showActivitiesStatus = true; // Activar para mostrar "Sin actividades opcionales"
+  }
+
+  // NUEVO: Manejar selección de actividad desde el componente hijo
+  onActivitySelected(activityHighlight: ActivityHighlight): void {
+
+    // Actualizar el array de actividades seleccionadas
+    const existingIndex = this.selectedActivities.findIndex(activity => activity.id === activityHighlight.id);
+    
+    if (existingIndex !== -1) {
+      // Si ya existe, actualizar el estado
+      this.selectedActivities[existingIndex] = { ...activityHighlight };
+    } else {
+      // Si no existe, agregar nueva actividad
+      this.selectedActivities.push({ ...activityHighlight });
+    }
+
+    // Remover actividades que ya no están agregadas
+    this.selectedActivities = this.selectedActivities.filter(activity => activity.added);
+    
   }
 
   // ✅ AÑADIDO: Recibir actualización de precio
@@ -93,11 +123,10 @@ export class TourV2Component implements OnInit {
   onDepartureUpdate(departure: any): void {
     this.selectedDepartureData = departure;
   }
-  
+    
   // ✅ AÑADIDO: Recibir actualización del total de pasajeros
   onPassengersUpdate(passengersData: any): void {
     // Calcular total de pasajeros (adultos + niños + bebés)
     this.totalPassengers = passengersData.adults + passengersData.children + passengersData.babies;
   }
-
 }

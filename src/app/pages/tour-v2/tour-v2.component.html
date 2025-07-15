@@ -11,7 +11,7 @@
 
   <!-- Tour Content -->
   <div *ngIf="!loading && !error && tour" class="tour-content">
-    <!-- Tour Header Section -->
+    <!-- Tour Header Section - MODIFICADO PARA PASAR ACTIVIDADES SELECCIONADAS Y FLAG -->
     <section class="tour-section tour-header-section">
       <app-tour-header-v2
         [tourId]="tour.id"
@@ -19,6 +19,8 @@
         [selectedCity]="selectedCity"
         [selectedDeparture]="selectedDepartureData"
         [totalPassengers]="totalPassengers"
+        [selectedActivities]="selectedActivities"
+        [showActivitiesStatus]="showActivitiesStatus"
       >
       </app-tour-header-v2>
     </section>
@@ -33,11 +35,12 @@
       <app-tour-highlights-v2 [tourId]="tour.id"></app-tour-highlights-v2>
     </section>
 
-    <!-- Tour Itinerary Section -->
+    <!-- Tour Itinerary Section - MODIFICADO PARA RECIBIR EVENTOS DE ACTIVIDAD -->
     <section class="tour-section tour-itinerary-section">
       <app-tour-itinerary-v2
         [tourId]="tour.id"
-        (departureSelected)="onDepartureSelected($event)">
+        (departureSelected)="onDepartureSelected($event)"
+        (activitySelected)="onActivitySelected($event)">
       </app-tour-itinerary-v2>
     </section>
 

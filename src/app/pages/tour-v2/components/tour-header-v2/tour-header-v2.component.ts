@@ -20,6 +20,7 @@ import { ReservationTravelerService } from '../../../../core/services/reservatio
 import { Subscription, forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { ActivityHighlight } from '../../../../shared/components/activity-card/activity-card.component';
 
 @Component({
   selector: 'app-tour-header-v2',
@@ -33,6 +34,10 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
   @Input() selectedCity: string = '';
   @Input() selectedDeparture: any = null;
   @Input() totalPassengers: number = 1;
+  // NUEVO: Input para recibir las actividades seleccionadas
+  @Input() selectedActivities: ActivityHighlight[] = [];
+  // NUEVO: Input para saber si se debe mostrar el estado de actividades
+  @Input() showActivitiesStatus: boolean = false;
 
   // Tour data
   tour: Partial<Tour> = {};
@@ -86,18 +91,50 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
   }
 
   get hasPrice(): boolean {
-    return this.totalPrice > 0;
+    return this.totalPriceWithActivities > 0;
+  }
+
+  // NUEVO: Calcular precio total incluyendo actividades
+  get totalPriceWithActivities(): number {
+    const activitiesTotal = this.selectedActivities
+      .filter(activity => activity.added)
+      .reduce((sum, activity) => sum + (activity.price || 0), 0);
+    
+    return this.totalPrice + activitiesTotal;
+  }
+
+  // NUEVO: Obtener actividades agregadas
+  get addedActivities(): ActivityHighlight[] {
+    return this.selectedActivities.filter(activity => activity.added);
+  }
+
+  // NUEVO: Verificar si hay actividades agregadas
+  get hasAddedActivities(): boolean {
+    return this.addedActivities.length > 0;
+  }
+
+  // NUEVO: Verificar si debe mostrar estado de actividades
+  get shouldShowActivitiesStatus(): boolean {
+    // Solo mostrar si el padre dice que debe mostrarse Y hay departure seleccionado
+    return this.showActivitiesStatus && 
+           this.selectedDeparture && 
+           this.selectedDeparture.departureDate;
+  }
+
+  // NUEVO: Verificar si ya se interactuó con actividades (no se usa más)
+  get hasInteractedWithActivities(): boolean {
+    return this.selectedActivities.length > 0;
   }
 
   get formattedPrice(): string {
-    if (this.totalPrice <= 0) return '';
+    if (this.totalPriceWithActivities <= 0) return '';
     
     return new Intl.NumberFormat('de-DE', {
       style: 'currency',
       currency: 'EUR',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
-    }).format(this.totalPrice);
+    }).format(this.totalPriceWithActivities);
   }
 
   get formattedFlights(): string {
@@ -358,7 +395,7 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
       departureId: this.selectedDeparture.id,
       userId: 1,
       totalPassengers: this.totalPassengers || 1,
-      totalAmount: this.totalPrice || 0,
+      totalAmount: this.totalPriceWithActivities || 0, // MODIFICADO: Usar precio con actividades
       budgetAt: '',
       cartAt: new Date().toISOString(),
       abandonedAt: '',

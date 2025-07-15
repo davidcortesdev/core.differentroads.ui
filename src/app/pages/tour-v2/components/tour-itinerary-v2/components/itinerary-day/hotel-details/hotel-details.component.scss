@@ -90,7 +90,7 @@ $colors: (
     }
 
     &-image {
-        width: 35%;
+        width: 28%;
         object-fit: cover;
         border-radius: map.get($border-radius, md);
         will-change: transform;

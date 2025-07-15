@@ -2,33 +2,42 @@
   <!-- Tour Information Section -->
   <div class="tour-info">
     <h1>{{ tour.name || '' }}</h1>
-         
+            
     <!-- ✅ NUEVA SECCIÓN: Mostrar país debajo del nombre con evento de clic -->
     <div class="tour-location" *ngIf="country">
       <span class="country" (click)="onCountryClick($event, country)" style="cursor: pointer;">{{ country }}</span>
     </div>
   </div>
-        
+          
   <!-- Tour Actions Section -->
   <div class="tour-actions">
     <!-- Tour Details -->
     <div class="tour-details">
       <!-- ✅ CAMBIAR: Mostrar Total en lugar de Código -->
       <div class="detail-item" *ngIf="hasPrice">
-        <span class="label">Total:</span>
+        <span class="label">Desde</span>
         <span class="value">{{ formattedPrice }}</span>
       </div>
-      
+            
       <!-- ✅ CORREGIDO: Mostrar vuelos con formato condicional -->
       <div class="detail-item">
         <span class="value val">{{ formattedFlights }}</span>
       </div>
-      
+            
       <!-- ✅ CORREGIDO: Mostrar fecha formateada con tipo Single si aplica -->
       <div class="detail-item" *ngIf="selectedDeparture && formattedDepartureWithType">
-        <span class="value  val">{{ formattedDepartureWithType }}</span>
+        <span class="value val">{{ formattedDepartureWithType }}</span>
       </div>
-      
+
+      <!-- ✅ NUEVO: Mostrar estado de actividades opcionales -->
+      <div class="detail-item activities-status" *ngIf="shouldShowActivitiesStatus">
+        <span class="value val activities-label" 
+              [class.with-activities]="hasAddedActivities"
+              [class.without-activities]="!hasAddedActivities">
+          {{ hasAddedActivities ? 'Con actividades opcionales' : 'Sin actividades opcionales' }}
+        </span>
+      </div>
+            
       <!-- ✅ MANTENER: Solo mostrar código si NO hay precio -->
       <!-- <div class="detail-item" *ngIf="tour.tkId">
         <span class="label">TK ID:</span>
@@ -39,7 +48,7 @@
         <span class="value">{{ tour.slug }}</span>
       </div> -->
     </div>
-            
+                
     <!-- ✅ BOTÓN NORMAL: Sin precio -->
     <div class="booking-container">
       <p-button 

@@ -48,6 +48,7 @@
             <app-selector-room 
               [departureId]="departureId"
               [reservationId]="reservationId"
+              (roomsSelectionChange)="onRoomsSelectionChange($event)"
               #roomSelector>
             </app-selector-room>
 
@@ -117,16 +118,20 @@
 
     <!-- Columna derecha - Resumen -->
     <div class="right-column">
-      <div class="summary-placeholder">
-        <h3>Resumen del pedido</h3>
-        
-        <div class="tour-summary" *ngIf="tourName">
-          <h4>{{ tourName }}</h4>
-          <p>{{ tourDates }}</p>
-          <p *ngIf="totalPassengers > 0"><strong>Pasajeros: {{ totalPassengers }}</strong></p>
-          <p *ngIf="totalAmount > 0"><strong>Total: {{ totalAmount | currency:'EUR':'symbol':'1.0-0' }}</strong></p>
-        </div>
-      </div>
+      <!-- Resumen del pedido usando SummaryTableComponent -->
+      <app-summary-table
+        [summary]="summary"
+        [subtotal]="subtotal"
+        [total]="totalAmount"
+        [isAuthenticated]="false"
+        [selectedFlight]="null"
+        [showPointsSection]="false"
+        [showTotalSection]="true"
+        [showFlightSection]="false"
+        [currency]="'EUR'"
+        [title]="'Resumen del pedido'"
+      >
+      </app-summary-table>
     </div>
   </div>
 

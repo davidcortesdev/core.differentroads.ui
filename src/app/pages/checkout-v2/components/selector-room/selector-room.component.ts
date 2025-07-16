@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, Output, EventEmitter } from '@angular/core';
 import { DepartureAccommodationService, IDepartureAccommodationResponse } from '../../../../core/services/departure/departure-accommodation.service';
 import { DepartureAccommodationPriceService, IDepartureAccommodationPriceResponse } from '../../../../core/services/departure/departure-accommodation-price.service';
 import { DepartureAccommodationTypeService, IDepartureAccommodationTypeResponse } from '../../../../core/services/departure/departure-accommodation-type.service';
@@ -27,6 +27,9 @@ interface RoomAvailability {
 export class SelectorRoomComponent implements OnInit, OnChanges {
   @Input() departureId: number | null = null;
   @Input() reservationId: number | null = null;
+
+  // NUEVO: Output para notificar cambios en habitaciones al componente padre
+  @Output() roomsSelectionChange = new EventEmitter<{ [tkId: string]: number }>();
 
   // Propiedades principales - IGUAL QUE EN EL EJEMPLO
   roomsAvailabilityForTravelersNumber: RoomAvailability[] = [];
@@ -85,10 +88,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges {
     this.travelersNumbers$.subscribe((data) => {
       const newTotalTravelers = data.adults + data.childs + data.babies;
 
-      console.log('_____________');
-      console.log('Travelers cambiados:', data);
-      console.log('Total travelers:', newTotalTravelers);
-
       // IGUAL QUE EN EL EJEMPLO: Deseleccionar habitaciones que excedan capacidad
       Object.entries(this.selectedRooms).forEach(([tkId, qty]) => {
         const room = this.allRoomsAvailability.find(r => r.tkId === tkId);
@@ -140,20 +139,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges {
   }
 
   processAccommodations(accommodations: IDepartureAccommodationResponse[]): void {
-    console.log('🏨 === ACCOMMODATIONS CARGADAS ===');
-    console.log('📊 Total accommodations recibidas:', accommodations.length);
-    accommodations.forEach((acc, index) => {
-      console.log(`🏠 [${index}] Accommodation:`, {
-        id: acc.id,
-        tkId: acc.tkId,
-        name: acc.name,
-        description: acc.description,
-        capacity: acc.capacity,
-        accommodationTypeId: acc.accommodationTypeId,
-        departureId: acc.departureId
-      });
-    });
-
     // Transformar datos al formato esperado
     this.allRoomsAvailability = accommodations.map(accommodation => ({
       id: accommodation.id,
@@ -166,8 +151,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges {
       isShared: false,
       accommodationTypeId: accommodation.accommodationTypeId
     }));
-
-    console.log('🔄 Accommodations transformadas:', this.allRoomsAvailability);
 
     // Cargar tipos de alojamiento para determinar habitaciones compartidas
     this.loadAccommodationTypes();
@@ -199,45 +182,18 @@ export class SelectorRoomComponent implements OnInit, OnChanges {
                         room.name?.toLowerCase().includes('single') ||
                         (room.name?.toLowerCase().includes('doble') && room.capacity === 1);
       }
-      
-      console.log(`🏠 Habitación ${room.name}: capacidad=${room.capacity}, isShared=${room.isShared}`);
     });
   }
 
   assignPricesToRooms(prices: IDepartureAccommodationPriceResponse[]): void {
-    console.log('💰 === PRECIOS CARGADOS ===');
-    console.log('📊 Total precios recibidos:', prices.length);
-    prices.forEach((price, index) => {
-      console.log(`💵 [${index}] Price:`, {
-        id: price.id,
-        tkId: price.tkId,
-        departureAccommodationId: price.departureAccommodationId,
-        basePrice: price.basePrice,
-        campaignPrice: price.campaignPrice,
-        ageGroupId: price.ageGroupId,
-        campaignId: price.campaignId,
-        priceCategoryId: price.priceCategoryId,
-        currencyId: price.currencyId,
-        retailerId: price.retailerId
-      });
-    });
-
     // IGUAL QUE EN EL EJEMPLO: Asignar precios y ordenar
     this.allRoomsAvailability.forEach(room => {
       const roomPrice = prices.find(price => price.departureAccommodationId === room.id);
       if (roomPrice && roomPrice.basePrice !== undefined) {
         room.basePrice = roomPrice.basePrice;
-        console.log(`✅ Precio asignado: Room ID ${room.id} (${room.name}) → ${roomPrice.basePrice}€`);
       } else {
         room.basePrice = 0;
-        console.log(`⚠️ Sin precio: Room ID ${room.id} (${room.name}) → 0€`);
       }
-    });
-
-    console.log('🔗 === MAPPING ACCOMMODATION-PRICE ===');
-    this.allRoomsAvailability.forEach(room => {
-      const relatedPrice = prices.find(price => price.departureAccommodationId === room.id);
-      console.log(`🏠 Room "${room.name}" (ID: ${room.id}) ↔️ Price (departureAccommodationId: ${relatedPrice?.departureAccommodationId || 'NO ENCONTRADO'})`);
     });
 
     // IGUAL QUE EN EL EJEMPLO: Ordenar por capacidad
@@ -269,12 +225,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges {
     return new Promise((resolve) => {
       this.reservationTravelerService.getByReservationOrdered(this.reservationId!).subscribe(travelers => {
         this.existingTravelers = travelers;
-        console.log('🔄 Travelers actualizados en componente de habitaciones:', travelers.length);
-        console.log('👥 Detalle travelers:', travelers.map(t => ({
-          id: t.id,
-          travelerNumber: t.travelerNumber,
-          isLeadTraveler: t.isLeadTraveler
-        })));
         resolve();
       });
     });
@@ -343,6 +293,9 @@ export class SelectorRoomComponent implements OnInit, OnChanges {
       this.selectedRooms[changedRoom.tkId] = newValue;
     }
 
+    // NUEVO: Emitir cambios al componente padre
+    this.roomsSelectionChange.emit(this.selectedRooms);
+
     this.updateRooms();
   }
 
@@ -387,10 +340,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges {
       return sum;
     }, 0);
     
-    console.log('🏠 Habitaciones seleccionadas:', updatedRooms.filter(r => r.qty! > 0));
-    console.log('👥 Total travelers:', totalTravelers);
-    console.log('🛏️ Plazas seleccionadas:', selectedPlaces);
-    
     // NUEVO: Distribuir camas entre travelers
     if (hasSelectedRooms) {
       this.distributeRoomsToTravelers(updatedRooms.filter(r => r.qty! > 0));
@@ -410,7 +359,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges {
   // NUEVO: Método para distribuir habitaciones entre travelers
   distributeRoomsToTravelers(selectedRooms: RoomAvailability[]): void {
     if (!this.existingTravelers || this.existingTravelers.length === 0) {
-      console.log('⚠️ No hay travelers existentes para distribuir habitaciones');
       return;
     }
 
@@ -420,13 +368,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges {
       if (!a.isLeadTraveler && b.isLeadTraveler) return 1;
       return a.id - b.id; // Ordenar por ID
     });
-
-    console.log('🎯 === DISTRIBUCIÓN DE HABITACIONES ===');
-    console.log('👥 Travelers ordenados:', sortedTravelers.map(t => ({
-      id: t.id,
-      travelerNumber: t.travelerNumber,
-      isLeadTraveler: t.isLeadTraveler
-    })));
 
     // Crear lista de todas las camas disponibles
     const availableBeds: Array<{
@@ -441,15 +382,9 @@ export class SelectorRoomComponent implements OnInit, OnChanges {
 
     selectedRooms.forEach(room => {
       const roomQty = room.qty || 0;
-      console.log(`🏠 Procesando habitación: ${room.name} (ID: ${room.id}, departureAccommodationId: ${room.id})`);
-      console.log(`   - Cantidad seleccionada: ${roomQty}`);
-      console.log(`   - Capacidad: ${room.capacity}`);
-      console.log(`   - Es compartida: ${room.isShared}`);
       
       for (let roomInstance = 1; roomInstance <= roomQty; roomInstance++) {
         const bedCapacity = room.isShared ? 1 : (room.capacity || 1);
-        
-        console.log(`   🏠 Instancia ${roomInstance}/${roomQty} - Capacidad de camas: ${bedCapacity}`);
         
         for (let bedNumber = 1; bedNumber <= bedCapacity; bedNumber++) {
           availableBeds.push({
@@ -461,13 +396,9 @@ export class SelectorRoomComponent implements OnInit, OnChanges {
             capacity: bedCapacity,
             isShared: room.isShared || false
           });
-          console.log(`     🛏️ Cama ${bedNumber} creada (departureAccommodationId: ${room.id})`);
         }
       }
     });
-
-    console.log('🛏️ Camas disponibles:', availableBeds.length);
-    console.log('🛏️ Detalle de camas:', availableBeds);
 
     // Distribuir camas a travelers
     const roomAssignments: Array<{
@@ -499,154 +430,91 @@ export class SelectorRoomComponent implements OnInit, OnChanges {
       }
     });
 
-    // Mostrar distribución final
-    console.log('🏨 === ASIGNACIÓN FINAL DE HABITACIONES ===');
-    roomAssignments.forEach(assignment => {
-      const leadIcon = assignment.isLeadTraveler ? '👑' : '👤';
-      const sharedInfo = assignment.isShared ? ' (Compartida)' : '';
-      console.log(`${leadIcon} Traveler ${assignment.travelerNumber} (ID: ${assignment.travelerId}) → ${assignment.roomName}${sharedInfo} - Cama ${assignment.bedNumber}`);
-      console.log(`   📋 departureAccommodationId: ${assignment.departureAccommodationId}`);
-      console.log(`   🔑 roomTkId: ${assignment.roomTkId}`);
-      console.log(`   🏠 roomId: ${assignment.roomId}`);
-    });
-
-    // Verificar si sobran travelers sin habitación
-    const unassignedTravelers = sortedTravelers.slice(availableBeds.length);
-    if (unassignedTravelers.length > 0) {
-      console.log('⚠️ Travelers sin habitación asignada:');
-      unassignedTravelers.forEach(traveler => {
-        const leadIcon = traveler.isLeadTraveler ? '👑' : '👤';
-        console.log(`${leadIcon} Traveler ${traveler.travelerNumber} (ID: ${traveler.id}) - SIN HABITACIÓN`);
-      });
-    }
-
-    // Resumen estadístico
-    console.log('📊 === RESUMEN ===');
-    console.log(`Total travelers: ${sortedTravelers.length}`);
-    console.log(`Total camas: ${availableBeds.length}`);
-    console.log(`Travelers asignados: ${roomAssignments.length}`);
-    console.log(`Travelers sin asignar: ${unassignedTravelers.length}`);
-    
     // NUEVO: Guardar asignaciones para usar al guardar
     this.currentRoomAssignments = roomAssignments;
-    
-    // Agrupar por habitación
-    const roomGroups = roomAssignments.reduce((groups, assignment) => {
-      const key = `${assignment.roomTkId}-${assignment.roomName}`;
-      if (!groups[key]) {
-        groups[key] = [];
-      }
-      groups[key].push(assignment);
-      return groups;
-    }, {} as Record<string, typeof roomAssignments>);
-
-    console.log('🏠 === DISTRIBUCIÓN POR HABITACIÓN ===');
-    Object.entries(roomGroups).forEach(([roomKey, assignments]) => {
-      console.log(`🏠 ${assignments[0].roomName}:`);
-      assignments.forEach(assignment => {
-        const leadIcon = assignment.isLeadTraveler ? '👑' : '👤';
-        console.log(`  ${leadIcon} Traveler ${assignment.travelerNumber} - Cama ${assignment.bedNumber}`);
-      });
-    });
   }
 
-  // NUEVO: Método para guardar las asignaciones de habitaciones
+  // NUEVO: Método para guardar las asignaciones de habitaciones (OPTIMIZADO)
   async saveRoomAssignments(): Promise<boolean> {
     if (!this.reservationId) {
-      console.log('⚠️ No hay reservationId para guardar');
       return false;
     }
 
     try {
-      console.log('💾 === GUARDANDO ASIGNACIONES DE HABITACIONES ===');
-      
-      // IMPORTANTE: Recargar travelers desde la BD para obtener los más recientes
-      console.log('🔄 Recargando travelers desde la BD...');
-      const currentTravelers = await this.reservationTravelerService.getByReservationOrdered(this.reservationId).toPromise();
+      // OPTIMIZACIÓN: Solo recargar travelers si no hay asignaciones actuales
+      let currentTravelers = this.existingTravelers;
       
       if (!currentTravelers || currentTravelers.length === 0) {
-        console.error('❌ No se pudieron obtener travelers actualizados');
+        currentTravelers = await this.reservationTravelerService.getByReservationOrdered(this.reservationId).toPromise() || [];
+        this.existingTravelers = currentTravelers;
+      }
+
+      if (!currentTravelers || currentTravelers.length === 0) {
         return false;
       }
 
-      console.log('👥 Travelers actuales en BD:', currentTravelers.length);
-      console.log('📋 Travelers detalle:', currentTravelers.map(t => ({
-        id: t.id,
-        travelerNumber: t.travelerNumber,
-        isLeadTraveler: t.isLeadTraveler
-      })));
+      // Verificar que hay habitaciones seleccionadas
+      const selectedRoomsWithQty = Object.keys(this.selectedRooms)
+        .filter(tkId => this.selectedRooms[tkId] > 0)
+        .map(tkId => {
+          const room = this.allRoomsAvailability.find(r => r.tkId === tkId);
+          return { ...room, qty: this.selectedRooms[tkId] };
+        })
+        .filter(room => room.qty > 0);
 
-      // Actualizar travelers locales
-      this.existingTravelers = currentTravelers;
-
-      // Recalcular distribución con travelers actualizados
-      const updatedRooms = Object.keys(this.selectedRooms).map((tkId) => {
-        const room = this.allRoomsAvailability.find(r => r.tkId === tkId);
-        return {
-          ...room,
-          qty: this.selectedRooms[tkId],
-        } as RoomAvailability;
-      });
-
-      const selectedRoomsWithQty = updatedRooms.filter(r => r.qty! > 0);
-      
       if (selectedRoomsWithQty.length === 0) {
-        console.warn('⚠️ No hay habitaciones seleccionadas para asignar');
         return false;
       }
 
-      // Redistribuir con travelers actualizados
-      this.distributeRoomsToTravelers(selectedRoomsWithQty);
+      // Generar distribución rápidamente
+      this.distributeRoomsToTravelers(selectedRoomsWithQty as RoomAvailability[]);
 
       if (this.currentRoomAssignments.length === 0) {
-        console.warn('⚠️ No se generaron asignaciones');
         return false;
       }
 
-      // Limpiar asignaciones existentes para todos los travelers
-      console.log('🗑️ Eliminando asignaciones existentes...');
+      // OPTIMIZACIÓN: Hacer eliminación y creación en paralelo por grupos
+      
+      // Eliminar asignaciones existentes en paralelo (máximo 5 a la vez)
       const deletePromises = currentTravelers.map(traveler => 
         this.reservationTravelerAccommodationService.deleteByReservationTraveler(traveler.id).toPromise()
       );
+      
+      // Ejecutar eliminaciones en chunks para no sobrecargar
+      const chunkSize = 5;
+      for (let i = 0; i < deletePromises.length; i += chunkSize) {
+        const chunk = deletePromises.slice(i, i + chunkSize);
+        await Promise.all(chunk);
+      }
 
-      await Promise.all(deletePromises);
-      console.log('🗑️ Asignaciones existentes eliminadas');
-
-      // Crear nuevas asignaciones basadas en la distribución actual
-      const createPromises: Promise<any>[] = [];
-
-      this.currentRoomAssignments.forEach(assignment => {
-        // Buscar el traveler correspondiente en la BD actualizada
+      // OPTIMIZACIÓN: Crear nuevas asignaciones en paralelo
+      const createPromises = this.currentRoomAssignments.map(assignment => {
         const travelerInDB = currentTravelers.find(t => 
           (t.isLeadTraveler && assignment.isLeadTraveler) ||
           (!t.isLeadTraveler && !assignment.isLeadTraveler && t.travelerNumber === assignment.travelerNumber)
         );
 
         if (travelerInDB) {
-          const createPromise = this.reservationTravelerAccommodationService.create({
+          return this.reservationTravelerAccommodationService.create({
             id: 0,
             reservationTravelerId: travelerInDB.id,
             departureAccommodationId: assignment.departureAccommodationId
           }).toPromise();
-
-          createPromises.push(createPromise);
-          
-          console.log(`✅ Creando asignación: Traveler ${travelerInDB.travelerNumber} (ID: ${travelerInDB.id}) → Room ${assignment.roomName} (accommodationId: ${assignment.departureAccommodationId})`);
-        } else {
-          console.warn(`⚠️ No se encontró traveler en BD para asignación:`, assignment);
         }
-      });
+        return Promise.resolve(null);
+      }).filter(promise => promise !== null);
 
-      const results = await Promise.all(createPromises);
-      
-      console.log('💾 === ASIGNACIONES GUARDADAS EXITOSAMENTE ===');
-      console.log(`✅ Total asignaciones creadas: ${results.length}`);
-      console.log('📋 Resultados:', results);
+      // Ejecutar creaciones en chunks para mejor rendimiento
+      const results = [];
+      for (let i = 0; i < createPromises.length; i += chunkSize) {
+        const chunk = createPromises.slice(i, i + chunkSize);
+        const chunkResults = await Promise.all(chunk);
+        results.push(...chunkResults);
+      }
       
       return true;
 
     } catch (error) {
-      console.error('❌ Error al guardar asignaciones:', error);
       return false;
     }
   }
@@ -682,7 +550,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges {
   updateSelectedRooms(rooms: RoomAvailability[]): void {
     // Simular actualización de servicio
     this.selectedRoomsSource.next(rooms);
-    console.log('Habitaciones seleccionadas actualizadas:', rooms);
   }
 
   // IGUAL QUE EN EL EJEMPLO: Verificar opciones de habitaciones compartidas

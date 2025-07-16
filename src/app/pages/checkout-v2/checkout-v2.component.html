@@ -35,22 +35,22 @@
         <div [ngSwitch]="activeIndex">
           <!-- Step 1: Personalizar viaje -->
           <div *ngSwitchCase="0">
-            <!-- Componente selector de habitaciones -->
-             <app-selector-traveler 
-                [departureId]="departureId"
-                [reservationId]="reservationId"
-                [availableTravelers]="['Adultos', 'Niños', 'Bebés']">
-             </app-selector-traveler>
-            <app-selector-room [departureId]="departureId"></app-selector-room>
+            <!-- Componente selector de viajeros -->
+            <app-selector-traveler 
+              [departureId]="departureId"
+              [reservationId]="reservationId"
+              [availableTravelers]="['Adultos', 'Niños', 'Bebés']"
+              (travelersNumbersChange)="onTravelersNumbersChange($event)"
+              #travelerSelector>
+            </app-selector-traveler>
             
-            <!-- Información de debug -->
-         <!--    <div class="debug-info" *ngIf="reservationId"> -->
-              <!-- <h4>Información de la reserva:</h4> -->
-              <!-- ✅ MODIFICADO: Mostrar reservationId en lugar de departureId -->
-             <!--  <p><strong>Reservation ID:</strong> {{ reservationId }}</p>
-              <p><strong>Departure ID:</strong> {{ departureId }}</p>
-              <p><strong>Total Amount:</strong> {{ totalAmount | currency:'EUR':'symbol':'1.0-0' }}</p> -->
-           <!--  </div> -->
+            <!-- Componente selector de habitaciones -->
+            <app-selector-room 
+              [departureId]="departureId"
+              [reservationId]="reservationId"
+              (roomsSelectionChange)="onRoomsSelectionChange($event)"
+              #roomSelector>
+            </app-selector-room>
 
             <div class="flex pt-6 justify-end">
               <p-button
@@ -118,15 +118,20 @@
 
     <!-- Columna derecha - Resumen -->
     <div class="right-column">
-      <div class="summary-placeholder">
-        <h3>Resumen del pedido</h3>
-        
-        <div class="tour-summary" *ngIf="tourName">
-          <h4>{{ tourName }}</h4>
-          <p>{{ tourDates }}</p>
-          <p *ngIf="totalAmount > 0"><strong>Total: {{ totalAmount | currency:'EUR':'symbol':'1.0-0' }}</strong></p>
-        </div>
-      </div>
+      <!-- Resumen del pedido usando SummaryTableComponent -->
+      <app-summary-table
+        [summary]="summary"
+        [subtotal]="subtotal"
+        [total]="totalAmount"
+        [isAuthenticated]="false"
+        [selectedFlight]="null"
+        [showPointsSection]="false"
+        [showTotalSection]="true"
+        [showFlightSection]="false"
+        [currency]="'EUR'"
+        [title]="'Resumen del pedido'"
+      >
+      </app-summary-table>
     </div>
   </div>
 

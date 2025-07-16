@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TourNetService } from '../../core/services/tourNet.service';
 import { ReservationService } from '../../core/services/reservation/reservation.service';
 import { DepartureService } from '../../core/services/departure/departure.service';
 import { MenuItem } from 'primeng/api';
+import { SelectorRoomComponent } from './components/selector-room/selector-room.component';
+import { SelectorTravelerComponent } from './components/selector-traveler/selector-traveler.component';
 
 @Component({
   selector: 'app-checkout-v2',
@@ -12,6 +14,10 @@ import { MenuItem } from 'primeng/api';
   styleUrl: './checkout-v2.component.scss'
 })
 export class CheckoutV2Component implements OnInit {
+  // Referencia al componente de habitaciones
+  @ViewChild('roomSelector') roomSelector!: SelectorRoomComponent;
+  @ViewChild('travelerSelector') travelerSelector!: SelectorTravelerComponent;
+
   // Datos del tour
   tourName: string = '';
   departureDate: string = '';
@@ -22,7 +28,7 @@ export class CheckoutV2Component implements OnInit {
   loading: boolean = false;
   error: string | null = null;
 
-  // ✅ AÑADIDO: Variables adicionales para mostrar información completa
+  // Variables adicionales para mostrar información completa
   tourId: number | null = null;
   totalPassengers: number = 0;
 
@@ -45,7 +51,7 @@ export class CheckoutV2Component implements OnInit {
     // Configurar los steps
     this.initializeSteps();
 
-    // ✅ MODIFICADO: Obtener el reservationId de la URL
+    // Obtener el reservationId de la URL
     this.route.paramMap.subscribe(params => {
       const reservationIdParam = params.get('reservationId');
       if (reservationIdParam) {
@@ -54,7 +60,7 @@ export class CheckoutV2Component implements OnInit {
         console.log('🔍 CHECKOUT-V2 INICIADO');
         console.log('📋 Reservation ID desde URL:', this.reservationId);
         
-        // ✅ MODIFICADO: Cargar datos de la reservación desde el backend
+        // Cargar datos de la reservación desde el backend
         this.loadReservationData(this.reservationId);
       } else {
         console.error('❌ No se encontró reservationId en la URL');
@@ -85,7 +91,7 @@ export class CheckoutV2Component implements OnInit {
     ];
   }
 
-  // ✅ NUEVO: Método para cargar datos de la reservación
+  // Método para cargar datos de la reservación
   private loadReservationData(reservationId: number): void {
     this.loading = true;
     this.error = null;
@@ -111,7 +117,7 @@ export class CheckoutV2Component implements OnInit {
         // Cargar datos del tour usando reservation.tourId
         this.loadTourData(reservation.tourId);
         
-        // ✅ NUEVO: Cargar datos del departure usando reservation.departureId
+        // Cargar datos del departure usando reservation.departureId
         this.loadDepartureData(reservation.departureId);
       },
       error: (error) => {
@@ -122,7 +128,7 @@ export class CheckoutV2Component implements OnInit {
     });
   }
 
-  // ✅ NUEVO: Método para cargar datos del tour
+  // Método para cargar datos del tour
   private loadTourData(tourId: number): void {
     console.log('🔄 Cargando datos del tour ID:', tourId);
     
@@ -147,7 +153,7 @@ export class CheckoutV2Component implements OnInit {
     });
   }
 
-  // ✅ NUEVO: Método para cargar datos del departure
+  // Método para cargar datos del departure
   private loadDepartureData(departureId: number): void {
     console.log('🔄 Cargando datos del departure ID:', departureId);
     
@@ -164,11 +170,33 @@ export class CheckoutV2Component implements OnInit {
       },
       error: (error) => {
         console.error('❌ Error al cargar los datos del departure:', error);
-        // No establecemos error general aquí porque el tour ya se cargó
         console.warn('⚠️ Continuando sin fechas del departure');
       }
     });
   }
+
+  // ============ NUEVO: MÉTODO PARA COMUNICACIÓN ENTRE COMPONENTES ============
+
+  /**
+   * Método llamado cuando cambian los números de viajeros en el selector de travelers
+   * Este método actualiza el componente de habitaciones con los nuevos números
+   */
+  onTravelersNumbersChange(travelersNumbers: { adults: number; childs: number; babies: number }): void {
+    console.log('👥 Números de viajeros cambiados en el componente padre:', travelersNumbers);
+    
+    // Actualizar el total de pasajeros
+    this.totalPassengers = travelersNumbers.adults + travelersNumbers.childs + travelersNumbers.babies;
+    
+    // Comunicar el cambio al componente de habitaciones
+    if (this.roomSelector) {
+      this.roomSelector.updateTravelersNumbers(travelersNumbers);
+    }
+    
+    // Log para debugging
+    console.log('📊 Total pasajeros actualizado:', this.totalPassengers);
+  }
+
+  // ============ MÉTODOS EXISTENTES ============
 
   // Método para formatear la fecha
   formatDate(dateString: string): string {
@@ -204,7 +232,6 @@ export class CheckoutV2Component implements OnInit {
     const returnFormatted = this.formatDate(this.returnDate);
     
     if (departure && returnFormatted) {
-      // ✅ MODIFICADO: Formato específico solicitado
       return `${departure} - ${returnFormatted}`;
     } else if (departure) {
       return `Salida: ${departure}`;
@@ -232,8 +259,57 @@ export class CheckoutV2Component implements OnInit {
   }
 
   // Método para navegar al siguiente paso con validación
-  nextStepWithValidation(targetStep: number): void {
-    // Aquí puedes añadir validaciones específicas para cada paso
+  async nextStepWithValidation(targetStep: number): Promise<void> {
+    // NUEVO: Guardar cambios de travelers y habitaciones antes de continuar
+    if (targetStep === 1 && this.travelerSelector && this.roomSelector) {
+      let canContinue = true;
+
+      // 1. Guardar cambios de travelers si hay pendientes
+      if (this.travelerSelector.hasUnsavedChanges) {
+        console.log('💾 Guardando cambios de travelers antes de continuar...');
+        this.travelerSelector.saveTravelersChanges();
+        
+        // Esperar más tiempo para que se complete la sincronización
+        console.log('⏳ Esperando sincronización de travelers...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+
+      // 2. Recargar travelers en el componente de habitaciones
+      console.log('🔄 Recargando travelers en componente de habitaciones...');
+      if (this.reservationId) {
+        await this.roomSelector.loadExistingTravelers();
+        // Esperar un momento adicional
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      // 3. Verificar que hay habitaciones seleccionadas
+      const hasSelectedRooms = Object.values(this.roomSelector.selectedRooms).some((qty: number) => qty > 0);
+      if (!hasSelectedRooms) {
+        console.warn('⚠️ No hay habitaciones seleccionadas');
+        alert('Por favor, selecciona al menos una habitación antes de continuar.');
+        canContinue = false;
+      }
+
+      // 4. Guardar asignaciones de habitaciones
+      if (canContinue) {
+        console.log('🏠 Guardando asignaciones de habitaciones...');
+        const roomsSaved = await this.roomSelector.saveRoomAssignments();
+        
+        if (!roomsSaved) {
+          console.error('❌ Error al guardar asignaciones de habitaciones');
+          alert('Hubo un error al guardar las asignaciones de habitaciones. Por favor, inténtalo de nuevo.');
+          canContinue = false;
+        } else {
+          console.log('✅ Asignaciones de habitaciones guardadas exitosamente');
+          console.log('📋 Resumen:', this.roomSelector.getAssignmentsSummary());
+        }
+      }
+
+      if (!canContinue) {
+        return; // No continuar al siguiente paso
+      }
+    }
+
     console.log('Navegando al paso:', targetStep);
     this.onActiveIndexChange(targetStep);
   }

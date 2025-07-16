@@ -122,8 +122,31 @@ $colors: (
     width: 100%;
 
     .p-card-body,
-    .p-carousel-content {
+    /* .p-carousel-content {
       padding: 0;
+    } */
+
+    // SOLUCIÓN CLAVE: Mantener el ancho fijo de las cards
+    .p-carousel-items-container {
+      .p-carousel-items-content {
+        .p-carousel-item {
+          // Ancho fijo para mantener consistencia visual
+          min-width: 300px; // Ajusta según el ancho deseado de tus cards
+          max-width: 350px; // Ancho máximo
+          flex: 0 0 auto; // No permitir que se estiren o contraigan
+
+          app-activity-card {
+            width: 100%;
+            display: block;
+          }
+        }
+
+        // Cuando hay 3 o menos items, centrar
+        &:has(.p-carousel-item:nth-child(-n + 3):last-child) {
+          justify-content: center;
+          gap: 1rem;
+        }
+      }
     }
 
     // Añadir efecto de subrayado al pasar el cursor por encima
@@ -142,24 +165,26 @@ $colors: (
   // Responsive carousel adjustments
   @include resp(md) {
     .p-carousel {
-      .p-carousel-content {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-
-      .highlight-card {
-        flex: 1 1 calc(50% - 1rem);
-        max-width: calc(50% - 1rem);
+      .p-carousel-items-container {
+        .p-carousel-items-content {
+          .p-carousel-item {
+            min-width: 250px;
+            max-width: 300px;
+          }
+        }
       }
     }
   }
 
   @include resp(sm) {
     .p-carousel {
-      .highlight-card {
-        flex: 1 1 100%;
-        max-width: 100%;
+      .p-carousel-items-container {
+        .p-carousel-items-content {
+          .p-carousel-item {
+            min-width: 280px;
+            max-width: 100%;
+          }
+        }
       }
     }
   }

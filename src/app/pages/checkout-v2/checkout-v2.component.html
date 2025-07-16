@@ -1,0 +1,141 @@
+<div class="checkout">
+  <!-- Título del tour -->
+  <h2 class="checkout-title">
+    <p-button 
+      [link]="true" 
+      [routerLink]="['/tour', tourSlug]" 
+      class="tour-link plain-text"
+      *ngIf="tourSlug; else plainTitle">
+      {{ tourName }}
+    </p-button>
+    <ng-template #plainTitle>
+      {{ tourName }}
+    </ng-template>
+  </h2>
+
+  <!-- Fechas del tour -->
+  <p class="checkout-subtitle">
+    {{ tourDates }}
+  </p>
+
+  <!-- Container principal -->
+  <div class="checkout-container">
+    <!-- Contenido principal con steps -->
+    <div class="main-content">
+      <div class="steps-container full-width">
+        <!-- Steps de PrimeNG -->
+        <p-steps
+          [model]="items"
+          [readonly]="false"
+          [activeIndex]="activeIndex"
+          (activeIndexChange)="onActiveIndexChange($event)"
+        ></p-steps>
+
+        <!-- Contenido de cada paso -->
+        <div [ngSwitch]="activeIndex">
+          <!-- Step 1: Personalizar viaje -->
+          <div *ngSwitchCase="0">
+            <!-- Componente selector de habitaciones -->
+             <app-selector-traveler 
+                [departureId]="departureId"
+                [reservationId]="reservationId"
+                [availableTravelers]="['Adultos', 'Niños', 'Bebés']">
+             </app-selector-traveler>
+            <app-selector-room [departureId]="departureId"></app-selector-room>
+            
+            <!-- Información de debug -->
+         <!--    <div class="debug-info" *ngIf="reservationId"> -->
+              <!-- <h4>Información de la reserva:</h4> -->
+              <!-- ✅ MODIFICADO: Mostrar reservationId en lugar de departureId -->
+             <!--  <p><strong>Reservation ID:</strong> {{ reservationId }}</p>
+              <p><strong>Departure ID:</strong> {{ departureId }}</p>
+              <p><strong>Total Amount:</strong> {{ totalAmount | currency:'EUR':'symbol':'1.0-0' }}</p> -->
+           <!--  </div> -->
+
+            <div class="flex pt-6 justify-end">
+              <p-button
+                class="next"
+                label="Continuar"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                (onClick)="nextStepWithValidation(1)"
+              ></p-button>
+            </div>
+          </div>
+
+          <!-- Step 2: Vuelos -->
+          <div *ngSwitchCase="1">
+            <h3>Vuelos</h3>
+            <p>Contenido del paso 2 - Vuelos</p>
+
+            <div class="flight-buttons">
+              <p-button
+                class="without-flight"
+                label="Lo quiero sin vuelos"
+                (onClick)="nextStepWithValidation(2)"
+              ></p-button>
+              <p-button
+                class="continue-button"
+                label="Continuar"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                (onClick)="nextStepWithValidation(2)"
+              ></p-button>
+            </div>
+          </div>
+
+          <!-- Step 3: Viajeros -->
+          <div *ngSwitchCase="2">
+            <h3>Viajeros</h3>
+            <p>Contenido del paso 3 - Viajeros</p>
+
+            <div class="flex pt-6 justify-between">
+              <p-button
+                label="Continuar"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                (onClick)="nextStepWithValidation(3)"
+              ></p-button>
+            </div>
+          </div>
+
+          <!-- Step 4: Pago -->
+          <div *ngSwitchCase="3">
+            <h3>Pago</h3>
+            <p>Contenido del paso 4 - Pago</p>
+
+            <div class="flex pt-6 justify-between">
+              <p-button
+                label="Finalizar reserva"
+                icon="pi pi-check"
+                iconPos="right"
+              ></p-button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Columna derecha - Resumen -->
+    <div class="right-column">
+      <div class="summary-placeholder">
+        <h3>Resumen del pedido</h3>
+        
+        <div class="tour-summary" *ngIf="tourName">
+          <h4>{{ tourName }}</h4>
+          <p>{{ tourDates }}</p>
+          <p *ngIf="totalAmount > 0"><strong>Total: {{ totalAmount | currency:'EUR':'symbol':'1.0-0' }}</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Indicadores de carga y error -->
+  <div *ngIf="loading" class="loading-indicator">
+    <p>Cargando información de la reserva...</p>
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    <p>{{ error }}</p>
+  </div>
+</div>

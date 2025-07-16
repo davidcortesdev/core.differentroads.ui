@@ -1,0 +1,204 @@
+.traveler-selector {
+    --p-inputtext-background: transparent;
+    border-bottom: 0.0625rem solid var(--background-azul);
+    color: var(--background-azul);
+    margin-top: -1.5rem;
+
+    .step {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        .step-title {
+            width: fit-content;
+            height: fit-content;
+            border-bottom: 1px solid var(--background-azul);
+            font-size: 1.2rem;
+            font-weight: 500;
+            @media screen and (max-width: 480px) {
+                margin-top: 5px;
+                font-size: 1.1rem;
+            }
+        }
+    }
+
+    .traveler-selector-title {
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+        margin-top: 10px;
+        @media screen and (max-width: 480px) {
+            margin-top: 5px;
+            font-size: 1.1rem;
+        }
+    }
+
+    // Loading container
+    .loading-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        color: var(--background-azul);
+        font-size: 0.875rem;
+
+        .pi-spinner {
+            font-size: 1rem;
+        }
+    }
+
+    // Departure info
+    .departure-info {
+        margin-bottom: 1rem;
+
+        .departure-details {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            color: var(--background-azul);
+            font-size: 0.75rem;
+            opacity: 0.8;
+
+            .pi-users {
+                font-size: 0.75rem;
+            }
+
+            .existing-travelers {
+                color: #4caf50;
+                font-weight: 500;
+            }
+        }
+    }
+
+    .traveler-selector-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        @media screen and (max-width: 480px) {
+            margin-top: -10px;
+        }
+
+        .traveler-selector-wrap-item {
+            align-items: flex-start;
+            display: flex;
+            gap: 0.5rem;
+            justify-content: space-between;
+
+            ::ng-deep .p-inputtext {
+                border: 0;
+                box-shadow: none;
+                color: var(--background-azul);
+                text-align: center;
+                width: 3.5rem;
+
+                &:disabled {
+                    opacity: 0.6;
+                    background-color: #f5f5f5;
+                }
+            }
+
+            ::ng-deep .p-inputnumber-button {
+                border: 0;
+                color: var(--background-azul);
+
+                &:disabled {
+                    opacity: 0.4;
+                    color: #ccc;
+                }
+            }
+
+            ::ng-deep .p-inputnumber.p-disabled {
+                opacity: 0.6;
+            }
+
+            .traveler-selector-wrap-item-group {
+                display: flex;
+                flex-direction: column;
+                @media screen and (max-width: 480px) {
+                    font-size: 1.1rem;
+                }
+
+                .traveler-selector-wrap-item-name {
+                    font-weight: bold;
+                }
+
+                .traveler-selector-wrap-item-description {
+                    color: var(--background-azul);
+                    font-size: 0.75rem;
+                }
+            }
+        }
+    }
+
+    // Traveler summary
+    .traveler-summary {
+        margin-top: 1rem;
+        padding: 0.75rem;
+        background-color: rgba(var(--background-azul-rgb), 0.05);
+        border-radius: 4px;
+        border: 1px solid rgba(var(--background-azul-rgb), 0.2);
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            .summary-label {
+                font-size: 0.875rem;
+                color: var(--background-azul);
+            }
+
+            .summary-value {
+                font-weight: bold;
+                font-size: 0.875rem;
+                color: var(--background-azul);
+
+                &.travelers-ids {
+                    font-family: monospace;
+                    font-size: 0.75rem;
+                    color: #666;
+                }
+            }
+        }
+    }
+
+    .traveler-selector-cradle {
+        display: flex;
+        align-items: center;
+        margin-top: 16px;
+
+        .traveler-selector-cradle-label {
+            margin-left: 8px;
+        }
+    }
+}
+
+.messages {
+    margin-top: 10px;
+
+    .info-message,
+    .error-message {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0.625rem;
+        font-size: 0.6875rem;
+        border-radius: 4px;
+        margin-bottom: 8px;
+
+        p {
+            margin: auto 0;
+        }
+    }
+
+    .info-message {
+        background-color: #e4e4e7;
+        color: var(--background-azul);
+    }
+
+    .error-message {
+        background-color: #ffebee;
+        border: 1px solid #ef9a9a;
+        color: #d32f2f;
+    }
+}

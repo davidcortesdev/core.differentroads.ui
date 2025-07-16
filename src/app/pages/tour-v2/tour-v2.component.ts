@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TourNetService, Tour } from '../../core/services/tourNet.service';
 import { catchError, of } from 'rxjs';
 import { ItineraryService } from '../../core/services/itinerary/itinerary.service';
+import { SelectedDepartureEvent } from './components/tour-itinerary-v2/components/selector-itinerary/selector-itinerary.component';
+import { ActivityHighlight } from '../../shared/components/activity-card/activity-card.component';
 
 @Component({
   selector: 'app-tour-v2',
@@ -16,9 +18,29 @@ export class TourV2Component implements OnInit {
   tour: Tour | null = null;
   loading: boolean = true;
   error: string | null = null;
+  selectedDepartureEvent: SelectedDepartureEvent | null = null;
+
+  // ✅ AÑADIDO: Total del carrito
+  totalPrice: number = 0;
+
+  // ✅ CORREGIDO: Ciudad seleccionada - no debe tener valor inicial
+  selectedCity: string = '';
+
+  // ✅ AÑADIDO: Departure seleccionado
+  selectedDepartureData: any = null;
+    
+  // ✅ AÑADIDO: Total de pasajeros
+  totalPassengers: number = 1;
+
+  // ✅ NUEVO: Array para almacenar actividades seleccionadas
+  selectedActivities: ActivityHighlight[] = [];
+  
+  // ✅ NUEVO: Flag para controlar cuándo mostrar el estado de actividades
+  showActivitiesStatus: boolean = false;
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private tourNetService: TourNetService,
     private ItineraryService: ItineraryService
   ) {}
@@ -39,7 +61,7 @@ export class TourV2Component implements OnInit {
   private loadTourBySlug(slug: string): void {
     this.loading = true;
     this.error = null;
-    
+
     this.tourNetService.getTours({ slug })
       .pipe(
         catchError(err => {
@@ -56,5 +78,55 @@ export class TourV2Component implements OnInit {
         }
         this.loading = false;
       });
+  }
+
+  onDepartureSelected(event: SelectedDepartureEvent): void {
+    this.selectedDepartureEvent = event;
+    // ✅ AÑADIDO: Reset precio al cambiar departure
+    this.totalPrice = 0;
+    
+    // ✅ NUEVO: Limpiar actividades y activar la visualización del estado
+    this.selectedActivities = [];
+    this.showActivitiesStatus = true; // Activar para mostrar "Sin actividades opcionales"
+  }
+
+  // NUEVO: Manejar selección de actividad desde el componente hijo
+  onActivitySelected(activityHighlight: ActivityHighlight): void {
+
+    // Actualizar el array de actividades seleccionadas
+    const existingIndex = this.selectedActivities.findIndex(activity => activity.id === activityHighlight.id);
+    
+    if (existingIndex !== -1) {
+      // Si ya existe, actualizar el estado
+      this.selectedActivities[existingIndex] = { ...activityHighlight };
+    } else {
+      // Si no existe, agregar nueva actividad
+      this.selectedActivities.push({ ...activityHighlight });
+    }
+
+    // Remover actividades que ya no están agregadas
+    this.selectedActivities = this.selectedActivities.filter(activity => activity.added);
+    
+  }
+
+  // ✅ AÑADIDO: Recibir actualización de precio
+  onPriceUpdate(price: number): void {
+    this.totalPrice = price;
+  }
+
+  // ✅ AÑADIDO: Recibir actualización de ciudad
+  onCityUpdate(city: string): void {
+    this.selectedCity = city;
+  }
+
+  // ✅ AÑADIDO: Recibir actualización de departure
+  onDepartureUpdate(departure: any): void {
+    this.selectedDepartureData = departure;
+  }
+    
+  // ✅ AÑADIDO: Recibir actualización del total de pasajeros
+  onPassengersUpdate(passengersData: any): void {
+    // Calcular total de pasajeros (adultos + niños + bebés)
+    this.totalPassengers = passengersData.adults + passengersData.children + passengersData.babies;
   }
 }

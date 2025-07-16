@@ -188,7 +188,9 @@ export class ActivityService {
    * @returns Lista de actividades filtradas
    */
   getForItinerary(itineraryId: number, departureId?: number, itineraryDayId?: number): Observable<IActivityResponse[]> {
-    let params = new HttpParams().set('itineraryId', itineraryId.toString());
+    let params = new HttpParams()
+      .set('itineraryId', itineraryId.toString())
+      .set('isVisibleOnWeb', 'true'); // Siempre enviamos isVisibleOnWeb=true
     if (departureId !== undefined) {
       params = params.set('departureId', departureId.toString());
     }

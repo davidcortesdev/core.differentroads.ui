@@ -10,25 +10,41 @@ import {
   AfterViewInit,
   OnDestroy,
   OnChanges,
-  SimpleChanges
+  SimpleChanges,
 } from '@angular/core';
-import { TourNetService, Tour } from '../../../../core/services/tourNet.service';
-import { TourLocationService, ITourLocationResponse } from '../../../../core/services/tour/tour-location.service';
-import { LocationNetService, Location } from '../../../../core/services/locations/locationNet.service';
-import { ReservationService, ReservationCreate, IReservationResponse } from '../../../../core/services/reservation/reservation.service';
+import {
+  TourNetService,
+  Tour,
+} from '../../../../core/services/tourNet.service';
+import {
+  TourLocationService,
+  ITourLocationResponse,
+} from '../../../../core/services/tour/tour-location.service';
+import {
+  LocationNetService,
+  Location,
+} from '../../../../core/services/locations/locationNet.service';
+import {
+  ReservationService,
+  ReservationCreate,
+  IReservationResponse,
+} from '../../../../core/services/reservation/reservation.service';
 import { ReservationTravelerService } from '../../../../core/services/reservation/reservation-traveler.service';
 import { Subscription, forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { ActivityHighlight } from '../../../../shared/components/activity-card/activity-card.component';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-tour-header-v2',
   standalone: false,
   templateUrl: './tour-header-v2.component.html',
-  styleUrls: ['./tour-header-v2.component.scss']
+  styleUrls: ['./tour-header-v2.component.scss'],
 })
-export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, OnChanges {
+export class TourHeaderV2Component
+  implements OnInit, AfterViewInit, OnDestroy, OnChanges
+{
   @Input() tourId: number | undefined;
   @Input() totalPrice: number = 0;
   @Input() selectedCity: string = '';
@@ -41,7 +57,7 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
 
   // Tour data
   tour: Partial<Tour> = {};
-  
+
   // Información geográfica
   country: string = '';
   continent: string = '';
@@ -97,15 +113,15 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
   // NUEVO: Calcular precio total incluyendo actividades
   get totalPriceWithActivities(): number {
     const activitiesTotal = this.selectedActivities
-      .filter(activity => activity.added)
+      .filter((activity) => activity.added)
       .reduce((sum, activity) => sum + (activity.price || 0), 0);
-    
+
     return this.totalPrice + activitiesTotal;
   }
 
   // NUEVO: Obtener actividades agregadas
   get addedActivities(): ActivityHighlight[] {
-    return this.selectedActivities.filter(activity => activity.added);
+    return this.selectedActivities.filter((activity) => activity.added);
   }
 
   // NUEVO: Verificar si hay actividades agregadas
@@ -116,9 +132,11 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
   // NUEVO: Verificar si debe mostrar estado de actividades
   get shouldShowActivitiesStatus(): boolean {
     // Solo mostrar si el padre dice que debe mostrarse Y hay departure seleccionado
-    return this.showActivitiesStatus && 
-           this.selectedDeparture && 
-           this.selectedDeparture.departureDate;
+    return (
+      this.showActivitiesStatus &&
+      this.selectedDeparture &&
+      this.selectedDeparture.departureDate
+    );
   }
 
   // NUEVO: Verificar si ya se interactuó con actividades (no se usa más)
@@ -128,12 +146,12 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
 
   get formattedPrice(): string {
     if (this.totalPriceWithActivities <= 0) return '';
-    
+
     return new Intl.NumberFormat('de-DE', {
       style: 'currency',
       currency: 'EUR',
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(this.totalPriceWithActivities);
   }
 
@@ -142,31 +160,34 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
   }
 
   get formattedDepartureWithType(): string {
-    if (!this.selectedDeparture || !this.selectedDeparture.departureDate) return '';
-    
+    if (!this.selectedDeparture || !this.selectedDeparture.departureDate)
+      return '';
+
     try {
       const dateString = this.selectedDeparture.departureDate;
       const dateParts = dateString.split('-');
-      
+
       if (dateParts.length !== 3) return dateString;
-      
+
       const year = parseInt(dateParts[0]);
       const month = parseInt(dateParts[1]) - 1;
       const day = parseInt(dateParts[2]);
-      
+
       const date = new Date(year, month, day);
-      
+
       const formattedDate = date.toLocaleDateString('es-ES', {
         day: 'numeric',
-        month: 'long'
+        month: 'long',
       });
-      
-      const isSingle = this.selectedDeparture.group?.toLowerCase().includes('single');
-      
+
+      const isSingle = this.selectedDeparture.group
+        ?.toLowerCase()
+        .includes('single');
+
       if (isSingle) {
         return `${formattedDate} (S) - Single`;
       }
-      
+
       return formattedDate;
     } catch {
       return this.selectedDeparture.departureDate;
@@ -179,7 +200,11 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
     const type = group.toLowerCase();
 
     if (type.includes('single') || type.includes('singles')) {
-      return { title: 'Single', description: 'Viaje individual', class: 'single' };
+      return {
+        title: 'Single',
+        description: 'Viaje individual',
+        class: 'single',
+      };
     }
 
     if (type.includes('group') || type.includes('grupo')) {
@@ -187,7 +212,11 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
     }
 
     if (type.includes('private') || type.includes('privado')) {
-      return { title: 'Private', description: 'Viaje privado', class: 'private' };
+      return {
+        title: 'Private',
+        description: 'Viaje privado',
+        class: 'private',
+      };
     }
 
     return undefined;
@@ -202,7 +231,7 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
         },
         error: (error) => {
           console.error('Error cargando tour:', error);
-        }
+        },
       })
     );
   }
@@ -210,71 +239,83 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
   private loadCountryAndContinent(tourId: number): void {
     this.subscriptions.add(
       forkJoin([
-        this.tourLocationService.getByTourAndType(tourId, "COUNTRY").pipe(
-          map(response => Array.isArray(response) ? response : (response ? [response] : [])),
-          catchError(error => {
+        this.tourLocationService.getByTourAndType(tourId, 'COUNTRY').pipe(
+          map((response) =>
+            Array.isArray(response) ? response : response ? [response] : []
+          ),
+          catchError((error) => {
             return of([]);
           })
         ),
-        this.tourLocationService.getByTourAndType(tourId, "CONTINENT").pipe(
-          map(response => Array.isArray(response) ? response : (response ? [response] : [])),
-          catchError(error => {
+        this.tourLocationService.getByTourAndType(tourId, 'CONTINENT').pipe(
+          map((response) =>
+            Array.isArray(response) ? response : response ? [response] : []
+          ),
+          catchError((error) => {
             return of([]);
           })
-        )
-      ]).pipe(
-        switchMap(([countryLocations, continentLocations]) => {
-          const validCountryLocations = countryLocations.filter(loc => loc && loc.id && loc.locationId);
-          const validContinentLocations = continentLocations.filter(loc => loc && loc.id && loc.locationId);
+        ),
+      ])
+        .pipe(
+          switchMap(([countryLocations, continentLocations]) => {
+            const validCountryLocations = countryLocations.filter(
+              (loc) => loc && loc.id && loc.locationId
+            );
+            const validContinentLocations = continentLocations.filter(
+              (loc) => loc && loc.id && loc.locationId
+            );
 
-          const allLocationIds = [
-            ...validCountryLocations.map(tl => tl.locationId),
-            ...validContinentLocations.map(tl => tl.locationId)
-          ];
-          const uniqueLocationIds = [...new Set(allLocationIds)];
+            const allLocationIds = [
+              ...validCountryLocations.map((tl) => tl.locationId),
+              ...validContinentLocations.map((tl) => tl.locationId),
+            ];
+            const uniqueLocationIds = [...new Set(allLocationIds)];
 
-          if (uniqueLocationIds.length === 0) {
-            return of({ 
-              countryLocations: validCountryLocations, 
-              continentLocations: validContinentLocations, 
-              locations: [] 
-            });
-          }
-
-          return this.locationNetService.getLocationsByIds(uniqueLocationIds).pipe(
-            map(locations => ({
-              countryLocations: validCountryLocations,
-              continentLocations: validContinentLocations,
-              locations
-            })),
-            catchError(error => {
-              return of({ 
-                countryLocations: validCountryLocations, 
-                continentLocations: validContinentLocations, 
-                locations: [] 
+            if (uniqueLocationIds.length === 0) {
+              return of({
+                countryLocations: validCountryLocations,
+                continentLocations: validContinentLocations,
+                locations: [],
               });
-            })
-          );
+            }
+
+            return this.locationNetService
+              .getLocationsByIds(uniqueLocationIds)
+              .pipe(
+                map((locations) => ({
+                  countryLocations: validCountryLocations,
+                  continentLocations: validContinentLocations,
+                  locations,
+                })),
+                catchError((error) => {
+                  return of({
+                    countryLocations: validCountryLocations,
+                    continentLocations: validContinentLocations,
+                    locations: [],
+                  });
+                })
+              );
+          })
+        )
+        .subscribe(({ countryLocations, continentLocations, locations }) => {
+          const locationsMap = new Map<number, Location>();
+          locations.forEach((location) => {
+            locationsMap.set(location.id, location);
+          });
+
+          const countries = countryLocations
+            .sort((a, b) => a.displayOrder - b.displayOrder)
+            .map((tl) => locationsMap.get(tl.locationId)?.name)
+            .filter((name) => name) as string[];
+
+          const continents = continentLocations
+            .sort((a, b) => a.displayOrder - b.displayOrder)
+            .map((tl) => locationsMap.get(tl.locationId)?.name)
+            .filter((name) => name) as string[];
+
+          this.country = countries.join(', ');
+          this.continent = continents.join(', ');
         })
-      ).subscribe(({ countryLocations, continentLocations, locations }) => {
-        const locationsMap = new Map<number, Location>();
-        locations.forEach(location => {
-          locationsMap.set(location.id, location);
-        });
-
-        const countries = countryLocations
-          .sort((a, b) => a.displayOrder - b.displayOrder)
-          .map(tl => locationsMap.get(tl.locationId)?.name)
-          .filter(name => name) as string[];
-
-        const continents = continentLocations
-          .sort((a, b) => a.displayOrder - b.displayOrder)
-          .map(tl => locationsMap.get(tl.locationId)?.name)
-          .filter(name => name) as string[];
-
-        this.country = countries.join(', ');
-        this.continent = continents.join(', ');
-      })
     );
   }
 
@@ -314,59 +355,65 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
 
   onCountryClick(event: MouseEvent, fullCountryText: string): void {
     event.preventDefault();
-    
+
     const clickedCountry = this.getClickedCountry(event, fullCountryText);
     if (clickedCountry) {
       this.router.navigate(['/tours'], {
         queryParams: {
-          destination: clickedCountry
-        }
+          destination: clickedCountry,
+        },
       });
     }
   }
 
-  private getClickedCountry(event: MouseEvent, fullText: string): string | null {
+  private getClickedCountry(
+    event: MouseEvent,
+    fullText: string
+  ): string | null {
     const target = event.target as HTMLElement;
-    const countries = fullText.split(',').map(c => c.trim()).filter(c => c);
-    
+    const countries = fullText
+      .split(',')
+      .map((c) => c.trim())
+      .filter((c) => c);
+
     if (countries.length === 1) {
       return countries[0];
     }
-  
+
     const rect = target.getBoundingClientRect();
     const clickX = event.clientX - rect.left;
-    
+
     const tempElement = document.createElement('span');
     tempElement.style.visibility = 'hidden';
     tempElement.style.position = 'absolute';
     tempElement.style.fontSize = window.getComputedStyle(target).fontSize;
     tempElement.style.fontFamily = window.getComputedStyle(target).fontFamily;
     document.body.appendChild(tempElement);
-    
+
     let currentX = 0;
     let clickedCountry: string | null = null;
-    
+
     for (let i = 0; i < countries.length; i++) {
       const country = countries[i];
       const separator = i < countries.length - 1 ? ', ' : '';
       const textToMeasure = country + separator;
-      
+
       tempElement.textContent = textToMeasure;
       const textWidth = tempElement.offsetWidth;
-      
+
       if (clickX >= currentX && clickX <= currentX + textWidth) {
         tempElement.textContent = country;
         const countryWidth = tempElement.offsetWidth;
-        
+
         if (clickX <= currentX + countryWidth) {
           clickedCountry = country;
           break;
         }
       }
-      
+
       currentX += textWidth;
     }
-    
+
     document.body.removeChild(tempElement);
     return clickedCountry;
   }
@@ -390,7 +437,7 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
       id: 0,
       tkId: '',
       reservationStatusId: 1,
-      retailerId: 7,
+      retailerId: environment.retaileriddefault,
       tourId: this.tourId,
       departureId: this.selectedDeparture.id,
       userId: 1,
@@ -401,48 +448,54 @@ export class TourHeaderV2Component implements OnInit, AfterViewInit, OnDestroy, 
       abandonedAt: '',
       reservedAt: '',
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
 
     this.subscriptions.add(
-      this.reservationService.create(reservationData).pipe(
-        switchMap((createdReservation: IReservationResponse) => {
-          const travelerObservables = [];
-          
-          for (let i = 0; i < this.totalPassengers; i++) {
-            const travelerNumber = i + 1;
-            const isLeadTraveler = i === 0;
-            
-            const travelerData = {
-              id: 0,
-              reservationId: createdReservation.id,
-              travelerNumber: travelerNumber,
-              isLeadTraveler: isLeadTraveler,
-              tkId: ''
-            };
-            
-            const travelerObservable = this.reservationTravelerService.create(travelerData);
-            travelerObservables.push(travelerObservable);
-          }
-          
-          return forkJoin(travelerObservables).pipe(
-            map(createdTravelers => {
-              return createdReservation;
-            })
-          );
+      this.reservationService
+        .create(reservationData)
+        .pipe(
+          switchMap((createdReservation: IReservationResponse) => {
+            const travelerObservables = [];
+
+            for (let i = 0; i < this.totalPassengers; i++) {
+              const travelerNumber = i + 1;
+              const isLeadTraveler = i === 0;
+
+              const travelerData = {
+                id: 0,
+                reservationId: createdReservation.id,
+                travelerNumber: travelerNumber,
+                isLeadTraveler: isLeadTraveler,
+                tkId: '',
+              };
+
+              const travelerObservable =
+                this.reservationTravelerService.create(travelerData);
+              travelerObservables.push(travelerObservable);
+            }
+
+            return forkJoin(travelerObservables).pipe(
+              map((createdTravelers) => {
+                return createdReservation;
+              })
+            );
+          })
+        )
+        .subscribe({
+          next: (createdReservation: IReservationResponse) => {
+            this.router.navigate(['/checkout-v2', createdReservation.id]);
+          },
+          error: (error) => {
+            console.error('Error en el proceso:', error);
+            alert(
+              'Error al crear la reservación o los travelers. Por favor, inténtalo de nuevo.'
+            );
+          },
+          complete: () => {
+            this.isCreatingReservation = false;
+          },
         })
-      ).subscribe({
-        next: (createdReservation: IReservationResponse) => {
-          this.router.navigate(['/checkout-v2', createdReservation.id]);
-        },
-        error: (error) => {
-          console.error('Error en el proceso:', error);
-          alert('Error al crear la reservación o los travelers. Por favor, inténtalo de nuevo.');
-        },
-        complete: () => {
-          this.isCreatingReservation = false;
-        }
-      })
     );
   }
 }

@@ -16,6 +16,8 @@ export interface ActivityPriceFilters {
   PriceRateId?: number;
   CurrencyId?: number;
   RetailerId?: number;
+  BasePrice?: number;
+  CampaignPrice?: number;
   DepartureId?: number;
 }
 
@@ -80,7 +82,7 @@ export class ActivityPriceService {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
           if (Array.isArray(value)) {
-            value.forEach(v => {
+            value.forEach((v) => {
               params = params.append(key, v.toString());
             });
           } else {

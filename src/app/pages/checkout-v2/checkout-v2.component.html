@@ -52,6 +52,15 @@
               #roomSelector>
             </app-selector-room>
 
+            <!-- Componente de seguro -->
+            <app-insurance
+              [tourId]="tourId"
+              [departureId]="departureId"
+              [itineraryId]="itineraryId"
+              (insuranceSelectionChange)="onInsuranceSelectionChange($event)"
+              #insuranceSelector>
+            </app-insurance>
+
             <div class="flex pt-6 justify-end">
               <p-button
                 class="next"

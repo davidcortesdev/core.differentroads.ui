@@ -5,7 +5,7 @@
       <i class="pi pi-info-circle"></i>También puedes añadirlas después desde tu perfil
     </div>
   </div>
-  
+
   <p-dataview #dv [value]="insurances">
     <ng-template #list let-items>
       <div class="dataview-grid">
@@ -27,6 +27,9 @@
               <div class="dataview-info">
                 <div>
                   <div class="dataview-name">Seguro Básico</div>
+                  <div class="dataview-description">
+                    Cobertura básica incluida sin costo adicional
+                  </div>
                 </div>
               </div>
               <div class="dataview-actions">
@@ -37,7 +40,7 @@
             </div>
           </div>
         </div>
-        
+
         <!-- Other Insurance Cards - Now clickable -->
         <div class="dataview-item" *ngFor="let item of items">
           <div class="dataview-card dataview-card-border"

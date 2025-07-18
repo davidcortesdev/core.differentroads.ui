@@ -11,10 +11,10 @@ import {
   AgeGroupService,
   IAgeGroupResponse,
 } from '../../core/services/agegroup/age-group.service';
-import { MenuItem } from 'primeng/api';
+import { MenuItem, MessageService } from 'primeng/api';
 import { SelectorRoomComponent } from './components/selector-room/selector-room.component';
 import { SelectorTravelerComponent } from './components/selector-traveler/selector-traveler.component';
-import { InsuranceComponent } from './components/insurance/insurance.component'; // NUEVO
+import { InsuranceComponent } from './components/insurance/insurance.component';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -27,7 +27,7 @@ export class CheckoutV2Component implements OnInit {
   // Referencias a componentes hijos
   @ViewChild('roomSelector') roomSelector!: SelectorRoomComponent;
   @ViewChild('travelerSelector') travelerSelector!: SelectorTravelerComponent;
-  @ViewChild('insuranceSelector') insuranceSelector!: InsuranceComponent; // NUEVO
+  @ViewChild('insuranceSelector') insuranceSelector!: InsuranceComponent;
 
   // Datos del tour
   tourName: string = '';
@@ -55,7 +55,7 @@ export class CheckoutV2Component implements OnInit {
   pricesByAgeGroup: { [ageGroupName: string]: number } = {};
   reservationData: any = null;
 
-  // NUEVO: Propiedades para seguros (sin afectar funcionalidad existente)
+  // Propiedades para seguros
   selectedInsurance: any = null;
   insurancePrice: number = 0;
 
@@ -73,7 +73,8 @@ export class CheckoutV2Component implements OnInit {
     private reservationService: ReservationService,
     private departureService: DepartureService,
     private departurePriceSupplementService: DeparturePriceSupplementService,
-    private ageGroupService: AgeGroupService
+    private ageGroupService: AgeGroupService,
+    private messageService: MessageService
   ) {}
 
   ngOnInit(): void {
@@ -321,7 +322,7 @@ export class CheckoutV2Component implements OnInit {
   }
 
   /**
-   * NUEVO: Método llamado cuando cambia la selección de seguro
+   * Método llamado cuando cambia la selección de seguro
    */
   onInsuranceSelectionChange(insuranceData: {
     selectedInsurance: any;
@@ -367,10 +368,9 @@ export class CheckoutV2Component implements OnInit {
   }): void {
     this.summary = [];
 
-    // Plan básico - Adultos (FUNCIONALIDAD ORIGINAL)
+    // Plan básico - Adultos
     if (travelersNumbers.adults > 0) {
       const adultPrice = this.pricesByAgeGroup['Adultos'] || 0;
-      // Solo añadir al summary si el precio es mayor que 0
       if (adultPrice > 0) {
         this.summary.push({
           qty: travelersNumbers.adults,
@@ -380,10 +380,9 @@ export class CheckoutV2Component implements OnInit {
       }
     }
 
-    // Plan básico - Niños (FUNCIONALIDAD ORIGINAL)
+    // Plan básico - Niños
     if (travelersNumbers.childs > 0) {
       const childPrice = this.pricesByAgeGroup['Niños'] || 0;
-      // Solo añadir al summary si el precio es mayor que 0
       if (childPrice > 0) {
         this.summary.push({
           qty: travelersNumbers.childs,
@@ -393,10 +392,9 @@ export class CheckoutV2Component implements OnInit {
       }
     }
 
-    // Plan básico - Bebés (FUNCIONALIDAD ORIGINAL)
+    // Plan básico - Bebés
     if (travelersNumbers.babies > 0) {
       const babyPrice = this.pricesByAgeGroup['Bebés'] || 0;
-      // Solo añadir al summary si el precio es mayor que 0
       if (babyPrice > 0) {
         this.summary.push({
           qty: travelersNumbers.babies,
@@ -406,7 +404,7 @@ export class CheckoutV2Component implements OnInit {
       }
     }
 
-    // Habitaciones seleccionadas (FUNCIONALIDAD ORIGINAL)
+    // Habitaciones seleccionadas
     if (this.roomSelector && this.roomSelector.selectedRooms) {
       Object.entries(this.roomSelector.selectedRooms).forEach(([tkId, qty]) => {
         if (qty > 0) {
@@ -415,7 +413,6 @@ export class CheckoutV2Component implements OnInit {
           );
           if (room) {
             const roomPrice = room.basePrice || 0;
-            // Solo añadir habitaciones con precio (pueden ser negativos para descuentos)
             if (roomPrice !== 0) {
               this.summary.push({
                 qty: qty,
@@ -428,23 +425,23 @@ export class CheckoutV2Component implements OnInit {
       });
     }
 
-    // NUEVO: Seguro seleccionado (ADICIÓN SIN AFECTAR LO ANTERIOR)
+    // Seguro seleccionado
     if (this.selectedInsurance && this.insurancePrice > 0) {
       const totalTravelers =
         travelersNumbers.adults +
         travelersNumbers.childs +
         travelersNumbers.babies;
       this.summary.push({
-        qty: totalTravelers, // El seguro se aplica a todos los viajeros
+        qty: totalTravelers,
         value: this.insurancePrice,
         description: `Seguro ${this.selectedInsurance.name}`,
       });
     }
 
-    // Calcular totales (FUNCIONALIDAD ORIGINAL)
+    // Calcular totales
     this.calculateTotals();
 
-    // Actualizar totalAmount en la reserva si ha cambiado (FUNCIONALIDAD ORIGINAL)
+    // Actualizar totales en la reserva (solo localmente, no en BD)
     this.updateReservationTotalAmount();
   }
 
@@ -472,24 +469,9 @@ export class CheckoutV2Component implements OnInit {
 
     // Solo actualizar si el monto ha cambiado
     if (this.totalAmountCalculated !== this.reservationData.totalAmount) {
-      // Crear objeto de actualización
-      const updateData = {
-        ...this.reservationData,
-        totalAmount: this.totalAmountCalculated,
-        updatedAt: new Date().toISOString(),
-      };
-
-      this.reservationService.update(this.reservationId, updateData).subscribe({
-        next: (success) => {
-          if (success) {
-            this.reservationData.totalAmount = this.totalAmountCalculated;
-            this.totalAmount = this.totalAmountCalculated; // Actualizar variable local también
-          }
-        },
-        error: (error) => {
-          // Error al actualizar totalAmount en la reserva
-        },
-      });
+      // Actualizar las variables locales inmediatamente para evitar conflictos
+      this.reservationData.totalAmount = this.totalAmountCalculated;
+      this.totalAmount = this.totalAmountCalculated;
     }
   }
 
@@ -498,15 +480,14 @@ export class CheckoutV2Component implements OnInit {
     if (!dateString) return '';
 
     try {
-      const dateParts = dateString.split('-'); // Ejemplo: "2025-07-23" -> ["2025", "07", "23"]
+      const dateParts = dateString.split('-');
 
       if (dateParts.length !== 3) return dateString;
 
       const year = parseInt(dateParts[0]);
-      const month = parseInt(dateParts[1]) - 1; // Los meses en JS van de 0-11
+      const month = parseInt(dateParts[1]) - 1;
       const day = parseInt(dateParts[2]);
 
-      // Crear fecha SIN zona horaria para evitar cambios de día
       const date = new Date(year, month, day);
 
       return date.toLocaleDateString('es-ES', {
@@ -554,19 +535,18 @@ export class CheckoutV2Component implements OnInit {
 
   // Método para navegar al siguiente paso con validación
   async nextStepWithValidation(targetStep: number): Promise<void> {
-    // Guardar cambios de travelers y habitaciones antes de continuar
-    if (targetStep === 1 && this.travelerSelector && this.roomSelector) {
-      let canContinue = true;
-
+    // Guardar cambios de travelers, habitaciones y seguros antes de continuar
+    if (
+      targetStep === 1 &&
+      this.travelerSelector &&
+      this.roomSelector &&
+      this.insuranceSelector
+    ) {
       try {
-        // 1. Guardar cambios de travelers si hay pendientes (en paralelo)
-        const savePromises: Promise<any>[] = [];
-
+        // 1. Guardar cambios de travelers si hay pendientes
         if (this.travelerSelector.hasUnsavedChanges) {
           this.travelerSelector.saveTravelersChanges();
-
-          // Esperar solo 500ms en lugar de 2000ms
-          savePromises.push(new Promise((resolve) => setTimeout(resolve, 500)));
+          await new Promise((resolve) => setTimeout(resolve, 800));
         }
 
         // 2. Verificar habitaciones seleccionadas inmediatamente
@@ -574,40 +554,150 @@ export class CheckoutV2Component implements OnInit {
           this.roomSelector.selectedRooms
         ).some((qty: number) => qty > 0);
         if (!hasSelectedRooms) {
-          alert(
-            'Por favor, selecciona al menos una habitación antes de continuar.'
-          );
-          return; // Salir inmediatamente
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Habitación requerida',
+            detail:
+              'Por favor, selecciona al menos una habitación antes de continuar.',
+            life: 5000,
+          });
+          return;
         }
 
-        // 3. Esperar promesas en paralelo si las hay
-        if (savePromises.length > 0) {
-          await Promise.all(savePromises);
+        // 3. Validar que las habitaciones seleccionadas puedan acomodar a todos los pasajeros
+        const currentTravelers = this.travelerSelector.travelersNumbers;
+        const totalPassengers =
+          currentTravelers.adults +
+          currentTravelers.childs +
+          currentTravelers.babies;
+
+        // Calcular la capacidad total de las habitaciones seleccionadas
+        let totalCapacity = 0;
+        Object.entries(this.roomSelector.selectedRooms).forEach(
+          ([tkId, qty]) => {
+            if (qty > 0) {
+              const room = this.roomSelector.allRoomsAvailability.find(
+                (r) => r.tkId === tkId
+              );
+              if (room) {
+                const roomCapacity = room.isShared ? 1 : room.capacity || 1;
+                totalCapacity += roomCapacity * qty;
+              }
+            }
+          }
+        );
+
+        // Validar que la capacidad sea suficiente
+        if (totalCapacity < totalPassengers) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Capacidad insuficiente',
+            detail: `Las habitaciones seleccionadas tienen capacidad para ${totalCapacity} personas, pero tienes ${totalPassengers} viajeros. Por favor, selecciona más habitaciones o habitaciones de mayor capacidad.`,
+            life: 7000,
+          });
+          return;
         }
 
-        // 4. Recargar travelers solo si es necesario
-        if (this.travelerSelector.hasUnsavedChanges) {
-          await this.roomSelector.loadExistingTravelers();
+        // Validar que la capacidad no sea excesiva (más del 150% necesario)
+        if (totalCapacity > totalPassengers * 1.5) {
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Capacidad excesiva',
+            detail: `Las habitaciones seleccionadas tienen capacidad para ${totalCapacity} personas, pero solo tienes ${totalPassengers} viajeros. Esto puede generar costos innecesarios.`,
+            life: 6000,
+          });
+          // No retornamos aquí, solo advertimos pero permitimos continuar
         }
 
-        // 5. Guardar asignaciones de habitaciones
-        const roomsSaved = await this.roomSelector.saveRoomAssignments();
+        // 4. Recargar travelers después de guardar cambios
+        await this.roomSelector.loadExistingTravelers();
+        this.insuranceSelector.loadExistingTravelers();
+
+        // 5. Actualizar el número de pasajeros total y recalcular resumen
+        this.totalPassengers = totalPassengers;
+        this.updateOrderSummary(currentTravelers);
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        // 6. Guardar asignaciones de habitaciones y seguros EN PARALELO
+        const [roomsSaved, insuranceSaved] = await Promise.all([
+          this.roomSelector.saveRoomAssignments(),
+          this.insuranceSelector.saveInsuranceAssignments(),
+        ]);
 
         if (!roomsSaved) {
-          alert(
-            'Hubo un error al guardar las asignaciones de habitaciones. Por favor, inténtalo de nuevo.'
-          );
-          return; // Salir si hay error
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error al guardar habitaciones',
+            detail:
+              'Hubo un error al guardar las asignaciones de habitaciones. Por favor, inténtalo de nuevo.',
+            life: 5000,
+          });
+          return;
+        }
+
+        if (!insuranceSaved) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error al guardar seguro',
+            detail:
+              'Hubo un error al guardar las asignaciones de seguro. Por favor, inténtalo de nuevo.',
+            life: 5000,
+          });
+          return;
+        }
+
+        // 7. Actualizar el totalPassengers en la reserva
+        if (this.reservationId && this.reservationData) {
+          const reservationUpdateData = {
+            ...this.reservationData,
+            totalPassengers: this.totalPassengers,
+            totalAmount: this.totalAmountCalculated,
+            updatedAt: new Date().toISOString(),
+          };
+
+          await new Promise((resolve, reject) => {
+            this.reservationService
+              .update(this.reservationId!, reservationUpdateData)
+              .subscribe({
+                next: (success) => {
+                  if (success) {
+                    this.reservationData.totalPassengers = this.totalPassengers;
+                    this.reservationData.totalAmount =
+                      this.totalAmountCalculated;
+                    this.totalAmount = this.totalAmountCalculated;
+
+                    // Mostrar toast de éxito
+                    this.messageService.add({
+                      severity: 'success',
+                      summary: 'Guardado exitoso',
+                      detail: `Datos guardados correctamente para ${this.totalPassengers} viajeros.`,
+                      life: 3000,
+                    });
+
+                    resolve(success);
+                  } else {
+                    reject(new Error('Error al actualizar la reserva'));
+                  }
+                },
+                error: (error) => {
+                  reject(error);
+                },
+              });
+          });
         }
       } catch (error) {
-        alert(
-          'Hubo un error al guardar los datos. Por favor, inténtalo de nuevo.'
-        );
-        return; // Salir si hay error
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error inesperado',
+          detail:
+            'Hubo un error al guardar los datos. Por favor, inténtalo de nuevo.',
+          life: 5000,
+        });
+        return;
       }
     }
 
-    // Navegar inmediatamente al siguiente paso
+    // Navegar al siguiente paso
     this.onActiveIndexChange(targetStep);
   }
 }

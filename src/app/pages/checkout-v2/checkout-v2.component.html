@@ -1,4 +1,7 @@
 <div class="checkout">
+  <!-- Toast para mensajes -->
+  <p-toast></p-toast>
+
   <!-- Título del tour -->
   <h2 class="checkout-title">
     <p-button 
@@ -57,6 +60,7 @@
               [tourId]="tourId"
               [departureId]="departureId"
               [itineraryId]="itineraryId"
+              [reservationId]="reservationId"
               (insuranceSelectionChange)="onInsuranceSelectionChange($event)"
               #insuranceSelector>
             </app-insurance>
@@ -131,7 +135,7 @@
       <app-summary-table
         [summary]="summary"
         [subtotal]="subtotal"
-        [total]="totalAmount"
+        [total]="totalAmountCalculated"
         [isAuthenticated]="false"
         [selectedFlight]="null"
         [showPointsSection]="false"

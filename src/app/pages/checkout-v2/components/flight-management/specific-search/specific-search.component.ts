@@ -44,10 +44,10 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
   equipajeBodega: boolean = false;
   tourOrigenConstante: Ciudad = { nombre: '', codigo: '' };
   tourDestinoConstante: Ciudad = { nombre: 'Madrid', codigo: 'MAD' };
-  fechaIdaConstante: Date = new Date('2025-04-03');
-  fechaRegresoConstante: Date = new Date('2025-04-10');
-  fechaIdaFormateada: string = this.formatDisplayDate(this.fechaIdaConstante);
-  fechaRegresoFormateada: string = this.formatDisplayDate(this.fechaRegresoConstante);
+  fechaIdaConstante: string = '';
+  fechaRegresoConstante: string = '';
+  horaIdaConstante: string = '';
+  horaRegresoConstante: string = '';
   filteredCities: Ciudad[] = [];
   combinedCities: { nombre: string; codigo: string; source: string; id: number }[] = [];
   aerolineas: Ciudad[] = [
@@ -107,14 +107,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
   ngOnInit() {
     if (this.tourDestination && this.tourDestination.codigo) {
       this.tourOrigenConstante = this.tourDestination;
-    }
-    if (this.dayOne) {
-      this.fechaIdaConstante = new Date(this.dayOne);
-      this.fechaIdaFormateada = this.formatDisplayDate(this.fechaIdaConstante);
-    }
-    if (this.returnDate) {
-      this.fechaRegresoConstante = new Date(this.returnDate);
-      this.fechaRegresoFormateada = this.formatDisplayDate(this.fechaRegresoConstante);
     }
     const tourTexts = this.textsService.getTextsForCategory('tour');
     if (tourTexts && tourTexts['name']) {
@@ -258,12 +250,12 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
             }
           }
           if (data.maxArrivalDateAtAirport) {
-            this.fechaIdaConstante = new Date(data.maxArrivalDateAtAirport + (data.maxArrivalTimeAtAirport ? 'T' + data.maxArrivalTimeAtAirport : 'T00:00:00'));
-            this.fechaIdaFormateada = this.formatDisplayDate(this.fechaIdaConstante);
+            this.fechaIdaConstante = data.maxArrivalDateAtAirport || '';
+            this.horaIdaConstante = data.maxArrivalTimeAtAirport || '';
           }
           if (data.minDepartureDateFromAirport) {
-            this.fechaRegresoConstante = new Date(data.minDepartureDateFromAirport + (data.minDepartureTimeFromAirport ? 'T' + data.minDepartureTimeFromAirport : 'T00:00:00'));
-            this.fechaRegresoFormateada = this.formatDisplayDate(this.fechaRegresoConstante);
+            this.fechaRegresoConstante = data.minDepartureDateFromAirport || '';
+            this.horaRegresoConstante = data.minDepartureTimeFromAirport || '';
           }
         },
         error: (err) => {
@@ -297,7 +289,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
         ? this.getCityCode(formValue.origen)
         : formValue.origen.codigo;
     const destinationCode = this.tourOrigenConstante.codigo;
-    const departureDate = this.formatDate(this.fechaIdaConstante);
+    const departureDate = this.fechaIdaConstante;
     const searchParams: FlightOffersParams = {
       originLocationCode: originCode,
       destinationLocationCode: destinationCode,
@@ -308,7 +300,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
       max: 10,
     };
     if (formValue.tipoViaje === 'idaVuelta') {
-      searchParams.returnDate = this.formatDate(this.fechaRegresoConstante);
+      searchParams.returnDate = this.fechaRegresoConstante;
     }
     if (formValue.aerolinea && formValue.aerolinea.codigo !== 'ALL') {
       searchParams.includedAirlineCodes = formValue.aerolinea.codigo;
@@ -443,8 +435,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
       const outbound = offerData.itineraries[0];
       const inboundItinerary = offerData.itineraries.length > 1 ? offerData.itineraries[1] : null;
       const priceDataArray = this.amadeusService.transformFlightPriceData([offerData]);
-      const departureDateStr = this.formatDate(this.fechaIdaConstante);
-      const returnDateStr = inboundItinerary ? this.formatDate(this.fechaRegresoConstante) : '';
+      const departureDateStr = this.fechaIdaConstante;
+      const returnDateStr = inboundItinerary ? this.fechaRegresoConstante : '';
       const outboundSegments: FlightSegment[] = outbound.segments.map((segment: any, index: number) => {
         let departureTime = '00:00';
         let arrivalTime = '00:00';

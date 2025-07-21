@@ -95,7 +95,7 @@
         <div class="date">
           <div class="date-lbl">Fecha</div>
           <div class="static-field">
-            {{ fechaIdaConstante | date : "dd/MM/yyyy" : "UTC" }}
+            {{ fechaIdaConstante }}<span *ngIf="horaIdaConstante" title="Hora local"> {{ horaIdaConstante }}</span>
           </div>
         </div>
       </div>
@@ -122,7 +122,7 @@
         <div class="date">
           <div class="date-lbl">Fecha</div>
           <div class="static-field">
-            {{ fechaRegresoConstante | date : "dd/MM/yyyy" : "UTC" }}
+            {{ fechaRegresoConstante }}<span *ngIf="horaRegresoConstante" title="Hora local"> {{ horaRegresoConstante }}</span>
           </div>
         </div>
       </div>

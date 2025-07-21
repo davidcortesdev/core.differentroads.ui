@@ -169,8 +169,8 @@ export class CheckoutV2Component implements OnInit {
   private loadDepartureData(departureId: number): void {
     this.departureService.getById(departureId).subscribe({
       next: (departure) => {
-        this.departureDate = departure.departureDate;
-        this.returnDate = departure.arrivalDate;
+        this.departureDate = departure.departureDate ?? '';
+        this.returnDate = departure.arrivalDate ?? '';
 
         // Asignar el itineraryId desde el departure
         this.itineraryId = departure.itineraryId;

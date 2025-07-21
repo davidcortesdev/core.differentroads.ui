@@ -31,15 +31,23 @@ export interface DepartureUpdate {
 
 export interface IDepartureResponse {
   id: number;
-  code: string;
-  tkId: string;
+  code?: string | null;
+  tkId?: string | null;
   itineraryId: number;
   isVisibleOnWeb: boolean;
   isBookable: boolean;
-  departureDate: string;
-  arrivalDate: string;
-  departureStatusId: number;
-  tripTypeId: number;
+  departureDate?: string | null;
+  arrivalDate?: string | null;
+  departureStatusId?: number | null;
+  tripTypeId?: number | null;
+  isConsolidadorVuelosActive?: boolean;
+  includeTourConsolidadorSearchLocations?: boolean;
+  maxArrivalDateAtAirport?: string | null;
+  maxArrivalTimeAtAirport?: string | null;
+  minDepartureDateFromAirport?: string | null;
+  minDepartureTimeFromAirport?: string | null;
+  arrivalAirportIATA?: string | null;
+  departureAirportIATA?: string | null;
 }
 
 /**

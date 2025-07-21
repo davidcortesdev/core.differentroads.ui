@@ -10,6 +10,8 @@ import { TravelersService } from '../../../../../core/services/checkout/traveler
 import { PeriodsService } from '../../../../../core/services/periods.service';
 import { ToursService } from '../../../../../core/services/tours.service';
 import { DepartureConsolidadorSearchLocationService, ConsolidadorSearchLocationWithSourceResponse } from '../../../../../core/services/departure/departure-consolidador-search-location.service';
+import { DepartureService, DepartureAirportTimesResponse } from '../../../../../core/services/departure/departure.service';
+import { LocationAirportNetService } from '../../../../../core/services/locations/locationAirportNet.service';
 
 
 interface Ciudad {
@@ -82,7 +84,9 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
     private textsService: TextsService,
     private periodsService: PeriodsService,
     private toursService: ToursService,
-    private departureConsolidadorSearchLocationService: DepartureConsolidadorSearchLocationService
+    private departureConsolidadorSearchLocationService: DepartureConsolidadorSearchLocationService,
+    private departureService: DepartureService, // <--- inyectar
+    private locationAirportNetService: LocationAirportNetService // <--- inyectar
   ) {
     this.flightForm = this.fb.group({
       origen: [null],
@@ -179,6 +183,60 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
             this.combinedCities = [];
           }
         });
+      this.departureService.getAirportTimes(this.departureId).subscribe({
+        next: (data: DepartureAirportTimesResponse) => {
+          // Origen (llegada al inicio del tour)
+          if (data.arrivalAirportIATA) {
+            let cityName = data.ArrivalCity;
+            if (!cityName || cityName.trim() === '') {
+              const filter = { iata: data.arrivalAirportIATA };
+              this.locationAirportNetService.getAirports(filter).subscribe(airports => {
+                cityName = airports && airports.length > 0 ? airports[0].name || data.arrivalAirportIATA : data.arrivalAirportIATA;
+                this.tourOrigenConstante = {
+                  nombre: cityName ?? '',
+                  codigo: data.arrivalAirportIATA ?? ''
+                };
+              });
+            } else {
+              this.tourOrigenConstante = {
+                nombre: cityName,
+                codigo: data.arrivalAirportIATA
+              };
+            }
+          }
+          // Destino (salida al final del tour)
+          if (data.departureAirportIATA) {
+            let cityName = data.DepartureCity;
+            if (!cityName || cityName.trim() === '') {
+              const filter = { iata: data.departureAirportIATA };
+              this.locationAirportNetService.getAirports(filter).subscribe(airports => {
+                cityName = airports && airports.length > 0 ? airports[0].name || data.departureAirportIATA : data.departureAirportIATA;
+                this.tourDestinoConstante = {
+                  nombre: cityName ?? '',
+                  codigo: data.departureAirportIATA ?? ''
+                };
+              });
+            } else {
+              this.tourDestinoConstante = {
+                nombre: cityName,
+                codigo: data.departureAirportIATA
+              };
+            }
+          }
+          if (data.maxArrivalDateAtAirport) {
+            this.fechaIdaConstante = new Date(data.maxArrivalDateAtAirport + (data.maxArrivalTimeAtAirport ? 'T' + data.maxArrivalTimeAtAirport : 'T00:00:00'));
+            this.fechaIdaFormateada = this.formatDisplayDate(this.fechaIdaConstante);
+          }
+          if (data.minDepartureDateFromAirport) {
+            this.fechaRegresoConstante = new Date(data.minDepartureDateFromAirport + (data.minDepartureTimeFromAirport ? 'T' + data.minDepartureTimeFromAirport : 'T00:00:00'));
+            this.fechaRegresoFormateada = this.formatDisplayDate(this.fechaRegresoConstante);
+          }
+        },
+        error: (err) => {
+          // Manejo de error: podrías mostrar un mensaje o dejar los valores por defecto
+          console.error('Error obteniendo datos de aeropuerto:', err);
+        }
+      });
     }
   }
 

@@ -66,6 +66,17 @@ export interface DepartureFilters {
   tripTypeId?: number;
 }
 
+export interface DepartureAirportTimesResponse {
+  maxArrivalDateAtAirport: string | null;
+  maxArrivalTimeAtAirport: string | null;
+  arrivalAirportIATA: string | null;
+  minDepartureDateFromAirport: string | null;
+  minDepartureTimeFromAirport: string | null;
+  departureAirportIATA: string | null;
+  ArrivalCity?: string | null;
+  DepartureCity?: string | null;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -149,5 +160,14 @@ export class DepartureService {
       .set('useExactMatchForStrings', 'false');
     
     return this.http.get<IDepartureResponse[]>(this.API_URL, { params });
+  }
+
+  /**
+   * Obtiene los datos clave de aeropuerto y fechas/horas de llegada y salida para una departure concreta.
+   * @param departureId ID de la departure.
+   * @returns Fechas, horas y aeropuertos clave para la llegada y salida del tour.
+   */
+  getAirportTimes(departureId: number): Observable<DepartureAirportTimesResponse> {
+    return this.http.get<DepartureAirportTimesResponse>(`${this.API_URL}/${departureId}/airport-times`);
   }
 }

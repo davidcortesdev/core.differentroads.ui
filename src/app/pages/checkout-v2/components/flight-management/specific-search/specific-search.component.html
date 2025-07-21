@@ -88,7 +88,9 @@
         </div>
         <div class="input destination">
           <div class="dest-lbl">Llegada</div>
-          <div class="static-field">{{ tourOrigenConstante.nombre }}</div>
+          <div class="static-field">
+            {{ tourOrigenConstante.codigo }} - {{ tourOrigenConstante.nombre }}
+          </div>
         </div>
         <div class="date">
           <div class="date-lbl">Fecha</div>
@@ -106,15 +108,15 @@
         </div>
         <div class="input origin">
           <i class="pi pi-plane"></i>
-          <div class="static-field">{{ tourOrigenConstante.nombre }}</div>
+          <div class="static-field">{{ tourDestinoConstante.codigo }} - {{ tourDestinoConstante.nombre }}</div>
         </div>
         <div class="input destination">
           <div class="dest-lbl">Llegada</div>
           <div class="static-field">
             {{
-              flightForm.get("origen")?.value?.nombre ||
+              flightForm.get("origen")?.value?.codigo ||
                 flightForm.get("origen")?.value
-            }}
+            }} - {{ flightForm.get("origen")?.value?.nombre || flightForm.get("origen")?.value }}
           </div>
         </div>
         <div class="date">

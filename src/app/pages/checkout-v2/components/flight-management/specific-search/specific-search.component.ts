@@ -12,6 +12,8 @@ import { ToursService } from '../../../../../core/services/tours.service';
 import { DepartureConsolidadorSearchLocationService, ConsolidadorSearchLocationWithSourceResponse } from '../../../../../core/services/departure/departure-consolidador-search-location.service';
 import { DepartureService, DepartureAirportTimesResponse } from '../../../../../core/services/departure/departure.service';
 import { LocationAirportNetService } from '../../../../../core/services/locations/locationAirportNet.service';
+import { LocationNetService } from '../../../../../core/services/locations/locationNet.service';
+import { forkJoin, of } from 'rxjs';
 
 
 interface Ciudad {
@@ -86,7 +88,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
     private toursService: ToursService,
     private departureConsolidadorSearchLocationService: DepartureConsolidadorSearchLocationService,
     private departureService: DepartureService, // <--- inyectar
-    private locationAirportNetService: LocationAirportNetService // <--- inyectar
+    private locationAirportNetService: LocationAirportNetService, // <--- inyectar
+    private locationNetService: LocationNetService // <--- inyectar
   ) {
     this.flightForm = this.fb.group({
       origen: [null],
@@ -172,12 +175,43 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
       this.departureConsolidadorSearchLocationService.getCombinedLocations(this.departureId)
         .subscribe({
           next: (data: ConsolidadorSearchLocationWithSourceResponse[]) => {
-            this.combinedCities = data.map(item => ({
-              nombre: `${item.source} - ${item.locationId ?? item.locationAirportId ?? ''}`,
-              codigo: String(item.locationId ?? item.locationAirportId ?? ''),
-              source: item.source,
-              id: item.id
-            }));
+            // Obtener los IDs de location y locationAirport, filtrando sólo números válidos
+            const locationIds = data.filter(item => typeof item.locationId === 'number').map(item => item.locationId as number);
+            const airportIds = data.filter(item => typeof item.locationAirportId === 'number').map(item => item.locationAirportId as number);
+
+            forkJoin({
+              locations: locationIds.length ? this.locationNetService.getLocationsByIds(locationIds) : of([]),
+              airports: airportIds.length ? this.locationAirportNetService.getAirportsByIds(airportIds) : of([])
+            }).subscribe(({ locations, airports }) => {
+              const locationMap = new Map(locations.map(l => [l.id, l]));
+              const airportMap = new Map(airports.map(a => [a.id, a]));
+              this.combinedCities = data.map(item => {
+                if (item.locationId && locationMap.has(item.locationId)) {
+                  const loc = locationMap.get(item.locationId);
+                  return {
+                    nombre: loc && loc.name ? loc.name : '',
+                    codigo: loc && loc.iataCode ? String(loc.iataCode) : (loc && loc.code ? String(loc.code) : ''),
+                    source: item.source,
+                    id: item.id
+                  };
+                } else if (item.locationAirportId && airportMap.has(item.locationAirportId)) {
+                  const airport = airportMap.get(item.locationAirportId);
+                  return {
+                    nombre: airport && airport.name ? airport.name : '',
+                    codigo: airport && airport.iata ? String(airport.iata) : '',
+                    source: item.source,
+                    id: item.id
+                  };
+                } else {
+                  return {
+                    nombre: '',
+                    codigo: '',
+                    source: item.source,
+                    id: item.id
+                  };
+                }
+              });
+            });
           },
           error: () => {
             this.combinedCities = [];

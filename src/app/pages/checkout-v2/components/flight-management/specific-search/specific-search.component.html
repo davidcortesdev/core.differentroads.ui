@@ -74,13 +74,13 @@
             <!-- Plantilla personalizada para los elementos del dropdown -->
             <ng-template pTemplate="item" let-city>
               <div class="city-item">
-                {{ city.nombre }}
+                {{ city.codigo }} - {{ city.nombre }}
               </div>
             </ng-template>
             <!-- Plantilla personalizada para el input cuando está seleccionado -->
             <ng-template pTemplate="selectedItem" let-city>
               <div class="selected-city">
-                {{ city.nombre }}
+                {{ city.codigo }} - {{ city.nombre }}
               </div>
             </ng-template>
           </p-autocomplete>

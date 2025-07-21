@@ -284,12 +284,19 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
   getFlightOffers() {
     this.isLoading = true;
     const formValue = this.flightForm.value;
-    const originCode =
+    let originCode =
       typeof formValue.origen === 'string'
         ? this.getCityCode(formValue.origen)
         : formValue.origen.codigo;
-    const destinationCode = this.tourOrigenConstante.codigo;
-    const departureDate = this.fechaIdaConstante;
+    let destinationCode = this.tourOrigenConstante.codigo;
+    let departureDate = this.fechaIdaConstante;
+    // Ajustar origen y destino según el tipo de viaje
+    if (formValue.tipoViaje === 'soloVuelta') {
+      // Para solo vuelta, el origen es el destino del tour y el destino es el origen seleccionado
+      destinationCode = originCode;
+      originCode = this.tourDestinoConstante.codigo;
+      departureDate = this.fechaRegresoConstante;
+    }
     const searchParams: FlightOffersParams = {
       originLocationCode: originCode,
       destinationLocationCode: destinationCode,

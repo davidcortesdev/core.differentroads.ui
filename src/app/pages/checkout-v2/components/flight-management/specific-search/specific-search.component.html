@@ -43,12 +43,21 @@
         ></p-radioButton>
         <label for="soloDia">Solo ida</label>
       </div>
+      <div class="radio">
+        <p-radioButton
+          formControlName="tipoViaje"
+          name="tipoViaje"
+          value="soloVuelta"
+          inputId="soloVuelta"
+        ></p-radioButton>
+        <label for="soloVuelta">Solo vuelta</label>
+      </div>
       <!-- Baggage filters removed -->
     </div>
 
     <div class="flt-details">
       <!-- Ida -->
-      <div class="row">
+      <div class="row" *ngIf="tipoViaje !== 'soloVuelta'">
         <div class="label">
           <label>Ida</label>
           <div class="from">Desde</div>
@@ -100,6 +109,55 @@
         </div>
       </div>
 
+      <!-- Solo vuelta: origen editable, destino fijo -->
+      <div class="row" *ngIf="tipoViaje === 'soloVuelta'">
+        <div class="label">
+          <label>Vuelta</label>
+          <div class="from">Desde</div>
+        </div>
+        <div class="input origin">
+          <i class="pi pi-plane"></i>
+          <p-autocomplete
+            formControlName="origen"
+            [suggestions]="filteredCities"
+            (completeMethod)="searchCities($event)"
+            field="nombre"
+            [forceSelection]="true"
+            styleClass="w-full"
+            [dropdown]="true"
+            [minLength]="1"
+            [delay]="0"
+            [appendTo]="'body'"
+            (onSelect)="onCitySelect($event)"
+            [showEmptyMessage]="true"
+            emptyMessage="No se encontraron ciudades"
+          >
+            <ng-template pTemplate="item" let-city>
+              <div class="city-item">
+                {{ city.codigo }} - {{ city.nombre }}
+              </div>
+            </ng-template>
+            <ng-template pTemplate="selectedItem" let-city>
+              <div class="selected-city">
+                {{ city.codigo }} - {{ city.nombre }}
+              </div>
+            </ng-template>
+          </p-autocomplete>
+        </div>
+        <div class="input destination">
+          <div class="dest-lbl">Llegada</div>
+          <div class="static-field">
+            {{ tourDestinoConstante.codigo }} - {{ tourDestinoConstante.nombre }}
+          </div>
+        </div>
+        <div class="date">
+          <div class="date-lbl">Fecha</div>
+          <div class="static-field">
+            {{ fechaRegresoConstante }}<span *ngIf="horaRegresoConstante"> {{ horaRegresoConstante }} <i class="pi pi-info-circle" title="Hora local"></i></span>
+          </div>
+        </div>
+      </div>
+
       <!-- Regreso -->
       <div class="row" *ngIf="tipoViaje === 'idaVuelta'">
         <div class="label">
@@ -113,10 +171,7 @@
         <div class="input destination">
           <div class="dest-lbl">Llegada</div>
           <div class="static-field">
-            {{
-              flightForm.get("origen")?.value?.codigo ||
-                flightForm.get("origen")?.value
-            }} - {{ flightForm.get("origen")?.value?.nombre || flightForm.get("origen")?.value }}
+            {{ flightForm.get("origen")?.value?.codigo || flightForm.get("origen")?.value }} - {{ flightForm.get("origen")?.value?.nombre || flightForm.get("origen")?.value }}
           </div>
         </div>
         <div class="date">

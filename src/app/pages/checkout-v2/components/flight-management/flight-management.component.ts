@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-flight-management',
@@ -8,5 +8,5 @@ import { Component } from '@angular/core';
   styleUrl: './flight-management.component.scss'
 })
 export class FlightManagementComponent {
-
+  @Input() departureId: number | null = null;
 }

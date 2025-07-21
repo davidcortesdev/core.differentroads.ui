@@ -9,6 +9,7 @@ import { TextsService } from '../../../../../core/services/checkout/texts.servic
 import { TravelersService } from '../../../../../core/services/checkout/travelers.service';
 import { PeriodsService } from '../../../../../core/services/periods.service';
 import { ToursService } from '../../../../../core/services/tours.service';
+import { DepartureConsolidadorSearchLocationService, ConsolidadorSearchLocationWithSourceResponse } from '../../../../../core/services/departure/departure-consolidador-search-location.service';
 
 
 interface Ciudad {
@@ -29,6 +30,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
   @Input() dayOne: string | null = null;
   @Input() returnDate: string | null = null;
   @Input() periodID: string | null = null;
+  @Input() departureId: number | null = null;
 
   airportsFilters: string[] = [];
   private searchTimeout: any;
@@ -43,6 +45,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
   fechaIdaFormateada: string = this.formatDisplayDate(this.fechaIdaConstante);
   fechaRegresoFormateada: string = this.formatDisplayDate(this.fechaRegresoConstante);
   filteredCities: Ciudad[] = [];
+  combinedCities: { nombre: string; codigo: string; source: string; id: number }[] = [];
   aerolineas: Ciudad[] = [
     { nombre: 'Todas', codigo: 'ALL' },
     { nombre: 'Royal Air Maroc', codigo: 'AT' },
@@ -78,7 +81,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
     private travelersService: TravelersService,
     private textsService: TextsService,
     private periodsService: PeriodsService,
-    private toursService: ToursService
+    private toursService: ToursService,
+    private departureConsolidadorSearchLocationService: DepartureConsolidadorSearchLocationService
   ) {
     const defaultCity = { nombre: 'Madrid', codigo: 'MAD' };
     this.flightForm = this.fb.group({
@@ -159,6 +163,22 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
           error: (err: any) => {
             console.error('Error fetching period details', err);
           },
+        });
+    }
+    if (this.departureId) {
+      this.departureConsolidadorSearchLocationService.getCombinedLocations(this.departureId)
+        .subscribe({
+          next: (data: ConsolidadorSearchLocationWithSourceResponse[]) => {
+            this.combinedCities = data.map(item => ({
+              nombre: `${item.source} - ${item.locationId ?? item.locationAirportId ?? ''}`,
+              codigo: String(item.locationId ?? item.locationAirportId ?? ''),
+              source: item.source,
+              id: item.id
+            }));
+          },
+          error: () => {
+            this.combinedCities = [];
+          }
         });
     }
   }
@@ -552,39 +572,10 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
   }
 
   searchCities(event: any): void {
-    const query = event.query;
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
-    }
-    this.searchTimeout = setTimeout(() => {
-      this.airportService.searchAirports(query).subscribe({
-        next: (airports: any[]) => {
-          if (this.airportsFilters && this.airportsFilters.length > 0) {
-            airports = airports.filter((airport: any) =>
-              this.airportsFilters.some((filter) => {
-                const lowerFilter = filter.toLowerCase();
-                return (
-                  airport.city.toLowerCase().includes(lowerFilter) ||
-                  airport.name.toLowerCase().includes(lowerFilter) ||
-                  airport.iata.toLowerCase().includes(lowerFilter) ||
-                  (airport.country &&
-                    airport.country.toLowerCase().includes(lowerFilter))
-                );
-              })
-            );
-          }
-          if (airports.length > 50) {
-            airports = airports.slice(0, 50);
-          }
-          this.filteredCities = airports.map((airport: any) => ({
-            nombre: airport.city + ' - ' + airport.name,
-            codigo: airport.iata,
-          }));
-        },
-        error: (err: any) => {
-          this.filteredCities = [];
-        }
-      });
-    }, 200);
+    const query = event.query.toLowerCase();
+    this.filteredCities = this.combinedCities.filter(city =>
+      city.nombre.toLowerCase().includes(query) ||
+      city.codigo.toLowerCase().includes(query)
+    );
   }
 }

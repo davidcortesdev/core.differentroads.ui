@@ -84,9 +84,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
     private toursService: ToursService,
     private departureConsolidadorSearchLocationService: DepartureConsolidadorSearchLocationService
   ) {
-    const defaultCity = { nombre: 'Madrid', codigo: 'MAD' };
     this.flightForm = this.fb.group({
-      origen: [defaultCity],
+      origen: [null],
       tipoViaje: [this.tipoViaje],
       equipajeMano: [this.equipajeMano],
       equipajeBodega: [this.equipajeBodega],

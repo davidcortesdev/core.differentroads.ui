@@ -22,6 +22,8 @@ export interface ActivityFilters {
   imageUrl?: string;
   imageAlt?: string;
   activityCompetitionGroupId?: number;
+  isTKOrigin?: boolean;
+  isVisibleOnWeb?: boolean;
 }
 
 /**
@@ -42,6 +44,8 @@ export interface ActivityCreate {
   imageUrl?: string | null;
   imageAlt?: string | null;
   activityCompetitionGroupId?: number | null;
+  isTKOrigin?: boolean;
+  isVisibleOnWeb?: boolean;
 }
 
 /**
@@ -62,6 +66,8 @@ export interface ActivityUpdate {
   imageUrl?: string | null;
   imageAlt?: string | null;
   activityCompetitionGroupId?: number | null;
+  isTKOrigin?: boolean;
+  isVisibleOnWeb?: boolean;
 }
 
 /**
@@ -175,9 +181,13 @@ export class ActivityService {
    * @returns `true` si la operación fue exitosa.
    */
   toggleActive(id: number, isActive: boolean): Observable<boolean> {
-    return this.http.patch<boolean>(`${this.API_URL}/${id}/toggle-active`, { isActive }, {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-    });
+    return this.http.patch<boolean>(
+      `${this.API_URL}/${id}/toggle-active`,
+      { isActive },
+      {
+        headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+      }
+    );
   }
 
   /**
@@ -187,7 +197,11 @@ export class ActivityService {
    * @param itineraryDayId ID del día de itinerario (opcional)
    * @returns Lista de actividades filtradas
    */
-  getForItinerary(itineraryId: number, departureId?: number, itineraryDayId?: number): Observable<IActivityResponse[]> {
+  getForItinerary(
+    itineraryId: number,
+    departureId?: number,
+    itineraryDayId?: number
+  ): Observable<IActivityResponse[]> {
     let params = new HttpParams()
       .set('itineraryId', itineraryId.toString())
       .set('isVisibleOnWeb', 'true'); // Siempre enviamos isVisibleOnWeb=true
@@ -197,6 +211,8 @@ export class ActivityService {
     if (itineraryDayId !== undefined) {
       params = params.set('itineraryDayId', itineraryDayId.toString());
     }
-    return this.http.get<IActivityResponse[]>(`${this.API_URL}/for-itinerary`, { params });
+    return this.http.get<IActivityResponse[]>(`${this.API_URL}/for-itinerary`, {
+      params,
+    });
   }
 }

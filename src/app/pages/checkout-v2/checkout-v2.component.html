@@ -1,4 +1,7 @@
 <div class="checkout">
+  <!-- Toast para mensajes -->
+  <p-toast></p-toast>
+
   <!-- Título del tour -->
   <h2 class="checkout-title">
     <p-button 
@@ -51,6 +54,16 @@
               (roomsSelectionChange)="onRoomsSelectionChange($event)"
               #roomSelector>
             </app-selector-room>
+
+            <!-- Componente de seguro -->
+            <app-insurance
+              [tourId]="tourId"
+              [departureId]="departureId"
+              [itineraryId]="itineraryId"
+              [reservationId]="reservationId"
+              (insuranceSelectionChange)="onInsuranceSelectionChange($event)"
+              #insuranceSelector>
+            </app-insurance>
 
             <div class="flex pt-6 justify-end">
               <p-button
@@ -122,7 +135,7 @@
       <app-summary-table
         [summary]="summary"
         [subtotal]="subtotal"
-        [total]="totalAmount"
+        [total]="totalAmountCalculated"
         [isAuthenticated]="false"
         [selectedFlight]="null"
         [showPointsSection]="false"

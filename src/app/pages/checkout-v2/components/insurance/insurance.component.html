@@ -1,0 +1,88 @@
+<div class="insurances" *ngIf="insurances && insurances.length">
+  <div class="step">
+    <div class="step-title">Seguros</div>
+    <div class="step-description">
+      <i class="pi pi-info-circle"></i>También puedes añadirlas después desde tu perfil
+    </div>
+  </div>
+
+  <p-dataview #dv [value]="insurances">
+    <ng-template #list let-items>
+      <div class="dataview-grid">
+        <!-- Basic Insurance Card - Now clickable -->
+        <div class="dataview-item">
+          <div class="dataview-card dataview-card-border"
+               [class.dataview-card-selected]="basicInsuranceSelected"
+               (click)="toggleInsurance(null)">
+            <div class="dataview-selector">
+              <p-radioButton
+                inputId="basicInsurance"
+                name="insurance"
+                [value]="null"
+                [(ngModel)]="selectedInsurance"
+                [checked]="basicInsuranceSelected"
+              ></p-radioButton>
+            </div>
+            <div class="dataview-content">
+              <div class="dataview-info">
+                <div>
+                  <div class="dataview-name">Seguro Básico</div>
+                  <div class="dataview-description">
+                    Cobertura básica incluida sin costo adicional
+                  </div>
+                </div>
+              </div>
+              <div class="dataview-actions">
+                <div class="dataview-price">
+                  <span class="dataview-price-inc">incluido</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Other Insurance Cards - Now clickable -->
+        <div class="dataview-item" *ngFor="let item of items">
+          <div class="dataview-card dataview-card-border"
+               [class.dataview-card-selected]="selectedInsurance === item"
+               (click)="toggleInsurance(item)">
+            <div class="dataview-selector">
+              <p-radioButton
+                [inputId]="item.id.toString()"
+                name="insurance"
+                [value]="item"
+                [(ngModel)]="selectedInsurance"
+              ></p-radioButton>
+            </div>
+            <div class="dataview-content">
+              <div class="dataview-info">
+                <div>
+                  <div class="dataview-name">
+                    {{ item.name }}
+                  </div>
+                  <div
+                    *ngIf="item.description"
+                    class="dataview-description"
+                    [innerHTML]="getSanitizedDescription(item.description)"
+                  ></div>
+                </div>
+              </div>
+              <div class="dataview-actions">
+                <div class="dataview-price">
+                  <span class="dataview-price-value">
+                    {{
+                      getPriceById(item.id) === 0
+                        ? "incluido"
+                        : (getPriceById(item.id) | currencyFormat : 'EUR')
+                    }}
+                  </span>
+                  <span class="dataview-per-person">por persona</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+  </p-dataview>
+</div>

@@ -225,6 +225,7 @@ import { ActivitysComponent } from './pages/tour-v2/components/tour-itinerary-v2
 import { CheckoutV2Component } from './pages/checkout-v2/checkout-v2.component';
 import { SelectorRoomComponent } from './pages/checkout-v2/components/selector-room/selector-room.component';
 import { SelectorTravelerComponent } from './pages/checkout-v2/components/selector-traveler/selector-traveler.component';
+import { InsuranceComponent } from './pages/checkout-v2/components/insurance/insurance.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -352,7 +353,8 @@ registerLocaleData(localeEs);
     ActivitysComponent,
     CheckoutV2Component,
     SelectorRoomComponent,
-    SelectorTravelerComponent
+    SelectorTravelerComponent,
+    InsuranceComponent
   ],
   imports: [
     // Angular Modules

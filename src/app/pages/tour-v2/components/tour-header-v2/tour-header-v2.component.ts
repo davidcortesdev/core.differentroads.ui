@@ -29,12 +29,34 @@ import {
   ReservationCreate,
   IReservationResponse,
 } from '../../../../core/services/reservation/reservation.service';
-import { ReservationTravelerService } from '../../../../core/services/reservation/reservation-traveler.service';
+import {
+  ReservationTravelerService,
+  ReservationTravelerCreate,
+} from '../../../../core/services/reservation/reservation-traveler.service';
 import { Subscription, forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { ActivityHighlight } from '../../../../shared/components/activity-card/activity-card.component';
 import { environment } from '../../../../../environments/environment';
+
+// ✅ INTERFACES para tipado fuerte
+interface PassengersData {
+  adults: number;
+  children: number;
+  babies: number;
+}
+
+interface AgeGroupCategory {
+  id: number | null;
+  lowerAge: number | null;
+  upperAge: number | null;
+}
+
+interface AgeGroupCategories {
+  adults: AgeGroupCategory;
+  children: AgeGroupCategory;
+  babies: AgeGroupCategory;
+}
 
 @Component({
   selector: 'app-tour-header-v2',
@@ -54,6 +76,17 @@ export class TourHeaderV2Component
   @Input() selectedActivities: ActivityHighlight[] = [];
   // NUEVO: Input para saber si se debe mostrar el estado de actividades
   @Input() showActivitiesStatus: boolean = false;
+  // ✅ NUEVOS INPUTS para age groups y datos de pasajeros con tipado fuerte
+  @Input() passengersData: PassengersData = {
+    adults: 1,
+    children: 0,
+    babies: 0,
+  };
+  @Input() ageGroupCategories: AgeGroupCategories = {
+    adults: { id: null, lowerAge: null, upperAge: null },
+    children: { id: null, lowerAge: null, upperAge: null },
+    babies: { id: null, lowerAge: null, upperAge: null },
+  };
 
   // Tour data
   tour: Partial<Tour> = {};
@@ -194,7 +227,9 @@ export class TourHeaderV2Component
     }
   }
 
-  private getTripTypeInfoForConsole(group: string): any {
+  private getTripTypeInfoForConsole(
+    group: string
+  ): { title: string; description: string; class: string } | undefined {
     if (!group) return undefined;
 
     const type = group.toLowerCase();
@@ -456,23 +491,96 @@ export class TourHeaderV2Component
         .create(reservationData)
         .pipe(
           switchMap((createdReservation: IReservationResponse) => {
+            // ✅ MODIFICADO: Crear travelers con age groups específicos usando tipado fuerte
             const travelerObservables = [];
+            let travelerNumber = 1;
 
-            for (let i = 0; i < this.totalPassengers; i++) {
-              const travelerNumber = i + 1;
-              const isLeadTraveler = i === 0;
+            // Crear travelers para adultos
+            for (let i = 0; i < this.passengersData.adults; i++) {
+              const isLeadTraveler = travelerNumber === 1; // Solo el primer traveler es lead
 
-              const travelerData = {
+              // ✅ VALIDACIÓN: Solo crear si hay age group válido
+              if (!this.ageGroupCategories.adults.id) {
+                console.error('No se encontró age group para adultos');
+                alert(
+                  'Error: No se pudo determinar el grupo de edad para adultos.'
+                );
+                this.isCreatingReservation = false;
+                throw new Error('Age group for adults not found');
+              }
+
+              const travelerData: ReservationTravelerCreate = {
                 id: 0,
                 reservationId: createdReservation.id,
                 travelerNumber: travelerNumber,
                 isLeadTraveler: isLeadTraveler,
                 tkId: '',
+                ageGroupId: this.ageGroupCategories.adults.id, // ✅ Ya validado que no es null
               };
 
-              const travelerObservable =
-                this.reservationTravelerService.create(travelerData);
-              travelerObservables.push(travelerObservable);
+              travelerObservables.push(
+                this.reservationTravelerService.create(travelerData)
+              );
+              travelerNumber++;
+            }
+
+            // Crear travelers para niños
+            for (let i = 0; i < this.passengersData.children; i++) {
+              // ✅ VALIDACIÓN: Solo crear si hay age group válido
+              if (!this.ageGroupCategories.children.id) {
+                console.error('No se encontró age group para niños');
+                alert(
+                  'Error: No se pudo determinar el grupo de edad para niños.'
+                );
+                this.isCreatingReservation = false;
+                throw new Error('Age group for children not found');
+              }
+
+              const travelerData: ReservationTravelerCreate = {
+                id: 0,
+                reservationId: createdReservation.id,
+                travelerNumber: travelerNumber,
+                isLeadTraveler: false,
+                tkId: '',
+                ageGroupId: this.ageGroupCategories.children.id, // ✅ Ya validado que no es null
+              };
+
+              travelerObservables.push(
+                this.reservationTravelerService.create(travelerData)
+              );
+              travelerNumber++;
+            }
+
+            // Crear travelers para bebés
+            for (let i = 0; i < this.passengersData.babies; i++) {
+              // ✅ VALIDACIÓN: Solo crear si hay age group válido
+              if (!this.ageGroupCategories.babies.id) {
+                console.error('No se encontró age group para bebés');
+                alert(
+                  'Error: No se pudo determinar el grupo de edad para bebés.'
+                );
+                this.isCreatingReservation = false;
+                throw new Error('Age group for babies not found');
+              }
+
+              const travelerData: ReservationTravelerCreate = {
+                id: 0,
+                reservationId: createdReservation.id,
+                travelerNumber: travelerNumber,
+                isLeadTraveler: false,
+                tkId: '',
+                ageGroupId: this.ageGroupCategories.babies.id, // ✅ Ya validado que no es null
+              };
+
+              travelerObservables.push(
+                this.reservationTravelerService.create(travelerData)
+              );
+              travelerNumber++;
+            }
+
+            // ✅ VALIDACIÓN: Si no hay observables, crear al menos uno vacío
+            if (travelerObservables.length === 0) {
+              throw new Error('No travelers to create');
             }
 
             return forkJoin(travelerObservables).pipe(

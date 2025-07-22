@@ -3,15 +3,15 @@
   <div *ngIf="loading" class="loading">
     <p>Cargando información del tour...</p>
   </div>
-
+  
   <!-- Error State -->
   <div *ngIf="error" class="error">
     <p>{{ error }}</p>
   </div>
-
+  
   <!-- Tour Content -->
   <div *ngIf="!loading && !error && tour" class="tour-content">
-    <!-- Tour Header Section - MODIFICADO PARA PASAR ACTIVIDADES SELECCIONADAS Y FLAG -->
+    <!-- Tour Header Section - MODIFICADO PARA PASAR ACTIVIDADES SELECCIONADAS, FLAG Y DATOS DE AGE GROUPS -->
     <section class="tour-section tour-header-section">
       <app-tour-header-v2
         [tourId]="tour.id"
@@ -21,20 +21,22 @@
         [totalPassengers]="totalPassengers"
         [selectedActivities]="selectedActivities"
         [showActivitiesStatus]="showActivitiesStatus"
+        [passengersData]="passengersData"
+        [ageGroupCategories]="ageGroupCategories"
       >
       </app-tour-header-v2>
     </section>
-
+    
     <!-- Tour Overview Section -->
     <section class="tour-section tour-overview-section">
       <app-tour-overview-v2 [tourId]="tour.id"></app-tour-overview-v2>
     </section>
-
+    
     <!-- Tour Highlights Section -->
     <section class="tour-section tour-highlights-section">
       <app-tour-highlights-v2 [tourId]="tour.id"></app-tour-highlights-v2>
     </section>
-
+    
     <!-- Tour Itinerary Section - MODIFICADO PARA RECIBIR EVENTOS DE ACTIVIDAD -->
     <section class="tour-section tour-itinerary-section">
       <app-tour-itinerary-v2
@@ -43,8 +45,8 @@
         (activitySelected)="onActivitySelected($event)">
       </app-tour-itinerary-v2>
     </section>
-
-    <!-- Tour departure Section -->
+    
+    <!-- Tour departure Section - MODIFICADO PARA RECIBIR EVENTO DE AGE GROUPS -->
     <section class="tour-section tour-departures-section">
       <app-tour-departures-v2
         [tourId]="tour.id"
@@ -52,10 +54,11 @@
         (priceUpdate)="onPriceUpdate($event)"
         (cityUpdate)="onCityUpdate($event)"
         (departureUpdate)="onDepartureUpdate($event)"
-        (passengersUpdate)="onPassengersUpdate($event)">
+        (passengersUpdate)="onPassengersUpdate($event)"
+        (ageGroupsUpdate)="onAgeGroupsUpdate($event)">
       </app-tour-departures-v2>
     </section>
-
+    
     <!-- Tour Reviews Section -->
     <section class="tour-section tour-reviews-section">
       <app-tour-reviews-v2 [tourId]="tour.id"></app-tour-reviews-v2>

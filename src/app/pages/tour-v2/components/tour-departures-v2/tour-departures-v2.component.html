@@ -73,7 +73,7 @@
               <div class="p-type" *ngIf="allowedPassengerTypes.adults">
                 <div class="p-info">
                   <div class="p-cat">Adultos</div>
-                  <div class="p-age">+18 años</div>
+                  <div class="p-age">{{ getAgeText('adults') }}</div>                
                 </div>
                 <div class="p-ctrl">
                   <p-button
@@ -102,7 +102,7 @@
                       styleClass="ml-2"
                     ></p-badge>
                   </div>
-                  <div class="p-age">2-17 años</div>
+                  <div class="p-age">{{ getAgeText('children') }}</div>
                 </div>
                 <div class="p-ctrl">
                   <p-button
@@ -131,7 +131,7 @@
                       styleClass="ml-2"
                     ></p-badge>
                   </div>
-                  <div class="p-age">0-1 años</div>
+                  <div class="p-age">{{ getAgeText('babies') }}</div>
                 </div>
                 <div class="p-ctrl">
                   <p-button

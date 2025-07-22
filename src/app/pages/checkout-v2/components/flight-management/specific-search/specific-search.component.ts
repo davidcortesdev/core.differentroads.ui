@@ -76,6 +76,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
     { label: 'Duración (más corto)', value: 'duration' },
   ];
   selectedSortOption: string = 'price-asc';
+  flightOffersRaw: any = null;
 
   constructor(
     private fb: FormBuilder,
@@ -263,8 +264,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
     };
     this.flightSearchService.searchFlights(request).subscribe({
       next: (response: any) => {
-        // Suponiendo que la respuesta contiene un array de ofertas de vuelo en response.offers o similar
         this.isLoading = false;
+        this.flightOffersRaw = response; // Guardar la respuesta cruda
         this.flightOffers = response.offers || [];
         this.filterOffers();
       },

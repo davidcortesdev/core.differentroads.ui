@@ -112,7 +112,7 @@
       <div class="row" *ngIf="tipoViaje === 'Vuelta'">
         <div class="label">
           <label>Vuelta</label>
-          <div class="from">Desde</div>
+          <div class="from">a</div>
         </div>
         <div class="input origin">
           <i class="pi pi-plane"></i>
@@ -143,7 +143,7 @@
           </p-autocomplete>
         </div>
         <div class="input destination">
-          <div class="dest-lbl">Llegada</div>
+          <div class="dest-lbl">Desde</div>
           <div class="static-field">
             {{ tourDestinoConstante.codigo }} - {{ tourDestinoConstante.nombre }}
           </div>
@@ -284,4 +284,50 @@
       </p>
     </div>
   </p-panel>
+</div>
+
+<!-- Sección de debug: mostrar ofertas crudas de la API de forma amigable -->
+<div *ngIf="flightOffersRaw?.data?.flightOffers?.length" class="api-flight-offers">
+  <h3>Ofertas de vuelo (API cruda):</h3>
+  <div *ngFor="let offer of flightOffersRaw.data.flightOffers">
+    <strong>ID:</strong> {{ offer.id }}<br>
+    <strong>Precio total:</strong> {{ offer.price.total }} {{ offer.price.currency }}<br>
+    <strong>Aerolínea principal:</strong> {{ offer.validatingAirlineCodes?.[0] || offer.itineraries[0]?.segments[0]?.carrierCode }}<br>
+    <strong>Último día para ticket:</strong> {{ offer.lastTicketingDate || '-' }}<br>
+    <strong>Tipo de tarifa:</strong> {{ offer.pricingOptions?.fareType?.join(', ') || '-' }}<br>
+    <strong>Tasas:</strong>
+    <ul *ngIf="offer.price.fees?.length">
+      <li *ngFor="let fee of offer.price.fees">
+        {{ fee.type }}: {{ fee.amount }} {{ offer.price.currency }}
+      </li>
+    </ul>
+    <strong>Precios por pasajero:</strong>
+    <ul *ngIf="offer.travelerPricings?.length">
+      <li *ngFor="let tp of offer.travelerPricings">
+        Tipo: {{ tp.travelerType }}<br>
+        Precio total: {{ tp.price.total }} {{ tp.price.currency }}<br>
+        Precio base: {{ tp.price.base }} {{ tp.price.currency }}<br>
+        <!-- Si hay más detalles por edad, se pueden mostrar aquí -->
+      </li>
+    </ul>
+    <strong>Itinerarios:</strong>
+    <ul>
+      <li *ngFor="let itin of offer.itineraries; let i = index">
+        <b>Itinerario {{ i + 1 }}</b>
+        <ul>
+          <li *ngFor="let seg of itin.segments">
+            <b>{{ seg.departure.iataCode }}</b> ({{ seg.departure.terminal || '-' }}) {{ seg.departure.at }} →
+            <b>{{ seg.arrival.iataCode }}</b> ({{ seg.arrival.terminal || '-' }}) {{ seg.arrival.at }}<br>
+            <span style="margin-left:1em">
+              Compañía: {{ seg.carrierCode }}<br>
+              Cabina: {{ seg.cabin || seg.class || '-' }}<br>
+              Clase: {{ seg.class || '-' }}<br>
+              Maletas incluidas: {{ seg.includedCheckedBags?.quantity || '-' }}<br>
+            </span>
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <hr>
+  </div>
 </div>

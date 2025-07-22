@@ -184,7 +184,7 @@
 
       <ng-template #list let-departures>
         <div class="dep-list">
-          <ng-container *ngFor="let item of departures; let i = index">
+          <ng-container *ngFor="let item of departures; trackBy: trackByDepartureId">
             <div class="dep-item">
               <div class="dates">
                 <div class="d-date">
@@ -238,21 +238,20 @@
               </div>
 
               <div class="actions">
-                <p-button
-                  [label]="
-                    item.status === 'complete'
-                      ? 'COMPLETO'
-                      : isDepartureSelected(item)
-                      ? 'Añadido'
-                      : 'Añadir'
-                  "
+                <button 
+                  type="button" 
+                  pButton 
                   [disabled]="item.status === 'complete'"
-                  (onClick)="addToCart(item)"
-                  styleClass="p-button-rounded"
-                  [outlined]="isDepartureSelected(item)"
-                  [raised]="true"
-                ></p-button>
+                  (click)="addToCart(item)"
+                  class="p-button-rounded"
+                  [style.background-color]="selectedDepartureId === item.id ? 'transparent' : null"
+                  [style.color]="selectedDepartureId === item.id ? 'var(--p-primary-color)' : null"
+                  [style.border]="selectedDepartureId === item.id ? '1px solid var(--p-primary-color)' : null"
+                >
+                  {{ item.status === 'complete' ? 'COMPLETO' : (selectedDepartureId === item.id ? 'Añadido' : 'Añadir') }}
+                </button>
               </div>
+              
             </div>
           </ng-container>
         </div>

@@ -7,7 +7,7 @@ import { ItineraryService } from '../../core/services/itinerary/itinerary.servic
 import { SelectedDepartureEvent } from './components/tour-itinerary-v2/components/selector-itinerary/selector-itinerary.component';
 import { ActivityHighlight } from '../../shared/components/activity-card/activity-card.component';
 
-// ✅ NUEVAS INTERFACES para tipado fuerte
+// ✅ INTERFACES para tipado fuerte
 interface PassengersData {
   adults: number;
   children: number;
@@ -26,6 +26,25 @@ interface AgeGroupCategories {
   babies: AgeGroupCategory;
 }
 
+// ✅ NUEVA INTERFACE: Para el departure seleccionado
+interface SelectedDepartureData {
+  id: number;
+  departureDate?: string;
+  returnDate?: string;
+  price?: number;
+  status?: string;
+  waitingList?: boolean;
+  group?: string;
+}
+
+// ✅ NUEVA INTERFACE: Para los datos de actualización de pasajeros
+interface PassengersUpdateData {
+  adults: number;
+  children: number;
+  babies: number;
+  total: number;
+}
+
 @Component({
   selector: 'app-tour-v2',
   standalone: false,
@@ -39,25 +58,25 @@ export class TourV2Component implements OnInit {
   error: string | null = null;
   selectedDepartureEvent: SelectedDepartureEvent | null = null;
 
-  // ✅ AÑADIDO: Total del carrito
+  // Total del carrito
   totalPrice: number = 0;
 
-  // ✅ CORREGIDO: Ciudad seleccionada - no debe tener valor inicial
+  // Ciudad seleccionada - no debe tener valor inicial
   selectedCity: string = '';
 
-  // ✅ AÑADIDO: Departure seleccionado
-  selectedDepartureData: any = null;
+  // ✅ TIPADO FUERTE: Departure seleccionado
+  selectedDepartureData: SelectedDepartureData | null = null;
 
-  // ✅ AÑADIDO: Total de pasajeros
+  // Total de pasajeros
   totalPassengers: number = 1;
 
-  // ✅ NUEVO: Array para almacenar actividades seleccionadas
+  // Array para almacenar actividades seleccionadas
   selectedActivities: ActivityHighlight[] = [];
 
-  // ✅ NUEVO: Flag para controlar cuándo mostrar el estado de actividades
+  // Flag para controlar cuándo mostrar el estado de actividades
   showActivitiesStatus: boolean = false;
 
-  // ✅ NUEVAS PROPIEDADES para age groups y datos detallados de pasajeros con tipado fuerte
+  // Propiedades para age groups y datos detallados de pasajeros con tipado fuerte
   passengersData: PassengersData = { adults: 1, children: 0, babies: 0 };
   ageGroupCategories: AgeGroupCategories = {
     adults: { id: null, lowerAge: null, upperAge: null },
@@ -74,7 +93,7 @@ export class TourV2Component implements OnInit {
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
-      const slug = params.get('slug');
+      const slug: string | null = params.get('slug');
       if (slug) {
         this.tourSlug = slug;
         this.loadTourBySlug(slug);
@@ -92,14 +111,14 @@ export class TourV2Component implements OnInit {
     this.tourNetService
       .getTours({ slug })
       .pipe(
-        catchError((err) => {
+        catchError((err: Error) => {
           console.error('Error al cargar el tour:', err);
           this.error =
             'Error al cargar el tour. Por favor, inténtalo de nuevo más tarde.';
           return of([]);
         })
       )
-      .subscribe((tours) => {
+      .subscribe((tours: Tour[]) => {
         if (tours && tours.length > 0) {
           this.tour = tours[0];
         } else {
@@ -111,19 +130,19 @@ export class TourV2Component implements OnInit {
 
   onDepartureSelected(event: SelectedDepartureEvent): void {
     this.selectedDepartureEvent = event;
-    // ✅ AÑADIDO: Reset precio al cambiar departure
+    // Reset precio al cambiar departure
     this.totalPrice = 0;
 
-    // ✅ NUEVO: Limpiar actividades y activar la visualización del estado
+    // Limpiar actividades y activar la visualización del estado
     this.selectedActivities = [];
     this.showActivitiesStatus = true; // Activar para mostrar "Sin actividades opcionales"
   }
 
-  // NUEVO: Manejar selección de actividad desde el componente hijo
+  // Manejar selección de actividad desde el componente hijo
   onActivitySelected(activityHighlight: ActivityHighlight): void {
     // Actualizar el array de actividades seleccionadas
-    const existingIndex = this.selectedActivities.findIndex(
-      (activity) => activity.id === activityHighlight.id
+    const existingIndex: number = this.selectedActivities.findIndex(
+      (activity: ActivityHighlight) => activity.id === activityHighlight.id
     );
 
     if (existingIndex !== -1) {
@@ -136,39 +155,34 @@ export class TourV2Component implements OnInit {
 
     // Remover actividades que ya no están agregadas
     this.selectedActivities = this.selectedActivities.filter(
-      (activity) => activity.added
+      (activity: ActivityHighlight) => activity.added
     );
   }
 
-  // ✅ AÑADIDO: Recibir actualización de precio
+  // Recibir actualización de precio
   onPriceUpdate(price: number): void {
     this.totalPrice = price;
   }
 
-  // ✅ AÑADIDO: Recibir actualización de ciudad
+  // Recibir actualización de ciudad
   onCityUpdate(city: string): void {
     this.selectedCity = city;
   }
 
-  // ✅ AÑADIDO: Recibir actualización de departure
-  onDepartureUpdate(departure: any): void {
+  // ✅ TIPADO FUERTE: Recibir actualización de departure
+  onDepartureUpdate(departure: SelectedDepartureData | null): void {
     this.selectedDepartureData = departure;
   }
 
-  // ✅ MODIFICADO: Recibir actualización del total de pasajeros con interface
-  onPassengersUpdate(passengersUpdateData: {
-    adults: number;
-    children: number;
-    babies: number;
-    total: number;
-  }): void {
+  // ✅ TIPADO FUERTE: Recibir actualización del total de pasajeros con interface
+  onPassengersUpdate(passengersUpdateData: PassengersUpdateData): void {
     // Calcular total de pasajeros (adultos + niños + bebés)
     this.totalPassengers =
       passengersUpdateData.adults +
       passengersUpdateData.children +
       passengersUpdateData.babies;
 
-    // ✅ NUEVO: Guardar datos detallados de pasajeros
+    // Guardar datos detallados de pasajeros
     this.passengersData = {
       adults: passengersUpdateData.adults,
       children: passengersUpdateData.children,
@@ -176,7 +190,7 @@ export class TourV2Component implements OnInit {
     };
   }
 
-  // ✅ NUEVO: Recibir información de age groups desde el componente TourDeparturesV2Component
+  // Recibir información de age groups desde el componente TourDeparturesV2Component
   onAgeGroupsUpdate(ageGroupCategories: AgeGroupCategories): void {
     this.ageGroupCategories = ageGroupCategories;
   }

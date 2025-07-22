@@ -5,6 +5,7 @@
   <div class="selector-section">
     <app-selector-itinerary 
       [tourId]="tourId"
+      [selectedDepartureFromParent]="selectedDepartureFromParent"
       (departureSelected)="onDepartureSelected($event)">
     </app-selector-itinerary>
   </div>

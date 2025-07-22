@@ -1,11 +1,30 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnInit,
+  OnDestroy,
+  OnChanges,
+  SimpleChanges,
+} from '@angular/core';
 import { Subject, forkJoin, of } from 'rxjs';
 import { takeUntil, catchError, map, switchMap } from 'rxjs/operators';
 
 // Importar servicios necesarios
-import { ItineraryService, IItineraryResponse, ItineraryFilters } from '../../../../../../core/services/itinerary/itinerary.service';
-import { DepartureService, IDepartureResponse } from '../../../../../../core/services/departure/departure.service';
-import { TripTypeService, ITripTypeResponse } from '../../../../../../core/services/trip-type/trip-type.service';
+import {
+  ItineraryService,
+  IItineraryResponse,
+  ItineraryFilters,
+} from '../../../../../../core/services/itinerary/itinerary.service';
+import {
+  DepartureService,
+  IDepartureResponse,
+} from '../../../../../../core/services/departure/departure.service';
+import {
+  TripTypeService,
+  ITripTypeResponse,
+} from '../../../../../../core/services/trip-type/trip-type.service';
 
 // Interface simplificada para departure con name
 interface IDepartureResponseExtended extends IDepartureResponse {
@@ -23,6 +42,30 @@ interface DepartureData {
   tripType?: ITripTypeResponse;
 }
 
+// ✅ Interface para las opciones del dropdown
+interface DateOption {
+  label: string;
+  value: number;
+  departureDate: string;
+  departureName: string;
+  itineraryName: string;
+  tripType: string;
+  tripTypeId: number;
+  departure: IDepartureResponseExtended;
+  itinerary: IItineraryResponse;
+}
+
+// ✅ Interface para departure seleccionado desde el padre
+interface DepartureFromParent {
+  id: number;
+  departureDate?: string;
+  returnDate?: string;
+  price?: number;
+  status?: string;
+  waitingList?: boolean;
+  group?: string;
+}
+
 // ✅ NUEVA INTERFACE: Para el evento que se emite
 export interface SelectedDepartureEvent {
   departure: IDepartureResponseExtended;
@@ -37,11 +80,16 @@ export interface SelectedDepartureEvent {
   selector: 'app-selector-itinerary',
   standalone: false,
   templateUrl: './selector-itinerary.component.html',
-  styleUrl: './selector-itinerary.component.scss'
+  styleUrl: './selector-itinerary.component.scss',
 })
-export class SelectorItineraryComponent implements OnInit, OnDestroy {
+export class SelectorItineraryComponent
+  implements OnInit, OnDestroy, OnChanges
+{
   @Input() tourId: number | undefined;
-  
+
+  // ✅ NUEVO INPUT: Para recibir el departure seleccionado desde el componente departures
+  @Input() selectedDepartureFromParent: DepartureFromParent | null = null;
+
   // ✅ NUEVO OUTPUT: Emite cuando cambia la selección
   @Output() departureSelected = new EventEmitter<SelectedDepartureEvent>();
 
@@ -49,14 +97,15 @@ export class SelectorItineraryComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   // Estados del componente
-  loading = true;
+  loading: boolean = true;
   error: string | undefined;
 
-  // Datos principales
+  // Datos principales con tipado fuerte
   itinerariesWithDepartures: ItineraryWithDepartures[] = [];
-  dateOptions: any[] = [];
-  selectedDeparture: any = null;
-  
+  dateOptions: DateOption[] = [];
+  selectedDeparture: DateOption | null = null;
+  selectedValue: number | null = null; // ✅ Para el dropdown
+
   // Map para tipos de viaje
   private tripTypesMap = new Map<number, ITripTypeResponse>();
 
@@ -70,7 +119,9 @@ export class SelectorItineraryComponent implements OnInit, OnDestroy {
     if (this.tourId) {
       this.loadSelectorData(this.tourId);
     } else {
-      console.warn('⚠️ No se proporcionó tourId para el selector de itinerarios');
+      console.warn(
+        '⚠️ No se proporcionó tourId para el selector de itinerarios'
+      );
       this.loading = false;
       this.error = 'ID del tour no proporcionado';
     }
@@ -81,6 +132,41 @@ export class SelectorItineraryComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  // ✅ NUEVO: Manejar cambios en el input selectedDepartureFromParent
+  ngOnChanges(changes: SimpleChanges): void {
+    if (
+      changes['selectedDepartureFromParent'] &&
+      changes['selectedDepartureFromParent'].currentValue
+    ) {
+      const departureFromParent = changes['selectedDepartureFromParent']
+        .currentValue as DepartureFromParent;
+      this.updateSelectorFromParent(departureFromParent);
+    }
+  }
+
+  // ✅ CORREGIDO: Actualizar el selector cuando el padre cambia el departure
+  private updateSelectorFromParent(
+    departureFromParent: DepartureFromParent
+  ): void {
+    if (!this.dateOptions || this.dateOptions.length === 0) return;
+
+    // Buscar la opción que corresponde al departure seleccionado en el padre
+    const matchingOption = this.dateOptions.find(
+      (option) => option.value === departureFromParent.id
+    );
+
+    if (matchingOption) {
+      this.selectedDeparture = matchingOption;
+      this.selectedValue = matchingOption.value; // ✅ CRÍTICO: Actualizar selectedValue
+      // No emitir evento aquí para evitar bucle infinito
+    } else if (!this.selectedDeparture && this.dateOptions.length > 0) {
+      // ✅ FALLBACK: Si no encuentra coincidencia, seleccionar el primero
+      this.selectedDeparture = this.dateOptions[0];
+      this.selectedValue = this.dateOptions[0].value;
+      this.emitDepartureSelected();
+    }
+  }
+
   /**
    * Cargar todos los datos necesarios para el selector
    */
@@ -89,31 +175,45 @@ export class SelectorItineraryComponent implements OnInit, OnDestroy {
     this.error = undefined;
 
     // Cargar tipos de viaje primero
-    this.tripTypeService.getAll().pipe(
-      takeUntil(this.destroy$),
-      catchError(error => {
-        console.error('❌ Error loading trip types:', error);
-        return of([]);
-      }),
-      switchMap(tripTypes => {
-        // Crear map de tipos de viaje
-        this.createTripTypesMap(tripTypes);
-        
-        // Cargar itinerarios del tour
-        return this.loadItinerariesWithDepartures(tourId);
-      })
-    ).subscribe({
-      next: (itinerariesData) => {
-        this.itinerariesWithDepartures = itinerariesData;
-        this.createDateOptions();
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('❌ Error cargando datos del selector:', error);
-        this.error = 'Error al cargar los datos del selector';
-        this.loading = false;
-      }
-    });
+    this.tripTypeService
+      .getAll()
+      .pipe(
+        takeUntil(this.destroy$),
+        catchError((error) => {
+          console.error('❌ Error loading trip types:', error);
+          return of([]);
+        }),
+        switchMap((tripTypes) => {
+          // Crear map de tipos de viaje
+          this.createTripTypesMap(tripTypes);
+
+          // Cargar itinerarios del tour
+          return this.loadItinerariesWithDepartures(tourId);
+        })
+      )
+      .subscribe({
+        next: (itinerariesData) => {
+          this.itinerariesWithDepartures = itinerariesData;
+          this.createDateOptions();
+          this.loading = false;
+
+          // ✅ NUEVO: Verificación final para asegurar sincronización
+          setTimeout(() => {
+            if (this.selectedDeparture && !this.selectedValue) {
+              this.selectedValue = this.selectedDeparture.value;
+              console.log(
+                '🔧 Corrección aplicada - selectedValue:',
+                this.selectedValue
+              );
+            }
+          }, 100);
+        },
+        error: (error) => {
+          console.error('❌ Error cargando datos del selector:', error);
+          this.error = 'Error al cargar los datos del selector';
+          this.loading = false;
+        },
+      });
   }
 
   /**
@@ -121,7 +221,7 @@ export class SelectorItineraryComponent implements OnInit, OnDestroy {
    */
   private createTripTypesMap(tripTypes: ITripTypeResponse[]): void {
     this.tripTypesMap.clear();
-    tripTypes.forEach(tripType => {
+    tripTypes.forEach((tripType) => {
       this.tripTypesMap.set(tripType.id, tripType);
     });
   }
@@ -133,28 +233,27 @@ export class SelectorItineraryComponent implements OnInit, OnDestroy {
     const itineraryFilters: ItineraryFilters = {
       tourId: tourId,
       isVisibleOnWeb: true,
-      isBookable: true
+      isBookable: true,
     };
 
     return this.itineraryService.getAll(itineraryFilters).pipe(
-      map(itineraries => {
-        return itineraries.filter(itinerary => 
-          itinerary.tkId && 
-          itinerary.tkId.trim() !== ''
+      map((itineraries) => {
+        return itineraries.filter(
+          (itinerary) => itinerary.tkId && itinerary.tkId.trim() !== ''
         );
       }),
-      switchMap(validItineraries => {
+      switchMap((validItineraries) => {
         if (validItineraries.length === 0) {
           return of([]);
         }
 
-        const itineraryDeparturesObservables = validItineraries.map(itinerary => 
-          this.loadDeparturesForItinerary(itinerary)
+        const itineraryDeparturesObservables = validItineraries.map(
+          (itinerary) => this.loadDeparturesForItinerary(itinerary)
         );
 
         return forkJoin(itineraryDeparturesObservables);
       }),
-      catchError(error => {
+      catchError((error) => {
         console.error('❌ Error loading itineraries:', error);
         return of([]);
       })
@@ -166,10 +265,10 @@ export class SelectorItineraryComponent implements OnInit, OnDestroy {
    */
   private loadDeparturesForItinerary(itinerary: IItineraryResponse) {
     return this.departureService.getByItinerary(itinerary.id).pipe(
-      map(departures => {
-        const departuresData: DepartureData[] = departures.map(departure => ({
+      map((departures) => {
+        const departuresData: DepartureData[] = departures.map((departure) => ({
           departure,
-          tripType: this.tripTypesMap.get(departure.tripTypeId)
+          tripType: this.tripTypesMap.get(departure.tripTypeId),
         }));
 
         // Ordenar departures por fecha de salida (orden cronológico)
@@ -181,17 +280,20 @@ export class SelectorItineraryComponent implements OnInit, OnDestroy {
 
         const itineraryWithDepartures: ItineraryWithDepartures = {
           itinerary,
-          departures: sortedDepartures
+          departures: sortedDepartures,
         };
 
         return itineraryWithDepartures;
       }),
-      catchError(error => {
-        console.error(`❌ Error loading departures for itinerary ${itinerary.id}:`, error);
-        
+      catchError((error) => {
+        console.error(
+          `❌ Error loading departures for itinerary ${itinerary.id}:`,
+          error
+        );
+
         const itineraryWithDepartures: ItineraryWithDepartures = {
           itinerary,
-          departures: []
+          departures: [],
         };
 
         return of(itineraryWithDepartures);
@@ -204,19 +306,22 @@ export class SelectorItineraryComponent implements OnInit, OnDestroy {
    */
   private createDateOptions(): void {
     this.dateOptions = [];
-    
-    this.itinerariesWithDepartures.forEach(itineraryData => {
-      itineraryData.departures.forEach(departureData => {
-        const option = {
+
+    this.itinerariesWithDepartures.forEach((itineraryData) => {
+      itineraryData.departures.forEach((departureData) => {
+        const option: DateOption = {
           label: this.formatDate(departureData.departure.departureDate), // Solo la fecha en el dropdown
           value: departureData.departure.id,
           departureDate: departureData.departure.departureDate,
           departureName: departureData.departure.name || 'Sin nombre',
-          itineraryName: itineraryData.itinerary.name || 'Itinerario sin nombre',
-          tripType: this.getTripTypeFirstLetter(departureData.departure.tripTypeId),
+          itineraryName:
+            itineraryData.itinerary.name || 'Itinerario sin nombre',
+          tripType: this.getTripTypeFirstLetter(
+            departureData.departure.tripTypeId
+          ),
           tripTypeId: departureData.departure.tripTypeId,
           departure: departureData.departure,
-          itinerary: itineraryData.itinerary
+          itinerary: itineraryData.itinerary,
         };
         this.dateOptions.push(option);
       });
@@ -224,22 +329,38 @@ export class SelectorItineraryComponent implements OnInit, OnDestroy {
 
     // Ordenar por fecha
     this.dateOptions.sort((a, b) => {
-      return new Date(a.departureDate).getTime() - new Date(b.departureDate).getTime();
+      return (
+        new Date(a.departureDate).getTime() -
+        new Date(b.departureDate).getTime()
+      );
     });
 
-    // Seleccionar automáticamente el primer departure
+    // ✅ CORREGIDO: Seleccionar automáticamente y asegurar que selectedValue se actualice
     if (this.dateOptions.length > 0) {
-      this.selectedDeparture = this.dateOptions[0];
-      // ✅ EMITIR EVENTO: Cuando se selecciona automáticamente el primer departure
-      this.emitDepartureSelected();
+      if (this.selectedDepartureFromParent) {
+        // Si hay un departure desde el padre, intentar seleccionarlo
+        this.updateSelectorFromParent(this.selectedDepartureFromParent);
+      } else {
+        // Si no hay departure del padre, seleccionar el primero
+        this.selectedDeparture = this.dateOptions[0];
+        this.selectedValue = this.dateOptions[0].value; // ✅ CRÍTICO: Asegurar selectedValue
+        this.emitDepartureSelected();
+      }
+
+      // ✅ NUEVO: Verificar que selectedValue esté configurado después de cualquier selección
+      if (this.selectedDeparture && !this.selectedValue) {
+        this.selectedValue = this.selectedDeparture.value;
+      }
     }
   }
 
   /**
    * Manejar selección de departure
    */
-  onDepartureChange(event: any): void {
-    this.selectedDeparture = this.dateOptions.find(option => option.value === event.value);    
+  onDepartureChange(event: { value: number }): void {
+    this.selectedDeparture =
+      this.dateOptions.find((option) => option.value === event.value) || null;
+    this.selectedValue = event.value;
     // ✅ EMITIR EVENTO: Cuando el usuario cambia la selección
     this.emitDepartureSelected();
   }
@@ -256,7 +377,7 @@ export class SelectorItineraryComponent implements OnInit, OnDestroy {
       departureDate: this.selectedDeparture.departureDate,
       formattedDate: this.formatDate(this.selectedDeparture.departureDate),
       itineraryName: this.selectedDeparture.itineraryName,
-      tripType: this.tripTypesMap.get(this.selectedDeparture.tripTypeId)
+      tripType: this.tripTypesMap.get(this.selectedDeparture.tripTypeId),
     };
 
     this.departureSelected.emit(eventData);
@@ -267,13 +388,13 @@ export class SelectorItineraryComponent implements OnInit, OnDestroy {
    */
   formatDate(dateString: string): string {
     if (!dateString) return '';
-    
+
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString('es-ES', {
         year: 'numeric',
         month: '2-digit',
-        day: '2-digit'
+        day: '2-digit',
       });
     } catch {
       return dateString;
@@ -295,7 +416,7 @@ export class SelectorItineraryComponent implements OnInit, OnDestroy {
   getTripTypeClass(tripTypeId: number): string {
     const tripType = this.tripTypesMap.get(tripTypeId);
     if (!tripType || !tripType.name) return 'trip-type-default';
-    
+
     const firstLetter = tripType.name.charAt(0).toLowerCase();
     return `trip-type-${firstLetter}`;
   }
@@ -314,6 +435,7 @@ export class SelectorItineraryComponent implements OnInit, OnDestroy {
   refreshSelector(): void {
     if (this.tourId) {
       this.selectedDeparture = null;
+      this.selectedValue = null;
       this.loadSelectorData(this.tourId);
     }
   }

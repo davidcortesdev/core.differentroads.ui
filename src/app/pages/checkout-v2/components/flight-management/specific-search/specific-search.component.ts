@@ -30,10 +30,6 @@ interface Ciudad {
 export class SpecificSearchComponent implements OnInit, OnDestroy {
   @Output() filteredFlightsChange = new EventEmitter<any[]>();
   @Input() flights: Flight[] = [];
-  @Input() tourDestination: Ciudad = { nombre: '', codigo: '' };
-  @Input() dayOne: string | null = null;
-  @Input() returnDate: string | null = null;
-  @Input() periodID: string | null = null;
   @Input() departureId: number | null = null;
 
   airportsFilters: string[] = [];
@@ -105,9 +101,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    if (this.tourDestination && this.tourDestination.codigo) {
-      this.tourOrigenConstante = this.tourDestination;
-    }
     const tourTexts = this.textsService.getTextsForCategory('tour');
     if (tourTexts && tourTexts['name']) {
       this.tourName = tourTexts['name'];
@@ -128,41 +121,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
         infants: travelersNumbers.babies,
       });
     });
-    if (this.periodID) {
-      this.periodsService
-        .getPeriodDetail(this.periodID, ['consolidator', 'tourID'])
-        .subscribe({
-          next: (period: any) => {
-            if (period.tourID) {
-              this.toursService
-                .getTourDetailByExternalID(period.tourID, ['consolidator'])
-                .subscribe({
-                  next: (tour: any) => {
-                    const periodFilters = period.consolidator?.airportsFilters || [];
-                    const tourFilters = tour.consolidator?.airportsFilters || [];
-                    const includeTourConfig = period.consolidator?.includeTourConfig || false;
-                    if (periodFilters.length > 0) {
-                      this.airportsFilters = includeTourConfig
-                        ? [...periodFilters, ...tourFilters]
-                        : periodFilters;
-                    } else {
-                      this.airportsFilters = tourFilters;
-                    }
-                    if (tour.name) {
-                      this.tourName = tour.name;
-                    }
-                  },
-                  error: (err: any) => {
-                    console.error('Error fetching tour details', err);
-                  },
-                });
-            }
-          },
-          error: (err: any) => {
-            console.error('Error fetching period details', err);
-          },
-        });
-    }
     if (this.departureId) {
       this.departureConsolidadorSearchLocationService.getCombinedLocations(this.departureId)
         .subscribe({
@@ -271,11 +229,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
       clearTimeout(this.searchTimeout);
     }
   }
-
-  onCitySelect(event: any) {
-    // Solo registrar la selección, el framework se encarga del resto
-  }
-
+  
   buscar() {
     this.searchPerformed = true;
     this.getFlightOffers();

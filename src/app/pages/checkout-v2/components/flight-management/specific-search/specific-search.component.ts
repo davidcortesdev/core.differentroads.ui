@@ -285,21 +285,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
     return city ? city.codigo : 'MAD';
   }
 
-  formatDate(date: Date): string {
-    const d = new Date(date);
-    const year = d.getUTCFullYear();
-    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(d.getUTCDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
-  formatDisplayDate(date: Date): string {
-    const year = date.getUTCFullYear();
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(date.getUTCDate()).padStart(2, '0');
-    return `${day}/${month}/${year}`;
-  }
-
   filterOffers() {
     const formValue = this.flightForm.value;
     this.filteredOffers = this.flightOffers.filter((offer) => {

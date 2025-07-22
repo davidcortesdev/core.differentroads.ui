@@ -9,4 +9,5 @@ import { Component, Input } from '@angular/core';
 })
 export class FlightManagementComponent {
   @Input() departureId: number | null = null;
+  @Input() reservationId: number | null = null;
 }

@@ -14,6 +14,7 @@ import { DepartureService, DepartureAirportTimesResponse } from '../../../../../
 import { LocationAirportNetService } from '../../../../../core/services/locations/locationAirportNet.service';
 import { LocationNetService } from '../../../../../core/services/locations/locationNet.service';
 import { forkJoin, of } from 'rxjs';
+import { FlightSearchService, FlightSearchRequest } from '../../../../../core/services/flight-search.service';
 
 
 interface Ciudad {
@@ -31,11 +32,13 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
   @Output() filteredFlightsChange = new EventEmitter<any[]>();
   @Input() flights: Flight[] = [];
   @Input() departureId: number | null = null;
+  @Input() reservationId: number | null = null;
 
   airportsFilters: string[] = [];
   private searchTimeout: any;
   flightForm: FormGroup;
-  tipoViaje: string = 'idaVuelta';
+  // Cambiar el tipo y valor inicial de tipoViaje
+  tipoViaje: 'Ida' | 'Vuelta' | 'IdaVuelta' = 'IdaVuelta';
   equipajeMano: boolean = false;
   equipajeBodega: boolean = false;
   tourOrigenConstante: Ciudad = { nombre: '', codigo: '' };
@@ -85,7 +88,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
     private departureConsolidadorSearchLocationService: DepartureConsolidadorSearchLocationService,
     private departureService: DepartureService, // <--- inyectar
     private locationAirportNetService: LocationAirportNetService, // <--- inyectar
-    private locationNetService: LocationNetService // <--- inyectar
+    private locationNetService: LocationNetService, // <--- inyectar
+    private flightSearchService: FlightSearchService // <--- nuevo servicio
   ) {
     this.flightForm = this.fb.group({
       origen: [null],
@@ -244,32 +248,24 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
         : formValue.origen.codigo;
     let destinationCode = this.tourOrigenConstante.codigo;
     let departureDate = this.fechaIdaConstante;
-    // Ajustar origen y destino según el tipo de viaje
-    if (formValue.tipoViaje === 'soloVuelta') {
-      // Para solo vuelta, el origen es el destino del tour y el destino es el origen seleccionado
+    let tipoViaje: 'Ida' | 'Vuelta' | 'IdaVuelta' = formValue.tipoViaje;
+    if (tipoViaje === 'Vuelta') {
       destinationCode = originCode;
       originCode = this.tourDestinoConstante.codigo;
       departureDate = this.fechaRegresoConstante;
     }
-    const searchParams: FlightOffersParams = {
-      originLocationCode: originCode,
-      destinationLocationCode: destinationCode,
-      departureDate: departureDate,
-      adults: formValue.adults || 1,
-      children: formValue.children || 0,
-      infants: formValue.infants || 0,
-      max: 10,
+    const request: FlightSearchRequest = {
+      departureId: this.departureId!,
+      reservationId: this.reservationId || 0,
+      tipoViaje: tipoViaje,
+      iataOrigen: originCode,
+      iataDestino: destinationCode
     };
-    if (formValue.tipoViaje === 'idaVuelta') {
-      searchParams.returnDate = this.fechaRegresoConstante;
-    }
-    if (formValue.aerolinea && formValue.aerolinea.codigo !== 'ALL') {
-      searchParams.includedAirlineCodes = formValue.aerolinea.codigo;
-    }
-    this.amadeusService.getFlightOffers(searchParams).subscribe({
-      next: (offers: any) => {
+    this.flightSearchService.searchFlights(request).subscribe({
+      next: (response: any) => {
+        // Suponiendo que la respuesta contiene un array de ofertas de vuelo en response.offers o similar
         this.isLoading = false;
-        this.flightOffers = offers;
+        this.flightOffers = response.offers || [];
         this.filterOffers();
       },
       error: (err: any) => {

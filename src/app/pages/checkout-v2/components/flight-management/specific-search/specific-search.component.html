@@ -29,35 +29,35 @@
         <p-radioButton
           formControlName="tipoViaje"
           name="tipoViaje"
-          value="idaVuelta"
-          inputId="idaVuelta"
+          value="IdaVuelta"
+          inputId="IdaVuelta"
         ></p-radioButton>
-        <label for="idaVuelta">Ida y vuelta</label>
+        <label for="IdaVuelta">Ida y vuelta</label>
       </div>
       <div class="radio">
         <p-radioButton
           formControlName="tipoViaje"
           name="tipoViaje"
-          value="soloDia"
-          inputId="soloDia"
+          value="Ida"
+          inputId="Ida"
         ></p-radioButton>
-        <label for="soloDia">Solo ida</label>
+        <label for="Ida">Solo ida</label>
       </div>
       <div class="radio">
         <p-radioButton
           formControlName="tipoViaje"
           name="tipoViaje"
-          value="soloVuelta"
-          inputId="soloVuelta"
+          value="Vuelta"
+          inputId="Vuelta"
         ></p-radioButton>
-        <label for="soloVuelta">Solo vuelta</label>
+        <label for="Vuelta">Solo vuelta</label>
       </div>
       <!-- Baggage filters removed -->
     </div>
 
     <div class="flt-details">
       <!-- Ida -->
-      <div class="row" *ngIf="tipoViaje !== 'soloVuelta'">
+      <div class="row" *ngIf="tipoViaje !== 'Vuelta'">
         <div class="label">
           <label>Ida</label>
           <div class="from">Desde</div>
@@ -109,7 +109,7 @@
       </div>
 
       <!-- Solo vuelta: origen editable, destino fijo -->
-      <div class="row" *ngIf="tipoViaje === 'soloVuelta'">
+      <div class="row" *ngIf="tipoViaje === 'Vuelta'">
         <div class="label">
           <label>Vuelta</label>
           <div class="from">Desde</div>
@@ -157,7 +157,7 @@
       </div>
 
       <!-- Regreso -->
-      <div class="row" *ngIf="tipoViaje === 'idaVuelta'">
+      <div class="row" *ngIf="tipoViaje === 'IdaVuelta'">
         <div class="label">
           <label>Regreso</label>
           <div class="from">Desde</div>

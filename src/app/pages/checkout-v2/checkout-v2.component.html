@@ -81,7 +81,7 @@
             <h3>Vuelos</h3>
             <p>Contenido del paso 2 - Vuelos</p>
             <!-- Componente de gestión de vuelos -->
-            <app-flight-management [departureId]="departureId" [reservationId]="reservationId"></app-flight-management>
+            <app-flight-management [departureId]="departureId ?? 0" [reservationId]="reservationId ?? 0"></app-flight-management>
 
             <div class="flight-buttons">
               <p-button

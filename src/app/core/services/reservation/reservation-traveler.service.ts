@@ -10,6 +10,7 @@ export interface ReservationTravelerCreate {
   travelerNumber: number;
   isLeadTraveler: boolean;
   tkId: string;
+  ageGroupId: number;
 }
 
 export interface ReservationTravelerUpdate {
@@ -18,6 +19,7 @@ export interface ReservationTravelerUpdate {
   travelerNumber: number;
   isLeadTraveler: boolean;
   tkId: string;
+  ageGroupId: number;
 }
 
 export interface IReservationTravelerResponse {
@@ -26,6 +28,7 @@ export interface IReservationTravelerResponse {
   travelerNumber: number;
   isLeadTraveler: boolean;
   tkId: string;
+  ageGroupId: number;
 }
 
 /**
@@ -37,6 +40,7 @@ export interface ReservationTravelerFilters {
   travelerNumber?: number;
   isLeadTraveler?: boolean;
   tkId?: string;
+  ageGroupId?: number;
 }
 
 @Injectable({
@@ -52,7 +56,9 @@ export class ReservationTravelerService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de viajeros de reservaciones.
    */
-  getAll(filters?: ReservationTravelerFilters): Observable<IReservationTravelerResponse[]> {
+  getAll(
+    filters?: ReservationTravelerFilters
+  ): Observable<IReservationTravelerResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -67,7 +73,9 @@ export class ReservationTravelerService {
       });
     }
 
-    return this.http.get<IReservationTravelerResponse[]>(this.API_URL, { params });
+    return this.http.get<IReservationTravelerResponse[]>(this.API_URL, {
+      params,
+    });
   }
 
   /**
@@ -75,10 +83,16 @@ export class ReservationTravelerService {
    * @param data Datos para crear el viajero de reservación.
    * @returns El viajero de reservación creado.
    */
-  create(data: ReservationTravelerCreate): Observable<IReservationTravelerResponse> {
-    return this.http.post<IReservationTravelerResponse>(`${this.API_URL}`, data, {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-    });
+  create(
+    data: ReservationTravelerCreate
+  ): Observable<IReservationTravelerResponse> {
+    return this.http.post<IReservationTravelerResponse>(
+      `${this.API_URL}`,
+      data,
+      {
+        headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+      }
+    );
   }
 
   /**
@@ -86,21 +100,24 @@ export class ReservationTravelerService {
    * @param reservationId ID de la reservación.
    * @param isLeadTraveler Si es el viajero principal.
    * @param tkId ID del token.
+   * @param ageGroupId ID del grupo de edad.
    * @returns El viajero de reservación creado con número auto-incrementado.
    */
   createWithAutoTravelerNumber(
-    reservationId: number, 
-    isLeadTraveler: boolean = false, 
-    tkId: string = ''
+    reservationId: number,
+    isLeadTraveler: boolean = false,
+    tkId: string = '',
+    ageGroupId: number = 0
   ): Observable<IReservationTravelerResponse> {
     return this.getNextTravelerNumber(reservationId).pipe(
-      switchMap(nextNumber => {
+      switchMap((nextNumber) => {
         const data: ReservationTravelerCreate = {
           id: 0, // Se asigna en el backend
           reservationId,
           travelerNumber: nextNumber,
           isLeadTraveler,
-          tkId
+          tkId,
+          ageGroupId,
         };
         return this.create(data);
       })
@@ -142,12 +159,16 @@ export class ReservationTravelerService {
    * @param reservationId ID de la reservación.
    * @returns Lista de viajeros de la reservación.
    */
-  getByReservation(reservationId: number): Observable<IReservationTravelerResponse[]> {
+  getByReservation(
+    reservationId: number
+  ): Observable<IReservationTravelerResponse[]> {
     const params = new HttpParams()
       .set('ReservationId', reservationId.toString())
       .set('useExactMatchForStrings', 'false');
-    
-    return this.http.get<IReservationTravelerResponse[]>(this.API_URL, { params });
+
+    return this.http.get<IReservationTravelerResponse[]>(this.API_URL, {
+      params,
+    });
   }
 
   /**
@@ -155,15 +176,17 @@ export class ReservationTravelerService {
    * @param reservationId ID de la reservación.
    * @returns El viajero principal de la reservación.
    */
-  getLeadTraveler(reservationId: number): Observable<IReservationTravelerResponse | null> {
+  getLeadTraveler(
+    reservationId: number
+  ): Observable<IReservationTravelerResponse | null> {
     const params = new HttpParams()
       .set('ReservationId', reservationId.toString())
       .set('IsLeadTraveler', 'true')
       .set('useExactMatchForStrings', 'false');
-    
-    return this.http.get<IReservationTravelerResponse[]>(this.API_URL, { params }).pipe(
-      map(travelers => travelers.length > 0 ? travelers[0] : null)
-    );
+
+    return this.http
+      .get<IReservationTravelerResponse[]>(this.API_URL, { params })
+      .pipe(map((travelers) => (travelers.length > 0 ? travelers[0] : null)));
   }
 
   /**
@@ -173,13 +196,15 @@ export class ReservationTravelerService {
    */
   getNextTravelerNumber(reservationId: number): Observable<number> {
     return this.getByReservation(reservationId).pipe(
-      map(travelers => {
+      map((travelers) => {
         if (travelers.length === 0) {
           return 1; // Primer viajero
         }
-        
+
         // Obtener el número más alto y agregar 1
-        const maxTravelerNumber = Math.max(...travelers.map(t => t.travelerNumber));
+        const maxTravelerNumber = Math.max(
+          ...travelers.map((t) => t.travelerNumber)
+        );
         return maxTravelerNumber + 1;
       })
     );
@@ -192,7 +217,7 @@ export class ReservationTravelerService {
    */
   getTravelerCount(reservationId: number): Observable<number> {
     return this.getByReservation(reservationId).pipe(
-      map(travelers => travelers.length)
+      map((travelers) => travelers.length)
     );
   }
 
@@ -203,7 +228,7 @@ export class ReservationTravelerService {
    */
   hasLeadTraveler(reservationId: number): Observable<boolean> {
     return this.getLeadTraveler(reservationId).pipe(
-      map(leadTraveler => leadTraveler !== null)
+      map((leadTraveler) => leadTraveler !== null)
     );
   }
 
@@ -213,18 +238,21 @@ export class ReservationTravelerService {
    * @param travelerId ID del viajero a establecer como principal.
    * @returns Resultado de la operación.
    */
-  setLeadTraveler(reservationId: number, travelerId: number): Observable<boolean> {
+  setLeadTraveler(
+    reservationId: number,
+    travelerId: number
+  ): Observable<boolean> {
     return this.getByReservation(reservationId).pipe(
-      switchMap(travelers => {
+      switchMap((travelers) => {
         // Crear array de observables para actualizar todos los viajeros
-        const updateObservables = travelers.map(traveler => {
+        const updateObservables = travelers.map((traveler) => {
           const updatedTraveler: ReservationTravelerUpdate = {
             ...traveler,
-            isLeadTraveler: traveler.id === travelerId
+            isLeadTraveler: traveler.id === travelerId,
           };
           return this.update(traveler.id, updatedTraveler);
         });
-        
+
         // Ejecutar todas las actualizaciones
         return Promise.all(updateObservables);
       }),
@@ -239,19 +267,21 @@ export class ReservationTravelerService {
    */
   reorderTravelerNumbers(reservationId: number): Observable<boolean> {
     return this.getByReservation(reservationId).pipe(
-      switchMap(travelers => {
+      switchMap((travelers) => {
         // Ordenar por número de viajero actual
-        const sortedTravelers = travelers.sort((a, b) => a.travelerNumber - b.travelerNumber);
-        
+        const sortedTravelers = travelers.sort(
+          (a, b) => a.travelerNumber - b.travelerNumber
+        );
+
         // Crear array de observables para actualizar números secuenciales
         const updateObservables = sortedTravelers.map((traveler, index) => {
           const updatedTraveler: ReservationTravelerUpdate = {
             ...traveler,
-            travelerNumber: index + 1
+            travelerNumber: index + 1,
           };
           return this.update(traveler.id, updatedTraveler);
         });
-        
+
         return Promise.all(updateObservables);
       }),
       map(() => true) // Simplificar el resultado
@@ -263,9 +293,13 @@ export class ReservationTravelerService {
    * @param reservationId ID de la reservación.
    * @returns Lista de viajeros ordenada por número de viajero.
    */
-  getByReservationOrdered(reservationId: number): Observable<IReservationTravelerResponse[]> {
+  getByReservationOrdered(
+    reservationId: number
+  ): Observable<IReservationTravelerResponse[]> {
     return this.getByReservation(reservationId).pipe(
-      map(travelers => travelers.sort((a, b) => a.travelerNumber - b.travelerNumber))
+      map((travelers) =>
+        travelers.sort((a, b) => a.travelerNumber - b.travelerNumber)
+      )
     );
   }
 }

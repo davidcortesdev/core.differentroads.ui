@@ -565,8 +565,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
             .flat()
             .sort(
               (a, b) =>
-                new Date(a.departureDate).getTime() -
-                new Date(b.departureDate).getTime()
+                new Date(a.departureDate ?? '').getTime() -
+                new Date(b.departureDate ?? '').getTime()
             );
 
           this.loading = false;

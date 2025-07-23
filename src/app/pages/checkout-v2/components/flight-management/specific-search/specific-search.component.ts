@@ -1,21 +1,17 @@
 import { Component, EventEmitter, Input, OnInit, Output, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { ITempFlightOffer, FlightOffersParams } from '../../../../../core/models/amadeus/flight.types';
-import { FlightSegment } from '../../../../../core/models/tours/flight.model';
-import { Flight } from '../../../../../core/models/tours/flight.model';
-import { AirportService } from '../../../../../core/services/airport.service';
+import { forkJoin, of, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { ITempFlightOffer } from '../../../../../core/models/amadeus/flight.types';
+import { FlightSegment, Flight } from '../../../../../core/models/tours/flight.model';
 import { AmadeusService } from '../../../../../core/services/amadeus.service';
 import { TextsService } from '../../../../../core/services/checkout/texts.service';
 import { TravelersService } from '../../../../../core/services/checkout/travelers.service';
-import { PeriodsService } from '../../../../../core/services/periods.service';
-import { ToursService } from '../../../../../core/services/tours.service';
 import { DepartureConsolidadorSearchLocationService, ConsolidadorSearchLocationWithSourceResponse } from '../../../../../core/services/departure/departure-consolidador-search-location.service';
 import { DepartureService, DepartureAirportTimesResponse } from '../../../../../core/services/departure/departure.service';
 import { LocationAirportNetService } from '../../../../../core/services/locations/locationAirportNet.service';
 import { LocationNetService } from '../../../../../core/services/locations/locationNet.service';
-import { forkJoin, of } from 'rxjs';
 import { FlightSearchService, FlightSearchRequest } from '../../../../../core/services/flight-search.service';
-
 
 interface Ciudad {
   nombre: string;
@@ -29,71 +25,92 @@ interface Ciudad {
   styleUrls: ['./specific-search.component.scss'],
 })
 export class SpecificSearchComponent implements OnInit, OnDestroy {
+  // Inputs y Outputs
   @Output() filteredFlightsChange = new EventEmitter<any[]>();
   @Input() flights: Flight[] = [];
   @Input() departureId: number | null = null;
   @Input() reservationId: number | null = null;
 
-  airportsFilters: string[] = [];
-  private searchTimeout: any;
+  // Propiedades públicas
   flightForm: FormGroup;
-  // Cambiar el tipo y valor inicial de tipoViaje
   tipoViaje: 'Ida' | 'Vuelta' | 'IdaVuelta' = 'IdaVuelta';
-  equipajeMano: boolean = false;
-  equipajeBodega: boolean = false;
+  equipajeMano = false;
+  equipajeBodega = false;
   tourOrigenConstante: Ciudad = { nombre: '', codigo: '' };
   tourDestinoConstante: Ciudad = { nombre: 'Madrid', codigo: 'MAD' };
-  fechaIdaConstante: string = '';
-  fechaRegresoConstante: string = '';
-  horaIdaConstante: string = '';
-  horaRegresoConstante: string = '';
+  fechaIdaConstante = '';
+  fechaRegresoConstante = '';
+  horaIdaConstante = '';
+  horaRegresoConstante = '';
   filteredCities: Ciudad[] = [];
   combinedCities: { nombre: string; codigo: string; source: string; id: number }[] = [];
-  aerolineas: Ciudad[] = [
+  readonly aerolineas: Ciudad[] = [
     { nombre: 'Todas', codigo: 'ALL' },
     { nombre: 'Royal Air Maroc', codigo: 'AT' },
     { nombre: 'TAP Air Portugal', codigo: 'TP' },
   ];
-  escalaOptions = [
+  readonly escalaOptions = [
     { label: 'Directos', value: 'directos' },
     { label: '1 Escala', value: 'unaEscala' },
     { label: '2+ Escalas', value: 'multiples' },
   ];
-  aerolineaOptions = this.aerolineas.map((a) => ({
-    label: a.nombre,
-    value: a.codigo,
-  }));
+  readonly aerolineaOptions = this.aerolineas.map((a) => ({ label: a.nombre, value: a.codigo }));
   flightOffers: ITempFlightOffer[] = [];
   filteredOffers: ITempFlightOffer[] = [];
-  isLoading: boolean = false;
-  searchPerformed: boolean = false;
+  isLoading = false;
+  searchPerformed = false;
   selectedFlightId: string | null = null;
   transformedFlights: Flight[] = [];
-  tourName: string = 'Destino';
-  sortOptions = [
+  tourName = 'Destino';
+  readonly sortOptions = [
     { label: 'Precio (menor a mayor)', value: 'price-asc' },
     { label: 'Precio (mayor a menor)', value: 'price-desc' },
     { label: 'Duración (más corto)', value: 'duration' },
   ];
-  selectedSortOption: string = 'price-asc';
+  selectedSortOption = 'price-asc';
   flightOffersRaw: any = null;
-  errorMessage: string = '';
+  errorMessage = '';
+
+  // Propiedades privadas
+  private searchTimeout: any;
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
-    private fb: FormBuilder,
-    private amadeusService: AmadeusService,
-    private airportService: AirportService,
-    private travelersService: TravelersService,
-    private textsService: TextsService,
-    private periodsService: PeriodsService,
-    private toursService: ToursService,
-    private departureConsolidadorSearchLocationService: DepartureConsolidadorSearchLocationService,
-    private departureService: DepartureService, // <--- inyectar
-    private locationAirportNetService: LocationAirportNetService, // <--- inyectar
-    private locationNetService: LocationNetService, // <--- inyectar
-    private flightSearchService: FlightSearchService // <--- nuevo servicio
+    private readonly fb: FormBuilder,
+    private readonly amadeusService: AmadeusService,
+    private readonly travelersService: TravelersService,
+    private readonly textsService: TextsService,
+    private readonly departureConsolidadorSearchLocationService: DepartureConsolidadorSearchLocationService,
+    private readonly departureService: DepartureService,
+    private readonly locationAirportNetService: LocationAirportNetService,
+    private readonly locationNetService: LocationNetService,
+    private readonly flightSearchService: FlightSearchService
   ) {
-    this.flightForm = this.fb.group({
+    this.flightForm = this.createFlightForm();
+  }
+
+  ngOnInit() {
+    this.initTexts();
+    this.initFormListeners();
+    this.initTravelersListener();
+    if (this.departureId) {
+      this.loadCombinedCities();
+      this.loadAirportTimes();
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // --- Métodos de inicialización ---
+
+  private createFlightForm(): FormGroup {
+    return this.fb.group({
       origen: [null],
       tipoViaje: [this.tipoViaje],
       equipajeMano: [this.equipajeMano],
@@ -106,81 +123,95 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnInit() {
+  private initTexts(): void {
     const tourTexts = this.textsService.getTextsForCategory('tour');
     if (tourTexts && tourTexts['name']) {
       this.tourName = tourTexts['name'];
     }
-    this.flightForm.get('tipoViaje')?.valueChanges.subscribe((value) => {
+  }
+
+  private initFormListeners(): void {
+    this.flightForm.get('tipoViaje')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((value) => {
       this.tipoViaje = value;
     });
-    this.flightForm.get('equipajeMano')?.valueChanges.subscribe((value) => {
+    this.flightForm.get('equipajeMano')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((value) => {
       this.equipajeMano = value;
     });
-    this.flightForm.get('equipajeBodega')?.valueChanges.subscribe((value) => {
+    this.flightForm.get('equipajeBodega')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((value) => {
       this.equipajeBodega = value;
     });
-    this.travelersService.travelersNumbers$.subscribe((travelersNumbers: any) => {
-      this.flightForm.patchValue({
-        adults: travelersNumbers.adults,
-        children: travelersNumbers.childs,
-        infants: travelersNumbers.babies,
-      });
-    });
-    if (this.departureId) {
-      this.departureConsolidadorSearchLocationService.getCombinedLocations(this.departureId)
-        .subscribe({
-          next: (data: ConsolidadorSearchLocationWithSourceResponse[]) => {
-            // Obtener los IDs de location y locationAirport, filtrando sólo números válidos
-            const locationIds = data.filter(item => typeof item.locationId === 'number').map(item => item.locationId as number);
-            const airportIds = data.filter(item => typeof item.locationAirportId === 'number').map(item => item.locationAirportId as number);
+  }
 
-            forkJoin({
-              locations: locationIds.length ? this.locationNetService.getLocationsByIds(locationIds) : of([]),
-              airports: airportIds.length ? this.locationAirportNetService.getAirportsByIds(airportIds) : of([])
-            }).subscribe(({ locations, airports }) => {
-              const locationMap = new Map(locations.map(l => [l.id, l]));
-              const airportMap = new Map(airports.map(a => [a.id, a]));
-              this.combinedCities = data.map(item => {
-                if (item.locationId && locationMap.has(item.locationId)) {
-                  const loc = locationMap.get(item.locationId);
-                  return {
-                    nombre: loc && loc.name ? loc.name : '',
-                    codigo: loc && loc.iataCode ? String(loc.iataCode) : (loc && loc.code ? String(loc.code) : ''),
-                    source: item.source,
-                    id: item.id
-                  };
-                } else if (item.locationAirportId && airportMap.has(item.locationAirportId)) {
-                  const airport = airportMap.get(item.locationAirportId);
-                  return {
-                    nombre: airport && airport.name ? airport.name : '',
-                    codigo: airport && airport.iata ? String(airport.iata) : '',
-                    source: item.source,
-                    id: item.id
-                  };
-                } else {
-                  return {
-                    nombre: '',
-                    codigo: '',
-                    source: item.source,
-                    id: item.id
-                  };
-                }
-              });
-            });
-          },
-          error: () => {
-            this.combinedCities = [];
-          }
+  private initTravelersListener(): void {
+    this.travelersService.travelersNumbers$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((travelersNumbers: any) => {
+        this.flightForm.patchValue({
+          adults: travelersNumbers.adults,
+          children: travelersNumbers.childs,
+          infants: travelersNumbers.babies,
         });
-      this.departureService.getAirportTimes(this.departureId).subscribe({
+      });
+  }
+
+  private loadCombinedCities(): void {
+    this.departureConsolidadorSearchLocationService.getCombinedLocations(this.departureId!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data: ConsolidadorSearchLocationWithSourceResponse[]) => {
+          const locationIds = data.filter(item => typeof item.locationId === 'number').map(item => item.locationId as number);
+          const airportIds = data.filter(item => typeof item.locationAirportId === 'number').map(item => item.locationAirportId as number);
+          forkJoin({
+            locations: locationIds.length ? this.locationNetService.getLocationsByIds(locationIds) : of([]),
+            airports: airportIds.length ? this.locationAirportNetService.getAirportsByIds(airportIds) : of([])
+          }).pipe(takeUntil(this.destroy$)).subscribe(({ locations, airports }) => {
+            const locationMap = new Map(locations.map((l: any) => [l.id, l]));
+            const airportMap = new Map(airports.map((a: any) => [a.id, a]));
+            this.combinedCities = data.map(item => {
+              if (item.locationId && locationMap.has(item.locationId)) {
+                const loc = locationMap.get(item.locationId);
+                return {
+                  nombre: loc && loc.name ? loc.name : '',
+                  codigo: loc && loc.iataCode ? String(loc.iataCode) : (loc && loc.code ? String(loc.code) : ''),
+                  source: item.source,
+                  id: item.id
+                };
+              } else if (item.locationAirportId && airportMap.has(item.locationAirportId)) {
+                const airport = airportMap.get(item.locationAirportId);
+                return {
+                  nombre: airport && airport.name ? airport.name : '',
+                  codigo: airport && airport.iata ? String(airport.iata) : '',
+                  source: item.source,
+                  id: item.id
+                };
+              } else {
+                return {
+                  nombre: '',
+                  codigo: '',
+                  source: item.source,
+                  id: item.id
+                };
+              }
+            });
+          });
+        },
+        error: () => {
+          this.combinedCities = [];
+        }
+      });
+  }
+
+  private loadAirportTimes(): void {
+    this.departureService.getAirportTimes(this.departureId!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
         next: (data: DepartureAirportTimesResponse) => {
           // Origen (llegada al inicio del tour)
           if (data.arrivalAirportIATA) {
             let cityName = data.ArrivalCity;
             if (!cityName || cityName.trim() === '') {
               const filter = { iata: data.arrivalAirportIATA };
-              this.locationAirportNetService.getAirports(filter).subscribe(airports => {
+              this.locationAirportNetService.getAirports(filter).pipe(takeUntil(this.destroy$)).subscribe(airports => {
                 cityName = airports && airports.length > 0 ? airports[0].name || data.arrivalAirportIATA : data.arrivalAirportIATA;
                 this.tourOrigenConstante = {
                   nombre: cityName ?? '',
@@ -199,7 +230,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
             let cityName = data.DepartureCity;
             if (!cityName || cityName.trim() === '') {
               const filter = { iata: data.departureAirportIATA };
-              this.locationAirportNetService.getAirports(filter).subscribe(airports => {
+              this.locationAirportNetService.getAirports(filter).pipe(takeUntil(this.destroy$)).subscribe(airports => {
                 cityName = airports && airports.length > 0 ? airports[0].name || data.departureAirportIATA : data.departureAirportIATA;
                 this.tourDestinoConstante = {
                   nombre: cityName ?? '',
@@ -223,19 +254,13 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
           }
         },
         error: (err) => {
-          // Manejo de error: podrías mostrar un mensaje o dejar los valores por defecto
           console.error('Error obteniendo datos de aeropuerto:', err);
         }
       });
-    }
   }
 
-  ngOnDestroy() {
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
-    }
-  }
-  
+  // --- Métodos públicos y de lógica de negocio ---
+
   buscar() {
     this.searchPerformed = true;
     this.getFlightOffers();
@@ -247,21 +272,17 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
     const formValue = this.flightForm.value;
     let originCode: string | null = null;
     let destinationCode: string | null = null;
-    let tipoViaje: 'Ida' | 'Vuelta' | 'IdaVuelta' = formValue.tipoViaje;
+    const tipoViaje: 'Ida' | 'Vuelta' | 'IdaVuelta' = formValue.tipoViaje;
 
     if (tipoViaje === 'Vuelta') {
-      // Solo regreso: origen = destino constante, destino = origen seleccionado
-        destinationCode = typeof formValue.origen === 'string'
+      destinationCode = typeof formValue.origen === 'string'
         ? this.getCityCode(formValue.origen)
         : formValue.origen.codigo;
     } else if (tipoViaje === 'Ida') {
-      // Solo ida: origen = origen seleccionado, destino = destino constante
-     originCode = typeof formValue.origen === 'string'
+      originCode = typeof formValue.origen === 'string'
         ? this.getCityCode(formValue.origen)
         : formValue.origen.codigo;
-      /*destinationCode = this.tourOrigenConstante.codigo;*/
     } else if (tipoViaje === 'IdaVuelta') {
-      // Ida y vuelta: se usa el mismo origen y destino que en la ida
       originCode = typeof formValue.origen === 'string'
         ? this.getCityCode(formValue.origen)
         : formValue.origen.codigo;
@@ -275,10 +296,10 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
       iataOrigen: originCode,
       iataDestino: destinationCode
     };
-    this.flightSearchService.searchFlights(request).subscribe({
+    this.flightSearchService.searchFlights(request).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: any) => {
         this.isLoading = false;
-        this.flightOffersRaw = response; // Guardar la respuesta cruda
+        this.flightOffersRaw = response;
         this.flightOffers = response.offers || [];
         this.filterOffers();
       },
@@ -387,6 +408,22 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
     }
   }
 
+  // --- Utilidades privadas y helpers ---
+
+  private getTimeFromDate(dateStr: string): string {
+    try {
+      const date = new Date(dateStr);
+      if (date instanceof Date && !isNaN(date.getTime())) {
+        return date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+      }
+    } catch {}
+    const parts = dateStr.split('T');
+    if (parts.length > 1) {
+      return parts[1].substring(0, 5);
+    }
+    return '00:00';
+  }
+
   transformOffersToFlightFormat(offers: ITempFlightOffer[]): Flight[] {
     return offers.map((offer) => {
       const offerData = offer.offerData;
@@ -395,52 +432,33 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
       const priceDataArray = this.amadeusService.transformFlightPriceData([offerData]);
       const departureDateStr = this.fechaIdaConstante;
       const returnDateStr = inboundItinerary ? this.fechaRegresoConstante : '';
-      const outboundSegments: FlightSegment[] = outbound.segments.map((segment: any, index: number) => {
-        let departureTime = '00:00';
-        let arrivalTime = '00:00';
-        if (segment.departure && segment.departure.at) {
-          try {
-            const date = new Date(segment.departure.at);
-            if (date instanceof Date && !isNaN(date.getTime())) {
-              departureTime = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
-            } else {
-              const parts = segment.departure.at.split('T');
-              if (parts.length > 1) {
-                departureTime = parts[1].substring(0, 5);
-              }
-            }
-          } catch (e) {
-            const parts = segment.departure.at.split('T');
-            if (parts.length > 1) {
-              departureTime = parts[1].substring(0, 5);
-            }
-          }
-        }
-        if (segment.arrival && segment.arrival.at) {
-          try {
-            const date = new Date(segment.arrival.at);
-            if (date instanceof Date && !isNaN(date.getTime())) {
-              arrivalTime = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
-            } else {
-              const parts = segment.arrival.at.split('T');
-              if (parts.length > 1) {
-                arrivalTime = parts[1].substring(0, 5);
-              }
-            }
-          } catch (e) {
-            const parts = segment.arrival.at.split('T');
-            if (parts.length > 1) {
-              arrivalTime = parts[1].substring(0, 5);
-            }
-          }
-        }
-        return {
+      const outboundSegments: FlightSegment[] = outbound.segments.map((segment: any, index: number) => ({
+        departureCity: this.getCityName(segment.departure.iataCode) || segment.departure.iataCode,
+        arrivalCity: this.getCityName(segment.arrival.iataCode) || segment.arrival.iataCode,
+        flightNumber: segment.carrierCode + segment.number,
+        departureIata: segment.departure.iataCode,
+        departureTime: this.getTimeFromDate(segment.departure.at),
+        arrivalTime: this.getTimeFromDate(segment.arrival.at),
+        arrivalIata: segment.arrival.iataCode,
+        numNights: 0,
+        differential: 0,
+        order: index,
+        airline: {
+          name: this.getAirlineName(segment.carrierCode),
+          email: '',
+          logo: '',
+          code: segment.carrierCode,
+        },
+      }));
+      let inboundSegments: FlightSegment[] = [];
+      if (inboundItinerary) {
+        inboundSegments = inboundItinerary.segments.map((segment: any, index: number) => ({
           departureCity: this.getCityName(segment.departure.iataCode) || segment.departure.iataCode,
           arrivalCity: this.getCityName(segment.arrival.iataCode) || segment.arrival.iataCode,
           flightNumber: segment.carrierCode + segment.number,
           departureIata: segment.departure.iataCode,
-          departureTime: departureTime,
-          arrivalTime: arrivalTime,
+          departureTime: this.getTimeFromDate(segment.departure.at),
+          arrivalTime: this.getTimeFromDate(segment.arrival.at),
           arrivalIata: segment.arrival.iataCode,
           numNights: 0,
           differential: 0,
@@ -451,75 +469,12 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
             logo: '',
             code: segment.carrierCode,
           },
-        };
-      });
-      let inboundSegments: FlightSegment[] = [];
-      if (inboundItinerary) {
-        inboundSegments = inboundItinerary.segments.map((segment: any, index: number) => {
-          let departureTime = '00:00';
-          let arrivalTime = '00:00';
-          if (segment.departure && segment.departure.at) {
-            try {
-              const date = new Date(segment.departure.at);
-              if (date instanceof Date && !isNaN(date.getTime())) {
-                departureTime = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
-              } else {
-                const parts = segment.departure.at.split('T');
-                if (parts.length > 1) {
-                  departureTime = parts[1].substring(0, 5);
-                }
-              }
-            } catch (e) {
-              const parts = segment.departure.at.split('T');
-              if (parts.length > 1) {
-                departureTime = parts[1].substring(0, 5);
-              }
-            }
-          }
-          if (segment.arrival && segment.arrival.at) {
-            try {
-              const date = new Date(segment.arrival.at);
-              if (date instanceof Date && !isNaN(date.getTime())) {
-                arrivalTime = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
-              } else {
-                const parts = segment.arrival.at.split('T');
-                if (parts.length > 1) {
-                  arrivalTime = parts[1].substring(0, 5);
-                }
-              }
-            } catch (e) {
-              const parts = segment.arrival.at.split('T');
-              if (parts.length > 1) {
-                arrivalTime = parts[1].substring(0, 5);
-              }
-            }
-          }
-          return {
-            departureCity: this.getCityName(segment.departure.iataCode) || segment.departure.iataCode,
-            arrivalCity: this.getCityName(segment.arrival.iataCode) || segment.arrival.iataCode,
-            flightNumber: segment.carrierCode + segment.number,
-            departureIata: segment.departure.iataCode,
-            departureTime: departureTime,
-            arrivalTime: arrivalTime,
-            arrivalIata: segment.arrival.iataCode,
-            numNights: 0,
-            differential: 0,
-            order: index,
-            airline: {
-              name: this.getAirlineName(segment.carrierCode),
-              email: '',
-              logo: '',
-              code: segment.carrierCode,
-            },
-          };
-        });
+        }));
       }
       const flight: Flight = {
         id: offer._id,
         externalID: offerData.id,
-        name: inboundItinerary
-          ? `Vuelo ${outbound.segments[0]?.departure?.iataCode} - ${outbound.segments[outbound.segments.length - 1]?.arrival?.iataCode}`
-          : `Vuelo ${outbound.segments[0]?.departure?.iataCode} - ${outbound.segments[outbound.segments.length - 1]?.arrival?.iataCode}`,
+        name: `Vuelo ${outbound.segments[0]?.departure?.iataCode} - ${outbound.segments[outbound.segments.length - 1]?.arrival?.iataCode}`,
         outbound: {
           activityID: 0,
           availability: 1,
@@ -558,10 +513,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
 
   getCityName(iataCode: string): string | null {
     const city = this.filteredCities.find((c) => c.codigo === iataCode);
-    if (city) {
-      return city.nombre.split(' - ')[0];
-    }
-    return null;
+    return city ? city.nombre.split(' - ')[0] : null;
   }
 
   formatDuration(duration: string): string {

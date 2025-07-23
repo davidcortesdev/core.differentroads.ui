@@ -220,6 +220,16 @@
   </form>
 </p-panel>
 
+<!-- Mensaje de error de búsqueda de vuelos -->
+<div *ngIf="errorMessage" class="error-message-panel">
+  <p-panel styleClass="error-panel">
+    <div class="msg">
+      <i class="pi pi-exclamation-triangle"></i>
+      <h3>{{ errorMessage }}</h3>
+    </div>
+  </p-panel>
+</div>
+
 <!-- Lista de resultados de vuelos -->
 <div
   class="flt-results"

@@ -77,6 +77,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
   ];
   selectedSortOption: string = 'price-asc';
   flightOffersRaw: any = null;
+  errorMessage: string = '';
 
   constructor(
     private fb: FormBuilder,
@@ -274,6 +275,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
         this.flightOffers = [];
         this.filteredOffers = [];
         this.filteredFlightsChange.emit([]);
+        this.errorMessage = 'Ocurrió un error al buscar vuelos. Por favor, inténtalo de nuevo.';
+        console.error('Error al buscar vuelos:', err);
       },
     });
   }

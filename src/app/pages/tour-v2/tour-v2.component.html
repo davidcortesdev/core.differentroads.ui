@@ -41,6 +41,7 @@
     <section class="tour-section tour-itinerary-section">
       <app-tour-itinerary-v2
         [tourId]="tour.id"
+        [selectedDepartureFromParent]="selectedDepartureData"
         (departureSelected)="onDepartureSelected($event)"
         (activitySelected)="onActivitySelected($event)">
       </app-tour-itinerary-v2>

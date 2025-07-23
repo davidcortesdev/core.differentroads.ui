@@ -51,7 +51,7 @@ interface Travelers {
   babies: number;
 }
 
-// ✅ INTERFACES para tipado fuerte
+// Interfaces para tipado fuerte
 interface AgeGroupCategory {
   id: number | null;
   lowerAge: number | null;
@@ -90,7 +90,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     babies: number;
     total: number;
   }>();
-  // ✅ NUEVO OUTPUT: Emitir información de age groups
   @Output() ageGroupsUpdate = new EventEmitter<AgeGroupCategories>();
 
   // Control de destrucción del componente
@@ -100,6 +99,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   loading = false;
   error: string | undefined;
   citiesLoading = false;
+  pricesLoading = false;
 
   // Propiedades para precios
   departuresPrices: ITourDeparturesPriceResponse[] = [];
@@ -126,6 +126,10 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   selectedDeparture: SelectedDepartureEvent | null = null;
   departureDetails: IDepartureResponse | null = null;
   itineraryDetails: IItineraryResponse | null = null;
+
+  // Propiedades para manejar múltiples departures
+  allDepartures: IDepartureResponse[] = [];
+  allItineraries: IItineraryResponse[] = [];
 
   // Datos para mostrar
   departureInfo = {
@@ -170,9 +174,11 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   ) {
     this.updatePassengerText();
 
-    // Emitir estado inicial de pasajeros
+    // Emitir estado inicial
     setTimeout(() => {
       this.emitPassengersUpdate();
+      this.priceUpdate.emit(0);
+      this.departureUpdate.emit(null);
     }, 0);
   }
 
@@ -220,14 +226,12 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (citiesResponse: ITourDepartureCityResponse[]) => {
-          // Convertir respuesta del servicio a formato del componente
           const mappedCities = citiesResponse.map((city) => ({
             name: city.name,
             code: city.name.toUpperCase().replace(/\s+/g, '_'),
             activityId: city.activityId,
           }));
 
-          // Ordenar: "Sin Vuelos" primero, luego el resto alfabéticamente
           this.cities = mappedCities.sort((a, b) => {
             const aIsSinVuelos =
               a.name.toLowerCase().includes('sin vuelos') ||
@@ -243,7 +247,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
           this.filteredCities = [...this.cities];
 
-          // Buscar "Sin Vuelos" en la respuesta de la API y establecerlo como seleccionado
           const sinVuelosCity = this.cities.find(
             (city) =>
               city.name.toLowerCase().includes('sin vuelos') ||
@@ -253,7 +256,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           if (sinVuelosCity) {
             this.selectedCity = sinVuelosCity;
           } else if (this.cities.length > 0) {
-            // Si no hay "Sin Vuelos", tomar la primera ciudad
             this.selectedCity = this.cities[0];
           }
 
@@ -261,7 +263,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         },
         error: (error) => {
           console.error('Error cargando ciudades:', error);
-          // Fallback a lista vacía en caso de error
           this.cities = [];
           this.filteredCities = [];
           this.selectedCity = null;
@@ -280,25 +281,24 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   private loadDeparturesPrices(activityId: number, departureId: number): void {
     if (!activityId || !departureId) return;
 
+    this.pricesLoading = true;
+
     this.tourDeparturesPricesService
       .getAll(activityId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (pricesResponse: ITourDeparturesPriceResponse[]) => {
-          // Filtrar solo los precios del departure seleccionado
-          const filteredPrices = pricesResponse.filter(
-            (price) => price.departureId === departureId
-          );
+          this.departuresPrices = pricesResponse;
+          this.pricesLoading = false;
 
-          this.departuresPrices = filteredPrices;
-
-          // Calcular precio cuando los precios ya están cargados
+          // Calcular precio si hay departure seleccionado
           if (this.selectedDepartureId) {
             this.calculateAndEmitPrice();
           }
         },
         error: (error) => {
           console.error('Error cargando precios:', error);
+          this.pricesLoading = false;
         },
       });
   }
@@ -321,7 +321,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
             return of([]);
           }
 
-          // Obtener detalles de cada grupo de edad
           const ageGroupRequests = ageGroupIds.map((id) =>
             this.ageGroupService.getById(id).pipe(
               catchError((error) => {
@@ -336,26 +335,19 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       )
       .subscribe({
         next: (ageGroups: (IAgeGroupResponse | null)[]) => {
-          // Filtrar grupos válidos
           this.tourAgeGroups = ageGroups.filter(
             (group) => group !== null
           ) as IAgeGroupResponse[];
 
           if (this.tourAgeGroups.length > 0) {
-            // Determinar qué tipos de pasajeros están permitidos
             this.determineAllowedPassengerTypes();
-
-            // ✅ NUEVO: Emitir información de age groups al componente padre
             this.emitAgeGroupsUpdate();
           }
 
-          // Obtener información adicional
           this.getAdditionalAgeGroupInfo();
         },
         error: (error) => {
           console.error('Error cargando grupos de edad:', error);
-
-          // En caso de error, permitir todos los tipos
           this.allowedPassengerTypes = {
             adults: true,
             children: true,
@@ -366,30 +358,24 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   }
 
   private determineAllowedPassengerTypes(): void {
-    // Inicializar como no permitidos
     this.allowedPassengerTypes = {
       adults: false,
       children: false,
       babies: false,
     };
 
-    // Resetear IDs de categorías
     this.ageGroupCategories.adults.id = null;
     this.ageGroupCategories.children.id = null;
     this.ageGroupCategories.babies.id = null;
 
-    // Revisar cada grupo de edad para determinar qué categorías están permitidas
     this.tourAgeGroups.forEach((group) => {
-      // Determinar categoría basada en rangos de edad del grupo
       this.categorizeAgeGroup(group);
     });
 
-    // Actualizar propiedades legacy para compatibilidad
     this.adultAgeGroupId = this.ageGroupCategories.adults.id;
     this.childAgeGroupId = this.ageGroupCategories.children.id;
     this.babyAgeGroupId = this.ageGroupCategories.babies.id;
 
-    // Si ningún tipo está permitido, permitir adultos por defecto
     if (
       !this.allowedPassengerTypes.adults &&
       !this.allowedPassengerTypes.children &&
@@ -398,16 +384,13 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       this.allowedPassengerTypes.adults = true;
     }
 
-    // Resetear pasajeros si algunos tipos no están permitidos
     this.resetDisallowedPassengers();
   }
 
   private categorizeAgeGroup(group: IAgeGroupResponse): void {
-    // Determinar categoría basándose en el código o nombre del grupo
     const groupCode = group.code?.toLowerCase() || '';
     const groupName = group.name?.toLowerCase() || '';
 
-    // Intentar identificar por código o nombre
     if (this.isAdultGroup(groupCode, groupName)) {
       this.allowedPassengerTypes.adults = true;
       this.ageGroupCategories.adults.id = group.id;
@@ -424,80 +407,48 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       this.ageGroupCategories.babies.lowerAge = group.lowerLimitAge;
       this.ageGroupCategories.babies.upperAge = group.upperLimitAge;
     } else {
-      // Si no se puede categorizar por código/nombre, usar rangos de edad como fallback
       this.categorizeByAgeRange(group);
     }
   }
 
   private isAdultGroup(code: string, name: string): boolean {
-    const adultKeywords = [
-      'adult',
-      'adulto',
-      'adultos',
-      'mayor',
-      'mayores',
-      'grown',
-      'senior',
-    ];
+    const adultKeywords = ['adulto', 'adultos'];
     return adultKeywords.some(
       (keyword) => code.includes(keyword) || name.includes(keyword)
     );
   }
 
   private isChildGroup(code: string, name: string): boolean {
-    const childKeywords = [
-      'child',
-      'children',
-      'niño',
-      'niños',
-      'menor',
-      'menores',
-      'kid',
-      'kids',
-      'junior',
-    ];
+    const childKeywords = ['niño', 'niños'];
     return childKeywords.some(
       (keyword) => code.includes(keyword) || name.includes(keyword)
     );
   }
 
   private isBabyGroup(code: string, name: string): boolean {
-    const babyKeywords = [
-      'baby',
-      'babies',
-      'bebé',
-      'bebés',
-      'infant',
-      'infants',
-      'toddler',
-    ];
+    const babyKeywords = ['bebé', 'bebés'];
     return babyKeywords.some(
       (keyword) => code.includes(keyword) || name.includes(keyword)
     );
   }
 
   private categorizeByAgeRange(group: IAgeGroupResponse): void {
-    // Ordenar grupos por edad mínima para asignar categorías lógicamente
     const sortedGroups = [...this.tourAgeGroups].sort(
       (a, b) => a.lowerLimitAge - b.lowerLimitAge
     );
     const currentIndex = sortedGroups.findIndex((g) => g.id === group.id);
 
-    // Asignar categorías basándose en la posición en la lista ordenada
     if (currentIndex === 0 && group.lowerLimitAge === 0) {
-      // Primer grupo que empieza en 0 = bebés
       this.allowedPassengerTypes.babies = true;
       this.ageGroupCategories.babies.id = group.id;
       this.ageGroupCategories.babies.lowerAge = group.lowerLimitAge;
       this.ageGroupCategories.babies.upperAge = group.upperLimitAge;
     } else if (currentIndex === sortedGroups.length - 1) {
-      // Último grupo = adultos
       this.allowedPassengerTypes.adults = true;
       this.ageGroupCategories.adults.id = group.id;
       this.ageGroupCategories.adults.lowerAge = group.lowerLimitAge;
       this.ageGroupCategories.adults.upperAge = group.upperLimitAge;
     } else {
-      // Grupos intermedios = niños
       this.allowedPassengerTypes.children = true;
       this.ageGroupCategories.children.id = group.id;
       this.ageGroupCategories.children.lowerAge = group.lowerLimitAge;
@@ -518,7 +469,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       changed = true;
     }
 
-    // Asegurar que siempre haya al menos 1 adulto si están permitidos
     if (this.allowedPassengerTypes.adults && this.travelers.adults < 1) {
       this.travelers.adults = 1;
       changed = true;
@@ -533,7 +483,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   private getAdditionalAgeGroupInfo(): void {
     if (!this.tourId) return;
 
-    // Obtener el conteo
     this.tourAgeGroupsService
       .getCount(this.tourId)
       .pipe(takeUntil(this.destroy$))
@@ -546,7 +495,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         },
       });
 
-    // Verificar si tiene grupos de edad
     this.tourAgeGroupsService
       .hasAgeGroups(this.tourId)
       .pipe(takeUntil(this.destroy$))
@@ -560,15 +508,75 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       });
   }
 
-  // ✅ NUEVO MÉTODO: Emitir información de age groups
   private emitAgeGroupsUpdate(): void {
     this.ageGroupsUpdate.emit(this.ageGroupCategories);
   }
-
   private handleDepartureSelection(event: SelectedDepartureEvent): void {
     this.selectedDeparture = event;
-    this.selectedDepartureId = null; // Reset selection cuando cambia departure
+    this.selectedDepartureId = null;
+
+    this.loadAllDeparturesForTour();
     this.loadDepartureDetails(event.departure.id);
+  }
+
+  private loadAllDeparturesForTour(): void {
+    if (!this.tourId) return;
+
+    this.loading = true;
+    this.error = undefined;
+
+    const itineraryFilters = {
+      tourId: this.tourId,
+      isVisibleOnWeb: true,
+      isBookable: true,
+    };
+
+    this.itineraryService
+      .getAll(itineraryFilters)
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap((itineraries) => {
+          this.allItineraries = itineraries.filter(
+            (itinerary) => itinerary.tkId && itinerary.tkId.trim() !== ''
+          );
+
+          if (this.allItineraries.length === 0) {
+            return of([]);
+          }
+
+          const departureRequests = this.allItineraries.map((itinerary) =>
+            this.departureService.getByItinerary(itinerary.id).pipe(
+              catchError((error) => {
+                console.error(
+                  `Error loading departures for itinerary ${itinerary.id}:`,
+                  error
+                );
+                return of([]);
+              })
+            )
+          );
+
+          return forkJoin(departureRequests);
+        })
+      )
+      .subscribe({
+        next: (departuresArrays) => {
+          this.allDepartures = departuresArrays
+            .flat()
+            .sort(
+              (a, b) =>
+                new Date(a.departureDate ?? '').getTime() -
+                new Date(b.departureDate ?? '').getTime()
+            );
+
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error cargando departures del tour:', error);
+          this.error = 'Error al cargar los departures del tour';
+          this.loading = false;
+        },
+      });
   }
 
   private loadDepartureDetails(departureId: number): void {
@@ -607,10 +615,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       tripTypeName: this.selectedDeparture.tripType?.name || 'Sin tipo',
     };
 
-    // Verificar validaciones después de actualizar info
     this.shouldBlockKidsAndBabies = this.checkIfShouldBlockKids();
 
-    // Si se deben bloquear y hay niños o bebés seleccionados, resetearlos
     if (this.shouldBlockKidsAndBabies) {
       if (this.travelers.children > 0 || this.travelers.babies > 0) {
         this.travelers.children = 0;
@@ -619,25 +625,28 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       }
     }
 
-    // Cargar precios primero, luego ejecutar addToCart
     if (
       this.selectedCity &&
       this.selectedCity.activityId &&
       this.departureDetails
     ) {
-      // Cargar precios primero
       this.loadDeparturesPrices(
         this.selectedCity.activityId,
         this.departureDetails.id
       );
     }
 
-    // Ejecutar addToCart después de un pequeño delay para que carguen los precios
+    // Auto-selección del departure desde el selector
     setTimeout(() => {
-      if (this.filteredDepartures.length > 0) {
-        this.addToCart(this.filteredDepartures[0]);
-        this.emitCityUpdate();
+      const selectedDepartureFromSelector = this.filteredDepartures.find(
+        (dep) => dep.id === this.selectedDeparture?.departure.id
+      );
+
+      if (selectedDepartureFromSelector) {
+        this.addToCart(selectedDepartureFromSelector);
       }
+
+      this.emitCityUpdate();
     }, 100);
   }
 
@@ -671,14 +680,11 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  // Validaciones del ejemplo
   checkIfShouldBlockKids(): boolean {
-    // Si no hay departure seleccionado, no bloqueamos
     if (!this.selectedDepartureId || this.filteredDepartures.length === 0) {
       return false;
     }
 
-    // Encontrar la salida seleccionada
     const selectedDeparture = this.filteredDepartures.find(
       (d) => d.id === this.selectedDepartureId
     );
@@ -687,7 +693,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       return false;
     }
 
-    // Si el precio es 0 o el tipo de viaje es 'single', bloqueamos
     const isSingleTrip =
       selectedDeparture.group?.toLowerCase().includes('single') ||
       this.getTripTypeInfo(selectedDeparture.group)?.class === 'single';
@@ -730,32 +735,58 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     if (!ageGroupId) return 0;
 
     const priceData = this.departuresPrices.find(
-      (price) => price.ageGroupId === ageGroupId
+      (price) =>
+        price.ageGroupId === ageGroupId &&
+        price.departureId === this.selectedDepartureId
     );
+
     return priceData ? priceData.total : 0;
   }
 
-  // Convertir el departure actual en formato para la tabla
-  get filteredDepartures(): any[] {
-    if (!this.departureDetails) return [];
+  private getPriceForDeparture(departureId: number): number {
+    if (!this.selectedCity?.activityId || !this.departuresPrices) return 0;
 
-    // Obtener el precio de adultos para mostrar en la tabla (precio base)
-    const adultPrice = this.getPriceByPassengerType('adults');
+    const priceData = this.departuresPrices.find(
+      (price) =>
+        price.departureId === departureId &&
+        price.ageGroupId === this.ageGroupCategories.adults.id
+    );
 
-    const departure = {
-      id: this.departureDetails.id,
-      departureDate: this.departureDetails.departureDate ?? '',
-      returnDate: this.departureDetails.arrivalDate ?? '',
-      price: adultPrice, // Usar precio real del servicio para adultos
-      status: 'available',
-      waitingList: false,
-      group: this.selectedDeparture?.tripType?.name || 'group',
-    };
-
-    return [departure];
+    return priceData ? priceData.total : 0;
   }
 
-  // Métodos para ciudades
+  get filteredDepartures(): any[] {
+    if (this.allDepartures.length === 0) {
+      if (!this.departureDetails) return [];
+
+      const adultPrice = this.getPriceByPassengerType('adults');
+      const departure = {
+        id: this.departureDetails.id,
+        departureDate: this.departureDetails.departureDate,
+        returnDate: this.departureDetails.arrivalDate,
+        price: adultPrice,
+        status: 'available',
+        waitingList: false,
+        group: this.selectedDeparture?.tripType?.name || 'group',
+      };
+      return [departure];
+    }
+
+    return this.allDepartures.map((departure) => {
+      const adultPrice = this.getPriceForDeparture(departure.id);
+
+      return {
+        id: departure.id,
+        departureDate: departure.departureDate,
+        returnDate: departure.arrivalDate,
+        price: adultPrice,
+        status: 'available',
+        waitingList: false,
+        group: 'group',
+      };
+    });
+  }
+
   filterCities(event: any): void {
     const query = event.query;
     this.filteredCities = this.cities.filter((city) =>
@@ -766,7 +797,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   onCityChange(event: any): void {
     this.selectedCity = event;
 
-    // Cargar precios cuando se selecciona una ciudad y hay departure seleccionado
     if (
       this.selectedCity &&
       this.selectedCity.activityId &&
@@ -779,6 +809,13 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     }
 
     this.emitCityUpdate();
+
+    // Recalcular precio si hay departure seleccionado
+    if (this.selectedDepartureId) {
+      setTimeout(() => {
+        this.calculateAndEmitPrice();
+      }, 300);
+    }
   }
 
   private emitCityUpdate(): void {
@@ -787,7 +824,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       return;
     }
 
-    // Formato condicional: Solo mostrar "Sin Vuelos" o "Vuelo desde [ciudad]"
     const isSinVuelos =
       this.selectedCity.name.toLowerCase().includes('sin vuelos') ||
       this.selectedCity.name.toLowerCase().includes('sin vuelo');
@@ -798,7 +834,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     this.cityUpdate.emit(cityText);
   }
 
-  // Métodos para pasajeros
   togglePassengersPanel(event: Event): void {
     this.showPassengersPanel = !this.showPassengersPanel;
     event.stopPropagation();
@@ -808,14 +843,12 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     this.shouldBlockKidsAndBabies = this.checkIfShouldBlockKids();
 
     if (type === 'adults') {
-      // Verificar si los adultos están permitidos
       if (!this.allowedPassengerTypes.adults && change > 0) {
         this.showPassengerTypeNotAllowedToast('adultos');
         return;
       }
       this.travelers.adults = Math.max(1, this.travelers.adults + change);
     } else if (type === 'children') {
-      // Verificar si los niños están permitidos
       if (!this.allowedPassengerTypes.children && change > 0) {
         this.showPassengerTypeNotAllowedToast('niños');
         return;
@@ -826,7 +859,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       }
       this.travelers.children = Math.max(0, this.travelers.children + change);
     } else if (type === 'babies') {
-      // Verificar si los bebés están permitidos
       if (!this.allowedPassengerTypes.babies && change > 0) {
         this.showPassengerTypeNotAllowedToast('bebés');
         return;
@@ -841,7 +873,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     this.updatePassengerText();
     this.emitPassengersUpdate();
 
-    // Si hay departure seleccionado, actualizar precio
     if (this.selectedDepartureId) {
       this.calculateAndEmitPrice();
     }
@@ -890,7 +921,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     this.showPassengersPanel = false;
     this.emitPassengersUpdate();
 
-    // Actualizar precio si hay departure seleccionado
     if (this.selectedDepartureId) {
       this.calculateAndEmitPrice();
     }
@@ -935,31 +965,47 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   }
 
   addToCart(item: any): void {
-    // Marcar como seleccionado para cambiar el botón
     this.selectedDepartureId = item.id;
-
-    // Calcular y emitir precio total
     this.calculateAndEmitPrice();
-
-    // Emitir departure seleccionado
     this.departureUpdate.emit(item);
   }
 
   private calculateAndEmitPrice(): void {
-    if (!this.selectedDepartureId) return;
+    if (!this.selectedDepartureId) {
+      this.priceUpdate.emit(0);
+      return;
+    }
+
+    if (
+      !this.departuresPrices ||
+      this.departuresPrices.length === 0 ||
+      this.pricesLoading
+    ) {
+      setTimeout(() => {
+        if (
+          this.departuresPrices &&
+          this.departuresPrices.length > 0 &&
+          !this.pricesLoading
+        ) {
+          this.calculateAndEmitPrice();
+        }
+      }, 100);
+      return;
+    }
 
     const selectedDeparture = this.filteredDepartures.find(
       (d) => d.id === this.selectedDepartureId
     );
 
-    if (!selectedDeparture) return;
+    if (!selectedDeparture) {
+      this.priceUpdate.emit(0);
+      return;
+    }
 
-    // Calcular precio total con precios diferenciados por tipo de pasajero
     const adultPrice = this.getPriceByPassengerType('adults');
     const childPrice = this.getPriceByPassengerType('children');
     const babyPrice = this.getPriceByPassengerType('babies');
 
-    // Calcular precio total
     const totalPrice =
       this.travelers.adults * adultPrice +
       this.travelers.children * childPrice +
@@ -968,7 +1014,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     this.priceUpdate.emit(totalPrice);
   }
 
-  // Verificar si el departure está seleccionado
   isDepartureSelected(item: any): boolean {
     return this.selectedDepartureId === item.id;
   }
@@ -980,24 +1025,26 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   get hasValidData(): boolean {
     return !this.loading && !this.error && this.hasSelectedDeparture;
   }
+
   getAgeText(passengerType: 'adults' | 'children' | 'babies'): string {
     const category = this.ageGroupCategories[passengerType];
 
-    // Si no hay datos de age group, retornar string vacío
     if (!category.lowerAge && category.lowerAge !== 0) return '';
     if (!category.upperAge && category.upperAge !== 0) return '';
 
-    // Caso especial: si la edad superior es muy alta (99+), mostrar como "X+ años"
     if (category.upperAge >= 99) {
       return `${category.lowerAge}+ años`;
     }
 
-    // Caso especial: si es solo una edad específica
     if (category.lowerAge === category.upperAge) {
       return `${category.lowerAge} años`;
     }
 
-    // Caso normal: rango de edades
     return `${category.lowerAge}-${category.upperAge} años`;
+  }
+  // ✅ AGREGAR ESTE MÉTODO AL FINAL DEL COMPONENTE TypeScript
+
+  trackByDepartureId(index: number, item: any): any {
+    return item.id; // Usar ID único para evitar re-renderizado innecesario
   }
 }

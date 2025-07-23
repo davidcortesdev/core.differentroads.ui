@@ -4,7 +4,7 @@
   </div>
   
   <h3 class="traveler-selector-title">Número de pasajeros</h3>
-
+  
   <!-- Error message -->
   <div *ngIf="error && !loading" class="messages">
     <div class="error-message">
@@ -12,7 +12,7 @@
       <p>{{ error }}</p>
     </div>
   </div>
-
+  
   <div class="traveler-selector-wrap" *ngIf="!loading && !loadingAgeGroups">
     <!-- Adultos -->
     <div
@@ -21,9 +21,9 @@
     >
       <div class="traveler-selector-wrap-item-group">
         <span class="traveler-selector-wrap-item-name">Adultos</span>
-        <span class="traveler-selector-wrap-item-description"
-          >(Desde 12 años)</span
-        >
+        <span class="traveler-selector-wrap-item-description">
+          {{ getAgeRangeText('adults') }}
+        </span>
       </div>
       <p-inputNumber
         [(ngModel)]="travelersNumbers.adults"
@@ -42,7 +42,7 @@
         </ng-template>
       </p-inputNumber>
     </div>
-
+    
     <!-- Niños -->
     <div
       class="traveler-selector-wrap-item"
@@ -50,9 +50,9 @@
     >
       <div class="traveler-selector-wrap-item-group">
         <span class="traveler-selector-wrap-item-name">Niños</span>
-        <span class="traveler-selector-wrap-item-description"
-          >(3 a 11 años)</span
-        >
+        <span class="traveler-selector-wrap-item-description">
+          {{ getAgeRangeText('childs') }}
+        </span>
       </div>
       <p-inputNumber
         [(ngModel)]="travelersNumbers.childs"
@@ -71,7 +71,7 @@
         </ng-template>
       </p-inputNumber>
     </div>
-
+    
     <!-- Bebés -->
     <div
       class="traveler-selector-wrap-item"
@@ -79,9 +79,9 @@
     >
       <div class="traveler-selector-wrap-item-group">
         <span class="traveler-selector-wrap-item-name">Bebés</span>
-        <span class="traveler-selector-wrap-item-description"
-          >(0 a 2 años)</span
-        >
+        <span class="traveler-selector-wrap-item-description">
+          {{ getAgeRangeText('babies') }}
+        </span>
       </div>
       <p-inputNumber
         [(ngModel)]="travelersNumbers.babies"
@@ -101,7 +101,7 @@
       </p-inputNumber>
     </div>
   </div>
-
+  
   <!-- Messages -->
   <div class="messages">
     <div *ngIf="adultsErrorMsg" class="error-message">

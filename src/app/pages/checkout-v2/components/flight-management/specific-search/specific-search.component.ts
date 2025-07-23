@@ -243,6 +243,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
 
   getFlightOffers() {
     this.isLoading = true;
+    this.errorMessage = '';
     const formValue = this.flightForm.value;
     let originCode =
       typeof formValue.origen === 'string'

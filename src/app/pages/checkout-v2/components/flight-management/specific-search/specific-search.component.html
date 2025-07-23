@@ -296,6 +296,21 @@
   </p-panel>
 </div>
 
+<!-- Mostrar warnings de la búsqueda de vuelos si existen -->
+<div *ngIf="flightOffersRaw?.warnings?.length" class="flight-warnings-panel">
+  <p-panel styleClass="warning-panel">
+    <div class="msg">
+      <i class="pi pi-exclamation-triangle"></i>
+      <h3>Advertencias de la búsqueda:</h3>
+      <ul>
+        <li *ngFor="let warning of flightOffersRaw.warnings">
+          <b>{{ warning.title }}</b>: {{ warning.detail }}
+        </li>
+      </ul>
+    </div>
+  </p-panel>
+</div>
+
 <!-- Sección de debug: mostrar ofertas crudas de la API de forma amigable -->
 <div *ngIf="flightOffersRaw?.data?.flightOffers?.length" class="api-flight-offers">
   <h3>Ofertas de vuelo (API cruda):</h3>
@@ -344,6 +359,13 @@
             <b>{{ seg.arrival.iataCode }}</b> ({{ seg.arrival.terminal || '-' }}) {{ seg.arrival.at }}<br>
             <span style="margin-left:1em">
               Compañía: {{ seg.carrierCode }}<br>
+              Número de vuelo: {{ seg.number || '-' }}<br>
+              Operado por: {{ seg.operating?.carrierCode || '-' }}<br>
+              Modelo avión: {{ seg.aircraft?.code || '-' }}<br>
+              Duración: {{ seg.duration || '-' }}<br>
+              Paradas: {{ seg.numberOfStops || 0 }}<br>
+              Blacklist UE: <span [ngStyle]="{color: seg.blacklistedInEU ? 'red' : 'inherit'}">{{ seg.blacklistedInEU ? 'Sí' : 'No' }}</span><br>
+              Emisiones CO₂: {{ seg.co2Emissions ? (seg.co2Emissions | json) : '-' }}<br>
               Cabina: {{ seg.cabin || seg.class || '-' }}<br>
               Clase: {{ seg.class || '-' }}<br>
               Maletas incluidas: {{ seg.includedCheckedBags?.quantity || '-' }}<br>

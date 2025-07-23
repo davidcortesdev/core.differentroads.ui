@@ -337,7 +337,16 @@
         <ul *ngIf="tp.fareDetailsBySegment?.length">
           <li *ngFor="let fd of tp.fareDetailsBySegment">
             <span>
-              Segmento: {{ fd.segmentId }} | Cabina: {{ fd.cabin || '-' }} | Clase: {{ fd.class || '-' }} | BrandedFare: {{ fd.brandedFare || '-' }} | FareBasis: {{ fd.fareBasis || '-' }} | Maletas: {{ fd.includedCheckedBags?.quantity ?? '-' }}
+              <b>Segmento:</b> {{ fd.segmentId }} |
+              <b>Cabina:</b> {{ fd.cabin || '-' }} |
+              <b>Clase:</b> {{ fd.class || '-' }} |
+              <b>BrandedFare:</b> {{ fd.brandedFare || '-' }} |
+              <b>FareBasis:</b> {{ fd.fareBasis || '-' }} |
+              <b>Maletas:</b> {{ fd.includedCheckedBags?.quantity ?? '-' }}
+              <span *ngIf="fd.includedCheckedBags?.weight">({{ fd.includedCheckedBags.weight }} {{ fd.includedCheckedBags.weightUnit || 'kg' }})</span>
+              <span *ngIf="fd.includedCabinBags"> | <b>Cabina:</b> {{ fd.includedCabinBags.quantity ?? '-' }}</span>
+              <span *ngIf="fd.mealServices"> | <b>Comidas:</b> {{ fd.mealServices }}</span>
+              <span *ngIf="fd.amenities"> | <b>Servicios:</b> {{ fd.amenities }}</span>
             </span>
           </li>
         </ul>
@@ -355,21 +364,35 @@
         <b>Itinerario {{ i + 1 }}</b>
         <ul>
           <li *ngFor="let seg of itin.segments">
-            <b>{{ seg.departure.iataCode }}</b> ({{ seg.departure.terminal || '-' }}) {{ seg.departure.at }} →
-            <b>{{ seg.arrival.iataCode }}</b> ({{ seg.arrival.terminal || '-' }}) {{ seg.arrival.at }}<br>
-            <span style="margin-left:1em">
-              Compañía: {{ seg.carrierCode }}<br>
-              Número de vuelo: {{ seg.number || '-' }}<br>
-              Operado por: {{ seg.operating?.carrierCode || '-' }}<br>
-              Modelo avión: {{ seg.aircraft?.code || '-' }}<br>
-              Duración: {{ seg.duration || '-' }}<br>
-              Paradas: {{ seg.numberOfStops || 0 }}<br>
-              Blacklist UE: <span [ngStyle]="{color: seg.blacklistedInEU ? 'red' : 'inherit'}">{{ seg.blacklistedInEU ? 'Sí' : 'No' }}</span><br>
-              Emisiones CO₂: {{ seg.co2Emissions ? (seg.co2Emissions | json) : '-' }}<br>
-              Cabina: {{ seg.cabin || seg.class || '-' }}<br>
-              Clase: {{ seg.class || '-' }}<br>
-              Maletas incluidas: {{ seg.includedCheckedBags?.quantity || '-' }}<br>
-            </span>
+            <div class="segment-detail">
+              <b>Salida:</b>
+              <ul>
+                <li><b>Aeropuerto:</b> {{ seg.departure.iataCode }} <span *ngIf="flightOffersRaw?.dictionaries?.locations?.[seg.departure.iataCode]">({{ flightOffersRaw.dictionaries.locations[seg.departure.iataCode].cityCode }}, {{ flightOffersRaw.dictionaries.locations[seg.departure.iataCode].countryCode }})</span></li>
+                <li><b>Terminal:</b> {{ seg.departure.terminal || '-' }}</li>
+                <li><b>Fecha y hora:</b> {{ seg.departure.at | date:'yyyy-MM-dd HH:mm' }}</li>
+              </ul>
+              <b>Llegada:</b>
+              <ul>
+                <li><b>Aeropuerto:</b> {{ seg.arrival.iataCode }} <span *ngIf="flightOffersRaw?.dictionaries?.locations?.[seg.arrival.iataCode]">({{ flightOffersRaw.dictionaries.locations[seg.arrival.iataCode].cityCode }}, {{ flightOffersRaw.dictionaries.locations[seg.arrival.iataCode].countryCode }})</span></li>
+                <li><b>Terminal:</b> {{ seg.arrival.terminal || '-' }}</li>
+                <li><b>Fecha y hora:</b> {{ seg.arrival.at | date:'yyyy-MM-dd HH:mm' }}</li>
+              </ul>
+              <b>Detalles del vuelo:</b>
+              <ul>
+                <li><b>Compañía:</b> {{ seg.carrierCode }}</li>
+                <li><b>Número de vuelo:</b> {{ seg.number || '-' }}</li>
+                <li><b>Operado por:</b> {{ seg.operating?.carrierCode || '-' }}</li>
+                <li><b>Modelo avión:</b> {{ seg.aircraft?.code || '-' }}</li>
+                <li><b>Duración:</b> {{ seg.duration || '-' }}</li>
+                <li><b>Paradas:</b> {{ seg.numberOfStops || 0 }}</li>
+                <li><b>Blacklist UE:</b> <span [ngStyle]="{color: seg.blacklistedInEU ? 'red' : 'inherit'}">{{ seg.blacklistedInEU ? 'Sí' : 'No' }}</span></li>
+                <li><b>Emisiones CO₂:</b> {{ seg.co2Emissions ? (seg.co2Emissions | json) : '-' }}</li>
+                <li><b>Cabina:</b> {{ seg.cabin || seg.class || '-' }}</li>
+                <li><b>Clase:</b> {{ seg.class || '-' }}</li>
+                <li><b>Maletas incluidas:</b> {{ seg.includedCheckedBags?.quantity || '-' }}</li>
+              </ul>
+            </div>
+            <hr>
           </li>
         </ul>
       </li>

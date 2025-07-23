@@ -55,6 +55,13 @@
               #roomSelector>
             </app-selector-room>
 
+            <!-- Componente actividades opcionales -->
+            <app-activities-optionals
+              [itineraryId]="itineraryId"
+              [departureId]="departureId"
+              (activitiesSelectionChange)="onActivitiesSelectionChange($event)">
+            </app-activities-optionals>
+
             <!-- Componente de seguro -->
             <app-insurance
               [tourId]="tourId"

@@ -12,6 +12,7 @@ export interface Location {
   latitude: number;
   longitude: number;
   locationTypeId: number;
+  iataCode: string;
 }
 
 export interface LocationType {

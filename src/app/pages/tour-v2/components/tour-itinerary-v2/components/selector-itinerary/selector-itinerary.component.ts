@@ -268,13 +268,13 @@ export class SelectorItineraryComponent
       map((departures) => {
         const departuresData: DepartureData[] = departures.map((departure) => ({
           departure,
-          tripType: this.tripTypesMap.get(departure.tripTypeId),
+          tripType: this.tripTypesMap.get(departure.tripTypeId ?? 0),
         }));
 
         // Ordenar departures por fecha de salida (orden cronológico)
         const sortedDepartures = departuresData.sort((a, b) => {
-          const dateA = new Date(a.departure.departureDate);
-          const dateB = new Date(b.departure.departureDate);
+          const dateA = new Date(a.departure.departureDate ?? '');
+          const dateB = new Date(b.departure.departureDate ?? '');
           return dateA.getTime() - dateB.getTime();
         });
 
@@ -310,16 +310,16 @@ export class SelectorItineraryComponent
     this.itinerariesWithDepartures.forEach((itineraryData) => {
       itineraryData.departures.forEach((departureData) => {
         const option: DateOption = {
-          label: this.formatDate(departureData.departure.departureDate), // Solo la fecha en el dropdown
+          label: this.formatDate(departureData.departure?.departureDate ?? ''), // Solo la fecha en el dropdown
           value: departureData.departure.id,
-          departureDate: departureData.departure.departureDate,
+          departureDate: departureData.departure.departureDate ?? '',
           departureName: departureData.departure.name || 'Sin nombre',
           itineraryName:
             itineraryData.itinerary.name || 'Itinerario sin nombre',
           tripType: this.getTripTypeFirstLetter(
             departureData.departure.tripTypeId
-          ),
-          tripTypeId: departureData.departure.tripTypeId,
+           ?? 0),
+          tripTypeId: departureData.departure.tripTypeId ?? 0,
           departure: departureData.departure,
           itinerary: itineraryData.itinerary,
         };
@@ -330,8 +330,8 @@ export class SelectorItineraryComponent
     // Ordenar por fecha
     this.dateOptions.sort((a, b) => {
       return (
-        new Date(a.departureDate).getTime() -
-        new Date(b.departureDate).getTime()
+        new Date(a.departureDate ?? '').getTime() -
+        new Date(b.departureDate ?? '').getTime()
       );
     });
 
@@ -377,7 +377,7 @@ export class SelectorItineraryComponent
       departureDate: this.selectedDeparture.departureDate,
       formattedDate: this.formatDate(this.selectedDeparture.departureDate),
       itineraryName: this.selectedDeparture.itineraryName,
-      tripType: this.tripTypesMap.get(this.selectedDeparture.tripTypeId),
+      tripType: this.tripTypesMap.get((this.selectedDeparture.tripTypeId ?? 0)),
     };
 
     this.departureSelected.emit(eventData);

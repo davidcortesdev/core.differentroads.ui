@@ -77,6 +77,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
   ];
   selectedSortOption: string = 'price-asc';
   flightOffersRaw: any = null;
+  errorMessage: string = '';
 
   constructor(
     private fb: FormBuilder,
@@ -242,19 +243,31 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
 
   getFlightOffers() {
     this.isLoading = true;
+    this.errorMessage = '';
     const formValue = this.flightForm.value;
-    let originCode =
-      typeof formValue.origen === 'string'
+    let originCode: string | null = null;
+    let destinationCode: string | null = null;
+    let tipoViaje: 'Ida' | 'Vuelta' | 'IdaVuelta' = formValue.tipoViaje;
+
+    if (tipoViaje === 'Vuelta') {
+      // Solo regreso: origen = destino constante, destino = origen seleccionado
+        destinationCode = typeof formValue.origen === 'string'
         ? this.getCityCode(formValue.origen)
         : formValue.origen.codigo;
-    let destinationCode = this.tourOrigenConstante.codigo;
-    let departureDate = this.fechaIdaConstante;
-    let tipoViaje: 'Ida' | 'Vuelta' | 'IdaVuelta' = formValue.tipoViaje;
-    if (tipoViaje === 'Vuelta') {
+    } else if (tipoViaje === 'Ida') {
+      // Solo ida: origen = origen seleccionado, destino = destino constante
+     originCode = typeof formValue.origen === 'string'
+        ? this.getCityCode(formValue.origen)
+        : formValue.origen.codigo;
+      /*destinationCode = this.tourOrigenConstante.codigo;*/
+    } else if (tipoViaje === 'IdaVuelta') {
+      // Ida y vuelta: se usa el mismo origen y destino que en la ida
+      originCode = typeof formValue.origen === 'string'
+        ? this.getCityCode(formValue.origen)
+        : formValue.origen.codigo;
       destinationCode = originCode;
-      originCode = this.tourDestinoConstante.codigo;
-      departureDate = this.fechaRegresoConstante;
     }
+
     const request: FlightSearchRequest = {
       departureId: this.departureId!,
       reservationId: this.reservationId || 0,
@@ -274,6 +287,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
         this.flightOffers = [];
         this.filteredOffers = [];
         this.filteredFlightsChange.emit([]);
+        this.errorMessage = 'Ocurrió un error al buscar vuelos. Por favor, inténtalo de nuevo.';
+        console.error('Error al buscar vuelos:', err);
       },
     });
   }

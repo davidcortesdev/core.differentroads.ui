@@ -8,8 +8,8 @@ export interface TourFilter {
   code?: string;
   name?: string;
   description?: string;
-  tkId?:string;
-  slug?:string;
+  tkId?: string;
+  slug?: string;
 }
 
 export interface Tour {
@@ -18,7 +18,8 @@ export interface Tour {
   name: string;
   description?: string;
   tkId?: string;
-  slug?:string;
+  slug?: string;
+  isConsolidadorVuelosActive?: boolean;
 }
 
 @Injectable({
@@ -27,7 +28,7 @@ export interface Tour {
 export class TourNetService {
   private readonly API_URL = `${environment.toursApiUrl}/Tour`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   /**
    * Get tour by filter criteria
@@ -50,7 +51,7 @@ export class TourNetService {
       });
     }
 
-    return this.http.get<Tour[]>(this.API_URL, { 
+    return this.http.get<Tour[]>(this.API_URL, {
       params,
       headers: {
         'Accept': 'text/plain'
@@ -104,19 +105,19 @@ export class TourNetService {
     const filter: TourFilter = {
       tkId: tkId,
     };
-    
+
     return this.getTours(filter).pipe(
       map(tours => {
         if (tours.length > 0) {
           const id = tours[0].id;
-          
+
           return id;
         }
-        return 0; 
+        return 0;
       }),
       catchError(error => {
         console.error('Error fetching tours:', error);
-        return of(0); 
+        return of(0);
       })
     );
   }
@@ -127,7 +128,7 @@ export class TourNetService {
    * @returns Observable con el ID del tour
    */
   getTourIdByPeriodId(tourId: string): Observable<number> {
-    
+
     return this.http.get<any>(`${environment.toursApiUrl}/Tour?TKid=${tourId}`)
       .pipe(
         map(response => {
@@ -138,7 +139,7 @@ export class TourNetService {
           throw new Error(`No se pudo obtener el tourId para el tourId: ${tourId}`);
         }),
         catchError(error => {
-          return of(0); 
+          return of(0);
         })
       );
   }

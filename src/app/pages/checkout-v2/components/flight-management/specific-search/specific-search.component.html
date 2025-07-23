@@ -304,10 +304,24 @@
     <strong>Precios por pasajero:</strong>
     <ul *ngIf="offer.travelerPricings?.length">
       <li *ngFor="let tp of offer.travelerPricings">
-        Tipo: {{ tp.travelerType }}<br>
-        Precio total: {{ tp.price.total }} {{ tp.price.currency }}<br>
-        Precio base: {{ tp.price.base }} {{ tp.price.currency }}<br>
-        <!-- Si hay más detalles por edad, se pueden mostrar aquí -->
+        <b>Tipo:</b> {{ tp.travelerType }}<br>
+        <b>Precio total:</b> {{ tp.price.total }} {{ tp.price.currency }}<br>
+        <b>Precio base:</b> {{ tp.price.base }} {{ tp.price.currency }}<br>
+        <b>Tarifa:</b> {{ tp.fareOption || '-' }}<br>
+        <b>Detalles de tarifa por segmento:</b>
+        <ul *ngIf="tp.fareDetailsBySegment?.length">
+          <li *ngFor="let fd of tp.fareDetailsBySegment">
+            <span>
+              Segmento: {{ fd.segmentId }} | Cabina: {{ fd.cabin || '-' }} | Clase: {{ fd.class || '-' }} | BrandedFare: {{ fd.brandedFare || '-' }} | FareBasis: {{ fd.fareBasis || '-' }} | Maletas: {{ fd.includedCheckedBags?.quantity ?? '-' }}
+            </span>
+          </li>
+        </ul>
+        <b>Tasas por pasajero:</b>
+        <ul *ngIf="tp.price.taxes?.length">
+          <li *ngFor="let tax of tp.price.taxes">
+            {{ tax.code }}: {{ tax.amount }} {{ tp.price.currency }}
+          </li>
+        </ul>
       </li>
     </ul>
     <strong>Itinerarios:</strong>

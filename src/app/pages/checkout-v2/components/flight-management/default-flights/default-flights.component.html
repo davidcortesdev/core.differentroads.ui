@@ -1,1 +1,52 @@
-<p>default-flights works!</p>
+<div class="flights">
+    <div class="step">
+      <div class="step-title">Elige tus vuelos</div>
+      <div class="step-description">Vuelos disponibles</div>
+    </div>
+  
+    <!-- Display original flights -->
+    <div class="flights-container">
+      <div *ngFor="let flight of flights">
+        <!--- Esto se puede sacar a componente -->
+        <div class="flight-item">
+
+        </div>
+      </div>
+    </div>
+  
+    <!-- Add the button to toggle flight search only when consolidator is enabled -->
+    <!--<div class="flight-search-toggle" *ngIf="enableConsolidatorFlights">
+      <p-button
+        label="Ver otras opciones de vuelos"
+        styleClass="p-button-outlined"
+        (click)="toggleFlightSearch()"
+        [icon]="showFlightSearch ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+        iconPos="right"
+      >
+      </p-button>
+    </div>
+  
+    <!-- Conditionally display flight search -->
+    <!--<div *ngIf="showFlightSearch" class="flight-search-container">
+      <app-flight-search
+        *ngIf="periodData"
+        [flights]="flights"
+        [tourDestination]="tourDestination"
+        [dayOne]="periodData.dayOne"
+        [returnDate]="periodData.returnDate"
+        [periodID]="orderDetails?.periodID || null"
+        (filteredFlightsChange)="onFilteredFlightsChange($event)"
+      >
+      </app-flight-search>
+    </div>-->
+  
+    <!-- Login Modal with PrimeNG dialog -->
+    <app-login-modal
+      [visible]="loginDialogVisible"
+      (close)="closeLoginModal()"
+      (login)="navigateToLogin()"
+      (register)="navigateToRegister()"
+    >
+    </app-login-modal>
+  </div>
+  

@@ -1,4 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
+import { Router } from '@angular/router';
+import { FlightsNetService, IFlightPackDTO } from '../../../services/flightsNet.service';
+
 
 @Component({
   selector: 'app-default-flights',
@@ -8,5 +11,85 @@ import { Component } from '@angular/core';
   styleUrl: './default-flights.component.scss'
 })
 export class DefaultFlightsComponent {
+  @Input() periodId: number | null = null;
+  @Input() reservationId: number | null = null;
 
+  selectedFlight: IFlightPackDTO | null = null;
+  flights: IFlightPackDTO[] = [];
+  loginDialogVisible: boolean = false;
+
+  constructor(
+    private router: Router,
+    private flightsNetService: FlightsNetService
+  ) {}
+
+  ngOnInit(): void {
+     this.getFlights();
+  }
+
+  getFlights(): void {
+    if (!this.periodId) {
+      return;
+    }
+    this.flightsNetService.getFlights(this.periodId).subscribe((flights) => {
+      this.flights = flights;
+    });
+  }
+
+  // // Selecciona un vuelo
+  // selectFlight(flight: Flight | null): void {
+  //   if (!flight) {
+  //     flight = this.flightlessOption;
+  //   }
+  //   this.selectedFlight = flight;
+  //   this.flightsService.updateSelectedFlight(flight); // This will now handle the order flights update as well
+  // }
+
+  // // Verifica si un vuelo está seleccionado
+  // isFlightSelected(flight: any): boolean {
+  //   return this.selectedFlight?.externalID === flight.externalID;
+  // }
+
+  // // Keep auth check for flight search toggle
+  // toggleFlightSearch(): void {
+  //   this.authService.isLoggedIn().subscribe((isLoggedIn) => {
+  //     if (isLoggedIn) {
+  //       this.showFlightSearch = !this.showFlightSearch;
+  //     } else {
+  //       // Save current URL in session storage for redirect after login
+  //       sessionStorage.setItem('redirectUrl', window.location.pathname);
+  //       this.loginDialogVisible = true;
+  //     }
+  //   });
+  // }
+
+  // // Restore the auth check for flight selection
+  // selectFlightWithAuthCheck(flight: Flight | null): void {
+  //   this.authService.isLoggedIn().subscribe((isLoggedIn) => {
+  //     if (isLoggedIn) {
+  //       this.selectFlight(flight);
+  //     } else {
+  //       // Save current URL in session storage for redirect after login
+  //       sessionStorage.setItem('redirectUrl', window.location.pathname);
+  //       this.loginDialogVisible = true;
+  //     }
+  //   });
+  // }
+
+   // Update method to close the login modal
+   closeLoginModal(): void {
+     this.loginDialogVisible = false;
+   }
+
+  // Add method to navigate to login page
+  navigateToLogin(): void {
+    this.closeLoginModal();
+    this.router.navigate(['/login']);
+  }
+
+  // Add method to navigate to register page
+  navigateToRegister(): void {
+    this.closeLoginModal();
+    this.router.navigate(['/sign-up']); // Changed from '/register' to '/sign-up'
+  }
 }

@@ -30,6 +30,7 @@ export const environment = {
   cmsApiUrl: 'https://cms-dev.differentroads.es/api',
   masterdataApiUrl:'https://masterdata-dev.differentroads.es/api',
   reservationsApiUrl: 'https://reservations-dev.differentroads.es/api',
+  amadeusApiUrl: 'https://amadeus-dev.differentroads.es/api',
 
 
   scalapayApiUrl: 'https://fastapi-dev.differentroads.es/scalapay',

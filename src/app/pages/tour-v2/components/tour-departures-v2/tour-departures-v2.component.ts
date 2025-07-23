@@ -596,12 +596,10 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     if (!this.selectedDeparture || !this.departureDetails) return;
 
     this.departureInfo = {
-      departureDate: this.departureDetails.departureDate,
-      formattedDepartureDate: this.formatDate(
-        this.departureDetails.departureDate
-      ),
-      arrivalDate: this.departureDetails.arrivalDate,
-      formattedArrivalDate: this.formatDate(this.departureDetails.arrivalDate),
+      departureDate: this.departureDetails.departureDate ?? '',
+      formattedDepartureDate: this.formatDate(this.departureDetails.departureDate ?? ''),
+      arrivalDate: this.departureDetails.arrivalDate ?? '',
+      formattedArrivalDate: this.formatDate(this.departureDetails.arrivalDate ?? ''),
       itineraryId: this.departureDetails.itineraryId,
       itineraryName: this.selectedDeparture.itineraryName,
       departureId: this.departureDetails.id,
@@ -663,11 +661,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     if (!this.departureDetails) return 0;
 
     try {
-      const departureDate = new Date(this.departureDetails.departureDate);
-      const arrivalDate = new Date(this.departureDetails.arrivalDate);
-      const diffTime = Math.abs(
-        arrivalDate.getTime() - departureDate.getTime()
-      );
+      const departureDate = new Date(this.departureDetails.departureDate ?? '');
+      const arrivalDate = new Date(this.departureDetails.arrivalDate ?? '');
+      const diffTime = Math.abs(arrivalDate.getTime() - departureDate.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       return diffDays;
     } catch {
@@ -748,8 +744,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
     const departure = {
       id: this.departureDetails.id,
-      departureDate: this.departureDetails.departureDate,
-      returnDate: this.departureDetails.arrivalDate,
+      departureDate: this.departureDetails.departureDate ?? '',
+      returnDate: this.departureDetails.arrivalDate ?? '',
       price: adultPrice, // Usar precio real del servicio para adultos
       status: 'available',
       waitingList: false,

@@ -1,0 +1,333 @@
+<p-panel>
+  <ng-template #header>
+    <div class="flt-hdr">
+      <h2>Mejor precio, reserva simple</h2>
+      <p>
+        {{ tourName }}
+        <span *ngIf="flightForm.get('adults')?.value > 0">
+          | {{ flightForm.get("adults")?.value }} adulto{{
+            flightForm.get("adults")?.value > 1 ? "s" : ""
+          }}
+        </span>
+        <span *ngIf="flightForm.get('children')?.value > 0">
+          , {{ flightForm.get("children")?.value }} niño{{
+            flightForm.get("children")?.value > 1 ? "s" : ""
+          }}
+        </span>
+        <span *ngIf="flightForm.get('infants')?.value > 0">
+          , {{ flightForm.get("infants")?.value }} bebé{{
+            flightForm.get("infants")?.value > 1 ? "s" : ""
+          }}
+        </span>
+      </p>
+    </div>
+  </ng-template>
+
+  <form [formGroup]="flightForm">
+    <div class="travel-type">
+      <div class="radio">
+        <p-radioButton
+          formControlName="tipoViaje"
+          name="tipoViaje"
+          value="IdaVuelta"
+          inputId="IdaVuelta"
+        ></p-radioButton>
+        <label for="IdaVuelta">Ida y vuelta</label>
+      </div>
+      <div class="radio">
+        <p-radioButton
+          formControlName="tipoViaje"
+          name="tipoViaje"
+          value="Ida"
+          inputId="Ida"
+        ></p-radioButton>
+        <label for="Ida">Solo ida</label>
+      </div>
+      <div class="radio">
+        <p-radioButton
+          formControlName="tipoViaje"
+          name="tipoViaje"
+          value="Vuelta"
+          inputId="Vuelta"
+        ></p-radioButton>
+        <label for="Vuelta">Solo vuelta</label>
+      </div>
+      <!-- Baggage filters removed -->
+    </div>
+
+    <div class="flt-details">
+      <!-- Ida -->
+      <div class="row" *ngIf="tipoViaje !== 'Vuelta'">
+        <div class="label">
+          <label>Ida</label>
+          <div class="from">Desde</div>
+        </div>
+        <div class="input origin">
+          <i class="pi pi-plane"></i>
+          <!-- Componente de autocomplete mejorado para mostrar todas las ciudades -->
+          <p-autocomplete
+            formControlName="origen"
+            [suggestions]="filteredCities"
+            (completeMethod)="searchCities($event)"
+            field="nombre"
+            [forceSelection]="true"
+            styleClass="w-full"
+            [dropdown]="true"
+            [minLength]="1"
+            [delay]="0"
+            [appendTo]="'body'"
+            [showEmptyMessage]="true"
+            emptyMessage="No se encontraron ciudades"
+          >
+            <!-- Plantilla personalizada para los elementos del dropdown -->
+            <ng-template pTemplate="item" let-city>
+              <div class="city-item">
+                {{ city.codigo }} - {{ city.nombre }}
+              </div>
+            </ng-template>
+            <!-- Plantilla personalizada para el input cuando está seleccionado -->
+            <ng-template pTemplate="selectedItem" let-city>
+              <div class="selected-city">
+                {{ city.codigo }} - {{ city.nombre }}
+              </div>
+            </ng-template>
+          </p-autocomplete>
+          <a href="#" class="change"></a>
+        </div>
+        <div class="input destination">
+          <div class="dest-lbl">Llegada</div>
+          <div class="static-field">
+            {{ tourOrigenConstante.codigo }} - {{ tourOrigenConstante.nombre }}
+          </div>
+        </div>
+        <div class="date">
+          <div class="date-lbl">Fecha</div>
+          <div class="static-field">
+            {{ fechaIdaConstante }}<span *ngIf="horaIdaConstante"> {{ horaIdaConstante }} <i class="pi pi-info-circle" title="Hora local"></i></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Solo vuelta: origen editable, destino fijo -->
+      <div class="row" *ngIf="tipoViaje === 'Vuelta'">
+        <div class="label">
+          <label>Vuelta</label>
+          <div class="from">a</div>
+        </div>
+        <div class="input origin">
+          <i class="pi pi-plane"></i>
+          <p-autocomplete
+            formControlName="origen"
+            [suggestions]="filteredCities"
+            (completeMethod)="searchCities($event)"
+            field="nombre"
+            [forceSelection]="true"
+            styleClass="w-full"
+            [dropdown]="true"
+            [minLength]="1"
+            [delay]="0"
+            [appendTo]="'body'"
+            [showEmptyMessage]="true"
+            emptyMessage="No se encontraron ciudades"
+          >
+            <ng-template pTemplate="item" let-city>
+              <div class="city-item">
+                {{ city.codigo }} - {{ city.nombre }}
+              </div>
+            </ng-template>
+            <ng-template pTemplate="selectedItem" let-city>
+              <div class="selected-city">
+                {{ city.codigo }} - {{ city.nombre }}
+              </div>
+            </ng-template>
+          </p-autocomplete>
+        </div>
+        <div class="input destination">
+          <div class="dest-lbl">Desde</div>
+          <div class="static-field">
+            {{ tourDestinoConstante.codigo }} - {{ tourDestinoConstante.nombre }}
+          </div>
+        </div>
+        <div class="date">
+          <div class="date-lbl">Fecha</div>
+          <div class="static-field">
+            {{ fechaRegresoConstante }}<span *ngIf="horaRegresoConstante"> {{ horaRegresoConstante }} <i class="pi pi-info-circle" title="Hora local"></i></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Regreso -->
+      <div class="row" *ngIf="tipoViaje === 'IdaVuelta'">
+        <div class="label">
+          <label>Regreso</label>
+          <div class="from">Desde</div>
+        </div>
+        <div class="input origin">
+          <i class="pi pi-plane"></i>
+          <div class="static-field">{{ tourDestinoConstante.codigo }} - {{ tourDestinoConstante.nombre }}</div>
+        </div>
+        <div class="input destination">
+          <div class="dest-lbl">Llegada</div>
+          <div class="static-field">
+            {{ flightForm.get("origen")?.value?.codigo || flightForm.get("origen")?.value }} - {{ flightForm.get("origen")?.value?.nombre || flightForm.get("origen")?.value }}
+          </div>
+        </div>
+        <div class="date">
+          <div class="date-lbl">Fecha</div>
+          <div class="static-field">
+            {{ fechaRegresoConstante }}<span *ngIf="horaRegresoConstante"> {{ horaRegresoConstante }} <i class="pi pi-info-circle" title="Hora local"></i></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="search-opts">
+      <div class="sort">
+        <p-dropdown
+          [options]="sortOptions"
+          [(ngModel)]="selectedSortOption"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="Ordenar por"
+          (onChange)="onSortChange($event)"
+          styleClass="p-button-outlined mobile-friendly-dropdown"
+          [showClear]="false"
+          appendTo="body"
+        ></p-dropdown>
+      </div>
+      <div class="filter">
+        <!--   <p-dropdown
+          [options]="escalaOptions"
+          formControlName="escala"
+          placeholder="Escala"
+          styleClass="p-button-outlined"
+        ></p-dropdown>
+        <p-dropdown
+          [options]="aerolineaOptions"
+          formControlName="aerolinea"
+          placeholder="Aerolínea"
+          styleClass="p-button-outlined"
+        ></p-dropdown> -->
+      </div>
+      <div class="btn-search">
+        <p-button 
+          label="Buscar" 
+          styleClass="mobile-friendly-button" 
+          (click)="buscar()"
+          [disabled]="isLoading"
+        ></p-button>
+      </div>
+    </div>
+  </form>
+</p-panel>
+
+<!-- Lista de resultados de vuelos -->
+<div
+  class="flt-results"
+  *ngIf="!isLoading && searchPerformed && filteredOffers.length > 0"
+>
+  <p-panel styleClass="results-panel">
+    <ng-template #header>
+      <div class="res-header">
+        <h3>Resultados de búsqueda</h3>
+        -
+        <div class="count">
+          {{ transformedFlights.length }} vuelos encontrados
+        </div>
+      </div>
+    </ng-template>
+
+    <!-- Lista de vuelos usando el componente flight-itinerary -->
+    <div class="flt-list">
+      <div *ngFor="let flight of transformedFlights" class="item">
+        <app-flight-itinerary
+          [flight]="flight"
+          [selectFlight]="selectFlight.bind(this)"
+          [isFlightSelected]="isFlightSelected.bind(this)"
+        >
+        </app-flight-itinerary>
+      </div>
+    </div>
+  </p-panel>
+</div>
+
+<!-- Estado de carga -->
+<div class="loading" *ngIf="isLoading">
+  <p-progressSpinner></p-progressSpinner>
+  <div class="msg">Buscando los mejores vuelos para ti...</div>
+</div>
+
+<!-- Estado inicial - sin búsqueda -->
+<div class="no-search" *ngIf="!isLoading && !searchPerformed">
+  <p-panel>
+    <div class="msg" style="text-align: center">
+      <h3><i class="pi pi-search"></i> Busca tu vuelo</h3>
+      <p>
+        Selecciona tu ciudad de origen y haz clic en "Buscar" para encontrar
+        vuelos disponibles.
+      </p>
+    </div>
+  </p-panel>
+</div>
+
+<!-- Estado de error o sin resultados -->
+<div
+  class="no-results"
+  *ngIf="!isLoading && searchPerformed && filteredOffers.length === 0"
+>
+  <p-panel>
+    <div class="msg">
+      <i class="pi pi-info-circle"></i>
+      <h3>No se encontraron vuelos</h3>
+      <p>
+        No hay vuelos disponibles con los criterios seleccionados. Por favor,
+        intenta modificar tu búsqueda.
+      </p>
+    </div>
+  </p-panel>
+</div>
+
+<!-- Sección de debug: mostrar ofertas crudas de la API de forma amigable -->
+<div *ngIf="flightOffersRaw?.data?.flightOffers?.length" class="api-flight-offers">
+  <h3>Ofertas de vuelo (API cruda):</h3>
+  <div *ngFor="let offer of flightOffersRaw.data.flightOffers">
+    <strong>ID:</strong> {{ offer.id }}<br>
+    <strong>Precio total:</strong> {{ offer.price.total }} {{ offer.price.currency }}<br>
+    <strong>Aerolínea principal:</strong> {{ offer.validatingAirlineCodes?.[0] || offer.itineraries[0]?.segments[0]?.carrierCode }}<br>
+    <strong>Último día para ticket:</strong> {{ offer.lastTicketingDate || '-' }}<br>
+    <strong>Tipo de tarifa:</strong> {{ offer.pricingOptions?.fareType?.join(', ') || '-' }}<br>
+    <strong>Tasas:</strong>
+    <ul *ngIf="offer.price.fees?.length">
+      <li *ngFor="let fee of offer.price.fees">
+        {{ fee.type }}: {{ fee.amount }} {{ offer.price.currency }}
+      </li>
+    </ul>
+    <strong>Precios por pasajero:</strong>
+    <ul *ngIf="offer.travelerPricings?.length">
+      <li *ngFor="let tp of offer.travelerPricings">
+        Tipo: {{ tp.travelerType }}<br>
+        Precio total: {{ tp.price.total }} {{ tp.price.currency }}<br>
+        Precio base: {{ tp.price.base }} {{ tp.price.currency }}<br>
+        <!-- Si hay más detalles por edad, se pueden mostrar aquí -->
+      </li>
+    </ul>
+    <strong>Itinerarios:</strong>
+    <ul>
+      <li *ngFor="let itin of offer.itineraries; let i = index">
+        <b>Itinerario {{ i + 1 }}</b>
+        <ul>
+          <li *ngFor="let seg of itin.segments">
+            <b>{{ seg.departure.iataCode }}</b> ({{ seg.departure.terminal || '-' }}) {{ seg.departure.at }} →
+            <b>{{ seg.arrival.iataCode }}</b> ({{ seg.arrival.terminal || '-' }}) {{ seg.arrival.at }}<br>
+            <span style="margin-left:1em">
+              Compañía: {{ seg.carrierCode }}<br>
+              Cabina: {{ seg.cabin || seg.class || '-' }}<br>
+              Clase: {{ seg.class || '-' }}<br>
+              Maletas incluidas: {{ seg.includedCheckedBags?.quantity || '-' }}<br>
+            </span>
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <hr>
+  </div>
+</div>

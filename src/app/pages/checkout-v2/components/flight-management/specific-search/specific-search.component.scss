@@ -1,0 +1,513 @@
+$primary: var(--background-azul);
+$accent: #f67362;
+$light: #f5f5f5;
+$border: #ddd;
+%flex-c {
+  display: flex;
+  align-items: center;
+}
+%small {
+  font-size: 0.8rem;
+  color: $primary;
+}
+%shadow {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+::ng-deep {
+  .p-autocomplete {
+    .p-autocomplete-input {
+      padding: 1rem !important;
+    }
+    .p-inputtext {
+      border-radius: 10px !important;
+      padding-right: 55px !important;
+    }
+  }
+  .p-panel {
+    font-family: Arial, sans-serif;
+    margin: 0 0 20px 0;
+    background-color: #fff !important;
+    color: $primary;
+    @extend %shadow;
+    .p-panel-header {
+      border-bottom: 1px solid #e9ecef;
+      padding: 1rem;
+    }
+    .p-panel-content {
+      width: 100%;
+      border: none;
+    }
+  }
+  .p-radiobutton .p-radiobutton-box {
+    border-color: $primary;
+  }
+  .p-radiobutton-checked {
+    .p-radiobutton-box {
+      border-color: $primary !important;
+      background: white !important;
+    }
+    .p-radiobutton-icon {
+      background-color: $primary !important;
+    }
+  }
+  .p-button {
+    &.p-button-danger {
+      background: $accent;
+      border-color: $accent;
+      font-weight: 600;
+      padding: 0.5rem 2rem;
+      border-radius: 4px;
+    }
+    &.p-button-success {
+      background: var(--p-primary-color);
+      border-color: var(--p-primary-color);
+    }
+  }
+  .p-calendar {
+    width: 100%;
+    .p-inputtext {
+      font-size: 0.9rem;
+    }
+    .p-datepicker-trigger {
+      background-color: transparent;
+      border-color: $border;
+      color: $primary;
+    }
+  }
+}
+.flt-hdr {
+  h2 {
+    margin: 0 0 5px 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: $primary;
+  }
+  p {
+    color: $primary;
+    margin: 0;
+    font-size: 0.9rem;
+  }
+}
+.travel-type {
+  @extend %flex-c;
+  margin: 10px 0;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+  .radio {
+    @extend %flex-c;
+    margin-right: 20px;
+    label {
+      margin-left: 8px;
+      font-size: 0.9rem;
+    }
+  }
+}
+
+.flt-details {
+  .row {
+    @extend %flex-c;
+    margin-bottom: 15px;
+    .label {
+      width: 70px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 5px;
+      display: block;
+
+      .from {
+        color: $primary;
+        @extend %small;
+      }
+    }
+
+    .input {
+      flex: 1;
+      margin-left: 20px;
+      &.origin {
+        i {
+          position: absolute;
+          left: 10px;
+          top: 50%;
+          transform: translateY(-50%) rotate(45deg);
+          color: #999;
+          z-index: 1;
+        }
+        ::ng-deep .p-dropdown .p-dropdown-label {
+          padding-left: 25px;
+          font-size: 0.9rem;
+        }
+        .change {
+          position: absolute;
+          right: 10px;
+          top: 50%;
+          transform: translateY(-50%);
+          font-size: 0.8rem;
+          color: $accent;
+          text-decoration: none;
+          z-index: 2;
+        }
+      }
+
+      .dest-lbl {
+        color: $primary;
+        @extend %small;
+        margin-bottom: 5px;
+      }
+    }
+
+    .date {
+      width: 150px;
+      margin-left: 10px;
+      .date-lbl {
+        color: $primary;
+        @extend %small;
+        margin-bottom: 5px;
+      }
+      .static-field {
+        color: $primary;
+      }
+    }
+  }
+}
+
+.search-opts {
+  @extend %flex-c;
+  justify-content: space-between;
+  .sort,
+  .filter {
+    @extend %flex-c;
+    gap: 10px;
+    ::ng-deep .p-dropdown {
+      min-width: 120px;
+      .p-dropdown-label {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+      }
+    }
+  }
+
+  .btn-search ::ng-deep .p-button.p-button-danger {
+    background: $accent;
+    border-color: $accent;
+    font-weight: 600;
+    padding: 0.5rem 2rem;
+    border-radius: 4px;
+  }
+}
+
+.res-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: $primary;
+    margin-right: 10px;
+  }
+  .count {
+    @extend %small;
+  }
+}
+
+.flt-list {
+  .item {
+    margin-bottom: 15px;
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .card {
+    display: grid;
+    grid-template-columns: 100px 1fr 1fr 150px 150px;
+    align-items: center;
+    background: #fff;
+    @extend %shadow;
+    padding: 15px;
+    transition: box-shadow 0.3s ease;
+    &:hover {
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .airline {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      .logo {
+        background: $light;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        @extend %flex-c;
+        justify-content: center;
+        margin-bottom: 5px;
+        .code {
+          font-weight: bold;
+          color: $primary;
+        }
+      }
+
+      .name {
+        font-size: 0.8rem;
+        color: $primary;
+        text-align: center;
+        max-width: 90px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    .segment {
+      padding: 0 15px;
+      .seg-hdr {
+        font-size: 0.8rem;
+        color: #999;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .route {
+        @extend %flex-c;
+        .dep,
+        .arr {
+          width: 70px;
+          .time {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: $primary;
+          }
+          .airport {
+            font-size: 0.9rem;
+            color: $primary;
+          }
+        }
+
+        .path {
+          flex: 1;
+          padding: 0 15px;
+          text-align: center;
+          .duration {
+            font-size: 0.9rem;
+            color: $primary;
+            margin-bottom: 5px;
+          }
+
+          .line {
+            position: relative;
+            height: 2px;
+            background: $border;
+            margin: 10px 0;
+            .stops {
+              position: absolute;
+              top: -4px;
+              left: 0;
+              right: 0;
+              display: flex;
+              justify-content: space-evenly;
+              .stop {
+                width: 10px;
+                height: 10px;
+                background: #999;
+                border-radius: 50%;
+              }
+            }
+          }
+
+          .stop-info {
+            font-size: 0.8rem;
+            color: #999;
+            span.direct {
+              color: red;
+            }
+          }
+        }
+      }
+    }
+
+    .baggage {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      .bag-item {
+        @extend %flex-c;
+        color: #999;
+        font-size: 0.9rem;
+        i {
+          margin-right: 5px;
+        }
+        &.included {
+          color: var(--p-primary-color);
+          font-weight: 500;
+        }
+      }
+    }
+
+    .price-box {
+      text-align: right;
+      .price {
+        margin-bottom: 10px;
+        .amount {
+          font-size: 1.3rem;
+          font-weight: bold;
+          color: $primary;
+        }
+        .detail {
+          font-size: 0.8rem;
+          color: #999;
+        }
+      }
+    }
+  }
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  .msg {
+    margin-top: 20px;
+    color: $primary;
+  }
+}
+
+.no-results .msg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 0;
+  text-align: center;
+
+  i {
+    font-size: 3rem;
+    color: $accent;
+    margin-bottom: 15px;
+  }
+  h3 {
+    margin: 0 0 10px 0;
+    color: $primary;
+  }
+  p {
+    color: $primary;
+    max-width: 400px;
+    margin: 0;
+  }
+}
+@media (max-width: 767px) {
+  .travel-type {
+    display: flex;
+    justify-content: space-between;
+  }
+  .flt-details {
+    .row {
+      .input {
+        margin-left: 00px;
+      }
+      &:first-child {
+        display: block;
+        .label {
+          width: 30%;
+          display: inline-block;
+          vertical-align: middle;
+        }
+        .input.origin {
+          width: 70%;
+          display: inline-block;
+          vertical-align: middle;
+        }
+        .input.destination,
+        .date {
+          margin-top: 10px;
+        }
+        .input.destination {
+          width: 50%;
+          display: inline-block;
+        }
+        .date {
+          width: 50%;
+          display: inline-block;
+          margin-left: 0;
+        }
+      }
+      &:nth-child(2) {
+        display: block;
+        .label {
+          width: 30%;
+          display: inline-block;
+          vertical-align: middle;
+          margin-bottom: 0;
+        }
+
+        .input.origin {
+          width: 70%;
+          display: inline-block;
+          vertical-align: middle;
+          margin-bottom: 10px;
+        }
+
+        .input.destination {
+          width: 50%;
+          display: inline-block;
+        }
+        .date {
+          width: 50%;
+          display: inline-block;
+          margin-left: 0;
+        }
+      }
+    }
+  }
+  .search-opts {
+    flex-direction: column;
+    .sort {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    .btn-search {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+
+      ::ng-deep .p-button {
+        width: auto;
+        min-width: 150px;
+      }
+    }
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .flt-details {
+    .row {
+      &:first-child {
+        display: block;
+        .label {
+          display: inline-block;
+          vertical-align: middle;
+        }
+        .input.origin {
+          width: 75%;
+          display: inline-block;
+          vertical-align: middle;
+          margin-bottom: 15px;
+        }
+        .input.destination {
+          display: inline-block;
+          vertical-align: top;
+          margin-left: 20%;
+        }
+        .date {
+          display: inline-block;
+          margin-left: 22%;
+        }
+      }
+    }
+  }
+}

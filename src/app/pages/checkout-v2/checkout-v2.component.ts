@@ -173,7 +173,7 @@ export class CheckoutV2Component implements OnInit {
     this.tourNetService.getTourById(tourId).subscribe({
       next: (tour) => {
         this.tourName = tour.name || '';
-        this.tourSlug = this.generateTourSlug(this.tourName);
+        this.tourSlug = tour.slug || '';
 
         this.loading = false;
       },
@@ -716,15 +716,7 @@ export class CheckoutV2Component implements OnInit {
     return '';
   }
 
-  // Generar slug del tour para navegación
-  private generateTourSlug(tourName: string): string {
-    if (!tourName) return '';
 
-    return tourName
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  }
 
   // Manejar cambio de paso activo
   onActiveIndexChange(index: number): void {

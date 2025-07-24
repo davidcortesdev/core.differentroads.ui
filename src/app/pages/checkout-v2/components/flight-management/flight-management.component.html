@@ -1,6 +1,6 @@
 <div class="default-flights">
   <h4>Vuelos por defecto</h4>
-  <app-default-flights></app-default-flights>
+  <app-default-flights [departureId]="departureId" [reservationId]="reservationId"></app-default-flights>
 </div>
 <div class="specific-search" *ngIf="isConsolidadorVuelosActive">
   <h4>Búsqueda específica de vuelos</h4>

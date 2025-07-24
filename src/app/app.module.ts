@@ -198,7 +198,6 @@ import { ActivityCardComponent } from './shared/components/activity-card/activit
 import { TourMapComponent } from './shared/components/tour-map/tour-map.component';
 import { TourItineraryPanelComponent } from './pages/tour/components/tour-itinerary-panel/tour-itinerary-panel.component';
 import { AirportSearchComponent } from './features/airports/airport-search/airport-search.component';
-
 import { SummaryTableComponent } from './components/summary-table/summary-table.component';
 import { TravelerActivitySelectorComponent } from './pages/checkout/components/traveler-activity-selector/traveler-activity-selector.component';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
@@ -229,6 +228,7 @@ import { InsuranceComponent } from './pages/checkout-v2/components/insurance/ins
 import { FlightManagementComponent } from './pages/checkout-v2/components/flight-management/flight-management.component';
 import { DefaultFlightsComponent } from './pages/checkout-v2/components/flight-management/default-flights/default-flights.component';
 import { SpecificSearchComponent } from './pages/checkout-v2/components/flight-management/specific-search/specific-search.component';
+import { PaymentManagementComponent } from './pages/checkout-v2/components/payment-management/payment-management.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -360,7 +360,8 @@ registerLocaleData(localeEs);
     InsuranceComponent,
     FlightManagementComponent,
     DefaultFlightsComponent,
-    SpecificSearchComponent
+    SpecificSearchComponent,
+    PaymentManagementComponent
   ],
   imports: [
     // Angular Modules

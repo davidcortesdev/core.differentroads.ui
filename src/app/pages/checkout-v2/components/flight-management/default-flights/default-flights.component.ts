@@ -11,11 +11,13 @@ import { FlightsNetService, IFlightPackDTO } from '../../../services/flightsNet.
   styleUrl: './default-flights.component.scss'
 })
 export class DefaultFlightsComponent {
-  @Input() periodId: number | null = null;
+  @Input() departureId: number | null = null;
   @Input() reservationId: number | null = null;
 
+  FLIGHT_TYPE_SALIDA = 5;
+
   selectedFlight: IFlightPackDTO | null = null;
-  flights: IFlightPackDTO[] = [];
+  flightPacks: IFlightPackDTO[] = [];
   loginDialogVisible: boolean = false;
 
   constructor(
@@ -24,15 +26,17 @@ export class DefaultFlightsComponent {
   ) {}
 
   ngOnInit(): void {
+    console.log('ngOnInit');
      this.getFlights();
   }
 
   getFlights(): void {
-    if (!this.periodId) {
+    if (!this.departureId) {
       return;
     }
-    this.flightsNetService.getFlights(this.periodId).subscribe((flights) => {
-      this.flights = flights;
+    this.flightsNetService.getFlights(this.departureId).subscribe((flights) => {
+      this.flightPacks = flights;
+      console.log('Vuelos cargados: ',this.flightPacks);
     });
   }
 
@@ -91,5 +95,9 @@ export class DefaultFlightsComponent {
   navigateToRegister(): void {
     this.closeLoginModal();
     this.router.navigate(['/sign-up']); // Changed from '/register' to '/sign-up'
+  }
+
+  selectFlight(flightPack: IFlightPackDTO): void {
+    this.selectedFlight = flightPack;
   }
 }

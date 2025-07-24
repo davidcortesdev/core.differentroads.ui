@@ -1,12 +1,12 @@
 import { Component, Input } from '@angular/core';
 import { Router } from '@angular/router';
-import { FlightsNetService, IFlightPackDTO } from '../../../services/flightsNet.service';
+import { FlightsNetService, IFlightDetailDTO, IFlightPackDTO } from '../../../services/flightsNet.service';
 
 
 @Component({
   selector: 'app-default-flights',
   standalone: false,
-  
+
   templateUrl: './default-flights.component.html',
   styleUrl: './default-flights.component.scss'
 })
@@ -19,15 +19,16 @@ export class DefaultFlightsComponent {
   selectedFlight: IFlightPackDTO | null = null;
   flightPacks: IFlightPackDTO[] = [];
   loginDialogVisible: boolean = false;
+  flightDetails: Map<number, IFlightDetailDTO> = new Map();
 
   constructor(
     private router: Router,
     private flightsNetService: FlightsNetService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     console.log('ngOnInit');
-     this.getFlights();
+    this.getFlights();
   }
 
   getFlights(): void {
@@ -36,7 +37,13 @@ export class DefaultFlightsComponent {
     }
     this.flightsNetService.getFlights(this.departureId).subscribe((flights) => {
       this.flightPacks = flights;
-      console.log('Vuelos cargados: ',this.flightPacks);
+      console.log('Vuelos cargados: ', this.flightPacks);
+      this.flightPacks.forEach(pack => {
+        pack.flights.forEach(flight => {
+          console.log('looking for detail of flight: ', flight);
+          this.getFlightDetail(flight.id);
+        });
+      });
     });
   }
 
@@ -80,10 +87,10 @@ export class DefaultFlightsComponent {
   //   });
   // }
 
-   // Update method to close the login modal
-   closeLoginModal(): void {
-     this.loginDialogVisible = false;
-   }
+  // Update method to close the login modal
+  closeLoginModal(): void {
+    this.loginDialogVisible = false;
+  }
 
   // Add method to navigate to login page
   navigateToLogin(): void {
@@ -99,5 +106,12 @@ export class DefaultFlightsComponent {
 
   selectFlight(flightPack: IFlightPackDTO): void {
     this.selectedFlight = flightPack;
+  }
+
+  getFlightDetail(flightId: number): void {
+    this.flightsNetService.getFlightDetail(flightId).subscribe((detail) => {
+      console.log('detail: ', detail);
+      this.flightDetails.set(flightId, detail);
+    });
   }
 }

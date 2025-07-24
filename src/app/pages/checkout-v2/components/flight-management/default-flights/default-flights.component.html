@@ -33,14 +33,26 @@
                 </div>
                 <div class="journey-line-left"></div>
                 <div class="journey-info-block">
-                  <div class="stops-container">
-                    <span class="journey-stops">
-                      {{ "TO DO: Escalas" }}
+                  <div class="stops-container">      
+                    <span class="journey-stops" (click)="op.toggle($event)">
+                      {{ flightDetails.get(flight.id)?.numScales }} escalas
                     </span>
                     <div class="stops-underline"></div>
+                    <p-overlayPanel #op>
+                      <p class="panel-title">Detalle del vuelo</p>
+                      <ng-container *ngIf="flightDetails.get(flight.id)?.segments as segments">
+                        <ul>
+                          <li *ngFor="let seg of segments">
+                            {{ seg.departureCity }} ({{ seg.departureIata }}) {{ seg.departureTime.slice(0,5) || '--:--'}} →
+                            {{ seg.arrivalCity }} ({{ seg.arrivalIata }}) {{ seg.arrivalTime.slice(0,5) || '--:--'}}
+                            <span *ngIf="seg.flightNumber">| Vuelo: {{ seg.flightNumber }}</span>
+                          </li>
+                        </ul>
+                      </ng-container>
+                    </p-overlayPanel>
                   </div>
-                  <span class="journey-airline">{{ "TO DO: Aerolínea" }}</span>
-                  <span class="journey-duration">{{ "TO DO: Duración" }}</span>
+                  <span class="journey-airline">{{ flightDetails.get(flight.id)?.airlines?.join(', ') || '' }}</span>
+                  <span class="journey-duration">{{ flightDetails.get(flight.id)?.duration || 0 }} horas</span>
                 </div>
                 <div class="journey-line-right"></div>
                 <div class="journey-time-block arrival">

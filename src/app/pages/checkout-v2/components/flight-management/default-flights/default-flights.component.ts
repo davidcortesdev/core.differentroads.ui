@@ -14,7 +14,7 @@ export class DefaultFlightsComponent {
   @Input() departureId: number | null = null;
   @Input() reservationId: number | null = null;
 
-  FLIGHT_TYPE_SALIDA = 5;
+  FLIGHT_TYPE_SALIDA = 4;
 
   selectedFlight: IFlightPackDTO | null = null;
   flightPacks: IFlightPackDTO[] = [];

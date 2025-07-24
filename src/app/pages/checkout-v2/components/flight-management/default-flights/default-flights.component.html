@@ -6,7 +6,7 @@
 
   <div class="flights-container">
     <div *ngFor="let flightPack of flightPacks">
-      <div class="flight-item">
+      <div *ngIf="flightPack.totalPrice > 0" class="flight-item">
         <div class="flight-departure-title" *ngIf="flightPack">
           <h3>
             Salida {{ flightPack.flights[0].departureCity }} ({{
@@ -29,7 +29,7 @@
                   <span class="journey-date">
                     {{flight.departureDate | date : "dd-MM-yyyy" : "UTC"}}
                   </span>
-                  <span class="journey-city">{{ flight.departureCity }}</span>
+                  <span class="journey-city">({{ flight.departureIATACode }}) {{ flight.departureCity }}</span>
                 </div>
                 <div class="journey-line-left"></div>
                 <div class="journey-info-block">
@@ -50,7 +50,7 @@
                   <span class="journey-date">
                     {{flight.arrivalDate | date : "dd-MM-yyyy" : "UTC"}}
                   </span>
-                  <span class="journey-city">{{ flight.arrivalCity }}</span>
+                  <span class="journey-city">({{ flight.arrivalIATACode }}) {{ flight.arrivalCity }}</span>
                 </div>
               </div>
             </div>

@@ -229,6 +229,7 @@ import { InsuranceComponent } from './pages/checkout-v2/components/insurance/ins
 import { FlightManagementComponent } from './pages/checkout-v2/components/flight-management/flight-management.component';
 import { DefaultFlightsComponent } from './pages/checkout-v2/components/flight-management/default-flights/default-flights.component';
 import { SpecificSearchComponent } from './pages/checkout-v2/components/flight-management/specific-search/specific-search.component';
+import { InfoTravelersComponent } from './pages/checkout-v2/components/info-travelers/info-travelers.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -360,7 +361,8 @@ registerLocaleData(localeEs);
     InsuranceComponent,
     FlightManagementComponent,
     DefaultFlightsComponent,
-    SpecificSearchComponent
+    SpecificSearchComponent,
+    InfoTravelersComponent
   ],
   imports: [
     // Angular Modules

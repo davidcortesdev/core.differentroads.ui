@@ -11,6 +11,7 @@ import {
   AgeGroupService,
   IAgeGroupResponse,
 } from '../../core/services/agegroup/age-group.service';
+import { ReservationTravelerActivityService } from '../../core/services/reservation/reservation-traveler-activity.service';
 import { MenuItem, MessageService } from 'primeng/api';
 import { SelectorRoomComponent } from './components/selector-room/selector-room.component';
 import { SelectorTravelerComponent } from './components/selector-traveler/selector-traveler.component';
@@ -43,6 +44,9 @@ export class CheckoutV2Component implements OnInit {
   tourId: number | null = null;
   itineraryId: number | null = null; // Se obtiene del departure
   totalPassengers: number = 0;
+  // Variables para actividades
+  selectedActivities: any[] = [];
+  activitiesTotalPrice: number = 0;
 
   // Variables para el resumen del pedido
   summary: { qty: number; value: number; description: string }[] = [];
@@ -74,6 +78,7 @@ export class CheckoutV2Component implements OnInit {
     private departureService: DepartureService,
     private departurePriceSupplementService: DeparturePriceSupplementService,
     private ageGroupService: AgeGroupService,
+    private reservationTravelerActivityService: ReservationTravelerActivityService,
     private messageService: MessageService
   ) {}
 
@@ -146,6 +151,21 @@ export class CheckoutV2Component implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  onActivitiesSelectionChange(activitiesData: {
+    selectedActivities: any[];
+    totalPrice: number;
+  }): void {
+    this.selectedActivities = activitiesData.selectedActivities;
+    this.activitiesTotalPrice = activitiesData.totalPrice;
+
+    if (
+      this.travelerSelector &&
+      Object.keys(this.pricesByAgeGroup).length > 0
+    ) {
+      this.updateOrderSummary(this.travelerSelector.travelersNumbers);
+    }
   }
 
   // Método para cargar datos del tour
@@ -425,6 +445,29 @@ export class CheckoutV2Component implements OnInit {
       });
     }
 
+    // Actividades seleccionadas
+    if (this.selectedActivities && this.selectedActivities.length > 0) {
+      const totalTravelers =
+        travelersNumbers.adults +
+        travelersNumbers.childs +
+        travelersNumbers.babies;
+
+      this.selectedActivities.forEach((activity) => {
+        const activityPrice =
+          activity.priceData?.find(
+            (price: any) => price.age_group_name === 'Adultos'
+          )?.value || 0;
+
+        if (activityPrice > 0) {
+          this.summary.push({
+            qty: totalTravelers,
+            value: activityPrice,
+            description: `${activity.name}`,
+          });
+        }
+      });
+    }
+
     // Seguro seleccionado
     if (this.selectedInsurance && this.insurancePrice > 0) {
       const totalTravelers =
@@ -472,6 +515,161 @@ export class CheckoutV2Component implements OnInit {
       // Actualizar las variables locales inmediatamente para evitar conflictos
       this.reservationData.totalAmount = this.totalAmountCalculated;
       this.totalAmount = this.totalAmountCalculated;
+    }
+  }
+
+  // Método para guardar actividades seleccionadas (USANDO SOLO EL SERVICIO PROPORCIONADO)
+  async saveActivitiesAssignments(): Promise<boolean> {
+    if (
+      !this.reservationId ||
+      !this.selectedActivities ||
+      this.selectedActivities.length === 0
+    ) {
+      return true; // Si no hay actividades seleccionadas, consideramos exitoso
+    }
+
+    try {
+      // En lugar de obtener travelers, trabajamos directamente con los datos que ya tenemos
+      // Crear las nuevas asignaciones de actividades usando los datos del travelerSelector
+      const createPromises: Promise<any>[] = [];
+
+      // Verificar que tenemos el componente travelerSelector con datos
+      if (!this.travelerSelector) {
+        throw new Error('No se encontró información de viajeros');
+      }
+
+      // Obtener los travelers desde el componente travelerSelector
+      // (asumiendo que tiene una propiedad con los travelers existentes)
+      const existingTravelers = this.travelerSelector.existingTravelers || [];
+
+      if (existingTravelers.length === 0) {
+        throw new Error('No se encontraron viajeros para esta reserva');
+      }
+
+      // Limpiar actividades existentes para esta reserva
+      await this.clearExistingActivitiesSimple(existingTravelers);
+
+      // Para cada actividad seleccionada, crear una asignación para cada viajero
+      this.selectedActivities.forEach((activity) => {
+        existingTravelers.forEach((traveler: any) => {
+          const activityAssignment = {
+            id: 0, // Para nuevas entradas
+            reservationTravelerId: traveler.id,
+            activityId: activity.id,
+          };
+
+          const createPromise = new Promise((resolve, reject) => {
+            this.reservationTravelerActivityService
+              .create(activityAssignment)
+              .subscribe({
+                next: (result) => resolve(result),
+                error: (error) => reject(error),
+              });
+          });
+
+          createPromises.push(createPromise);
+        });
+      });
+
+      // Ejecutar todas las operaciones de creación
+      await Promise.all(createPromises);
+
+      return true;
+    } catch (error) {
+      console.error('Error al guardar actividades:', error);
+      return false;
+    }
+  }
+
+  // Método auxiliar simplificado para limpiar actividades existentes
+  private async clearExistingActivitiesSimple(
+    existingTravelers: any[]
+  ): Promise<void> {
+    const deletePromises: Promise<any>[] = [];
+
+    for (const traveler of existingTravelers) {
+      try {
+        // Obtener actividades existentes para este viajero usando el servicio proporcionado
+        const existingActivities = await new Promise<any[]>(
+          (resolve, reject) => {
+            this.reservationTravelerActivityService
+              .getByReservationTraveler(traveler.id)
+              .subscribe({
+                next: (activities) => resolve(activities),
+                error: (error) => resolve([]), // Si hay error, asumimos que no hay actividades
+              });
+          }
+        );
+
+        // Eliminar cada actividad existente
+        existingActivities.forEach((activity) => {
+          const deletePromise = new Promise((resolve, reject) => {
+            this.reservationTravelerActivityService
+              .delete(activity.id)
+              .subscribe({
+                next: (result) => resolve(result),
+                error: (error) => resolve(false), // Continuar aunque falle una eliminación
+              });
+          });
+          deletePromises.push(deletePromise);
+        });
+      } catch (error) {
+        console.warn(
+          `Error al obtener actividades para el viajero ${traveler.id}:`,
+          error
+        );
+      }
+    }
+
+    // Esperar a que se completen todas las eliminaciones
+    if (deletePromises.length > 0) {
+      await Promise.all(deletePromises);
+    }
+  }
+
+  // Método auxiliar para limpiar actividades existentes
+  private async clearExistingActivities(
+    existingTravelers: any[]
+  ): Promise<void> {
+    const deletePromises: Promise<any>[] = [];
+
+    for (const traveler of existingTravelers) {
+      try {
+        // Obtener actividades existentes para este viajero
+        const existingActivities = await new Promise<any[]>(
+          (resolve, reject) => {
+            this.reservationTravelerActivityService
+              .getByReservationTraveler(traveler.id)
+              .subscribe({
+                next: (activities) => resolve(activities),
+                error: (error) => resolve([]), // Si hay error, asumimos que no hay actividades
+              });
+          }
+        );
+
+        // Eliminar cada actividad existente
+        existingActivities.forEach((activity) => {
+          const deletePromise = new Promise((resolve, reject) => {
+            this.reservationTravelerActivityService
+              .delete(activity.id)
+              .subscribe({
+                next: (result) => resolve(result),
+                error: (error) => resolve(false), // Continuar aunque falle una eliminación
+              });
+          });
+          deletePromises.push(deletePromise);
+        });
+      } catch (error) {
+        console.warn(
+          `Error al obtener actividades para el viajero ${traveler.id}:`,
+          error
+        );
+      }
+    }
+
+    // Esperar a que se completen todas las eliminaciones
+    if (deletePromises.length > 0) {
+      await Promise.all(deletePromises);
     }
   }
 
@@ -527,7 +725,7 @@ export class CheckoutV2Component implements OnInit {
 
   // Método para navegar al siguiente paso con validación
   async nextStepWithValidation(targetStep: number): Promise<void> {
-    // Guardar cambios de travelers, habitaciones y seguros antes de continuar
+    // Guardar cambios de travelers, habitaciones, seguros y actividades antes de continuar
     if (
       targetStep === 1 &&
       this.travelerSelector &&
@@ -610,11 +808,14 @@ export class CheckoutV2Component implements OnInit {
         this.updateOrderSummary(currentTravelers);
         await new Promise((resolve) => setTimeout(resolve, 300));
 
-        // 6. Guardar asignaciones de habitaciones y seguros EN PARALELO
-        const [roomsSaved, insuranceSaved] = await Promise.all([
-          this.roomSelector.saveRoomAssignments(),
-          this.insuranceSelector.saveInsuranceAssignments(),
-        ]);
+        // 6. Guardar asignaciones de habitaciones, seguros y actividades EN PARALELO
+        const [roomsSaved, insuranceSaved, activitiesSaved] = await Promise.all(
+          [
+            this.roomSelector.saveRoomAssignments(),
+            this.insuranceSelector.saveInsuranceAssignments(),
+            this.saveActivitiesAssignments(),
+          ]
+        );
 
         if (!roomsSaved) {
           this.messageService.add({
@@ -633,6 +834,17 @@ export class CheckoutV2Component implements OnInit {
             summary: 'Error al guardar seguro',
             detail:
               'Hubo un error al guardar las asignaciones de seguro. Por favor, inténtalo de nuevo.',
+            life: 5000,
+          });
+          return;
+        }
+
+        if (!activitiesSaved) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error al guardar actividades',
+            detail:
+              'Hubo un error al guardar las actividades seleccionadas. Por favor, inténtalo de nuevo.',
             life: 5000,
           });
           return;
@@ -662,7 +874,11 @@ export class CheckoutV2Component implements OnInit {
                     this.messageService.add({
                       severity: 'success',
                       summary: 'Guardado exitoso',
-                      detail: `Datos guardados correctamente para ${this.totalPassengers} viajeros.`,
+                      detail: `Datos guardados correctamente para ${
+                        this.totalPassengers
+                      } viajeros con ${
+                        this.selectedActivities?.length || 0
+                      } actividades.`,
                       life: 3000,
                     });
 

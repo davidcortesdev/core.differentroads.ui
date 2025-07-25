@@ -33,7 +33,7 @@ export const environment = {
   amadeusApiUrl: 'https://amadeus-dev.differentroads.es/api',
 
 
-  scalapayApiUrl: 'https://fastapi-dev.differentroads.es/scalapay',
+  scalapayApiUrl: 'https://scalapay-dev.differentroads.es/api',
   scalapayApiKey: 'qhtfs87hjnc12kkos',
   retaileriddefault: 7,
 };

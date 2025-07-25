@@ -24,6 +24,7 @@ export interface ActivityFilters {
   activityCompetitionGroupId?: number;
   isTKOrigin?: boolean;
   isVisibleOnWeb?: boolean;
+  type?: string;
 }
 
 /**
@@ -46,6 +47,7 @@ export interface ActivityCreate {
   activityCompetitionGroupId?: number | null;
   isTKOrigin?: boolean;
   isVisibleOnWeb?: boolean;
+  type?: string;
 }
 
 /**
@@ -68,6 +70,7 @@ export interface ActivityUpdate {
   activityCompetitionGroupId?: number | null;
   isTKOrigin?: boolean;
   isVisibleOnWeb?: boolean;
+  type?: string;
 }
 
 /**
@@ -91,6 +94,7 @@ export interface IActivityResponse {
   activityCompetitionGroupId: number | null;
   isTKOrigin: boolean;
   isVisibleOnWeb: boolean;
+  type: string;
 }
 
 @Injectable({
@@ -214,5 +218,47 @@ export class ActivityService {
     return this.http.get<IActivityResponse[]>(`${this.API_URL}/for-itinerary`, {
       params,
     });
+  }
+
+  /**
+   * Obtiene las actividades y activity packs filtradas para la sección de itinerario.
+   * @param itineraryId ID del itinerario (obligatorio)
+   * @param departureId ID de la salida (opcional)
+   * @param itineraryDayId ID del día de itinerario (opcional)
+   * @param isVisibleOnWeb Indica si es visible en la web (opcional)
+   * @param onlyOpt Filtrar solo actividades opcionales (opcional)
+   * @returns Lista de actividades y packs filtradas
+   */
+  getForItineraryWithPacks(
+    itineraryId: number,
+    departureId?: number,
+    itineraryDayId?: number,
+    isVisibleOnWeb?: boolean,
+    onlyOpt?: boolean
+  ): Observable<IActivityResponse[]> {
+    let params = new HttpParams().set('itineraryId', itineraryId.toString());
+
+    if (departureId !== undefined) {
+      params = params.set('departureId', departureId.toString());
+    }
+
+    if (itineraryDayId !== undefined) {
+      params = params.set('itineraryDayId', itineraryDayId.toString());
+    }
+
+    if (isVisibleOnWeb !== undefined) {
+      params = params.set('isVisibleOnWeb', isVisibleOnWeb.toString());
+    }
+
+    if (onlyOpt !== undefined) {
+      params = params.set('onlyOpt', onlyOpt.toString());
+    }
+
+    return this.http.get<IActivityResponse[]>(
+      `${this.API_URL}/for-itinerary-with-packs`,
+      {
+        params,
+      }
+    );
   }
 }

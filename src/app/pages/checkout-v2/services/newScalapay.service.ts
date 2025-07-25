@@ -27,11 +27,11 @@ export class NewScalapayService {
 
     constructor(private http: HttpClient) {}
 
-    createOrder(reservationId: number, payments: number): Observable<any> {
+    createOrder(reservationId: number, payments: number): Observable<IScalapayOrderResponse> {
         const params = new HttpParams()
             .set('reservationId', reservationId)
             .set('payments', payments);
-        return this.http.post<any>(`${this.API_URL}/create-order`, params);
+        return this.http.post<IScalapayOrderResponse>(`${this.API_URL}/create-order`, {}, { params });
     }
 
 }

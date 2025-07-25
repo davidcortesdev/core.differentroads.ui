@@ -65,7 +65,8 @@ export class PaymentManagementComponent implements OnInit{
     if(this.paymentType === 'installments') {
       const payments: number = this.installmentOption === 'three' ? 3 : this.installmentOption === 'four' ? 4 : 1;
       this.scalapayService.createOrder(this.reservationId, payments).subscribe((response: IScalapayOrderResponse) => {
-        this.router.navigate(response.CheckoutUrl);
+        console.log(response);
+        window.location.href = response.CheckoutUrl;
     });
   }
 }

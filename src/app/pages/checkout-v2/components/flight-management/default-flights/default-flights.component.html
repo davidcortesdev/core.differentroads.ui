@@ -35,7 +35,7 @@
                 <div class="journey-info-block">
                   <div class="stops-container">      
                     <span class="journey-stops" (click)="op.toggle($event)">
-                      {{ flightDetails.get(flight.id)?.numScales }} escalas
+                      {{ flightDetails.get(flight.id)?.numScales === 1 ? 'Directo' : flightDetails.get(flight.id)?.numScales + ' escalas' }}
                     </span>
                     <div class="stops-underline"></div>
                     <p-overlayPanel #op>
@@ -52,7 +52,7 @@
                     </p-overlayPanel>
                   </div>
                   <span class="journey-airline">{{ flightDetails.get(flight.id)?.airlines?.join(', ') || '' }}</span>
-                  <span class="journey-duration">{{ flightDetails.get(flight.id)?.duration || 0 }} horas</span>
+                  <!-- <span class="journey-duration">{{ flightDetails.get(flight.id)?.duration || 0 }} horas</span> -->
                 </div>
                 <div class="journey-line-right"></div>
                 <div class="journey-time-block arrival">

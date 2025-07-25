@@ -6,17 +6,17 @@ import { Observable } from "rxjs";
 import { ScalapayAmount } from "../../../core/models/scalapay/ScalapayAmount";
 
 export interface IScalapayOrderResponse {
-    Token: string;
-    CheckoutUrl: string;
-    ExpiresAt: Date;
-    Order: IScalapayOrderResponseDetails;
+    token: string;
+    checkoutUrl: string;
+    expiresAt: Date;
+    order: IScalapayOrderResponseDetails;
 }
 
 export interface IScalapayOrderResponseDetails {
-    TotalAmount: ScalapayAmount;
-    MerchantReference: string;
-    Status: string;
-    CreatedAt: Date;
+    totalAmount: ScalapayAmount;
+    merchantReference: string;
+    status: string;
+    createdAt: Date;
 }
 
 @Injectable({

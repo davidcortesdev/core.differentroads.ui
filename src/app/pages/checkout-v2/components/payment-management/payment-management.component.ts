@@ -16,7 +16,7 @@ export class PaymentManagementComponent implements OnInit{
   depositAmount: number = 0;
   paymentDeadline: string = '';
   @Input() totalPrice: number = 0;
-  @Input() reservationId: number = 20;
+  @Input() reservationId!: number;
   paymentMethod: 'creditCard' | 'transfer' | null = null;
   installmentOption: string | null = null;
   isLoading: boolean = false;
@@ -66,7 +66,7 @@ export class PaymentManagementComponent implements OnInit{
       const payments: number = this.installmentOption === 'three' ? 3 : this.installmentOption === 'four' ? 4 : 1;
       this.scalapayService.createOrder(this.reservationId, payments).subscribe((response: IScalapayOrderResponse) => {
         console.log(response);
-        window.location.href = response.CheckoutUrl;
+        window.location.href = response.checkoutUrl;
     });
   }
 }

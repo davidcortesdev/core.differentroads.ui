@@ -115,7 +115,7 @@
           <!-- Step 4: Pago -->
           <div *ngSwitchCase="3">
             <!-- Componente de pago -->
-             <app-payment-management></app-payment-management>
+             <app-payment-management [totalPrice]="totalAmountCalculated" [reservationId]="reservationId ?? 0"></app-payment-management>
 
             <div class="flex pt-6 justify-between">
               <p-button

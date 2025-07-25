@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
+import { IScalapayOrderResponse, NewScalapayService } from '../../services/newScalapay.service';
 
 @Component({
   selector: 'app-payment-management',
@@ -14,12 +15,14 @@ export class PaymentManagementComponent implements OnInit{
   paymentType: string | null = null;
   depositAmount: number = 0;
   paymentDeadline: string = '';
-  totalPrice: number = 0;
+  @Input() totalPrice: number = 0;
+  @Input() reservationId: number = 20;
   paymentMethod: 'creditCard' | 'transfer' | null = null;
   installmentOption: string | null = null;
   isLoading: boolean = false;
+  router: any;
 
-  constructor() {}
+  constructor(private scalapayService: NewScalapayService) {}
 
   ngOnInit(): void {
     console.log('PaymentManagementComponent initialized');
@@ -57,9 +60,15 @@ export class PaymentManagementComponent implements OnInit{
 
   // Métodos stub para el HTML
   goBack(): void {}
+
   submitPayment(): void {
-    console.log('submitPayment');
+    if(this.paymentType === 'installments') {
+      const payments: number = this.installmentOption === 'three' ? 3 : this.installmentOption === 'four' ? 4 : 1;
+      this.scalapayService.createOrder(this.reservationId, payments).subscribe((response: IScalapayOrderResponse) => {
+        this.router.navigate(response.CheckoutUrl);
+    });
   }
+}
 
   toggleDropdown() {
     this.isOpen = !this.isOpen;

@@ -32,9 +32,17 @@
 
   <!-- Mensaje de bienvenida -->
   <div class="wel">
-    <p class="greet" *ngIf="reservation?.userId">
-      Hola {{ reservation?.userId }},
-    </p>
+    <p-toast></p-toast>
+    <div class="greet" *ngIf="reservation?.userId">
+      <p>Hola {{ reservation?.userId }},</p>
+      <div *ngIf="status === 'SUCCESS'">
+        Pago realizado con éxito
+      </div>
+      <div *ngIf="status != 'SUCCESS'">
+        Pago fallido
+      </div>
+    </div>
+  </div>
 
     <!-- Mensajes específicos por estado -->
     <!-- <ng-container
@@ -216,7 +224,7 @@
     [bookingData]="bookingData!"
     [currentPayment]="paymentInfo!"
   ></app-payments-information-section> -->
-</div>
+<!-- </div> -->
 
 <div *ngIf="error" class="error-container">
   <i

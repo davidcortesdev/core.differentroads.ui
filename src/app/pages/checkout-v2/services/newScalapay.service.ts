@@ -34,4 +34,8 @@ export class NewScalapayService {
         return this.http.post<IScalapayOrderResponse>(`${this.API_URL}/create-order`, {}, { params });
     }
 
+    captureOrder(token: string): Observable<any> {
+        return this.http.post<any>(`${this.API_URL}/capture-order`, { token });
+    }
+
 }

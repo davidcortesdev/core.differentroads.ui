@@ -1,10 +1,8 @@
-// Variables
 $azul: var(--background-azul);
 $border-light: #d4d4d8;
 $text-muted: #64748b;
 $border-color: #e2e8f0;
 
-// Breakpoints
 @mixin mobile {
   @media (max-width: 480px) { @content; }
 }
@@ -15,7 +13,6 @@ $border-color: #e2e8f0;
   @media (min-width: 768px) { @content; }
 }
 
-// Mixins comunes
 @mixin flex-center {
   display: flex;
   align-items: center;
@@ -34,7 +31,6 @@ $border-color: #e2e8f0;
   @include mobile { padding: 1rem 0.75rem; }
 }
 
-// Estilos principales
 .container {
   --p-panel-background: var(--background-azul-color-letra);
   --p-panel-border-radius: 10px;
@@ -45,7 +41,6 @@ $border-color: #e2e8f0;
   padding: 0;
   margin-top: -20px;
 
-  // Header común
   .header-container {
     cursor: pointer;
     margin-bottom: 15px;
@@ -84,7 +79,6 @@ $border-color: #e2e8f0;
     &.pay { max-width: 200px; }
   }
 
-  // Paneles de pago
   ::ng-deep .payment-panel {
     font-weight: 500;
     margin-bottom: 0.75rem;
@@ -104,7 +98,6 @@ $border-color: #e2e8f0;
     }
   }
 
-  // Opciones de pago
   .payment-option {
     @include flex-between;
     flex-wrap: nowrap;
@@ -138,7 +131,6 @@ $border-color: #e2e8f0;
     }
   }
 
-  // Secciones
   .payment-methods-section,
   .installments-section {
     margin-top: 2rem;
@@ -197,7 +189,6 @@ $border-color: #e2e8f0;
     }
   }
 
-  // Sección de viajeros
   .travelers-points-section {
     .title-underline {
       max-width: 200px;
@@ -225,7 +216,6 @@ $border-color: #e2e8f0;
     }
   }
 
-  // Lista de viajeros
   .travelers-list {
     margin-top: 15px;
 
@@ -285,7 +275,6 @@ $border-color: #e2e8f0;
     }
   }
 
-  // Términos
   .terms-container {
     margin-top: 20px;
     display: flex;
@@ -311,7 +300,6 @@ $border-color: #e2e8f0;
     @include tablet { font-size: 0.8125rem; }
   }
 
-  // Botones
   .buttons-container {
     @include flex-between;
 
@@ -336,9 +324,7 @@ $border-color: #e2e8f0;
   }
 }
 
-// Estilos globales del componente
 :host ::ng-deep {
-  // Botón de pago
   .payment-button {
     margin: 10px 0;
 
@@ -368,7 +354,6 @@ $border-color: #e2e8f0;
     }
   }
 
-  // Radio buttons y checkboxes
   .p-radiobutton .p-radiobutton-box,
   .p-checkbox .p-checkbox-box {
     border-color: $azul;
@@ -425,7 +410,6 @@ $border-color: #e2e8f0;
     border-color: $azul !important;
   }
 
-  // Responsive para controles
   @include mobile {
     .p-radiobutton,
     .p-checkbox {
@@ -449,7 +433,6 @@ $border-color: #e2e8f0;
     }
   }
 
-  // Contenedor de carga
   .loading-container-scalapay {
     @include flex-center;
     flex-direction: column;
@@ -478,7 +461,6 @@ $border-color: #e2e8f0;
   }
 }
 
-// Utilidades
 .button-content {
   @include flex-center;
   width: 100%;

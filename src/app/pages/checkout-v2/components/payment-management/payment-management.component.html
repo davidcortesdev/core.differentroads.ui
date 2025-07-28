@@ -1,107 +1,157 @@
+<!-- Loading States -->
 <div *ngIf="isLoading && paymentType === 'installments'" class="loading-container-scalapay">
-  <span>Espere un momento, le estamos redirigiendo a <img src="assets/images/scalapay.svg" alt="ScalaPay" class="scalapay-logo" loading="lazy" /></span>
+  <span>
+    Espere un momento, le estamos redirigiendo a 
+    <img src="assets/images/scalapay.svg" alt="ScalaPay" class="scalapay-logo" loading="lazy" />
+  </span>
   <p-progressSpinner></p-progressSpinner>
 </div>
-<div *ngIf="isLoading && paymentType != 'installments'" class="loading-container">
+
+<div *ngIf="isLoading && paymentType !== 'installments'" class="loading-container">
   <p-progressSpinner></p-progressSpinner>
 </div>
+
+<!-- Main Content -->
 <div class="container" *ngIf="!isLoading">
-  <div class="header-container" (click)="toggleDropdown()">
-    <div class="title-with-icon">
-      <span class="title">Selecciona la forma de pago</span>
-      <i class="pi" [ngClass]="isOpen ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+  
+  <!-- Payment Type Selection -->
+  <section class="payment-type-section">
+    <div class="header-container" (click)="toggleDropdown('main')">
+      <div class="title-with-icon">
+        <span class="title">Selecciona la forma de pago</span>
+        <i class="pi" [ngClass]="dropdownStates.main ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+      </div>
+      <div class="title-underline"></div>
     </div>
-    <div class="title-underline"></div>
-  </div>
 
-  <div *ngIf="isOpen" class="payment-panels">
-    <!-- Panel para pago completo -->
-    <p-panel styleClass="payment-panel" [ngClass]="{ 'selected': paymentType === 'complete' }" (click)="selectPaymentType('complete')">
-      <div class="payment-option">
-        <p-radioButton name="paymentType" value="complete" [(ngModel)]="paymentType" (onChange)="onPaymentTypeChange()"></p-radioButton>
-        <span class="option-text">Paga tu viaje al completo</span>
-        <span class="option-price">{{ totalPrice | currencyFormat }}</span>
-      </div>
-    </p-panel>
+    <div *ngIf="dropdownStates.main" class="payment-panels">
+      <!-- Complete Payment Panel -->
+      <p-panel 
+        styleClass="payment-panel" 
+        [ngClass]="{ 'selected': paymentType === 'complete' }" 
+        (click)="selectPaymentType('complete')">
+        <div class="payment-option">
+          <p-radioButton 
+            name="paymentType" 
+            value="complete" 
+            [ngModel]="paymentType"
+            (ngModelChange)="selectPaymentType('complete')">
+          </p-radioButton>
+          <span class="option-text">Paga tu viaje al completo</span>
+          <span class="option-price">{{ totalPrice | currencyFormat }}</span>
+        </div>
+      </p-panel>
 
-    <!-- Panel para pago con depósito -->
-    <p-panel styleClass="payment-panel" [ngClass]="{ 'selected': paymentType === 'deposit' }" (click)="selectPaymentType('deposit')">
-      <div class="payment-option">
-        <p-radioButton name="paymentType" value="deposit" [(ngModel)]="paymentType" (onChange)="onPaymentTypeChange()"></p-radioButton>
-        <span class="option-text">
-          Paga ahora {{ depositAmount | currencyFormat }} y el resto antes del {{ paymentDeadline }}
-        </span>
-        <span class="option-price">{{ depositAmount | currencyFormat }}</span>
-      </div>
-    </p-panel>
+      <!-- Deposit Payment Panel -->
+      <p-panel 
+        styleClass="payment-panel" 
+        [ngClass]="{ 'selected': paymentType === 'deposit' }" 
+        (click)="selectPaymentType('deposit')">
+        <div class="payment-option">
+          <p-radioButton 
+            name="paymentType" 
+            value="deposit" 
+            [ngModel]="paymentType"
+            (ngModelChange)="selectPaymentType('deposit')">
+          </p-radioButton>
+          <span class="option-text">
+            Paga ahora {{ depositAmount | currencyFormat }} y el resto antes del {{ paymentDeadline }}
+          </span>
+          <span class="option-price">{{ depositAmount | currencyFormat }}</span>
+        </div>
+      </p-panel>
 
-    <!-- Panel para pago a plazos -->
-    <p-panel styleClass="payment-panel" [ngClass]="{ 'selected': paymentType === 'installments' }" (click)="selectPaymentType('installments')">
-      <div class="payment-option">
-        <p-radioButton name="paymentType" value="installments" [(ngModel)]="paymentType" (onChange)="onPaymentTypeChange()"></p-radioButton>
-        <span class="option-text">Paga a plazos</span>
-        <img src="assets/images/scalapay.svg" alt="ScalaPay" class="scalapay-logo" loading="lazy" />
-      </div>
-    </p-panel>
-  </div>
+      <!-- Installments Payment Panel -->
+      <p-panel 
+        styleClass="payment-panel" 
+        [ngClass]="{ 'selected': paymentType === 'installments' }" 
+        (click)="selectPaymentType('installments')">
+        <div class="payment-option">
+          <p-radioButton 
+            name="paymentType" 
+            value="installments" 
+            [ngModel]="paymentType"
+            (ngModelChange)="selectPaymentType('installments')">
+          </p-radioButton>
+          <span class="option-text">Paga a plazos</span>
+          <img src="assets/images/scalapay.svg" alt="ScalaPay" class="scalapay-logo" loading="lazy" />
+        </div>
+      </p-panel>
+    </div>
+  </section>
 
-  <!-- Métodos de pago para completo o depósito -->
-  <div *ngIf="paymentType === 'complete' || paymentType === 'deposit'" class="payment-methods-section">
-    <div class="header-container" (click)="togglePaymentMethodsDropdown()">
+  <!-- Payment Methods Section (for complete/deposit) -->
+  <section *ngIf="paymentType === 'complete' || paymentType === 'deposit'" class="payment-methods-section">
+    <div class="header-container" (click)="toggleDropdown('paymentMethods')">
       <div class="title-with-icon">
         <span class="title">Selecciona el método de pago</span>
-        <i class="pi" [ngClass]="isPaymentMethodsOpen ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+        <i class="pi" [ngClass]="dropdownStates.paymentMethods ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
       </div>
       <div class="title-underline pay"></div>
     </div>
-    <div *ngIf="isPaymentMethodsOpen" class="payment-methods-row">
+    
+    <div *ngIf="dropdownStates.paymentMethods" class="payment-methods-row">
+      <!-- Credit Card Method -->
       <div class="payment-method-container">
-        <p-panel styleClass="payment-panel payment-method-panel" [ngClass]="{ selected: paymentMethod === 'creditCard' }" (click)="selectPaymentMethod('creditCard')">
+        <p-panel 
+          styleClass="payment-panel payment-method-panel" 
+          [ngClass]="{ selected: paymentMethod === 'creditCard' }" 
+          (click)="selectPaymentMethod('creditCard')">
           <div class="payment-option">
-            <p-radioButton name="paymentMethod" value="creditCard" [(ngModel)]="paymentMethod" (onChange)="onPaymentMethodChange()"></p-radioButton>
+            <p-radioButton 
+              name="paymentMethod" 
+              value="creditCard" 
+              [ngModel]="paymentMethod"
+              (ngModelChange)="selectPaymentMethod('creditCard')">
+            </p-radioButton>
             <span class="option-text">Tarjeta bancaria</span>
           </div>
         </p-panel>
       </div>
+      
+      <!-- Bank Transfer Method -->
       <div class="payment-method-container">
-        <p-panel styleClass="payment-panel payment-method-panel" [ngClass]="{ selected: paymentMethod === 'transfer' }" (click)="selectPaymentMethod('transfer')">
+        <p-panel 
+          styleClass="payment-panel payment-method-panel" 
+          [ngClass]="{ selected: paymentMethod === 'transfer' }" 
+          (click)="selectPaymentMethod('transfer')">
           <div class="payment-option">
-            <p-radioButton name="paymentMethod" value="transfer" [(ngModel)]="paymentMethod" (onChange)="onPaymentMethodChange()"></p-radioButton>
+            <p-radioButton 
+              name="paymentMethod" 
+              value="transfer" 
+              [ngModel]="paymentMethod"
+              (ngModelChange)="selectPaymentMethod('transfer')">
+            </p-radioButton>
             <span class="option-text">Transferencia bancaria</span>
           </div>
         </p-panel>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- Sección de cuotas para pago a plazos -->
-  <div *ngIf="paymentType === 'installments'" class="installments-section">
-    <div class="header-container" (click)="toggleInstallmentsDropdown()">
+  <!-- Installments Section (for installments) -->
+  <section *ngIf="paymentType === 'installments'" class="installments-section">
+    <div class="header-container" (click)="toggleDropdown('installments')">
       <div class="title-with-icon">
         <span class="title">Selecciona el plazo de pagos</span>
-        <i
-          class="pi"
-          [ngClass]="isInstallmentsOpen ? 'pi-chevron-up' : 'pi-chevron-down'"
-        ></i>
+        <i class="pi" [ngClass]="dropdownStates.installments ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
       </div>
       <div class="title-underline"></div>
     </div>
 
-    <div *ngIf="isInstallmentsOpen" class="installment-panels-row">
+    <div *ngIf="dropdownStates.installments" class="installment-panels-row">
+      <!-- 3 Installments Panel -->
       <div class="installment-panel-container">
-        <!-- Panel para 3 cuotas - Ahora clickeable completo -->
         <p-panel
           styleClass="payment-panel installment-panel"
           [ngClass]="{ selected: installmentOption === 'three' }"
-          (click)="selectInstallmentOption('three')"
-        >
+          (click)="selectInstallmentOption('three')">
           <div class="payment-option">
             <p-radioButton
               name="installmentOption"
               value="three"
-              [(ngModel)]="installmentOption"
-              (onChange)="onInstallmentOptionChange()"
-            >
+              [ngModel]="installmentOption"
+              (ngModelChange)="selectInstallmentOption('three')">
             </p-radioButton>
             <div class="installment-content">
               <div class="scalapay-widget-container">
@@ -122,8 +172,7 @@
                   currency-position="before"
                   currency-display="symbol"
                   logo-size="100"
-                  locale="es"
-                >
+                  locale="es">
                 </scalapay-widget>
               </div>
             </div>
@@ -131,20 +180,18 @@
         </p-panel>
       </div>
 
+      <!-- 4 Installments Panel -->
       <div class="installment-panel-container">
-        <!-- Panel para 4 cuotas - Ahora clickeable completo -->
         <p-panel
           styleClass="payment-panel installment-panel"
           [ngClass]="{ selected: installmentOption === 'four' }"
-          (click)="selectInstallmentOption('four')"
-        >
+          (click)="selectInstallmentOption('four')">
           <div class="payment-option">
             <p-radioButton
               name="installmentOption"
               value="four"
-              [(ngModel)]="installmentOption"
-              (onChange)="onInstallmentOptionChange()"
-            >
+              [ngModel]="installmentOption"
+              (ngModelChange)="selectInstallmentOption('four')">
             </p-radioButton>
             <div class="installment-content">
               <div class="scalapay-widget-container">
@@ -165,8 +212,7 @@
                   currency-position="before"
                   currency-display="symbol"
                   logo-size="100"
-                  locale="es"
-                >
+                  locale="es">
                 </scalapay-widget>
               </div>
             </div>
@@ -174,11 +220,24 @@
         </p-panel>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- Botón de pago -->
-  <div class="buttons-container">
-    <p-button label="Regresar" severity="secondary" icon="pi pi-arrow-left" styleClass="back-button" [disabled]="isLoading" (click)="goBack()"></p-button>
-    <p-button [label]="isLoading ? 'Procesando...' : 'Realizar pago'" styleClass="payment-button" [disabled]="isLoading || !paymentType || ((paymentType === 'complete' || paymentType === 'deposit') && !paymentMethod) || (paymentType === 'installments' && !installmentOption)" (click)="submitPayment()"></p-button>
-  </div>
+  <!-- Action Buttons -->
+  <footer class="buttons-container">
+    <p-button 
+      label="Regresar" 
+      severity="secondary" 
+      icon="pi pi-arrow-left" 
+      styleClass="back-button" 
+      [disabled]="isLoading" 
+      (click)="goBack()">
+    </p-button>
+    
+    <p-button 
+      [label]="buttonLabel" 
+      styleClass="payment-button" 
+      [disabled]="isLoading || !isPaymentValid" 
+      (click)="submitPayment()">
+    </p-button>
+  </footer>
 </div>

@@ -1,118 +1,208 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { IScalapayOrderResponse, NewScalapayService } from '../../services/newScalapay.service';
+
+// Interfaces y tipos
+export type PaymentType = 'complete' | 'deposit' | 'installments';
+export type PaymentMethod = 'creditCard' | 'transfer';
+export type InstallmentOption = 'three' | 'four';
+
+export interface PaymentOption {
+  type: PaymentType;
+  method?: PaymentMethod;
+  installments?: InstallmentOption;
+}
 
 @Component({
   selector: 'app-payment-management',
-  standalone: false,
-  
   templateUrl: './payment-management.component.html',
+  standalone: false,
   styleUrl: './payment-management.component.scss'
 })
-export class PaymentManagementComponent implements OnInit{
-  isOpen:boolean = true;
-  isInstallmentsOpen: boolean = true;
-  isPaymentMethodsOpen: boolean = true;
-  paymentType: string | null = null;
-  depositAmount: number = 200; //Cambiar
-  paymentDeadline: string = '30 días antes del tour'; //Cambiar
+export class PaymentManagementComponent implements OnInit, OnDestroy {
+  // Inputs
   @Input() totalPrice: number = 0;
   @Input() reservationId!: number;
-  paymentMethod: 'creditCard' | 'transfer' | null = null;
-  installmentOption: string | null = null;
-  isLoading: boolean = false;
-  router: any;
+  @Input() depositAmount: number = 200;
+  @Input() paymentDeadline: string = '30 días antes del tour';
 
-  constructor(private scalapayService: NewScalapayService) {}
+  // Outputs
+  @Output() paymentCompleted = new EventEmitter<PaymentOption>();
+  @Output() backRequested = new EventEmitter<void>();
+
+  // State management
+  readonly dropdownStates = {
+    main: true,
+    paymentMethods: true,
+    installments: true
+  };
+
+  readonly paymentState = {
+    type: null as PaymentType | null,
+    method: null as PaymentMethod | null,
+    installmentOption: null as InstallmentOption | null,
+    isLoading: false
+  };
+
+  constructor(private readonly scalapayService: NewScalapayService) {}
 
   ngOnInit(): void {
-    console.log('PaymentManagementComponent initialized');
-    this.loadScalapayScript();
-    //TODO: Load data from backend
+    this.initializeScalapayScript();
   }
 
-  loadScalapayScript() {
-    if (!document.querySelector('script[src*="scalapay-widget-loader.js"]')) {
-      const script = document.createElement('script');
-      script.type = 'module';
-      script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js';
-      document.head.appendChild(script);
+  ngOnDestroy(): void {
+    // Cleanup script if needed
+  }
+
+  // Getters for template
+  get isLoading(): boolean {
+    return this.paymentState.isLoading;
+  }
+
+  get paymentType(): PaymentType | null {
+    return this.paymentState.type;
+  }
+
+  get paymentMethod(): PaymentMethod | null {
+    return this.paymentState.method;
+  }
+
+  get installmentOption(): InstallmentOption | null {
+    return this.paymentState.installmentOption;
+  }
+
+  get isPaymentValid(): boolean {
+    if (!this.paymentState.type) return false;
+    
+    if (this.paymentState.type === 'installments') {
+      return !!this.paymentState.installmentOption;
     }
+    
+    return !!this.paymentState.method;
   }
 
-  onInstallmentOptionChange() {
+  get buttonLabel(): string {
+    return this.paymentState.isLoading ? 'Procesando...' : 'Realizar pago';
+  }
+
+  // Payment type management
+  selectPaymentType(type: PaymentType): void {
+    this.paymentState.type = type;
+    this.updateDropdownVisibility();
+    this.resetRelatedSelections(type);
+  }
+
+  // Payment method management
+  selectPaymentMethod(method: PaymentMethod): void {
+    this.paymentState.method = method;
+  }
+
+  // Installment management
+  selectInstallmentOption(option: InstallmentOption): void {
+    this.paymentState.installmentOption = option;
     this.reloadScalapayWidgets();
   }
 
-  reloadScalapayWidgets() {
-    setTimeout(() => {
-      const priceContainerThree = document.getElementById('price-container-three');
-      const priceContainerFour = document.getElementById('price-container-four');
-      if (priceContainerThree) {
-        priceContainerThree.textContent = `€ ${this.totalPrice?.toFixed ? this.totalPrice.toFixed(2) : this.totalPrice}`;
-      }
-      if (priceContainerFour) {
-        priceContainerFour.textContent = `€ ${this.totalPrice?.toFixed ? this.totalPrice.toFixed(2) : this.totalPrice}`;
-      }
-      const event = new CustomEvent('scalapay-widget-reload');
-      window.dispatchEvent(event);
-    }, 200);
-  }
-
-  // Métodos stub para el HTML
-  goBack(): void {}
-
-  submitPayment(): void {
-    this.isLoading = true;
-    if(this.paymentType === 'installments') {
-      const payments: number = this.installmentOption === 'three' ? 3 : this.installmentOption === 'four' ? 4 : 1;
-      this.scalapayService.createOrder(this.reservationId, payments).subscribe((response: IScalapayOrderResponse) => {
-        console.log(response);
-        window.location.href = response.checkoutUrl;
-    });
-  }
-}
-
-  toggleDropdown() {
-    this.isOpen = !this.isOpen;
-    if (!this.isOpen) {
-      this.isInstallmentsOpen = false;
-      this.isPaymentMethodsOpen = false;
+  // Dropdown management
+  toggleDropdown(dropdown: keyof typeof this.dropdownStates): void {
+    this.dropdownStates[dropdown] = !this.dropdownStates[dropdown];
+    
+    if (dropdown === 'main' && !this.dropdownStates.main) {
+      this.dropdownStates.installments = false;
+      this.dropdownStates.paymentMethods = false;
     }
   }
 
-  onPaymentTypeChange() {
-    this.isInstallmentsOpen = this.paymentType === 'installments';
-    this.isPaymentMethodsOpen = this.paymentType === 'paymentMethods';
+  // Actions
+  goBack(): void {
+    this.backRequested.emit();
   }
 
-  selectPaymentType(type: string) {
-    this.paymentType = type;
+  async submitPayment(): Promise<void> {
+    if (!this.isPaymentValid) return;
+
+    this.paymentState.isLoading = true;
+
+    try {
+      if (this.paymentState.type === 'installments') {
+        await this.processInstallmentPayment();
+      } else {
+        await this.processRegularPayment();
+      }
+    } catch (error) {
+      console.error('Payment processing failed:', error);
+      // TODO: Handle error properly
+    } finally {
+      this.paymentState.isLoading = false;
+    }
   }
 
-  togglePaymentMethodsDropdown() {
-    this.isPaymentMethodsOpen = !this.isPaymentMethodsOpen;
+  // Private methods
+  private initializeScalapayScript(): void {
+    if (this.isScalapayScriptLoaded()) return;
+
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js';
+    document.head.appendChild(script);
   }
 
-  selectPaymentMethod(method: 'creditCard' | 'transfer'): void {
-    this.paymentMethod = method;
-    this.onPaymentMethodChange();
+  private isScalapayScriptLoaded(): boolean {
+    return !!document.querySelector('script[src*="scalapay-widget-loader.js"]');
   }
 
-  onPaymentMethodChange() {
-    this.updatePaymentOption();
+  private updateDropdownVisibility(): void {
+    this.dropdownStates.installments = this.paymentState.type === 'installments';
+    this.dropdownStates.paymentMethods = ['complete', 'deposit'].includes(this.paymentState.type!);
   }
 
-  updatePaymentOption() {
-    console.log('updatePaymentOption');
+  private resetRelatedSelections(type: PaymentType): void {
+    if (type !== 'installments') {
+      this.paymentState.installmentOption = null;
+    }
+    if (type === 'installments') {
+      this.paymentState.method = null;
+    }
   }
 
-  toggleInstallmentsDropdown() {
-    this.isInstallmentsOpen = !this.isInstallmentsOpen;
+  private reloadScalapayWidgets(): void {
+    setTimeout(() => {
+      this.updatePriceContainers();
+      this.dispatchScalapayReloadEvent();
+    }, 200);
   }
 
-  selectInstallmentOption(option: string): void {
-    this.installmentOption = option;
-    this.onInstallmentOptionChange();
+  private updatePriceContainers(): void {
+    const formattedPrice = `€ ${this.totalPrice?.toFixed?.(2) ?? this.totalPrice}`;
+    
+    ['three', 'four'].forEach(option => {
+      const container = document.getElementById(`price-container-${option}`);
+      if (container) {
+        container.textContent = formattedPrice;
+      }
+    });
   }
 
+  private dispatchScalapayReloadEvent(): void {
+    const event = new CustomEvent('scalapay-widget-reload');
+    window.dispatchEvent(event);
+  }
+
+  private async processInstallmentPayment(): Promise<void> {
+    const payments = this.paymentState.installmentOption === 'three' ? 3 : 4;
+    
+    const response = await this.scalapayService.createOrder(this.reservationId, payments).toPromise();
+    
+    if (response?.checkoutUrl) {
+      window.location.href = response.checkoutUrl;
+    }
+  }
+
+  private async processRegularPayment(): Promise<void> {
+    const paymentOption: PaymentOption = {
+      type: this.paymentState.type!,
+      method: this.paymentState.method!
+    };
+    
+    this.paymentCompleted.emit(paymentOption);
+  }
 }

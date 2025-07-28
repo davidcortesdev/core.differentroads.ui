@@ -1,17 +1,10 @@
 $azul: var(--background-azul);
-$border-light: #d4d4d8;
 $text-muted: #64748b;
 $border-color: #e2e8f0;
 
-@mixin mobile {
-  @media (max-width: 480px) { @content; }
-}
-@mixin tablet {
-  @media (max-width: 768px) { @content; }
-}
-@mixin desktop {
-  @media (min-width: 768px) { @content; }
-}
+@mixin mobile { @media (max-width: 480px) { @content; } }
+@mixin tablet { @media (max-width: 768px) { @content; } }
+@mixin desktop { @media (min-width: 768px) { @content; } }
 
 @mixin flex-center {
   display: flex;
@@ -36,6 +29,10 @@ $border-color: #e2e8f0;
   --p-panel-border-radius: 10px;
   --p-accordion-content-background: transparent !important;
   --p-accordion-header-background: transparent !important;
+  --p-radiobutton-border-color: #{$azul};
+  --p-radiobutton-checked-background: var(--background-azul-color-letra);
+  --p-radiobutton-checked-border-color: #{$azul};
+  --p-radiobutton-icon-checked-color: #{$azul};
 
   width: 100%;
   padding: 0;
@@ -90,11 +87,6 @@ $border-color: #e2e8f0;
     .p-panel-content {
       @include panel-padding;
       background: transparent;
-    }
-
-    .p-radiobutton .p-radiobutton-box {
-      border: 1px solid $azul;
-      background: white;
     }
   }
 
@@ -354,80 +346,11 @@ $border-color: #e2e8f0;
     }
   }
 
-  .p-radiobutton .p-radiobutton-box,
-  .p-checkbox .p-checkbox-box {
-    border-color: $azul;
-
-    &:hover {
-      background: #fff !important;
-      border-color: $azul !important;
-    }
-
-    &.p-highlight {
-      border-color: $azul !important;
-      background: $azul !important;
-    }
-  }
-
-  .p-radiobutton .p-radiobutton-box.p-highlight {
-    background: var(--background-azul-color-letra) !important;
-
-    &:hover {
-      background: #fff !important;
-    }
-  }
-
-  .p-radiobutton-checked .p-radiobutton-box {
-    border-color: $azul !important;
-    background: var(--background-azul-color-letra) !important;
-  }
-
-  .p-radiobutton-checked .p-radiobutton-icon {
-    background-color: $azul !important;
-  }
-
-  .p-checkbox-checked .p-checkbox-box {
-    border-color: $azul !important;
-    background: $azul !important;
-  }
-
-  .p-checkbox-checked .p-checkbox-icon {
-    color: white !important;
-  }
-
-  .p-checkbox.ng-dirty .p-highlight,
-  .p-checkbox.ng-touched .p-highlight {
-    background: $azul !important;
-    border-color: $azul !important;
-  }
-
   .p-checkbox .p-checkbox-box.p-focus {
     box-shadow: 0 0 0 0.2rem rgba($azul, 0.25) !important;
   }
 
-  .p-checkbox .p-checkbox-box.p-indeterminate {
-    background: $azul !important;
-    border-color: $azul !important;
-  }
-
   @include mobile {
-    .p-radiobutton,
-    .p-checkbox {
-      width: 16px !important;
-      height: 16px !important;
-
-      .p-radiobutton-box,
-      .p-checkbox-box {
-        width: 16px !important;
-        height: 16px !important;
-      }
-
-      .p-radiobutton-icon {
-        width: 8px !important;
-        height: 8px !important;
-      }
-    }
-
     .p-radiobutton {
       margin-right: 0.25rem;
     }

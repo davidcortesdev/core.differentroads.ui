@@ -55,6 +55,13 @@
               #roomSelector>
             </app-selector-room>
 
+            <!-- Componente actividades opcionales -->
+            <app-activities-optionals
+              [itineraryId]="itineraryId"
+              [departureId]="departureId"
+              (activitiesSelectionChange)="onActivitiesSelectionChange($event)">
+            </app-activities-optionals>
+
             <!-- Componente de seguro -->
             <app-insurance
               [tourId]="tourId"
@@ -99,8 +106,7 @@
 
           <!-- Step 3: Viajeros -->
           <div *ngSwitchCase="2">
-            <h3>Viajeros</h3>
-            <p>Contenido del paso 3 - Viajeros</p>
+            <app-info-travelers></app-info-travelers>
 
             <div class="flex pt-6 justify-between">
               <p-button

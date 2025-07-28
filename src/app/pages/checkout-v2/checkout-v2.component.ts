@@ -15,6 +15,7 @@ import { MenuItem, MessageService } from 'primeng/api';
 import { SelectorRoomComponent } from './components/selector-room/selector-room.component';
 import { SelectorTravelerComponent } from './components/selector-traveler/selector-traveler.component';
 import { InsuranceComponent } from './components/insurance/insurance.component';
+import { InfoTravelersComponent } from './components/info-travelers/info-travelers.component';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -28,6 +29,7 @@ export class CheckoutV2Component implements OnInit {
   @ViewChild('roomSelector') roomSelector!: SelectorRoomComponent;
   @ViewChild('travelerSelector') travelerSelector!: SelectorTravelerComponent;
   @ViewChild('insuranceSelector') insuranceSelector!: InsuranceComponent;
+  @ViewChild('infoTravelers') infoTravelers!: InfoTravelersComponent;
 
   // Datos del tour
   tourName: string = '';
@@ -518,11 +520,30 @@ export class CheckoutV2Component implements OnInit {
     return '';
   }
 
-
-
   // Manejar cambio de paso activo
   onActiveIndexChange(index: number): void {
     this.activeIndex = index;
+  }
+
+  // Método para guardar todos los datos de los viajeros
+  private async saveTravelersData(): Promise<boolean> {
+    if (!this.infoTravelers) {
+      return true; // Si no hay componente, no hay nada que guardar
+    }
+
+    try {
+      // Llamar al método saveAllTravelersData del componente hijo
+      await this.infoTravelers.saveAllTravelersData();
+      return true;
+    } catch (error) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error al guardar',
+        detail: 'Error al guardar los datos de los viajeros',
+        life: 5000,
+      });
+      return false;
+    }
   }
 
   // Método para navegar al siguiente paso con validación
@@ -686,6 +707,14 @@ export class CheckoutV2Component implements OnInit {
           life: 5000,
         });
         return;
+      }
+    }
+
+    // Guardar datos de viajeros antes de continuar al paso de pago (targetStep === 3)
+    if (targetStep === 3) {
+      const saved = await this.saveTravelersData();
+      if (!saved) {
+        return; // No continuar si no se pudieron guardar los datos
       }
     }
 

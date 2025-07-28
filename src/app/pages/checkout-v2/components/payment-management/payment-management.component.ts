@@ -13,8 +13,8 @@ export class PaymentManagementComponent implements OnInit{
   isInstallmentsOpen: boolean = true;
   isPaymentMethodsOpen: boolean = true;
   paymentType: string | null = null;
-  depositAmount: number = 0;
-  paymentDeadline: string = '';
+  depositAmount: number = 200; //Cambiar
+  paymentDeadline: string = '30 días antes del tour'; //Cambiar
   @Input() totalPrice: number = 0;
   @Input() reservationId!: number;
   paymentMethod: 'creditCard' | 'transfer' | null = null;
@@ -62,6 +62,7 @@ export class PaymentManagementComponent implements OnInit{
   goBack(): void {}
 
   submitPayment(): void {
+    this.isLoading = true;
     if(this.paymentType === 'installments') {
       const payments: number = this.installmentOption === 'three' ? 3 : this.installmentOption === 'four' ? 4 : 1;
       this.scalapayService.createOrder(this.reservationId, payments).subscribe((response: IScalapayOrderResponse) => {

@@ -437,4 +437,33 @@ $border-light: #d4d4d8;
       }
     }
   }
+
+  .loading-container-scalapay {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+    padding: 2rem;
+    
+    span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.1rem;
+      color: #666;
+      margin-bottom: 1.5rem;
+      
+      .scalapay-logo {
+        width: 80px;
+        height: auto;
+        vertical-align: middle;
+        display: inline-block;
+      }
+    }
+    
+    .spinner {
+      margin-top: 1rem;
+    }
+  }
 }

@@ -26,6 +26,7 @@ export class NewReservationComponent implements OnInit {
   travelers: any[] = [];
   successId = 0;
   failedId = 0;
+  pendingId = 0;
   //Hasta aqui
 
   loading: boolean = true;
@@ -55,6 +56,9 @@ export class NewReservationComponent implements OnInit {
     this.paymentService.getStatus({code:"FAILED"} as PaymentStatusFilter).subscribe((status: IPaymentStatusResponse[]) => {
       this.failedId = status[0].id;
     });
+    this.paymentService.getStatus({code:"PENDING"} as PaymentStatusFilter).subscribe((status: IPaymentStatusResponse[]) => {
+      this.pendingId = status[0].id;
+    });
   }
 
   loadReservation(): void {
@@ -75,7 +79,13 @@ export class NewReservationComponent implements OnInit {
     this.paymentService.getPaymentById(this.paymentId).subscribe((payment: IPaymentResponse) => {
       this.payment = payment;
       console.log(this.payment);
-      this.captureOrder();
+      if(this.payment.paymentStatusId === this.pendingId) {
+        this.captureOrder();
+      } else if(this.payment.paymentStatusId === this.successId) {
+        this.status = 'SUCCESS';
+      } else if(this.payment.paymentStatusId === this.failedId) {
+        this.status = 'FAILED';
+      }
     });
 
     

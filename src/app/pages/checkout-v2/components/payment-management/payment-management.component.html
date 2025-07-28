@@ -1,4 +1,11 @@
-<div class="container">
+<div *ngIf="isLoading && paymentType === 'installments'" class="loading-container-scalapay">
+  <span>Espere un momento, le estamos redirigiendo a <img src="assets/images/scalapay.svg" alt="ScalaPay" class="scalapay-logo" loading="lazy" /></span>
+  <p-progressSpinner></p-progressSpinner>
+</div>
+<div *ngIf="isLoading && paymentType != 'installments'" class="loading-container">
+  <p-progressSpinner></p-progressSpinner>
+</div>
+<div class="container" *ngIf="!isLoading">
   <div class="header-container" (click)="toggleDropdown()">
     <div class="title-with-icon">
       <span class="title">Selecciona la forma de pago</span>

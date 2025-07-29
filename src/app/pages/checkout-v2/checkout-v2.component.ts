@@ -12,6 +12,11 @@ import {
   IAgeGroupResponse,
 } from '../../core/services/agegroup/age-group.service';
 import { ReservationTravelerActivityService } from '../../core/services/reservation/reservation-traveler-activity.service';
+import {
+  ItineraryService,
+  IItineraryResponse,
+  ItineraryFilters,
+} from '../../core/services/itinerary/itinerary.service';
 import { MenuItem, MessageService } from 'primeng/api';
 import { SelectorRoomComponent } from './components/selector-room/selector-room.component';
 import { SelectorTravelerComponent } from './components/selector-traveler/selector-traveler.component';
@@ -44,8 +49,12 @@ export class CheckoutV2Component implements OnInit {
 
   // Variables adicionales para mostrar información completa
   tourId: number | null = null;
-  itineraryId: number | null = null; // Se obtiene del departure
+  itineraryId: number | null = null; // Se obtiene del tour usando el servicio
   totalPassengers: number = 0;
+
+  // Variable para datos del itinerario
+  itineraryData: IItineraryResponse | null = null;
+
   // Variables para actividades
   selectedActivities: any[] = [];
   activitiesTotalPrice: number = 0;
@@ -81,6 +90,7 @@ export class CheckoutV2Component implements OnInit {
     private departurePriceSupplementService: DeparturePriceSupplementService,
     private ageGroupService: AgeGroupService,
     private reservationTravelerActivityService: ReservationTravelerActivityService,
+    private itineraryService: ItineraryService,
     private messageService: MessageService
   ) {}
 
@@ -170,12 +180,15 @@ export class CheckoutV2Component implements OnInit {
     }
   }
 
-  // Método para cargar datos del tour
+  // Método para cargar datos del tour y obtener el itinerario
   private loadTourData(tourId: number): void {
     this.tourNetService.getTourById(tourId).subscribe({
       next: (tour) => {
         this.tourName = tour.name || '';
         this.tourSlug = tour.slug || '';
+
+        // Cargar itinerario basado en el tourId
+        this.loadItineraryByTourId(tourId);
 
         this.loading = false;
       },
@@ -187,15 +200,55 @@ export class CheckoutV2Component implements OnInit {
     });
   }
 
-  // Método para cargar datos del departure - aquí se obtiene el itineraryId
+  /**
+   * Cargar itinerario basado en el tourId
+   */
+  private loadItineraryByTourId(tourId: number): void {
+    const filters: ItineraryFilters = {
+      tourId: tourId,
+      isVisibleOnWeb: true,
+      isBookable: true,
+    };
+
+    this.itineraryService.getAll(filters).subscribe({
+      next: (itineraries) => {
+        if (itineraries && itineraries.length > 0) {
+          // Tomar el primer itinerario que coincida con los filtros
+          this.itineraryData = itineraries[0];
+          this.itineraryId = this.itineraryData.id;
+
+          console.log('Itinerario cargado:', this.itineraryData);
+          console.log(
+            'itineraryId establecido para pasar a componentes hijos:',
+            this.itineraryId
+          );
+        } else {
+          console.warn('No se encontraron itinerarios para el tourId:', tourId);
+          this.itineraryId = null;
+        }
+      },
+      error: (error) => {
+        console.error('Error al cargar itinerario por tourId:', error);
+        this.itineraryId = null;
+      },
+    });
+  }
+
+  // Método para cargar datos del departure - manteniendo como respaldo
   private loadDepartureData(departureId: number): void {
     this.departureService.getById(departureId).subscribe({
       next: (departure) => {
         this.departureDate = departure.departureDate ?? '';
         this.returnDate = departure.arrivalDate ?? '';
 
-        // Asignar el itineraryId desde el departure
-        this.itineraryId = departure.itineraryId;
+        // Solo asignar si no se ha obtenido desde el tour (como respaldo)
+        if (!this.itineraryId && departure.itineraryId) {
+          this.itineraryId = departure.itineraryId;
+          console.log(
+            'itineraryId obtenido desde departure como respaldo:',
+            this.itineraryId
+          );
+        }
       },
       error: (error) => {
         // Error al cargar los datos del departure - continuando sin fechas

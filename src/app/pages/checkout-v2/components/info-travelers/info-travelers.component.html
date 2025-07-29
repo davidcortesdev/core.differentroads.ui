@@ -153,6 +153,7 @@
 
                 <!-- Campos ADICIONALES visibles al hacer Ver más -->
                 <div class="additional-fields" *ngIf="showMoreFields">
+
                   <div class="form-row">
                     <!-- Generar campos NO obligatorios dinámicamente desde la API -->
                     <ng-container *ngFor="let field of departureReservationFields">
@@ -231,6 +232,22 @@
                       </div>
                     </ng-container>
                   </ng-container>
+                </div>
+                <!-- Actividades asignadas al viajero dentro de Ver más -->
+                <div class="traveler-activities" *ngIf="travelerActivities[traveler.id] && travelerActivities[traveler.id].length > 0">
+                  <h4>Actividades asignadas:</h4>
+                  <div class="activities-list">
+                    <div *ngFor="let travelerActivity of travelerActivities[traveler.id]" class="activity-item" style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0;">
+                      <div class="activity-info">
+                        <h5><strong>{{ getActivityName(travelerActivity.activityId) }}</strong></h5>
+                      </div>
+                      <p-toggleSwitch 
+                        [ngModel]="true"
+                        (ngModelChange)="onActivityToggleChange(traveler.id, travelerActivity.activityId, $event)"
+                        [ngModelOptions]="{standalone: true}">
+                      </p-toggleSwitch>
+                    </div>
+                  </div>
                 </div>
               </form>
               

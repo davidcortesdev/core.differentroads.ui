@@ -1,4 +1,3 @@
-// Variables globales
 :root {
     --form-spacing: 10px;
     --mobile-breakpoint: 768px;
@@ -11,7 +10,6 @@
     --p-datepicker-panel-background: #fff !important;
 }
 
-// Mixins para reutilización
 @mixin form-input-base {
     width: 100%;
     border: none;
@@ -47,7 +45,6 @@
     }
 }
 
-// Estilos base
 * {
     color: var(--background-azul);
 }
@@ -56,7 +53,6 @@
     margin-top: -20px;
 }
 
-// Contenedor principal
 .content-form {
     --p-panel-background: var(--background-azul-color-letra) !important;
     --p-accordion-content-background: var(--background-azul-color-letra) !important;
@@ -83,7 +79,6 @@
     }
 }
 
-// Elementos de usuario y descripciones
 .user {
     display: inline-block;
     margin: 0 0 0 14px;
@@ -99,7 +94,6 @@
     margin-right: 15px;
 }
 
-// Títulos (base y específicos)
 .title {
     padding-bottom: 4px;
     border-bottom: 1px solid var(--background-azul);
@@ -130,7 +124,6 @@ h3.title {
     }
 }
 
-// Encabezado de viajero
 .traveler-header {
     margin-bottom: 1rem;
 
@@ -140,7 +133,6 @@ h3.title {
     }
 }
 
-// Formulario de viajeros
 .traveler-form {
     margin-top: 15px;
     width: 100%;
@@ -193,7 +185,6 @@ h3.title {
     }
 }
 
-// Campos de formulario (base)
 .form-field {
     margin-bottom: 10px;
     font-size: 14px;
@@ -204,7 +195,6 @@ h3.title {
         color: var(--background-azul);
     }
 
-    // Aplicar estilos base a todos los inputs
     input,
     p-autocomplete,
     p-calendar,
@@ -213,7 +203,6 @@ h3.title {
         width: 100%;
     }
 
-    // Campos de checkbox
     &.checkbox-field {
         display: flex;
         align-items: center;
@@ -228,7 +217,6 @@ h3.title {
     }
 }
 
-// Campos de checkbox adicionales
 .checkbox-field {
     display: flex;
     align-items: flex-start;
@@ -241,7 +229,58 @@ h3.title {
     }
 }
 
-// Forzar dos columnas en tablets
+.traveler-activities {
+    margin-top: 15px;
+    margin-bottom: 15px;
+
+    h5 {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--background-azul);
+    }
+
+    .activities-list {
+        .activity-item {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            padding: 8px 0 !important;
+            border-bottom: 1px solid #f0f0f0;
+
+            &:last-child {
+                border-bottom: none;
+            }
+
+            .activity-info {
+                flex: 1;
+
+                p {
+                    margin: 0 0 3px 0;
+                    font-size: 13px;
+                    line-height: 1.3;
+
+                    strong {
+                        font-weight: 600;
+                        color: var(--background-azul);
+                    }
+
+                    &:last-child {
+                        margin-bottom: 0;
+                        font-size: 11px;
+                        color: #666;
+                    }
+                }
+            }
+
+            p-toggleSwitch {
+                flex-shrink: 0;
+                margin-left: 15px;
+            }
+        }
+    }
+}
+
 @media (min-width: 577px) {
     .traveler-form {
         .form-row {
@@ -264,10 +303,8 @@ h3.title {
     }
 }
 
-// Estilos deep para PrimeNG
 .content-form {
     ::ng-deep {
-        // Aplicar estilos base a todos los inputs PrimeNG
         .p-inputtext,
         .p-dropdown,
         .p-calendar,
@@ -300,7 +337,6 @@ h3.title {
             width: 100%;
         }
 
-        // Checkbox específico
         .p-checkbox .p-checkbox-box {
             border: 1px solid var(--background-azul);
             border-radius: 3px;
@@ -312,14 +348,21 @@ h3.title {
             }
         }
 
-        // Botones dropdown con estilos consistentes
+        .p-toggleswitch {
+            width: 2.5rem;
+            height: 1.5rem;
+
+            .p-toggleswitch-slider {
+                border-radius: 0.75rem;
+            }
+        }
+
         .p-datepicker-dropdown,
         .p-autocomplete-dropdown,
         .p-select-dropdown {
             @include dropdown-button-reset;
         }
 
-        // Paneles
         .p-panel {
             .p-panel-content {
                 padding: 10px;
@@ -345,7 +388,6 @@ h3.title {
     }
 }
 
-// Acordeón general
 .p-accordion {
     .p-accordionheader {
         background: white !important;
@@ -369,7 +411,6 @@ h3.title {
     }
 }
 
-// Botón "Ver más"
 .show-more-button {
     margin-top: -10px;
     margin-left: -1px;
@@ -381,7 +422,6 @@ h3.title {
     }
 }
 
-// Campos adicionales con animación
 .additional-fields {
     margin-top: 15px;
     animation: fadeIn 0.3s ease-in-out;
@@ -398,7 +438,6 @@ h3.title {
     }
 }
 
-// Contenedores responsivos
 .flex.flex-col {
     width: 100%;
     overflow-x: hidden;
@@ -410,7 +449,6 @@ h3.title {
     box-sizing: border-box;
 }
 
-// Mensajes informativos
 .datos-adicionales-info {
     margin-bottom: 1rem;
     margin-top: -30px;
@@ -425,7 +463,6 @@ h3.title {
     }
 }
 
-// Mensajes de estado
 .loading-indicator,
 .error-message,
 .no-travelers-message {

@@ -1,5 +1,6 @@
 import { Component, Input, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { IScalapayOrderResponse, NewScalapayService } from '../../services/newScalapay.service';
+import { Router } from '@angular/router';
 
 // Interfaces y tipos
 export type PaymentType = 'complete' | 'deposit' | 'installments';
@@ -43,7 +44,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
     isLoading: false
   };
 
-  constructor(private readonly scalapayService: NewScalapayService) {}
+  constructor(private readonly scalapayService: NewScalapayService, private readonly router: Router) {}
 
   ngOnInit(): void {
     this.initializeScalapayScript();
@@ -186,8 +187,12 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
 
   private async processInstallmentPayment(): Promise<void> {
     const payments = this.paymentState.installmentOption === 'three' ? 3 : 4;
+
+    const baseUrl = (window.location.href).replace(this.router.url, '');
+
+    console.log('baseUrl', baseUrl);
     
-    const response = await this.scalapayService.createOrder(this.reservationId, payments).toPromise();
+    const response = await this.scalapayService.createOrder(this.reservationId, payments, baseUrl).toPromise();
     
     if (response?.checkoutUrl) {
       window.location.href = response.checkoutUrl;

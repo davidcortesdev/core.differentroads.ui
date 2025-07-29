@@ -368,7 +368,7 @@ registerLocaleData(localeEs);
     ActivitiesOptionalsComponent,
     InfoTravelersComponent,
     PaymentManagementComponent,
-    NewReservationComponent
+    NewReservationComponent,
   ],
   imports: [
     // Angular Modules

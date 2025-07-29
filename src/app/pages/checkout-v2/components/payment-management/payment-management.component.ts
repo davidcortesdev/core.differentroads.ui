@@ -130,9 +130,6 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
       }
     } catch (error) {
       console.error('Payment processing failed:', error);
-      // TODO: Handle error properly
-    } finally {
-      this.paymentState.isLoading = false;
     }
   }
 

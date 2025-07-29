@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { IPaymentResponse, IPaymentStatusResponse, PaymentsNetService, PaymentStatusFilter } from '../../services/paymentsNet.service';
 import { NewScalapayService } from '../../services/newScalapay.service';
 import { MessageService } from 'primeng/api';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-new-reservation',
@@ -44,20 +45,54 @@ export class NewReservationComponent implements OnInit {
       this.status = params['status'];
     });
 
+    // First load payment statuses, then load reservation
     this.loadPaymentStatuses();
-    this.loadReservation();
     
   }
 
   loadPaymentStatuses(): void {
-    this.paymentService.getStatus({code: "SUCCESS"} as PaymentStatusFilter).subscribe((status: IPaymentStatusResponse[]) => {
-      this.successId = status[0].id;
-    });
-    this.paymentService.getStatus({code:"FAILED"} as PaymentStatusFilter).subscribe((status: IPaymentStatusResponse[]) => {
-      this.failedId = status[0].id;
-    });
-    this.paymentService.getStatus({code:"PENDING"} as PaymentStatusFilter).subscribe((status: IPaymentStatusResponse[]) => {
-      this.pendingId = status[0].id;
+    const successStatus$ = this.paymentService.getStatus({code: "COMPLETED"} as PaymentStatusFilter);
+    const failedStatus$ = this.paymentService.getStatus({code: "FAILED"} as PaymentStatusFilter);
+    const pendingStatus$ = this.paymentService.getStatus({code: "PENDING"} as PaymentStatusFilter);
+
+    forkJoin({
+      success: successStatus$,
+      failed: failedStatus$,
+      pending: pendingStatus$
+    }).subscribe({
+      next: (statuses) => {
+        // Validate arrays are not empty before accessing [0]
+        if (statuses.success && statuses.success.length > 0) {
+          this.successId = statuses.success[0].id;
+        } else {
+          console.error('SUCCESS status not found');
+        }
+        
+        if (statuses.failed && statuses.failed.length > 0) {
+          this.failedId = statuses.failed[0].id;
+        } else {
+          console.error('FAILED status not found');
+        }
+        
+        if (statuses.pending && statuses.pending.length > 0) {
+          this.pendingId = statuses.pending[0].id;
+        } else {
+          console.error('PENDING status not found');
+        }
+
+        // Only load reservation after payment statuses are loaded
+        this.loadReservation();
+      },
+      error: (error) => {
+        console.error('Error loading payment statuses:', error);
+        this.error = true;
+        this.loading = false;
+        this.messageService.add({ 
+          severity: 'error', 
+          summary: 'Error', 
+          detail: 'Error loading payment statuses' 
+        });
+      }
     });
   }
 
@@ -101,19 +136,34 @@ export class NewReservationComponent implements OnInit {
 
   captureOrder(): void {
     if (this.payment.transactionReference) {
-      this.scalapayService.captureOrder(this.payment.transactionReference).subscribe((response: any) => {
-        console.log(response);
-        this.payment.paymentStatusId = this.successId;
-        this.paymentService.update(this.payment);
-        this.messageService.add({ severity: 'success', summary: 'Order captured', detail: 'Order captured successfully' });
-        this.status = 'SUCCESS';
-      }, (error: any) => {
-        this.payment.paymentStatusId = this.failedId;
-        this.paymentService.update(this.payment);
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error capturing order' });
-        this.status = 'FAILED';
+      this.scalapayService.captureOrder(this.payment.transactionReference).subscribe({
+        next: (response: any) => {
+          console.log(response);
+          this.payment.paymentStatusId = this.successId;
+          this.paymentService.update(this.payment).subscribe({
+            next: () => {
+              this.messageService.add({ severity: 'success', summary: 'Order captured', detail: 'Order captured successfully' });
+              this.status = 'SUCCESS';
+            },
+            error: (updateError) => {
+              console.error('Error updating payment:', updateError);
+            }
+          });
+        },
+        error: (error: any) => {
+          console.error('Error capturing order:', error);
+          this.payment.paymentStatusId = this.failedId;
+          this.paymentService.update(this.payment).subscribe({
+            next: () => {
+              this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error capturing order' });
+              this.status = 'FAILED';
+            },
+            error: (updateError) => {
+              console.error('Error updating payment:', updateError);
+            }
+          });
+        }
       });
-
     }
   }
 

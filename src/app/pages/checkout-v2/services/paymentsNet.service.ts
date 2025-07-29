@@ -32,16 +32,16 @@ export class PaymentStatusFilter {
     providedIn: 'root'
 })
 export class PaymentsNetService {
-    private readonly API_URL = `${environment.reservationsApiUrl}/ReservationPayment`;
+    private readonly API_URL = `${environment.reservationsApiUrl}`;
 
     constructor(private http: HttpClient) {}
 
     getPaymentById(paymentId: number): Observable<IPaymentResponse> {
-        return this.http.get<IPaymentResponse>(`${this.API_URL}/${paymentId}`);
+        return this.http.get<IPaymentResponse>(`${this.API_URL}/ReservationPayment/${paymentId}`);
     }
 
     update(payment: IPaymentResponse): Observable<IPaymentResponse> {
-        return this.http.put<IPaymentResponse>(`${this.API_URL}/${payment.id}`, payment);
+        return this.http.put<IPaymentResponse>(`${this.API_URL}/ReservationPayment/${payment.id}`, payment);
     }
 
     getStatus(filter: PaymentStatusFilter): Observable<IPaymentStatusResponse[]> {

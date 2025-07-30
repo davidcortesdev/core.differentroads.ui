@@ -19,6 +19,14 @@ import {
   ActivityPackPriceService,
   IActivityPackPriceResponse,
 } from '../../../../core/services/activity/activity-pack-price.service';
+import {
+  ReservationTravelerActivityService,
+  IReservationTravelerActivityResponse,
+} from '../../../../core/services/reservation/reservation-traveler-activity.service';
+import {
+  ReservationTravelerService,
+  IReservationTravelerResponse,
+} from '../../../../core/services/reservation/reservation-traveler.service';
 import { catchError, map } from 'rxjs/operators';
 import { of } from 'rxjs';
 
@@ -43,6 +51,7 @@ interface ActivityWithPrice extends IActivityResponse {
 export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
   @Input() itineraryId: number | null = null;
   @Input() departureId: number | null = null;
+  @Input() reservationId: number | null = null; // Nuevo input para la reservación
 
   // 🔥 NUEVO: Output para notificar cambios al componente padre
   @Output() activitiesSelectionChange = new EventEmitter<{
@@ -57,12 +66,19 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
   constructor(
     private activityService: ActivityService,
     private activityPriceService: ActivityPriceService,
-    private activityPackPriceService: ActivityPackPriceService
+    private activityPackPriceService: ActivityPackPriceService,
+    private reservationTravelerActivityService: ReservationTravelerActivityService,
+    private reservationTravelerService: ReservationTravelerService
   ) {}
 
   ngOnInit(): void {
     if (this.itineraryId && this.departureId) {
       this.loadActivities();
+    }
+
+    // Mostrar actividades por pasajero si tenemos reservationId
+    if (this.reservationId) {
+      this.showActivitiesByTraveler();
     }
   }
 
@@ -73,6 +89,11 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
       this.departureId
     ) {
       this.loadActivities();
+    }
+
+    // Si cambia reservationId, mostrar actividades por pasajero
+    if (changes['reservationId'] && this.reservationId) {
+      this.showActivitiesByTraveler();
     }
   }
 
@@ -105,6 +126,108 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
           console.error('Error loading activities:', error);
         },
       });
+  }
+
+  /**
+   * Muestra las actividades por pasajero usando los servicios y marca como añadidas
+   */
+  private showActivitiesByTraveler(): void {
+    if (!this.reservationId) return;
+
+    // Obtener todos los viajeros de la reservación
+    this.reservationTravelerService
+      .getByReservation(this.reservationId)
+      .subscribe({
+        next: (travelers) => {
+          console.log('=== ACTIVIDADES POR PASAJERO ===');
+          console.log(`Reservación ID: ${this.reservationId}`);
+          console.log(`Total de pasajeros: ${travelers.length}`);
+          console.log('');
+
+          // Set para almacenar todas las actividades asignadas
+          const assignedActivities = new Set<number>();
+
+          // Contador para saber cuándo terminar de procesar todos los viajeros
+          let processedTravelers = 0;
+
+          // Para cada viajero, obtener sus actividades
+          travelers.forEach((traveler) => {
+            this.reservationTravelerActivityService
+              .getByReservationTraveler(traveler.id)
+              .subscribe({
+                next: (activities) => {
+                  console.log(`🧳 PASAJERO ${traveler.travelerNumber}:`);
+                  console.log(`   - ID del viajero: ${traveler.id}`);
+                  console.log(
+                    `   - Es viajero principal: ${
+                      traveler.isLeadTraveler ? 'Sí' : 'No'
+                    }`
+                  );
+                  console.log(`   - Grupo de edad ID: ${traveler.ageGroupId}`);
+                  console.log(`   - Actividades (${activities.length}):`);
+
+                  if (activities.length === 0) {
+                    console.log('     ❌ Sin actividades asignadas');
+                  } else {
+                    activities.forEach((activity, index) => {
+                      console.log(
+                        `     ${index + 1}. Actividad ID: ${
+                          activity.activityId
+                        }`
+                      );
+                      // Agregar al set de actividades asignadas
+                      assignedActivities.add(activity.activityId);
+                    });
+                  }
+                  console.log('');
+
+                  // Incrementar contador de viajeros procesados
+                  processedTravelers++;
+
+                  // Si ya procesamos todos los viajeros, marcar actividades como añadidas
+                  if (processedTravelers === travelers.length) {
+                    this.markAssignedActivitiesAsAdded(assignedActivities);
+                  }
+                },
+                error: (error) => {
+                  console.error(
+                    `Error obteniendo actividades del viajero ${traveler.travelerNumber}:`,
+                    error
+                  );
+                  processedTravelers++;
+
+                  // Verificar si terminamos de procesar incluso con error
+                  if (processedTravelers === travelers.length) {
+                    this.markAssignedActivitiesAsAdded(assignedActivities);
+                  }
+                },
+              });
+          });
+        },
+        error: (error) => {
+          console.error('Error obteniendo viajeros:', error);
+        },
+      });
+  }
+
+  /**
+   * Marca las actividades asignadas como añadidas en la interfaz
+   */
+  private markAssignedActivitiesAsAdded(assignedActivities: Set<number>): void {
+    // Limpiar actividades añadidas previamente
+    this.addedActivities.clear();
+
+    // Agregar todas las actividades asignadas al set
+    assignedActivities.forEach((activityId) => {
+      this.addedActivities.add(activityId);
+    });
+
+    console.log(
+      `✅ Marcadas ${assignedActivities.size} actividades como añadidas en la interfaz`
+    );
+
+    // Emitir cambios para actualizar el componente padre si es necesario
+    this.emitActivitiesChange();
   }
 
   /**

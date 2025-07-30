@@ -109,12 +109,9 @@ export class CheckoutV2Component implements OnInit {
 
     // Leer step de URL si está presente (para redirección después del login)
     this.route.queryParams.subscribe((params) => {
-      console.log('📖 Leyendo query params:', params);
       if (params['step']) {
         const stepParam = parseInt(params['step']);
-        console.log('📖 Step encontrado en URL:', stepParam);
         if (!isNaN(stepParam) && stepParam >= 0 && stepParam <= 3) {
-          console.log('✅ Estableciendo activeIndex a:', stepParam);
           this.activeIndex = stepParam;
         }
       }
@@ -242,12 +239,6 @@ export class CheckoutV2Component implements OnInit {
           // Tomar el primer itinerario que coincida con los filtros
           this.itineraryData = itineraries[0];
           this.itineraryId = this.itineraryData.id;
-
-          console.log('Itinerario cargado:', this.itineraryData);
-          console.log(
-            'itineraryId establecido para pasar a componentes hijos:',
-            this.itineraryId
-          );
         } else {
           console.warn('No se encontraron itinerarios para el tourId:', tourId);
           this.itineraryId = null;
@@ -270,10 +261,6 @@ export class CheckoutV2Component implements OnInit {
         // Solo asignar si no se ha obtenido desde el tour (como respaldo)
         if (!this.itineraryId && departure.itineraryId) {
           this.itineraryId = departure.itineraryId;
-          console.log(
-            'itineraryId obtenido desde departure como respaldo:',
-            this.itineraryId
-          );
         }
       },
       error: (error) => {
@@ -324,7 +311,7 @@ export class CheckoutV2Component implements OnInit {
     });
   }
 
-  // Método para mapear precios por grupo de edad
+  // OPTIMIZADO: Método para mapear precios por grupo de edad
   private mapPricesByAgeGroup(): void {
     this.pricesByAgeGroup = {};
 
@@ -340,6 +327,11 @@ export class CheckoutV2Component implements OnInit {
 
     // Inicializar el resumen automáticamente después de cargar precios
     this.initializeOrderSummary();
+
+    // NUEVO: Forzar actualización adicional después de un delay para asegurar que los componentes estén listos
+    setTimeout(() => {
+      this.forceSummaryUpdate();
+    }, 500);
   }
 
   // Método para inicializar el resumen automáticamente
@@ -410,16 +402,11 @@ export class CheckoutV2Component implements OnInit {
   }
 
   /**
-   * Método llamado cuando cambian las habitaciones seleccionadas
+   * OPTIMIZADO: Método llamado cuando cambian las habitaciones seleccionadas
    */
   onRoomsSelectionChange(selectedRooms: { [tkId: string]: number }): void {
-    // Recalcular el resumen con los datos actuales de travelers (solo si ya tenemos precios)
-    if (
-      this.travelerSelector &&
-      Object.keys(this.pricesByAgeGroup).length > 0
-    ) {
-      this.updateOrderSummary(this.travelerSelector.travelersNumbers);
-    }
+    // NUEVO: Forzar actualización del summary cuando cambian las habitaciones
+    this.forceSummaryUpdate();
   }
 
   /**
@@ -441,7 +428,7 @@ export class CheckoutV2Component implements OnInit {
     }
   }
 
-  // Método para verificar si podemos inicializar el resumen
+  // OPTIMIZADO: Método para verificar si podemos inicializar el resumen
   private checkAndInitializeSummary(): void {
     // Verificar si tenemos todo lo necesario para inicializar
     const hasPrices = Object.keys(this.pricesByAgeGroup).length > 0;
@@ -458,6 +445,18 @@ export class CheckoutV2Component implements OnInit {
         babies: 0,
       };
       this.updateOrderSummary(fallbackTravelers);
+    }
+  }
+
+  // NUEVO: Método para forzar la actualización del summary cuando se cargan datos de habitaciones
+  private forceSummaryUpdate(): void {
+    if (Object.keys(this.pricesByAgeGroup).length > 0) {
+      const currentTravelers = this.travelerSelector?.travelersNumbers || {
+        adults: Math.max(1, this.totalPassengers),
+        childs: 0,
+        babies: 0,
+      };
+      this.updateOrderSummary(currentTravelers);
     }
   }
 
@@ -806,7 +805,6 @@ export class CheckoutV2Component implements OnInit {
   // Método para actualizar la URL cuando cambia el step
   updateStepInUrl(step: number): void {
     if (typeof step === 'number' && !isNaN(step)) {
-      console.log('🔄 Actualizando URL con step:', step);
       this.router.navigate([], {
         relativeTo: this.route,
         queryParams: { step: step },
@@ -1055,7 +1053,9 @@ export class CheckoutV2Component implements OnInit {
   cleanScalapayPendingPayments(): void {
     if (!this.reservationId) return;
 
-      this.paymentsService.cleanScalapayPendingPayments(this.reservationId).subscribe();
+    this.paymentsService
+      .cleanScalapayPendingPayments(this.reservationId)
+      .subscribe();
   }
 
   /**
@@ -1064,40 +1064,35 @@ export class CheckoutV2Component implements OnInit {
   private checkAndUpdateUserId(reservation: any): void {
     // Verificar si el userId está vacío
     if (!reservation.userId) {
-      console.log('🔍 Verificando usuario logueado para actualizar userId...');
-      
       this.authService.getCognitoId().subscribe({
         next: (cognitoId) => {
           if (cognitoId) {
-            console.log('👤 Usuario logueado encontrado, buscando en base de datos...');
-            
             // Buscar el usuario por Cognito ID para obtener su ID en la base de datos
             this.usersNetService.getUsersByCognitoId(cognitoId).subscribe({
               next: (users) => {
                 if (users && users.length > 0) {
                   const userId = users[0].id;
-                  console.log('✅ Usuario encontrado en base de datos, ID:', userId);
-                  
+
                   // Actualizar la reservación con el userId correcto
                   this.updateReservationUserId(userId);
                 } else {
-                  console.log('⚠️ Usuario no encontrado en base de datos, manteniendo userId actual');
                 }
               },
               error: (error) => {
-                console.error('❌ Error buscando usuario por Cognito ID:', error);
-              }
+                console.error(
+                  '❌ Error buscando usuario por Cognito ID:',
+                  error
+                );
+              },
             });
           } else {
-            console.log('👤 Usuario no logueado, manteniendo userId actual');
           }
         },
         error: (error) => {
           console.error('❌ Error obteniendo Cognito ID:', error);
-        }
+        },
       });
     } else {
-      console.log('✅ userId ya está configurado:', reservation.userId);
     }
   }
 
@@ -1106,25 +1101,24 @@ export class CheckoutV2Component implements OnInit {
    */
   private updateReservationUserId(userId: number): void {
     if (!this.reservationId || !this.reservationData) {
-      console.error('❌ No se puede actualizar userId: reservationId o reservationData no disponibles');
+      console.error(
+        '❌ No se puede actualizar userId: reservationId o reservationData no disponibles'
+      );
       return;
     }
 
-    console.log('🔄 Actualizando userId de la reservación:', userId);
-    
     const updateData = {
       ...this.reservationData,
       userId: userId,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
 
     this.reservationService.update(this.reservationId, updateData).subscribe({
       next: (success) => {
         if (success) {
-          console.log('✅ userId actualizado exitosamente en la reservación');
           // Actualizar los datos locales
           this.reservationData.userId = userId;
-          
+
           this.messageService.add({
             severity: 'success',
             summary: 'Reservación actualizada',
@@ -1136,14 +1130,17 @@ export class CheckoutV2Component implements OnInit {
         }
       },
       error: (error) => {
-        console.error('❌ Error al actualizar userId en la reservación:', error);
+        console.error(
+          '❌ Error al actualizar userId en la reservación:',
+          error
+        );
         this.messageService.add({
           severity: 'error',
           summary: 'Error al actualizar',
           detail: 'No se pudo asociar la reservación con tu cuenta de usuario.',
           life: 5000,
         });
-      }
+      },
     });
   }
 
@@ -1170,7 +1167,6 @@ export class CheckoutV2Component implements OnInit {
         // Guardar la URL actual con el step en sessionStorage
         const currentUrl = window.location.pathname;
         const redirectUrl = `${currentUrl}?step=${this.activeIndex}`;
-        console.log('🔗 URL de redirección guardada:', redirectUrl);
         sessionStorage.setItem('redirectUrl', redirectUrl);
         this.loginDialogVisible = true;
       }

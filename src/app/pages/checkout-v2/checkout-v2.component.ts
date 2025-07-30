@@ -17,6 +17,7 @@ import { SelectorRoomComponent } from './components/selector-room/selector-room.
 import { SelectorTravelerComponent } from './components/selector-traveler/selector-traveler.component';
 import { InsuranceComponent } from './components/insurance/insurance.component';
 import { forkJoin } from 'rxjs';
+import { PaymentsNetService } from './services/paymentsNet.service';
 
 @Component({
   selector: 'app-checkout-v2',
@@ -79,7 +80,8 @@ export class CheckoutV2Component implements OnInit {
     private departurePriceSupplementService: DeparturePriceSupplementService,
     private ageGroupService: AgeGroupService,
     private reservationTravelerActivityService: ReservationTravelerActivityService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private paymentsService: PaymentsNetService
   ) {}
 
   ngOnInit(): void {
@@ -94,6 +96,7 @@ export class CheckoutV2Component implements OnInit {
 
         // Cargar datos de la reservación desde el backend
         this.loadReservationData(this.reservationId);
+        this.cleanScalapayPendingPayments();
       } else {
         this.error = 'No se proporcionó un ID de reservación válido';
       }
@@ -907,5 +910,11 @@ export class CheckoutV2Component implements OnInit {
 
     // Navegar al siguiente paso
     this.onActiveIndexChange(targetStep);
+  }
+
+  cleanScalapayPendingPayments(): void {
+    if (!this.reservationId) return;
+
+      this.paymentsService.cleanScalapayPendingPayments(this.reservationId).subscribe();
   }
 }

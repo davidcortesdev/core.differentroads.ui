@@ -59,6 +59,7 @@
             <app-activities-optionals
               [itineraryId]="itineraryId"
               [departureId]="departureId"
+              [reservationId]="reservationId"
               (activitiesSelectionChange)="onActivitiesSelectionChange($event)">
             </app-activities-optionals>
 
@@ -106,7 +107,12 @@
 
           <!-- Step 3: Viajeros -->
           <div *ngSwitchCase="2">
-            <app-info-travelers></app-info-travelers>
+            <app-info-travelers 
+              [departureId]="departureId"
+              [reservationId]="reservationId"
+              [itineraryId]="itineraryId"
+              #infoTravelers>
+            </app-info-travelers>
 
             <div class="flex pt-6 justify-between">
               <p-button

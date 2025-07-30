@@ -182,7 +182,7 @@ export class AuthenticateService {
   }
 
   // Signup
-  signUp(email: string, password: string): Promise<void> {
+  signUp(email: string, password: string): Promise<string> {
     return new Promise((resolve, reject) => {
       let attributeList = [];
 
@@ -203,8 +203,10 @@ export class AuthenticateService {
             return;
           }
           this.cognitoUser = result.user;
+          const cognitoUserId = result.userSub; // ID único de Cognito
           console.log('user name is ' + this.cognitoUser.getUsername());
-          resolve();
+          console.log('cognito user id is ' + cognitoUserId);
+          resolve(cognitoUserId);
         }
       );
     });

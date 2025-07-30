@@ -503,35 +503,35 @@ export class TourHeaderV2Component
           // Buscar el usuario por Cognito ID para obtener su ID en la base de datos
           this.usersNetService.getUsersByCognitoId(cognitoId).subscribe({
             next: (users) => {
-              let userId = 1; // Valor por defecto si no se encuentra el usuario
+              let userId: number | null = null; // Valor por defecto si no se encuentra el usuario
               
               if (users && users.length > 0) {
                 userId = users[0].id;
                 console.log('Usuario logueado encontrado, ID:', userId);
               } else {
-                console.log('Usuario no encontrado en la base de datos, usando ID por defecto:', userId);
+                console.log('Usuario no encontrado en la base de datos, usando userId null');
               }
 
               this.createReservation(userId);
             },
             error: (error) => {
               console.error('Error buscando usuario por Cognito ID:', error);
-              this.createReservation(1); // Usar ID por defecto en caso de error
+              this.createReservation(null); // Usar null en caso de error
             }
           });
         } else {
-          console.log('Usuario no logueado, usando ID por defecto: 1');
-          this.createReservation(1);
+          console.log('Usuario no logueado, usando userId null');
+          this.createReservation(null);
         }
       },
       error: (error) => {
         console.error('Error obteniendo Cognito ID:', error);
-        this.createReservation(1); // Usar ID por defecto en caso de error
+        this.createReservation(null); // Usar null en caso de error
       }
     });
   }
 
-  private createReservation(userId: number): void {
+  private createReservation(userId: number | null): void {
     console.log('🏗️ Creando reservación con userId:', userId);
     
     const reservationData: ReservationCreate = {
@@ -541,7 +541,7 @@ export class TourHeaderV2Component
       retailerId: environment.retaileriddefault,
       tourId: this.tourId!,
       departureId: this.selectedDeparture.id,
-      userId: userId, // Usar el ID del usuario logueado
+      userId: userId, // Usar el ID del usuario logueado o null
       totalPassengers: this.totalPassengers || 1,
       totalAmount: this.totalPriceWithActivities || 0, // MODIFICADO: Usar precio con actividades
       budgetAt: '',

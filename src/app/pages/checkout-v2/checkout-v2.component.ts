@@ -1062,8 +1062,8 @@ export class CheckoutV2Component implements OnInit {
    * Verifica si el userId está vacío y el usuario está logueado, y actualiza la reservación si es necesario
    */
   private checkAndUpdateUserId(reservation: any): void {
-    // Verificar si el userId está vacío o es 1 (valor por defecto)
-    if (!reservation.userId || reservation.userId === 1) {
+    // Verificar si el userId está vacío
+    if (!reservation.userId) {
       console.log('🔍 Verificando usuario logueado para actualizar userId...');
       
       this.authService.getCognitoId().subscribe({

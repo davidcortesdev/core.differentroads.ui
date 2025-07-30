@@ -17,6 +17,8 @@ import {
   filter,
   debounceTime,
   distinctUntilChanged,
+  switchMap,
+  of,
 } from 'rxjs';
 import { Router } from '@angular/router';
 
@@ -174,6 +176,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         distinctUntilChanged() // Solo procesar cuando realmente cambie
       )
       .subscribe((isLoggedIn) => {
+        console.log('Estado de autenticación cambiado:', isLoggedIn);
         this.isLoggedIn = isLoggedIn;
 
         if (isLoggedIn) {
@@ -286,7 +289,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   populateUserMenu(): void {
-    if (this.isLoadingUser) return;
+    console.log('populateUserMenu() ejecutándose...');
+    if (this.isLoadingUser) {
+      console.log('Ya está cargando, saliendo...');
+      return;
+    }
 
     this.authService
       .getUserEmail()
@@ -296,114 +303,93 @@ export class HeaderComponent implements OnInit, OnDestroy {
         debounceTime(300)
       )
       .subscribe((email) => {
+        console.log('Email obtenido:', email);
         this.isLoadingUser = true;
         this.chipLabel = 'Cargando...';
+        console.log('Estado inicial - isLoadingUser:', this.isLoadingUser, 'showUserInfo:', this.showUserInfo);
 
-        // Primero intentar obtener el Cognito ID
+        // Combinar email y Cognito ID en un solo flujo
         this.authService.getCognitoId().pipe(
-          takeUntil(this.destroy$)
-        ).subscribe({
-          next: (cognitoId) => {
+          takeUntil(this.destroy$),
+          switchMap((cognitoId: string) => {
+            console.log('Cognito ID obtenido:', cognitoId);
             if (cognitoId) {
-              // Buscar por Cognito ID primero
-              this.usersNetService.getUsersByCognitoId(cognitoId).pipe(
-                takeUntil(this.destroy$),
-                finalize(() => {
-                  this.isLoadingUser = false;
-                  setTimeout(() => (this.showUserInfo = true), 100);
-                })
-              ).subscribe({
-                next: (users) => {
-                  if (users && users.length > 0) {
-                    const user = users[0];
-                    this.chipLabel = `Hola, ${
-                      user.name || email
-                    }`;
-                    this.chipImage = ''; // El nuevo modelo no tiene profileImage
-
-                    this.userMenuItems = [
-                      {
-                        label: 'Ver Perfil',
-                        icon: 'pi pi-user',
-                        command: () => this.authService.navigateToProfile(),
-                      },
-                      {
-                        label: 'Desconectar',
-                        icon: 'pi pi-sign-out',
-                        command: () => this.authService.logOut(),
-                      },
-                    ];
-                  } else {
-                    // Si no se encuentra por Cognito ID, mostrar solo el email
-                    this.chipLabel = `Hola, ${email}`;
-                    this.userMenuItems = [
-                      {
-                        label: 'Ver Perfil',
-                        icon: 'pi pi-user',
-                        command: () => this.authService.navigateToProfile(),
-                      },
-                      {
-                        label: 'Desconectar',
-                        icon: 'pi pi-sign-out',
-                        command: () => this.authService.logOut(),
-                      },
-                    ];
-                  }
-                },
-                error: (error: any) => {
-                  console.error('Error buscando por Cognito ID:', error);
-                  // En caso de error, mostrar solo el email
-                  this.chipLabel = `Hola, ${email}`;
-                  this.userMenuItems = [
-                    {
-                      label: 'Ver Perfil',
-                      icon: 'pi pi-user',
-                      command: () => this.authService.navigateToProfile(),
-                    },
-                    {
-                      label: 'Desconectar',
-                      icon: 'pi pi-sign-out',
-                      command: () => this.authService.logOut(),
-                    },
-                  ];
-                }
-              });
+              console.log('Buscando usuario por Cognito ID:', cognitoId);
+              return this.usersNetService.getUsersByCognitoId(cognitoId);
             } else {
+              console.log('No hay Cognito ID, mostrando solo email');
               // Si no hay Cognito ID, mostrar solo el email
               this.chipLabel = `Hola, ${email}`;
-              this.userMenuItems = [
-                {
-                  label: 'Ver Perfil',
-                  icon: 'pi pi-user',
-                  command: () => this.authService.navigateToProfile(),
-                },
-                {
-                  label: 'Desconectar',
-                  icon: 'pi pi-sign-out',
-                  command: () => this.authService.logOut(),
-                },
-              ];
+              this.setUserMenuItems();
+              this.isLoadingUser = false;
+              this.showUserInfo = true;
+              return of([]);
+            }
+          }),
+          finalize(() => {
+            console.log('Finalizando carga de usuario');
+            this.isLoadingUser = false;
+            this.showUserInfo = true;
+          })
+        ).subscribe({
+          next: (users: any[]) => {
+            console.log('Usuarios encontrados:', users);
+            if (users && users.length > 0) {
+              const user = users[0];
+              const displayName = user?.name || email;
+              console.log('Usuario encontrado:', user);
+              console.log('Nombre a mostrar:', displayName);
+              
+              this.chipLabel = `Hola, ${displayName}`;
+              this.chipImage = ''; // El nuevo modelo no tiene profileImage
+              this.setUserMenuItems();
+              
+              // Asegurar que el estado se actualice correctamente
+              this.isLoadingUser = false;
+              this.showUserInfo = true;
+              console.log('Estado después de configurar usuario - isLoadingUser:', this.isLoadingUser, 'showUserInfo:', this.showUserInfo);
+            } else {
+              console.log('No se encontró usuario, mostrando solo email');
+              // Si no se encuentra el usuario, mostrar solo el email
+              this.chipLabel = `Hola, ${email}`;
+              this.setUserMenuItems();
+              
+              // Asegurar que el estado se actualice correctamente
+              this.isLoadingUser = false;
+              this.showUserInfo = true;
+              console.log('Estado después de configurar email - isLoadingUser:', this.isLoadingUser, 'showUserInfo:', this.showUserInfo);
             }
           },
           error: (error: any) => {
-            console.error('Error obteniendo Cognito ID:', error);
-            // En caso de error, mostrar solo el email
+            console.error('Error obteniendo información del usuario:', error);
             this.chipLabel = `Hola, ${email}`;
-            this.userMenuItems = [
-              {
-                label: 'Ver Perfil',
-                icon: 'pi pi-user',
-                command: () => this.authService.navigateToProfile(),
-              },
-              {
-                label: 'Desconectar',
-                icon: 'pi pi-sign-out',
-                command: () => this.authService.logOut(),
-              },
-            ];
+            this.setUserMenuItems();
+            
+            // Asegurar que el estado se actualice correctamente
+            this.isLoadingUser = false;
+            this.showUserInfo = true;
+            console.log('Estado después de error - isLoadingUser:', this.isLoadingUser, 'showUserInfo:', this.showUserInfo);
           }
         });
       });
+  }
+
+  /**
+   * Configura los elementos del menú de usuario
+   */
+  private setUserMenuItems(): void {
+    this.userMenuItems = [
+      {
+        label: 'Ver Perfil',
+        icon: 'pi pi-user',
+        command: () => this.authService.navigateToProfile(),
+      },
+      {
+        label: 'Desconectar',
+        icon: 'pi pi-sign-out',
+        command: () => this.authService.logOut(),
+      },
+    ];
   }
 
 

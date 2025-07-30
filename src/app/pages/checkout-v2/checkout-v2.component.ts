@@ -24,6 +24,8 @@ import { InsuranceComponent } from './components/insurance/insurance.component';
 import { InfoTravelersComponent } from './components/info-travelers/info-travelers.component';
 import { forkJoin } from 'rxjs';
 import { PaymentsNetService } from './services/paymentsNet.service';
+import { AuthenticateService } from '../../core/services/auth-service.service';
+import { UsersNetService } from '../../core/services/usersNet.service';
 
 @Component({
   selector: 'app-checkout-v2',
@@ -82,6 +84,9 @@ export class CheckoutV2Component implements OnInit {
   // Tour slug para navegación
   tourSlug: string = '';
 
+  // Propiedades para autenticación
+  loginDialogVisible: boolean = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -93,7 +98,9 @@ export class CheckoutV2Component implements OnInit {
     private reservationTravelerActivityService: ReservationTravelerActivityService,
     private itineraryService: ItineraryService,
     private messageService: MessageService,
-    private paymentsService: PaymentsNetService
+    private paymentsService: PaymentsNetService,
+    private authService: AuthenticateService,
+    private usersNetService: UsersNetService
   ) {}
 
   ngOnInit(): void {
@@ -150,6 +157,9 @@ export class CheckoutV2Component implements OnInit {
         this.tourId = reservation.tourId;
         this.totalPassengers = reservation.totalPassengers;
         this.reservationData = reservation; // Guardar datos completos de la reserva
+
+        // Verificar si el userId está vacío y el usuario está logueado
+        this.checkAndUpdateUserId(reservation);
 
         // Cargar datos del tour usando reservation.tourId
         this.loadTourData(reservation.tourId);
@@ -802,6 +812,26 @@ export class CheckoutV2Component implements OnInit {
 
   // Método para navegar al siguiente paso con validación
   async nextStepWithValidation(targetStep: number): Promise<void> {
+    // Verificar autenticación para pasos que la requieren
+    if (targetStep >= 2) {
+      this.authService.isLoggedIn().subscribe((isLoggedIn) => {
+        if (!isLoggedIn) {
+          // Usuario no está logueado, mostrar modal
+          sessionStorage.setItem('redirectUrl', window.location.pathname);
+          this.loginDialogVisible = true;
+          return;
+        }
+        // Usuario está logueado, continuar con la validación normal
+        this.performStepValidation(targetStep);
+      });
+      return;
+    }
+
+    // Para el paso 0 (personalizar viaje) y paso 1 (vuelos), no se requiere autenticación
+    this.performStepValidation(targetStep);
+  }
+
+  private async performStepValidation(targetStep: number): Promise<void> {
     // Guardar cambios de travelers, habitaciones, seguros y actividades antes de continuar
     if (
       targetStep === 1 &&
@@ -998,5 +1028,132 @@ export class CheckoutV2Component implements OnInit {
     if (!this.reservationId) return;
 
       this.paymentsService.cleanScalapayPendingPayments(this.reservationId).subscribe();
+  }
+
+  /**
+   * Verifica si el userId está vacío y el usuario está logueado, y actualiza la reservación si es necesario
+   */
+  private checkAndUpdateUserId(reservation: any): void {
+    // Verificar si el userId está vacío o es 1 (valor por defecto)
+    if (!reservation.userId || reservation.userId === 1) {
+      console.log('🔍 Verificando usuario logueado para actualizar userId...');
+      
+      this.authService.getCognitoId().subscribe({
+        next: (cognitoId) => {
+          if (cognitoId) {
+            console.log('👤 Usuario logueado encontrado, buscando en base de datos...');
+            
+            // Buscar el usuario por Cognito ID para obtener su ID en la base de datos
+            this.usersNetService.getUsersByCognitoId(cognitoId).subscribe({
+              next: (users) => {
+                if (users && users.length > 0) {
+                  const userId = users[0].id;
+                  console.log('✅ Usuario encontrado en base de datos, ID:', userId);
+                  
+                  // Actualizar la reservación con el userId correcto
+                  this.updateReservationUserId(userId);
+                } else {
+                  console.log('⚠️ Usuario no encontrado en base de datos, manteniendo userId actual');
+                }
+              },
+              error: (error) => {
+                console.error('❌ Error buscando usuario por Cognito ID:', error);
+              }
+            });
+          } else {
+            console.log('👤 Usuario no logueado, manteniendo userId actual');
+          }
+        },
+        error: (error) => {
+          console.error('❌ Error obteniendo Cognito ID:', error);
+        }
+      });
+    } else {
+      console.log('✅ userId ya está configurado:', reservation.userId);
+    }
+  }
+
+  /**
+   * Actualiza el userId de la reservación
+   */
+  private updateReservationUserId(userId: number): void {
+    if (!this.reservationId || !this.reservationData) {
+      console.error('❌ No se puede actualizar userId: reservationId o reservationData no disponibles');
+      return;
+    }
+
+    console.log('🔄 Actualizando userId de la reservación:', userId);
+    
+    const updateData = {
+      ...this.reservationData,
+      userId: userId,
+      updatedAt: new Date().toISOString()
+    };
+
+    this.reservationService.update(this.reservationId, updateData).subscribe({
+      next: (success) => {
+        if (success) {
+          console.log('✅ userId actualizado exitosamente en la reservación');
+          // Actualizar los datos locales
+          this.reservationData.userId = userId;
+          
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Reservación actualizada',
+            detail: 'La reservación ha sido asociada con tu cuenta de usuario.',
+            life: 3000,
+          });
+        } else {
+          console.error('❌ Error al actualizar userId en la reservación');
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error al actualizar userId en la reservación:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error al actualizar',
+          detail: 'No se pudo asociar la reservación con tu cuenta de usuario.',
+          life: 5000,
+        });
+      }
+    });
+  }
+
+  // Métodos para autenticación
+  checkAuthAndContinue(
+    nextStep: number,
+    activateCallback: () => void,
+    useFlightless: boolean = false
+  ): void {
+    this.authService.isLoggedIn().subscribe((isLoggedIn) => {
+      if (isLoggedIn) {
+        // Usuario está logueado, proceder normalmente
+        if (useFlightless) {
+          // Lógica para continuar sin vuelos
+          this.nextStepWithValidation(nextStep);
+        } else {
+          // Lógica normal
+          this.nextStepWithValidation(nextStep);
+        }
+      } else {
+        // Usuario no está logueado, mostrar modal
+        sessionStorage.setItem('redirectUrl', window.location.pathname);
+        this.loginDialogVisible = true;
+      }
+    });
+  }
+
+  closeLoginModal(): void {
+    this.loginDialogVisible = false;
+  }
+
+  navigateToLogin(): void {
+    this.closeLoginModal();
+    this.router.navigate(['/login']);
+  }
+
+  navigateToRegister(): void {
+    this.closeLoginModal();
+    this.router.navigate(['/sign-up']);
   }
 }

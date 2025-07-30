@@ -42,6 +42,8 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { ActivityHighlight } from '../../../../shared/components/activity-card/activity-card.component';
 import { environment } from '../../../../../environments/environment';
+import { AuthenticateService } from '../../../../core/services/auth-service.service';
+import { UsersNetService } from '../../../../core/services/usersNet.service';
 
 // ✅ INTERFACES para tipado fuerte
 interface PassengersData {
@@ -116,7 +118,9 @@ export class TourHeaderV2Component
     private reservationTravelerActivityService: ReservationTravelerActivityService,
     private el: ElementRef,
     private renderer: Renderer2,
-    private router: Router
+    private router: Router,
+    private authService: AuthenticateService,
+    private usersNetService: UsersNetService
   ) {}
 
   ngOnInit() {
@@ -492,14 +496,52 @@ export class TourHeaderV2Component
 
     this.isCreatingReservation = true;
 
+    // Obtener el ID del usuario logueado
+    this.authService.getCognitoId().subscribe({
+      next: (cognitoId) => {
+        if (cognitoId) {
+          // Buscar el usuario por Cognito ID para obtener su ID en la base de datos
+          this.usersNetService.getUsersByCognitoId(cognitoId).subscribe({
+            next: (users) => {
+              let userId = 1; // Valor por defecto si no se encuentra el usuario
+              
+              if (users && users.length > 0) {
+                userId = users[0].id;
+                console.log('Usuario logueado encontrado, ID:', userId);
+              } else {
+                console.log('Usuario no encontrado en la base de datos, usando ID por defecto:', userId);
+              }
+
+              this.createReservation(userId);
+            },
+            error: (error) => {
+              console.error('Error buscando usuario por Cognito ID:', error);
+              this.createReservation(1); // Usar ID por defecto en caso de error
+            }
+          });
+        } else {
+          console.log('Usuario no logueado, usando ID por defecto: 1');
+          this.createReservation(1);
+        }
+      },
+      error: (error) => {
+        console.error('Error obteniendo Cognito ID:', error);
+        this.createReservation(1); // Usar ID por defecto en caso de error
+      }
+    });
+  }
+
+  private createReservation(userId: number): void {
+    console.log('🏗️ Creando reservación con userId:', userId);
+    
     const reservationData: ReservationCreate = {
       id: 0,
       tkId: '',
       reservationStatusId: 1,
       retailerId: environment.retaileriddefault,
-      tourId: this.tourId,
+      tourId: this.tourId!,
       departureId: this.selectedDeparture.id,
-      userId: 1,
+      userId: userId, // Usar el ID del usuario logueado
       totalPassengers: this.totalPassengers || 1,
       totalAmount: this.totalPriceWithActivities || 0, // MODIFICADO: Usar precio con actividades
       budgetAt: '',
@@ -509,6 +551,14 @@ export class TourHeaderV2Component
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+
+    console.log('📝 Datos de la reservación:', {
+      tourId: reservationData.tourId,
+      departureId: reservationData.departureId,
+      userId: reservationData.userId,
+      totalPassengers: reservationData.totalPassengers,
+      totalAmount: reservationData.totalAmount
+    });
 
     /* console.log('Booking - Iniciando proceso de reservación con datos:', {
       reservationData,

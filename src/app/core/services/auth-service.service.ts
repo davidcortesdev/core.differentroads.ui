@@ -102,7 +102,7 @@ export class AuthenticateService {
   }
 
   // Login
-  login(emailaddress: string, password: string): Observable<void> {
+  login(emailaddress: string, password: string): Observable<any> {
     return new Observable((observer) => {
       const authenticationDetails = new AuthenticationDetails({
         Username: emailaddress,
@@ -130,17 +130,9 @@ export class AuthenticateService {
                 hubspotResponse
               );
 
-              // Check if redirectUrl exists in sessionStorage
-              const redirectUrl = sessionStorage.getItem('redirectUrl');
-              if (redirectUrl) {
-                // Navigate to the stored URL
-                this.router.navigate([redirectUrl]);
-                // Clear the redirectUrl from sessionStorage
-                sessionStorage.removeItem('redirectUrl');
-              } else {
-                // Default navigation to home
-                this.router.navigate(['/home']);
-              }
+              // Retornar el usuario de Cognito para que el componente maneje la navegación
+              observer.next(this.cognitoUser);
+              observer.complete();
             },
             error: (hubspotError) => {
               console.error(
@@ -148,17 +140,8 @@ export class AuthenticateService {
                 hubspotError
               );
 
-              // Even if Hubspot fails, check for redirectUrl
-              const redirectUrl = sessionStorage.getItem('redirectUrl');
-              if (redirectUrl) {
-                this.router.navigate([redirectUrl]);
-                sessionStorage.removeItem('redirectUrl');
-              } else {
-                this.router.navigate(['/home']);
-              }
-            },
-            complete: () => {
-              observer.next();
+              // Even if Hubspot fails, return the Cognito user for component to handle navigation
+              observer.next(this.cognitoUser);
               observer.complete();
             },
           });
@@ -380,6 +363,21 @@ export class AuthenticateService {
   // Navegar a la página de login
   navigateToLogin() {
     this.router.navigate(['/login']); // Ajusta la ruta según tu configuración
+  }
+
+  // Método para navegar después de completar la verificación del usuario
+  navigateAfterUserVerification(): void {
+    // Check if redirectUrl exists in sessionStorage
+    const redirectUrl = sessionStorage.getItem('redirectUrl');
+    if (redirectUrl) {
+      // Navigate to the stored URL
+      this.router.navigate([redirectUrl]);
+      // Clear the redirectUrl from sessionStorage
+      sessionStorage.removeItem('redirectUrl');
+    } else {
+      // Default navigation to home
+      this.router.navigate(['/home']);
+    }
   }
 
   async handleGoogleSignIn() {

@@ -113,29 +113,38 @@ export class LoginFormComponent implements OnInit {
       return;
     }
 
+    console.log('🔍 Iniciando verificación de usuario...');
+    console.log('📧 Email:', email);
+    console.log('🆔 Cognito ID:', cognitoId);
+
     // Primero buscar por Cognito ID
     this.usersNetService.getUsersByCognitoId(cognitoId).subscribe({
       next: (users) => {
+        console.log('✅ Búsqueda por Cognito ID completada. Usuarios encontrados:', users?.length || 0);
         if (users && users.length > 0) {
           // Usuario encontrado por Cognito ID
-          console.log('Usuario encontrado por Cognito ID:', users[0]);
+          console.log('🎉 Usuario encontrado por Cognito ID:', users[0]);
           this.isLoading = false;
+          // Navegar después de encontrar el usuario
+          this.authService.navigateAfterUserVerification();
         } else {
           // No encontrado por Cognito ID, buscar por email
+          console.log('🔍 Usuario no encontrado por Cognito ID, buscando por email...');
           this.usersNetService.getUsersByEmail(email).subscribe({
             next: (usersByEmail) => {
+              console.log('✅ Búsqueda por email completada. Usuarios encontrados:', usersByEmail?.length || 0);
               if (usersByEmail && usersByEmail.length > 0) {
                 // Usuario encontrado por email, actualizar con Cognito ID
-                console.log('Usuario encontrado por email, actualizando Cognito ID:', usersByEmail[0]);
+                console.log('🔄 Usuario encontrado por email, actualizando Cognito ID:', usersByEmail[0]);
                 this.updateUserWithCognitoId(usersByEmail[0].id, cognitoId);
               } else {
                 // Usuario no existe, crearlo
-                console.log('Usuario no encontrado, creando nuevo usuario');
+                console.log('🆕 Usuario no encontrado, creando nuevo usuario');
                 this.createNewUser(cognitoId, email);
               }
             },
             error: (error) => {
-              console.error('Error buscando usuario por email:', error);
+              console.error('❌ Error buscando usuario por email:', error);
               // En caso de error, intentar crear el usuario
               this.createNewUser(cognitoId, email);
             }
@@ -143,20 +152,22 @@ export class LoginFormComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error buscando usuario por Cognito ID:', error);
+        console.error('❌ Error buscando usuario por Cognito ID:', error);
         // En caso de error, buscar por email
+        console.log('🔍 Intentando búsqueda por email debido a error...');
         this.usersNetService.getUsersByEmail(email).subscribe({
           next: (usersByEmail) => {
+            console.log('✅ Búsqueda por email completada. Usuarios encontrados:', usersByEmail?.length || 0);
             if (usersByEmail && usersByEmail.length > 0) {
-              console.log('Usuario encontrado por email, actualizando Cognito ID:', usersByEmail[0]);
+              console.log('🔄 Usuario encontrado por email, actualizando Cognito ID:', usersByEmail[0]);
               this.updateUserWithCognitoId(usersByEmail[0].id, cognitoId);
             } else {
-              console.log('Usuario no encontrado, creando nuevo usuario');
+              console.log('🆕 Usuario no encontrado, creando nuevo usuario');
               this.createNewUser(cognitoId, email);
             }
           },
           error: (emailError) => {
-            console.error('Error buscando usuario por email:', emailError);
+            console.error('❌ Error buscando usuario por email:', emailError);
             this.createNewUser(cognitoId, email);
           }
         });
@@ -168,16 +179,21 @@ export class LoginFormComponent implements OnInit {
    * Actualiza un usuario existente con el Cognito ID
    */
   private updateUserWithCognitoId(userId: number, cognitoId: string): void {
+    console.log('🔄 Actualizando usuario con Cognito ID...');
     this.usersNetService.updateUser(userId, { cognitoId }).subscribe({
       next: (success) => {
         if (success) {
-          console.log('Usuario actualizado con Cognito ID exitosamente');
+          console.log('✅ Usuario actualizado con Cognito ID exitosamente');
         }
         this.isLoading = false;
+        // Navegar después de actualizar el usuario
+        this.authService.navigateAfterUserVerification();
       },
       error: (error) => {
-        console.error('Error actualizando usuario con Cognito ID:', error);
+        console.error('❌ Error actualizando usuario con Cognito ID:', error);
         this.isLoading = false;
+        // Navegar incluso si hay error en la actualización
+        this.authService.navigateAfterUserVerification();
       }
     });
   }
@@ -186,6 +202,7 @@ export class LoginFormComponent implements OnInit {
    * Crea un nuevo usuario en el API
    */
   private createNewUser(cognitoId: string, email: string): void {
+    console.log('🆕 Creando nuevo usuario...');
     const newUser: UserCreate = {
       cognitoId: cognitoId,
       name: email, // Nombre por defecto
@@ -198,12 +215,16 @@ export class LoginFormComponent implements OnInit {
 
     this.usersNetService.createUser(newUser).subscribe({
       next: (user) => {
-        console.log('Nuevo usuario creado exitosamente:', user);
+        console.log('✅ Nuevo usuario creado exitosamente:', user);
         this.isLoading = false;
+        // Navegar después de crear el usuario
+        this.authService.navigateAfterUserVerification();
       },
       error: (error) => {
-        console.error('Error creando nuevo usuario:', error);
+        console.error('❌ Error creando nuevo usuario:', error);
         this.isLoading = false;
+        // Navegar incluso si hay error en la creación
+        this.authService.navigateAfterUserVerification();
       }
     });
   }
@@ -222,6 +243,8 @@ export class LoginFormComponent implements OnInit {
     
     const username = this.loginForm.value.username;
     const password = this.userPassword;
+    
+    console.log('🔄 Iniciando sesión después de confirmación...');
     
     this.authService.login(username, password).subscribe({
       next: (cognitoUser) => {
@@ -250,6 +273,7 @@ export class LoginFormComponent implements OnInit {
 
   signInWithGoogle(): void {
     this.isLoading = true;
+    console.log('🔄 Iniciando sesión con Google...');
     this.authService.handleGoogleSignIn().then((cognitoUser) => {
       // Login exitoso con Google, verificar si el usuario existe en nuestro API
       this.checkAndCreateUserIfNeeded(cognitoUser);

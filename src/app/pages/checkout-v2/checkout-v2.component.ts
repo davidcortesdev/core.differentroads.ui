@@ -107,6 +107,19 @@ export class CheckoutV2Component implements OnInit {
     // Configurar los steps
     this.initializeSteps();
 
+    // Leer step de URL si está presente (para redirección después del login)
+    this.route.queryParams.subscribe((params) => {
+      console.log('📖 Leyendo query params:', params);
+      if (params['step']) {
+        const stepParam = parseInt(params['step']);
+        console.log('📖 Step encontrado en URL:', stepParam);
+        if (!isNaN(stepParam) && stepParam >= 0 && stepParam <= 3) {
+          console.log('✅ Estableciendo activeIndex a:', stepParam);
+          this.activeIndex = stepParam;
+        }
+      }
+    });
+
     // Obtener el reservationId de la URL
     this.route.paramMap.subscribe((params) => {
       const reservationIdParam = params.get('reservationId');
@@ -787,6 +800,21 @@ export class CheckoutV2Component implements OnInit {
   // Manejar cambio de paso activo
   onActiveIndexChange(index: number): void {
     this.activeIndex = index;
+    this.updateStepInUrl(index);
+  }
+
+  // Método para actualizar la URL cuando cambia el step
+  updateStepInUrl(step: number): void {
+    if (typeof step === 'number' && !isNaN(step)) {
+      console.log('🔄 Actualizando URL con step:', step);
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { step: step },
+        queryParamsHandling: 'merge',
+      });
+    } else {
+      console.error('Invalid step value:', step);
+    }
   }
 
   // Método para guardar todos los datos de los viajeros
@@ -1122,7 +1150,7 @@ export class CheckoutV2Component implements OnInit {
   // Métodos para autenticación
   checkAuthAndContinue(
     nextStep: number,
-    activateCallback: () => void,
+    activateCallback: (step: number) => void,
     useFlightless: boolean = false
   ): void {
     this.authService.isLoggedIn().subscribe((isLoggedIn) => {
@@ -1135,9 +1163,14 @@ export class CheckoutV2Component implements OnInit {
           // Lógica normal
           this.nextStepWithValidation(nextStep);
         }
+        // Llamar al callback con el step
+        activateCallback(nextStep);
       } else {
         // Usuario no está logueado, mostrar modal
-        sessionStorage.setItem('redirectUrl', window.location.pathname);
+        // Guardar la URL actual en sessionStorage (el step ya está en la URL)
+        const currentUrl = window.location.pathname;
+        console.log('🔗 URL de redirección guardada:', currentUrl);
+        sessionStorage.setItem('redirectUrl', currentUrl);
         this.loginDialogVisible = true;
       }
     });

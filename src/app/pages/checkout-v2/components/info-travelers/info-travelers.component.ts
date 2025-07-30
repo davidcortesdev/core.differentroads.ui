@@ -5,6 +5,8 @@ import {
   EventEmitter,
   OnInit,
   OnDestroy,
+  OnChanges,
+  SimpleChanges,
 } from '@angular/core';
 import { Subject, forkJoin } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -59,7 +61,7 @@ import {
   templateUrl: './info-travelers.component.html',
   styleUrls: ['./info-travelers.component.scss'],
 })
-export class InfoTravelersComponent implements OnInit, OnDestroy {
+export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   // Inputs del componente padre
   @Input() departureId: number | null = null;
   @Input() reservationId: number | null = null;
@@ -141,6 +143,17 @@ export class InfoTravelersComponent implements OnInit, OnDestroy {
       this.loadAllData();
     } else {
       this.error = 'No se proporcionó un ID de departure o reservación válido';
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    console.log('ngOnChanges - info-travelers:', changes);
+    if ((changes['departureId'] && changes['departureId'].currentValue) || 
+        (changes['reservationId'] && changes['reservationId'].currentValue)) {
+      console.log('🔄 Recargando datos de info-travelers');
+      if (this.departureId && this.reservationId) {
+        this.loadAllData();
+      }
     }
   }
 

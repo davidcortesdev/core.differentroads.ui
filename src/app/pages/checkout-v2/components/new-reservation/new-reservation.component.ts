@@ -37,7 +37,6 @@ export class NewReservationComponent implements OnInit {
   constructor(private route: ActivatedRoute, private reservationService: ReservationService, private paymentService: PaymentsNetService, private scalapayService: NewScalapayService, private messageService: MessageService) { }
 
   ngOnInit(): void {
-    //TODO: Capturar order 
     console.log("NewReservationComponent initialized");
     this.route.params.subscribe((params) => {
       this.reservationId = params['reservationId'];

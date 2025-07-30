@@ -140,6 +140,13 @@ export class TourV2Component implements OnInit {
 
   // Manejar selección de actividad desde el componente hijo
   onActivitySelected(activityHighlight: ActivityHighlight): void {
+    console.log('TourV2 - Actividad recibida de TourItineraryV2:', {
+      id: activityHighlight.id,
+      title: activityHighlight.title,
+      price: activityHighlight.price,
+      added: activityHighlight.added,
+    });
+
     // Actualizar el array de actividades seleccionadas
     const existingIndex: number = this.selectedActivities.findIndex(
       (activity: ActivityHighlight) => activity.id === activityHighlight.id
@@ -156,6 +163,11 @@ export class TourV2Component implements OnInit {
     // Remover actividades que ya no están agregadas
     this.selectedActivities = this.selectedActivities.filter(
       (activity: ActivityHighlight) => activity.added
+    );
+
+    console.log(
+      'TourV2 - Array de actividades actualizado:',
+      this.selectedActivities
     );
   }
 

@@ -66,10 +66,11 @@ export class FlightManagementComponent implements OnInit, OnChanges {
         this.isConsolidadorVuelosActive = true;
       } else {
         // Usuario no está logueado, mostrar modal
-        // Guardar la URL actual en sessionStorage (el step ya está en la URL)
+        // Guardar la URL actual con el step en sessionStorage (step 1 = vuelos)
         const currentUrl = window.location.pathname;
-        console.log('🔗 URL de redirección guardada (flight-management):', currentUrl);
-        sessionStorage.setItem('redirectUrl', currentUrl);
+        const redirectUrl = `${currentUrl}?step=1`;
+        console.log('🔗 URL de redirección guardada (flight-management):', redirectUrl);
+        sessionStorage.setItem('redirectUrl', redirectUrl);
         this.loginDialogVisible = true;
       }
     });

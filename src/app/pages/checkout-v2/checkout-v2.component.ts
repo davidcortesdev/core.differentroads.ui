@@ -1167,10 +1167,11 @@ export class CheckoutV2Component implements OnInit {
         activateCallback(nextStep);
       } else {
         // Usuario no está logueado, mostrar modal
-        // Guardar la URL actual en sessionStorage (el step ya está en la URL)
+        // Guardar la URL actual con el step en sessionStorage
         const currentUrl = window.location.pathname;
-        console.log('🔗 URL de redirección guardada:', currentUrl);
-        sessionStorage.setItem('redirectUrl', currentUrl);
+        const redirectUrl = `${currentUrl}?step=${this.activeIndex}`;
+        console.log('🔗 URL de redirección guardada:', redirectUrl);
+        sessionStorage.setItem('redirectUrl', redirectUrl);
         this.loginDialogVisible = true;
       }
     });

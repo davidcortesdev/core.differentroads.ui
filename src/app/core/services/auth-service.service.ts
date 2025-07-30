@@ -374,9 +374,16 @@ export class AuthenticateService {
     console.log('🧭 redirectUrl en sessionStorage:', redirectUrl);
     
     if (redirectUrl) {
-      // Navigate to the stored URL
-      console.log('🧭 Navegando a URL guardada:', redirectUrl);
-      this.router.navigate([redirectUrl]);
+      // Parse the URL to separate path and query parameters
+      const urlParts = redirectUrl.split('?');
+      const path = urlParts[0];
+      const queryParams = urlParts[1] ? this.parseQueryString(urlParts[1]) : {};
+      
+      console.log('🧭 Path:', path);
+      console.log('🧭 Query params:', queryParams);
+      
+      // Navigate to the path with query parameters
+      this.router.navigate([path], { queryParams });
       // Clear the redirectUrl from sessionStorage
       sessionStorage.removeItem('redirectUrl');
     } else {
@@ -384,6 +391,21 @@ export class AuthenticateService {
       console.log('🧭 Navegando a /home por defecto');
       this.router.navigate(['/home']);
     }
+  }
+
+  // Helper method to parse query string
+  private parseQueryString(queryString: string): { [key: string]: string } {
+    const params: { [key: string]: string } = {};
+    const pairs = queryString.split('&');
+    
+    for (const pair of pairs) {
+      const [key, value] = pair.split('=');
+      if (key && value) {
+        params[decodeURIComponent(key)] = decodeURIComponent(value);
+      }
+    }
+    
+    return params;
   }
 
   async handleGoogleSignIn() {

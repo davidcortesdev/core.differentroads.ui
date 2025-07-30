@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { Router } from '@angular/router';
 import { FlightsNetService, IFlightDetailDTO, IFlightPackDTO } from '../../../services/flightsNet.service';
 
@@ -10,7 +10,7 @@ import { FlightsNetService, IFlightDetailDTO, IFlightPackDTO } from '../../../se
   templateUrl: './default-flights.component.html',
   styleUrl: './default-flights.component.scss'
 })
-export class DefaultFlightsComponent {
+export class DefaultFlightsComponent implements OnInit, OnChanges {
   @Input() departureId: number | null = null;
   @Input() reservationId: number | null = null;
 
@@ -29,6 +29,15 @@ export class DefaultFlightsComponent {
   ngOnInit(): void {
     console.log('ngOnInit');
     this.getFlights();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    console.log('ngOnChanges - departureId changed:', changes['departureId']);
+    if (changes['departureId'] && changes['departureId'].currentValue && 
+        changes['departureId'].currentValue !== changes['departureId'].previousValue) {
+      console.log('🔄 Recargando vuelos debido a cambio en departureId');
+      this.getFlights();
+    }
   }
 
   getFlights(): void {

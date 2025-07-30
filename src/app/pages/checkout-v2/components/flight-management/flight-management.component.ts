@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { Router } from '@angular/router';
 import { DepartureService, IDepartureResponse } from '../../../../core/services/departure/departure.service';
 import { Tour, TourNetService } from '../../../../core/services/tourNet.service';
@@ -11,7 +11,7 @@ import { AuthenticateService } from '../../../../core/services/auth-service.serv
   templateUrl: './flight-management.component.html',
   styleUrls: ['./flight-management.component.scss']
 })
-export class FlightManagementComponent implements OnInit {
+export class FlightManagementComponent implements OnInit, OnChanges {
   @Input() tourId!: number;
   @Input() departureId!: number;
   @Input() reservationId!: number;
@@ -26,11 +26,26 @@ export class FlightManagementComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.tourNetService.getTourById(this.tourId).subscribe({
-      next: (tour: Tour) => {
-        this.isConsolidadorVuelosActive = !!tour.isConsolidadorVuelosActive;
-      }
-    });
+    this.loadTourAndDepartureData();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    console.log('ngOnChanges - flight-management:', changes);
+    if ((changes['tourId'] && changes['tourId'].currentValue) || 
+        (changes['departureId'] && changes['departureId'].currentValue)) {
+      console.log('🔄 Recargando datos de tour y departure');
+      this.loadTourAndDepartureData();
+    }
+  }
+
+  private loadTourAndDepartureData(): void {
+    if (this.tourId) {
+      this.tourNetService.getTourById(this.tourId).subscribe({
+        next: (tour: Tour) => {
+          this.isConsolidadorVuelosActive = !!tour.isConsolidadorVuelosActive;
+        }
+      });
+    }
     if (this.departureId) {
       this.departureService.getById(this.departureId).subscribe({
         next: (departure: IDepartureResponse) => {
@@ -51,7 +66,11 @@ export class FlightManagementComponent implements OnInit {
         this.isConsolidadorVuelosActive = true;
       } else {
         // Usuario no está logueado, mostrar modal
-        sessionStorage.setItem('redirectUrl', window.location.pathname);
+        // Guardar la URL actual con el step en sessionStorage (step 1 = vuelos)
+        const currentUrl = window.location.pathname;
+        const redirectUrl = `${currentUrl}?step=1`;
+        console.log('🔗 URL de redirección guardada (flight-management):', redirectUrl);
+        sessionStorage.setItem('redirectUrl', redirectUrl);
         this.loginDialogVisible = true;
       }
     });

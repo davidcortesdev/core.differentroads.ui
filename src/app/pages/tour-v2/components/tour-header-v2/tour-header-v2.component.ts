@@ -159,20 +159,6 @@ export class TourHeaderV2Component
     if (changes['tourId'] && changes['tourId'].currentValue) {
       this.loadTourData(changes['tourId'].currentValue);
     }
-
-    if (changes['activityTypesAnalysis']) {
-      console.log(
-        'TourHeader - Análisis de tipos actualizado:',
-        this.activityTypesAnalysis
-      );
-    }
-
-    if (changes['selectedActivities']) {
-      console.log(
-        'TourHeader - Actividades recibidas:',
-        this.selectedActivities
-      );
-    }
   }
 
   ngAfterViewInit() {
@@ -563,25 +549,10 @@ export class TourHeaderV2Component
       activityId: parseInt(activity.id),
     };
 
-    console.log('📤 Booking - Creando actividad individual:', {
-      endpoint: '/api/ReservationTravelerActivity',
-      travelerId: travelerId,
-      activityId: activity.id,
-      activityType: activity.type,
-      activityTitle: activity.title,
-      data: travelerActivityData,
-    });
-
     return this.reservationTravelerActivityService
       .create(travelerActivityData)
       .pipe(
         map((result) => {
-          console.log('✅ Booking - Actividad individual creada:', {
-            activityId: activity.id,
-            activityTitle: activity.title,
-            result: result,
-          });
-
           return {
             success: true,
             activity: activity,
@@ -630,25 +601,10 @@ export class TourHeaderV2Component
       activityPackId: parseInt(activity.id), // ✅ activityPackId para paquetes
     };
 
-    console.log('📤 Booking - Creando paquete de actividades:', {
-      endpoint: '/api/ReservationTravelerActivityPack',
-      travelerId: travelerId,
-      activityPackId: activity.id,
-      activityType: activity.type,
-      activityTitle: activity.title,
-      data: travelerActivityPackData,
-    });
-
     return this.reservationTravelerActivityPackService
       .create(travelerActivityPackData)
       .pipe(
         map((result) => {
-          console.log('✅ Booking - Paquete de actividades creado:', {
-            activityPackId: activity.id,
-            activityTitle: activity.title,
-            result: result,
-          });
-
           return {
             success: true,
             activity: activity,
@@ -680,19 +636,8 @@ export class TourHeaderV2Component
     const addedActivities = this.addedActivities;
 
     if (addedActivities.length === 0) {
-      console.log('ℹ️ Booking - No hay actividades para procesar');
       return of({ successful: 0, failed: 0, details: [] });
     }
-
-    console.log(
-      '🚀 Booking - Procesando actividades con servicios separados:',
-      {
-        travelers: travelers.length,
-        activities: addedActivities.length,
-        totalOperaciones: travelers.length * addedActivities.length,
-        activityTypesAnalysis: this.activityTypesAnalysis,
-      }
-    );
 
     const activityObservables: Observable<ActivityCreationResult>[] = [];
 
@@ -716,21 +661,10 @@ export class TourHeaderV2Component
       return of({ successful: 0, failed: 0, details: [] });
     }
 
-    console.log(
-      `📊 Booking - Ejecutando ${activityObservables.length} operaciones con servicios separados`
-    );
-
     return forkJoin(activityObservables).pipe(
       map((results: ActivityCreationResult[]) => {
         const successful = results.filter((r) => r.success).length;
         const failed = results.filter((r) => !r.success).length;
-
-        console.log('📈 Booking - Resultados finales por servicio:', {
-          total: results.length,
-          successful: successful,
-          failed: failed,
-          successRate: `${((successful / results.length) * 100).toFixed(1)}%`,
-        });
 
         return { successful, failed, details: results };
       }),
@@ -765,11 +699,6 @@ export class TourHeaderV2Component
 
               if (users && users.length > 0) {
                 userId = users[0].id;
-                console.log('Usuario logueado encontrado, ID:', userId);
-              } else {
-                console.log(
-                  'Usuario no encontrado en la base de datos, usando userId null'
-                );
               }
 
               this.createReservation(userId);
@@ -780,7 +709,6 @@ export class TourHeaderV2Component
             },
           });
         } else {
-          console.log('Usuario no logueado, usando userId null');
           this.createReservation(null);
         }
       },
@@ -792,8 +720,6 @@ export class TourHeaderV2Component
   }
 
   private createReservation(userId: number | null): void {
-    console.log('🏗️ Creando reservación con userId:', userId);
-
     const reservationData: ReservationCreate = {
       id: 0,
       tkId: '',
@@ -812,22 +738,11 @@ export class TourHeaderV2Component
       updatedAt: new Date().toISOString(),
     };
 
-    console.log('🎯 Booking - Iniciando proceso con servicios separados:', {
-      reservationData,
-      totalActividades: this.addedActivities.length,
-      activityTypesAnalysis: this.activityTypesAnalysis,
-      passengersData: this.passengersData,
-    });
-
     this.subscriptions.add(
       this.reservationService
         .create(reservationData)
         .pipe(
           switchMap((createdReservation: IReservationResponse) => {
-            console.log('✅ Booking - Reservación creada exitosamente:', {
-              reservationId: createdReservation.id,
-            });
-
             const travelerObservables = [];
             let travelerNumber = 1;
 
@@ -917,9 +832,6 @@ export class TourHeaderV2Component
 
             return forkJoin(travelerObservables).pipe(
               map((createdTravelers) => {
-                console.log(
-                  `✅ Booking - ${createdTravelers.length} travelers creados exitosamente`
-                );
                 return {
                   reservation: createdReservation,
                   travelers: createdTravelers,
@@ -940,16 +852,6 @@ export class TourHeaderV2Component
         )
         .subscribe({
           next: ({ reservation, travelers, activityResults }) => {
-            console.log(
-              '🎉 Booking - Proceso completado con servicios separados:',
-              {
-                reservationId: reservation.id,
-                travelers: travelers.length,
-                activitiesSuccessful: activityResults.successful,
-                activitiesFailed: activityResults.failed,
-              }
-            );
-
             // ✅ MOSTRAR mensaje según los resultados
             if (activityResults.failed > 0) {
               const message =
@@ -958,10 +860,6 @@ export class TourHeaderV2Component
                 `❌ ${activityResults.failed} no pudieron ser asignados\n\n` +
                 `Puedes agregarlos manualmente desde el checkout.`;
               alert(message);
-            } else if (activityResults.successful > 0) {
-              console.log(
-                `✅ Todas las ${activityResults.successful} actividades/paquetes fueron asignados correctamente`
-              );
             }
 
             this.router.navigate(['/checkout-v2', reservation.id]);
@@ -994,7 +892,6 @@ export class TourHeaderV2Component
             alert(errorMessage);
           },
           complete: () => {
-            console.log('🏁 Booking - Proceso finalizado, limpiando estado');
             this.isCreatingReservation = false;
           },
         })

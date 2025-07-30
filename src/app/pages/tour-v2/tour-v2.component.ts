@@ -159,14 +159,6 @@ export class TourV2Component implements OnInit {
 
   // Manejar selección de actividad desde el componente hijo - MODIFICADO
   onActivitySelected(activityHighlight: ActivityHighlight): void {
-    console.log('TourV2 - Actividad recibida de TourItineraryV2:', {
-      id: activityHighlight.id,
-      title: activityHighlight.title,
-      price: activityHighlight.price,
-      type: activityHighlight.type, // ✅ NUEVO: Log del tipo
-      added: activityHighlight.added,
-    });
-
     // Actualizar el array de actividades seleccionadas
     const existingIndex: number = this.selectedActivities.findIndex(
       (activity: ActivityHighlight) => activity.id === activityHighlight.id
@@ -187,12 +179,6 @@ export class TourV2Component implements OnInit {
 
     // ✅ NUEVO: Analizar tipos de actividades después de cada cambio
     this.analyzeActivityTypes();
-
-    console.log(
-      'TourV2 - Array de actividades actualizado:',
-      this.selectedActivities
-    );
-    console.log('TourV2 - Análisis de tipos:', this.activityTypesAnalysis);
   }
 
   // ✅ NUEVO MÉTODO: Analizar tipos de actividades seleccionadas
@@ -214,14 +200,6 @@ export class TourV2Component implements OnInit {
       actCount: actCount,
       packCount: packCount,
     };
-
-    console.log('TourV2 - Análisis detallado:', {
-      totalActividades: addedActivities.length,
-      actCount: actCount,
-      packCount: packCount,
-      hasAct: this.activityTypesAnalysis.hasAct,
-      hasPack: this.activityTypesAnalysis.hasPack,
-    });
   }
 
   // ✅ NUEVO MÉTODO: Reset del análisis de tipos

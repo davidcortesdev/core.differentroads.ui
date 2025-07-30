@@ -63,21 +63,10 @@ export class ActivitysComponent implements OnInit, OnChanges {
   ) {}
 
   ngOnInit(): void {
-    console.log('Activities - Inputs:', {
-      itineraryId: this.itineraryId,
-      itineraryDayId: this.itineraryDayId,
-      departureId: this.departureId,
-    });
     this.loadDataWithFilters();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('Activities - Inputs:', {
-      itineraryId: this.itineraryId,
-      itineraryDayId: this.itineraryDayId,
-      departureId: this.departureId,
-    });
-
     const itineraryChanged =
       changes['itineraryId'] &&
       changes['itineraryId'].currentValue !==
@@ -107,15 +96,6 @@ export class ActivitysComponent implements OnInit, OnChanges {
     this.activities = [];
     this.highlights = [];
 
-    console.log(
-      'Cargando actividades con departureId:',
-      this.departureId,
-      'itineraryId:',
-      this.itineraryId,
-      'itineraryDayId:',
-      this.itineraryDayId
-    );
-
     this.activityService
       .getForItineraryWithPacks(
         this.itineraryId,
@@ -132,8 +112,6 @@ export class ActivitysComponent implements OnInit, OnChanges {
         })
       )
       .subscribe((activities: IActivityResponse[]) => {
-        console.log('Actividades cargadas:', activities);
-
         // Transformar actividades siguiendo el patrón del ejemplo
         this.activities = activities.map((activity) => ({
           ...activity,
@@ -166,15 +144,6 @@ export class ActivitysComponent implements OnInit, OnChanges {
   ): void {
     if (!this.departureId) return;
 
-    console.log('Procesando actividad/pack:', {
-      id: activity.id,
-      type: activity.type,
-      name: activity.name,
-      departureId: this.departureId,
-      itineraryId: this.itineraryId,
-      itineraryDayId: this.itineraryDayId,
-    });
-
     if (activity.type === 'act') {
       // Cargar precio de actividad individual
       this.activityPriceService
@@ -193,11 +162,6 @@ export class ActivitysComponent implements OnInit, OnChanges {
           })
         )
         .subscribe((prices) => {
-          console.log(
-            `Respuesta de precios para actividad ${activity.id}:`,
-            prices
-          );
-
           // Transformar precios al formato esperado
           this.activities[index].priceData = prices.map(
             (price: IActivityPriceResponse) => ({
@@ -206,18 +170,6 @@ export class ActivitysComponent implements OnInit, OnChanges {
               currency: 'EUR',
             })
           );
-
-          console.log('Precio para actividad:', {
-            id: activity.id,
-            type: activity.type,
-            price:
-              prices.length > 0
-                ? prices[0].campaignPrice || prices[0].basePrice
-                : 0,
-            departureId: this.departureId,
-            itineraryId: this.itineraryId,
-            itineraryDayId: this.itineraryDayId,
-          });
 
           // Actualizar highlights después de cargar precios
           this.updateHighlights();
@@ -240,8 +192,6 @@ export class ActivitysComponent implements OnInit, OnChanges {
           })
         )
         .subscribe((prices) => {
-          console.log(`Respuesta de precios para pack ${activity.id}:`, prices);
-
           // Transformar precios al formato esperado
           this.activities[index].priceData = prices.map(
             (price: IActivityPackPriceResponse) => ({
@@ -250,18 +200,6 @@ export class ActivitysComponent implements OnInit, OnChanges {
               currency: 'EUR',
             })
           );
-
-          console.log('Precio para pack:', {
-            id: activity.id,
-            type: activity.type,
-            price:
-              prices.length > 0
-                ? prices[0].campaignPrice || prices[0].basePrice
-                : 0,
-            departureId: this.departureId,
-            itineraryId: this.itineraryId,
-            itineraryDayId: this.itineraryDayId,
-          });
 
           // Actualizar highlights después de cargar precios
           this.updateHighlights();
@@ -310,13 +248,6 @@ export class ActivitysComponent implements OnInit, OnChanges {
     const index = this.highlights.findIndex((h) => h.id === highlight.id);
     if (index !== -1) {
       this.highlights[index] = { ...highlight, added: !highlight.added };
-
-      console.log('Activities - Actividad seleccionada:', {
-        id: this.highlights[index].id,
-        title: this.highlights[index].title,
-        price: this.highlights[index].price,
-        added: this.highlights[index].added,
-      });
 
       // Emitir evento al componente padre
       this.activitySelected.emit(this.highlights[index]);

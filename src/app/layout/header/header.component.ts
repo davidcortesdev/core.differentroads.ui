@@ -4,7 +4,7 @@ import { LanguageService } from '../../core/services/language.service';
 import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 import { GeneralConfigService } from '../../core/services/general-config.service';
 import { AuthenticateService } from '../../core/services/auth-service.service';
-import { UsersService } from '../../core/services/users.service';
+import { UsersNetService } from '../../core/services/usersNet.service';
 import {
   MenuConfig,
   MenuList,
@@ -55,7 +55,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private languageService: LanguageService,
     private generalConfigService: GeneralConfigService,
     private authService: AuthenticateService,
-    private usersService: UsersService,
+    private usersNetService: UsersNetService,
     private elementRef: ElementRef,
     private renderer: Renderer2,
     private router: Router
@@ -299,22 +299,78 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.isLoadingUser = true;
         this.chipLabel = 'Cargando...';
 
-        this.usersService
-          .getUserByEmail(email)
-          .pipe(
-            takeUntil(this.destroy$),
-            finalize(() => {
-              this.isLoadingUser = false;
-              setTimeout(() => (this.showUserInfo = true), 100);
-            })
-          )
-          .subscribe({
-            next: (user) => {
-              this.chipLabel = `Hola, ${
-                user.names === 'pendiente' ? email : user.names || email
-              }`;
-              this.chipImage = user.profileImage || '';
+        // Primero intentar obtener el Cognito ID
+        this.authService.getCognitoId().pipe(
+          takeUntil(this.destroy$)
+        ).subscribe({
+          next: (cognitoId) => {
+            if (cognitoId) {
+              // Buscar por Cognito ID primero
+              this.usersNetService.getUsersByCognitoId(cognitoId).pipe(
+                takeUntil(this.destroy$),
+                finalize(() => {
+                  this.isLoadingUser = false;
+                  setTimeout(() => (this.showUserInfo = true), 100);
+                })
+              ).subscribe({
+                next: (users) => {
+                  if (users && users.length > 0) {
+                    const user = users[0];
+                    this.chipLabel = `Hola, ${
+                      user.name || email
+                    }`;
+                    this.chipImage = ''; // El nuevo modelo no tiene profileImage
 
+                    this.userMenuItems = [
+                      {
+                        label: 'Ver Perfil',
+                        icon: 'pi pi-user',
+                        command: () => this.authService.navigateToProfile(),
+                      },
+                      {
+                        label: 'Desconectar',
+                        icon: 'pi pi-sign-out',
+                        command: () => this.authService.logOut(),
+                      },
+                    ];
+                  } else {
+                    // Si no se encuentra por Cognito ID, mostrar solo el email
+                    this.chipLabel = `Hola, ${email}`;
+                    this.userMenuItems = [
+                      {
+                        label: 'Ver Perfil',
+                        icon: 'pi pi-user',
+                        command: () => this.authService.navigateToProfile(),
+                      },
+                      {
+                        label: 'Desconectar',
+                        icon: 'pi pi-sign-out',
+                        command: () => this.authService.logOut(),
+                      },
+                    ];
+                  }
+                },
+                error: (error: any) => {
+                  console.error('Error buscando por Cognito ID:', error);
+                  // En caso de error, mostrar solo el email
+                  this.chipLabel = `Hola, ${email}`;
+                  this.userMenuItems = [
+                    {
+                      label: 'Ver Perfil',
+                      icon: 'pi pi-user',
+                      command: () => this.authService.navigateToProfile(),
+                    },
+                    {
+                      label: 'Desconectar',
+                      icon: 'pi pi-sign-out',
+                      command: () => this.authService.logOut(),
+                    },
+                  ];
+                }
+              });
+            } else {
+              // Si no hay Cognito ID, mostrar solo el email
+              this.chipLabel = `Hola, ${email}`;
               this.userMenuItems = [
                 {
                   label: 'Ver Perfil',
@@ -327,23 +383,30 @@ export class HeaderComponent implements OnInit, OnDestroy {
                   command: () => this.authService.logOut(),
                 },
               ];
-            },
-            error: async (err) => {
-              console.error('Error al obtener el usuario:', err);
-              this.chipLabel = `Hola, ${email}`;
-
-              if (err.status === 404) {
-                try {
-                  await this.authService.createUserIfNotExists(email);
-                  this.populateUserMenu();
-                } catch (createError) {
-                  console.error('Error al crear el usuario:', createError);
-                }
-              }
-            },
-          });
+            }
+          },
+          error: (error: any) => {
+            console.error('Error obteniendo Cognito ID:', error);
+            // En caso de error, mostrar solo el email
+            this.chipLabel = `Hola, ${email}`;
+            this.userMenuItems = [
+              {
+                label: 'Ver Perfil',
+                icon: 'pi pi-user',
+                command: () => this.authService.navigateToProfile(),
+              },
+              {
+                label: 'Desconectar',
+                icon: 'pi pi-sign-out',
+                command: () => this.authService.logOut(),
+              },
+            ];
+          }
+        });
       });
   }
+
+
 
   private navigateTo(slug: string, type: string): void {
     const route = this.createLink(slug, type);

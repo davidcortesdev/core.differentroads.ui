@@ -30,6 +30,9 @@ export class AuthenticateService {
   // Nuevo BehaviorSubject para mantener el email del usuario actual
   private currentUserEmail = new BehaviorSubject<string>('');
 
+  // Nuevo BehaviorSubject para mantener el Cognito ID del usuario actual
+  private currentUserCognitoId = new BehaviorSubject<string>('');
+
   userAttributesChanged: Subject<void> = new Subject<void>();
 
   constructor(
@@ -57,6 +60,13 @@ export class AuthenticateService {
           const attributes = await fetchUserAttributes();
           if (attributes && attributes.email) {
             this.currentUserEmail.next(attributes.email);
+            
+            // Obtener el Cognito ID del usuario actual
+            const user = await getCurrentUser();
+            if (user) {
+              this.currentUserCognitoId.next(user.userId);
+            }
+            
             // Intentar crear el usuario en la base de datos si aún no existe
             this.createUserIfNotExists(attributes.email).then(() => {
               this.userAttributesChanged.next();
@@ -82,6 +92,11 @@ export class AuthenticateService {
     return this.currentUserEmail.asObservable();
   }
 
+  // Obtener el Cognito ID del usuario actual como Observable
+  getCognitoId(): Observable<string> {
+    return this.currentUserCognitoId.asObservable();
+  }
+
   private getUserData(username: string): CognitoUser {
     return new CognitoUser({ Username: username, Pool: this.userPool });
   }
@@ -100,6 +115,7 @@ export class AuthenticateService {
         onSuccess: (result: any) => {
           this.isAuthenticated.next(true);
           this.currentUserEmail.next(emailaddress);
+          this.currentUserCognitoId.next(this.cognitoUser.getUsername());
           this.userAttributesChanged.next();
 
           // Agregar la integración con Hubspot
@@ -177,6 +193,7 @@ export class AuthenticateService {
       currentUser.signOut();
       this.isAuthenticated.next(false);
       this.currentUserEmail.next('');
+      this.currentUserCognitoId.next('');
       window.location.href = '/home';
     }
   }
@@ -334,6 +351,12 @@ export class AuthenticateService {
             this.currentUserEmail.next(formattedResult.email);
           }
 
+          // Obtener el Cognito ID del usuario actual
+          const currentUser = this.userPool.getCurrentUser();
+          if (currentUser) {
+            this.currentUserCognitoId.next(currentUser.getUsername());
+          }
+
           this.userAttributesChanged.next();
           observer.next(formattedResult);
           observer.complete();
@@ -376,6 +399,7 @@ export class AuthenticateService {
         if (attributes && attributes.email) {
           this.isAuthenticated.next(true);
           this.currentUserEmail.next(attributes.email);
+          this.currentUserCognitoId.next(user.userId);
           await this.createUserIfNotExists(attributes.email);
           this.userAttributesChanged.next();
         }

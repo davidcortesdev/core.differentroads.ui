@@ -180,20 +180,30 @@ export class LoginFormComponent implements OnInit {
    */
   private updateUserWithCognitoId(userId: number, cognitoId: string): void {
     console.log('🔄 Actualizando usuario con Cognito ID...');
+    console.log('📝 Datos de actualización:', { userId, cognitoId });
+    
     this.usersNetService.updateUser(userId, { cognitoId }).subscribe({
       next: (success) => {
         if (success) {
           console.log('✅ Usuario actualizado con Cognito ID exitosamente');
         }
+        console.log('🔄 Estado antes de navegar - isLoading:', this.isLoading);
         this.isLoading = false;
+        console.log('🔄 Estado después de setear isLoading = false:', this.isLoading);
+        console.log('🧭 Iniciando navegación...');
         // Navegar después de actualizar el usuario
         this.authService.navigateAfterUserVerification();
+        console.log('🧭 Navegación iniciada');
       },
       error: (error) => {
         console.error('❌ Error actualizando usuario con Cognito ID:', error);
+        console.log('🔄 Estado antes de navegar (error) - isLoading:', this.isLoading);
         this.isLoading = false;
+        console.log('🔄 Estado después de setear isLoading = false (error):', this.isLoading);
+        console.log('🧭 Iniciando navegación (error)...');
         // Navegar incluso si hay error en la actualización
         this.authService.navigateAfterUserVerification();
+        console.log('🧭 Navegación iniciada (error)');
       }
     });
   }
@@ -203,6 +213,8 @@ export class LoginFormComponent implements OnInit {
    */
   private createNewUser(cognitoId: string, email: string): void {
     console.log('🆕 Creando nuevo usuario...');
+    console.log('📝 Datos del usuario a crear:', { cognitoId, email });
+    
     const newUser: UserCreate = {
       cognitoId: cognitoId,
       name: email, // Nombre por defecto
@@ -213,18 +225,27 @@ export class LoginFormComponent implements OnInit {
       hasMiddleAccess: false
     };
 
+    console.log('🚀 Enviando petición de creación...');
     this.usersNetService.createUser(newUser).subscribe({
       next: (user) => {
         console.log('✅ Nuevo usuario creado exitosamente:', user);
+        console.log('🔄 Estado antes de navegar - isLoading:', this.isLoading);
         this.isLoading = false;
+        console.log('🔄 Estado después de setear isLoading = false:', this.isLoading);
+        console.log('🧭 Iniciando navegación...');
         // Navegar después de crear el usuario
         this.authService.navigateAfterUserVerification();
+        console.log('🧭 Navegación iniciada');
       },
       error: (error) => {
         console.error('❌ Error creando nuevo usuario:', error);
+        console.log('🔄 Estado antes de navegar (error) - isLoading:', this.isLoading);
         this.isLoading = false;
+        console.log('🔄 Estado después de setear isLoading = false (error):', this.isLoading);
+        console.log('🧭 Iniciando navegación (error)...');
         // Navegar incluso si hay error en la creación
         this.authService.navigateAfterUserVerification();
+        console.log('🧭 Navegación iniciada (error)');
       }
     });
   }

@@ -367,15 +367,21 @@ export class AuthenticateService {
 
   // Método para navegar después de completar la verificación del usuario
   navigateAfterUserVerification(): void {
+    console.log('🧭 navigateAfterUserVerification() ejecutándose...');
+    
     // Check if redirectUrl exists in sessionStorage
     const redirectUrl = sessionStorage.getItem('redirectUrl');
+    console.log('🧭 redirectUrl en sessionStorage:', redirectUrl);
+    
     if (redirectUrl) {
       // Navigate to the stored URL
+      console.log('🧭 Navegando a URL guardada:', redirectUrl);
       this.router.navigate([redirectUrl]);
       // Clear the redirectUrl from sessionStorage
       sessionStorage.removeItem('redirectUrl');
     } else {
       // Default navigation to home
+      console.log('🧭 Navegando a /home por defecto');
       this.router.navigate(['/home']);
     }
   }

@@ -96,7 +96,7 @@ export class FlightsNetService {
     return this.http.get<IFlightPackDTO[]>(`${this.API_URL_DEPARTURE}/${periodId}/flights`);
   }
 
-  // TODO: Add methods to get flights by departureId and reservationId
+  
   getFlightDetail(flightId: number): Observable<IFlightDetailDTO> {
     const params = new HttpParams().set('flightId', flightId.toString());
     return this.http.get<IFlightSegmentResponse[]>(`${this.API_URL_SEGMENT}`, { params }).pipe(

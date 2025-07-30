@@ -45,6 +45,14 @@ interface PassengersUpdateData {
   total: number;
 }
 
+// ✅ NUEVA INTERFACE: Para análisis de tipos de actividades
+interface ActivityTypesAnalysis {
+  hasAct: boolean;
+  hasPack: boolean;
+  actCount: number;
+  packCount: number;
+}
+
 @Component({
   selector: 'app-tour-v2',
   standalone: false,
@@ -75,6 +83,14 @@ export class TourV2Component implements OnInit {
 
   // Flag para controlar cuándo mostrar el estado de actividades
   showActivitiesStatus: boolean = false;
+
+  // ✅ NUEVA PROPIEDAD: Análisis de tipos de actividades
+  activityTypesAnalysis: ActivityTypesAnalysis = {
+    hasAct: false,
+    hasPack: false,
+    actCount: 0,
+    packCount: 0,
+  };
 
   // Propiedades para age groups y datos detallados de pasajeros con tipado fuerte
   passengersData: PassengersData = { adults: 1, children: 0, babies: 0 };
@@ -136,14 +152,18 @@ export class TourV2Component implements OnInit {
     // Limpiar actividades y activar la visualización del estado
     this.selectedActivities = [];
     this.showActivitiesStatus = true; // Activar para mostrar "Sin actividades opcionales"
+
+    // ✅ NUEVO: Reset del análisis de tipos al cambiar departure
+    this.resetActivityTypesAnalysis();
   }
 
-  // Manejar selección de actividad desde el componente hijo
+  // Manejar selección de actividad desde el componente hijo - MODIFICADO
   onActivitySelected(activityHighlight: ActivityHighlight): void {
     console.log('TourV2 - Actividad recibida de TourItineraryV2:', {
       id: activityHighlight.id,
       title: activityHighlight.title,
       price: activityHighlight.price,
+      type: activityHighlight.type, // ✅ NUEVO: Log del tipo
       added: activityHighlight.added,
     });
 
@@ -165,10 +185,53 @@ export class TourV2Component implements OnInit {
       (activity: ActivityHighlight) => activity.added
     );
 
+    // ✅ NUEVO: Analizar tipos de actividades después de cada cambio
+    this.analyzeActivityTypes();
+
     console.log(
       'TourV2 - Array de actividades actualizado:',
       this.selectedActivities
     );
+    console.log('TourV2 - Análisis de tipos:', this.activityTypesAnalysis);
+  }
+
+  // ✅ NUEVO MÉTODO: Analizar tipos de actividades seleccionadas
+  private analyzeActivityTypes(): void {
+    const addedActivities = this.selectedActivities.filter(
+      (activity) => activity.added
+    );
+
+    const actCount = addedActivities.filter(
+      (activity) => activity.type === 'act'
+    ).length;
+    const packCount = addedActivities.filter(
+      (activity) => activity.type === 'pack'
+    ).length;
+
+    this.activityTypesAnalysis = {
+      hasAct: actCount > 0,
+      hasPack: packCount > 0,
+      actCount: actCount,
+      packCount: packCount,
+    };
+
+    console.log('TourV2 - Análisis detallado:', {
+      totalActividades: addedActivities.length,
+      actCount: actCount,
+      packCount: packCount,
+      hasAct: this.activityTypesAnalysis.hasAct,
+      hasPack: this.activityTypesAnalysis.hasPack,
+    });
+  }
+
+  // ✅ NUEVO MÉTODO: Reset del análisis de tipos
+  private resetActivityTypesAnalysis(): void {
+    this.activityTypesAnalysis = {
+      hasAct: false,
+      hasPack: false,
+      actCount: 0,
+      packCount: 0,
+    };
   }
 
   // Recibir actualización de precio

@@ -46,10 +46,21 @@ export class ActivitysComponent implements OnInit, OnChanges {
   ) {}
 
   ngOnInit(): void {
+    console.log('Activities - Inputs:', {
+      itineraryId: this.itineraryId,
+      itineraryDayId: this.itineraryDayId,
+      departureId: this.departureId,
+    });
     this.loadDataWithFilters();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    console.log('Activities - Inputs:', {
+      itineraryId: this.itineraryId,
+      itineraryDayId: this.itineraryDayId,
+      departureId: this.departureId,
+    });
+
     const itineraryChanged =
       changes['itineraryId'] &&
       changes['itineraryId'].currentValue !==
@@ -146,6 +157,13 @@ export class ActivitysComponent implements OnInit, OnChanges {
     const index = this.highlights.findIndex((h) => h.id === highlight.id);
     if (index !== -1) {
       this.highlights[index] = { ...highlight, added: !highlight.added };
+
+      console.log('Activities - Actividad seleccionada:', {
+        id: this.highlights[index].id,
+        title: this.highlights[index].title,
+        price: this.highlights[index].price,
+        added: this.highlights[index].added,
+      });
 
       // NUEVO: Emitir evento al componente padre
       this.activitySelected.emit(this.highlights[index]);

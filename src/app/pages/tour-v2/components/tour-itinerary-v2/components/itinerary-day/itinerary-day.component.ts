@@ -1,4 +1,14 @@
-import { Component, Input, OnInit, ViewChildren, QueryList, OnChanges, SimpleChanges, Output, EventEmitter } from '@angular/core';
+import {
+  Component,
+  Input,
+  OnInit,
+  ViewChildren,
+  QueryList,
+  OnChanges,
+  SimpleChanges,
+  Output,
+  EventEmitter,
+} from '@angular/core';
 import { forkJoin, of, Observable } from 'rxjs';
 import { catchError, map, finalize } from 'rxjs/operators';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -6,9 +16,19 @@ import { Panel } from 'primeng/panel';
 import { ActivityHighlight } from '../../../../../../shared/components/activity-card/activity-card.component';
 
 // Importar servicios para itinerary, itinerary days y CMS
-import { ItineraryService, IItineraryResponse, ItineraryFilters } from '../../../../../../core/services/itinerary/itinerary.service';
-import { ItineraryDayService, IItineraryDayResponse } from '../../../../../../core/services/itinerary/itinerary-day/itinerary-day.service';
-import { ItineraryDayCMSService, IItineraryDayCMSResponse } from '../../../../../../core/services/itinerary/itinerary-day/itinerary-day-cms.service';
+import {
+  ItineraryService,
+  IItineraryResponse,
+  ItineraryFilters,
+} from '../../../../../../core/services/itinerary/itinerary.service';
+import {
+  ItineraryDayService,
+  IItineraryDayResponse,
+} from '../../../../../../core/services/itinerary/itinerary-day/itinerary-day.service';
+import {
+  ItineraryDayCMSService,
+  IItineraryDayCMSResponse,
+} from '../../../../../../core/services/itinerary/itinerary-day/itinerary-day-cms.service';
 
 // Interface para los elementos del itinerario en el timeline
 interface ItineraryItem {
@@ -37,33 +57,33 @@ interface ProcessedItineraryDay {
   selector: 'app-itinerary-day',
   standalone: false,
   templateUrl: './itinerary-day.component.html',
-  styleUrl: './itinerary-day.component.scss'
+  styleUrl: './itinerary-day.component.scss',
 })
 export class ItineraryDayComponent implements OnInit, OnChanges {
   @Input() tourId: number | undefined;
   @Input() itineraryId: number | undefined;
   @Input() departureId: number | undefined; // NUEVO: Recibir el departure ID seleccionado
-  
+
   // NUEVO: Output para emitir actividades seleccionadas
   @Output() activitySelected = new EventEmitter<ActivityHighlight>();
-  
+
   @ViewChildren('itineraryPanel') itineraryPanels!: QueryList<Panel>;
-  
+
   // Estados del componente
   loading = true;
   showDebug = false;
-  
+
   // Propiedades para los días del itinerario
   itineraryDays: IItineraryDayResponse[] = [];
   itineraryDaysCMS: IItineraryDayCMSResponse[] = [];
   processedDays: ProcessedItineraryDay[] = [];
-  
+
   // Propiedades para el timeline
   itineraryItems: ItineraryItem[] = [];
-  
+
   // Map para optimización de búsquedas O(1)
   private daysCMSMap = new Map<number, IItineraryDayCMSResponse>();
-  
+
   constructor(
     private itineraryService: ItineraryService,
     private itineraryDayService: ItineraryDayService,
@@ -83,12 +103,11 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    
     // Si cambió el itineraryId o departureId
     if (changes['itineraryId'] || changes['departureId']) {
       const currentItineraryId = this.itineraryId;
       const currentDepartureId = this.departureId;
-            
+
       if (currentItineraryId) {
         this.loadInitialData();
       } else {
@@ -100,6 +119,13 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
 
   // NUEVO: Manejar selección de actividad y reenviar al padre
   onActivitySelected(activityHighlight: ActivityHighlight): void {
+    console.log('ItineraryDay - Actividad recibida de Activities:', {
+      id: activityHighlight.id,
+      title: activityHighlight.title,
+      price: activityHighlight.price,
+      added: activityHighlight.added,
+    });
+
     this.activitySelected.emit(activityHighlight);
   }
 
@@ -127,28 +153,33 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
    */
   private loadItineraryDaysData(itineraryIds: number[]): void {
     this.loading = true;
-        
+
     // Crear observables para cada itineraryId y combinar los resultados
-    const itineraryDaysObservables = itineraryIds.map(itineraryId => 
+    const itineraryDaysObservables = itineraryIds.map((itineraryId) =>
       this.itineraryDayService.getAll({ itineraryId }).pipe(
-        catchError(error => {
-          console.error(`❌ Error loading days for itinerary ${itineraryId}:`, error);
+        catchError((error) => {
+          console.error(
+            `❌ Error loading days for itinerary ${itineraryId}:`,
+            error
+          );
           return of([]);
         })
       )
     );
 
     // Primero cargar todos los días de itinerario
-    forkJoin(itineraryDaysObservables).pipe(
-      map(daysArrays => daysArrays.flat()), // Aplanar el array de arrays
-      catchError(error => {
-        console.error('❌ Error loading itinerary days:', error);
-        return of([]);
-      })
-    ).subscribe(filteredItineraryDays => {      
-      // Ahora cargar el CMS usando los IDs de los días obtenidos
-      this.loadItineraryDaysCMS(filteredItineraryDays);
-    });
+    forkJoin(itineraryDaysObservables)
+      .pipe(
+        map((daysArrays) => daysArrays.flat()), // Aplanar el array de arrays
+        catchError((error) => {
+          console.error('❌ Error loading itinerary days:', error);
+          return of([]);
+        })
+      )
+      .subscribe((filteredItineraryDays) => {
+        // Ahora cargar el CMS usando los IDs de los días obtenidos
+        this.loadItineraryDaysCMS(filteredItineraryDays);
+      });
   }
 
   /**
@@ -161,12 +192,12 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
     }
 
     // Obtener los IDs de los días para filtrar el CMS
-    const dayIds = itineraryDays.map(day => day.id);
-    
+    const dayIds = itineraryDays.map((day) => day.id);
+
     // Crear observables para obtener CMS de cada día
-    const itineraryDaysCMSObservables = dayIds.map(dayId => 
+    const itineraryDaysCMSObservables = dayIds.map((dayId) =>
       this.itineraryDayCMSService.getAll({ itineraryDayId: dayId }).pipe(
-        catchError(error => {
+        catchError((error) => {
           console.error(`❌ Error loading CMS for day ${dayId}:`, error);
           return of([]);
         })
@@ -174,21 +205,23 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
     );
 
     // Combinar todas las llamadas de CMS
-    forkJoin(itineraryDaysCMSObservables).pipe(
-      map(cmsArrays => cmsArrays.flat()), // Aplanar el array de arrays
-      finalize(() => {
-        this.loading = false;
-      })
-    ).subscribe(filteredItineraryDaysCMS => {      
-      // Almacenar los datos ya filtrados
-      this.itineraryDays = itineraryDays;
-      this.itineraryDaysCMS = filteredItineraryDaysCMS;
+    forkJoin(itineraryDaysCMSObservables)
+      .pipe(
+        map((cmsArrays) => cmsArrays.flat()), // Aplanar el array de arrays
+        finalize(() => {
+          this.loading = false;
+        })
+      )
+      .subscribe((filteredItineraryDaysCMS) => {
+        // Almacenar los datos ya filtrados
+        this.itineraryDays = itineraryDays;
+        this.itineraryDaysCMS = filteredItineraryDaysCMS;
 
-      // Procesar datos del itinerario
-      this.createDaysCMSMap(filteredItineraryDaysCMS);
-      this.processItineraryDays();
-      this.createItineraryItemsFromDays();      
-    });
+        // Procesar datos del itinerario
+        this.createDaysCMSMap(filteredItineraryDaysCMS);
+        this.processItineraryDays();
+        this.createItineraryItemsFromDays();
+      });
   }
 
   /**
@@ -196,8 +229,8 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
    */
   private createDaysCMSMap(daysCMS: IItineraryDayCMSResponse[]): void {
     this.daysCMSMap.clear();
-    
-    daysCMS.forEach(cms => {
+
+    daysCMS.forEach((cms) => {
       this.daysCMSMap.set(cms.itineraryDayId, cms);
     });
   }
@@ -207,20 +240,20 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
    */
   private processItineraryDays(): void {
     this.processedDays = [];
-        
-    this.itineraryDays.forEach(day => {
+
+    this.itineraryDays.forEach((day) => {
       // Búsqueda O(1) del contenido CMS asociado
       const cmsData = this.daysCMSMap.get(day.id);
-      
+
       const processedDay: ProcessedItineraryDay = {
         day: day,
         cms: cmsData,
-        hasValidData: !!(day.name || cmsData?.longTitle)
+        hasValidData: !!(day.name || cmsData?.longTitle),
       };
-      
+
       this.processedDays.push(processedDay);
     });
-    
+
     // Ordenar por número de día
     this.processedDays.sort((a, b) => a.day.dayNumber - b.day.dayNumber);
   }
@@ -232,10 +265,10 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
     this.itineraryItems = this.processedDays.map((processedDay, index) => {
       const day = processedDay.day;
       const cms = processedDay.cms;
-      
+
       // Determinar el título del día (sin el número de día)
       const dayTitle = cms?.longTitle || day.name || `Día ${day.dayNumber}`;
-      
+
       // Crear descripción principal
       let description = '';
       if (cms?.webDescription) {
@@ -245,17 +278,21 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
       } else {
         description = `<p>Día ${day.dayNumber} del itinerario</p>`;
       }
-      
+
       // Información adicional
-      const hasAdditionalInfo = !!(cms?.additionalInfoTitle && cms?.additionalInfoContent);
+      const hasAdditionalInfo = !!(
+        cms?.additionalInfoTitle && cms?.additionalInfoContent
+      );
       let additionalInfoContent: SafeHtml | undefined;
-      
+
       if (hasAdditionalInfo && cms?.additionalInfoContent) {
-        additionalInfoContent = this.sanitizer.bypassSecurityTrustHtml(cms.additionalInfoContent);
+        additionalInfoContent = this.sanitizer.bypassSecurityTrustHtml(
+          cms.additionalInfoContent
+        );
       }
-      
+
       const imageAlt = `Día ${day.dayNumber} ${dayTitle}`;
-      
+
       return {
         dayId: day.id,
         dayNumber: day.dayNumber,
@@ -268,7 +305,7 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
         additionalInfoTitle: cms?.additionalInfoTitle || undefined,
         additionalInfoContent: additionalInfoContent,
         hasAdditionalInfo: hasAdditionalInfo,
-        icon: 'pi-map-marker'
+        icon: 'pi-map-marker',
       } as ItineraryItem;
     });
   }
@@ -279,12 +316,14 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
     const index = element.getAttribute('data-index');
     if (index !== null) {
       const itemIndex = parseInt(index, 10);
-      this.itineraryItems[itemIndex].collapsed = !this.itineraryItems[itemIndex].collapsed;
+      this.itineraryItems[itemIndex].collapsed =
+        !this.itineraryItems[itemIndex].collapsed;
     }
   }
 
   handlePanelClick(index: number): void {
-    this.itineraryItems[index].collapsed = !this.itineraryItems[index].collapsed;
+    this.itineraryItems[index].collapsed =
+      !this.itineraryItems[index].collapsed;
   }
 
   /**
@@ -315,9 +354,11 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
   get itineraryStats() {
     return {
       totalDays: this.processedDays.length,
-      daysWithCMS: this.processedDays.filter(day => !!day.cms).length,
-      daysWithImages: this.itineraryItems.filter(item => item.image).length,
-      daysWithAdditionalInfo: this.itineraryItems.filter(item => item.hasAdditionalInfo).length
+      daysWithCMS: this.processedDays.filter((day) => !!day.cms).length,
+      daysWithImages: this.itineraryItems.filter((item) => item.image).length,
+      daysWithAdditionalInfo: this.itineraryItems.filter(
+        (item) => item.hasAdditionalInfo
+      ).length,
     };
   }
 

@@ -168,4 +168,13 @@
   <div *ngIf="error" class="error-message">
     <p>{{ error }}</p>
   </div>
+
+  <!-- Modal de login -->
+  <app-login-modal
+    [visible]="loginDialogVisible"
+    (close)="closeLoginModal()"
+    (login)="navigateToLogin()"
+    (register)="navigateToRegister()"
+  >
+  </app-login-modal>
 </div>

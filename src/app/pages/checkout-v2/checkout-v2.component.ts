@@ -84,6 +84,9 @@ export class CheckoutV2Component implements OnInit {
   // Tour slug para navegación
   tourSlug: string = '';
 
+  // Propiedades para autenticación
+  loginDialogVisible: boolean = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -809,6 +812,26 @@ export class CheckoutV2Component implements OnInit {
 
   // Método para navegar al siguiente paso con validación
   async nextStepWithValidation(targetStep: number): Promise<void> {
+    // Verificar autenticación para pasos que la requieren
+    if (targetStep >= 2) {
+      this.authService.isLoggedIn().subscribe((isLoggedIn) => {
+        if (!isLoggedIn) {
+          // Usuario no está logueado, mostrar modal
+          sessionStorage.setItem('redirectUrl', window.location.pathname);
+          this.loginDialogVisible = true;
+          return;
+        }
+        // Usuario está logueado, continuar con la validación normal
+        this.performStepValidation(targetStep);
+      });
+      return;
+    }
+
+    // Para el paso 0 (personalizar viaje) y paso 1 (vuelos), no se requiere autenticación
+    this.performStepValidation(targetStep);
+  }
+
+  private async performStepValidation(targetStep: number): Promise<void> {
     // Guardar cambios de travelers, habitaciones, seguros y actividades antes de continuar
     if (
       targetStep === 1 &&
@@ -1094,5 +1117,43 @@ export class CheckoutV2Component implements OnInit {
         });
       }
     });
+  }
+
+  // Métodos para autenticación
+  checkAuthAndContinue(
+    nextStep: number,
+    activateCallback: () => void,
+    useFlightless: boolean = false
+  ): void {
+    this.authService.isLoggedIn().subscribe((isLoggedIn) => {
+      if (isLoggedIn) {
+        // Usuario está logueado, proceder normalmente
+        if (useFlightless) {
+          // Lógica para continuar sin vuelos
+          this.nextStepWithValidation(nextStep);
+        } else {
+          // Lógica normal
+          this.nextStepWithValidation(nextStep);
+        }
+      } else {
+        // Usuario no está logueado, mostrar modal
+        sessionStorage.setItem('redirectUrl', window.location.pathname);
+        this.loginDialogVisible = true;
+      }
+    });
+  }
+
+  closeLoginModal(): void {
+    this.loginDialogVisible = false;
+  }
+
+  navigateToLogin(): void {
+    this.closeLoginModal();
+    this.router.navigate(['/login']);
+  }
+
+  navigateToRegister(): void {
+    this.closeLoginModal();
+    this.router.navigate(['/sign-up']);
   }
 }

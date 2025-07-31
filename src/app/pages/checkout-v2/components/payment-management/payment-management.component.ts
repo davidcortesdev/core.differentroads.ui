@@ -1,6 +1,8 @@
 import { Component, Input, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { IScalapayOrderResponse, NewScalapayService } from '../../services/newScalapay.service';
 import { Router } from '@angular/router';
+import { PaymentsNetService, PaymentStatusFilter } from '../../services/paymentsNet.service';
+import { IFormData, NewRedsysService } from '../../services/newRedsys.service';
 
 // Interfaces y tipos
 export type PaymentType = 'complete' | 'deposit' | 'installments';
@@ -44,7 +46,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
     isLoading: false
   };
 
-  constructor(private readonly scalapayService: NewScalapayService, private readonly router: Router) {}
+  constructor(private readonly scalapayService: NewScalapayService, private readonly router: Router, private readonly paymentsService: PaymentsNetService, private readonly redsysService: NewRedsysService) { }
 
   ngOnInit(): void {
     this.initializeScalapayScript();
@@ -73,11 +75,11 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
 
   get isPaymentValid(): boolean {
     if (!this.paymentState.type) return false;
-    
+
     if (this.paymentState.type === 'installments') {
       return !!this.paymentState.installmentOption;
     }
-    
+
     return !!this.paymentState.method;
   }
 
@@ -106,7 +108,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
   // Dropdown management
   toggleDropdown(dropdown: keyof typeof this.dropdownStates): void {
     this.dropdownStates[dropdown] = !this.dropdownStates[dropdown];
-    
+
     if (dropdown === 'main' && !this.dropdownStates.main) {
       this.dropdownStates.installments = false;
       this.dropdownStates.paymentMethods = false;
@@ -119,15 +121,23 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
   }
 
   async submitPayment(): Promise<void> {
+
     if (!this.isPaymentValid) return;
 
     this.paymentState.isLoading = true;
 
     try {
+
       if (this.paymentState.type === 'installments') {
         await this.processInstallmentPayment();
+      } else if (this.paymentMethod === 'creditCard') {
+        if (this.paymentState.type === 'deposit') {
+          await this.processCreditCardPayment(200);
+        } else {
+          await this.processCreditCardPayment(this.totalPrice);
+        }
       } else {
-        await this.processRegularPayment();
+        //TODO process transfer payment
       }
     } catch (error) {
       console.error('Payment processing failed:', error);
@@ -171,7 +181,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
 
   private updatePriceContainers(): void {
     const formattedPrice = `€ ${this.totalPrice?.toFixed?.(2) ?? this.totalPrice}`;
-    
+
     ['three', 'four'].forEach(option => {
       const container = document.getElementById(`price-container-${option}`);
       if (container) {
@@ -191,20 +201,62 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
     const baseUrl = (window.location.href).replace(this.router.url, '');
 
     console.log('baseUrl', baseUrl);
-    
+
+    //El payment se crea en el backend
     const response = await this.scalapayService.createOrder(this.reservationId, payments, baseUrl).toPromise();
-    
+
     if (response?.checkoutUrl) {
       window.location.href = response.checkoutUrl;
     }
   }
 
-  private async processRegularPayment(): Promise<void> {
-    const paymentOption: PaymentOption = {
-      type: this.paymentState.type!,
-      method: this.paymentState.method!
-    };
-    
-    this.paymentCompleted.emit(paymentOption);
+  private async processCreditCardPayment(amount: number): Promise<void> {
+    const response = await this.paymentsService.create({
+      reservationId: this.reservationId,
+      amount: amount,
+      paymentDate: new Date(),
+      paymentMethodId: 3, //Redsys en dev, TODO get de la tabla
+      paymentStatusId: 1 //Pending en dev, TODO get de la tabla
+    }).toPromise();
+
+    if (!response) {
+      throw new Error('Error al crear el pago');
+    }
+
+    const formData: IFormData | undefined = await this.redsysService.generateFormData(response.id).toPromise();
+    if (formData) {
+      await this.enviarFormARedsys(formData);
+    }
+  }
+
+  private async enviarFormARedsys(formData: IFormData): Promise<void> {
+
+    if (formData) {
+      // Create and submit form to Redsys
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = 'https://sis-t.redsys.es:25443/sis/realizarPago';
+
+      const input1 = document.createElement('input');
+      input1.type = 'hidden';
+      input1.name = 'Ds_SignatureVersion';
+      input1.value = formData.ds_SignatureVersion;
+      form.appendChild(input1);
+
+      const input2 = document.createElement('input');
+      input2.type = 'hidden';
+      input2.name = 'Ds_MerchantParameters';
+      input2.value = formData.ds_MerchantParameters;
+      form.appendChild(input2);
+
+      const input3 = document.createElement('input');
+      input3.type = 'hidden';
+      input3.name = 'Ds_Signature';
+      input3.value = formData.ds_Signature;
+      form.appendChild(input3);
+
+      document.body.appendChild(form);
+      form.submit();
+    }
   }
 }

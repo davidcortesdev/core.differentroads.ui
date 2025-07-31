@@ -120,13 +120,6 @@ export class TourItineraryV2Component implements OnInit {
 
   // Manejar selección de actividad y reenviar al padre
   onActivitySelected(activityHighlight: ActivityHighlight): void {
-    console.log('TourItineraryV2 - Actividad recibida de ItineraryDay:', {
-      id: activityHighlight.id,
-      title: activityHighlight.title,
-      price: activityHighlight.price,
-      added: activityHighlight.added,
-    });
-
     this.activitySelected.emit(activityHighlight);
   }
 

@@ -12,6 +12,7 @@ import {
   IAgeGroupResponse,
 } from '../../core/services/agegroup/age-group.service';
 import { ReservationTravelerActivityService } from '../../core/services/reservation/reservation-traveler-activity.service';
+import { ReservationTravelerActivityPackService } from '../../core/services/reservation/reservation-traveler-activity-pack.service';
 import {
   ItineraryService,
   IItineraryResponse,
@@ -96,6 +97,7 @@ export class CheckoutV2Component implements OnInit {
     private departurePriceSupplementService: DeparturePriceSupplementService,
     private ageGroupService: AgeGroupService,
     private reservationTravelerActivityService: ReservationTravelerActivityService,
+    private reservationTravelerActivityPackService: ReservationTravelerActivityPackService,
     private itineraryService: ItineraryService,
     private messageService: MessageService,
     private paymentsService: PaymentsNetService,
@@ -598,7 +600,7 @@ export class CheckoutV2Component implements OnInit {
     }
   }
 
-  // Método para guardar actividades seleccionadas (USANDO SOLO EL SERVICIO PROPORCIONADO)
+  // Método para guardar actividades seleccionadas (CON SOPORTE COMPLETO PARA PACKS)
   async saveActivitiesAssignments(): Promise<boolean> {
     if (
       !this.reservationId ||
@@ -609,31 +611,36 @@ export class CheckoutV2Component implements OnInit {
     }
 
     try {
-      // En lugar de obtener travelers, trabajamos directamente con los datos que ya tenemos
-      // Crear las nuevas asignaciones de actividades usando los datos del travelerSelector
-      const createPromises: Promise<any>[] = [];
-
       // Verificar que tenemos el componente travelerSelector con datos
       if (!this.travelerSelector) {
         throw new Error('No se encontró información de viajeros');
       }
 
       // Obtener los travelers desde el componente travelerSelector
-      // (asumiendo que tiene una propiedad con los travelers existentes)
       const existingTravelers = this.travelerSelector.existingTravelers || [];
 
       if (existingTravelers.length === 0) {
         throw new Error('No se encontraron viajeros para esta reserva');
       }
 
-      // Limpiar actividades existentes para esta reserva
-      await this.clearExistingActivitiesSimple(existingTravelers);
+      // Limpiar actividades y packs existentes para esta reserva
+      await this.clearExistingActivitiesAndPacks(existingTravelers);
 
-      // Para cada actividad seleccionada, crear una asignación para cada viajero
-      this.selectedActivities.forEach((activity) => {
+      // Separar actividades individuales y packs
+      const individualActivities = this.selectedActivities.filter(
+        (activity) => activity.type === 'act'
+      );
+      const activityPacks = this.selectedActivities.filter(
+        (activity) => activity.type === 'pack'
+      );
+
+      const createPromises: Promise<any>[] = [];
+
+      // Crear asignaciones para actividades individuales
+      individualActivities.forEach((activity) => {
         existingTravelers.forEach((traveler: any) => {
           const activityAssignment = {
-            id: 0, // Para nuevas entradas
+            id: 0,
             reservationTravelerId: traveler.id,
             activityId: activity.id,
           };
@@ -641,6 +648,28 @@ export class CheckoutV2Component implements OnInit {
           const createPromise = new Promise((resolve, reject) => {
             this.reservationTravelerActivityService
               .create(activityAssignment)
+              .subscribe({
+                next: (result) => resolve(result),
+                error: (error) => reject(error),
+              });
+          });
+
+          createPromises.push(createPromise);
+        });
+      });
+
+      // Crear asignaciones para packs de actividades
+      activityPacks.forEach((pack) => {
+        existingTravelers.forEach((traveler: any) => {
+          const packAssignment = {
+            id: 0,
+            reservationTravelerId: traveler.id,
+            activityPackId: pack.id,
+          };
+
+          const createPromise = new Promise((resolve, reject) => {
+            this.reservationTravelerActivityPackService
+              .create(packAssignment)
               .subscribe({
                 next: (result) => resolve(result),
                 error: (error) => reject(error),
@@ -661,41 +690,62 @@ export class CheckoutV2Component implements OnInit {
     }
   }
 
-  // Método auxiliar simplificado para limpiar actividades existentes
-  private async clearExistingActivitiesSimple(
+  // Método para limpiar actividades y packs existentes
+  private async clearExistingActivitiesAndPacks(
     existingTravelers: any[]
   ): Promise<void> {
     const deletePromises: Promise<any>[] = [];
 
     for (const traveler of existingTravelers) {
       try {
-        // Obtener actividades existentes para este viajero usando el servicio proporcionado
+        // Obtener y eliminar actividades individuales existentes
         const existingActivities = await new Promise<any[]>(
           (resolve, reject) => {
             this.reservationTravelerActivityService
               .getByReservationTraveler(traveler.id)
               .subscribe({
                 next: (activities) => resolve(activities),
-                error: (error) => resolve([]), // Si hay error, asumimos que no hay actividades
+                error: (error) => resolve([]),
               });
           }
         );
 
-        // Eliminar cada actividad existente
         existingActivities.forEach((activity) => {
           const deletePromise = new Promise((resolve, reject) => {
             this.reservationTravelerActivityService
               .delete(activity.id)
               .subscribe({
                 next: (result) => resolve(result),
-                error: (error) => resolve(false), // Continuar aunque falle una eliminación
+                error: (error) => resolve(false),
+              });
+          });
+          deletePromises.push(deletePromise);
+        });
+
+        // Obtener y eliminar packs de actividades existentes
+        const existingPacks = await new Promise<any[]>((resolve, reject) => {
+          this.reservationTravelerActivityPackService
+            .getByReservationTraveler(traveler.id)
+            .subscribe({
+              next: (packs) => resolve(packs),
+              error: (error) => resolve([]),
+            });
+        });
+
+        existingPacks.forEach((pack) => {
+          const deletePromise = new Promise((resolve, reject) => {
+            this.reservationTravelerActivityPackService
+              .delete(pack.id)
+              .subscribe({
+                next: (result) => resolve(result),
+                error: (error) => resolve(false),
               });
           });
           deletePromises.push(deletePromise);
         });
       } catch (error) {
         console.warn(
-          `Error al obtener actividades para el viajero ${traveler.id}:`,
+          `Error al obtener actividades/packs para el viajero ${traveler.id}:`,
           error
         );
       }
@@ -1090,6 +1140,7 @@ export class CheckoutV2Component implements OnInit {
         },
         error: (error) => {
           console.error('❌ Error obteniendo Cognito ID:', error);
+        },
         },
       });
     } else {

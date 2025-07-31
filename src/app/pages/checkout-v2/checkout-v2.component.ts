@@ -1140,10 +1140,8 @@ export class CheckoutV2Component implements OnInit {
         },
         error: (error) => {
           console.error('❌ Error obteniendo Cognito ID:', error);
-        },
-        },
+        }
       });
-    } else {
     }
   }
 

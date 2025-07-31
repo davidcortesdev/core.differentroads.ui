@@ -31,6 +31,10 @@ import {
   ReservationTravelerService,
   IReservationTravelerResponse,
 } from '../../../../core/services/reservation/reservation-traveler.service';
+import {
+  AgeGroupService,
+  IAgeGroupResponse,
+} from '../../../../core/services/agegroup/age-group.service';
 import { catchError, map } from 'rxjs/operators';
 import { of, forkJoin } from 'rxjs';
 
@@ -66,6 +70,9 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
   // Variables siguiendo el patrón del ejemplo
   optionalActivities: ActivityWithPrice[] = [];
   addedActivities: Set<number> = new Set();
+  
+  // Cache de grupos de edad
+  private ageGroupsCache: IAgeGroupResponse[] = [];
 
   constructor(
     private activityService: ActivityService,
@@ -73,18 +80,12 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
     private activityPackPriceService: ActivityPackPriceService,
     private reservationTravelerActivityService: ReservationTravelerActivityService,
     private reservationTravelerActivityPackService: ReservationTravelerActivityPackService,
-    private reservationTravelerService: ReservationTravelerService
+    private reservationTravelerService: ReservationTravelerService,
+    private ageGroupService: AgeGroupService
   ) {}
 
   ngOnInit(): void {
-    if (this.itineraryId && this.departureId) {
-      this.loadActivities();
-    }
-
-    // Mostrar actividades por pasajero si tenemos reservationId
-    if (this.reservationId) {
-      this.showActivitiesByTraveler();
-    }
+    this.loadAgeGroups();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -98,6 +99,37 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
 
     // Si cambia reservationId, mostrar actividades por pasajero
     if (changes['reservationId'] && this.reservationId) {
+      this.showActivitiesByTraveler();
+    }
+  }
+
+  /**
+   * Carga los grupos de edad desde el servicio
+   */
+  private loadAgeGroups(): void {
+    this.ageGroupService.getAll().subscribe({
+      next: (ageGroups) => {
+        this.ageGroupsCache = ageGroups;
+        this.initializeComponent();
+      },
+      error: (error) => {
+        console.error('Error loading age groups:', error);
+        // Continuar sin grupos de edad, usar valores por defecto
+        this.initializeComponent();
+      }
+    });
+  }
+
+  /**
+   * Inicializa el componente después de cargar los grupos de edad
+   */
+  private initializeComponent(): void {
+    if (this.itineraryId && this.departureId) {
+      this.loadActivities();
+    }
+
+    // Mostrar actividades por pasajero si tenemos reservationId
+    if (this.reservationId) {
       this.showActivitiesByTraveler();
     }
   }
@@ -259,7 +291,7 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
           // Transformar precios al formato esperado (similar al ejemplo)
           this.optionalActivities[index].priceData = prices.map(
             (price: IActivityPriceResponse) => ({
-              age_group_name: 'Adultos', // Simplificado para adultos
+              age_group_name: this.getAgeGroupName(price.ageGroupId),
               value: price.campaignPrice || price.basePrice,
               currency: 'EUR', // Ajustar según tu moneda
             })
@@ -291,7 +323,7 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
           // Transformar precios al formato esperado
           this.optionalActivities[index].priceData = prices.map(
             (price: IActivityPackPriceResponse) => ({
-              age_group_name: 'Adultos',
+              age_group_name: this.getAgeGroupName(price.ageGroupId),
               value: price.campaignPrice || price.basePrice,
               currency: 'EUR',
             })
@@ -303,6 +335,14 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
           }
         });
     }
+  }
+
+  /**
+   * Obtiene el nombre del grupo de edad basado en el ID
+   */
+  private getAgeGroupName(ageGroupId: number): string {
+    const ageGroup = this.ageGroupsCache.find(group => group.id === ageGroupId);
+    return ageGroup ? ageGroup.name : 'Adultos'; // Por defecto
   }
 
   /**

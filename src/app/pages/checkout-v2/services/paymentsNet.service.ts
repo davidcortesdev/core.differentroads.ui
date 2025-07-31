@@ -14,6 +14,28 @@ export interface IPaymentResponse {
     notes?: string;
     attachmentUrl?: string;
 }
+
+export interface IPaymentCreate {
+    reservationId: number;
+    amount: number;
+    paymentDate: Date;
+    paymentMethodId: number;
+    paymentStatusId: number;
+    transactionReference?: string;
+    notes?: string;
+    attachmentUrl?: string;
+}
+
+export interface IPaymentUpdate {
+    id: number;
+    amount?: number;
+    paymentDate?: Date;
+    paymentMethodId?: number;
+    paymentStatusId?: number;
+    transactionReference?: string;
+    notes?: string;
+}
+
 export interface PaymentFilter {
     id?: number;
     reservationId?: number;
@@ -48,8 +70,11 @@ export class PaymentsNetService {
         return this.http.get<IPaymentResponse>(`${this.API_URL}/ReservationPayment/${paymentId}`);
     }
 
-    update(payment: IPaymentResponse): Observable<IPaymentResponse> {
+    update(payment: IPaymentUpdate): Observable<IPaymentResponse> {
         return this.http.put<IPaymentResponse>(`${this.API_URL}/ReservationPayment/${payment.id}`, payment);
+    } 
+    create(payment: IPaymentCreate): Observable<IPaymentResponse> {
+        return this.http.post<IPaymentResponse>(`${this.API_URL}/ReservationPayment`, payment);
     }
 
     getStatus(filter: PaymentStatusFilter): Observable<IPaymentStatusResponse[]> {
@@ -78,4 +103,6 @@ export class PaymentsNetService {
     cleanScalapayPendingPayments(reservationId: number): Observable<void> {
         return this.http.delete<void>(`${this.API_URL}/ReservationPayment/clean-pending-payments/${reservationId}`);
     }
+
+   
 }

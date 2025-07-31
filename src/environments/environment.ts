@@ -32,6 +32,7 @@ export const environment = {
   reservationsApiUrl: 'https://reservations-dev.differentroads.es/api',
   amadeusApiUrl: 'https://amadeus-dev.differentroads.es/api',
   usersApiUrl: 'https://auth-dev.differentroads.es/api',
+  redsysApiUrl: 'https://redsys-dev.differentroads.es/api',
 
 
   scalapayApiUrl: 'https://scalapay-dev.differentroads.es/api',

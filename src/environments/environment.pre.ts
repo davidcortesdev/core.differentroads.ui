@@ -32,7 +32,7 @@ export const environment = {
   reservationsApiUrl: 'https://reservations-pre.differentroads.es/api',
   amadeusApiUrl: 'https://amadeus-pre.differentroads.es/api',
   usersApiUrl: 'https://auth-pre.differentroads.es/api',
-
+  redsysApiUrl: 'https://redsys-pre.differentroads.es/api',
   scalapayApiUrl: 'https://scalapay-pre.differentroads.es/api',
   scalapayApiKey: 'qhtfs87hjnc12kkos',
   retaileriddefault: 7,

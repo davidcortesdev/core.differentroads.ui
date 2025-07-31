@@ -244,24 +244,37 @@ $primary: var(--p-primary-color);
 }
 .dates {
     @include flex(null, center);
-    gap: 1.5rem;
+    gap: 0.75rem;
     .pi-arrow-right {
         @extend %txt-azul;
         width: 17px;
         height: 9px;
+        flex-shrink: 0;
     }
     .d-date {
         display: flex;
         flex-direction: column;
+        align-items: flex-start;
+        min-width: 106px;
+        width: 106px;
+        text-align: left;
         .d-name {
             @extend %txt-azul;
             font-size: 15px;
             font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
         }
         .d-day {
             @extend %txt-azul;
             font-size: 29px;
             font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
         }
     }
 }
@@ -397,8 +410,10 @@ $primary: var(--p-primary-color);
         }
     }
     .dates {
-        gap: 0.5rem;
+        gap: 0.25rem;
         .d-date {
+            min-width: 106px;
+            width: 106px;
             .d-name {
                 font-size: 14px;
             }
@@ -449,7 +464,11 @@ $primary: var(--p-primary-color);
                 }
                 .dates {
                     flex-direction: row;
-                    gap: 1rem;
+                    gap: 0.5rem;
+                    .d-date {
+                        min-width: 100px;
+                        width: 100px;
+                    }
                     .pi-arrow-right {
                         transform: none;
                         margin: 0 0.5rem;

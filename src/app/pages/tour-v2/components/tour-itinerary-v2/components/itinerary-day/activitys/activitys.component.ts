@@ -19,7 +19,11 @@ import {
   ActivityPackPriceService,
   IActivityPackPriceResponse,
 } from '../../../../../../../core/services/activity/activity-pack-price.service';
-import { catchError, map, of } from 'rxjs';
+import {
+  AgeGroupService,
+  IAgeGroupResponse,
+} from '../../../../../../../core/services/agegroup/age-group.service';
+import { catchError, map, of, forkJoin } from 'rxjs';
 import { ActivityHighlight } from '../../../../../../../shared/components/activity-card/activity-card.component';
 import { environment } from '../../../../../../../../environments/environment';
 
@@ -55,15 +59,19 @@ export class ActivitysComponent implements OnInit, OnChanges {
 
   // Datos para el carousel - transformados desde activities
   highlights: ActivityHighlight[] = [];
+  
+  // Cache de grupos de edad
+  private ageGroupsCache: IAgeGroupResponse[] = [];
 
   constructor(
     private activityService: ActivityService,
     private activityPriceService: ActivityPriceService,
-    private activityPackPriceService: ActivityPackPriceService
+    private activityPackPriceService: ActivityPackPriceService,
+    private ageGroupService: AgeGroupService
   ) {}
 
   ngOnInit(): void {
-    this.loadDataWithFilters();
+    this.loadAgeGroups();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -83,6 +91,23 @@ export class ActivitysComponent implements OnInit, OnChanges {
     if (itineraryChanged || itineraryDayChanged || departureChanged) {
       this.loadDataWithFilters();
     }
+  }
+
+  /**
+   * Carga los grupos de edad desde el servicio
+   */
+  private loadAgeGroups(): void {
+    this.ageGroupService.getAll().subscribe({
+      next: (ageGroups) => {
+        this.ageGroupsCache = ageGroups;
+        this.loadDataWithFilters();
+      },
+      error: (error) => {
+        console.error('Error loading age groups:', error);
+        // Continuar sin grupos de edad, usar valores por defecto
+        this.loadDataWithFilters();
+      }
+    });
   }
 
   private loadDataWithFilters(): void {
@@ -165,7 +190,7 @@ export class ActivitysComponent implements OnInit, OnChanges {
           // Transformar precios al formato esperado
           this.activities[index].priceData = prices.map(
             (price: IActivityPriceResponse) => ({
-              age_group_name: 'Adultos',
+              age_group_name: this.getAgeGroupName(price.ageGroupId),
               value: price.campaignPrice || price.basePrice,
               currency: 'EUR',
             })
@@ -195,7 +220,7 @@ export class ActivitysComponent implements OnInit, OnChanges {
           // Transformar precios al formato esperado
           this.activities[index].priceData = prices.map(
             (price: IActivityPackPriceResponse) => ({
-              age_group_name: 'Adultos',
+              age_group_name: this.getAgeGroupName(price.ageGroupId),
               value: price.campaignPrice || price.basePrice,
               currency: 'EUR',
             })
@@ -226,6 +251,14 @@ export class ActivitysComponent implements OnInit, OnChanges {
           type: activity.type as 'act' | 'pack',
         } as ActivityHighlight)
     );
+  }
+
+  /**
+   * Obtiene el nombre del grupo de edad basado en el ID
+   */
+  private getAgeGroupName(ageGroupId: number): string {
+    const ageGroup = this.ageGroupsCache.find(group => group.id === ageGroupId);
+    return ageGroup ? ageGroup.name : 'Adultos'; // Por defecto
   }
 
   /**

@@ -31,10 +31,10 @@
 
       <!-- ✅ NUEVO: Mostrar estado de actividades opcionales -->
       <div class="detail-item activities-status" *ngIf="shouldShowActivitiesStatus">
-        <span class="value val activities-label" 
+        <span class="value val activities-label"
               [class.with-activities]="hasAddedActivities"
               [class.without-activities]="!hasAddedActivities">
-          {{ hasAddedActivities ? 'Con actividades opcionales' : 'Sin actividades opcionales' }}
+          {{ activitiesStatusText }}
         </span>
       </div>
             

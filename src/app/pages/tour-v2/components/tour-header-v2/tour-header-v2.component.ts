@@ -37,6 +37,11 @@ import {
   ReservationTravelerActivityService,
   ReservationTravelerActivityCreate,
 } from '../../../../core/services/reservation/reservation-traveler-activity.service';
+// ✅ SOLO AGREGANDO: Servicio para paquetes
+import {
+  ReservationTravelerActivityPackService,
+  ReservationTravelerActivityPackCreate,
+} from '../../../../core/services/reservation/reservation-traveler-activity-pack.service';
 import { Subscription, forkJoin, of, Observable } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { Router } from '@angular/router';
@@ -64,6 +69,22 @@ interface AgeGroupCategories {
   babies: AgeGroupCategory;
 }
 
+// ✅ INTERFACE: Para análisis de tipos de actividades
+interface ActivityTypesAnalysis {
+  hasAct: boolean;
+  hasPack: boolean;
+  actCount: number;
+  packCount: number;
+}
+
+// ✅ INTERFACE para resultados de creación de actividades
+interface ActivityCreationResult {
+  success: boolean;
+  activity: ActivityHighlight;
+  result?: any;
+  error?: any;
+}
+
 @Component({
   selector: 'app-tour-header-v2',
   standalone: false,
@@ -78,11 +99,8 @@ export class TourHeaderV2Component
   @Input() selectedCity: string = '';
   @Input() selectedDeparture: any = null;
   @Input() totalPassengers: number = 1;
-  // NUEVO: Input para recibir las actividades seleccionadas
   @Input() selectedActivities: ActivityHighlight[] = [];
-  // NUEVO: Input para saber si se debe mostrar el estado de actividades
   @Input() showActivitiesStatus: boolean = false;
-  // ✅ NUEVOS INPUTS para age groups y datos de pasajeros con tipado fuerte
   @Input() passengersData: PassengersData = {
     adults: 1,
     children: 0,
@@ -92,6 +110,12 @@ export class TourHeaderV2Component
     adults: { id: null, lowerAge: null, upperAge: null },
     children: { id: null, lowerAge: null, upperAge: null },
     babies: { id: null, lowerAge: null, upperAge: null },
+  };
+  @Input() activityTypesAnalysis: ActivityTypesAnalysis = {
+    hasAct: false,
+    hasPack: false,
+    actCount: 0,
+    packCount: 0,
   };
 
   // Tour data
@@ -116,6 +140,8 @@ export class TourHeaderV2Component
     private reservationService: ReservationService,
     private reservationTravelerService: ReservationTravelerService,
     private reservationTravelerActivityService: ReservationTravelerActivityService,
+    // ✅ SOLO AGREGANDO: Servicio para paquetes
+    private reservationTravelerActivityPackService: ReservationTravelerActivityPackService,
     private el: ElementRef,
     private renderer: Renderer2,
     private router: Router,
@@ -133,19 +159,6 @@ export class TourHeaderV2Component
     if (changes['tourId'] && changes['tourId'].currentValue) {
       this.loadTourData(changes['tourId'].currentValue);
     }
-
-    // Console log cuando cambien las actividades seleccionadas
-    /*  if (changes['selectedActivities']) {
-      console.log(
-        'TourHeader - Actividades recibidas:',
-        this.selectedActivities
-      );
-      console.log('TourHeader - Actividades agregadas:', this.addedActivities);
-      console.log(
-        'TourHeader - Precio total con actividades:',
-        this.totalPriceWithActivities
-      );
-    } */
   }
 
   ngAfterViewInit() {
@@ -165,34 +178,23 @@ export class TourHeaderV2Component
     return this.totalPriceWithActivities > 0;
   }
 
-  // NUEVO: Calcular precio total incluyendo actividades
   get totalPriceWithActivities(): number {
     const activitiesTotal = this.selectedActivities
       .filter((activity) => activity.added)
       .reduce((sum, activity) => sum + (activity.price || 0), 0);
 
-    /* console.log('TourHeader - Cálculo precio total:', {
-      basePrice: this.totalPrice,
-      activitiesTotal: activitiesTotal,
-      totalWithActivities: this.totalPrice + activitiesTotal,
-    }); */
-
     return this.totalPrice + activitiesTotal;
   }
 
-  // NUEVO: Obtener actividades agregadas
   get addedActivities(): ActivityHighlight[] {
     return this.selectedActivities.filter((activity) => activity.added);
   }
 
-  // NUEVO: Verificar si hay actividades agregadas
   get hasAddedActivities(): boolean {
     return this.addedActivities.length > 0;
   }
 
-  // NUEVO: Verificar si debe mostrar estado de actividades
   get shouldShowActivitiesStatus(): boolean {
-    // Solo mostrar si el padre dice que debe mostrarse Y hay departure seleccionado
     return (
       this.showActivitiesStatus &&
       this.selectedDeparture &&
@@ -200,9 +202,50 @@ export class TourHeaderV2Component
     );
   }
 
-  // NUEVO: Verificar si ya se interactuó con actividades (no se usa más)
-  get hasInteractedWithActivities(): boolean {
-    return this.selectedActivities.length > 0;
+  // ✅ GETTER dinámico para texto de actividades
+  get activitiesStatusText(): string {
+    if (!this.hasAddedActivities) {
+      return 'Sin actividades opcionales';
+    }
+
+    const analysis = this.activityTypesAnalysis;
+
+    if (analysis.hasAct && analysis.hasPack) {
+      return 'Con actividades opcionales y paquetes';
+    }
+
+    if (analysis.hasAct && !analysis.hasPack) {
+      return 'Con actividades opcionales';
+    }
+
+    if (!analysis.hasAct && analysis.hasPack) {
+      return 'Con paquete de actividades';
+    }
+
+    return 'Con actividades opcionales';
+  }
+
+  get activitiesDetailText(): string {
+    if (!this.hasAddedActivities) {
+      return '';
+    }
+
+    const analysis = this.activityTypesAnalysis;
+    const parts: string[] = [];
+
+    if (analysis.hasAct) {
+      parts.push(
+        `${analysis.actCount} actividad${analysis.actCount !== 1 ? 'es' : ''}`
+      );
+    }
+
+    if (analysis.hasPack) {
+      parts.push(
+        `${analysis.packCount} paquete${analysis.packCount !== 1 ? 's' : ''}`
+      );
+    }
+
+    return parts.join(' y ');
   }
 
   get formattedPrice(): string {
@@ -253,36 +296,6 @@ export class TourHeaderV2Component
     } catch {
       return this.selectedDeparture.departureDate;
     }
-  }
-
-  private getTripTypeInfoForConsole(
-    group: string
-  ): { title: string; description: string; class: string } | undefined {
-    if (!group) return undefined;
-
-    const type = group.toLowerCase();
-
-    if (type.includes('single') || type.includes('singles')) {
-      return {
-        title: 'Single',
-        description: 'Viaje individual',
-        class: 'single',
-      };
-    }
-
-    if (type.includes('group') || type.includes('grupo')) {
-      return { title: 'Group', description: 'Viaje en grupo', class: 'group' };
-    }
-
-    if (type.includes('private') || type.includes('privado')) {
-      return {
-        title: 'Private',
-        description: 'Viaje privado',
-        class: 'private',
-      };
-    }
-
-    return undefined;
   }
 
   private loadTourData(tourId: number) {
@@ -483,6 +496,185 @@ export class TourHeaderV2Component
 
   @Output() bookingClick = new EventEmitter<void>();
 
+  // ✅ MÉTODO: Validar actividad
+  private validateActivity(activity: ActivityHighlight): {
+    isValid: boolean;
+    error?: string;
+  } {
+    const activityId = parseInt(activity.id);
+
+    if (isNaN(activityId) || activityId <= 0) {
+      return {
+        isValid: false,
+        error: `ID de actividad inválido: ${activity.id}`,
+      };
+    }
+
+    if (
+      !activity.type ||
+      (activity.type !== 'act' && activity.type !== 'pack')
+    ) {
+      return {
+        isValid: false,
+        error: `Tipo de actividad inválido: ${activity.type}`,
+      };
+    }
+
+    return { isValid: true };
+  }
+
+  // ✅ MÉTODO: Crear actividad individual (sin cambios)
+  private createTravelerActivity(
+    travelerId: number,
+    activity: ActivityHighlight
+  ): Observable<ActivityCreationResult> {
+    const validation = this.validateActivity(activity);
+
+    if (!validation.isValid) {
+      console.error(
+        '❌ Booking - Actividad inválida:',
+        validation.error,
+        activity
+      );
+      return of({
+        success: false,
+        activity: activity,
+        error: validation.error,
+      });
+    }
+
+    const travelerActivityData: ReservationTravelerActivityCreate = {
+      id: 0,
+      reservationTravelerId: travelerId,
+      activityId: parseInt(activity.id),
+    };
+
+    return this.reservationTravelerActivityService
+      .create(travelerActivityData)
+      .pipe(
+        map((result) => {
+          return {
+            success: true,
+            activity: activity,
+            result: result,
+          };
+        }),
+        catchError((error) => {
+          console.error('❌ Booking - Error creando actividad individual:', {
+            activityId: activity.id,
+            activityTitle: activity.title,
+            error: error,
+          });
+
+          return of({
+            success: false,
+            activity: activity,
+            error: error,
+          });
+        })
+      );
+  }
+
+  // ✅ MÉTODO NUEVO: Crear paquete de actividades
+  private createTravelerActivityPack(
+    travelerId: number,
+    activity: ActivityHighlight
+  ): Observable<ActivityCreationResult> {
+    const validation = this.validateActivity(activity);
+
+    if (!validation.isValid) {
+      console.error(
+        '❌ Booking - Paquete inválido:',
+        validation.error,
+        activity
+      );
+      return of({
+        success: false,
+        activity: activity,
+        error: validation.error,
+      });
+    }
+
+    const travelerActivityPackData: ReservationTravelerActivityPackCreate = {
+      id: 0,
+      reservationTravelerId: travelerId,
+      activityPackId: parseInt(activity.id), // ✅ activityPackId para paquetes
+    };
+
+    return this.reservationTravelerActivityPackService
+      .create(travelerActivityPackData)
+      .pipe(
+        map((result) => {
+          return {
+            success: true,
+            activity: activity,
+            result: result,
+          };
+        }),
+        catchError((error) => {
+          console.error('❌ Booking - Error creando paquete de actividades:', {
+            activityPackId: activity.id,
+            activityTitle: activity.title,
+            error: error,
+          });
+
+          return of({
+            success: false,
+            activity: activity,
+            error: error,
+          });
+        })
+      );
+  }
+
+  // ✅ MÉTODO MODIFICADO: Procesar actividades usando servicios apropiados según tipo
+  private processActivitiesForTravelers(travelers: any[]): Observable<{
+    successful: number;
+    failed: number;
+    details: ActivityCreationResult[];
+  }> {
+    const addedActivities = this.addedActivities;
+
+    if (addedActivities.length === 0) {
+      return of({ successful: 0, failed: 0, details: [] });
+    }
+
+    const activityObservables: Observable<ActivityCreationResult>[] = [];
+
+    // Crear observables para cada combinación traveler-actividad
+    travelers.forEach((traveler: any) => {
+      addedActivities.forEach((activity: ActivityHighlight) => {
+        // ✅ USAR SERVICIO APROPIADO SEGÚN TIPO
+        if (activity.type === 'act') {
+          activityObservables.push(
+            this.createTravelerActivity(traveler.id, activity)
+          );
+        } else if (activity.type === 'pack') {
+          activityObservables.push(
+            this.createTravelerActivityPack(traveler.id, activity)
+          );
+        }
+      });
+    });
+
+    if (activityObservables.length === 0) {
+      return of({ successful: 0, failed: 0, details: [] });
+    }
+
+    return forkJoin(activityObservables).pipe(
+      map((results: ActivityCreationResult[]) => {
+        const successful = results.filter((r) => r.success).length;
+        const failed = results.filter((r) => !r.success).length;
+
+        return { successful, failed, details: results };
+      }),
+      catchError((error) => {
+        console.error('💥 Booking - Error fatal en procesamiento:', error);
+        throw error;
+      })
+    );
+  }
+
   onBookingClick(): void {
     if (!this.selectedDeparture || !this.selectedDeparture.id) {
       alert('Por favor, selecciona una fecha de salida antes de continuar.');
@@ -504,12 +696,9 @@ export class TourHeaderV2Component
           this.usersNetService.getUsersByCognitoId(cognitoId).subscribe({
             next: (users) => {
               let userId: number | null = null; // Valor por defecto si no se encuentra el usuario
-              
+
               if (users && users.length > 0) {
                 userId = users[0].id;
-                console.log('Usuario logueado encontrado, ID:', userId);
-              } else {
-                console.log('Usuario no encontrado en la base de datos, usando userId null');
               }
 
               this.createReservation(userId);
@@ -517,23 +706,20 @@ export class TourHeaderV2Component
             error: (error) => {
               console.error('Error buscando usuario por Cognito ID:', error);
               this.createReservation(null); // Usar null en caso de error
-            }
+            },
           });
         } else {
-          console.log('Usuario no logueado, usando userId null');
           this.createReservation(null);
         }
       },
       error: (error) => {
         console.error('Error obteniendo Cognito ID:', error);
         this.createReservation(null); // Usar null en caso de error
-      }
+      },
     });
   }
 
   private createReservation(userId: number | null): void {
-    console.log('🏗️ Creando reservación con userId:', userId);
-    
     const reservationData: ReservationCreate = {
       id: 0,
       tkId: '',
@@ -543,7 +729,7 @@ export class TourHeaderV2Component
       departureId: this.selectedDeparture.id,
       userId: userId, // Usar el ID del usuario logueado o null
       totalPassengers: this.totalPassengers || 1,
-      totalAmount: this.totalPriceWithActivities || 0, // MODIFICADO: Usar precio con actividades
+      totalAmount: this.totalPriceWithActivities || 0,
       budgetAt: '',
       cartAt: new Date().toISOString(),
       abandonedAt: '',
@@ -552,38 +738,20 @@ export class TourHeaderV2Component
       updatedAt: new Date().toISOString(),
     };
 
-    console.log('📝 Datos de la reservación:', {
-      tourId: reservationData.tourId,
-      departureId: reservationData.departureId,
-      userId: reservationData.userId,
-      totalPassengers: reservationData.totalPassengers,
-      totalAmount: reservationData.totalAmount
-    });
-
-    /* console.log('Booking - Iniciando proceso de reservación con datos:', {
-      reservationData,
-      selectedActivities: this.addedActivities,
-      passengersData: this.passengersData,
-    }); */
-
     this.subscriptions.add(
       this.reservationService
         .create(reservationData)
         .pipe(
           switchMap((createdReservation: IReservationResponse) => {
-            /*             console.log('Booking - Reservación creada:', createdReservation);
-             */
-            // ✅ MODIFICADO: Crear travelers con age groups específicos usando tipado fuerte
             const travelerObservables = [];
             let travelerNumber = 1;
 
             // Crear travelers para adultos
             for (let i = 0; i < this.passengersData.adults; i++) {
-              const isLeadTraveler = travelerNumber === 1; // Solo el primer traveler es lead
+              const isLeadTraveler = travelerNumber === 1;
 
-              // ✅ VALIDACIÓN: Solo crear si hay age group válido
               if (!this.ageGroupCategories.adults.id) {
-                console.error('No se encontró age group para adultos');
+                console.error('❌ No se encontró age group para adultos');
                 alert(
                   'Error: No se pudo determinar el grupo de edad para adultos.'
                 );
@@ -597,7 +765,7 @@ export class TourHeaderV2Component
                 travelerNumber: travelerNumber,
                 isLeadTraveler: isLeadTraveler,
                 tkId: '',
-                ageGroupId: this.ageGroupCategories.adults.id, // ✅ Ya validado que no es null
+                ageGroupId: this.ageGroupCategories.adults.id,
               };
 
               travelerObservables.push(
@@ -608,9 +776,8 @@ export class TourHeaderV2Component
 
             // Crear travelers para niños
             for (let i = 0; i < this.passengersData.children; i++) {
-              // ✅ VALIDACIÓN: Solo crear si hay age group válido
               if (!this.ageGroupCategories.children.id) {
-                console.error('No se encontró age group para niños');
+                console.error('❌ No se encontró age group para niños');
                 alert(
                   'Error: No se pudo determinar el grupo de edad para niños.'
                 );
@@ -624,7 +791,7 @@ export class TourHeaderV2Component
                 travelerNumber: travelerNumber,
                 isLeadTraveler: false,
                 tkId: '',
-                ageGroupId: this.ageGroupCategories.children.id, // ✅ Ya validado que no es null
+                ageGroupId: this.ageGroupCategories.children.id,
               };
 
               travelerObservables.push(
@@ -635,9 +802,8 @@ export class TourHeaderV2Component
 
             // Crear travelers para bebés
             for (let i = 0; i < this.passengersData.babies; i++) {
-              // ✅ VALIDACIÓN: Solo crear si hay age group válido
               if (!this.ageGroupCategories.babies.id) {
-                console.error('No se encontró age group para bebés');
+                console.error('❌ No se encontró age group para bebés');
                 alert(
                   'Error: No se pudo determinar el grupo de edad para bebés.'
                 );
@@ -651,7 +817,7 @@ export class TourHeaderV2Component
                 travelerNumber: travelerNumber,
                 isLeadTraveler: false,
                 tkId: '',
-                ageGroupId: this.ageGroupCategories.babies.id, // ✅ Ya validado que no es null
+                ageGroupId: this.ageGroupCategories.babies.id,
               };
 
               travelerObservables.push(
@@ -660,102 +826,70 @@ export class TourHeaderV2Component
               travelerNumber++;
             }
 
-            // ✅ VALIDACIÓN: Si no hay observables, crear al menos uno vacío
             if (travelerObservables.length === 0) {
               throw new Error('No travelers to create');
             }
 
             return forkJoin(travelerObservables).pipe(
               map((createdTravelers) => {
-                /*                 console.log('Booking - Travelers creados:', createdTravelers);
-                 */ return {
+                return {
                   reservation: createdReservation,
                   travelers: createdTravelers,
                 };
               })
             );
           }),
+          // ✅ USAR MÉTODO MODIFICADO para servicios separados
           switchMap(({ reservation, travelers }) => {
-            // ✅ NUEVO: Crear actividades para cada traveler
-            const addedActivities = this.addedActivities;
-
-            if (addedActivities.length === 0) {
-              /*               console.log('Booking - No hay actividades para asignar');
-               */ return of({ reservation, travelers, activities: [] });
-            }
-
-            /* console.log('Booking - Asignando actividades a travelers:', {
-              travelers: travelers.length,
-              activities: addedActivities.length,
-              activitiesData: addedActivities,
-            }); */
-
-            const activityObservables: Observable<any>[] = [];
-
-            // Para cada traveler, asignar todas las actividades seleccionadas
-            travelers.forEach((traveler: any) => {
-              addedActivities.forEach((activity: ActivityHighlight) => {
-                const travelerActivityData: ReservationTravelerActivityCreate =
-                  {
-                    id: 0,
-                    reservationTravelerId: traveler.id,
-                    activityId: parseInt(activity.id), // Convertir string a number
-                  };
-
-                /* console.log(
-                  'Booking - Creando asignación actividad-traveler:',
-                  {
-                    travelerId: traveler.id,
-                    travelerNumber: traveler.travelerNumber,
-                    activityId: activity.id,
-                    activityTitle: activity.title,
-                    activityPrice: activity.price,
-                  }
-                ); */
-
-                activityObservables.push(
-                  this.reservationTravelerActivityService.create(
-                    travelerActivityData
-                  )
-                );
-              });
-            });
-
-            if (activityObservables.length === 0) {
-              return of({ reservation, travelers, activities: [] });
-            }
-
-            return forkJoin(activityObservables).pipe(
-              map((createdActivities) => {
-                /* console.log(
-                  'Booking - Actividades asignadas exitosamente:',
-                  createdActivities
-                ); */
-                return {
-                  reservation,
-                  travelers,
-                  activities: createdActivities,
-                };
-              })
+            return this.processActivitiesForTravelers(travelers).pipe(
+              map((activityResults) => ({
+                reservation,
+                travelers,
+                activityResults,
+              }))
             );
           })
         )
         .subscribe({
-          next: ({ reservation, travelers, activities }) => {
-            /* console.log('Booking - Proceso completado exitosamente:', {
-              reservation,
-              travelers,
-              activities,
-              totalActivitiesCreated: activities.length,
-            }); */
+          next: ({ reservation, travelers, activityResults }) => {
+            // ✅ MOSTRAR mensaje según los resultados
+            if (activityResults.failed > 0) {
+              const message =
+                `Reservación creada exitosamente.\n\n` +
+                `✅ ${activityResults.successful} actividad(es)/paquete(s) asignados correctamente\n` +
+                `❌ ${activityResults.failed} no pudieron ser asignados\n\n` +
+                `Puedes agregarlos manualmente desde el checkout.`;
+              alert(message);
+            }
 
             this.router.navigate(['/checkout-v2', reservation.id]);
           },
           error: (error) => {
-            console.error('Booking - Error en el proceso:', error);
-            alert(
-              'Error al crear la reservación, travelers o actividades. Por favor, inténtalo de nuevo.'
-            );
+            console.error('💥 Booking - Error fatal en el proceso:', {
+              error: error,
+              errorMessage: error.message,
+              errorStatus: error.status,
+            });
+
+            let errorMessage =
+              'Error al crear la reservación. Por favor, inténtalo de nuevo.';
+
+            // ✅ MENSAJES DE ERROR MÁS ESPECÍFICOS
+            if (error.status === 500) {
+              errorMessage =
+                'Error interno del servidor. Por favor, contacta al soporte técnico.';
+            } else if (error.status === 400) {
+              errorMessage =
+                'Datos inválidos. Por favor, verifica la información e inténtalo de nuevo.';
+            } else if (error.status === 404) {
+              errorMessage =
+                'Recurso no encontrado. Por favor, verifica que el tour y la fecha seleccionada sean válidos.';
+            } else if (error.status === 0 || !error.status) {
+              errorMessage =
+                'Sin conexión al servidor. Por favor, verifica tu conexión a internet.';
+            }
+
+            alert(errorMessage);
           },
           complete: () => {
             this.isCreatingReservation = false;

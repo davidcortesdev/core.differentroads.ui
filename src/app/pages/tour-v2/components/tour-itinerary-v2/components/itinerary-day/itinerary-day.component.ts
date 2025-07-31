@@ -119,13 +119,6 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
 
   // NUEVO: Manejar selección de actividad y reenviar al padre
   onActivitySelected(activityHighlight: ActivityHighlight): void {
-    console.log('ItineraryDay - Actividad recibida de Activities:', {
-      id: activityHighlight.id,
-      title: activityHighlight.title,
-      price: activityHighlight.price,
-      added: activityHighlight.added,
-    });
-
     this.activitySelected.emit(activityHighlight);
   }
 

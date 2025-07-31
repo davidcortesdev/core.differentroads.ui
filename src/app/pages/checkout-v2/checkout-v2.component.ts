@@ -313,7 +313,7 @@ export class CheckoutV2Component implements OnInit {
     });
   }
 
-  // Método para mapear precios por grupo de edad
+  // OPTIMIZADO: Método para mapear precios por grupo de edad
   private mapPricesByAgeGroup(): void {
     this.pricesByAgeGroup = {};
 
@@ -329,6 +329,11 @@ export class CheckoutV2Component implements OnInit {
 
     // Inicializar el resumen automáticamente después de cargar precios
     this.initializeOrderSummary();
+
+    // NUEVO: Forzar actualización adicional después de un delay para asegurar que los componentes estén listos
+    setTimeout(() => {
+      this.forceSummaryUpdate();
+    }, 500);
   }
 
   // Método para inicializar el resumen automáticamente
@@ -399,16 +404,11 @@ export class CheckoutV2Component implements OnInit {
   }
 
   /**
-   * Método llamado cuando cambian las habitaciones seleccionadas
+   * OPTIMIZADO: Método llamado cuando cambian las habitaciones seleccionadas
    */
   onRoomsSelectionChange(selectedRooms: { [tkId: string]: number }): void {
-    // Recalcular el resumen con los datos actuales de travelers (solo si ya tenemos precios)
-    if (
-      this.travelerSelector &&
-      Object.keys(this.pricesByAgeGroup).length > 0
-    ) {
-      this.updateOrderSummary(this.travelerSelector.travelersNumbers);
-    }
+    // NUEVO: Forzar actualización del summary cuando cambian las habitaciones
+    this.forceSummaryUpdate();
   }
 
   /**
@@ -430,7 +430,7 @@ export class CheckoutV2Component implements OnInit {
     }
   }
 
-  // Método para verificar si podemos inicializar el resumen
+  // OPTIMIZADO: Método para verificar si podemos inicializar el resumen
   private checkAndInitializeSummary(): void {
     // Verificar si tenemos todo lo necesario para inicializar
     const hasPrices = Object.keys(this.pricesByAgeGroup).length > 0;
@@ -447,6 +447,18 @@ export class CheckoutV2Component implements OnInit {
         babies: 0,
       };
       this.updateOrderSummary(fallbackTravelers);
+    }
+  }
+
+  // NUEVO: Método para forzar la actualización del summary cuando se cargan datos de habitaciones
+  private forceSummaryUpdate(): void {
+    if (Object.keys(this.pricesByAgeGroup).length > 0) {
+      const currentTravelers = this.travelerSelector?.travelersNumbers || {
+        adults: Math.max(1, this.totalPassengers),
+        childs: 0,
+        babies: 0,
+      };
+      this.updateOrderSummary(currentTravelers);
     }
   }
 
@@ -1110,8 +1122,10 @@ export class CheckoutV2Component implements OnInit {
               next: (users) => {
                 if (users && users.length > 0) {
                   const userId = users[0].id;
+
                   // Actualizar la reservación con el userId correcto
                   this.updateReservationUserId(userId);
+                } else {
                 }
               },
               error: (error) => {
@@ -1121,11 +1135,12 @@ export class CheckoutV2Component implements OnInit {
                 );
               },
             });
+          } else {
           }
         },
         error: (error) => {
           console.error('❌ Error obteniendo Cognito ID:', error);
-        },
+        }
       });
     }
   }

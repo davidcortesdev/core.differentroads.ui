@@ -28,6 +28,7 @@ export class NewReservationComponent implements OnInit {
   successId = 0;
   failedId = 0;
   pendingId = 0;
+  paymentType: ("Transfer" | "Scalapay" | "RedSys" | null) = null;
   //Hasta aqui
 
   loading: boolean = true;
@@ -46,13 +47,13 @@ export class NewReservationComponent implements OnInit {
 
     // First load payment statuses, then load reservation
     this.loadPaymentStatuses();
-    
+
   }
 
   loadPaymentStatuses(): void {
-    const successStatus$ = this.paymentService.getStatus({code: "COMPLETED"} as PaymentStatusFilter);
-    const failedStatus$ = this.paymentService.getStatus({code: "FAILED"} as PaymentStatusFilter);
-    const pendingStatus$ = this.paymentService.getStatus({code: "PENDING"} as PaymentStatusFilter);
+    const successStatus$ = this.paymentService.getStatus({ code: "COMPLETED" } as PaymentStatusFilter);
+    const failedStatus$ = this.paymentService.getStatus({ code: "FAILED" } as PaymentStatusFilter);
+    const pendingStatus$ = this.paymentService.getStatus({ code: "PENDING" } as PaymentStatusFilter);
 
     forkJoin({
       success: successStatus$,
@@ -66,13 +67,13 @@ export class NewReservationComponent implements OnInit {
         } else {
           console.error('SUCCESS status not found');
         }
-        
+
         if (statuses.failed && statuses.failed.length > 0) {
           this.failedId = statuses.failed[0].id;
         } else {
           console.error('FAILED status not found');
         }
-        
+
         if (statuses.pending && statuses.pending.length > 0) {
           this.pendingId = statuses.pending[0].id;
         } else {
@@ -86,10 +87,10 @@ export class NewReservationComponent implements OnInit {
         console.error('Error loading payment statuses:', error);
         this.error = true;
         this.loading = false;
-        this.messageService.add({ 
-          severity: 'error', 
-          summary: 'Error', 
-          detail: 'Error loading payment statuses' 
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Error loading payment statuses'
         });
       }
     });
@@ -113,16 +114,26 @@ export class NewReservationComponent implements OnInit {
     this.paymentService.getPaymentById(this.paymentId).subscribe((payment: IPaymentResponse) => {
       this.payment = payment;
       console.log(this.payment);
-      if(this.payment.paymentStatusId === this.pendingId) {
-        this.captureOrder();
-      } else if(this.payment.paymentStatusId === this.successId) {
+      if (this.payment.paymentStatusId === this.pendingId) { // Scalapay TODO: Cambiar por id sacando de la tabla
+        if (this.payment.paymentMethodId === 1) { // Transfer TODO: Cambiar por id sacando de la tabla
+          this.paymentType = 'Transfer';
+          console.log('Payment is a transfer');
+        } else if (this.payment.paymentMethodId === 2) { // Scalapay TODO: Cambiar por id sacando de la tabla
+          this.paymentType = 'Scalapay';
+          console.log('Payment is a scalapay');
+          this.captureOrder();
+        } else if (this.payment.paymentMethodId === 3) { // RedSys TODO: Cambiar por id sacando de la tabla
+          this.paymentType = 'RedSys';
+          console.log('Payment is a redsys');
+        }
+      } else if (this.payment.paymentStatusId === this.successId) {
         this.status = 'SUCCESS';
-      } else if(this.payment.paymentStatusId === this.failedId) {
+      } else if (this.payment.paymentStatusId === this.failedId) {
         this.status = 'FAILED';
       }
     });
 
-    
+
   }
   //De aqui sacar paymentStatus.name
   //De aqui sacar paymentMethod.name

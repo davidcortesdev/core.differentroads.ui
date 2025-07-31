@@ -223,7 +223,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
       throw new Error('Error al crear el pago');
     }
 
-    const formData: IFormData | undefined = await this.redsysService.generateFormData(response.id).toPromise();
+      const formData: IFormData | undefined = await this.redsysService.generateFormData(response.id, "https://www.differentroads.es/", "https://redsys-dev.differentroads.es").toPromise();
     if (formData) {
       await this.enviarFormARedsys(formData);
     }

@@ -30,6 +30,9 @@ export class AuthenticateService {
   // Nuevo BehaviorSubject para mantener el email del usuario actual
   private currentUserEmail = new BehaviorSubject<string>('');
 
+  // Nuevo BehaviorSubject para mantener el Cognito ID del usuario actual
+  private currentUserCognitoId = new BehaviorSubject<string>('');
+
   userAttributesChanged: Subject<void> = new Subject<void>();
 
   constructor(
@@ -57,6 +60,13 @@ export class AuthenticateService {
           const attributes = await fetchUserAttributes();
           if (attributes && attributes.email) {
             this.currentUserEmail.next(attributes.email);
+            
+            // Obtener el Cognito ID del usuario actual
+            const user = await getCurrentUser();
+            if (user) {
+              this.currentUserCognitoId.next(user.userId);
+            }
+            
             // Intentar crear el usuario en la base de datos si aún no existe
             this.createUserIfNotExists(attributes.email).then(() => {
               this.userAttributesChanged.next();
@@ -82,12 +92,17 @@ export class AuthenticateService {
     return this.currentUserEmail.asObservable();
   }
 
+  // Obtener el Cognito ID del usuario actual como Observable
+  getCognitoId(): Observable<string> {
+    return this.currentUserCognitoId.asObservable();
+  }
+
   private getUserData(username: string): CognitoUser {
     return new CognitoUser({ Username: username, Pool: this.userPool });
   }
 
   // Login
-  login(emailaddress: string, password: string): Observable<void> {
+  login(emailaddress: string, password: string): Observable<any> {
     return new Observable((observer) => {
       const authenticationDetails = new AuthenticationDetails({
         Username: emailaddress,
@@ -100,6 +115,7 @@ export class AuthenticateService {
         onSuccess: (result: any) => {
           this.isAuthenticated.next(true);
           this.currentUserEmail.next(emailaddress);
+          this.currentUserCognitoId.next(this.cognitoUser.getUsername());
           this.userAttributesChanged.next();
 
           // Agregar la integración con Hubspot
@@ -114,17 +130,9 @@ export class AuthenticateService {
                 hubspotResponse
               );
 
-              // Check if redirectUrl exists in sessionStorage
-              const redirectUrl = sessionStorage.getItem('redirectUrl');
-              if (redirectUrl) {
-                // Navigate to the stored URL
-                this.router.navigate([redirectUrl]);
-                // Clear the redirectUrl from sessionStorage
-                sessionStorage.removeItem('redirectUrl');
-              } else {
-                // Default navigation to home
-                this.router.navigate(['/home']);
-              }
+              // Retornar el usuario de Cognito para que el componente maneje la navegación
+              observer.next(this.cognitoUser);
+              observer.complete();
             },
             error: (hubspotError) => {
               console.error(
@@ -132,17 +140,8 @@ export class AuthenticateService {
                 hubspotError
               );
 
-              // Even if Hubspot fails, check for redirectUrl
-              const redirectUrl = sessionStorage.getItem('redirectUrl');
-              if (redirectUrl) {
-                this.router.navigate([redirectUrl]);
-                sessionStorage.removeItem('redirectUrl');
-              } else {
-                this.router.navigate(['/home']);
-              }
-            },
-            complete: () => {
-              observer.next();
+              // Even if Hubspot fails, return the Cognito user for component to handle navigation
+              observer.next(this.cognitoUser);
               observer.complete();
             },
           });
@@ -177,12 +176,13 @@ export class AuthenticateService {
       currentUser.signOut();
       this.isAuthenticated.next(false);
       this.currentUserEmail.next('');
+      this.currentUserCognitoId.next('');
       window.location.href = '/home';
     }
   }
 
   // Signup
-  signUp(email: string, password: string): Promise<void> {
+  signUp(email: string, password: string): Promise<string> {
     return new Promise((resolve, reject) => {
       let attributeList = [];
 
@@ -203,8 +203,10 @@ export class AuthenticateService {
             return;
           }
           this.cognitoUser = result.user;
+          const cognitoUserId = result.userSub; // ID único de Cognito
           console.log('user name is ' + this.cognitoUser.getUsername());
-          resolve();
+          console.log('cognito user id is ' + cognitoUserId);
+          resolve(cognitoUserId);
         }
       );
     });
@@ -332,6 +334,12 @@ export class AuthenticateService {
             this.currentUserEmail.next(formattedResult.email);
           }
 
+          // Obtener el Cognito ID del usuario actual
+          const currentUser = this.userPool.getCurrentUser();
+          if (currentUser) {
+            this.currentUserCognitoId.next(currentUser.getUsername());
+          }
+
           this.userAttributesChanged.next();
           observer.next(formattedResult);
           observer.complete();
@@ -357,6 +365,49 @@ export class AuthenticateService {
     this.router.navigate(['/login']); // Ajusta la ruta según tu configuración
   }
 
+  // Método para navegar después de completar la verificación del usuario
+  navigateAfterUserVerification(): void {
+    console.log('🧭 navigateAfterUserVerification() ejecutándose...');
+    
+    // Check if redirectUrl exists in sessionStorage
+    const redirectUrl = sessionStorage.getItem('redirectUrl');
+    console.log('🧭 redirectUrl en sessionStorage:', redirectUrl);
+    
+    if (redirectUrl) {
+      // Parse the URL to separate path and query parameters
+      const urlParts = redirectUrl.split('?');
+      const path = urlParts[0];
+      const queryParams = urlParts[1] ? this.parseQueryString(urlParts[1]) : {};
+      
+      console.log('🧭 Path:', path);
+      console.log('🧭 Query params:', queryParams);
+      
+      // Navigate to the path with query parameters
+      this.router.navigate([path], { queryParams });
+      // Clear the redirectUrl from sessionStorage
+      sessionStorage.removeItem('redirectUrl');
+    } else {
+      // Default navigation to home
+      console.log('🧭 Navegando a /home por defecto');
+      this.router.navigate(['/home']);
+    }
+  }
+
+  // Helper method to parse query string
+  private parseQueryString(queryString: string): { [key: string]: string } {
+    const params: { [key: string]: string } = {};
+    const pairs = queryString.split('&');
+    
+    for (const pair of pairs) {
+      const [key, value] = pair.split('=');
+      if (key && value) {
+        params[decodeURIComponent(key)] = decodeURIComponent(value);
+      }
+    }
+    
+    return params;
+  }
+
   async handleGoogleSignIn() {
     try {
       await signInWithRedirect({ provider: 'Google' });
@@ -374,6 +425,7 @@ export class AuthenticateService {
         if (attributes && attributes.email) {
           this.isAuthenticated.next(true);
           this.currentUserEmail.next(attributes.email);
+          this.currentUserCognitoId.next(user.userId);
           await this.createUserIfNotExists(attributes.email);
           this.userAttributesChanged.next();
         }

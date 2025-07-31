@@ -24,6 +24,7 @@ export interface ActivityHighlight {
   optional?: boolean;
   added?: boolean;
   price?: number;
+  type?: 'act' | 'pack';
 }
 
 @Component({
@@ -54,7 +55,9 @@ export class ActivityCardComponent implements OnInit, OnChanges {
 
   private updateSanitizedDescription(): void {
     if (this.highlight?.description) {
-      this.sanitizedDescription = this.sanitizer.bypassSecurityTrustHtml(this.highlight.description);
+      this.sanitizedDescription = this.sanitizer.bypassSecurityTrustHtml(
+        this.highlight.description
+      );
     } else {
       this.sanitizedDescription = '';
     }
@@ -64,7 +67,7 @@ export class ActivityCardComponent implements OnInit, OnChanges {
     event.stopPropagation();
     this.addActivity.emit(highlight);
   }
-  
+
   onViewDetails(event: Event, highlight: ActivityHighlight): void {
     event.stopPropagation();
     this.viewDetails.emit(highlight);

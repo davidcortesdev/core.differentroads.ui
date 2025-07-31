@@ -93,14 +93,14 @@
               <p-button
                 class="without-flight"
                 label="Lo quiero sin vuelos"
-                (onClick)="nextStepWithValidation(2)"
+                (onClick)="checkAuthAndContinue(2, onActiveIndexChange.bind(this), true)"
               ></p-button>
               <p-button
                 class="continue-button"
                 label="Continuar"
                 icon="pi pi-arrow-right"
                 iconPos="right"
-                (onClick)="nextStepWithValidation(2)"
+                (onClick)="checkAuthAndContinue(2, onActiveIndexChange.bind(this), false)"
               ></p-button>
             </div>
           </div>
@@ -119,7 +119,7 @@
                 label="Continuar"
                 icon="pi pi-arrow-right"
                 iconPos="right"
-                (onClick)="nextStepWithValidation(3)"
+                (onClick)="checkAuthAndContinue(3, onActiveIndexChange.bind(this), false)"
               ></p-button>
             </div>
           </div>
@@ -168,4 +168,13 @@
   <div *ngIf="error" class="error-message">
     <p>{{ error }}</p>
   </div>
+
+  <!-- Modal de login -->
+  <app-login-modal
+    [visible]="loginDialogVisible"
+    (close)="closeLoginModal()"
+    (login)="navigateToLogin()"
+    (register)="navigateToRegister()"
+  >
+  </app-login-modal>
 </div>

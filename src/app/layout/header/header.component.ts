@@ -4,7 +4,7 @@ import { LanguageService } from '../../core/services/language.service';
 import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 import { GeneralConfigService } from '../../core/services/general-config.service';
 import { AuthenticateService } from '../../core/services/auth-service.service';
-import { UsersService } from '../../core/services/users.service';
+import { UsersNetService } from '../../core/services/usersNet.service';
 import {
   MenuConfig,
   MenuList,
@@ -17,6 +17,8 @@ import {
   filter,
   debounceTime,
   distinctUntilChanged,
+  switchMap,
+  of,
 } from 'rxjs';
 import { Router } from '@angular/router';
 
@@ -55,7 +57,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private languageService: LanguageService,
     private generalConfigService: GeneralConfigService,
     private authService: AuthenticateService,
-    private usersService: UsersService,
+    private usersNetService: UsersNetService,
     private elementRef: ElementRef,
     private renderer: Renderer2,
     private router: Router
@@ -174,6 +176,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         distinctUntilChanged() // Solo procesar cuando realmente cambie
       )
       .subscribe((isLoggedIn) => {
+        console.log('Estado de autenticación cambiado:', isLoggedIn);
         this.isLoggedIn = isLoggedIn;
 
         if (isLoggedIn) {
@@ -286,7 +289,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   populateUserMenu(): void {
-    if (this.isLoadingUser) return;
+    console.log('populateUserMenu() ejecutándose...');
+    if (this.isLoadingUser) {
+      console.log('Ya está cargando, saliendo...');
+      return;
+    }
 
     this.authService
       .getUserEmail()
@@ -296,54 +303,96 @@ export class HeaderComponent implements OnInit, OnDestroy {
         debounceTime(300)
       )
       .subscribe((email) => {
+        console.log('Email obtenido:', email);
         this.isLoadingUser = true;
         this.chipLabel = 'Cargando...';
+        console.log('Estado inicial - isLoadingUser:', this.isLoadingUser, 'showUserInfo:', this.showUserInfo);
 
-        this.usersService
-          .getUserByEmail(email)
-          .pipe(
-            takeUntil(this.destroy$),
-            finalize(() => {
-              this.isLoadingUser = false;
-              setTimeout(() => (this.showUserInfo = true), 100);
-            })
-          )
-          .subscribe({
-            next: (user) => {
-              this.chipLabel = `Hola, ${
-                user.names === 'pendiente' ? email : user.names || email
-              }`;
-              this.chipImage = user.profileImage || '';
-
-              this.userMenuItems = [
-                {
-                  label: 'Ver Perfil',
-                  icon: 'pi pi-user',
-                  command: () => this.authService.navigateToProfile(),
-                },
-                {
-                  label: 'Desconectar',
-                  icon: 'pi pi-sign-out',
-                  command: () => this.authService.logOut(),
-                },
-              ];
-            },
-            error: async (err) => {
-              console.error('Error al obtener el usuario:', err);
+        // Combinar email y Cognito ID en un solo flujo
+        this.authService.getCognitoId().pipe(
+          takeUntil(this.destroy$),
+          switchMap((cognitoId: string) => {
+            console.log('Cognito ID obtenido:', cognitoId);
+            if (cognitoId) {
+              console.log('Buscando usuario por Cognito ID:', cognitoId);
+              return this.usersNetService.getUsersByCognitoId(cognitoId);
+            } else {
+              console.log('No hay Cognito ID, mostrando solo email');
+              // Si no hay Cognito ID, mostrar solo el email
               this.chipLabel = `Hola, ${email}`;
-
-              if (err.status === 404) {
-                try {
-                  await this.authService.createUserIfNotExists(email);
-                  this.populateUserMenu();
-                } catch (createError) {
-                  console.error('Error al crear el usuario:', createError);
-                }
-              }
-            },
-          });
+              this.setUserMenuItems();
+              this.isLoadingUser = false;
+              this.showUserInfo = true;
+              return of([]);
+            }
+          }),
+          finalize(() => {
+            console.log('Finalizando carga de usuario');
+            this.isLoadingUser = false;
+            this.showUserInfo = true;
+          })
+        ).subscribe({
+          next: (users: any[]) => {
+            console.log('Usuarios encontrados:', users);
+            if (users && users.length > 0) {
+              const user = users[0];
+              const displayName = user?.name || email;
+              console.log('Usuario encontrado:', user);
+              console.log('Nombre a mostrar:', displayName);
+              
+              this.chipLabel = `Hola, ${displayName}`;
+              this.chipImage = ''; // El nuevo modelo no tiene profileImage
+              this.setUserMenuItems();
+              
+              // Asegurar que el estado se actualice correctamente
+              this.isLoadingUser = false;
+              this.showUserInfo = true;
+              console.log('Estado después de configurar usuario - isLoadingUser:', this.isLoadingUser, 'showUserInfo:', this.showUserInfo);
+            } else {
+              console.log('No se encontró usuario, mostrando solo email');
+              // Si no se encuentra el usuario, mostrar solo el email
+              this.chipLabel = `Hola, ${email}`;
+              this.setUserMenuItems();
+              
+              // Asegurar que el estado se actualice correctamente
+              this.isLoadingUser = false;
+              this.showUserInfo = true;
+              console.log('Estado después de configurar email - isLoadingUser:', this.isLoadingUser, 'showUserInfo:', this.showUserInfo);
+            }
+          },
+          error: (error: any) => {
+            console.error('Error obteniendo información del usuario:', error);
+            this.chipLabel = `Hola, ${email}`;
+            this.setUserMenuItems();
+            
+            // Asegurar que el estado se actualice correctamente
+            this.isLoadingUser = false;
+            this.showUserInfo = true;
+            console.log('Estado después de error - isLoadingUser:', this.isLoadingUser, 'showUserInfo:', this.showUserInfo);
+          }
+        });
       });
   }
+
+  /**
+   * Configura los elementos del menú de usuario
+   */
+  private setUserMenuItems(): void {
+    this.userMenuItems = [
+      {
+        label: 'Ver Perfil',
+        icon: 'pi pi-user',
+        command: () => this.authService.navigateToProfile(),
+      },
+      {
+        label: 'Desconectar',
+        icon: 'pi pi-sign-out',
+        command: () => this.authService.logOut(),
+      },
+    ];
+  }
+
+
 
   private navigateTo(slug: string, type: string): void {
     const route = this.createLink(slug, type);

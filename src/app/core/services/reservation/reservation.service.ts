@@ -10,7 +10,7 @@ export interface ReservationCreate {
   retailerId: number;
   tourId: number;
   departureId: number;
-  userId: number;
+  userId: number | null;
   totalPassengers: number;
   totalAmount: number;
   budgetAt: string;
@@ -28,7 +28,7 @@ export interface ReservationUpdate {
   retailerId: number;
   tourId: number;
   departureId: number;
-  userId: number;
+  userId: number | null;
   totalPassengers: number;
   totalAmount: number;
   budgetAt: string;
@@ -67,7 +67,7 @@ export interface ReservationFilters {
   retailerId?: number;
   tourId?: number;
   departureId?: number;
-  userId?: number;
+  userId?: number | null;
   totalPassengers?: number;
   totalAmount?: number;
   budgetAt?: string;

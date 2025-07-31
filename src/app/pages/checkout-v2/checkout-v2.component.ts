@@ -12,6 +12,7 @@ import {
   IAgeGroupResponse,
 } from '../../core/services/agegroup/age-group.service';
 import { ReservationTravelerActivityService } from '../../core/services/reservation/reservation-traveler-activity.service';
+import { ReservationTravelerActivityPackService } from '../../core/services/reservation/reservation-traveler-activity-pack.service';
 import {
   ItineraryService,
   IItineraryResponse,
@@ -24,6 +25,8 @@ import { InsuranceComponent } from './components/insurance/insurance.component';
 import { InfoTravelersComponent } from './components/info-travelers/info-travelers.component';
 import { forkJoin } from 'rxjs';
 import { PaymentsNetService } from './services/paymentsNet.service';
+import { AuthenticateService } from '../../core/services/auth-service.service';
+import { UsersNetService } from '../../core/services/usersNet.service';
 
 @Component({
   selector: 'app-checkout-v2',
@@ -82,6 +85,9 @@ export class CheckoutV2Component implements OnInit {
   // Tour slug para navegación
   tourSlug: string = '';
 
+  // Propiedades para autenticación
+  loginDialogVisible: boolean = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -91,14 +97,27 @@ export class CheckoutV2Component implements OnInit {
     private departurePriceSupplementService: DeparturePriceSupplementService,
     private ageGroupService: AgeGroupService,
     private reservationTravelerActivityService: ReservationTravelerActivityService,
+    private reservationTravelerActivityPackService: ReservationTravelerActivityPackService,
     private itineraryService: ItineraryService,
     private messageService: MessageService,
-    private paymentsService: PaymentsNetService
+    private paymentsService: PaymentsNetService,
+    private authService: AuthenticateService,
+    private usersNetService: UsersNetService
   ) {}
 
   ngOnInit(): void {
     // Configurar los steps
     this.initializeSteps();
+
+    // Leer step de URL si está presente (para redirección después del login)
+    this.route.queryParams.subscribe((params) => {
+      if (params['step']) {
+        const stepParam = parseInt(params['step']);
+        if (!isNaN(stepParam) && stepParam >= 0 && stepParam <= 3) {
+          this.activeIndex = stepParam;
+        }
+      }
+    });
 
     // Obtener el reservationId de la URL
     this.route.paramMap.subscribe((params) => {
@@ -150,6 +169,9 @@ export class CheckoutV2Component implements OnInit {
         this.tourId = reservation.tourId;
         this.totalPassengers = reservation.totalPassengers;
         this.reservationData = reservation; // Guardar datos completos de la reserva
+
+        // Verificar si el userId está vacío y el usuario está logueado
+        this.checkAndUpdateUserId(reservation);
 
         // Cargar datos del tour usando reservation.tourId
         this.loadTourData(reservation.tourId);
@@ -219,12 +241,6 @@ export class CheckoutV2Component implements OnInit {
           // Tomar el primer itinerario que coincida con los filtros
           this.itineraryData = itineraries[0];
           this.itineraryId = this.itineraryData.id;
-
-          console.log('Itinerario cargado:', this.itineraryData);
-          console.log(
-            'itineraryId establecido para pasar a componentes hijos:',
-            this.itineraryId
-          );
         } else {
           console.warn('No se encontraron itinerarios para el tourId:', tourId);
           this.itineraryId = null;
@@ -247,10 +263,6 @@ export class CheckoutV2Component implements OnInit {
         // Solo asignar si no se ha obtenido desde el tour (como respaldo)
         if (!this.itineraryId && departure.itineraryId) {
           this.itineraryId = departure.itineraryId;
-          console.log(
-            'itineraryId obtenido desde departure como respaldo:',
-            this.itineraryId
-          );
         }
       },
       error: (error) => {
@@ -301,7 +313,7 @@ export class CheckoutV2Component implements OnInit {
     });
   }
 
-  // Método para mapear precios por grupo de edad
+  // OPTIMIZADO: Método para mapear precios por grupo de edad
   private mapPricesByAgeGroup(): void {
     this.pricesByAgeGroup = {};
 
@@ -317,6 +329,11 @@ export class CheckoutV2Component implements OnInit {
 
     // Inicializar el resumen automáticamente después de cargar precios
     this.initializeOrderSummary();
+
+    // NUEVO: Forzar actualización adicional después de un delay para asegurar que los componentes estén listos
+    setTimeout(() => {
+      this.forceSummaryUpdate();
+    }, 500);
   }
 
   // Método para inicializar el resumen automáticamente
@@ -387,16 +404,11 @@ export class CheckoutV2Component implements OnInit {
   }
 
   /**
-   * Método llamado cuando cambian las habitaciones seleccionadas
+   * OPTIMIZADO: Método llamado cuando cambian las habitaciones seleccionadas
    */
   onRoomsSelectionChange(selectedRooms: { [tkId: string]: number }): void {
-    // Recalcular el resumen con los datos actuales de travelers (solo si ya tenemos precios)
-    if (
-      this.travelerSelector &&
-      Object.keys(this.pricesByAgeGroup).length > 0
-    ) {
-      this.updateOrderSummary(this.travelerSelector.travelersNumbers);
-    }
+    // NUEVO: Forzar actualización del summary cuando cambian las habitaciones
+    this.forceSummaryUpdate();
   }
 
   /**
@@ -418,7 +430,7 @@ export class CheckoutV2Component implements OnInit {
     }
   }
 
-  // Método para verificar si podemos inicializar el resumen
+  // OPTIMIZADO: Método para verificar si podemos inicializar el resumen
   private checkAndInitializeSummary(): void {
     // Verificar si tenemos todo lo necesario para inicializar
     const hasPrices = Object.keys(this.pricesByAgeGroup).length > 0;
@@ -435,6 +447,18 @@ export class CheckoutV2Component implements OnInit {
         babies: 0,
       };
       this.updateOrderSummary(fallbackTravelers);
+    }
+  }
+
+  // NUEVO: Método para forzar la actualización del summary cuando se cargan datos de habitaciones
+  private forceSummaryUpdate(): void {
+    if (Object.keys(this.pricesByAgeGroup).length > 0) {
+      const currentTravelers = this.travelerSelector?.travelersNumbers || {
+        adults: Math.max(1, this.totalPassengers),
+        childs: 0,
+        babies: 0,
+      };
+      this.updateOrderSummary(currentTravelers);
     }
   }
 
@@ -576,7 +600,7 @@ export class CheckoutV2Component implements OnInit {
     }
   }
 
-  // Método para guardar actividades seleccionadas (USANDO SOLO EL SERVICIO PROPORCIONADO)
+  // Método para guardar actividades seleccionadas (CON SOPORTE COMPLETO PARA PACKS)
   async saveActivitiesAssignments(): Promise<boolean> {
     if (
       !this.reservationId ||
@@ -587,31 +611,36 @@ export class CheckoutV2Component implements OnInit {
     }
 
     try {
-      // En lugar de obtener travelers, trabajamos directamente con los datos que ya tenemos
-      // Crear las nuevas asignaciones de actividades usando los datos del travelerSelector
-      const createPromises: Promise<any>[] = [];
-
       // Verificar que tenemos el componente travelerSelector con datos
       if (!this.travelerSelector) {
         throw new Error('No se encontró información de viajeros');
       }
 
       // Obtener los travelers desde el componente travelerSelector
-      // (asumiendo que tiene una propiedad con los travelers existentes)
       const existingTravelers = this.travelerSelector.existingTravelers || [];
 
       if (existingTravelers.length === 0) {
         throw new Error('No se encontraron viajeros para esta reserva');
       }
 
-      // Limpiar actividades existentes para esta reserva
-      await this.clearExistingActivitiesSimple(existingTravelers);
+      // Limpiar actividades y packs existentes para esta reserva
+      await this.clearExistingActivitiesAndPacks(existingTravelers);
 
-      // Para cada actividad seleccionada, crear una asignación para cada viajero
-      this.selectedActivities.forEach((activity) => {
+      // Separar actividades individuales y packs
+      const individualActivities = this.selectedActivities.filter(
+        (activity) => activity.type === 'act'
+      );
+      const activityPacks = this.selectedActivities.filter(
+        (activity) => activity.type === 'pack'
+      );
+
+      const createPromises: Promise<any>[] = [];
+
+      // Crear asignaciones para actividades individuales
+      individualActivities.forEach((activity) => {
         existingTravelers.forEach((traveler: any) => {
           const activityAssignment = {
-            id: 0, // Para nuevas entradas
+            id: 0,
             reservationTravelerId: traveler.id,
             activityId: activity.id,
           };
@@ -619,6 +648,28 @@ export class CheckoutV2Component implements OnInit {
           const createPromise = new Promise((resolve, reject) => {
             this.reservationTravelerActivityService
               .create(activityAssignment)
+              .subscribe({
+                next: (result) => resolve(result),
+                error: (error) => reject(error),
+              });
+          });
+
+          createPromises.push(createPromise);
+        });
+      });
+
+      // Crear asignaciones para packs de actividades
+      activityPacks.forEach((pack) => {
+        existingTravelers.forEach((traveler: any) => {
+          const packAssignment = {
+            id: 0,
+            reservationTravelerId: traveler.id,
+            activityPackId: pack.id,
+          };
+
+          const createPromise = new Promise((resolve, reject) => {
+            this.reservationTravelerActivityPackService
+              .create(packAssignment)
               .subscribe({
                 next: (result) => resolve(result),
                 error: (error) => reject(error),
@@ -639,41 +690,62 @@ export class CheckoutV2Component implements OnInit {
     }
   }
 
-  // Método auxiliar simplificado para limpiar actividades existentes
-  private async clearExistingActivitiesSimple(
+  // Método para limpiar actividades y packs existentes
+  private async clearExistingActivitiesAndPacks(
     existingTravelers: any[]
   ): Promise<void> {
     const deletePromises: Promise<any>[] = [];
 
     for (const traveler of existingTravelers) {
       try {
-        // Obtener actividades existentes para este viajero usando el servicio proporcionado
+        // Obtener y eliminar actividades individuales existentes
         const existingActivities = await new Promise<any[]>(
           (resolve, reject) => {
             this.reservationTravelerActivityService
               .getByReservationTraveler(traveler.id)
               .subscribe({
                 next: (activities) => resolve(activities),
-                error: (error) => resolve([]), // Si hay error, asumimos que no hay actividades
+                error: (error) => resolve([]),
               });
           }
         );
 
-        // Eliminar cada actividad existente
         existingActivities.forEach((activity) => {
           const deletePromise = new Promise((resolve, reject) => {
             this.reservationTravelerActivityService
               .delete(activity.id)
               .subscribe({
                 next: (result) => resolve(result),
-                error: (error) => resolve(false), // Continuar aunque falle una eliminación
+                error: (error) => resolve(false),
+              });
+          });
+          deletePromises.push(deletePromise);
+        });
+
+        // Obtener y eliminar packs de actividades existentes
+        const existingPacks = await new Promise<any[]>((resolve, reject) => {
+          this.reservationTravelerActivityPackService
+            .getByReservationTraveler(traveler.id)
+            .subscribe({
+              next: (packs) => resolve(packs),
+              error: (error) => resolve([]),
+            });
+        });
+
+        existingPacks.forEach((pack) => {
+          const deletePromise = new Promise((resolve, reject) => {
+            this.reservationTravelerActivityPackService
+              .delete(pack.id)
+              .subscribe({
+                next: (result) => resolve(result),
+                error: (error) => resolve(false),
               });
           });
           deletePromises.push(deletePromise);
         });
       } catch (error) {
         console.warn(
-          `Error al obtener actividades para el viajero ${traveler.id}:`,
+          `Error al obtener actividades/packs para el viajero ${traveler.id}:`,
           error
         );
       }
@@ -777,6 +849,20 @@ export class CheckoutV2Component implements OnInit {
   // Manejar cambio de paso activo
   onActiveIndexChange(index: number): void {
     this.activeIndex = index;
+    this.updateStepInUrl(index);
+  }
+
+  // Método para actualizar la URL cuando cambia el step
+  updateStepInUrl(step: number): void {
+    if (typeof step === 'number' && !isNaN(step)) {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { step: step },
+        queryParamsHandling: 'merge',
+      });
+    } else {
+      console.error('Invalid step value:', step);
+    }
   }
 
   // Método para guardar todos los datos de los viajeros
@@ -802,6 +888,26 @@ export class CheckoutV2Component implements OnInit {
 
   // Método para navegar al siguiente paso con validación
   async nextStepWithValidation(targetStep: number): Promise<void> {
+    // Verificar autenticación para pasos que la requieren
+    if (targetStep >= 2) {
+      this.authService.isLoggedIn().subscribe((isLoggedIn) => {
+        if (!isLoggedIn) {
+          // Usuario no está logueado, mostrar modal
+          sessionStorage.setItem('redirectUrl', window.location.pathname);
+          this.loginDialogVisible = true;
+          return;
+        }
+        // Usuario está logueado, continuar con la validación normal
+        this.performStepValidation(targetStep);
+      });
+      return;
+    }
+
+    // Para el paso 0 (personalizar viaje) y paso 1 (vuelos), no se requiere autenticación
+    this.performStepValidation(targetStep);
+  }
+
+  private async performStepValidation(targetStep: number): Promise<void> {
     // Guardar cambios de travelers, habitaciones, seguros y actividades antes de continuar
     if (
       targetStep === 1 &&
@@ -997,6 +1103,136 @@ export class CheckoutV2Component implements OnInit {
   cleanScalapayPendingPayments(): void {
     if (!this.reservationId) return;
 
-      this.paymentsService.cleanScalapayPendingPayments(this.reservationId).subscribe();
+    this.paymentsService
+      .cleanScalapayPendingPayments(this.reservationId)
+      .subscribe();
+  }
+
+  /**
+   * Verifica si el userId está vacío y el usuario está logueado, y actualiza la reservación si es necesario
+   */
+  private checkAndUpdateUserId(reservation: any): void {
+    // Verificar si el userId está vacío
+    if (!reservation.userId) {
+      this.authService.getCognitoId().subscribe({
+        next: (cognitoId) => {
+          if (cognitoId) {
+            // Buscar el usuario por Cognito ID para obtener su ID en la base de datos
+            this.usersNetService.getUsersByCognitoId(cognitoId).subscribe({
+              next: (users) => {
+                if (users && users.length > 0) {
+                  const userId = users[0].id;
+
+                  // Actualizar la reservación con el userId correcto
+                  this.updateReservationUserId(userId);
+                } else {
+                }
+              },
+              error: (error) => {
+                console.error(
+                  '❌ Error buscando usuario por Cognito ID:',
+                  error
+                );
+              },
+            });
+          } else {
+          }
+        },
+        error: (error) => {
+          console.error('❌ Error obteniendo Cognito ID:', error);
+        }
+      });
+    }
+  }
+
+  /**
+   * Actualiza el userId de la reservación
+   */
+  private updateReservationUserId(userId: number): void {
+    if (!this.reservationId || !this.reservationData) {
+      console.error(
+        '❌ No se puede actualizar userId: reservationId o reservationData no disponibles'
+      );
+      return;
+    }
+
+    const updateData = {
+      ...this.reservationData,
+      userId: userId,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.reservationService.update(this.reservationId, updateData).subscribe({
+      next: (success) => {
+        if (success) {
+          // Actualizar los datos locales
+          this.reservationData.userId = userId;
+
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Reservación actualizada',
+            detail: 'La reservación ha sido asociada con tu cuenta de usuario.',
+            life: 3000,
+          });
+        } else {
+          console.error('❌ Error al actualizar userId en la reservación');
+        }
+      },
+      error: (error) => {
+        console.error(
+          '❌ Error al actualizar userId en la reservación:',
+          error
+        );
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error al actualizar',
+          detail: 'No se pudo asociar la reservación con tu cuenta de usuario.',
+          life: 5000,
+        });
+      },
+    });
+  }
+
+  // Métodos para autenticación
+  checkAuthAndContinue(
+    nextStep: number,
+    activateCallback: (step: number) => void,
+    useFlightless: boolean = false
+  ): void {
+    this.authService.isLoggedIn().subscribe((isLoggedIn) => {
+      if (isLoggedIn) {
+        // Usuario está logueado, proceder normalmente
+        if (useFlightless) {
+          // Lógica para continuar sin vuelos
+          this.nextStepWithValidation(nextStep);
+        } else {
+          // Lógica normal
+          this.nextStepWithValidation(nextStep);
+        }
+        // Llamar al callback con el step
+        activateCallback(nextStep);
+      } else {
+        // Usuario no está logueado, mostrar modal
+        // Guardar la URL actual con el step en sessionStorage
+        const currentUrl = window.location.pathname;
+        const redirectUrl = `${currentUrl}?step=${this.activeIndex}`;
+        sessionStorage.setItem('redirectUrl', redirectUrl);
+        this.loginDialogVisible = true;
+      }
+    });
+  }
+
+  closeLoginModal(): void {
+    this.loginDialogVisible = false;
+  }
+
+  navigateToLogin(): void {
+    this.closeLoginModal();
+    this.router.navigate(['/login']);
+  }
+
+  navigateToRegister(): void {
+    this.closeLoginModal();
+    this.router.navigate(['/sign-up']);
   }
 }

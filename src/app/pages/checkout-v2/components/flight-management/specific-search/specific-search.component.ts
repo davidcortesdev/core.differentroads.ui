@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, OnDestroy } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { forkJoin, of, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -24,7 +24,7 @@ interface Ciudad {
   templateUrl: './specific-search.component.html',
   styleUrls: ['./specific-search.component.scss'],
 })
-export class SpecificSearchComponent implements OnInit, OnDestroy {
+export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   // Inputs y Outputs
   @Output() filteredFlightsChange = new EventEmitter<any[]>();
   @Input() flights: Flight[] = [];
@@ -94,6 +94,16 @@ export class SpecificSearchComponent implements OnInit, OnDestroy {
     this.initFormListeners();
     this.initTravelersListener();
     if (this.departureId) {
+      this.loadCombinedCities();
+      this.loadAirportTimes();
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    console.log('ngOnChanges - specific-search:', changes);
+    if (changes['departureId'] && changes['departureId'].currentValue && 
+        changes['departureId'].currentValue !== changes['departureId'].previousValue) {
+      console.log('🔄 Recargando datos de specific-search');
       this.loadCombinedCities();
       this.loadAirportTimes();
     }

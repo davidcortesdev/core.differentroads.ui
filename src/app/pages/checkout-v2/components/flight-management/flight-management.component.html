@@ -1,8 +1,27 @@
 <div class="default-flights">
-  <h4>Vuelos por defecto</h4>
-  <app-default-flights></app-default-flights>
+  <app-default-flights [departureId]="departureId" [reservationId]="reservationId"></app-default-flights>
 </div>
+
+<!-- Botón para activar búsqueda específica -->
+<div class="specific-search-toggle" *ngIf="!isConsolidadorVuelosActive">
+  <p-button
+    label="Ver otras opciones de vuelos"
+    icon="pi pi-search"
+    (onClick)="checkAuthAndShowSpecificSearch()"
+    outlined=" true"
+  ></p-button>
+</div>
+
 <div class="specific-search" *ngIf="isConsolidadorVuelosActive">
   <h4>Búsqueda específica de vuelos</h4>
   <app-specific-search [departureId]="departureId" [reservationId]="reservationId"></app-specific-search>
 </div>
+
+<!-- Modal de login -->
+<app-login-modal
+  [visible]="loginDialogVisible"
+  (close)="closeLoginModal()"
+  (login)="navigateToLogin()"
+  (register)="navigateToRegister()"
+>
+</app-login-modal>

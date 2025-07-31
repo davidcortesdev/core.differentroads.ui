@@ -15,9 +15,25 @@ import {
   ActivityPriceService,
   IActivityPriceResponse,
 } from '../../../../../../../core/services/activity/activity-price.service';
-import { catchError, of, forkJoin } from 'rxjs';
+import {
+  ActivityPackPriceService,
+  IActivityPackPriceResponse,
+} from '../../../../../../../core/services/activity/activity-pack-price.service';
+import { catchError, map, of } from 'rxjs';
 import { ActivityHighlight } from '../../../../../../../shared/components/activity-card/activity-card.component';
 import { environment } from '../../../../../../../../environments/environment';
+
+// Interface para el formato de precio siguiendo el ejemplo
+interface PriceData {
+  age_group_name: string;
+  value: number;
+  currency: string;
+}
+
+// Interface siguiendo el patrón del ejemplo
+interface ActivityWithPrice extends IActivityResponse {
+  priceData: PriceData[];
+}
 
 @Component({
   selector: 'app-activity',
@@ -30,19 +46,20 @@ export class ActivitysComponent implements OnInit, OnChanges {
   @Input() itineraryDayId: number | undefined;
   @Input() departureId: number | undefined;
 
-  // NUEVO: Output para emitir actividades seleccionadas
+  // Output para emitir actividades seleccionadas
   @Output() activitySelected = new EventEmitter<ActivityHighlight>();
 
   loading = true;
-  activities: IActivityResponse[] = [];
+  activities: ActivityWithPrice[] = [];
   error: string | null = null;
 
-  // Datos para el carousel
+  // Datos para el carousel - transformados desde activities
   highlights: ActivityHighlight[] = [];
 
   constructor(
     private activityService: ActivityService,
-    private activityPriceService: ActivityPriceService
+    private activityPriceService: ActivityPriceService,
+    private activityPackPriceService: ActivityPackPriceService
   ) {}
 
   ngOnInit(): void {
@@ -80,7 +97,12 @@ export class ActivitysComponent implements OnInit, OnChanges {
     this.highlights = [];
 
     this.activityService
-      .getForItinerary(this.itineraryId, this.departureId, this.itineraryDayId)
+      .getForItineraryWithPacks(
+        this.itineraryId,
+        this.departureId,
+        this.itineraryDayId,
+        true // isVisibleOnWeb = true
+      )
       .pipe(
         catchError((err) => {
           console.error('Error al cargar actividades:', err);
@@ -90,15 +112,107 @@ export class ActivitysComponent implements OnInit, OnChanges {
         })
       )
       .subscribe((activities: IActivityResponse[]) => {
-        this.activities = activities;
-        this.transformActivitiesToHighlights();
+        // Transformar actividades siguiendo el patrón del ejemplo
+        this.activities = activities.map((activity) => ({
+          ...activity,
+          priceData: [], // Inicializar array vacío
+        }));
+
+        // Cargar precios para cada actividad siguiendo el patrón del ejemplo
+        this.loadPricesForActivities();
         this.loading = false;
       });
   }
 
-  private transformActivitiesToHighlights(): void {
-    const highlights: ActivityHighlight[] = this.activities.map(
-      (activity: IActivityResponse) =>
+  /**
+   * Carga precios para todas las actividades siguiendo el patrón del ejemplo
+   */
+  private loadPricesForActivities(): void {
+    if (!this.departureId) return;
+
+    this.activities.forEach((activity, index) => {
+      this.loadPriceForActivity(activity, index);
+    });
+  }
+
+  /**
+   * Carga precio para una actividad específica siguiendo el patrón del ejemplo
+   */
+  private loadPriceForActivity(
+    activity: ActivityWithPrice,
+    index: number
+  ): void {
+    if (!this.departureId) return;
+
+    if (activity.type === 'act') {
+      // Cargar precio de actividad individual
+      this.activityPriceService
+        .getAll({
+          ActivityId: [activity.id],
+          DepartureId: this.departureId,
+        })
+        .pipe(
+          map((prices) => (prices.length > 0 ? prices : [])),
+          catchError((error) => {
+            console.error(
+              `Error loading price for activity ${activity.id}:`,
+              error
+            );
+            return of([]);
+          })
+        )
+        .subscribe((prices) => {
+          // Transformar precios al formato esperado
+          this.activities[index].priceData = prices.map(
+            (price: IActivityPriceResponse) => ({
+              age_group_name: 'Adultos',
+              value: price.campaignPrice || price.basePrice,
+              currency: 'EUR',
+            })
+          );
+
+          // Actualizar highlights después de cargar precios
+          this.updateHighlights();
+        });
+    } else if (activity.type === 'pack') {
+      // Cargar precio de pack
+      this.activityPackPriceService
+        .getAll({
+          activityPackId: activity.id,
+          departureId: this.departureId,
+        })
+        .pipe(
+          map((prices) => (prices.length > 0 ? prices : [])),
+          catchError((error) => {
+            console.error(
+              `Error loading price for pack ${activity.id}:`,
+              error
+            );
+            return of([]);
+          })
+        )
+        .subscribe((prices) => {
+          // Transformar precios al formato esperado
+          this.activities[index].priceData = prices.map(
+            (price: IActivityPackPriceResponse) => ({
+              age_group_name: 'Adultos',
+              value: price.campaignPrice || price.basePrice,
+              currency: 'EUR',
+            })
+          );
+
+          // Actualizar highlights después de cargar precios
+          this.updateHighlights();
+        });
+    }
+  }
+
+  /**
+   * Actualiza los highlights desde las actividades con precios cargados
+   */
+  private updateHighlights(): void {
+    this.highlights = this.activities.map(
+      (activity: ActivityWithPrice) =>
         ({
           id: activity.id.toString(),
           title: activity.name || 'Sin título',
@@ -107,39 +221,27 @@ export class ActivitysComponent implements OnInit, OnChanges {
           recommended: activity.isRecommended || false,
           optional: activity.isOptional || false,
           added: false,
-          price: 0,
+          price: this.getBasePrice(activity) || 0,
           imageAlt: activity.imageAlt || activity.name || 'Sin título',
+          type: activity.type as 'act' | 'pack',
         } as ActivityHighlight)
     );
+  }
 
-    // Si hay actividades opcionales, buscar el precio de adulto (ageGroupId=1) para todas en una sola petición
-    const optionalActivities = this.activities.filter((a) => a.isOptional);
-    if (optionalActivities.length > 0) {
-      const activityIds = optionalActivities.map((a) => a.id);
-      this.activityPriceService
-        .getAll({
-          ActivityId: activityIds,
-          AgeGroupId: 1,
-          RetailerId: environment.retaileriddefault,
-        })
-        .subscribe((prices: IActivityPriceResponse[]) => {
-          optionalActivities.forEach((activity) => {
-            const priceObj = prices.find(
-              (p) => p.activityId === activity.id && p.ageGroupId === 1
-            );
-            const price = priceObj ? priceObj.basePrice : 0;
-            const highlightIdx = highlights.findIndex(
-              (h) => h.id === activity.id.toString()
-            );
-            if (highlightIdx !== -1) {
-              highlights[highlightIdx].price = price;
-            }
-          });
-          this.highlights = highlights;
-        });
-    } else {
-      this.highlights = highlights;
-    }
+  /**
+   * Obtiene precios de adultos siguiendo el patrón del ejemplo
+   */
+  getAdultPrices(priceData: PriceData[]): PriceData[] {
+    if (!priceData) return [];
+    return priceData.filter((price) => price.age_group_name === 'Adultos');
+  }
+
+  /**
+   * Obtiene el precio base para mostrar siguiendo el patrón del ejemplo
+   */
+  getBasePrice(item: ActivityWithPrice): number | null {
+    const adultPrices = this.getAdultPrices(item.priceData);
+    return adultPrices.length > 0 ? adultPrices[0].value : null;
   }
 
   onAddActivity(highlight: ActivityHighlight): void {
@@ -147,7 +249,7 @@ export class ActivitysComponent implements OnInit, OnChanges {
     if (index !== -1) {
       this.highlights[index] = { ...highlight, added: !highlight.added };
 
-      // NUEVO: Emitir evento al componente padre
+      // Emitir evento al componente padre
       this.activitySelected.emit(this.highlights[index]);
     }
   }

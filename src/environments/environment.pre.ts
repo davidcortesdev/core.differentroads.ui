@@ -31,8 +31,9 @@ export const environment = {
   masterdataApiUrl:'https://masterdata-pre.differentroads.es/api',
   reservationsApiUrl: 'https://reservations-pre.differentroads.es/api',
   amadeusApiUrl: 'https://amadeus-pre.differentroads.es/api',
+  usersApiUrl: 'https://auth-pre.differentroads.es/api',
 
-  scalapayApiUrl: 'https://fastapi-pre.differentroads.es/scalapay',
+  scalapayApiUrl: 'https://scalapay-pre.differentroads.es/api',
   scalapayApiKey: 'qhtfs87hjnc12kkos',
   retaileriddefault: 7,
 };

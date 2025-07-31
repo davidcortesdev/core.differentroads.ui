@@ -13,7 +13,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
-import { UsersService } from '../../../../core/services/users.service';
+import { UsersNetService } from '../../../../core/services/usersNet.service';
 import { HubspotService } from '../../../../core/services/hubspot.service';
 import { ConfirmationCodeComponent } from '../../../../shared/components/confirmation-code/confirmation-code.component';
 
@@ -73,7 +73,7 @@ export class SignUpFormComponent {
     private fb: FormBuilder,
     private router: Router,
     private authService: AuthenticateService,
-    private usersService: UsersService,
+    private usersNetService: UsersNetService,
     private hubspotService: HubspotService
   ) {
     this.signUpForm = this.fb.group(
@@ -131,30 +131,33 @@ export class SignUpFormComponent {
           // Si Hubspot responde correctamente, proceder con el registro del usuario
           this.authService
             .signUp(this.signUpForm.value.email, this.signUpForm.value.password)
-            .then(() => {
-              this.usersService
+            .then((cognitoUserId) => {
+              console.log('Usuario creado en Cognito con ID:', cognitoUserId);
+              this.usersNetService
                 .createUser({
+                  cognitoId: cognitoUserId,
+                  name: this.signUpForm.value.firstName,
+                  lastName: this.signUpForm.value.lastName,
                   email: this.signUpForm.value.email,
-                  names: this.signUpForm.value.firstName,
-                  lastname: this.signUpForm.value.lastName,
                   phone: this.signUpForm.value.phone,
+                  hasWebAccess: true,
+                  hasMiddleAccess: false
                 })
-                .subscribe(
-                  () => {
-                    // NEW: Asignar 100 puntos al usuario recién creado
-                    this.authService.assignNewTravelerPoints(this.signUpForm.value.email);
-
+                .subscribe({
+                  next: (user) => {
+                    console.log('Usuario creado exitosamente:', user);
+                    
                     this.isLoading = false;
                     this.isConfirming = true;
                     this.registeredUsername = this.signUpForm.value.email;
                     this.userPassword = this.signUpForm.value.password;
                     console.log('Registro completado. Esperando confirmación.');
                   },
-                  (error) => {
+                  error: (error: any) => {
                     this.isLoading = false;
                     this.errorMessage = error.message || 'Registro fallido';
                   }
-                );
+                });
             })
             .catch((error) => {
               this.isLoading = false;

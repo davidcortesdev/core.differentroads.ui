@@ -55,6 +55,14 @@
               #roomSelector>
             </app-selector-room>
 
+            <!-- Componente actividades opcionales -->
+            <app-activities-optionals
+              [itineraryId]="itineraryId"
+              [departureId]="departureId"
+              [reservationId]="reservationId"
+              (activitiesSelectionChange)="onActivitiesSelectionChange($event)">
+            </app-activities-optionals>
+
             <!-- Componente de seguro -->
             <app-insurance
               [tourId]="tourId"
@@ -78,8 +86,6 @@
 
           <!-- Step 2: Vuelos -->
           <div *ngSwitchCase="1">
-            <h3>Vuelos</h3>
-            <p>Contenido del paso 2 - Vuelos</p>
             <!-- Componente de gestión de vuelos -->
             <app-flight-management [departureId]="departureId ?? 0" [reservationId]="reservationId ?? 0" [tourId]="tourId ?? 0"></app-flight-management>
 
@@ -87,37 +93,41 @@
               <p-button
                 class="without-flight"
                 label="Lo quiero sin vuelos"
-                (onClick)="nextStepWithValidation(2)"
+                (onClick)="checkAuthAndContinue(2, onActiveIndexChange.bind(this), true)"
               ></p-button>
               <p-button
                 class="continue-button"
                 label="Continuar"
                 icon="pi pi-arrow-right"
                 iconPos="right"
-                (onClick)="nextStepWithValidation(2)"
+                (onClick)="checkAuthAndContinue(2, onActiveIndexChange.bind(this), false)"
               ></p-button>
             </div>
           </div>
 
           <!-- Step 3: Viajeros -->
           <div *ngSwitchCase="2">
-            <h3>Viajeros</h3>
-            <p>Contenido del paso 3 - Viajeros</p>
+            <app-info-travelers 
+              [departureId]="departureId"
+              [reservationId]="reservationId"
+              [itineraryId]="itineraryId"
+              #infoTravelers>
+            </app-info-travelers>
 
             <div class="flex pt-6 justify-between">
               <p-button
                 label="Continuar"
                 icon="pi pi-arrow-right"
                 iconPos="right"
-                (onClick)="nextStepWithValidation(3)"
+                (onClick)="checkAuthAndContinue(3, onActiveIndexChange.bind(this), false)"
               ></p-button>
             </div>
           </div>
 
           <!-- Step 4: Pago -->
           <div *ngSwitchCase="3">
-            <h3>Pago</h3>
-            <p>Contenido del paso 4 - Pago</p>
+            <!-- Componente de pago -->
+             <app-payment-management [totalPrice]="totalAmountCalculated" [reservationId]="reservationId ?? 0"></app-payment-management>
 
             <div class="flex pt-6 justify-between">
               <p-button
@@ -158,4 +168,13 @@
   <div *ngIf="error" class="error-message">
     <p>{{ error }}</p>
   </div>
+
+  <!-- Modal de login -->
+  <app-login-modal
+    [visible]="loginDialogVisible"
+    (close)="closeLoginModal()"
+    (login)="navigateToLogin()"
+    (register)="navigateToRegister()"
+  >
+  </app-login-modal>
 </div>

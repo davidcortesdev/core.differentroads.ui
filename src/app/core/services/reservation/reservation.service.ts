@@ -10,7 +10,7 @@ export interface ReservationCreate {
   retailerId: number;
   tourId: number;
   departureId: number;
-  userId: number;
+  userId: number | null;
   totalPassengers: number;
   totalAmount: number;
   budgetAt: string;
@@ -28,7 +28,7 @@ export interface ReservationUpdate {
   retailerId: number;
   tourId: number;
   departureId: number;
-  userId: number;
+  userId: number | null;
   totalPassengers: number;
   totalAmount: number;
   budgetAt: string;
@@ -67,7 +67,7 @@ export interface ReservationFilters {
   retailerId?: number;
   tourId?: number;
   departureId?: number;
-  userId?: number;
+  userId?: number | null;
   totalPassengers?: number;
   totalAmount?: number;
   budgetAt?: string;
@@ -159,7 +159,7 @@ export class ReservationService {
     const params = new HttpParams()
       .set('UserId', userId.toString())
       .set('useExactMatchForStrings', 'false');
-    
+
     return this.http.get<IReservationResponse[]>(this.API_URL, { params });
   }
 
@@ -172,7 +172,7 @@ export class ReservationService {
     const params = new HttpParams()
       .set('TourId', tourId.toString())
       .set('useExactMatchForStrings', 'false');
-    
+
     return this.http.get<IReservationResponse[]>(this.API_URL, { params });
   }
 
@@ -185,7 +185,7 @@ export class ReservationService {
     const params = new HttpParams()
       .set('DepartureId', departureId.toString())
       .set('useExactMatchForStrings', 'false');
-    
+
     return this.http.get<IReservationResponse[]>(this.API_URL, { params });
   }
 
@@ -198,7 +198,7 @@ export class ReservationService {
     const params = new HttpParams()
       .set('RetailerId', retailerId.toString())
       .set('useExactMatchForStrings', 'false');
-    
+
     return this.http.get<IReservationResponse[]>(this.API_URL, { params });
   }
 
@@ -207,11 +207,13 @@ export class ReservationService {
    * @param reservationStatusId ID del estado de reservación.
    * @returns Lista de reservaciones con el estado especificado.
    */
-  getByReservationStatus(reservationStatusId: number): Observable<IReservationResponse[]> {
+  getByReservationStatus(
+    reservationStatusId: number
+  ): Observable<IReservationResponse[]> {
     const params = new HttpParams()
       .set('ReservationStatusId', reservationStatusId.toString())
       .set('useExactMatchForStrings', 'false');
-    
+
     return this.http.get<IReservationResponse[]>(this.API_URL, { params });
   }
 
@@ -221,12 +223,15 @@ export class ReservationService {
    * @param endDate Fecha de fin (formato ISO string).
    * @returns Lista de reservaciones en el rango de fechas.
    */
-  getByDateRange(startDate: string, endDate: string): Observable<IReservationResponse[]> {
+  getByDateRange(
+    startDate: string,
+    endDate: string
+  ): Observable<IReservationResponse[]> {
     const params = new HttpParams()
       .set('CreatedAtFrom', startDate)
       .set('CreatedAtTo', endDate)
       .set('useExactMatchForStrings', 'false');
-    
+
     return this.http.get<IReservationResponse[]>(this.API_URL, { params });
   }
 
@@ -238,7 +243,7 @@ export class ReservationService {
     const params = new HttpParams()
       .set('AbandonedAtIsNotNull', 'true')
       .set('useExactMatchForStrings', 'false');
-    
+
     return this.http.get<IReservationResponse[]>(this.API_URL, { params });
   }
 
@@ -251,7 +256,7 @@ export class ReservationService {
       .set('CartAtIsNotNull', 'true')
       .set('ReservedAtIsNull', 'true')
       .set('useExactMatchForStrings', 'false');
-    
+
     return this.http.get<IReservationResponse[]>(this.API_URL, { params });
   }
 
@@ -263,7 +268,7 @@ export class ReservationService {
     const params = new HttpParams()
       .set('ReservedAtIsNotNull', 'true')
       .set('useExactMatchForStrings', 'false');
-    
+
     return this.http.get<IReservationResponse[]>(this.API_URL, { params });
   }
 }

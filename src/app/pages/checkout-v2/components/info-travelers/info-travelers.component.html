@@ -1,0 +1,260 @@
+<div class="cont">
+  <h3 class="title">Agrega los datos del viajero</h3>
+  
+  <!-- Indicador de carga -->
+  <div *ngIf="loading" class="loading-indicator">
+    <p>Cargando información de los viajeros...</p>
+  </div>
+
+  <!-- Mensaje de error -->
+  <div *ngIf="error" class="error-message">
+    <p>{{ error }}</p>
+  </div>
+  
+  <div class="flex flex-col" *ngIf="!loading && !error">
+    <div class="border-2 border-dashed border-surface-200 dark:border-surface-700 rounded bg-surface-50 dark:bg-surface-950 flex-auto flex justify-center items-center font-medium">
+      <div class="content-form">
+        <div class="travel-title">
+          <h3 class="title">Viajeros</h3>
+        </div>
+        <p></p>
+        
+        <p-accordion 
+          [multiple]="true"
+          [value]="[0]"
+          class="travelers-accordion">
+          
+          <!-- Generar un accordion panel por cada viajero -->
+          <p-accordion-panel *ngFor="let traveler of travelers; let i = index" [value]="i">
+            <p-accordion-header>
+              Pasajero {{ traveler.travelerNumber }} {{ traveler.isLeadTraveler ? '(Persona que hace la reserva)' : '' }}
+            </p-accordion-header>
+            <p-accordion-content>
+              
+              <!-- Encabezado del panel -->
+              <div class="traveler-header">
+                <p-panel class="user-button">
+                  <i class="pi pi-user"></i>
+                  <p class="user">{{ getAgeGroupName(traveler.ageGroupId) }}</p>
+                </p-panel>
+                <p class="user-description">
+                  <i class="pi pi-exclamation-circle info-icon"></i>
+                  Introduce el nombre y el apellido tal y como aparecen en el documento de identificación. 
+                  <strong>Los campos marcados con * son obligatorios.</strong>
+                </p>
+              </div>
+
+              <!-- Formulario del viajero -->
+              <form class="traveler-form">
+                <!-- Campos OBLIGATORIOS visibles siempre -->
+                <div class="form-section mandatory-fields">
+                  <div class="form-row">
+                    <!-- Generar campos obligatorios dinámicamente desde la API -->
+                    <ng-container *ngFor="let field of departureReservationFields; let fieldIndex = index">
+                      <ng-container *ngIf="isFieldMandatory(field, traveler.isLeadTraveler) && getReservationFieldDetails(field.reservationFieldId) as fieldDetails">
+                        
+                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'text'">
+                          <label>{{ fieldDetails.name }}*</label>
+                          <input 
+                            pInputText 
+                            [name]="fieldDetails.code + '_' + traveler.id" 
+                            [placeholder]="'Introduce tu ' + fieldDetails.name.toLowerCase()"
+                            [value]="getExistingFieldValue(traveler.id, fieldDetails.id)" />
+                        </div>
+                        
+                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'email'">
+                          <label>{{ fieldDetails.name }}*</label>
+                          <input 
+                            pInputText 
+                            type="email" 
+                            [name]="fieldDetails.code + '_' + traveler.id" 
+                            [placeholder]="'Introduce tu ' + fieldDetails.name.toLowerCase()"
+                            [value]="getExistingFieldValue(traveler.id, fieldDetails.id)" />
+                        </div>
+                        
+                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'sex'">
+                          <label>{{ fieldDetails.name }}*</label>
+                          <p-select 
+                            [name]="fieldDetails.code + '_' + traveler.id" 
+                            [options]="sexOptions" 
+                            optionLabel="label" 
+                            optionValue="value" 
+                            placeholder="Seleccione"
+                            [ngModel]="getExistingFieldValue(traveler.id, fieldDetails.id)"></p-select>
+                        </div>
+                        
+                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'date'">
+                          <label>{{ fieldDetails.name }}*</label>
+                          <p-datepicker 
+                            [name]="fieldDetails.code + '_' + traveler.id" 
+                            showIcon 
+                            appendTo="body" 
+                            placeholder="dd/mm/yyyy"
+                            [ngModel]="getExistingFieldValue(traveler.id, fieldDetails.id)"></p-datepicker>
+                        </div>
+                        
+                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'country'">
+                          <label>{{ fieldDetails.name }}*</label>
+                          <p-autocomplete 
+                            [name]="fieldDetails.code + '_' + traveler.id" 
+                            [suggestions]="countryOptions" 
+                            field="name" 
+                            [placeholder]="'Introduce tu ' + fieldDetails.name.toLowerCase()" 
+                            appendTo="body" 
+                            [dropdown]="true"
+                            [ngModel]="getExistingFieldValue(traveler.id, fieldDetails.id)"></p-autocomplete>
+                        </div>
+                        
+                      </ng-container>
+                    </ng-container>
+                  </div>
+
+                  <!-- Campos de checkbox van en filas separadas -->
+                  <ng-container *ngFor="let field of departureReservationFields">
+                    <ng-container *ngIf="isFieldMandatory(field, traveler.isLeadTraveler) && getReservationFieldDetails(field.reservationFieldId) as fieldDetails">
+                      <div class="form-row" *ngIf="fieldDetails.fieldType === 'checkbox'">
+                        <div class="form-column form-field full-width">
+                          <div class="checkbox-field">
+                            <p-checkbox 
+                              [name]="fieldDetails.code + '_' + traveler.id" 
+                              binary="true" 
+                              [inputId]="fieldDetails.code + '_' + traveler.id"
+                              [ngModel]="getExistingFieldValue(traveler.id, fieldDetails.id) === 'true'"></p-checkbox>
+                            <label [for]="fieldDetails.code + '_' + traveler.id" class="checkbox-label">{{ fieldDetails.description }}*</label>
+                          </div>
+                        </div>
+                      </div>
+                    </ng-container>
+                  </ng-container>
+                </div>
+
+                <!-- Botón Ver más / Ver menos -->
+                <div class="form-row">
+                  <div class="form-column">
+                    <button
+                      pButton
+                      type="button"
+                      [label]="showMoreFields ? 'Ver menos' : 'Ver más'"
+                      [icon]="showMoreFields ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+                      (click)="toggleMoreFields()"
+                      class="p-button-text p-button-sm show-more-button"
+                    ></button>
+                  </div>
+                </div>
+                
+                <!-- Mensaje debajo del botón Ver más / Ver menos -->
+                <div class="datos-adicionales-info">
+                  <p class="mensaje-info">
+                    <i class="pi pi-exclamation-circle icono-info"></i>
+                    Completa tus datos pendientes antes de tu viaje. 
+                    <strong>Puedes rellenarlos más tarde desde tu perfil.</strong>
+                  </p>
+                </div>
+
+                <!-- Campos ADICIONALES visibles al hacer Ver más -->
+                <div class="additional-fields" *ngIf="showMoreFields">
+
+                  <div class="form-row">
+                    <!-- Generar campos NO obligatorios dinámicamente desde la API -->
+                    <ng-container *ngFor="let field of departureReservationFields">
+                      <ng-container *ngIf="!isFieldMandatory(field, traveler.isLeadTraveler) && getReservationFieldDetails(field.reservationFieldId) as fieldDetails">
+                        
+                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'text'">
+                          <label>{{ fieldDetails.name }}</label>
+                          <input 
+                            pInputText 
+                            [name]="fieldDetails.code + '_' + traveler.id" 
+                            [placeholder]="'Introduce tu ' + fieldDetails.name.toLowerCase()"
+                            [value]="getExistingFieldValue(traveler.id, fieldDetails.id)" />
+                        </div>
+                        
+                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'email'">
+                          <label>{{ fieldDetails.name }}</label>
+                          <input 
+                            pInputText 
+                            type="email" 
+                            [name]="fieldDetails.code + '_' + traveler.id" 
+                            [placeholder]="'Introduce tu ' + fieldDetails.name.toLowerCase()"
+                            [value]="getExistingFieldValue(traveler.id, fieldDetails.id)" />
+                        </div>
+                        
+                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'sex'">
+                          <label>{{ fieldDetails.name }}</label>
+                          <p-select 
+                            [name]="fieldDetails.code + '_' + traveler.id" 
+                            [options]="sexOptions" 
+                            optionLabel="label" 
+                            optionValue="value" 
+                            placeholder="Seleccione"
+                            [ngModel]="getExistingFieldValue(traveler.id, fieldDetails.id)"></p-select>
+                        </div>
+                        
+                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'date'">
+                          <label>{{ fieldDetails.name }}</label>
+                          <p-datepicker 
+                            [name]="fieldDetails.code + '_' + traveler.id" 
+                            showIcon 
+                            appendTo="body" 
+                            placeholder="dd/mm/yyyy"
+                            [ngModel]="getExistingFieldValue(traveler.id, fieldDetails.id)"></p-datepicker>
+                        </div>
+                        
+                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'country'">
+                          <label>{{ fieldDetails.name }}</label>
+                          <p-autocomplete 
+                            [name]="fieldDetails.code + '_' + traveler.id" 
+                            [suggestions]="countryOptions" 
+                            field="name" 
+                            [placeholder]="'Introduce tu ' + fieldDetails.name.toLowerCase()" 
+                            appendTo="body" 
+                            [dropdown]="true"
+                            [ngModel]="getExistingFieldValue(traveler.id, fieldDetails.id)"></p-autocomplete>
+                        </div>
+                        
+                      </ng-container>
+                    </ng-container>
+                  </div>
+
+                  <!-- Campos de checkbox opcionales van en filas separadas -->
+                  <ng-container *ngFor="let field of departureReservationFields">
+                    <ng-container *ngIf="!isFieldMandatory(field, traveler.isLeadTraveler) && getReservationFieldDetails(field.reservationFieldId) as fieldDetails">
+                      <div class="form-row" *ngIf="fieldDetails.fieldType === 'checkbox'">
+                        <div class="form-column form-field full-width">
+                          <div class="checkbox-field">
+                            <p-checkbox 
+                              [name]="fieldDetails.code + '_' + traveler.id" 
+                              binary="true" 
+                              [inputId]="fieldDetails.code + '_opt_' + traveler.id"
+                              [ngModel]="getExistingFieldValue(traveler.id, fieldDetails.id) === 'true'"></p-checkbox>
+                            <label [for]="fieldDetails.code + '_opt_' + traveler.id" class="checkbox-label">{{ fieldDetails.description }}</label>
+                          </div>
+                        </div>
+                      </div>
+                    </ng-container>
+                  </ng-container>
+                </div>
+                <!-- Actividades asignadas al viajero dentro de Ver más -->
+                <div class="traveler-activities" *ngIf="travelerActivities[traveler.id] && travelerActivities[traveler.id].length > 0">
+                  <h4>Actividades asignadas:</h4>
+                  <div class="activities-list">
+                    <div *ngFor="let travelerActivity of travelerActivities[traveler.id]" class="activity-item" style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0;">
+                      <div class="activity-info">
+                        <h5><strong>{{ getActivityName(travelerActivity.activityId) }}</strong></h5>
+                      </div>
+                      <p-toggleSwitch 
+                        [ngModel]="true"
+                        (ngModelChange)="onActivityToggleChange(traveler.id, travelerActivity.activityId, $event)"
+                        [ngModelOptions]="{standalone: true}">
+                      </p-toggleSwitch>
+                    </div>
+                  </div>
+                </div>
+              </form>
+              
+            </p-accordion-content>
+          </p-accordion-panel>
+        </p-accordion>
+      </div>
+    </div>
+  </div>
+</div>

@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { IReservationResponse, ReservationService } from '../../../../core/services/reservation/reservation.service';
 import { ActivatedRoute } from '@angular/router';
 import { IPaymentResponse, IPaymentStatusResponse, PaymentsNetService, PaymentStatusFilter } from '../../services/paymentsNet.service';
+import { PaymentStatusNetService } from '../../services/paymentStatusNet.service';
+import { PaymentMethodNetService } from '../../services/paymentMethodNet.service';
 import { NewScalapayService } from '../../services/newScalapay.service';
 import { MessageService } from 'primeng/api';
 import { forkJoin } from 'rxjs';
@@ -24,6 +26,7 @@ export class NewReservationComponent implements OnInit {
   paymentStatus: string = '';
   paymentMethod: string = '';
   status: string = '';
+  statusName: string = ''; // Agregar propiedad para el nombre del estado
   travelers: any[] = [];
   successId = 0;
   failedId = 0;
@@ -35,25 +38,32 @@ export class NewReservationComponent implements OnInit {
   error: boolean = false;
 
 
-  constructor(private route: ActivatedRoute, private reservationService: ReservationService, private paymentService: PaymentsNetService, private scalapayService: NewScalapayService, private messageService: MessageService) { }
+  constructor(
+    private route: ActivatedRoute, 
+    private reservationService: ReservationService, 
+    private paymentService: PaymentsNetService, 
+    private paymentStatusService: PaymentStatusNetService,
+    private paymentMethodService: PaymentMethodNetService,
+    private scalapayService: NewScalapayService, 
+    private messageService: MessageService
+  ) { }
 
   ngOnInit(): void {
     console.log("NewReservationComponent initialized");
     this.route.params.subscribe((params) => {
       this.reservationId = params['reservationId'];
       this.paymentId = params['paymentId'];
-      this.status = params['status'];
+      // El status se determinará basado en el pago cargado
     });
 
     // First load payment statuses, then load reservation
     this.loadPaymentStatuses();
-
   }
 
   loadPaymentStatuses(): void {
-    const successStatus$ = this.paymentService.getStatus({ code: "COMPLETED" } as PaymentStatusFilter);
-    const failedStatus$ = this.paymentService.getStatus({ code: "FAILED" } as PaymentStatusFilter);
-    const pendingStatus$ = this.paymentService.getStatus({ code: "PENDING" } as PaymentStatusFilter);
+    const successStatus$ = this.paymentStatusService.getPaymentStatusByCode("COMPLETED");
+    const failedStatus$ = this.paymentStatusService.getPaymentStatusByCode("FAILED");
+    const pendingStatus$ = this.paymentStatusService.getPaymentStatusByCode("PENDING");
 
     forkJoin({
       success: successStatus$,
@@ -114,26 +124,48 @@ export class NewReservationComponent implements OnInit {
     this.paymentService.getPaymentById(this.paymentId).subscribe((payment: IPaymentResponse) => {
       this.payment = payment;
       console.log(this.payment);
-      if (this.payment.paymentStatusId === this.pendingId) { // Scalapay TODO: Cambiar por id sacando de la tabla
-        if (this.payment.paymentMethodId === 1) { // Transfer TODO: Cambiar por id sacando de la tabla
-          this.paymentType = 'Transfer';
-          console.log('Payment is a transfer');
-        } else if (this.payment.paymentMethodId === 2) { // Scalapay TODO: Cambiar por id sacando de la tabla
-          this.paymentType = 'Scalapay';
-          console.log('Payment is a scalapay');
-          this.captureOrder();
-        } else if (this.payment.paymentMethodId === 3) { // RedSys TODO: Cambiar por id sacando de la tabla
-          this.paymentType = 'RedSys';
-          console.log('Payment is a redsys');
-        }
-      } else if (this.payment.paymentStatusId === this.successId) {
-        this.status = 'SUCCESS';
-      } else if (this.payment.paymentStatusId === this.failedId) {
-        this.status = 'FAILED';
-      }
+      
+      // Cargar información del método de pago
+      this.paymentMethodService.getPaymentMethodById(payment.paymentMethodId).subscribe({
+        next: (method) => {
+          this.paymentMethod = method.name;
+          
+          // Determinar el tipo de pago basado en el método
+          if (method.code === 'TRANSFER') {
+            this.paymentType = 'Transfer';
+            console.log('Payment is a transfer');
+          } else if (method.code === 'SCALAPAY') {
+            this.paymentType = 'Scalapay';
+            console.log('Payment is a scalapay');
+            this.captureOrder();
+          } else if (method.code === 'REDSYS') {
+            this.paymentType = 'RedSys';
+            console.log('Payment is a redsys');
+          }
+        },
+        error: (error) => console.error('Error loading payment method:', error)
+      });
+      
+      // Cargar información del estado de pago
+      this.paymentStatusService.getPaymentStatusById(payment.paymentStatusId).subscribe({
+        next: (status) => {
+          this.paymentStatus = status.name;
+          
+          // Determinar el status y nombre del estado
+          if (status.code === 'PENDING') {
+            this.status = 'PENDING';
+            this.statusName = status.name;
+          } else if (status.code === 'COMPLETED') {
+            this.status = 'SUCCESS';
+            this.statusName = status.name;
+          } else if (status.code === 'FAILED') {
+            this.status = 'FAILED';
+            this.statusName = status.name;
+          }
+        },
+        error: (error) => console.error('Error loading payment status:', error)
+      });
     });
-
-
   }
   //De aqui sacar paymentStatus.name
   //De aqui sacar paymentMethod.name
@@ -175,6 +207,43 @@ export class NewReservationComponent implements OnInit {
         }
       });
     }
+  }
+
+  handleVoucherUpload(response: any): void {
+    console.log('Voucher uploaded successfully:', response);
+    
+    // Actualizar el pago con la URL del archivo subido
+    if (this.payment && response.secure_url) {
+      this.payment.attachmentUrl = response.secure_url;
+      this.payment.paymentStatusId = this.pendingId; // Mantener como PENDING hasta que se revise
+      
+      this.paymentService.update(this.payment).subscribe({
+        next: () => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Justificante subido',
+            detail: 'El justificante se ha subido correctamente. Nuestro equipo lo revisará pronto.'
+          });
+        },
+        error: (error) => {
+          console.error('Error updating payment with voucher:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al actualizar el pago con el justificante'
+          });
+        }
+      });
+    }
+  }
+
+  handleVoucherError(error: any): void {
+    console.error('Error uploading voucher:', error);
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error de subida',
+      detail: 'Ha ocurrido un error al subir el justificante. Por favor, inténtalo de nuevo.'
+    });
   }
 
 }

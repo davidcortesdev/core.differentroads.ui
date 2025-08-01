@@ -38,31 +38,47 @@
       <div *ngIf="status === 'SUCCESS'">
         Pago realizado con éxito
       </div>
-      <div *ngIf="status != 'SUCCESS'">
+      <div *ngIf="status === 'PENDING' && paymentType === 'Transfer'">
+        Tu pago por transferencia está pendiente
+      </div>
+      <div *ngIf="status === 'FAILED'">
         Pago fallido
       </div>
     </div>
   </div>
 
-    <!-- Mensajes específicos por estado -->
-    <!-- <ng-container
-      *ngIf="(paymentStatus || reservationInfo?.status) === 'confirm'"
-    >
-      <p class="hl">
-        ¡Estamos emocionados de confirmarte que tu reserva ha sido realizada con
-        éxito!
-      </p>
-      <p class="msg">
-        Gracias por elegirnos para tu próximo viaje. Sabemos que cada viaje es
-        una oportunidad para crear recuerdos inolvidables, y estamos aquí para
-        asegurarnos de que todo sea perfecto. Si tienes alguna pregunta sobre tu
-        destino, recomendaciones de actividades o cualquier detalle relacionado
-        con tu viaje, no dudes en contactarnos.
-      </p>
-      <p class="msg">
-        ¡Estamos seguros de que vivirás una experiencia maravillosa!
-      </p>
-    </ng-container> -->
+  <!-- Mensajes específicos por estado -->
+  <ng-container *ngIf="status === 'PENDING' && paymentType === 'Transfer'">
+    <p class="hl">
+      ¡Hemos recibido tu petición de pago por transferencia!
+    </p>
+    <p class="msg">
+      Por favor, realiza el pago por transferencia a través de las entidades bancarias que se indican a continuación.
+    </p>
+    <p class="status-msg" style="color: #f05a4c">
+      IMPORTANTE: Sube el justificante de pago para completar tu reserva.
+    </p>
+  </ng-container>
+
+  <ng-container *ngIf="status === 'SUCCESS'">
+    <p class="hl">
+      ¡Estamos emocionados de confirmarte que tu pago ha sido realizado con éxito!
+    </p>
+    <p class="msg">
+      Gracias por elegirnos para tu próximo viaje. Sabemos que cada viaje es
+      una oportunidad para crear recuerdos inolvidables, y estamos aquí para
+      asegurarnos de que todo sea perfecto.
+    </p>
+  </ng-container>
+
+  <ng-container *ngIf="status === 'FAILED'">
+    <p class="hl">
+      Ha ocurrido un problema con tu pago
+    </p>
+    <p class="msg">
+      Por favor, contacta con nuestro equipo de soporte para resolver este problema.
+    </p>
+  </ng-container>
 
     <!-- <ng-container *ngIf="(paymentStatus || reservationInfo?.status) === 'rq'">
       <p class="hl">
@@ -164,6 +180,54 @@
       </ng-template>
     </ng-container> -->
   <!-- </div> -->
+
+  <!-- Panel de detalles del pago -->
+  <p-panel styleClass="det-panel" *ngIf="payment">
+    <div class="det-item">
+      <label class="val">Fecha de pago:</label>
+      <span>{{ payment.paymentDate | date:'dd/MM/yyyy' }}</span>
+    </div>
+    <div class="det-item">
+      <label class="val">Número de pago:</label>
+      <span>{{ payment.id }}</span>
+    </div>
+    <div class="det-item">
+      <label class="val">Importe:</label>
+      <span>{{ payment.amount | currencyFormat : "EUR" }}</span>
+    </div>
+    <div class="det-item">
+      <label class="val">Estado:</label>
+      <span>{{ statusName }}</span>
+    </div>
+  </p-panel>
+
+  <!-- Sección de subida de justificante para transferencias pendientes -->
+  <ng-container *ngIf="status === 'PENDING' && paymentType === 'Transfer'">
+    <p-panel styleClass="upload-panel">
+      <ng-template pTemplate="header">
+        <div class="pan-hdr">
+          Subir justificante de transferencia
+        </div>
+      </ng-template>
+      <div class="upload-content">
+        <p class="upload-description">
+          Para completar tu reserva, por favor sube el comprobante de la transferencia bancaria.
+        </p>
+        <app-upload-button
+          label="Subir justificante de transferencia"
+          accept="image/*, .pdf"
+          [maxFileSize]="5000000"
+          folder="vouchers"
+          [auto]="true"
+          chooseIcon="pi pi-upload"
+          styleClass="upload-button"
+          (onUploadSuccess)="handleVoucherUpload($event)"
+          (onUploadError)="handleVoucherError($event)"
+        >
+        </app-upload-button>
+      </div>
+    </p-panel>
+  </ng-container>
 
   <!-- Panel de detalles -->
   <!-- <p-panel styleClass="det-panel">

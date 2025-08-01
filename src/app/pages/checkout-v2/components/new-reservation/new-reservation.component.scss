@@ -1,1 +1,106 @@
+// Estilos básicos para el componente new-reservation
 
+.wel {
+  margin-bottom: 2rem;
+  
+  .greet {
+    p {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    div {
+      font-weight: 500;
+      margin-top: 0.5rem;
+    }
+  }
+}
+
+.hl {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.msg {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.status-msg {
+  font-weight: 500;
+  margin-top: 1rem;
+}
+
+.det-panel {
+  margin: 2rem 0;
+  
+  .det-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #eee;
+    
+    &:last-child {
+      border-bottom: none;
+    }
+    
+    .val {
+      font-weight: 500;
+      color: #333;
+    }
+    
+    span {
+      color: #666;
+    }
+  }
+}
+
+.upload-panel {
+  margin: 2rem 0;
+  
+  .pan-hdr {
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .upload-content {
+    padding: 1rem 0;
+    
+    .upload-description {
+      margin-bottom: 1.5rem;
+      color: #666;
+    }
+    
+    .upload-placeholder {
+      text-align: center;
+      padding: 2rem;
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      
+      p {
+        margin-top: 1rem;
+        color: #999;
+      }
+    }
+  }
+}
+
+.error-container {
+  text-align: center;
+  padding: 3rem 1rem;
+  
+  h2 {
+    margin: 1rem 0;
+    color: #f05a4c;
+  }
+  
+  p {
+    margin-bottom: 2rem;
+    color: #666;
+  }
+}

@@ -2,6 +2,8 @@ import { Component, Input, OnInit, OnDestroy, Output, EventEmitter } from '@angu
 import { IScalapayOrderResponse, NewScalapayService } from '../../services/newScalapay.service';
 import { Router } from '@angular/router';
 import { PaymentsNetService, PaymentStatusFilter } from '../../services/paymentsNet.service';
+import { PaymentStatusNetService } from '../../services/paymentStatusNet.service';
+import { PaymentMethodNetService } from '../../services/paymentMethodNet.service';
 import { IFormData, NewRedsysService } from '../../services/newRedsys.service';
 
 // Interfaces y tipos
@@ -32,6 +34,11 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
   @Output() paymentCompleted = new EventEmitter<PaymentOption>();
   @Output() backRequested = new EventEmitter<void>();
 
+  // Payment IDs (se cargarán desde la API)
+  transferMethodId: number = 0;
+  redsysMethodId: number = 0;
+  pendingStatusId: number = 0;
+
   // State management
   readonly dropdownStates = {
     main: true,
@@ -46,10 +53,49 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
     isLoading: false
   };
 
-  constructor(private readonly scalapayService: NewScalapayService, private readonly router: Router, private readonly paymentsService: PaymentsNetService, private readonly redsysService: NewRedsysService) { }
+  constructor(
+    private readonly scalapayService: NewScalapayService, 
+    private readonly router: Router, 
+    private readonly paymentsService: PaymentsNetService, 
+    private readonly paymentStatusService: PaymentStatusNetService,
+    private readonly paymentMethodService: PaymentMethodNetService,
+    private readonly redsysService: NewRedsysService
+  ) { }
 
   ngOnInit(): void {
     this.initializeScalapayScript();
+    this.loadPaymentIds();
+  }
+
+  private loadPaymentIds(): void {
+    // Cargar métodos de pago
+    this.paymentMethodService.getPaymentMethodByCode('TRANSFER').subscribe({
+      next: (methods) => {
+        if (methods && methods.length > 0) {
+          this.transferMethodId = methods[0].id;
+        }
+      },
+      error: (error) => console.error('Error loading transfer method:', error)
+    });
+
+    this.paymentMethodService.getPaymentMethodByCode('REDSYS').subscribe({
+      next: (methods) => {
+        if (methods && methods.length > 0) {
+          this.redsysMethodId = methods[0].id;
+        }
+      },
+      error: (error) => console.error('Error loading redsys method:', error)
+    });
+
+    // Cargar estados de pago
+    this.paymentStatusService.getPaymentStatusByCode('PENDING').subscribe({
+      next: (statuses) => {
+        if (statuses && statuses.length > 0) {
+          this.pendingStatusId = statuses[0].id;
+        }
+      },
+      error: (error) => console.error('Error loading pending status:', error)
+    });
   }
 
   ngOnDestroy(): void {
@@ -136,11 +182,13 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
         } else {
           await this.processCreditCardPayment(this.totalPrice);
         }
-      } else {
-        //TODO process transfer payment
+      } else if (this.paymentMethod === 'transfer') {
+        await this.processTransferPayment();
       }
     } catch (error) {
       console.error('Payment processing failed:', error);
+    } finally {
+      this.paymentState.isLoading = false;
     }
   }
 
@@ -215,15 +263,15 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
       reservationId: this.reservationId,
       amount: amount,
       paymentDate: new Date(),
-      paymentMethodId: 3, //Redsys en dev, TODO get de la tabla
-      paymentStatusId: 1 //Pending en dev, TODO get de la tabla
+      paymentMethodId: this.redsysMethodId,
+      paymentStatusId: this.pendingStatusId
     }).toPromise();
 
     if (!response) {
       throw new Error('Error al crear el pago');
     }
 
-      const formData: IFormData | undefined = await this.redsysService.generateFormData(response.id, "https://www.differentroads.es/", "https://redsys-dev.differentroads.es").toPromise();
+    const formData: IFormData | undefined = await this.redsysService.generateFormData(response.id, "https://www.differentroads.es/", "https://redsys-dev.differentroads.es").toPromise();
     if (formData) {
       await this.enviarFormARedsys(formData);
     }
@@ -258,5 +306,28 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
       document.body.appendChild(form);
       form.submit();
     }
+  }
+
+  private async processTransferPayment(): Promise<void> {
+    // Determinar el importe según el tipo de pago
+    const amount = this.paymentState.type === 'deposit' ? this.depositAmount : this.totalPrice;
+
+    // Crear el pago en la API
+    const response = await this.paymentsService.create({
+      reservationId: this.reservationId,
+      amount: amount,
+      paymentDate: new Date(),
+      paymentMethodId: this.transferMethodId,
+      paymentStatusId: this.pendingStatusId
+    }).toPromise();
+
+    if (!response) {
+      throw new Error('Error al crear el pago por transferencia');
+    }
+
+    // Redirigir a new-reservation con los parámetros necesarios
+    this.router.navigate([
+      `/reservation/${this.reservationId}/${response.id}`
+    ]);
   }
 }

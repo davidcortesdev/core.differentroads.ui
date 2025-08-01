@@ -63,6 +63,14 @@ export class CheckoutV2Component implements OnInit {
   selectedActivities: any[] = [];
   activitiesTotalPrice: number = 0;
 
+  // Variables para actividades por viajero
+  travelerActivities: {
+    [travelerId: number]: { [activityId: number]: boolean };
+  } = {};
+  activitiesByTraveler: {
+    [activityId: number]: { count: number; price: number; name: string };
+  } = {};
+
   // Variables para el resumen del pedido
   summary: { qty: number; value: number; description: string }[] = [];
   subtotal: number = 0;
@@ -203,6 +211,69 @@ export class CheckoutV2Component implements OnInit {
     ) {
       this.updateOrderSummary(this.travelerSelector.travelersNumbers);
     }
+  }
+
+  /**
+   * Maneja los cambios de asignación de actividades por viajero
+   */
+  onActivitiesAssignmentChange(event: {
+    travelerId: number;
+    activityId: number;
+    isAssigned: boolean;
+    activityName: string;
+    activityPrice: number;
+  }): void {
+    console.log('Cambio de asignación de actividad:', event);
+
+    // Inicializar el objeto para el viajero si no existe
+    if (!this.travelerActivities[event.travelerId]) {
+      this.travelerActivities[event.travelerId] = {};
+    }
+
+    // Actualizar el estado de la actividad para el viajero
+    this.travelerActivities[event.travelerId][event.activityId] =
+      event.isAssigned;
+
+    // Actualizar el conteo de actividades por actividad
+    this.updateActivitiesByTraveler(
+      event.activityId,
+      event.activityName,
+      event.activityPrice
+    );
+
+    // Recalcular el resumen del pedido
+    if (
+      this.travelerSelector &&
+      Object.keys(this.pricesByAgeGroup).length > 0
+    ) {
+      this.updateOrderSummary(this.travelerSelector.travelersNumbers);
+    }
+  }
+
+  /**
+   * Actualiza el conteo de actividades por actividad
+   */
+  private updateActivitiesByTraveler(
+    activityId: number,
+    activityName: string,
+    activityPrice: number
+  ): void {
+    // Contar cuántos viajeros tienen esta actividad asignada
+    let count = 0;
+    Object.values(this.travelerActivities).forEach((travelerActivities) => {
+      if (travelerActivities[activityId]) {
+        count++;
+      }
+    });
+
+    // Actualizar o crear el registro de la actividad
+    this.activitiesByTraveler[activityId] = {
+      count: count,
+      price: activityPrice,
+      name: activityName,
+    };
+
+    console.log(`Actividad ${activityName}: ${count} viajeros asignados`);
   }
 
   // Método para cargar datos del tour y obtener el itinerario
@@ -527,8 +598,23 @@ export class CheckoutV2Component implements OnInit {
       });
     }
 
-    // Actividades seleccionadas
-    if (this.selectedActivities && this.selectedActivities.length > 0) {
+    // Actividades por viajero (nueva lógica)
+    Object.values(this.activitiesByTraveler).forEach((activityData) => {
+      if (activityData.count > 0 && activityData.price > 0) {
+        this.summary.push({
+          qty: activityData.count,
+          value: activityData.price,
+          description: `${activityData.name}`,
+        });
+      }
+    });
+
+    // Actividades seleccionadas (mantener como respaldo para compatibilidad)
+    if (
+      this.selectedActivities &&
+      this.selectedActivities.length > 0 &&
+      Object.keys(this.activitiesByTraveler).length === 0
+    ) {
       const totalTravelers =
         travelersNumbers.adults +
         travelersNumbers.childs +
@@ -1140,7 +1226,7 @@ export class CheckoutV2Component implements OnInit {
         },
         error: (error) => {
           console.error('❌ Error obteniendo Cognito ID:', error);
-        }
+        },
       });
     }
   }

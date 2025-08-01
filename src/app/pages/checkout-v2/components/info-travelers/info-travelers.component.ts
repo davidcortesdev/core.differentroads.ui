@@ -233,6 +233,9 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       return;
     }
 
+    let loadedTravelers = 0;
+    const totalTravelers = this.travelers.length;
+
     this.travelers.forEach((traveler) => {
       this.reservationTravelerActivityService
         .getByReservationTraveler(traveler.id)
@@ -244,12 +247,30 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
             // Cargar precios para las actividades de este viajero
             this.loadActivityPricesForTraveler(traveler, activities);
+
+            loadedTravelers++;
+            
+            // Emitir estado inicial cuando todos los viajeros estén cargados
+            if (loadedTravelers === totalTravelers) {
+              // Pequeño delay para asegurar que los precios se hayan cargado
+              setTimeout(() => {
+                this.emitInitialActivitiesState();
+              }, 1000);
+            }
           },
           error: (error) => {
             console.error(
               `Error al cargar actividades para viajero ${traveler.id}:`,
               error
             );
+            loadedTravelers++;
+            
+            // Continuar con el conteo incluso si hay error
+            if (loadedTravelers === totalTravelers) {
+              setTimeout(() => {
+                this.emitInitialActivitiesState();
+              }, 1000);
+            }
           },
         });
     });
@@ -424,6 +445,33 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       );
       // Aquí podrías agregar lógica para eliminar la asignación en BD si es necesario
     }
+  }
+
+  /**
+   * Emite el estado inicial de todas las actividades asignadas
+   */
+  private emitInitialActivitiesState(): void {
+    if (!this.travelers || this.travelers.length === 0) {
+      return;
+    }
+
+    this.travelers.forEach(traveler => {
+      const travelerActivities = this.travelerActivities[traveler.id];
+      if (travelerActivities) {
+        travelerActivities.forEach(activity => {
+          const activityName = this.getActivityName(activity.activityId);
+          const activityPrice = this.getActivityPrice(traveler.id, activity.activityId) || 0;
+          
+          this.activitiesAssignmentChange.emit({
+            travelerId: traveler.id,
+            activityId: activity.activityId,
+            isAssigned: true,
+            activityName,
+            activityPrice,
+          });
+        });
+      }
+    });
   }
 
   /**

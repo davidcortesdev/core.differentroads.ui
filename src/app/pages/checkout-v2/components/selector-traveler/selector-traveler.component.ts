@@ -21,6 +21,7 @@ import {
   AgeGroupService,
   IAgeGroupResponse,
 } from '../../../../core/services/agegroup/age-group.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-selector-traveler',
@@ -40,13 +41,20 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
     babies: number;
   }>();
 
+  // Emitir eventos de guardado para el componente padre
+  @Output() saveStatusChange = new EventEmitter<{
+    saving: boolean;
+    success?: boolean;
+    error?: string;
+  }>();
+
   travelersNumbers: { adults: number; childs: number; babies: number } = {
     adults: 1,
     childs: 0,
     babies: 0,
   };
 
-  // NUEVO: Números originales de la reserva (solo lectura)
+  // Números originales de la reserva (solo lectura)
   originalTravelersNumbers: { adults: number; childs: number; babies: number } =
     {
       adults: 1,
@@ -54,7 +62,7 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
       babies: 0,
     };
 
-  // NUEVO: Conteo real por grupos de edad de la reserva existente
+  // Conteo real por grupos de edad de la reserva existente
   actualTravelerCounts: { adults: number; childs: number; babies: number } = {
     adults: 0,
     childs: 0,
@@ -64,10 +72,11 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
   adultsErrorMsg = '';
   loading: boolean = false;
   error: string | null = null;
+  saving: boolean = false; // NUEVO: Estado de guardado
 
   // Datos del departure y travelers
   departureData: any = null;
-  reservationData: any = null; // NUEVO: Para guardar datos de la reserva
+  reservationData: any = null;
   existingTravelers: IReservationTravelerResponse[] = [];
   totalExistingTravelers: number = 0;
 
@@ -99,7 +108,7 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
 
     if (this.reservationId) {
       this.loadExistingTravelers();
-      this.loadReservationData(); // NUEVO: Cargar datos de la reserva
+      this.loadReservationData();
     }
   }
 
@@ -113,11 +122,10 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
     // Detectar cambios en reservationId
     if (changes['reservationId'] && changes['reservationId'].currentValue) {
       this.loadExistingTravelers();
-      this.loadReservationData(); // NUEVO: Cargar datos de la reserva
+      this.loadReservationData();
     }
   }
 
-  // NUEVO: Método para cargar datos de la reserva
   private loadReservationData(): void {
     if (!this.reservationId) {
       return;
@@ -128,7 +136,7 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
         this.reservationData = reservation;
       },
       error: (error) => {
-        // Error al cargar los datos de la reserva
+        console.error('Error al cargar los datos de la reserva:', error);
       },
     });
   }
@@ -153,6 +161,7 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
           this.supplementsError =
             'Error al cargar los suplementos de precio del viaje.';
           this.loadingSupplements = false;
+          console.error('Error loading supplements:', error);
         },
       });
   }
@@ -177,26 +186,24 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
       this.ageGroupService.getById(id)
     );
 
-    // Usar forkJoin para cargar todos los grupos de edad en paralelo
-    import('rxjs').then((rxjs) => {
-      rxjs.forkJoin(ageGroupRequests).subscribe({
-        next: (ageGroups) => {
-          this.ageGroups = ageGroups;
-          this.updateAvailableTravelersFromAgeGroups();
-          this.loadingAgeGroups = false;
+    forkJoin(ageGroupRequests).subscribe({
+      next: (ageGroups) => {
+        this.ageGroups = ageGroups;
+        this.updateAvailableTravelersFromAgeGroups();
+        this.loadingAgeGroups = false;
 
-          // Si ya tenemos viajeros cargados, contar por grupos de edad
-          if (this.existingTravelers.length > 0) {
-            this.countTravelersByAgeGroup();
-          }
-        },
-        error: (error) => {
-          this.ageGroupsError =
-            'Error al cargar la información de grupos de edad.';
-          this.loadingAgeGroups = false;
-          this.dynamicAvailableTravelers = this.availableTravelers;
-        },
-      });
+        // Si ya tenemos viajeros cargados, contar por grupos de edad
+        if (this.existingTravelers.length > 0) {
+          this.countTravelersByAgeGroup();
+        }
+      },
+      error: (error) => {
+        this.ageGroupsError =
+          'Error al cargar la información de grupos de edad.';
+        this.loadingAgeGroups = false;
+        this.dynamicAvailableTravelers = this.availableTravelers;
+        console.error('Error loading age groups:', error);
+      },
     });
   }
 
@@ -274,11 +281,11 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
           this.error =
             'Error al cargar la información de viajeros. Usando valores por defecto.';
           this.loading = false;
+          console.error('Error loading existing travelers:', error);
         },
       });
   }
 
-  // NUEVO: Método para contar viajeros por grupo de edad usando el servicio
   private countTravelersByAgeGroup(): void {
     if (!this.reservationId || this.ageGroups.length === 0) {
       return;
@@ -306,7 +313,6 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
     this.countTravelersByAgeGroupIds(babyAgeGroupIds, 'babies');
   }
 
-  // NUEVO: Obtener IDs de grupos de edad por tipo
   private getAgeGroupIdsByType(type: 'adults' | 'childs' | 'babies'): number[] {
     return this.ageGroups
       .filter((ageGroup) => {
@@ -340,7 +346,6 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
       .map((ageGroup) => ageGroup.id);
   }
 
-  // NUEVO: Contar viajeros por IDs de grupos de edad específicos
   private countTravelersByAgeGroupIds(
     ageGroupIds: number[],
     type: 'adults' | 'childs' | 'babies'
@@ -386,7 +391,6 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
     });
   }
 
-  // NUEVO: Actualizar travelersNumbers basándose en el conteo real
   private updateTravelersNumbersFromActualCounts(): void {
     this.travelersNumbers = {
       adults: this.actualTravelerCounts.adults,
@@ -427,11 +431,25 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
         this.error =
           'Error al cargar la información del viaje. Usando valores por defecto.';
         this.loading = false;
+        console.error('Error loading departure data:', error);
       },
     });
   }
 
   handlePassengers(value: number, type: 'adults' | 'childs' | 'babies'): void {
+    if (value < 0) {
+      value = 0;
+    }
+
+    // Validar que los adultos no sean menos que 1 si es el único tipo con pasajeros
+    if (type === 'adults' && value === 0) {
+      const totalOthers =
+        this.travelersNumbers.childs + this.travelersNumbers.babies;
+      if (totalOthers === 0) {
+        value = 1; // Forzar al menos 1 adulto si no hay otros pasajeros
+      }
+    }
+
     this.travelersNumbers[type] = value;
 
     // Validar que haya suficientes adultos para los menores
@@ -448,131 +466,227 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
     // Emitir cambios para el componente de habitaciones
     this.travelersNumbersChange.emit(this.travelersNumbers);
 
-    // CAMBIO IMPORTANTE: NO sincronizar automáticamente con la reservación
-    // Solo actualizar la UI y las habitaciones, la BD se actualiza cuando se confirme
-    // this.syncTravelersWithReservation();
+    // NUEVO: Sincronizar automáticamente con la reservación
+    if (this.reservationId && !this.adultsErrorMsg) {
+      this.syncTravelersWithReservation();
+    }
   }
 
-  private syncTravelersWithReservation(): void {
+  /**
+   * MEJORADO: Método principal para sincronizar travelers con la reservación
+   */
+  private async syncTravelersWithReservation(): Promise<void> {
+    if (!this.reservationId || this.saving) {
+      return;
+    }
+
     const newTotal = this.totalPassengers;
     const currentTotal = this.totalExistingTravelers;
 
-    if (newTotal > currentTotal) {
-      // Necesitamos crear más travelers
-      const travelersToCreate = newTotal - currentTotal;
-      this.createAdditionalTravelers(travelersToCreate);
-    } else if (newTotal < currentTotal) {
-      // Necesitamos eliminar travelers
-      const travelersToRemove = currentTotal - newTotal;
-      this.removeExcessTravelers(travelersToRemove);
+    if (newTotal === currentTotal) {
+      return;
+    }
+
+    this.saving = true;
+    this.saveStatusChange.emit({ saving: true });
+
+    try {
+      if (newTotal > currentTotal) {
+        // Necesitamos crear más travelers
+        const travelersToCreate = newTotal - currentTotal;
+        await this.createAdditionalTravelers(travelersToCreate);
+      } else {
+        // Necesitamos eliminar travelers
+        const travelersToRemove = currentTotal - newTotal;
+        await this.removeExcessTravelers(travelersToRemove);
+      }
+
+      // Actualizar el total de pasajeros en la reserva
+      await this.updateReservationTotalPassengers();
+
+      // Recargar travelers después de los cambios
+      await this.reloadTravelers();
+
+      this.saveStatusChange.emit({ saving: false, success: true });
+    } catch (error) {
+      console.error('❌ Error en sincronización:', error);
+      this.saveStatusChange.emit({
+        saving: false,
+        success: false,
+        error: 'Error al sincronizar travelers',
+      });
+    } finally {
+      this.saving = false;
     }
   }
 
-  private createAdditionalTravelers(count: number): void {
-    if (!this.reservationId) return;
+  /**
+   * MEJORADO: Crear travelers adicionales con validación
+   */
+  private async createAdditionalTravelers(count: number): Promise<void> {
+    if (!this.reservationId || count <= 0) return;
 
-    // Calcular el siguiente número de traveler
-    const nextTravelerNumber = this.existingTravelers.length + 1;
+    const createPromises: Promise<IReservationTravelerResponse>[] = [];
 
     for (let i = 0; i < count; i++) {
-      const newTravelerNumber = nextTravelerNumber + i;
+      const promise = new Promise<IReservationTravelerResponse>(
+        (resolve, reject) => {
+          this.reservationTravelerService
+            .createWithAutoTravelerNumber(
+              this.reservationId!,
+              false, // No es lead traveler por defecto
+              '', // tkId vacío por ahora
+              this.getDefaultAgeGroupId() // Usar grupo de edad por defecto
+            )
+            .subscribe({
+              next: (newTraveler) => {
+                resolve(newTraveler);
+              },
+              error: (error) => {
+                console.error('❌ Error creando traveler:', error);
+                reject(error);
+              },
+            });
+        }
+      );
 
-      this.reservationTravelerService
-        .createWithAutoTravelerNumber(
-          this.reservationId,
-          false, // No es lead traveler por defecto
-          '' // tkId vacío por ahora
-        )
-        .subscribe({
-          next: (newTraveler) => {
-            // IMPORTANTE: Actualizar el travelerNumber al correcto
-            if (newTraveler.travelerNumber !== newTravelerNumber) {
-              this.reservationTravelerService
-                .update(newTraveler.id, {
-                  ...newTraveler,
-                  travelerNumber: newTravelerNumber,
-                })
-                .subscribe({
-                  next: (success) => {
-                    if (success) {
-                      newTraveler.travelerNumber = newTravelerNumber;
-                    }
-                  },
-                  error: (error) => {
-                    // Error al actualizar travelerNumber
-                  },
-                });
-            }
+      createPromises.push(promise);
+    }
 
-            this.existingTravelers.push(newTraveler);
-            this.totalExistingTravelers = this.existingTravelers.length;
-
-            // Reordenar travelers por número
-            this.existingTravelers.sort(
-              (a, b) => a.travelerNumber - b.travelerNumber
-            );
-
-            // Actualizar la reserva con el nuevo total
-            this.updateReservationTotalPassengers();
-          },
-          error: (error) => {
-            // Error al crear traveler
-          },
-        });
+    try {
+      const newTravelers = await Promise.all(createPromises);
+    } catch (error) {
+      console.error('❌ Error creando múltiples travelers:', error);
+      throw error;
     }
   }
 
-  private removeExcessTravelers(count: number): void {
-    // Eliminar los últimos travelers (excepto el lead traveler si existe)
-    const travelersToRemove = this.existingTravelers
+  /**
+   * MEJORADO: Eliminar travelers excedentes con validación
+   */
+  private async removeExcessTravelers(count: number): Promise<void> {
+    if (count <= 0) return;
+
+    // Obtener travelers actuales ordenados
+    const currentTravelers = await new Promise<IReservationTravelerResponse[]>(
+      (resolve, reject) => {
+        this.reservationTravelerService
+          .getByReservationOrdered(this.reservationId!)
+          .subscribe({
+            next: resolve,
+            error: reject,
+          });
+      }
+    );
+
+    // Filtrar para no eliminar el lead traveler
+    const travelersToRemove = currentTravelers
       .filter((t) => !t.isLeadTraveler)
       .slice(-count);
 
-    travelersToRemove.forEach((traveler) => {
-      this.reservationTravelerService.delete(traveler.id).subscribe({
-        next: (success) => {
-          if (success) {
-            this.existingTravelers = this.existingTravelers.filter(
-              (t) => t.id !== traveler.id
-            );
-            this.totalExistingTravelers = this.existingTravelers.length;
+    if (travelersToRemove.length === 0) {
+      return;
+    }
 
-            // Actualizar la reserva con el nuevo total
-            this.updateReservationTotalPassengers();
-          }
-        },
-        error: (error) => {
-          // Error al eliminar traveler
-        },
+    const deletePromises = travelersToRemove.map((traveler) => {
+      return new Promise<boolean>((resolve, reject) => {
+        this.reservationTravelerService.delete(traveler.id).subscribe({
+          next: (success) => {
+            if (success) {
+              resolve(true);
+            } else {
+              console.error(`❌ Fallo al eliminar traveler: ${traveler.id}`);
+              reject(new Error(`Failed to delete traveler ${traveler.id}`));
+            }
+          },
+          error: (error) => {
+            console.error(
+              `❌ Error eliminando traveler ${traveler.id}:`,
+              error
+            );
+            reject(error);
+          },
+        });
       });
     });
+
+    try {
+      await Promise.all(deletePromises);
+    } catch (error) {
+      console.error('❌ Error eliminando múltiples travelers:', error);
+      throw error;
+    }
   }
 
-  // NUEVO: Método para actualizar el total de pasajeros en la reserva
-  private updateReservationTotalPassengers(): void {
+  /**
+   * NUEVO: Obtener ID de grupo de edad por defecto
+   */
+  private getDefaultAgeGroupId(): number {
+    if (this.ageGroups.length === 0) {
+      return 0;
+    }
+
+    // Buscar grupo de adultos por defecto
+    const adultGroup = this.ageGroups.find((group) => {
+      const name = group.name.toLowerCase();
+      return (
+        name.includes('adult') ||
+        name.includes('adulto') ||
+        group.lowerLimitAge >= 12
+      );
+    });
+
+    return adultGroup ? adultGroup.id : this.ageGroups[0].id;
+  }
+
+  /**
+   * NUEVO: Actualizar el total de pasajeros en la reserva
+   */
+  private async updateReservationTotalPassengers(): Promise<void> {
     if (!this.reservationId || !this.reservationData) {
       return;
     }
 
     const newTotal = this.totalPassengers;
 
-    // Crear objeto de actualización con todos los campos requeridos
-    const updateData = {
-      ...this.reservationData,
-      totalPassengers: newTotal,
-      updatedAt: new Date().toISOString(),
-    };
+    return new Promise((resolve, reject) => {
+      const updateData = {
+        ...this.reservationData,
+        totalPassengers: newTotal,
+        updatedAt: new Date().toISOString(),
+      };
 
-    this.reservationService.update(this.reservationId, updateData).subscribe({
-      next: (success) => {
-        if (success) {
-          // Actualizar datos locales
-          this.reservationData.totalPassengers = newTotal;
-        }
-      },
-      error: (error) => {
-        // Error al actualizar la reserva
-      },
+      this.reservationService
+        .update(this.reservationId!, updateData)
+        .subscribe({
+          next: (success) => {
+            if (success) {
+              this.reservationData.totalPassengers = newTotal;
+              resolve();
+            } else {
+              reject(new Error('Failed to update reservation'));
+            }
+          },
+          error: reject,
+        });
+    });
+  }
+
+  /**
+   * NUEVO: Recargar travelers después de cambios
+   */
+  private async reloadTravelers(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.reservationTravelerService
+        .getByReservationOrdered(this.reservationId!)
+        .subscribe({
+          next: (travelers) => {
+            this.existingTravelers = travelers;
+            this.totalExistingTravelers = travelers.length;
+            resolve();
+          },
+          error: reject,
+        });
     });
   }
 
@@ -585,18 +699,35 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
     );
   }
 
-  // NUEVO: Método para guardar cambios en la base de datos
-  saveTravelersChanges(): void {
-    this.syncTravelersWithReservation();
+  /**
+   * MEJORADO: Método público para guardar cambios en la base de datos
+   */
+  async saveTravelersChanges(): Promise<boolean> {
+    if (!this.hasUnsavedChanges) {
+      return true;
+    }
+
+    try {
+      await this.syncTravelersWithReservation();
+      return true;
+    } catch (error) {
+      console.error('❌ Error guardando cambios de travelers:', error);
+      return false;
+    }
   }
 
-  // NUEVO: Método para resetear a los números originales
+  /**
+   * NUEVO: Método para resetear a los números originales
+   */
   resetTravelersNumbers(): void {
     this.travelersNumbers = { ...this.originalTravelersNumbers };
     this.travelersNumbersChange.emit(this.travelersNumbers);
+    this.adultsErrorMsg = '';
   }
 
-  // NUEVO: Verificar si hay cambios pendientes
+  /**
+   * NUEVO: Verificar si hay cambios pendientes
+   */
   get hasUnsavedChanges(): boolean {
     return (
       JSON.stringify(this.travelersNumbers) !==
@@ -604,7 +735,7 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
     );
   }
 
-  // NUEVO: Getters para obtener el conteo real de cada tipo
+  // Getters para obtener el conteo real de cada tipo
   get currentAdultsCount(): number {
     return this.actualTravelerCounts.adults;
   }
@@ -616,7 +747,10 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
   get currentBabiesCount(): number {
     return this.actualTravelerCounts.babies;
   }
-  // Método para obtener el rango de edad dinámico
+
+  /**
+   * Método para obtener el rango de edad dinámico
+   */
   getAgeRangeText(type: 'adults' | 'childs' | 'babies'): string {
     if (!this.ageGroups || this.ageGroups.length === 0) {
       // Fallback a rangos por defecto si no hay grupos de edad

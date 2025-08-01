@@ -27,6 +27,11 @@ import { forkJoin } from 'rxjs';
 import { PaymentsNetService } from './services/paymentsNet.service';
 import { AuthenticateService } from '../../core/services/auth-service.service';
 import { UsersNetService } from '../../core/services/usersNet.service';
+import { IFlightPackDTO } from './services/flightsNet.service';
+import {
+  ReservationTravelerService,
+  IReservationTravelerResponse,
+} from '../../core/services/reservation/reservation-traveler.service';
 
 @Component({
   selector: 'app-checkout-v2',
@@ -78,6 +83,10 @@ export class CheckoutV2Component implements OnInit {
   selectedInsurance: any = null;
   insurancePrice: number = 0;
 
+  // Propiedades para vuelos
+  selectedFlight: IFlightPackDTO | null = null;
+  flightPrice: number = 0;
+
   // Steps configuration
   items: MenuItem[] = [];
   activeIndex: number = 0;
@@ -102,7 +111,8 @@ export class CheckoutV2Component implements OnInit {
     private messageService: MessageService,
     private paymentsService: PaymentsNetService,
     private authService: AuthenticateService,
-    private usersNetService: UsersNetService
+    private usersNetService: UsersNetService,
+    private reservationTravelerService: ReservationTravelerService
   ) {}
 
   ngOnInit(): void {
@@ -430,6 +440,37 @@ export class CheckoutV2Component implements OnInit {
     }
   }
 
+  /**
+   * Método llamado cuando cambia la selección de vuelos
+   */
+  onFlightSelectionChange(flightData: {
+    selectedFlight: IFlightPackDTO | null;
+    totalPrice: number;
+  }): void {
+    this.selectedFlight = flightData.selectedFlight;
+    this.flightPrice = flightData.totalPrice; // Ahora es el precio por persona
+
+    // Actualizar el resumen del pedido si tenemos datos de viajeros
+    if (
+      this.travelerSelector &&
+      Object.keys(this.pricesByAgeGroup).length > 0
+    ) {
+      this.updateOrderSummary(this.travelerSelector.travelersNumbers);
+    } else {
+      const basicTravelers = {
+        adults: Math.max(1, this.totalPassengers),
+        childs: 0,
+        babies: 0,
+      };
+      this.updateOrderSummary(basicTravelers);
+    }
+
+    // Forzar actualización del resumen incluso si no hay datos de viajeros
+    setTimeout(() => {
+      this.forceSummaryUpdate();
+    }, 100);
+  }
+
   // OPTIMIZADO: Método para verificar si podemos inicializar el resumen
   private checkAndInitializeSummary(): void {
     // Verificar si tenemos todo lo necesario para inicializar
@@ -506,6 +547,26 @@ export class CheckoutV2Component implements OnInit {
       }
     }
 
+    // Vuelos seleccionados
+    if (this.selectedFlight && this.flightPrice > 0) {
+      // Calcular el total de travelers para el vuelo
+      const totalTravelers =
+        travelersNumbers.adults +
+        travelersNumbers.childs +
+        travelersNumbers.babies;
+
+      // El flightPrice ahora es el precio por persona, multiplicar por la cantidad de travelers
+      const flightItem = {
+        qty: totalTravelers,
+        value: this.flightPrice, // Precio por persona
+        description: `Vuelo ${
+          this.selectedFlight.flights[0]?.departureCity || ''
+        } - ${this.selectedFlight.flights[0]?.arrivalCity || ''}`,
+      };
+      this.summary.push(flightItem);
+    } else {
+    }
+
     // Habitaciones seleccionadas
     if (this.roomSelector && this.roomSelector.selectedRooms) {
       Object.entries(this.roomSelector.selectedRooms).forEach(([tkId, qty]) => {
@@ -574,15 +635,17 @@ export class CheckoutV2Component implements OnInit {
   calculateTotals(): void {
     // Calcular subtotal (solo valores positivos)
     this.subtotal = this.summary.reduce((acc, item) => {
+      const itemTotal = item.value * item.qty;
       if (item.value >= 0) {
-        return acc + item.value * item.qty;
+        return acc + itemTotal;
       }
       return acc;
     }, 0);
 
     // Calcular total (todos los valores, incluyendo negativos)
     this.totalAmountCalculated = this.summary.reduce((acc, item) => {
-      return acc + item.value * item.qty;
+      const itemTotal = item.value * item.qty;
+      return acc + itemTotal;
     }, 0);
   }
 
@@ -886,7 +949,10 @@ export class CheckoutV2Component implements OnInit {
     }
   }
 
-  // Método para navegar al siguiente paso con validación
+  /**
+   * Guarda las asignaciones de vuelos para todos los travelers
+   */
+
   async nextStepWithValidation(targetStep: number): Promise<void> {
     // Verificar autenticación para pasos que la requieren
     if (targetStep >= 2) {
@@ -1054,6 +1120,9 @@ export class CheckoutV2Component implements OnInit {
                     this.totalAmount = this.totalAmountCalculated;
 
                     // Mostrar toast de éxito
+                    const flightInfo = this.selectedFlight
+                      ? ' con vuelo seleccionado'
+                      : '';
                     this.messageService.add({
                       severity: 'success',
                       summary: 'Guardado exitoso',
@@ -1061,7 +1130,7 @@ export class CheckoutV2Component implements OnInit {
                         this.totalPassengers
                       } viajeros con ${
                         this.selectedActivities?.length || 0
-                      } actividades.`,
+                      } actividades${flightInfo}.`,
                       life: 3000,
                     });
 
@@ -1140,7 +1209,7 @@ export class CheckoutV2Component implements OnInit {
         },
         error: (error) => {
           console.error('❌ Error obteniendo Cognito ID:', error);
-        }
+        },
       });
     }
   }

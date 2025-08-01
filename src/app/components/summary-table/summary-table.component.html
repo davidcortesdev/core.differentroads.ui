@@ -57,16 +57,14 @@
         </div>
       </div>
       <!-- Flights info if selected -->
-      <app-flight-section
+      <app-flight-section-v2
         *ngIf="
           showFlightSection &&
-          selectedFlight &&
-          !selectedFlight?.name?.toLowerCase()?.includes('sin ') &&
-          !selectedFlight?.name?.toLowerCase()?.includes('sinv')
+          selectedFlight
         "
-        [flight]="selectedFlight"
+        [flightPack]="selectedFlight"
       >
-      </app-flight-section>
+      </app-flight-section-v2>
     </div>
   </div>
 </div>

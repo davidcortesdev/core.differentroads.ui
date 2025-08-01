@@ -1,0 +1,186 @@
+// Variables
+$mobile: 425px;
+$tablet: 768px;
+
+// Mixins
+@mixin mobile {
+    @media (max-width: $mobile) {
+        @content;
+    }
+}
+
+@mixin flex-center {
+    display: flex;
+    align-items: center;
+}
+
+@mixin flex-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.stops-container {
+    @include flex-column;
+    align-items: center;
+    position: relative;
+    width: 100%;
+}
+
+.stops-underline {
+    height: 1px;
+    background-color: var(--p-primary-color);
+    width: 100%;
+    margin-top: 2px;
+}
+
+.journey-stops {
+    cursor: pointer;
+    color: var(--p-primary-color);
+    font-size: 0.75rem;
+    text-decoration: none;
+    text-align: center;
+    white-space: nowrap;
+
+    @include mobile {
+        font-size: 0.65rem;
+    }
+}
+
+// Popover de detalles del vuelo
+::ng-deep .p-popover {
+    .p-popover-content {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        padding: 1rem;
+        min-width: 350px;
+        max-width: 450px;
+
+        .flight-details-content {
+            .popover-header {
+                margin-bottom: 0;
+
+                h4 {
+                    color: var(--background-azul);
+                    font-size: 1.125rem;
+                    font-weight: 700;
+                    margin: 0;
+                    text-align: left;
+                }
+            }
+
+            .flight-segments-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                position: relative;
+
+                .flight-segment-item {
+                    position: relative;
+                    padding: 1rem 0 1rem 1.5rem;
+                    color: var(--background-azul);
+
+                    &::before {
+                        content: "";
+                        position: absolute;
+                        left: 4px;
+                        top: 1.25rem;
+                        width: 8px;
+                        height: 8px;
+                        background: var(--p-primary-color);
+                        border-radius: 50%;
+                        z-index: 2;
+                    }
+
+                    &:not(:last-child)::after {
+                        content: "";
+                        position: absolute;
+                        left: 7.5px;
+                        top: calc(1.25rem + 8px + 4px);
+                        width: 1px;
+                        height: calc(100% - 1.25rem + 1rem);
+                        background: repeating-linear-gradient(
+                            to bottom,
+                            var(--background-azul) 0px,
+                            var(--background-azul) 4px,
+                            transparent 4px,
+                            transparent 8px
+                        );
+                        z-index: 1;
+                    }
+
+                    .segment-info {
+                        .segment-route {
+                            @include flex-center;
+                            justify-content: space-between;
+                            gap: 1.5rem;
+
+                            .departure-info,
+                            .arrival-info {
+                                flex: 1;
+                                @include flex-column;
+
+                                .time-city-row {
+                                    @include flex-center;
+                                    gap: 0.5rem;
+                                    margin-bottom: 0.25rem;
+
+                                    .time {
+                                        color: var(--p-primary-color);
+                                        font-weight: 600;
+                                        font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", monospace;
+                                        font-size: 1rem;
+                                        flex-shrink: 0;
+                                    }
+
+                                    .city-name {
+                                        color: var(--background-azul);
+                                        font-weight: 600;
+                                        font-size: 0.9rem;
+                                    }
+                                }
+
+                                .airport-code {
+                                    color: var(--background-azul);
+                                    font-weight: 400;
+                                    font-size: 0.75rem;
+                                    opacity: 0.7;
+                                    margin-left: 0;
+                                }
+                            }
+
+                            .arrival-info {
+                                .time-city-row {
+                                    justify-content: flex-start;
+                                }
+
+                                .airport-code {
+                                    text-align: left;
+                                }
+                            }
+
+                            .route-arrow {
+                                color: var(--p-primary-color);
+                                font-weight: 600;
+                                font-size: 1.25rem;
+                                flex-shrink: 0;
+                                @include flex-center;
+                                justify-content: center;
+                                min-width: 30px;
+                            }
+                        }
+
+                        .flight-number {
+                            color: var(--background-azul);
+                            font-size: 0.75rem;
+                            font-weight: 500;
+                            opacity: 0.7;
+                            margin-top: 0.5rem;
+                            text-align: left;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

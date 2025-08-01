@@ -161,6 +161,7 @@ import awsconfig from '../../src/aws-exports';
 import { TripTypesSectionComponent } from './pages/home/components/trip-types-section/trip-types-section.component';
 import { ConfirmationCodeComponent } from './shared/components/confirmation-code/confirmation-code.component';
 import { ScalapayService } from './core/services/checkout/payment/scalapay.service';
+import { PopoverModule } from 'primeng/popover';
 
 import { CookieService } from 'ngx-cookie-service';
 
@@ -231,6 +232,8 @@ import { ActivitiesOptionalsComponent } from './pages/checkout-v2/components/act
 import { InfoTravelersComponent } from './pages/checkout-v2/components/info-travelers/info-travelers.component';
 import { PaymentManagementComponent } from './pages/checkout-v2/components/payment-management/payment-management.component';
 import { NewReservationComponent } from './pages/checkout-v2/components/new-reservation/new-reservation.component';
+import { FlightSectionV2Component } from './pages/checkout-v2/components/flight-section/flight-section.component';
+import { FlightStopsComponent } from './pages/checkout-v2/components/flight-management/flight-stops/flight-stops.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -369,6 +372,8 @@ registerLocaleData(localeEs);
     InfoTravelersComponent,
     PaymentManagementComponent,
     NewReservationComponent,
+    FlightSectionV2Component,
+    FlightStopsComponent,
   ],
   imports: [
     // Angular Modules
@@ -430,6 +435,7 @@ registerLocaleData(localeEs);
     Dialog,
     OverlayPanelModule,
     ToggleSwitchModule,
+    PopoverModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

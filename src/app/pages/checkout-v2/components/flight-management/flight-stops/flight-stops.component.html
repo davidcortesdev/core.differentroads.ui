@@ -1,0 +1,39 @@
+<div class="stops-container">      
+    <span class="journey-stops" (click)="op.toggle($event)">
+      {{ getFlightStopsText() }}
+    </span>
+    <div class="stops-underline"></div>
+    <p-popover #op>
+      <div class="flight-details-content">
+        <div class="popover-header">
+          <h4>Detalle del vuelo</h4>
+        </div>
+        <ul class="flight-segments-list">
+          <li *ngFor="let seg of getFlightSegments()" class="flight-segment-item">
+            <div class="segment-info">
+              <div class="segment-route">
+                <div class="departure-info">
+                  <div class="time-city-row">
+                    <span class="time">{{ formatTime(seg.departureTime) }}</span>
+                    <span class="city-name">{{ seg.departureCity }}</span>
+                  </div>
+                  <span class="airport-code">({{ seg.departureIata }})</span>
+                </div>
+                <span class="route-arrow">→</span>
+                <div class="arrival-info">
+                  <div class="time-city-row">
+                    <span class="time">{{ formatTime(seg.arrivalTime) }}</span>
+                    <span class="city-name">{{ seg.arrivalCity }}</span>
+                  </div>
+                  <span class="airport-code">({{ seg.arrivalIata }})</span>
+                </div>
+              </div>
+              <div class="flight-number" *ngIf="seg.flightNumber">
+                Vuelo: {{ seg.flightNumber }}
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </p-popover>
+  </div>

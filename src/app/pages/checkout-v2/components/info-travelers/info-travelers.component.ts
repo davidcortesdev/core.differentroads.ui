@@ -425,6 +425,14 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     const activityName = this.getActivityName(activityId);
     const activityPrice = this.getActivityPrice(travelerId, activityId) || 0;
 
+    console.log(`📊 Datos a emitir:`, {
+      travelerId,
+      activityId,
+      isAssigned: isSelected,
+      activityName,
+      activityPrice,
+    });
+
     // Emitir el evento al componente padre
     this.activitiesAssignmentChange.emit({
       travelerId,
@@ -433,6 +441,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       activityName,
       activityPrice,
     });
+
+    console.log(`✅ Evento emitido correctamente`);
 
     if (isSelected) {
       console.log(
@@ -455,12 +465,25 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       return;
     }
 
+    console.log(`🔄 Emitiendo estado inicial de actividades...`);
+    console.log(`📋 Viajeros:`, this.travelers);
+    console.log(`🎯 Actividades por viajero:`, this.travelerActivities);
+
     this.travelers.forEach(traveler => {
       const travelerActivities = this.travelerActivities[traveler.id];
       if (travelerActivities) {
+        console.log(`👤 Viajero ${traveler.id} tiene ${travelerActivities.length} actividades`);
         travelerActivities.forEach(activity => {
           const activityName = this.getActivityName(activity.activityId);
           const activityPrice = this.getActivityPrice(traveler.id, activity.activityId) || 0;
+          
+          console.log(`📤 Emitiendo actividad inicial:`, {
+            travelerId: traveler.id,
+            activityId: activity.activityId,
+            isAssigned: true,
+            activityName,
+            activityPrice,
+          });
           
           this.activitiesAssignmentChange.emit({
             travelerId: traveler.id,
@@ -472,6 +495,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         });
       }
     });
+    
+    console.log(`✅ Estado inicial emitido`);
   }
 
   /**

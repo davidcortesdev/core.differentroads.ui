@@ -1,0 +1,88 @@
+<div class="flight-section" *ngIf="flightPack">
+  <div class="flight-section-header">
+    <div class="header-icon">
+      <i class="fas fa-plane"></i>
+    </div>
+    <h4>
+      Vuelos seleccionados
+      <i class="fa-light fa-chevron-down"></i>
+    </h4>
+  </div>
+  
+  <div class="flight-details">
+    <!-- Vuelo de ida -->
+    <div class="flight-journey" *ngIf="departureFlight">
+        <!-- Separador entre vuelos -->
+    <div class="flight-separator" *ngIf="departureFlight && returnFlight">
+        <div class="separator-line"></div>
+        <div class="separator-text">Ida</div>
+        <div class="separator-line"></div>
+      </div>
+      
+      <div class="journey-info">
+        <div class="departure">
+          <div class="time">{{ formatTime(departureFlight.departureTime) }}</div>
+          <div class="date">{{ formatDate(departureFlight.departureDate) }}</div>
+          <div class="city">
+            <div class="city-name">{{ departureFlight.departureCity }}</div>
+            <div class="airport-code">{{ departureFlight.departureIATACode }}</div>
+          </div>
+        </div>
+        
+        <div class="journey-line">
+          <div class="line"></div>
+          <div class="plane-icon">
+            <i class="fas fa-plane"></i>
+          </div>
+        </div>
+        
+        <div class="arrival">
+          <div class="time">{{ formatTime(departureFlight.arrivalTime) }}</div>
+          <div class="date">{{ formatDate(departureFlight.arrivalDate) }}</div>
+          <div class="city">
+            <div class="city-name">{{ departureFlight.arrivalCity }}</div>
+            <div class="airport-code">{{ departureFlight.arrivalIATACode }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Separador entre vuelos -->
+    <div class="flight-separator" *ngIf="departureFlight && returnFlight">
+      <div class="separator-line"></div>
+      <div class="separator-text">Vuelta</div>
+      <div class="separator-line"></div>
+    </div>
+
+    <!-- Vuelo de vuelta -->
+    <div class="flight-journey" *ngIf="returnFlight">
+      
+      <div class="journey-info">
+        <div class="departure">
+          <div class="time">{{ formatTime(returnFlight.departureTime) }}</div>
+          <div class="date">{{ formatDate(returnFlight.departureDate) }}</div>
+          <div class="city">
+            <div class="city-name">{{ returnFlight.departureCity }}</div>
+            <div class="airport-code">{{ returnFlight.departureIATACode }}</div>
+          </div>
+        </div>
+        
+        <div class="journey-line">
+          <div class="line"></div>
+          <div class="plane-icon">
+            <i class="fas fa-plane"></i>
+          </div>
+        </div>
+        
+        <div class="arrival">
+          <div class="time">{{ formatTime(returnFlight.arrivalTime) }}</div>
+          <div class="date">{{ formatDate(returnFlight.arrivalDate) }}</div>
+          <div class="city">
+            <div class="city-name">{{ returnFlight.arrivalCity }}</div>
+            <div class="airport-code">{{ returnFlight.arrivalIATACode }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

@@ -24,43 +24,26 @@
               <div class="journey-row">
                 <div class="journey-time-block departure">
                   <span class="journey-time">
-                    {{ flight.departureTime ? (flight.departureTime.slice(0,5)) : '--:--' }}
+                    {{ formatTime(flight.departureTime) }}
                   </span>
                   <span class="journey-date">
-                    {{flight.departureDate | date : "dd-MM-yyyy" : "UTC"}}
+                    {{ flight.departureDate | date : "dd-MM-yyyy" : "UTC" }}
                   </span>
                   <span class="journey-city">({{ flight.departureIATACode }}) {{ flight.departureCity }}</span>
                 </div>
                 <div class="journey-line-left"></div>
                 <div class="journey-info-block">
-                  <div class="stops-container">      
-                    <span class="journey-stops" (click)="op.toggle($event)">
-                      {{ flightDetails.get(flight.id)?.numScales === 1 ? 'Directo' : flightDetails.get(flight.id)?.numScales + ' escalas' }}
-                    </span>
-                    <div class="stops-underline"></div>
-                    <p-overlayPanel #op>
-                      <p class="panel-title">Detalle del vuelo</p>
-                      <ng-container *ngIf="flightDetails.get(flight.id)?.segments as segments">
-                        <ul>
-                          <li *ngFor="let seg of segments">
-                            {{ seg.departureCity }} ({{ seg.departureIata }}) {{ seg.departureTime.slice(0,5) || '--:--'}} →
-                            {{ seg.arrivalCity }} ({{ seg.arrivalIata }}) {{ seg.arrivalTime.slice(0,5) || '--:--'}}
-                            <span *ngIf="seg.flightNumber">| Vuelo: {{ seg.flightNumber }}</span>
-                          </li>
-                        </ul>
-                      </ng-container>
-                    </p-overlayPanel>
-                  </div>
-                  <span class="journey-airline">{{ flightDetails.get(flight.id)?.airlines?.join(', ') || '' }}</span>
-                  <!-- <span class="journey-duration">{{ flightDetails.get(flight.id)?.duration || 0 }} horas</span> -->
+                  <!-- Usar el nuevo componente de escalas -->
+                  <app-flight-stops [flightId]="flight.id"></app-flight-stops>
+                  <span class="journey-airline">{{ getAirlinesText(flight.id) }}</span>
                 </div>
                 <div class="journey-line-right"></div>
                 <div class="journey-time-block arrival">
                   <span class="journey-time">
-                    {{ flight.arrivalTime ? (flight.arrivalTime.slice(0,5)) : '--:--' }}
+                    {{ formatTime(flight.arrivalTime) }}
                   </span>
                   <span class="journey-date">
-                    {{flight.arrivalDate | date : "dd-MM-yyyy" : "UTC"}}
+                    {{ flight.arrivalDate | date : "dd-MM-yyyy" : "UTC" }}
                   </span>
                   <span class="journey-city">({{ flight.arrivalIATACode }}) {{ flight.arrivalCity }}</span>
                 </div>
@@ -96,4 +79,3 @@
   >
   </app-login-modal>
 </div>
-  

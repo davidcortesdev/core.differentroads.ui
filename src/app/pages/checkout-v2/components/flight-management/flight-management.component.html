@@ -1,5 +1,9 @@
 <div class="default-flights">
-  <app-default-flights [departureId]="departureId" [reservationId]="reservationId"></app-default-flights>
+  <app-default-flights 
+    [departureId]="departureId" 
+    [reservationId]="reservationId"
+    (flightSelectionChange)="onFlightSelectionChange($event)">
+  </app-default-flights>
 </div>
 
 <!-- Botón para activar búsqueda específica -->

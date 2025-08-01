@@ -87,7 +87,12 @@
           <!-- Step 2: Vuelos -->
           <div *ngSwitchCase="1">
             <!-- Componente de gestión de vuelos -->
-            <app-flight-management [departureId]="departureId ?? 0" [reservationId]="reservationId ?? 0" [tourId]="tourId ?? 0"></app-flight-management>
+            <app-flight-management 
+              [departureId]="departureId ?? 0" 
+              [reservationId]="reservationId ?? 0" 
+              [tourId]="tourId ?? 0"
+              (flightSelectionChange)="onFlightSelectionChange($event)">
+            </app-flight-management>
 
             <div class="flight-buttons">
               <p-button
@@ -111,6 +116,7 @@
               [departureId]="departureId"
               [reservationId]="reservationId"
               [itineraryId]="itineraryId"
+              (activitiesAssignmentChange)="onActivitiesAssignmentChange($event)"
               #infoTravelers>
             </app-info-travelers>
 
@@ -149,10 +155,10 @@
         [subtotal]="subtotal"
         [total]="totalAmountCalculated"
         [isAuthenticated]="false"
-        [selectedFlight]="null"
+        [selectedFlight]="selectedFlight"
         [showPointsSection]="false"
         [showTotalSection]="true"
-        [showFlightSection]="false"
+        [showFlightSection]="true"
         [currency]="'EUR'"
         [title]="'Resumen del pedido'"
       >

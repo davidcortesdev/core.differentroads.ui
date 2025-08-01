@@ -1,3 +1,73 @@
+// Variables
+$mobile: 425px;
+$tablet: 768px;
+$desktop: 992px;
+
+// Mixins
+@mixin mobile {
+  @media (max-width: $mobile) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (max-width: $tablet) and (min-width: #{$mobile + 1px}) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (max-width: $desktop) and (min-width: #{$tablet + 1px}) {
+    @content;
+  }
+}
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+}
+
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+// Componente principal
+.flights {
+  color: var(--background-azul);
+  display: grid;
+
+  .step {
+    @include flex-column;
+    gap: 0.5rem;
+    margin-top: -2rem;
+
+    @media (max-width: 767px) {
+      margin-top: -1.5rem;
+    }
+
+    &-title {
+      width: fit-content;
+      height: fit-content;
+      border-bottom: 1px solid var(--background-azul);
+      font-size: 1.21rem;
+      font-weight: 500;
+      padding-top: 0.5rem;
+
+      @media (max-width: 767px) {
+        font-size: 1.1rem;
+      }
+    }
+
+    &-description {
+      font-size: 0.75rem;
+      @include flex-center;
+      gap: 0.5rem;
+      margin-top: -5px;
+    }
+  }
+}
+
 .flight-itinerary {
   color: var(--background-azul);
   display: flex;
@@ -5,38 +75,35 @@
   background-color: #fff;
   width: 100%;
 
-  @media (max-width: 425px) {
+  @include mobile {
     flex-direction: column;
   }
 
-  // Journey section
   &-journey {
     background-color: transparent;
     border-right: 0.0625rem solid var(--background-azul);
     width: 75%;
 
-    @media (max-width: 425px) {
+    @include mobile {
       width: 100%;
       border-right: none;
       border-bottom: 0.0625rem solid var(--background-azul);
     }
 
-    @media (max-width: 992px) and (min-width: 426px) {
+    @include desktop {
       width: 70%;
     }
 
-    @media (max-width: 576px) and (min-width: 426px) {
+    @include tablet {
       width: 65%;
     }
 
-    // Journey item
     .journey-item {
-      display: flex;
-      flex-direction: column;
+      @include flex-column;
       border-bottom: 0.0625rem solid var(--background-azul);
       padding: 0.75rem 1rem;
 
-      @media (max-width: 425px) {
+      @include mobile {
         padding: 0.5rem;
       }
 
@@ -44,37 +111,34 @@
         border-bottom: 0;
       }
 
-      // Etiqueta de dirección (IDA/VUELTA)
       .journey-direction {
         margin-bottom: 0.75rem;
+
         .direction-text {
           color: var(--p-primary-color);
           font-weight: 600;
           font-size: 0.875rem;
 
-          @media (max-width: 425px) {
+          @include mobile {
             font-size: 0.75rem;
           }
         }
       }
 
-      // Fila principal con info
       .journey-row {
-        display: flex;
-        align-items: center;
+        @include flex-center;
         position: relative;
-        @media (max-width: 425px) {
+
+        @include mobile {
           height: 4rem;
           margin-bottom: 20px;
         }
 
-        // Bloques de tiempo (izquierda y derecha)
         .journey-time-block {
-          display: flex;
-          flex-direction: column;
+          @include flex-column;
           width: 22%;
 
-          @media (max-width: 768px) {
+          @include tablet {
             width: 20%;
           }
 
@@ -93,7 +157,7 @@
             font-weight: 600;
             line-height: 1.2;
 
-            @media (max-width: 425px) {
+            @include mobile {
               font-size: 1.25rem;
             }
           }
@@ -102,7 +166,7 @@
             font-size: 0.75rem;
             line-height: 1.2;
 
-            @media (max-width: 425px) {
+            @include mobile {
               font-size: 0.65rem;
             }
           }
@@ -116,13 +180,12 @@
             text-overflow: ellipsis;
             line-height: 1.2;
 
-            @media (max-width: 425px) {
+            @include mobile {
               font-size: 0.7rem;
             }
           }
         }
 
-        // Líneas horizontales
         .journey-line-left,
         .journey-line-right {
           height: 1px;
@@ -130,7 +193,7 @@
           width: 45%;
           margin-top: 10px;
 
-          @media (max-width: 768px) {
+          @include tablet {
             width: 20%;
           }
 
@@ -138,47 +201,17 @@
             width: 18%;
           }
         }
-        .stops-container {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          position: relative;
-          width: 100%;
-        }
 
-        // Línea roja debajo del texto de escalas
-        .stops-underline {
-          height: 1px;
-          background-color: var(--p-primary-color);
-          width: 100%;
-          margin-top: 2px;
-        }
-
-        // Bloque de información central
         .journey-info-block {
-          display: flex;
-          flex-direction: column;
+          @include flex-column;
           align-items: center;
           width: 6%;
           min-width: 90px;
           padding: 0 0.5rem;
 
-          @media (max-width: 768px) {
+          @include tablet {
             width: 20%;
             min-width: 80px;
-          }
-
-          .journey-stops {
-            cursor: pointer;
-            color: var(--p-primary-color);
-            font-size: 0.75rem;
-            text-decoration: none;
-            text-align: center;
-            white-space: nowrap;
-
-            @media (max-width: 425px) {
-              font-size: 0.65rem;
-            }
           }
 
           .journey-airline {
@@ -188,18 +221,9 @@
             text-align: center;
             margin: 0.25rem 0;
 
-            @media (max-width: 425px) {
+            @include mobile {
               font-size: 0.85rem;
               margin: 0.15rem 0;
-            }
-          }
-
-          .journey-duration {
-            font-size: 0.75rem;
-            text-align: center;
-
-            @media (max-width: 425px) {
-              font-size: 0.65rem;
             }
           }
         }
@@ -207,33 +231,32 @@
     }
   }
 
-  // Price section
   &-price {
-    align-items: center;
+    @include flex-center;
+    @include flex-column;
     background-color: transparent;
-    display: flex;
-    flex-direction: column;
     justify-content: center;
     padding: 1rem;
     width: 25%;
     gap: 0.5rem;
-    @media (max-width: 992px) and (min-width: 577px) {
+
+    @include desktop {
       margin-left: 15px;
     }
 
-    @media (max-width: 576px) and (min-width: 426px) {
+    @media (max-width: 576px) and (min-width: #{$mobile + 1px}) {
       width: 35%;
       padding: 0.5rem;
       gap: 0.25rem;
     }
 
-    @media (max-width: 768px) and (min-width: 577px) {
+    @include tablet {
       width: 30%;
       padding: 0.75rem;
       gap: 0.25rem;
     }
 
-    @media (max-width: 425px) {
+    @include mobile {
       width: 100%;
       flex-direction: column;
       gap: 0.5rem;
@@ -241,21 +264,20 @@
     }
 
     &-wrapper {
+      @include flex-column;
       align-items: center;
-      display: flex;
-      flex-direction: column;
       text-align: center;
       font-size: 0.875rem;
 
-      @media (max-width: 768px) and (min-width: 426px) {
+      @include tablet {
         font-size: 0.8rem;
       }
 
-      @media (max-width: 576px) and (min-width: 426px) {
+      @media (max-width: 576px) and (min-width: #{$mobile + 1px}) {
         font-size: 0.75rem;
       }
 
-      @media (max-width: 425px) {
+      @include mobile {
         align-items: center;
         text-align: center;
         width: 100%;
@@ -267,35 +289,36 @@
         font-weight: 600;
         line-height: 1;
 
-        @media (max-width: 992px) and (min-width: 577px) {
+        @include desktop {
           font-size: 1.5rem;
         }
 
-        @media (max-width: 576px) and (min-width: 426px) {
+        @media (max-width: 576px) and (min-width: #{$mobile + 1px}) {
           font-size: 1.25rem;
         }
 
-        @media (max-width: 425px) {
+        @include mobile {
           font-size: 1.3rem;
         }
       }
-      &-fee-text {
-        font-size: 0.7em;
+
+      &-text {
+        font-size: 0.875rem;
       }
     }
 
     ::ng-deep .p-button {
-      @media (max-width: 992px) and (min-width: 577px) {
+      @include desktop {
         font-size: 0.8rem;
         padding: 0.4rem 0.8rem !important;
       }
 
-      @media (max-width: 576px) and (min-width: 426px) {
+      @media (max-width: 576px) and (min-width: #{$mobile + 1px}) {
         font-size: 0.75rem;
         padding: 0.3rem 0.6rem !important;
       }
 
-      @media (max-width: 425px) {
+      @include mobile {
         width: 100%;
         font-size: 0.7rem;
         padding: 0.3rem 0.6rem !important;
@@ -306,7 +329,8 @@
         color: var(--p-primary-color) !important;
         background-color: transparent !important;
 
-        &:hover {
+        &:hover,
+        &:focus {
           border-color: var(--p-primary-color) !important;
           color: var(--p-primary-color) !important;
           background-color: transparent !important;
@@ -319,127 +343,3 @@
     }
   }
 }
-
-/* Overlay panel styles */
-::ng-deep .p-overlaypanel {
-  width: 10rem !important;
-
-  .panel-title {
-    color: var(--background-azul);
-    font-weight: 500;
-    margin-bottom: 1rem;
-  }
-
-  .p-timeline {
-    .p-timeline-event {
-      &-marker {
-        background-color: var(--p-primary-color) !important;
-        border-color: var(--p-primary-color) !important;
-      }
-    }
-  }
-
-  @media (max-width: 425px) {
-    width: 90vw !important;
-    max-width: 320px !important;
-
-    .p-timeline {
-      padding: 0.5rem !important;
-      font-size: 0.65rem;
-    }
-  }
-
-  @media (max-width: 992px) and (min-width: 426px) {
-    max-width: 400px !important;
-
-    .p-timeline {
-      padding: 0.5rem !important;
-      font-size: 0.8rem;
-    }
-  }
-}
-
-/* Timeline styles */
-::ng-deep .p-popover-content .p-timeline {
-  .p-timeline-event {
-    &-marker {
-      background-color: var(--p-primary-color);
-      border-color: var(--p-primary-color);
-      height: 12px;
-      width: 12px;
-      margin-top: 4px;
-      margin-right: 3px;
-    }
-
-    &-connector {
-      border-left: 2px dashed var(--background-azul);
-      background-color: transparent;
-    }
-
-    &-content {
-      font-size: 0.875rem;
-      line-height: 1.25rem;
-      min-width: 10rem;
-      color: var(--background-azul);
-      text-align: left;
-    }
-
-    &-opposite {
-      font-size: 0.875rem;
-      color: var(--p-primary-color);
-      flex: 0.1;
-    }
-  }
-
-  .pi-send,
-  .pi-map-marker {
-    color: var(--p-primary-color);
-  }
-}
-
-.flights {
-  color: var(--background-azul);
-  display: grid;
-  /* gap: 1rem; */
-
-  .step {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-top: -2rem; // Default for desktop
-
-    // Adjust margin for mobile devices
-    @media (max-width: 767px) {
-      margin-top: -1.5rem; // Less negative margin for mobile to prevent elements from sticking too close
-    }
-
-    .step-title {
-      width: fit-content;
-      height: fit-content;
-      border-bottom: 1px solid var(--background-azul);
-      font-size: 1.21rem;
-      font-weight: 500;
-      padding-top: 0.5rem;
-      @media (max-width: 767px) {
-        font-size: 1.1rem;
-      }
-    }
-
-    .step-description {
-      font-size: 0.75rem;
-      align-items: center;
-      display: flex;
-      gap: 0.5rem;
-      margin-top: -5px;
-    }
-  }
-  .flight-search-container {
-    width: 100%;
-    overflow-x: hidden;
-
-    @media (min-width: 768px) and (max-width: 1024px) {
-      padding: 0 0.5rem;
-    }
-  }
-}
-  

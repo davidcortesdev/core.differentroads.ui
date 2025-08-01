@@ -42,12 +42,11 @@ export class NewReservationComponent implements OnInit {
     this.route.params.subscribe((params) => {
       this.reservationId = params['reservationId'];
       this.paymentId = params['paymentId'];
-      this.status = params['status'];
+      // El status se determinará basado en el pago cargado
     });
 
     // First load payment statuses, then load reservation
     this.loadPaymentStatuses();
-
   }
 
   loadPaymentStatuses(): void {
@@ -114,26 +113,31 @@ export class NewReservationComponent implements OnInit {
     this.paymentService.getPaymentById(this.paymentId).subscribe((payment: IPaymentResponse) => {
       this.payment = payment;
       console.log(this.payment);
-      if (this.payment.paymentStatusId === this.pendingId) { // Scalapay TODO: Cambiar por id sacando de la tabla
-        if (this.payment.paymentMethodId === 1) { // Transfer TODO: Cambiar por id sacando de la tabla
-          this.paymentType = 'Transfer';
-          console.log('Payment is a transfer');
-        } else if (this.payment.paymentMethodId === 2) { // Scalapay TODO: Cambiar por id sacando de la tabla
-          this.paymentType = 'Scalapay';
-          console.log('Payment is a scalapay');
-          this.captureOrder();
-        } else if (this.payment.paymentMethodId === 3) { // RedSys TODO: Cambiar por id sacando de la tabla
-          this.paymentType = 'RedSys';
-          console.log('Payment is a redsys');
+      
+      // Determinar el tipo de pago basado en el método
+      if (this.payment.paymentMethodId === 1) { // Transfer
+        this.paymentType = 'Transfer';
+        console.log('Payment is a transfer');
+        
+        // Si el status viene de la URL, usarlo; si no, determinar por el status del pago
+        if (this.status && this.status !== 'undefined') {
+          this.status = this.status;
+        } else if (this.payment.paymentStatusId === this.pendingId) {
+          this.status = 'PENDING';
+        } else if (this.payment.paymentStatusId === this.successId) {
+          this.status = 'SUCCESS';
+        } else if (this.payment.paymentStatusId === this.failedId) {
+          this.status = 'FAILED';
         }
-      } else if (this.payment.paymentStatusId === this.successId) {
-        this.status = 'SUCCESS';
-      } else if (this.payment.paymentStatusId === this.failedId) {
-        this.status = 'FAILED';
+      } else if (this.payment.paymentMethodId === 2) { // Scalapay
+        this.paymentType = 'Scalapay';
+        console.log('Payment is a scalapay');
+        this.captureOrder();
+      } else if (this.payment.paymentMethodId === 3) { // RedSys
+        this.paymentType = 'RedSys';
+        console.log('Payment is a redsys');
       }
     });
-
-
   }
   //De aqui sacar paymentStatus.name
   //De aqui sacar paymentMethod.name
@@ -175,6 +179,43 @@ export class NewReservationComponent implements OnInit {
         }
       });
     }
+  }
+
+  handleVoucherUpload(response: any): void {
+    console.log('Voucher uploaded successfully:', response);
+    
+    // Actualizar el pago con la URL del archivo subido
+    if (this.payment && response.secure_url) {
+      this.payment.attachmentUrl = response.secure_url;
+      this.payment.paymentStatusId = this.pendingId; // Mantener como PENDING hasta que se revise
+      
+      this.paymentService.update(this.payment).subscribe({
+        next: () => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Justificante subido',
+            detail: 'El justificante se ha subido correctamente. Nuestro equipo lo revisará pronto.'
+          });
+        },
+        error: (error) => {
+          console.error('Error updating payment with voucher:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al actualizar el pago con el justificante'
+          });
+        }
+      });
+    }
+  }
+
+  handleVoucherError(error: any): void {
+    console.error('Error uploading voucher:', error);
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error de subida',
+      detail: 'Ha ocurrido un error al subir el justificante. Por favor, inténtalo de nuevo.'
+    });
   }
 
 }

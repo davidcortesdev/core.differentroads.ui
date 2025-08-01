@@ -136,11 +136,13 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
         } else {
           await this.processCreditCardPayment(this.totalPrice);
         }
-      } else {
-        //TODO process transfer payment
+      } else if (this.paymentMethod === 'transfer') {
+        await this.processTransferPayment();
       }
     } catch (error) {
       console.error('Payment processing failed:', error);
+    } finally {
+      this.paymentState.isLoading = false;
     }
   }
 
@@ -258,5 +260,28 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
       document.body.appendChild(form);
       form.submit();
     }
+  }
+
+  private async processTransferPayment(): Promise<void> {
+    // Determinar el importe según el tipo de pago
+    const amount = this.paymentState.type === 'deposit' ? this.depositAmount : this.totalPrice;
+
+    // Crear el pago en la API
+    const response = await this.paymentsService.create({
+      reservationId: this.reservationId,
+      amount: amount,
+      paymentDate: new Date(),
+      paymentMethodId: 1, // Transfer - TODO: obtener de la tabla de métodos de pago
+      paymentStatusId: 1 // Pending - TODO: obtener de la tabla de estados de pago
+    }).toPromise();
+
+    if (!response) {
+      throw new Error('Error al crear el pago por transferencia');
+    }
+
+    // Redirigir a new-reservation con los parámetros necesarios
+    this.router.navigate([
+      `/reservation/${this.reservationId}/${response.id}`
+    ]);
   }
 }

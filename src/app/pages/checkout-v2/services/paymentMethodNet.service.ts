@@ -71,7 +71,7 @@ export class PaymentMethodNetService {
      * @returns Observable de array de métodos de pago
      */
     getPaymentMethodByCode(code: string): Observable<IPaymentMethodResponse[]> {
-        return this.http.get<IPaymentMethodResponse[]>(`${this.API_URL}/PaymentMethod/filter-by/code/${code}`);
+        return this.getAllPaymentMethods({ code: code });
     }
 
     /**
@@ -79,7 +79,7 @@ export class PaymentMethodNetService {
      * @returns Observable de array de métodos de pago activos
      */
     getActivePaymentMethods(): Observable<IPaymentMethodResponse[]> {
-        return this.http.get<IPaymentMethodResponse[]>(`${this.API_URL}/PaymentMethod/filter-by/isActive/true`);
+        return this.getAllPaymentMethods({ isActive: true });
     }
 
     /**

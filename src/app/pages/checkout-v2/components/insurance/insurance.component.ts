@@ -382,9 +382,17 @@ export class InsuranceComponent implements OnInit, OnChanges {
     console.log('🛡️ [INSURANCE] 🔍 DEBUG - Parámetro insurance recibido:', insurance);
     console.log('🛡️ [INSURANCE] 🔍 DEBUG - insurance es null?', insurance === null);
     console.log('🛡️ [INSURANCE] Seguro seleccionado:', insurance ? insurance.name : 'Básico');
+    console.log('🛡️ [INSURANCE] 🔍 DEBUG - selectedInsurance actual:', this.selectedInsurance ? this.selectedInsurance.name : 'Básico');
+    
+    // MEJORA: Verificar si realmente hay un cambio en la selección
+    const isSameSelection = this.selectedInsurance === insurance;
+    console.log('🛡️ [INSURANCE] 🔍 DEBUG - ¿Es la misma selección?', isSameSelection);
     
     this.selectedInsurance = insurance;
     this.basicInsuranceSelected = !insurance;
+    
+    // MEJORA: Siempre marcar como cambios pendientes para asegurar que se guarde
+    // Esto es especialmente importante en el step 1 cuando se quiere guardar para todos los viajeros
     this.hasUnsavedChanges = true;
     this.errorMsg = null;
     this.userHasMadeSelection = true; // NUEVO: Marcar que el usuario ha hecho una selección
@@ -421,9 +429,19 @@ export class InsuranceComponent implements OnInit, OnChanges {
     console.log('🛡️ [INSURANCE] Iniciando saveInsuranceAssignments()');
     console.log('🛡️ [INSURANCE] hasUnsavedChanges:', this.hasUnsavedChanges);
     console.log('🛡️ [INSURANCE] reservationId:', this.reservationId);
+    console.log('🛡️ [INSURANCE] selectedInsurance:', this.selectedInsurance ? this.selectedInsurance.name : 'Básico');
     
-    if (!this.hasUnsavedChanges || !this.reservationId) {
-      console.log('🛡️ [INSURANCE] No hay cambios pendientes o no hay reservationId, retornando true');
+    if (!this.reservationId) {
+      console.log('🛡️ [INSURANCE] ❌ No hay reservationId, retornando false');
+      return false;
+    }
+
+    // MEJORA: Siempre guardar si hay un seguro seleccionado, incluso si no hay cambios pendientes
+    // Esto asegura que el seguro se guarde para todos los viajeros en el step 1
+    const shouldSave = this.hasUnsavedChanges || this.selectedInsurance !== null;
+    
+    if (!shouldSave) {
+      console.log('🛡️ [INSURANCE] No hay cambios pendientes ni seguro seleccionado, retornando true');
       return true;
     }
 
@@ -454,21 +472,21 @@ export class InsuranceComponent implements OnInit, OnChanges {
       console.log('🛡️ [INSURANCE] Asignaciones a eliminar:', this.currentInsuranceAssignments.length);
       
       // Eliminar asignaciones existentes de seguros
-              console.log('🛡️ [INSURANCE] RELACIONES ACTIVITY/TRAVELER A ELIMINAR:', this.currentInsuranceAssignments.map(a => ({
-          asignacionId: a.id,
-          travelerId: a.reservationTravelerId,
-          activityId: a.activityId,
-          relacion: `Traveler ${a.reservationTravelerId} → Seguro ${a.activityId}`
-        })));
+      console.log('🛡️ [INSURANCE] RELACIONES ACTIVITY/TRAVELER A ELIMINAR:', this.currentInsuranceAssignments.map(a => ({
+        asignacionId: a.id,
+        travelerId: a.reservationTravelerId,
+        activityId: a.activityId,
+        relacion: `Traveler ${a.reservationTravelerId} → Seguro ${a.activityId}`
+      })));
       
-              const deletePromises = this.currentInsuranceAssignments.map(
-          (assignment) => {
-            console.log('🛡️ [INSURANCE] 🗑️ ELIMINANDO DE BD - Asignación ID:', assignment.id, 'para traveler:', assignment.reservationTravelerId, 'activity:', assignment.activityId);
-            return this.reservationTravelerActivityService
-              .delete(assignment.id)
-              .toPromise();
-          }
-        );
+      const deletePromises = this.currentInsuranceAssignments.map(
+        (assignment) => {
+          console.log('🛡️ [INSURANCE] 🗑️ ELIMINANDO DE BD - Asignación ID:', assignment.id, 'para traveler:', assignment.reservationTravelerId, 'activity:', assignment.activityId);
+          return this.reservationTravelerActivityService
+            .delete(assignment.id)
+            .toPromise();
+        }
+      );
 
       if (deletePromises.length > 0) {
         console.log('🛡️ [INSURANCE] Ejecutando eliminación de asignaciones existentes...');
@@ -516,13 +534,10 @@ export class InsuranceComponent implements OnInit, OnChanges {
           activityId: a.activityId,     // ← ID del seguro
           relacion: `Traveler ${a.reservationTravelerId} → Seguro ${a.activityId}`
         })));
-              } else {
-          console.log('🛡️ [INSURANCE] ❌ PROBLEMA - selectedInsurance es null pero debería tener valor');
-          console.log('🛡️ [INSURANCE] ❌ PROBLEMA - basicInsuranceSelected:', this.basicInsuranceSelected);
-          console.log('🛡️ [INSURANCE] ❌ PROBLEMA - Insurances disponibles:', this.insurances.map(i => ({ id: i.id, name: i.name })));
-          console.log('🛡️ [INSURANCE] Seguro básico seleccionado, no se crean asignaciones');
-          this.currentInsuranceAssignments = [];
-        }
+      } else {
+        console.log('🛡️ [INSURANCE] Seguro básico seleccionado, no se crean asignaciones');
+        this.currentInsuranceAssignments = [];
+      }
 
       this.hasUnsavedChanges = false;
       this.isSaving = false;
@@ -589,5 +604,61 @@ export class InsuranceComponent implements OnInit, OnChanges {
   // NUEVO: Getter para verificar si hay cambios pendientes
   get hasPendingChanges(): boolean {
     return this.hasUnsavedChanges;
+  }
+
+  // NUEVO: Método para verificar que las asignaciones se guardaron correctamente
+  async verifyInsuranceAssignments(): Promise<boolean> {
+    console.log('🛡️ [INSURANCE] Verificando asignaciones de seguro...');
+    
+    if (!this.reservationId || !this.existingTravelers.length) {
+      console.log('🛡️ [INSURANCE] ❌ No hay reservationId o travelers para verificar');
+      return false;
+    }
+
+    try {
+      // Obtener todas las asignaciones actuales de seguros
+      const verificationPromises = this.existingTravelers.map(traveler => 
+        this.reservationTravelerActivityService.getByReservationTraveler(traveler.id).toPromise()
+      );
+
+      const allAssignments = await Promise.all(verificationPromises);
+      const flatAssignments = allAssignments.flat().filter(assignment => assignment !== null && assignment !== undefined);
+      
+      // Filtrar solo asignaciones de seguros
+      const insuranceIds = this.insurances.map(i => i.id);
+      const currentInsuranceAssignments = flatAssignments.filter(
+        (assignment) => assignment && insuranceIds.includes(assignment.activityId)
+      );
+
+      console.log('🛡️ [INSURANCE] 📊 Verificación de asignaciones:');
+      console.log('🛡️ [INSURANCE]   - Total de viajeros:', this.existingTravelers.length);
+      console.log('🛡️ [INSURANCE]   - Asignaciones de seguro encontradas:', currentInsuranceAssignments.length);
+      console.log('🛡️ [INSURANCE]   - Seguro seleccionado:', this.selectedInsurance ? this.selectedInsurance.name : 'Básico');
+
+      if (this.selectedInsurance) {
+        // Verificar que todos los viajeros tengan el seguro seleccionado
+        const expectedAssignments = this.existingTravelers.length;
+        const actualAssignments = currentInsuranceAssignments.filter(
+          (assignment) => assignment && assignment.activityId === this.selectedInsurance!.id
+        ).length;
+
+        console.log('🛡️ [INSURANCE]   - Asignaciones esperadas:', expectedAssignments);
+        console.log('🛡️ [INSURANCE]   - Asignaciones reales:', actualAssignments);
+
+        const isCorrect = actualAssignments === expectedAssignments;
+        console.log('🛡️ [INSURANCE] ✅ Verificación:', isCorrect ? 'EXITOSA' : 'FALLIDA');
+        
+        return isCorrect;
+      } else {
+        // Si es seguro básico, no debería haber asignaciones
+        const hasAssignments = currentInsuranceAssignments.length > 0;
+        console.log('🛡️ [INSURANCE] ✅ Verificación seguro básico:', !hasAssignments ? 'EXITOSA' : 'FALLIDA');
+        
+        return !hasAssignments;
+      }
+    } catch (error) {
+      console.error('🛡️ [INSURANCE] ❌ Error verificando asignaciones:', error);
+      return false;
+    }
   }
 }

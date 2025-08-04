@@ -37,6 +37,7 @@ export class FlightManagementComponent implements OnInit, OnChanges {
 
   isConsolidadorVuelosActive: boolean = false;
   loginDialogVisible: boolean = false;
+  specificSearchVisible: boolean = false;
 
   constructor(
     private departureService: DepartureService,
@@ -59,32 +60,79 @@ export class FlightManagementComponent implements OnInit, OnChanges {
   }
 
   private loadTourAndDepartureData(): void {
+    let tourConsolidadorActive: boolean | null = null;
+    let departureConsolidadorActive: boolean | null = null;
+
+    console.log('🔄 Iniciando carga de datos - tourId:', this.tourId, 'departureId:', this.departureId);
+
+    // Función para verificar si ambas respuestas han llegado
+    const checkBothResponses = () => {
+      console.log('📊 Verificando respuestas - tour:', tourConsolidadorActive, 'departure:', departureConsolidadorActive);
+      
+      if (tourConsolidadorActive !== null && departureConsolidadorActive !== null) {
+        // Condición AND: ambas deben ser true
+        this.isConsolidadorVuelosActive = tourConsolidadorActive && departureConsolidadorActive;
+        console.log('✅ Resultado final isConsolidadorVuelosActive:', this.isConsolidadorVuelosActive);
+      } else {
+        console.log('⏳ Esperando más respuestas...');
+      }
+    };
+
+    // Cargar datos del tour
     if (this.tourId) {
+      console.log('🛫 Cargando datos del tour...');
       this.tourNetService.getTourById(this.tourId).subscribe({
         next: (tour: Tour) => {
-          this.isConsolidadorVuelosActive = !!tour.isConsolidadorVuelosActive;
+          tourConsolidadorActive = !!tour.isConsolidadorVuelosActive;
+          console.log('🎯 Tour cargado - isConsolidadorVuelosActive:', tour.isConsolidadorVuelosActive, '-> procesado:', tourConsolidadorActive);
+          checkBothResponses();
+        },
+        error: (error) => {
+          tourConsolidadorActive = false;
+          console.log('❌ Error cargando tour:', error);
+          checkBothResponses();
         },
       });
+    } else {
+      // Si no hay tourId, asumimos false
+      tourConsolidadorActive = false;
+      console.log('🚫 No hay tourId, asumiendo false');
+      checkBothResponses();
     }
+
+    // Cargar datos del departure
     if (this.departureId) {
+      console.log('✈️ Cargando datos del departure...');
       this.departureService.getById(this.departureId).subscribe({
         next: (departure: IDepartureResponse) => {
-          this.isConsolidadorVuelosActive =
-            !!departure.isConsolidadorVuelosActive;
+          departureConsolidadorActive = !!departure.isConsolidadorVuelosActive;
+          console.log('🎯 Departure cargado - isConsolidadorVuelosActive:', departure.isConsolidadorVuelosActive, '-> procesado:', departureConsolidadorActive);
+          checkBothResponses();
         },
-        error: () => {
-          this.isConsolidadorVuelosActive = false;
+        error: (error) => {
+          departureConsolidadorActive = false;
+          console.log('❌ Error cargando departure:', error);
+          checkBothResponses();
         },
       });
+    } else {
+      // Si no hay departureId, asumimos false
+      departureConsolidadorActive = false;
+      console.log('🚫 No hay departureId, asumiendo false');
+      checkBothResponses();
     }
+  }
+
+  private loadTourData(): void {
+    // Este método ya no se usa con la nueva lógica AND
   }
 
   // Métodos para autenticación
   checkAuthAndShowSpecificSearch(): void {
     this.authService.isLoggedIn().subscribe((isLoggedIn) => {
       if (isLoggedIn) {
-        // Usuario está logueado, mostrar búsqueda específica
-        this.isConsolidadorVuelosActive = true;
+        // Usuario está logueado, mostrar sección específica
+        this.specificSearchVisible = true;
       } else {
         // Usuario no está logueado, mostrar modal
         // Guardar la URL actual con el step en sessionStorage (step 1 = vuelos)

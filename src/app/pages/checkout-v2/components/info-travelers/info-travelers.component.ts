@@ -47,6 +47,10 @@ import {
   IReservationTravelerActivityResponse,
 } from '../../../../core/services/reservation/reservation-traveler-activity.service';
 import {
+  ReservationTravelerActivityPackService,
+  IReservationTravelerActivityPackResponse,
+} from '../../../../core/services/reservation/reservation-traveler-activity-pack.service';
+import {
   ActivityPriceService,
   IActivityPriceResponse,
 } from '../../../../core/services/activity/activity-price.service';
@@ -99,10 +103,22 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     [travelerId: number]: IReservationTravelerActivityResponse[];
   } = {};
 
+  // Paquetes de actividades asignados por viajero
+  travelerActivityPacks: {
+    [travelerId: number]: IReservationTravelerActivityPackResponse[];
+  } = {};
+
   // Precios de actividades por viajero
   activityPrices: {
     [travelerId: number]: {
       [activityId: number]: number;
+    };
+  } = {};
+
+  // Control de estado para actividades eliminadas de BD pero visibles en UI
+  private deletedFromDB: {
+    [travelerId: number]: {
+      [activityId: number]: boolean;
     };
   } = {};
 
@@ -129,6 +145,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     private reservationTravelerFieldService: ReservationTravelerFieldService,
     private activityService: ActivityService,
     private reservationTravelerActivityService: ReservationTravelerActivityService,
+    private reservationTravelerActivityPackService: ReservationTravelerActivityPackService,
     private activityPriceService: ActivityPriceService,
     private activityPackPriceService: ActivityPackPriceService,
     private messageService: MessageService
@@ -148,10 +165,14 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     console.log('ngOnChanges - info-travelers:', changes);
-    if ((changes['departureId'] && changes['departureId'].currentValue) || 
-        (changes['reservationId'] && changes['reservationId'].currentValue)) {
+    if (
+      (changes['departureId'] && changes['departureId'].currentValue) ||
+      (changes['reservationId'] && changes['reservationId'].currentValue)
+    ) {
       console.log('🔄 Recargando datos de info-travelers');
       if (this.departureId && this.reservationId) {
+        // Reinicializar control de eliminados
+        this.deletedFromDB = {};
         this.loadAllData();
       }
     }
@@ -204,11 +225,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
           // Cargar datos existentes de campos de viajeros
           this.loadExistingTravelerFields();
 
-          // Cargar actividades opcionales
-          this.loadOptionalActivities();
-
-          // Cargar actividades por cada viajero
-          this.loadTravelerActivities();
+          // Cargar actividades opcionales primero, luego las actividades de viajeros
+          this.loadOptionalActivitiesAndThenTravelerActivities();
 
           this.loading = false;
         },
@@ -226,7 +244,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
-   * Cargar actividades por cada viajero
+   * Cargar actividades y paquetes de actividades por cada viajero
    */
   private loadTravelerActivities(): void {
     if (!this.travelers || this.travelers.length === 0) {
@@ -237,25 +255,63 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     const totalTravelers = this.travelers.length;
 
     this.travelers.forEach((traveler) => {
-      this.reservationTravelerActivityService
-        .getByReservationTraveler(traveler.id)
+      // Cargar actividades individuales y paquetes en paralelo
+      forkJoin({
+        activities:
+          this.reservationTravelerActivityService.getByReservationTraveler(
+            traveler.id
+          ),
+        activityPacks:
+          this.reservationTravelerActivityPackService.getByReservationTraveler(
+            traveler.id
+          ),
+      })
         .pipe(takeUntil(this.destroy$))
         .subscribe({
-          next: (activities) => {
+          next: ({ activities, activityPacks }) => {
             this.travelerActivities[traveler.id] = activities;
-            console.log(`Actividades para viajero ${traveler.id}:`, activities);
+            this.travelerActivityPacks[traveler.id] = activityPacks;
+
+            console.log(
+              `🎯 Actividades para viajero ${traveler.id}:`,
+              activities
+            );
+            console.log(
+              `📦 Paquetes de actividades para viajero ${traveler.id}:`,
+              activityPacks
+            );
 
             // Cargar precios para las actividades de este viajero
             this.loadActivityPricesForTraveler(traveler, activities);
 
+            // Cargar precios para los paquetes de actividades de este viajero
+            this.loadActivityPackPricesForTraveler(traveler, activityPacks);
+
             loadedTravelers++;
-            
+
             // Emitir estado inicial cuando todos los viajeros estén cargados
             if (loadedTravelers === totalTravelers) {
-              // Pequeño delay para asegurar que los precios se hayan cargado
-              setTimeout(() => {
-                this.emitInitialActivitiesState();
-              }, 1000);
+              // Verificar que las actividades opcionales estén cargadas antes de emitir
+              if (this.optionalActivities.length > 0) {
+                // Pequeño delay para asegurar que los precios se hayan cargado
+                setTimeout(() => {
+                  this.emitInitialActivitiesState();
+                }, 1000);
+              } else {
+                console.log(
+                  '⏳ Esperando a que se carguen las actividades opcionales...'
+                );
+                // Esperar un poco más y verificar nuevamente
+                setTimeout(() => {
+                  if (this.optionalActivities.length > 0) {
+                    this.emitInitialActivitiesState();
+                  } else {
+                    console.log(
+                      '⚠️ No se pudieron cargar las actividades opcionales'
+                    );
+                  }
+                }, 2000);
+              }
             }
           },
           error: (error) => {
@@ -264,12 +320,29 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
               error
             );
             loadedTravelers++;
-            
+
             // Continuar con el conteo incluso si hay error
             if (loadedTravelers === totalTravelers) {
-              setTimeout(() => {
-                this.emitInitialActivitiesState();
-              }, 1000);
+              // Verificar que las actividades opcionales estén cargadas antes de emitir
+              if (this.optionalActivities.length > 0) {
+                setTimeout(() => {
+                  this.emitInitialActivitiesState();
+                }, 1000);
+              } else {
+                console.log(
+                  '⏳ Esperando a que se carguen las actividades opcionales (error case)...'
+                );
+                // Esperar un poco más y verificar nuevamente
+                setTimeout(() => {
+                  if (this.optionalActivities.length > 0) {
+                    this.emitInitialActivitiesState();
+                  } else {
+                    console.log(
+                      '⚠️ No se pudieron cargar las actividades opcionales (error case)'
+                    );
+                  }
+                }, 2000);
+              }
             }
           },
         });
@@ -379,6 +452,60 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
+   * Cargar precios de paquetes de actividades para un viajero específico
+   */
+  private loadActivityPackPricesForTraveler(
+    traveler: IReservationTravelerResponse,
+    activityPacks: IReservationTravelerActivityPackResponse[]
+  ): void {
+    if (!activityPacks || activityPacks.length === 0 || !this.departureId) {
+      return;
+    }
+
+    // Inicializar el objeto de precios para este viajero si no existe
+    if (!this.activityPrices[traveler.id]) {
+      this.activityPrices[traveler.id] = {};
+    }
+
+    activityPacks.forEach((travelerActivityPack) => {
+      // Obtener precio de pack
+      this.activityPackPriceService
+        .getAll({
+          activityPackId: travelerActivityPack.activityPackId,
+          departureId: this.departureId!,
+          ageGroupId: traveler.ageGroupId,
+        })
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (prices) => {
+            if (prices && prices.length > 0) {
+              // Tomar el primer precio encontrado o el precio de campaña si existe
+              const price = prices[0];
+              const finalPrice =
+                price.campaignPrice && price.campaignPrice > 0
+                  ? price.campaignPrice
+                  : price.basePrice;
+
+              this.activityPrices[traveler.id][
+                travelerActivityPack.activityPackId
+              ] = finalPrice;
+              console.log(
+                `Precio pack actividad ${travelerActivityPack.activityPackId} para viajero ${traveler.id}:`,
+                finalPrice
+              );
+            }
+          },
+          error: (error) => {
+            console.error(
+              `Error al cargar precio pack para actividad ${travelerActivityPack.activityPackId}:`,
+              error
+            );
+          },
+        });
+    });
+  }
+
+  /**
    * Obtener el precio de una actividad para un viajero específico
    */
   getActivityPrice(travelerId: number, activityId: number): number | null {
@@ -397,8 +524,20 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
    * Obtener el nombre de la actividad por ID
    */
   getActivityName(activityId: number): string {
+    console.log(`🔍 Buscando actividad con ID: ${activityId}`);
+    console.log(
+      `📋 Actividades disponibles:`,
+      this.optionalActivities.map((a) => ({
+        id: a.id,
+        name: a.name,
+        type: a.type,
+      }))
+    );
+
     const activity = this.optionalActivities.find((a) => a.id === activityId);
-    return activity ? activity.name || 'Sin nombre' : 'Actividad no encontrada';
+    console.log(`✅ Actividad encontrada:`, activity);
+
+    return activity ? activity.name || 'Sin nombre' : '';
   }
 
   /**
@@ -423,37 +562,400 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
     // Obtener información de la actividad y su precio
     const activityName = this.getActivityName(activityId);
-    const activityPrice = this.getActivityPrice(travelerId, activityId) || 0;
 
-    console.log(`📊 Datos a emitir:`, {
-      travelerId,
-      activityId,
-      isAssigned: isSelected,
-      activityName,
-      activityPrice,
-    });
+    // Solo proceder si la actividad tiene nombre válido
+    if (activityName) {
+      const activityPrice = this.getActivityPrice(travelerId, activityId) || 0;
 
-    // Emitir el evento al componente padre
-    this.activitiesAssignmentChange.emit({
-      travelerId,
-      activityId,
-      isAssigned: isSelected,
-      activityName,
-      activityPrice,
-    });
+      console.log(`📊 Datos a procesar:`, {
+        travelerId,
+        activityId,
+        isAssigned: isSelected,
+        activityName,
+        activityPrice,
+      });
 
-    console.log(`✅ Evento emitido correctamente`);
-
-    if (isSelected) {
-      console.log(
-        `Actividad ${activityId} activada para viajero ${travelerId}`
-      );
-      // Aquí podrías agregar lógica para crear la asignación en BD si es necesario
+      if (isSelected) {
+        // Crear nueva asignación en BD
+        this.createActivityAssignment(
+          travelerId,
+          activityId,
+          activityName,
+          activityPrice
+        );
+      } else {
+        // Eliminar asignación existente de BD
+        this.removeActivityAssignment(
+          travelerId,
+          activityId,
+          activityName,
+          activityPrice
+        );
+      }
     } else {
       console.log(
-        `Actividad ${activityId} desactivada para viajero ${travelerId}`
+        `⚠️ No se procesó actividad ${activityId} - nombre no encontrado`
       );
-      // Aquí podrías agregar lógica para eliminar la asignación en BD si es necesario
+    }
+  }
+
+  /**
+   * Crear nueva asignación de actividad en base de datos
+   */
+  private createActivityAssignment(
+    travelerId: number,
+    activityId: number,
+    activityName: string,
+    activityPrice: number
+  ): void {
+    console.log(
+      `➕ Creando asignación: Viajero ${travelerId}, Actividad ${activityId}`
+    );
+
+    // Verificar si ya existe la asignación Y no fue eliminada de BD
+    const isCurrentlyAssigned = this.isTravelerActivityAssigned(
+      travelerId,
+      activityId
+    );
+    const wasDeletedFromDB = this.deletedFromDB[travelerId]?.[activityId];
+
+    if (isCurrentlyAssigned && !wasDeletedFromDB) {
+      console.log(
+        `⚠️ La actividad ${activityId} ya está asignada al viajero ${travelerId}`
+      );
+
+      // Solo emitir el evento sin crear duplicado
+      this.activitiesAssignmentChange.emit({
+        travelerId,
+        activityId,
+        isAssigned: true,
+        activityName,
+        activityPrice,
+      });
+      return;
+    }
+
+    // Determinar si es actividad individual o paquete
+    const activity = this.optionalActivities.find((a) => a.id === activityId);
+
+    if (!activity) {
+      console.error(
+        `❌ No se encontró la actividad ${activityId} en actividades opcionales`
+      );
+      return;
+    }
+
+    const isActivityPack = activity.type === 'pack';
+
+    if (isActivityPack) {
+      // Crear asignación de paquete de actividad
+      const activityPackData = {
+        id: 0,
+        reservationTravelerId: travelerId,
+        activityPackId: activityId,
+      };
+
+      this.reservationTravelerActivityPackService
+        .create(activityPackData)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            console.log(
+              `✅ Paquete de actividad ${activityId} creado exitosamente para viajero ${travelerId}`,
+              response
+            );
+
+            // Si fue eliminado previamente, actualizar el registro existente en lugar de agregar uno nuevo
+            if (wasDeletedFromDB) {
+              // Buscar y actualizar el registro existente
+              const existingPackIndex = this.travelerActivityPacks[
+                travelerId
+              ]?.findIndex((pack) => pack.activityPackId === activityId);
+
+              if (existingPackIndex !== -1 && existingPackIndex !== undefined) {
+                this.travelerActivityPacks[travelerId][existingPackIndex] =
+                  response;
+              } else {
+                // Si no se encuentra, agregarlo
+                if (!this.travelerActivityPacks[travelerId]) {
+                  this.travelerActivityPacks[travelerId] = [];
+                }
+                this.travelerActivityPacks[travelerId].push(response);
+              }
+            } else {
+              // Agregar normalmente si no fue eliminado previamente
+              if (!this.travelerActivityPacks[travelerId]) {
+                this.travelerActivityPacks[travelerId] = [];
+              }
+              this.travelerActivityPacks[travelerId].push(response);
+            }
+
+            // Limpiar de la lista de eliminados
+            if (this.deletedFromDB[travelerId]?.[activityId]) {
+              delete this.deletedFromDB[travelerId][activityId];
+            }
+
+            // Emitir evento al componente padre
+            this.activitiesAssignmentChange.emit({
+              travelerId,
+              activityId,
+              isAssigned: true,
+              activityName,
+              activityPrice,
+            });
+
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Actividad agregada',
+              detail: `${activityName} agregada correctamente`,
+              life: 3000,
+            });
+          },
+          error: (error) => {
+            console.error(
+              `❌ Error creando paquete de actividad ${activityId}:`,
+              error
+            );
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: `Error al agregar ${activityName}: ${
+                error.message || 'Error desconocido'
+              }`,
+              life: 5000,
+            });
+          },
+        });
+    } else {
+      // Crear asignación de actividad individual
+      const activityData = {
+        id: 0,
+        reservationTravelerId: travelerId,
+        activityId: activityId,
+      };
+
+      this.reservationTravelerActivityService
+        .create(activityData)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            console.log(
+              `✅ Actividad ${activityId} creada exitosamente para viajero ${travelerId}`,
+              response
+            );
+
+            // Si fue eliminado previamente, actualizar el registro existente en lugar de agregar uno nuevo
+            if (wasDeletedFromDB) {
+              // Buscar y actualizar el registro existente
+              const existingActivityIndex = this.travelerActivities[
+                travelerId
+              ]?.findIndex((activity) => activity.activityId === activityId);
+
+              if (
+                existingActivityIndex !== -1 &&
+                existingActivityIndex !== undefined
+              ) {
+                this.travelerActivities[travelerId][existingActivityIndex] =
+                  response;
+              } else {
+                // Si no se encuentra, agregarlo
+                if (!this.travelerActivities[travelerId]) {
+                  this.travelerActivities[travelerId] = [];
+                }
+                this.travelerActivities[travelerId].push(response);
+              }
+            } else {
+              // Agregar normalmente si no fue eliminado previamente
+              if (!this.travelerActivities[travelerId]) {
+                this.travelerActivities[travelerId] = [];
+              }
+              this.travelerActivities[travelerId].push(response);
+            }
+
+            // Limpiar de la lista de eliminados
+            if (this.deletedFromDB[travelerId]?.[activityId]) {
+              delete this.deletedFromDB[travelerId][activityId];
+            }
+
+            // Emitir evento al componente padre
+            this.activitiesAssignmentChange.emit({
+              travelerId,
+              activityId,
+              isAssigned: true,
+              activityName,
+              activityPrice,
+            });
+
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Actividad agregada',
+              detail: `${activityName} agregada correctamente`,
+              life: 3000,
+            });
+          },
+          error: (error) => {
+            console.error(`❌ Error creando actividad ${activityId}:`, error);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: `Error al agregar ${activityName}: ${
+                error.message || 'Error desconocido'
+              }`,
+              life: 5000,
+            });
+          },
+        });
+    }
+  }
+
+  /**
+   * Eliminar asignación de actividad de base de datos
+   */
+  private removeActivityAssignment(
+    travelerId: number,
+    activityId: number,
+    activityName: string,
+    activityPrice: number
+  ): void {
+    console.log(
+      `➖ Eliminando asignación: Viajero ${travelerId}, Actividad ${activityId}`
+    );
+
+    // Buscar en actividades individuales
+    const individualActivities = this.travelerActivities[travelerId] || [];
+    const individualActivity = individualActivities.find(
+      (activity) => activity.activityId === activityId
+    );
+
+    // Buscar en paquetes de actividades
+    const activityPacks = this.travelerActivityPacks[travelerId] || [];
+    const activityPack = activityPacks.find(
+      (pack) => pack.activityPackId === activityId
+    );
+
+    if (individualActivity) {
+      // Eliminar actividad individual solo de BD
+      console.log(
+        `🗑️ Eliminando actividad individual con ID: ${individualActivity.id} solo de BD`
+      );
+
+      this.reservationTravelerActivityService
+        .delete(individualActivity.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (result) => {
+            console.log(
+              `📝 Resultado eliminación actividad ${activityId}:`,
+              result
+            );
+            console.log(
+              `✅ Actividad ${activityId} eliminada exitosamente de BD para viajero ${travelerId}`
+            );
+
+            // Marcar como eliminada de BD pero mantener visible en UI
+            if (!this.deletedFromDB[travelerId]) {
+              this.deletedFromDB[travelerId] = {};
+            }
+            this.deletedFromDB[travelerId][activityId] = true;
+
+            // Solo emitir evento al componente padre para actualizar summary
+            this.activitiesAssignmentChange.emit({
+              travelerId,
+              activityId,
+              isAssigned: false,
+              activityName,
+              activityPrice,
+            });
+
+            console.log(
+              `ℹ️ Actividad ${activityName} eliminada de BD pero permanece visible en UI`
+            );
+          },
+          error: (error) => {
+            console.error(
+              `❌ Error eliminando actividad ${activityId}:`,
+              error
+            );
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: `Error al eliminar ${activityName}: ${
+                error.message || 'Error desconocido'
+              }`,
+              life: 5000,
+            });
+          },
+        });
+    } else if (activityPack) {
+      // Eliminar paquete de actividad solo de BD
+      console.log(
+        `🗑️ Eliminando paquete de actividad con ID: ${activityPack.id} solo de BD`
+      );
+
+      this.reservationTravelerActivityPackService
+        .delete(activityPack.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (result) => {
+            console.log(
+              `📝 Resultado eliminación paquete ${activityId}:`,
+              result
+            );
+            console.log(
+              `✅ Paquete de actividad ${activityId} eliminado exitosamente de BD para viajero ${travelerId}`
+            );
+
+            // Marcar como eliminada de BD pero mantener visible en UI
+            if (!this.deletedFromDB[travelerId]) {
+              this.deletedFromDB[travelerId] = {};
+            }
+            this.deletedFromDB[travelerId][activityId] = true;
+
+            // Solo emitir evento al componente padre para actualizar summary
+            this.activitiesAssignmentChange.emit({
+              travelerId,
+              activityId,
+              isAssigned: false,
+              activityName,
+              activityPrice,
+            });
+
+            console.log(
+              `ℹ️ Paquete ${activityName} eliminado de BD pero permanece visible en UI`
+            );
+          },
+          error: (error) => {
+            console.error(
+              `❌ Error eliminando paquete de actividad ${activityId}:`,
+              error
+            );
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: `Error al eliminar ${activityName}: ${
+                error.message || 'Error desconocido'
+              }`,
+              life: 5000,
+            });
+          },
+        });
+    } else {
+      console.warn(
+        `⚠️ No se encontró asignación para eliminar: Viajero ${travelerId}, Actividad ${activityId}`
+      );
+
+      // Aún así emitir el evento para mantener consistencia en el componente padre
+      this.activitiesAssignmentChange.emit({
+        travelerId,
+        activityId,
+        isAssigned: false,
+        activityName,
+        activityPrice,
+      });
+
+      console.log(
+        `ℹ️ La actividad ${activityName} no estaba asignada previamente`
+      );
     }
   }
 
@@ -465,54 +967,85 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       return;
     }
 
-    console.log(`🔄 Emitiendo estado inicial de actividades...`);
-    console.log(`📋 Viajeros:`, this.travelers);
-    console.log(`🎯 Actividades por viajero:`, this.travelerActivities);
-
-    this.travelers.forEach(traveler => {
+    this.travelers.forEach((traveler) => {
+      // Emitir actividades individuales
       const travelerActivities = this.travelerActivities[traveler.id];
       if (travelerActivities) {
-        console.log(`👤 Viajero ${traveler.id} tiene ${travelerActivities.length} actividades`);
-        travelerActivities.forEach(activity => {
+        travelerActivities.forEach((activity) => {
           const activityName = this.getActivityName(activity.activityId);
-          const activityPrice = this.getActivityPrice(traveler.id, activity.activityId) || 0;
-          
-          console.log(`📤 Emitiendo actividad inicial:`, {
-            travelerId: traveler.id,
-            activityId: activity.activityId,
-            isAssigned: true,
-            activityName,
-            activityPrice,
-          });
-          
-          this.activitiesAssignmentChange.emit({
-            travelerId: traveler.id,
-            activityId: activity.activityId,
-            isAssigned: true,
-            activityName,
-            activityPrice,
-          });
+          // Solo emitir si la actividad tiene nombre válido
+          if (activityName) {
+            const activityPrice =
+              this.getActivityPrice(traveler.id, activity.activityId) || 0;
+
+            this.activitiesAssignmentChange.emit({
+              travelerId: traveler.id,
+              activityId: activity.activityId,
+              isAssigned: true,
+              activityName,
+              activityPrice,
+            });
+          }
+        });
+      }
+
+      // Emitir paquetes de actividades
+      const travelerActivityPacks = this.travelerActivityPacks[traveler.id];
+      if (travelerActivityPacks) {
+        travelerActivityPacks.forEach((activityPack) => {
+          const activityName = this.getActivityName(
+            activityPack.activityPackId
+          );
+          // Solo emitir si la actividad tiene nombre válido
+          if (activityName) {
+            const activityPrice =
+              this.getActivityPrice(traveler.id, activityPack.activityPackId) ||
+              0;
+
+            this.activitiesAssignmentChange.emit({
+              travelerId: traveler.id,
+              activityId: activityPack.activityPackId,
+              isAssigned: true,
+              activityName,
+              activityPrice,
+            });
+          }
         });
       }
     });
-    
-    console.log(`✅ Estado inicial emitido`);
   }
 
   /**
    * Verificar si un viajero tiene una actividad específica asignada
    */
   isTravelerActivityAssigned(travelerId: number, activityId: number): boolean {
+    // Si fue eliminada de BD, no está realmente asignada
+    if (this.deletedFromDB[travelerId]?.[activityId]) {
+      return false;
+    }
+
+    // Verificar actividades individuales
     const activities = this.travelerActivities[travelerId];
-    return activities
+    const hasIndividualActivity = activities
       ? activities.some((activity) => activity.activityId === activityId)
       : false;
+
+    // Verificar paquetes de actividades
+    const activityPacks = this.travelerActivityPacks[travelerId];
+    const hasActivityPack = activityPacks
+      ? activityPacks.some(
+          (activityPack) => activityPack.activityPackId === activityId
+        )
+      : false;
+
+    const result = hasIndividualActivity || hasActivityPack;
+    return result;
   }
 
   /**
-   * Cargar actividades opcionales
+   * Cargar actividades opcionales primero, luego las actividades de viajeros
    */
-  private loadOptionalActivities(): void {
+  private loadOptionalActivitiesAndThenTravelerActivities(): void {
     if (!this.itineraryId || !this.departureId) {
       return;
     }
@@ -529,10 +1062,19 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       .subscribe({
         next: (activities) => {
           this.optionalActivities = activities;
-          console.log('Actividades opcionales:', this.optionalActivities);
+          console.log('✅ Actividades opcionales cargadas:', activities.length);
+          console.log(
+            '📋 Detalles de actividades opcionales:',
+            activities.map((a) => ({ id: a.id, name: a.name, type: a.type }))
+          );
+
+          // Ahora que las actividades opcionales están cargadas, cargar las actividades de viajeros
+          this.loadTravelerActivities();
         },
         error: (error) => {
-          console.error('Error al cargar actividades:', error);
+          console.error('❌ Error al cargar actividades opcionales:', error);
+          // Aún así intentar cargar las actividades de viajeros
+          this.loadTravelerActivities();
         },
       });
   }
@@ -672,6 +1214,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
    */
   reloadData(): void {
     if (this.departureId && this.reservationId) {
+      // Reinicializar control de eliminados
+      this.deletedFromDB = {};
       this.loadAllData();
     }
   }

@@ -58,6 +58,8 @@ import {
   ActivityPackPriceService,
   IActivityPackPriceResponse,
 } from '../../../../core/services/activity/activity-pack-price.service';
+import { ReservationService } from '../../../../core/services/reservation/reservation.service';
+import { IReservationStatusResponse, ReservationStatusService } from '../../../../core/services/reservation/reservation-status.service';
 
 @Component({
   selector: 'app-info-travelers',
@@ -86,6 +88,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   reservationFields: IReservationFieldResponse[] = [];
   travelers: IReservationTravelerResponse[] = [];
   ageGroups: IAgeGroupResponse[] = [];
+  statuses: IReservationStatusResponse[] = [];
 
   // Estados del componente
   loading: boolean = false;
@@ -148,19 +151,38 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     private reservationTravelerActivityPackService: ReservationTravelerActivityPackService,
     private activityPriceService: ActivityPriceService,
     private activityPackPriceService: ActivityPackPriceService,
-    private messageService: MessageService
-  ) {}
+    private messageService: MessageService,
+    private reservationStatusService: ReservationStatusService,
+    private reservationService: ReservationService
+  ) { }
 
   ngOnInit(): void {
     console.log('departureId:', this.departureId);
     console.log('reservationId:', this.reservationId);
     console.log('itineraryId:', this.itineraryId);
 
-    if (this.departureId && this.reservationId) {
-      this.loadAllData();
-    } else {
-      this.error = 'No se proporcionó un ID de departure o reservación válido';
-    }
+    this.reservationStatusService.getAll().subscribe(
+      (statuses) => {
+        this.statuses = statuses;
+        console.log('statuses:', this.statuses);
+        if (this.departureId && this.reservationId) {
+          let cartStatusId: number | null | undefined = undefined;
+          if (this.statuses) {
+            cartStatusId = this.statuses.find(status => status.code == 'CART')?.id;
+          }
+          if (cartStatusId) {
+            this.reservationService
+              .updateStatus(this.reservationId, cartStatusId) //No hace falta comprobar que no esté en budget ya que en ese caso fallaría el updateStatus
+              .subscribe((status) => {
+                console.log('status:', status);
+              });
+          }
+          this.loadAllData();
+        } else {
+          this.error = 'No se proporcionó un ID de departure o reservación válido';
+        }
+      }
+    );
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -719,9 +741,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
-              detail: `Error al agregar ${activityName}: ${
-                error.message || 'Error desconocido'
-              }`,
+              detail: `Error al agregar ${activityName}: ${error.message || 'Error desconocido'
+                }`,
               life: 5000,
             });
           },
@@ -798,9 +819,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
-              detail: `Error al agregar ${activityName}: ${
-                error.message || 'Error desconocido'
-              }`,
+              detail: `Error al agregar ${activityName}: ${error.message || 'Error desconocido'
+                }`,
               life: 5000,
             });
           },
@@ -879,9 +899,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
-              detail: `Error al eliminar ${activityName}: ${
-                error.message || 'Error desconocido'
-              }`,
+              detail: `Error al eliminar ${activityName}: ${error.message || 'Error desconocido'
+                }`,
               life: 5000,
             });
           },
@@ -932,9 +951,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
-              detail: `Error al eliminar ${activityName}: ${
-                error.message || 'Error desconocido'
-              }`,
+              detail: `Error al eliminar ${activityName}: ${error.message || 'Error desconocido'
+                }`,
               life: 5000,
             });
           },
@@ -1034,8 +1052,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     const activityPacks = this.travelerActivityPacks[travelerId];
     const hasActivityPack = activityPacks
       ? activityPacks.some(
-          (activityPack) => activityPack.activityPackId === activityId
-        )
+        (activityPack) => activityPack.activityPackId === activityId
+      )
       : false;
 
     const result = hasIndividualActivity || hasActivityPack;

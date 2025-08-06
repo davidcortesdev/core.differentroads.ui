@@ -414,3 +414,136 @@ p-button.continue-button ::ng-deep .p-button {
         color: #721c24;
     }
 }
+
+// Estilos para tour-additional-info-container (copiados de tour-additional-info.component.scss)
+.tour-additional-info-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    flex-direction: row;
+    gap: 10rem;
+    flex-wrap: wrap;
+    margin: 1rem 0;
+
+    // Small desktop view - adjust gap and centering
+    @media (max-width: 1366px) {
+        gap: 3rem;
+        justify-content: center;
+    }
+
+    // Tablet view
+    @media (max-width: 992px) {
+        gap: 1.5rem;
+        justify-content: center;
+    }
+
+    // Mobile view
+    @media (max-width: 576px) {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        padding: 0 1.5rem;
+    }
+}
+
+.action-card {
+    cursor: pointer;
+    transition:
+        transform 0.2s,
+        box-shadow 0.2s,
+        border-color 0.2s;
+    width: 250px;
+
+    // Small desktop view - adjust width for better proportions
+    @media (max-width: 1366px) {
+        width: 230px;
+    }
+
+    // Mobile view - full width with margins
+    @media (max-width: 576px) {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-color: #002b57 !important;
+    }
+}
+
+.disabled-card {
+    opacity: 0.7;
+    cursor: not-allowed;
+
+    &:hover {
+        transform: none;
+        box-shadow: none;
+    }
+}
+
+.card-content {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1rem;
+
+    // Small desktop view
+    @media (max-width: 1366px) {
+        justify-content: center;
+    }
+
+    // Mobile view - center content
+    @media (max-width: 576px) {
+        justify-content: center;
+    }
+}
+
+.card-text {
+    color: var(--background-azul);
+    font-weight: 500;
+}
+
+.claseBord {
+    border-radius: 0.875rem;
+    border: 1px solid #002b57;
+}
+
+.bg-pink-100 {
+    background-color: #ff6f61;
+    border-radius: 25%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    i {
+        color: #fff;
+    }
+}
+
+// Deep styles para las tarjetas
+:host ::ng-deep {
+    .p-card.action-card {
+        .p-card-body {
+            padding: 1rem;
+        }
+
+        .p-card-content {
+            padding: 0;
+        }
+    }
+
+    // Tooltip styles
+    .p-tooltip {
+        max-width: 250px;
+        text-align: center;
+
+        .p-tooltip-text {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            border-radius: 4px;
+        }
+    }
+}

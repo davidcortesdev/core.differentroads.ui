@@ -32,6 +32,7 @@ import {
   ReservationTravelerService,
   IReservationTravelerResponse,
 } from '../../core/services/reservation/reservation-traveler.service';
+import { ReservationStatusService } from '../../core/services/reservation/reservation-status.service';
 
 @Component({
   selector: 'app-checkout-v2',
@@ -104,6 +105,7 @@ export class CheckoutV2Component implements OnInit {
 
   // Propiedades para autenticación
   loginDialogVisible: boolean = false;
+  isAuthenticated: boolean = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -121,12 +123,18 @@ export class CheckoutV2Component implements OnInit {
     private authService: AuthenticateService,
     private usersNetService: UsersNetService,
     private reservationTravelerService: ReservationTravelerService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private reservationStatusService: ReservationStatusService
   ) {}
 
   ngOnInit(): void {
     // Configurar los steps
     this.initializeSteps();
+
+    // Verificar estado de autenticación inicial
+    this.authService.isLoggedIn().subscribe((isLoggedIn) => {
+      this.isAuthenticated = isLoggedIn;
+    });
 
     // Leer step de URL si está presente (para redirección después del login)
     this.route.queryParams.subscribe((params) => {
@@ -1127,7 +1135,8 @@ export class CheckoutV2Component implements OnInit {
           this.loginDialogVisible = true;
           return;
         }
-        // Usuario está logueado, continuar con la validación normal
+        // Usuario está logueado, actualizar variable local y continuar con la validación normal
+        this.isAuthenticated = true;
         this.performStepValidation(targetStep);
       });
       return;
@@ -1355,7 +1364,7 @@ export class CheckoutV2Component implements OnInit {
               next: (users) => {
                 if (users && users.length > 0) {
                   const userId = users[0].id;
-
+                  this.isAuthenticated = true;
                   // Actualizar la reservación con el userId correcto
                   this.updateReservationUserId(userId);
                 } else {
@@ -1468,4 +1477,59 @@ export class CheckoutV2Component implements OnInit {
     this.closeLoginModal();
     this.router.navigate(['/sign-up']);
   }
+
+  // TODO: Implementar lógica para guardar el presupuesto
+  handleSaveBudget(): void {
+    if (!this.isAuthenticated) {
+      this.loginDialogVisible = true;
+    }
+    else {
+      this.reservationStatusService.getByCode('BUDGET').subscribe({
+        next: (reservationStatus) => {
+          if (reservationStatus) {
+            this.reservationService.updateStatus(this.reservationId!, reservationStatus[0].id).subscribe({
+              next: (success) => {
+                if (success) {
+                  this.messageService.add({
+                    severity: 'success',
+                    summary: 'Presupuesto guardado',
+                    detail: 'El presupuesto ha sido guardado correctamente',
+                    life: 3000,
+                  });
+                }
+                else {
+                  this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error al guardar el presupuesto',
+                    detail: 'No se pudo guardar el presupuesto',
+                    life: 5000,
+                  })
+                }
+              },
+              error: (error) => {
+                console.error('Error al actualizar el estado de la reservación:', error);
+              }
+            })
+          }
+          else {
+            console.log('No se encontró el id del estado de Budget');
+          }
+        },
+        error: (error) => {
+          console.error('Error al obtener el estado de la reservación:', error);
+        }
+      });
+    }
+  }
+
+  // TODO: Implementar lógica para descargar el presupuesto
+  handleDownloadBudget(): void {
+    console.log('handleDownloadBudget');
+  }
+
+  // TODO: Implementar lógica para compartir el presupuesto
+  handleShareBudget(): void {
+    console.log('handleShareBudget');
+  }
+
 }

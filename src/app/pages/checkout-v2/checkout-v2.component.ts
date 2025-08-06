@@ -234,8 +234,6 @@ export class CheckoutV2Component implements OnInit {
     activityName: string;
     activityPrice: number;
   }): void {
-    console.log('🎯 Cambio de asignación de actividad recibido:', event);
-
     // Inicializar el objeto para el viajero si no existe
     if (!this.travelerActivities[event.travelerId]) {
       this.travelerActivities[event.travelerId] = {};
@@ -245,8 +243,6 @@ export class CheckoutV2Component implements OnInit {
     this.travelerActivities[event.travelerId][event.activityId] =
       event.isAssigned;
 
-    console.log(`📊 Estado actualizado - travelerActivities:`, this.travelerActivities);
-
     // Actualizar el conteo de actividades por actividad
     this.updateActivitiesByTraveler(
       event.activityId,
@@ -254,29 +250,20 @@ export class CheckoutV2Component implements OnInit {
       event.activityPrice
     );
 
-    console.log(`📊 activitiesByTraveler después de actualizar:`, this.activitiesByTraveler);
-
     // Recalcular el resumen del pedido
     if (
       this.travelerSelector &&
       this.travelerSelector.travelersNumbers &&
       Object.keys(this.pricesByAgeGroup).length > 0
     ) {
-      console.log(`🔄 Recalculando resumen del pedido...`);
-      console.log(`👥 travelersNumbers:`, this.travelerSelector.travelersNumbers);
       this.updateOrderSummary(this.travelerSelector.travelersNumbers);
-      console.log(`📋 Summary actualizado:`, this.summary);
-      console.log(`💰 Total calculado:`, this.totalAmountCalculated);
     } else {
-      console.log(`⚠️ No se puede recalcular resumen - travelerSelector:`, !!this.travelerSelector, 'travelersNumbers:', !!this.travelerSelector?.travelersNumbers, 'pricesByAgeGroup:', Object.keys(this.pricesByAgeGroup).length);
-      
       // Intentar recalcular solo las actividades si no tenemos travelerSelector
       this.updateActivitiesOnly();
     }
 
     // Forzar detección de cambios
     this.cdr.detectChanges();
-
   }
 
   /**
@@ -287,9 +274,6 @@ export class CheckoutV2Component implements OnInit {
     activityName: string,
     activityPrice: number
   ): void {
-    console.log(`🔢 Actualizando conteo para actividad ${activityId} (${activityName})`);
-    console.log(`📊 travelerActivities actual:`, this.travelerActivities);
-    
     // Contar cuántos viajeros tienen esta actividad asignada
     let count = 0;
     Object.values(this.travelerActivities).forEach((travelerActivities) => {
@@ -298,61 +282,46 @@ export class CheckoutV2Component implements OnInit {
       }
     });
 
-    console.log(`👥 Conteo calculado: ${count} viajeros para actividad ${activityId}`);
-
     // Actualizar o crear el registro de la actividad
     this.activitiesByTraveler[activityId] = {
       count: count,
       price: activityPrice,
       name: activityName,
     };
-
-    console.log(`📝 activitiesByTraveler actualizado:`, this.activitiesByTraveler);
-    console.log(`Actividad ${activityName}: ${count} viajeros asignados`);
   }
 
   /**
    * Actualiza solo la sección de actividades en el resumen
    */
   private updateActivitiesOnly(): void {
-    console.log(`🔄 Actualizando solo actividades en el resumen...`);
-    
     // Limpiar actividades existentes del summary
-    this.summary = this.summary.filter(item => 
-      !item.description || 
-      !Object.values(this.activitiesByTraveler).some(activity => 
-        activity.name === item.description
-      )
+    this.summary = this.summary.filter(
+      (item) =>
+        !item.description ||
+        !Object.values(this.activitiesByTraveler).some(
+          (activity) => activity.name === item.description
+        )
     );
-    
-    console.log(`📋 Summary después de limpiar actividades:`, this.summary);
-    
+
     // Agregar actividades actualizadas
     Object.values(this.activitiesByTraveler).forEach((activityData) => {
-      console.log(`📋 Procesando actividad:`, activityData);
       if (activityData.count > 0 && activityData.price > 0) {
         const summaryItem = {
           qty: activityData.count,
           value: activityData.price,
           description: `${activityData.name}`,
         };
-        console.log(`➕ Agregando al summary:`, summaryItem);
         this.summary.push(summaryItem);
       } else {
-        console.log(`❌ Actividad no agregada - count: ${activityData.count}, price: ${activityData.price}`);
       }
     });
-    
-    console.log(`📋 Summary final:`, this.summary);
-    
+
     // Recalcular totales
     this.calculateTotals();
-    console.log(`💰 Total recalculado:`, this.totalAmountCalculated);
-    
+
     // Forzar detección de cambios
     this.cdr.detectChanges();
   }
-
 
   // Método para cargar datos del tour y obtener el itinerario
   private loadTourData(tourId: number): void {
@@ -728,22 +697,17 @@ export class CheckoutV2Component implements OnInit {
     }
 
     // Actividades por viajero (nueva lógica)
-    console.log(`🎯 Procesando actividades por viajero:`, this.activitiesByTraveler);
     Object.values(this.activitiesByTraveler).forEach((activityData) => {
-      console.log(`📋 Procesando actividad:`, activityData);
       if (activityData.count > 0 && activityData.price > 0) {
         const summaryItem = {
           qty: activityData.count,
           value: activityData.price,
           description: `${activityData.name}`,
         };
-        console.log(`➕ Agregando al summary:`, summaryItem);
         this.summary.push(summaryItem);
       } else {
-        console.log(`❌ Actividad no agregada - count: ${activityData.count}, price: ${activityData.price}`);
       }
     });
-    console.log(`📋 Summary después de actividades:`, this.summary);
 
     // Actividades seleccionadas (mantener como respaldo para compatibilidad)
     if (

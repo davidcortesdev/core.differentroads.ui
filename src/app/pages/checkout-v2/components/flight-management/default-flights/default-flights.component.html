@@ -5,70 +5,13 @@
   </div>
 
   <div class="flights-container">
-    <div *ngFor="let flightPack of flightPacks">
-      <div *ngIf="flightPack.totalPrice > 0" class="flight-item">
-        <div class="flight-departure-title" *ngIf="flightPack">
-          <h3>
-            Salida {{ flightPack.flights[0].departureCity }} ({{
-              flightPack.flights[0].departureIATACode
-            }})
-          </h3>
-        </div>
-
-        <div class="flight-itinerary">
-          <div class="flight-itinerary-journey">
-            <div class="journey-item" *ngFor="let flight of flightPack.flights; let i = index">
-              <div class="journey-direction">
-                <span class="direction-text">{{flight.flightTypeId === FLIGHT_TYPE_SALIDA ? "IDA" : "VUELTA"}}</span>
-              </div>
-              <div class="journey-row">
-                <div class="journey-time-block departure">
-                  <span class="journey-time">
-                    {{ formatTime(flight.departureTime) }}
-                  </span>
-                  <span class="journey-date">
-                    {{ flight.departureDate | date : "dd-MM-yyyy" : "UTC" }}
-                  </span>
-                  <span class="journey-city">({{ flight.departureIATACode }}) {{ flight.departureCity }}</span>
-                </div>
-                <div class="journey-line-left"></div>
-                <div class="journey-info-block">
-                  <!-- Usar el nuevo componente de escalas -->
-                  <app-flight-stops [flightId]="flight.id"></app-flight-stops>
-                  <span class="journey-airline">{{ getAirlinesText(flight.id) }}</span>
-                </div>
-                <div class="journey-line-right"></div>
-                <div class="journey-time-block arrival">
-                  <span class="journey-time">
-                    {{ formatTime(flight.arrivalTime) }}
-                  </span>
-                  <span class="journey-date">
-                    {{ flight.arrivalDate | date : "dd-MM-yyyy" : "UTC" }}
-                  </span>
-                  <span class="journey-city">({{ flight.arrivalIATACode }}) {{ flight.arrivalCity }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="flight-itinerary-price space-y-4">
-            <div class="flight-itinerary-price-wrapper">
-              <span class="flight-itinerary-price-wrapper-price">
-                {{ flightPack.totalPrice || 0 | currencyFormat : "EUR" }}
-              </span>
-              <span class="flight-itinerary-price-wrapper-text">Por persona</span>
-            </div>
-            <p-button
-              type="button"
-              class="button-rounded is-primary px-6 py-3"
-              [styleClass]="selectedFlight === flightPack ? 'selected-flight-button' : ''"
-              (click)="selectFlight(flightPack)"
-            >
-              {{ selectedFlight === flightPack ? "Seleccionado" : "Seleccionar" }}
-            </p-button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <app-flight-item
+      *ngFor="let flightPack of flightPacks"
+      [flightPack]="flightPack"
+      [selectedFlight]="selectedFlight"
+      [flightDetails]="flightDetails"
+      (flightSelected)="selectFlight(flightPack)"
+    ></app-flight-item>
   </div>
 
   <app-login-modal

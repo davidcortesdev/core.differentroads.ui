@@ -7,7 +7,7 @@
 </div>
 
 <!-- Botón para activar búsqueda específica -->
-<div class="specific-search-toggle" *ngIf="!isConsolidadorVuelosActive">
+<div class="specific-search-toggle" *ngIf="isConsolidadorVuelosActive && !specificSearchVisible">
   <p-button
     label="Ver otras opciones de vuelos"
     icon="pi pi-search"
@@ -16,7 +16,7 @@
   ></p-button>
 </div>
 
-<div class="specific-search" *ngIf="isConsolidadorVuelosActive">
+<div class="specific-search" *ngIf="specificSearchVisible">
   <h4>Búsqueda específica de vuelos</h4>
   <app-specific-search [departureId]="departureId" [reservationId]="reservationId"></app-specific-search>
 </div>

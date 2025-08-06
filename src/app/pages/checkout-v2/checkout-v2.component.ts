@@ -1194,6 +1194,14 @@ export class CheckoutV2Component implements OnInit {
           ]
         );
 
+        // MEJORA: Validación adicional para el seguro
+        console.log('🛡️ [CHECKOUT] Resultados del guardado:');
+        console.log('🛡️ [CHECKOUT] - Habitaciones guardadas:', roomsSaved);
+        console.log('🛡️ [CHECKOUT] - Seguro guardado:', insuranceSaved);
+        console.log('🛡️ [CHECKOUT] - Actividades guardadas:', activitiesSaved);
+        console.log('🛡️ [CHECKOUT] - Seguro seleccionado:', this.insuranceSelector.selectedInsurance ? this.insuranceSelector.selectedInsurance.name : 'Básico');
+        console.log('🛡️ [CHECKOUT] - Total de viajeros:', this.totalPassengers);
+
         if (!roomsSaved) {
           this.messageService.add({
             severity: 'error',
@@ -1225,6 +1233,33 @@ export class CheckoutV2Component implements OnInit {
             life: 5000,
           });
           return;
+        }
+
+        // MEJORA: Verificación adicional de que el seguro se guardó correctamente
+        if (this.insuranceSelector.selectedInsurance) {
+          console.log('🛡️ [CHECKOUT] ✅ Seguro guardado exitosamente para todos los viajeros');
+          console.log('🛡️ [CHECKOUT] 📋 Detalles del seguro guardado:');
+          console.log('🛡️ [CHECKOUT]   - Nombre:', this.insuranceSelector.selectedInsurance.name);
+          console.log('🛡️ [CHECKOUT]   - ID:', this.insuranceSelector.selectedInsurance.id);
+          console.log('🛡️ [CHECKOUT]   - Precio por persona:', this.insurancePrice);
+          console.log('🛡️ [CHECKOUT]   - Total de viajeros:', this.totalPassengers);
+          console.log('🛡️ [CHECKOUT]   - Precio total:', this.insurancePrice * this.totalPassengers);
+          
+          // MEJORA: Verificar que las asignaciones se guardaron correctamente
+          const verificationResult = await this.insuranceSelector.verifyInsuranceAssignments();
+          if (!verificationResult) {
+            console.warn('🛡️ [CHECKOUT] ⚠️ ADVERTENCIA: Las asignaciones de seguro podrían no haberse guardado correctamente');
+            this.messageService.add({
+              severity: 'warn',
+              summary: 'Advertencia',
+              detail: 'El seguro se guardó pero podría no haberse aplicado a todos los viajeros. Verifica en el siguiente paso.',
+              life: 5000,
+            });
+          } else {
+            console.log('🛡️ [CHECKOUT] ✅ Verificación exitosa: El seguro se guardó correctamente para todos los viajeros');
+          }
+        } else {
+          console.log('🛡️ [CHECKOUT] ✅ Seguro básico seleccionado (sin asignaciones en BD)');
         }
 
         // 7. Actualizar el totalPassengers en la reserva

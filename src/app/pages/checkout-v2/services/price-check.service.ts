@@ -10,6 +10,13 @@ export interface IPriceCheckResponse {
   tourTKId?: string;
 }
 
+export interface IJobStatusResponse {
+  jobId: string;
+  state: string;
+  createdAt: string;
+  properties: any;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -27,5 +34,14 @@ export class PriceCheckService {
    */
   checkPrices(retailerID: number, departureID: number, numPasajeros: number): Observable<IPriceCheckResponse> {
     return this.http.get<IPriceCheckResponse>(`${this.API_URL}/${retailerID}/${departureID}/${numPasajeros}`);
+  }
+
+  /**
+   * Verifica el estado de un job de sincronización
+   * @param jobId ID del job de Hangfire
+   * @returns Observable con el estado del job
+   */
+  checkJobStatus(jobId: string): Observable<IJobStatusResponse> {
+    return this.http.get<IJobStatusResponse>(`${this.API_URL}/status/${jobId}`);
   }
 } 

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MenuItem, MessageService } from 'primeng/api';
 import { TourNetService } from '../../core/services/tourNet.service';
@@ -33,8 +33,10 @@ import {
   IReservationTravelerResponse,
 } from '../../core/services/reservation/reservation-traveler.service';
 import { PriceCheckService } from './services/price-check.service';
-import { IPriceCheckResponse } from './services/price-check.service';
+import { IPriceCheckResponse, IJobStatusResponse } from './services/price-check.service';
 import { environment } from '../../../environments/environment';
+import { interval, Subscription } from 'rxjs';
+import { takeWhile } from 'rxjs/operators';
 
 @Component({
   selector: 'app-checkout-v2',
@@ -42,7 +44,7 @@ import { environment } from '../../../environments/environment';
   templateUrl: './checkout-v2.component.html',
   styleUrl: './checkout-v2.component.scss',
 })
-export class CheckoutV2Component implements OnInit {
+export class CheckoutV2Component implements OnInit, OnDestroy {
   // Referencias a componentes hijos
   @ViewChild('roomSelector') roomSelector!: SelectorRoomComponent;
   @ViewChild('travelerSelector') travelerSelector!: SelectorTravelerComponent;
@@ -108,6 +110,11 @@ export class CheckoutV2Component implements OnInit {
 
   // Propiedades para autenticación
   loginDialogVisible: boolean = false;
+
+  // Propiedades para monitoreo de jobs de sincronización
+  currentJobId: string | null = null;
+  jobMonitoringSubscription: Subscription | null = null;
+  isSyncInProgress: boolean = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -180,16 +187,25 @@ export class CheckoutV2Component implements OnInit {
             console.log('PriceCheck response:', response);
             
             if (response.needsUpdate) {
-              if (response.jobStatus === 'ENQUEUED') {
+              if (response.jobStatus === 'ENQUEUED' && response.jobId) {
                 console.log(`Job de sincronización encolado con ID: ${response.jobId} para tour: ${response.tourTKId}`);
-                // Opcional: Mostrar mensaje al usuario sobre la actualización en curso
+                
+                // Iniciar el monitoreo del job
+                this.startJobMonitoring(response.jobId);
+                
+                // Mostrar mensaje al usuario sobre la actualización en curso
                 this.messageService.add({
                   severity: 'info',
                   summary: 'Actualización de precios',
-                  detail: 'Los precios se están actualizando en segundo plano. Esto puede tomar unos minutos.'
+                  detail: 'Los precios se están actualizando en segundo plano. Te notificaremos cuando termine.'
                 });
               } else if (response.jobStatus === 'EXISTING') {
                 console.log(`Ya existe un job de sincronización para el tour: ${response.tourTKId}`);
+                this.messageService.add({
+                  severity: 'info',
+                  summary: 'Sincronización en curso',
+                  detail: 'Ya hay una actualización de precios en curso para este tour.'
+                });
               }
             } else {
               console.log('Los precios están actualizados');
@@ -200,6 +216,140 @@ export class CheckoutV2Component implements OnInit {
             // No mostramos error al usuario ya que esto es una verificación en segundo plano
           }
         });
+    }
+  }
+
+  /**
+   * Inicia el monitoreo de un job de Hangfire
+   */
+  private startJobMonitoring(jobId: string): void {
+    this.currentJobId = jobId;
+    this.isSyncInProgress = true;
+
+    // Cancelar cualquier monitoreo anterior
+    if (this.jobMonitoringSubscription) {
+      this.jobMonitoringSubscription.unsubscribe();
+    }
+
+    // Verificar el estado del job cada 5 segundos
+    this.jobMonitoringSubscription = interval(5000)
+      .pipe(
+        takeWhile(() => this.isSyncInProgress, true) // Incluir la última emisión cuando se complete
+      )
+      .subscribe(() => {
+        if (this.currentJobId) {
+          this.checkJobStatus(this.currentJobId);
+        }
+      });
+  }
+
+  /**
+   * Verifica el estado de un job específico
+   */
+  private checkJobStatus(jobId: string): void {
+    this.priceCheckService.checkJobStatus(jobId).subscribe({
+      next: (jobStatus: IJobStatusResponse) => {
+        console.log('Job status:', jobStatus);
+        
+        // Estados de Hangfire: Enqueued, Processing, Succeeded, Failed, Deleted, Scheduled
+        switch (jobStatus.state) {
+          case 'Succeeded':
+            this.onJobCompleted(true);
+            break;
+          case 'Failed':
+          case 'Deleted':
+            this.onJobCompleted(false);
+            break;
+          case 'Processing':
+            console.log('Job en proceso...');
+            break;
+          case 'Enqueued':
+          case 'Scheduled':
+            console.log('Job en cola...');
+            break;
+          default:
+            console.log(`Estado desconocido del job: ${jobStatus.state}`);
+        }
+      },
+      error: (error) => {
+        console.error('Error al verificar estado del job:', error);
+        // Si hay error al verificar el job, asumir que terminó (podría haberse eliminado)
+        this.onJobCompleted(false);
+      }
+    });
+  }
+
+  /**
+   * Se ejecuta cuando un job se completa (exitoso o fallido)
+   */
+  private onJobCompleted(wasSuccessful: boolean): void {
+    this.isSyncInProgress = false;
+    this.currentJobId = null;
+
+    // Cancelar el monitoreo
+    if (this.jobMonitoringSubscription) {
+      this.jobMonitoringSubscription.unsubscribe();
+      this.jobMonitoringSubscription = null;
+    }
+
+    if (wasSuccessful) {
+      // Mostrar mensaje de éxito
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Sincronización completada',
+        detail: 'Los precios han sido actualizados correctamente. Recargando información...'
+      });
+
+      // Recargar todos los datos del componente
+      this.reloadComponentData();
+    } else {
+      // Mostrar mensaje de error
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Sincronización finalizada',
+        detail: 'La sincronización de precios ha finalizado. Puedes continuar con tu reserva.'
+      });
+    }
+  }
+
+  /**
+   * Recarga todos los datos del componente
+   */
+  private reloadComponentData(): void {
+    if (this.reservationId) {
+      // Recargar datos de la reservación
+      this.loadReservationData(this.reservationId);
+      
+      // Forzar actualización de todos los componentes hijos
+      setTimeout(() => {
+        // Los componentes hijos se recargarán automáticamente cuando cambie departureId/reservationId
+        // a través de sus métodos ngOnChanges
+        
+        // Recargar datos de habitaciones si está disponible
+        if (this.roomSelector) {
+          this.roomSelector.initializeComponent();
+        }
+        
+        // Recargar datos de seguros si está disponible
+        if (this.insuranceSelector) {
+          this.insuranceSelector.loadInsurances();
+        }
+        
+        // Forzar actualización del resumen
+        this.forceSummaryUpdate();
+        
+        console.log('Datos del componente recargados después de la sincronización');
+      }, 1000);
+    }
+  }
+
+  /**
+   * Se ejecuta cuando el componente se destruye
+   */
+  ngOnDestroy(): void {
+    // Cancelar el monitoreo de jobs al destruir el componente
+    if (this.jobMonitoringSubscription) {
+      this.jobMonitoringSubscription.unsubscribe();
     }
   }
 

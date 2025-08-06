@@ -33,6 +33,7 @@ export const environment = {
   amadeusApiUrl: 'https://amadeus.differentroads.es/api',
   usersApiUrl: 'https://auth.differentroads.es/api',
   redsysApiUrl: 'https://redsys.differentroads.es/api',
+  tourknifeApiUrl: 'https://tourknife.differentroads.es/api',
   scalapayApiUrl: 'https://scalapay.differentroads.es/api',
   scalapayApiKey: 'qhtfs87hjnc12kkos',
   retaileriddefault: 7,

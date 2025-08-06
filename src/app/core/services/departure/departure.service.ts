@@ -48,6 +48,7 @@ export interface IDepartureResponse {
   minDepartureTimeFromAirport?: string | null;
   arrivalAirportIATA?: string | null;
   departureAirportIATA?: string | null;
+  retailerId?: number | null;
 }
 
 /**

@@ -148,10 +148,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnInit(): void {
-    console.log('departureId:', this.departureId);
-    console.log('reservationId:', this.reservationId);
-    console.log('itineraryId:', this.itineraryId);
-
     if (this.departureId && this.reservationId) {
       this.loadAllData();
     } else {
@@ -160,12 +156,10 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('ngOnChanges - info-travelers:', changes);
     if (
       (changes['departureId'] && changes['departureId'].currentValue) ||
       (changes['reservationId'] && changes['reservationId'].currentValue)
     ) {
-      console.log('🔄 Recargando datos de info-travelers');
       if (this.departureId && this.reservationId) {
         this.deletedFromDB = {};
         this.loadAllData();
@@ -207,12 +201,20 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
           traveler.id,
           fieldDetails.id
         );
-        console.log(
-          `Campo ${fieldDetails.code} para viajero ${traveler.id}: valor existente = "${existingValue}"`
-        );
+
+        // Para campos de fecha, convertir string a Date si es necesario
+        let controlValue: any = existingValue;
+        if (fieldDetails.fieldType === 'date' && existingValue) {
+          // Si el valor está en formato dd/mm/yyyy, convertirlo a Date
+          const parsedDate = this.parseDateFromDDMMYYYY(existingValue);
+          if (parsedDate) {
+            controlValue = parsedDate;
+          }
+        }
+
         formGroup.addControl(
           `${fieldDetails.code}_${traveler.id}`,
-          this.fb.control(existingValue)
+          this.fb.control(controlValue)
         );
       }
     });
@@ -224,12 +226,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
    * Inicializa los formularios para todos los viajeros
    */
   private initializeTravelerForms(): void {
-    console.log(
-      '🔄 Inicializando formularios para',
-      this.travelers.length,
-      'viajeros'
-    );
-
     // Limpiar formularios existentes
     while (this.travelerForms.length !== 0) {
       this.travelerForms.removeAt(0);
@@ -239,14 +235,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     this.travelers.forEach((traveler, index) => {
       const travelerForm = this.createTravelerForm(traveler);
       this.travelerForms.push(travelerForm);
-
-      console.log(
-        `Formulario ${index} para viajero ${traveler.id}:`,
-        travelerForm.value
-      );
     });
-
-    console.log('✅ Formularios inicializados:', this.travelerForms.length);
   }
 
   /**
@@ -286,6 +275,9 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
           this.ageGroups = ageGroups;
           this.travelers = this.sortTravelersWithLeadFirst(travelers);
 
+          // Ordenar los campos de departure por displayOrder
+          this.sortDepartureFieldsByDisplayOrder();
+
           // Cargar campos existentes primero, luego inicializar formularios
           this.loadExistingTravelerFields();
           this.loadOptionalActivitiesAndThenTravelerActivities();
@@ -303,6 +295,22 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
           });
         },
       });
+  }
+
+  /**
+   * Ordenar los campos de departure por displayOrder
+   */
+  private sortDepartureFieldsByDisplayOrder(): void {
+    this.departureReservationFields.sort((a, b) => {
+      const fieldA = this.getReservationFieldDetails(a.reservationFieldId);
+      const fieldB = this.getReservationFieldDetails(b.reservationFieldId);
+
+      if (!fieldA || !fieldB) {
+        return 0;
+      }
+
+      return fieldA.displayOrder - fieldB.displayOrder;
+    });
   }
 
   /**
@@ -325,13 +333,11 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       .subscribe({
         next: (activities) => {
           this.optionalActivities = activities;
-          console.log('✅ Actividades opcionales cargadas:', activities.length);
 
           // Ahora cargar las actividades de los viajeros
           this.loadTravelerActivities();
         },
         error: (error) => {
-          console.error('❌ Error al cargar actividades opcionales:', error);
           this.loadTravelerActivities();
         },
       });
@@ -385,10 +391,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             }
           },
           error: (error) => {
-            console.error(
-              `Error al cargar actividades para viajero ${traveler.id}:`,
-              error
-            );
             loadedTravelers++;
 
             if (loadedTravelers === totalTravelers) {
@@ -424,9 +426,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       );
 
       if (!activity) {
-        console.warn(
-          `No se encontró la actividad con ID ${travelerActivity.activityId}`
-        );
         return;
       }
 
@@ -452,10 +451,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
               }
             },
             error: (error) => {
-              console.error(
-                `Error al cargar precio pack para actividad ${travelerActivity.activityId}:`,
-                error
-              );
+              // Error handling
             },
           });
       } else {
@@ -480,10 +476,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
               }
             },
             error: (error) => {
-              console.error(
-                `Error al cargar precio para actividad ${travelerActivity.activityId}:`,
-                error
-              );
+              // Error handling
             },
           });
       }
@@ -528,10 +521,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             }
           },
           error: (error) => {
-            console.error(
-              `Error al cargar precio pack para actividad ${travelerActivityPack.activityPackId}:`,
-              error
-            );
+            // Error handling
           },
         });
     });
@@ -609,23 +599,22 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       .subscribe({
         next: (responses) => {
           this.existingTravelerFields = responses.flat();
-          console.log(
-            '✅ Campos existentes cargados:',
-            this.existingTravelerFields.length
-          );
-          console.log(
-            'Datos de campos existentes:',
-            this.existingTravelerFields
+
+          // Debug para campos existentes de fecha
+          const existingDateFields = this.existingTravelerFields.filter(
+            (field) => {
+              const fieldDetails = this.getReservationFieldDetails(
+                field.reservationFieldId
+              );
+              return fieldDetails?.fieldType === 'date';
+            }
           );
 
           // Inicializar formularios con los valores existentes
           this.initializeTravelerForms();
         },
         error: (error) => {
-          console.error(
-            'Error al cargar campos existentes de viajeros:',
-            error
-          );
+          // Error handling
         },
       });
   }
@@ -646,12 +635,34 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             const { travelerId, fieldId } = this.parseFieldName(controlName);
 
             if (travelerId && fieldId) {
-              formData.push({
+              const fieldDetails = this.getReservationFieldDetails(fieldId);
+              // Para campos de fecha, formatear a dd/mm/yyyy
+              let fieldValue = control.value?.toString() || '';
+              if (fieldDetails?.fieldType === 'date' && control.value) {
+                if (control.value instanceof Date) {
+                  fieldValue = this.formatDateToDDMMYYYY(control.value);
+                } else if (typeof control.value === 'string') {
+                  // Si ya está en formato dd/mm/yyyy, mantenerlo
+                  if (control.value.includes('/')) {
+                    fieldValue = control.value;
+                  } else {
+                    // Intentar parsear y formatear
+                    const date = new Date(control.value);
+                    if (!isNaN(date.getTime())) {
+                      fieldValue = this.formatDateToDDMMYYYY(date);
+                    }
+                  }
+                }
+              }
+
+              const fieldData = {
                 id: 0,
                 reservationTravelerId: travelerId,
                 reservationFieldId: fieldId,
-                value: control.value?.toString() || '',
-              });
+                value: fieldValue,
+              };
+
+              formData.push(fieldData);
             }
           }
         });
@@ -675,6 +686,10 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       const savePromises = formData.map((fieldData) => {
         const existingField = this.findExistingField(
           fieldData.reservationTravelerId,
+          fieldData.reservationFieldId
+        );
+
+        const fieldDetails = this.getReservationFieldDetails(
           fieldData.reservationFieldId
         );
 
@@ -708,6 +723,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         life: 3000,
       });
     } catch (error) {
+      console.error('Error al guardar datos:', error);
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
@@ -729,9 +745,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     );
 
     const value = existingField ? existingField.value : '';
-    console.log(
-      `Buscando campo ${fieldId} para viajero ${travelerId}: encontrado = ${!!existingField}, valor = "${value}"`
-    );
 
     return value;
   }
@@ -940,9 +953,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
     const activity = this.optionalActivities.find((a) => a.id === activityId);
     if (!activity) {
-      console.error(
-        `❌ No se encontró la actividad ${activityId} en actividades opcionales`
-      );
       return;
     }
 
@@ -1191,5 +1201,128 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       : false;
 
     return hasIndividualActivity || hasActivityPack;
+  }
+
+  /**
+   * Formatear fecha a dd/mm/yyyy
+   */
+  private formatDateToDDMMYYYY(date: Date): string {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  /**
+   * Parsear string dd/mm/yyyy a Date
+   */
+  private parseDateFromDDMMYYYY(dateString: string): Date | null {
+    if (!dateString || typeof dateString !== 'string') {
+      return null;
+    }
+
+    const parts = dateString.split('/');
+    if (parts.length !== 3) {
+      return null;
+    }
+
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // Los meses en JS van de 0-11
+    const year = parseInt(parts[2], 10);
+
+    if (isNaN(day) || isNaN(month) || isNaN(year)) {
+      return null;
+    }
+
+    const date = new Date(year, month, day);
+
+    // Verificar que la fecha es válida
+    if (
+      date.getDate() !== day ||
+      date.getMonth() !== month ||
+      date.getFullYear() !== year
+    ) {
+      return null;
+    }
+
+    return date;
+  }
+
+  /**
+   * Manejar cambio en campo de fecha
+   */
+  onDateFieldChange(travelerId: number, fieldCode: string, value: any): void {
+    const controlName = `${fieldCode}_${travelerId}`;
+    const control = this.travelerForms.controls
+      .find((form) => form instanceof FormGroup && form.get(controlName))
+      ?.get(controlName);
+
+    if (control) {
+      // Forzar que el control se marque como modificado
+      control.markAsDirty();
+      control.markAsTouched();
+    }
+  }
+
+  /**
+   * Obtener el valor formateado de una fecha para mostrar en el campo
+   */
+  getFormattedDateValue(travelerId: number, fieldCode: string): string {
+    const controlName = `${fieldCode}_${travelerId}`;
+    const control = this.travelerForms.controls
+      .find((form) => form instanceof FormGroup && form.get(controlName))
+      ?.get(controlName);
+
+    if (control && control.value) {
+      // Si el valor es un objeto Date, convertirlo a dd/mm/yyyy
+      if (control.value instanceof Date) {
+        return this.formatDateToDDMMYYYY(control.value);
+      }
+
+      // Si es un string en formato dd/mm/yyyy, devolverlo tal como está
+      if (typeof control.value === 'string' && control.value.includes('/')) {
+        return control.value;
+      }
+
+      // Si es un string en formato ISO (YYYY-MM-DD), convertirlo
+      if (typeof control.value === 'string' && control.value.includes('-')) {
+        const date = new Date(control.value);
+        if (!isNaN(date.getTime())) {
+          return this.formatDateToDDMMYYYY(date);
+        }
+      }
+
+      // Para cualquier otro caso, intentar parsear como fecha
+      const date = new Date(control.value);
+      if (!isNaN(date.getTime())) {
+        return this.formatDateToDDMMYYYY(date);
+      }
+    }
+
+    return '';
+  }
+
+  /**
+   * Obtener el valor actual de un campo de fecha para debugging
+   */
+  getCurrentDateValue(travelerId: number, fieldCode: string): any {
+    const controlName = `${fieldCode}_${travelerId}`;
+    const control = this.travelerForms.controls
+      .find((form) => form instanceof FormGroup && form.get(controlName))
+      ?.get(controlName);
+
+    if (control) {
+      return {
+        value: control.value,
+        type: typeof control.value,
+        isDate: control.value instanceof Date,
+        formatted: this.getFormattedDateValue(travelerId, fieldCode),
+        dirty: control.dirty,
+        touched: control.touched,
+        valid: control.valid,
+      };
+    }
+
+    return null;
   }
 }

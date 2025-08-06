@@ -82,11 +82,13 @@
                         
                         <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'date'">
                           <label>{{ fieldDetails.name }}*</label>
-                          <p-calendar 
+                          <p-datePicker 
                             [formControlName]="fieldDetails.code + '_' + traveler.id"
                             showIcon 
                             appendTo="body" 
-                            placeholder="dd/mm/yyyy"></p-calendar>
+                            placeholder="dd/mm/yyyy"
+                            dateFormat="dd/mm/yy"
+                            (onSelect)="onDateFieldChange(traveler.id, fieldDetails.code, $event)"></p-datePicker>
                         </div>
                         
                         <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'country'">
@@ -182,11 +184,13 @@
                         
                         <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'date'">
                           <label>{{ fieldDetails.name }}</label>
-                          <p-calendar 
+                          <p-datePicker 
                             [formControlName]="fieldDetails.code + '_' + traveler.id"
                             showIcon 
                             appendTo="body" 
-                            placeholder="dd/mm/yyyy"></p-calendar>
+                            placeholder="dd/mm/yyyy"
+                            dateFormat="dd/mm/yy"
+                            (onSelect)="onDateFieldChange(traveler.id, fieldDetails.code, $event)"></p-datePicker>
                         </div>
                         
                         <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'country'">
@@ -244,7 +248,7 @@
                     <ng-container *ngFor="let travelerActivityPack of travelerActivityPacks[traveler.id]">
                       <div *ngIf="getActivityName(travelerActivityPack.activityPackId)" class="activity-item" style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0;">
                         <div class="activity-info">
-                          <h5><strong>{{ getActivityName(travelerActivityPack.activityPackId) }}</strong> - {{ getFormattedActivityPrice(traveler.id, travelerActivityPack.activityPackId) }}</h5>
+                          <h5><strong>{{ getActivityName(travelerActivityPack.activityPackId) }}</strong> </h5>
                         </div>
                         <p-toggleSwitch 
                           [ngModel]="true"

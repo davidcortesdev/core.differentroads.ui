@@ -1,8 +1,9 @@
 import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MenuItem, MessageService } from 'primeng/api';
 import { TourNetService } from '../../core/services/tourNet.service';
 import { ReservationService } from '../../core/services/reservation/reservation.service';
-import { DepartureService } from '../../core/services/departure/departure.service';
+import { DepartureService, IDepartureResponse } from '../../core/services/departure/departure.service';
 import {
   DeparturePriceSupplementService,
   IDeparturePriceSupplementResponse,
@@ -18,7 +19,6 @@ import {
   IItineraryResponse,
   ItineraryFilters,
 } from '../../core/services/itinerary/itinerary.service';
-import { MenuItem, MessageService } from 'primeng/api';
 import { SelectorRoomComponent } from './components/selector-room/selector-room.component';
 import { SelectorTravelerComponent } from './components/selector-traveler/selector-traveler.component';
 import { InsuranceComponent } from './components/insurance/insurance.component';
@@ -32,6 +32,9 @@ import {
   ReservationTravelerService,
   IReservationTravelerResponse,
 } from '../../core/services/reservation/reservation-traveler.service';
+import { PriceCheckService } from './services/price-check.service';
+import { IPriceCheckResponse } from './services/price-check.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-checkout-v2',
@@ -63,6 +66,7 @@ export class CheckoutV2Component implements OnInit {
 
   // Variable para datos del itinerario
   itineraryData: IItineraryResponse | null = null;
+  departureData: IDepartureResponse | null = null; // Nuevo: para almacenar datos del departure
 
   // Variables para actividades
   selectedActivities: any[] = [];
@@ -121,7 +125,8 @@ export class CheckoutV2Component implements OnInit {
     private authService: AuthenticateService,
     private usersNetService: UsersNetService,
     private reservationTravelerService: ReservationTravelerService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private priceCheckService: PriceCheckService
   ) {}
 
   ngOnInit(): void {
@@ -151,6 +156,51 @@ export class CheckoutV2Component implements OnInit {
         this.error = 'No se proporcionó un ID de reservación válido';
       }
     });
+
+    // Ejecutar la verificación de precios cuando se tienen los datos necesarios
+    this.executePriceCheck();
+  }
+
+  /**
+   * Ejecuta la verificación de precios cuando se tienen los datos necesarios
+   */
+  private executePriceCheck(): void {
+    if (this.departureId && this.reservationId && this.totalPassengers > 0) {
+      // Obtener el retailer ID del departure o usar el valor por defecto
+      let retailerID = environment.retaileriddefault;
+      
+      // Si tenemos datos del departure, intentar obtener el retailer ID
+      if (this.departureData && this.departureData.retailerId) {
+        retailerID = this.departureData.retailerId;
+      }
+      
+      this.priceCheckService.checkPrices(retailerID, this.departureId, this.totalPassengers)
+        .subscribe({
+          next: (response: IPriceCheckResponse) => {
+            console.log('PriceCheck response:', response);
+            
+            if (response.needsUpdate) {
+              if (response.jobStatus === 'ENQUEUED') {
+                console.log(`Job de sincronización encolado con ID: ${response.jobId} para tour: ${response.tourTKId}`);
+                // Opcional: Mostrar mensaje al usuario sobre la actualización en curso
+                this.messageService.add({
+                  severity: 'info',
+                  summary: 'Actualización de precios',
+                  detail: 'Los precios se están actualizando en segundo plano. Esto puede tomar unos minutos.'
+                });
+              } else if (response.jobStatus === 'EXISTING') {
+                console.log(`Ya existe un job de sincronización para el tour: ${response.tourTKId}`);
+              }
+            } else {
+              console.log('Los precios están actualizados');
+            }
+          },
+          error: (error) => {
+            console.error('Error al verificar precios:', error);
+            // No mostramos error al usuario ya que esto es una verificación en segundo plano
+          }
+        });
+    }
   }
 
   // Inicializar los pasos del checkout
@@ -377,6 +427,7 @@ export class CheckoutV2Component implements OnInit {
       next: (departure) => {
         this.departureDate = departure.departureDate ?? '';
         this.returnDate = departure.arrivalDate ?? '';
+        this.departureData = departure; // Almacenar datos del departure
 
         // Solo asignar si no se ha obtenido desde el tour (como respaldo)
         if (!this.itineraryId && departure.itineraryId) {
@@ -504,6 +555,8 @@ export class CheckoutV2Component implements OnInit {
     childs: number;
     babies: number;
   }): void {
+    console.log('Travelers numbers changed:', travelersNumbers);
+    
     // Actualizar el total de pasajeros
     this.totalPassengers =
       travelersNumbers.adults +
@@ -514,11 +567,13 @@ export class CheckoutV2Component implements OnInit {
     if (this.roomSelector) {
       this.roomSelector.updateTravelersNumbers(travelersNumbers);
     }
-
+    
     // Actualizar el resumen del pedido (solo si ya tenemos precios cargados)
     if (Object.keys(this.pricesByAgeGroup).length > 0) {
-      this.updateOrderSummary(travelersNumbers);
+    this.updateOrderSummary(travelersNumbers);
     }
+        // Ejecutar verificación de precios con el nuevo número de pasajeros
+        this.executePriceCheck();
   }
 
   /**

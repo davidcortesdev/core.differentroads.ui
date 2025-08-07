@@ -5,6 +5,9 @@ import { PaymentsNetService, PaymentStatusFilter } from '../../services/payments
 import { PaymentStatusNetService } from '../../services/paymentStatusNet.service';
 import { PaymentMethodNetService } from '../../services/paymentMethodNet.service';
 import { IFormData, NewRedsysService } from '../../services/newRedsys.service';
+import { ReservationStatusService } from '../../../../core/services/reservation/reservation-status.service';
+import { ReservationService } from '../../../../core/services/reservation/reservation.service';
+import { MessageService } from 'primeng/api';
 
 // Interfaces y tipos
 export type PaymentType = 'complete' | 'deposit' | 'installments';
@@ -59,7 +62,10 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
     private readonly paymentsService: PaymentsNetService, 
     private readonly paymentStatusService: PaymentStatusNetService,
     private readonly paymentMethodService: PaymentMethodNetService,
-    private readonly redsysService: NewRedsysService
+    private readonly redsysService: NewRedsysService,
+    private readonly reservationStatusService: ReservationStatusService,
+    private readonly reservationService: ReservationService,
+    private readonly messageService: MessageService
   ) { }
 
   ngOnInit(): void {
@@ -173,6 +179,29 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
     this.paymentState.isLoading = true;
 
     try {
+      //estado --> PREBOOK
+      this.reservationStatusService.getByCode('PREBOOK').subscribe({
+        next: (reservationStatus) => {
+          if (reservationStatus) {
+            this.reservationService.updateStatus(this.reservationId!, reservationStatus[0].id).subscribe({
+              next: (success) => {
+                if (success) {
+                  console.log('Estado actualizado correctamente');
+                }     
+              },
+              error: (error) => {
+                console.error('Error al actualizar el estado de la reservación:', error);
+                this.messageService.add({
+                  severity: 'error',
+                  summary: 'Error interno al guardar su reserva',
+                  detail: 'Intente nuevamente más tarde o contacte con nuestro equipo de soporte',
+                  life: 3000,
+                });
+              }
+            })
+          }
+          }
+        })
 
       if (this.paymentState.type === 'installments') {
         await this.processInstallmentPayment();

@@ -1,0 +1,23 @@
+<!-- travel-info.component.html -->
+<p-panel styleClass="info-pan" *ngIf="hasInfo">
+    <ng-template pTemplate="header">
+        <div class="pan-hdr">Información de tu viaje</div>
+    </ng-template>
+    <div class="trip-det">
+        <div class="det-row" *ngIf="tourInfo?.name">
+            <i class="pi pi-globe"></i>
+            <label class="trip">Viaje: </label>
+            <span>{{ tourInfo?.name }}</span>
+        </div>
+        <div class="det-row" *ngIf="departureInfo?.departureDate && departureInfo?.arrivalDate">
+            <i class="pi pi-calendar"></i>
+            <label class="trip">Periodo:</label>
+            <span>{{ departureInfo?.departureDate | date:'dd/MM/yyyy' }} - {{ departureInfo?.arrivalDate | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="det-row" *ngIf="totalTravelers > 0">
+            <i class="pi pi-users"></i>
+            <label class="trip">Número de viajeros:</label>
+            <span>{{ totalTravelers }} {{ totalTravelers === 1 ? 'Adulto' : 'Adultos' }}</span>
+        </div>
+    </div>
+</p-panel>

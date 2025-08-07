@@ -13,6 +13,7 @@ export interface IPaymentResponse {
     transactionReference?: string;
     notes?: string;
     attachmentUrl?: string;
+    currencyId: number;
 }
 
 export interface IPaymentCreate {
@@ -24,6 +25,7 @@ export interface IPaymentCreate {
     transactionReference?: string;
     notes?: string;
     attachmentUrl?: string;
+    currencyId: number;
 }
 
 export interface IPaymentUpdate {
@@ -34,6 +36,7 @@ export interface IPaymentUpdate {
     paymentStatusId?: number;
     transactionReference?: string;
     notes?: string;
+    currencyId?: number;
 }
 
 export interface PaymentFilter {

@@ -8,6 +8,7 @@ import { IFormData, NewRedsysService } from '../../services/newRedsys.service';
 import { ReservationStatusService } from '../../../../core/services/reservation/reservation-status.service';
 import { ReservationService } from '../../../../core/services/reservation/reservation.service';
 import { MessageService } from 'primeng/api';
+import { CurrencyService } from '../../../../core/services/currency.service';
 
 // Interfaces y tipos
 export type PaymentType = 'complete' | 'deposit' | 'installments';
@@ -65,7 +66,8 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
     private readonly redsysService: NewRedsysService,
     private readonly reservationStatusService: ReservationStatusService,
     private readonly reservationService: ReservationService,
-    private readonly messageService: MessageService
+    private readonly messageService: MessageService,
+    private readonly currencyService: CurrencyService
   ) { }
 
   ngOnInit(): void {
@@ -288,12 +290,20 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
   }
 
   private async processCreditCardPayment(amount: number): Promise<void> {
+    // Obtener el currencyId para EUR
+    const currencyId = await this.currencyService.getCurrencyIdByCode('EUR').toPromise();
+
+    if (!currencyId) {
+      throw new Error('No se pudo obtener el ID de la moneda EUR');
+    }
+
     const response = await this.paymentsService.create({
       reservationId: this.reservationId,
       amount: amount,
       paymentDate: new Date(),
       paymentMethodId: this.redsysMethodId,
-      paymentStatusId: this.pendingStatusId
+      paymentStatusId: this.pendingStatusId,
+      currencyId: currencyId
     }).toPromise();
 
     if (!response) {
@@ -341,13 +351,21 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
     // Determinar el importe según el tipo de pago
     const amount = this.paymentState.type === 'deposit' ? this.depositAmount : this.totalPrice;
 
+    // Obtener el currencyId para EUR
+    const currencyId = await this.currencyService.getCurrencyIdByCode('EUR').toPromise();
+
+    if (!currencyId) {
+      throw new Error('No se pudo obtener el ID de la moneda EUR');
+    }
+
     // Crear el pago en la API
     const response = await this.paymentsService.create({
       reservationId: this.reservationId,
       amount: amount,
       paymentDate: new Date(),
       paymentMethodId: this.transferMethodId,
-      paymentStatusId: this.pendingStatusId
+      paymentStatusId: this.pendingStatusId,
+      currencyId: currencyId
     }).toPromise();
 
     if (!response) {

@@ -134,17 +134,60 @@
           <div *ngSwitchCase="3">
             <!-- Componente de pago -->
              <app-payment-management [totalPrice]="totalAmountCalculated" [reservationId]="reservationId ?? 0"></app-payment-management>
-
-            <div class="flex pt-6 justify-between">
-              <p-button
-                label="Finalizar reserva"
-                icon="pi pi-check"
-                iconPos="right"
-              ></p-button>
-            </div>
           </div>
         </div>
       </div>
+        <!-- Budget Options Section Footer -->
+  <div class="tour-additional-info-container">
+    <!-- Card para "Guarda tu presupuesto" con tooltip mejorado -->
+    <p-card
+      styleClass="action-card"
+      (click)="handleSaveBudget()"
+      [pTooltip]="
+        !isAuthenticated
+          ? 'Para guardar tu presupuesto debes iniciar sesión o registrarte en la plataforma'
+          : 'Guarda este presupuesto en tu perfil para consultarlo más tarde'
+      "
+      tooltipPosition="top"
+    >
+      <div class="card-content">
+        <span class="bg-pink-100">
+          <i class="pi pi-bookmark" aria-hidden="true"></i>
+        </span>
+        <span class="card-text">Guarda tu presupuesto</span>
+      </div>
+    </p-card>
+  
+    <!-- Card para "Descarga tu presupuesto" con tooltip -->
+    <p-card
+       styleClass="action-card claseBord"
+       (click)="handleDownloadBudget()"
+      pTooltip="Envia un email con un PDF con toda la información de este presupuesto"
+      tooltipPosition="top"
+    >
+      <div class="card-content">
+        <span class="bg-pink-100">
+          <i class="pi pi-download" aria-hidden="true"></i>
+        </span>
+        <span class="card-text">Descarga tu presupuesto</span>
+      </div>
+    </p-card>
+  
+    <!-- Card para "Comparte tu presupuesto con alguien" con tooltip (ahora abre el mismo modal) -->
+    <p-card
+       styleClass="action-card"
+       (click)="handleShareBudget()"
+      pTooltip="Comparte este presupuesto con amigos o familiares"
+      tooltipPosition="top"
+    >
+      <div class="card-content">
+        <span class="bg-pink-100">
+          <i class="pi pi-user-plus" aria-hidden="true"></i>
+        </span>
+        <span class="card-text">Comparte tu presupuesto con alguien</span>
+      </div>
+    </p-card>
+  </div>
     </div>
 
     <!-- Columna derecha - Resumen -->

@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable, switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+import { IReservationStatusResponse, ReservationStatusService } from './reservation-status.service';
 
 export interface ReservationCreate {
   id: number;
@@ -84,7 +85,10 @@ export interface ReservationFilters {
 export class ReservationService {
   private readonly API_URL = `${environment.reservationsApiUrl}/Reservation`;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private reservationStatusService: ReservationStatusService
+  ) {}
 
   /**
    * Obtiene todas las reservaciones según los criterios de filtrado.
@@ -270,5 +274,14 @@ export class ReservationService {
       .set('useExactMatchForStrings', 'false');
 
     return this.http.get<IReservationResponse[]>(this.API_URL, { params });
+  }
+
+  updateStatus(reservationId: number, statusId: number): Observable<boolean> {
+    return this.getById(reservationId).pipe(
+      switchMap(reservation => {
+        reservation.reservationStatusId = statusId;
+        return this.update(reservationId, reservation as ReservationUpdate);
+      })
+    );
   }
 }

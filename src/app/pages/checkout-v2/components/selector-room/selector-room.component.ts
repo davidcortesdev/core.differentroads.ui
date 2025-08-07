@@ -27,7 +27,8 @@ import {
   ReservationTravelerAccommodationService,
   IReservationTravelerAccommodationResponse,
 } from '../../../../core/services/reservation/reservation-traveler-accommodation.service';
-import { BehaviorSubject, forkJoin } from 'rxjs';
+import { BehaviorSubject, forkJoin, throwError } from 'rxjs';
+import { AgeGroupFilters, AgeGroupService } from '../../../../core/services/agegroup/age-group.service';
 
 interface RoomAvailability {
   id: number;
@@ -125,7 +126,8 @@ export class SelectorRoomComponent implements OnInit, OnChanges {
     private departureAccommodationPriceService: DepartureAccommodationPriceService,
     private departureAccommodationTypeService: DepartureAccommodationTypeService,
     private reservationTravelerService: ReservationTravelerService,
-    private reservationTravelerAccommodationService: ReservationTravelerAccommodationService
+    private reservationTravelerAccommodationService: ReservationTravelerAccommodationService,
+    private ageGroupService: AgeGroupService
   ) {
     // IGUAL QUE EN EL EJEMPLO: Inicializar en constructor
 
@@ -401,11 +403,16 @@ export class SelectorRoomComponent implements OnInit, OnChanges {
     });
   }
 
-  assignPricesToRooms(prices: IDepartureAccommodationPriceResponse[]): void {
+  async assignPricesToRooms(prices: IDepartureAccommodationPriceResponse[]): Promise<void> {
+    const adultAgeGroups = await this.ageGroupService.getByCode('ADULT').toPromise();
+    const adultAgeGroupId = adultAgeGroups?.[0]?.id ?? throwError(() => new Error('Adult age group not found')); // Default to 1 if not found
+
     // Asignar precios
     this.allRoomsAvailability.forEach((room) => {
       const roomPrice = prices.find(
-        (price) => price.departureAccommodationId === room.id
+        (price) =>
+          price.departureAccommodationId === room.id &&
+          price.ageGroupId === adultAgeGroupId // 1 = Adulto
       );
       if (roomPrice && roomPrice.basePrice !== undefined) {
         room.basePrice = roomPrice.basePrice;

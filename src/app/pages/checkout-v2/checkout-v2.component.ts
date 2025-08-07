@@ -117,6 +117,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
   jobMonitoringSubscription: Subscription | null = null;
   isSyncInProgress: boolean = false;
   isAuthenticated: boolean = false;
+  
+  // Propiedades para controlar la verificación de precios
+  priceCheckExecuted: boolean = false;
+  lastPriceCheckParams: { retailerID: number; departureID: number; numPasajeros: number } | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -172,59 +176,88 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
       }
     });
 
-    // Ejecutar la verificación de precios cuando se tienen los datos necesarios
-    this.executePriceCheck();
+    // La verificación de precios se ejecutará cuando se carguen los datos de la reservación
+    // No se ejecuta aquí para evitar llamadas duplicadas
   }
 
   /**
    * Ejecuta la verificación de precios cuando se tienen los datos necesarios
+   * Evita llamadas duplicadas verificando si ya se ejecutó con los mismos parámetros
    */
   private executePriceCheck(): void {
-    if (this.departureId && this.reservationId && this.totalPassengers > 0) {
-      // Obtener el retailer ID del departure o usar el valor por defecto
-      let retailerID = environment.retaileriddefault;
-      
-      // Si tenemos datos del departure, intentar obtener el retailer ID
-      if (this.departureData && this.departureData.retailerId) {
-        retailerID = this.departureData.retailerId;
-      }
-      
-      this.priceCheckService.checkPrices(retailerID, this.departureId, this.totalPassengers)
-        .subscribe({
-          next: (response: IPriceCheckResponse) => {
-            console.log('PriceCheck response:', response);
-            
-            if (response.needsUpdate) {
-              if (response.jobStatus === 'ENQUEUED' && response.jobId) {
-                console.log(`Job de sincronización encolado con ID: ${response.jobId} para tour: ${response.tourTKId}`);
-                
-                // Iniciar el monitoreo del job
-                this.startJobMonitoring(response.jobId);
-                
-                // Mostrar mensaje al usuario sobre la actualización en curso
-                this.messageService.add({
-                  severity: 'info',
-                  summary: 'Actualización de precios',
-                  detail: 'Los precios se están actualizando en segundo plano. Te notificaremos cuando termine.'
-                });
-              } else if (response.jobStatus === 'EXISTING') {
-                console.log(`Ya existe un job de sincronización para el tour: ${response.tourTKId}`);
-                this.messageService.add({
-                  severity: 'info',
-                  summary: 'Sincronización en curso',
-                  detail: 'Ya hay una actualización de precios en curso para este tour.'
-                });
-              }
-            } else {
-              console.log('Los precios están actualizados');
-            }
-          },
-          error: (error) => {
-            console.error('Error al verificar precios:', error);
-            // No mostramos error al usuario ya que esto es una verificación en segundo plano
-          }
-        });
+    // Verificar que tengamos los datos mínimos necesarios
+    if (!this.departureId || !this.reservationId) {
+      console.log('PriceCheck: Faltan datos básicos (departureId o reservationId), esperando...');
+      return;
     }
+    
+    // Usar el número de pasajeros de la reservación si no tenemos uno específico
+    const numPasajeros = this.totalPassengers > 0 ? this.totalPassengers : 1;
+    
+    // Obtener el retailer ID del departure o usar el valor por defecto
+    let retailerID = environment.retaileriddefault;
+    
+    // Si tenemos datos del departure, intentar obtener el retailer ID
+    if (this.departureData && this.departureData.retailerId) {
+      retailerID = this.departureData.retailerId;
+    }
+    
+    // Crear parámetros actuales para comparar
+    const currentParams = {
+      retailerID,
+      departureID: this.departureId,
+      numPasajeros
+    };
+    
+    // Verificar si ya se ejecutó con los mismos parámetros
+    if (this.priceCheckExecuted && 
+        this.lastPriceCheckParams && 
+        JSON.stringify(this.lastPriceCheckParams) === JSON.stringify(currentParams)) {
+      console.log('PriceCheck ya ejecutado con los mismos parámetros, omitiendo...');
+      return;
+    }
+    
+    // Actualizar parámetros de la última ejecución
+    this.lastPriceCheckParams = currentParams;
+    this.priceCheckExecuted = true;
+    
+    console.log('Ejecutando PriceCheck con parámetros:', currentParams);
+    
+    this.priceCheckService.checkPrices(retailerID, this.departureId, numPasajeros)
+      .subscribe({
+        next: (response: IPriceCheckResponse) => {
+          console.log('PriceCheck response:', response);
+          
+          if (response.needsUpdate) {
+            if (response.jobStatus === 'ENQUEUED' && response.jobId) {
+              console.log(`Job de sincronización encolado con ID: ${response.jobId} para tour: ${response.tourTKId}`);
+              
+              // Iniciar el monitoreo del job
+              this.startJobMonitoring(response.jobId);
+              
+              // Mostrar mensaje al usuario sobre la actualización en curso
+              this.messageService.add({
+                severity: 'info',
+                summary: 'Actualización de precios',
+                detail: 'Los precios se están actualizando en segundo plano. Te notificaremos cuando termine.'
+              });
+            } else if (response.jobStatus === 'EXISTING') {
+              console.log(`Ya existe un job de sincronización para el tour: ${response.tourTKId}`);
+              this.messageService.add({
+                severity: 'info',
+                summary: 'Sincronización en curso',
+                detail: 'Ya hay una actualización de precios en curso para este tour.'
+              });
+            }
+          } else {
+            console.log('Los precios están actualizados');
+          }
+        },
+        error: (error) => {
+          console.error('Error al verificar precios:', error);
+          // No mostramos error al usuario ya que esto es una verificación en segundo plano
+        }
+      });
   }
 
   /**
@@ -325,6 +358,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
    */
   private reloadComponentData(): void {
     if (this.reservationId) {
+      // Resetear el estado de verificación de precios para permitir nueva verificación
+      this.resetPriceCheckState();
+      
       // Recargar datos de la reservación
       this.loadReservationData(this.reservationId);
       
@@ -349,6 +385,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
         console.log('Datos del componente recargados después de la sincronización');
       }, 1000);
     }
+  }
+
+  /**
+   * Resetea el estado de verificación de precios (útil después de recargar datos)
+   */
+  private resetPriceCheckState(): void {
+    this.priceCheckExecuted = false;
+    this.lastPriceCheckParams = null;
   }
 
   /**
@@ -406,8 +450,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
         // Cargar datos del departure usando reservation.departureId
         this.loadDepartureData(reservation.departureId);
 
-        // Cargar precios del departure
+        // Cargar precios del departure y ejecutar verificación de precios inmediatamente
         this.loadDeparturePrices(reservation.departureId);
+        
+        // Ejecutar verificación de precios inmediatamente cuando tengamos los datos básicos
+        this.executePriceCheck();
       },
       error: (error) => {
         this.error =
@@ -728,10 +775,15 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
     
     // Actualizar el resumen del pedido (solo si ya tenemos precios cargados)
     if (Object.keys(this.pricesByAgeGroup).length > 0) {
-    this.updateOrderSummary(travelersNumbers);
+      this.updateOrderSummary(travelersNumbers);
     }
-        // Ejecutar verificación de precios con el nuevo número de pasajeros
-        this.executePriceCheck();
+    
+    // Ejecutar verificación de precios solo si el número de pasajeros cambió significativamente
+    // (evita llamadas innecesarias por cambios menores)
+    const newTotalPassengers = travelersNumbers.adults + travelersNumbers.childs + travelersNumbers.babies;
+    if (newTotalPassengers !== this.totalPassengers && newTotalPassengers > 0) {
+      this.executePriceCheck();
+    }
   }
 
   /**

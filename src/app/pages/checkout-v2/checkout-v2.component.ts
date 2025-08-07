@@ -129,10 +129,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
   jobMonitoringSubscription: Subscription | null = null;
   isSyncInProgress: boolean = false;
   isAuthenticated: boolean = false;
-  
+
   // Propiedades para controlar la verificación de precios
   priceCheckExecuted: boolean = false;
-  lastPriceCheckParams: { retailerID: number; departureID: number; numPasajeros: number } | null = null;
+  lastPriceCheckParams: {
+    retailerID: number;
+    departureID: number;
+    numPasajeros: number;
+  } | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -199,76 +203,73 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
   private executePriceCheck(): void {
     // Verificar que tengamos los datos mínimos necesarios
     if (!this.departureId || !this.reservationId) {
-      console.log('PriceCheck: Faltan datos básicos (departureId o reservationId), esperando...');
       return;
     }
-    
+
     // Usar el número de pasajeros de la reservación si no tenemos uno específico
     const numPasajeros = this.totalPassengers > 0 ? this.totalPassengers : 1;
-    
+
     // Obtener el retailer ID del departure o usar el valor por defecto
     let retailerID = environment.retaileriddefault;
-    
+
     // Si tenemos datos del departure, intentar obtener el retailer ID
     if (this.departureData && this.departureData.retailerId) {
       retailerID = this.departureData.retailerId;
     }
-    
+
     // Crear parámetros actuales para comparar
     const currentParams = {
       retailerID,
-      departureID: this.departureId,
-      numPasajeros
+      departureID: this.departureId!,
+      numPasajeros,
     };
-    
+
     // Verificar si ya se ejecutó con los mismos parámetros
-    if (this.priceCheckExecuted && 
-        this.lastPriceCheckParams && 
-        JSON.stringify(this.lastPriceCheckParams) === JSON.stringify(currentParams)) {
-      console.log('PriceCheck ya ejecutado con los mismos parámetros, omitiendo...');
+    if (
+      this.priceCheckExecuted &&
+      this.lastPriceCheckParams &&
+      JSON.stringify(this.lastPriceCheckParams) ===
+        JSON.stringify(currentParams)
+    ) {
       return;
     }
-    
+
     // Actualizar parámetros de la última ejecución
     this.lastPriceCheckParams = currentParams;
     this.priceCheckExecuted = true;
-    
-    console.log('Ejecutando PriceCheck con parámetros:', currentParams);
-    
-    this.priceCheckService.checkPrices(retailerID, this.departureId, numPasajeros)
+
+    this.priceCheckService
+      .checkPrices(retailerID, this.departureId!, numPasajeros)
       .subscribe({
         next: (response: IPriceCheckResponse) => {
-          console.log('PriceCheck response:', response);
-          
           if (response.needsUpdate) {
             if (response.jobStatus === 'ENQUEUED' && response.jobId) {
-              console.log(`Job de sincronización encolado con ID: ${response.jobId} para tour: ${response.tourTKId}`);
-              
               // Iniciar el monitoreo del job
               this.startJobMonitoring(response.jobId);
-              
+
               // Mostrar mensaje al usuario sobre la actualización en curso
               this.messageService.add({
                 severity: 'info',
                 summary: 'Actualización de precios',
-                detail: 'Los precios se están actualizando en segundo plano. Te notificaremos cuando termine.'
+                detail:
+                  'Los precios se están actualizando en segundo plano. Te notificaremos cuando termine.',
               });
             } else if (response.jobStatus === 'EXISTING') {
-              console.log(`Ya existe un job de sincronización para el tour: ${response.tourTKId}`);
               this.messageService.add({
                 severity: 'info',
                 summary: 'Sincronización en curso',
-                detail: 'Ya hay una actualización de precios en curso para este tour.'
+                detail:
+                  'Ya hay una actualización de precios en curso para este tour.',
               });
             }
           } else {
-            console.log('Los precios están actualizados');
+            // Los precios están actualizados
           }
         },
         error: (error) => {
           console.error('Error al verificar precios:', error);
           // No mostramos error al usuario ya que esto es una verificación en segundo plano
-        }
+        },
       });
   }
 
@@ -302,8 +303,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
   private checkJobStatus(jobId: string): void {
     this.priceCheckService.checkJobStatus(jobId).subscribe({
       next: (jobStatus: IJobStatusResponse) => {
-        console.log('Job status:', jobStatus);
-
         // Estados de Hangfire: Enqueued, Processing, Succeeded, Failed, Deleted, Scheduled
         switch (jobStatus.state) {
           case 'Succeeded':
@@ -314,14 +313,15 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
             this.onJobCompleted(false);
             break;
           case 'Processing':
-            console.log('Job en proceso...');
+            // Job en proceso
             break;
           case 'Enqueued':
           case 'Scheduled':
-            console.log('Job en cola...');
+            // Job en cola
             break;
           default:
-            console.log(`Estado desconocido del job: ${jobStatus.state}`);
+            // Estado desconocido del job
+            break;
         }
       },
       error: (error) => {
@@ -374,7 +374,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
     if (this.reservationId) {
       // Resetear el estado de verificación de precios para permitir nueva verificación
       this.resetPriceCheckState();
-      
+
       // Recargar datos de la reservación
       this.loadReservationData(this.reservationId);
 
@@ -395,10 +395,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
 
         // Forzar actualización del resumen
         this.forceSummaryUpdate();
-
-        console.log(
-          'Datos del componente recargados después de la sincronización'
-        );
       }, 1000);
     }
   }
@@ -467,7 +463,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
 
         // Cargar precios del departure y ejecutar verificación de precios inmediatamente
         this.loadDeparturePrices(reservation.departureId);
-        
+
         // Ejecutar verificación de precios inmediatamente cuando tengamos los datos básicos
         this.executePriceCheck();
       },
@@ -775,8 +771,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
     childs: number;
     babies: number;
   }): void {
-    console.log('Travelers numbers changed:', travelersNumbers);
-
     // Actualizar el total de pasajeros
     this.totalPassengers =
       travelersNumbers.adults +
@@ -792,10 +786,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
     if (Object.keys(this.pricesByAgeGroup).length > 0) {
       this.updateOrderSummary(travelersNumbers);
     }
-    
     // Ejecutar verificación de precios solo si el número de pasajeros cambió significativamente
     // (evita llamadas innecesarias por cambios menores)
-    const newTotalPassengers = travelersNumbers.adults + travelersNumbers.childs + travelersNumbers.babies;
+    const newTotalPassengers =
+      travelersNumbers.adults +
+      travelersNumbers.childs +
+      travelersNumbers.babies;
     if (newTotalPassengers !== this.totalPassengers && newTotalPassengers > 0) {
       this.executePriceCheck();
     }
@@ -816,21 +812,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
     selectedInsurance: any;
     price: number;
   }): void {
-    console.log('🛡️ [CHECKOUT] onInsuranceSelectionChange() llamado');
-    console.log('🛡️ [CHECKOUT] Datos del seguro recibidos:', insuranceData);
-
     this.selectedInsurance = insuranceData.selectedInsurance;
     this.insurancePrice = insuranceData.price;
-
-    console.log(
-      '🛡️ [CHECKOUT] Seguro seleccionado:',
-      this.selectedInsurance ? this.selectedInsurance.name : 'null'
-    );
-    console.log('🛡️ [CHECKOUT] Precio del seguro:', this.insurancePrice);
-    console.log(
-      '🛡️ [CHECKOUT] ¿Es seguro básico (precio 0)?',
-      this.insurancePrice === 0
-    );
 
     // Recalcular el resumen del pedido
     if (
@@ -847,10 +830,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
       };
       this.updateOrderSummary(basicTravelers);
     }
-
-    console.log(
-      '🛡️ [CHECKOUT] Resumen actualizado después del cambio de seguro'
-    );
   }
 
   /**
@@ -921,14 +900,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
     childs: number;
     babies: number;
   }): void {
-    console.log('🛡️ [CHECKOUT] updateOrderSummary() iniciado');
-    console.log('🛡️ [CHECKOUT] Travelers numbers:', travelersNumbers);
-    console.log(
-      '🛡️ [CHECKOUT] Seguro seleccionado:',
-      this.selectedInsurance ? this.selectedInsurance.name : 'null'
-    );
-    console.log('🛡️ [CHECKOUT] Precio del seguro:', this.insurancePrice);
-
     this.summary = [];
 
     // Plan básico - Adultos
@@ -1053,22 +1024,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
         travelersNumbers.childs +
         travelersNumbers.babies;
 
-      console.log('🛡️ [CHECKOUT] 🔍 Procesando seguro para summary:');
-      console.log('🛡️ [CHECKOUT]   - Nombre:', this.selectedInsurance.name);
-      console.log('🛡️ [CHECKOUT]   - Precio por persona:', this.insurancePrice);
-      console.log('🛡️ [CHECKOUT]   - Total travelers:', totalTravelers);
-      console.log('🛡️ [CHECKOUT]   - ¿Precio es 0?', this.insurancePrice === 0);
-
       if (this.insurancePrice === 0) {
         // Seguro básico incluido (precio 0)
         this.summary.push({
           qty: totalTravelers,
           value: 0,
-          description: `Seguro ${this.selectedInsurance.name} (incluido)`,
+          description: `Seguro ${this.selectedInsurance.name}`,
         });
-        console.log(
-          '🛡️ [CHECKOUT] ✅ Seguro básico agregado al summary como incluido'
-        );
       } else {
         // Seguro con precio
         this.summary.push({
@@ -1076,15 +1038,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
           value: this.insurancePrice,
           description: `Seguro ${this.selectedInsurance.name}`,
         });
-        console.log(
-          '🛡️ [CHECKOUT] ✅ Seguro con precio agregado al summary:',
-          this.insurancePrice
-        );
       }
-    } else {
-      console.log(
-        '🛡️ [CHECKOUT] ❌ No hay seguro seleccionado para agregar al summary'
-      );
     }
 
     // Calcular totales
@@ -1092,12 +1046,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
 
     // Actualizar totales en la reserva (solo localmente, no en BD)
     this.updateReservationTotalAmount();
-
-    console.log('🛡️ [CHECKOUT] 📋 Summary final:', this.summary);
-    console.log(
-      '🛡️ [CHECKOUT] 💰 Total calculado:',
-      this.totalAmountCalculated
-    );
 
     // Forzar detección de cambios
     this.cdr.detectChanges();
@@ -1535,18 +1483,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
           ]
         );
 
-        console.log('🛡️ [CHECKOUT] Resultados del guardado:');
-        console.log('🛡️ [CHECKOUT] - Habitaciones guardadas:', roomsSaved);
-        console.log('🛡️ [CHECKOUT] - Seguro guardado:', insuranceSaved);
-        console.log('🛡️ [CHECKOUT] - Actividades guardadas:', activitiesSaved);
-        console.log(
-          '🛡️ [CHECKOUT] - Seguro seleccionado:',
-          this.insuranceSelector.selectedInsurance
-            ? this.insuranceSelector.selectedInsurance.name
-            : 'null'
-        );
-        console.log('🛡️ [CHECKOUT] - Total de viajeros:', this.totalPassengers);
-
         if (!roomsSaved) {
           this.messageService.add({
             severity: 'error',
@@ -1582,38 +1518,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
 
         // Verificación adicional de que el seguro se guardó correctamente
         if (this.insuranceSelector.selectedInsurance) {
-          console.log(
-            '🛡️ [CHECKOUT] ✅ Seguro guardado exitosamente para todos los viajeros'
-          );
-          console.log('🛡️ [CHECKOUT] 📋 Detalles del seguro guardado:');
-          console.log(
-            '🛡️ [CHECKOUT]   - Nombre:',
-            this.insuranceSelector.selectedInsurance.name
-          );
-          console.log(
-            '🛡️ [CHECKOUT]   - ID:',
-            this.insuranceSelector.selectedInsurance.id
-          );
-          console.log(
-            '🛡️ [CHECKOUT]   - Precio por persona:',
-            this.insurancePrice
-          );
-          console.log(
-            '🛡️ [CHECKOUT]   - Total de viajeros:',
-            this.totalPassengers
-          );
-          console.log(
-            '🛡️ [CHECKOUT]   - Precio total:',
-            this.insurancePrice * this.totalPassengers
-          );
-
           // Verificar que las asignaciones se guardaron correctamente
           const verificationResult =
             await this.insuranceSelector.verifyInsuranceAssignments();
           if (!verificationResult) {
-            console.warn(
-              '🛡️ [CHECKOUT] ⚠️ ADVERTENCIA: Las asignaciones de seguro podrían no haberse guardado correctamente'
-            );
             this.messageService.add({
               severity: 'warn',
               summary: 'Advertencia',
@@ -1621,13 +1529,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
                 'El seguro se guardó pero podría no haberse aplicado a todos los viajeros. Verifica en el siguiente paso.',
               life: 5000,
             });
-          } else {
-            console.log(
-              '🛡️ [CHECKOUT] ✅ Verificación exitosa: El seguro se guardó correctamente para todos los viajeros'
-            );
           }
-        } else {
-          console.log('🛡️ [CHECKOUT] ✅ No hay seguro seleccionado');
         }
 
         // 7. Actualizar el totalPassengers en la reserva
@@ -1677,7 +1579,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
           });
         }
       } catch (error) {
-        console.log('error', error);
         this.messageService.add({
           severity: 'error',
           summary: 'Error inesperado',
@@ -1841,57 +1742,58 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
   handleSaveBudget(): void {
     if (!this.isAuthenticated) {
       this.loginDialogVisible = true;
-    }
-    else {
+    } else {
       this.reservationStatusService.getByCode('BUDGET').subscribe({
         next: (reservationStatus) => {
           if (reservationStatus) {
-            this.reservationService.updateStatus(this.reservationId!, reservationStatus[0].id).subscribe({
-              next: (success) => {
-                if (success) {
-                  this.messageService.add({
-                    severity: 'success',
-                    summary: 'Presupuesto guardado',
-                    detail: 'El presupuesto ha sido guardado correctamente',
-                    life: 3000,
-                  });
-                }
-                else {
-                  this.messageService.add({
-                    severity: 'error',
-                    summary: 'Error al guardar el presupuesto',
-                    detail: 'No se pudo guardar el presupuesto',
-                    life: 5000,
-                  })
-                }
-              },
-              error: (error) => {
-                console.error('Error al actualizar el estado de la reservación:', error);
-              },
-              complete: () => {
-                this.loadReservationData(this.reservationId!);
-              }
-            })
-          }
-          else {
-            console.log('No se encontró el id del estado de Budget');
+            this.reservationService
+              .updateStatus(this.reservationId!, reservationStatus[0].id)
+              .subscribe({
+                next: (success) => {
+                  if (success) {
+                    this.messageService.add({
+                      severity: 'success',
+                      summary: 'Presupuesto guardado',
+                      detail: 'El presupuesto ha sido guardado correctamente',
+                      life: 3000,
+                    });
+                  } else {
+                    this.messageService.add({
+                      severity: 'error',
+                      summary: 'Error al guardar el presupuesto',
+                      detail: 'No se pudo guardar el presupuesto',
+                      life: 5000,
+                    });
+                  }
+                },
+                error: (error) => {
+                  console.error(
+                    'Error al actualizar el estado de la reservación:',
+                    error
+                  );
+                },
+                complete: () => {
+                  this.loadReservationData(this.reservationId!);
+                },
+              });
+          } else {
+            // No se encontró el id del estado de Budget
           }
         },
         error: (error) => {
           console.error('Error al obtener el estado de la reservación:', error);
-        }
+        },
       });
     }
   }
 
   // TODO: Implementar lógica para descargar el presupuesto
   handleDownloadBudget(): void {
-    console.log('handleDownloadBudget');
+    // TODO: Implementar lógica para descargar el presupuesto
   }
 
   // TODO: Implementar lógica para compartir el presupuesto
   handleShareBudget(): void {
-    console.log('handleShareBudget');
+    // TODO: Implementar lógica para compartir el presupuesto
   }
-
 }

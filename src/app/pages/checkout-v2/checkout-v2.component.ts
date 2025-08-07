@@ -1319,6 +1319,7 @@ export class CheckoutV2Component implements OnInit {
           });
         }
       } catch (error) {
+        console.log('error', error);
         this.messageService.add({
           severity: 'error',
           summary: 'Error inesperado',
@@ -1508,6 +1509,9 @@ export class CheckoutV2Component implements OnInit {
               },
               error: (error) => {
                 console.error('Error al actualizar el estado de la reservación:', error);
+              },
+              complete: () => {
+                this.loadReservationData(this.reservationId!);
               }
             })
           }

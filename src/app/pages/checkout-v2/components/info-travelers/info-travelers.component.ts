@@ -88,7 +88,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   reservationFields: IReservationFieldResponse[] = [];
   travelers: IReservationTravelerResponse[] = [];
   ageGroups: IAgeGroupResponse[] = [];
-  statuses: IReservationStatusResponse[] = [];
 
   // Estados del componente
   loading: boolean = false;
@@ -136,6 +135,10 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     { name: 'Colombia', code: 'CO', value: 'CO' },
   ];
 
+  cartStatusId: number | null = null;
+  budgetStatusId: number | null = null;
+  draftStatusId: number | null = null;
+
   // Subject para manejar la destrucción del componente
   private destroy$ = new Subject<void>();
 
@@ -161,28 +164,31 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     console.log('reservationId:', this.reservationId);
     console.log('itineraryId:', this.itineraryId);
 
-    this.reservationStatusService.getAll().subscribe(
-      (statuses) => {
-        this.statuses = statuses;
-        console.log('statuses:', this.statuses);
-        if (this.departureId && this.reservationId) {
-          let cartStatusId: number | null | undefined = undefined;
-          if (this.statuses) {
-            cartStatusId = this.statuses.find(status => status.code == 'CART')?.id;
-          }
-          if (cartStatusId) {
-            this.reservationService
-              .updateStatus(this.reservationId, cartStatusId) //No hace falta comprobar que no esté en budget ya que en ese caso fallaría el updateStatus
-              .subscribe((status) => {
-                console.log('status:', status);
-              });
-          }
-          this.loadAllData();
-        } else {
-          this.error = 'No se proporcionó un ID de departure o reservación válido';
+    this.reservationStatusService.getByCode('CART').subscribe((cartStatus) => { this.cartStatusId = cartStatus[0].id});
+    this.reservationStatusService.getByCode('BUDGET').subscribe((budgetStatus) => { this.budgetStatusId = budgetStatus[0].id})
+    this.reservationStatusService.getByCode('DRAFT').subscribe((prebookStatus) => { this.draftStatusId = prebookStatus[0].id})
+    this.reservationService.getById(this.reservationId!).subscribe({
+      next: (reservation) => { 
+        if (reservation.reservationStatusId == this.budgetStatusId) {
+          console.log('Reserva en estado BUDGET');
+        } 
+        else if (reservation.reservationStatusId == this.draftStatusId) {
+          console.log('Reserva en estado DRAFT');
+          console.log('Pasando a estado CART');
+          this.reservationService.updateStatus(this.reservationId!, this.cartStatusId!).subscribe({
+            next: (success) => {
+              if (success) {
+                console.log('Estado actualizado correctamente');
+              }
+            }
+          });
         }
+      },
+      error: (error) => {
+        console.error('Error al obtener la reserva', error);
       }
-    );
+    });
+    this.loadAllData(); 
   }
 
   ngOnChanges(changes: SimpleChanges): void {

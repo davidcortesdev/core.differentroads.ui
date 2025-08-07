@@ -40,7 +40,7 @@ export class InsuranceComponent implements OnInit, OnChanges {
   @Input() tourId: number | null = null;
   @Input() departureId: number | null = null;
   @Input() itineraryId: number | null = null;
-  @Input() reservationId: number | null = null; // NUEVO: Agregar reservationId
+  @Input() reservationId: number | null = null;
 
   // Output para notificar cambios de seguro al componente padre
   @Output() insuranceSelectionChange = new EventEmitter<{
@@ -52,7 +52,6 @@ export class InsuranceComponent implements OnInit, OnChanges {
   insurancePrices: IActivityPriceResponse[] = [];
   insuranceGroups: IActivityCompetitionGroupResponse[] = [];
   private _selectedInsurance: IActivityResponse | null = null;
-  basicInsuranceSelected: boolean = true;
 
   // Getter y setter para rastrear cambios en selectedInsurance
   get selectedInsurance(): IActivityResponse | null {
@@ -60,17 +59,22 @@ export class InsuranceComponent implements OnInit, OnChanges {
   }
 
   set selectedInsurance(value: IActivityResponse | null) {
-    console.log('🛡️ [INSURANCE] 🔍 DEBUG - selectedInsurance cambiando de:', this._selectedInsurance, 'a:', value);
+    console.log(
+      '🛡️ [INSURANCE] 🔍 DEBUG - selectedInsurance cambiando de:',
+      this._selectedInsurance,
+      'a:',
+      value
+    );
     this._selectedInsurance = value;
   }
 
-  // NUEVO: Propiedades para gestionar travelers y asignaciones
+  // Propiedades para gestionar travelers y asignaciones
   existingTravelers: IReservationTravelerResponse[] = [];
   currentInsuranceAssignments: IReservationTravelerActivityResponse[] = [];
   hasUnsavedChanges: boolean = false;
   isSaving: boolean = false;
   errorMsg: string | null = null;
-  userHasMadeSelection: boolean = false; // NUEVO: Para rastrear si el usuario ha hecho una selección
+  userHasMadeSelection: boolean = false;
 
   constructor(
     private activityService: ActivityService,
@@ -87,26 +91,27 @@ export class InsuranceComponent implements OnInit, OnChanges {
       tourId: this.tourId,
       departureId: this.departureId,
       itineraryId: this.itineraryId,
-      reservationId: this.reservationId
+      reservationId: this.reservationId,
     });
-    
+
     this.loadInsurances();
     this.loadExistingTravelers();
-    
-    // NUEVO: Agregar listener para cambios en selectedInsurance
-    console.log('🛡️ [INSURANCE] 🔍 DEBUG - Agregando listener para selectedInsurance');
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     console.log('🛡️ [INSURANCE] ngOnChanges() llamado');
     console.log('🛡️ [INSURANCE] Cambios detectados:', Object.keys(changes));
-    
+
     if (changes['itineraryId'] || changes['departureId']) {
-      console.log('🛡️ [INSURANCE] Cambio en itineraryId o departureId, recargando seguros');
+      console.log(
+        '🛡️ [INSURANCE] Cambio en itineraryId o departureId, recargando seguros'
+      );
       this.loadInsurances();
     }
     if (changes['reservationId'] && this.reservationId) {
-      console.log('🛡️ [INSURANCE] Cambio en reservationId, recargando travelers');
+      console.log(
+        '🛡️ [INSURANCE] Cambio en reservationId, recargando travelers'
+      );
       this.loadExistingTravelers();
     }
   }
@@ -114,30 +119,45 @@ export class InsuranceComponent implements OnInit, OnChanges {
   loadInsurances(): void {
     console.log('🛡️ [INSURANCE] loadInsurances() iniciado');
     console.log('🛡️ [INSURANCE] itineraryId:', this.itineraryId);
-    
+
     if (this.itineraryId) {
-      console.log('🛡️ [INSURANCE] Cargando grupos de competición para itinerario:', this.itineraryId);
-      
+      console.log(
+        '🛡️ [INSURANCE] Cargando grupos de competición para itinerario:',
+        this.itineraryId
+      );
+
       // Cargar los grupos de competición del itinerario
       this.activityCompetitionGroupService
         .getByItineraryId(this.itineraryId)
         .subscribe({
           next: (groups) => {
-            console.log('🛡️ [INSURANCE] Grupos de competición cargados:', groups.length);
-            console.log('🛡️ [INSURANCE] Grupos encontrados:', groups.map(g => g.name));
-            
+            console.log(
+              '🛡️ [INSURANCE] ✅ Grupos de competición cargados desde BD:',
+              groups.length
+            );
+            console.log('🛡️ [INSURANCE] ✅ Grupos encontrados en BD:', groups);
+
             // Filtrar solo los grupos que contengan "seguros" en el nombre
             this.insuranceGroups = groups.filter(
               (group) =>
                 group.name && group.name.toLowerCase().includes('seguros')
             );
 
-            console.log('🛡️ [INSURANCE] Grupos de seguros filtrados:', this.insuranceGroups.length);
-            console.log('🛡️ [INSURANCE] Nombres de grupos de seguros:', this.insuranceGroups.map(g => g.name));
+            console.log(
+              '🛡️ [INSURANCE] ✅ Grupos de seguros filtrados desde BD:',
+              this.insuranceGroups.length
+            );
+            console.log(
+              '🛡️ [INSURANCE] ✅ Grupos de seguros encontrados en BD:',
+              this.insuranceGroups
+            );
 
             if (this.insuranceGroups.length > 0) {
-              console.log('🛡️ [INSURANCE] Cargando actividades de seguro para grupo:', this.insuranceGroups[0].id);
-              
+              console.log(
+                '🛡️ [INSURANCE] Cargando actividades de seguro para grupo:',
+                this.insuranceGroups[0].id
+              );
+
               // Cargar actividades filtrando por los grupos de seguros
               this.activityService
                 .getAll({
@@ -147,27 +167,43 @@ export class InsuranceComponent implements OnInit, OnChanges {
                 })
                 .subscribe({
                   next: (activities) => {
-                    console.log('🛡️ [INSURANCE] Actividades de seguro cargadas:', activities.length);
-                    console.log('🛡️ [INSURANCE] Nombres de seguros:', activities.map(a => a.name));
-                    
+                    console.log(
+                      '🛡️ [INSURANCE] ✅ Seguros cargados desde BD:',
+                      activities.length
+                    );
+                    console.log(
+                      '🛡️ [INSURANCE] ✅ Seguros encontrados en BD:',
+                      activities
+                    );
+
                     this.insurances = activities;
                     this.loadPrices();
                   },
                   error: (error) => {
-                    console.error('🛡️ [INSURANCE] ❌ Error loading insurance activities:', error);
+                    console.error(
+                      '🛡️ [INSURANCE] ❌ Error loading insurance activities:',
+                      error
+                    );
                   },
                 });
             } else {
-              console.log('🛡️ [INSURANCE] No se encontraron grupos de seguros, array vacío');
+              console.log(
+                '🛡️ [INSURANCE] ❌ No se encontraron grupos de seguros en BD'
+              );
               this.insurances = [];
             }
           },
           error: (error) => {
-            console.error('🛡️ [INSURANCE] ❌ Error loading insurance groups:', error);
+            console.error(
+              '🛡️ [INSURANCE] ❌ Error loading insurance groups:',
+              error
+            );
           },
         });
     } else {
-      console.log('🛡️ [INSURANCE] ❌ No hay itineraryId, no se pueden cargar seguros');
+      console.log(
+        '🛡️ [INSURANCE] ❌ No hay itineraryId, no se pueden cargar seguros'
+      );
     }
   }
 
@@ -175,10 +211,13 @@ export class InsuranceComponent implements OnInit, OnChanges {
     console.log('🛡️ [INSURANCE] loadPrices() iniciado');
     console.log('🛡️ [INSURANCE] departureId:', this.departureId);
     console.log('🛡️ [INSURANCE] insurances.length:', this.insurances.length);
-    
+
     if (this.departureId && this.insurances.length > 0) {
       const activityIds = this.insurances.map((insurance) => insurance.id);
-      console.log('🛡️ [INSURANCE] Cargando precios para activityIds:', activityIds);
+      console.log(
+        '🛡️ [INSURANCE] Cargando precios para activityIds:',
+        activityIds
+      );
 
       this.activityPriceService
         .getAll({
@@ -187,173 +226,230 @@ export class InsuranceComponent implements OnInit, OnChanges {
         })
         .subscribe({
           next: (prices) => {
-            console.log('🛡️ [INSURANCE] Precios de seguros cargados:', prices.length);
-            console.log('🛡️ [INSURANCE] Precios:', prices.map(p => ({
-              activityId: p.activityId,
-              basePrice: p.basePrice,
-              ageGroupId: p.ageGroupId
-            })));
-            
+            console.log(
+              '🛡️ [INSURANCE] ✅ Precios de seguros cargados desde BD:',
+              prices.length
+            );
+            console.log('🛡️ [INSURANCE] ✅ Precios encontrados en BD:', prices);
+
             this.insurancePrices = prices;
+
+            // Identificar y seleccionar seguro básico por defecto
+            this.selectDefaultInsurance();
+
             // Cargar asignaciones existentes después de cargar precios
             this.loadExistingInsuranceAssignments();
           },
           error: (error) => {
-            console.error('🛡️ [INSURANCE] ❌ Error loading insurance prices:', error);
+            console.error(
+              '🛡️ [INSURANCE] ❌ Error loading insurance prices:',
+              error
+            );
+            // Si no hay precios, seleccionar el primer seguro
+            this.selectDefaultInsurance();
+            this.loadExistingInsuranceAssignments();
           },
         });
     } else {
-      console.log('🛡️ [INSURANCE] ❌ No se pueden cargar precios - departureId:', this.departureId, 'insurances:', this.insurances.length);
+      console.log(
+        '🛡️ [INSURANCE] ❌ No se pueden cargar precios - departureId:',
+        this.departureId,
+        'insurances:',
+        this.insurances.length
+      );
     }
   }
 
-  // NUEVO: Cargar travelers existentes
-  loadExistingTravelers(): void {
-    console.log('🛡️ [INSURANCE] loadExistingTravelers() iniciado');
-    console.log('🛡️ [INSURANCE] reservationId:', this.reservationId);
-    
-    if (!this.reservationId) {
-      console.log('🛡️ [INSURANCE] ❌ No hay reservationId, no se pueden cargar travelers');
+  // Seleccionar seguro por defecto
+  private selectDefaultInsurance(): void {
+    console.log('🛡️ [INSURANCE] 🔍 Seleccionando seguro por defecto...');
+
+    if (this.insurances.length === 0) {
+      console.log(
+        '🛡️ [INSURANCE] No hay seguros en BD, selectedInsurance = null'
+      );
+      this.selectedInsurance = null;
+      this.emitInsuranceChange();
       return;
     }
 
-    console.log('🛡️ [INSURANCE] Cargando travelers para reserva:', this.reservationId);
-    
+    // Buscar el seguro básico (precio 0)
+    const basicInsurance = this.insurances.find((insurance) => {
+      const price = this.getPriceById(insurance.id);
+      const isBasic = price === 0;
+      console.log(
+        `🛡️ [INSURANCE] Seguro "${insurance.name}" - precio: ${price}, es básico: ${isBasic}`
+      );
+      return isBasic;
+    });
+
+    if (basicInsurance) {
+      console.log(
+        '🛡️ [INSURANCE] ✅ Seguro básico encontrado en BD, seleccionando por defecto:',
+        basicInsurance.name
+      );
+      this.selectedInsurance = basicInsurance;
+    } else {
+      console.log(
+        '🛡️ [INSURANCE] ❌ No se encontró seguro básico, NO seleccionando ninguno por defecto'
+      );
+      this.selectedInsurance = null;
+    }
+
+    // Emitir el estado inicial
+    this.emitInsuranceChange();
+  }
+
+  // Cargar travelers existentes
+  loadExistingTravelers(): void {
+    console.log('🛡️ [INSURANCE] loadExistingTravelers() iniciado');
+    console.log('🛡️ [INSURANCE] reservationId:', this.reservationId);
+
+    if (!this.reservationId) {
+      console.log(
+        '🛡️ [INSURANCE] ❌ No hay reservationId, no se pueden cargar travelers'
+      );
+      return;
+    }
+
+    console.log(
+      '🛡️ [INSURANCE] Cargando travelers para reserva:',
+      this.reservationId
+    );
+
     this.reservationTravelerService
       .getByReservationOrdered(this.reservationId)
       .subscribe({
         next: (travelers) => {
           console.log('🛡️ [INSURANCE] Travelers cargados:', travelers.length);
-          console.log('🛡️ [INSURANCE] Travelers IDs:', travelers.map(t => t.id));
-          
+          console.log(
+            '🛡️ [INSURANCE] Travelers IDs:',
+            travelers.map((t) => t.id)
+          );
+
           this.existingTravelers = travelers;
           this.loadExistingInsuranceAssignments();
         },
         error: (error) => {
-          console.error('🛡️ [INSURANCE] ❌ Error loading existing travelers:', error);
+          console.error(
+            '🛡️ [INSURANCE] ❌ Error loading existing travelers:',
+            error
+          );
         },
       });
   }
 
-  // NUEVO: Cargar asignaciones de seguro existentes
+  // Cargar asignaciones de seguro existentes
   loadExistingInsuranceAssignments(): void {
     console.log('🛡️ [INSURANCE] loadExistingInsuranceAssignments() iniciado');
-    console.log('🛡️ [INSURANCE] existingTravelers.length:', this.existingTravelers.length);
+    console.log(
+      '🛡️ [INSURANCE] existingTravelers.length:',
+      this.existingTravelers.length
+    );
     console.log('🛡️ [INSURANCE] insurances.length:', this.insurances.length);
-    
+
     if (!this.existingTravelers.length || !this.insurances.length) {
-      console.log('🛡️ [INSURANCE] ❌ No hay travelers o insurances, no se pueden cargar asignaciones');
+      console.log(
+        '🛡️ [INSURANCE] ❌ No hay travelers o insurances, no se pueden cargar asignaciones'
+      );
       return;
     }
 
     // Obtener todas las asignaciones de seguros para los travelers de esta reserva
     const travelerIds = this.existingTravelers.map((t) => t.id);
     const insuranceIds = this.insurances.map((i) => i.id);
-    
-    console.log('🛡️ [INSURANCE] Buscando asignaciones para travelers:', travelerIds);
+
+    console.log(
+      '🛡️ [INSURANCE] Buscando asignaciones para travelers:',
+      travelerIds
+    );
     console.log('🛡️ [INSURANCE] IDs de seguros disponibles:', insuranceIds);
 
     // Buscar asignaciones existentes
-    console.log('🛡️ [INSURANCE] Buscando asignaciones para cada traveler...');
     const assignmentPromises = travelerIds.map((travelerId) => {
-      console.log('🛡️ [INSURANCE] Consultando asignaciones para traveler ID:', travelerId);
       return this.reservationTravelerActivityService.getByReservationTraveler(
         travelerId
       );
     });
 
-    console.log('🛡️ [INSURANCE] Ejecutando búsqueda de asignaciones existentes...');
-    
+    console.log(
+      '🛡️ [INSURANCE] Ejecutando búsqueda de asignaciones existentes...'
+    );
+
     forkJoin(assignmentPromises).subscribe({
       next: (allAssignments) => {
-        console.log('🛡️ [INSURANCE] Todas las asignaciones encontradas:', allAssignments.flat().length);
-        
-        // Mostrar todas las asignaciones encontradas por traveler
-        allAssignments.forEach((assignments, index) => {
-          console.log('🛡️ [INSURANCE] Traveler ID:', travelerIds[index], 'tiene', assignments.length, 'asignaciones:');
-          assignments.forEach(assignment => {
-            console.log('🛡️ [INSURANCE]   - Asignación ID:', assignment.id, 'Activity ID:', assignment.activityId, 'Traveler ID:', assignment.reservationTravelerId);
-          });
-        });
-        
-        console.log('🛡️ [INSURANCE] Asignaciones por traveler:', allAssignments.map((assignments, index) => ({
-          travelerId: travelerIds[index],
-          assignmentsCount: assignments.length
-        })));
-        
+        console.log(
+          '🛡️ [INSURANCE] Todas las asignaciones encontradas:',
+          allAssignments.flat().length
+        );
+
         // Filtrar solo las asignaciones que corresponden a seguros
         const allAssignmentsFlat = allAssignments.flat();
-        console.log('🛡️ [INSURANCE] TODAS LAS RELACIONES ACTIVITY/TRAVELER ENCONTRADAS:', allAssignmentsFlat.map(a => ({
-          asignacionId: a.id,
-          travelerId: a.reservationTravelerId,
-          activityId: a.activityId,
-          relacion: `Traveler ${a.reservationTravelerId} → Activity ${a.activityId}`
-        })));
-        
-        this.currentInsuranceAssignments = allAssignmentsFlat
-          .filter((assignment) => insuranceIds.includes(assignment.activityId));
+        this.currentInsuranceAssignments = allAssignmentsFlat.filter(
+          (assignment) => insuranceIds.includes(assignment.activityId)
+        );
 
-        console.log('🛡️ [INSURANCE] Asignaciones de seguros filtradas:', this.currentInsuranceAssignments.length);
-        console.log('🛡️ [INSURANCE] RELACIONES ACTIVITY/TRAVELER RECUPERADAS:', this.currentInsuranceAssignments.map(a => ({
-          asignacionId: a.id,
-          travelerId: a.reservationTravelerId,
-          activityId: a.activityId,
-          relacion: `Traveler ${a.reservationTravelerId} → Seguro ${a.activityId}`
-        })));
+        console.log(
+          '🛡️ [INSURANCE] Asignaciones de seguros filtradas:',
+          this.currentInsuranceAssignments.length
+        );
 
         // Determinar el seguro seleccionado basado en las asignaciones existentes
         this.determineSelectedInsurance();
       },
       error: (error) => {
-        console.error('🛡️ [INSURANCE] ❌ Error loading existing insurance assignments:', error);
+        console.error(
+          '🛡️ [INSURANCE] ❌ Error loading existing insurance assignments:',
+          error
+        );
       },
     });
   }
 
-  // NUEVO: Determinar el seguro seleccionado basado en asignaciones existentes
+  // Determinar el seguro seleccionado basado en asignaciones existentes
   determineSelectedInsurance(): void {
     console.log('🛡️ [INSURANCE] determineSelectedInsurance() iniciado');
-    console.log('🛡️ [INSURANCE] currentInsuranceAssignments.length:', this.currentInsuranceAssignments.length);
-    console.log('🛡️ [INSURANCE] 🔍 DEBUG - selectedInsurance actual antes de determinar:', this.selectedInsurance);
-    
-    // NUEVO: Solo determinar si no hay una selección previa del usuario
+    console.log(
+      '🛡️ [INSURANCE] currentInsuranceAssignments.length:',
+      this.currentInsuranceAssignments.length
+    );
+
+    // Solo determinar si no hay una selección previa del usuario
     if (this.userHasMadeSelection) {
-      console.log('🛡️ [INSURANCE] ✅ Usuario ya ha hecho una selección manual, no sobrescribir');
+      console.log(
+        '🛡️ [INSURANCE] ✅ Usuario ya ha hecho una selección manual, no sobrescribir'
+      );
       return;
     }
-    
-    if (this.selectedInsurance !== null) {
-      console.log('🛡️ [INSURANCE] ✅ Usuario ya tiene una selección, no sobrescribir:', this.selectedInsurance.name);
-      return;
-    }
-    
+
     if (this.currentInsuranceAssignments.length === 0) {
-      console.log('🛡️ [INSURANCE] No hay asignaciones, seleccionando seguro básico por defecto');
-      // No hay asignaciones, mantener seguro básico
-      this.selectedInsurance = null;
-      this.basicInsuranceSelected = true;
+      console.log(
+        '🛡️ [INSURANCE] No hay asignaciones, manteniendo selección por defecto'
+      );
       this.emitInsuranceChange();
       return;
     }
 
-    console.log('🛡️ [INSURANCE] Analizando asignaciones existentes...');
-    console.log('🛡️ [INSURANCE] IDs de asignaciones a analizar:', this.currentInsuranceAssignments.map(a => a.id));
-    
     // Encontrar el seguro más común entre las asignaciones
     const insuranceCount: { [activityId: number]: number } = {};
     this.currentInsuranceAssignments.forEach((assignment) => {
-      console.log('🛡️ [INSURANCE] Procesando asignación ID:', assignment.id, 'con activityId:', assignment.activityId);
       insuranceCount[assignment.activityId] =
         (insuranceCount[assignment.activityId] || 0) + 1;
     });
 
-    console.log('🛡️ [INSURANCE] Conteo de seguros por activityId:', insuranceCount);
+    console.log(
+      '🛡️ [INSURANCE] Conteo de seguros por activityId:',
+      insuranceCount
+    );
 
     const mostCommonInsuranceId = Object.keys(insuranceCount).reduce((a, b) =>
       insuranceCount[parseInt(a)] > insuranceCount[parseInt(b)] ? a : b
     );
 
-    console.log('🛡️ [INSURANCE] Seguro más común (activityId):', mostCommonInsuranceId);
+    console.log(
+      '🛡️ [INSURANCE] Seguro más común (activityId):',
+      mostCommonInsuranceId
+    );
 
     // Buscar el seguro correspondiente
     const selectedInsurance = this.insurances.find(
@@ -361,17 +457,16 @@ export class InsuranceComponent implements OnInit, OnChanges {
     );
 
     if (selectedInsurance) {
-      console.log('🛡️ [INSURANCE] ✅ Seguro encontrado y seleccionado:', selectedInsurance.name);
+      console.log(
+        '🛡️ [INSURANCE] ✅ Seguro encontrado y seleccionado:',
+        selectedInsurance.name
+      );
       this.selectedInsurance = selectedInsurance;
-      this.basicInsuranceSelected = false;
     } else {
-      console.log('🛡️ [INSURANCE] ❌ Seguro no encontrado, seleccionando básico');
-      this.selectedInsurance = null;
-      this.basicInsuranceSelected = true;
+      console.log(
+        '🛡️ [INSURANCE] ❌ Seguro no encontrado, manteniendo selección actual'
+      );
     }
-
-    console.log('🛡️ [INSURANCE] Estado final - selectedInsurance:', this.selectedInsurance ? this.selectedInsurance.name : 'Básico');
-    console.log('🛡️ [INSURANCE] Estado final - basicInsuranceSelected:', this.basicInsuranceSelected);
 
     // Emitir el estado inicial
     this.emitInsuranceChange();
@@ -379,69 +474,63 @@ export class InsuranceComponent implements OnInit, OnChanges {
 
   toggleInsurance(insurance: IActivityResponse | null): void {
     console.log('🛡️ [INSURANCE] toggleInsurance() llamado');
-    console.log('🛡️ [INSURANCE] 🔍 DEBUG - Parámetro insurance recibido:', insurance);
-    console.log('🛡️ [INSURANCE] 🔍 DEBUG - insurance es null?', insurance === null);
-    console.log('🛡️ [INSURANCE] Seguro seleccionado:', insurance ? insurance.name : 'Básico');
-    console.log('🛡️ [INSURANCE] 🔍 DEBUG - selectedInsurance actual:', this.selectedInsurance ? this.selectedInsurance.name : 'Básico');
-    
-    // MEJORA: Verificar si realmente hay un cambio en la selección
-    const isSameSelection = this.selectedInsurance === insurance;
-    console.log('🛡️ [INSURANCE] 🔍 DEBUG - ¿Es la misma selección?', isSameSelection);
-    
+    console.log(
+      '🛡️ [INSURANCE] Seguro seleccionado:',
+      insurance ? insurance.name : 'null'
+    );
+
     this.selectedInsurance = insurance;
-    this.basicInsuranceSelected = !insurance;
-    
-    // MEJORA: Siempre marcar como cambios pendientes para asegurar que se guarde
-    // Esto es especialmente importante en el step 1 cuando se quiere guardar para todos los viajeros
+
+    // Marcar como cambios pendientes
     this.hasUnsavedChanges = true;
     this.errorMsg = null;
-    this.userHasMadeSelection = true; // NUEVO: Marcar que el usuario ha hecho una selección
+    this.userHasMadeSelection = true;
 
-    console.log('🛡️ [INSURANCE] 🔍 DEBUG - Después de asignar:');
-    console.log('🛡️ [INSURANCE] 🔍 DEBUG - this.selectedInsurance:', this.selectedInsurance);
-    console.log('🛡️ [INSURANCE] 🔍 DEBUG - this.basicInsuranceSelected:', this.basicInsuranceSelected);
-    console.log('🛡️ [INSURANCE] 🔍 DEBUG - userHasMadeSelection:', this.userHasMadeSelection);
     console.log('🛡️ [INSURANCE] hasUnsavedChanges marcado como true');
 
     // Emitir el cambio al componente padre
     this.emitInsuranceChange();
   }
 
-  // NUEVO: Emitir cambio de seguro
+  // Emitir cambio de seguro
   private emitInsuranceChange(): void {
     const price = this.selectedInsurance
       ? this.getPriceById(this.selectedInsurance.id)
       : 0;
-    
+
     console.log('🛡️ [INSURANCE] emitInsuranceChange() - Emitiendo cambio:', {
-      selectedInsurance: this.selectedInsurance ? this.selectedInsurance.name : 'Básico',
-      price: price
+      selectedInsurance: this.selectedInsurance
+        ? this.selectedInsurance.name
+        : 'null',
+      price: price,
     });
-    
+
     this.insuranceSelectionChange.emit({
       selectedInsurance: this.selectedInsurance,
       price: price,
     });
   }
 
-  // NUEVO: Guardar asignaciones de seguro
+  // Guardar asignaciones de seguro
   async saveInsuranceAssignments(): Promise<boolean> {
     console.log('🛡️ [INSURANCE] Iniciando saveInsuranceAssignments()');
     console.log('🛡️ [INSURANCE] hasUnsavedChanges:', this.hasUnsavedChanges);
-    console.log('🛡️ [INSURANCE] reservationId:', this.reservationId);
-    console.log('🛡️ [INSURANCE] selectedInsurance:', this.selectedInsurance ? this.selectedInsurance.name : 'Básico');
-    
+    console.log(
+      '🛡️ [INSURANCE] selectedInsurance:',
+      this.selectedInsurance ? this.selectedInsurance.name : 'null'
+    );
+
     if (!this.reservationId) {
       console.log('🛡️ [INSURANCE] ❌ No hay reservationId, retornando false');
       return false;
     }
 
-    // MEJORA: Siempre guardar si hay un seguro seleccionado, incluso si no hay cambios pendientes
-    // Esto asegura que el seguro se guarde para todos los viajeros en el step 1
-    const shouldSave = this.hasUnsavedChanges || this.selectedInsurance !== null;
-    
+    // Guardar si hay cambios pendientes o hay un seguro seleccionado
+    const shouldSave =
+      this.hasUnsavedChanges || this.selectedInsurance !== null;
+
     if (!shouldSave) {
-      console.log('🛡️ [INSURANCE] No hay cambios pendientes ni seguro seleccionado, retornando true');
+      console.log('🛡️ [INSURANCE] No hay cambios pendientes, retornando true');
       return true;
     }
 
@@ -450,38 +539,27 @@ export class InsuranceComponent implements OnInit, OnChanges {
     this.errorMsg = null;
 
     try {
-      console.log('🛡️ [INSURANCE] Iniciando try-catch del guardado');
-      
       // Asegurar que tenemos travelers cargados
       if (!this.existingTravelers.length) {
-        console.log('🛡️ [INSURANCE] No hay travelers cargados, cargando desde el servicio...');
         this.existingTravelers =
           (await this.reservationTravelerService
             .getByReservationOrdered(this.reservationId)
             .toPromise()) || [];
-        console.log('🛡️ [INSURANCE] Travelers cargados:', this.existingTravelers.length);
+        console.log(
+          '🛡️ [INSURANCE] Travelers cargados:',
+          this.existingTravelers.length
+        );
       }
 
       if (!this.existingTravelers.length) {
-        console.log('🛡️ [INSURANCE] ❌ ERROR: No se encontraron viajeros para asignar el seguro');
+        console.log('🛡️ [INSURANCE] ❌ ERROR: No se encontraron viajeros');
         this.errorMsg = 'No se encontraron viajeros para asignar el seguro.';
         return false;
       }
 
-      console.log('🛡️ [INSURANCE] Eliminando asignaciones existentes...');
-      console.log('🛡️ [INSURANCE] Asignaciones a eliminar:', this.currentInsuranceAssignments.length);
-      
       // Eliminar asignaciones existentes de seguros
-      console.log('🛡️ [INSURANCE] RELACIONES ACTIVITY/TRAVELER A ELIMINAR:', this.currentInsuranceAssignments.map(a => ({
-        asignacionId: a.id,
-        travelerId: a.reservationTravelerId,
-        activityId: a.activityId,
-        relacion: `Traveler ${a.reservationTravelerId} → Seguro ${a.activityId}`
-      })));
-      
       const deletePromises = this.currentInsuranceAssignments.map(
         (assignment) => {
-          console.log('🛡️ [INSURANCE] 🗑️ ELIMINANDO DE BD - Asignación ID:', assignment.id, 'para traveler:', assignment.reservationTravelerId, 'activity:', assignment.activityId);
           return this.reservationTravelerActivityService
             .delete(assignment.id)
             .toPromise();
@@ -489,71 +567,56 @@ export class InsuranceComponent implements OnInit, OnChanges {
       );
 
       if (deletePromises.length > 0) {
-        console.log('🛡️ [INSURANCE] Ejecutando eliminación de asignaciones existentes...');
         await Promise.all(deletePromises);
         console.log('🛡️ [INSURANCE] ✅ Asignaciones existentes eliminadas');
-      } else {
-        console.log('🛡️ [INSURANCE] No hay asignaciones existentes para eliminar');
       }
 
-      // Crear nuevas asignaciones si no es seguro básico
-      console.log('🛡️ [INSURANCE] 🔍 DEBUG - Verificando selectedInsurance:', this.selectedInsurance);
-      console.log('🛡️ [INSURANCE] 🔍 DEBUG - basicInsuranceSelected:', this.basicInsuranceSelected);
-      
+      // Crear nuevas asignaciones si hay seguro seleccionado
       if (this.selectedInsurance) {
-        console.log('🛡️ [INSURANCE] ✅ Seguro seleccionado:', this.selectedInsurance.name, 'ID:', this.selectedInsurance.id);
-        console.log('🛡️ [INSURANCE] Creando nuevas asignaciones para seguro:', this.selectedInsurance.name);
-        console.log('🛡️ [INSURANCE] Travelers a asignar:', this.existingTravelers.length);
-        console.log('🛡️ [INSURANCE] RELACIONES ACTIVITY/TRAVELER A CREAR:');
-        this.existingTravelers.forEach(traveler => {
-          console.log('🛡️ [INSURANCE]   - Traveler', traveler.id, '→ Seguro', this.selectedInsurance!.id);
-        });
-        
+        console.log(
+          '🛡️ [INSURANCE] Creando nuevas asignaciones para seguro:',
+          this.selectedInsurance.name
+        );
+
         const createPromises = this.existingTravelers.map((traveler) => {
           const newAssignment = {
             id: 0,
             reservationTravelerId: traveler.id,
             activityId: this.selectedInsurance!.id,
           };
-          console.log('🛡️ [INSURANCE] 🗄️ GUARDANDO EN BD - Datos a insertar:', newAssignment);
           return this.reservationTravelerActivityService
             .create(newAssignment)
             .toPromise();
         });
 
-        console.log('🛡️ [INSURANCE] Ejecutando creación de asignaciones...');
         const results = await Promise.all(createPromises);
         this.currentInsuranceAssignments = results.filter(
           (r) => r !== null
         ) as IReservationTravelerActivityResponse[];
-        
-        console.log('🛡️ [INSURANCE] ✅ Asignaciones creadas:', this.currentInsuranceAssignments.length);
-        console.log('🛡️ [INSURANCE] 🗄️ IDs GUARDADOS EN BD:', this.currentInsuranceAssignments.map(a => ({
-          asignacionId: a.id,           // ← ID generado por la BD
-          travelerId: a.reservationTravelerId,  // ← ID del traveler
-          activityId: a.activityId,     // ← ID del seguro
-          relacion: `Traveler ${a.reservationTravelerId} → Seguro ${a.activityId}`
-        })));
+
+        console.log(
+          '🛡️ [INSURANCE] ✅ Asignaciones creadas:',
+          this.currentInsuranceAssignments.length
+        );
       } else {
-        console.log('🛡️ [INSURANCE] Seguro básico seleccionado, no se crean asignaciones');
+        console.log(
+          '🛡️ [INSURANCE] No hay seguro seleccionado, no se crean asignaciones'
+        );
         this.currentInsuranceAssignments = [];
       }
 
       this.hasUnsavedChanges = false;
       this.isSaving = false;
       console.log('🛡️ [INSURANCE] ✅ Guardado completado exitosamente');
-      console.log('🛡️ [INSURANCE] 📋 RESUMEN DE IDs GUARDADOS:');
-      console.log('🛡️ [INSURANCE]   - Total de asignaciones guardadas:', this.currentInsuranceAssignments.length);
-      console.log('🛡️ [INSURANCE]   - IDs de asignaciones:', this.currentInsuranceAssignments.map(a => a.id));
-      console.log('🛡️ [INSURANCE]   - IDs de travelers:', this.currentInsuranceAssignments.map(a => a.reservationTravelerId));
-      console.log('🛡️ [INSURANCE]   - ID del seguro:', this.selectedInsurance ? this.selectedInsurance.id : 'Básico (sin asignación)');
       return true;
     } catch (error) {
-      console.error('🛡️ [INSURANCE] ❌ ERROR saving insurance assignments:', error);
+      console.error(
+        '🛡️ [INSURANCE] ❌ ERROR saving insurance assignments:',
+        error
+      );
       this.errorMsg =
         'Error al guardar las asignaciones de seguro. Por favor, inténtalo de nuevo.';
       this.isSaving = false;
-      console.log('🛡️ [INSURANCE] ❌ Guardado falló, retornando false');
       return false;
     }
   }
@@ -563,7 +626,13 @@ export class InsuranceComponent implements OnInit, OnChanges {
     const price = this.insurancePrices.find(
       (p) => p.activityId === activityId && p.ageGroupId === 1
     );
-    return price ? price.basePrice : 0;
+    const finalPrice = price ? price.basePrice : 0;
+
+    console.log(
+      `🛡️ [INSURANCE] 💰 Precio para seguro ID ${activityId}:`,
+      finalPrice
+    );
+    return finalPrice;
   }
 
   getSanitizedDescription(description: string): SafeHtml {
@@ -588,72 +657,107 @@ export class InsuranceComponent implements OnInit, OnChanges {
     };
   }
 
-  // NUEVO: Método para obtener resumen de asignaciones
+  // Método para obtener resumen de asignaciones
   getAssignmentsSummary(): string {
     if (!this.selectedInsurance) {
-      return 'Seguro básico incluido';
+      return 'Sin seguro seleccionado';
     }
 
     const travelersCount = this.existingTravelers.length;
     const price = this.getPriceById(this.selectedInsurance.id);
-    const totalPrice = price * travelersCount;
 
-    return `${this.selectedInsurance.name} - ${travelersCount} viajeros (${totalPrice}€)`;
+    if (price === 0) {
+      return `${this.selectedInsurance.name} - ${travelersCount} viajeros (incluido)`;
+    } else {
+      const totalPrice = price * travelersCount;
+      return `${this.selectedInsurance.name} - ${travelersCount} viajeros (${totalPrice}€)`;
+    }
   }
 
-  // NUEVO: Getter para verificar si hay cambios pendientes
+  // Getter para verificar si hay cambios pendientes
   get hasPendingChanges(): boolean {
     return this.hasUnsavedChanges;
   }
 
-  // NUEVO: Método para verificar que las asignaciones se guardaron correctamente
+  // Método para verificar que las asignaciones se guardaron correctamente
   async verifyInsuranceAssignments(): Promise<boolean> {
     console.log('🛡️ [INSURANCE] Verificando asignaciones de seguro...');
-    
+
     if (!this.reservationId || !this.existingTravelers.length) {
-      console.log('🛡️ [INSURANCE] ❌ No hay reservationId o travelers para verificar');
+      console.log(
+        '🛡️ [INSURANCE] ❌ No hay reservationId o travelers para verificar'
+      );
       return false;
     }
 
     try {
       // Obtener todas las asignaciones actuales de seguros
-      const verificationPromises = this.existingTravelers.map(traveler => 
-        this.reservationTravelerActivityService.getByReservationTraveler(traveler.id).toPromise()
+      const verificationPromises = this.existingTravelers.map((traveler) =>
+        this.reservationTravelerActivityService
+          .getByReservationTraveler(traveler.id)
+          .toPromise()
       );
 
       const allAssignments = await Promise.all(verificationPromises);
-      const flatAssignments = allAssignments.flat().filter(assignment => assignment !== null && assignment !== undefined);
-      
+      const flatAssignments = allAssignments
+        .flat()
+        .filter(
+          (assignment) => assignment !== null && assignment !== undefined
+        );
+
       // Filtrar solo asignaciones de seguros
-      const insuranceIds = this.insurances.map(i => i.id);
+      const insuranceIds = this.insurances.map((i) => i.id);
       const currentInsuranceAssignments = flatAssignments.filter(
-        (assignment) => assignment && insuranceIds.includes(assignment.activityId)
+        (assignment) =>
+          assignment && insuranceIds.includes(assignment.activityId)
       );
 
       console.log('🛡️ [INSURANCE] 📊 Verificación de asignaciones:');
-      console.log('🛡️ [INSURANCE]   - Total de viajeros:', this.existingTravelers.length);
-      console.log('🛡️ [INSURANCE]   - Asignaciones de seguro encontradas:', currentInsuranceAssignments.length);
-      console.log('🛡️ [INSURANCE]   - Seguro seleccionado:', this.selectedInsurance ? this.selectedInsurance.name : 'Básico');
+      console.log(
+        '🛡️ [INSURANCE]   - Total de viajeros:',
+        this.existingTravelers.length
+      );
+      console.log(
+        '🛡️ [INSURANCE]   - Asignaciones de seguro encontradas:',
+        currentInsuranceAssignments.length
+      );
+      console.log(
+        '🛡️ [INSURANCE]   - Seguro seleccionado:',
+        this.selectedInsurance ? this.selectedInsurance.name : 'null'
+      );
 
       if (this.selectedInsurance) {
         // Verificar que todos los viajeros tengan el seguro seleccionado
         const expectedAssignments = this.existingTravelers.length;
         const actualAssignments = currentInsuranceAssignments.filter(
-          (assignment) => assignment && assignment.activityId === this.selectedInsurance!.id
+          (assignment) =>
+            assignment && assignment.activityId === this.selectedInsurance!.id
         ).length;
 
-        console.log('🛡️ [INSURANCE]   - Asignaciones esperadas:', expectedAssignments);
-        console.log('🛡️ [INSURANCE]   - Asignaciones reales:', actualAssignments);
+        console.log(
+          '🛡️ [INSURANCE]   - Asignaciones esperadas:',
+          expectedAssignments
+        );
+        console.log(
+          '🛡️ [INSURANCE]   - Asignaciones reales:',
+          actualAssignments
+        );
 
         const isCorrect = actualAssignments === expectedAssignments;
-        console.log('🛡️ [INSURANCE] ✅ Verificación:', isCorrect ? 'EXITOSA' : 'FALLIDA');
-        
+        console.log(
+          '🛡️ [INSURANCE] ✅ Verificación:',
+          isCorrect ? 'EXITOSA' : 'FALLIDA'
+        );
+
         return isCorrect;
       } else {
-        // Si es seguro básico, no debería haber asignaciones
+        // Si no hay seguro seleccionado, no debería haber asignaciones
         const hasAssignments = currentInsuranceAssignments.length > 0;
-        console.log('🛡️ [INSURANCE] ✅ Verificación seguro básico:', !hasAssignments ? 'EXITOSA' : 'FALLIDA');
-        
+        console.log(
+          '🛡️ [INSURANCE] ✅ Verificación sin seguro:',
+          !hasAssignments ? 'EXITOSA' : 'FALLIDA'
+        );
+
         return !hasAssignments;
       }
     } catch (error) {

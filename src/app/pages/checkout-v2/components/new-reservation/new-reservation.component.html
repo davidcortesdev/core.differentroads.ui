@@ -30,22 +30,24 @@
     </h1>
   </div> -->
 
-  <!-- Mensaje de bienvenida -->
-  <div class="wel">
-    <p-toast></p-toast>
-    <div class="greet" *ngIf="reservation?.userId">
-      <p>Hola {{ reservation?.userId }},</p>
-      <div *ngIf="status === 'SUCCESS'">
-        Pago realizado con éxito
-      </div>
-      <div *ngIf="status === 'PENDING' && paymentType === 'Transfer'">
-        Tu pago por transferencia está pendiente
-      </div>
-      <div *ngIf="status === 'FAILED'">
-        Pago fallido
+  <!-- Contenedor principal centrado -->
+  <div class="new-reservation-container">
+    <!-- Mensaje de bienvenida -->
+    <div class="wel">
+      <p-toast></p-toast>
+      <div class="greet" *ngIf="reservation?.userId">
+        <p>Hola {{ reservation?.userId }},</p>
+        <div *ngIf="status === 'SUCCESS'">
+          Pago realizado con éxito
+        </div>
+        <div *ngIf="status === 'PENDING' && paymentType === 'Transfer'">
+          Tu pago por transferencia está pendiente
+        </div>
+        <div *ngIf="status === 'FAILED'">
+          Pago fallido
+        </div>
       </div>
     </div>
-  </div>
 
   <!-- Mensajes específicos por estado -->
   <ng-container *ngIf="status === 'PENDING' && paymentType === 'Transfer'">
@@ -290,15 +292,17 @@
   ></app-payments-information-section> -->
 <!-- </div> -->
 
-<div *ngIf="error" class="error-container">
-  <i
-    class="pi pi-exclamation-triangle"
-    style="font-size: 3rem; color: #f05a4c"
-  ></i>
-  <h2>No se pudo cargar la información de la reserva</h2>
-  <p>
-    Por favor, inténtalo de nuevo más tarde o ponte en contacto con nuestro
-    equipo de soporte.
-  </p>
-  <button pButton type="button" label="Volver" routerLink="/"></button>
-</div>
+  </div> <!-- Cierre del contenedor principal -->
+
+  <div *ngIf="error" class="error-container">
+    <i
+      class="pi pi-exclamation-triangle"
+      style="font-size: 3rem; color: #f05a4c"
+    ></i>
+    <h2>No se pudo cargar la información de la reserva</h2>
+    <p>
+      Por favor, inténtalo de nuevo más tarde o ponte en contacto con nuestro
+      equipo de soporte.
+    </p>
+    <button pButton type="button" label="Volver" routerLink="/"></button>
+  </div>

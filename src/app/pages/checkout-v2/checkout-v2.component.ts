@@ -115,6 +115,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
   currentJobId: string | null = null;
   jobMonitoringSubscription: Subscription | null = null;
   isSyncInProgress: boolean = false;
+  
+  // Propiedades para controlar la verificación de precios
+  priceCheckExecuted: boolean = false;
+  lastPriceCheckParams: { retailerID: number; departureID: number; numPasajeros: number } | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -164,12 +168,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
       }
     });
 
-    // Ejecutar la verificación de precios cuando se tienen los datos necesarios
-    this.executePriceCheck();
+    // La verificación de precios se ejecutará cuando se carguen los datos de la reservación
+    // No se ejecuta aquí para evitar llamadas duplicadas
   }
 
   /**
    * Ejecuta la verificación de precios cuando se tienen los datos necesarios
+   * Evita llamadas duplicadas verificando si ya se ejecutó con los mismos parámetros
    */
   private executePriceCheck(): void {
     if (this.departureId && this.reservationId && this.totalPassengers > 0) {
@@ -180,6 +185,27 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
       if (this.departureData && this.departureData.retailerId) {
         retailerID = this.departureData.retailerId;
       }
+      
+      // Crear parámetros actuales para comparar
+      const currentParams = {
+        retailerID,
+        departureID: this.departureId,
+        numPasajeros: this.totalPassengers
+      };
+      
+      // Verificar si ya se ejecutó con los mismos parámetros
+      if (this.priceCheckExecuted && 
+          this.lastPriceCheckParams && 
+          JSON.stringify(this.lastPriceCheckParams) === JSON.stringify(currentParams)) {
+        console.log('PriceCheck ya ejecutado con los mismos parámetros, omitiendo...');
+        return;
+      }
+      
+      // Actualizar parámetros de la última ejecución
+      this.lastPriceCheckParams = currentParams;
+      this.priceCheckExecuted = true;
+      
+      console.log('Ejecutando PriceCheck con parámetros:', currentParams);
       
       this.priceCheckService.checkPrices(retailerID, this.departureId, this.totalPassengers)
         .subscribe({
@@ -317,6 +343,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
    */
   private reloadComponentData(): void {
     if (this.reservationId) {
+      // Resetear el estado de verificación de precios para permitir nueva verificación
+      this.resetPriceCheckState();
+      
       // Recargar datos de la reservación
       this.loadReservationData(this.reservationId);
       
@@ -341,6 +370,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
         console.log('Datos del componente recargados después de la sincronización');
       }, 1000);
     }
+  }
+
+  /**
+   * Resetea el estado de verificación de precios (útil después de recargar datos)
+   */
+  private resetPriceCheckState(): void {
+    this.priceCheckExecuted = false;
+    this.lastPriceCheckParams = null;
   }
 
   /**
@@ -400,6 +437,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
 
         // Cargar precios del departure
         this.loadDeparturePrices(reservation.departureId);
+        
+        // Ejecutar verificación de precios después de cargar todos los datos
+        setTimeout(() => {
+          this.executePriceCheck();
+        }, 1000);
       },
       error: (error) => {
         this.error =
@@ -720,10 +762,15 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
     
     // Actualizar el resumen del pedido (solo si ya tenemos precios cargados)
     if (Object.keys(this.pricesByAgeGroup).length > 0) {
-    this.updateOrderSummary(travelersNumbers);
+      this.updateOrderSummary(travelersNumbers);
     }
-        // Ejecutar verificación de precios con el nuevo número de pasajeros
-        this.executePriceCheck();
+    
+    // Ejecutar verificación de precios solo si el número de pasajeros cambió significativamente
+    // (evita llamadas innecesarias por cambios menores)
+    const newTotalPassengers = travelersNumbers.adults + travelersNumbers.childs + travelersNumbers.babies;
+    if (newTotalPassengers !== this.totalPassengers) {
+      this.executePriceCheck();
+    }
   }
 
   /**

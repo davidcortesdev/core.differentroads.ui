@@ -37,7 +37,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
     totalPrice: number;
   }>();
 
-  FLIGHT_TYPE_SALIDA = 4;
+
 
   selectedFlight: IFlightPackDTO | null = null;
   flightPacks: IFlightPackDTO[] = [];
@@ -179,16 +179,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
     });
   }
 
-  // Métodos simplificados - ya no necesitamos los métodos de escalas aquí
-  getAirlinesText(flightId: number): string {
-    const detail = this.flightDetails.get(flightId);
-    if (!detail || !detail.airlines) return '';
-    return detail.airlines.join(', ');
-  }
 
-  formatTime(time: any): string {
-    return time ? time.slice(0, 5) : '--:--';
-  }
 
   refreshData(): void {
     this.getFlights();

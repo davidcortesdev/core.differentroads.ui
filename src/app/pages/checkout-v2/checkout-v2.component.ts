@@ -1,8 +1,9 @@
-import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MenuItem, MessageService } from 'primeng/api';
 import { TourNetService } from '../../core/services/tourNet.service';
 import { ReservationService } from '../../core/services/reservation/reservation.service';
-import { DepartureService } from '../../core/services/departure/departure.service';
+import { DepartureService, IDepartureResponse } from '../../core/services/departure/departure.service';
 import {
   DeparturePriceSupplementService,
   IDeparturePriceSupplementResponse,
@@ -18,7 +19,6 @@ import {
   IItineraryResponse,
   ItineraryFilters,
 } from '../../core/services/itinerary/itinerary.service';
-import { MenuItem, MessageService } from 'primeng/api';
 import { SelectorRoomComponent } from './components/selector-room/selector-room.component';
 import { SelectorTravelerComponent } from './components/selector-traveler/selector-traveler.component';
 import { InsuranceComponent } from './components/insurance/insurance.component';
@@ -32,6 +32,11 @@ import {
   ReservationTravelerService,
   IReservationTravelerResponse,
 } from '../../core/services/reservation/reservation-traveler.service';
+import { PriceCheckService } from './services/price-check.service';
+import { IPriceCheckResponse, IJobStatusResponse } from './services/price-check.service';
+import { environment } from '../../../environments/environment';
+import { interval, Subscription } from 'rxjs';
+import { takeWhile } from 'rxjs/operators';
 import { ReservationStatusService } from '../../core/services/reservation/reservation-status.service';
 
 @Component({
@@ -40,7 +45,7 @@ import { ReservationStatusService } from '../../core/services/reservation/reserv
   templateUrl: './checkout-v2.component.html',
   styleUrl: './checkout-v2.component.scss',
 })
-export class CheckoutV2Component implements OnInit {
+export class CheckoutV2Component implements OnInit, OnDestroy {
   // Referencias a componentes hijos
   @ViewChild('roomSelector') roomSelector!: SelectorRoomComponent;
   @ViewChild('travelerSelector') travelerSelector!: SelectorTravelerComponent;
@@ -64,6 +69,7 @@ export class CheckoutV2Component implements OnInit {
 
   // Variable para datos del itinerario
   itineraryData: IItineraryResponse | null = null;
+  departureData: IDepartureResponse | null = null; // Nuevo: para almacenar datos del departure
 
   // Variables para actividades
   selectedActivities: any[] = [];
@@ -105,6 +111,11 @@ export class CheckoutV2Component implements OnInit {
 
   // Propiedades para autenticación
   loginDialogVisible: boolean = false;
+
+  // Propiedades para monitoreo de jobs de sincronización
+  currentJobId: string | null = null;
+  jobMonitoringSubscription: Subscription | null = null;
+  isSyncInProgress: boolean = false;
   isAuthenticated: boolean = false;
 
   constructor(
@@ -124,6 +135,7 @@ export class CheckoutV2Component implements OnInit {
     private usersNetService: UsersNetService,
     private reservationTravelerService: ReservationTravelerService,
     private cdr: ChangeDetectorRef,
+    private priceCheckService: PriceCheckService,
     private reservationStatusService: ReservationStatusService
   ) {}
 
@@ -159,6 +171,194 @@ export class CheckoutV2Component implements OnInit {
         this.error = 'No se proporcionó un ID de reservación válido';
       }
     });
+
+    // Ejecutar la verificación de precios cuando se tienen los datos necesarios
+    this.executePriceCheck();
+  }
+
+  /**
+   * Ejecuta la verificación de precios cuando se tienen los datos necesarios
+   */
+  private executePriceCheck(): void {
+    if (this.departureId && this.reservationId && this.totalPassengers > 0) {
+      // Obtener el retailer ID del departure o usar el valor por defecto
+      let retailerID = environment.retaileriddefault;
+      
+      // Si tenemos datos del departure, intentar obtener el retailer ID
+      if (this.departureData && this.departureData.retailerId) {
+        retailerID = this.departureData.retailerId;
+      }
+      
+      this.priceCheckService.checkPrices(retailerID, this.departureId, this.totalPassengers)
+        .subscribe({
+          next: (response: IPriceCheckResponse) => {
+            console.log('PriceCheck response:', response);
+            
+            if (response.needsUpdate) {
+              if (response.jobStatus === 'ENQUEUED' && response.jobId) {
+                console.log(`Job de sincronización encolado con ID: ${response.jobId} para tour: ${response.tourTKId}`);
+                
+                // Iniciar el monitoreo del job
+                this.startJobMonitoring(response.jobId);
+                
+                // Mostrar mensaje al usuario sobre la actualización en curso
+                this.messageService.add({
+                  severity: 'info',
+                  summary: 'Actualización de precios',
+                  detail: 'Los precios se están actualizando en segundo plano. Te notificaremos cuando termine.'
+                });
+              } else if (response.jobStatus === 'EXISTING') {
+                console.log(`Ya existe un job de sincronización para el tour: ${response.tourTKId}`);
+                this.messageService.add({
+                  severity: 'info',
+                  summary: 'Sincronización en curso',
+                  detail: 'Ya hay una actualización de precios en curso para este tour.'
+                });
+              }
+            } else {
+              console.log('Los precios están actualizados');
+            }
+          },
+          error: (error) => {
+            console.error('Error al verificar precios:', error);
+            // No mostramos error al usuario ya que esto es una verificación en segundo plano
+          }
+        });
+    }
+  }
+
+  /**
+   * Inicia el monitoreo de un job de Hangfire
+   */
+  private startJobMonitoring(jobId: string): void {
+    this.currentJobId = jobId;
+    this.isSyncInProgress = true;
+
+    // Cancelar cualquier monitoreo anterior
+    if (this.jobMonitoringSubscription) {
+      this.jobMonitoringSubscription.unsubscribe();
+    }
+
+    // Verificar el estado del job cada 5 segundos
+    this.jobMonitoringSubscription = interval(5000)
+      .pipe(
+        takeWhile(() => this.isSyncInProgress, true) // Incluir la última emisión cuando se complete
+      )
+      .subscribe(() => {
+        if (this.currentJobId) {
+          this.checkJobStatus(this.currentJobId);
+        }
+      });
+  }
+
+  /**
+   * Verifica el estado de un job específico
+   */
+  private checkJobStatus(jobId: string): void {
+    this.priceCheckService.checkJobStatus(jobId).subscribe({
+      next: (jobStatus: IJobStatusResponse) => {
+        console.log('Job status:', jobStatus);
+        
+        // Estados de Hangfire: Enqueued, Processing, Succeeded, Failed, Deleted, Scheduled
+        switch (jobStatus.state) {
+          case 'Succeeded':
+            this.onJobCompleted(true);
+            break;
+          case 'Failed':
+          case 'Deleted':
+            this.onJobCompleted(false);
+            break;
+          case 'Processing':
+            console.log('Job en proceso...');
+            break;
+          case 'Enqueued':
+          case 'Scheduled':
+            console.log('Job en cola...');
+            break;
+          default:
+            console.log(`Estado desconocido del job: ${jobStatus.state}`);
+        }
+      },
+      error: (error) => {
+        console.error('Error al verificar estado del job:', error);
+        // Si hay error al verificar el job, asumir que terminó (podría haberse eliminado)
+        this.onJobCompleted(false);
+      }
+    });
+  }
+
+  /**
+   * Se ejecuta cuando un job se completa (exitoso o fallido)
+   */
+  private onJobCompleted(wasSuccessful: boolean): void {
+    this.isSyncInProgress = false;
+    this.currentJobId = null;
+
+    // Cancelar el monitoreo
+    if (this.jobMonitoringSubscription) {
+      this.jobMonitoringSubscription.unsubscribe();
+      this.jobMonitoringSubscription = null;
+    }
+
+    if (wasSuccessful) {
+      // Mostrar mensaje de éxito
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Sincronización completada',
+        detail: 'Los precios han sido actualizados correctamente. Recargando información...'
+      });
+
+      // Recargar todos los datos del componente
+      this.reloadComponentData();
+    } else {
+      // Mostrar mensaje de error
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Sincronización finalizada',
+        detail: 'La sincronización de precios ha finalizado. Puedes continuar con tu reserva.'
+      });
+    }
+  }
+
+  /**
+   * Recarga todos los datos del componente
+   */
+  private reloadComponentData(): void {
+    if (this.reservationId) {
+      // Recargar datos de la reservación
+      this.loadReservationData(this.reservationId);
+      
+      // Forzar actualización de todos los componentes hijos
+      setTimeout(() => {
+        // Los componentes hijos se recargarán automáticamente cuando cambie departureId/reservationId
+        // a través de sus métodos ngOnChanges
+        
+        // Recargar datos de habitaciones si está disponible
+        if (this.roomSelector) {
+          this.roomSelector.initializeComponent();
+        }
+        
+        // Recargar datos de seguros si está disponible
+        if (this.insuranceSelector) {
+          this.insuranceSelector.loadInsurances();
+        }
+        
+        // Forzar actualización del resumen
+        this.forceSummaryUpdate();
+        
+        console.log('Datos del componente recargados después de la sincronización');
+      }, 1000);
+    }
+  }
+
+  /**
+   * Se ejecuta cuando el componente se destruye
+   */
+  ngOnDestroy(): void {
+    // Cancelar el monitoreo de jobs al destruir el componente
+    if (this.jobMonitoringSubscription) {
+      this.jobMonitoringSubscription.unsubscribe();
+    }
   }
 
   // Inicializar los pasos del checkout
@@ -242,8 +442,6 @@ export class CheckoutV2Component implements OnInit {
     activityName: string;
     activityPrice: number;
   }): void {
-    console.log('🎯 Cambio de asignación de actividad recibido:', event);
-
     // Inicializar el objeto para el viajero si no existe
     if (!this.travelerActivities[event.travelerId]) {
       this.travelerActivities[event.travelerId] = {};
@@ -253,8 +451,6 @@ export class CheckoutV2Component implements OnInit {
     this.travelerActivities[event.travelerId][event.activityId] =
       event.isAssigned;
 
-    console.log(`📊 Estado actualizado - travelerActivities:`, this.travelerActivities);
-
     // Actualizar el conteo de actividades por actividad
     this.updateActivitiesByTraveler(
       event.activityId,
@@ -262,29 +458,20 @@ export class CheckoutV2Component implements OnInit {
       event.activityPrice
     );
 
-    console.log(`📊 activitiesByTraveler después de actualizar:`, this.activitiesByTraveler);
-
     // Recalcular el resumen del pedido
     if (
       this.travelerSelector &&
       this.travelerSelector.travelersNumbers &&
       Object.keys(this.pricesByAgeGroup).length > 0
     ) {
-      console.log(`🔄 Recalculando resumen del pedido...`);
-      console.log(`👥 travelersNumbers:`, this.travelerSelector.travelersNumbers);
       this.updateOrderSummary(this.travelerSelector.travelersNumbers);
-      console.log(`📋 Summary actualizado:`, this.summary);
-      console.log(`💰 Total calculado:`, this.totalAmountCalculated);
     } else {
-      console.log(`⚠️ No se puede recalcular resumen - travelerSelector:`, !!this.travelerSelector, 'travelersNumbers:', !!this.travelerSelector?.travelersNumbers, 'pricesByAgeGroup:', Object.keys(this.pricesByAgeGroup).length);
-      
       // Intentar recalcular solo las actividades si no tenemos travelerSelector
       this.updateActivitiesOnly();
     }
 
     // Forzar detección de cambios
     this.cdr.detectChanges();
-
   }
 
   /**
@@ -295,9 +482,6 @@ export class CheckoutV2Component implements OnInit {
     activityName: string,
     activityPrice: number
   ): void {
-    console.log(`🔢 Actualizando conteo para actividad ${activityId} (${activityName})`);
-    console.log(`📊 travelerActivities actual:`, this.travelerActivities);
-    
     // Contar cuántos viajeros tienen esta actividad asignada
     let count = 0;
     Object.values(this.travelerActivities).forEach((travelerActivities) => {
@@ -306,61 +490,46 @@ export class CheckoutV2Component implements OnInit {
       }
     });
 
-    console.log(`👥 Conteo calculado: ${count} viajeros para actividad ${activityId}`);
-
     // Actualizar o crear el registro de la actividad
     this.activitiesByTraveler[activityId] = {
       count: count,
       price: activityPrice,
       name: activityName,
     };
-
-    console.log(`📝 activitiesByTraveler actualizado:`, this.activitiesByTraveler);
-    console.log(`Actividad ${activityName}: ${count} viajeros asignados`);
   }
 
   /**
    * Actualiza solo la sección de actividades en el resumen
    */
   private updateActivitiesOnly(): void {
-    console.log(`🔄 Actualizando solo actividades en el resumen...`);
-    
     // Limpiar actividades existentes del summary
-    this.summary = this.summary.filter(item => 
-      !item.description || 
-      !Object.values(this.activitiesByTraveler).some(activity => 
-        activity.name === item.description
-      )
+    this.summary = this.summary.filter(
+      (item) =>
+        !item.description ||
+        !Object.values(this.activitiesByTraveler).some(
+          (activity) => activity.name === item.description
+        )
     );
-    
-    console.log(`📋 Summary después de limpiar actividades:`, this.summary);
-    
+
     // Agregar actividades actualizadas
     Object.values(this.activitiesByTraveler).forEach((activityData) => {
-      console.log(`📋 Procesando actividad:`, activityData);
       if (activityData.count > 0 && activityData.price > 0) {
         const summaryItem = {
           qty: activityData.count,
           value: activityData.price,
           description: `${activityData.name}`,
         };
-        console.log(`➕ Agregando al summary:`, summaryItem);
         this.summary.push(summaryItem);
       } else {
-        console.log(`❌ Actividad no agregada - count: ${activityData.count}, price: ${activityData.price}`);
       }
     });
-    
-    console.log(`📋 Summary final:`, this.summary);
-    
+
     // Recalcular totales
     this.calculateTotals();
-    console.log(`💰 Total recalculado:`, this.totalAmountCalculated);
-    
+
     // Forzar detección de cambios
     this.cdr.detectChanges();
   }
-
 
   // Método para cargar datos del tour y obtener el itinerario
   private loadTourData(tourId: number): void {
@@ -416,6 +585,7 @@ export class CheckoutV2Component implements OnInit {
       next: (departure) => {
         this.departureDate = departure.departureDate ?? '';
         this.returnDate = departure.arrivalDate ?? '';
+        this.departureData = departure; // Almacenar datos del departure
 
         // Solo asignar si no se ha obtenido desde el tour (como respaldo)
         if (!this.itineraryId && departure.itineraryId) {
@@ -543,6 +713,8 @@ export class CheckoutV2Component implements OnInit {
     childs: number;
     babies: number;
   }): void {
+    console.log('Travelers numbers changed:', travelersNumbers);
+    
     // Actualizar el total de pasajeros
     this.totalPassengers =
       travelersNumbers.adults +
@@ -553,11 +725,13 @@ export class CheckoutV2Component implements OnInit {
     if (this.roomSelector) {
       this.roomSelector.updateTravelersNumbers(travelersNumbers);
     }
-
+    
     // Actualizar el resumen del pedido (solo si ya tenemos precios cargados)
     if (Object.keys(this.pricesByAgeGroup).length > 0) {
-      this.updateOrderSummary(travelersNumbers);
+    this.updateOrderSummary(travelersNumbers);
     }
+        // Ejecutar verificación de precios con el nuevo número de pasajeros
+        this.executePriceCheck();
   }
 
   /**
@@ -736,22 +910,17 @@ export class CheckoutV2Component implements OnInit {
     }
 
     // Actividades por viajero (nueva lógica)
-    console.log(`🎯 Procesando actividades por viajero:`, this.activitiesByTraveler);
     Object.values(this.activitiesByTraveler).forEach((activityData) => {
-      console.log(`📋 Procesando actividad:`, activityData);
       if (activityData.count > 0 && activityData.price > 0) {
         const summaryItem = {
           qty: activityData.count,
           value: activityData.price,
           description: `${activityData.name}`,
         };
-        console.log(`➕ Agregando al summary:`, summaryItem);
         this.summary.push(summaryItem);
       } else {
-        console.log(`❌ Actividad no agregada - count: ${activityData.count}, price: ${activityData.price}`);
       }
     });
-    console.log(`📋 Summary después de actividades:`, this.summary);
 
     // Actividades seleccionadas (mantener como respaldo para compatibilidad)
     if (
@@ -1239,6 +1408,14 @@ export class CheckoutV2Component implements OnInit {
           ]
         );
 
+        // MEJORA: Validación adicional para el seguro
+        console.log('🛡️ [CHECKOUT] Resultados del guardado:');
+        console.log('🛡️ [CHECKOUT] - Habitaciones guardadas:', roomsSaved);
+        console.log('🛡️ [CHECKOUT] - Seguro guardado:', insuranceSaved);
+        console.log('🛡️ [CHECKOUT] - Actividades guardadas:', activitiesSaved);
+        console.log('🛡️ [CHECKOUT] - Seguro seleccionado:', this.insuranceSelector.selectedInsurance ? this.insuranceSelector.selectedInsurance.name : 'Básico');
+        console.log('🛡️ [CHECKOUT] - Total de viajeros:', this.totalPassengers);
+
         if (!roomsSaved) {
           this.messageService.add({
             severity: 'error',
@@ -1270,6 +1447,33 @@ export class CheckoutV2Component implements OnInit {
             life: 5000,
           });
           return;
+        }
+
+        // MEJORA: Verificación adicional de que el seguro se guardó correctamente
+        if (this.insuranceSelector.selectedInsurance) {
+          console.log('🛡️ [CHECKOUT] ✅ Seguro guardado exitosamente para todos los viajeros');
+          console.log('🛡️ [CHECKOUT] 📋 Detalles del seguro guardado:');
+          console.log('🛡️ [CHECKOUT]   - Nombre:', this.insuranceSelector.selectedInsurance.name);
+          console.log('🛡️ [CHECKOUT]   - ID:', this.insuranceSelector.selectedInsurance.id);
+          console.log('🛡️ [CHECKOUT]   - Precio por persona:', this.insurancePrice);
+          console.log('🛡️ [CHECKOUT]   - Total de viajeros:', this.totalPassengers);
+          console.log('🛡️ [CHECKOUT]   - Precio total:', this.insurancePrice * this.totalPassengers);
+          
+          // MEJORA: Verificar que las asignaciones se guardaron correctamente
+          const verificationResult = await this.insuranceSelector.verifyInsuranceAssignments();
+          if (!verificationResult) {
+            console.warn('🛡️ [CHECKOUT] ⚠️ ADVERTENCIA: Las asignaciones de seguro podrían no haberse guardado correctamente');
+            this.messageService.add({
+              severity: 'warn',
+              summary: 'Advertencia',
+              detail: 'El seguro se guardó pero podría no haberse aplicado a todos los viajeros. Verifica en el siguiente paso.',
+              life: 5000,
+            });
+          } else {
+            console.log('🛡️ [CHECKOUT] ✅ Verificación exitosa: El seguro se guardó correctamente para todos los viajeros');
+          }
+        } else {
+          console.log('🛡️ [CHECKOUT] ✅ Seguro básico seleccionado (sin asignaciones en BD)');
         }
 
         // 7. Actualizar el totalPassengers en la reserva

@@ -234,6 +234,7 @@ import { PaymentManagementComponent } from './pages/checkout-v2/components/payme
 import { NewReservationComponent } from './pages/checkout-v2/components/new-reservation/new-reservation.component';
 import { FlightSectionV2Component } from './pages/checkout-v2/components/flight-section/flight-section.component';
 import { FlightStopsComponent } from './pages/checkout-v2/components/flight-management/flight-stops/flight-stops.component';
+import { FlightItemComponent } from './pages/checkout-v2/components/flight-management/flight-item/flight-item.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -374,6 +375,7 @@ registerLocaleData(localeEs);
     NewReservationComponent,
     FlightSectionV2Component,
     FlightStopsComponent,
+    FlightItemComponent,
   ],
   imports: [
     // Angular Modules

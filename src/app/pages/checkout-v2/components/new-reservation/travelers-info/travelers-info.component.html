@@ -1,0 +1,61 @@
+<!-- travelers-info.component.html -->
+<p-panel styleClass="trav-pan" *ngIf="hasTravelers">
+    <ng-template pTemplate="header">
+      <div class="pan-hdr">Información de los viajeros</div>
+    </ng-template>
+    <div class="trav-cont">
+      <div class="trav-note">
+        <i class="pi pi-info-circle"></i>
+        <p>
+          Revisa que los nombres y apellidos aparecen 
+          igual que en tu documento de identificación.
+        </p>
+      </div>
+  
+      <div class="trav-grid">
+        <div class="trav-info" *ngFor="let traveler of travelers; let i = index">
+          <div class="trav-box">
+            <h3>Pasajero {{ i + 1 }}: {{ traveler.name }}</h3>
+            <div class="trav-det">
+              <div class="det-row" *ngIf="traveler.email">
+                <label>Email:</label>
+                <span>{{ traveler.email }}</span>
+              </div>
+              <div class="det-row" *ngIf="traveler.phone">
+                <label>Teléfono:</label>
+                <span>{{ traveler.phone }}</span>
+              </div>
+              <div class="det-row" *ngIf="traveler.gender">
+                <label>Sexo:</label>
+                <span>{{ traveler.gender }}</span>
+              </div>
+              <div class="det-row" *ngIf="traveler.room">
+                <label>Acomodación:</label>
+                <span>{{ traveler.room }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <div class="footnote">
+        <span>
+          *Los gastos de gestión derivados del cambio o corrección de nombre pueden conllevar gastos 
+          desde la aerolínea de hasta 150€ de penalización, no incluidos en el bono. En ocasiones, 
+          incluso las aerolíneas no permiten cambios/correción de nombre.
+        </span>
+        <br />
+        <span>
+          <br />
+          Por favor, revisa nuestras condiciones de Cancelación en el apartado 
+          de <a class="conditions" href="/pages/condiciones-generales">"Condiciones Generales"</a> de nuestra página web.
+        </span>
+      </div>
+    </div>
+  </p-panel>
+  
+  <!-- Estado de carga -->
+  <div class="loading-state" *ngIf="loading">
+    <i class="pi pi-spin pi-spinner"></i>
+    <span>Cargando información de viajeros...</span>
+  </div>

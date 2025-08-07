@@ -1,0 +1,189 @@
+// travel-info.component.ts
+import {
+  Component,
+  Input,
+  OnInit,
+  OnChanges,
+  SimpleChanges,
+} from '@angular/core';
+import { forkJoin } from 'rxjs';
+
+// Importaciones de servicios
+import {
+  ReservationTravelerService,
+  IReservationTravelerResponse,
+} from '../../../../../core/services/reservation/reservation-traveler.service';
+import {
+  ReservationTravelerFieldService,
+  IReservationTravelerFieldResponse,
+} from '../../../../../core/services/reservation/reservation-traveler-field.service';
+import {
+  TourNetService,
+  Tour,
+} from '../../../../../core/services/tourNet.service';
+import {
+  DepartureService,
+  IDepartureResponse,
+} from '../../../../../core/services/departure/departure.service';
+
+// Interfaces
+interface TravelerWithFields extends IReservationTravelerResponse {
+  fields: IReservationTravelerFieldResponse[];
+}
+
+@Component({
+  selector: 'app-travel-info',
+  standalone: false,
+  templateUrl: './travel-info.component.html',
+  styleUrl: './travel-info.component.scss',
+})
+export class TravelInfoComponent implements OnInit, OnChanges {
+  @Input() reservationId!: number;
+  @Input() tourId?: number;
+  @Input() departureId?: number;
+
+  // Datos del componente
+  travelersWithFields: TravelerWithFields[] = [];
+  totalTravelers: number = 0;
+  tourInfo: Tour | undefined;
+  departureInfo: IDepartureResponse | undefined;
+  loading: boolean = false;
+
+  constructor(
+    private reservationTravelerService: ReservationTravelerService,
+    private reservationTravelerFieldService: ReservationTravelerFieldService,
+    private tourNetService: TourNetService,
+    private departureService: DepartureService
+  ) {}
+
+  ngOnInit(): void {
+    this.loadData();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Recargar datos cuando cambien los inputs
+    if (
+      changes['reservationId'] ||
+      changes['tourId'] ||
+      changes['departureId']
+    ) {
+      this.loadData();
+    }
+  }
+
+  private loadData(): void {
+    if (!this.reservationId) {
+      console.warn('No reservation ID provided to travel-info component');
+      return;
+    }
+
+    this.loading = true;
+
+    // Cargar travelers
+    this.loadTravelers();
+
+    // Cargar tour info si se proporciona tourId
+    if (this.tourId) {
+      this.loadTourInfo();
+    }
+
+    // Cargar departure info si se proporciona departureId
+    if (this.departureId) {
+      this.loadDepartureInfo();
+    }
+  }
+
+  private loadTravelers(): void {
+    console.log('Cargando travelers para reservation ID:', this.reservationId);
+
+    this.reservationTravelerService
+      .getByReservation(this.reservationId)
+      .subscribe({
+        next: (travelers) => {
+          this.totalTravelers = travelers.length;
+          console.log('Travelers obtenidos:', travelers);
+
+          // Cargar campos de todos los travelers
+          this.loadTravelersFields(travelers);
+        },
+        error: (error) => {
+          console.error('Error loading travelers:', error);
+          this.loading = false;
+        },
+      });
+  }
+
+  private loadTravelersFields(travelers: IReservationTravelerResponse[]): void {
+    if (travelers.length === 0) {
+      this.loading = false;
+      return;
+    }
+
+    const travelerFieldRequests = travelers.map((traveler) =>
+      this.reservationTravelerFieldService.getByReservationTraveler(traveler.id)
+    );
+
+    forkJoin(travelerFieldRequests).subscribe({
+      next: (allTravelerFields) => {
+        console.log('Campos de todos los travelers:', allTravelerFields);
+
+        // Combinar travelers con sus campos
+        this.travelersWithFields = travelers.map((traveler, index) => ({
+          ...traveler,
+          fields: allTravelerFields[index],
+        }));
+
+        console.log(
+          'Travelers con campos combinados:',
+          this.travelersWithFields
+        );
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error loading travelers fields:', error);
+        this.loading = false;
+      },
+    });
+  }
+
+  private loadTourInfo(): void {
+    if (!this.tourId) return;
+
+    console.log('Cargando información del tour con ID:', this.tourId);
+
+    this.tourNetService.getTourById(this.tourId).subscribe({
+      next: (tour) => {
+        this.tourInfo = tour;
+        console.log('Información del tour cargada:', tour);
+      },
+      error: (error) => {
+        console.error('Error loading tour info:', error);
+      },
+    });
+  }
+
+  private loadDepartureInfo(): void {
+    if (!this.departureId) return;
+
+    console.log('Cargando información del departure con ID:', this.departureId);
+
+    this.departureService.getById(this.departureId).subscribe({
+      next: (departure) => {
+        this.departureInfo = departure;
+        console.log('Información del departure cargada:', departure);
+      },
+      error: (error) => {
+        console.error('Error loading departure info:', error);
+      },
+    });
+  }
+
+  // Getter para saber si hay información para mostrar
+  get hasInfo(): boolean {
+    return !!(
+      this.tourInfo?.name ||
+      (this.departureInfo?.departureDate && this.departureInfo?.arrivalDate) ||
+      this.totalTravelers > 0
+    );
+  }
+}

@@ -59,6 +59,8 @@ import {
   IActivityPackPriceResponse,
 } from '../../../../core/services/activity/activity-pack-price.service';
 import { FormGroup, FormBuilder, FormArray, FormControl } from '@angular/forms';
+import { ReservationService } from '../../../../core/services/reservation/reservation.service';
+import { IReservationStatusResponse, ReservationStatusService } from '../../../../core/services/reservation/reservation-status.service';
 
 @Component({
   selector: 'app-info-travelers',
@@ -125,6 +127,11 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     { name: 'Colombia', code: 'CO', value: 'CO' },
   ];
 
+  cartStatusId: number | null = null;
+  budgetStatusId: number | null = null;
+  draftStatusId: number | null = null;
+
+
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -140,14 +147,18 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     private activityPriceService: ActivityPriceService,
     private activityPackPriceService: ActivityPackPriceService,
     private messageService: MessageService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private reservationStatusService: ReservationStatusService,
+    private reservationService: ReservationService
   ) {
     this.travelersForm = this.fb.group({
       travelers: this.fb.array([]),
     });
-  }
+   }
 
   ngOnInit(): void {
+
+
     if (this.departureId && this.reservationId) {
       this.loadAllData();
     } else {
@@ -1014,9 +1025,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
-              detail: `Error al agregar ${activityName}: ${
-                error.message || 'Error desconocido'
-              }`,
+              detail: `Error al agregar ${activityName}: ${error.message || 'Error desconocido'
+                }`,
               life: 5000,
             });
           },
@@ -1080,9 +1090,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
-              detail: `Error al agregar ${activityName}: ${
-                error.message || 'Error desconocido'
-              }`,
+              detail: `Error al agregar ${activityName}: ${error.message || 'Error desconocido'
+                }`,
               life: 5000,
             });
           },
@@ -1132,9 +1141,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
-              detail: `Error al eliminar ${activityName}: ${
-                error.message || 'Error desconocido'
-              }`,
+              detail: `Error al eliminar ${activityName}: ${error.message || 'Error desconocido'
+                }`,
               life: 5000,
             });
           },
@@ -1162,9 +1170,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
-              detail: `Error al eliminar ${activityName}: ${
-                error.message || 'Error desconocido'
-              }`,
+              detail: `Error al eliminar ${activityName}: ${error.message || 'Error desconocido'
+                }`,
               life: 5000,
             });
           },
@@ -1196,8 +1203,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     const activityPacks = this.travelerActivityPacks[travelerId];
     const hasActivityPack = activityPacks
       ? activityPacks.some(
-          (activityPack) => activityPack.activityPackId === activityId
-        )
+        (activityPack) => activityPack.activityPackId === activityId
+      )
       : false;
 
     return hasIndividualActivity || hasActivityPack;

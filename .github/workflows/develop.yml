@@ -18,20 +18,20 @@ jobs:
     steps:
 
       - name: Checkout repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3.8.0
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3.3.0
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v6.11.0
+        uses: docker/build-push-action@v6
         with:
           context: .
           build-args: |
@@ -49,14 +49,14 @@ jobs:
     steps:
 
       - name: Checkout repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
 
       - name: Set project directory variable
         run: |
           echo "PROJECT_DIR=${{ vars.WORKING_DIR }}/yml/${{ github.event.repository.name }}-dev" >> $GITHUB_ENV
 
       - name: Create project directory if it doesn't exist
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ vars.REMOTE_HOST }}
           username: ${{ vars.REMOTE_USER }}
@@ -89,7 +89,7 @@ jobs:
           EOL
 
       - name: Copy docker-compose.yml to remote server
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1
         with:
           host: ${{ vars.REMOTE_HOST }}
           username: ${{ vars.REMOTE_USER }}
@@ -99,7 +99,7 @@ jobs:
           overwrite: true
 
       - name: Execute docker compose up
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ vars.REMOTE_HOST }}
           username: ${{ vars.REMOTE_USER }}

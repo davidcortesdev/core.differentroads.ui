@@ -19,7 +19,7 @@ jobs:
     steps:
 
       - name: Checkout repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -65,7 +65,7 @@ jobs:
 
       - name: Add comment to PR if branch is not up to date
         if: (env.behind_by > 0 || env.has_changes == 'true') && github.event_name == 'pull_request'
-        uses: actions/github-script@v7.0.1
+        uses: actions/github-script@v7
         with:
           script: |
             let message = '';
@@ -99,10 +99,10 @@ jobs:
     steps:
 
       - name: Checkout repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4.2.0
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
 
@@ -114,7 +114,7 @@ jobs:
 
       - name: Add comment to PR if build fails
         if: failure() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7.0.1
+        uses: actions/github-script@v7
         with:
           script: |
             github.rest.issues.createComment({
@@ -126,7 +126,7 @@ jobs:
 
       - name: Add comment to PR if build succeeds
         if: success() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7.0.1
+        uses: actions/github-script@v7
         with:
           script: |
             github.rest.issues.createComment({

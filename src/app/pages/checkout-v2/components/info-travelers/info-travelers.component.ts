@@ -160,18 +160,49 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
 
     if (this.departureId && this.reservationId) {
-      this.loadAllData();
+      console.log('departureId:', this.departureId);
+      console.log('reservationId:', this.reservationId);
+      console.log('itineraryId:', this.itineraryId);
+  
+      this.reservationStatusService.getByCode('CART').subscribe((cartStatus) => { this.cartStatusId = cartStatus[0].id});
+      this.reservationStatusService.getByCode('BUDGET').subscribe((budgetStatus) => { this.budgetStatusId = budgetStatus[0].id})
+      this.reservationStatusService.getByCode('DRAFT').subscribe((prebookStatus) => { this.draftStatusId = prebookStatus[0].id})
+      this.reservationService.getById(this.reservationId!).subscribe({
+        next: (reservation) => { 
+          if (reservation.reservationStatusId == this.budgetStatusId) {
+            console.log('Reserva en estado BUDGET');
+          } 
+          else if (reservation.reservationStatusId == this.draftStatusId) {
+            console.log('Reserva en estado DRAFT');
+            console.log('Pasando a estado CART');
+            this.reservationService.updateStatus(this.reservationId!, this.cartStatusId!).subscribe({
+              next: (success) => {
+                if (success) {
+                  console.log('Estado actualizado correctamente');
+                }
+              }
+            });
+          }
+        },
+        error: (error) => {
+          console.error('Error al obtener la reserva', error);
+        }
+      });
+      this.loadAllData(); 
     } else {
       this.error = 'No se proporcionó un ID de departure o reservación válido';
     }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    console.log('ngOnChanges - info-travelers:', changes);
     if (
       (changes['departureId'] && changes['departureId'].currentValue) ||
       (changes['reservationId'] && changes['reservationId'].currentValue)
     ) {
+      console.log('🔄 Recargando datos de info-travelers');
       if (this.departureId && this.reservationId) {
+        // Reinicializar control de eliminados
         this.deletedFromDB = {};
         this.loadAllData();
       }

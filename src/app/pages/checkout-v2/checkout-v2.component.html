@@ -133,7 +133,11 @@
           <!-- Step 4: Pago -->
           <div *ngSwitchCase="3">
             <!-- Componente de pago -->
-             <app-payment-management [totalPrice]="totalAmountCalculated" [reservationId]="reservationId ?? 0"></app-payment-management>
+             <app-payment-management 
+               [totalPrice]="totalAmountCalculated" 
+               [reservationId]="reservationId ?? 0"
+               [departureDate]="departureDate">
+             </app-payment-management>
           </div>
         </div>
       </div>

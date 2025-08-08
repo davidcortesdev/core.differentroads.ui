@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, Output, EventEmitter, OnChanges } from '@angular/core';
 import { IScalapayOrderResponse, NewScalapayService } from '../../services/newScalapay.service';
 import { Router } from '@angular/router';
 import { PaymentsNetService, PaymentStatusFilter } from '../../services/paymentsNet.service';
@@ -27,12 +27,13 @@ export interface PaymentOption {
   standalone: false,
   styleUrl: './payment-management.component.scss'
 })
-export class PaymentManagementComponent implements OnInit, OnDestroy {
+export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges {
   // Inputs
   @Input() totalPrice: number = 0;
   @Input() reservationId!: number;
   @Input() depositAmount: number = 200;
   @Input() paymentDeadline: string = '30 días antes del tour';
+  @Input() departureDate: string = '';
 
   // Outputs
   @Output() paymentCompleted = new EventEmitter<PaymentOption>();
@@ -73,6 +74,14 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initializeScalapayScript();
     this.loadPaymentIds();
+  }
+
+  ngOnChanges(): void {
+    // Si el depósito no está disponible pero está seleccionado, limpiar la selección
+    if (this.paymentState.type === 'deposit' && !this.shouldShowDepositOption) {
+      this.paymentState.type = null;
+      this.updateDropdownVisibility();
+    }
   }
 
   private loadPaymentIds(): void {
@@ -141,8 +150,30 @@ export class PaymentManagementComponent implements OnInit, OnDestroy {
     return this.paymentState.isLoading ? 'Procesando...' : 'Realizar pago';
   }
 
+  get shouldShowDepositOption(): boolean {
+    if (!this.departureDate) return false;
+    
+    const today = new Date();
+    const departureDate = new Date(this.departureDate);
+    
+    // Extraer el número de días del paymentDeadline (asumiendo formato "X días antes del tour")
+    const deadlineMatch = this.paymentDeadline.match(/(\d+)\s*días?\s*antes/);
+    if (!deadlineMatch) return false;
+    
+    const daysBeforeDeparture = parseInt(deadlineMatch[1]);
+    const deadlineDate = new Date(departureDate);
+    deadlineDate.setDate(departureDate.getDate() - daysBeforeDeparture);
+    
+    return today < deadlineDate;
+  }
+
   // Payment type management
   selectPaymentType(type: PaymentType): void {
+    // Si se intenta seleccionar depósito pero no está disponible, no hacer nada
+    if (type === 'deposit' && !this.shouldShowDepositOption) {
+      return;
+    }
+    
     this.paymentState.type = type;
     this.updateDropdownVisibility();
     this.resetRelatedSelections(type);

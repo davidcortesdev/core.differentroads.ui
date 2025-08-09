@@ -1,5 +1,10 @@
 <div class="cont">
+  <!-- Toast para mensajes informativos -->
+  <p-toast position="top-right"></p-toast>
+  
   <h3 class="title">Agrega los datos del viajero</h3>
+  
+
   
   <!-- Indicador de carga -->
   <div *ngIf="loading" class="loading-indicator">
@@ -58,7 +63,12 @@
                           <input 
                             pInputText 
                             [formControlName]="fieldDetails.code + '_' + traveler.id"
-                            [placeholder]="'Introduce tu ' + fieldDetails.name.toLowerCase()" />
+                            [placeholder]="'Introduce tu ' + fieldDetails.name.toLowerCase()"
+                            [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"
+                            (input)="onFieldChange(traveler.id, fieldDetails.code)" />
+                          <small *ngIf="hasFieldError(traveler.id, fieldDetails.code)" class="p-error">
+                            {{ getErrorMessage(fieldDetails.code, getFieldErrors(traveler.id, fieldDetails.code)) }}
+                          </small>
                         </div>
                         
                         <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'email'">
@@ -67,7 +77,26 @@
                             pInputText 
                             type="email" 
                             [formControlName]="fieldDetails.code + '_' + traveler.id"
-                            [placeholder]="'Introduce tu ' + fieldDetails.name.toLowerCase()" />
+                            [placeholder]="'Introduce tu ' + fieldDetails.name.toLowerCase()"
+                            [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"
+                            (input)="onFieldChange(traveler.id, fieldDetails.code)" />
+                          <small *ngIf="hasFieldError(traveler.id, fieldDetails.code)" class="p-error">
+                            {{ getErrorMessage(fieldDetails.code, getFieldErrors(traveler.id, fieldDetails.code)) }}
+                          </small>
+                        </div>
+                        
+                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'phone'">
+                          <label>{{ fieldDetails.name }}*</label>
+                          <input 
+                            pInputText 
+                            type="tel" 
+                            [formControlName]="fieldDetails.code + '_' + traveler.id"
+                            [placeholder]="'Introduce tu ' + fieldDetails.name.toLowerCase()"
+                            [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"
+                            (input)="onPhoneFieldChange(traveler.id, fieldDetails.code, $event)" />
+                          <small *ngIf="hasFieldError(traveler.id, fieldDetails.code)" class="p-error">
+                            {{ getErrorMessage(fieldDetails.code, getFieldErrors(traveler.id, fieldDetails.code)) }}
+                          </small>
                         </div>
                         
                         <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'sex'">
@@ -77,7 +106,12 @@
                             [options]="sexOptions" 
                             optionLabel="label" 
                             optionValue="value" 
-                            placeholder="Seleccione"></p-dropdown>
+                            placeholder="Seleccione"
+                            [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"
+                            (onChange)="onFieldChange(traveler.id, fieldDetails.code)"></p-dropdown>
+                          <small *ngIf="hasFieldError(traveler.id, fieldDetails.code)" class="p-error">
+                            {{ getErrorMessage(fieldDetails.code, getFieldErrors(traveler.id, fieldDetails.code)) }}
+                          </small>
                         </div>
                         
                         <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'date'">
@@ -88,7 +122,11 @@
                             appendTo="body" 
                             placeholder="dd/mm/yyyy"
                             dateFormat="dd/mm/yy"
-                            (onSelect)="onDateFieldChange(traveler.id, fieldDetails.code, $event)"></p-datePicker>
+                            (onSelect)="onDateFieldChange(traveler.id, fieldDetails.code, $event)"
+                            [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"></p-datePicker>
+                          <small *ngIf="hasFieldError(traveler.id, fieldDetails.code)" class="p-error">
+                            {{ getErrorMessage(fieldDetails.code, getFieldErrors(traveler.id, fieldDetails.code)) }}
+                          </small>
                         </div>
                         
                         <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'country'">
@@ -99,8 +137,12 @@
                             field="name" 
                             [placeholder]="'Introduce tu ' + fieldDetails.name.toLowerCase()" 
                             appendTo="body" 
-                            [dropdown]="true">
+                            [dropdown]="true"
+                            [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }">
                           </p-autocomplete>
+                          <small *ngIf="hasFieldError(traveler.id, fieldDetails.code)" class="p-error">
+                            {{ getErrorMessage(fieldDetails.code, getFieldErrors(traveler.id, fieldDetails.code)) }}
+                          </small>
                         </div>
                         
                       </ng-container>
@@ -160,7 +202,12 @@
                           <input 
                             pInputText 
                             [formControlName]="fieldDetails.code + '_' + traveler.id"
-                            [placeholder]="'Introduce tu ' + fieldDetails.name.toLowerCase()" />
+                            [placeholder]="'Introduce tu ' + fieldDetails.name.toLowerCase()"
+                            [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"
+                            (input)="onFieldChange(traveler.id, fieldDetails.code)" />
+                          <small *ngIf="hasFieldError(traveler.id, fieldDetails.code)" class="p-error">
+                            {{ getErrorMessage(fieldDetails.code, getFieldErrors(traveler.id, fieldDetails.code)) }}
+                          </small>
                         </div>
                         
                         <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'email'">
@@ -169,7 +216,26 @@
                             pInputText 
                             type="email" 
                             [formControlName]="fieldDetails.code + '_' + traveler.id"
-                            [placeholder]="'Introduce tu ' + fieldDetails.name.toLowerCase()" />
+                            [placeholder]="'Introduce tu ' + fieldDetails.name.toLowerCase()"
+                            [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"
+                            (input)="onFieldChange(traveler.id, fieldDetails.code)" />
+                          <small *ngIf="hasFieldError(traveler.id, fieldDetails.code)" class="p-error">
+                            {{ getErrorMessage(fieldDetails.code, getFieldErrors(traveler.id, fieldDetails.code)) }}
+                          </small>
+                        </div>
+                        
+                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'phone'">
+                          <label>{{ fieldDetails.name }}</label>
+                          <input 
+                            pInputText 
+                            type="tel" 
+                            [formControlName]="fieldDetails.code + '_' + traveler.id"
+                            [placeholder]="'Introduce tu ' + fieldDetails.name.toLowerCase()"
+                            [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"
+                            (input)="onPhoneFieldChange(traveler.id, fieldDetails.code, $event)" />
+                          <small *ngIf="hasFieldError(traveler.id, fieldDetails.code)" class="p-error">
+                            {{ getErrorMessage(fieldDetails.code, getFieldErrors(traveler.id, fieldDetails.code)) }}
+                          </small>
                         </div>
                         
                         <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'sex'">

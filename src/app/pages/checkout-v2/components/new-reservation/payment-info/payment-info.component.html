@@ -1,0 +1,38 @@
+<!-- payment-info.component.html -->
+<p-panel styleClass="pay-pan" *ngIf="hasPaymentInfo">
+    <ng-template pTemplate="header">
+      <div class="pan-hdr">Información sobre el pago</div>
+    </ng-template>
+    <div class="pay-det">
+      <div class="pay-amts">
+        <div class="amt-box">
+          <span class="lbl">Total a pagar</span>
+          <br />
+          <span class="val">{{ paymentInfo.totalAmount | number:'1.0-0' }} €</span>
+        </div>
+        <div class="amt-box">
+          <span class="lbl">Pagado</span>
+          <br />
+          <span class="val pay">{{ paymentInfo.paidAmount | number:'1.0-0' }} €</span>
+        </div>
+        <div class="amt-box">
+          <span class="lbl">Restante</span>
+          <br />
+          <span class="val rem">{{ paymentInfo.remainingAmount | number:'1.0-0' }} €</span>
+        </div>
+      </div>
+      <div class="pay-sch" *ngIf="hasPayments">
+        <div *ngFor="let payment of payments">
+          {{ payment.createdAt | date : "dd/MM/yyyy" }}: Pago de
+          {{ payment.amount | number:'1.0-0' }} € a través de
+          {{ payment.method }}
+        </div>
+      </div>
+    </div>
+  </p-panel>
+  
+  <!-- Estado de carga -->
+  <div class="loading-state" *ngIf="loading">
+    <i class="pi pi-spin pi-spinner"></i>
+    <span>Cargando información de pagos...</span>
+  </div>

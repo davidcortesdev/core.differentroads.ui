@@ -27,7 +27,7 @@
       ¡Tu reserva con número {{ reservation?.id }} ha sido confirmada!
     </h1>
     <h1 *ngIf="status === 'PENDING' && paymentType !== 'Transfer'">
-      ¡Tu reserva con número {{ reservation?.id }} está en petición!
+      ¡Tu reserva con número #{{ reservation?.id }} está en petición!
     </h1>
     <h1 *ngIf="paymentType === 'Transfer'">
       Confirma tu petición de reserva realizando el pago por transferencia
@@ -161,7 +161,7 @@
     </div>
     <div class="det-item">
       <label class="val">Número de reserva:</label>
-      <span>{{ reservation?.id }}</span>
+      <span>#{{ reservation?.id }}</span>
     </div>
     <div class="det-item">
       <label class="val">{{
@@ -183,7 +183,7 @@
     </p>
     <a href="#" class="pwd" style="color: #55728f">Crear contraseña</a>
   </div>
-  -->
+  
 
   <!-- Panel de información del viaje -->
   <app-travel-info 
@@ -201,6 +201,17 @@
   <app-section-flight 
     [departureId]="reservation?.departureId">
   </app-section-flight>
+
+  <!-- Panel de resumen de precios -->
+  <app-summary-info 
+    [reservationId]="reservationId">
+  </app-summary-info>
+
+  <!-- Panel de información de pago -->
+  <app-payment-info 
+    [reservationId]="reservationId">
+  </app-payment-info>
+
 </div>
 
 <div *ngIf="error" class="error-container">

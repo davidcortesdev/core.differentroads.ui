@@ -238,6 +238,8 @@ import { FlightItemComponent } from './pages/checkout-v2/components/flight-manag
 import { TravelInfoComponent } from './pages/checkout-v2/components/new-reservation/travel-info/travel-info.component';
 import { TravelersInfoComponent } from './pages/checkout-v2/components/new-reservation/travelers-info/travelers-info.component';
 import { SectionFlightComponent } from './pages/checkout-v2/components/new-reservation/section-flight/section-flight.component';
+import { PaymentInfoComponent } from './pages/checkout-v2/components/new-reservation/payment-info/payment-info.component';
+import { SummaryInfoComponent } from './pages/checkout-v2/components/new-reservation/summary-info/summary-info.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -382,6 +384,8 @@ registerLocaleData(localeEs);
     TravelInfoComponent,
     TravelersInfoComponent,
     SectionFlightComponent,
+    PaymentInfoComponent,
+    SummaryInfoComponent,
   ],
   imports: [
     // Angular Modules

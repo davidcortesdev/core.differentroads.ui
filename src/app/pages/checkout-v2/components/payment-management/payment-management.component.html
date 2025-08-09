@@ -44,6 +44,7 @@
 
       <!-- Deposit Payment Panel -->
       <p-panel 
+        *ngIf="shouldShowDepositOption"
         styleClass="payment-panel" 
         [ngClass]="{ 'selected': paymentType === 'deposit' }" 
         (click)="selectPaymentType('deposit')">

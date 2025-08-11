@@ -58,9 +58,18 @@ import {
   ActivityPackPriceService,
   IActivityPackPriceResponse,
 } from '../../../../core/services/activity/activity-pack-price.service';
-import { FormGroup, FormBuilder, FormArray, FormControl } from '@angular/forms';
+import {
+  FormGroup,
+  FormBuilder,
+  FormArray,
+  FormControl,
+  Validators,
+} from '@angular/forms';
 import { ReservationService } from '../../../../core/services/reservation/reservation.service';
-import { IReservationStatusResponse, ReservationStatusService } from '../../../../core/services/reservation/reservation-status.service';
+import {
+  IReservationStatusResponse,
+  ReservationStatusService,
+} from '../../../../core/services/reservation/reservation-status.service';
 
 @Component({
   selector: 'app-info-travelers',
@@ -80,6 +89,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     activityName: string;
     activityPrice: number;
   }>();
+
+  @Output() formValidityChange = new EventEmitter<boolean>();
 
   // Formulario reactivo principal
   travelersForm: FormGroup;
@@ -131,6 +142,43 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   budgetStatusId: number | null = null;
   draftStatusId: number | null = null;
 
+  // Mensajes de error personalizados
+  errorMessages: { [key: string]: { [key: string]: string } } = {
+    email: {
+      required: 'El correo electrónico es requerido.',
+      email: 'Ingresa un correo electrónico válido.',
+    },
+    phone: {
+      required: 'El teléfono es requerido.',
+      pattern:
+        'Ingresa un número de teléfono válido. Puede incluir código de país.',
+    },
+    text: {
+      required: 'Este campo es obligatorio.',
+      minlength: 'Debe tener al menos {minLength} caracteres.',
+      maxlength: 'No puede tener más de {maxLength} caracteres.',
+    },
+    number: {
+      required: 'Este campo es obligatorio.',
+      min: 'El valor mínimo es {min}.',
+      max: 'El valor máximo es {max}.',
+    },
+    date: {
+      required: 'Esta fecha es obligatoria.',
+      invalidDate: 'Fecha inválida.',
+      pastDate: 'La fecha debe ser anterior a hoy.',
+      futureDate: 'La fecha debe ser posterior a hoy.',
+    },
+    sex: {
+      required: 'Debe seleccionar un sexo.',
+    },
+    country: {
+      required: 'Debe seleccionar un país.',
+    },
+    required: {
+      required: 'Este campo es obligatorio.',
+    },
+  };
 
   private destroy$ = new Subject<void>();
 
@@ -154,41 +202,52 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     this.travelersForm = this.fb.group({
       travelers: this.fb.array([]),
     });
-   }
+  }
 
   ngOnInit(): void {
-
-
     if (this.departureId && this.reservationId) {
       console.log('departureId:', this.departureId);
       console.log('reservationId:', this.reservationId);
       console.log('itineraryId:', this.itineraryId);
-  
-      this.reservationStatusService.getByCode('CART').subscribe((cartStatus) => { this.cartStatusId = cartStatus[0].id});
-      this.reservationStatusService.getByCode('BUDGET').subscribe((budgetStatus) => { this.budgetStatusId = budgetStatus[0].id})
-      this.reservationStatusService.getByCode('DRAFT').subscribe((prebookStatus) => { this.draftStatusId = prebookStatus[0].id})
+
+      this.reservationStatusService
+        .getByCode('CART')
+        .subscribe((cartStatus) => {
+          this.cartStatusId = cartStatus[0].id;
+        });
+      this.reservationStatusService
+        .getByCode('BUDGET')
+        .subscribe((budgetStatus) => {
+          this.budgetStatusId = budgetStatus[0].id;
+        });
+      this.reservationStatusService
+        .getByCode('DRAFT')
+        .subscribe((prebookStatus) => {
+          this.draftStatusId = prebookStatus[0].id;
+        });
       this.reservationService.getById(this.reservationId!).subscribe({
-        next: (reservation) => { 
+        next: (reservation) => {
           if (reservation.reservationStatusId == this.budgetStatusId) {
             console.log('Reserva en estado BUDGET');
-          } 
-          else if (reservation.reservationStatusId == this.draftStatusId) {
+          } else if (reservation.reservationStatusId == this.draftStatusId) {
             console.log('Reserva en estado DRAFT');
             console.log('Pasando a estado CART');
-            this.reservationService.updateStatus(this.reservationId!, this.cartStatusId!).subscribe({
-              next: (success) => {
-                if (success) {
-                  console.log('Estado actualizado correctamente');
-                }
-              }
-            });
+            this.reservationService
+              .updateStatus(this.reservationId!, this.cartStatusId!)
+              .subscribe({
+                next: (success) => {
+                  if (success) {
+                    console.log('Estado actualizado correctamente');
+                  }
+                },
+              });
           }
         },
         error: (error) => {
           console.error('Error al obtener la reserva', error);
-        }
+        },
       });
-      this.loadAllData(); 
+      this.loadAllData();
     } else {
       this.error = 'No se proporcionó un ID de departure o reservación válido';
     }
@@ -254,14 +313,112 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
           }
         }
 
+        // Aplicar validaciones según el tipo de campo
+        const validators = this.getValidatorsForField(
+          fieldDetails,
+          field,
+          traveler.isLeadTraveler
+        );
+
         formGroup.addControl(
           `${fieldDetails.code}_${traveler.id}`,
-          this.fb.control(controlValue)
+          this.fb.control(controlValue, validators)
         );
       }
     });
 
     return formGroup;
+  }
+
+  /**
+   * Obtiene las validaciones para un campo específico
+   */
+  private getValidatorsForField(
+    fieldDetails: IReservationFieldResponse,
+    field: IDepartureReservationFieldResponse,
+    isLeadTraveler: boolean
+  ): any[] {
+    const validators: any[] = [];
+
+    // Si el campo es obligatorio, agregar Validators.required
+    if (this.isFieldMandatory(field, isLeadTraveler)) {
+      validators.push(Validators.required);
+    }
+
+    // Validaciones específicas según el tipo de campo
+    switch (fieldDetails.fieldType) {
+      case 'email':
+        validators.push(Validators.email);
+        break;
+      case 'phone':
+        validators.push(Validators.pattern(/^(\+\d{1,3})?\s?\d{6,14}$/));
+        break;
+      case 'text':
+        // Validaciones para campos de texto - usar valores por defecto
+        validators.push(Validators.minLength(2)); // Mínimo 2 caracteres
+        validators.push(Validators.maxLength(100)); // Máximo 100 caracteres
+        break;
+      case 'number':
+        // Validaciones para campos numéricos - usar valores por defecto
+        validators.push(Validators.min(0)); // Mínimo 0
+        validators.push(Validators.max(999999)); // Máximo 999999
+        break;
+      case 'date':
+        // Para campos de fecha, agregar validación de fecha válida
+        validators.push(this.dateValidator());
+        break;
+      case 'sex':
+        // Para campos de sexo, validar que sea M o F
+        validators.push(Validators.pattern(/^[MF]$/));
+        break;
+      case 'country':
+        // Para campos de país, validar que sea un código válido
+        validators.push(Validators.pattern(/^[A-Z]{2}$/));
+        break;
+    }
+
+    return validators;
+  }
+
+  /**
+   * Validador personalizado para fechas
+   */
+  private dateValidator() {
+    return (control: FormControl): { [key: string]: any } | null => {
+      if (!control.value) {
+        return null; // Si no hay valor, la validación required se encargará
+      }
+
+      let date: Date;
+
+      if (control.value instanceof Date) {
+        date = control.value;
+      } else if (typeof control.value === 'string') {
+        if (control.value.includes('/')) {
+          // Formato dd/mm/yyyy
+          const parts = control.value.split('/');
+          if (parts.length === 3) {
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const year = parseInt(parts[2], 10);
+            date = new Date(year, month, day);
+          } else {
+            return { invalidDate: true };
+          }
+        } else {
+          // Formato ISO
+          date = new Date(control.value);
+        }
+      } else {
+        return { invalidDate: true };
+      }
+
+      if (isNaN(date.getTime())) {
+        return { invalidDate: true };
+      }
+
+      return null;
+    };
   }
 
   /**
@@ -278,6 +435,11 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       const travelerForm = this.createTravelerForm(traveler);
       this.travelerForms.push(travelerForm);
     });
+
+    // Emitir el estado de validez inicial
+    setTimeout(() => {
+      this.emitFormValidity();
+    }, 100);
   }
 
   /**
@@ -654,6 +816,9 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
           // Inicializar formularios con los valores existentes
           this.initializeTravelerForms();
+
+          // Debug: Log de tipos de campos para debugging
+          this.logFieldTypesForDebugging();
         },
         error: (error) => {
           // Error handling
@@ -1056,8 +1221,9 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
-              detail: `Error al agregar ${activityName}: ${error.message || 'Error desconocido'
-                }`,
+              detail: `Error al agregar ${activityName}: ${
+                error.message || 'Error desconocido'
+              }`,
               life: 5000,
             });
           },
@@ -1121,8 +1287,9 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
-              detail: `Error al agregar ${activityName}: ${error.message || 'Error desconocido'
-                }`,
+              detail: `Error al agregar ${activityName}: ${
+                error.message || 'Error desconocido'
+              }`,
               life: 5000,
             });
           },
@@ -1172,8 +1339,9 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
-              detail: `Error al eliminar ${activityName}: ${error.message || 'Error desconocido'
-                }`,
+              detail: `Error al eliminar ${activityName}: ${
+                error.message || 'Error desconocido'
+              }`,
               life: 5000,
             });
           },
@@ -1201,8 +1369,9 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
-              detail: `Error al eliminar ${activityName}: ${error.message || 'Error desconocido'
-                }`,
+              detail: `Error al eliminar ${activityName}: ${
+                error.message || 'Error desconocido'
+              }`,
               life: 5000,
             });
           },
@@ -1234,8 +1403,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     const activityPacks = this.travelerActivityPacks[travelerId];
     const hasActivityPack = activityPacks
       ? activityPacks.some(
-        (activityPack) => activityPack.activityPackId === activityId
-      )
+          (activityPack) => activityPack.activityPackId === activityId
+        )
       : false;
 
     return hasIndividualActivity || hasActivityPack;
@@ -1299,6 +1468,46 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       // Forzar que el control se marque como modificado
       control.markAsDirty();
       control.markAsTouched();
+      this.emitFormValidity();
+    }
+  }
+
+  /**
+   * Manejar cambio en cualquier campo del formulario
+   */
+  onFieldChange(travelerId: number, fieldCode: string): void {
+    const controlName = `${fieldCode}_${travelerId}`;
+    const control = this.travelerForms.controls
+      .find((form) => form instanceof FormGroup && form.get(controlName))
+      ?.get(controlName);
+
+    if (control) {
+      control.markAsDirty();
+      control.markAsTouched();
+      this.emitFormValidity();
+    }
+  }
+
+  /**
+   * Maneja el cambio en campos de teléfono, filtrando caracteres no numéricos
+   */
+  onPhoneFieldChange(travelerId: number, fieldCode: string, event: any): void {
+    const input = event.target as HTMLInputElement;
+    // Filtrar solo números, +, espacios y guiones
+    const filteredValue = input.value.replace(/[^\d+\s-]/g, '');
+    input.value = filteredValue;
+
+    // Actualizar el control del formulario
+    const controlName = `${fieldCode}_${travelerId}`;
+    const control = this.travelerForms.controls
+      .find((form) => form instanceof FormGroup && form.get(controlName))
+      ?.get(controlName);
+
+    if (control) {
+      control.setValue(filteredValue);
+      control.markAsDirty();
+      control.markAsTouched();
+      this.emitFormValidity();
     }
   }
 
@@ -1362,5 +1571,344 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     return null;
+  }
+
+  /**
+   * Verifica si el formulario completo es válido
+   */
+  isFormValid(): boolean {
+    if (!this.travelersForm || !this.travelerForms) {
+      return false;
+    }
+
+    // Verificar que todos los formularios de viajeros sean válidos
+    for (let i = 0; i < this.travelerForms.length; i++) {
+      const travelerForm = this.getTravelerForm(i);
+      if (travelerForm && !travelerForm.valid) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Obtiene el mensaje de error para un campo específico
+   */
+  getErrorMessage(fieldCode: string, errors: any): string {
+    if (!errors) return '';
+
+    const fieldType = this.getFieldTypeByCode(fieldCode);
+    const errorMessages =
+      this.errorMessages[fieldType] || this.errorMessages['required'];
+
+    for (const errorKey in errors) {
+      if (errorMessages[errorKey]) {
+        let message = errorMessages[errorKey];
+
+        // Reemplazar placeholders en los mensajes
+        if (errorKey === 'minlength' && errors[errorKey]?.requiredLength) {
+          message = message.replace(
+            '{minLength}',
+            errors[errorKey].requiredLength
+          );
+        } else if (
+          errorKey === 'maxlength' &&
+          errors[errorKey]?.requiredLength
+        ) {
+          message = message.replace(
+            '{maxLength}',
+            errors[errorKey].requiredLength
+          );
+        } else if (errorKey === 'min' && errors[errorKey]?.min) {
+          message = message.replace('{min}', errors[errorKey].min);
+        } else if (errorKey === 'max' && errors[errorKey]?.max) {
+          message = message.replace('{max}', errors[errorKey].max);
+        }
+
+        return message;
+      }
+    }
+
+    return 'Campo inválido';
+  }
+
+  /**
+   * Obtiene el tipo de campo por su código
+   */
+  private getFieldTypeByCode(fieldCode: string): string {
+    const field = this.reservationFields.find((f) => f.code === fieldCode);
+    return field?.fieldType || 'required';
+  }
+
+  /**
+   * Verifica si un campo específico tiene errores
+   */
+  hasFieldError(travelerId: number, fieldCode: string): boolean {
+    const controlName = `${fieldCode}_${travelerId}`;
+    const control = this.travelerForms.controls
+      .find((form) => form instanceof FormGroup && form.get(controlName))
+      ?.get(controlName);
+
+    return control
+      ? control.invalid && (control.dirty || control.touched)
+      : false;
+  }
+
+  /**
+   * Obtiene los errores de un campo específico
+   */
+  getFieldErrors(travelerId: number, fieldCode: string): any {
+    const controlName = `${fieldCode}_${travelerId}`;
+    const control = this.travelerForms.controls
+      .find((form) => form instanceof FormGroup && form.get(controlName))
+      ?.get(controlName);
+
+    return control ? control.errors : null;
+  }
+
+  /**
+   * Marca todos los campos como touched para mostrar errores
+   */
+  markAllFieldsAsTouched(): void {
+    this.travelerForms.controls.forEach((travelerForm) => {
+      if (travelerForm instanceof FormGroup) {
+        Object.keys(travelerForm.controls).forEach((controlName) => {
+          const control = travelerForm.get(controlName);
+          if (control) {
+            control.markAsTouched();
+          }
+        });
+      }
+    });
+  }
+
+  /**
+   * Emite el estado de validez del formulario
+   */
+  private emitFormValidity(): void {
+    const isValid = this.isFormValid();
+    this.formValidityChange.emit(isValid);
+  }
+
+  /**
+   * Verifica si todos los campos obligatorios están completados
+   */
+  areAllMandatoryFieldsCompleted(): boolean {
+    if (!this.travelers || this.travelers.length === 0) {
+      return false;
+    }
+
+    for (const traveler of this.travelers) {
+      const travelerForm = this.getTravelerForm(
+        this.travelers.indexOf(traveler)
+      );
+      if (!travelerForm) continue;
+
+      // Verificar campos obligatorios para este viajero
+      for (const field of this.departureReservationFields) {
+        if (this.isFieldMandatory(field, traveler.isLeadTraveler)) {
+          const fieldDetails = this.getReservationFieldDetails(
+            field.reservationFieldId
+          );
+          if (fieldDetails) {
+            const controlName = `${fieldDetails.code}_${traveler.id}`;
+            const control = travelerForm.get(controlName);
+
+            if (!control || !control.value || control.invalid) {
+              return false;
+            }
+          }
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Obtiene la lista de campos faltantes para mostrar al usuario
+   */
+  getMissingFieldsList(): string[] {
+    const missingFields: string[] = [];
+
+    if (!this.travelers || this.travelers.length === 0) {
+      return missingFields;
+    }
+
+    for (const traveler of this.travelers) {
+      const travelerForm = this.getTravelerForm(
+        this.travelers.indexOf(traveler)
+      );
+      if (!travelerForm) continue;
+
+      for (const field of this.departureReservationFields) {
+        if (this.isFieldMandatory(field, traveler.isLeadTraveler)) {
+          const fieldDetails = this.getReservationFieldDetails(
+            field.reservationFieldId
+          );
+          if (fieldDetails) {
+            const controlName = `${fieldDetails.code}_${traveler.id}`;
+            const control = travelerForm.get(controlName);
+
+            if (!control || !control.value || control.invalid) {
+              missingFields.push(
+                `${fieldDetails.name} (Viajero ${traveler.travelerNumber})`
+              );
+            }
+          }
+        }
+      }
+    }
+
+    return missingFields;
+  }
+
+  /**
+   * Muestra un toast informativo cuando faltan campos obligatorios
+   */
+  showMissingFieldsToast(): void {
+    console.log('=== DEBUG: showMissingFieldsToast iniciado ===');
+
+    const missingFields = this.getMissingFieldsList();
+    console.log('Campos faltantes:', missingFields);
+
+    if (missingFields.length > 0) {
+      const message = `Por favor completa los siguientes campos obligatorios: ${missingFields.join(
+        ', '
+      )}`;
+
+      console.log('Mensaje del toast:', message);
+
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Campos requeridos',
+        detail: message,
+        life: 5000,
+      });
+
+      console.log('Toast agregado al MessageService');
+    } else {
+      console.log('No hay campos faltantes');
+    }
+
+    console.log('=== DEBUG: showMissingFieldsToast terminado ===');
+  }
+
+  /**
+   * Valida el formulario y muestra toast si hay errores
+   */
+  validateFormAndShowToast(): boolean {
+    console.log('=== DEBUG: validateFormAndShowToast iniciado ===');
+
+    const isValid = this.isFormValid();
+    console.log('Formulario válido:', isValid);
+
+    if (!isValid) {
+      console.log('Formulario NO válido, marcando campos como touched...');
+      this.markAllFieldsAsTouched();
+      console.log('Mostrando toast de campos faltantes...');
+      this.showMissingFieldsToast();
+    } else {
+      console.log('Formulario válido, no se muestra toast');
+    }
+
+    console.log('=== DEBUG: validateFormAndShowToast terminado ===');
+    return isValid;
+  }
+
+  /**
+   * Obtiene información detallada de validación para debugging
+   */
+  getValidationDebugInfo(): any {
+    const debugInfo: any = {
+      totalTravelers: this.travelers?.length || 0,
+      formValid: this.isFormValid(),
+      missingFields: this.getMissingFieldsList(),
+      fieldTypes: {},
+    };
+
+    // Obtener información de tipos de campos
+    if (this.departureReservationFields && this.reservationFields) {
+      this.departureReservationFields.forEach((field) => {
+        const fieldDetails = this.getReservationFieldDetails(
+          field.reservationFieldId
+        );
+        if (fieldDetails) {
+          debugInfo.fieldTypes[fieldDetails.code] = {
+            name: fieldDetails.name,
+            type: fieldDetails.fieldType,
+            mandatory: this.isFieldMandatory(field, false),
+          };
+        }
+      });
+    }
+
+    return debugInfo;
+  }
+
+  /**
+   * Console log para debugging de tipos de campos
+   */
+  logFieldTypesForDebugging(): void {
+    console.log('=== DEBUG: Tipos de campos disponibles ===');
+
+    if (this.reservationFields) {
+      this.reservationFields.forEach((field) => {
+        console.log(
+          `Campo: ${field.name} (${field.code}) - Tipo: ${field.fieldType}`
+        );
+      });
+    }
+
+    if (this.departureReservationFields) {
+      console.log('=== DEBUG: Campos de departure ===');
+      this.departureReservationFields.forEach((field) => {
+        const fieldDetails = this.getReservationFieldDetails(
+          field.reservationFieldId
+        );
+        console.log(
+          `Departure Field: ${
+            fieldDetails?.name
+          } - Mandatory: ${this.isFieldMandatory(field, false)}`
+        );
+      });
+    }
+  }
+
+  /**
+   * Método de prueba para verificar que el toast funciona
+   */
+  testToast(): void {
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Prueba de Toast',
+      detail:
+        'Este es un mensaje de prueba para verificar que el toast funciona correctamente',
+      life: 3000,
+    });
+  }
+
+  /**
+   * Método para debuggear los tipos de campo de teléfono
+   */
+  debugPhoneFieldTypes(): void {
+    console.log('=== DEBUG: Tipos de campo de teléfono ===');
+    this.departureReservationFields.forEach((field) => {
+      const fieldDetails = this.getReservationFieldDetails(
+        field.reservationFieldId
+      );
+      if (fieldDetails && fieldDetails.code.toLowerCase().includes('phone')) {
+        console.log(
+          'Campo:',
+          fieldDetails.name,
+          'Código:',
+          fieldDetails.code,
+          'Tipo:',
+          fieldDetails.fieldType
+        );
+      }
+    });
+    console.log('=== FIN DEBUG ===');
   }
 }

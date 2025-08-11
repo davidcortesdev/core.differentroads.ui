@@ -786,7 +786,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
     if (Object.keys(this.pricesByAgeGroup).length > 0) {
       this.updateOrderSummary(travelersNumbers);
     }
-
     // Ejecutar verificación de precios solo si el número de pasajeros cambió significativamente
     // (evita llamadas innecesarias por cambios menores)
     const newTotalPassengers =
@@ -1351,15 +1350,29 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
 
   // Método para guardar todos los datos de los viajeros
   private async saveTravelersData(): Promise<boolean> {
+    console.log('=== DEBUG: saveTravelersData iniciado ===');
+
     if (!this.infoTravelers) {
+      console.log('No hay componente infoTravelers, retornando true');
       return true; // Si no hay componente, no hay nada que guardar
     }
 
     try {
+      console.log('Validando campos obligatorios...');
+      // Validar que todos los campos obligatorios estén completados
+      if (!this.infoTravelers.validateFormAndShowToast()) {
+        console.log('Validación falló, retornando false');
+        // El toast ya se mostró automáticamente en validateFormAndShowToast()
+        return false; // No continuar si hay campos faltantes
+      }
+
+      console.log('Validación exitosa, guardando datos...');
       // Llamar al método saveAllTravelersData del componente hijo
       await this.infoTravelers.saveAllTravelersData();
+      console.log('Datos guardados exitosamente, retornando true');
       return true;
     } catch (error) {
+      console.error('Error en saveTravelersData:', error);
       this.messageService.add({
         severity: 'error',
         summary: 'Error al guardar',
@@ -1373,25 +1386,33 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
   async nextStepWithValidation(targetStep: number): Promise<void> {
     // Verificar autenticación para pasos que la requieren
     if (targetStep >= 2) {
-      this.authService.isLoggedIn().subscribe((isLoggedIn) => {
-        if (!isLoggedIn) {
-          // Usuario no está logueado, mostrar modal
-          sessionStorage.setItem('redirectUrl', window.location.pathname);
-          this.loginDialogVisible = true;
-          return;
-        }
-        // Usuario está logueado, actualizar variable local y continuar con la validación normal
-        this.isAuthenticated = true;
-        this.performStepValidation(targetStep);
+      return new Promise((resolve) => {
+        this.authService.isLoggedIn().subscribe(async (isLoggedIn) => {
+          if (!isLoggedIn) {
+            // Usuario no está logueado, mostrar modal
+            sessionStorage.setItem('redirectUrl', window.location.pathname);
+            this.loginDialogVisible = true;
+            resolve();
+            return;
+          }
+          // Usuario está logueado, actualizar variable local y continuar con la validación normal
+          this.isAuthenticated = true;
+          await this.performStepValidation(targetStep);
+          resolve();
+        });
       });
-      return;
     }
 
     // Para el paso 0 (personalizar viaje) y paso 1 (vuelos), no se requiere autenticación
-    this.performStepValidation(targetStep);
+    await this.performStepValidation(targetStep);
   }
 
   private async performStepValidation(targetStep: number): Promise<void> {
+    console.log(
+      '=== DEBUG: performStepValidation iniciado para targetStep:',
+      targetStep
+    );
+
     // Guardar cambios de travelers, habitaciones, seguros y actividades antes de continuar
     if (
       targetStep === 1 &&
@@ -1399,6 +1420,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
       this.roomSelector &&
       this.insuranceSelector
     ) {
+      console.log('Validando paso 1 (habitaciones, etc.)...');
       try {
         // 1. Guardar cambios de travelers si hay pendientes
         if (this.travelerSelector.hasUnsavedChanges) {
@@ -1418,6 +1440,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
               'Por favor, selecciona al menos una habitación antes de continuar.',
             life: 5000,
           });
+          console.log('No hay habitaciones seleccionadas, retornando');
           return;
         }
 
@@ -1593,13 +1616,18 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
 
     // Guardar datos de viajeros antes de continuar al paso de pago (targetStep === 3)
     if (targetStep === 3) {
+      console.log('Validando paso 3 (info-travelers)...');
       const saved = await this.saveTravelersData();
+      console.log('Resultado de saveTravelersData:', saved);
       if (!saved) {
+        console.log('Validación falló, NO continuando al siguiente paso');
         return; // No continuar si no se pudieron guardar los datos
       }
+      console.log('Validación exitosa, continuando al siguiente paso');
     }
 
     // Navegar al siguiente paso
+    console.log('Navegando al siguiente paso:', targetStep);
     this.onActiveIndexChange(targetStep);
   }
 
@@ -1697,23 +1725,23 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
   }
 
   // Métodos para autenticación
-  checkAuthAndContinue(
+  async checkAuthAndContinue(
     nextStep: number,
     activateCallback: (step: number) => void,
     useFlightless: boolean = false
-  ): void {
-    this.authService.isLoggedIn().subscribe((isLoggedIn) => {
+  ): Promise<void> {
+    this.authService.isLoggedIn().subscribe(async (isLoggedIn) => {
       if (isLoggedIn) {
         // Usuario está logueado, proceder normalmente
         if (useFlightless) {
           // Lógica para continuar sin vuelos
-          this.nextStepWithValidation(nextStep);
+          await this.nextStepWithValidation(nextStep);
         } else {
           // Lógica normal
-          this.nextStepWithValidation(nextStep);
+          await this.nextStepWithValidation(nextStep);
         }
-        // Llamar al callback con el step
-        activateCallback(nextStep);
+        // Solo llamar al callback si la validación fue exitosa
+        // La validación se maneja dentro de nextStepWithValidation
       } else {
         // Usuario no está logueado, mostrar modal
         // Guardar la URL actual con el step en sessionStorage

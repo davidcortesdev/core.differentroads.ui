@@ -111,7 +111,9 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
 
   private recalculateFlightPrice(): void {
     if (this.selectedFlight) {
-      const basePrice = this.selectedFlight.totalPrice || 0;
+      const basePrice = this.selectedFlight.ageGroupPrices.find(
+        (price) => price.ageGroupId === this.travelers[0].ageGroupId
+      )?.price || 0; //TODO: Añadir al summary los precios segun el ageGroup de los diferentes viajeros , no solo el del leadTraveler
       const totalTravelers = this.travelers.length;
       const totalPrice = totalTravelers > 0 ? basePrice * totalTravelers : 0;
 
@@ -152,7 +154,9 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       this.flightSelectionChange.emit({ selectedFlight: null, totalPrice: 0 });
     } else {
       this.selectedFlight = flightPack;
-      const basePrice = flightPack.totalPrice || 0;
+      const basePrice = flightPack.ageGroupPrices.find(
+        (price) => price.ageGroupId === this.travelers[0].ageGroupId
+      )?.price || 0; //TODO: Añadir al summary los precios segun el ageGroup de los diferentes viajeros , no solo el del leadTraveler
       const totalTravelers = this.travelers.length;
       const totalPrice = totalTravelers > 0 ? basePrice * totalTravelers : 0;
 

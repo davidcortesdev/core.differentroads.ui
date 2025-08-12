@@ -1,4 +1,4 @@
-<div *ngIf="flightPack && flightPack.totalPrice > 0" class="flight-item">
+<div *ngIf="flightPack && flightPack.ageGroupPrices[0].price > 0" class="flight-item"> <!-- Puede haber errores, se da por hecho que o son iguales o el primero es de adulto-->
   <div class="flight-departure-title" *ngIf="flightPack">
     <h3>
       Salida {{ flightPack.flights[0].departureCity }} ({{
@@ -45,7 +45,7 @@
     <div class="flight-itinerary-price space-y-4">
       <div class="flight-itinerary-price-wrapper">
         <span class="flight-itinerary-price-wrapper-price">
-          {{ flightPack.totalPrice || 0 | currencyFormat : "EUR" }}
+          {{ flightPack.ageGroupPrices[0].price || 0 | currencyFormat : "EUR" }} <!-- Puede haber errores, se da por hecho que o son iguales o el primero es de adulto-->
         </span>
         <span class="flight-itinerary-price-wrapper-text">Por persona</span>
       </div>

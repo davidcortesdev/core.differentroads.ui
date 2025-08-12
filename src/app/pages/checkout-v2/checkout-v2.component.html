@@ -105,6 +105,9 @@
                 label="Continuar"
                 icon="pi pi-arrow-right"
                 iconPos="right"
+                [disabled]="!selectedFlight"
+                [pTooltip]="!selectedFlight ? 'Debes seleccionar un vuelo para continuar' : ''"
+                tooltipPosition="top"
                 (onClick)="checkAuthAndContinue(2, onActiveIndexChange.bind(this), false)"
               ></p-button>
             </div>

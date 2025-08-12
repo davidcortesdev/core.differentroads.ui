@@ -157,6 +157,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       required: 'Este campo es obligatorio.',
       minlength: 'Debe tener al menos {minLength} caracteres.',
       maxlength: 'No puede tener más de {maxLength} caracteres.',
+      pattern:
+        'Ingresa un número de teléfono válido. Puede incluir código de país.', // Para el campo phone con fieldType text
     },
     number: {
       required: 'Este campo es obligatorio.',
@@ -351,12 +353,18 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         validators.push(Validators.email);
         break;
       case 'phone':
+        // Aplicar la validación específica para teléfono como en SignUpFormComponent
         validators.push(Validators.pattern(/^(\+\d{1,3})?\s?\d{6,14}$/));
         break;
       case 'text':
-        // Validaciones para campos de texto - usar valores por defecto
-        validators.push(Validators.minLength(2)); // Mínimo 2 caracteres
-        validators.push(Validators.maxLength(100)); // Máximo 100 caracteres
+        // Validación específica para el campo de teléfono basada en el código
+        if (fieldDetails.code === 'phone') {
+          validators.push(Validators.pattern(/^(\+\d{1,3})?\s?\d{6,14}$/));
+        } else {
+          // Validaciones para otros campos de texto
+          validators.push(Validators.minLength(2)); // Mínimo 2 caracteres
+          validators.push(Validators.maxLength(50)); // Máximo 100 caracteres
+        }
         break;
       case 'number':
         // Validaciones para campos numéricos - usar valores por defecto
@@ -439,7 +447,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     // Emitir el estado de validez inicial
     setTimeout(() => {
       this.emitFormValidity();
-    }, 100);
+    }, 50);
   }
 
   /**
@@ -1638,6 +1646,12 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
    */
   private getFieldTypeByCode(fieldCode: string): string {
     const field = this.reservationFields.find((f) => f.code === fieldCode);
+
+    // Si el campo es 'phone', usar 'phone' como tipo para los mensajes de error
+    if (fieldCode === 'phone') {
+      return 'phone';
+    }
+
     return field?.fieldType || 'required';
   }
 

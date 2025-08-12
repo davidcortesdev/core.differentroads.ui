@@ -1085,17 +1085,24 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
 
   // Método para guardar actividades seleccionadas (CON SOPORTE COMPLETO PARA PACKS)
   async saveActivitiesAssignments(): Promise<boolean> {
+    console.log('=== INICIO saveActivitiesAssignments ===');
+    
     if (
       !this.reservationId ||
       !this.selectedActivities ||
       this.selectedActivities.length === 0
     ) {
+      console.log('No hay actividades para guardar, retornando true');
+      console.log('reservationId:', this.reservationId);
+      console.log('selectedActivities:', this.selectedActivities);
+      console.log('selectedActivities.length:', this.selectedActivities?.length);
       return true; // Si no hay actividades seleccionadas, consideramos exitoso
     }
 
     try {
       // Verificar que tenemos el componente travelerSelector con datos
       if (!this.travelerSelector) {
+        console.error('No se encontró el componente travelerSelector');
         throw new Error('No se encontró información de viajeros');
       }
 
@@ -1103,11 +1110,18 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
       const existingTravelers = this.travelerSelector.existingTravelers || [];
 
       if (existingTravelers.length === 0) {
+        console.error('No se encontraron viajeros para esta reserva');
+        console.log('travelerSelector.existingTravelers:', this.travelerSelector.existingTravelers);
         throw new Error('No se encontraron viajeros para esta reserva');
       }
 
+      console.log(`Guardando actividades para ${existingTravelers.length} viajeros`);
+      console.log('Viajeros encontrados:', existingTravelers.map(t => ({ id: t.id, name: (t as any).name || 'Sin nombre' })));
+
       // Limpiar actividades y packs existentes para esta reserva
+      console.log('Limpiando actividades existentes...');
       await this.clearExistingActivitiesAndPacks(existingTravelers);
+      console.log('Actividades existentes limpiadas');
 
       // Separar actividades individuales y packs
       const individualActivities = this.selectedActivities.filter(
@@ -1116,6 +1130,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
       const activityPacks = this.selectedActivities.filter(
         (activity) => activity.type === 'pack'
       );
+
+      console.log(`Actividades individuales: ${individualActivities.length}, Packs: ${activityPacks.length}`);
+      console.log('Actividades individuales:', individualActivities);
+      console.log('Packs de actividades:', activityPacks);
 
       const createPromises: Promise<any>[] = [];
 
@@ -1128,12 +1146,26 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
             activityId: activity.id,
           };
 
+          console.log(`Creando asignación de actividad ${activity.id} para viajero ${traveler.id}:`, activityAssignment);
+
           const createPromise = new Promise((resolve, reject) => {
             this.reservationTravelerActivityService
               .create(activityAssignment)
               .subscribe({
-                next: (result) => resolve(result),
-                error: (error) => reject(error),
+                next: (result) => {
+                  console.log(`Actividad ${activity.id} asignada al viajero ${traveler.id} exitosamente:`, result);
+                  resolve(result);
+                },
+                error: (error) => {
+                  console.error(`Error al asignar actividad ${activity.id} al viajero ${traveler.id}:`, error);
+                  console.error('Detalles del error:', {
+                    status: error?.status,
+                    message: error?.message,
+                    error: error?.error,
+                    stack: error?.stack
+                  });
+                  reject(error);
+                },
               });
           });
 
@@ -1150,12 +1182,26 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
             activityPackId: pack.id,
           };
 
+          console.log(`Creando asignación de pack ${pack.id} para viajero ${traveler.id}:`, packAssignment);
+
           const createPromise = new Promise((resolve, reject) => {
             this.reservationTravelerActivityPackService
               .create(packAssignment)
               .subscribe({
-                next: (result) => resolve(result),
-                error: (error) => reject(error),
+                next: (result) => {
+                  console.log(`Pack ${pack.id} asignado al viajero ${traveler.id} exitosamente:`, result);
+                  resolve(result);
+                },
+                error: (error) => {
+                  console.error(`Error al asignar pack ${pack.id} al viajero ${traveler.id}:`, error);
+                  console.error('Detalles del error:', {
+                    status: error?.status,
+                    message: error?.message,
+                    error: error?.error,
+                    stack: error?.stack
+                  });
+                  reject(error);
+                },
               });
           });
 
@@ -1164,11 +1210,33 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
       });
 
       // Ejecutar todas las operaciones de creación
-      await Promise.all(createPromises);
+      if (createPromises.length > 0) {
+        console.log(`Ejecutando ${createPromises.length} operaciones de creación...`);
+        try {
+          await Promise.all(createPromises);
+          console.log('Todas las actividades se guardaron exitosamente');
+        } catch (error) {
+          console.error('Error durante la ejecución de operaciones de creación:', error);
+          throw error; // Re-lanzar el error para que sea capturado por el catch externo
+        }
+      } else {
+        console.log('No hay actividades para crear');
+      }
 
+      console.log('=== FIN saveActivitiesAssignments (EXITOSO) ===');
       return true;
     } catch (error) {
-      console.error('Error al guardar actividades:', error);
+      console.log('=== ERROR en saveActivitiesAssignments ===');
+      console.error('Error completo:', error);
+      console.error('Stack trace:', (error as any)?.stack);
+      console.error('Mensaje del error:', (error as any)?.message);
+      
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error al guardar actividades',
+        detail: 'Hubo un error al guardar las actividades seleccionadas. Por favor, inténtalo de nuevo.',
+        life: 5000,
+      });
       return false;
     }
   }
@@ -1177,29 +1245,63 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
   private async clearExistingActivitiesAndPacks(
     existingTravelers: any[]
   ): Promise<void> {
+    console.log(`=== INICIO clearExistingActivitiesAndPacks ===`);
+    console.log(`Limpiando actividades existentes para ${existingTravelers.length} viajeros`);
+    
     const deletePromises: Promise<any>[] = [];
+    let totalActivitiesFound = 0;
+    let totalPacksFound = 0;
+    let totalActivitiesDeleted = 0;
+    let totalPacksDeleted = 0;
 
     for (const traveler of existingTravelers) {
       try {
+        console.log(`Procesando viajero ${traveler.id}...`);
+        
         // Obtener y eliminar actividades individuales existentes
         const existingActivities = await new Promise<any[]>(
           (resolve, reject) => {
             this.reservationTravelerActivityService
               .getByReservationTraveler(traveler.id)
               .subscribe({
-                next: (activities) => resolve(activities),
-                error: (error) => resolve([]),
+                next: (activities) => {
+                  console.log(`Viajero ${traveler.id} tiene ${activities.length} actividades individuales`);
+                  totalActivitiesFound += activities.length;
+                  resolve(activities);
+                },
+                error: (error) => {
+                  console.warn(`Error al obtener actividades para viajero ${traveler.id}:`, error);
+                  console.warn('Detalles del error:', {
+                    status: (error as any)?.status,
+                    message: (error as any)?.message,
+                    error: (error as any)?.error
+                  });
+                  resolve([]); // Continuar con lista vacía
+                },
               });
           }
         );
 
         existingActivities.forEach((activity) => {
           const deletePromise = new Promise((resolve, reject) => {
+            console.log(`Eliminando actividad ${activity.id} del viajero ${traveler.id}...`);
             this.reservationTravelerActivityService
               .delete(activity.id)
               .subscribe({
-                next: (result) => resolve(result),
-                error: (error) => resolve(false),
+                next: (result) => {
+                  console.log(`Actividad ${activity.id} eliminada del viajero ${traveler.id} exitosamente:`, result);
+                  totalActivitiesDeleted++;
+                  resolve(result);
+                },
+                error: (error) => {
+                  console.warn(`Error al eliminar actividad ${activity.id} del viajero ${traveler.id}:`, error);
+                  console.warn('Detalles del error:', {
+                    status: (error as any)?.status,
+                    message: (error as any)?.message,
+                    error: (error as any)?.error
+                  });
+                  resolve(false); // Continuar aunque falle la eliminación
+                },
               });
           });
           deletePromises.push(deletePromise);
@@ -1210,34 +1312,75 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
           this.reservationTravelerActivityPackService
             .getByReservationTraveler(traveler.id)
             .subscribe({
-              next: (packs) => resolve(packs),
-              error: (error) => resolve([]),
+              next: (packs) => {
+                console.log(`Viajero ${traveler.id} tiene ${packs.length} packs de actividades`);
+                totalPacksFound += packs.length;
+                resolve(packs);
+              },
+              error: (error) => {
+                console.warn(`Error al obtener packs para viajero ${traveler.id}:`, error);
+                console.warn('Detalles del error:', {
+                  status: (error as any)?.status,
+                  message: (error as any)?.message,
+                  error: (error as any)?.error
+                });
+                resolve([]); // Continuar con lista vacía
+              },
             });
         });
 
         existingPacks.forEach((pack) => {
           const deletePromise = new Promise((resolve, reject) => {
+            console.log(`Eliminando pack ${pack.id} del viajero ${traveler.id}...`);
             this.reservationTravelerActivityPackService
               .delete(pack.id)
               .subscribe({
-                next: (result) => resolve(result),
-                error: (error) => resolve(false),
+                next: (result) => {
+                  console.log(`Pack ${pack.id} eliminado del viajero ${traveler.id} exitosamente:`, result);
+                  totalPacksDeleted++;
+                  resolve(result);
+                },
+                error: (error) => {
+                  console.warn(`Error al eliminar pack ${pack.id} del viajero ${traveler.id}:`, error);
+                  console.warn('Detalles del error:', {
+                    status: (error as any)?.status,
+                    message: (error as any)?.message,
+                    error: (error as any)?.error
+                  });
+                  resolve(false); // Continuar aunque falle la eliminación
+                },
               });
           });
           deletePromises.push(deletePromise);
         });
       } catch (error) {
         console.warn(
-          `Error al obtener actividades/packs para el viajero ${traveler.id}:`,
+          `Error al procesar viajero ${traveler.id}:`,
           error
         );
+        // Continuar con el siguiente viajero
       }
     }
 
     // Esperar a que se completen todas las eliminaciones
     if (deletePromises.length > 0) {
-      await Promise.all(deletePromises);
+      console.log(`Esperando a que se completen ${deletePromises.length} eliminaciones...`);
+      try {
+        await Promise.all(deletePromises);
+        console.log('Todas las eliminaciones se completaron');
+      } catch (error) {
+        console.warn('Algunas eliminaciones fallaron, pero continuando:', error);
+      }
+    } else {
+      console.log('No hay elementos para eliminar');
     }
+
+    console.log(`=== RESUMEN clearExistingActivitiesAndPacks ===`);
+    console.log(`Total actividades encontradas: ${totalActivitiesFound}`);
+    console.log(`Total packs encontrados: ${totalPacksFound}`);
+    console.log(`Total actividades eliminadas: ${totalActivitiesDeleted}`);
+    console.log(`Total packs eliminados: ${totalPacksDeleted}`);
+    console.log(`=== FIN clearExistingActivitiesAndPacks ===`);
   }
 
   // Método auxiliar para limpiar actividades existentes
@@ -1348,6 +1491,40 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
     }
   }
 
+  // Método auxiliar para logging detallado
+  private logComponentState(): void {
+    console.log('=== ESTADO DE COMPONENTES ===');
+    console.log('travelerSelector:', {
+      available: !!this.travelerSelector,
+      hasUnsavedChanges: this.travelerSelector?.hasUnsavedChanges,
+      travelersNumbers: this.travelerSelector?.travelersNumbers,
+      existingTravelers: this.travelerSelector?.existingTravelers?.length || 0
+    });
+    console.log('roomSelector:', {
+      available: !!this.roomSelector,
+      selectedRooms: this.roomSelector?.selectedRooms,
+      allRoomsAvailability: this.roomSelector?.allRoomsAvailability?.length || 0
+    });
+    console.log('insuranceSelector:', {
+      available: !!this.insuranceSelector,
+      selectedInsurance: !!this.insuranceSelector?.selectedInsurance
+    });
+    console.log('infoTravelers:', {
+      available: !!this.infoTravelers
+    });
+    console.log('reservationData:', {
+      id: this.reservationId,
+      totalPassengers: this.totalPassengers,
+      totalAmount: this.totalAmount,
+      totalAmountCalculated: this.totalAmountCalculated
+    });
+    console.log('selectedActivities:', {
+      count: this.selectedActivities?.length || 0,
+      activities: this.selectedActivities
+    });
+    console.log('=============================');
+  }
+
   // Método para guardar todos los datos de los viajeros
   private async saveTravelersData(): Promise<boolean> {
     console.log('=== DEBUG: saveTravelersData iniciado ===');
@@ -1413,6 +1590,27 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
       targetStep
     );
 
+    // Log del estado inicial de los componentes
+    this.logComponentState();
+
+    // Validar que los componentes necesarios estén disponibles
+    if (targetStep === 1) {
+      if (!this.travelerSelector || !this.roomSelector || !this.insuranceSelector) {
+        console.error('Componentes requeridos no están disponibles:', {
+          travelerSelector: !!this.travelerSelector,
+          roomSelector: !!this.roomSelector,
+          insuranceSelector: !!this.insuranceSelector
+        });
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error de inicialización',
+          detail: 'Los componentes necesarios no están disponibles. Por favor, recarga la página.',
+          life: 5000,
+        });
+        return;
+      }
+    }
+
     // Guardar cambios de travelers, habitaciones, seguros y actividades antes de continuar
     if (
       targetStep === 1 &&
@@ -1424,6 +1622,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
       try {
         // 1. Guardar cambios de travelers si hay pendientes
         if (this.travelerSelector.hasUnsavedChanges) {
+          console.log('Guardando cambios de travelers...');
           this.travelerSelector.saveTravelersChanges();
           await new Promise((resolve) => setTimeout(resolve, 800));
         }
@@ -1451,6 +1650,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
           currentTravelers.childs +
           currentTravelers.babies;
 
+        console.log(`Total de pasajeros: ${totalPassengers}`);
+
         // Calcular la capacidad total de las habitaciones seleccionadas
         let totalCapacity = 0;
         Object.entries(this.roomSelector.selectedRooms).forEach(
@@ -1462,10 +1663,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
               if (room) {
                 const roomCapacity = room.isShared ? 1 : room.capacity || 1;
                 totalCapacity += roomCapacity * qty;
+                console.log(`Habitación ${tkId}: capacidad ${roomCapacity}, cantidad ${qty}, subtotal ${roomCapacity * qty}`);
               }
             }
           }
         );
+
+        console.log(`Capacidad total de habitaciones: ${totalCapacity}`);
 
         // Validar que la capacidad sea suficiente
         if (totalCapacity < totalPassengers) {
@@ -1490,6 +1694,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
         }
 
         // 4. Recargar travelers después de guardar cambios
+        console.log('Recargando travelers...');
         await this.roomSelector.loadExistingTravelers();
         this.insuranceSelector.loadExistingTravelers();
 
@@ -1498,16 +1703,21 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
         this.updateOrderSummary(currentTravelers);
         await new Promise((resolve) => setTimeout(resolve, 300));
 
-        // 6. Guardar asignaciones de habitaciones, seguros y actividades EN PARALELO
-        const [roomsSaved, insuranceSaved, activitiesSaved] = await Promise.all(
-          [
-            this.roomSelector.saveRoomAssignments(),
-            this.insuranceSelector.saveInsuranceAssignments(),
-            this.saveActivitiesAssignments(),
-          ]
-        );
+        // Log del estado después de actualizar datos
+        console.log('Estado después de actualizar datos:');
+        this.logComponentState();
 
-        if (!roomsSaved) {
+        // 6. Guardar asignaciones de habitaciones, seguros y actividades EN PARALELO
+        console.log('Guardando asignaciones en paralelo...');
+        const [roomsSaved, insuranceSaved, activitiesSaved] = await Promise.allSettled([
+          this.roomSelector.saveRoomAssignments(),
+          this.insuranceSelector.saveInsuranceAssignments(),
+          this.saveActivitiesAssignments(),
+        ]);
+
+        // Verificar resultados de las operaciones
+        if (roomsSaved.status === 'rejected') {
+          console.error('Error al guardar habitaciones:', roomsSaved.reason);
           this.messageService.add({
             severity: 'error',
             summary: 'Error al guardar habitaciones',
@@ -1518,7 +1728,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
           return;
         }
 
-        if (!insuranceSaved) {
+        if (insuranceSaved.status === 'rejected') {
+          console.error('Error al guardar seguro:', insuranceSaved.reason);
           this.messageService.add({
             severity: 'error',
             summary: 'Error al guardar seguro',
@@ -1529,7 +1740,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
           return;
         }
 
-        if (!activitiesSaved) {
+        if (activitiesSaved.status === 'rejected') {
+          console.error('Error al guardar actividades:', activitiesSaved.reason);
           this.messageService.add({
             severity: 'error',
             summary: 'Error al guardar actividades',
@@ -1540,8 +1752,25 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
           return;
         }
 
+        // Verificar que las operaciones fueron exitosas
+        if (!roomsSaved.value || !insuranceSaved.value || !activitiesSaved.value) {
+          const failedOperations = [];
+          if (!roomsSaved.value) failedOperations.push('habitaciones');
+          if (!insuranceSaved.value) failedOperations.push('seguro');
+          if (!activitiesSaved.value) failedOperations.push('actividades');
+          
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error al guardar',
+            detail: `No se pudieron guardar: ${failedOperations.join(', ')}. Por favor, inténtalo de nuevo.`,
+            life: 5000,
+          });
+          return;
+        }
+
         // Verificación adicional de que el seguro se guardó correctamente
         if (this.insuranceSelector.selectedInsurance) {
+          console.log('Verificando asignaciones de seguro...');
           // Verificar que las asignaciones se guardaron correctamente
           const verificationResult =
             await this.insuranceSelector.verifyInsuranceAssignments();
@@ -1558,6 +1787,16 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
 
         // 7. Actualizar el totalPassengers en la reserva
         if (this.reservationId && this.reservationData) {
+          console.log('Actualizando datos de la reserva...');
+          console.log('Datos a actualizar:', {
+            reservationId: this.reservationId,
+            currentTotalPassengers: this.reservationData.totalPassengers,
+            newTotalPassengers: this.totalPassengers,
+            currentTotalAmount: this.reservationData.totalAmount,
+            newTotalAmount: this.totalAmountCalculated,
+            reservationDataKeys: Object.keys(this.reservationData)
+          });
+          
           const reservationUpdateData = {
             ...this.reservationData,
             totalPassengers: this.totalPassengers,
@@ -1565,15 +1804,43 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
             updatedAt: new Date().toISOString(),
           };
 
+          console.log('Datos completos de actualización:', reservationUpdateData);
+
           await new Promise((resolve, reject) => {
+            console.log('Iniciando llamada al servicio de actualización...');
+            
             this.reservationService
               .update(this.reservationId!, reservationUpdateData)
               .subscribe({
-                next: (success) => {
-                  if (success) {
+                next: (response) => {
+                  console.log('Respuesta del servicio de actualización:', response);
+                  console.log('Tipo de respuesta:', typeof response);
+                  console.log('¿Response es truthy?', !!response);
+                  
+                  // Verificar si la respuesta es exitosa
+                  let isSuccess = false;
+                  
+                  if (typeof response === 'boolean') {
+                    isSuccess = response;
+                  } else if (typeof response === 'object' && response !== null) {
+                    // Si es un objeto, verificar propiedades comunes de éxito
+                    const responseObj = response as any;
+                    isSuccess = responseObj.success !== false && 
+                               responseObj.error === undefined && 
+                               responseObj.status !== 'error';
+                  } else if (response !== null && response !== undefined) {
+                    // Para otros tipos, considerar exitoso si no es null/undefined
+                    isSuccess = true;
+                  }
+                  
+                  console.log('Resultado de la verificación de éxito:', isSuccess);
+                  
+                  if (isSuccess) {
+                    console.log('Actualización exitosa, actualizando datos locales...');
+                    
+                    // Actualizar datos locales
                     this.reservationData.totalPassengers = this.totalPassengers;
-                    this.reservationData.totalAmount =
-                      this.totalAmountCalculated;
+                    this.reservationData.totalAmount = this.totalAmountCalculated;
                     this.totalAmount = this.totalAmountCalculated;
 
                     // Mostrar toast de éxito
@@ -1591,18 +1858,65 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
                       life: 3000,
                     });
 
-                    resolve(success);
+                    console.log('Datos locales actualizados:', {
+                      totalPassengers: this.totalPassengers,
+                      totalAmount: this.totalAmount,
+                      totalAmountCalculated: this.totalAmountCalculated
+                    });
+
+                    resolve(response);
                   } else {
-                    reject(new Error('Error al actualizar la reserva'));
+                    console.error('La actualización no fue exitosa. Respuesta:', response);
+                    console.error('Tipo de respuesta:', typeof response);
+                    console.error('¿Response es null?', response === null);
+                    console.error('¿Response es undefined?', response === undefined);
+                    
+                    // Crear un error más detallado
+                    const errorMessage = `Error al actualizar la reserva. Respuesta del servicio: ${JSON.stringify(response)}`;
+                    console.error(errorMessage);
+                    
+                    reject(new Error(errorMessage));
                   }
                 },
                 error: (error) => {
-                  reject(error);
+                  console.error('Error en la llamada al servicio de actualización:', error);
+                  console.error('Tipo de error:', typeof error);
+                  console.error('Stack trace del error:', error?.stack);
+                  console.error('Mensaje del error:', error?.message);
+                  console.error('Código de estado HTTP:', error?.status);
+                  console.error('Respuesta del servidor:', error?.error);
+                  
+                  // Crear un error más detallado
+                  let errorDetail = 'Error desconocido en el servicio';
+                  
+                  if (error?.status) {
+                    errorDetail += ` (HTTP ${error.status})`;
+                  }
+                  
+                  if (error?.message) {
+                    errorDetail += `: ${error.message}`;
+                  }
+                  
+                  if (error?.error) {
+                    errorDetail += ` - Detalles: ${JSON.stringify(error.error)}`;
+                  }
+                  
+                  console.error('Error detallado:', errorDetail);
+                  reject(new Error(errorDetail));
                 },
+                complete: () => {
+                  console.log('Observable de actualización completado');
+                }
               });
           });
         }
+
+        // Log del estado final después de guardar todo
+        console.log('Estado final después de guardar todo:');
+        this.logComponentState();
+
       } catch (error) {
+        console.error('Error en performStepValidation paso 1:', error);
         this.messageService.add({
           severity: 'error',
           summary: 'Error inesperado',
@@ -1617,6 +1931,18 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
     // Guardar datos de viajeros antes de continuar al paso de pago (targetStep === 3)
     if (targetStep === 3) {
       console.log('Validando paso 3 (info-travelers)...');
+      
+      if (!this.infoTravelers) {
+        console.error('Componente infoTravelers no está disponible');
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error de inicialización',
+          detail: 'El componente de información de viajeros no está disponible. Por favor, recarga la página.',
+          life: 5000,
+        });
+        return;
+      }
+      
       const saved = await this.saveTravelersData();
       console.log('Resultado de saveTravelersData:', saved);
       if (!saved) {

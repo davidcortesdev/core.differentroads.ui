@@ -96,6 +96,7 @@
 
             <div class="flight-buttons">
               <p-button
+                *ngIf="hasAvailableFlights"
                 class="without-flight"
                 label="Lo quiero sin vuelos"
                 (onClick)="checkAuthAndContinue(2, onActiveIndexChange.bind(this), true)"

@@ -4,6 +4,12 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { map } from 'rxjs/operators';
 
+export interface IAgeGroupPriceDTO {
+  price: number;
+  ageGroupId: number;
+  ageGroupName: string;
+}
+
 export interface IFlightPackDTO {
   id: number;
   code: string;
@@ -15,7 +21,7 @@ export interface IFlightPackDTO {
   imageUrl: string;
   imageAlt: string;
   isVisibleOnWeb: boolean;
-  totalPrice: number;
+  ageGroupPrices: IAgeGroupPriceDTO[];
   flights: IFlightResponse[];
 }
 

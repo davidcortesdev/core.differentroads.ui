@@ -116,6 +116,7 @@ export class InsuranceComponent implements OnInit, OnChanges {
                 })
                 .subscribe({
                   next: (activities) => {
+                    // Guardar las actividades sin ordenar por ahora
                     this.insurances = activities;
                     this.loadPrices();
                   },
@@ -152,6 +153,9 @@ export class InsuranceComponent implements OnInit, OnChanges {
         .subscribe({
           next: (prices) => {
             this.insurancePrices = prices;
+
+            // Reordenar los seguros ahora que tenemos los precios
+            this.insurances = this.sortInsurancesByPrice(this.insurances);
 
             // Identificar y seleccionar seguro básico por defecto
             this.selectDefaultInsurance();
@@ -393,6 +397,28 @@ export class InsuranceComponent implements OnInit, OnChanges {
       this.isSaving = false;
       return false;
     }
+  }
+
+  // Método para ordenar seguros por precio (básico primero)
+  private sortInsurancesByPrice(
+    insurances: IActivityResponse[]
+  ): IActivityResponse[] {
+    // Si no hay precios cargados aún, retornar la lista original
+    if (this.insurancePrices.length === 0) {
+      return insurances;
+    }
+
+    return insurances.sort((a, b) => {
+      const priceA = this.getPriceById(a.id);
+      const priceB = this.getPriceById(b.id);
+
+      // El seguro básico (precio 0) va primero
+      if (priceA === 0 && priceB !== 0) return -1;
+      if (priceA !== 0 && priceB === 0) return 1;
+
+      // Si ambos son básicos o ambos son pagos, mantener el orden original
+      return 0;
+    });
   }
 
   getPriceById(activityId: number): number {

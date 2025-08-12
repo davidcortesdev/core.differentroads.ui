@@ -58,7 +58,7 @@
                     <ng-container *ngFor="let field of departureReservationFields; let fieldIndex = index">
                       <ng-container *ngIf="isFieldMandatory(field, traveler.isLeadTraveler) && getReservationFieldDetails(field.reservationFieldId) as fieldDetails">
                         
-                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'text'">
+                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'text' && fieldDetails.code !== 'phone'">
                           <label>{{ fieldDetails.name }}*</label>
                           <input 
                             pInputText 
@@ -85,7 +85,7 @@
                           </small>
                         </div>
                         
-                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'phone'">
+                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'phone' || (fieldDetails.fieldType === 'text' && fieldDetails.code === 'phone')">
                           <label>{{ fieldDetails.name }}*</label>
                           <input 
                             pInputText 
@@ -197,7 +197,7 @@
                     <ng-container *ngFor="let field of departureReservationFields">
                       <ng-container *ngIf="!isFieldMandatory(field, traveler.isLeadTraveler) && getReservationFieldDetails(field.reservationFieldId) as fieldDetails">
                         
-                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'text'">
+                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'text' && fieldDetails.code !== 'phone'">
                           <label>{{ fieldDetails.name }}</label>
                           <input 
                             pInputText 
@@ -224,7 +224,7 @@
                           </small>
                         </div>
                         
-                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'phone'">
+                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'phone' || (fieldDetails.fieldType === 'text' && fieldDetails.code === 'phone')">
                           <label>{{ fieldDetails.name }}</label>
                           <input 
                             pInputText 

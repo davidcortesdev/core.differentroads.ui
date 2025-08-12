@@ -5,35 +5,85 @@ import {
   OnInit,
   OnChanges,
   SimpleChanges,
+  OnDestroy,
 } from '@angular/core';
+import { Subject, takeUntil, catchError, EMPTY } from 'rxjs';
+import { MessageService } from 'primeng/api';
+import {
+  ReservationService,
+  IReservationSummaryResponse,
+  ReservationSummaryItem,
+} from '../../../../../core/services/reservation/reservation.service';
 
 @Component({
   selector: 'app-summary-info',
   standalone: false,
   templateUrl: './summary-info.component.html',
   styleUrl: './summary-info.component.scss',
+  providers: [MessageService],
 })
-export class SummaryInfoComponent implements OnInit, OnChanges {
+export class SummaryInfoComponent implements OnInit, OnChanges, OnDestroy {
   @Input() reservationId: number | undefined;
 
-  // Datos de ejemplo hasta que tengas el servicio
-  priceDetails: any[] = [
-    { description: 'Tour Base', amount: 1200, quantity: 2, total: 2400 },
-    { description: 'Hotel Premium', amount: 150, quantity: 3, total: 450 },
-    { description: 'Seguro de viaje', amount: 50, quantity: 2, total: 100 },
-  ];
+  private destroy$: Subject<void> = new Subject<void>();
+
+  loading: boolean = false;
+  error: boolean = false;
+
+  priceDetails: ReservationSummaryItem[] = [];
+  reservationSummary: IReservationSummaryResponse | undefined;
 
   get totalPrice(): number {
-    return this.priceDetails.reduce((sum, item) => sum + item.total, 0);
+    return this.reservationSummary?.totalAmount || 0;
   }
 
-  constructor() {}
+  constructor(
+    private reservationService: ReservationService,
+    private messageService: MessageService
+  ) {}
 
   ngOnInit(): void {
-    // Aquí cargarás los datos cuando tengas el servicio
+    if (this.reservationId) {
+      this.loadReservationSummary();
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // Reaccionar a cambios en los inputs
+    if (changes['reservationId'] && this.reservationId) {
+      this.loadReservationSummary();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private loadReservationSummary(): void {
+    if (!this.reservationId) {
+      return;
+    }
+
+    this.loading = true;
+    this.error = false;
+
+    this.reservationService
+      .getSummary(this.reservationId)
+      .pipe(
+        takeUntil(this.destroy$),
+        catchError((err) => {
+          this.error = true;
+          this.loading = false;
+          console.error('Error fetching reservation summary:', err);
+          return EMPTY;
+        })
+      )
+      .subscribe({
+        next: (summary: IReservationSummaryResponse) => {
+          this.reservationSummary = summary;
+          this.priceDetails = summary.items || [];
+          this.loading = false;
+        },
+      });
   }
 }

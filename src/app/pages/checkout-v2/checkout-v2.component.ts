@@ -1029,7 +1029,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
         this.summary.push({
           qty: totalTravelers,
           value: 0,
-          description: `Seguro ${this.selectedInsurance.name}`,
+          description: ` ${this.selectedInsurance.name}`,
         });
       } else {
         // Seguro con precio

@@ -6,8 +6,13 @@
   
 
   
-  <!-- Indicador de carga -->
-  <div *ngIf="loading" class="loading-indicator">
+  <!-- Indicador de carga para verificación de estado de reserva -->
+  <div *ngIf="checkingReservationStatus" class="loading-indicator">
+    <p>Verificando estado de la reserva...</p>
+  </div>
+
+  <!-- Indicador de carga para datos de viajeros -->
+  <div *ngIf="loading && !checkingReservationStatus" class="loading-indicator">
     <p>Cargando información de los viajeros...</p>
   </div>
 
@@ -16,7 +21,7 @@
     <p>{{ error }}</p>
   </div>
   
-  <div class="flex flex-col" *ngIf="!loading && !error">
+  <div class="flex flex-col" *ngIf="!loading && !checkingReservationStatus && !error">
     <div class="border-2 border-dashed border-surface-200 dark:border-surface-700 rounded bg-surface-50 dark:bg-surface-950 flex-auto flex justify-center items-center font-medium">
       <div class="content-form">
         <div class="travel-title">

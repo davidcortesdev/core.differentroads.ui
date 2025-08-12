@@ -109,7 +109,7 @@ export class ReservationStatusService {
   getByCode(code: string): Observable<IReservationStatusResponse[]> {
     const params = new HttpParams()
       .set('Code', code)
-      .set('useExactMatchForStrings', 'false');
+      .set('useExactMatchForStrings', 'true');
 
     return this.http.get<IReservationStatusResponse[]>(this.API_URL, { params });
   }

@@ -4,6 +4,7 @@ import {
   OnDestroy,
   ViewChild,
   ChangeDetectorRef,
+  AfterViewInit,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MenuItem, MessageService } from 'primeng/api';
@@ -57,7 +58,7 @@ import { ReservationStatusService } from '../../core/services/reservation/reserv
   templateUrl: './checkout-v2.component.html',
   styleUrl: './checkout-v2.component.scss',
 })
-export class CheckoutV2Component implements OnInit, OnDestroy {
+export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   // Referencias a componentes hijos
   @ViewChild('roomSelector') roomSelector!: SelectorRoomComponent;
   @ViewChild('travelerSelector') travelerSelector!: SelectorTravelerComponent;
@@ -174,6 +175,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
         const stepParam = parseInt(params['step']);
         if (!isNaN(stepParam) && stepParam >= 0 && stepParam <= 3) {
           this.activeIndex = stepParam;
+          console.log('📍 Step activo desde URL:', this.activeIndex);
         }
       }
     });
@@ -194,6 +196,21 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
 
     // La verificación de precios se ejecutará cuando se carguen los datos de la reservación
     // No se ejecuta aquí para evitar llamadas duplicadas
+  }
+
+  ngAfterViewInit(): void {
+    // Las referencias a los componentes hijos ya están disponibles
+    console.log('✅ Componentes hijos inicializados:', {
+      travelerSelector: !!this.travelerSelector,
+      roomSelector: !!this.roomSelector,
+      insuranceSelector: !!this.insuranceSelector,
+      infoTravelers: !!this.infoTravelers
+    });
+
+    // Si hay un step activo en la URL, inicializar el componente correspondiente
+    if (this.activeIndex >= 0) {
+      this.initializeComponentForStep(this.activeIndex);
+    }
   }
 
   /**
@@ -466,6 +483,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
 
         // Ejecutar verificación de precios inmediatamente cuando tengamos los datos básicos
         this.executePriceCheck();
+
+        // Si hay un step activo, inicializar el componente correspondiente
+        if (this.activeIndex >= 0) {
+          // Usar setTimeout para asegurar que los datos estén completamente cargados
+          setTimeout(() => {
+            this.initializeComponentForStep(this.activeIndex);
+          }, 500);
+        }
       },
       error: (error) => {
         this.error =
@@ -1476,6 +1501,98 @@ export class CheckoutV2Component implements OnInit, OnDestroy {
   onActiveIndexChange(index: number): void {
     this.activeIndex = index;
     this.updateStepInUrl(index);
+    
+    // Forzar inicialización de componentes cuando se activan
+    this.initializeComponentForStep(index);
+  }
+
+  /**
+   * Inicializa componentes específicos según el step activo
+   */
+  private initializeComponentForStep(stepIndex: number): void {
+    // Usar setTimeout para asegurar que el DOM se haya actualizado
+    setTimeout(() => {
+      switch (stepIndex) {
+        case 2: // Step de info-travelers
+          this.initializeInfoTravelersComponent();
+          break;
+        case 1: // Step de vuelos
+          this.initializeFlightManagementComponent();
+          break;
+        case 0: // Step de personalización
+          this.initializePersonalizationComponents();
+          break;
+        case 3: // Step de pago
+          this.initializePaymentComponent();
+          break;
+      }
+    }, 100); // Pequeño delay para asegurar que el DOM esté listo
+  }
+
+  /**
+   * Inicializa el componente info-travelers cuando se activa su step
+   */
+  private initializeInfoTravelersComponent(): void {
+    console.log('🔄 Intentando inicializar componente info-travelers...');
+    
+    // Verificar que tengamos todos los datos necesarios
+    if (!this.infoTravelers) {
+      console.log('⚠️ Componente info-travelers no disponible');
+      return;
+    }
+
+    if (!this.departureId || !this.reservationId) {
+      console.log('⚠️ Faltan datos necesarios:', {
+        departureId: this.departureId,
+        reservationId: this.reservationId
+      });
+      return;
+    }
+
+    console.log('✅ Datos disponibles, verificando estado del componente...');
+    
+    // Verificar si el componente ya tiene datos cargados
+    if (!this.infoTravelers.travelers || this.infoTravelers.travelers.length === 0) {
+      console.log('📋 Componente info-travelers sin datos, forzando recarga...');
+      
+      // Usar un pequeño delay para asegurar que el componente esté completamente renderizado
+      setTimeout(() => {
+        try {
+          this.infoTravelers.reloadData();
+          console.log('✅ Recarga de datos iniciada');
+        } catch (error) {
+          console.error('❌ Error al recargar datos:', error);
+        }
+      }, 200);
+    } else {
+      console.log('✅ Componente info-travelers ya tiene datos cargados:', {
+        travelersCount: this.infoTravelers.travelers.length
+      });
+    }
+  }
+
+  /**
+   * Inicializa componentes de personalización
+   */
+  private initializePersonalizationComponents(): void {
+    // Lógica para componentes de personalización si es necesaria
+    console.log('🎨 Inicializando componentes de personalización...');
+  }
+
+  /**
+   * Inicializa componente de gestión de vuelos
+   */
+  private initializeFlightManagementComponent(): void {
+    // Lógica para componente de vuelos si es necesaria
+    console.log('✈️ Inicializando componente de gestión de vuelos...');
+  }
+
+  /**
+   * Inicializa componente de pago
+   */
+  private initializePaymentComponent(): void {
+    // Lógica para componente de pago si es necesaria
+    console.log('💳 Inicializando componente de pago...');
   }
 
   // Método para actualizar la URL cuando cambia el step

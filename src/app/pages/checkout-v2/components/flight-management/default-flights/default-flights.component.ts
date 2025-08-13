@@ -41,6 +41,9 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
   // Contador estático para rastrear llamadas a saveFlightAssignments
   private static saveFlightAssignmentsCallCount = 0;
 
+  // Bandera para evitar llamadas duplicadas a saveFlightAssignments
+  private isInternalSelection: boolean = false;
+
   selectedFlight: IFlightPackDTO | null = null;
   flightPacks: IFlightPackDTO[] = [];
   loginDialogVisible: boolean = false;
@@ -109,8 +112,12 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
 
       this.selectedFlight = changes['selectedFlightFromParent'].currentValue;
 
-      // Si hay un vuelo seleccionado desde el padre, guardar las asignaciones
-      if (this.selectedFlight && this.reservationId) {
+      // Solo guardar asignaciones si NO es una selección interna
+      if (
+        !this.isInternalSelection &&
+        this.selectedFlight &&
+        this.reservationId
+      ) {
         console.log(
           '💾 Guardando asignaciones para vuelo seleccionado desde padre...'
         );
@@ -132,12 +139,21 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
             );
           });
       } else {
-        console.log(
-          '⚠️ No se puede guardar - selectedFlight o reservationId faltan'
-        );
-        console.log('📊 selectedFlight:', this.selectedFlight);
-        console.log('🆔 reservationId:', this.reservationId);
+        if (this.isInternalSelection) {
+          console.log(
+            '⚠️ No se guardan asignaciones - es una selección interna'
+          );
+        } else {
+          console.log(
+            '⚠️ No se puede guardar - selectedFlight o reservationId faltan'
+          );
+          console.log('📊 selectedFlight:', this.selectedFlight);
+          console.log('🆔 reservationId:', this.reservationId);
+        }
       }
+
+      // Resetear la bandera después de procesar el cambio
+      this.isInternalSelection = false;
     }
   }
 
@@ -236,6 +252,9 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       console.log('💰 Precio base:', basePrice);
       console.log('👥 Total de viajeros:', totalTravelers);
       console.log('💰 Precio total:', totalPrice);
+
+      // Marcar como selección interna antes de emitir el cambio
+      this.isInternalSelection = true;
 
       this.flightSelectionChange.emit({
         selectedFlight: flightPack,
@@ -337,167 +356,65 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
         return true;
       }
 
-      console.log('🧹 Limpiando asignaciones existentes...');
-      await this.clearExistingFlightAssignments(travelers);
+      // Si no hay vuelo seleccionado, actualizar las asignaciones existentes con activityPackId = 0
+      if (!this.selectedFlight) {
+        console.log(
+          '🔄 No hay vuelo seleccionado, actualizando asignaciones existentes con activityPackId = 0...'
+        );
 
-      const activityPackId = this.selectedFlight.id;
-      console.log('🎯 ID del paquete de actividad a asignar:', activityPackId);
+        const updatePromises = travelers.map((traveler) => {
+          return new Promise<boolean>((resolve, reject) => {
+            this.reservationTravelerActivityPackService
+              .getByReservationTraveler(traveler.id)
+              .subscribe({
+                next: (assignments) => {
+                  // Buscar todas las asignaciones de vuelos (activityPackId > 0)
+                  const flightAssignments = assignments.filter(
+                    (a) => a.activityPackId > 0
+                  );
 
-      // Verificar estado después de la limpieza
-      console.log('🔍 Verificando estado después de la limpieza...');
-      for (const traveler of travelers) {
-        this.reservationTravelerActivityPackService
-          .getByReservationTraveler(traveler.id)
-          .subscribe({
-            next: (assignmentsAfterCleanup) => {
-              console.log(
-                `🔍 Asignaciones después de limpieza para viajero ${traveler.id}:`,
-                assignmentsAfterCleanup
-              );
-              console.log(
-                `🔍 Cantidad después de limpieza:`,
-                assignmentsAfterCleanup.length
-              );
+                  if (flightAssignments.length === 0) {
+                    console.log(
+                      `ℹ️ Viajero ${traveler.id} no tiene asignaciones de vuelos para actualizar`
+                    );
+                    resolve(true);
+                    return;
+                  }
 
-              // Verificar si hay duplicados después de la limpieza
-              const currentFlightAssignments = assignmentsAfterCleanup.filter(
-                (a) => a.activityPackId === this.selectedFlight!.id
-              );
+                  // Ordenar por ID descendente para obtener el más reciente
+                  const sortedAssignments = flightAssignments.sort(
+                    (a, b) => b.id - a.id
+                  );
+                  const mostRecentAssignment = sortedAssignments[0];
 
-              if (currentFlightAssignments.length > 1) {
-                console.warn(
-                  `⚠️ ¡DUPLICADOS DESPUÉS DE LIMPIEZA! Viajero ${
-                    traveler.id
-                  } tiene ${
-                    currentFlightAssignments.length
-                  } asignaciones para vuelo ${this.selectedFlight!.id}`
-                );
-                console.warn(
-                  `⚠️ Asignaciones duplicadas:`,
-                  currentFlightAssignments
-                );
-              } else if (currentFlightAssignments.length === 1) {
-                console.log(
-                  `✅ Estado después de limpieza correcto para viajero ${
-                    traveler.id
-                  }: 1 asignación para vuelo ${this.selectedFlight!.id}`
-                );
-              } else {
-                console.log(
-                  `ℹ️ Estado después de limpieza para viajero ${
-                    traveler.id
-                  }: 0 asignaciones para vuelo ${
-                    this.selectedFlight!.id
-                  } (esperado)`
-                );
-              }
-            },
-            error: (error) => {
-              console.error(
-                `❌ Error al verificar estado después de limpieza para viajero ${traveler.id}:`,
-                error
-              );
-            },
-          });
-      }
-
-      console.log(
-        '📝 Creando/actualizando asignaciones para',
-        travelers.length,
-        'viajeros...'
-      );
-      const assignmentPromises = travelers.map((traveler) => {
-        return new Promise<boolean>((resolve, reject) => {
-          console.log(
-            `🔍 Procesando viajero ${traveler.id} (Viajero #${traveler.travelerNumber})`
-          );
-
-          this.reservationTravelerActivityPackService
-            .getByReservationTraveler(traveler.id)
-            .subscribe({
-              next: (
-                existingAssignments: IReservationTravelerActivityPackResponse[]
-              ) => {
-                console.log(
-                  `🔍 Asignaciones existentes para viajero ${traveler.id}:`,
-                  existingAssignments
-                );
-                console.log(
-                  `🔍 Cantidad de asignaciones existentes:`,
-                  existingAssignments.length
-                );
-
-                const existingAssignment = existingAssignments.find(
-                  (assignment) => assignment.activityPackId === activityPackId
-                );
-
-                if (existingAssignment) {
                   console.log(
-                    `🔄 Actualizando asignación existente para viajero ${traveler.id}`
+                    `🔄 Actualizando asignación más reciente ${mostRecentAssignment.id} para viajero ${traveler.id}`
                   );
                   console.log(
-                    `🔄 ID de asignación existente:`,
-                    existingAssignment.id
+                    `🔄 Cambio: vuelo ${mostRecentAssignment.activityPackId} -> sin vuelo (0)`
                   );
-                  console.log(
-                    `🔄 Datos de asignación existente:`,
-                    existingAssignment
-                  );
+
                   const updateData = {
-                    id: existingAssignment.id,
+                    id: mostRecentAssignment.id,
                     reservationTravelerId: traveler.id,
-                    activityPackId: activityPackId,
+                    activityPackId: 0, // 0 significa sin vuelo
+                    updatedAt: new Date().toISOString(),
                   };
-                  console.log(`🔄 Datos para actualización:`, updateData);
 
                   this.reservationTravelerActivityPackService
-                    .update(existingAssignment.id, updateData)
+                    .update(mostRecentAssignment.id, updateData)
                     .subscribe({
                       next: (updated: boolean) => {
                         if (updated) {
                           console.log(
-                            `✅ Asignación actualizada para viajero ${traveler.id}`
+                            `✅ Asignación ${mostRecentAssignment.id} actualizada para viajero ${traveler.id} (sin vuelo)`
                           );
-
-                          // Verificar inmediatamente si se actualizó correctamente
-                          this.reservationTravelerActivityPackService
-                            .getByReservationTraveler(traveler.id)
-                            .subscribe({
-                              next: (verificationAssignments) => {
-                                const currentFlightAssignments =
-                                  verificationAssignments.filter(
-                                    (a) => a.activityPackId === activityPackId
-                                  );
-                                console.log(
-                                  `🔍 Verificación inmediata después de actualización para viajero ${traveler.id}:`,
-                                  currentFlightAssignments
-                                );
-                                console.log(
-                                  `🔍 Cantidad de asignaciones para este vuelo:`,
-                                  currentFlightAssignments.length
-                                );
-
-                                if (currentFlightAssignments.length > 1) {
-                                  console.warn(
-                                    `⚠️ ¡DUPLICACIÓN DESPUÉS DE ACTUALIZACIÓN DETECTADA! Viajero ${traveler.id} tiene ${currentFlightAssignments.length} asignaciones para vuelo ${activityPackId}`
-                                  );
-                                }
-                              },
-                              error: (error) => {
-                                console.error(
-                                  `❌ Error en verificación inmediata después de actualización para viajero ${traveler.id}:`,
-                                  error
-                                );
-                              },
-                            });
-
-                          resolve(true);
                         } else {
                           console.error(
-                            `❌ Error al actualizar asignación para viajero ${traveler.id}`
+                            `❌ Error al actualizar asignación ${mostRecentAssignment.id} para viajero ${traveler.id}`
                           );
-                          reject(new Error('Error al actualizar asignación'));
                         }
+                        resolve(updated);
                       },
                       error: (error: any) => {
                         console.error(
@@ -507,163 +424,70 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                         reject(error);
                       },
                     });
-                } else {
-                  console.log(
-                    `➕ Creando nueva asignación para viajero ${traveler.id}`
+                },
+                error: (error: any) => {
+                  console.error(
+                    `❌ Error al obtener asignaciones para viajero ${traveler.id}:`,
+                    error
                   );
+                  reject(error);
+                },
+              });
+          });
+        });
 
-                  // Verificar si ya existe una asignación para este viajero y vuelo
-                  const existingForThisFlight = existingAssignments.find(
-                    (assignment) => assignment.activityPackId === activityPackId
-                  );
+        await Promise.all(updatePromises);
+        console.log(
+          '✅ Todas las asignaciones actualizadas exitosamente (sin vuelo)'
+        );
+        return true;
+      }
 
-                  if (existingForThisFlight) {
-                    console.warn(
-                      `⚠️ ¡CONFLICTO! Ya existe una asignación para viajero ${traveler.id} y vuelo ${activityPackId}`
-                    );
-                    console.warn(
-                      `⚠️ Asignación existente:`,
-                      existingForThisFlight
-                    );
-                    console.log(`🔄 Cambiando a modo de actualización...`);
+      const activityPackId = this.selectedFlight.id;
+      console.log('🎯 ID del paquete de actividad a asignar:', activityPackId);
 
-                    // Actualizar en lugar de crear
-                    const updateData = {
-                      id: existingForThisFlight.id,
-                      reservationTravelerId: traveler.id,
-                      activityPackId: activityPackId,
-                    };
+      console.log(
+        '📝 Procesando asignaciones para',
+        travelers.length,
+        'viajeros...'
+      );
 
-                    this.reservationTravelerActivityPackService
-                      .update(existingForThisFlight.id, updateData)
-                      .subscribe({
-                        next: (updated: boolean) => {
-                          if (updated) {
-                            console.log(
-                              `✅ Asignación actualizada para viajero ${traveler.id} (resolución de conflicto)`
-                            );
+      // Primero verificar si ya existen asignaciones para este vuelo
+      console.log('🔍 Verificando asignaciones existentes para este vuelo...');
+      const existingAssignmentsPromises = travelers.map((traveler) => {
+        return new Promise<{
+          traveler: IReservationTravelerResponse;
+          existingAssignments: IReservationTravelerActivityPackResponse[];
+        }>((resolve, reject) => {
+          this.reservationTravelerActivityPackService
+            .getByReservationTraveler(traveler.id)
+            .subscribe({
+              next: (assignments) => {
+                // Buscar TODAS las asignaciones de vuelos (activityPackId > 0), no solo del vuelo actual
+                const allFlightAssignments = assignments.filter(
+                  (a) => a.activityPackId > 0
+                );
 
-                            // Verificar inmediatamente si se actualizó correctamente
-                            this.reservationTravelerActivityPackService
-                              .getByReservationTraveler(traveler.id)
-                              .subscribe({
-                                next: (verificationAssignments) => {
-                                  const currentFlightAssignments =
-                                    verificationAssignments.filter(
-                                      (a) => a.activityPackId === activityPackId
-                                    );
-                                  console.log(
-                                    `🔍 Verificación inmediata después de resolución de conflicto para viajero ${traveler.id}:`,
-                                    currentFlightAssignments
-                                  );
-                                  console.log(
-                                    `🔍 Cantidad de asignaciones para este vuelo:`,
-                                    currentFlightAssignments.length
-                                  );
+                // Ordenar por ID descendente para obtener el más reciente
+                const sortedAssignments = allFlightAssignments.sort(
+                  (a, b) => b.id - a.id
+                );
 
-                                  if (currentFlightAssignments.length > 1) {
-                                    console.warn(
-                                      `⚠️ ¡DUPLICACIÓN DESPUÉS DE RESOLUCIÓN DE CONFLICTO DETECTADA! Viajero ${traveler.id} tiene ${currentFlightAssignments.length} asignaciones para vuelo ${activityPackId}`
-                                    );
-                                  }
-                                },
-                                error: (error) => {
-                                  console.error(
-                                    `❌ Error en verificación inmediata después de resolución de conflicto para viajero ${traveler.id}:`,
-                                    error
-                                  );
-                                },
-                              });
+                console.log(
+                  `🔍 Viajero ${traveler.id}: ${allFlightAssignments.length} asignaciones de vuelos encontradas`
+                );
+                console.log(
+                  `🔍 IDs de asignaciones: ${allFlightAssignments
+                    .map((a) => a.id)
+                    .join(', ')}`
+                );
 
-                            resolve(true);
-                          } else {
-                            console.error(
-                              `❌ Error al actualizar asignación para viajero ${traveler.id} (resolución de conflicto)`
-                            );
-                            reject(new Error('Error al actualizar asignación'));
-                          }
-                        },
-                        error: (error: any) => {
-                          console.error(
-                            `❌ Error al actualizar asignación para viajero ${traveler.id}:`,
-                            error
-                          );
-                          reject(error);
-                        },
-                      });
-                    return;
-                  }
-
-                  const assignmentData = {
-                    id: 0,
-                    reservationTravelerId: traveler.id,
-                    activityPackId: activityPackId,
-                  };
-                  console.log(
-                    `➕ Datos para nueva asignación:`,
-                    assignmentData
-                  );
-
-                  this.reservationTravelerActivityPackService
-                    .create(assignmentData)
-                    .subscribe({
-                      next: (
-                        createdAssignment: IReservationTravelerActivityPackResponse
-                      ) => {
-                        console.log(
-                          `✅ Nueva asignación creada para viajero ${traveler.id}:`,
-                          createdAssignment
-                        );
-                        console.log(
-                          `✅ ID de nueva asignación:`,
-                          createdAssignment.id
-                        );
-
-                        // Verificar inmediatamente si se creó correctamente
-                        this.reservationTravelerActivityPackService
-                          .getByReservationTraveler(traveler.id)
-                          .subscribe({
-                            next: (verificationAssignments) => {
-                              const currentFlightAssignments =
-                                verificationAssignments.filter(
-                                  (a) => a.activityPackId === activityPackId
-                                );
-                              console.log(
-                                `🔍 Verificación inmediata para viajero ${traveler.id}:`,
-                                currentFlightAssignments
-                              );
-                              console.log(
-                                `🔍 Cantidad de asignaciones para este vuelo:`,
-                                currentFlightAssignments.length
-                              );
-
-                              if (currentFlightAssignments.length > 1) {
-                                console.warn(
-                                  `⚠️ ¡DUPLICACIÓN INMEDIATA DETECTADA! Viajero ${traveler.id} tiene ${currentFlightAssignments.length} asignaciones para vuelo ${activityPackId}`
-                                );
-                              }
-                            },
-                            error: (error) => {
-                              console.error(
-                                `❌ Error en verificación inmediata para viajero ${traveler.id}:`,
-                                error
-                              );
-                            },
-                          });
-
-                        resolve(true);
-                      },
-                      error: (error: any) => {
-                        console.error(
-                          `❌ Error al crear asignación para viajero ${traveler.id}:`,
-                          error
-                        );
-                        reject(error);
-                      },
-                    });
-                }
+                resolve({
+                  traveler,
+                  existingAssignments: sortedAssignments,
+                });
               },
-              error: (error: any) => {
+              error: (error) => {
                 console.error(
                   `❌ Error al obtener asignaciones para viajero ${traveler.id}:`,
                   error
@@ -674,9 +498,157 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
         });
       });
 
-      console.log('⏳ Esperando que se completen todas las asignaciones...');
-      await Promise.all(assignmentPromises);
-      console.log('✅ Todas las asignaciones completadas exitosamente');
+      const existingAssignmentsResults = await Promise.all(
+        existingAssignmentsPromises
+      );
+
+      // Determinar si debemos crear nuevos registros o actualizar existentes
+      const hasExistingAssignments = existingAssignmentsResults.some(
+        (result) => result.existingAssignments.length > 0
+      );
+
+      if (hasExistingAssignments) {
+        console.log(
+          '🔄 Se encontraron asignaciones existentes de vuelos, actualizando el más reciente...'
+        );
+
+        const updatePromises = existingAssignmentsResults.map((result) => {
+          return new Promise<boolean>((resolve, reject) => {
+            const { traveler, existingAssignments } = result;
+
+            if (existingAssignments.length > 0) {
+              // Siempre usar la primera asignación (la más reciente por ID)
+              const mostRecentAssignment = existingAssignments[0];
+              console.log(
+                `🔄 Actualizando asignación más reciente ${mostRecentAssignment.id} para viajero ${traveler.id}`
+              );
+              console.log(
+                `🔄 ID anterior: ${mostRecentAssignment.activityPackId} -> Nuevo ID: ${activityPackId}`
+              );
+
+              const updateData = {
+                id: mostRecentAssignment.id,
+                reservationTravelerId: traveler.id,
+                activityPackId: activityPackId,
+                updatedAt: new Date().toISOString(),
+              };
+
+              this.reservationTravelerActivityPackService
+                .update(mostRecentAssignment.id, updateData)
+                .subscribe({
+                  next: (updated: boolean) => {
+                    if (updated) {
+                      console.log(
+                        `✅ Asignación ${mostRecentAssignment.id} actualizada para viajero ${traveler.id}`
+                      );
+                      console.log(
+                        `✅ Cambio: vuelo ${mostRecentAssignment.activityPackId} -> vuelo ${activityPackId}`
+                      );
+                    } else {
+                      console.error(
+                        `❌ Error al actualizar asignación ${mostRecentAssignment.id} para viajero ${traveler.id}`
+                      );
+                    }
+                    resolve(updated);
+                  },
+                  error: (error: any) => {
+                    console.error(
+                      `❌ Error al actualizar asignación para viajero ${traveler.id}:`,
+                      error
+                    );
+                    reject(error);
+                  },
+                });
+            } else {
+              // Solo crear nueva asignación si no hay ninguna asignación de vuelos
+              console.log(
+                `➕ No hay asignaciones de vuelos para viajero ${traveler.id}, creando nueva...`
+              );
+
+              const assignmentData = {
+                id: 0,
+                reservationTravelerId: traveler.id,
+                activityPackId: activityPackId,
+                createdAt: new Date().toISOString(),
+              };
+
+              this.reservationTravelerActivityPackService
+                .create(assignmentData)
+                .subscribe({
+                  next: (
+                    createdAssignment: IReservationTravelerActivityPackResponse
+                  ) => {
+                    console.log(
+                      `✅ Nueva asignación creada para viajero ${traveler.id}:`,
+                      createdAssignment.id
+                    );
+                    resolve(true);
+                  },
+                  error: (error: any) => {
+                    console.error(
+                      `❌ Error al crear asignación para viajero ${traveler.id}:`,
+                      error
+                    );
+                    reject(error);
+                  },
+                });
+            }
+          });
+        });
+
+        await Promise.all(updatePromises);
+        console.log('✅ Todas las asignaciones actualizadas exitosamente');
+      } else {
+        console.log(
+          '➕ No se encontraron asignaciones de vuelos existentes, creando nuevas...'
+        );
+
+        const assignmentPromises = travelers.map((traveler) => {
+          return new Promise<boolean>((resolve, reject) => {
+            console.log(
+              `➕ Creando nueva asignación para viajero ${traveler.id}`
+            );
+
+            const assignmentData = {
+              id: 0,
+              reservationTravelerId: traveler.id,
+              activityPackId: activityPackId,
+              createdAt: new Date().toISOString(),
+            };
+            console.log(`➕ Datos para nueva asignación:`, assignmentData);
+
+            this.reservationTravelerActivityPackService
+              .create(assignmentData)
+              .subscribe({
+                next: (
+                  createdAssignment: IReservationTravelerActivityPackResponse
+                ) => {
+                  console.log(
+                    `✅ Nueva asignación creada para viajero ${traveler.id}:`,
+                    createdAssignment
+                  );
+                  console.log(
+                    `✅ ID de nueva asignación:`,
+                    createdAssignment.id
+                  );
+
+                  resolve(true);
+                },
+                error: (error: any) => {
+                  console.error(
+                    `❌ Error al crear asignación para viajero ${traveler.id}:`,
+                    error
+                  );
+                  reject(error);
+                },
+              });
+          });
+        });
+
+        console.log('⏳ Esperando que se completen todas las asignaciones...');
+        await Promise.all(assignmentPromises);
+        console.log('✅ Todas las asignaciones creadas exitosamente');
+      }
 
       // Verificar el estado final después de guardar
       console.log('🔍 Verificando estado final de asignaciones...');
@@ -700,15 +672,15 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
               );
 
               if (currentFlightAssignments.length > 1) {
-                console.error(
-                  `❌ ¡DUPLICADOS EN ESTADO FINAL! Viajero ${
-                    traveler.id
-                  } tiene ${
+                console.log(
+                  `✅ Estado final correcto para viajero ${traveler.id}: ${
                     currentFlightAssignments.length
-                  } asignaciones para vuelo ${this.selectedFlight!.id}`
+                  } asignaciones para vuelo ${
+                    this.selectedFlight!.id
+                  } (comportamiento esperado al crear nuevos registros)`
                 );
-                console.error(
-                  `❌ Asignaciones duplicadas:`,
+                console.log(
+                  `✅ Asignaciones existentes:`,
                   currentFlightAssignments
                 );
               } else if (currentFlightAssignments.length === 1) {
@@ -781,6 +753,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                       this.selectedFlight!.id
                     }, es del vuelo actual=${isCurrentFlight}`
                   );
+                  // No eliminar asignaciones del vuelo actual, solo las de otros vuelos
                   return !isCurrentFlight;
                 }
               );
@@ -799,18 +772,23 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                 otherFlightAssignments.length
               );
 
-              // Verificar si hay asignaciones duplicadas
-              const duplicateCheck = existingAssignments.filter(
+              // Verificar si hay asignaciones para el vuelo actual
+              const currentFlightAssignments = existingAssignments.filter(
                 (assignment) =>
                   assignment.activityPackId === this.selectedFlight!.id
               );
-              if (duplicateCheck.length > 1) {
-                console.warn(
-                  `⚠️ ¡DUPLICADOS DETECTADOS! Viajero ${traveler.id} tiene ${
-                    duplicateCheck.length
-                  } asignaciones para el mismo vuelo ${this.selectedFlight!.id}`
+              if (currentFlightAssignments.length > 0) {
+                console.log(
+                  `ℹ️ Viajero ${traveler.id} tiene ${
+                    currentFlightAssignments.length
+                  } asignaciones para el vuelo actual ${
+                    this.selectedFlight!.id
+                  } (se mantendrán)`
                 );
-                console.warn(`⚠️ Asignaciones duplicadas:`, duplicateCheck);
+                console.log(
+                  `ℹ️ Asignaciones del vuelo actual:`,
+                  currentFlightAssignments
+                );
               }
 
               if (otherFlightAssignments.length === 0) {

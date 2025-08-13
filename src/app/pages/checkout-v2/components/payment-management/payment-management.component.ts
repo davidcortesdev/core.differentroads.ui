@@ -1,4 +1,5 @@
 import { Component, Input, OnInit, OnDestroy, Output, EventEmitter, OnChanges } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { IScalapayOrderResponse, NewScalapayService } from '../../services/newScalapay.service';
 import { Router } from '@angular/router';
 import { PaymentsNetService, PaymentStatusFilter } from '../../services/paymentsNet.service';
@@ -206,51 +207,155 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
   }
 
   async submitPayment(): Promise<void> {
-
     if (!this.isPaymentValid) return;
 
     this.paymentState.isLoading = true;
 
     try {
-      //estado --> PREBOOK
-      this.reservationStatusService.getByCode('PREBOOK').subscribe({
-        next: (reservationStatus) => {
-          if (reservationStatus) {
-            this.reservationService.updateStatus(this.reservationId!, reservationStatus[0].id).subscribe({
-              next: (success) => {
-                if (success) {
-                  console.log('Estado actualizado correctamente');
-                }     
-              },
-              error: (error) => {
-                console.error('Error al actualizar el estado de la reservación:', error);
-                this.messageService.add({
-                  severity: 'error',
-                  summary: 'Error interno al guardar su reserva',
-                  detail: 'Intente nuevamente más tarde o contacte con nuestro equipo de soporte',
-                  life: 3000,
-                });
-              }
-            })
-          }
-          }
-        })
+      // Mostrar mensaje de inicio del proceso
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Procesando pago',
+        detail: 'Actualizando estado de la reservación...',
+        life: 3000,
+      });
 
-      if (this.paymentState.type === 'installments') {
-        await this.processInstallmentPayment();
-      } else if (this.paymentMethod === 'creditCard') {
-        if (this.paymentState.type === 'deposit') {
-          await this.processCreditCardPayment(200);
-        } else {
-          await this.processCreditCardPayment(this.totalPrice);
-        }
-      } else if (this.paymentMethod === 'transfer') {
-        await this.processTransferPayment();
-      }
+      // Primero actualizar el estado a PREBOOKED y esperar a que se complete
+      await this.updateReservationStatusToPrebooked();
+
+      // Mostrar mensaje de éxito en la actualización
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Reserva actualizada',
+        detail: 'Estado de la reservación actualizado correctamente. Procesando pago...',
+        life: 3000,
+      });
+
+      // Solo después de actualizar el estado, procesar el pago
+      await this.processPaymentBasedOnMethod();
+
+      // Mensaje de éxito final
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Pago procesado',
+        detail: 'El pago se ha procesado correctamente.',
+        life: 5000,
+      });
+
     } catch (error) {
       console.error('Payment processing failed:', error);
+      
+      // Determinar el tipo de error para mostrar mensaje apropiado
+      let errorMessage = 'Ha ocurrido un error inesperado. Por favor, inténtelo nuevamente.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('estado')) {
+          errorMessage = 'Error al actualizar el estado de la reservación. El pago no se procesará.';
+        } else if (error.message.includes('pago')) {
+          errorMessage = 'Error al procesar el pago. La reservación se mantendrá en su estado actual.';
+        }
+      }
+
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error al procesar el pago',
+        detail: errorMessage,
+        life: 5000,
+      });
     } finally {
       this.paymentState.isLoading = false;
+    }
+  }
+
+  /**
+   * Actualiza el estado de la reservación a PREBOOKED
+   * @returns Promise<boolean> - true si se actualizó correctamente, false en caso contrario
+   */
+  private async updateReservationStatusToPrebooked(): Promise<boolean> {
+    try {
+      console.log('🔄 Actualizando estado de reservación a PREBOOKED...');
+      
+      // Obtener el estado PREBOOKED usando firstValueFrom (alternativa moderna a toPromise)
+      const reservationStatus = await firstValueFrom(
+        this.reservationStatusService.getByCode('PREBOOKED')
+      );
+      
+      if (!reservationStatus || reservationStatus.length === 0) {
+        throw new Error('No se pudo obtener el estado PREBOOKED');
+      }
+
+      // Actualizar el estado de la reservación
+      const success = await firstValueFrom(
+        this.reservationService.updateStatus(this.reservationId!, reservationStatus[0].id)
+      );
+
+      if (success) {
+        console.log('✅ Estado de reservación actualizado correctamente a PREBOOKED');
+        
+        // Verificar que el estado se haya actualizado correctamente
+        await this.verifyReservationStatusUpdate(reservationStatus[0].id);
+        
+        return true;
+      } else {
+        throw new Error('La actualización del estado falló');
+      }
+
+    } catch (error) {
+      console.error('❌ Error al actualizar estado de reservación:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error interno al guardar su reserva',
+        detail: 'No se pudo actualizar el estado de la reservación. Intente nuevamente más tarde o contacte con nuestro equipo de soporte.',
+        life: 5000,
+      });
+      throw error; // Re-lanzar el error para que se maneje en el método principal
+    }
+  }
+
+  /**
+   * Verifica que el estado de la reservación se haya actualizado correctamente
+   * @param expectedStatusId - ID del estado esperado
+   */
+  private async verifyReservationStatusUpdate(expectedStatusId: number): Promise<void> {
+    try {
+      console.log('🔍 Verificando actualización del estado de la reservación...');
+      
+      // Obtener la reservación actualizada para verificar el estado
+      const updatedReservation = await firstValueFrom(
+        this.reservationService.getById(this.reservationId!)
+      );
+      
+      if (updatedReservation.reservationStatusId === expectedStatusId) {
+        console.log('✅ Verificación exitosa: Estado de reservación actualizado correctamente');
+      } else {
+        console.warn('⚠️ Verificación fallida: Estado esperado', expectedStatusId, 'vs actual', updatedReservation.reservationStatusId);
+        // No lanzar error aquí, solo log de advertencia
+      }
+      
+    } catch (error) {
+      console.warn('⚠️ No se pudo verificar el estado de la reservación:', error);
+      // No lanzar error aquí, solo log de advertencia
+    }
+  }
+
+  /**
+   * Procesa el pago según el método seleccionado
+   */
+  private async processPaymentBasedOnMethod(): Promise<void> {
+    console.log('💳 Procesando pago con método:', this.paymentMethod, 'tipo:', this.paymentState.type);
+
+    if (this.paymentState.type === 'installments') {
+      await this.processInstallmentPayment();
+    } else if (this.paymentMethod === 'creditCard') {
+      if (this.paymentState.type === 'deposit') {
+        await this.processCreditCardPayment(200);
+      } else {
+        await this.processCreditCardPayment(this.totalPrice);
+      }
+    } else if (this.paymentMethod === 'transfer') {
+      await this.processTransferPayment();
+    } else {
+      throw new Error(`Método de pago no soportado: ${this.paymentMethod}`);
     }
   }
 

@@ -87,10 +87,12 @@
           <!-- Step 2: Vuelos -->
           <div *ngSwitchCase="1">
             <!-- Componente de gestión de vuelos -->
-            <app-flight-management 
-              [departureId]="departureId ?? 0" 
-              [reservationId]="reservationId ?? 0" 
+            <app-flight-management
+              #flightManagement
+              [departureId]="departureId ?? 0"
+              [reservationId]="reservationId ?? 0"
               [tourId]="tourId ?? 0"
+              [selectedFlight]="selectedFlight"
               (flightSelectionChange)="onFlightSelectionChange($event)">
             </app-flight-management>
 

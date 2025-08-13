@@ -2,7 +2,10 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { map, Observable, switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { IReservationStatusResponse, ReservationStatusService } from './reservation-status.service';
+import {
+  IReservationStatusResponse,
+  ReservationStatusService,
+} from './reservation-status.service';
 
 export interface ReservationCreate {
   id: number;
@@ -56,6 +59,26 @@ export interface IReservationResponse {
   reservedAt: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ReservationSummaryItem {
+  itemId: number;
+  description: string;
+  amount: number;
+  quantity: number;
+  total: number;
+  itemType: string;
+  included: boolean;
+  ageGroupId: number;
+}
+
+export interface IReservationSummaryResponse {
+  id: number;
+  tkId: string;
+  totalPassengers: number;
+  totalAmount: number;
+  items: ReservationSummaryItem[];
+  createdAt: string;
 }
 
 /**
@@ -131,6 +154,17 @@ export class ReservationService {
    */
   getById(id: number): Observable<IReservationResponse> {
     return this.http.get<IReservationResponse>(`${this.API_URL}/${id}`);
+  }
+
+  /**
+   * Obtiene un resumen completo de una reservación incluyendo todos los ítems y costos.
+   * @param id ID de la reservación.
+   * @returns El resumen de la reservación.
+   */
+  getSummary(id: number): Observable<IReservationSummaryResponse> {
+    return this.http.get<IReservationSummaryResponse>(
+      `${this.API_URL}/${id}/summary`
+    );
   }
 
   /**
@@ -278,7 +312,7 @@ export class ReservationService {
 
   updateStatus(reservationId: number, statusId: number): Observable<boolean> {
     return this.getById(reservationId).pipe(
-      switchMap(reservation => {
+      switchMap((reservation) => {
         reservation.reservationStatusId = statusId;
         return this.update(reservationId, reservation as ReservationUpdate);
       })

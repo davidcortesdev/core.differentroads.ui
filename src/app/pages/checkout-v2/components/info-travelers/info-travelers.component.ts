@@ -95,6 +95,9 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   // Formulario reactivo principal
   travelersForm: FormGroup;
 
+  // Estados de carga
+  checkingReservationStatus: boolean = false;
+
   departureReservationFields: IDepartureReservationFieldResponse[] = [];
   mandatoryTypes: IMandatoryTypeResponse[] = [];
   reservationFields: IReservationFieldResponse[] = [];
@@ -212,47 +215,100 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       console.log('reservationId:', this.reservationId);
       console.log('itineraryId:', this.itineraryId);
 
-      this.reservationStatusService
-        .getByCode('CART')
-        .subscribe((cartStatus) => {
-          this.cartStatusId = cartStatus[0].id;
-        });
-      this.reservationStatusService
-        .getByCode('BUDGET')
-        .subscribe((budgetStatus) => {
-          this.budgetStatusId = budgetStatus[0].id;
-        });
-      this.reservationStatusService
-        .getByCode('DRAFT')
-        .subscribe((prebookStatus) => {
-          this.draftStatusId = prebookStatus[0].id;
-        });
-      this.reservationService.getById(this.reservationId!).subscribe({
-        next: (reservation) => {
-          if (reservation.reservationStatusId == this.budgetStatusId) {
-            console.log('Reserva en estado BUDGET');
-          } else if (reservation.reservationStatusId == this.draftStatusId) {
-            console.log('Reserva en estado DRAFT');
-            console.log('Pasando a estado CART');
-            this.reservationService
-              .updateStatus(this.reservationId!, this.cartStatusId!)
-              .subscribe({
-                next: (success) => {
-                  if (success) {
-                    console.log('Estado actualizado correctamente');
-                  }
-                },
-              });
-          }
-        },
-        error: (error) => {
-          console.error('Error al obtener la reserva', error);
-        },
-      });
-      this.loadAllData();
+      // Cargar los estados de reserva primero
+      this.loadReservationStatuses();
     } else {
       this.error = 'No se proporcionó un ID de departure o reservación válido';
     }
+  }
+
+  /**
+   * Carga los estados de reserva y luego procede con la verificación del estado actual
+   */
+  private loadReservationStatuses(): void {
+    this.checkingReservationStatus = true;
+    this.error = null;
+    
+    // Usar forkJoin para cargar todos los estados en paralelo
+    forkJoin({
+      cartStatus: this.reservationStatusService.getByCode('CART'),
+      budgetStatus: this.reservationStatusService.getByCode('BUDGET'),
+      draftStatus: this.reservationStatusService.getByCode('DRAFT')
+    }).subscribe({
+      next: (statuses) => {
+        this.cartStatusId = statuses.cartStatus[0].id;
+        this.budgetStatusId = statuses.budgetStatus[0].id;
+        this.draftStatusId = statuses.draftStatus[0].id;
+        
+        console.log('Estados de reserva cargados:', {
+          cart: this.cartStatusId,
+          budget: this.budgetStatusId,
+          draft: this.draftStatusId
+        });
+        
+        // Ahora verificar el estado actual de la reserva
+        this.checkReservationStatus();
+      },
+      error: (error) => {
+        console.error('Error al cargar estados de reserva:', error);
+        this.error = 'Error al cargar estados de reserva';
+        this.checkingReservationStatus = false;
+      }
+    });
+  }
+
+  /**
+   * Verifica el estado actual de la reserva y actualiza si es necesario
+   */
+  private checkReservationStatus(): void {
+    this.reservationService.getById(this.reservationId!).subscribe({
+      next: (reservation) => {
+        console.log('Estado actual de la reserva:', reservation.reservationStatusId);
+        
+        if (reservation.reservationStatusId === this.budgetStatusId) {
+          console.log('Reserva en estado BUDGET');
+          this.checkingReservationStatus = false;
+          // Cargar datos después de verificar el estado
+          this.loadAllData();
+        } else if (reservation.reservationStatusId === this.draftStatusId) {
+          console.log('Reserva en estado DRAFT');
+          console.log('Pasando a estado CART');
+          
+          // Actualizar estado y luego cargar datos
+          this.reservationService
+            .updateStatus(this.reservationId!, this.cartStatusId!)
+            .subscribe({
+              next: (success) => {
+                if (success) {
+                  console.log('Estado actualizado correctamente a CART');
+                  this.checkingReservationStatus = false;
+                  // Solo cargar datos después de actualizar el estado
+                  this.loadAllData();
+                } else {
+                  console.error('Error al actualizar estado de la reserva');
+                  this.error = 'Error al actualizar estado de la reserva';
+                  this.checkingReservationStatus = false;
+                }
+              },
+              error: (error) => {
+                console.error('Error al actualizar estado:', error);
+                this.error = 'Error al actualizar estado de la reserva';
+                this.checkingReservationStatus = false;
+              }
+            });
+        } else {
+          console.log('Reserva en otro estado, cargando datos directamente');
+          this.checkingReservationStatus = false;
+          // Para otros estados, cargar datos directamente
+          this.loadAllData();
+        }
+      },
+      error: (error) => {
+        console.error('Error al obtener la reserva:', error);
+        this.error = 'Error al obtener información de la reserva';
+        this.checkingReservationStatus = false;
+      }
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -265,7 +321,12 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       if (this.departureId && this.reservationId) {
         // Reinicializar control de eliminados
         this.deletedFromDB = {};
-        this.loadAllData();
+        // Reiniciar estados de carga
+        this.loading = false;
+        this.checkingReservationStatus = false;
+        this.error = null;
+        // Recargar desde el inicio para asegurar el orden correcto
+        this.loadReservationStatuses();
       }
     }
   }
@@ -274,6 +335,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     this.destroy$.next();
     this.destroy$.complete();
   }
+
+
 
   // Accesor para los formularios de viajeros
   get travelerForms(): FormArray {
@@ -1073,8 +1136,14 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
    */
   reloadData(): void {
     if (this.departureId && this.reservationId) {
+      console.log('🔄 Recarga manual de datos solicitada');
       this.deletedFromDB = {};
-      this.loadAllData();
+      // Reiniciar estados de carga
+      this.loading = false;
+      this.checkingReservationStatus = false;
+      this.error = null;
+      // Recargar desde el inicio para asegurar el orden correcto
+      this.loadReservationStatuses();
     }
   }
 

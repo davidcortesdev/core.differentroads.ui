@@ -10,6 +10,7 @@ export interface TourFilter {
   description?: string;
   tkId?: string;
   slug?: string;
+  filterByVisible?: boolean;
 }
 
 export interface Tour {

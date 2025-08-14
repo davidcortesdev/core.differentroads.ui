@@ -65,7 +65,7 @@ export class TourV2Component implements OnInit {
   loading: boolean = true;
   error: string | null = null;
   selectedDepartureEvent: SelectedDepartureEvent | null = null;
-
+  preview: boolean = false;
   // Total del carrito
   totalPrice: number = 0;
 
@@ -110,8 +110,13 @@ export class TourV2Component implements OnInit {
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
       const slug: string | null = params.get('slug');
+      const preview: string | null = params.get('preview');
+      console.log('preview', preview);
       if (slug) {
         this.tourSlug = slug;
+        if (preview) {
+          this.preview = true;
+        }
         this.loadTourBySlug(slug);
       } else {
         this.error = 'No se proporcionó un slug de tour válido';
@@ -125,7 +130,7 @@ export class TourV2Component implements OnInit {
     this.error = null;
 
     this.tourNetService
-      .getTours({ slug })
+      .getTours({ slug, filterByVisible: this.preview })
       .pipe(
         catchError((err: Error) => {
           console.error('Error al cargar el tour:', err);

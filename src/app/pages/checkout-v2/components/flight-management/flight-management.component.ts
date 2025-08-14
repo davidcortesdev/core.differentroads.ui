@@ -6,6 +6,7 @@ import {
   SimpleChanges,
   Output,
   EventEmitter,
+  ViewChild,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import {
@@ -18,6 +19,7 @@ import {
 } from '../../../../core/services/tourNet.service';
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
 import { IFlightPackDTO } from '../../services/flightsNet.service';
+import { DefaultFlightsComponent } from './default-flights/default-flights.component';
 
 @Component({
   selector: 'app-flight-management',
@@ -27,13 +29,16 @@ import { IFlightPackDTO } from '../../services/flightsNet.service';
   styleUrls: ['./flight-management.component.scss'],
 })
 export class FlightManagementComponent implements OnInit, OnChanges {
-  @Input() tourId!: number;
-  @Input() departureId!: number;
-  @Input() reservationId!: number;
+  @Input() departureId: number | null = null;
+  @Input() reservationId: number | null = null;
+  @Input() tourId: number | null = null;
+  @Input() selectedFlight: IFlightPackDTO | null = null; // Nuevo input
   @Output() flightSelectionChange = new EventEmitter<{
     selectedFlight: IFlightPackDTO | null;
     totalPrice: number;
   }>();
+
+  @ViewChild(DefaultFlightsComponent) defaultFlightsComponent!: DefaultFlightsComponent;
 
   isConsolidadorVuelosActive: boolean = false;
   loginDialogVisible: boolean = false;
@@ -163,5 +168,9 @@ export class FlightManagementComponent implements OnInit, OnChanges {
     totalPrice: number;
   }): void {
     this.flightSelectionChange.emit(flightData);
+  }
+
+  saveFlightAssignments(): void {
+    this.defaultFlightsComponent.saveFlightAssignments();
   }
 }

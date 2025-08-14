@@ -87,15 +87,18 @@
           <!-- Step 2: Vuelos -->
           <div *ngSwitchCase="1">
             <!-- Componente de gestión de vuelos -->
-            <app-flight-management 
-              [departureId]="departureId ?? 0" 
-              [reservationId]="reservationId ?? 0" 
+            <app-flight-management
+              #flightManagement
+              [departureId]="departureId ?? 0"
+              [reservationId]="reservationId ?? 0"
               [tourId]="tourId ?? 0"
+              [selectedFlight]="selectedFlight"
               (flightSelectionChange)="onFlightSelectionChange($event)">
             </app-flight-management>
 
             <div class="flight-buttons">
               <p-button
+                *ngIf="hasAvailableFlights"
                 class="without-flight"
                 label="Lo quiero sin vuelos"
                 (onClick)="checkAuthAndContinue(2, onActiveIndexChange.bind(this), true)"

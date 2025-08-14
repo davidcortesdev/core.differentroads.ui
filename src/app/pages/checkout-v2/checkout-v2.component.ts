@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MenuItem, MessageService } from 'primeng/api';
+import { HttpClient } from '@angular/common/http';
 import { TourNetService } from '../../core/services/tourNet.service';
 import { ReservationService } from '../../core/services/reservation/reservation.service';
 import {
@@ -64,6 +65,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('travelerSelector') travelerSelector!: SelectorTravelerComponent;
   @ViewChild('insuranceSelector') insuranceSelector!: InsuranceComponent;
   @ViewChild('infoTravelers') infoTravelers!: InfoTravelersComponent;
+  @ViewChild('flightManagement') flightManagement!: any; // Referencia al componente de gestión de vuelos
 
   // Datos del tour
   tourName: string = '';
@@ -97,7 +99,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   } = {};
 
   // Variables para el resumen del pedido
-  summary: { qty: number; value: number; description: string }[] = [];
+  summary: Array<{
+    qty: number;
+    value: number;
+    description: string;
+  }> = [];
   subtotal: number = 0;
   totalAmountCalculated: number = 0;
 
@@ -114,6 +120,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   // Propiedades para vuelos
   selectedFlight: IFlightPackDTO | null = null;
   flightPrice: number = 0;
+  hasAvailableFlights: boolean = false; // Nueva propiedad para controlar la visibilidad del botón
+  availableFlights: IFlightPackDTO[] = []; // Nueva propiedad para almacenar los vuelos disponibles
 
   // Steps configuration
   items: MenuItem[] = [];
@@ -157,7 +165,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     private reservationTravelerService: ReservationTravelerService,
     private cdr: ChangeDetectorRef,
     private priceCheckService: PriceCheckService,
-    private reservationStatusService: ReservationStatusService
+    private reservationStatusService: ReservationStatusService,
+    private http: HttpClient
   ) {}
 
   ngOnInit(): void {
@@ -204,7 +213,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       travelerSelector: !!this.travelerSelector,
       roomSelector: !!this.roomSelector,
       insuranceSelector: !!this.insuranceSelector,
-      infoTravelers: !!this.infoTravelers
+      infoTravelers: !!this.infoTravelers,
     });
 
     // Si hay un step activo en la URL, inicializar el componente correspondiente
@@ -480,6 +489,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
         // Cargar precios del departure y ejecutar verificación de precios inmediatamente
         this.loadDeparturePrices(reservation.departureId);
+
+        // Verificar si hay vuelos disponibles
+        this.checkFlightsAvailability(reservation.departureId);
 
         // Ejecutar verificación de precios inmediatamente cuando tengamos los datos básicos
         this.executePriceCheck();
@@ -864,16 +876,33 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     selectedFlight: IFlightPackDTO | null;
     totalPrice: number;
   }): void {
+    console.log('🔄 onFlightSelectionChange llamado con:', flightData);
+    console.log('🕐 Timestamp:', new Date().toISOString());
+    console.log('📊 selectedFlight anterior:', this.selectedFlight);
+    console.log('💰 flightPrice anterior:', this.flightPrice);
+
     this.selectedFlight = flightData.selectedFlight;
     this.flightPrice = flightData.totalPrice; // Ahora es el precio por persona
+
+    console.log('✅ Vuelo seleccionado actualizado:', this.selectedFlight);
+    console.log('💰 Precio del vuelo actualizado:', this.flightPrice);
+
+    // Determinar si hay vuelos disponibles
+    this.hasAvailableFlights = this.checkIfFlightsAvailable();
+    console.log(
+      '🛫 hasAvailableFlights actualizado:',
+      this.hasAvailableFlights
+    );
 
     // Actualizar el resumen del pedido si tenemos datos de viajeros
     if (
       this.travelerSelector &&
       Object.keys(this.pricesByAgeGroup).length > 0
     ) {
+      console.log('📊 Actualizando resumen con datos de viajeros existentes');
       this.updateOrderSummary(this.travelerSelector.travelersNumbers);
     } else {
+      console.log('📊 Actualizando resumen con datos básicos de viajeros');
       const basicTravelers = {
         adults: Math.max(1, this.totalPassengers),
         childs: 0,
@@ -883,9 +912,81 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     }
 
     // Forzar actualización del resumen incluso si no hay datos de viajeros
+    console.log('⏰ Programando actualización forzada del resumen...');
     setTimeout(() => {
+      console.log('🔄 Ejecutando actualización forzada del resumen...');
       this.forceSummaryUpdate();
     }, 100);
+  }
+
+  /**
+   * Método para verificar si hay vuelos disponibles
+   */
+  private checkIfFlightsAvailable(): boolean {
+    // Si no hay vuelo seleccionado, verificar si hay vuelos en el sistema
+    if (!this.selectedFlight) {
+      // Aquí podrías verificar si hay vuelos disponibles en el sistema
+      // Por ahora, asumimos que hay vuelos disponibles si no hay uno seleccionado
+      return true;
+    }
+
+    // Verificar si el name o description contienen "sin vuelos" o "pack sin vuelos"
+    const name = this.selectedFlight.name?.toLowerCase() || '';
+    const description = this.selectedFlight.description?.toLowerCase() || '';
+
+    const isFlightlessOption =
+      name.includes('sin vuelos') ||
+      description.includes('sin vuelos') ||
+      name.includes('pack sin vuelos') ||
+      description.includes('pack sin vuelos');
+
+    // Si es una opción sin vuelos, entonces SÍ hay opción sin vuelos (mostrar botón)
+    return isFlightlessOption;
+  }
+
+  /**
+   * Método para verificar la disponibilidad de vuelos en el sistema
+   */
+  private checkFlightsAvailability(departureId: number): void {
+    // Importar el servicio de vuelos
+    import('./services/flightsNet.service').then(({ FlightsNetService }) => {
+      const flightsService = new FlightsNetService(this.http);
+
+      flightsService.getFlights(departureId).subscribe({
+        next: (flights) => {
+          // Almacenar los vuelos disponibles
+          this.availableFlights = flights || [];
+
+          // Verificar si hay vuelos disponibles basándose en name y description
+          this.hasAvailableFlights =
+            flights &&
+            flights.length > 0 &&
+            flights.some((pack) => {
+              const name = pack.name?.toLowerCase() || '';
+              const description = pack.description?.toLowerCase() || '';
+
+              // Verificar que SÍ sea una opción sin vuelos
+              const isFlightlessOption =
+                name.includes('sin vuelos') ||
+                description.includes('sin vuelos') ||
+                name.includes('pack sin vuelos') ||
+                description.includes('pack sin vuelos');
+
+              return isFlightlessOption;
+            });
+
+          console.log(
+            'Vuelos disponibles en el sistema:',
+            this.hasAvailableFlights
+          );
+        },
+        error: (error) => {
+          console.error('Error al verificar disponibilidad de vuelos:', error);
+          this.hasAvailableFlights = false;
+          this.availableFlights = [];
+        },
+      });
+    });
   }
 
   // OPTIMIZADO: Método para verificar si podemos inicializar el resumen
@@ -980,6 +1081,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         } - ${this.selectedFlight.flights[0]?.arrivalCity || ''}`,
       };
       this.summary.push(flightItem);
+    } else if (
+      this.selectedFlight &&
+      this.selectedFlight.code === 'NO_FLIGHT'
+    ) {
+      // Vuelo "sin vuelos" creado dinámicamente - no agregar al resumen ya que no tiene costo
+      console.log(
+        '🚫 Vuelo "sin vuelos" detectado - no se agrega al resumen de costos'
+      );
     }
 
     // Habitaciones seleccionadas
@@ -1111,7 +1220,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   // Método para guardar actividades seleccionadas (CON SOPORTE COMPLETO PARA PACKS)
   async saveActivitiesAssignments(): Promise<boolean> {
     console.log('=== INICIO saveActivitiesAssignments ===');
-    
+
     if (
       !this.reservationId ||
       !this.selectedActivities ||
@@ -1120,7 +1229,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       console.log('No hay actividades para guardar, retornando true');
       console.log('reservationId:', this.reservationId);
       console.log('selectedActivities:', this.selectedActivities);
-      console.log('selectedActivities.length:', this.selectedActivities?.length);
+      console.log(
+        'selectedActivities.length:',
+        this.selectedActivities?.length
+      );
       return true; // Si no hay actividades seleccionadas, consideramos exitoso
     }
 
@@ -1136,12 +1248,23 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
       if (existingTravelers.length === 0) {
         console.error('No se encontraron viajeros para esta reserva');
-        console.log('travelerSelector.existingTravelers:', this.travelerSelector.existingTravelers);
+        console.log(
+          'travelerSelector.existingTravelers:',
+          this.travelerSelector.existingTravelers
+        );
         throw new Error('No se encontraron viajeros para esta reserva');
       }
 
-      console.log(`Guardando actividades para ${existingTravelers.length} viajeros`);
-      console.log('Viajeros encontrados:', existingTravelers.map(t => ({ id: t.id, name: (t as any).name || 'Sin nombre' })));
+      console.log(
+        `Guardando actividades para ${existingTravelers.length} viajeros`
+      );
+      console.log(
+        'Viajeros encontrados:',
+        existingTravelers.map((t) => ({
+          id: t.id,
+          name: (t as any).name || 'Sin nombre',
+        }))
+      );
 
       // Limpiar actividades y packs existentes para esta reserva
       console.log('Limpiando actividades existentes...');
@@ -1156,7 +1279,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         (activity) => activity.type === 'pack'
       );
 
-      console.log(`Actividades individuales: ${individualActivities.length}, Packs: ${activityPacks.length}`);
+      console.log(
+        `Actividades individuales: ${individualActivities.length}, Packs: ${activityPacks.length}`
+      );
       console.log('Actividades individuales:', individualActivities);
       console.log('Packs de actividades:', activityPacks);
 
@@ -1171,23 +1296,32 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             activityId: activity.id,
           };
 
-          console.log(`Creando asignación de actividad ${activity.id} para viajero ${traveler.id}:`, activityAssignment);
+          console.log(
+            `Creando asignación de actividad ${activity.id} para viajero ${traveler.id}:`,
+            activityAssignment
+          );
 
           const createPromise = new Promise((resolve, reject) => {
             this.reservationTravelerActivityService
               .create(activityAssignment)
               .subscribe({
                 next: (result) => {
-                  console.log(`Actividad ${activity.id} asignada al viajero ${traveler.id} exitosamente:`, result);
+                  console.log(
+                    `Actividad ${activity.id} asignada al viajero ${traveler.id} exitosamente:`,
+                    result
+                  );
                   resolve(result);
                 },
                 error: (error) => {
-                  console.error(`Error al asignar actividad ${activity.id} al viajero ${traveler.id}:`, error);
+                  console.error(
+                    `Error al asignar actividad ${activity.id} al viajero ${traveler.id}:`,
+                    error
+                  );
                   console.error('Detalles del error:', {
                     status: error?.status,
                     message: error?.message,
                     error: error?.error,
-                    stack: error?.stack
+                    stack: error?.stack,
                   });
                   reject(error);
                 },
@@ -1207,23 +1341,32 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             activityPackId: pack.id,
           };
 
-          console.log(`Creando asignación de pack ${pack.id} para viajero ${traveler.id}:`, packAssignment);
+          console.log(
+            `Creando asignación de pack ${pack.id} para viajero ${traveler.id}:`,
+            packAssignment
+          );
 
           const createPromise = new Promise((resolve, reject) => {
             this.reservationTravelerActivityPackService
               .create(packAssignment)
               .subscribe({
                 next: (result) => {
-                  console.log(`Pack ${pack.id} asignado al viajero ${traveler.id} exitosamente:`, result);
+                  console.log(
+                    `Pack ${pack.id} asignado al viajero ${traveler.id} exitosamente:`,
+                    result
+                  );
                   resolve(result);
                 },
                 error: (error) => {
-                  console.error(`Error al asignar pack ${pack.id} al viajero ${traveler.id}:`, error);
+                  console.error(
+                    `Error al asignar pack ${pack.id} al viajero ${traveler.id}:`,
+                    error
+                  );
                   console.error('Detalles del error:', {
                     status: error?.status,
                     message: error?.message,
                     error: error?.error,
-                    stack: error?.stack
+                    stack: error?.stack,
                   });
                   reject(error);
                 },
@@ -1236,7 +1379,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
       // Ejecutar todas las operaciones de creación
       if (createPromises.length > 0) {
-        console.log(`Ejecutando ${createPromises.length} operaciones de creación...`);
+        console.log(
+          `Ejecutando ${createPromises.length} operaciones de creación...`
+        );
         try {
           // Usar Promise.allSettled para manejar mejor los errores y asegurar que todas las operaciones se completen
           const results = await Promise.allSettled(createPromises);
@@ -1265,7 +1410,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           
           console.log('Todas las actividades se guardaron exitosamente');
         } catch (error) {
-          console.error('Error durante la ejecución de operaciones de creación:', error);
+          console.error(
+            'Error durante la ejecución de operaciones de creación:',
+            error
+          );
           throw error; // Re-lanzar el error para que sea capturado por el catch externo
         }
       } else {
@@ -1279,11 +1427,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       console.error('Error completo:', error);
       console.error('Stack trace:', (error as any)?.stack);
       console.error('Mensaje del error:', (error as any)?.message);
-      
+
       this.messageService.add({
         severity: 'error',
         summary: 'Error al guardar actividades',
-        detail: 'Hubo un error al guardar las actividades seleccionadas. Por favor, inténtalo de nuevo.',
+        detail:
+          'Hubo un error al guardar las actividades seleccionadas. Por favor, inténtalo de nuevo.',
         life: 5000,
       });
       return false;
@@ -1295,8 +1444,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     existingTravelers: any[]
   ): Promise<void> {
     console.log(`=== INICIO clearExistingActivitiesAndPacks ===`);
-    console.log(`Limpiando actividades existentes para ${existingTravelers.length} viajeros`);
-    
+    console.log(
+      `Limpiando actividades existentes para ${existingTravelers.length} viajeros`
+    );
+
     const deletePromises: Promise<any>[] = [];
     let totalActivitiesFound = 0;
     let totalPacksFound = 0;
@@ -1306,7 +1457,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     for (const traveler of existingTravelers) {
       try {
         console.log(`Procesando viajero ${traveler.id}...`);
-        
+
         // Obtener y eliminar actividades individuales existentes
         const existingActivities = await new Promise<any[]>(
           (resolve, reject) => {
@@ -1314,16 +1465,21 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               .getByReservationTraveler(traveler.id)
               .subscribe({
                 next: (activities) => {
-                  console.log(`Viajero ${traveler.id} tiene ${activities.length} actividades individuales`);
+                  console.log(
+                    `Viajero ${traveler.id} tiene ${activities.length} actividades individuales`
+                  );
                   totalActivitiesFound += activities.length;
                   resolve(activities);
                 },
                 error: (error) => {
-                  console.warn(`Error al obtener actividades para viajero ${traveler.id}:`, error);
+                  console.warn(
+                    `Error al obtener actividades para viajero ${traveler.id}:`,
+                    error
+                  );
                   console.warn('Detalles del error:', {
                     status: (error as any)?.status,
                     message: (error as any)?.message,
-                    error: (error as any)?.error
+                    error: (error as any)?.error,
                   });
                   resolve([]); // Continuar con lista vacía
                 },
@@ -1333,21 +1489,29 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
         existingActivities.forEach((activity) => {
           const deletePromise = new Promise((resolve, reject) => {
-            console.log(`Eliminando actividad ${activity.id} del viajero ${traveler.id}...`);
+            console.log(
+              `Eliminando actividad ${activity.id} del viajero ${traveler.id}...`
+            );
             this.reservationTravelerActivityService
               .delete(activity.id)
               .subscribe({
                 next: (result) => {
-                  console.log(`Actividad ${activity.id} eliminada del viajero ${traveler.id} exitosamente:`, result);
+                  console.log(
+                    `Actividad ${activity.id} eliminada del viajero ${traveler.id} exitosamente:`,
+                    result
+                  );
                   totalActivitiesDeleted++;
                   resolve(result);
                 },
                 error: (error) => {
-                  console.warn(`Error al eliminar actividad ${activity.id} del viajero ${traveler.id}:`, error);
+                  console.warn(
+                    `Error al eliminar actividad ${activity.id} del viajero ${traveler.id}:`,
+                    error
+                  );
                   console.warn('Detalles del error:', {
                     status: (error as any)?.status,
                     message: (error as any)?.message,
-                    error: (error as any)?.error
+                    error: (error as any)?.error,
                   });
                   resolve(false); // Continuar aunque falle la eliminación
                 },
@@ -1362,16 +1526,21 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             .getByReservationTraveler(traveler.id)
             .subscribe({
               next: (packs) => {
-                console.log(`Viajero ${traveler.id} tiene ${packs.length} packs de actividades`);
+                console.log(
+                  `Viajero ${traveler.id} tiene ${packs.length} packs de actividades`
+                );
                 totalPacksFound += packs.length;
                 resolve(packs);
               },
               error: (error) => {
-                console.warn(`Error al obtener packs para viajero ${traveler.id}:`, error);
+                console.warn(
+                  `Error al obtener packs para viajero ${traveler.id}:`,
+                  error
+                );
                 console.warn('Detalles del error:', {
                   status: (error as any)?.status,
                   message: (error as any)?.message,
-                  error: (error as any)?.error
+                  error: (error as any)?.error,
                 });
                 resolve([]); // Continuar con lista vacía
               },
@@ -1380,21 +1549,29 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
         existingPacks.forEach((pack) => {
           const deletePromise = new Promise((resolve, reject) => {
-            console.log(`Eliminando pack ${pack.id} del viajero ${traveler.id}...`);
+            console.log(
+              `Eliminando pack ${pack.id} del viajero ${traveler.id}...`
+            );
             this.reservationTravelerActivityPackService
               .delete(pack.id)
               .subscribe({
                 next: (result) => {
-                  console.log(`Pack ${pack.id} eliminado del viajero ${traveler.id} exitosamente:`, result);
+                  console.log(
+                    `Pack ${pack.id} eliminado del viajero ${traveler.id} exitosamente:`,
+                    result
+                  );
                   totalPacksDeleted++;
                   resolve(result);
                 },
                 error: (error) => {
-                  console.warn(`Error al eliminar pack ${pack.id} del viajero ${traveler.id}:`, error);
+                  console.warn(
+                    `Error al eliminar pack ${pack.id} del viajero ${traveler.id}:`,
+                    error
+                  );
                   console.warn('Detalles del error:', {
                     status: (error as any)?.status,
                     message: (error as any)?.message,
-                    error: (error as any)?.error
+                    error: (error as any)?.error,
                   });
                   resolve(false); // Continuar aunque falle la eliminación
                 },
@@ -1403,22 +1580,24 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           deletePromises.push(deletePromise);
         });
       } catch (error) {
-        console.warn(
-          `Error al procesar viajero ${traveler.id}:`,
-          error
-        );
+        console.warn(`Error al procesar viajero ${traveler.id}:`, error);
         // Continuar con el siguiente viajero
       }
     }
 
     // Esperar a que se completen todas las eliminaciones
     if (deletePromises.length > 0) {
-      console.log(`Esperando a que se completen ${deletePromises.length} eliminaciones...`);
+      console.log(
+        `Esperando a que se completen ${deletePromises.length} eliminaciones...`
+      );
       try {
         await Promise.all(deletePromises);
         console.log('Todas las eliminaciones se completaron');
       } catch (error) {
-        console.warn('Algunas eliminaciones fallaron, pero continuando:', error);
+        console.warn(
+          'Algunas eliminaciones fallaron, pero continuando:',
+          error
+        );
       }
     } else {
       console.log('No hay elementos para eliminar');
@@ -1525,7 +1704,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   onActiveIndexChange(index: number): void {
     this.activeIndex = index;
     this.updateStepInUrl(index);
-    
+
     // Forzar inicialización de componentes cuando se activan
     this.initializeComponentForStep(index);
   }
@@ -1558,7 +1737,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    */
   private initializeInfoTravelersComponent(): void {
     console.log('🔄 Intentando inicializar componente info-travelers...');
-    
+
     // Verificar que tengamos todos los datos necesarios
     if (!this.infoTravelers) {
       console.log('⚠️ Componente info-travelers no disponible');
@@ -1568,17 +1747,22 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     if (!this.departureId || !this.reservationId) {
       console.log('⚠️ Faltan datos necesarios:', {
         departureId: this.departureId,
-        reservationId: this.reservationId
+        reservationId: this.reservationId,
       });
       return;
     }
 
     console.log('✅ Datos disponibles, verificando estado del componente...');
-    
+
     // Verificar si el componente ya tiene datos cargados
-    if (!this.infoTravelers.travelers || this.infoTravelers.travelers.length === 0) {
-      console.log('📋 Componente info-travelers sin datos, forzando recarga...');
-      
+    if (
+      !this.infoTravelers.travelers ||
+      this.infoTravelers.travelers.length === 0
+    ) {
+      console.log(
+        '📋 Componente info-travelers sin datos, forzando recarga...'
+      );
+
       // Usar un pequeño delay para asegurar que el componente esté completamente renderizado
       setTimeout(() => {
         try {
@@ -1590,7 +1774,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }, 200);
     } else {
       console.log('✅ Componente info-travelers ya tiene datos cargados:', {
-        travelersCount: this.infoTravelers.travelers.length
+        travelersCount: this.infoTravelers.travelers.length,
       });
     }
   }
@@ -1639,29 +1823,30 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       available: !!this.travelerSelector,
       hasUnsavedChanges: this.travelerSelector?.hasUnsavedChanges,
       travelersNumbers: this.travelerSelector?.travelersNumbers,
-      existingTravelers: this.travelerSelector?.existingTravelers?.length || 0
+      existingTravelers: this.travelerSelector?.existingTravelers?.length || 0,
     });
     console.log('roomSelector:', {
       available: !!this.roomSelector,
       selectedRooms: this.roomSelector?.selectedRooms,
-      allRoomsAvailability: this.roomSelector?.allRoomsAvailability?.length || 0
+      allRoomsAvailability:
+        this.roomSelector?.allRoomsAvailability?.length || 0,
     });
     console.log('insuranceSelector:', {
       available: !!this.insuranceSelector,
-      selectedInsurance: !!this.insuranceSelector?.selectedInsurance
+      selectedInsurance: !!this.insuranceSelector?.selectedInsurance,
     });
     console.log('infoTravelers:', {
-      available: !!this.infoTravelers
+      available: !!this.infoTravelers,
     });
     console.log('reservationData:', {
       id: this.reservationId,
       totalPassengers: this.totalPassengers,
       totalAmount: this.totalAmount,
-      totalAmountCalculated: this.totalAmountCalculated
+      totalAmountCalculated: this.totalAmountCalculated,
     });
     console.log('selectedActivities:', {
       count: this.selectedActivities?.length || 0,
-      activities: this.selectedActivities
+      activities: this.selectedActivities,
     });
     console.log('=============================');
   }
@@ -1737,16 +1922,21 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     // Validar que los componentes necesarios estén disponibles
     if (targetStep === 1) {
-      if (!this.travelerSelector || !this.roomSelector || !this.insuranceSelector) {
+      if (
+        !this.travelerSelector ||
+        !this.roomSelector ||
+        !this.insuranceSelector
+      ) {
         console.error('Componentes requeridos no están disponibles:', {
           travelerSelector: !!this.travelerSelector,
           roomSelector: !!this.roomSelector,
-          insuranceSelector: !!this.insuranceSelector
+          insuranceSelector: !!this.insuranceSelector,
         });
         this.messageService.add({
           severity: 'error',
           summary: 'Error de inicialización',
-          detail: 'Los componentes necesarios no están disponibles. Por favor, recarga la página.',
+          detail:
+            'Los componentes necesarios no están disponibles. Por favor, recarga la página.',
           life: 5000,
         });
         return;
@@ -1806,7 +1996,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               if (room) {
                 const roomCapacity = room.isShared ? 1 : room.capacity || 1;
                 totalCapacity += roomCapacity * qty;
-                console.log(`Habitación ${tkId}: capacidad ${roomCapacity}, cantidad ${qty}, subtotal ${roomCapacity * qty}`);
+                console.log(
+                  `Habitación ${tkId}: capacidad ${roomCapacity}, cantidad ${qty}, subtotal ${
+                    roomCapacity * qty
+                  }`
+                );
               }
             }
           }
@@ -1854,11 +2048,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         console.log('Guardando asignaciones en paralelo...');
         
         // Ejecutar todas las operaciones con Promise.allSettled para mejor manejo de errores
-        const [roomsSaved, insuranceSaved, activitiesSaved] = await Promise.allSettled([
-          this.roomSelector.saveRoomAssignments(),
-          this.insuranceSelector.saveInsuranceAssignments(),
-          this.saveActivitiesAssignments(),
-        ]);
+        const [roomsSaved, insuranceSaved, activitiesSaved] =
+          await Promise.allSettled([
+            this.roomSelector.saveRoomAssignments(),
+            this.insuranceSelector.saveInsuranceAssignments(),
+            this.saveActivitiesAssignments(),
+          ]);
 
         console.log('Resultados de las operaciones:', {
           rooms: roomsSaved,
@@ -1866,7 +2061,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           activities: activitiesSaved
         });
 
-        // Verificar resultados de las operaciones con manejo detallado de errores
+        // Verificar que las operaciones con manejo detallado de errores fueron exitosas
         if (roomsSaved.status === 'rejected') {
           console.error('Error al guardar habitaciones:', roomsSaved.reason);
           this.messageService.add({
@@ -1892,7 +2087,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         }
 
         if (activitiesSaved.status === 'rejected') {
-          console.error('Error al guardar actividades:', activitiesSaved.reason);
+          console.error(
+            'Error al guardar actividades:',
+            activitiesSaved.reason
+          );
           this.messageService.add({
             severity: 'error',
             summary: 'Error al guardar actividades',
@@ -1904,16 +2102,22 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         }
 
         // Verificar que las operaciones fueron exitosas
-        if (!roomsSaved.value || !insuranceSaved.value || !activitiesSaved.value) {
+        if (
+          !roomsSaved.value ||
+          !insuranceSaved.value ||
+          !activitiesSaved.value
+        ) {
           const failedOperations = [];
           if (!roomsSaved.value) failedOperations.push('habitaciones');
           if (!insuranceSaved.value) failedOperations.push('seguro');
           if (!activitiesSaved.value) failedOperations.push('actividades');
-          
+
           this.messageService.add({
             severity: 'error',
             summary: 'Error al guardar',
-            detail: `No se pudieron guardar: ${failedOperations.join(', ')}. Por favor, inténtalo de nuevo.`,
+            detail: `No se pudieron guardar: ${failedOperations.join(
+              ', '
+            )}. Por favor, inténtalo de nuevo.`,
             life: 5000,
           });
           return;
@@ -1945,9 +2149,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             newTotalPassengers: this.totalPassengers,
             currentTotalAmount: this.reservationData.totalAmount,
             newTotalAmount: this.totalAmountCalculated,
-            reservationDataKeys: Object.keys(this.reservationData)
+            reservationDataKeys: Object.keys(this.reservationData),
           });
-          
+
           const reservationUpdateData = {
             ...this.reservationData,
             totalPassengers: this.totalPassengers,
@@ -1955,46 +2159,60 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             updatedAt: new Date().toISOString(),
           };
 
-          console.log('Datos completos de actualización:', reservationUpdateData);
+          console.log(
+            'Datos completos de actualización:',
+            reservationUpdateData
+          );
 
-          // Actualizar la reserva y esperar a que se complete
-          try {
-            await new Promise((resolve, reject) => {
-              console.log('Iniciando llamada al servicio de actualización...');
-              
-              this.reservationService
-                .update(this.reservationId!, reservationUpdateData)
-                .subscribe({
-                  next: (response) => {
-                    console.log('Respuesta del servicio de actualización:', response);
-                    console.log('Tipo de respuesta:', typeof response);
-                    console.log('¿Response es truthy?', !!response);
-                    
-                    // Verificar si la respuesta es exitosa
-                    let isSuccess = false;
-                    
-                    if (typeof response === 'boolean') {
-                      isSuccess = response;
-                    } else if (typeof response === 'object' && response !== null) {
-                      // Si es un objeto, verificar propiedades comunes de éxito
-                      const responseObj = response as any;
-                      isSuccess = responseObj.success !== false && 
-                                 responseObj.error === undefined && 
-                                 responseObj.status !== 'error';
-                    } else if (response !== null && response !== undefined) {
-                      // Para otros tipos, considerar exitoso si no es null/undefined
-                      isSuccess = true;
-                    }
-                    
-                    console.log('Resultado de la verificación de éxito:', isSuccess);
-                    
-                    if (isSuccess) {
-                      console.log('Actualización exitosa, actualizando datos locales...');
-                      
-                      // Actualizar datos locales
-                      this.reservationData.totalPassengers = this.totalPassengers;
-                      this.reservationData.totalAmount = this.totalAmountCalculated;
-                      this.totalAmount = this.totalAmountCalculated;
+          await new Promise((resolve, reject) => {
+            console.log('Iniciando llamada al servicio de actualización...');
+
+            this.reservationService
+              .update(this.reservationId!, reservationUpdateData)
+              .subscribe({
+                next: (response) => {
+                  console.log(
+                    'Respuesta del servicio de actualización:',
+                    response
+                  );
+                  console.log('Tipo de respuesta:', typeof response);
+                  console.log('¿Response es truthy?', !!response);
+
+                  // Verificar si la respuesta es exitosa
+                  let isSuccess = false;
+
+                  if (typeof response === 'boolean') {
+                    isSuccess = response;
+                  } else if (
+                    typeof response === 'object' &&
+                    response !== null
+                  ) {
+                    // Si es un objeto, verificar propiedades comunes de éxito
+                    const responseObj = response as any;
+                    isSuccess =
+                      responseObj.success !== false &&
+                      responseObj.error === undefined &&
+                      responseObj.status !== 'error';
+                  } else if (response !== null && response !== undefined) {
+                    // Para otros tipos, considerar exitoso si no es null/undefined
+                    isSuccess = true;
+                  }
+
+                  console.log(
+                    'Resultado de la verificación de éxito:',
+                    isSuccess
+                  );
+
+                  if (isSuccess) {
+                    console.log(
+                      'Actualización exitosa, actualizando datos locales...'
+                    );
+
+                    // Actualizar datos locales
+                    this.reservationData.totalPassengers = this.totalPassengers;
+                    this.reservationData.totalAmount =
+                      this.totalAmountCalculated;
+                    this.totalAmount = this.totalAmountCalculated;
 
                       // Mostrar toast de éxito
                       const flightInfo = this.selectedFlight
@@ -2014,7 +2232,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                       console.log('Datos locales actualizados:', {
                         totalPassengers: this.totalPassengers,
                         totalAmount: this.totalAmount,
-                        totalAmountCalculated: this.totalAmountCalculated
+                        totalAmountCalculated: this.totalAmountCalculated,
                       });
 
                       resolve(response);
@@ -2079,7 +2297,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         // Log del estado final después de guardar todo
         console.log('Estado final después de guardar todo:');
         this.logComponentState();
-
       } catch (error) {
         console.error('Error en performStepValidation paso 1:', error);
         this.messageService.add({
@@ -2096,18 +2313,19 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     // Guardar datos de viajeros antes de continuar al paso de pago (targetStep === 3)
     if (targetStep === 3) {
       console.log('Validando paso 3 (info-travelers)...');
-      
+
       if (!this.infoTravelers) {
         console.error('Componente infoTravelers no está disponible');
         this.messageService.add({
           severity: 'error',
           summary: 'Error de inicialización',
-          detail: 'El componente de información de viajeros no está disponible. Por favor, recarga la página.',
+          detail:
+            'El componente de información de viajeros no está disponible. Por favor, recarga la página.',
           life: 5000,
         });
         return;
       }
-      
+
       const saved = await this.saveTravelersData();
       console.log('Resultado de saveTravelersData:', saved);
       if (!saved) {
@@ -2241,7 +2459,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       if (isLoggedIn) {
         // Usuario está logueado, proceder normalmente
         if (useFlightless) {
-          // Lógica para continuar sin vuelos
+          // Lógica para continuar sin vuelos - guardar como vuelo seleccionado
+          await this.handleFlightlessSelection();
           await this.nextStepWithValidation(nextStep);
         } else {
           // Lógica normal
@@ -2258,6 +2477,97 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         this.loginDialogVisible = true;
       }
     });
+  }
+
+  /**
+   * Método para manejar la selección de "sin vuelos"
+   */
+  private async handleFlightlessSelection(): Promise<void> {
+    try {
+      console.log('🚀 Iniciando handleFlightlessSelection...');
+      console.log('🕐 Timestamp:', new Date().toISOString());
+      console.log(
+        '📊 Estado actual - hasAvailableFlights:',
+        this.hasAvailableFlights
+      );
+      console.log('📦 availableFlights:', this.availableFlights);
+      console.log(
+        '📊 selectedFlight actual antes de la selección:',
+        this.selectedFlight
+      );
+
+      // Buscar el paquete de vuelos real que corresponde a "sin vuelos"
+      if (this.hasAvailableFlights && this.availableFlights) {
+        console.log(
+          '🔍 Buscando paquete sin vuelos en',
+          this.availableFlights.length,
+          'paquetes disponibles...'
+        );
+
+        const flightlessPack = this.availableFlights.find(
+          (pack: IFlightPackDTO) => {
+            const name = pack.name?.toLowerCase() || '';
+            const description = pack.description?.toLowerCase() || '';
+            const isFlightless =
+              name.includes('sin vuelos') ||
+              description.includes('sin vuelos') ||
+              name.includes('pack sin vuelos') ||
+              description.includes('pack sin vuelos');
+
+            console.log(
+              `🔍 Evaluando paquete ${pack.id} - name: "${name}", description: "${description}", isFlightless: ${isFlightless}`
+            );
+
+            return isFlightless;
+          }
+        );
+
+        if (flightlessPack) {
+          console.log('✅ Paquete sin vuelos encontrado:', flightlessPack);
+          console.log('🆔 ID del paquete:', flightlessPack.id);
+          console.log('📝 Nombre del paquete:', flightlessPack.name);
+          console.log(
+            '📄 Descripción del paquete:',
+            flightlessPack.description
+          );
+
+          // Usar el mecanismo existente de selección de vuelos
+          // Esto simula exactamente lo que pasa cuando se selecciona un vuelo normal
+          console.log('🔄 Llamando onFlightSelectionChange...');
+          this.onFlightSelectionChange({
+            selectedFlight: flightlessPack,
+            totalPrice: 0, // precio 0 para opción sin vuelos
+          });
+
+          // Continuar al siguiente paso
+          console.log('➡️ Continuando al siguiente paso...');
+          this.onActiveIndexChange(2);
+        } else {
+          console.error('❌ No se encontró paquete sin vuelos disponible');
+          console.log(
+            '🔍 Paquetes revisados:',
+            this.availableFlights.map((p) => ({
+              id: p.id,
+              name: p.name,
+              description: p.description,
+            }))
+          );
+        }
+      } else {
+        console.error('❌ No hay vuelos disponibles o no se han cargado');
+        console.log('📊 hasAvailableFlights:', this.hasAvailableFlights);
+        console.log(
+          '📦 availableFlights length:',
+          this.availableFlights?.length || 0
+        );
+      }
+    } catch (error) {
+      console.error('💥 Error al manejar selección sin vuelos:', error);
+      console.error(
+        '💥 Stack trace:',
+        error instanceof Error ? error.stack : 'No stack trace available'
+      );
+    }
   }
 
   closeLoginModal(): void {

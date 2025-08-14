@@ -1,7 +1,9 @@
 <div class="default-flights">
-  <app-default-flights 
-    [departureId]="departureId" 
+  <app-default-flights
+    #defaultFlights
+    [departureId]="departureId"
     [reservationId]="reservationId"
+    [selectedFlightFromParent]="selectedFlight"
     (flightSelectionChange)="onFlightSelectionChange($event)">
   </app-default-flights>
 </div>

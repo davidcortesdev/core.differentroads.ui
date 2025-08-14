@@ -2229,69 +2229,57 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                         life: 3000,
                       });
 
-                      console.log('Datos locales actualizados:', {
-                        totalPassengers: this.totalPassengers,
-                        totalAmount: this.totalAmount,
-                        totalAmountCalculated: this.totalAmountCalculated,
-                      });
+                    console.log('Datos locales actualizados:', {
+                      totalPassengers: this.totalPassengers,
+                      totalAmount: this.totalAmount,
+                      totalAmountCalculated: this.totalAmountCalculated
+                    });
 
-                      resolve(response);
-                    } else {
-                      console.error('La actualización no fue exitosa. Respuesta:', response);
-                      console.error('Tipo de respuesta:', typeof response);
-                      console.error('¿Response es null?', response === null);
-                      console.error('¿Response es undefined?', response === undefined);
-                      
-                      // Crear un error más detallado
-                      const errorMessage = `Error al actualizar la reserva. Respuesta del servicio: ${JSON.stringify(response)}`;
-                      console.error(errorMessage);
-                      
-                      reject(new Error(errorMessage));
-                    }
-                  },
-                  error: (error) => {
-                    console.error('Error en la llamada al servicio de actualización:', error);
-                    console.error('Tipo de error:', typeof error);
-                    console.error('Stack trace del error:', error?.stack);
-                    console.error('Mensaje del error:', error?.message);
-                    console.error('Código de estado HTTP:', error?.status);
-                    console.error('Respuesta del servidor:', error?.error);
+                    resolve(response);
+                  } else {
+                    console.error('La actualización no fue exitosa. Respuesta:', response);
+                    console.error('Tipo de respuesta:', typeof response);
+                    console.error('¿Response es null?', response === null);
+                    console.error('¿Response es undefined?', response === undefined);
                     
                     // Crear un error más detallado
-                    let errorDetail = 'Error desconocido en el servicio';
+                    const errorMessage = `Error al actualizar la reserva. Respuesta del servicio: ${JSON.stringify(response)}`;
+                    console.error(errorMessage);
                     
-                    if (error?.status) {
-                      errorDetail += ` (HTTP ${error.status})`;
-                    }
-                    
-                    if (error?.message) {
-                      errorDetail += `: ${error.message}`;
-                    }
-                    
-                    if (error?.error) {
-                      errorDetail += ` - Detalles: ${JSON.stringify(error.error)}`;
-                    }
-                    
-                    console.error('Error detallado:', errorDetail);
-                    reject(new Error(errorDetail));
-                  },
-                  complete: () => {
-                    console.log('Observable de actualización completado');
+                    reject(new Error(errorMessage));
                   }
-                });
-            });
-            
-            console.log('Reserva actualizada exitosamente');
-          } catch (error) {
-            console.error('Error al actualizar la reserva:', error);
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Error al actualizar',
-              detail: 'No se pudo actualizar la reserva. Por favor, inténtalo de nuevo.',
-              life: 5000,
-            });
-            return;
-          }
+                },
+                error: (error) => {
+                  console.error('Error en la llamada al servicio de actualización:', error);
+                  console.error('Tipo de error:', typeof error);
+                  console.error('Stack trace del error:', error?.stack);
+                  console.error('Mensaje del error:', error?.message);
+                  console.error('Código de estado HTTP:', error?.status);
+                  console.error('Respuesta del servidor:', error?.error);
+                  
+                  // Crear un error más detallado
+                  let errorDetail = 'Error desconocido en el servicio';
+                  
+                  if (error?.status) {
+                    errorDetail += ` (HTTP ${error.status})`;
+                  }
+                  
+                  if (error?.message) {
+                    errorDetail += `: ${error.message}`;
+                  }
+                  
+                  if (error?.error) {
+                    errorDetail += ` - Detalles: ${JSON.stringify(error.error)}`;
+                  }
+                  
+                  console.error('Error detallado:', errorDetail);
+                  reject(new Error(errorDetail));
+                },
+                complete: () => {
+                  console.log('Observable de actualización completado');
+                }
+              });
+          });
         }
 
         // Log del estado final después de guardar todo

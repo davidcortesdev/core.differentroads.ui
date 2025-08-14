@@ -1238,7 +1238,31 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       if (createPromises.length > 0) {
         console.log(`Ejecutando ${createPromises.length} operaciones de creación...`);
         try {
-          await Promise.all(createPromises);
+          // Usar Promise.allSettled para manejar mejor los errores y asegurar que todas las operaciones se completen
+          const results = await Promise.allSettled(createPromises);
+          
+          // Verificar el estado de cada operación
+          const successful = results.filter(result => result.status === 'fulfilled');
+          const failed = results.filter(result => result.status === 'rejected');
+          
+          console.log(`Operaciones completadas: ${successful.length} exitosas, ${failed.length} fallidas`);
+          
+          // Si hay operaciones fallidas, mostrar detalles y fallar
+          if (failed.length > 0) {
+            console.error('Operaciones fallidas:', failed);
+            const errorMessages = failed.map((result, index) => {
+              const reason = result.status === 'rejected' ? result.reason : 'Error desconocido';
+              return `Operación ${index + 1}: ${(reason as any)?.message || reason}`;
+            });
+            
+            throw new Error(`Fallaron ${failed.length} operaciones:\n${errorMessages.join('\n')}`);
+          }
+          
+          // Verificar que todas las operaciones fueron exitosas
+          if (successful.length !== createPromises.length) {
+            throw new Error(`Se esperaban ${createPromises.length} operaciones exitosas, pero solo se completaron ${successful.length}`);
+          }
+          
           console.log('Todas las actividades se guardaron exitosamente');
         } catch (error) {
           console.error('Error durante la ejecución de operaciones de creación:', error);
@@ -1661,7 +1685,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }
 
       console.log('Validación exitosa, guardando datos...');
-      // Llamar al método saveAllTravelersData del componente hijo
+      
+      // Llamar al método saveAllTravelersData del componente hijo y esperar a que se complete
       await this.infoTravelers.saveAllTravelersData();
       console.log('Datos guardados exitosamente, retornando true');
       return true;
@@ -1741,7 +1766,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         if (this.travelerSelector.hasUnsavedChanges) {
           console.log('Guardando cambios de travelers...');
           this.travelerSelector.saveTravelersChanges();
-          await new Promise((resolve) => setTimeout(resolve, 800));
+          // Esperar a que se complete la operación verificando el estado real
+          await this.waitForOperation(() => !this.travelerSelector.hasUnsavedChanges, 5000, 'guardar cambios de travelers');
         }
 
         // 2. Verificar habitaciones seleccionadas inmediatamente
@@ -1824,15 +1850,23 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         console.log('Estado después de actualizar datos:');
         this.logComponentState();
 
-        // 6. Guardar asignaciones de habitaciones, seguros y actividades EN PARALELO
+        // 6. Guardar asignaciones de habitaciones, seguros y actividades EN PARALELO con verificación de estado
         console.log('Guardando asignaciones en paralelo...');
+        
+        // Ejecutar todas las operaciones con Promise.allSettled para mejor manejo de errores
         const [roomsSaved, insuranceSaved, activitiesSaved] = await Promise.allSettled([
           this.roomSelector.saveRoomAssignments(),
           this.insuranceSelector.saveInsuranceAssignments(),
           this.saveActivitiesAssignments(),
         ]);
 
-        // Verificar resultados de las operaciones
+        console.log('Resultados de las operaciones:', {
+          rooms: roomsSaved,
+          insurance: insuranceSaved,
+          activities: activitiesSaved
+        });
+
+        // Verificar resultados de las operaciones con manejo detallado de errores
         if (roomsSaved.status === 'rejected') {
           console.error('Error al guardar habitaciones:', roomsSaved.reason);
           this.messageService.add({
@@ -1889,8 +1923,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         if (this.insuranceSelector.selectedInsurance) {
           console.log('Verificando asignaciones de seguro...');
           // Verificar que las asignaciones se guardaron correctamente
-          const verificationResult =
-            await this.insuranceSelector.verifyInsuranceAssignments();
+          const verificationResult = await this.insuranceSelector.verifyInsuranceAssignments();
+          
           if (!verificationResult) {
             this.messageService.add({
               severity: 'warn',
@@ -1902,7 +1936,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           }
         }
 
-        // 7. Actualizar el totalPassengers en la reserva
+        // 7. Actualizar el totalPassengers en la reserva con verificación de estado
         if (this.reservationId && this.reservationData) {
           console.log('Actualizando datos de la reserva...');
           console.log('Datos a actualizar:', {
@@ -1923,109 +1957,123 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
           console.log('Datos completos de actualización:', reservationUpdateData);
 
-          await new Promise((resolve, reject) => {
-            console.log('Iniciando llamada al servicio de actualización...');
-            
-            this.reservationService
-              .update(this.reservationId!, reservationUpdateData)
-              .subscribe({
-                next: (response) => {
-                  console.log('Respuesta del servicio de actualización:', response);
-                  console.log('Tipo de respuesta:', typeof response);
-                  console.log('¿Response es truthy?', !!response);
-                  
-                  // Verificar si la respuesta es exitosa
-                  let isSuccess = false;
-                  
-                  if (typeof response === 'boolean') {
-                    isSuccess = response;
-                  } else if (typeof response === 'object' && response !== null) {
-                    // Si es un objeto, verificar propiedades comunes de éxito
-                    const responseObj = response as any;
-                    isSuccess = responseObj.success !== false && 
-                               responseObj.error === undefined && 
-                               responseObj.status !== 'error';
-                  } else if (response !== null && response !== undefined) {
-                    // Para otros tipos, considerar exitoso si no es null/undefined
-                    isSuccess = true;
-                  }
-                  
-                  console.log('Resultado de la verificación de éxito:', isSuccess);
-                  
-                  if (isSuccess) {
-                    console.log('Actualización exitosa, actualizando datos locales...');
+          // Actualizar la reserva y esperar a que se complete
+          try {
+            await new Promise((resolve, reject) => {
+              console.log('Iniciando llamada al servicio de actualización...');
+              
+              this.reservationService
+                .update(this.reservationId!, reservationUpdateData)
+                .subscribe({
+                  next: (response) => {
+                    console.log('Respuesta del servicio de actualización:', response);
+                    console.log('Tipo de respuesta:', typeof response);
+                    console.log('¿Response es truthy?', !!response);
                     
-                    // Actualizar datos locales
-                    this.reservationData.totalPassengers = this.totalPassengers;
-                    this.reservationData.totalAmount = this.totalAmountCalculated;
-                    this.totalAmount = this.totalAmountCalculated;
+                    // Verificar si la respuesta es exitosa
+                    let isSuccess = false;
+                    
+                    if (typeof response === 'boolean') {
+                      isSuccess = response;
+                    } else if (typeof response === 'object' && response !== null) {
+                      // Si es un objeto, verificar propiedades comunes de éxito
+                      const responseObj = response as any;
+                      isSuccess = responseObj.success !== false && 
+                                 responseObj.error === undefined && 
+                                 responseObj.status !== 'error';
+                    } else if (response !== null && response !== undefined) {
+                      // Para otros tipos, considerar exitoso si no es null/undefined
+                      isSuccess = true;
+                    }
+                    
+                    console.log('Resultado de la verificación de éxito:', isSuccess);
+                    
+                    if (isSuccess) {
+                      console.log('Actualización exitosa, actualizando datos locales...');
+                      
+                      // Actualizar datos locales
+                      this.reservationData.totalPassengers = this.totalPassengers;
+                      this.reservationData.totalAmount = this.totalAmountCalculated;
+                      this.totalAmount = this.totalAmountCalculated;
 
-                    // Mostrar toast de éxito
-                    const flightInfo = this.selectedFlight
-                      ? ' con vuelo seleccionado'
-                      : '';
-                    this.messageService.add({
-                      severity: 'success',
-                      summary: 'Guardado exitoso',
-                      detail: `Datos guardados correctamente para ${
-                        this.totalPassengers
-                      } viajeros con ${
-                        this.selectedActivities?.length || 0
-                      } actividades${flightInfo}.`,
-                      life: 3000,
-                    });
+                      // Mostrar toast de éxito
+                      const flightInfo = this.selectedFlight
+                        ? ' con vuelo seleccionado'
+                        : '';
+                      this.messageService.add({
+                        severity: 'success',
+                        summary: 'Guardado exitoso',
+                        detail: `Datos guardados correctamente para ${
+                          this.totalPassengers
+                        } viajeros con ${
+                          this.selectedActivities?.length || 0
+                        } actividades${flightInfo}.`,
+                        life: 3000,
+                      });
 
-                    console.log('Datos locales actualizados:', {
-                      totalPassengers: this.totalPassengers,
-                      totalAmount: this.totalAmount,
-                      totalAmountCalculated: this.totalAmountCalculated
-                    });
+                      console.log('Datos locales actualizados:', {
+                        totalPassengers: this.totalPassengers,
+                        totalAmount: this.totalAmount,
+                        totalAmountCalculated: this.totalAmountCalculated
+                      });
 
-                    resolve(response);
-                  } else {
-                    console.error('La actualización no fue exitosa. Respuesta:', response);
-                    console.error('Tipo de respuesta:', typeof response);
-                    console.error('¿Response es null?', response === null);
-                    console.error('¿Response es undefined?', response === undefined);
+                      resolve(response);
+                    } else {
+                      console.error('La actualización no fue exitosa. Respuesta:', response);
+                      console.error('Tipo de respuesta:', typeof response);
+                      console.error('¿Response es null?', response === null);
+                      console.error('¿Response es undefined?', response === undefined);
+                      
+                      // Crear un error más detallado
+                      const errorMessage = `Error al actualizar la reserva. Respuesta del servicio: ${JSON.stringify(response)}`;
+                      console.error(errorMessage);
+                      
+                      reject(new Error(errorMessage));
+                    }
+                  },
+                  error: (error) => {
+                    console.error('Error en la llamada al servicio de actualización:', error);
+                    console.error('Tipo de error:', typeof error);
+                    console.error('Stack trace del error:', error?.stack);
+                    console.error('Mensaje del error:', error?.message);
+                    console.error('Código de estado HTTP:', error?.status);
+                    console.error('Respuesta del servidor:', error?.error);
                     
                     // Crear un error más detallado
-                    const errorMessage = `Error al actualizar la reserva. Respuesta del servicio: ${JSON.stringify(response)}`;
-                    console.error(errorMessage);
+                    let errorDetail = 'Error desconocido en el servicio';
                     
-                    reject(new Error(errorMessage));
+                    if (error?.status) {
+                      errorDetail += ` (HTTP ${error.status})`;
+                    }
+                    
+                    if (error?.message) {
+                      errorDetail += `: ${error.message}`;
+                    }
+                    
+                    if (error?.error) {
+                      errorDetail += ` - Detalles: ${JSON.stringify(error.error)}`;
+                    }
+                    
+                    console.error('Error detallado:', errorDetail);
+                    reject(new Error(errorDetail));
+                  },
+                  complete: () => {
+                    console.log('Observable de actualización completado');
                   }
-                },
-                error: (error) => {
-                  console.error('Error en la llamada al servicio de actualización:', error);
-                  console.error('Tipo de error:', typeof error);
-                  console.error('Stack trace del error:', error?.stack);
-                  console.error('Mensaje del error:', error?.message);
-                  console.error('Código de estado HTTP:', error?.status);
-                  console.error('Respuesta del servidor:', error?.error);
-                  
-                  // Crear un error más detallado
-                  let errorDetail = 'Error desconocido en el servicio';
-                  
-                  if (error?.status) {
-                    errorDetail += ` (HTTP ${error.status})`;
-                  }
-                  
-                  if (error?.message) {
-                    errorDetail += `: ${error.message}`;
-                  }
-                  
-                  if (error?.error) {
-                    errorDetail += ` - Detalles: ${JSON.stringify(error.error)}`;
-                  }
-                  
-                  console.error('Error detallado:', errorDetail);
-                  reject(new Error(errorDetail));
-                },
-                complete: () => {
-                  console.log('Observable de actualización completado');
-                }
-              });
-          });
+                });
+            });
+            
+            console.log('Reserva actualizada exitosamente');
+          } catch (error) {
+            console.error('Error al actualizar la reserva:', error);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error al actualizar',
+              detail: 'No se pudo actualizar la reserva. Por favor, inténtalo de nuevo.',
+              life: 5000,
+            });
+            return;
+          }
         }
 
         // Log del estado final después de guardar todo
@@ -2072,6 +2120,22 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     // Navegar al siguiente paso
     console.log('Navegando al siguiente paso:', targetStep);
     this.onActiveIndexChange(targetStep);
+  }
+
+  // Método auxiliar para esperar a que una operación se complete
+  private async waitForOperation(
+    condition: () => boolean, 
+    maxWaitTime: number, 
+    operationName: string
+  ): Promise<void> {
+    const startTime = Date.now();
+    
+    while (!condition()) {
+      if (Date.now() - startTime > maxWaitTime) {
+        throw new Error(`La operación "${operationName}" no se completó en ${maxWaitTime}ms`);
+      }
+      await new Promise(resolve => setTimeout(resolve, 100)); // Esperar 100ms antes de verificar de nuevo
+    }
   }
 
   cleanScalapayPendingPayments(): void {

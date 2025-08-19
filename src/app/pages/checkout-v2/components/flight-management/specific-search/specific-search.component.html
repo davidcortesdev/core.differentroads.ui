@@ -336,8 +336,8 @@
   -->
   <div class="flight-list">
     <app-flight-item
-      *ngFor="let flightPack of flightOffersRaw; trackBy: trackByFlightId"
-      [flightPack]="adaptFlightPackForFlightItem(flightPack)"
+      *ngFor="let flightPack of adaptedFlightPacks; trackBy: trackByFlightId"
+      [flightPack]="flightPack"
       [selectedFlight]="selectedFlight ? adaptFlightPackForFlightItem(selectedFlight) : null"
       [useNewService]="true"
       (flightSelected)="selectFlight($event)"

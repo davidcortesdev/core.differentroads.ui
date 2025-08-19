@@ -12,6 +12,7 @@ import { DepartureService, DepartureAirportTimesResponse } from '../../../../../
 import { LocationAirportNetService } from '../../../../../core/services/locations/locationAirportNet.service';
 import { LocationNetService } from '../../../../../core/services/locations/locationNet.service';
 import { FlightSearchService, FlightSearchRequest, IFlightPackDTO, IFlightDetailDTO } from '../../../../../core/services/flight-search.service';
+import { IFlightPackDTO as IFlightsNetFlightPackDTO } from '../../../services/flightsNet.service';
 
 interface Ciudad {
   nombre: string;
@@ -71,6 +72,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   selectedSortOption = 'price-asc';
   flightOffersRaw: IFlightPackDTO[] = [];
   selectedFlight: IFlightPackDTO | null = null;
+  adaptedFlightPacks: IFlightsNetFlightPackDTO[] = []; // Variable para almacenar los objetos transformados
   errorMessage = '';
 
   // Propiedades privadas
@@ -306,11 +308,16 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       next: (response: IFlightPackDTO[]) => {
         this.isLoading = false;
         this.flightOffersRaw = response;
+        
+        // Transformar los datos directamente aquí para evitar recreaciones constantes
+        this.adaptedFlightPacks = response.map(flightPack => this.adaptFlightPackForFlightItem(flightPack));
+        
         this.filterOffers();
       },
       error: (err: any) => {
         this.isLoading = false;
         this.flightOffersRaw = [];
+        this.adaptedFlightPacks = [];
         this.filteredOffers = [];
         this.filteredFlightsChange.emit([]);
         this.errorMessage = 'Ocurrió un error al buscar vuelos. Por favor, inténtalo de nuevo.';
@@ -337,6 +344,10 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     
     // Si no hay filtros de escalas, aplicar filtros básicos y ordenamiento
     this.sortFlights(this.selectedSortOption);
+    
+    // Actualizar adaptedFlightPacks para mantener sincronización
+    this.adaptedFlightPacks = this.flightOffersRaw.map(flightPack => this.adaptFlightPackForFlightItem(flightPack));
+    
     this.transformedFlights = this.transformOffersToFlightFormat(this.flightOffersRaw);
     this.filteredFlightsChange.emit(this.transformedFlights);
   }
@@ -637,18 +648,19 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  trackByFlightId(index: number, flightPack: IFlightPackDTO): number {
+  trackByFlightId(index: number, flightPack: IFlightsNetFlightPackDTO): number {
     return flightPack.id;
   }
 
   // Adaptador para convertir IFlightPackDTO del FlightSearchService al formato esperado por app-flight-item
-  adaptFlightPackForFlightItem(flightPack: IFlightPackDTO): any {
-    return {
+  adaptFlightPackForFlightItem(flightPack: IFlightPackDTO): IFlightsNetFlightPackDTO {
+    // Crear nuevo objeto adaptado
+    const adaptedObject: IFlightsNetFlightPackDTO = {
       id: flightPack.id,
       code: flightPack.code || '',
       name: flightPack.name || '',
       description: flightPack.description || '',
-      tkId: flightPack.tkId || '',
+      tkId: typeof flightPack.tkId === 'string' ? parseInt(flightPack.tkId) || 0 : (flightPack.tkId || 0),
       itineraryId: flightPack.itineraryId,
       isOptional: flightPack.isOptional,
       imageUrl: flightPack.imageUrl || '',
@@ -681,6 +693,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         arrivalCity: flight.arrivalCity || ''
       })) || []
     };
+
+    return adaptedObject;
   }
 
   isFlightSelected(flight: Flight): boolean {

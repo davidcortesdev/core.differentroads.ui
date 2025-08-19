@@ -226,7 +226,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     this.citiesLoading = true;
 
     this.tourDepartureCitiesService
-      .getAll(this.tourId)
+      .getAll(this.tourId, {}, false)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (citiesResponse: ITourDepartureCityResponse[]) => {

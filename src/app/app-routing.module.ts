@@ -41,6 +41,7 @@ const routes: Routes = [
       { path: 'tours', component: ToursComponent },
       { path: 'tour-old/:slug', component: TourComponent },
       { path: 'tour/:slug', component: TourV2Component },
+      { path: 'tour/:slug/preview', component: TourV2Component },
       { path: 'pages/:slug', component: BasicPageComponent },
       // Nueva ruta para previsualización
       { path: 'preview/pages', component: BasicPagePreviewComponent },

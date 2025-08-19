@@ -40,8 +40,11 @@ export class TourDepartureCitiesService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de ciudades de departure del tour.
    */
-  getAll(tourId: number, filters?: TourDepartureCityFilters): Observable<ITourDepartureCityResponse[]> {
+  getAll(tourId: number, filters?: TourDepartureCityFilters, tourVisibility?: boolean): Observable<ITourDepartureCityResponse[]> {
     let params = new HttpParams();
+    if (tourVisibility !== undefined) {
+      params = params.set('tourVisibility', tourVisibility.toString());
+    }
 
     // Add filter parameters if provided
     if (filters) {

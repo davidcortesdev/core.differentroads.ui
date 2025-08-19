@@ -54,6 +54,7 @@ interface ProcessedLocation {
 })
 export class TourOverviewV2Component implements OnInit {
   @Input() tourId: number | undefined;
+  @Input() preview: boolean = false;
   
   loading = true;
   
@@ -119,7 +120,7 @@ export class TourOverviewV2Component implements OnInit {
   private loadEssentialData(id: number): void {
     // FASE 1: Cargar datos esenciales del tour
     forkJoin([
-      this.tourNetService.getTourById(id).pipe(
+      this.tourNetService.getTourById(id, !this.preview).pipe(
         catchError(error => {
           console.error('❌ Error loading tour data:', error);
           return of(null);
@@ -140,6 +141,7 @@ export class TourOverviewV2Component implements OnInit {
             
       // Aplicar datos básicos inmediatamente
       this.applyBasicTourData(tourData, cmsTourData);
+      console.log('tour', tourData);
       
       // Cargar datos adicionales en segundo plano
       this.loadAdditionalDataOptimized(id, cmsTourData);

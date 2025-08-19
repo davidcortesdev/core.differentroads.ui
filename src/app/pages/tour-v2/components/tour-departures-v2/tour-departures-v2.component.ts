@@ -80,7 +80,7 @@ interface AllowedPassengerTypes {
 export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   @Input() tourId: number | undefined;
   @Input() selectedDepartureEvent: SelectedDepartureEvent | null = null;
-
+  @Input() preview: boolean = false;
   @Output() priceUpdate = new EventEmitter<number>();
   @Output() cityUpdate = new EventEmitter<string>();
   @Output() departureUpdate = new EventEmitter<any>();
@@ -226,7 +226,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     this.citiesLoading = true;
 
     this.tourDepartureCitiesService
-      .getAll(this.tourId)
+      .getAll(this.tourId, {}, !this.preview)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (citiesResponse: ITourDepartureCityResponse[]) => {
@@ -441,7 +441,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     if (!this.tourId) return;
 
     this.tourAgeGroupsService
-      .getAll(this.tourId)
+      .getAll(this.tourId, {}, !this.preview)
       .pipe(
         takeUntil(this.destroy$),
         switchMap((ageGroupIds: number[]) => {

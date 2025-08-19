@@ -10,6 +10,7 @@ export interface TourFilter {
   description?: string;
   tkId?: string;
   slug?: string;
+  filterByVisible?: boolean;
 }
 
 export interface Tour {
@@ -64,8 +65,9 @@ export class TourNetService {
    * @param id Tour ID
    * @returns Observable of Tour
    */
-  getTourById(id: number): Observable<Tour> {
+  getTourById(id: number, filterByVisible?: boolean): Observable<Tour> {
     let params = new HttpParams().set('Id', id.toString());
+    params = params.set('FilterByVisible', filterByVisible ? 'true' : 'false');
 
     return this.http.get<any>(this.API_URL, {
       params,

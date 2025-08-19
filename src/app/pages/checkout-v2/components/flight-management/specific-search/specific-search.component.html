@@ -230,36 +230,6 @@
   </p-panel>
 </div>
 
-<!-- Lista de resultados de vuelos -->
-<div
-  class="flt-results"
-  *ngIf="!isLoading && searchPerformed && filteredOffers.length > 0"
->
-  <p-panel styleClass="results-panel">
-    <ng-template #header>
-      <div class="res-header">
-        <h3>Resultados de búsqueda</h3>
-        -
-        <div class="count">
-          {{ transformedFlights.length }} vuelos encontrados
-        </div>
-      </div>
-    </ng-template>
-
-    <!-- Lista de vuelos usando el componente flight-itinerary -->
-    <div class="flt-list">
-      <div *ngFor="let flight of transformedFlights" class="item">
-        <app-flight-itinerary
-          [flight]="flight"
-          [selectFlight]="selectFlight.bind(this)"
-          [isFlightSelected]="isFlightSelected.bind(this)"
-        >
-        </app-flight-itinerary>
-      </div>
-    </div>
-  </p-panel>
-</div>
-
 <!-- Estado de carga -->
 <div class="loading" *ngIf="isLoading">
   <p-progressSpinner></p-progressSpinner>
@@ -279,25 +249,8 @@
   </p-panel>
 </div>
 
-<!-- Estado de error o sin resultados -->
-<div
-  class="no-results"
-  *ngIf="!isLoading && searchPerformed && filteredOffers.length === 0"
->
-  <p-panel>
-    <div class="msg">
-      <i class="pi pi-info-circle"></i>
-      <h3>No se encontraron vuelos</h3>
-      <p>
-        No hay vuelos disponibles con los criterios seleccionados. Por favor,
-        intenta modificar tu búsqueda.
-      </p>
-    </div>
-  </p-panel>
-</div>
-
 <!-- Sección de resultados de búsqueda usando app-flight-item -->
-<div *ngIf="flightOffersRaw?.length" class="flight-results">
+<div *ngIf="!isLoading && searchPerformed && flightOffersRaw && flightOffersRaw.length > 0" class="flight-results">
   <h3>Resultados de búsqueda de vuelos:</h3>
   
   <!-- Filtros de ordenación -->
@@ -348,9 +301,18 @@
   </div>
 </div>
 
-<!-- Mensaje cuando no hay resultados -->
-<div *ngIf="searchPerformed && !isLoading && (!flightOffersRaw || flightOffersRaw.length === 0)" class="no-results">
-  <p>No se encontraron vuelos disponibles para los criterios de búsqueda especificados.</p>
+<!-- Mensaje cuando no hay resultados después de una búsqueda -->
+<div *ngIf="!isLoading && searchPerformed && (!flightOffersRaw || flightOffersRaw.length === 0)" class="no-results">
+  <p-panel>
+    <div class="msg">
+      <i class="pi pi-info-circle"></i>
+      <h3>No se encontraron vuelos</h3>
+      <p>
+        No hay vuelos disponibles con los criterios seleccionados. Por favor,
+        intenta modificar tu búsqueda.
+      </p>
+    </div>
+  </p-panel>
 </div>
 
 <!-- Mensaje de error -->

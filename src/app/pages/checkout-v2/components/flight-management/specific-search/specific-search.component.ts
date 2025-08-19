@@ -57,7 +57,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   ];
   readonly aerolineaOptions = this.aerolineas.map((a) => ({ label: a.nombre, value: a.codigo }));
   flightOffers: ITempFlightOffer[] = [];
-  filteredOffers: IFlightPackDTO[] = [];
   isLoading = false;
   isLoadingDetails = false;
   searchPerformed = false;
@@ -323,7 +322,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         this.isLoading = false;
         this.flightOffersRaw = [];
         this.adaptedFlightPacks = [];
-        this.filteredOffers = [];
+        this.transformedFlights = [];
         this.filteredFlightsChange.emit([]);
         this.errorMessage = 'Ocurrió un error al buscar vuelos. Por favor, inténtalo de nuevo.';
         console.error('Error al buscar vuelos:', err);
@@ -459,9 +458,9 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
   onSortChange(event: any) {
     this.selectedSortOption = event.value;
-    if (this.filteredOffers.length > 0) {
+    if (this.flightOffersRaw.length > 0) {
       this.sortFlights(this.selectedSortOption);
-      this.transformedFlights = this.transformOffersToFlightFormat(this.filteredOffers);
+      this.transformedFlights = this.transformOffersToFlightFormat(this.flightOffersRaw);
       this.filteredFlightsChange.emit(this.transformedFlights);
     }
   }

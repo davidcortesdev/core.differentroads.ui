@@ -170,6 +170,104 @@ export class FlightManagementComponent implements OnInit, OnChanges {
     this.flightSelectionChange.emit(flightData);
   }
 
+  // Método para manejar la selección de vuelos desde specific-search
+  onSpecificSearchFlightSelection(flightData: {
+    selectedFlight: any; // IFlightPackDTO del FlightSearchService
+    totalPrice: number;
+  }): void {
+    // Convertir el tipo del FlightSearchService al tipo de FlightsNetService
+    const convertedFlight = flightData.selectedFlight ? this.convertFlightSearchToFlightsNet(flightData.selectedFlight) : null;
+    
+    this.flightSelectionChange.emit({
+      selectedFlight: convertedFlight,
+      totalPrice: flightData.totalPrice
+    });
+  }
+
+  // Método para convertir IFlightPackDTO del FlightSearchService al formato de FlightsNetService
+  private convertFlightSearchToFlightsNet(flightSearchFlight: any): IFlightPackDTO {
+    return {
+      id: flightSearchFlight.id,
+      code: flightSearchFlight.code || '',
+      name: flightSearchFlight.name || '',
+      description: flightSearchFlight.description || '',
+      tkId: typeof flightSearchFlight.tkId === 'string' ? parseInt(flightSearchFlight.tkId) || 0 : (flightSearchFlight.tkId || 0),
+      itineraryId: flightSearchFlight.itineraryId,
+      isOptional: flightSearchFlight.isOptional,
+      imageUrl: flightSearchFlight.imageUrl || '',
+      imageAlt: flightSearchFlight.imageAlt || '',
+      isVisibleOnWeb: flightSearchFlight.isVisibleOnWeb,
+      ageGroupPrices: flightSearchFlight.ageGroupPrices?.map((price: any) => ({
+        price: price.price || 0,
+        ageGroupId: price.ageGroupId || 0,
+        ageGroupName: price.ageGroupName || 'Adultos'
+      })) || [],
+      flights: flightSearchFlight.flights?.map((flight: any) => ({
+        id: flight.id,
+        tkId: flight.tkId || '',
+        name: flight.name || '',
+        activityId: flight.activityId,
+        departureId: flight.departureId,
+        tkActivityPeriodId: flight.tkActivityPeriodId || '',
+        tkServiceCombinationId: flight.tkServiceCombinationId || '',
+        date: flight.date || '',
+        tkServiceId: flight.tkServiceId || '',
+        tkJourneyId: flight.tkJourneyId || '',
+        flightTypeId: flight.flightTypeId,
+        departureIATACode: flight.departureIATACode || '',
+        arrivalIATACode: flight.arrivalIATACode || '',
+        departureDate: flight.departureDate || '',
+        departureTime: flight.departureTime || '',
+        arrivalDate: flight.arrivalDate || '',
+        arrivalTime: flight.arrivalTime || '',
+        departureCity: flight.departureCity || '',
+        arrivalCity: flight.arrivalCity || ''
+      })) || []
+    };
+  }
+
+  // Método para convertir IFlightPackDTO del FlightsNetService al formato de FlightSearchService
+  convertFlightsNetToFlightSearch(flightsNetFlight: IFlightPackDTO): any {
+    return {
+      id: flightsNetFlight.id,
+      code: flightsNetFlight.code,
+      name: flightsNetFlight.name,
+      description: flightsNetFlight.description,
+      tkId: flightsNetFlight.tkId.toString(),
+      itineraryId: flightsNetFlight.itineraryId,
+      isOptional: flightsNetFlight.isOptional,
+      imageUrl: flightsNetFlight.imageUrl,
+      imageAlt: flightsNetFlight.imageAlt,
+      isVisibleOnWeb: flightsNetFlight.isVisibleOnWeb,
+      ageGroupPrices: flightsNetFlight.ageGroupPrices?.map((price) => ({
+        price: price.price,
+        ageGroupId: price.ageGroupId,
+        ageGroupName: price.ageGroupName
+      })) || [],
+      flights: flightsNetFlight.flights?.map((flight) => ({
+        id: flight.id,
+        tkId: flight.tkId,
+        name: flight.name,
+        activityId: flight.activityId,
+        departureId: flight.departureId,
+        tkActivityPeriodId: flight.tkActivityPeriodId,
+        tkServiceCombinationId: flight.tkServiceCombinationId,
+        date: flight.date,
+        tkServiceId: flight.tkServiceId,
+        tkJourneyId: flight.tkJourneyId,
+        flightTypeId: flight.flightTypeId,
+        departureIATACode: flight.departureIATACode,
+        arrivalIATACode: flight.arrivalIATACode,
+        departureDate: flight.departureDate,
+        departureTime: flight.departureTime,
+        arrivalDate: flight.arrivalDate,
+        arrivalTime: flight.arrivalTime,
+        departureCity: flight.departureCity,
+        arrivalCity: flight.arrivalCity
+      })) || []
+    };
+  }
+
   saveFlightAssignments(): void {
     this.defaultFlightsComponent.saveFlightAssignments();
   }

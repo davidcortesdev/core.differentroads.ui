@@ -20,7 +20,12 @@
 
 <div class="specific-search" *ngIf="specificSearchVisible">
   <h4>Búsqueda específica de vuelos</h4>
-  <app-specific-search [departureId]="departureId" [reservationId]="reservationId"></app-specific-search>
+  <app-specific-search 
+    [departureId]="departureId" 
+    [reservationId]="reservationId"
+    [selectedFlightFromParent]="selectedFlight ? convertFlightsNetToFlightSearch(selectedFlight) : null"
+    (flightSelectionChange)="onSpecificSearchFlightSelection($event)">
+  </app-specific-search>
 </div>
 
 <!-- Modal de login -->

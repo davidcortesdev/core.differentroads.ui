@@ -536,6 +536,18 @@ $border: #ddd;
   p-dropdown {
     min-width: 200px;
   }
+  
+  .loading-details {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #666;
+    font-size: 0.9rem;
+    
+    .pi-spinner {
+      color: #007bff;
+    }
+  }
 }
 
 .flight-list {

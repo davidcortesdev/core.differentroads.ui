@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { forkJoin, of, Subject } from 'rxjs';
+import { forkJoin, of, Subject, Observable } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { ITempFlightOffer } from '../../../../../core/models/amadeus/flight.types';
 import { FlightSegment, Flight } from '../../../../../core/models/tours/flight.model';
@@ -11,7 +11,7 @@ import { DepartureConsolidadorSearchLocationService, ConsolidadorSearchLocationW
 import { DepartureService, DepartureAirportTimesResponse } from '../../../../../core/services/departure/departure.service';
 import { LocationAirportNetService } from '../../../../../core/services/locations/locationAirportNet.service';
 import { LocationNetService } from '../../../../../core/services/locations/locationNet.service';
-import { FlightSearchService, FlightSearchRequest, IFlightPackDTO } from '../../../../../core/services/flight-search.service';
+import { FlightSearchService, FlightSearchRequest, IFlightPackDTO, IFlightDetailDTO } from '../../../../../core/services/flight-search.service';
 
 interface Ciudad {
   nombre: string;
@@ -58,6 +58,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   flightOffers: ITempFlightOffer[] = [];
   filteredOffers: IFlightPackDTO[] = [];
   isLoading = false;
+  isLoadingDetails = false;
   searchPerformed = false;
   selectedFlightId: string | null = null;
   transformedFlights: Flight[] = [];
@@ -300,7 +301,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       iataDestino: destinationCode
     };
     
-    this.flightSearchService.searchFlights(request).pipe(takeUntil(this.destroy$)).subscribe({
+    // Pasar autoSearch=false para evitar llamadas automáticas que causen bucles
+    this.flightSearchService.searchFlights(request, false).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: IFlightPackDTO[]) => {
         this.isLoading = false;
         this.flightOffersRaw = response;
@@ -327,31 +329,111 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   filterOffers() {
     const formValue = this.flightForm.value;
     
-    // Filtrar por escalas si se especifica
+    // Si se especifica filtro de escalas, cargar detalles primero
     if (formValue.escala) {
-      this.flightOffersRaw = this.flightOffersRaw.filter((flightPack) => {
-        if (!flightPack.flights || flightPack.flights.length === 0) return false;
-        
-        // Contar escalas basándose en el primer vuelo (ida)
-        const outboundFlight = flightPack.flights.find(f => f.flightTypeId === 4); // IDA
-        if (!outboundFlight) return false;
-        
-        // Por ahora asumimos que no hay escalas detalladas, pero podríamos implementar lógica más compleja
-        // basada en los datos de stopovers si están disponibles
-        const hasStops = outboundFlight.stopovers && outboundFlight.stopovers.length > 0;
-        
-        switch (formValue.escala) {
-          case 'directos':
-            return !hasStops;
-          case 'unaEscala':
-            return hasStops && outboundFlight.stopovers!.length === 1;
-          case 'multiples':
-            return hasStops && outboundFlight.stopovers!.length >= 2;
-          default:
-            return true;
-        }
-      });
+      this.loadFlightDetailsAndFilter();
+      return;
     }
+    
+    // Si no hay filtros de escalas, aplicar filtros básicos y ordenamiento
+    this.sortFlights(this.selectedSortOption);
+    this.transformedFlights = this.transformOffersToFlightFormat(this.flightOffersRaw);
+    this.filteredFlightsChange.emit(this.transformedFlights);
+  }
+
+  // Método para obtener detalles de un vuelo específico cuando sea necesario
+  getFlightDetails(packId: number, flightId: number): Observable<IFlightDetailDTO> {
+    return this.flightSearchService.getFlightDetails(packId, flightId);
+  }
+
+  // Método para cargar detalles de todos los vuelos y aplicar filtros de escalas
+  loadFlightDetailsAndFilter(): void {
+    if (!this.flightOffersRaw || this.flightOffersRaw.length === 0) return;
+
+    const formValue = this.flightForm.value;
+    if (!formValue.escala) {
+      this.filterOffers();
+      return;
+    }
+
+    this.isLoadingDetails = true;
+
+    // Cargar detalles de todos los vuelos en todos los paquetes para poder filtrar por escalas
+    // El nuevo endpoint requiere: /api/FlightSearch/{packId}/details/{flightId}
+    // Por eso necesitamos tanto el ID del paquete como el ID del vuelo individual
+    const detailRequests: Observable<IFlightDetailDTO>[] = [];
+    
+    this.flightOffersRaw.forEach(flightPack => {
+      if (flightPack.flights) {
+        flightPack.flights.forEach(flight => {
+          detailRequests.push(this.getFlightDetails(flightPack.id, flight.id));
+        });
+      }
+    });
+
+    forkJoin(detailRequests).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (flightDetails) => {
+        this.isLoadingDetails = false;
+        // Aplicar filtros basados en los detalles cargados
+        this.applyScaleFilters(flightDetails);
+      },
+      error: (err) => {
+        this.isLoadingDetails = false;
+        console.error('Error al cargar detalles de vuelos:', err);
+        // Si falla la carga de detalles, mostrar todos los vuelos
+        this.filterOffers();
+      }
+    });
+  }
+
+  // Aplicar filtros de escalas basados en los detalles cargados
+  private applyScaleFilters(flightDetails: IFlightDetailDTO[]): void {
+    const formValue = this.flightForm.value;
+    
+    // Crear un mapa de detalles por paquete y vuelo
+    const detailsMap = new Map<string, IFlightDetailDTO>();
+    let detailIndex = 0;
+    
+    this.flightOffersRaw.forEach(flightPack => {
+      if (flightPack.flights) {
+        flightPack.flights.forEach(flight => {
+          const key = `${flightPack.id}-${flight.id}`;
+          if (flightDetails[detailIndex]) {
+            detailsMap.set(key, flightDetails[detailIndex]);
+          }
+          detailIndex++;
+        });
+      }
+    });
+    
+    // Filtrar paquetes basándose en los detalles de escalas
+    this.flightOffersRaw = this.flightOffersRaw.filter((flightPack) => {
+      if (!flightPack.flights || flightPack.flights.length === 0) return false;
+      
+      // Buscar el primer vuelo de ida (flightTypeId === 4)
+      const outboundFlight = flightPack.flights.find(f => f.flightTypeId === 4);
+      if (!outboundFlight) return false;
+      
+      const key = `${flightPack.id}-${outboundFlight.id}`;
+      const detail = detailsMap.get(key);
+      
+      if (!detail) return true; // Si no hay detalles, mostrar el vuelo
+      
+      const numScales = detail.numScales || 0;
+      
+      switch (formValue.escala) {
+        case 'directos':
+          return numScales === 0;
+        case 'unaEscala':
+          return numScales === 1;
+        case 'multiples':
+          return numScales >= 2;
+        default:
+          return true;
+      }
+    });
     
     this.sortFlights(this.selectedSortOption);
     this.transformedFlights = this.transformOffersToFlightFormat(this.flightOffersRaw);

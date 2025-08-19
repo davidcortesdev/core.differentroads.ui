@@ -1,4 +1,3 @@
-<!-- Componente de búsqueda específica de vuelos -->
 <p-panel>
   <ng-template #header>
     <div class="flt-hdr">
@@ -313,20 +312,34 @@
       optionValue="value"
       placeholder="Seleccionar orden"
     ></p-dropdown>
+    
+    <!-- Indicador de carga de detalles -->
+    <div *ngIf="isLoadingDetails" class="loading-details">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Cargando detalles de escalas...</span>
+    </div>
   </div>
 
   <!-- Lista de vuelos usando app-flight-item -->
   <!-- 
     Nota: Se pasa autoSearch="false" para evitar que cada flight-item haga 
     búsquedas automáticas al cargar, lo que causaría múltiples llamadas al API.
-    Los datos se cargan solo cuando se necesitan manualmente.
+    
+    Los detalles de vuelos (escalas, duración, aerolíneas) se cargan solo cuando 
+    se necesitan para aplicar filtros específicos, usando el endpoint 
+    /api/FlightSearch/{flightId}/details.
+    
+    Esto evita el bucle de peticiones y mejora el rendimiento.
+    
+    Se pasa useNewService="true" para que flight-item y flight-stops usen el nuevo
+    FlightSearchService en lugar del FlightsNetService.
   -->
   <div class="flight-list">
     <app-flight-item
       *ngFor="let flightPack of flightOffersRaw; trackBy: trackByFlightId"
       [flightPack]="adaptFlightPackForFlightItem(flightPack)"
       [selectedFlight]="selectedFlight ? adaptFlightPackForFlightItem(selectedFlight) : null"
-      [autoSearch]="false"
+      [useNewService]="true"
       (flightSelected)="selectFlight($event)"
     ></app-flight-item>
   </div>

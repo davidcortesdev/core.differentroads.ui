@@ -1,18 +1,3 @@
-<!-- 
-  Componente de item de vuelo
-  
-  Parámetros:
-  - flightPack: Paquete de vuelos a mostrar
-  - selectedFlight: Vuelo seleccionado actualmente
-  - flightDetails: Detalles adicionales de los vuelos
-  - autoSearch: Controla si app-flight-stops debe hacer búsqueda automática
-                - true (por defecto): Búsqueda automática habilitada
-                - false: Búsqueda automática deshabilitada (útil para listas)
-  
-  Outputs:
-  - flightSelected: Emitido cuando se selecciona un vuelo
--->
-
 <div *ngIf="flightPack && flightPack.ageGroupPrices[0].price > 0" class="flight-item"> <!-- Puede haber errores, se da por hecho que o son iguales o el primero es de adulto-->
   <div class="flight-departure-title" *ngIf="flightPack">
     <h3>
@@ -40,8 +25,8 @@
           </div>
           <div class="journey-line-left"></div>
           <div class="journey-info-block">
-            <!-- Usar el nuevo componente de escalas con búsqueda automática controlada por el padre -->
-            <app-flight-stops [flightId]="flight.id" [autoSearch]="autoSearch"></app-flight-stops>
+            <!-- Usar el nuevo componente de escalas -->
+            <app-flight-stops [flightId]="flight.id" [packId]="flightPack.id" [useNewService]="useNewService"></app-flight-stops>
             <span class="journey-airline">{{ getAirlinesText(flight.id) }}</span>
           </div>
           <div class="journey-line-right"></div>

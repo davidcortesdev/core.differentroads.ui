@@ -6,6 +6,7 @@ import {
   IFlightDetailDTO,
 } from '../../../services/flightsNet.service';
 import { FlightSearchService, IFlightDetailDTO as IFlightSearchFlightDetailDTO } from '../../../../../core/services/flight-search.service';
+import { FlightsNetService } from '../../../services/flightsNet.service';
 
 @Component({
   selector: 'app-flight-item',
@@ -31,7 +32,10 @@ export class FlightItemComponent implements OnInit, OnDestroy {
   private internalFlightDetails: Map<number, IFlightDetailDTO | IFlightSearchFlightDetailDTO> = new Map();
   private readonly destroy$ = new Subject<void>();
 
-  constructor(private flightSearchService: FlightSearchService) {}
+  constructor(
+    private flightSearchService: FlightSearchService,
+    private flightsNetService: FlightsNetService
+  ) {}
 
   ngOnInit(): void {
     console.log('=== VUELOS RECIBIDOS ===');
@@ -62,7 +66,10 @@ export class FlightItemComponent implements OnInit, OnDestroy {
 
       // Si useNewService es true, cargar detalles internamente
       if (this.useNewService) {
+        console.log('🔄 FlightItem: Iniciando carga de detalles y aerolíneas con nuevo servicio');
         this.loadFlightDetailsInternally();
+      } else {
+        console.log('ℹ️ FlightItem: Usando servicio actual, no se cargan detalles internamente');
       }
     } else {
       console.log('No hay vuelos disponibles');
@@ -72,6 +79,7 @@ export class FlightItemComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.internalFlightDetails.clear();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -122,12 +130,34 @@ export class FlightItemComponent implements OnInit, OnDestroy {
             
             this.internalFlightDetails.set(flight.id, mappedDetail);
             console.log(`✅ FlightItem: Detalles cargados para vuelo ${flight.id}:`, mappedDetail);
+
+            // Precargar nombres de aerolíneas en el servicio (la cache se maneja automáticamente)
+            if (detail.airlines && detail.airlines.length > 0) {
+              this.preloadAirlineNames(detail.airlines);
+            }
           },
           error: (error) => {
             console.warn(`⚠️ FlightItem: Error al cargar detalles para vuelo ${flight.id}:`, error);
           }
         });
     });
+  }
+
+  /**
+   * Precarga los nombres de las aerolíneas en el servicio (la cache se maneja automáticamente)
+   */
+  private preloadAirlineNames(airlineCodes: string[]): void {
+    // Usar el método optimizado del servicio para precargar múltiples aerolíneas
+    this.flightsNetService.preloadAirlines(airlineCodes)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (airlineNames) => {
+          console.log(`✅ FlightItem: ${airlineNames.length} aerolíneas precargadas exitosamente`);
+        },
+        error: (error) => {
+          console.warn(`⚠️ FlightItem: Error al precargar aerolíneas:`, error);
+        }
+      });
   }
 
   /**
@@ -141,10 +171,35 @@ export class FlightItemComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Obtiene el nombre de una aerolínea por su código IATA
+   * @param airlineCode Código IATA de la aerolínea
+   * @returns Nombre de la aerolínea o el código si no se encuentra
+   */
+  getAirlineName(airlineCode: string): string {
+    if (this.useNewService) {
+      return this.flightsNetService.getAirlineNameFromCache(airlineCode);
+    } else {
+      // Para el servicio actual, devolver el código tal como está
+      return airlineCode;
+    }
+  }
+
   getAirlinesText(flightId: number): string {
-    const detail = this.getFlightDetails(flightId);
-    if (!detail || !detail.airlines) return '';
-    return detail.airlines.join(', ');
+    if (this.useNewService) {
+      // Para el nuevo servicio, usar los nombres de aerolíneas desde la cache del servicio
+      const detail = this.getFlightDetails(flightId);
+      if (!detail || !detail.airlines) return '';
+      
+      return detail.airlines.map(code => {
+        return this.flightsNetService.getAirlineNameFromCache(code);
+      }).join(', ');
+    } else {
+      // Para el servicio actual, usar el comportamiento original
+      const detail = this.getFlightDetails(flightId);
+      if (!detail || !detail.airlines) return '';
+      return detail.airlines.join(', ');
+    }
   }
 
   formatTime(time: any): string {

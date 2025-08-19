@@ -33,8 +33,24 @@ export class FlightStopsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    if (this.flightId) {
-      this.getFlightDetail();
+    if (this.useNewService) {
+      // Para el nuevo servicio: permitir flightId = 0 y packId = 0
+      // ya que 0 es un ID válido en la base de datos
+      if (this.flightId !== null && this.flightId !== undefined && 
+          this.packId !== null && this.packId !== undefined) {
+        console.log(`🔄 FlightStops: Iniciando con nuevo servicio - flightId=${this.flightId}, packId=${this.packId}`);
+        this.getFlightDetail();
+      } else {
+        console.warn(`⚠️ FlightStops: Valores inválidos para nuevo servicio - flightId=${this.flightId}, packId=${this.packId}`);
+      }
+    } else {
+      // Para el servicio actual: mantener la comprobación original
+      if (this.flightId) {
+        console.log(`🔄 FlightStops: Iniciando con servicio actual - flightId=${this.flightId}`);
+        this.getFlightDetail();
+      } else {
+        console.warn(`⚠️ FlightStops: flightId inválido para servicio actual - flightId=${this.flightId}`);
+      }
     }
   }
 
@@ -49,27 +65,31 @@ export class FlightStopsComponent implements OnInit {
   }
 
   private getFlightDetailFromNewService(): void {
+    console.log(`🔄 FlightStops: Obteniendo detalles del nuevo servicio - packId=${this.packId}, flightId=${this.flightId}`);
     this.flightSearchService.getFlightDetails(this.packId, this.flightId).subscribe({
       next: (detail) => {
+        console.log(`✅ FlightStops: Detalles obtenidos del nuevo servicio:`, detail);
         this.flightDetail = detail;
         this.isLoading = false;
       },
       error: (error) => {
+        console.error(`❌ FlightStops: Error al obtener detalles del nuevo servicio:`, error);
         this.isLoading = false;
-        console.error('Error loading flight detail from new service:', error);
       },
     });
   }
 
   private getFlightDetailFromCurrentService(): void {
+    console.log(`🔄 FlightStops: Obteniendo detalles del servicio actual - flightId=${this.flightId}`);
     this.flightsNetService.getFlightDetail(this.flightId).subscribe({
       next: (detail) => {
+        console.log(`✅ FlightStops: Detalles obtenidos del servicio actual:`, detail);
         this.flightDetail = detail;
         this.isLoading = false;
       },
       error: (error) => {
+        console.error(`❌ FlightStops: Error al obtener detalles del servicio actual:`, error);
         this.isLoading = false;
-        console.error('Error loading flight detail from current service:', error);
       },
     });
   }

@@ -441,7 +441,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     if (!this.tourId) return;
 
     this.tourAgeGroupsService
-      .getAll(this.tourId)
+      .getAll(this.tourId, {}, !this.preview)
       .pipe(
         takeUntil(this.destroy$),
         switchMap((ageGroupIds: number[]) => {

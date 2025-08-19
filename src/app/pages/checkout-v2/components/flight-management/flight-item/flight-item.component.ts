@@ -85,6 +85,55 @@ export class FlightItemComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Verifica si este vuelo está seleccionado, considerando que selectedFlight
+   * puede venir de diferentes fuentes (default-flights o specific-search)
+   */
+  isFlightSelected(): boolean {
+    if (!this.selectedFlight || !this.flightPack) {
+      return false;
+    }
+
+    const isSelected = this.selectedFlight.id === this.flightPack.id;
+    
+    // Logging para debugging
+    if (isSelected) {
+      console.log(`✅ FlightItem: Vuelo ${this.flightPack.id} está seleccionado`);
+      console.log(`📊 selectedFlight ID: ${this.selectedFlight.id}, flightPack ID: ${this.flightPack.id}`);
+    }
+
+    return isSelected;
+  }
+
+  /**
+   * Obtiene el texto del botón de selección
+   */
+  getSelectionButtonText(): string {
+    return this.isFlightSelected() ? 'Seleccionado' : 'Seleccionar';
+  }
+
+  /**
+   * Obtiene la clase CSS del botón de selección
+   */
+  getSelectionButtonClass(): string {
+    return this.isFlightSelected() ? 'selected-flight-button' : '';
+  }
+
+  /**
+   * Obtiene información del estado de selección para debugging
+   */
+  getSelectionDebugInfo(): string {
+    if (!this.selectedFlight) {
+      return 'No hay vuelo seleccionado';
+    }
+    
+    if (!this.flightPack) {
+      return 'No hay paquete de vuelo';
+    }
+    
+    return `Selected: ${this.selectedFlight.id} (${this.selectedFlight.name || 'Sin nombre'}), Current: ${this.flightPack.id} (${this.flightPack.name || 'Sin nombre'})`;
+  }
+
+  /**
    * Carga los detalles de vuelos internamente cuando useNewService es true
    */
   private loadFlightDetailsInternally(): void {

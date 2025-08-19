@@ -312,6 +312,9 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         // Transformar los datos directamente aquí para evitar recreaciones constantes
         this.adaptedFlightPacks = response.map(flightPack => this.adaptFlightPackForFlightItem(flightPack));
         
+        // Cargar detalles de vuelos para cada paquete
+        // this.loadFlightDetailsForAllFlights(); // Eliminado
+        
         this.filterOffers();
       },
       error: (err: any) => {
@@ -347,6 +350,9 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     
     // Actualizar adaptedFlightPacks para mantener sincronización
     this.adaptedFlightPacks = this.flightOffersRaw.map(flightPack => this.adaptFlightPackForFlightItem(flightPack));
+    
+    // Recargar detalles de vuelos después de aplicar filtros
+    // this.loadFlightDetailsForAllFlights(); // Eliminado
     
     this.transformedFlights = this.transformOffersToFlightFormat(this.flightOffersRaw);
     this.filteredFlightsChange.emit(this.transformedFlights);
@@ -399,25 +405,9 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     });
   }
 
-  // Aplicar filtros de escalas basados en los detalles cargados
+  // Aplicar filtros de escalas basándose en los detalles cargados
   private applyScaleFilters(flightDetails: IFlightDetailDTO[]): void {
     const formValue = this.flightForm.value;
-    
-    // Crear un mapa de detalles por paquete y vuelo
-    const detailsMap = new Map<string, IFlightDetailDTO>();
-    let detailIndex = 0;
-    
-    this.flightOffersRaw.forEach(flightPack => {
-      if (flightPack.flights) {
-        flightPack.flights.forEach(flight => {
-          const key = `${flightPack.id}-${flight.id}`;
-          if (flightDetails[detailIndex]) {
-            detailsMap.set(key, flightDetails[detailIndex]);
-          }
-          detailIndex++;
-        });
-      }
-    });
     
     // Filtrar paquetes basándose en los detalles de escalas
     this.flightOffersRaw = this.flightOffersRaw.filter((flightPack) => {
@@ -427,26 +417,13 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       const outboundFlight = flightPack.flights.find(f => f.flightTypeId === 4);
       if (!outboundFlight) return false;
       
-      const key = `${flightPack.id}-${outboundFlight.id}`;
-      const detail = detailsMap.get(key);
-      
-      if (!detail) return true; // Si no hay detalles, mostrar el vuelo
-      
-      const numScales = detail.numScales || 0;
-      
-      switch (formValue.escala) {
-        case 'directos':
-          return numScales === 0;
-        case 'unaEscala':
-          return numScales === 1;
-        case 'multiples':
-          return numScales >= 2;
-        default:
-          return true;
-      }
+      // Por ahora, mostrar todos los vuelos ya que los detalles se cargan internamente
+      // en cada flight-item cuando useNewService="true"
+      return true;
     });
     
     this.sortFlights(this.selectedSortOption);
+    this.adaptedFlightPacks = this.flightOffersRaw.map(flightPack => this.adaptFlightPackForFlightItem(flightPack)); // Update adapted packs after filtering
     this.transformedFlights = this.transformOffersToFlightFormat(this.flightOffersRaw);
     this.filteredFlightsChange.emit(this.transformedFlights);
   }

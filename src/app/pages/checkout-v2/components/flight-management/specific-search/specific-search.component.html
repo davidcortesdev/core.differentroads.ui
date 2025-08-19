@@ -325,14 +325,17 @@
     Nota: Se pasa autoSearch="false" para evitar que cada flight-item haga 
     búsquedas automáticas al cargar, lo que causaría múltiples llamadas al API.
     
-    Los detalles de vuelos (escalas, duración, aerolíneas) se cargan solo cuando 
-    se necesitan para aplicar filtros específicos, usando el endpoint 
-    /api/FlightSearch/{flightId}/details.
+    Los detalles de vuelos (escalas, duración, aerolíneas) se cargan automáticamente
+    dentro de cada flight-item cuando useNewService="true", usando el endpoint 
+    /api/FlightSearch/{packId}/details/{flightId}.
     
     Esto evita el bucle de peticiones y mejora el rendimiento.
     
     Se pasa useNewService="true" para que flight-item y flight-stops usen el nuevo
     FlightSearchService en lugar del FlightsNetService.
+    
+    Los detalles se mapean internamente al formato esperado por FlightsNetService
+    para mantener compatibilidad con el resto de la aplicación.
   -->
   <div class="flight-list">
     <app-flight-item

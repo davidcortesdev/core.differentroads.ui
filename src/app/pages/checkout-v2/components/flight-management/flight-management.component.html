@@ -23,7 +23,7 @@
   <app-specific-search 
     [departureId]="departureId" 
     [reservationId]="reservationId"
-    [selectedFlightFromParent]="selectedFlight ? convertFlightsNetToFlightSearch(selectedFlight) : null"
+    [selectedFlightFromParent]="transformedSelectedFlight"
     (flightSelectionChange)="onSpecificSearchFlightSelection($event)">
   </app-specific-search>
 </div>

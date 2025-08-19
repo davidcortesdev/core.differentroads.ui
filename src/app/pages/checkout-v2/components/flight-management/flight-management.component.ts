@@ -45,6 +45,31 @@ export class FlightManagementComponent implements OnInit, OnChanges {
   loginDialogVisible: boolean = false;
   specificSearchVisible: boolean = false;
 
+  // Propiedad privada para cachear la transformación
+  private _cachedTransformedFlight: any = null;
+  private _lastSelectedFlightId: number | null = null;
+
+  // Getter que solo transforma cuando es necesario
+  get transformedSelectedFlight(): any {
+    if (!this.selectedFlight) {
+      this._cachedTransformedFlight = null;
+      this._lastSelectedFlightId = null;
+      return null;
+    }
+
+    // Solo transformar si el vuelo ha cambiado
+    if (this._lastSelectedFlightId !== this.selectedFlight.id) {
+      console.log('🔄 Transformando vuelo - ID anterior:', this._lastSelectedFlightId, 'ID actual:', this.selectedFlight.id);
+      this._cachedTransformedFlight = this.convertFlightsNetToFlightSearch(this.selectedFlight);
+      this._lastSelectedFlightId = this.selectedFlight.id;
+      console.log('✅ Vuelo transformado y cacheado');
+    } else {
+      console.log('📋 Usando vuelo cacheado - ID:', this._lastSelectedFlightId);
+    }
+
+    return this._cachedTransformedFlight;
+  }
+
   constructor(
     private departureService: DepartureService,
     private tourNetService: TourNetService,
@@ -63,6 +88,18 @@ export class FlightManagementComponent implements OnInit, OnChanges {
     ) {
       this.loadTourAndDepartureData();
     }
+
+    // Limpiar cache si selectedFlight cambió
+    if (changes['selectedFlight']) {
+      this.clearFlightCache();
+    }
+  }
+
+  // Método para limpiar el cache de vuelos
+  private clearFlightCache(): void {
+    console.log('🧹 Limpiando cache de vuelos');
+    this._cachedTransformedFlight = null;
+    this._lastSelectedFlightId = null;
   }
 
   private loadTourAndDepartureData(): void {
@@ -230,7 +267,8 @@ export class FlightManagementComponent implements OnInit, OnChanges {
 
   // Método para convertir IFlightPackDTO del FlightsNetService al formato de FlightSearchService
   convertFlightsNetToFlightSearch(flightsNetFlight: IFlightPackDTO): any {
-    return {
+    // Crear el objeto base una sola vez
+    const baseObject = {
       id: flightsNetFlight.id,
       code: flightsNetFlight.code,
       name: flightsNetFlight.name,
@@ -268,6 +306,8 @@ export class FlightManagementComponent implements OnInit, OnChanges {
         arrivalCity: flight.arrivalCity
       })) || []
     };
+
+    return baseObject;
   }
 
   saveFlightAssignments(): void {

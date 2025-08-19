@@ -66,7 +66,7 @@ export class FlightStopsComponent implements OnInit {
 
   private getFlightDetailFromNewService(): void {
     console.log(`🔄 FlightStops: Obteniendo detalles del nuevo servicio - packId=${this.packId}, flightId=${this.flightId}`);
-    this.flightSearchService.getFlightDetails(this.packId, this.flightId).subscribe({
+    this.flightSearchService.getFlightDetails(this.packId, this.flightId.toString()).subscribe({
       next: (detail) => {
         console.log(`✅ FlightStops: Detalles obtenidos del nuevo servicio:`, detail);
         this.flightDetail = detail;

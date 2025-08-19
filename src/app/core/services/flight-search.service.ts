@@ -3,10 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
-/**
- * Interfaces generadas a partir del swagger de localhost:5007 para el endpoint /api/FlightSearch
- */
-
+// Nuevas interfaces basadas en el Swagger actualizado
 export interface FlightSearchRequest {
   departureId: number;
   reservationId: number;
@@ -43,22 +40,6 @@ export interface IFlightResponse {
   arrivalCity?: string | null;
 }
 
-export interface IFlightPackDTO {
-  id: number;
-  code?: string | null;
-  name?: string | null;
-  description?: string | null;
-  tkId?: string | null;
-  itineraryId: number;
-  isOptional: boolean;
-  imageUrl?: string | null;
-  imageAlt?: string | null;
-  isVisibleOnWeb: boolean;
-  ageGroupPrices?: IAgeGroupPriceDTO[] | null;
-  flights?: IFlightResponse[] | null;
-}
-
-// Nuevas interfaces para el endpoint de detalles
 export interface IFlightSegmentResponse {
   id: number;
   tkId?: string | null;
@@ -91,7 +72,42 @@ export interface IFlightDetailDTO {
   segments?: IFlightSegmentResponse[] | null;
 }
 
+export interface IFlightPackDTO {
+  id: number;
+  code?: string | null;
+  name?: string | null;
+  description?: string | null;
+  tkId?: string | null;
+  itineraryId: number;
+  isOptional: boolean;
+  imageUrl?: string | null;
+  imageAlt?: string | null;
+  isVisibleOnWeb: boolean;
+  ageGroupPrices?: IAgeGroupPriceDTO[] | null;
+  flights?: IFlightResponse[] | null;
+}
+
 export type FlightSearchResponse = IFlightPackDTO[];
+
+// Interfaces para respuestas de operaciones PUT
+export interface FlightSelectionResponse {
+  success: boolean;
+  message?: string;
+  timestamp?: string;
+}
+
+export interface FlightUnselectionResponse {
+  success: boolean;
+  message?: string;
+  timestamp?: string;
+}
+
+export interface FlightUnselectAllResponse {
+  success: boolean;
+  message?: string;
+  timestamp?: string;
+  unselectedCount?: number;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -122,13 +138,51 @@ export class FlightSearchService {
 
   /**
    * Obtiene los detalles de un vuelo específico por su ID de paquete y ID de vuelo
-   * @param packId ID del paquete de vuelos (consolidatorSearchId)
-   * @param flightId ID del vuelo específico (amadeusFlightId)
+   * @param consolidatorSearchId ID del paquete de vuelos (consolidatorSearchId)
+   * @param amadeusFlightId ID del vuelo específico (amadeusFlightId)
    * @returns Observable con los detalles del vuelo
    */
-  getFlightDetails(packId: number, flightId: number): Observable<IFlightDetailDTO> {
+  getFlightDetails(consolidatorSearchId: number, amadeusFlightId: string): Observable<IFlightDetailDTO> {
     return this.http.get<IFlightDetailDTO>(
-      `${this.DETAILS_API_URL}/${packId}/details/${flightId}`
+      `${this.DETAILS_API_URL}/${consolidatorSearchId}/details/${amadeusFlightId}`
+    );
+  }
+
+  /**
+   * Marca un ConsolidatorSearch como seleccionado, desmarcando los demás de la misma reserva
+   * @param reservationId ID de la reserva
+   * @param consolidatorSearchId ID del ConsolidatorSearch a marcar como seleccionado
+   * @returns Observable con la respuesta de la operación
+   */
+  selectFlight(reservationId: number, consolidatorSearchId: number): Observable<FlightSelectionResponse> {
+    return this.http.put<FlightSelectionResponse>(
+      `${this.API_URL}/reservation/${reservationId}/consolidator/${consolidatorSearchId}/select`,
+      {}
+    );
+  }
+
+  /**
+   * Desmarca un ConsolidatorSearch como no seleccionado
+   * @param reservationId ID de la reserva
+   * @param consolidatorSearchId ID del ConsolidatorSearch a desmarcar
+   * @returns Observable con la respuesta de la operación
+   */
+  unselectFlight(reservationId: number, consolidatorSearchId: number): Observable<FlightUnselectionResponse> {
+    return this.http.put<FlightUnselectionResponse>(
+      `${this.API_URL}/reservation/${reservationId}/consolidator/${consolidatorSearchId}/unselect`,
+      {}
+    );
+  }
+
+  /**
+   * Desmarca todos los ConsolidatorSearch de una reserva como no seleccionados
+   * @param reservationId ID de la reserva
+   * @returns Observable con la respuesta de la operación
+   */
+  unselectAllFlights(reservationId: number): Observable<FlightUnselectAllResponse> {
+    return this.http.put<FlightUnselectAllResponse>(
+      `${this.API_URL}/reservation/${reservationId}/unselect-all`,
+      {}
     );
   }
 } 

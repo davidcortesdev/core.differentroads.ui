@@ -93,7 +93,7 @@ export class FlightItemComponent implements OnInit, OnDestroy {
     console.log(`🔄 FlightItem: Cargando detalles internamente para paquete ${this.flightPack.id}`);
 
     this.flightPack.flights.forEach(flight => {
-      this.flightSearchService.getFlightDetails(this.flightPack!.id, flight.id)
+      this.flightSearchService.getFlightDetails(this.flightPack!.id, flight.id.toString())
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (detail) => {

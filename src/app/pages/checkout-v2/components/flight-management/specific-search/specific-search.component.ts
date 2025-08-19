@@ -360,8 +360,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   // Método para obtener detalles de un vuelo específico cuando sea necesario
-  getFlightDetails(packId: number, flightId: number): Observable<IFlightDetailDTO> {
-    return this.flightSearchService.getFlightDetails(packId, flightId);
+  getFlightDetails(consolidatorSearchId: number, amadeusFlightId: string): Observable<IFlightDetailDTO> {
+    return this.flightSearchService.getFlightDetails(consolidatorSearchId, amadeusFlightId);
   }
 
   // Método para cargar detalles de todos los vuelos y aplicar filtros de escalas
@@ -384,7 +384,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     this.flightOffersRaw.forEach(flightPack => {
       if (flightPack.flights) {
         flightPack.flights.forEach(flight => {
-          detailRequests.push(this.getFlightDetails(flightPack.id, flight.id));
+          detailRequests.push(this.getFlightDetails(flightPack.id, flight.id.toString()));
         });
       }
     });

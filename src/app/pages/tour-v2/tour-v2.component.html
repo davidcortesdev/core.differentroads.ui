@@ -30,12 +30,12 @@
     
     <!-- Tour Overview Section -->
     <section class="tour-section tour-overview-section">
-      <app-tour-overview-v2 [tourId]="tour.id"></app-tour-overview-v2>
+      <app-tour-overview-v2 [tourId]="tour.id" [preview]="preview"></app-tour-overview-v2>
     </section>
     
     <!-- Tour Highlights Section -->
     <section class="tour-section tour-highlights-section">
-      <app-tour-highlights-v2 [tourId]="tour.id"></app-tour-highlights-v2>
+      <app-tour-highlights-v2 [tourId]="tour.id" [preview]="preview" ></app-tour-highlights-v2>
     </section>
     
     <!-- Tour Itinerary Section - MODIFICADO PARA RECIBIR EVENTOS DE ACTIVIDAD -->
@@ -57,7 +57,8 @@
         (cityUpdate)="onCityUpdate($event)"
         (departureUpdate)="onDepartureUpdate($event)"
         (passengersUpdate)="onPassengersUpdate($event)"
-        (ageGroupsUpdate)="onAgeGroupsUpdate($event)">
+        (ageGroupsUpdate)="onAgeGroupsUpdate($event)"
+        [preview]="preview">
       </app-tour-departures-v2>
     </section>
     

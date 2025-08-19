@@ -24,8 +24,11 @@ export class TourAgeGroupsService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de IDs de grupos de edad del tour.
    */
-  getAll(tourId: number, filters?: TourAgeGroupFilters): Observable<number[]> {
+  getAll(tourId: number, filters?: TourAgeGroupFilters, tourVisibility?: boolean): Observable<number[]> {
     let params = new HttpParams();
+    if (tourVisibility !== undefined) {
+      params = params.set('tourVisibility', tourVisibility.toString());
+    }
 
     // Add filter parameters if provided
     if (filters) {

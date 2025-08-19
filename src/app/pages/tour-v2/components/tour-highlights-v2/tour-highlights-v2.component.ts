@@ -21,6 +21,7 @@ interface HighlightDisplay {
 })
 export class TourHighlightsV2Component implements OnInit, OnChanges {
   @Input() tourId: number | undefined;
+  @Input() preview: boolean = false;
 
   highlights: HighlightDisplay[] = [];
   highlightsTitle = 'Highlights';
@@ -114,7 +115,7 @@ export class TourHighlightsV2Component implements OnInit, OnChanges {
 
     this.tourHighlightsService.getAll({ 
       tourId: this.tourId, 
-      isActive: true 
+      isActive: this.preview ? undefined : true
     }).subscribe({
       next: (data) => {
         this.highlights = this.transformHighlightsData(data);

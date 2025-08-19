@@ -20,6 +20,7 @@ import {
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
 import { IFlightPackDTO } from '../../services/flightsNet.service';
 import { DefaultFlightsComponent } from './default-flights/default-flights.component';
+import { FlightSelectionState } from '../../types/flight-selection-state';
 
 @Component({
   selector: 'app-flight-management',
@@ -171,10 +172,11 @@ export class FlightManagementComponent implements OnInit, OnChanges {
   }
 
   // Método para manejar la selección de vuelos desde specific-search
-  onSpecificSearchFlightSelection(flightData: {
-    selectedFlight: any; // IFlightPackDTO del FlightSearchService
-    totalPrice: number;
-  }): void {
+  onSpecificSearchFlightSelection(flightData: FlightSelectionState): void {
+    console.log('🔄 Selección de vuelo desde specific-search:', flightData);
+    console.log('📍 Origen:', flightData.source);
+    console.log('🆔 Pack ID:', flightData.packId);
+    
     // Convertir el tipo del FlightSearchService al tipo de FlightsNetService
     const convertedFlight = flightData.selectedFlight ? this.convertFlightSearchToFlightsNet(flightData.selectedFlight) : null;
     

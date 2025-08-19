@@ -15,6 +15,7 @@ import { FlightSearchService, FlightSearchRequest, IFlightPackDTO, IFlightDetail
 import { IFlightPackDTO as IFlightsNetFlightPackDTO } from '../../../services/flightsNet.service';
 import { ReservationTravelerService, IReservationTravelerResponse } from '../../../../../core/services/reservation/reservation-traveler.service';
 import { ReservationTravelerActivityPackService, IReservationTravelerActivityPackResponse } from '../../../../../core/services/reservation/reservation-traveler-activity-pack.service';
+import { FlightSelectionState } from '../../../types/flight-selection-state';
 
 interface Ciudad {
   nombre: string;
@@ -30,10 +31,7 @@ interface Ciudad {
 export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   // Inputs y Outputs
   @Output() filteredFlightsChange = new EventEmitter<any[]>();
-  @Output() flightSelectionChange = new EventEmitter<{
-    selectedFlight: IFlightPackDTO | null;
-    totalPrice: number;
-  }>();
+  @Output() flightSelectionChange = new EventEmitter<FlightSelectionState>();
   @Input() flights: Flight[] = [];
   @Input() departureId: number | null = null;
   @Input() reservationId: number | null = null;
@@ -116,6 +114,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     }
     if (this.reservationId) {
       this.getTravelers();
+      // Verificar si hay un vuelo ya seleccionado en el servicio
+      this.checkExistingFlightSelection();
     }
   }
 
@@ -158,6 +158,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         );
         console.log('🎯 Vuelo seleccionado:', this.selectedFlight);
         console.log('🆔 reservationId:', this.reservationId);
+        console.log('📍 Origen: default-flights (padre)');
 
         this.saveFlightAssignments()
           .then((success) => {
@@ -862,17 +863,48 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       });
   }
 
+  // Método para verificar si hay un vuelo ya seleccionado en el servicio
+  checkExistingFlightSelection(): void {
+    if (!this.reservationId) {
+      return;
+    }
+
+    // Por ahora, no hay un método directo para obtener el vuelo seleccionado
+    // del FlightSearchService. La selección se maneja a través de la sincronización
+    // con el componente padre via selectedFlightFromParent
+    console.log('ℹ️ Verificación de selección de vuelo delegada al componente padre');
+  }
+
   // Método para seleccionar/deseleccionar vuelos (similar a default-flights)
   selectFlightFromFlightItem(flightPack: IFlightPackDTO): void {
     console.log('🎯 selectFlightFromFlightItem llamado');
     console.log('📦 flightPack:', flightPack);
     console.log('🔄 selectedFlight actual:', this.selectedFlight);
     console.log('🕐 Timestamp:', new Date().toISOString());
+    console.log('📍 Origen: specific-search (interno)');
 
     if (this.selectedFlight === flightPack) {
       console.log('🔄 Deseleccionando vuelo actual');
       this.selectedFlight = null;
-      this.flightSelectionChange.emit({ selectedFlight: null, totalPrice: 0 });
+      
+      // Deseleccionar usando el FlightSearchService
+      if (this.reservationId) {
+        this.flightSearchService.unselectAllFlights(this.reservationId).subscribe({
+          next: () => {
+            console.log('✅ Vuelo deseleccionado exitosamente en el servicio');
+          },
+          error: (error) => {
+            console.error('❌ Error al deseleccionar vuelo en el servicio:', error);
+          }
+        });
+      }
+      
+      this.flightSelectionChange.emit({ 
+        selectedFlight: null, 
+        totalPrice: 0, 
+        source: 'specific', 
+        packId: null 
+      });
     } else {
       console.log('✅ Seleccionando nuevo vuelo');
       this.selectedFlight = flightPack;
@@ -890,9 +922,23 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       // Marcar como selección interna antes de emitir el cambio
       this.isInternalSelection = true;
 
+      // Seleccionar usando el FlightSearchService
+      if (this.reservationId) {
+        this.flightSearchService.selectFlight(this.reservationId, flightPack.id).subscribe({
+          next: () => {
+            console.log('✅ Vuelo seleccionado exitosamente en el servicio');
+          },
+          error: (error) => {
+            console.error('❌ Error al seleccionar vuelo en el servicio:', error);
+          }
+        });
+      }
+
       this.flightSelectionChange.emit({
         selectedFlight: flightPack,
         totalPrice: basePrice,
+        source: 'specific',
+        packId: flightPack.id
       });
 
       console.log('💾 Guardando asignaciones de vuelo...');
@@ -1068,8 +1114,19 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     return adaptedObject;
   }
 
-  isFlightSelected(flight: Flight): boolean {
-    return flight.externalID === this.selectedFlightId;
+  // Método helper para verificar si un vuelo está seleccionado
+  isFlightSelected(flightPack: IFlightsNetFlightPackDTO): boolean {
+    return this.selectedFlight !== null && this.selectedFlight.id === flightPack.id;
+  }
+
+  // Método para obtener el texto del botón de selección
+  getSelectionButtonText(flightPack: IFlightsNetFlightPackDTO): string {
+    return this.isFlightSelected(flightPack) ? 'Seleccionado' : 'Seleccionar';
+  }
+
+  // Método para obtener la clase CSS del botón de selección
+  getSelectionButtonClass(flightPack: IFlightsNetFlightPackDTO): string {
+    return this.isFlightSelected(flightPack) ? 'selected-flight-button' : '';
   }
 
   searchCities(event: any): void {

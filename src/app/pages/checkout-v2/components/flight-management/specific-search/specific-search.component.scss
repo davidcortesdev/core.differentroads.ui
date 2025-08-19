@@ -575,3 +575,17 @@ $border: #ddd;
     margin: 0;
   }
 }
+
+// Estilos para el botón de vuelo seleccionado
+::ng-deep {
+  .selected-flight-button {
+    background-color: var(--p-primary-color) !important;
+    color: white !important;
+    border-color: var(--p-primary-color) !important;
+    
+    &:hover {
+      background-color: var(--p-primary-color) !important;
+      opacity: 0.9;
+    }
+  }
+}

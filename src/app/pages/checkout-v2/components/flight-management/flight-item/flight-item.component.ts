@@ -14,6 +14,7 @@ export class FlightItemComponent implements OnInit {
   @Input() flightPack: IFlightPackDTO | null = null;
   @Input() selectedFlight: IFlightPackDTO | null = null;
   @Input() flightDetails: Map<number, IFlightDetailDTO> = new Map();
+  @Input() autoSearch: boolean = true; // Control para búsqueda automática en flight-stops
   @Output() flightSelected = new EventEmitter<IFlightPackDTO>();
 
   FLIGHT_TYPE_SALIDA = 4;
@@ -55,6 +56,23 @@ export class FlightItemComponent implements OnInit {
     const detail = this.flightDetails.get(flightId);
     if (!detail || !detail.airlines) return '';
     return detail.airlines.join(', ');
+  }
+
+  // Método para habilitar búsqueda automática en todos los flight-stops
+  enableAutoSearch(): void {
+    this.autoSearch = true;
+    console.log('✅ Búsqueda automática habilitada en flight-item');
+  }
+
+  // Método para deshabilitar búsqueda automática en todos los flight-stops
+  disableAutoSearch(): void {
+    this.autoSearch = false;
+    console.log('🔒 Búsqueda automática deshabilitada en flight-item');
+  }
+
+  // Método para obtener el estado actual del autoSearch
+  getAutoSearchStatus(): boolean {
+    return this.autoSearch;
   }
 
   formatTime(time: any): string {

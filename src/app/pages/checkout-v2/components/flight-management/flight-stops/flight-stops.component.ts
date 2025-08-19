@@ -12,6 +12,7 @@ import {
 })
 export class FlightStopsComponent implements OnInit {
   @Input() flightId!: number;
+  @Input() autoSearch: boolean = true; // Control para búsqueda automática
 
   flightDetail: IFlightDetailDTO | null = null;
   isLoading = true;
@@ -19,8 +20,27 @@ export class FlightStopsComponent implements OnInit {
   constructor(private flightsNetService: FlightsNetService) {}
 
   ngOnInit(): void {
-    if (this.flightId) {
+    if (this.flightId && this.autoSearch) {
       this.getFlightDetail();
+    } else if (this.flightId && !this.autoSearch) {
+      // Si no se debe hacer búsqueda automática, solo mostrar estado de carga
+      this.isLoading = false;
+    }
+  }
+
+  // Método para hacer la búsqueda manualmente
+  loadFlightDetail(): void {
+    if (this.flightId && !this.isLoading) {
+      this.isLoading = true;
+      this.getFlightDetail();
+    }
+  }
+
+  // Método para habilitar búsqueda automática y cargar datos
+  enableAutoSearch(): void {
+    this.autoSearch = true;
+    if (this.flightId && !this.flightDetail) {
+      this.loadFlightDetail();
     }
   }
 
@@ -43,7 +63,12 @@ export class FlightStopsComponent implements OnInit {
 
   getFlightStopsText(): string {
     if (this.isLoading) return 'Cargando...';
-    if (!this.flightDetail) return 'Error';
+    if (!this.flightDetail) {
+      if (!this.autoSearch) {
+        return 'Sin información'; // Cuando no se hace búsqueda automática
+      }
+      return 'Error';
+    }
     return this.flightDetail.numScales === 1
       ? 'Directo'
       : this.flightDetail.numScales + ' escalas';

@@ -11,7 +11,7 @@ import { DepartureConsolidadorSearchLocationService, ConsolidadorSearchLocationW
 import { DepartureService, DepartureAirportTimesResponse } from '../../../../../core/services/departure/departure.service';
 import { LocationAirportNetService } from '../../../../../core/services/locations/locationAirportNet.service';
 import { LocationNetService } from '../../../../../core/services/locations/locationNet.service';
-import { FlightSearchService, FlightSearchRequest } from '../../../../../core/services/flight-search.service';
+import { FlightSearchService, FlightSearchRequest, IFlightPackDTO } from '../../../../../core/services/flight-search.service';
 
 interface Ciudad {
   nombre: string;
@@ -56,7 +56,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   ];
   readonly aerolineaOptions = this.aerolineas.map((a) => ({ label: a.nombre, value: a.codigo }));
   flightOffers: ITempFlightOffer[] = [];
-  filteredOffers: ITempFlightOffer[] = [];
+  filteredOffers: IFlightPackDTO[] = [];
   isLoading = false;
   searchPerformed = false;
   selectedFlightId: string | null = null;
@@ -68,7 +68,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     { label: 'Duración (más corto)', value: 'duration' },
   ];
   selectedSortOption = 'price-asc';
-  flightOffersRaw: any = null;
+  flightOffersRaw: IFlightPackDTO[] = [];
+  selectedFlight: IFlightPackDTO | null = null;
   errorMessage = '';
 
   // Propiedades privadas
@@ -273,31 +274,23 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
   buscar() {
     this.searchPerformed = true;
-    this.getFlightOffers();
+    this.searchFlights();
   }
 
-  getFlightOffers() {
-    this.isLoading = true;
-    this.errorMessage = '';
-    const formValue = this.flightForm.value;
-    let originCode: string | null = null;
-    let destinationCode: string | null = null;
-    const tipoViaje: 'Ida' | 'Vuelta' | 'IdaVuelta' = formValue.tipoViaje;
-
-    if (tipoViaje === 'Vuelta') {
-      destinationCode = typeof formValue.origen === 'string'
-        ? this.getCityCode(formValue.origen)
-        : formValue.origen.codigo;
-    } else if (tipoViaje === 'Ida') {
-      originCode = typeof formValue.origen === 'string'
-        ? this.getCityCode(formValue.origen)
-        : formValue.origen.codigo;
-    } else if (tipoViaje === 'IdaVuelta') {
-      originCode = typeof formValue.origen === 'string'
-        ? this.getCityCode(formValue.origen)
-        : formValue.origen.codigo;
-      destinationCode = originCode;
+  searchFlights() {
+    if (!this.departureId || !this.reservationId) {
+      console.error('Faltan departureId o reservationId');
+      return;
     }
+
+    this.isLoading = true;
+    this.searchPerformed = true;
+    this.errorMessage = '';
+
+    const formValue = this.flightForm.value;
+    const tipoViaje = formValue.tipoViaje;
+    const originCode = formValue.origen?.codigo || null;
+    const destinationCode = formValue.origen?.codigo || null;
 
     const request: FlightSearchRequest = {
       departureId: this.departureId!,
@@ -306,16 +299,16 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       iataOrigen: originCode,
       iataDestino: destinationCode
     };
+    
     this.flightSearchService.searchFlights(request).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (response: any) => {
+      next: (response: IFlightPackDTO[]) => {
         this.isLoading = false;
         this.flightOffersRaw = response;
-        this.flightOffers = response.offers || [];
         this.filterOffers();
       },
       error: (err: any) => {
         this.isLoading = false;
-        this.flightOffers = [];
+        this.flightOffersRaw = [];
         this.filteredOffers = [];
         this.filteredFlightsChange.emit([]);
         this.errorMessage = 'Ocurrió un error al buscar vuelos. Por favor, inténtalo de nuevo.';
@@ -333,77 +326,60 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
   filterOffers() {
     const formValue = this.flightForm.value;
-    this.filteredOffers = this.flightOffers.filter((offer) => {
-      const offerData = offer.offerData;
-      let matchesHandBaggage = true;
-      let matchesCheckedBaggage = true;
-      if (formValue.equipajeMano) {
-        const hasCabinBag = offerData.travelerPricings.some((pricing: any) =>
-          pricing.fareDetailsBySegment.some(
-            (segment: any) =>
-              segment.includedCabinBags &&
-              segment.includedCabinBags.quantity > 0
-          )
-        );
-        matchesHandBaggage = hasCabinBag;
-      }
-      if (formValue.equipajeBodega) {
-        const hasCheckedBag = offerData.travelerPricings.some((pricing: any) =>
-          pricing.fareDetailsBySegment.some(
-            (segment: any) =>
-              segment.includedCheckedBags &&
-              segment.includedCheckedBags.quantity > 0
-          )
-        );
-        matchesCheckedBaggage = hasCheckedBag;
-      }
-      let matchesStops = true;
-      if (formValue.escala) {
-        const outboundStops = offerData.itineraries[0].segments.length - 1;
+    
+    // Filtrar por escalas si se especifica
+    if (formValue.escala) {
+      this.flightOffersRaw = this.flightOffersRaw.filter((flightPack) => {
+        if (!flightPack.flights || flightPack.flights.length === 0) return false;
+        
+        // Contar escalas basándose en el primer vuelo (ida)
+        const outboundFlight = flightPack.flights.find(f => f.flightTypeId === 4); // IDA
+        if (!outboundFlight) return false;
+        
+        // Por ahora asumimos que no hay escalas detalladas, pero podríamos implementar lógica más compleja
+        // basada en los datos de stopovers si están disponibles
+        const hasStops = outboundFlight.stopovers && outboundFlight.stopovers.length > 0;
+        
         switch (formValue.escala) {
           case 'directos':
-            matchesStops = outboundStops === 0;
-            break;
+            return !hasStops;
           case 'unaEscala':
-            matchesStops = outboundStops === 1;
-            break;
+            return hasStops && outboundFlight.stopovers!.length === 1;
           case 'multiples':
-            matchesStops = outboundStops >= 2;
-            break;
+            return hasStops && outboundFlight.stopovers!.length >= 2;
+          default:
+            return true;
         }
-      }
-      return matchesHandBaggage && matchesCheckedBaggage && matchesStops;
-    });
+      });
+    }
+    
     this.sortFlights(this.selectedSortOption);
-    this.transformedFlights = this.transformOffersToFlightFormat(this.filteredOffers);
+    this.transformedFlights = this.transformOffersToFlightFormat(this.flightOffersRaw);
     this.filteredFlightsChange.emit(this.transformedFlights);
   }
 
   sortFlights(sortOption: string) {
     switch (sortOption) {
       case 'price-asc':
-        this.filteredOffers.sort(
-          (a, b) =>
-            parseFloat(a.offerData.price.total) -
-            parseFloat(b.offerData.price.total)
-        );
+        this.flightOffersRaw.sort((a, b) => {
+          const priceA = a.ageGroupPrices?.[0]?.price || 0;
+          const priceB = b.ageGroupPrices?.[0]?.price || 0;
+          return priceA - priceB;
+        });
         break;
       case 'price-desc':
-        this.filteredOffers.sort(
-          (a, b) =>
-            parseFloat(b.offerData.price.total) -
-            parseFloat(a.offerData.price.total)
-        );
+        this.flightOffersRaw.sort((a, b) => {
+          const priceA = a.ageGroupPrices?.[0]?.price || 0;
+          const priceB = b.ageGroupPrices?.[0]?.price || 0;
+          return priceB - priceA;
+        });
         break;
       case 'duration':
-        this.filteredOffers.sort((a, b) => {
-          const getDurationMinutes = (offer: ITempFlightOffer) => {
-            const duration = offer.offerData.itineraries[0].duration || '';
-            const hours = parseInt(duration.match(/(\d+)H/)?.[1] || '0');
-            const minutes = parseInt(duration.match(/(\d+)M/)?.[1] || '0');
-            return hours * 60 + minutes;
-          };
-          return getDurationMinutes(a) - getDurationMinutes(b);
+        // Por ahora ordenamos por precio ya que no tenemos duración detallada
+        this.flightOffersRaw.sort((a, b) => {
+          const priceA = a.ageGroupPrices?.[0]?.price || 0;
+          const priceB = b.ageGroupPrices?.[0]?.price || 0;
+          return priceA - priceB;
         });
         break;
     }
@@ -434,72 +410,84 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     return '00:00';
   }
 
-  transformOffersToFlightFormat(offers: ITempFlightOffer[]): Flight[] {
-    return offers.map((offer) => {
-      const offerData = offer.offerData;
-      const outbound = offerData.itineraries[0];
-      const inboundItinerary = offerData.itineraries.length > 1 ? offerData.itineraries[1] : null;
-      const priceDataArray = this.amadeusService.transformFlightPriceData([offerData]);
-      const departureDateStr = this.fechaIdaConstante;
-      const returnDateStr = inboundItinerary ? this.fechaRegresoConstante : '';
-      const outboundSegments: FlightSegment[] = outbound.segments.map((segment: any, index: number) => ({
-        departureCity: this.getCityName(segment.departure.iataCode) || segment.departure.iataCode,
-        arrivalCity: this.getCityName(segment.arrival.iataCode) || segment.arrival.iataCode,
-        flightNumber: segment.carrierCode + segment.number,
-        departureIata: segment.departure.iataCode,
-        departureTime: this.getTimeFromDate(segment.departure.at),
-        arrivalTime: this.getTimeFromDate(segment.arrival.at),
-        arrivalIata: segment.arrival.iataCode,
+  transformOffersToFlightFormat(offers: IFlightPackDTO[]): Flight[] {
+    return offers.map((flightPack) => {
+      const outboundFlight = flightPack.flights?.find(f => f.flightTypeId === 4); // IDA
+      const inboundFlight = flightPack.flights?.find(f => f.flightTypeId === 5); // VUELTA
+
+      // Crear segmentos básicos basados en la información disponible
+      const outboundSegments: FlightSegment[] = outboundFlight ? [{
+        departureCity: outboundFlight.departureCity || outboundFlight.departureIATACode || '',
+        arrivalCity: outboundFlight.arrivalCity || outboundFlight.arrivalIATACode || '',
+        departureTime: outboundFlight.departureTime || '',
+        arrivalTime: outboundFlight.arrivalTime || '',
+        departureIata: outboundFlight.departureIATACode || '',
+        arrivalIata: outboundFlight.arrivalIATACode || '',
+        flightNumber: outboundFlight.tkId || '',
         numNights: 0,
         differential: 0,
-        order: index,
+        order: 0,
         airline: {
-          name: this.getAirlineName(segment.carrierCode),
+          name: outboundFlight.name || '',
+          code: outboundFlight.tkId || '',
           email: '',
           logo: '',
-          code: segment.carrierCode,
         },
-      }));
+      }] : [];
+
       let inboundSegments: FlightSegment[] = [];
-      if (inboundItinerary) {
-        inboundSegments = inboundItinerary.segments.map((segment: any, index: number) => ({
-          departureCity: this.getCityName(segment.departure.iataCode) || segment.departure.iataCode,
-          arrivalCity: this.getCityName(segment.arrival.iataCode) || segment.arrival.iataCode,
-          flightNumber: segment.carrierCode + segment.number,
-          departureIata: segment.departure.iataCode,
-          departureTime: this.getTimeFromDate(segment.departure.at),
-          arrivalTime: this.getTimeFromDate(segment.arrival.at),
-          arrivalIata: segment.arrival.iataCode,
+      if (inboundFlight) {
+        inboundSegments = [{
+          departureCity: inboundFlight.departureCity || inboundFlight.departureIATACode || '',
+          arrivalCity: inboundFlight.arrivalCity || inboundFlight.arrivalIATACode || '',
+          departureTime: inboundFlight.departureTime || '',
+          arrivalTime: inboundFlight.arrivalTime || '',
+          departureIata: inboundFlight.departureIATACode || '',
+          arrivalIata: inboundFlight.arrivalIATACode || '',
+          flightNumber: inboundFlight.tkId || '',
           numNights: 0,
           differential: 0,
-          order: index,
+          order: 0,
           airline: {
-            name: this.getAirlineName(segment.carrierCode),
+            name: inboundFlight.name || '',
+            code: inboundFlight.tkId || '',
             email: '',
             logo: '',
-            code: segment.carrierCode,
           },
-        }));
+        }];
       }
+
+      // Convertir IAgeGroupPriceDTO a PriceData
+      const priceData = flightPack.ageGroupPrices?.map(price => ({
+        id: price.ageGroupId?.toString() || '',
+        value: price.price || 0,
+        value_with_campaign: price.price || 0,
+        campaign: null,
+        age_group_name: price.ageGroupName || 'Adultos',
+        category_name: 'Vuelo',
+        period_product: undefined,
+        _id: undefined,
+      })) || [];
+
       const flight: Flight = {
-        id: offer._id,
-        externalID: offerData.id,
-        name: `Vuelo ${outbound.segments[0]?.departure?.iataCode} - ${outbound.segments[outbound.segments.length - 1]?.arrival?.iataCode}`,
+        id: flightPack.id.toString(),
+        externalID: flightPack.id.toString(),
+        name: `Vuelo ${outboundFlight?.departureIATACode || ''} - ${outboundFlight?.arrivalIATACode || ''}`,
         outbound: {
           activityID: 0,
           availability: 1,
-          date: departureDateStr,
-          name: `Vuelo a ${outbound.segments[outbound.segments.length - 1]?.arrival?.iataCode}`,
+          date: this.fechaIdaConstante,
+          name: `Vuelo a ${outboundFlight?.arrivalCity || outboundFlight?.arrivalIATACode || ''}`,
           segments: outboundSegments,
           serviceCombinationID: 0,
-          prices: priceDataArray,
+          prices: priceData,
         },
-        inbound: inboundItinerary
+        inbound: inboundFlight
           ? {
               activityID: 0,
               availability: 1,
-              date: returnDateStr,
-              name: `Vuelo de regreso desde ${inboundItinerary.segments[0]?.departure?.iataCode} a ${inboundItinerary.segments[inboundItinerary.segments.length - 1]?.arrival?.iataCode}`,
+              date: this.fechaRegresoConstante,
+              name: `Vuelo de regreso desde ${inboundFlight.departureCity || inboundFlight.departureIATACode || ''} a ${inboundFlight.arrivalCity || inboundFlight.arrivalIATACode || ''}`,
               segments: inboundSegments,
               serviceCombinationID: 0,
               prices: [],
@@ -513,10 +501,11 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
               serviceCombinationID: 0,
               prices: [],
             },
-        price: priceDataArray.find((price: any) => price.age_group_name === 'Adultos')?.value_with_campaign || 0,
-        priceData: priceDataArray,
+        price: flightPack.ageGroupPrices?.[0]?.price || 0,
+        priceData: priceData,
         source: 'amadeus',
       };
+
       return flight;
     });
   }
@@ -558,16 +547,58 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     );
   }
 
-  selectFlight(flight: Flight): void {
-    this.selectedFlightId = flight.externalID;
-    const flightWithSource = {
-      ...flight,
-      source: 'amadeus',
-      id: flight.id || flight.externalID,
-      externalID: flight.externalID,
-      name: flight.name || `$ ${flight.outbound.segments[0]?.flightNumber}`,
+  selectFlight(flightPack: any): void {
+    // Convertir de vuelta al formato del FlightSearchService si es necesario
+    if (flightPack && typeof flightPack === 'object') {
+      this.selectedFlight = flightPack;
+      console.log('Vuelo seleccionado:', flightPack);
+    }
+  }
+
+  trackByFlightId(index: number, flightPack: IFlightPackDTO): number {
+    return flightPack.id;
+  }
+
+  // Adaptador para convertir IFlightPackDTO del FlightSearchService al formato esperado por app-flight-item
+  adaptFlightPackForFlightItem(flightPack: IFlightPackDTO): any {
+    return {
+      id: flightPack.id,
+      code: flightPack.code || '',
+      name: flightPack.name || '',
+      description: flightPack.description || '',
+      tkId: flightPack.tkId || '',
+      itineraryId: flightPack.itineraryId,
+      isOptional: flightPack.isOptional,
+      imageUrl: flightPack.imageUrl || '',
+      imageAlt: flightPack.imageAlt || '',
+      isVisibleOnWeb: flightPack.isVisibleOnWeb,
+      ageGroupPrices: flightPack.ageGroupPrices?.map(price => ({
+        price: price.price || 0,
+        ageGroupId: price.ageGroupId || 0,
+        ageGroupName: price.ageGroupName || 'Adultos'
+      })) || [],
+      flights: flightPack.flights?.map(flight => ({
+        id: flight.id,
+        tkId: flight.tkId || '',
+        name: flight.name || '',
+        activityId: flight.activityId,
+        departureId: flight.departureId,
+        tkActivityPeriodId: flight.tkActivityPeriodId || '',
+        tkServiceCombinationId: flight.tkServiceCombinationId || '',
+        date: flight.date || '',
+        tkServiceId: flight.tkServiceId || '',
+        tkJourneyId: flight.tkJourneyId || '',
+        flightTypeId: flight.flightTypeId,
+        departureIATACode: flight.departureIATACode || '',
+        arrivalIATACode: flight.arrivalIATACode || '',
+        departureDate: flight.departureDate || '',
+        departureTime: flight.departureTime || '',
+        arrivalDate: flight.arrivalDate || '',
+        arrivalTime: flight.arrivalTime || '',
+        departureCity: flight.departureCity || '',
+        arrivalCity: flight.arrivalCity || ''
+      })) || []
     };
-    this.filteredFlightsChange.emit([flightWithSource]);
   }
 
   isFlightSelected(flight: Flight): boolean {

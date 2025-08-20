@@ -117,7 +117,7 @@ export class TourHeaderV2Component
     actCount: 0,
     packCount: 0,
   };
-
+  @Input() preview: boolean = false;
   // Tour data
   tour: Partial<Tour> = {};
 

@@ -54,7 +54,8 @@
       <p-button 
         label="Reservar mi tour"
         styleClass="p-button-rounded"
-        (onClick)="onBookingClick()">
+        (onClick)="onBookingClick()"
+        [disabled]="preview">
       </p-button>
     </div>
   </div>

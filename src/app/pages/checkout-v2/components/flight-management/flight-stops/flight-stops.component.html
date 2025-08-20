@@ -18,7 +18,15 @@
         <div class="popover-header">
           <h4>Detalle del vuelo</h4>
         </div>
-        <ul class="flight-segments-list">
+        
+        <!-- Indicador de carga de ciudades -->
+        <div *ngIf="!citiesLoaded && !isLoading" class="loading-cities">
+          <i class="pi pi-spin pi-spinner"></i>
+          <span>Cargando nombres de ciudades...</span>
+        </div>
+        
+        <!-- Lista de segmentos solo cuando las ciudades estén cargadas -->
+        <ul *ngIf="citiesLoaded" class="flight-segments-list">
           <li *ngFor="let seg of getFlightSegments()" class="flight-segment-item">
             <div class="segment-info">
               <div class="segment-route">

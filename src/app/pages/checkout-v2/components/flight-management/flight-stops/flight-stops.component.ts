@@ -27,6 +27,7 @@ export class FlightStopsComponent implements OnInit {
 
   flightDetail: IFlightsNetFlightDetailDTO | IFlightSearchFlightDetailDTO | null = null;
   isLoading = true;
+  citiesLoaded = false; // Nueva propiedad para controlar si las ciudades están cargadas
 
   constructor(
     private flightsNetService: FlightsNetService,
@@ -34,14 +35,14 @@ export class FlightStopsComponent implements OnInit {
     private airportCityCacheService: AirportCityCacheService
   ) {}
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     if (this.useNewService) {
       // Para el nuevo servicio: permitir flightId = 0 y packId = 0
       // ya que 0 es un ID válido en la base de datos
       if (this.flightId !== null && this.flightId !== undefined && 
           this.packId !== null && this.packId !== undefined) {
         console.log(`🔄 FlightStops: Iniciando con nuevo servicio - flightId=${this.flightId}, packId=${this.packId}`);
-        this.getFlightDetail();
+        await this.getFlightDetail();
       } else {
         console.warn(`⚠️ FlightStops: Valores inválidos para nuevo servicio - flightId=${this.flightId}, packId=${this.packId}`);
       }
@@ -49,32 +50,32 @@ export class FlightStopsComponent implements OnInit {
       // Para el servicio actual: mantener la comprobación original
       if (this.flightId) {
         console.log(`🔄 FlightStops: Iniciando con servicio actual - flightId=${this.flightId}`);
-        this.getFlightDetail();
+        await this.getFlightDetail();
       } else {
         console.warn(`⚠️ FlightStops: flightId inválido para servicio actual - flightId=${this.flightId}`);
       }
     }
   }
 
-  private getFlightDetail(): void {
+  private async getFlightDetail(): Promise<void> {
     if (this.useNewService) {
       // Usar el nuevo FlightSearchService
-      this.getFlightDetailFromNewService();
+      await this.getFlightDetailFromNewService();
     } else {
       // Usar el servicio actual (FlightsNetService)
-      this.getFlightDetailFromCurrentService();
+      await this.getFlightDetailFromCurrentService();
     }
   }
 
-  private getFlightDetailFromNewService(): void {
+  private async getFlightDetailFromNewService(): Promise<void> {
     console.log(`🔄 FlightStops: Obteniendo detalles del nuevo servicio - packId=${this.packId}, flightId=${this.flightId}`);
     this.flightSearchService.getFlightDetails(this.packId, this.flightId.toString()).subscribe({
-      next: (detail) => {
+      next: async (detail) => {
         console.log(`✅ FlightStops: Detalles obtenidos del nuevo servicio:`, detail);
         this.flightDetail = detail;
         
-        // Precargar ciudades de los segmentos del vuelo
-        this.preloadCitiesFromSegments();
+        // Precargar ciudades de los segmentos del vuelo y esperar a que se completen
+        await this.preloadCitiesFromSegments();
         
         this.isLoading = false;
       },
@@ -85,15 +86,15 @@ export class FlightStopsComponent implements OnInit {
     });
   }
 
-  private getFlightDetailFromCurrentService(): void {
+  private async getFlightDetailFromCurrentService(): Promise<void> {
     console.log(`🔄 FlightStops: Obteniendo detalles del servicio actual - flightId=${this.flightId}`);
     this.flightsNetService.getFlightDetail(this.flightId).subscribe({
-      next: (detail) => {
+      next: async (detail) => {
         console.log(`✅ FlightStops: Detalles obtenidos del servicio actual:`, detail);
         this.flightDetail = detail;
         
-        // Precargar ciudades de los segmentos del vuelo
-        this.preloadCitiesFromSegments();
+        // Precargar ciudades de los segmentos del vuelo y esperar a que se completen
+        await this.preloadCitiesFromSegments();
         
         this.isLoading = false;
       },
@@ -107,11 +108,14 @@ export class FlightStopsComponent implements OnInit {
   /**
    * Precarga las ciudades de los segmentos del vuelo para asegurar que estén disponibles
    */
-  private preloadCitiesFromSegments(): void {
+  private async preloadCitiesFromSegments(): Promise<void> {
     if (!this.flightDetail) return;
 
     const segments = this.getFlightSegments();
-    if (!segments || segments.length === 0) return;
+    if (!segments || segments.length === 0) {
+      this.citiesLoaded = true;
+      return;
+    }
 
     // Extraer códigos IATA únicos de los segmentos
     const airportCodes: string[] = [];
@@ -126,8 +130,15 @@ export class FlightStopsComponent implements OnInit {
 
     if (airportCodes.length > 0) {
       console.log(`🔄 FlightStops: Precargando ciudades para ${airportCodes.length} aeropuertos`);
-      this.airportCityCacheService.preloadAllAirportCities(airportCodes);
+      try {
+        await this.airportCityCacheService.preloadAllAirportCities(airportCodes);
+        console.log('✅ FlightStops: Ciudades precargadas exitosamente');
+      } catch (error) {
+        console.warn('⚠️ FlightStops: Error al precargar ciudades:', error);
+      }
     }
+    
+    this.citiesLoaded = true;
   }
 
   formatTime(time: any): string {
@@ -154,16 +165,49 @@ export class FlightStopsComponent implements OnInit {
     }
   }
 
+  /**
+   * Obtiene los segmentos del vuelo con nombres de ciudades transformados
+   */
   getFlightSegments(): any[] {
     if (!this.flightDetail) return [];
     
+    let segments: any[] = [];
+    
     if (this.useNewService) {
       const newDetail = this.flightDetail as IFlightSearchFlightDetailDTO;
-      return newDetail.segments || [];
+      segments = newDetail.segments || [];
     } else {
       const currentDetail = this.flightDetail as IFlightsNetFlightDetailDTO;
-      return currentDetail.segments || [];
+      segments = currentDetail.segments || [];
     }
+    
+    // Transformar segmentos para incluir nombres de ciudades
+    return this.transformSegmentsWithCityNames(segments);
+  }
+
+  /**
+   * Transforma los segmentos para incluir nombres de ciudades desde el cache
+   */
+  private transformSegmentsWithCityNames(segments: any[]): any[] {
+    if (!segments || segments.length === 0) return [];
+    
+    console.log('🔄 FlightStops: Transformando segmentos con nombres de ciudades');
+    
+    const transformedSegments = segments.map(segment => {
+      const departureCity = this.airportCityCacheService.getCityNameFromCache(segment.departureIata) || segment.departureIata;
+      const arrivalCity = this.airportCityCacheService.getCityNameFromCache(segment.arrivalIata) || segment.arrivalIata;
+      
+      console.log(`📍 Segmento: ${segment.departureIata} (${departureCity}) → ${segment.arrivalIata} (${arrivalCity})`);
+      
+      return {
+        ...segment,
+        departureCity,
+        arrivalCity
+      };
+    });
+    
+    console.log('✅ FlightStops: Segmentos transformados:', transformedSegments);
+    return transformedSegments;
   }
 
   // Método para obtener aerolíneas (solo para el servicio actual)

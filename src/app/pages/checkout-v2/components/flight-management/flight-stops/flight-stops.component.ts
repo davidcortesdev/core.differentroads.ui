@@ -7,6 +7,7 @@ import {
   FlightSearchService,
   IFlightDetailDTO as IFlightSearchFlightDetailDTO,
 } from '../../../../../core/services/flight-search.service';
+import { AirportCityCacheService } from '../../../../../core/services/airport-city-cache.service';
 
 @Component({
   selector: 'app-flight-stops',
@@ -29,7 +30,8 @@ export class FlightStopsComponent implements OnInit {
 
   constructor(
     private flightsNetService: FlightsNetService,
-    private flightSearchService: FlightSearchService
+    private flightSearchService: FlightSearchService,
+    private airportCityCacheService: AirportCityCacheService
   ) {}
 
   ngOnInit(): void {
@@ -70,6 +72,10 @@ export class FlightStopsComponent implements OnInit {
       next: (detail) => {
         console.log(`✅ FlightStops: Detalles obtenidos del nuevo servicio:`, detail);
         this.flightDetail = detail;
+        
+        // Precargar ciudades de los segmentos del vuelo
+        this.preloadCitiesFromSegments();
+        
         this.isLoading = false;
       },
       error: (error) => {
@@ -85,6 +91,10 @@ export class FlightStopsComponent implements OnInit {
       next: (detail) => {
         console.log(`✅ FlightStops: Detalles obtenidos del servicio actual:`, detail);
         this.flightDetail = detail;
+        
+        // Precargar ciudades de los segmentos del vuelo
+        this.preloadCitiesFromSegments();
+        
         this.isLoading = false;
       },
       error: (error) => {
@@ -92,6 +102,32 @@ export class FlightStopsComponent implements OnInit {
         this.isLoading = false;
       },
     });
+  }
+
+  /**
+   * Precarga las ciudades de los segmentos del vuelo para asegurar que estén disponibles
+   */
+  private preloadCitiesFromSegments(): void {
+    if (!this.flightDetail) return;
+
+    const segments = this.getFlightSegments();
+    if (!segments || segments.length === 0) return;
+
+    // Extraer códigos IATA únicos de los segmentos
+    const airportCodes: string[] = [];
+    segments.forEach(segment => {
+      if (segment.departureIata && !airportCodes.includes(segment.departureIata)) {
+        airportCodes.push(segment.departureIata);
+      }
+      if (segment.arrivalIata && !airportCodes.includes(segment.arrivalIata)) {
+        airportCodes.push(segment.arrivalIata);
+      }
+    });
+
+    if (airportCodes.length > 0) {
+      console.log(`🔄 FlightStops: Precargando ciudades para ${airportCodes.length} aeropuertos`);
+      this.airportCityCacheService.preloadAllAirportCities(airportCodes);
+    }
   }
 
   formatTime(time: any): string {

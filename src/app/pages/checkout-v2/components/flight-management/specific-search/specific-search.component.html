@@ -290,7 +290,14 @@
     Los detalles se mapean internamente al formato esperado por FlightsNetService
     para mantener compatibilidad con el resto de la aplicación.
   -->
-  <div class="flight-list">
+  
+  <!-- Indicador de carga de nombres de ciudades -->
+  <div *ngIf="hasPendingCities() && flightOffersRaw.length > 0" class="loading-cities">
+    <p-progressSpinner size="small"></p-progressSpinner>
+    <div class="msg">Cargando nombres de ciudades y aeropuertos...</div>
+  </div>
+  
+  <div class="flight-list" *ngIf="!hasPendingCities()">
     <app-flight-item
       *ngFor="let flightPack of adaptedFlightPacks; trackBy: trackByFlightId"
       [flightPack]="flightPack"

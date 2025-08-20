@@ -87,6 +87,10 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   private searchTimeout: any;
   private readonly destroy$ = new Subject<void>();
   private airportCityCache: Map<string, string> = new Map(); // Cache para almacenar nombres de ciudades por IATA
+  
+  // Nueva propiedad para controlar si los nombres de ciudades están cargados
+  private citiesLoadingPromises: Promise<void>[] = [];
+  public allCitiesLoaded = false;
 
   constructor(
     private readonly fb: FormBuilder,
@@ -198,6 +202,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       clearTimeout(this.searchTimeout);
     }
     this.airportCityCache.clear(); // Limpiar cache de aeropuertos
+    this.allCitiesLoaded = false; // Resetear estado de carga de ciudades
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -370,6 +375,10 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     this.isLoading = true;
     this.searchPerformed = true;
     this.errorMessage = '';
+    
+    // Reinicializar el estado de carga de ciudades
+    this.allCitiesLoaded = false;
+    this.airportCityCache.clear();
 
     const formValue = this.flightForm.value;
     const tipoViaje = formValue.tipoViaje;
@@ -394,9 +403,9 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         this.adaptedFlightPacks = response.map(flightPack => this.adaptFlightPackForFlightItem(flightPack));
         
         // Precargar nombres de ciudades para todos los aeropuertos
-        this.preloadAllAirportCities();
-        
-        this.filterOffers();
+        this.preloadAllAirportCities().then(() => {
+          this.filterOffers();
+        });
       },
       error: (err: any) => {
         this.isLoading = false;
@@ -429,14 +438,29 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     // Si no hay filtros de escalas, aplicar filtros básicos y ordenamiento
     this.sortFlights(this.selectedSortOption);
     
+    // Solo mostrar vuelos si las ciudades están cargadas
+    if (!this.hasPendingCities()) {
+      this.displayFlights();
+    } else {
+      // Si las ciudades no están cargadas, esperar a que se completen
+      console.log('⏳ Esperando a que se carguen las ciudades antes de mostrar vuelos...');
+      this.preloadAllAirportCities().then(() => {
+        this.displayFlights();
+      });
+    }
+  }
+
+  /**
+   * Método privado para mostrar los vuelos una vez que las ciudades están cargadas
+   */
+  private displayFlights(): void {
     // Actualizar adaptedFlightPacks para mantener sincronización
     this.adaptedFlightPacks = this.flightOffersRaw.map(flightPack => this.adaptFlightPackForFlightItem(flightPack));
     
-    // Recargar detalles de vuelos después de aplicar filtros
-    // this.loadFlightDetailsForAllFlights(); // Eliminado
-    
     this.transformedFlights = this.transformOffersToFlightFormat(this.flightOffersRaw);
     this.filteredFlightsChange.emit(this.transformedFlights);
+    
+    console.log('✅ Vuelos mostrados con nombres de ciudades cargados');
   }
 
   // Método para obtener detalles de un vuelo específico cuando sea necesario
@@ -504,9 +528,17 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     });
     
     this.sortFlights(this.selectedSortOption);
-    this.adaptedFlightPacks = this.flightOffersRaw.map(flightPack => this.adaptFlightPackForFlightItem(flightPack)); // Update adapted packs after filtering
-    this.transformedFlights = this.transformOffersToFlightFormat(this.flightOffersRaw);
-    this.filteredFlightsChange.emit(this.transformedFlights);
+    
+    // Solo mostrar vuelos si las ciudades están cargadas
+    if (!this.hasPendingCities()) {
+      this.displayFlights();
+    } else {
+      // Si las ciudades no están cargadas, esperar a que se completen
+      console.log('⏳ Esperando a que se carguen las ciudades antes de mostrar vuelos filtrados...');
+      this.preloadAllAirportCities().then(() => {
+        this.displayFlights();
+      });
+    }
   }
 
   sortFlights(sortOption: string) {
@@ -540,8 +572,17 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     this.selectedSortOption = event.value;
     if (this.flightOffersRaw.length > 0) {
       this.sortFlights(this.selectedSortOption);
-      this.transformedFlights = this.transformOffersToFlightFormat(this.flightOffersRaw);
-      this.filteredFlightsChange.emit(this.transformedFlights);
+      
+      // Solo mostrar vuelos si las ciudades están cargadas
+      if (!this.hasPendingCities()) {
+        this.displayFlights();
+      } else {
+        // Si las ciudades no están cargadas, esperar a que se completen
+        console.log('⏳ Esperando a que se carguen las ciudades antes de mostrar vuelos ordenados...');
+        this.preloadAllAirportCities().then(() => {
+          this.displayFlights();
+        });
+      }
     }
   }
 
@@ -690,6 +731,52 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
+   * Obtiene el nombre de la ciudad desde el cache
+   * @param airportIATA Código IATA del aeropuerto
+   * @returns Nombre de la ciudad o string vacío si no está en cache
+   */
+  private getCityNameFromCache(airportIATA: string | null | undefined): string {
+    if (!airportIATA) return '';
+
+    const cacheKey = `airport_${airportIATA}`;
+    return this.airportCityCache.get(cacheKey) || '';
+  }
+
+  /**
+   * Verifica si hay ciudades pendientes de cargar
+   * @returns true si hay ciudades pendientes, false si todas están cargadas
+   */
+  public hasPendingCities(): boolean {
+    if (!this.flightOffersRaw || this.flightOffersRaw.length === 0) {
+      return false;
+    }
+
+    const allAirportCodes = new Set<string>();
+    
+    this.flightOffersRaw.forEach(flightPack => {
+      if (flightPack.flights) {
+        flightPack.flights.forEach(flight => {
+          if (flight.departureIATACode) {
+            allAirportCodes.add(flight.departureIATACode);
+          }
+          if (flight.arrivalIATACode) {
+            allAirportCodes.add(flight.arrivalIATACode);
+          }
+        });
+      }
+    });
+
+    // Verificar si todas las ciudades están en cache
+    for (const airportCode of allAirportCodes) {
+      if (!this.airportCityCache.has(`airport_${airportCode}`)) {
+        return true; // Hay ciudades pendientes
+      }
+    }
+
+    return false; // Todas las ciudades están cargadas
+  }
+
+  /**
    * Carga de forma asíncrona el nombre de la ciudad para un aeropuerto
    * @param airportIATA Código IATA del aeropuerto
    * @param cacheKey Clave para el cache
@@ -743,6 +830,67 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
+   * Versión asíncrona del método loadCityNameForAirport que retorna una promesa
+   * @param airportIATA Código IATA del aeropuerto
+   * @param cacheKey Clave para el cache
+   * @returns Promise que se resuelve cuando se completa la carga
+   */
+  private loadCityNameForAirportAsync(airportIATA: string, cacheKey: string): Promise<void> {
+    return new Promise((resolve) => {
+      this.locationAirportNetService.getAirports({ iata: airportIATA })
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (airports) => {
+            if (airports && airports.length > 0) {
+              const airport = airports[0];
+              if (airport.locationId) {
+                // Obtener el nombre de la ciudad
+                this.locationNetService.getLocationById(airport.locationId)
+                  .pipe(takeUntil(this.destroy$))
+                  .subscribe({
+                    next: (city) => {
+                      if (city && city.name) {
+                        const cityName = city.name;
+                        this.airportCityCache.set(cacheKey, cityName);
+                        console.log(`✅ Ciudad encontrada para aeropuerto ${airportIATA}: ${cityName}`);
+                        
+                        // Actualizar los vuelos que usan este aeropuerto
+                        this.updateFlightsWithCityName(airportIATA, cityName);
+                      }
+                      resolve();
+                    },
+                    error: (error) => {
+                      console.warn(`⚠️ Error al obtener ciudad para aeropuerto ${airportIATA}:`, error);
+                      // En caso de error, guardar el código IATA como fallback
+                      this.airportCityCache.set(cacheKey, airportIATA);
+                      resolve();
+                    }
+                  });
+              } else {
+                // Si no hay locationId, usar el nombre del aeropuerto o el código IATA
+                const airportName = airport.name || airportIATA;
+                this.airportCityCache.set(cacheKey, airportName);
+                console.log(`ℹ️ Aeropuerto ${airportIATA} sin ciudad asociada, usando: ${airportName}`);
+                resolve();
+              }
+            } else {
+              // Si no se encuentra el aeropuerto, usar el código IATA como fallback
+              this.airportCityCache.set(cacheKey, airportIATA);
+              console.warn(`⚠️ Aeropuerto ${airportIATA} no encontrado, usando código IATA como fallback`);
+              resolve();
+            }
+          },
+          error: (error) => {
+            console.warn(`⚠️ Error al obtener aeropuerto ${airportIATA}:`, error);
+            // En caso de error, usar el código IATA como fallback
+            this.airportCityCache.set(cacheKey, airportIATA);
+            resolve();
+          }
+        });
+    });
+  }
+
+  /**
    * Actualiza los vuelos que usan un aeropuerto específico con el nombre de la ciudad
    * @param airportIATA Código IATA del aeropuerto
    * @param cityName Nombre de la ciudad
@@ -769,33 +917,58 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Precarga los nombres de ciudades para todos los aeropuertos utilizados en los vuelos
+   * @returns Promise que se resuelve cuando todas las ciudades están cargadas
    */
-  private preloadAllAirportCities(): void {
-    if (!this.flightOffersRaw || this.flightOffersRaw.length === 0) return;
-
-    // Obtener todos los códigos IATA únicos de aeropuertos
-    const allAirportCodes = new Set<string>();
-    
-    this.flightOffersRaw.forEach(flightPack => {
-      if (flightPack.flights) {
-        flightPack.flights.forEach(flight => {
-          if (flight.departureIATACode) {
-            allAirportCodes.add(flight.departureIATACode);
-          }
-          if (flight.arrivalIATACode) {
-            allAirportCodes.add(flight.arrivalIATACode);
-          }
-        });
+  private preloadAllAirportCities(): Promise<void> {
+    return new Promise((resolve) => {
+      if (!this.flightOffersRaw || this.flightOffersRaw.length === 0) {
+        resolve();
+        return;
       }
-    });
 
-    console.log(`🔄 Precargando ciudades para ${allAirportCodes.size} aeropuertos únicos`);
+      // Obtener todos los códigos IATA únicos de aeropuertos
+      const allAirportCodes = new Set<string>();
+      
+      this.flightOffersRaw.forEach(flightPack => {
+        if (flightPack.flights) {
+          flightPack.flights.forEach(flight => {
+            if (flight.departureIATACode) {
+              allAirportCodes.add(flight.departureIATACode);
+            }
+            if (flight.arrivalIATACode) {
+              allAirportCodes.add(flight.arrivalIATACode);
+            }
+          });
+        }
+      });
 
-    // Precargar cada aeropuerto
-    allAirportCodes.forEach(airportCode => {
-      if (!this.airportCityCache.has(`airport_${airportCode}`)) {
-        this.loadCityNameForAirport(airportCode, `airport_${airportCode}`);
+      console.log(`🔄 Precargando ciudades para ${allAirportCodes.size} aeropuertos únicos`);
+
+      if (allAirportCodes.size === 0) {
+        resolve();
+        return;
       }
+
+      // Crear promesas para cada aeropuerto
+      const airportPromises: Promise<void>[] = [];
+      
+      allAirportCodes.forEach(airportCode => {
+        if (!this.airportCityCache.has(`airport_${airportCode}`)) {
+          const airportPromise = this.loadCityNameForAirportAsync(airportCode, `airport_${airportCode}`);
+          airportPromises.push(airportPromise);
+        }
+      });
+
+      // Esperar a que todas las promesas se completen
+      Promise.all(airportPromises).then(() => {
+        console.log('✅ Todas las ciudades de aeropuertos han sido cargadas');
+        this.allCitiesLoaded = true;
+        resolve();
+      }).catch((error) => {
+        console.warn('⚠️ Algunas ciudades no se pudieron cargar:', error);
+        this.allCitiesLoaded = true;
+        resolve();
+      });
     });
   }
 
@@ -1106,8 +1279,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         departureTime: flight.departureTime || '',
         arrivalDate: flight.arrivalDate || '',
         arrivalTime: flight.arrivalTime || '',
-        departureCity: this.getCityNameFromAirport(flight.departureIATACode) || flight.departureCity || '',
-        arrivalCity: this.getCityNameFromAirport(flight.arrivalIATACode) || flight.arrivalCity || ''
+        departureCity: this.getCityNameFromCache(flight.departureIATACode) || flight.departureCity || '',
+        arrivalCity: this.getCityNameFromCache(flight.arrivalIATACode) || flight.arrivalCity || ''
       })) || []
     };
 

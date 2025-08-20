@@ -377,6 +377,31 @@ $border: #ddd;
   }
 }
 
+.loading-cities {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 0;
+  margin: 20px 0;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  
+  .msg {
+    margin-top: 15px;
+    color: $primary;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+  
+  .p-progressspinner {
+    .p-progressspinner-circle {
+      stroke: $primary;
+    }
+  }
+}
+
 .no-results .msg {
   display: flex;
   flex-direction: column;

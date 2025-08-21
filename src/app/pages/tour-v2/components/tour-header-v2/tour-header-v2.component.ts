@@ -118,6 +118,7 @@ export class TourHeaderV2Component
     packCount: 0,
   };
   @Input() preview: boolean = false;
+  @Input() selectedActivityPackId: number | null = null;
   // Tour data
   tour: Partial<Tour> = {};
 
@@ -158,6 +159,13 @@ export class TourHeaderV2Component
   ngOnChanges(changes: SimpleChanges) {
     if (changes['tourId'] && changes['tourId'].currentValue) {
       this.loadTourData(changes['tourId'].currentValue);
+    }
+    if (changes['selectedActivityPackId']) {
+      console.log('🎯 ===== ACTIVITY PACK ID RECIBIDO EN TOUR HEADER =====');
+      console.log(
+        '📦 NUEVO ID:',
+        changes['selectedActivityPackId'].currentValue
+      );
     }
   }
 
@@ -516,14 +524,78 @@ export class TourHeaderV2Component
     ) {
       return {
         isValid: false,
-        error: `Tipo de actividad inválido: ${activity.type}`,
+        error: `Tipo de actividad inválido: ${activity.type}. Debe ser 'act' o 'pack'`,
+      };
+    }
+
+    // ✅ VALIDACIÓN ADICIONAL: Verificar que el título no esté vacío
+    if (!activity.title || activity.title.trim() === '') {
+      return {
+        isValid: false,
+        error: `Título de actividad vacío para ID: ${activity.id}`,
       };
     }
 
     return { isValid: true };
   }
 
-  // ✅ MÉTODO: Crear actividad individual (sin cambios)
+  // ✅ MÉTODO NUEVO: Verificar si ya existe la actividad/paquete para un viajero
+  private checkExistingActivity(
+    travelerId: number,
+    activity: ActivityHighlight
+  ): Observable<boolean> {
+    if (activity.type === 'act') {
+      // Verificar si ya existe la actividad individual
+      return this.reservationTravelerActivityService
+        .getByReservationTraveler(travelerId)
+        .pipe(
+          map((existingActivities) => {
+            const exists = existingActivities.some(
+              (existing) => existing.activityId === parseInt(activity.id)
+            );
+            if (exists) {
+              console.log('⚠️ Booking - Actividad ya existe para el viajero:', {
+                travelerId,
+                activityId: activity.id,
+                activityTitle: activity.title,
+              });
+            }
+            return exists;
+          }),
+          catchError((error) => {
+            console.error('❌ Error verificando actividad existente:', error);
+            return of(false); // En caso de error, permitir crear
+          })
+        );
+    } else if (activity.type === 'pack') {
+      // Verificar si ya existe el paquete
+      return this.reservationTravelerActivityPackService
+        .getByReservationTraveler(travelerId)
+        .pipe(
+          map((existingPacks) => {
+            const exists = existingPacks.some(
+              (existing) => existing.activityPackId === parseInt(activity.id)
+            );
+            if (exists) {
+              console.log('⚠️ Booking - Paquete ya existe para el viajero:', {
+                travelerId,
+                activityPackId: activity.id,
+                activityTitle: activity.title,
+              });
+            }
+            return exists;
+          }),
+          catchError((error) => {
+            console.error('❌ Error verificando paquete existente:', error);
+            return of(false); // En caso de error, permitir crear
+          })
+        );
+    }
+
+    return of(false);
+  }
+
+  // ✅ MÉTODO MODIFICADO: Crear actividad individual con verificación de duplicados
   private createTravelerActivity(
     travelerId: number,
     activity: ActivityHighlight
@@ -543,39 +615,84 @@ export class TourHeaderV2Component
       });
     }
 
-    const travelerActivityData: ReservationTravelerActivityCreate = {
-      id: 0,
-      reservationTravelerId: travelerId,
-      activityId: parseInt(activity.id),
-    };
+    // ✅ VALIDACIÓN ADICIONAL: Verificar que no sea un paquete
+    if (activity.type !== 'act') {
+      console.error(
+        '❌ Booking - Error de tipo: Se intentó crear actividad individual con tipo incorrecto:',
+        activity.type,
+        activity
+      );
+      return of({
+        success: false,
+        activity: activity,
+        error: `Tipo incorrecto para actividad individual: ${activity.type}`,
+      });
+    }
 
-    return this.reservationTravelerActivityService
-      .create(travelerActivityData)
-      .pipe(
-        map((result) => {
-          return {
-            success: true,
-            activity: activity,
-            result: result,
-          };
-        }),
-        catchError((error) => {
-          console.error('❌ Booking - Error creando actividad individual:', {
+    // ✅ VERIFICAR DUPLICADOS antes de crear
+    return this.checkExistingActivity(travelerId, activity).pipe(
+      switchMap((exists) => {
+        if (exists) {
+          console.log('⚠️ Booking - Omitiendo actividad duplicada:', {
+            travelerId,
             activityId: activity.id,
             activityTitle: activity.title,
-            error: error,
           });
-
           return of({
-            success: false,
+            success: true,
             activity: activity,
-            error: error,
+            result: { message: 'Actividad ya existía' },
           });
-        })
-      );
+        }
+
+        const travelerActivityData: ReservationTravelerActivityCreate = {
+          id: 0,
+          reservationTravelerId: travelerId,
+          activityId: parseInt(activity.id),
+        };
+
+        return this.reservationTravelerActivityService
+          .create(travelerActivityData)
+          .pipe(
+            map((result) => {
+              console.log(
+                '✅ Booking - Actividad individual creada exitosamente:',
+                {
+                  travelerId,
+                  activityId: activity.id,
+                  activityTitle: activity.title,
+                  result,
+                }
+              );
+              return {
+                success: true,
+                activity: activity,
+                result: result,
+              };
+            }),
+            catchError((error) => {
+              console.error(
+                '❌ Booking - Error creando actividad individual:',
+                {
+                  travelerId,
+                  activityId: activity.id,
+                  activityTitle: activity.title,
+                  error: error,
+                }
+              );
+
+              return of({
+                success: false,
+                activity: activity,
+                error: error,
+              });
+            })
+          );
+      })
+    );
   }
 
-  // ✅ MÉTODO NUEVO: Crear paquete de actividades
+  // ✅ MÉTODO MODIFICADO: Crear paquete de actividades con verificación de duplicados
   private createTravelerActivityPack(
     travelerId: number,
     activity: ActivityHighlight
@@ -595,36 +712,82 @@ export class TourHeaderV2Component
       });
     }
 
-    const travelerActivityPackData: ReservationTravelerActivityPackCreate = {
-      id: 0,
-      reservationTravelerId: travelerId,
-      activityPackId: parseInt(activity.id), // ✅ activityPackId para paquetes
-    };
+    // ✅ VALIDACIÓN ADICIONAL: Verificar que sea un paquete
+    if (activity.type !== 'pack') {
+      console.error(
+        '❌ Booking - Error de tipo: Se intentó crear paquete con tipo incorrecto:',
+        activity.type,
+        activity
+      );
+      return of({
+        success: false,
+        activity: activity,
+        error: `Tipo incorrecto para paquete: ${activity.type}`,
+      });
+    }
 
-    return this.reservationTravelerActivityPackService
-      .create(travelerActivityPackData)
-      .pipe(
-        map((result) => {
-          return {
-            success: true,
-            activity: activity,
-            result: result,
-          };
-        }),
-        catchError((error) => {
-          console.error('❌ Booking - Error creando paquete de actividades:', {
+    // ✅ VERIFICAR DUPLICADOS antes de crear
+    return this.checkExistingActivity(travelerId, activity).pipe(
+      switchMap((exists) => {
+        if (exists) {
+          console.log('⚠️ Booking - Omitiendo paquete duplicado:', {
+            travelerId,
             activityPackId: activity.id,
             activityTitle: activity.title,
-            error: error,
           });
-
           return of({
-            success: false,
+            success: true,
             activity: activity,
-            error: error,
+            result: { message: 'Paquete ya existía' },
           });
-        })
-      );
+        }
+
+        const travelerActivityPackData: ReservationTravelerActivityPackCreate =
+          {
+            id: 0,
+            reservationTravelerId: travelerId,
+            activityPackId: parseInt(activity.id), // ✅ activityPackId para paquetes
+          };
+
+        return this.reservationTravelerActivityPackService
+          .create(travelerActivityPackData)
+          .pipe(
+            map((result) => {
+              console.log(
+                '✅ Booking - Paquete de actividades creado exitosamente:',
+                {
+                  travelerId,
+                  activityPackId: activity.id,
+                  activityTitle: activity.title,
+                  result,
+                }
+              );
+              return {
+                success: true,
+                activity: activity,
+                result: result,
+              };
+            }),
+            catchError((error) => {
+              console.error(
+                '❌ Booking - Error creando paquete de actividades:',
+                {
+                  travelerId,
+                  activityPackId: activity.id,
+                  activityTitle: activity.title,
+                  error: error,
+                }
+              );
+
+              return of({
+                success: false,
+                activity: activity,
+                error: error,
+              });
+            })
+          );
+      })
+    );
   }
 
   // ✅ MÉTODO MODIFICADO: Procesar actividades usando servicios apropiados según tipo
@@ -634,16 +797,55 @@ export class TourHeaderV2Component
     details: ActivityCreationResult[];
   }> {
     const addedActivities = this.addedActivities;
+    const departureActivityPackId = this.selectedActivityPackId;
 
-    if (addedActivities.length === 0) {
+    // ✅ COMBINAR actividades manuales + paquete automático del departure
+    const allActivitiesToProcess: Array<{
+      activity: ActivityHighlight;
+      isFromDeparture: boolean;
+    }> = [];
+
+    // 1. Agregar actividades seleccionadas manualmente
+    addedActivities.forEach((activity) => {
+      allActivitiesToProcess.push({ activity, isFromDeparture: false });
+    });
+
+    // 2. Agregar paquete automático del departure si existe
+    if (departureActivityPackId && departureActivityPackId > 0) {
+      const departurePack: ActivityHighlight = {
+        id: departureActivityPackId.toString(),
+        title: 'Paquete de actividades del departure',
+        description: 'Paquete automático incluido en el departure',
+        image: '',
+        recommended: false,
+        optional: false,
+        added: true,
+        price: 0, // Precio incluido en el departure
+        imageAlt: 'Paquete del departure',
+        type: 'pack',
+      };
+
+      allActivitiesToProcess.push({
+        activity: departurePack,
+        isFromDeparture: true,
+      });
+
+      console.log('🎯 Agregando paquete automático del departure:', {
+        activityPackId: departureActivityPackId,
+        isFromDeparture: true,
+      });
+    }
+
+    if (allActivitiesToProcess.length === 0) {
       return of({ successful: 0, failed: 0, details: [] });
     }
 
+    // ✅ OPTIMIZACIÓN: Crear un solo registro por actividad/paquete por viajero
     const activityObservables: Observable<ActivityCreationResult>[] = [];
 
-    // Crear observables para cada combinación traveler-actividad
-    travelers.forEach((traveler: any) => {
-      addedActivities.forEach((activity: ActivityHighlight) => {
+    // Para cada actividad/paquete (manual + automático), crear un registro por cada viajero
+    allActivitiesToProcess.forEach(({ activity, isFromDeparture }) => {
+      travelers.forEach((traveler: any) => {
         // ✅ USAR SERVICIO APROPIADO SEGÚN TIPO
         if (activity.type === 'act') {
           activityObservables.push(
@@ -666,6 +868,25 @@ export class TourHeaderV2Component
         const successful = results.filter((r) => r.success).length;
         const failed = results.filter((r) => !r.success).length;
 
+        // ✅ LOGGING MEJORADO para debugging
+        console.log('🎯 Resultados de creación de actividades/paquetes:', {
+          total: results.length,
+          successful,
+          failed,
+          departurePackId: departureActivityPackId,
+          manualActivities: addedActivities.length,
+          details: results.map((r) => ({
+            type: r.activity.type,
+            id: r.activity.id,
+            title: r.activity.title,
+            success: r.success,
+            error: r.error,
+            isFromDeparture: allActivitiesToProcess.find(
+              (p) => p.activity.id === r.activity.id
+            )?.isFromDeparture,
+          })),
+        });
+
         return { successful, failed, details: results };
       }),
       catchError((error) => {
@@ -684,6 +905,38 @@ export class TourHeaderV2Component
     if (!this.tourId) {
       alert('Error: No se pudo identificar el tour.');
       return;
+    }
+
+    // ✅ MOSTRAR RESUMEN DE ACTIVIDADES ANTES DE RESERVAR
+    if (
+      this.hasAddedActivities ||
+      (this.selectedActivityPackId && this.selectedActivityPackId > 0)
+    ) {
+      const activitySummary = this.getActivitySummary();
+      console.log(
+        '🎯 Resumen de actividades antes de reservar:',
+        activitySummary
+      );
+
+      // ✅ LOG ADICIONAL para mostrar qué se va a procesar
+      console.log('📋 Detalle de elementos a procesar:', {
+        manualActivities: this.addedActivities.map((a) => ({
+          id: a.id,
+          title: a.title,
+          type: a.type,
+          price: a.price,
+        })),
+        departurePack: this.selectedActivityPackId
+          ? {
+              id: this.selectedActivityPackId,
+              title: 'Paquete automático del departure',
+              type: 'pack',
+              price: 0,
+            }
+          : null,
+        totalElements:
+          activitySummary.totalActivities + activitySummary.totalPacks,
+      });
     }
 
     this.isCreatingReservation = true;
@@ -717,6 +970,45 @@ export class TourHeaderV2Component
         this.createReservation(null); // Usar null en caso de error
       },
     });
+  }
+
+  // ✅ MÉTODO NUEVO: Obtener resumen de actividades seleccionadas
+  private getActivitySummary(): {
+    totalActivities: number;
+    totalPacks: number;
+    activities: string[];
+    packs: string[];
+    totalPrice: number;
+    departurePackIncluded: boolean;
+  } {
+    const activities = this.addedActivities.filter((a) => a.type === 'act');
+    const manualPacks = this.addedActivities.filter((a) => a.type === 'pack');
+
+    // ✅ INCLUIR paquete automático del departure
+    const hasDeparturePack = Boolean(
+      this.selectedActivityPackId && this.selectedActivityPackId > 0
+    );
+    const totalPacks = manualPacks.length + (hasDeparturePack ? 1 : 0);
+
+    const activitiesList = activities.map((a) => `${a.title} (€${a.price})`);
+    const packsList = [
+      ...manualPacks.map((a) => `${a.title} (€${a.price})`),
+      ...(hasDeparturePack ? [`Paquete del departure (incluido)`] : []),
+    ];
+
+    const totalPrice = this.addedActivities.reduce(
+      (sum, a) => sum + (a.price || 0),
+      0
+    );
+
+    return {
+      totalActivities: activities.length,
+      totalPacks: totalPacks,
+      activities: activitiesList,
+      packs: packsList,
+      totalPrice,
+      departurePackIncluded: hasDeparturePack,
+    };
   }
 
   private createReservation(userId: number | null): void {
@@ -852,15 +1144,13 @@ export class TourHeaderV2Component
         )
         .subscribe({
           next: ({ reservation, travelers, activityResults }) => {
-            // ✅ MOSTRAR mensaje según los resultados
-            if (activityResults.failed > 0) {
-              const message =
-                `Reservación creada exitosamente.\n\n` +
-                `✅ ${activityResults.successful} actividad(es)/paquete(s) asignados correctamente\n` +
-                `❌ ${activityResults.failed} no pudieron ser asignados\n\n` +
-                `Puedes agregarlos manualmente desde el checkout.`;
-              alert(message);
-            }
+            // ✅ NAVEGAR DIRECTAMENTE AL CHECKOUT sin mostrar alerts
+            console.log('✅ Reservación creada exitosamente:', {
+              reservationId: reservation.id,
+              travelersCount: travelers.length,
+              activitiesSuccessful: activityResults.successful,
+              activitiesFailed: activityResults.failed,
+            });
 
             this.router.navigate(['/checkout-v2', reservation.id]);
           },

@@ -24,7 +24,8 @@
         [passengersData]="passengersData"
         [ageGroupCategories]="ageGroupCategories"
         [activityTypesAnalysis]="activityTypesAnalysis"
-        [preview]="preview">
+        [preview]="preview"
+        [selectedActivityPackId]="selectedActivityPackId">
       >
       </app-tour-header-v2>
     </section>
@@ -59,7 +60,8 @@
         (departureUpdate)="onDepartureUpdate($event)"
         (passengersUpdate)="onPassengersUpdate($event)"
         (ageGroupsUpdate)="onAgeGroupsUpdate($event)"
-        [preview]="preview">
+        [preview]="preview"
+        (activityPackIdUpdate)="onActivityPackIdUpdate($event)">
       </app-tour-departures-v2>
     </section>
     

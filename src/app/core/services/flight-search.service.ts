@@ -87,7 +87,16 @@ export interface IFlightPackDTO {
   flights?: IFlightResponse[] | null;
 }
 
-export type FlightSearchResponse = IFlightPackDTO[];
+// Nueva interfaz para la respuesta del endpoint de búsqueda
+export interface IFlightSearchResultDTO {
+  flightPacks?: IFlightPackDTO[] | null;
+  warningsJson?: string | null;
+  metaJson?: string | null;
+  hasWarnings?: boolean;
+  isEmptyResult?: boolean;
+}
+
+export type FlightSearchResponse = IFlightSearchResultDTO;
 
 // Interfaces para respuestas de operaciones PUT
 export interface FlightSelectionResponse {
@@ -124,7 +133,7 @@ export class FlightSearchService {
    * @param autoSearch Booleano para controlar si se deben hacer llamadas automáticas
    *                    - true (default): Comportamiento estándar
    *                    - false: Evita llamadas automáticas que puedan causar bucles
-   * @returns Observable con la respuesta de la API (array de IFlightPackDTO)
+   * @returns Observable con la respuesta de la API (IFlightSearchResultDTO)
    */
   searchFlights(request: FlightSearchRequest, autoSearch: boolean = true): Observable<FlightSearchResponse> {
     return this.http.post<FlightSearchResponse>(

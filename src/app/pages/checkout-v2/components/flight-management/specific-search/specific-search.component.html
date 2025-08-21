@@ -230,6 +230,19 @@
   </p-panel>
 </div>
 
+<!-- Warnings de búsqueda -->
+<div *ngIf="hasSearchWarnings && searchWarnings.length > 0" class="warning-message-panel">
+  <p-panel styleClass="warning-panel">
+    <div class="msg">
+      <i class="pi pi-exclamation-triangle"></i>
+      <h3>Advertencias en la búsqueda</h3>
+      <ul class="warning-list">
+        <li *ngFor="let warning of searchWarnings">{{ warning }}</li>
+      </ul>
+    </div>
+  </p-panel>
+</div>
+
 <!-- Estado de carga -->
 <div class="loading" *ngIf="isLoading">
   <p-progressSpinner></p-progressSpinner>

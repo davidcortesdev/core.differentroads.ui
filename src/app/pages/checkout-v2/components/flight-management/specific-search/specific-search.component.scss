@@ -601,6 +601,59 @@ $border: #ddd;
   }
 }
 
+.error-message-panel {
+  margin-bottom: 1rem;
+  
+  .msg {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    
+    i {
+      color: #dc3545;
+      font-size: 1.2rem;
+    }
+    
+    h3 {
+      margin: 0;
+      color: #dc3545;
+      font-size: 1rem;
+    }
+  }
+}
+
+.warning-message-panel {
+  margin-bottom: 1rem;
+  
+  .msg {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    
+    i {
+      color: #ffc107;
+      font-size: 1.2rem;
+    }
+    
+    h3 {
+      margin: 0;
+      color: #856404;
+      font-size: 1rem;
+    }
+    
+    .warning-list {
+      margin: 0.5rem 0 0 0;
+      padding-left: 1.5rem;
+      color: #856404;
+      font-size: 0.9rem;
+      
+      li {
+        margin-bottom: 0.25rem;
+      }
+    }
+  }
+}
+
 // Estilos para el botón de vuelo seleccionado
 ::ng-deep {
   .selected-flight-button {

@@ -11,7 +11,7 @@ import { DepartureConsolidadorSearchLocationService, ConsolidadorSearchLocationW
 import { DepartureService, DepartureAirportTimesResponse } from '../../../../../core/services/departure/departure.service';
 import { LocationAirportNetService } from '../../../../../core/services/locations/locationAirportNet.service';
 import { LocationNetService } from '../../../../../core/services/locations/locationNet.service';
-import { FlightSearchService, FlightSearchRequest, IFlightPackDTO, IFlightDetailDTO } from '../../../../../core/services/flight-search.service';
+import { FlightSearchService, FlightSearchRequest, IFlightPackDTO, IFlightDetailDTO, IFlightSearchResultDTO } from '../../../../../core/services/flight-search.service';
 import { IFlightPackDTO as IFlightsNetFlightPackDTO } from '../../../services/flightsNet.service';
 import { ReservationTravelerService, IReservationTravelerResponse } from '../../../../../core/services/reservation/reservation-traveler.service';
 import { ReservationTravelerActivityPackService, IReservationTravelerActivityPackResponse } from '../../../../../core/services/reservation/reservation-traveler-activity-pack.service';
@@ -79,6 +79,12 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   selectedFlight: IFlightPackDTO | null = null;
   adaptedFlightPacks: IFlightsNetFlightPackDTO[] = []; // Variable para almacenar los objetos transformados
   errorMessage = '';
+
+  // Nuevas propiedades para manejar la respuesta del servicio actualizado
+  searchWarnings: string[] = [];
+  searchMeta: any = null;
+  hasSearchWarnings = false;
+  isEmptySearchResult = false;
 
   // Propiedades para la selección de vuelos
   travelers: IReservationTravelerResponse[] = [];
@@ -389,12 +395,46 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     
     // Pasar autoSearch=false para evitar llamadas automáticas que causen bucles
     this.flightSearchService.searchFlights(request, false).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (response: IFlightPackDTO[]) => {
+      next: (response: IFlightSearchResultDTO) => {
         this.isLoading = false;
-        this.flightOffersRaw = response;
+        
+        // Extraer los flightPacks de la nueva respuesta
+        this.flightOffersRaw = response.flightPacks || [];
+        
+        // Procesar warnings y meta información
+        this.hasSearchWarnings = response.hasWarnings || false;
+        this.isEmptySearchResult = response.isEmptyResult || false;
+        
+        // Procesar warnings JSON si existe
+        if (response.warningsJson) {
+          try {
+            this.searchWarnings = JSON.parse(response.warningsJson);
+          } catch (error) {
+            console.warn('Error al parsear warnings JSON:', error);
+            this.searchWarnings = [];
+          }
+        }
+        
+        // Procesar meta JSON si existe
+        if (response.metaJson) {
+          try {
+            this.searchMeta = JSON.parse(response.metaJson);
+          } catch (error) {
+            console.warn('Error al parsear meta JSON:', error);
+            this.searchMeta = null;
+          }
+        }
+        
+        // Log de información de la búsqueda
+        if (this.hasSearchWarnings) {
+          console.warn('⚠️ La búsqueda tiene warnings:', this.searchWarnings);
+        }
+        if (this.isEmptySearchResult) {
+          console.log('ℹ️ La búsqueda no retornó resultados');
+        }
         
         // Transformar los datos directamente aquí para evitar recreaciones constantes
-        this.adaptedFlightPacks = response.map(flightPack => this.adaptFlightPackForFlightItem(flightPack));
+        this.adaptedFlightPacks = this.flightOffersRaw.map(flightPack => this.adaptFlightPackForFlightItem(flightPack));
         
         // Precargar nombres de ciudades para todos los aeropuertos
         this.preloadAllAirportCities().then(() => {

@@ -29,16 +29,18 @@ import { DefaultFlightsComponent } from './default-flights/default-flights.compo
   styleUrls: ['./flight-management.component.scss'],
 })
 export class FlightManagementComponent implements OnInit, OnChanges {
-  @Input() departureId: number | null = null;
-  @Input() reservationId: number | null = null;
-  @Input() tourId: number | null = null;
-  @Input() selectedFlight: IFlightPackDTO | null = null; // Nuevo input
+  @Input() departureId: number = 0;
+  @Input() reservationId: number = 0;
+  @Input() tourId: number = 0;
+  @Input() selectedFlight: IFlightPackDTO | null = null;
+  @Input() departureActivityPackId: number | null = null; // ✅ NUEVO: ID del paquete del departure
   @Output() flightSelectionChange = new EventEmitter<{
     selectedFlight: IFlightPackDTO | null;
     totalPrice: number;
   }>();
 
-  @ViewChild(DefaultFlightsComponent) defaultFlightsComponent!: DefaultFlightsComponent;
+  @ViewChild(DefaultFlightsComponent)
+  defaultFlightsComponent!: DefaultFlightsComponent;
 
   isConsolidadorVuelosActive: boolean = false;
   loginDialogVisible: boolean = false;
@@ -56,10 +58,29 @@ export class FlightManagementComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    console.log('🔄 flight-management: ngOnChanges llamado con:', changes);
+
+    // ✅ NUEVO: Manejar cambio en departureActivityPackId
     if (
-      (changes['tourId'] && changes['tourId'].currentValue) ||
-      (changes['departureId'] && changes['departureId'].currentValue)
+      changes['departureActivityPackId'] &&
+      changes['departureActivityPackId'].currentValue !==
+        changes['departureActivityPackId'].previousValue
     ) {
+      console.log(
+        '🔄 departureActivityPackId cambió en flight-management:',
+        changes['departureActivityPackId'].currentValue
+      );
+    }
+
+    // Verificar si departureId o tourId han cambiado
+    if (
+      (changes['departureId'] &&
+        changes['departureId'].currentValue !==
+          changes['departureId'].previousValue) ||
+      (changes['tourId'] &&
+        changes['tourId'].currentValue !== changes['tourId'].previousValue)
+    ) {
+      console.log('🔄 departureId o tourId cambió, recargando datos...');
       this.loadTourAndDepartureData();
     }
   }
@@ -68,16 +89,33 @@ export class FlightManagementComponent implements OnInit, OnChanges {
     let tourConsolidadorActive: boolean | null = null;
     let departureConsolidadorActive: boolean | null = null;
 
-    console.log('🔄 Iniciando carga de datos - tourId:', this.tourId, 'departureId:', this.departureId);
+    console.log(
+      '🔄 Iniciando carga de datos - tourId:',
+      this.tourId,
+      'departureId:',
+      this.departureId
+    );
 
     // Función para verificar si ambas respuestas han llegado
     const checkBothResponses = () => {
-      console.log('📊 Verificando respuestas - tour:', tourConsolidadorActive, 'departure:', departureConsolidadorActive);
-      
-      if (tourConsolidadorActive !== null && departureConsolidadorActive !== null) {
+      console.log(
+        '📊 Verificando respuestas - tour:',
+        tourConsolidadorActive,
+        'departure:',
+        departureConsolidadorActive
+      );
+
+      if (
+        tourConsolidadorActive !== null &&
+        departureConsolidadorActive !== null
+      ) {
         // Condición AND: ambas deben ser true
-        this.isConsolidadorVuelosActive = tourConsolidadorActive && departureConsolidadorActive;
-        console.log('✅ Resultado final isConsolidadorVuelosActive:', this.isConsolidadorVuelosActive);
+        this.isConsolidadorVuelosActive =
+          tourConsolidadorActive && departureConsolidadorActive;
+        console.log(
+          '✅ Resultado final isConsolidadorVuelosActive:',
+          this.isConsolidadorVuelosActive
+        );
       } else {
         console.log('⏳ Esperando más respuestas...');
       }
@@ -89,7 +127,12 @@ export class FlightManagementComponent implements OnInit, OnChanges {
       this.tourNetService.getTourById(this.tourId).subscribe({
         next: (tour: Tour) => {
           tourConsolidadorActive = !!tour.isConsolidadorVuelosActive;
-          console.log('🎯 Tour cargado - isConsolidadorVuelosActive:', tour.isConsolidadorVuelosActive, '-> procesado:', tourConsolidadorActive);
+          console.log(
+            '🎯 Tour cargado - isConsolidadorVuelosActive:',
+            tour.isConsolidadorVuelosActive,
+            '-> procesado:',
+            tourConsolidadorActive
+          );
           checkBothResponses();
         },
         error: (error) => {
@@ -111,7 +154,12 @@ export class FlightManagementComponent implements OnInit, OnChanges {
       this.departureService.getById(this.departureId).subscribe({
         next: (departure: IDepartureResponse) => {
           departureConsolidadorActive = !!departure.isConsolidadorVuelosActive;
-          console.log('🎯 Departure cargado - isConsolidadorVuelosActive:', departure.isConsolidadorVuelosActive, '-> procesado:', departureConsolidadorActive);
+          console.log(
+            '🎯 Departure cargado - isConsolidadorVuelosActive:',
+            departure.isConsolidadorVuelosActive,
+            '-> procesado:',
+            departureConsolidadorActive
+          );
           checkBothResponses();
         },
         error: (error) => {
@@ -167,7 +215,23 @@ export class FlightManagementComponent implements OnInit, OnChanges {
     selectedFlight: IFlightPackDTO | null;
     totalPrice: number;
   }): void {
+    console.log(
+      '🔄 flight-management: onFlightSelectionChange llamado con:',
+      flightData
+    );
+    console.log('🕐 Timestamp:', new Date().toISOString());
+    console.log('📊 selectedFlight:', flightData.selectedFlight);
+    console.log('💰 totalPrice:', flightData.totalPrice);
+
+    // ✅ NUEVO: Log específico para "Sin Vuelos"
+    if (!flightData.selectedFlight) {
+      console.log(
+        '🚫 flight-management: CASO ESPECIAL - Sin Vuelos seleccionado'
+      );
+    }
+
     this.flightSelectionChange.emit(flightData);
+    console.log('✅ flight-management: Evento emitido al componente padre');
   }
 
   saveFlightAssignments(): void {

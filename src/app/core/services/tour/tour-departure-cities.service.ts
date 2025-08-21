@@ -6,16 +6,19 @@ import { environment } from '../../../../environments/environment';
 export interface TourDepartureCityCreate {
   name: string;
   activityId: number;
+  activityPackId: number;
 }
 
 export interface TourDepartureCityUpdate {
   name: string;
   activityId: number;
+  activityPackId: number;
 }
 
 export interface ITourDepartureCityResponse {
   name: string;
   activityId: number;
+  activityPackId: number;
 }
 
 /**
@@ -24,6 +27,7 @@ export interface ITourDepartureCityResponse {
 export interface TourDepartureCityFilters {
   name?: string;
   activityId?: number;
+  activityPackId?: number;
 }
 
 @Injectable({
@@ -40,7 +44,11 @@ export class TourDepartureCitiesService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de ciudades de departure del tour.
    */
-  getAll(tourId: number, filters?: TourDepartureCityFilters, tourVisibility?: boolean): Observable<ITourDepartureCityResponse[]> {
+  getAll(
+    tourId: number,
+    filters?: TourDepartureCityFilters,
+    tourVisibility?: boolean
+  ): Observable<ITourDepartureCityResponse[]> {
     let params = new HttpParams();
     if (tourVisibility !== undefined) {
       params = params.set('tourVisibility', tourVisibility.toString());
@@ -58,7 +66,10 @@ export class TourDepartureCitiesService {
       });
     }
 
-    return this.http.get<ITourDepartureCityResponse[]>(`${this.API_URL}/${tourId}/departure-cities`, { params });
+    return this.http.get<ITourDepartureCityResponse[]>(
+      `${this.API_URL}/${tourId}/departure-cities`,
+      { params }
+    );
   }
 
   /**
@@ -67,10 +78,17 @@ export class TourDepartureCitiesService {
    * @param data Datos para crear la ciudad de departure.
    * @returns La ciudad de departure creada.
    */
-  create(tourId: number, data: TourDepartureCityCreate): Observable<ITourDepartureCityResponse> {
-    return this.http.post<ITourDepartureCityResponse>(`${this.API_URL}/${tourId}/departure-cities`, data, {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-    });
+  create(
+    tourId: number,
+    data: TourDepartureCityCreate
+  ): Observable<ITourDepartureCityResponse> {
+    return this.http.post<ITourDepartureCityResponse>(
+      `${this.API_URL}/${tourId}/departure-cities`,
+      data,
+      {
+        headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+      }
+    );
   }
 
   /**
@@ -80,10 +98,20 @@ export class TourDepartureCitiesService {
    * @param data Datos actualizados.
    * @returns Resultado de la operación.
    */
-  update(tourId: number, cityName: string, data: TourDepartureCityUpdate): Observable<boolean> {
-    return this.http.put<boolean>(`${this.API_URL}/${tourId}/departure-cities/${encodeURIComponent(cityName)}`, data, {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-    });
+  update(
+    tourId: number,
+    cityName: string,
+    data: TourDepartureCityUpdate
+  ): Observable<boolean> {
+    return this.http.put<boolean>(
+      `${this.API_URL}/${tourId}/departure-cities/${encodeURIComponent(
+        cityName
+      )}`,
+      data,
+      {
+        headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+      }
+    );
   }
 
   /**
@@ -93,7 +121,11 @@ export class TourDepartureCitiesService {
    * @returns Resultado de la operación.
    */
   delete(tourId: number, cityName: string): Observable<boolean> {
-    return this.http.delete<boolean>(`${this.API_URL}/${tourId}/departure-cities/${encodeURIComponent(cityName)}`);
+    return this.http.delete<boolean>(
+      `${this.API_URL}/${tourId}/departure-cities/${encodeURIComponent(
+        cityName
+      )}`
+    );
   }
 
   /**
@@ -102,8 +134,15 @@ export class TourDepartureCitiesService {
    * @param cityName Nombre de la ciudad.
    * @returns La ciudad de departure encontrada.
    */
-  getByName(tourId: number, cityName: string): Observable<ITourDepartureCityResponse> {
-    return this.http.get<ITourDepartureCityResponse>(`${this.API_URL}/${tourId}/departure-cities/${encodeURIComponent(cityName)}`);
+  getByName(
+    tourId: number,
+    cityName: string
+  ): Observable<ITourDepartureCityResponse> {
+    return this.http.get<ITourDepartureCityResponse>(
+      `${this.API_URL}/${tourId}/departure-cities/${encodeURIComponent(
+        cityName
+      )}`
+    );
   }
 
   /**
@@ -112,9 +151,12 @@ export class TourDepartureCitiesService {
    * @param namePattern Patrón de búsqueda para el nombre.
    * @returns Lista de ciudades que coinciden con el patrón.
    */
-  searchByName(tourId: number, namePattern: string): Observable<ITourDepartureCityResponse[]> {
+  searchByName(
+    tourId: number,
+    namePattern: string
+  ): Observable<ITourDepartureCityResponse[]> {
     const filters: TourDepartureCityFilters = {
-      name: namePattern
+      name: namePattern,
     };
     return this.getAll(tourId, filters);
   }
@@ -125,9 +167,28 @@ export class TourDepartureCitiesService {
    * @param activityId ID de la actividad.
    * @returns Lista de ciudades asociadas a la actividad especificada.
    */
-  getByActivity(tourId: number, activityId: number): Observable<ITourDepartureCityResponse[]> {
+  getByActivity(
+    tourId: number,
+    activityId: number
+  ): Observable<ITourDepartureCityResponse[]> {
     const filters: TourDepartureCityFilters = {
-      activityId: activityId
+      activityId: activityId,
+    };
+    return this.getAll(tourId, filters);
+  }
+
+  /**
+   * Obtiene ciudades de departure de un tour filtradas por activity pack ID.
+   * @param tourId ID del tour.
+   * @param activityPackId ID del paquete de actividad.
+   * @returns Lista de ciudades asociadas al paquete de actividad especificado.
+   */
+  getByActivityPack(
+    tourId: number,
+    activityPackId: number
+  ): Observable<ITourDepartureCityResponse[]> {
+    const filters: TourDepartureCityFilters = {
+      activityPackId: activityPackId,
     };
     return this.getAll(tourId, filters);
   }
@@ -139,7 +200,7 @@ export class TourDepartureCitiesService {
    * @returns True si la ciudad existe, false si no.
    */
   exists(tourId: number, cityName: string): Observable<boolean> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.getByName(tourId, cityName).subscribe({
         next: (city) => {
           observer.next(true);
@@ -152,7 +213,7 @@ export class TourDepartureCitiesService {
           } else {
             observer.error(error);
           }
-        }
+        },
       });
     });
   }
@@ -163,13 +224,13 @@ export class TourDepartureCitiesService {
    * @returns Número total de ciudades de departure.
    */
   getCount(tourId: number): Observable<number> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       this.getAll(tourId).subscribe({
         next: (cities) => {
           observer.next(cities.length);
           observer.complete();
         },
-        error: (error) => observer.error(error)
+        error: (error) => observer.error(error),
       });
     });
   }
@@ -180,18 +241,25 @@ export class TourDepartureCitiesService {
    * @param cities Array de ciudades a crear.
    * @returns Array de ciudades creadas.
    */
-  createMultiple(tourId: number, cities: TourDepartureCityCreate[]): Observable<ITourDepartureCityResponse[]> {
-    const createPromises = cities.map(city => 
+  createMultiple(
+    tourId: number,
+    cities: TourDepartureCityCreate[]
+  ): Observable<ITourDepartureCityResponse[]> {
+    const createPromises = cities.map((city) =>
       this.create(tourId, city).toPromise()
     );
-    
-    return new Observable(observer => {
+
+    return new Observable((observer) => {
       Promise.all(createPromises)
-        .then(results => {
-          observer.next(results.filter(result => result !== undefined) as ITourDepartureCityResponse[]);
+        .then((results) => {
+          observer.next(
+            results.filter(
+              (result) => result !== undefined
+            ) as ITourDepartureCityResponse[]
+          );
           observer.complete();
         })
-        .catch(error => observer.error(error));
+        .catch((error) => observer.error(error));
     });
   }
 
@@ -202,17 +270,19 @@ export class TourDepartureCitiesService {
    * @returns Resultado de las operaciones de eliminación.
    */
   deleteMultiple(tourId: number, cityNames: string[]): Observable<boolean[]> {
-    const deletePromises = cityNames.map(cityName => 
+    const deletePromises = cityNames.map((cityName) =>
       this.delete(tourId, cityName).toPromise()
     );
-    
-    return new Observable(observer => {
+
+    return new Observable((observer) => {
       Promise.all(deletePromises)
-        .then(results => {
-          observer.next(results.filter(result => result !== undefined) as boolean[]);
+        .then((results) => {
+          observer.next(
+            results.filter((result) => result !== undefined) as boolean[]
+          );
           observer.complete();
         })
-        .catch(error => observer.error(error));
+        .catch((error) => observer.error(error));
     });
   }
 }

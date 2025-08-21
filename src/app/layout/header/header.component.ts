@@ -1,4 +1,10 @@
-import { Component, OnInit, OnDestroy, ElementRef, Renderer2 } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ElementRef,
+  Renderer2,
+} from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { LanguageService } from '../../core/services/language.service';
 import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
@@ -82,7 +88,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     // Limpiar el listener de resize
     window.removeEventListener('resize', this.checkScreenSize.bind(this));
-    
+
     // Clean up document click listener
     if (this.documentClickListener) {
       this.documentClickListener();
@@ -118,8 +124,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
   // Método para cerrar todos los menús móviles
   public closeAllMobileMenus(): void {
     // Find all mobile active menus and remove the active class
-    const mobileActiveMenus = document.querySelectorAll('.p-menubar-mobile-active');
-    mobileActiveMenus.forEach(menu => {
+    const mobileActiveMenus = document.querySelectorAll(
+      '.p-menubar-mobile-active'
+    );
+    mobileActiveMenus.forEach((menu) => {
       menu.classList.remove('p-menubar-mobile-active');
     });
   }
@@ -153,12 +161,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private initializeClickOutside(): void {
     // Only add listener in mobile view
     if (this.isMobileView) {
-      this.documentClickListener = this.renderer.listen('document', 'click', (event) => {
-        // Check if click is outside the header element
-        if (!this.elementRef.nativeElement.contains(event.target)) {
-          this.closeAllMobileMenus();
+      this.documentClickListener = this.renderer.listen(
+        'document',
+        'click',
+        (event) => {
+          // Check if click is outside the header element
+          if (!this.elementRef.nativeElement.contains(event.target)) {
+            this.closeAllMobileMenus();
+          }
         }
-      });
+      );
     } else if (this.documentClickListener) {
       // Remove listener if not in mobile view
       this.documentClickListener();
@@ -176,7 +188,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
         distinctUntilChanged() // Solo procesar cuando realmente cambie
       )
       .subscribe((isLoggedIn) => {
-        console.log('Estado de autenticación cambiado:', isLoggedIn);
         this.isLoggedIn = isLoggedIn;
 
         if (isLoggedIn) {
@@ -247,7 +258,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     // Set mobile view flag based on screen width (tablet breakpoint)
     const wasMobileView = this.isMobileView;
     this.isMobileView = window.innerWidth <= 992; // Same as $tablet-breakpoint
-    
+
     // If mobile view status changed, update click outside listener
     if (wasMobileView !== this.isMobileView) {
       this.initializeClickOutside();
@@ -270,11 +281,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
       routerLink: item['custom-link']
         ? this.createLink(item['custom-link'], item.subtype || '')
         : undefined,
-        command: () => {
-          if (item['custom-link']) {
-            this.navigateTo(item['custom-link'], item.subtype || '');
-          }
-        },
+      command: () => {
+        if (item['custom-link']) {
+          this.navigateTo(item['custom-link'], item.subtype || '');
+        }
+      },
       items: item['link-menu']
         ? this.mapLinkMenuToItems(item['link-menu'])
         : undefined,
@@ -289,9 +300,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   populateUserMenu(): void {
-    console.log('populateUserMenu() ejecutándose...');
     if (this.isLoadingUser) {
-      console.log('Ya está cargando, saliendo...');
       return;
     }
 
@@ -303,74 +312,63 @@ export class HeaderComponent implements OnInit, OnDestroy {
         debounceTime(300)
       )
       .subscribe((email) => {
-        console.log('Email obtenido:', email);
         this.isLoadingUser = true;
         this.chipLabel = 'Cargando...';
-        console.log('Estado inicial - isLoadingUser:', this.isLoadingUser, 'showUserInfo:', this.showUserInfo);
 
         // Combinar email y Cognito ID en un solo flujo
-        this.authService.getCognitoId().pipe(
-          takeUntil(this.destroy$),
-          switchMap((cognitoId: string) => {
-            console.log('Cognito ID obtenido:', cognitoId);
-            if (cognitoId) {
-              console.log('Buscando usuario por Cognito ID:', cognitoId);
-              return this.usersNetService.getUsersByCognitoId(cognitoId);
-            } else {
-              console.log('No hay Cognito ID, mostrando solo email');
-              // Si no hay Cognito ID, mostrar solo el email
-              this.chipLabel = `Hola, ${email}`;
-              this.setUserMenuItems();
+        this.authService
+          .getCognitoId()
+          .pipe(
+            takeUntil(this.destroy$),
+            switchMap((cognitoId: string) => {
+              if (cognitoId) {
+                return this.usersNetService.getUsersByCognitoId(cognitoId);
+              } else {
+                // Si no hay Cognito ID, mostrar solo el email
+                this.chipLabel = `Hola, ${email}`;
+                this.setUserMenuItems();
+                this.isLoadingUser = false;
+                this.showUserInfo = true;
+                return of([]);
+              }
+            }),
+            finalize(() => {
               this.isLoadingUser = false;
               this.showUserInfo = true;
-              return of([]);
-            }
-          }),
-          finalize(() => {
-            console.log('Finalizando carga de usuario');
-            this.isLoadingUser = false;
-            this.showUserInfo = true;
-          })
-        ).subscribe({
-          next: (users: any[]) => {
-            console.log('Usuarios encontrados:', users);
-            if (users && users.length > 0) {
-              const user = users[0];
-              const displayName = user?.name || email;
-              console.log('Usuario encontrado:', user);
-              console.log('Nombre a mostrar:', displayName);
-              
-              this.chipLabel = `Hola, ${displayName}`;
-              this.chipImage = ''; // El nuevo modelo no tiene profileImage
+            })
+          )
+          .subscribe({
+            next: (users: any[]) => {
+              if (users && users.length > 0) {
+                const user = users[0];
+                const displayName = user?.name || email;
+
+                this.chipLabel = `Hola, ${displayName}`;
+                this.chipImage = ''; // El nuevo modelo no tiene profileImage
+                this.setUserMenuItems();
+
+                // Asegurar que el estado se actualice correctamente
+                this.isLoadingUser = false;
+                this.showUserInfo = true;
+              } else {
+                // Si no se encuentra el usuario, mostrar solo el email
+                this.chipLabel = `Hola, ${email}`;
+                this.setUserMenuItems();
+
+                // Asegurar que el estado se actualice correctamente
+                this.isLoadingUser = false;
+                this.showUserInfo = true;
+              }
+            },
+            error: (error: any) => {
+              this.chipLabel = `Hola, ${email}`;
               this.setUserMenuItems();
-              
+
               // Asegurar que el estado se actualice correctamente
               this.isLoadingUser = false;
               this.showUserInfo = true;
-              console.log('Estado después de configurar usuario - isLoadingUser:', this.isLoadingUser, 'showUserInfo:', this.showUserInfo);
-            } else {
-              console.log('No se encontró usuario, mostrando solo email');
-              // Si no se encuentra el usuario, mostrar solo el email
-              this.chipLabel = `Hola, ${email}`;
-              this.setUserMenuItems();
-              
-              // Asegurar que el estado se actualice correctamente
-              this.isLoadingUser = false;
-              this.showUserInfo = true;
-              console.log('Estado después de configurar email - isLoadingUser:', this.isLoadingUser, 'showUserInfo:', this.showUserInfo);
-            }
-          },
-          error: (error: any) => {
-            console.error('Error obteniendo información del usuario:', error);
-            this.chipLabel = `Hola, ${email}`;
-            this.setUserMenuItems();
-            
-            // Asegurar que el estado se actualice correctamente
-            this.isLoadingUser = false;
-            this.showUserInfo = true;
-            console.log('Estado después de error - isLoadingUser:', this.isLoadingUser, 'showUserInfo:', this.showUserInfo);
-          }
-        });
+            },
+          });
       });
   }
 
@@ -392,16 +390,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
     ];
   }
 
-
-
   private navigateTo(slug: string, type: string): void {
     const route = this.createLink(slug, type);
     if (route) {
-      this.router.navigate([route]).then(() => {
-        console.log(`Navigated to ${route}`);
-      }).catch((error) => {
-        console.error('Navigation error:', error);
-      });
+      this.router
+        .navigate([route])
+        .then(() => {
+          // Navigation successful
+        })
+        .catch((error) => {
+          // Navigation error handling
+        });
     }
   }
 }

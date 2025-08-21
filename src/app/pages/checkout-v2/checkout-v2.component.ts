@@ -122,6 +122,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   flightPrice: number = 0;
   hasAvailableFlights: boolean = false; // Nueva propiedad para controlar la visibilidad del botón
   availableFlights: IFlightPackDTO[] = []; // Nueva propiedad para almacenar los vuelos disponibles
+  departureActivityPackId: number | null = null; // ✅ NUEVO: ID del paquete de actividad del departure
 
   // Steps configuration
   items: MenuItem[] = [];
@@ -194,6 +195,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       const reservationIdParam = params.get('reservationId');
       if (reservationIdParam) {
         this.reservationId = +reservationIdParam;
+
+        // ✅ NUEVO: Restaurar resumen desde localStorage antes de cargar datos
+        this.restoreSummaryFromLocalStorage();
 
         // Cargar datos de la reservación desde el backend
         this.loadReservationData(this.reservationId);
@@ -441,6 +445,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     if (this.jobMonitoringSubscription) {
       this.jobMonitoringSubscription.unsubscribe();
     }
+
+    // ✅ NUEVO: Limpiar el resumen del localStorage al destruir el componente
+    this.clearSummaryFromLocalStorage();
   }
 
   // Inicializar los pasos del checkout
@@ -682,6 +689,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         this.returnDate = departure.arrivalDate ?? '';
         this.departureData = departure; // Almacenar datos del departure
 
+        // ✅ NUEVO: Obtener el departureActivityPackId desde el departure
+        // Por ahora, vamos a usar un valor por defecto o buscar en la BD
+        this.loadDepartureActivityPackId(departureId);
+
         // Solo asignar si no se ha obtenido desde el tour (como respaldo)
         if (!this.itineraryId && departure.itineraryId) {
           this.itineraryId = departure.itineraryId;
@@ -691,6 +702,19 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         // Error al cargar los datos del departure - continuando sin fechas
       },
     });
+  }
+
+  // ✅ NUEVO: Método para cargar el departureActivityPackId
+  private loadDepartureActivityPackId(departureId: number): void {
+    // ✅ SIMPLIFICADO: No hacer nada especial, solo mantener el departureId como referencia
+    this.departureActivityPackId = departureId;
+
+    console.log(
+      '🔄 departureActivityPackId cargado:',
+      this.departureActivityPackId
+    );
+
+    // ✅ ELIMINADO: No forzar actualización del summary automáticamente
   }
 
   // Método para cargar precios del departure
@@ -749,31 +773,59 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }
     });
 
-    // Inicializar el resumen automáticamente después de cargar precios
-    this.initializeOrderSummary();
+    // ✅ MEJORADO: Verificar si hay un resumen persistido en localStorage
+    if (this.reservationId && this.summary.length === 0) {
+      console.log(
+        '🔄 Verificando si hay resumen persistido en localStorage...'
+      );
+      this.restoreSummaryFromLocalStorage();
+    }
 
-    // NUEVO: Forzar actualización adicional después de un delay para asegurar que los componentes estén listos
+    // ✅ MEJORADO: Solo inicializar el resumen si no hay uno persistido
+    if (this.summary.length === 0) {
+      console.log(
+        '🔄 No hay resumen persistido, inicializando resumen automáticamente...'
+      );
+      this.initializeOrderSummary();
+    } else {
+      console.log(
+        '✅ Resumen restaurado desde localStorage, no se necesita inicialización'
+      );
+      // ✅ NUEVO: Recalcular totales del resumen restaurado
+      this.calculateTotals();
+      this.updateReservationTotalAmount();
+    }
+
+    // ✅ NUEVO: Forzar actualización adicional después de un delay para asegurar que los componentes estén listos
     setTimeout(() => {
-      this.forceSummaryUpdate();
+      if (this.summary.length === 0) {
+        console.log(
+          '⚠️ Resumen aún vacío después del delay, forzando actualización...'
+        );
+        this.forceSummaryUpdate();
+      } else {
+        console.log(
+          '✅ Resumen ya tiene contenido, no se necesita actualización forzada'
+        );
+      }
     }, 500);
   }
 
   // Método para inicializar el resumen automáticamente
   private initializeOrderSummary(): void {
-    // Verificar inmediatamente
+    // ✅ SIMPLIFICADO: Solo verificar una vez cuando se cargan los precios
     this.checkAndInitializeSummary();
 
-    // También verificar después de un delay para asegurar que los componentes estén listos
-    setTimeout(() => {
-      this.checkAndInitializeSummary();
-    }, 1500);
-
-    // Y una verificación final después de más tiempo
+    // ✅ ELIMINADO: No llamar múltiples veces con delays que sobrescriben el summary
+    // Solo verificar una vez más después de un delay si el summary está vacío
     setTimeout(() => {
       if (this.summary.length === 0) {
+        console.log(
+          '🔄 Summary vacío después del delay, verificando nuevamente...'
+        );
         this.checkAndInitializeSummary();
       }
-    }, 3000);
+    }, 2000);
   }
 
   // Método para normalizar nombres de grupos de edad
@@ -876,7 +928,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     selectedFlight: IFlightPackDTO | null;
     totalPrice: number;
   }): void {
-    console.log('🔄 onFlightSelectionChange llamado con:', flightData);
+    console.log(
+      '🔄 checkout-v2: onFlightSelectionChange llamado con:',
+      flightData
+    );
     console.log('🕐 Timestamp:', new Date().toISOString());
     console.log('📊 selectedFlight anterior:', this.selectedFlight);
     console.log('💰 flightPrice anterior:', this.flightPrice);
@@ -887,6 +942,28 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     console.log('✅ Vuelo seleccionado actualizado:', this.selectedFlight);
     console.log('💰 Precio del vuelo actualizado:', this.flightPrice);
 
+    // ✅ MEJORADO: Verificar si es una opción "Sin Vuelos"
+    if (this.selectedFlight && this.isNoFlightOption(this.selectedFlight)) {
+      console.log('🚫 CASO ESPECIAL: "Sin Vuelos" seleccionado');
+      console.log('🚫 selectedFlight es una opción sin vuelos');
+      console.log('🚫 flightPrice es:', this.flightPrice);
+
+      // ✅ NUEVO: Forzar precio 0 para opciones "Sin Vuelos"
+      this.flightPrice = 0;
+      console.log('🚫 Precio forzado a 0 para "Sin Vuelos"');
+    }
+
+    // ✅ MEJORADO: Verificar si no hay vuelo seleccionado
+    if (!this.selectedFlight) {
+      console.log('🚫 CASO ESPECIAL: No hay vuelo seleccionado');
+      console.log('🚫 selectedFlight es null');
+      console.log('🚫 flightPrice es:', this.flightPrice);
+
+      // ✅ NUEVO: Forzar precio 0 cuando no hay vuelo
+      this.flightPrice = 0;
+      console.log('🚫 Precio forzado a 0 para estado sin vuelo');
+    }
+
     // Determinar si hay vuelos disponibles
     this.hasAvailableFlights = this.checkIfFlightsAvailable();
     console.log(
@@ -894,29 +971,44 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       this.hasAvailableFlights
     );
 
-    // Actualizar el resumen del pedido si tenemos datos de viajeros
-    if (
-      this.travelerSelector &&
-      Object.keys(this.pricesByAgeGroup).length > 0
-    ) {
-      console.log('📊 Actualizando resumen con datos de viajeros existentes');
-      this.updateOrderSummary(this.travelerSelector.travelersNumbers);
+    // ✅ MEJORADO: Actualizar el resumen siempre que tengamos datos de precios
+    if (Object.keys(this.pricesByAgeGroup).length > 0) {
+      let travelersToUse;
+
+      if (this.travelerSelector && this.travelerSelector.travelersNumbers) {
+        travelersToUse = this.travelerSelector.travelersNumbers;
+        console.log(
+          '📊 Actualizando resumen con datos de viajeros existentes:',
+          travelersToUse
+        );
+      } else {
+        travelersToUse = {
+          adults: Math.max(1, this.totalPassengers),
+          childs: 0,
+          babies: 0,
+        };
+        console.log(
+          '📊 Actualizando resumen con datos básicos de viajeros:',
+          travelersToUse
+        );
+      }
+
+      // ✅ NUEVO: Forzar actualización inmediata del summary
+      this.updateOrderSummary(travelersToUse);
+      console.log(
+        '✅ Resumen actualizado inmediatamente después del cambio de vuelo'
+      );
     } else {
-      console.log('📊 Actualizando resumen con datos básicos de viajeros');
-      const basicTravelers = {
-        adults: Math.max(1, this.totalPassengers),
-        childs: 0,
-        babies: 0,
-      };
-      this.updateOrderSummary(basicTravelers);
+      console.log(
+        '⚠️ No hay precios por grupo de edad disponibles, no se puede actualizar el resumen'
+      );
     }
 
-    // Forzar actualización del resumen incluso si no hay datos de viajeros
-    console.log('⏰ Programando actualización forzada del resumen...');
-    setTimeout(() => {
-      console.log('🔄 Ejecutando actualización forzada del resumen...');
-      this.forceSummaryUpdate();
-    }, 100);
+    // ✅ NUEVO: Limpiar resumen anterior del localStorage antes de persistir el nuevo
+    if (this.reservationId) {
+      localStorage.removeItem(`checkout_summary_${this.reservationId}`);
+      console.log('🗑️ Resumen anterior del localStorage eliminado');
+    }
   }
 
   /**
@@ -991,10 +1083,26 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   // OPTIMIZADO: Método para verificar si podemos inicializar el resumen
   private checkAndInitializeSummary(): void {
+    // ✅ NUEVO: No sobrescribir el summary si ya tiene contenido
+    if (this.summary.length > 0) {
+      console.log(
+        '🔄 Summary ya tiene contenido, no sobrescribiendo:',
+        this.summary.length,
+        'elementos'
+      );
+      return;
+    }
+
     // Verificar si tenemos todo lo necesario para inicializar
     const hasPrices = Object.keys(this.pricesByAgeGroup).length > 0;
     const hasTravelers =
       this.travelerSelector && this.travelerSelector.travelersNumbers;
+
+    console.log('🔄 checkAndInitializeSummary - Estado:', {
+      hasPrices,
+      hasTravelers: !!hasTravelers,
+      summaryLength: this.summary.length,
+    });
 
     if (hasPrices && hasTravelers) {
       this.updateOrderSummary(this.travelerSelector.travelersNumbers);
@@ -1011,12 +1119,24 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   // NUEVO: Método para forzar la actualización del summary cuando se cargan datos de habitaciones
   private forceSummaryUpdate(): void {
+    // ✅ NUEVO: No sobrescribir el summary si ya tiene contenido
+    if (this.summary.length > 0) {
+      console.log(
+        '🔄 forceSummaryUpdate: Summary ya tiene contenido, no sobrescribiendo:',
+        this.summary.length,
+        'elementos'
+      );
+      return;
+    }
+
     if (Object.keys(this.pricesByAgeGroup).length > 0) {
       const currentTravelers = this.travelerSelector?.travelersNumbers || {
         adults: Math.max(1, this.totalPassengers),
         childs: 0,
         babies: 0,
       };
+
+      // ✅ SIMPLIFICADO: Solo actualizar el summary sin lógica adicional
       this.updateOrderSummary(currentTravelers);
     }
   }
@@ -1026,6 +1146,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     childs: number;
     babies: number;
   }): void {
+    console.log(
+      '🔄 updateOrderSummary llamado con travelersNumbers:',
+      travelersNumbers
+    );
+    console.log('📊 selectedFlight actual:', this.selectedFlight);
+    console.log('💰 flightPrice actual:', this.flightPrice);
+
     this.summary = [];
 
     // Plan básico - Adultos
@@ -1064,30 +1191,65 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }
     }
 
-    // Vuelos seleccionados
-    if (this.selectedFlight && this.flightPrice > 0) {
-      // Calcular el total de travelers para el vuelo
+    // ✅ CORREGIDO: Manejo mejorado de vuelos
+    if (this.selectedFlight) {
+      // Verificar si es una opción "Sin Vuelos"
+      const isNoFlightOption = this.isNoFlightOption(this.selectedFlight);
+
+      if (isNoFlightOption) {
+        // ✅ CASO "Sin Vuelos": Agregar al resumen con precio 0 y texto "incluido"
+        const totalTravelers =
+          travelersNumbers.adults +
+          travelersNumbers.childs +
+          travelersNumbers.babies;
+
+        const noFlightItem = {
+          qty: totalTravelers,
+          value: 0, // Precio 0 para "Sin Vuelos"
+          description: 'Sin Vuelos',
+        };
+        this.summary.push(noFlightItem);
+
+        console.log(
+          '🚫 Agregando "Sin Vuelos" al resumen con precio 0 (incluido)'
+        );
+      } else if (this.flightPrice > 0) {
+        // Vuelo con precio: agregar normalmente
+        const totalTravelers =
+          travelersNumbers.adults +
+          travelersNumbers.childs +
+          travelersNumbers.babies;
+
+        const flightItem = {
+          qty: totalTravelers,
+          value: this.flightPrice, // Precio por persona
+          description: `Vuelo ${
+            this.selectedFlight.flights[0]?.departureCity || ''
+          } - ${this.selectedFlight.flights[0]?.arrivalCity || ''}`,
+        };
+        this.summary.push(flightItem);
+
+        console.log(
+          '✈️ Agregando vuelo al resumen con precio:',
+          this.flightPrice
+        );
+      }
+    } else {
+      // ✅ CASO: No hay vuelo seleccionado (estado inicial o después de recarga)
       const totalTravelers =
         travelersNumbers.adults +
         travelersNumbers.childs +
         travelersNumbers.babies;
 
-      // El flightPrice ahora es el precio por persona, multiplicar por la cantidad de travelers
-      const flightItem = {
+      const noFlightItem = {
         qty: totalTravelers,
-        value: this.flightPrice, // Precio por persona
-        description: `Vuelo ${
-          this.selectedFlight.flights[0]?.departureCity || ''
-        } - ${this.selectedFlight.flights[0]?.arrivalCity || ''}`,
+        value: 0, // Precio 0 para "Sin Vuelos"
+        description: 'Sin Vuelos',
       };
-      this.summary.push(flightItem);
-    } else if (
-      this.selectedFlight &&
-      this.selectedFlight.code === 'NO_FLIGHT'
-    ) {
-      // Vuelo "sin vuelos" creado dinámicamente - no agregar al resumen ya que no tiene costo
+      this.summary.push(noFlightItem);
+
       console.log(
-        '🚫 Vuelo "sin vuelos" detectado - no se agrega al resumen de costos'
+        '🚫 No hay vuelo seleccionado - agregando "Sin Vuelos" al resumen'
       );
     }
 
@@ -1181,8 +1343,106 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     // Actualizar totales en la reserva (solo localmente, no en BD)
     this.updateReservationTotalAmount();
 
+    // ✅ NUEVO: Log del resumen final para debugging
+    console.log('📋 Resumen final del pedido:', this.summary);
+    console.log('📊 Cantidad de elementos en el resumen:', this.summary.length);
+    console.log('💰 Subtotal calculado:', this.subtotal);
+    console.log('💰 Total calculado:', this.totalAmountCalculated);
+
+    // ✅ NUEVO: Log específico para verificar "Sin Vuelos"
+    const hasNoFlight = this.summary.some(
+      (item) => item.description === 'Sin Vuelos'
+    );
+    console.log('🚫 ¿Tiene "Sin Vuelos" en el resumen?', hasNoFlight);
+
+    // ✅ NUEVO: Persistir el resumen en localStorage para mantener consistencia
+    this.persistSummaryToLocalStorage();
+
     // Forzar detección de cambios
     this.cdr.detectChanges();
+  }
+
+  // ✅ NUEVO: Método para verificar si un vuelo es la opción "Sin Vuelos"
+  private isNoFlightOption(flight: IFlightPackDTO): boolean {
+    if (!flight) return false;
+
+    const name = flight.name?.toLowerCase() || '';
+    const description = flight.description?.toLowerCase() || '';
+    const code = flight.code?.toLowerCase() || '';
+
+    return (
+      name.includes('sin vuelos') ||
+      description.includes('sin vuelos') ||
+      name.includes('pack sin vuelos') ||
+      description.includes('pack sin vuelos') ||
+      code === 'no_flight' ||
+      code === 'sin_vuelos'
+    );
+  }
+
+  // ✅ NUEVO: Método para persistir el resumen en localStorage
+  private persistSummaryToLocalStorage(): void {
+    if (this.reservationId) {
+      const summaryData = {
+        reservationId: this.reservationId,
+        summary: this.summary,
+        subtotal: this.subtotal,
+        total: this.totalAmountCalculated,
+        timestamp: new Date().toISOString(),
+      };
+
+      try {
+        localStorage.setItem(
+          `checkout_summary_${this.reservationId}`,
+          JSON.stringify(summaryData)
+        );
+        console.log('💾 Resumen persistido en localStorage:', summaryData);
+      } catch (error) {
+        console.warn(
+          '⚠️ No se pudo persistir el resumen en localStorage:',
+          error
+        );
+      }
+    }
+  }
+
+  // ✅ NUEVO: Método para recuperar el resumen desde localStorage
+  private restoreSummaryFromLocalStorage(): void {
+    if (this.reservationId) {
+      try {
+        const storedData = localStorage.getItem(
+          `checkout_summary_${this.reservationId}`
+        );
+        if (storedData) {
+          const summaryData = JSON.parse(storedData);
+          const storedTimestamp = new Date(summaryData.timestamp);
+          const now = new Date();
+
+          // Solo restaurar si los datos tienen menos de 1 hora
+          const oneHour = 60 * 60 * 1000;
+          if (now.getTime() - storedTimestamp.getTime() < oneHour) {
+            this.summary = summaryData.summary || [];
+            this.subtotal = summaryData.subtotal || 0;
+            this.totalAmountCalculated = summaryData.total || 0;
+
+            console.log(
+              '🔄 Resumen restaurado desde localStorage:',
+              summaryData
+            );
+            this.cdr.detectChanges();
+          } else {
+            console.log('⏰ Datos del resumen expirados, no se restauran');
+            localStorage.removeItem(`checkout_summary_${this.reservationId}`);
+          }
+        }
+      } catch (error) {
+        console.warn(
+          '⚠️ Error al restaurar resumen desde localStorage:',
+          error
+        );
+        localStorage.removeItem(`checkout_summary_${this.reservationId}`);
+      }
+    }
   }
 
   // Método para calcular totales
@@ -2629,5 +2889,32 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   // TODO: Implementar lógica para compartir el presupuesto
   handleShareBudget(): void {
     // TODO: Implementar lógica para compartir el presupuesto
+  }
+
+  // ✅ NUEVO: Método para limpiar el resumen del localStorage
+  private clearSummaryFromLocalStorage(): void {
+    if (this.reservationId) {
+      try {
+        localStorage.removeItem(`checkout_summary_${this.reservationId}`);
+        console.log(
+          '🗑️ Resumen del localStorage eliminado para reservación:',
+          this.reservationId
+        );
+      } catch (error) {
+        console.warn('⚠️ Error al limpiar resumen del localStorage:', error);
+      }
+    }
+  }
+
+  // ✅ NUEVO: Método para limpiar localStorage cuando se complete el checkout
+  public onCheckoutComplete(): void {
+    this.clearSummaryFromLocalStorage();
+    console.log('✅ Checkout completado, resumen del localStorage limpiado');
+  }
+
+  // ✅ NUEVO: Método para limpiar localStorage cuando se cancele el checkout
+  public onCheckoutCancel(): void {
+    this.clearSummaryFromLocalStorage();
+    console.log('❌ Checkout cancelado, resumen del localStorage limpiado');
   }
 }

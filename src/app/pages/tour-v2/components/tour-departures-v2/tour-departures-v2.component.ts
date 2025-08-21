@@ -43,6 +43,7 @@ interface City {
   name: string;
   code: string;
   activityId?: number;
+  activityPackId?: number;
 }
 
 interface Travelers {
@@ -91,6 +92,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     total: number;
   }>();
   @Output() ageGroupsUpdate = new EventEmitter<AgeGroupCategories>();
+  @Output() activityPackIdUpdate = new EventEmitter<number | null>();
 
   // Control de destrucción del componente
   private destroy$ = new Subject<void>();
@@ -172,13 +174,10 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     private tourDeparturesPricesService: TourDeparturesPricesService,
     private messageService: MessageService
   ) {
-    console.log('🏗️ Constructor TourDeparturesV2Component iniciado');
-
     this.updatePassengerText();
 
     // Emitir estado inicial
     setTimeout(() => {
-      console.log('🚀 Emitiendo estado inicial del componente');
       this.emitPassengersUpdate();
       this.priceUpdate.emit(0);
       this.departureUpdate.emit(null);
@@ -222,7 +221,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   private loadCities(): void {
     if (!this.tourId) return;
 
-    console.log('🚀 INICIANDO loadCities() - tourId:', this.tourId);
     this.citiesLoading = true;
 
     this.tourDepartureCitiesService
@@ -230,16 +228,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (citiesResponse: ITourDepartureCityResponse[]) => {
-          console.log('🔍 Data obtenida para ciudades de origen:', {
-            rawResponse: citiesResponse,
-            tourId: this.tourId,
-            responseLength: citiesResponse.length,
-            responseType: typeof citiesResponse,
-            isArray: Array.isArray(citiesResponse),
-            firstItem: citiesResponse[0],
-            lastItem: citiesResponse[citiesResponse.length - 1],
-          });
-
           // Validar si la respuesta está vacía o es null/undefined
           if (!citiesResponse || citiesResponse.length === 0) {
             console.warn(
@@ -253,24 +241,13 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           }
 
           const mappedCities = citiesResponse.map((city, index) => {
-            console.log(`📍 Mapeando ciudad ${index + 1}:`, {
-              originalCity: city,
-              name: city.name,
-              code: city.name.toUpperCase().replace(/\s+/g, '_'),
-              activityId: city.activityId,
-              cityType: typeof city,
-              hasName: !!city.name,
-              hasActivityId: !!city.activityId,
-            });
-
             return {
               name: city.name,
               code: city.name.toUpperCase().replace(/\s+/g, '_'),
               activityId: city.activityId,
+              activityPackId: city.activityPackId,
             };
           });
-
-          console.log('🗺️ Ciudades mapeadas:', mappedCities);
 
           // Validar el mapeo
           const validCities = mappedCities.filter(
@@ -280,9 +257,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
             (city) => !city.name || city.name.trim() === ''
           );
 
-          console.log('✅ Ciudades válidas:', validCities);
-          console.log('❌ Ciudades inválidas:', invalidCities);
-
           // Verificar si realmente existe alguna ciudad "Sin Vuelos" en los datos
           const hasSinVuelosCities = validCities.some(
             (city) =>
@@ -290,17 +264,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
               city.name.toLowerCase().includes('sin vuelo')
           );
 
-          console.log('🔍 Verificando existencia de ciudades "Sin Vuelos":', {
-            hasSinVuelosCities,
-            totalCities: validCities.length,
-          });
-
           // Solo aplicar lógica de "Sin Vuelos" si realmente existen esas ciudades
           if (hasSinVuelosCities) {
-            console.log(
-              '✅ Se encontraron ciudades "Sin Vuelos", aplicando lógica especial'
-            );
-
             this.cities = validCities.sort((a, b) => {
               const aIsSinVuelos =
                 a.name.toLowerCase().includes('sin vuelos') ||
@@ -309,22 +274,10 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
                 b.name.toLowerCase().includes('sin vuelos') ||
                 b.name.toLowerCase().includes('sin vuelo');
 
-              console.log(`🔄 Ordenando: "${a.name}" vs "${b.name}"`, {
-                aIsSinVuelos,
-                bIsSinVuelos,
-                aName: a.name,
-                bName: b.name,
-              });
-
               if (aIsSinVuelos && !bIsSinVuelos) return -1;
               if (!aIsSinVuelos && bIsSinVuelos) return 1;
               return a.name.localeCompare(b.name);
             });
-
-            console.log(
-              '📋 Ciudades ordenadas (con lógica Sin Vuelos):',
-              this.cities
-            );
 
             this.filteredCities = [...this.cities];
 
@@ -334,37 +287,15 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
                 city.name.toLowerCase().includes('sin vuelo')
             );
 
-            console.log('🔍 Buscando ciudad "Sin Vuelos":', {
-              found: !!sinVuelosCity,
-              city: sinVuelosCity,
-              searchCriteria: ['sin vuelos', 'sin vuelo'],
-            });
-
             if (sinVuelosCity) {
               this.selectedCity = sinVuelosCity;
-              console.log(
-                '✈️ Ciudad "Sin Vuelos" seleccionada:',
-                sinVuelosCity
-              );
             } else if (this.cities.length > 0) {
               this.selectedCity = this.cities[0];
-              console.log(
-                '🏙️ Primera ciudad seleccionada por defecto:',
-                this.selectedCity
-              );
             }
           } else {
-            console.log(
-              '❌ No se encontraron ciudades "Sin Vuelos", usando ordenamiento normal'
-            );
-
             // Si no hay ciudades "Sin Vuelos", usar ordenamiento alfabético normal
             this.cities = validCities.sort((a, b) =>
               a.name.localeCompare(b.name)
-            );
-            console.log(
-              '📋 Ciudades ordenadas (orden alfabético normal):',
-              this.cities
             );
 
             this.filteredCities = [...this.cities];
@@ -372,26 +303,12 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
             // Seleccionar la primera ciudad disponible
             if (this.cities.length > 0) {
               this.selectedCity = this.cities[0];
-              console.log(
-                '🏙️ Primera ciudad seleccionada (sin lógica Sin Vuelos):',
-                this.selectedCity
-              );
             }
           }
 
           if (this.cities.length === 0) {
             console.warn('⚠️ No hay ciudades disponibles para seleccionar');
           }
-
-          console.log('✅ Estado final del select de ciudades:', {
-            cities: this.cities,
-            filteredCities: this.filteredCities,
-            selectedCity: this.selectedCity,
-            citiesLoading: this.citiesLoading,
-            citiesCount: this.cities.length,
-            filteredCount: this.filteredCities.length,
-            hasSelectedCity: !!this.selectedCity,
-          });
 
           this.citiesLoading = false;
         },
@@ -928,88 +845,39 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   }
 
   filterCities(event: any): void {
-    console.log('🔍 filterCities() llamado con:', {
-      event,
-      query: event?.query,
-      queryType: typeof event?.query,
-      citiesCount: this.cities.length,
-      currentFilteredCount: this.filteredCities.length,
-    });
-
     const query = event.query;
 
     if (!query || query.trim() === '') {
-      console.log('📋 Sin filtro, mostrando todas las ciudades');
       this.filteredCities = [...this.cities];
       return;
     }
 
     const filtered = this.cities.filter((city) => {
       const matches = city.name.toLowerCase().includes(query.toLowerCase());
-      console.log(
-        `🔍 Filtrando "${city.name}" con query "${query}": ${matches}`
-      );
       return matches;
     });
 
     this.filteredCities = filtered;
-
-    console.log('✅ Filtrado completado:', {
-      originalQuery: query,
-      filteredCount: filtered.length,
-      filteredCities: filtered.map((c) => c.name),
-    });
   }
 
   onCityChange(event: any): void {
-    console.log('🔄 onCityChange() llamado con:', {
-      event,
-      eventType: typeof event,
-      isObject: typeof event === 'object',
-      hasName: event?.name,
-      hasActivityId: event?.activityId,
-      previousSelectedCity: this.selectedCity,
-    });
-
     this.selectedCity = event;
-
-    console.log('✅ Nueva ciudad seleccionada:', {
-      selectedCity: this.selectedCity,
-      name: this.selectedCity?.name,
-      activityId: this.selectedCity?.activityId,
-      departureDetails: this.departureDetails,
-    });
 
     if (
       this.selectedCity &&
       this.selectedCity.activityId &&
       this.departureDetails
     ) {
-      console.log('💰 Cargando precios para:', {
-        activityId: this.selectedCity.activityId,
-        departureId: this.departureDetails.id,
-      });
-
       this.loadDeparturesPrices(
         this.selectedCity.activityId,
         this.departureDetails.id
       );
-    } else {
-      console.log('⚠️ No se pueden cargar precios:', {
-        hasSelectedCity: !!this.selectedCity,
-        hasActivityId: !!this.selectedCity?.activityId,
-        hasDepartureDetails: !!this.departureDetails,
-      });
     }
 
     this.emitCityUpdate();
 
     // Recalcular precio si hay departure seleccionado
     if (this.selectedDepartureId) {
-      console.log(
-        '💵 Recalculando precio para departure:',
-        this.selectedDepartureId
-      );
       setTimeout(() => {
         this.calculateAndEmitPrice();
       }, 300);
@@ -1019,8 +887,12 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   private emitCityUpdate(): void {
     if (!this.selectedCity) {
       this.cityUpdate.emit('');
+      this.activityPackIdUpdate.emit(null);
       return;
     }
+
+    // ✅ AGREGAR emisión
+    this.activityPackIdUpdate.emit(this.selectedCity.activityPackId || null);
 
     // Verificar si realmente existe la opción "Sin Vuelos" en las ciudades disponibles
     const hasSinVuelosOption = this.cities.some(
@@ -1028,12 +900,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         city.name.toLowerCase().includes('sin vuelos') ||
         city.name.toLowerCase().includes('sin vuelo')
     );
-
-    console.log('🌍 emitCityUpdate - Verificando opción Sin Vuelos:', {
-      selectedCity: this.selectedCity.name,
-      hasSinVuelosOption,
-      totalCities: this.cities.length,
-    });
 
     const isSinVuelos =
       this.selectedCity.name.toLowerCase().includes('sin vuelos') ||
@@ -1044,19 +910,12 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     if (isSinVuelos && hasSinVuelosOption) {
       // Solo mostrar "Sin Vuelos" si realmente existe esa opción en el servicio
       cityText = 'Sin Vuelos';
-      console.log(
-        '✈️ Emitiendo "Sin Vuelos" (opción disponible en el servicio)'
-      );
     } else if (isSinVuelos && !hasSinVuelosOption) {
       // Si la ciudad seleccionada tiene "sin vuelos" pero no está en el servicio, mostrar el nombre completo
       cityText = this.selectedCity.name;
-      console.log(
-        '⚠️ Ciudad con "sin vuelos" pero no disponible en servicio, mostrando nombre completo'
-      );
     } else {
       // Ciudad normal con vuelo
       cityText = `Vuelo desde ${this.selectedCity.name}`;
-      console.log('🛫 Emitiendo ciudad con vuelo:', cityText);
     }
 
     this.cityUpdate.emit(cityText);

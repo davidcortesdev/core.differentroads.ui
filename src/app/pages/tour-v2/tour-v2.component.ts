@@ -84,6 +84,12 @@ export class TourV2Component implements OnInit {
   // Flag para controlar cuándo mostrar el estado de actividades
   showActivitiesStatus: boolean = false;
 
+  selectedActivityPackId: number | null = null; // ✅ AGREGAR
+  onActivityPackIdUpdate(activityPackId: number | null): void {
+    console.log('📦 ActivityPackId recibido en padre:', activityPackId);
+    this.selectedActivityPackId = activityPackId;
+  }
+
   // ✅ NUEVA PROPIEDAD: Análisis de tipos de actividades
   activityTypesAnalysis: ActivityTypesAnalysis = {
     hasAct: false,

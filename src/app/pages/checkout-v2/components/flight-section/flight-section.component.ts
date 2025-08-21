@@ -3,6 +3,7 @@ import {
   IFlightPackDTO,
   IFlightResponse,
 } from '../../services/flightsNet.service';
+import { AirportCityCacheService } from '../../../../core/services/airport-city-cache.service';
 
 @Component({
   selector: 'app-flight-section-v2',
@@ -16,9 +17,13 @@ export class FlightSectionV2Component implements OnChanges {
   departureFlight: IFlightResponse | null = null;
   returnFlight: IFlightResponse | null = null;
 
+  constructor(private airportCityCacheService: AirportCityCacheService) {}
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['flightPack'] && this.flightPack) {
       this.processFlightData();
+      // Precargar ciudades de aeropuertos después de procesar los datos
+      this.preloadAirportCities();
     }
   }
 
@@ -32,6 +37,55 @@ export class FlightSectionV2Component implements OnChanges {
       this.flightPack.flights.find((f) => f.flightTypeId === 4) || null;
     this.returnFlight =
       this.flightPack.flights.find((f) => f.flightTypeId !== 4) || null;
+  }
+
+  /**
+   * Obtiene el nombre de la ciudad de salida transformado
+   */
+  getDepartureCityName(flight: IFlightResponse): string {
+    if (!flight || !flight.departureIATACode) return '';
+    
+    // Intentar obtener el nombre de la ciudad desde el cache
+    const cityName = this.airportCityCacheService.getCityNameFromCache(flight.departureIATACode);
+    
+    // Si hay un nombre de ciudad en el cache, usarlo; si no, usar el departureCity original o el código IATA
+    return cityName || flight.departureCity || flight.departureIATACode;
+  }
+
+  /**
+   * Obtiene el nombre de la ciudad de llegada transformado
+   */
+  getArrivalCityName(flight: IFlightResponse): string {
+    if (!flight || !flight.arrivalIATACode) return '';
+    
+    // Intentar obtener el nombre de la ciudad desde el cache
+    const cityName = this.airportCityCacheService.getCityNameFromCache(flight.arrivalIATACode);
+    
+    // Si hay un nombre de ciudad en el cache, usarlo; si no, usar el arrivalCity original o el código IATA
+    return cityName || flight.arrivalCity || flight.arrivalIATACode;
+  }
+
+  /**
+   * Precarga las ciudades de los aeropuertos para todos los vuelos del paquete
+   */
+  private preloadAirportCities(): void {
+    if (!this.flightPack || !this.flightPack.flights) return;
+
+    const airportCodes: string[] = [];
+    
+    this.flightPack.flights.forEach(flight => {
+      if (flight.departureIATACode && !airportCodes.includes(flight.departureIATACode)) {
+        airportCodes.push(flight.departureIATACode);
+      }
+      if (flight.arrivalIATACode && !airportCodes.includes(flight.arrivalIATACode)) {
+        airportCodes.push(flight.arrivalIATACode);
+      }
+    });
+
+    if (airportCodes.length > 0) {
+      console.log(`🔄 FlightSection: Precargando ciudades para ${airportCodes.length} aeropuertos`);
+      this.airportCityCacheService.preloadAllAirportCities(airportCodes);
+    }
   }
 
   formatTime(time: string | undefined): string {

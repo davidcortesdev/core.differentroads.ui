@@ -40,6 +40,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   @Input() flights: Flight[] = [];
   @Input() departureId: number | null = null;
   @Input() reservationId: number | null = null;
+  @Input() departureActivityPackId: number | null = null; // ✅ NUEVO: ID del paquete del departure
   @Input() selectedFlightFromParent: IFlightPackDTO | null = null; // Nuevo input para sincronización con el padre
 
   // Propiedades públicas
@@ -1059,41 +1060,44 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         'viajeros...'
       );
 
-      // Crear nuevas asignaciones para todos los viajeros
-      const assignmentPromises = travelers.map((traveler) => {
-        return new Promise<boolean>((resolve, reject) => {
-          console.log(
-            `➕ Creando nueva asignación para viajero ${traveler.id}`
-          );
-
-          const assignmentData = {
-            id: 0,
-            reservationTravelerId: traveler.id,
-            activityPackId: activityPackId,
-            createdAt: new Date().toISOString(),
-          };
-          console.log(`➕ Datos para nueva asignación:`, assignmentData);
-
+      // ✅ MODIFICADO: Solo actualizar asignaciones existentes del departure, NUNCA crear nuevas
+      console.log('🔍 Verificando asignaciones existentes del departure...');
+      const existingAssignmentsPromises = travelers.map((traveler) => {
+        return new Promise<{
+          traveler: IReservationTravelerResponse;
+          existingAssignments: IReservationTravelerActivityPackResponse[];
+        }>((resolve, reject) => {
           this.reservationTravelerActivityPackService
-            .create(assignmentData)
+            .getByReservationTraveler(traveler.id)
             .subscribe({
-              next: (
-                createdAssignment: IReservationTravelerActivityPackResponse
-              ) => {
-                console.log(
-                  `✅ Nueva asignación creada para viajero ${traveler.id}:`,
-                  createdAssignment
-                );
-                console.log(
-                  `✅ ID de nueva asignación:`,
-                  createdAssignment.id
+              next: (assignments) => {
+                // ✅ SOLO buscar asignaciones del departure (por departureActivityPackId)
+                const departureAssignments = assignments.filter(
+                  (a) => a.activityPackId === this.departureActivityPackId
                 );
 
-                resolve(true);
+                // Ordenar por ID descendente para obtener el más reciente
+                const sortedAssignments = departureAssignments.sort(
+                  (a, b) => b.id - a.id
+                );
+
+                console.log(
+                  `🔍 Viajero ${traveler.id}: ${departureAssignments.length} asignaciones del departure encontradas`
+                );
+                console.log(
+                  `🔍 IDs de asignaciones del departure: ${departureAssignments
+                    .map((a) => a.id)
+                    .join(', ')}`
+                );
+
+                resolve({
+                  traveler,
+                  existingAssignments: sortedAssignments,
+                });
               },
-              error: (error: any) => {
+              error: (error) => {
                 console.error(
-                  `❌ Error al crear asignación para viajero ${traveler.id}:`,
+                  `❌ Error al obtener asignaciones para viajero ${traveler.id}:`,
                   error
                 );
                 reject(error);
@@ -1102,9 +1106,93 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         });
       });
 
-      console.log('⏳ Esperando que se completen todas las asignaciones...');
-      await Promise.all(assignmentPromises);
-      console.log('✅ Todas las asignaciones creadas exitosamente');
+      const existingAssignmentsResults = await Promise.all(
+        existingAssignmentsPromises
+      );
+
+      // ✅ MODIFICADO: SOLO actualizar registros existentes, NUNCA crear nuevos
+      const hasExistingDepartureAssignments = existingAssignmentsResults.some(
+        (result) => result.existingAssignments.length > 0
+      );
+
+      if (hasExistingDepartureAssignments) {
+        console.log(
+          '🔄 Se encontraron asignaciones del departure existentes, actualizando el más reciente...'
+        );
+
+        const updatePromises = existingAssignmentsResults.map((result) => {
+          return new Promise<boolean>((resolve, reject) => {
+            const { traveler, existingAssignments } = result;
+
+            if (existingAssignments.length > 0) {
+              // Siempre usar la primera asignación (la más reciente por ID)
+              const mostRecentAssignment = existingAssignments[0];
+              console.log(
+                `🔄 Actualizando asignación del departure más reciente ${mostRecentAssignment.id} para viajero ${traveler.id}`
+              );
+              console.log(
+                `🔄 ID anterior: ${mostRecentAssignment.activityPackId} -> Nuevo ID: ${activityPackId}`
+              );
+
+              const updateData = {
+                id: mostRecentAssignment.id,
+                reservationTravelerId: traveler.id,
+                activityPackId: activityPackId,
+                updatedAt: new Date().toISOString(),
+              };
+
+              this.reservationTravelerActivityPackService
+                .update(mostRecentAssignment.id, updateData)
+                .subscribe({
+                  next: (updated: boolean) => {
+                    if (updated) {
+                      console.log(
+                        `✅ Asignación del departure ${mostRecentAssignment.id} actualizada para viajero ${traveler.id}`
+                      );
+                      console.log(
+                        `✅ Cambio: departure ${mostRecentAssignment.activityPackId} -> vuelo ${activityPackId}`
+                      );
+                    } else {
+                      console.error(
+                        `❌ Error al actualizar asignación del departure ${mostRecentAssignment.id} para viajero ${traveler.id}`
+                      );
+                    }
+                    resolve(updated);
+                  },
+                  error: (error: any) => {
+                    console.error(
+                      `❌ Error al actualizar asignación del departure para viajero ${traveler.id}:`,
+                      error
+                    );
+                    reject(error);
+                  },
+                });
+            } else {
+              // ✅ MODIFICADO: NO crear nuevas asignaciones, solo log
+              console.log(
+                `⚠️ Viajero ${traveler.id} no tiene asignaciones del departure existentes. NO se creará nueva asignación.`
+              );
+              resolve(true); // Resolver como éxito sin crear nada
+            }
+          });
+        });
+
+        await Promise.all(updatePromises);
+        console.log(
+          '✅ Todas las asignaciones del departure actualizadas exitosamente'
+        );
+      } else {
+        // ✅ MODIFICADO: NO crear nuevas asignaciones si no existen
+        console.log(
+          '⚠️ No se encontraron asignaciones del departure existentes. NO se crearán nuevas asignaciones.'
+        );
+        console.log(
+          'ℹ️ Las asignaciones deben existir previamente en la BD para ser actualizadas.'
+        );
+      }
+
+      console.log('⏳ Proceso de asignaciones completado');
+      console.log('✅ Todas las asignaciones del departure procesadas exitosamente');
 
       // ✅ NUEVO: Marcar "Sin Vuelos" en default-flights después de guardar
       if (this.reservationId) {

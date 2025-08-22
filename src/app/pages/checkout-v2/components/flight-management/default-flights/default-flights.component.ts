@@ -1211,44 +1211,11 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                     });
                 } else {
                   console.log(
-                    `➕ No hay asignaciones del departure para viajero ${traveler.id}, creando nueva...`
+                    `ℹ️ No hay asignaciones del departure para viajero ${traveler.id}. No se creará una nueva asignación automáticamente.`
                   );
-
-                  const assignmentData = {
-                    id: 0,
-                    reservationTravelerId: traveler.id,
-                    activityPackId: activityPackId,
-                    createdAt: new Date().toISOString(),
-                  };
-                  console.log(
-                    `➕ Datos para nueva asignación del departure:`,
-                    assignmentData
-                  );
-
-                  this.reservationTravelerActivityPackService
-                    .create(assignmentData)
-                    .subscribe({
-                      next: (
-                        createdAssignment: IReservationTravelerActivityPackResponse
-                      ) => {
-                        console.log(
-                          `✅ Nueva asignación del departure creada para viajero ${traveler.id}:`,
-                          createdAssignment
-                        );
-                        console.log(
-                          `✅ ID de nueva asignación del departure:`,
-                          createdAssignment.id
-                        );
-                        resolve(true);
-                      },
-                      error: (error: any) => {
-                        console.error(
-                          `❌ Error al crear asignación del departure para viajero ${traveler.id}:`,
-                          error
-                        );
-                        reject(error);
-                      },
-                    });
+                  // No creamos asignaciones automáticamente durante la carga
+                  // Solo resolvemos como true para continuar el proceso
+                  resolve(true);
                 }
               },
               error: (error: any) => {

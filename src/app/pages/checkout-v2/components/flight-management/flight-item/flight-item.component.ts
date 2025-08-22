@@ -66,10 +66,10 @@ export class FlightItemComponent implements OnInit, OnDestroy {
 
       // Si useNewService es true, cargar detalles internamente
       if (this.useNewService) {
-        console.log('🔄 FlightItem: Iniciando carga de detalles y aerolíneas con nuevo servicio');
+        //console.log('🔄 FlightItem: Iniciando carga de detalles y aerolíneas con nuevo servicio');
         this.loadFlightDetailsInternally();
       } else {
-        console.log('ℹ️ FlightItem: Usando servicio actual, no se cargan detalles internamente');
+        //console.log('ℹ️ FlightItem: Usando servicio actual, no se cargan detalles internamente');
       }
     } else {
       console.log('No hay vuelos disponibles');
@@ -97,8 +97,8 @@ export class FlightItemComponent implements OnInit, OnDestroy {
     
     // Logging para debugging
     if (isSelected) {
-      console.log(`✅ FlightItem: Vuelo ${this.flightPack.id} está seleccionado`);
-      console.log(`📊 selectedFlight ID: ${this.selectedFlight.id}, flightPack ID: ${this.flightPack.id}`);
+      //console.log(`✅ FlightItem: Vuelo ${this.flightPack.id} está seleccionado`);
+      //console.log(`📊 selectedFlight ID: ${this.selectedFlight.id}, flightPack ID: ${this.flightPack.id}`);
     }
 
     return isSelected;
@@ -139,7 +139,7 @@ export class FlightItemComponent implements OnInit, OnDestroy {
   private loadFlightDetailsInternally(): void {
     if (!this.flightPack || !this.flightPack.flights) return;
 
-    console.log(`🔄 FlightItem: Cargando detalles internamente para paquete ${this.flightPack.id}`);
+    //console.log(`🔄 FlightItem: Cargando detalles internamente para paquete ${this.flightPack.id}`);
 
     this.flightPack.flights.forEach(flight => {
       this.flightSearchService.getFlightDetails(this.flightPack!.id, flight.id.toString())
@@ -178,7 +178,7 @@ export class FlightItemComponent implements OnInit, OnDestroy {
             };
             
             this.internalFlightDetails.set(flight.id, mappedDetail);
-            console.log(`✅ FlightItem: Detalles cargados para vuelo ${flight.id}:`, mappedDetail);
+            //console.log(`✅ FlightItem: Detalles cargados para vuelo ${flight.id}:`, mappedDetail);
 
             // Precargar nombres de aerolíneas en el servicio (la cache se maneja automáticamente)
             if (detail.airlines && detail.airlines.length > 0) {
@@ -201,7 +201,7 @@ export class FlightItemComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (airlineNames) => {
-          console.log(`✅ FlightItem: ${airlineNames.length} aerolíneas precargadas exitosamente`);
+          //console.log(`✅ FlightItem: ${airlineNames.length} aerolíneas precargadas exitosamente`);
         },
         error: (error) => {
           console.warn(`⚠️ FlightItem: Error al precargar aerolíneas:`, error);

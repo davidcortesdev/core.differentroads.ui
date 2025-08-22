@@ -80,19 +80,18 @@
             emptyMessage="No se encontraron ciudades"
           >
             <!-- Plantilla personalizada para los elementos del dropdown -->
-            <ng-template pTemplate="item" let-city>
+            <ng-template #item let-city>
               <div class="city-item">
                 {{ city.codigo }} - {{ city.nombre }}
               </div>
             </ng-template>
             <!-- Plantilla personalizada para el input cuando está seleccionado -->
-            <ng-template pTemplate="selectedItem" let-city>
+            <ng-template #selectedItem let-city>
               <div class="selected-city">
                 {{ city.codigo }} - {{ city.nombre }}
               </div>
             </ng-template>
           </p-autocomplete>
-          <a href="#" class="change"></a>
         </div>
         <div class="input destination">
           <div class="dest-lbl">Llegada</div>
@@ -130,12 +129,12 @@
             [showEmptyMessage]="true"
             emptyMessage="No se encontraron ciudades"
           >
-            <ng-template pTemplate="item" let-city>
+            <ng-template #item let-city>
               <div class="city-item">
                 {{ city.codigo }} - {{ city.nombre }}
               </div>
             </ng-template>
-            <ng-template pTemplate="selectedItem" let-city>
+            <ng-template #selectedItem let-city>
               <div class="selected-city">
                 {{ city.codigo }} - {{ city.nombre }}
               </div>

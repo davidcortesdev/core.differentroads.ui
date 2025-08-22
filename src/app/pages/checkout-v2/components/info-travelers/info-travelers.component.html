@@ -74,16 +74,19 @@
 
   <!-- Indicador de carga para verificación de estado de reserva -->
   <div *ngIf="checkingReservationStatus" class="loading-indicator">
+    <p-progressSpinner></p-progressSpinner>
     <p>Verificando estado de la reserva...</p>
   </div>
 
   <!-- Indicador de carga para verificación de estado de vuelos de Amadeus -->
   <div *ngIf="isCheckingFlightStatus" class="loading-indicator">
-    <p>Verificando estado de vuelos seleccionados...</p>
+    <p-progressSpinner></p-progressSpinner>
+    <p>Verificando la información necesaria para los vuelos seleccionados...</p>
   </div>
 
   <!-- Indicador de carga para datos de viajeros -->
   <div *ngIf="loading && !checkingReservationStatus && !isCheckingFlightStatus" class="loading-indicator">
+    <p-progressSpinner></p-progressSpinner>
     <p>Cargando información de los viajeros...</p>
   </div>
 

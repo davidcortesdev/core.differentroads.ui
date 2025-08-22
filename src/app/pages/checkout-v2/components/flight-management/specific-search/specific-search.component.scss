@@ -15,15 +15,6 @@ $border: #ddd;
   border-radius: 8px;
 }
 ::ng-deep {
-  .p-autocomplete {
-    .p-autocomplete-input {
-      padding: 1rem !important;
-    }
-    .p-inputtext {
-      border-radius: 10px !important;
-      padding-right: 55px !important;
-    }
-  }
   .p-panel {
     font-family: Arial, sans-serif;
     margin: 0 0 20px 0;

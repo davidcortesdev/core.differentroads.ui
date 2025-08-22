@@ -11,7 +11,7 @@ import { DepartureConsolidadorSearchLocationService, ConsolidadorSearchLocationW
 import { DepartureService, DepartureAirportTimesResponse } from '../../../../../core/services/departure/departure.service';
 import { LocationAirportNetService } from '../../../../../core/services/locations/locationAirportNet.service';
 import { LocationNetService } from '../../../../../core/services/locations/locationNet.service';
-import { FlightSearchService, FlightSearchRequest, IFlightPackDTO, IFlightDetailDTO, IFlightSearchResultDTO } from '../../../../../core/services/flight-search.service';
+import { FlightSearchService, FlightSearchRequest, IFlightPackDTO, IFlightDetailDTO, IFlightSearchResultDTO, IFlightSearchWarning, IFlightSearchMeta } from '../../../../../core/services/flight-search.service';
 import { IFlightPackDTO as IFlightsNetFlightPackDTO } from '../../../services/flightsNet.service';
 import { ReservationTravelerService, IReservationTravelerResponse } from '../../../../../core/services/reservation/reservation-traveler.service';
 import { ReservationTravelerActivityPackService, IReservationTravelerActivityPackResponse } from '../../../../../core/services/reservation/reservation-traveler-activity-pack.service';
@@ -81,8 +81,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   errorMessage = '';
 
   // Nuevas propiedades para manejar la respuesta del servicio actualizado
-  searchWarnings: string[] = [];
-  searchMeta: any = null;
+  searchWarnings: IFlightSearchWarning[] = [];
+  searchMeta: IFlightSearchMeta | null = null;
   hasSearchWarnings = false;
   isEmptySearchResult = false;
 
@@ -377,6 +377,9 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     this.searchPerformed = true;
     this.errorMessage = '';
     
+    // Limpiar estado anterior de warnings y meta
+    this.clearSearchState();
+    
     // Reinicializar el estado de carga de ciudades
     this.airportCityCacheService.clearCache();
 
@@ -408,11 +411,14 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         // Procesar warnings JSON si existe
         if (response.warningsJson) {
           try {
-            this.searchWarnings = JSON.parse(response.warningsJson);
+            const warningsArray = JSON.parse(response.warningsJson);
+            this.searchWarnings = Array.isArray(warningsArray) ? warningsArray : [];
           } catch (error) {
             console.warn('Error al parsear warnings JSON:', error);
             this.searchWarnings = [];
           }
+        } else {
+          this.searchWarnings = [];
         }
         
         // Procesar meta JSON si existe
@@ -423,14 +429,22 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
             console.warn('Error al parsear meta JSON:', error);
             this.searchMeta = null;
           }
+        } else {
+          this.searchMeta = null;
         }
         
         // Log de información de la búsqueda
-        if (this.hasSearchWarnings) {
+        if (this.hasSearchWarnings && this.searchWarnings.length > 0) {
           console.warn('⚠️ La búsqueda tiene warnings:', this.searchWarnings);
+          this.searchWarnings.forEach(warning => {
+            console.warn(`  - ${warning.title}: ${warning.detail} (Status: ${warning.status}, Code: ${warning.code})`);
+          });
         }
         if (this.isEmptySearchResult) {
           console.log('ℹ️ La búsqueda no retornó resultados');
+        }
+        if (this.searchMeta) {
+          console.log('📊 Meta información de búsqueda:', this.searchMeta);
         }
         
         // Transformar los datos directamente aquí para evitar recreaciones constantes
@@ -1159,5 +1173,32 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       city.nombre.toLowerCase().includes(query) ||
       city.codigo.toLowerCase().includes(query)
     );
+  }
+
+  /**
+   * Obtiene un mensaje amigable para el usuario cuando no hay resultados
+   * @returns Mensaje descriptivo basado en el estado de la búsqueda
+   */
+  getNoResultsMessage(): string {
+    if (this.hasSearchWarnings && this.searchWarnings.length > 0) {
+      const firstWarning = this.searchWarnings[0];
+      if (firstWarning.title === 'IncompleteSearchWarning') {
+        return 'La búsqueda no se pudo completar completamente. Esto puede deberse a limitaciones temporales del servicio.';
+      }
+      return `Búsqueda con advertencias: ${firstWarning.detail}`;
+    }
+    
+    if (this.searchMeta && this.searchMeta.count === 0) {
+      return 'No se encontraron vuelos disponibles con los criterios seleccionados.';
+    }
+    
+    return 'No hay vuelos disponibles con los criterios seleccionados. Por favor, intenta modificar tu búsqueda.';
+  }
+
+  private clearSearchState(): void {
+    this.searchWarnings = [];
+    this.searchMeta = null;
+    this.hasSearchWarnings = false;
+    this.isEmptySearchResult = false;
   }
 }

@@ -235,10 +235,43 @@
   <p-panel styleClass="warning-panel">
     <div class="msg">
       <i class="pi pi-exclamation-triangle"></i>
-      <h3>Advertencias en la búsqueda</h3>
-      <ul class="warning-list">
-        <li *ngFor="let warning of searchWarnings">{{ warning }}</li>
-      </ul>
+      <h3>
+        Advertencias en la búsqueda
+        <i class="pi pi-info-circle amadeus-info-icon" 
+           pTooltip="Estas advertencias son proporcionadas por el servicio de búsqueda de vuelos de Amadeus"
+           tooltipPosition="top"
+           [showDelay]="300"></i>
+      </h3>
+      <div class="warnings-container">
+        <div *ngFor="let warning of searchWarnings" class="warning-item">
+          <div class="warning-header">
+            <span class="warning-title">{{ warning.title }}</span>
+            <span class="warning-status">({{ warning.status }})</span>
+          </div>
+          <div class="warning-detail">{{ warning.detail }}</div>
+          <div *ngIf="warning.code !== 0" class="warning-code">Código: {{ warning.code }}</div>
+        </div>
+      </div>
+    </div>
+  </p-panel>
+</div>
+
+<!-- Meta información de búsqueda -->
+<div *ngIf="searchMeta" class="meta-info-panel">
+  <p-panel styleClass="info-panel">
+    <div class="msg">
+      <i class="pi pi-info-circle"></i>
+      <h3>Información de la búsqueda</h3>
+      <div class="meta-container">
+        <div class="meta-item">
+          <span class="meta-label">Total de resultados:</span>
+          <span class="meta-value">{{ searchMeta.count }}</span>
+        </div>
+        <div *ngIf="searchMeta.oneWayCombinations" class="meta-item">
+          <span class="meta-label">Combinaciones de ida:</span>
+          <span class="meta-value">{{ searchMeta.oneWayCombinations }}</span>
+        </div>
+      </div>
     </div>
   </p-panel>
 </div>
@@ -327,10 +360,7 @@
     <div class="msg">
       <i class="pi pi-info-circle"></i>
       <h3>No se encontraron vuelos</h3>
-      <p>
-        No hay vuelos disponibles con los criterios seleccionados. Por favor,
-        intenta modificar tu búsqueda.
-      </p>
+      <p>{{ getNoResultsMessage() }}</p>
     </div>
   </p-panel>
 </div>

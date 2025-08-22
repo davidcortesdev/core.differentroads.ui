@@ -96,6 +96,20 @@ export interface IFlightSearchResultDTO {
   isEmptyResult?: boolean;
 }
 
+// Interfaces para los warnings y meta información
+export interface IFlightSearchWarning {
+  status: number;
+  code: number;
+  title: string;
+  detail: string;
+  source: any;
+}
+
+export interface IFlightSearchMeta {
+  count: number;
+  oneWayCombinations?: any;
+}
+
 export type FlightSearchResponse = IFlightSearchResultDTO;
 
 // Interfaces para respuestas de operaciones PUT

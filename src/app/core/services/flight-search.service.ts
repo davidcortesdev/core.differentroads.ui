@@ -110,6 +110,31 @@ export interface IFlightSearchMeta {
   oneWayCombinations?: any;
 }
 
+// Nueva interfaz para los requisitos de reserva
+export interface IBookingRequirements {
+  invoiceAddressRequired?: boolean | null;
+  mailingAddressRequired?: boolean | null;
+  emailAddressRequired?: boolean | null;
+  phoneCountryCodeRequired?: boolean | null;
+  mobilePhoneNumberRequired?: boolean | null;
+  phoneNumberRequired?: boolean | null;
+  postalCodeRequired?: boolean | null;
+  travelerRequirements?: IPassengerConditions[] | null;
+}
+
+// Nueva interfaz para las condiciones de pasajeros
+export interface IPassengerConditions {
+  travelerId?: string | null;
+  genderRequired?: boolean | null;
+  documentRequired?: boolean | null;
+  documentIssuanceCityRequired?: boolean | null;
+  dateOfBirthRequired?: boolean | null;
+  redressRequiredIfAny?: boolean | null;
+  airFranceDiscountRequired?: boolean | null;
+  spanishResidentDiscountRequired?: boolean | null;
+  residenceRequired?: boolean | null;
+}
+
 export type FlightSearchResponse = IFlightSearchResultDTO;
 
 // Interfaces para respuestas de operaciones PUT
@@ -147,6 +172,7 @@ export class FlightSearchService {
    * @param autoSearch Booleano para controlar si se deben hacer llamadas automáticas
    *                    - true (default): Comportamiento estándar
    *                    - false: Evita llamadas automáticas que puedan causar bucles
+   *                    Nota: Este parámetro se mantiene por compatibilidad pero ya no se usa en la nueva implementación
    * @returns Observable con la respuesta de la API (IFlightSearchResultDTO)
    */
   searchFlights(request: FlightSearchRequest, autoSearch: boolean = true): Observable<FlightSearchResponse> {
@@ -206,6 +232,28 @@ export class FlightSearchService {
     return this.http.put<FlightUnselectAllResponse>(
       `${this.API_URL}/reservation/${reservationId}/unselect-all`,
       {}
+    );
+  }
+
+  /**
+   * Obtiene los requisitos de reserva para una reserva específica
+   * @param reservationId ID de la reserva
+   * @returns Observable con los requisitos de reserva
+   */
+  getBookingRequirements(reservationId: number): Observable<IBookingRequirements> {
+    return this.http.get<IBookingRequirements>(
+      `${this.API_URL}/reservation/${reservationId}/booking-requirements`
+    );
+  }
+
+  /**
+   * Verifica si existe un ConsolidatorSearch seleccionado para una reserva específica
+   * @param reservationId ID de la reserva
+   * @returns Observable con el estado de selección (boolean)
+   */
+  getSelectionStatus(reservationId: number): Observable<boolean> {
+    return this.http.get<boolean>(
+      `${this.API_URL}/reservation/${reservationId}/consolidator/selection-status`
     );
   }
 } 

@@ -293,7 +293,7 @@ export class FlightManagementComponent implements OnInit, OnChanges {
     });
   }
 
-  // ✅ NUEVO: Método para manejar la selección de vuelos desde default-flights
+    // ✅ NUEVO: Método para manejar la selección de vuelos desde default-flights
   onDefaultFlightSelected(flightData: {
     selectedFlight: IFlightPackDTO | null;
     totalPrice: number;
@@ -304,18 +304,21 @@ export class FlightManagementComponent implements OnInit, OnChanges {
     // Actualizar el vuelo seleccionado
     this.selectedFlight = flightData.selectedFlight;
     
-          // ✅ NUEVO: Deseleccionar vuelos en specific-search
-      if (this.specificSearchComponent && this.reservationId) {
-        // Llamar al método unselectAllFlights del servicio
-        this.specificSearchComponent.flightSearchService.unselectAllFlights(this.reservationId).subscribe({
-          next: () => {
-            console.log('✅ Vuelos de specific-search deseleccionados desde flight-management');
-          },
-          error: (error: any) => {
-            console.error('❌ Error al deseleccionar vuelos de specific-search desde flight-management:', error);
-          }
-        });
-      }
+    // ✅ NUEVO: Deseleccionar vuelos en specific-search SOLO si isConsolidadorVuelosActive es true
+    if (this.isConsolidadorVuelosActive && this.specificSearchComponent && this.reservationId) {
+      console.log('🔄 isConsolidadorVuelosActive es true - deseleccionando vuelos en specific-search');
+      // Llamar al método unselectAllFlights del servicio
+      this.specificSearchComponent.flightSearchService.unselectAllFlights(this.reservationId).subscribe({
+        next: () => {
+          console.log('✅ Vuelos de specific-search deseleccionados desde flight-management');
+        },
+        error: (error: any) => {
+          console.error('❌ Error al deseleccionar vuelos de specific-search desde flight-management:', error);
+        }
+      });
+    } else {
+      console.log('ℹ️ isConsolidadorVuelosActive es false - no se deseleccionan vuelos en specific-search');
+    }
     
     // Emitir el cambio al componente padre
     this.flightSelectionChange.emit(flightData);
@@ -335,8 +338,9 @@ export class FlightManagementComponent implements OnInit, OnChanges {
     // Actualizar el vuelo seleccionado
     this.selectedFlight = convertedFlight;
     
-    // ✅ NUEVO: Marcar "Sin Vuelos" en default-flights
-    if (this.defaultFlightsComponent && this.reservationId) {
+    // ✅ NUEVO: Marcar "Sin Vuelos" en default-flights SOLO si isConsolidadorVuelosActive es true
+    if (this.isConsolidadorVuelosActive && this.defaultFlightsComponent && this.reservationId) {
+      console.log('🔄 isConsolidadorVuelosActive es true - marcando "Sin Vuelos" en default-flights');
       // Primero, deseleccionar cualquier vuelo que esté seleccionado en default-flights
       this.defaultFlightsComponent.selectedFlight = null;
       
@@ -350,6 +354,8 @@ export class FlightManagementComponent implements OnInit, OnChanges {
       }).catch((error: any) => {
         console.error('💥 Error al marcar "Sin Vuelos" en default-flights desde flight-management:', error);
       });
+    } else {
+      console.log('ℹ️ isConsolidadorVuelosActive es false - no se marca "Sin Vuelos" en default-flights');
     }
     
     // Emitir el cambio al componente padre con el vuelo convertido

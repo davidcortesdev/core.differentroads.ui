@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 // Nuevas interfaces basadas en el Swagger actualizado
@@ -138,24 +139,12 @@ export interface IPassengerConditions {
 export type FlightSearchResponse = IFlightSearchResultDTO;
 
 // Interfaces para respuestas de operaciones PUT
-export interface FlightSelectionResponse {
-  success: boolean;
-  message?: string;
-  timestamp?: string;
-}
+// ✅ ACTUALIZADO: Según nueva especificación del Swagger
+// Todos los endpoints ahora retornan boolean (true = éxito, false = fallo)
 
-export interface FlightUnselectionResponse {
-  success: boolean;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface FlightUnselectAllResponse {
-  success: boolean;
-  message?: string;
-  timestamp?: string;
-  unselectedCount?: number;
-}
+export type FlightSelectionResponse = boolean;
+export type FlightUnselectionResponse = boolean;
+export type FlightUnselectAllResponse = boolean;
 
 @Injectable({
   providedIn: 'root',
@@ -165,6 +154,11 @@ export class FlightSearchService {
   private readonly DETAILS_API_URL = `${environment.amadeusApiUrl}/FlightSearch`;
 
   constructor(private http: HttpClient) {}
+
+  // ✅ ACTUALIZADO: Todos los métodos de selección/deselección ahora retornan boolean
+  // ✅ selectFlight: retorna boolean (true = éxito, false = fallo)
+  // ✅ unselectFlight: retorna boolean (true = éxito, false = fallo)
+  // ✅ unselectAllFlights: retorna boolean (true = éxito, false = fallo)
 
   /**
    * Realiza una búsqueda de vuelos usando el endpoint /api/FlightSearch
@@ -201,7 +195,7 @@ export class FlightSearchService {
    * Marca un ConsolidatorSearch como seleccionado, desmarcando los demás de la misma reserva
    * @param reservationId ID de la reserva
    * @param consolidatorSearchId ID del ConsolidatorSearch a marcar como seleccionado
-   * @returns Observable con la respuesta de la operación
+   * @returns Observable con la respuesta de la operación (boolean)
    */
   selectFlight(reservationId: number, consolidatorSearchId: number): Observable<FlightSelectionResponse> {
     return this.http.put<FlightSelectionResponse>(
@@ -214,7 +208,7 @@ export class FlightSearchService {
    * Desmarca un ConsolidatorSearch como no seleccionado
    * @param reservationId ID de la reserva
    * @param consolidatorSearchId ID del ConsolidatorSearch a desmarcar
-   * @returns Observable con la respuesta de la operación
+   * @returns Observable con la respuesta de la operación (boolean)
    */
   unselectFlight(reservationId: number, consolidatorSearchId: number): Observable<FlightUnselectionResponse> {
     return this.http.put<FlightUnselectionResponse>(
@@ -226,7 +220,7 @@ export class FlightSearchService {
   /**
    * Desmarca todos los ConsolidatorSearch de una reserva como no seleccionados
    * @param reservationId ID de la reserva
-   * @returns Observable con la respuesta de la operación
+   * @returns Observable con la respuesta de la operación (boolean)
    */
   unselectAllFlights(reservationId: number): Observable<FlightUnselectAllResponse> {
     return this.http.put<FlightUnselectAllResponse>(
@@ -254,6 +248,64 @@ export class FlightSearchService {
   getSelectionStatus(reservationId: number): Observable<boolean> {
     return this.http.get<boolean>(
       `${this.API_URL}/reservation/${reservationId}/consolidator/selection-status`
+    );
+  }
+
+  // ✅ MÉTODOS DE UTILIDAD para manejar respuestas booleanas
+
+  /**
+   * Desmarca todos los vuelos y retorna un Observable<boolean> con manejo de errores
+   * @param reservationId ID de la reserva
+   * @returns Observable<boolean> que siempre retorna true en caso de éxito
+   */
+  unselectAllFlightsSafe(reservationId: number): Observable<boolean> {
+    return this.unselectAllFlights(reservationId).pipe(
+      map((result: FlightUnselectAllResponse) => {
+        console.log('✅ unselectAllFlights exitoso:', result);
+        return result; // Retornar el resultado real del API
+      }),
+      catchError((error: unknown) => {
+        console.error('❌ Error en unselectAllFlights:', error);
+        return of(false); // Retornar false en caso de error
+      })
+    );
+  }
+
+  /**
+   * Marca un vuelo como seleccionado con manejo de errores
+   * @param reservationId ID de la reserva
+   * @param consolidatorSearchId ID del ConsolidatorSearch a marcar
+   * @returns Observable<boolean> que retorna true en caso de éxito
+   */
+  selectFlightSafe(reservationId: number, consolidatorSearchId: number): Observable<boolean> {
+    return this.selectFlight(reservationId, consolidatorSearchId).pipe(
+      map((result: FlightSelectionResponse) => {
+        console.log('✅ selectFlight exitoso para consolidatorSearchId:', consolidatorSearchId, 'resultado:', result);
+        return result; // Retornar el resultado real del API
+      }),
+      catchError((error: unknown) => {
+        console.error('❌ Error en selectFlight:', error);
+        return of(false); // Retornar false en caso de error
+      })
+    );
+  }
+
+  /**
+   * Desmarca un vuelo específico con manejo de errores
+   * @param reservationId ID de la reserva
+   * @param consolidatorSearchId ID del ConsolidatorSearch a desmarcar
+   * @returns Observable<boolean> que retorna true en caso de éxito
+   */
+  unselectFlightSafe(reservationId: number, consolidatorSearchId: number): Observable<boolean> {
+    return this.unselectFlight(reservationId, consolidatorSearchId).pipe(
+      map((result: FlightUnselectionResponse) => {
+        console.log('✅ unselectFlight exitoso para consolidatorSearchId:', consolidatorSearchId, 'resultado:', result);
+        return result; // Retornar el resultado real del API
+      }),
+      catchError((error: unknown) => {
+        console.error('❌ Error en unselectFlight:', error);
+        return of(false); // Retornar false en caso de error
+      })
     );
   }
 } 

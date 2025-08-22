@@ -85,13 +85,8 @@
     padding: 0;
 }
 
-.user-description,
-.pasajero {
+.user-description {
     font-size: 12px;
-}
-
-.pasajero {
-    margin-right: 15px;
 }
 
 .title {
@@ -137,8 +132,7 @@ h3.title {
     margin-top: 15px;
     width: 100%;
 
-    .form-section,
-    .document-section {
+    .form-section {
         margin-bottom: 1rem;
     }
 
@@ -332,11 +326,6 @@ h3.title {
             }
         }
 
-        .p-button-rounded {
-            border-radius: var(--p-button-rounded-border-radius);
-            width: 100%;
-        }
-
         .p-checkbox .p-checkbox-box {
             border: 1px solid var(--background-azul);
             border-radius: 3px;
@@ -381,10 +370,6 @@ h3.title {
                 display: inline-block;
             }
         }
-    }
-
-    .p-accordioncontent-content {
-        padding: 0px;
     }
 }
 
@@ -465,8 +450,7 @@ h3.title {
 }
 
 .loading-indicator,
-.error-message,
-.no-travelers-message {
+.error-message {
     text-align: center;
     padding: 2rem;
 

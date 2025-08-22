@@ -22,6 +22,7 @@ import {
   ReservationTravelerActivityPackService,
   IReservationTravelerActivityPackResponse,
 } from '../../../../../core/services/reservation/reservation-traveler-activity-pack.service';
+import { FlightSearchService } from '../../../../../core/services/flight-search.service';
 
 @Component({
   selector: 'app-default-flights',
@@ -35,6 +36,10 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
   @Input() selectedFlightFromParent: IFlightPackDTO | null = null; // Nuevo input
   @Input() departureActivityPackId: number | null = null; // ✅ NUEVO: ID del paquete del departure
   @Output() flightSelectionChange = new EventEmitter<{
+    selectedFlight: IFlightPackDTO | null;
+    totalPrice: number;
+  }>();
+  @Output() defaultFlightSelected = new EventEmitter<{
     selectedFlight: IFlightPackDTO | null;
     totalPrice: number;
   }>();
@@ -55,7 +60,8 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
     private router: Router,
     private flightsNetService: FlightsNetService,
     private reservationTravelerService: ReservationTravelerService,
-    private reservationTravelerActivityPackService: ReservationTravelerActivityPackService
+    private reservationTravelerActivityPackService: ReservationTravelerActivityPackService,
+    private flightSearchService: FlightSearchService
   ) {}
 
   ngOnInit(): void {
@@ -622,6 +628,12 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       // Marcar como selección interna antes de emitir el cambio
       this.isInternalSelection = true;
 
+      // ✅ NUEVO: Emitir evento específico para default-flight seleccionado
+      this.defaultFlightSelected.emit({
+        selectedFlight: flightPack,
+        totalPrice: basePrice,
+      });
+
       this.flightSelectionChange.emit({
         selectedFlight: flightPack,
         totalPrice: basePrice,
@@ -634,6 +646,18 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
             console.log(
               '✅ Asignaciones guardadas exitosamente desde selectFlight'
             );
+            
+            // ✅ NUEVO: Deseleccionar todos los vuelos en specific-search
+            if (this.reservationId) {
+              this.flightSearchService.unselectAllFlights(this.reservationId).subscribe({
+                next: () => {
+                  console.log('✅ Vuelos de specific-search deseleccionados exitosamente');
+                },
+                error: (error) => {
+                  console.error('❌ Error al deseleccionar vuelos de specific-search:', error);
+                }
+              });
+            }
           } else {
             console.error(
               '❌ Error al guardar asignaciones desde selectFlight'
@@ -990,19 +1014,31 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
           });
         });
 
-        await Promise.all(updatePromises);
-        console.log(
-          '✅ Todas las asignaciones del departure actualizadas exitosamente'
-        );
-      } else {
-        // ✅ MODIFICADO: NO crear nuevas asignaciones si no existen
-        console.log(
-          '⚠️ No se encontraron asignaciones del departure existentes. NO se crearán nuevas asignaciones.'
-        );
-        console.log(
-          'ℹ️ Las asignaciones deben existir previamente en la BD para ser actualizadas.'
-        );
+              await Promise.all(updatePromises);
+      console.log(
+        '✅ Todas las asignaciones del departure actualizadas exitosamente'
+      );
+      
+      // ✅ NUEVO: Deseleccionar todos los vuelos en specific-search después de guardar
+      if (this.reservationId) {
+        this.flightSearchService.unselectAllFlights(this.reservationId).subscribe({
+          next: () => {
+            console.log('✅ Vuelos de specific-search deseleccionados exitosamente después de guardar');
+          },
+          error: (error) => {
+            console.error('❌ Error al deseleccionar vuelos de specific-search después de guardar:', error);
+          }
+        });
       }
+    } else {
+      // ✅ MODIFICADO: NO crear nuevas asignaciones si no existen
+      console.log(
+        '⚠️ No se encontraron asignaciones del departure existentes. NO se crearán nuevas asignaciones.'
+      );
+      console.log(
+        'ℹ️ Las asignaciones deben existir previamente en la BD para ser actualizadas.'
+      );
+    }
 
       // ✅ MODIFICADO: Verificar solo las asignaciones del departure
       console.log(

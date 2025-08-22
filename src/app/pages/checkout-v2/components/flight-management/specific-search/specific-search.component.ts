@@ -33,6 +33,10 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   // Inputs y Outputs
   @Output() filteredFlightsChange = new EventEmitter<any[]>();
   @Output() flightSelectionChange = new EventEmitter<FlightSelectionState>();
+  @Output() specificFlightSelected = new EventEmitter<{
+    selectedFlight: IFlightPackDTO | null;
+    totalPrice: number;
+  }>();
   @Input() flights: Flight[] = [];
   @Input() departureId: number | null = null;
   @Input() reservationId: number | null = null;
@@ -972,6 +976,12 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         });
       }
 
+      // ✅ NUEVO: Emitir evento específico para specific-flight seleccionado
+      this.specificFlightSelected.emit({
+        selectedFlight: flightPack,
+        totalPrice: basePrice,
+      });
+
       this.flightSelectionChange.emit({
         selectedFlight: flightPack,
         totalPrice: basePrice,
@@ -1095,6 +1105,13 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       console.log('⏳ Esperando que se completen todas las asignaciones...');
       await Promise.all(assignmentPromises);
       console.log('✅ Todas las asignaciones creadas exitosamente');
+
+      // ✅ NUEVO: Marcar "Sin Vuelos" en default-flights después de guardar
+      if (this.reservationId) {
+        // En lugar de crear asignaciones duplicadas, solo emitir el evento
+        // El componente padre se encargará de marcar "Sin Vuelos" en default-flights
+        console.log('✅ Vuelo de specific-search guardado, se emitirá evento para marcar "Sin Vuelos" en default-flights');
+      }
 
       return true;
     } catch (error) {

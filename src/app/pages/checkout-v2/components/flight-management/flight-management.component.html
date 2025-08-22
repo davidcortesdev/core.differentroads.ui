@@ -5,7 +5,8 @@
     [reservationId]="reservationId"
     [selectedFlightFromParent]="selectedFlight"
     [departureActivityPackId]="departureActivityPackId"
-    (flightSelectionChange)="onFlightSelectionChange($event)">
+    (flightSelectionChange)="onFlightSelectionChange($event)"
+    (defaultFlightSelected)="onDefaultFlightSelected($event)">
   </app-default-flights>
 </div>
 
@@ -22,10 +23,12 @@
 <div class="specific-search" *ngIf="specificSearchVisible">
   <h4>Búsqueda específica de vuelos</h4>
   <app-specific-search 
+    #specificSearch
     [departureId]="departureId" 
     [reservationId]="reservationId"
     [selectedFlightFromParent]="transformedSelectedFlight"
-    (flightSelectionChange)="onSpecificSearchFlightSelection($event)">
+    (flightSelectionChange)="onSpecificSearchFlightSelection($event)"
+    (specificFlightSelected)="onSpecificFlightSelected($event)">
   </app-specific-search>
 </div>
 

@@ -43,6 +43,9 @@ export class FlightManagementComponent implements OnInit, OnChanges {
   @ViewChild(DefaultFlightsComponent)
   defaultFlightsComponent!: DefaultFlightsComponent;
 
+  @ViewChild('specificSearch')
+  specificSearchComponent!: any;
+
   isConsolidadorVuelosActive: boolean = false;
   loginDialogVisible: boolean = false;
   specificSearchVisible: boolean = false;
@@ -268,6 +271,9 @@ export class FlightManagementComponent implements OnInit, OnChanges {
       );
     }
 
+    // ✅ NUEVO: Actualizar el vuelo seleccionado internamente
+    this.selectedFlight = flightData.selectedFlight;
+
     this.flightSelectionChange.emit(flightData);
     console.log('✅ flight-management: Evento emitido al componente padre');
   }
@@ -281,6 +287,72 @@ export class FlightManagementComponent implements OnInit, OnChanges {
     // Convertir el tipo del FlightSearchService al tipo de FlightsNetService
     const convertedFlight = flightData.selectedFlight ? this.convertFlightSearchToFlightsNet(flightData.selectedFlight) : null;
     
+    this.flightSelectionChange.emit({
+      selectedFlight: convertedFlight,
+      totalPrice: flightData.totalPrice
+    });
+  }
+
+  // ✅ NUEVO: Método para manejar la selección de vuelos desde default-flights
+  onDefaultFlightSelected(flightData: {
+    selectedFlight: IFlightPackDTO | null;
+    totalPrice: number;
+  }): void {
+    console.log('🔄 Vuelo seleccionado desde default-flights:', flightData);
+    console.log('📍 Origen: default-flights');
+    
+    // Actualizar el vuelo seleccionado
+    this.selectedFlight = flightData.selectedFlight;
+    
+          // ✅ NUEVO: Deseleccionar vuelos en specific-search
+      if (this.specificSearchComponent && this.reservationId) {
+        // Llamar al método unselectAllFlights del servicio
+        this.specificSearchComponent.flightSearchService.unselectAllFlights(this.reservationId).subscribe({
+          next: () => {
+            console.log('✅ Vuelos de specific-search deseleccionados desde flight-management');
+          },
+          error: (error: any) => {
+            console.error('❌ Error al deseleccionar vuelos de specific-search desde flight-management:', error);
+          }
+        });
+      }
+    
+    // Emitir el cambio al componente padre
+    this.flightSelectionChange.emit(flightData);
+  }
+
+  // ✅ NUEVO: Método para manejar la selección de vuelos desde specific-search
+  onSpecificFlightSelected(flightData: {
+    selectedFlight: any | null; // Usar any para evitar conflictos de tipos
+    totalPrice: number;
+  }): void {
+    console.log('🔄 Vuelo seleccionado desde specific-search:', flightData);
+    console.log('📍 Origen: specific-search');
+    
+    // Convertir el vuelo al formato de FlightsNetService si existe
+    const convertedFlight = flightData.selectedFlight ? this.convertFlightSearchToFlightsNet(flightData.selectedFlight) : null;
+    
+    // Actualizar el vuelo seleccionado
+    this.selectedFlight = convertedFlight;
+    
+    // ✅ NUEVO: Marcar "Sin Vuelos" en default-flights
+    if (this.defaultFlightsComponent && this.reservationId) {
+      // Primero, deseleccionar cualquier vuelo que esté seleccionado en default-flights
+      this.defaultFlightsComponent.selectedFlight = null;
+      
+      // Luego, guardar el estado "sin vuelo" en la BD
+      this.defaultFlightsComponent.saveFlightAssignments().then((success) => {
+        if (success) {
+          console.log('✅ "Sin Vuelos" marcado en default-flights desde flight-management');
+        } else {
+          console.error('❌ Error al marcar "Sin Vuelos" en default-flights desde flight-management');
+        }
+      }).catch((error: any) => {
+        console.error('💥 Error al marcar "Sin Vuelos" en default-flights desde flight-management:', error);
+      });
+    }
+    
+    // Emitir el cambio al componente padre con el vuelo convertido
     this.flightSelectionChange.emit({
       selectedFlight: convertedFlight,
       totalPrice: flightData.totalPrice

@@ -83,7 +83,7 @@ export class FlightSectionV2Component implements OnChanges {
     });
 
     if (airportCodes.length > 0) {
-      console.log(`🔄 FlightSection: Precargando ciudades para ${airportCodes.length} aeropuertos`);
+      //console.log(`🔄 FlightSection: Precargando ciudades para ${airportCodes.length} aeropuertos`);
       this.airportCityCacheService.preloadAllAirportCities(airportCodes);
     }
   }

@@ -139,13 +139,11 @@ export class AirportCityCacheService {
       return Promise.resolve();
     }
 
-    console.log(`🔄 Precargando ciudades para ${airportCodes.length} aeropuertos únicos`);
-
     // Filtrar solo los aeropuertos que no están en cache
     const uncachedAirports = airportCodes.filter(code => !this.isCityCached(code));
 
     if (uncachedAirports.length === 0) {
-      console.log('✅ Todas las ciudades ya están en cache');
+      //console.log('✅ Todas las ciudades ya están en cache');
       return Promise.resolve();
     }
 
@@ -156,7 +154,7 @@ export class AirportCityCacheService {
 
     // Esperar a que todas las promesas se completen
     return Promise.all(airportPromises).then(() => {
-      console.log('✅ Todas las ciudades de aeropuertos han sido cargadas');
+      //console.log('✅ Todas las ciudades de aeropuertos han sido cargadas');
     }).catch((error) => {
       console.warn('⚠️ Algunas ciudades no se pudieron cargar:', error);
     });
@@ -303,7 +301,7 @@ export class AirportCityCacheService {
                           airportName: airport.name,
                           isLoaded: true
                         });
-                        console.log(`✅ Ciudad encontrada para aeropuerto ${airportIATA}: ${cityName}`);
+                        //console.log(`✅ Ciudad encontrada para aeropuerto ${airportIATA}: ${cityName}`);
                       } else {
                         this.setFallbackCityName(airportIATA, cacheKey, airport.name || airportIATA);
                       }

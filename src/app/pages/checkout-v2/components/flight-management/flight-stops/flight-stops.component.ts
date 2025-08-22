@@ -129,10 +129,10 @@ export class FlightStopsComponent implements OnInit {
     });
 
     if (airportCodes.length > 0) {
-      console.log(`🔄 FlightStops: Precargando ciudades para ${airportCodes.length} aeropuertos`);
+      //console.log(`🔄 FlightStops: Precargando ciudades para ${airportCodes.length} aeropuertos`);
       try {
         await this.airportCityCacheService.preloadAllAirportCities(airportCodes);
-        console.log('✅ FlightStops: Ciudades precargadas exitosamente');
+        //console.log('✅ FlightStops: Ciudades precargadas exitosamente');
       } catch (error) {
         console.warn('⚠️ FlightStops: Error al precargar ciudades:', error);
       }
@@ -191,13 +191,13 @@ export class FlightStopsComponent implements OnInit {
   private transformSegmentsWithCityNames(segments: any[]): any[] {
     if (!segments || segments.length === 0) return [];
     
-    console.log('🔄 FlightStops: Transformando segmentos con nombres de ciudades');
+    //console.log('🔄 FlightStops: Transformando segmentos con nombres de ciudades');
     
     const transformedSegments = segments.map(segment => {
       const departureCity = this.airportCityCacheService.getCityNameFromCache(segment.departureIata) || segment.departureIata;
       const arrivalCity = this.airportCityCacheService.getCityNameFromCache(segment.arrivalIata) || segment.arrivalIata;
       
-      console.log(`📍 Segmento: ${segment.departureIata} (${departureCity}) → ${segment.arrivalIata} (${arrivalCity})`);
+      //console.log(`📍 Segmento: ${segment.departureIata} (${departureCity}) → ${segment.arrivalIata} (${arrivalCity})`);
       
       return {
         ...segment,
@@ -206,8 +206,8 @@ export class FlightStopsComponent implements OnInit {
       };
     });
     
-    console.log('✅ FlightStops: Segmentos transformados:', transformedSegments);
-    return transformedSegments;
+    //console.log('✅ FlightStops: Segmentos transformados:', transformedSegments);
+        return transformedSegments;
   }
 
   // Método para obtener aerolíneas (solo para el servicio actual)

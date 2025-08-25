@@ -2829,33 +2829,26 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
-   * ✅ MÉTODO NUEVO: Continuar con la selección de "Sin Vuelos" después de deseleccionar vuelos de specific-search
+   * ✅ MÉTODO SIMPLIFICADO: Continuar con la selección de "Sin Vuelos"
    */
   private continueWithFlightlessSelection(flightlessPack: IFlightPackDTO): void {
     console.log('🔄 Continuando con selección de "Sin Vuelos"');
     console.log('📦 Paquete sin vuelos:', flightlessPack);
     
-    // ✅ NUEVO: Actualizar el selectedFlight para que default-flights sepa que se seleccionó "Sin Vuelos"
+    // Actualizar el selectedFlight
     this.selectedFlight = flightlessPack;
     console.log('✅ selectedFlight actualizado con el paquete sin vuelos:', this.selectedFlight);
     
-    // ✅ NUEVO: El componente default-flights se actualizará automáticamente cuando cambie selectedFlight
-    // y guardará la asignación correspondiente del paquete "Sin Vuelos"
-    console.log('🔄 El componente default-flights se actualizará automáticamente con el nuevo selectedFlight');
-    
-    // Usar el mecanismo existente de selección de vuelos
-    // Esto simula exactamente lo que pasa cuando se selecciona un vuelo normal
-    console.log('🔄 Llamando onFlightSelectionChange...');
+    // Llamar a onFlightSelectionChange para actualizar el resumen
     this.onFlightSelectionChange({
       selectedFlight: flightlessPack,
       totalPrice: 0, // precio 0 para opción sin vuelos
     });
 
-    // ✅ NUEVO: Forzar la actualización del resumen para reflejar la selección de "Sin Vuelos"
+    // Actualizar el resumen
     if (this.travelerSelector && this.travelerSelector.travelersNumbers) {
       this.updateOrderSummary(this.travelerSelector.travelersNumbers);
     } else {
-      // Usar datos básicos si no hay travelerSelector
       const basicTravelers = {
         adults: Math.max(1, this.totalPassengers),
         childs: 0,

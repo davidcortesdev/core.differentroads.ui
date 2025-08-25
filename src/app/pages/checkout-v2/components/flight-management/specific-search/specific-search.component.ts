@@ -927,6 +927,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     console.log('📍 Origen: specific-search (interno)');
 
     if (this.selectedFlight === flightPack) {
+      // Deseleccionar vuelo
       console.log('🔄 Deseleccionando vuelo actual');
       this.selectedFlight = null;
       
@@ -948,9 +949,16 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         source: 'specific', 
         packId: null 
       });
+
+      this.specificFlightSelected.emit({
+        selectedFlight: null,
+        totalPrice: 0,
+      });
     } else {
+      // Seleccionar nuevo vuelo
       console.log('✅ Seleccionando nuevo vuelo');
       this.selectedFlight = flightPack;
+      
       const basePrice =
         flightPack.ageGroupPrices?.find(
           (price) => price.ageGroupId === this.travelers[0]?.ageGroupId
@@ -962,22 +970,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       console.log('👥 Total de viajeros:', totalTravelers);
       console.log('💰 Precio total:', totalPrice);
 
-      // Marcar como selección interna antes de emitir el cambio
-      this.isInternalSelection = true;
-
-      // Seleccionar usando el FlightSearchService
-      if (this.reservationId) {
-        this.flightSearchService.selectFlight(this.reservationId, flightPack.id).subscribe({
-          next: () => {
-            console.log('✅ Vuelo seleccionado exitosamente en el servicio');
-          },
-          error: (error) => {
-            console.error('❌ Error al seleccionar vuelo en el servicio:', error);
-          }
-        });
-      }
-
-      // ✅ NUEVO: Emitir evento específico para specific-flight seleccionado
+      // Emitir eventos
       this.specificFlightSelected.emit({
         selectedFlight: flightPack,
         totalPrice: basePrice,
@@ -990,25 +983,189 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         packId: flightPack.id
       });
 
-      console.log('💾 Guardando asignaciones de vuelo...');
-      this.saveFlightAssignments()
-        .then((success: boolean) => {
-          if (success) {
-            console.log(
-              '✅ Asignaciones guardadas exitosamente desde selectFlightFromFlightItem'
-            );
-          } else {
-            console.error(
-              '❌ Error al guardar asignaciones desde selectFlightFromFlightItem'
-            );
-          }
-        })
-        .catch((error: any) => {
-          console.error(
-            '💥 Error al guardar asignaciones desde selectFlightFromFlightItem:',
-            error
-          );
+      // Buscar el flightPack "sin vuelos" y asignarlo a todos los viajeros
+      console.log('💾 Buscando flightPack "sin vuelos" para asignar...');
+      this.findAndAssignNoFlightOption();
+    }
+  }
+
+  /**
+   * ✅ MÉTODO NUEVO: Buscar el flightPack "sin vuelos" y asignarlo a todos los viajeros
+   */
+  private async findAndAssignNoFlightOption(): Promise<void> {
+    if (!this.reservationId) {
+      console.log('❌ No hay reservationId, no se puede asignar');
+      return;
+    }
+
+    try {
+      // Obtener todos los viajeros de la reserva
+      const travelers = await new Promise<IReservationTravelerResponse[]>(
+        (resolve, reject) => {
+          this.reservationTravelerService
+            .getAll({ reservationId: this.reservationId! })
+            .subscribe({
+              next: (travelers) => {
+                console.log('✅ Viajeros obtenidos:', travelers);
+                resolve(travelers);
+              },
+              error: (error) => {
+                console.error('❌ Error al obtener viajeros:', error);
+                reject(error);
+              },
+            });
+        }
+      );
+
+      if (travelers.length === 0) {
+        console.log('⚠️ No hay viajeros para asignar');
+        return;
+      }
+
+      // Buscar el flightPack "sin vuelos" en flightOffersRaw
+      const noFlightPack = this.flightOffersRaw?.find((pack: IFlightPackDTO) => {
+        const name = pack.name?.toLowerCase() || '';
+        const description = pack.description?.toLowerCase() || '';
+        return (
+          name.includes('sin vuelos') ||
+          description.includes('sin vuelos') ||
+          name.includes('pack sin vuelos') ||
+          description.includes('pack sin vuelos')
+        );
+      });
+
+      if (!noFlightPack) {
+        console.log('⚠️ No se encontró flightPack "sin vuelos"');
+        return;
+      }
+
+      console.log('✅ FlightPack "sin vuelos" encontrado:', noFlightPack);
+
+      // Para cada viajero, buscar y actualizar/crear asignaciones
+      const updatePromises = travelers.map((traveler) => {
+        return new Promise<boolean>((resolve, reject) => {
+          this.reservationTravelerActivityPackService
+            .getByReservationTraveler(traveler.id)
+            .subscribe({
+              next: (assignments) => {
+                // Filtrar por flightPacks (activityPackId > 0)
+                const flightPackAssignments = assignments.filter(
+                  (a) => a.activityPackId > 0
+                );
+
+                if (flightPackAssignments.length > 0) {
+                  // Actualizar la asignación más reciente
+                  const mostRecentAssignment = flightPackAssignments.sort(
+                    (a, b) => b.id - a.id
+                  )[0];
+
+                  console.log(
+                    `🔄 Actualizando asignación ${mostRecentAssignment.id} para viajero ${traveler.id}`
+                  );
+                  console.log(
+                    `🔄 Cambio: ${mostRecentAssignment.activityPackId} -> ${noFlightPack.id}`
+                  );
+
+                  const updateData = {
+                    id: mostRecentAssignment.id,
+                    reservationTravelerId: traveler.id,
+                    activityPackId: noFlightPack.id,
+                    updatedAt: new Date().toISOString(),
+                  };
+
+                  this.reservationTravelerActivityPackService
+                    .update(mostRecentAssignment.id, updateData)
+                    .subscribe({
+                      next: (updated) => {
+                        if (updated) {
+                          console.log(
+                            `✅ Asignación actualizada para viajero ${traveler.id}`
+                          );
+                          resolve(true);
+                        } else {
+                          console.error(
+                            `❌ Error al actualizar asignación para viajero ${traveler.id}`
+                          );
+                          resolve(false);
+                        }
+                      },
+                      error: (error) => {
+                        console.error(
+                          `❌ Error al actualizar asignación para viajero ${traveler.id}:`,
+                          error
+                        );
+                        reject(error);
+                      },
+                    });
+                } else {
+                  // Crear nueva asignación si no existe
+                  console.log(
+                    `➕ Creando nueva asignación para viajero ${traveler.id}`
+                  );
+
+                  const newAssignment = {
+                    id: 0,
+                    reservationTravelerId: traveler.id,
+                    activityPackId: noFlightPack.id,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  };
+
+                  this.reservationTravelerActivityPackService
+                    .create(newAssignment)
+                    .subscribe({
+                      next: (created) => {
+                        if (created) {
+                          console.log(
+                            `✅ Nueva asignación creada para viajero ${traveler.id}`
+                          );
+                          resolve(true);
+                        } else {
+                          console.error(
+                            `❌ Error al crear asignación para viajero ${traveler.id}`
+                          );
+                          resolve(false);
+                        }
+                      },
+                      error: (error) => {
+                        console.error(
+                          `❌ Error al crear asignación para viajero ${traveler.id}:`,
+                          error
+                        );
+                        reject(error);
+                      },
+                    });
+                }
+              },
+              error: (error) => {
+                console.error(
+                  `❌ Error al obtener asignaciones para viajero ${traveler.id}:`,
+                  error
+                );
+                reject(error);
+              },
+            });
         });
+      });
+
+      // Esperar a que se completen todas las actualizaciones
+      await Promise.all(updatePromises);
+      console.log('✅ Todas las asignaciones "sin vuelos" procesadas exitosamente');
+
+      // Llamar a select de specific-search para guardar la selección
+      if (this.reservationId && this.selectedFlight) {
+        console.log('🔄 Llamando a select de specific-search...');
+        this.flightSearchService.selectFlight(this.reservationId, this.selectedFlight.id).subscribe({
+          next: () => {
+            console.log('✅ Vuelo seleccionado en specific-search exitosamente');
+          },
+          error: (error) => {
+            console.error('❌ Error al seleccionar vuelo en specific-search:', error);
+          },
+        });
+      }
+    } catch (error) {
+      console.error('💥 Error en findAndAssignNoFlightOption:', error);
     }
   }
 

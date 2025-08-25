@@ -85,13 +85,9 @@ export class ReviewsComponent implements OnInit {
   travelerData: Traveler | null = null;
   isSubmitting: boolean = false;
 
-  // Propiedades para manejo de imágenes
-  uploadedImages: string[] = [];
-  showImageCropper: boolean = false;
-  uploadErrorMessage: string = '';
-
   // Configuración de imágenes
   readonly MAX_IMAGES = 40;
+  uploadedImages: string[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -416,25 +412,11 @@ export class ReviewsComponent implements OnInit {
   // ==================== MÉTODOS PARA MANEJO DE IMÁGENES ====================
 
   /**
-   * Muestra el componente de recorte de imagen
-   */
-  showImageUploader(): void {
-    if (this.uploadedImages.length >= this.MAX_IMAGES) {
-      this.uploadErrorMessage = `Solo puedes subir un máximo de ${this.MAX_IMAGES} imágenes.`;
-      setTimeout(() => (this.uploadErrorMessage = ''), 5000);
-      return;
-    }
-    this.uploadErrorMessage = '';
-    this.showImageCropper = true;
-  }
-
-  /**
    * Maneja la imagen recortada y subida
    */
   onImageCropped(imageUrl: string): void {
     if (imageUrl) {
       this.uploadedImages.push(imageUrl);
-      this.showImageCropper = false;
       console.log('Imagen subida:', imageUrl);
       console.log('Total de imágenes:', this.uploadedImages.length);
     }
@@ -448,25 +430,9 @@ export class ReviewsComponent implements OnInit {
   }
 
   /**
-   * Cancela la subida de imagen
-   */
-  cancelImageUpload(): void {
-    this.showImageCropper = false;
-    this.uploadErrorMessage = '';
-  }
-
-  /**
    * Maneja errores de subida de imagen
    */
   onUploadError(errorMessage: string): void {
-    this.uploadErrorMessage = errorMessage;
-    setTimeout(() => (this.uploadErrorMessage = ''), 5000);
-  }
-
-  /**
-   * Verifica si se pueden subir más imágenes
-   */
-  canUploadMoreImages(): boolean {
-    return this.uploadedImages.length < this.MAX_IMAGES;
+    console.error('Error al subir imagen:', errorMessage);
   }
 }

@@ -10,7 +10,7 @@
 .upload-section {
   text-align: center;
   padding: 2rem 1rem;
-  
+
   .upload-hint {
     display: block;
     margin-top: 0.5rem;
@@ -78,6 +78,24 @@
   font-size: 1rem;
 }
 
+// Personalizar el botón "Recortar y subir" con el mismo color que "Enviar opinión"
+::ng-deep .p-button-success.p-button-fixed-width {
+  background-color: var(--primary-color-500) !important;
+  border-color: var(--primary-color-500) !important;
+  color: white !important;
+
+  &:hover {
+    background-color: var(--primary-color-600) !important;
+    border-color: var(--primary-color-600) !important;
+  }
+
+  &:focus {
+    background-color: var(--primary-color-600) !important;
+    border-color: var(--primary-color-600) !important;
+    box-shadow: 0 0 0 2px rgba(var(--primary-color-500), 0.2) !important;
+  }
+}
+
 .image-edit-container {
   display: flex;
   flex-direction: column;
@@ -113,7 +131,7 @@
   min-width: unset;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   background-color: rgba(255, 255, 255, 0.9);
-  
+
   &:hover {
     background-color: #dc3545;
     color: white;
@@ -128,7 +146,7 @@
   padding: 3rem 2rem;
   color: #6c757d;
   text-align: center;
-  
+
   p {
     margin: 0;
     font-weight: 500;
@@ -142,17 +160,17 @@
   .cropper-section {
     padding: 1rem;
   }
-  
+
   .cropper-controls {
     flex-direction: column;
     width: 100%;
   }
-  
+
   .cropper-controls-left {
     width: 100%;
     justify-content: center;
   }
-  
+
   .p-button-fixed-width {
     width: 100%;
     max-width: 200px;

@@ -272,90 +272,14 @@
     <textarea id="comentario" #comentarioInput style="resize: none;"></textarea>
   </div>
 
-  <div class="review-text">
-    <label for="nombre" class="input-label">
-      <i class="pi pi-camera input-icon"></i> ¿Quieres compartir tu viaje con nosotros?
-    </label>
-    
-    <div class="photo-upload-section">
-      <!-- Botón de carga -->
-      <div class="upload-button-container">
-        <button class="upload-button" (click)="showImageUploader()" type="button" [disabled]="!canUploadMoreImages()">
-          <span *ngIf="canUploadMoreImages()">Cargar fotos <i class="pi pi-upload"></i></span>
-          <span *ngIf="!canUploadMoreImages()">Máximo {{MAX_IMAGES}} fotos <i class="pi pi-check"></i></span>
-        </button>
-      </div>
-      <div class="upload-info-container">
-        <small class="upload-info">Máximo {{MAX_IMAGES}} fotos, 8MB cada una</small>
-      </div>
-
-      <!-- Mensaje de error -->
-      <div class="error-message" *ngIf="uploadErrorMessage">
-        <i class="pi pi-exclamation-triangle"></i>
-        {{uploadErrorMessage}}
-      </div>
-    </div>
-
-    <!-- Componente de recorte de imagen -->
-    <div *ngIf="showImageCropper" class="image-cropper-modal">
-      <div class="modal-overlay" (click)="cancelImageUpload()"></div>
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>Subir imagen</h3>
-          <button type="button" class="close-btn" (click)="cancelImageUpload()">
-            <i class="pi pi-times"></i>
-          </button>
-        </div>
-        <app-image-cropper 
-          [aspectRatio]="16/9"
-          (imageCropped)="onImageCropped($event)"
-          (uploadError)="onUploadError($event)">
-        </app-image-cropper>
-      </div>
-    </div>
-  </div>
-
-  <!-- Carrusel de imágenes subidas - Completamente separado, debajo de todo -->
-  <div class="uploaded-images-carousel" *ngIf="uploadedImages.length > 0">
-    <div class="carousel-header">
-      <span class="images-count">{{uploadedImages.length}} foto<span *ngIf="uploadedImages.length !== 1">s</span> subida<span *ngIf="uploadedImages.length !== 1">s</span></span>
-    </div>
-    <p-carousel 
-      [value]="uploadedImages" 
-      [numVisible]="uploadedImages.length <= 5 ? uploadedImages.length : 5" 
-      [numScroll]="1"
-      [circular]="false"
-      [autoplayInterval]="0"
-      [showNavigators]="uploadedImages.length > 5"
-      [showIndicators]="false"
-      [responsiveOptions]="[
-        {
-          breakpoint: '1200px',
-          numVisible: uploadedImages.length <= 4 ? uploadedImages.length : 4,
-          numScroll: 1
-        },
-        {
-          breakpoint: '768px',
-          numVisible: uploadedImages.length <= 3 ? uploadedImages.length : 3,
-          numScroll: 1
-        },
-        {
-          breakpoint: '560px',
-          numVisible: uploadedImages.length <= 2 ? uploadedImages.length : 2,
-          numScroll: 1
-        }
-      ]"
-      class="photos-carousel">
-      <ng-template let-image let-i="index" pTemplate="item">
-        <div class="carousel-photo-item">
-          <img [src]="image" alt="Foto {{i + 1}}" class="carousel-photo">
-          <button type="button" class="remove-photo-btn" (click)="removeImage(i)" title="Eliminar foto">
-            <i class="pi pi-times"></i>
-          </button>
-        </div>
-      </ng-template>
-    </p-carousel>
-  </div>
+  <!-- Componente de carga de imágenes -->
+  <app-image-upload-modal
+    [uploadedImages]="uploadedImages"
+    [maxImages]="MAX_IMAGES"
+    (imageCropped)="onImageCropped($event)"
+    (uploadError)="onUploadError($event)"
+    (removeImage)="removeImage($event)">
+  </app-image-upload-modal>
 
   <div class="submit-review-container">
     <button type="button" class="submit-review" (click)="submitReview()" [disabled]="isSubmitting">

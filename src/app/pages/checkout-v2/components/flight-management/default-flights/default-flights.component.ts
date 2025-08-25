@@ -512,6 +512,30 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
     }
   }
 
+  // ✅ MÉTODO NUEVO: Deseleccionar vuelo del departure sin guardar en BD (para sincronización con specific-search)
+  deselectDepartureFlightWithoutSaving(): void {
+    console.log('🔄 deselectDepartureFlightWithoutSaving llamado');
+    console.log('📦 departureActivityPackId:', this.departureActivityPackId);
+    console.log('🔄 selectedFlight actual:', this.selectedFlight);
+    
+    if (this.selectedFlight && this.selectedFlight.id === this.departureActivityPackId) {
+      console.log('✅ Deseleccionando vuelo del departure sin guardar en BD');
+      
+      // Marcar como selección interna para evitar guardar automáticamente
+      this.isInternalSelection = true;
+      
+      // Deseleccionar el vuelo
+      this.selectedFlight = null;
+      
+      // Emitir el cambio
+      this.flightSelectionChange.emit({ selectedFlight: null, totalPrice: 0 });
+      
+      console.log('✅ Vuelo del departure deseleccionado, opción "Sin Vuelos" visible pero no seleccionada');
+    } else {
+      console.log('ℹ️ No hay vuelo del departure seleccionado para deseleccionar');
+    }
+  }
+
   getTravelers(): void {
     if (!this.reservationId) {
       return;
@@ -595,18 +619,26 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       // ✅ EMITIR "Sin Vuelos" con precio 0 cuando se deselecciona
       this.flightSelectionChange.emit({ selectedFlight: null, totalPrice: 0 });
 
-      // ✅ GUARDAR el estado "sin vuelo" en la BD
-      this.saveFlightAssignments()
-        .then((success) => {
-          if (success) {
-            console.log('✅ Estado "sin vuelo" guardado exitosamente');
-          } else {
-            console.error('❌ Error al guardar estado "sin vuelo"');
-          }
-        })
-        .catch((error) => {
-          console.error('💥 Error al guardar estado "sin vuelo":', error);
-        });
+      // ✅ MODIFICADO: Solo guardar el estado "sin vuelo" si es una deselección explícita del usuario
+      // (no cuando se deselecciona automáticamente desde specific-search)
+      if (this.isInternalSelection === false) {
+        console.log('💾 Usuario deseleccionó explícitamente - guardando estado "sin vuelo" en la BD');
+        this.saveFlightAssignments()
+          .then((success) => {
+            if (success) {
+              console.log('✅ Estado "sin vuelo" guardado exitosamente');
+            } else {
+              console.error('❌ Error al guardar estado "sin vuelo"');
+            }
+          })
+          .catch((error) => {
+            console.error('💥 Error al guardar estado "sin vuelo":', error);
+          });
+      } else {
+        console.log('ℹ️ Deselección automática desde specific-search - NO se guarda en BD automáticamente');
+        // Resetear la bandera para futuras selecciones
+        this.isInternalSelection = false;
+      }
     } else {
       console.log('✅ Seleccionando nuevo vuelo');
       this.selectedFlight = flightPack;

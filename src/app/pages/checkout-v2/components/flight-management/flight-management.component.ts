@@ -338,24 +338,16 @@ export class FlightManagementComponent implements OnInit, OnChanges {
     // Actualizar el vuelo seleccionado
     this.selectedFlight = convertedFlight;
     
-    // ✅ NUEVO: Marcar "Sin Vuelos" en default-flights SOLO si isConsolidadorVuelosActive es true
+    // ✅ MODIFICADO: NO marcar "Sin Vuelos" automáticamente, solo deseleccionar el vuelo del departure
     if (this.isConsolidadorVuelosActive && this.defaultFlightsComponent && this.reservationId) {
-      console.log('🔄 isConsolidadorVuelosActive es true - marcando "Sin Vuelos" en default-flights');
-      // Primero, deseleccionar cualquier vuelo que esté seleccionado en default-flights
-      this.defaultFlightsComponent.selectedFlight = null;
+      console.log('🔄 isConsolidadorVuelosActive es true - deseleccionando vuelo del departure en default-flights');
       
-      // Luego, guardar el estado "sin vuelo" en la BD
-      this.defaultFlightsComponent.saveFlightAssignments().then((success) => {
-        if (success) {
-          console.log('✅ "Sin Vuelos" marcado en default-flights desde flight-management');
-        } else {
-          console.error('❌ Error al marcar "Sin Vuelos" en default-flights desde flight-management');
-        }
-      }).catch((error: any) => {
-        console.error('💥 Error al marcar "Sin Vuelos" en default-flights desde flight-management:', error);
-      });
+      // Usar el nuevo método que deselecciona sin guardar en BD
+      this.defaultFlightsComponent.deselectDepartureFlightWithoutSaving();
+      
+      console.log('✅ Vuelo del departure deseleccionado en default-flights, opción "Sin Vuelos" sigue visible');
     } else {
-      console.log('ℹ️ isConsolidadorVuelosActive es false - no se marca "Sin Vuelos" en default-flights');
+      console.log('ℹ️ isConsolidadorVuelosActive es false - no se deselecciona vuelo del departure en default-flights');
     }
     
     // Emitir el cambio al componente padre con el vuelo convertido

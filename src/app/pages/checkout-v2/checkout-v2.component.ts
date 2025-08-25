@@ -1013,27 +1013,21 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * Método para verificar si hay vuelos disponibles
+   * ✅ MODIFICADO: Ahora verifica si hay flightPacks disponibles en default-flights
+   * para determinar si mostrar la opción "Sin Vuelos"
    */
   private checkIfFlightsAvailable(): boolean {
-    // Si no hay vuelo seleccionado, verificar si hay vuelos en el sistema
-    if (!this.selectedFlight) {
-      // Aquí podrías verificar si hay vuelos disponibles en el sistema
-      // Por ahora, asumimos que hay vuelos disponibles si no hay uno seleccionado
+    // ✅ NUEVA LÓGICA: Mostrar la opción "Sin Vuelos" solo cuando hay flightPacks disponibles
+    // Esto asegura que la opción esté disponible cuando realmente hay vuelos en el sistema
+    
+    // Verificar si hay flightPacks disponibles
+    if (this.availableFlights && this.availableFlights.length > 0) {
+      console.log('✅ Hay flightPacks disponibles - mostrando opción "Sin Vuelos"');
       return true;
     }
-
-    // Verificar si el name o description contienen "sin vuelos" o "pack sin vuelos"
-    const name = this.selectedFlight.name?.toLowerCase() || '';
-    const description = this.selectedFlight.description?.toLowerCase() || '';
-
-    const isFlightlessOption =
-      name.includes('sin vuelos') ||
-      description.includes('sin vuelos') ||
-      name.includes('pack sin vuelos') ||
-      description.includes('pack sin vuelos');
-
-    // Si es una opción sin vuelos, entonces SÍ hay opción sin vuelos (mostrar botón)
-    return isFlightlessOption;
+    
+    console.log('❌ No hay flightPacks disponibles - ocultando opción "Sin Vuelos"');
+    return false;
   }
 
   /**
@@ -2779,17 +2773,33 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             flightlessPack.description
           );
 
-          // Usar el mecanismo existente de selección de vuelos
-          // Esto simula exactamente lo que pasa cuando se selecciona un vuelo normal
-          console.log('🔄 Llamando onFlightSelectionChange...');
-          this.onFlightSelectionChange({
-            selectedFlight: flightlessPack,
-            totalPrice: 0, // precio 0 para opción sin vuelos
-          });
-
-          // Continuar al siguiente paso
-          console.log('➡️ Continuando al siguiente paso...');
-          this.onActiveIndexChange(2);
+          // ✅ NUEVO: Deseleccionar cualquier vuelo que esté seleccionado en specific-search
+          if (this.reservationId) {
+            console.log('🔄 Deseleccionando vuelos de specific-search antes de seleccionar "Sin Vuelos"');
+            
+            // Importar y usar el FlightSearchService para deseleccionar vuelos
+            import('../../core/services/flight-search.service').then(({ FlightSearchService }) => {
+              const flightSearchService = new FlightSearchService(this.http);
+              
+              flightSearchService.unselectAllFlights(this.reservationId!).subscribe({
+                next: () => {
+                  console.log('✅ Vuelos de specific-search deseleccionados exitosamente');
+                  
+                  // Continuar con la selección de "Sin Vuelos"
+                  this.continueWithFlightlessSelection(flightlessPack);
+                },
+                error: (error) => {
+                  console.error('❌ Error al deseleccionar vuelos de specific-search:', error);
+                  
+                  // Continuar de todas formas
+                  this.continueWithFlightlessSelection(flightlessPack);
+                }
+              });
+            });
+          } else {
+            // Si no hay reservationId, continuar directamente
+            this.continueWithFlightlessSelection(flightlessPack);
+          }
         } else {
           console.error('❌ No se encontró paquete sin vuelos disponible');
           console.log(
@@ -2816,6 +2826,47 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         error instanceof Error ? error.stack : 'No stack trace available'
       );
     }
+  }
+
+  /**
+   * ✅ MÉTODO NUEVO: Continuar con la selección de "Sin Vuelos" después de deseleccionar vuelos de specific-search
+   */
+  private continueWithFlightlessSelection(flightlessPack: IFlightPackDTO): void {
+    console.log('🔄 Continuando con selección de "Sin Vuelos"');
+    console.log('📦 Paquete sin vuelos:', flightlessPack);
+    
+    // ✅ NUEVO: Actualizar el selectedFlight para que default-flights sepa que se seleccionó "Sin Vuelos"
+    this.selectedFlight = flightlessPack;
+    console.log('✅ selectedFlight actualizado con el paquete sin vuelos:', this.selectedFlight);
+    
+    // ✅ NUEVO: El componente default-flights se actualizará automáticamente cuando cambie selectedFlight
+    // y guardará la asignación correspondiente del paquete "Sin Vuelos"
+    console.log('🔄 El componente default-flights se actualizará automáticamente con el nuevo selectedFlight');
+    
+    // Usar el mecanismo existente de selección de vuelos
+    // Esto simula exactamente lo que pasa cuando se selecciona un vuelo normal
+    console.log('🔄 Llamando onFlightSelectionChange...');
+    this.onFlightSelectionChange({
+      selectedFlight: flightlessPack,
+      totalPrice: 0, // precio 0 para opción sin vuelos
+    });
+
+    // ✅ NUEVO: Forzar la actualización del resumen para reflejar la selección de "Sin Vuelos"
+    if (this.travelerSelector && this.travelerSelector.travelersNumbers) {
+      this.updateOrderSummary(this.travelerSelector.travelersNumbers);
+    } else {
+      // Usar datos básicos si no hay travelerSelector
+      const basicTravelers = {
+        adults: Math.max(1, this.totalPassengers),
+        childs: 0,
+        babies: 0,
+      };
+      this.updateOrderSummary(basicTravelers);
+    }
+
+    // Continuar al siguiente paso
+    console.log('➡️ Continuando al siguiente paso...');
+    this.onActiveIndexChange(2);
   }
 
   closeLoginModal(): void {

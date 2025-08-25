@@ -3,9 +3,17 @@ import { ActivatedRoute } from '@angular/router';
 import { ReviewsService } from '../../core/services/reviews.service';
 import { PeriodsService } from '../../core/services/periods.service';
 import { DatePipe } from '@angular/common';
-import { TourFilter, TourNetService } from '../../core/services/tourNet.service';
+import {
+  TourFilter,
+  TourNetService,
+} from '../../core/services/tourNet.service';
 import { switchMap, take, of } from 'rxjs';
-import { TravelersNetService, Traveler } from '../../core/services/travelersNet.service';
+import {
+  TravelersNetService,
+  Traveler,
+} from '../../core/services/travelersNet.service';
+import { CloudinaryService } from '../../core/services/cloudinary.service';
+import { CldImage } from '../../shared/models/cloudinary/cld-image.model';
 
 interface ReviewPayload {
   text: string;
@@ -23,16 +31,23 @@ interface ReviewPayload {
   departureId: number;
   externalId: string;
   reviewDate: string;
+  // Añadimos campos para imágenes
+  images?: string[];
 }
 
-type RatingCategory = 'accommodationRating' |'tripRating'|'activitiesRating' | 'destinationRating' | 'guideRating' | 'priceQualityRating';
+type RatingCategory =
+  | 'accommodationRating'
+  | 'tripRating'
+  | 'activitiesRating'
+  | 'destinationRating'
+  | 'guideRating'
+  | 'priceQualityRating';
 
 interface TripInfo {
   title: string;
   date: string;
   tourId?: number;
   departureId?: number;
-
 }
 
 interface Period {
@@ -41,14 +56,15 @@ interface Period {
 
 @Component({
   selector: 'app-reviews',
-  standalone: false, 
+  standalone: false,
   templateUrl: './reviews.component.html',
   styleUrl: './reviews.component.scss',
 })
 export class ReviewsComponent implements OnInit {
   @ViewChild('nombreInput') nombreInputRef!: ElementRef<HTMLInputElement>;
   @ViewChild('emailInput') emailInputRef!: ElementRef<HTMLInputElement>;
-  @ViewChild('comentarioInput') comentarioInputRef!: ElementRef<HTMLTextAreaElement>; 
+  @ViewChild('comentarioInput')
+  comentarioInputRef!: ElementRef<HTMLTextAreaElement>;
 
   ratings: { [key in RatingCategory]: number } = {
     accommodationRating: 0,
@@ -56,12 +72,12 @@ export class ReviewsComponent implements OnInit {
     destinationRating: 0,
     guideRating: 0,
     priceQualityRating: 0,
-    tripRating: 0
+    tripRating: 0,
   };
 
   tripInfo: TripInfo = {
     title: 'Cargando...',
-    date: 'Cargando...'
+    date: 'Cargando...',
   };
   formattedDate: string = '';
   periodExternalId: string = '';
@@ -69,27 +85,36 @@ export class ReviewsComponent implements OnInit {
   travelerData: Traveler | null = null;
   isSubmitting: boolean = false;
 
+  // Propiedades para manejo de imágenes
+  uploadedImages: string[] = [];
+  showImageCropper: boolean = false;
+  uploadErrorMessage: string = '';
+
+  // Configuración de imágenes
+  readonly MAX_IMAGES = 40;
+
   constructor(
     private route: ActivatedRoute,
     private periodsService: PeriodsService,
     private reviewsService: ReviewsService,
     private datePipe: DatePipe,
     private tourNetService: TourNetService,
-    private travelersNetService: TravelersNetService
+    private travelersNetService: TravelersNetService,
+    private cloudinaryService: CloudinaryService
   ) {}
 
-  rawDepartureInfo: any = null; 
+  rawDepartureInfo: any = null;
 
   ngOnInit(): void {
-    this.route.params.subscribe(params => {
+    this.route.params.subscribe((params) => {
       if (params['id']) {
         this.periodExternalId = params['id'];
         this.loadTripInfoFromPeriod(this.periodExternalId);
         this.getTourIdFromExternalId(this.periodExternalId);
         this.loadRawDepartureInfo(this.periodExternalId);
       }
-      
-      this.route.queryParams.subscribe(queryParams => {
+
+      this.route.queryParams.subscribe((queryParams) => {
         if (queryParams['travelerId']) {
           this.travelerId = parseInt(queryParams['travelerId'], 10);
           this.checkTravelerExists(this.travelerId);
@@ -113,7 +138,6 @@ export class ReviewsComponent implements OnInit {
         if (this.nombreInputRef && this.emailInputRef) {
           this.nombreInputRef.nativeElement.value = traveler.name || '';
           this.emailInputRef.nativeElement.value = traveler.email || '';
-         
         } else {
           setTimeout(() => {
             if (this.nombreInputRef && this.emailInputRef) {
@@ -125,9 +149,10 @@ export class ReviewsComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error al verificar el viajero:', error);
-      }
+      },
     });
   }
+
   /**
    * Obtiene toda la información cruda de la departure usando el TKId (externalId)
    */
@@ -138,8 +163,11 @@ export class ReviewsComponent implements OnInit {
         console.log('Información completa de la departure:', info);
       },
       error: (error) => {
-        console.error('Error al obtener la información completa de la departure:', error);
-      }
+        console.error(
+          'Error al obtener la información completa de la departure:',
+          error
+        );
+      },
     });
   }
 
@@ -149,11 +177,16 @@ export class ReviewsComponent implements OnInit {
         this.tripInfo = {
           title: info.tourName || 'Título no disponible',
           date: info.dayOne || 'Fecha no disponible',
-          tourId: info.tourId ? Number(info.tourId) : undefined 
+          tourId: info.tourId ? Number(info.tourId) : undefined,
         };
-        
-        if (this.tripInfo.date && this.tripInfo.date !== 'Fecha no disponible') {
-          this.formattedDate = this.datePipe.transform(this.tripInfo.date, 'dd/MM/yyyy') || 'dd/MM/yyyy';
+
+        if (
+          this.tripInfo.date &&
+          this.tripInfo.date !== 'Fecha no disponible'
+        ) {
+          this.formattedDate =
+            this.datePipe.transform(this.tripInfo.date, 'dd/MM/yyyy') ||
+            'dd/MM/yyyy';
         } else {
           this.formattedDate = 'dd/MM/yyyy';
         }
@@ -162,20 +195,20 @@ export class ReviewsComponent implements OnInit {
         console.error('Error al cargar la información del periodo:', error);
         this.setErrorTripInfo();
         this.formattedDate = 'dd/MM/yyyy';
-      }
+      },
     });
   }
 
   getTourIdFromExternalId(externalId: string): void {
     console.log('Obteniendo tourId para externalId:', externalId);
-    
+
     this.tourNetService.getTourIdByPeriodId(externalId).subscribe({
       next: (tourId) => {
         console.log('Respuesta de getTourIdByPeriodId:', tourId);
         console.log('Tipo de tourId:', typeof tourId);
-        
+
         if (tourId) {
-          this.tripInfo.tourId = Number(tourId); 
+          this.tripInfo.tourId = Number(tourId);
           console.log('Tour ID asignado a tripInfo:', this.tripInfo.tourId);
           const tkid = externalId;
           this.periodsService.getRawDepartureByTkId(tkid).subscribe({
@@ -188,7 +221,10 @@ export class ReviewsComponent implements OnInit {
               const salida = salidas[0];
               const departureId = salida.id || salida.departureId;
               if (!departureId) {
-                console.warn('La salida no contiene id ni departureId:', salida);
+                console.warn(
+                  'La salida no contiene id ni departureId:',
+                  salida
+                );
               } else {
                 console.log('DepartureId obtenido:', departureId);
                 this.tripInfo.departureId = departureId;
@@ -196,7 +232,7 @@ export class ReviewsComponent implements OnInit {
             },
             error: (error) => {
               console.error('Error al obtener salidas:', error);
-            }
+            },
           });
         } else {
           console.error('No se pudo obtener el tourId (valor vacío o cero)');
@@ -206,14 +242,14 @@ export class ReviewsComponent implements OnInit {
       error: (error) => {
         console.error('Error al obtener el tourId:', error);
         this.setErrorTripInfo();
-      }
+      },
     });
   }
 
   private setErrorTripInfo(): void {
     this.tripInfo = {
       title: 'Error al cargar el título',
-      date: 'Error al cargar la fecha'
+      date: 'Error al cargar la fecha',
     };
   }
 
@@ -234,50 +270,59 @@ export class ReviewsComponent implements OnInit {
   }
 
   isHalfStar(tipo: RatingCategory, index: number): boolean {
-    return false; 
+    return false;
   }
 
   submitReview(): void {
     if (this.isSubmitting) {
-      return; 
+      return;
     }
-  
+
     this.isSubmitting = true;
-    
+
     const nombreValue = this.nombreInputRef.nativeElement.value;
     const emailValue = this.emailInputRef.nativeElement.value;
     const comentarioValue = this.comentarioInputRef.nativeElement.value;
-  
+
     if (!nombreValue || !emailValue || !comentarioValue) {
-      alert('Por favor, completa todos los campos: Nombre, Email y Comentario.');
+      alert(
+        'Por favor, completa todos los campos: Nombre, Email y Comentario.'
+      );
       this.isSubmitting = false;
       return;
     }
-    
+
     // Verificar que todas las calificaciones tengan un valor
-    if (Object.values(this.ratings).some(rating => rating === 0)) {
-        alert('Por favor, valora todas las categorías con estrellas.');
-        this.isSubmitting = false;
-        return;
+    if (Object.values(this.ratings).some((rating) => rating === 0)) {
+      alert('Por favor, valora todas las categorías con estrellas.');
+      this.isSubmitting = false;
+      return;
     }
 
     // Verificar específicamente el tripRating
     if (this.ratings.tripRating === 0) {
-        console.log('El tripRating es 0, asegúrate de que se esté asignando correctamente');
-        // Puedes descomentar la siguiente línea si quieres forzar un valor para pruebas
-        // this.ratings.tripRating = 5;
+      console.log(
+        'El tripRating es 0, asegúrate de que se esté asignando correctamente'
+      );
+      // Puedes descomentar la siguiente línea si quieres forzar un valor para pruebas
+      // this.ratings.tripRating = 5;
     }
 
     if (this.rawDepartureInfo) {
-      const salida = Array.isArray(this.rawDepartureInfo) ? this.rawDepartureInfo[0] : this.rawDepartureInfo;
+      const salida = Array.isArray(this.rawDepartureInfo)
+        ? this.rawDepartureInfo[0]
+        : this.rawDepartureInfo;
       this.tripInfo.departureId = salida?.id || salida?.departureId || 0;
     }
+
     const continueWithReview = (travelerId: number) => {
       const ratingValues = Object.values(this.ratings);
-      const averageRating = ratingValues.reduce((sum, rating) => sum + rating, 0) / ratingValues.length;
-      
+      const averageRating =
+        ratingValues.reduce((sum, rating) => sum + rating, 0) /
+        ratingValues.length;
+
       console.log('Valores de calificación antes de enviar:', this.ratings);
-      
+
       const reviewPayload: ReviewPayload = {
         text: comentarioValue,
         accommodationRating: this.ratings.accommodationRating,
@@ -286,45 +331,50 @@ export class ReviewsComponent implements OnInit {
         guideRating: this.ratings.guideRating,
         priceQualityRating: this.ratings.priceQualityRating,
         tripRating: this.ratings.tripRating,
-        rating: Math.floor(averageRating), 
-        showOnHomePage: false, 
-        showOnTourPage: false,  
-        tourId: this.tripInfo.tourId ?? 0, 
-        travelerId: travelerId, 
+        rating: Math.floor(averageRating),
+        showOnHomePage: false,
+        showOnTourPage: false,
+        tourId: this.tripInfo.tourId ?? 0,
+        travelerId: travelerId,
         departureId: this.tripInfo.departureId || 0,
         externalId: this.periodExternalId,
-        reviewDate: new Date().toISOString()
+        reviewDate: new Date().toISOString(),
+        // Incluir imágenes en el payload
+        images:
+          this.uploadedImages.length > 0 ? this.uploadedImages : undefined,
       };
-  
+
       console.log('Payload que se envía:', reviewPayload);
-  
+
       this.reviewsService.saveReview(reviewPayload).subscribe({
         next: (resp) => {
           console.log('Respuesta del backend:', resp);
           this.nombreInputRef.nativeElement.value = '';
           this.emailInputRef.nativeElement.value = '';
           this.comentarioInputRef.nativeElement.value = '';
-          (Object.keys(this.ratings) as RatingCategory[]).forEach(key => {
-              this.ratings[key] = 0;
+          (Object.keys(this.ratings) as RatingCategory[]).forEach((key) => {
+            this.ratings[key] = 0;
           });
+          // Limpiar también las imágenes subidas
+          this.uploadedImages = [];
           this.isSubmitting = false;
         },
         error: (err: any) => {
           console.error('Error al guardar la review:', err);
           this.isSubmitting = false;
-        }
+        },
       });
     };
 
     const travelerFilter = {
       email: emailValue,
-      name: nombreValue
+      name: nombreValue,
     };
-  
+
     this.travelersNetService.getTravelers(travelerFilter).subscribe({
       next: (travelers) => {
         const travelerMatch = travelers.find(
-          t => t.email === emailValue && t.name === nombreValue
+          (t) => t.email === emailValue && t.name === nombreValue
         );
         if (travelerMatch) {
           continueWithReview(travelerMatch.id);
@@ -332,7 +382,7 @@ export class ReviewsComponent implements OnInit {
           const newTraveler: Partial<Traveler> = {
             name: nombreValue,
             email: emailValue,
-            code: emailValue.split('@')[0] 
+            code: emailValue.split('@')[0],
           };
           this.travelersNetService.createTraveler(newTraveler).subscribe({
             next: (traveler) => {
@@ -341,14 +391,14 @@ export class ReviewsComponent implements OnInit {
             error: (error) => {
               continueWithReview(0);
               this.isSubmitting = false;
-            }
+            },
           });
         }
       },
       error: (error) => {
         const newTraveler: Partial<Traveler> = {
           name: nombreValue,
-          email: emailValue
+          email: emailValue,
         };
         this.travelersNetService.createTraveler(newTraveler).subscribe({
           next: (traveler) => {
@@ -357,10 +407,66 @@ export class ReviewsComponent implements OnInit {
           error: (createError) => {
             continueWithReview(0);
             this.isSubmitting = false;
-          }
+          },
         });
-      }
+      },
     });
   }
-}
 
+  // ==================== MÉTODOS PARA MANEJO DE IMÁGENES ====================
+
+  /**
+   * Muestra el componente de recorte de imagen
+   */
+  showImageUploader(): void {
+    if (this.uploadedImages.length >= this.MAX_IMAGES) {
+      this.uploadErrorMessage = `Solo puedes subir un máximo de ${this.MAX_IMAGES} imágenes.`;
+      setTimeout(() => (this.uploadErrorMessage = ''), 5000);
+      return;
+    }
+    this.uploadErrorMessage = '';
+    this.showImageCropper = true;
+  }
+
+  /**
+   * Maneja la imagen recortada y subida
+   */
+  onImageCropped(imageUrl: string): void {
+    if (imageUrl) {
+      this.uploadedImages.push(imageUrl);
+      this.showImageCropper = false;
+      console.log('Imagen subida:', imageUrl);
+      console.log('Total de imágenes:', this.uploadedImages.length);
+    }
+  }
+
+  /**
+   * Elimina una imagen de la lista
+   */
+  removeImage(index: number): void {
+    this.uploadedImages.splice(index, 1);
+  }
+
+  /**
+   * Cancela la subida de imagen
+   */
+  cancelImageUpload(): void {
+    this.showImageCropper = false;
+    this.uploadErrorMessage = '';
+  }
+
+  /**
+   * Maneja errores de subida de imagen
+   */
+  onUploadError(errorMessage: string): void {
+    this.uploadErrorMessage = errorMessage;
+    setTimeout(() => (this.uploadErrorMessage = ''), 5000);
+  }
+
+  /**
+   * Verifica si se pueden subir más imágenes
+   */
+  canUploadMoreImages(): boolean {
+    return this.uploadedImages.length < this.MAX_IMAGES;
+  }
+}

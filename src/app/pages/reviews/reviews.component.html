@@ -272,16 +272,14 @@
     <textarea id="comentario" #comentarioInput style="resize: none;"></textarea>
   </div>
 
-  <div class="review-text">
-    <label for="nombre" class="input-label">
-      <i class="pi pi-camera input-icon"></i> ¿Quieres compartir tu viaje con nosotros?
-    </label>
-    <div class="upload-button-container">
-      <button class="upload-button">
-        Cargar fotos <i class="pi pi-upload"></i>
-      </button>
-    </div>
-  </div>
+  <!-- Componente de carga de imágenes -->
+  <app-image-upload-modal
+    [uploadedImages]="uploadedImages"
+    [maxImages]="MAX_IMAGES"
+    (imageCropped)="onImageCropped($event)"
+    (uploadError)="onUploadError($event)"
+    (removeImage)="removeImage($event)">
+  </app-image-upload-modal>
 
   <div class="submit-review-container">
     <button type="button" class="submit-review" (click)="submitReview()" [disabled]="isSubmitting">

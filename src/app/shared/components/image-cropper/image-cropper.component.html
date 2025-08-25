@@ -1,0 +1,30 @@
+<div class="cropper-section">
+    <!-- Botón de seleccionar archivo -->
+    <div class="upload-section" *ngIf="!imageSource && !loading">
+      <button pButton type="button" label="Seleccionar imagen" icon="pi pi-upload" 
+              class="p-button-outlined upload-button" (click)="triggerFileInput()"></button>
+      <small class="upload-hint">Formatos: JPG, PNG, WebP • Máximo 8MB</small>
+    </div>
+    
+    <input #fileInput type="file" accept="image/*" (change)="onImageFileSelected($event)" style="display: none;" />
+    
+    <!-- Contenedor del cropper -->
+    <div class="cropper-container" *ngIf="imageSource && !croppedImage && !loading">
+      <div class="img-container">
+        <img #cropperImage [src]="imageSource" alt="Imagen para recortar" class="cropper-image">
+      </div>
+      
+      <div class="cropper-controls">
+        <button pButton type="button" label="Recortar y subir" icon="pi pi-check" 
+                (click)="cropImage()" class="p-button-success p-button-fixed-width"></button>
+        <button pButton type="button" label="Cancelar" icon="pi pi-times" 
+                (click)="cancelCrop()" class="p-button-outlined p-button-danger p-button-fixed-width"></button>
+      </div>
+    </div>
+
+    <!-- Loading indicator -->
+    <div *ngIf="loading" class="loading-container">
+      <i class="pi pi-spin pi-spinner" style="font-size: 2rem; color: var(--primary-color-500);"></i>
+      <p>Procesando y subiendo imagen...</p>
+    </div>
+</div>

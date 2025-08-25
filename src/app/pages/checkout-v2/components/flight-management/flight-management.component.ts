@@ -328,15 +328,25 @@ export class FlightManagementComponent implements OnInit, OnChanges {
   onSpecificFlightSelected(flightData: {
     selectedFlight: any | null; // Usar any para evitar conflictos de tipos
     totalPrice: number;
+    shouldAssignNoFlight?: boolean; // ✅ NUEVO: Indicar si se debe asignar "sin vuelos"
   }): void {
     console.log('🔄 Vuelo seleccionado desde specific-search:', flightData);
     console.log('📍 Origen: specific-search');
+    console.log('🔄 shouldAssignNoFlight:', flightData.shouldAssignNoFlight);
     
     // Convertir el vuelo al formato de FlightsNetService si existe
     const convertedFlight = flightData.selectedFlight ? this.convertFlightSearchToFlightsNet(flightData.selectedFlight) : null;
     
     // Actualizar el vuelo seleccionado
     this.selectedFlight = convertedFlight;
+    
+    // ✅ NUEVO: Si shouldAssignNoFlight es true, asignar "sin vuelos" a todos los viajeros
+    if (flightData.shouldAssignNoFlight && this.defaultFlightsComponent && this.reservationId) {
+      console.log('🔄 shouldAssignNoFlight es true - asignando "sin vuelos" a todos los viajeros');
+      // ✅ CORRECCIÓN: No deseleccionar vuelos de specific-search cuando asignamos "sin vuelos"
+      // porque acabamos de hacer la selección
+      this.defaultFlightsComponent.saveFlightAssignmentsForAllTravelers(0, false);
+    }
     
     // ✅ MODIFICADO: NO marcar "Sin Vuelos" automáticamente, solo deseleccionar el vuelo del departure
     if (this.isConsolidadorVuelosActive && this.defaultFlightsComponent && this.reservationId) {

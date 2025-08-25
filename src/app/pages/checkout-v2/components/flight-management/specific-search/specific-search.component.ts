@@ -36,6 +36,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   @Output() specificFlightSelected = new EventEmitter<{
     selectedFlight: IFlightPackDTO | null;
     totalPrice: number;
+    shouldAssignNoFlight?: boolean; // ✅ NUEVO: Indicar si se debe asignar "sin vuelos"
   }>();
   @Input() flights: Flight[] = [];
   @Input() departureId: number | null = null;
@@ -875,15 +876,24 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   selectFlight(flightPack: any): void {
+    console.log('🎯 selectFlight llamado desde HTML');
+    console.log('📦 flightPack recibido:', flightPack);
+    console.log('🔄 flightOffersRaw disponible:', this.flightOffersRaw?.length || 0);
+    
     // Convertir de vuelta al formato del FlightSearchService si es necesario
     if (flightPack && typeof flightPack === 'object') {
       // Buscar el vuelo original en flightOffersRaw
       const originalFlight = this.flightOffersRaw.find(f => f.id === flightPack.id);
       if (originalFlight) {
+        console.log('✅ Vuelo original encontrado, llamando a selectFlightFromFlightItem');
         this.selectFlightFromFlightItem(originalFlight);
       } else {
         console.warn('⚠️ No se encontró el vuelo original para seleccionar');
+        console.log('🔍 flightPack.id buscado:', flightPack.id);
+        console.log('🔍 flightOffersRaw IDs disponibles:', this.flightOffersRaw.map(f => f.id));
       }
+    } else {
+      console.warn('⚠️ flightPack inválido o nulo:', flightPack);
     }
   }
 
@@ -990,11 +1000,22 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
-   * ✅ MÉTODO NUEVO: Buscar el flightPack "sin vuelos" y asignarlo a todos los viajeros
+   * ✅ MÉTODO CORREGIDO: Buscar el flightPack "sin vuelos" y asignarlo a todos los viajeros
+   * Nota: En specific-search no tenemos acceso directo a los flightPacks "sin vuelos",
+   * por lo que emitimos un evento para que el componente padre (flight-management) lo maneje
    */
   private async findAndAssignNoFlightOption(): Promise<void> {
+    console.log('🔍 findAndAssignNoFlightOption llamado');
+    console.log('📊 selectedFlight:', this.selectedFlight);
+    console.log('🆔 reservationId:', this.reservationId);
+
     if (!this.reservationId) {
       console.log('❌ No hay reservationId, no se puede asignar');
+      return;
+    }
+
+    if (!this.selectedFlight) {
+      console.log('❌ No hay vuelo seleccionado, no se puede proceder');
       return;
     }
 
@@ -1022,135 +1043,16 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         return;
       }
 
-      // Buscar el flightPack "sin vuelos" en flightOffersRaw
-      const noFlightPack = this.flightOffersRaw?.find((pack: IFlightPackDTO) => {
-        const name = pack.name?.toLowerCase() || '';
-        const description = pack.description?.toLowerCase() || '';
-        return (
-          name.includes('sin vuelos') ||
-          description.includes('sin vuelos') ||
-          name.includes('pack sin vuelos') ||
-          description.includes('pack sin vuelos')
-        );
+      // ✅ CORRECCIÓN: En specific-search no tenemos acceso a flightPacks "sin vuelos"
+      // Por lo tanto, emitimos un evento para que el componente padre lo maneje
+      console.log('🔄 Emitiendo evento para que el componente padre maneje la asignación "sin vuelos"');
+      
+      // Emitir evento específico para que el padre sepa que debe asignar "sin vuelos"
+      this.specificFlightSelected.emit({
+        selectedFlight: this.selectedFlight,
+        totalPrice: this.selectedFlight.ageGroupPrices?.[0]?.price || 0,
+        shouldAssignNoFlight: true // ✅ NUEVO: Indicar que se debe asignar "sin vuelos"
       });
-
-      if (!noFlightPack) {
-        console.log('⚠️ No se encontró flightPack "sin vuelos"');
-        return;
-      }
-
-      console.log('✅ FlightPack "sin vuelos" encontrado:', noFlightPack);
-
-      // Para cada viajero, buscar y actualizar/crear asignaciones
-      const updatePromises = travelers.map((traveler) => {
-        return new Promise<boolean>((resolve, reject) => {
-          this.reservationTravelerActivityPackService
-            .getByReservationTraveler(traveler.id)
-            .subscribe({
-              next: (assignments) => {
-                // Filtrar por flightPacks (activityPackId > 0)
-                const flightPackAssignments = assignments.filter(
-                  (a) => a.activityPackId > 0
-                );
-
-                if (flightPackAssignments.length > 0) {
-                  // Actualizar la asignación más reciente
-                  const mostRecentAssignment = flightPackAssignments.sort(
-                    (a, b) => b.id - a.id
-                  )[0];
-
-                  console.log(
-                    `🔄 Actualizando asignación ${mostRecentAssignment.id} para viajero ${traveler.id}`
-                  );
-                  console.log(
-                    `🔄 Cambio: ${mostRecentAssignment.activityPackId} -> ${noFlightPack.id}`
-                  );
-
-                  const updateData = {
-                    id: mostRecentAssignment.id,
-                    reservationTravelerId: traveler.id,
-                    activityPackId: noFlightPack.id,
-                    updatedAt: new Date().toISOString(),
-                  };
-
-                  this.reservationTravelerActivityPackService
-                    .update(mostRecentAssignment.id, updateData)
-                    .subscribe({
-                      next: (updated) => {
-                        if (updated) {
-                          console.log(
-                            `✅ Asignación actualizada para viajero ${traveler.id}`
-                          );
-                          resolve(true);
-                        } else {
-                          console.error(
-                            `❌ Error al actualizar asignación para viajero ${traveler.id}`
-                          );
-                          resolve(false);
-                        }
-                      },
-                      error: (error) => {
-                        console.error(
-                          `❌ Error al actualizar asignación para viajero ${traveler.id}:`,
-                          error
-                        );
-                        reject(error);
-                      },
-                    });
-                } else {
-                  // Crear nueva asignación si no existe
-                  console.log(
-                    `➕ Creando nueva asignación para viajero ${traveler.id}`
-                  );
-
-                  const newAssignment = {
-                    id: 0,
-                    reservationTravelerId: traveler.id,
-                    activityPackId: noFlightPack.id,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                  };
-
-                  this.reservationTravelerActivityPackService
-                    .create(newAssignment)
-                    .subscribe({
-                      next: (created) => {
-                        if (created) {
-                          console.log(
-                            `✅ Nueva asignación creada para viajero ${traveler.id}`
-                          );
-                          resolve(true);
-                        } else {
-                          console.error(
-                            `❌ Error al crear asignación para viajero ${traveler.id}`
-                          );
-                          resolve(false);
-                        }
-                      },
-                      error: (error) => {
-                        console.error(
-                          `❌ Error al crear asignación para viajero ${traveler.id}:`,
-                          error
-                        );
-                        reject(error);
-                      },
-                    });
-                }
-              },
-              error: (error) => {
-                console.error(
-                  `❌ Error al obtener asignaciones para viajero ${traveler.id}:`,
-                  error
-                );
-                reject(error);
-              },
-            });
-        });
-      });
-
-      // Esperar a que se completen todas las actualizaciones
-      await Promise.all(updatePromises);
-      console.log('✅ Todas las asignaciones "sin vuelos" procesadas exitosamente');
 
       // Llamar a select de specific-search para guardar la selección
       if (this.reservationId && this.selectedFlight) {
@@ -1164,6 +1066,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
           },
         });
       }
+
+      console.log('✅ Proceso completado - evento emitido para asignación "sin vuelos"');
     } catch (error) {
       console.error('💥 Error en findAndAssignNoFlightOption:', error);
     }

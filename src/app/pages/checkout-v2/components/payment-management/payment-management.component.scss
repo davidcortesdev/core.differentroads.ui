@@ -309,11 +309,6 @@ $border-color: #e2e8f0;
       }
     }
   }
-
-  .error-content {
-    @include flex-center;
-    flex-direction: column;
-  }
 }
 
 :host ::ng-deep {
@@ -376,10 +371,6 @@ $border-color: #e2e8f0;
         vertical-align: middle;
         display: inline-block;
       }
-    }
-
-    .spinner {
-      margin-top: 1rem;
     }
   }
 }
@@ -465,8 +456,7 @@ $border-color: #e2e8f0;
           color: #28a745;
         }
         
-        &.difference-price,
-        &.percentage-change {
+        &.difference-price {
           &.increase {
             color: #dc3545;
           }
@@ -494,44 +484,4 @@ $border-color: #e2e8f0;
   .p-button {
     min-width: 180px;
   }
-}
-
-// Estilos para la información de Amadeus
-.amadeus-info {
-  margin-top: 1rem;
-  
-  .info-panel {
-    ::ng-deep .p-panel-content {
-      padding: 0.75rem 1rem;
-      background-color: #d1ecf1;
-      border: 1px solid #bee5eb;
-      border-radius: 6px;
-    }
-    
-    .info-content {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      
-      i {
-        color: #17a2b8;
-        font-size: 1.1rem;
-      }
-      
-      span {
-        color: #0c5460;
-        font-size: 0.9rem;
-        font-weight: 500;
-      }
-    }
-  }
-}
-
-.button-content {
-  @include flex-center;
-  width: 100%;
-}
-
-.ml-2 {
-  margin-left: 0.5rem;
 }

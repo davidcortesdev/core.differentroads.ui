@@ -50,35 +50,35 @@
       <div class="star-item">
         <p class="review-label"><i class="pi pi-map p-mr-1"></i> Tour<span>*</span></p>
         <div class="stars">
-          <span class="star-wrapper" (click)="setRating('tripRating', 1)">
+          <span class="star-wrapper" (click)="setRating('overallTourRating', 1)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('tripRating', 1)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('overallTourRating', 1)" aria-hidden="true"></i>
             <i class="pi pi-star" 
-              [class.active]="isFullStar('tripRating', 1)" aria-hidden="true"></i>
+              [class.active]="isFullStar('overallTourRating', 1)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('tripRating', 2)">
+          <span class="star-wrapper" (click)="setRating('overallTourRating', 2)">
             <i class="pi pi-star"
-              [class.active]="isHalfStar('tripRating', 2)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('overallTourRating', 2)" aria-hidden="true"></i>
             <i class="pi pi-star" 
-              [class.active]="isFullStar('tripRating', 2)" aria-hidden="true"></i>
+              [class.active]="isFullStar('overallTourRating', 2)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('tripRating', 3)">
+          <span class="star-wrapper" (click)="setRating('overallTourRating', 3)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('tripRating', 3)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('overallTourRating', 3)" aria-hidden="true"></i>
             <i class="pi pi-star" 
-              [class.active]="isFullStar('tripRating', 3)" aria-hidden="true"></i>
+              [class.active]="isFullStar('overallTourRating', 3)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('tripRating', 4)">
+          <span class="star-wrapper" (click)="setRating('overallTourRating', 4)">
             <i class="pi pi-star" 
-              [class.active]="isHalfStar('tripRating', 4)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('overallTourRating', 4)" aria-hidden="true"></i>
             <i class="pi pi-star" 
-              [class.active]="isFullStar('tripRating', 4)" aria-hidden="true"></i>
+              [class.active]="isFullStar('overallTourRating', 4)" aria-hidden="true"></i>
           </span>
-          <span class="star-wrapper" (click)="setRating('tripRating', 5)">
+          <span class="star-wrapper" (click)="setRating('overallTourRating', 5)">
             <i class="pi pi-star"
-              [class.active]="isHalfStar('tripRating', 5)" aria-hidden="true"></i>
+              [class.active]="isHalfStar('overallTourRating', 5)" aria-hidden="true"></i>
             <i class="pi pi-star"
-              [class.active]="isFullStar('tripRating', 5)" aria-hidden="true"></i>
+              [class.active]="isFullStar('overallTourRating', 5)" aria-hidden="true"></i>
           </span>
         </div>
       </div>
@@ -272,16 +272,14 @@
     <textarea id="comentario" #comentarioInput style="resize: none;"></textarea>
   </div>
 
-  <div class="review-text">
-    <label for="nombre" class="input-label">
-      <i class="pi pi-camera input-icon"></i> ¿Quieres compartir tu viaje con nosotros?
-    </label>
-    <div class="upload-button-container">
-      <button class="upload-button">
-        Cargar fotos <i class="pi pi-upload"></i>
-      </button>
-    </div>
-  </div>
+  <!-- Componente de carga de imágenes -->
+  <app-image-upload-modal
+    [uploadedImages]="uploadedImages"
+    [maxImages]="MAX_IMAGES"
+    (imageCropped)="onImageCropped($event)"
+    (uploadError)="onUploadError($event)"
+    (removeImage)="removeImage($event)">
+  </app-image-upload-modal>
 
   <div class="submit-review-container">
     <button type="button" class="submit-review" (click)="submitReview()" [disabled]="isSubmitting">

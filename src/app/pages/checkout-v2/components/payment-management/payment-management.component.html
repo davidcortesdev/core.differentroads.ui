@@ -13,7 +13,7 @@
 
 <!-- Main Content -->
 <div class="container" *ngIf="!isLoading">
-  
+  {{ hasSpecificSearchFlights}} -- {{specificSearchFlightsCost}}
   <!-- Payment Type Selection -->
   <section class="payment-type-section">
     <div class="header-container" (click)="toggleDropdown('main')">
@@ -140,7 +140,7 @@
             <span style="font-weight: 300;padding-left: 10px;">
               Para vuelos de búsqueda directa:<br>
               • Pago completo: Tarjeta bancaria o Scalapay<br>
-              • Pago parcial: Tarjeta bancaria (depósito + vuelos de specific-search) o Scalapay
+              • Pago parcial: Tarjeta bancaria (depósito + vuelos de specific-search)
             </span>
           </div>
         </p-panel>

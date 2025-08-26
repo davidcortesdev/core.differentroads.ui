@@ -139,11 +139,17 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
   private checkSpecificSearchFlights(): void {
     if (!this.reservationId) return;
 
+    // ✅ NUEVO: Solo verificar si no se han establecido ya los valores
+    if (this.hasSpecificSearchFlights && this.specificSearchFlightsCost > 0) {
+      console.log('✅ Los valores de specific-search ya están establecidos:', {
+        hasSpecificSearchFlights: this.hasSpecificSearchFlights,
+        specificSearchFlightsCost: this.specificSearchFlightsCost
+      });
+      return;
+    }
+
     // TODO: Implementar llamada al servicio para obtener vuelos de specific-search
-    // Por ahora, simulamos que no hay vuelos de specific-search
-    this.hasSpecificSearchFlights = false;
-    this.specificSearchFlightsCost = 0;
-    
+    // Por ahora, los valores se establecen en validateAmadeusPrice
     console.log('🔍 Verificando vuelos de specific-search...');
     console.log('📊 Estado actual:', {
       hasSpecificSearchFlights: this.hasSpecificSearchFlights,
@@ -184,6 +190,16 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
       next: (validation: IPriceChangeInfo | null) => {
         if (validation) {
           this.priceValidation = validation;
+          
+          // ✅ NUEVO: Rellenar specificSearchFlightsCost con el precio actual del vuelo
+          this.specificSearchFlightsCost = validation.currentPrice;
+          this.hasSpecificSearchFlights = true;
+          
+          console.log('✅ Precio del vuelo obtenido:', validation.currentPrice);
+          console.log('📊 Estado actualizado:', {
+            hasSpecificSearchFlights: this.hasSpecificSearchFlights,
+            specificSearchFlightsCost: this.specificSearchFlightsCost
+          });
           
           if (validation.hasChanged) {
             console.log('⚠️ Cambio de precio detectado:', validation);
@@ -289,7 +305,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
     
     const daysBeforeDeparture = parseInt(deadlineMatch[1]);
     const deadlineDate = new Date(departureDate);
-    deadlineDate.setDate(departureDate.getDate() + daysBeforeDeparture);
+    deadlineDate.setDate(departureDate.getDate() - daysBeforeDeparture);
     
     const isWithinDeadline = today < deadlineDate;
     
@@ -538,7 +554,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
       await this.processInstallmentPayment();
     } else if (this.paymentMethod === 'creditCard') {
       if (this.paymentState.type === 'deposit') {
-        await this.processCreditCardPayment(200);
+        await this.processCreditCardPayment(this.depositAmount);
       } else {
         await this.processCreditCardPayment(this.totalPrice);
       }

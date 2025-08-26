@@ -85,13 +85,8 @@
     padding: 0;
 }
 
-.user-description,
-.pasajero {
+.user-description {
     font-size: 12px;
-}
-
-.pasajero {
-    margin-right: 15px;
 }
 
 .title {
@@ -137,8 +132,7 @@ h3.title {
     margin-top: 15px;
     width: 100%;
 
-    .form-section,
-    .document-section {
+    .form-section {
         margin-bottom: 1rem;
     }
 
@@ -332,11 +326,6 @@ h3.title {
             }
         }
 
-        .p-button-rounded {
-            border-radius: var(--p-button-rounded-border-radius);
-            width: 100%;
-        }
-
         .p-checkbox .p-checkbox-box {
             border: 1px solid var(--background-azul);
             border-radius: 3px;
@@ -381,10 +370,6 @@ h3.title {
                 display: inline-block;
             }
         }
-    }
-
-    .p-accordioncontent-content {
-        padding: 0px;
     }
 }
 
@@ -465,8 +450,7 @@ h3.title {
 }
 
 .loading-indicator,
-.error-message,
-.no-travelers-message {
+.error-message {
     text-align: center;
     padding: 2rem;
 
@@ -474,4 +458,143 @@ h3.title {
         margin: 0;
         color: var(--background-azul);
     }
+}
+
+.amadeus-requirements-info {
+  margin-bottom: 1.5rem;
+  
+  .msg {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    
+    i {
+      color: #17a2b8;
+      font-size: 1.2rem;
+    }
+    
+    h4 {
+      margin: 0;
+      color: #0c5460;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    
+    .requirements-description {
+      margin: 0;
+      color: #495057;
+      font-size: 0.9rem;
+      font-style: italic;
+    }
+    
+    .requirements-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      
+      .requirement-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        background-color: #d1ecf1;
+        border: 1px solid #bee5eb;
+        border-radius: 4px;
+        
+        i {
+          color: #28a745;
+          font-size: 1rem;
+        }
+        
+        span {
+          color: #0c5460;
+          font-size: 0.9rem;
+          font-weight: 500;
+        }
+      }
+    }
+    
+    .traveler-requirements {
+      margin-top: 1rem;
+      
+      h5 {
+        margin: 0 0 0.75rem 0;
+        color: #0c5460;
+        font-size: 1rem;
+        font-weight: 600;
+      }
+      
+      .traveler-requirement {
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        
+        strong {
+          color: #0c5460;
+          font-size: 0.9rem;
+          display: block;
+          margin-bottom: 0.5rem;
+        }
+        
+        ul {
+          margin: 0;
+          padding-left: 1.5rem;
+          
+          li {
+            color: #495057;
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+            
+            &:last-child {
+              margin-bottom: 0;
+            }
+          }
+        }
+      }
+    }
+    
+    .amadeus-mandatory-fields {
+      margin-top: 1rem;
+      padding: 1rem;
+      background-color: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 4px;
+      
+      h5 {
+        margin: 0 0 0.75rem 0;
+        color: #856404;
+        font-size: 1rem;
+        font-weight: 600;
+      }
+      
+      .mandatory-fields-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        
+        .mandatory-field-item {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem;
+          background-color: #fff8e1;
+          border: 1px solid #ffe082;
+          border-radius: 4px;
+          
+          i {
+            color: #f57c00;
+            font-size: 1rem;
+          }
+          
+          span {
+            color: #856404;
+            font-size: 0.9rem;
+            font-weight: 500;
+          }
+        }
+      }
+    }
+  }
 }

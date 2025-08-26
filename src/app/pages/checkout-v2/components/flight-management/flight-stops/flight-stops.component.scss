@@ -46,6 +46,25 @@ $tablet: 768px;
     }
 }
 
+// Indicador de carga de ciudades
+.loading-cities {
+    @include flex-center;
+    flex-direction: column;
+    padding: 1rem;
+    color: var(--background-azul);
+    font-size: 0.9rem;
+    
+    i {
+        margin-bottom: 0.5rem;
+        color: var(--p-primary-color);
+        font-size: 1.2rem;
+    }
+    
+    span {
+        text-align: center;
+    }
+}
+
 // Popover de detalles del vuelo
 ::ng-deep .p-popover {
     .p-popover-content {

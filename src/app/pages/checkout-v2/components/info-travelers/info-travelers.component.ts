@@ -70,6 +70,7 @@ import {
   IReservationStatusResponse,
   ReservationStatusService,
 } from '../../../../core/services/reservation/reservation-status.service';
+import { FlightSearchService, IBookingRequirements, IPassengerConditions } from '../../../../core/services/flight-search.service';
 
 @Component({
   selector: 'app-info-travelers',
@@ -145,6 +146,11 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   budgetStatusId: number | null = null;
   draftStatusId: number | null = null;
 
+  // Propiedades para requisitos de reserva de Amadeus
+  amadeusBookingRequirements: IBookingRequirements | null = null;
+  hasFlightSelected: boolean = false;
+  isCheckingFlightStatus: boolean = false;
+
   // Mensajes de error personalizados
   errorMessages: { [key: string]: { [key: string]: string } } = {
     email: {
@@ -202,7 +208,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     private messageService: MessageService,
     private fb: FormBuilder,
     private reservationStatusService: ReservationStatusService,
-    private reservationService: ReservationService
+    private reservationService: ReservationService,
+    private flightSearchService: FlightSearchService
   ) {
     this.travelersForm = this.fb.group({
       travelers: this.fb.array([]),
@@ -215,8 +222,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       console.log('reservationId:', this.reservationId);
       console.log('itineraryId:', this.itineraryId);
 
-      // Cargar los estados de reserva primero
-      this.loadReservationStatuses();
+      // PRIMERO: Verificar si hay un vuelo seleccionado en Amadeus
+      this.checkFlightSelectionStatus();
     } else {
       this.error = 'No se proporcionó un ID de departure o reservación válido';
     }
@@ -324,9 +331,13 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         // Reiniciar estados de carga
         this.loading = false;
         this.checkingReservationStatus = false;
+        this.isCheckingFlightStatus = false;
         this.error = null;
+        // Limpiar requisitos de Amadeus
+        this.amadeusBookingRequirements = null;
+        this.hasFlightSelected = false;
         // Recargar desde el inicio para asegurar el orden correcto
-        this.loadReservationStatuses();
+        this.checkFlightSelectionStatus();
       }
     }
   }
@@ -405,7 +416,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   ): any[] {
     const validators: any[] = [];
 
-    // Si el campo es obligatorio, agregar Validators.required
+    // Verificar si el campo es obligatorio (estándar + Amadeus)
     if (this.isFieldMandatory(field, isLeadTraveler)) {
       validators.push(Validators.required);
     }
@@ -1078,22 +1089,147 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
-   * Verificar si un campo es obligatorio según el tipo de viajero
+   * Verifica si un campo es obligatorio según el tipo de viajero
    */
   isFieldMandatory(
     field: IDepartureReservationFieldResponse,
     isLeadTraveler: boolean = false
   ): boolean {
+    // Verificar si es obligatorio según la configuración estándar
+    let isStandardMandatory = false;
+    
     if (field.mandatoryTypeId === 1) {
+      isStandardMandatory = false;
+    } else if (field.mandatoryTypeId === 2) {
+      isStandardMandatory = true;
+    } else if (field.mandatoryTypeId === 3 && isLeadTraveler) {
+      isStandardMandatory = true;
+    }
+
+    // Verificar si es obligatorio según los requisitos de Amadeus
+    const fieldDetails = this.getReservationFieldDetails(field.reservationFieldId);
+    const isAmadeusMandatory = fieldDetails ? this.isFieldAmadeusMandatory(fieldDetails, isLeadTraveler) : false;
+
+    // El campo es obligatorio si lo requiere la configuración estándar O los requisitos de Amadeus
+    return isStandardMandatory || isAmadeusMandatory;
+  }
+
+  /**
+   * Verifica si un campo es obligatorio según los requisitos de Amadeus
+   */
+  private isFieldAmadeusMandatory(
+    fieldDetails: IReservationFieldResponse,
+    isLeadTraveler: boolean
+  ): boolean {
+    // Si no hay requisitos de Amadeus o no hay vuelo seleccionado, no es obligatorio por Amadeus
+    if (!this.amadeusBookingRequirements || !this.hasFlightSelected) {
       return false;
     }
 
-    if (field.mandatoryTypeId === 2) {
-      return true;
+    const fieldCode = fieldDetails.code.toLowerCase();
+
+    // Requisitos generales (solo para el líder)
+    if (isLeadTraveler) {
+      // Mailing address requerida
+      if (this.amadeusBookingRequirements.mailingAddressRequired && 
+          (fieldCode === 'address' || fieldCode === 'mailing_address')) {
+        return true;
+      }
+
+      // Mobile phone requerido
+      if (this.amadeusBookingRequirements.mobilePhoneNumberRequired && 
+          fieldCode === 'phone') {
+        return true;
+      }
+
+      // Phone requerido
+      if (this.amadeusBookingRequirements.phoneNumberRequired && 
+          fieldCode === 'phone') {
+        return true;
+      }
+
+      // Email requerido
+      if (this.amadeusBookingRequirements.emailAddressRequired && 
+          fieldCode === 'email') {
+        return true;
+      }
+
+      // Postal code requerido
+      if (this.amadeusBookingRequirements.postalCodeRequired && 
+          fieldCode === 'postal_code') {
+        return true;
+      }
+
+      // Invoice address requerida
+      if (this.amadeusBookingRequirements.invoiceAddressRequired && 
+          (fieldCode === 'invoice_address' || fieldCode === 'billing_address')) {
+        return true;
+      }
+
+      // Phone country code requerido
+      if (this.amadeusBookingRequirements.phoneCountryCodeRequired && 
+          fieldCode === 'phone_country_code') {
+        return true;
+      }
     }
 
-    if (field.mandatoryTypeId === 3 && isLeadTraveler) {
-      return true;
+    // Requisitos específicos por viajero
+    if (this.amadeusBookingRequirements.travelerRequirements && 
+        this.amadeusBookingRequirements.travelerRequirements.length > 0) {
+      
+      // Buscar el viajero actual en los requisitos
+      const currentTravelerIndex = this.travelers.findIndex(t => t.isLeadTraveler === isLeadTraveler);
+      if (currentTravelerIndex !== -1) {
+        const currentTraveler = this.travelers[currentTravelerIndex];
+        const travelerRequirements = this.amadeusBookingRequirements.travelerRequirements.find(
+          req => String(req.travelerId) === String(currentTraveler.id)
+        );
+
+        if (travelerRequirements) {
+          // Gender requerido
+          if (travelerRequirements.genderRequired && fieldCode === 'sex') {
+            return true;
+          }
+
+          // Document requerido
+          if (travelerRequirements.documentRequired && fieldCode === 'national_id') {
+            return true;
+          }
+
+          // Date of birth requerido
+          if (travelerRequirements.dateOfBirthRequired && fieldCode === 'birthdate') {
+            return true;
+          }
+
+          // Document issuance city requerido
+          if (travelerRequirements.documentIssuanceCityRequired && 
+              fieldCode === 'document_issuance_city') {
+            return true;
+          }
+
+          // Redress requerido si existe
+          if (travelerRequirements.redressRequiredIfAny && fieldCode === 'redress_number') {
+            return true;
+          }
+
+          // Air France discount requerido
+          if (travelerRequirements.airFranceDiscountRequired && 
+              fieldCode === 'air_france_discount') {
+            return true;
+          }
+
+          // Spanish resident discount requerido
+          if (travelerRequirements.spanishResidentDiscountRequired && 
+              fieldCode === 'spanish_resident_discount') {
+            return true;
+          }
+
+          // Residence requerido
+          if (travelerRequirements.residenceRequired && fieldCode === 'country') {
+            return true;
+          }
+        }
+      }
     }
 
     return false;
@@ -1141,9 +1277,13 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       // Reiniciar estados de carga
       this.loading = false;
       this.checkingReservationStatus = false;
+      this.isCheckingFlightStatus = false;
       this.error = null;
+      // Limpiar requisitos de Amadeus
+      this.amadeusBookingRequirements = null;
+      this.hasFlightSelected = false;
       // Recargar desde el inicio para asegurar el orden correcto
-      this.loadReservationStatuses();
+      this.checkFlightSelectionStatus();
     }
   }
 
@@ -1993,5 +2133,208 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       }
     });
     console.log('=== FIN DEBUG ===');
+  }
+
+  /**
+   * Obtiene información sobre los requisitos de reserva de Amadeus
+   */
+  getAmadeusRequirementsInfo(): any {
+    return {
+      hasFlightSelected: this.hasFlightSelected,
+      requirements: this.amadeusBookingRequirements,
+      isChecking: this.isCheckingFlightStatus
+    };
+  }
+
+  /**
+   * Verifica si hay requisitos específicos de Amadeus que requieran campos adicionales
+   */
+  hasAmadeusSpecificRequirements(): boolean {
+    if (!this.amadeusBookingRequirements || !this.hasFlightSelected) {
+      return false;
+    }
+
+    // Verificar si hay requisitos específicos que no estén cubiertos por los campos estándar
+    return !!(
+      this.amadeusBookingRequirements.invoiceAddressRequired ||
+      this.amadeusBookingRequirements.mailingAddressRequired ||
+      this.amadeusBookingRequirements.phoneCountryCodeRequired ||
+      (this.amadeusBookingRequirements.travelerRequirements && 
+       this.amadeusBookingRequirements.travelerRequirements.length > 0)
+    );
+  }
+
+  /**
+   * Obtiene la lista de campos que se han vuelto obligatorios debido a los requisitos de Amadeus
+   */
+  getAmadeusMandatoryFields(): string[] {
+    const mandatoryFields: string[] = [];
+
+    if (!this.amadeusBookingRequirements || !this.hasFlightSelected) {
+      return mandatoryFields;
+    }
+
+    // Requisitos generales para el líder
+    if (this.amadeusBookingRequirements.mailingAddressRequired) {
+      mandatoryFields.push('Dirección de correo');
+    }
+    if (this.amadeusBookingRequirements.mobilePhoneNumberRequired || 
+        this.amadeusBookingRequirements.phoneNumberRequired) {
+      mandatoryFields.push('Teléfono');
+    }
+    if (this.amadeusBookingRequirements.emailAddressRequired) {
+      mandatoryFields.push('Correo electrónico');
+    }
+    if (this.amadeusBookingRequirements.postalCodeRequired) {
+      mandatoryFields.push('Código postal');
+    }
+    if (this.amadeusBookingRequirements.invoiceAddressRequired) {
+      mandatoryFields.push('Dirección de facturación');
+    }
+    if (this.amadeusBookingRequirements.phoneCountryCodeRequired) {
+      mandatoryFields.push('Código de país del teléfono');
+    }
+
+    // Requisitos específicos por viajero
+    if (this.amadeusBookingRequirements.travelerRequirements) {
+      this.amadeusBookingRequirements.travelerRequirements.forEach((req, index) => {
+        const travelerNumber = index + 1;
+        if (req.genderRequired) {
+          mandatoryFields.push(`Género (Viajero ${travelerNumber})`);
+        }
+        if (req.documentRequired) {
+          mandatoryFields.push(`Documento de identidad (Viajero ${travelerNumber})`);
+        }
+        if (req.dateOfBirthRequired) {
+          mandatoryFields.push(`Fecha de nacimiento (Viajero ${travelerNumber})`);
+        }
+        if (req.documentIssuanceCityRequired) {
+          mandatoryFields.push(`Ciudad de emisión del documento (Viajero ${travelerNumber})`);
+        }
+        if (req.redressRequiredIfAny) {
+          mandatoryFields.push(`Número de redress (Viajero ${travelerNumber})`);
+        }
+        if (req.airFranceDiscountRequired) {
+          mandatoryFields.push(`Descuento de Air France (Viajero ${travelerNumber})`);
+        }
+        if (req.spanishResidentDiscountRequired) {
+          mandatoryFields.push(`Descuento de residente español (Viajero ${travelerNumber})`);
+        }
+        if (req.residenceRequired) {
+          mandatoryFields.push(`País de residencia (Viajero ${travelerNumber})`);
+        }
+      });
+    }
+
+    return mandatoryFields;
+  }
+
+  /**
+   * Obtiene información de debugging sobre los campos obligatorios
+   */
+  getMandatoryFieldsDebugInfo(): any {
+    const debugInfo: any = {
+      hasAmadeusRequirements: !!this.amadeusBookingRequirements,
+      hasFlightSelected: this.hasFlightSelected,
+      amadeusMandatoryFields: this.getAmadeusMandatoryFields(),
+      fieldAnalysis: {}
+    };
+
+    // Analizar cada campo para determinar por qué es obligatorio
+    if (this.departureReservationFields && this.travelers) {
+      this.departureReservationFields.forEach((field) => {
+        const fieldDetails = this.getReservationFieldDetails(field.reservationFieldId);
+        if (fieldDetails) {
+          const fieldCode = fieldDetails.code;
+          const isStandardMandatory = this.isFieldMandatory(field, false);
+          const isAmadeusMandatory = this.isFieldAmadeusMandatory(fieldDetails, false);
+          
+          debugInfo.fieldAnalysis[fieldCode] = {
+            name: fieldDetails.name,
+            type: fieldDetails.fieldType,
+            standardMandatory: isStandardMandatory,
+            amadeusMandatory: isAmadeusMandatory,
+            finalMandatory: isStandardMandatory || isAmadeusMandatory,
+            mandatoryTypeId: field.mandatoryTypeId
+          };
+        }
+      });
+    }
+
+    return debugInfo;
+  }
+
+  /**
+   * Verifica si hay un vuelo seleccionado en Amadeus y obtiene los requisitos de reserva si es necesario
+   */
+  private checkFlightSelectionStatus(): void {
+    if (!this.reservationId) {
+      console.log('No hay reservationId, continuando con carga normal...');
+      this.loadReservationStatuses();
+      return;
+    }
+
+    console.log('=== Verificando estado de selección de vuelos en Amadeus ===');
+    this.isCheckingFlightStatus = true;
+
+    this.flightSearchService.getSelectionStatus(this.reservationId).subscribe({
+      next: (hasSelection: boolean) => {
+        console.log('Estado de selección de vuelos:', hasSelection);
+        this.hasFlightSelected = hasSelection;
+
+        if (hasSelection) {
+          console.log('✅ Vuelo seleccionado encontrado, obteniendo requisitos de reserva...');
+          this.getAmadeusBookingRequirements();
+        } else {
+          console.log('ℹ️ No hay vuelo seleccionado, continuando con carga normal...');
+          this.isCheckingFlightStatus = false;
+          this.loadReservationStatuses();
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error al verificar estado de selección de vuelos:', error);
+        console.log('⚠️ Continuando con carga normal debido al error...');
+        this.isCheckingFlightStatus = false;
+        this.loadReservationStatuses();
+      }
+    });
+  }
+
+  /**
+   * Obtiene los requisitos de reserva de Amadeus para la reserva actual
+   */
+  private getAmadeusBookingRequirements(): void {
+    if (!this.reservationId) {
+      console.log('No hay reservationId, continuando con carga normal...');
+      this.isCheckingFlightStatus = false;
+      this.loadReservationStatuses();
+      return;
+    }
+
+    console.log('=== Obteniendo requisitos de reserva de Amadeus ===');
+
+    this.flightSearchService.getBookingRequirements(this.reservationId).subscribe({
+      next: (requirements: IBookingRequirements) => {
+        console.log('✅ Requisitos de reserva obtenidos:', requirements);
+        this.amadeusBookingRequirements = requirements;
+        this.isCheckingFlightStatus = false;
+
+        // Si ya tenemos formularios inicializados, reinicializarlos para aplicar las nuevas validaciones
+        if (this.travelerForms.length > 0) {
+          console.log('🔄 Reinicializando formularios con nuevos requisitos de Amadeus...');
+          this.initializeTravelerForms();
+        }
+
+        // Ahora continuar con la carga normal de datos
+        this.loadReservationStatuses();
+      },
+      error: (error) => {
+        console.error('❌ Error al obtener requisitos de reserva:', error);
+        console.log('⚠️ Continuando con carga normal debido al error...');
+        this.amadeusBookingRequirements = null;
+        this.isCheckingFlightStatus = false;
+        this.loadReservationStatuses();
+      }
+    });
   }
 }

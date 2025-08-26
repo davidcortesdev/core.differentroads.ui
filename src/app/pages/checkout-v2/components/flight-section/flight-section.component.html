@@ -1,4 +1,4 @@
-<div class="flight-section" *ngIf="flightPack">
+<div class="flight-section" *ngIf="shouldShowComponent">
   <div class="flight-section-header">
     <div class="header-icon">
       <i class="fas fa-plane"></i>
@@ -24,7 +24,7 @@
           <div class="time">{{ formatTime(departureFlight.departureTime) }}</div>
           <div class="date">{{ formatDate(departureFlight.departureDate) }}</div>
           <div class="city">
-            <div class="city-name">{{ departureFlight.departureCity }}</div>
+            <div class="city-name">{{ getDepartureCityName(departureFlight) }}</div>
             <div class="airport-code">{{ departureFlight.departureIATACode }}</div>
           </div>
         </div>
@@ -40,7 +40,7 @@
           <div class="time">{{ formatTime(departureFlight.arrivalTime) }}</div>
           <div class="date">{{ formatDate(departureFlight.arrivalDate) }}</div>
           <div class="city">
-            <div class="city-name">{{ departureFlight.arrivalCity }}</div>
+            <div class="city-name">{{ getArrivalCityName(departureFlight) }}</div>
             <div class="airport-code">{{ departureFlight.arrivalIATACode }}</div>
           </div>
         </div>
@@ -62,7 +62,7 @@
           <div class="time">{{ formatTime(returnFlight.departureTime) }}</div>
           <div class="date">{{ formatDate(returnFlight.departureDate) }}</div>
           <div class="city">
-            <div class="city-name">{{ returnFlight.departureCity }}</div>
+            <div class="city-name">{{ getDepartureCityName(returnFlight) }}</div>
             <div class="airport-code">{{ returnFlight.departureIATACode }}</div>
           </div>
         </div>
@@ -78,7 +78,7 @@
           <div class="time">{{ formatTime(returnFlight.arrivalTime) }}</div>
           <div class="date">{{ formatDate(returnFlight.arrivalDate) }}</div>
           <div class="city">
-            <div class="city-name">{{ returnFlight.arrivalCity }}</div>
+            <div class="city-name">{{ getArrivalCityName(returnFlight) }}</div>
             <div class="airport-code">{{ returnFlight.arrivalIATACode }}</div>
           </div>
         </div>

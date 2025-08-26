@@ -26,7 +26,7 @@
           <div class="journey-line-left"></div>
           <div class="journey-info-block">
             <!-- Usar el nuevo componente de escalas -->
-            <app-flight-stops [flightId]="flight.id"></app-flight-stops>
+            <app-flight-stops [flightId]="flight.id" [packId]="flightPack.id" [useNewService]="useNewService"></app-flight-stops>
             <span class="journey-airline">{{ getAirlinesText(flight.id) }}</span>
           </div>
           <div class="journey-line-right"></div>
@@ -52,10 +52,10 @@
       <p-button
         type="button"
         class="button-rounded is-primary px-6 py-3"
-        [styleClass]="selectedFlight === flightPack ? 'selected-flight-button' : ''"
+        [styleClass]="getSelectionButtonClass()"
         (click)="selectFlight(flightPack)"
       >
-        {{ selectedFlight === flightPack ? "Seleccionado" : "Seleccionar" }}
+        {{ getSelectionButtonText() }}
       </p-button>
     </div>
   </div>

@@ -4,15 +4,89 @@
   
   <h3 class="title">Agrega los datos del viajero</h3>
   
+  <!-- Información de requisitos de reserva de Amadeus -->
+  <div *ngIf="amadeusBookingRequirements && hasFlightSelected" class="amadeus-requirements-info">
+    <p-panel styleClass="info-panel">
+      <div class="msg">
+        <i class="pi pi-info-circle"></i>
+        <h4>Requisitos de reserva de Amadeus</h4>
+        <p class="requirements-description">
+          Los siguientes campos son obligatorios para completar tu reserva de vuelo:
+        </p>
+        <div class="requirements-list">
+          <div *ngIf="amadeusBookingRequirements.invoiceAddressRequired" class="requirement-item">
+            <i class="pi pi-check-circle"></i>
+            <span>Dirección de facturación requerida</span>
+          </div>
+          <div *ngIf="amadeusBookingRequirements.mailingAddressRequired" class="requirement-item">
+            <i class="pi pi-check-circle"></i>
+            <span>Dirección de correo requerida</span>
+          </div>
+          <div *ngIf="amadeusBookingRequirements.emailAddressRequired" class="requirement-item">
+            <i class="pi pi-check-circle"></i>
+            <span>Correo electrónico requerido</span>
+          </div>
+          <div *ngIf="amadeusBookingRequirements.phoneCountryCodeRequired" class="requirement-item">
+            <i class="pi pi-check-circle"></i>
+            <span>Código de país de teléfono requerido</span>
+          </div>
+          <div *ngIf="amadeusBookingRequirements.mobilePhoneNumberRequired" class="requirement-item">
+            <i class="pi pi-check-circle"></i>
+            <span>Número de teléfono móvil requerido</span>
+          </div>
+          <div *ngIf="amadeusBookingRequirements.phoneNumberRequired" class="requirement-item">
+            <i class="pi pi-check-circle"></i>
+            <span>Número de teléfono requerido</span>
+          </div>
+          <div *ngIf="amadeusBookingRequirements.postalCodeRequired" class="requirement-item">
+            <i class="pi pi-check-circle"></i>
+            <span>Código postal requerido</span>
+          </div>
+        </div>
+        <div *ngIf="amadeusBookingRequirements.travelerRequirements && amadeusBookingRequirements.travelerRequirements.length > 0" class="traveler-requirements">
+          <h5>Requisitos específicos por viajero:</h5>
+          <div *ngFor="let requirement of amadeusBookingRequirements.travelerRequirements" class="traveler-requirement">
+            <strong>Viajero {{ requirement.travelerId }}:</strong>
+            <ul>
+              <li *ngIf="requirement.genderRequired">Género requerido</li>
+              <li *ngIf="requirement.documentRequired">Documento de identidad requerido</li>
+              <li *ngIf="requirement.documentIssuanceCityRequired">Ciudad de emisión del documento requerida</li>
+              <li *ngIf="requirement.dateOfBirthRequired">Fecha de nacimiento requerida</li>
+              <li *ngIf="requirement.redressRequiredIfAny">Número de redress requerido si existe</li>
+              <li *ngIf="requirement.airFranceDiscountRequired">Descuento de Air France requerido</li>
+              <li *ngIf="requirement.spanishResidentDiscountRequired">Descuento de residente español requerido</li>
+              <li *ngIf="requirement.residenceRequired">País de residencia requerido</li>
+            </ul>
+          </div>
+        </div>
+        <div class="amadeus-mandatory-fields">
+          <h5>Campos obligatorios adicionales:</h5>
+          <div class="mandatory-fields-list">
+            <div *ngFor="let field of getAmadeusMandatoryFields()" class="mandatory-field-item">
+              <i class="pi pi-exclamation-triangle"></i>
+              <span>{{ field }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </p-panel>
+  </div>
 
-  
   <!-- Indicador de carga para verificación de estado de reserva -->
   <div *ngIf="checkingReservationStatus" class="loading-indicator">
+    <p-progressSpinner></p-progressSpinner>
     <p>Verificando estado de la reserva...</p>
   </div>
 
+  <!-- Indicador de carga para verificación de estado de vuelos de Amadeus -->
+  <div *ngIf="isCheckingFlightStatus" class="loading-indicator">
+    <p-progressSpinner></p-progressSpinner>
+    <p>Verificando la información necesaria para los vuelos seleccionados...</p>
+  </div>
+
   <!-- Indicador de carga para datos de viajeros -->
-  <div *ngIf="loading && !checkingReservationStatus" class="loading-indicator">
+  <div *ngIf="loading && !checkingReservationStatus && !isCheckingFlightStatus" class="loading-indicator">
+    <p-progressSpinner></p-progressSpinner>
     <p>Cargando información de los viajeros...</p>
   </div>
 

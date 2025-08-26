@@ -149,37 +149,6 @@
                 position: sticky;
                 top: 2rem;
             }
-
-            .summary-placeholder {
-                background: white;
-                border-radius: 8px;
-                padding: 1.5rem;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-
-                h3 {
-                    margin-top: 0;
-                    color: var(--background-azul);
-                    font-weight: 600;
-                }
-
-                .tour-summary {
-                    margin-top: 1rem;
-                    padding-top: 1rem;
-                    border-top: 1px solid #e0e0e0;
-
-                    h4 {
-                        margin: 0 0 0.5rem 0;
-                        color: var(--background-azul);
-                        font-size: 1rem;
-                    }
-
-                    p {
-                        margin: 0.25rem 0;
-                        color: var(--background-azul);
-                        font-size: 0.9rem;
-                    }
-                }
-            }
         }
     }
 }
@@ -403,27 +372,6 @@ p-button.continue-button ::ng-deep .p-button {
             display: flex;
             flex-direction: column;
         }
-    }
-}
-
-// Estilos para información de debug
-.debug-info {
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 1rem;
-    margin: 1rem 0;
-
-    h4 {
-        margin-top: 0;
-        color: var(--background-azul);
-        font-size: 1rem;
-    }
-
-    p {
-        margin: 0.5rem 0;
-        color: var(--background-azul);
-        font-size: 0.9rem;
     }
 }
 

@@ -16,15 +16,70 @@ export class FlightSectionV2Component implements OnChanges {
 
   departureFlight: IFlightResponse | null = null;
   returnFlight: IFlightResponse | null = null;
+  
+  // ✅ NUEVO: Propiedad para controlar si se debe mostrar el componente
+  shouldShowComponent: boolean = false;
 
   constructor(private airportCityCacheService: AirportCityCacheService) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['flightPack'] && this.flightPack) {
-      this.processFlightData();
-      // Precargar ciudades de aeropuertos después de procesar los datos
-      this.preloadAirportCities();
+      // ✅ NUEVO: Verificar si se debe mostrar el componente
+      this.shouldShowComponent = this.shouldShowFlightSection();
+      
+      if (this.shouldShowComponent) {
+        this.processFlightData();
+        // Precargar ciudades de aeropuertos después de procesar los datos
+        this.preloadAirportCities();
+      }
     }
+  }
+
+  /**
+   * ✅ NUEVO: Determina si se debe mostrar la sección de vuelos
+   * Retorna false si es "sin vuelos" o si no hay vuelos válidos
+   */
+  private shouldShowFlightSection(): boolean {
+    if (!this.flightPack) {
+      return false;
+    }
+
+    // Verificar si es "sin vuelos" basándose en el nombre y descripción
+    const name = this.flightPack.name?.toLowerCase() || '';
+    const description = this.flightPack.description?.toLowerCase() || '';
+    
+    const isFlightlessOption = 
+      name.includes('sin vuelos') ||
+      description.includes('sin vuelos') ||
+      name.includes('pack sin vuelos') ||
+      description.includes('pack sin vuelos');
+
+    if (isFlightlessOption) {
+      console.log('🚫 FlightSection: Opción "sin vuelos" detectada, ocultando componente');
+      return false;
+    }
+
+    // Verificar si hay vuelos válidos
+    if (!this.flightPack.flights || this.flightPack.flights.length === 0) {
+      console.log('🚫 FlightSection: No hay vuelos disponibles, ocultando componente');
+      return false;
+    }
+
+    // Verificar si hay al menos un vuelo con información válida
+    const hasValidFlights = this.flightPack.flights.some(flight => 
+      flight.departureIATACode && 
+      flight.arrivalIATACode && 
+      flight.departureTime && 
+      flight.arrivalTime
+    );
+
+    if (!hasValidFlights) {
+      console.log('🚫 FlightSection: No hay vuelos con información válida, ocultando componente');
+      return false;
+    }
+
+    console.log('✅ FlightSection: Vuelos válidos detectados, mostrando componente');
+    return true;
   }
 
   private processFlightData(): void {

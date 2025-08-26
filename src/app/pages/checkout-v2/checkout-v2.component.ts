@@ -2722,7 +2722,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
-   * Método para manejar la selección de "sin vuelos"
+   * ✅ MÉTODO SIMPLIFICADO: Manejar la selección de "sin vuelos"
    */
   private async handleFlightlessSelection(): Promise<void> {
     try {
@@ -2773,31 +2773,17 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             flightlessPack.description
           );
 
-          // ✅ NUEVO: Deseleccionar cualquier vuelo que esté seleccionado en specific-search
-          if (this.reservationId) {
-            console.log('🔄 Deseleccionando vuelos de specific-search antes de seleccionar "Sin Vuelos"');
+          // ✅ NUEVO: Usar la lógica simplificada del componente default-flights
+          if (this.flightManagement && this.reservationId) {
+            console.log('🔄 Usando lógica simplificada del componente default-flights...');
             
-            // Importar y usar el FlightSearchService para deseleccionar vuelos
-            import('../../core/services/flight-search.service').then(({ FlightSearchService }) => {
-              const flightSearchService = new FlightSearchService(this.http);
-              
-              flightSearchService.unselectAllFlights(this.reservationId!).subscribe({
-                next: () => {
-                  console.log('✅ Vuelos de specific-search deseleccionados exitosamente');
-                  
-                  // Continuar con la selección de "Sin Vuelos"
-                  this.continueWithFlightlessSelection(flightlessPack);
-                },
-                error: (error) => {
-                  console.error('❌ Error al deseleccionar vuelos de specific-search:', error);
-                  
-                  // Continuar de todas formas
-                  this.continueWithFlightlessSelection(flightlessPack);
-                }
-              });
-            });
+            // Llamar al método del componente default-flights para asignar "sin vuelos"
+            this.flightManagement.defaultFlightsComponent.saveFlightAssignmentsForAllTravelers(0, true);
+            
+            // Continuar con la selección de "Sin Vuelos"
+            this.continueWithFlightlessSelection(flightlessPack);
           } else {
-            // Si no hay reservationId, continuar directamente
+            console.log('⚠️ No se puede acceder al componente default-flights, continuando directamente...');
             this.continueWithFlightlessSelection(flightlessPack);
           }
         } else {

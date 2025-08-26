@@ -37,8 +37,6 @@ export class ImageUploadModalComponent {
     if (imageUrl) {
       this.imageCropped.emit(imageUrl);
       this.showImageCropper = false;
-      console.log('Imagen subida:', imageUrl);
-      console.log('Total de imágenes:', this.uploadedImages.length);
     }
   }
 

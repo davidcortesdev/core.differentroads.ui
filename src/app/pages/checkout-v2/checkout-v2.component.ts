@@ -139,6 +139,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   jobMonitoringSubscription: Subscription | null = null;
   isSyncInProgress: boolean = false;
   isAuthenticated: boolean = false;
+  
+  // ✅ NUEVO: Propiedades para controlar el estado de carga del botón "Sin Vuelos"
+  isFlightlessProcessing: boolean = false;
+  flightlessProcessingMessage: string = '';
 
   // Propiedades para controlar la verificación de precios
   priceCheckExecuted: boolean = false;
@@ -2722,10 +2726,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
-   * ✅ MÉTODO SIMPLIFICADO: Manejar la selección de "sin vuelos"
+   * ✅ MÉTODO MEJORADO: Manejar la selección de "sin vuelos" con bloqueo de paso
    */
   private async handleFlightlessSelection(): Promise<void> {
     try {
+      // ✅ NUEVO: Activar estado de procesamiento
+      this.isFlightlessProcessing = true;
+      this.flightlessProcessingMessage = 'Procesando selección sin vuelos...';
       console.log('🚀 Iniciando handleFlightlessSelection...');
       console.log('🕐 Timestamp:', new Date().toISOString());
       console.log(
@@ -2773,18 +2780,23 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             flightlessPack.description
           );
 
-          // ✅ NUEVO: Usar la lógica simplificada del componente default-flights
+          // ✅ NUEVO: Usar la lógica simplificada del componente default-flights y ESPERAR
           if (this.flightManagement && this.reservationId) {
             console.log('🔄 Usando lógica simplificada del componente default-flights...');
             
-            // Llamar al método del componente default-flights para asignar "sin vuelos"
-            this.flightManagement.defaultFlightsComponent.saveFlightAssignmentsForAllTravelers(0, true);
+            // ✅ NUEVO: Actualizar mensaje de procesamiento
+            this.flightlessProcessingMessage = 'Guardando asignaciones sin vuelos...';
             
-            // Continuar con la selección de "Sin Vuelos"
-            this.continueWithFlightlessSelection(flightlessPack);
+            // ✅ NUEVO: Llamar al método del componente default-flights para asignar "sin vuelos" y ESPERAR
+            await this.flightManagement.defaultFlightsComponent.saveFlightAssignmentsForAllTravelers(0, true);
+            
+            console.log('✅ Asignaciones sin vuelos guardadas exitosamente');
+            
+            // ✅ NUEVO: Continuar con la selección de "Sin Vuelos" y ESPERAR
+            await this.continueWithFlightlessSelection(flightlessPack);
           } else {
             console.log('⚠️ No se puede acceder al componente default-flights, continuando directamente...');
-            this.continueWithFlightlessSelection(flightlessPack);
+            await this.continueWithFlightlessSelection(flightlessPack);
           }
         } else {
           console.error('❌ No se encontró paquete sin vuelos disponible');
@@ -2796,6 +2808,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               description: p.description,
             }))
           );
+          
+          // ✅ NUEVO: Mostrar error y desactivar procesamiento
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se encontró la opción sin vuelos disponible',
+            life: 5000,
+          });
         }
       } else {
         console.error('❌ No hay vuelos disponibles o no se han cargado');
@@ -2804,6 +2824,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           '📦 availableFlights length:',
           this.availableFlights?.length || 0
         );
+        
+        // ✅ NUEVO: Mostrar error y desactivar procesamiento
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No hay vuelos disponibles en el sistema',
+          life: 5000,
+        });
       }
     } catch (error) {
       console.error('💥 Error al manejar selección sin vuelos:', error);
@@ -2811,15 +2839,31 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         '💥 Stack trace:',
         error instanceof Error ? error.stack : 'No stack trace available'
       );
+      
+      // ✅ NUEVO: Mostrar error y desactivar procesamiento
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Error al procesar la selección sin vuelos. Por favor, inténtalo de nuevo.',
+        life: 5000,
+      });
+    } finally {
+      // ✅ NUEVO: Desactivar estado de procesamiento
+      this.isFlightlessProcessing = false;
+      this.flightlessProcessingMessage = '';
+      console.log('✅ Procesamiento de sin vuelos completado');
     }
   }
 
   /**
-   * ✅ MÉTODO SIMPLIFICADO: Continuar con la selección de "Sin Vuelos"
+   * ✅ MÉTODO MEJORADO: Continuar con la selección de "Sin Vuelos" (sin cambio automático de paso)
    */
-  private continueWithFlightlessSelection(flightlessPack: IFlightPackDTO): void {
+  private async continueWithFlightlessSelection(flightlessPack: IFlightPackDTO): Promise<void> {
     console.log('🔄 Continuando con selección de "Sin Vuelos"');
     console.log('📦 Paquete sin vuelos:', flightlessPack);
+    
+    // ✅ NUEVO: Actualizar mensaje de procesamiento
+    this.flightlessProcessingMessage = 'Actualizando resumen y datos...';
     
     // Actualizar el selectedFlight
     this.selectedFlight = flightlessPack;
@@ -2831,6 +2875,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       totalPrice: 0, // precio 0 para opción sin vuelos
     });
 
+    // ✅ NUEVO: Actualizar mensaje de procesamiento
+    this.flightlessProcessingMessage = 'Recalculando precios...';
+    
     // Actualizar el resumen
     if (this.travelerSelector && this.travelerSelector.travelersNumbers) {
       this.updateOrderSummary(this.travelerSelector.travelersNumbers);
@@ -2843,9 +2890,16 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       this.updateOrderSummary(basicTravelers);
     }
 
-    // Continuar al siguiente paso
-    console.log('➡️ Continuando al siguiente paso...');
-    this.onActiveIndexChange(2);
+    // ✅ NUEVO: Mostrar mensaje de éxito
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Sin vuelos seleccionado',
+      detail: 'La opción sin vuelos ha sido seleccionada y guardada correctamente. Ahora puedes continuar al siguiente paso.',
+      life: 5000,
+    });
+
+    // ✅ NUEVO: NO cambiar automáticamente de paso - el usuario debe hacer clic en "Continuar"
+    console.log('✅ Selección sin vuelos completada. El usuario debe hacer clic en "Continuar" para avanzar.');
   }
 
   closeLoginModal(): void {
@@ -2946,5 +3000,18 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   public onCheckoutCancel(): void {
     this.clearSummaryFromLocalStorage();
     console.log('❌ Checkout cancelado, resumen del localStorage limpiado');
+  }
+
+  /**
+   * ✅ NUEVO: Método para obtener el tooltip del botón Continuar
+   */
+  public getContinueButtonTooltip(): string {
+    if (this.isFlightlessProcessing) {
+      return 'Espera a que se complete el procesamiento de sin vuelos';
+    }
+    if (!this.selectedFlight) {
+      return 'Debes seleccionar un vuelo para continuar';
+    }
+    return '';
   }
 }

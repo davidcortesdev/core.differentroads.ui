@@ -220,10 +220,26 @@ p-button.without-flight ::ng-deep .p-button {
     color: var(--p-primary-color);
     border-radius: 50px;
     min-width: 250px;
+    transition: all 0.3s ease;
 
     &:hover {
         background-color: var(--p-primary-color);
         color: var(--background-azul-color-letra);
+    }
+
+    // ✅ NUEVO: Estilos para estado de carga
+    &:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+        color: #6c757d;
+    }
+
+    // ✅ NUEVO: Estilos para el spinner de carga
+    .p-button-icon.pi-spinner {
+        animation: spin 1s linear infinite;
+        margin-right: 0.5rem;
     }
 
     @media screen and (min-width: 481px) and (max-width: 1024px) {
@@ -238,9 +254,28 @@ p-button.without-flight ::ng-deep .p-button {
     }
 }
 
+// ✅ NUEVO: Animación para el spinner
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 p-button.continue-button ::ng-deep .p-button {
     background-color: var(--p-primary-color);
     min-width: 150px;
+    transition: all 0.3s ease;
+
+    // ✅ NUEVO: Estilos para estado deshabilitado durante procesamiento
+    &:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
 
     @media screen and (min-width: 481px) and (max-width: 1024px) {
         min-width: 120px;

@@ -21,7 +21,7 @@ import { BookingsComponent } from './pages/bookings/bookings.component';
 import { PaymentsComponent } from './pages/payments/payments.component';
 import { AirportSearchComponent } from './features/airports/airport-search/airport-search.component';
 import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
-import { ReviewsComponent } from './pages/reviews/reviews.component';
+import { ReviewSurveyComponent } from './pages/review-survey/review-survey.component';
 import { ReviewSectionComponent } from './pages/profile/components/review-section/review-section.component';
 import { NewReservationComponent } from './pages/checkout-v2/components/new-reservation/new-reservation.component';
 
@@ -62,7 +62,7 @@ const routes: Routes = [
       { path: 'reservation/:reservationId/:paymentId', component: NewReservationComponent },
       { path: 'bookings/:id', component: BookingsComponent },
       { path: 'aeropuertos', component: AirportSearchComponent },
-      {path: 'reviews/:id', component: ReviewsComponent},
+      {path: 'reviews/:id', component: ReviewSurveyComponent},
       { path: '**', component: NotFoundComponent },
     ],
   },

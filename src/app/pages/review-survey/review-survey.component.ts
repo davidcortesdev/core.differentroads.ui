@@ -62,12 +62,12 @@ interface Period {
 }
 
 @Component({
-  selector: 'app-reviews',
+  selector: 'app-review-survey',
   standalone: false,
-  templateUrl: './reviews.component.html',
-  styleUrl: './reviews.component.scss',
+  templateUrl: './review-survey.component.html',
+  styleUrl: './review-survey.component.scss',
 })
-export class ReviewsComponent implements OnInit {
+export class ReviewSurveyComponent implements OnInit {
   @ViewChild('nombreInput') nombreInputRef!: ElementRef<HTMLInputElement>;
   @ViewChild('emailInput') emailInputRef!: ElementRef<HTMLInputElement>;
   @ViewChild('comentarioInput')

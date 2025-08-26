@@ -384,6 +384,149 @@ $border-color: #e2e8f0;
   }
 }
 
+// Estilos para el diálogo de cambio de precio
+.price-change-dialog {
+  ::ng-deep .p-dialog {
+    min-width: 500px;
+    max-width: 600px;
+    
+    .p-dialog-header {
+      background-color: #fff3cd;
+      border-bottom: 1px solid #ffeaa7;
+      
+      .p-dialog-title {
+        color: #856404;
+        font-weight: 600;
+      }
+    }
+    
+    .p-dialog-content {
+      padding: 1.5rem;
+    }
+    
+    .p-dialog-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #dee2e6;
+    }
+  }
+}
+
+.price-change-content {
+  text-align: center;
+  
+  .price-change-icon {
+    margin-bottom: 1rem;
+    
+    i {
+      font-size: 3rem;
+      color: #f39c12;
+    }
+  }
+  
+  h3 {
+    color: #856404;
+    margin-bottom: 1.5rem;
+    font-size: 1.25rem;
+  }
+  
+  .price-details {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #e9ecef;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      .price-label {
+        font-weight: 500;
+        color: #495057;
+      }
+      
+      .price-value {
+        font-weight: 600;
+        font-size: 1.1rem;
+        
+        &.previous-price {
+          color: #6c757d;
+          text-decoration: line-through;
+        }
+        
+        &.current-price {
+          color: #28a745;
+        }
+        
+        &.difference-price,
+        &.percentage-change {
+          &.increase {
+            color: #dc3545;
+          }
+          
+          &.decrease {
+            color: #28a745;
+          }
+        }
+      }
+    }
+  }
+  
+  .price-change-message {
+    color: #495057;
+    line-height: 1.5;
+    margin: 0;
+  }
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  
+  .p-button {
+    min-width: 180px;
+  }
+}
+
+// Estilos para la información de Amadeus
+.amadeus-info {
+  margin-top: 1rem;
+  
+  .info-panel {
+    ::ng-deep .p-panel-content {
+      padding: 0.75rem 1rem;
+      background-color: #d1ecf1;
+      border: 1px solid #bee5eb;
+      border-radius: 6px;
+    }
+    
+    .info-content {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      
+      i {
+        color: #17a2b8;
+        font-size: 1.1rem;
+      }
+      
+      span {
+        color: #0c5460;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
 .button-content {
   @include flex-center;
   width: 100%;

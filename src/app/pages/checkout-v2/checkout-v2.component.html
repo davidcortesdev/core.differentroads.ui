@@ -146,7 +146,8 @@
              <app-payment-management 
                [totalPrice]="totalAmountCalculated" 
                [reservationId]="reservationId ?? 0"
-               [departureDate]="departureDate">
+               [departureDate]="departureDate"
+               (navigateToStep)="onNavigateToStep($event)">
              </app-payment-management>
           </div>
         </div>

@@ -10,6 +10,7 @@ import { ReservationStatusService } from '../../../../core/services/reservation/
 import { ReservationService } from '../../../../core/services/reservation/reservation.service';
 import { MessageService } from 'primeng/api';
 import { CurrencyService } from '../../../../core/services/currency.service';
+import { FlightSearchService, IPriceChangeInfo } from '../../../../core/services/flight-search.service';
 
 // Interfaces y tipos
 export type PaymentType = 'complete' | 'deposit' | 'installments';
@@ -39,11 +40,17 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
   // Outputs
   @Output() paymentCompleted = new EventEmitter<PaymentOption>();
   @Output() backRequested = new EventEmitter<void>();
+  @Output() navigateToStep = new EventEmitter<number>();
 
   // Payment IDs (se cargarán desde la API)
   transferMethodId: number = 0;
   redsysMethodId: number = 0;
   pendingStatusId: number = 0;
+
+  // Amadeus flight validation
+  hasAmadeusFlight: boolean = false;
+  priceValidation: IPriceChangeInfo | null = null;
+  showPriceChangeDialog: boolean = false;
 
   // State management
   readonly dropdownStates = {
@@ -69,12 +76,14 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
     private readonly reservationStatusService: ReservationStatusService,
     private readonly reservationService: ReservationService,
     private readonly messageService: MessageService,
-    private readonly currencyService: CurrencyService
+    private readonly currencyService: CurrencyService,
+    private readonly flightSearchService: FlightSearchService
   ) { }
 
   ngOnInit(): void {
     this.initializeScalapayScript();
     this.loadPaymentIds();
+    this.checkAmadeusFlightStatus();
   }
 
   ngOnChanges(): void {
@@ -83,6 +92,92 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
       this.paymentState.type = null;
       this.updateDropdownVisibility();
     }
+  }
+
+  /**
+   * Verifica si hay un vuelo Amadeus seleccionado y valida el precio
+   */
+  private checkAmadeusFlightStatus(): void {
+    if (!this.reservationId) return;
+
+    this.flightSearchService.getSelectionStatus(this.reservationId).subscribe({
+      next: (hasSelection: boolean) => {
+        this.hasAmadeusFlight = hasSelection;
+        
+        if (hasSelection) {
+          console.log('✅ Vuelo Amadeus detectado, validando precio...');
+          
+          // Limpiar selecciones no permitidas para vuelos de Amadeus
+          this.cleanupInvalidSelectionsForAmadeus();
+          
+          this.validateAmadeusPrice();
+        } else {
+          console.log('ℹ️ No hay vuelo Amadeus seleccionado');
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error al verificar estado de vuelo Amadeus:', error);
+        this.hasAmadeusFlight = false;
+      }
+    });
+  }
+
+  /**
+   * Limpia las selecciones de pago no permitidas para vuelos de Amadeus
+   */
+  private cleanupInvalidSelectionsForAmadeus(): void {
+    // Si estaba seleccionado pagos a plazos, limpiarlo
+    if (this.paymentState.type === 'installments') {
+      console.log('🔄 Limpiando selección de plazos (no permitido para Amadeus)');
+      this.paymentState.type = null;
+      this.paymentState.installmentOption = null;
+    }
+    
+    // Si estaba seleccionado transferencia, limpiarlo
+    if (this.paymentState.method === 'transfer') {
+      console.log('🔄 Limpiando selección de transferencia (no permitido para Amadeus)');
+      this.paymentState.method = null;
+    }
+    
+    // Actualizar visibilidad de dropdowns
+    this.updateDropdownVisibility();
+  }
+
+  /**
+   * Valida si ha cambiado el precio del vuelo Amadeus
+   */
+  private validateAmadeusPrice(): void {
+    if (!this.reservationId) return;
+
+    this.flightSearchService.validatePriceChange(this.reservationId).subscribe({
+      next: (validation: IPriceChangeInfo | null) => {
+        if (validation) {
+          this.priceValidation = validation;
+          
+          if (validation.hasChanged) {
+            console.log('⚠️ Cambio de precio detectado:', validation);
+            this.showPriceChangeDialog = true;
+            
+            // Mostrar mensaje informativo
+            this.messageService.add({
+              severity: 'warn',
+              summary: 'Precio cambiado',
+              detail: `El precio del vuelo ha cambiado. Diferencia: ${validation.priceDifference.toFixed(2)} ${validation.currency || 'EUR'}`,
+              life: 5000,
+            });
+          } else {
+            console.log('✅ Precio del vuelo sin cambios');
+          }
+        } else {
+          console.log('ℹ️ No se pudo validar el precio del vuelo');
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error al validar precio del vuelo:', error);
+        // En caso de error, permitir continuar
+        this.priceValidation = null;
+      }
+    });
   }
 
   private loadPaymentIds(): void {
@@ -168,6 +263,22 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
     return today < deadlineDate;
   }
 
+  /**
+   * Controla si se debe mostrar la opción de transferencia bancaria
+   * Para vuelos de Amadeus, solo se permite tarjeta bancaria
+   */
+  get shouldShowTransferOption(): boolean {
+    return !this.hasAmadeusFlight;
+  }
+
+  /**
+   * Controla si se debe mostrar la opción de pagos a plazos (Scalapay)
+   * Para vuelos de Amadeus, solo se permite pago completo con tarjeta
+   */
+  get shouldShowInstallmentsOption(): boolean {
+    return !this.hasAmadeusFlight;
+  }
+
   // Payment type management
   selectPaymentType(type: PaymentType): void {
     // Si se intenta seleccionar depósito pero no está disponible, no hacer nada
@@ -204,6 +315,35 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
   // Actions
   goBack(): void {
     this.backRequested.emit();
+  }
+
+  /**
+   * Maneja la decisión del usuario sobre el cambio de precio
+   * @param continueWithNewPrice true para continuar con el nuevo precio, false para volver
+   */
+  handlePriceChangeDecision(continueWithNewPrice: boolean): void {
+    this.showPriceChangeDialog = false;
+    
+    if (continueWithNewPrice) {
+      console.log('✅ Usuario decidió continuar con el nuevo precio');
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Continuando con nuevo precio',
+        detail: 'Procediendo con el pago con el precio actualizado del vuelo',
+        life: 3000,
+      });
+    } else {
+      console.log('🔄 Usuario decidió volver a selección de vuelos (step 1)');
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Volviendo a selección de vuelos',
+        detail: 'Será redirigido al paso de selección de vuelos',
+        life: 3000,
+      });
+      
+      // Emitir evento para navegar al step 1 (selección de vuelos)
+      this.navigateToStep.emit(1);
+    }
   }
 
   async submitPayment(): Promise<void> {

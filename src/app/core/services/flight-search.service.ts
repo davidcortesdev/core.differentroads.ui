@@ -136,6 +136,20 @@ export interface IPassengerConditions {
   residenceRequired?: boolean | null;
 }
 
+// Nueva interfaz para información de cambio de precio
+export interface IPriceChangeInfo {
+  hasChanged: boolean;
+  previousPrice: number;
+  currentPrice: number;
+  priceDifference: number;
+  percentageChange: number;
+  currency?: string | null;
+  isPriceIncrease: boolean;
+  timestamp: string;
+  tolerance: number;
+  message?: string | null;
+}
+
 export type FlightSearchResponse = IFlightSearchResultDTO;
 
 // Interfaces para respuestas de operaciones PUT
@@ -248,6 +262,17 @@ export class FlightSearchService {
   getSelectionStatus(reservationId: number): Observable<boolean> {
     return this.http.get<boolean>(
       `${this.API_URL}/reservation/${reservationId}/consolidator/selection-status`
+    );
+  }
+
+  /**
+   * Valida si el precio de una oferta de vuelo ha cambiado entre el registro en base de datos y la respuesta actual de Amadeus
+   * @param reservationId ID de la reserva para la cual validar el cambio de precio
+   * @returns Observable con la información del cambio de precio o null si no hay cambios
+   */
+  validatePriceChange(reservationId: number): Observable<IPriceChangeInfo | null> {
+    return this.http.get<IPriceChangeInfo | null>(
+      `${this.API_URL}/reservation/${reservationId}/validate-price-change`
     );
   }
 

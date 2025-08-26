@@ -3014,4 +3014,53 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     }
     return '';
   }
+
+  /**
+   * ✅ NUEVO: Maneja la navegación a un step específico desde el componente de pago
+   * @param stepNumber Número del step al que navegar
+   */
+  public onNavigateToStep(stepNumber: number): void {
+    console.log(`🔄 Navegando al step ${stepNumber} desde payment-management`);
+    
+    if (stepNumber === 1) {
+      // Navegar al step 1 (selección de vuelos)
+      console.log('📍 Navegando a selección de vuelos (step 1)');
+      
+      // Cambiar al step 1
+      this.onActiveIndexChange(1);
+      
+      // Mostrar mensaje informativo al usuario
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Navegación',
+        detail: 'Has sido redirigido a la selección de vuelos para elegir una nueva opción',
+        life: 4000,
+      });
+      
+      // Opcional: Limpiar estado relacionado con vuelos si es necesario
+      this.clearFlightSelectionState();
+    } else {
+      console.log(`⚠️ Step ${stepNumber} no manejado específicamente`);
+      // Para otros steps, usar la navegación estándar
+      this.onActiveIndexChange(stepNumber);
+    }
+  }
+
+  /**
+   * ✅ NUEVO: Limpia el estado relacionado con la selección de vuelos
+   */
+  private clearFlightSelectionState(): void {
+    console.log('🧹 Limpiando estado de selección de vuelos...');
+    
+    // Resetear vuelo seleccionado
+    this.selectedFlight = null;
+    this.flightPrice = 0;
+    
+    // Actualizar el resumen sin vuelos
+    if (this.travelerSelector && this.travelerSelector.travelersNumbers) {
+      this.updateOrderSummary(this.travelerSelector.travelersNumbers);
+    }
+    
+    console.log('✅ Estado de vuelos limpiado');
+  }
 }

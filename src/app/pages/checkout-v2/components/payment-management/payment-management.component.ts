@@ -52,6 +52,10 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
   priceValidation: IPriceChangeInfo | null = null;
   showPriceChangeDialog: boolean = false;
 
+  // Specific search flights validation
+  hasSpecificSearchFlights: boolean = false;
+  specificSearchFlightsCost: number = 0;
+
   // State management
   readonly dropdownStates = {
     main: true,
@@ -107,18 +111,43 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
         if (hasSelection) {
           console.log('✅ Vuelo Amadeus detectado, validando precio...');
           
+          // Verificar si hay vuelos de specific-search para depósito
+          this.checkSpecificSearchFlights();
+          
           // Limpiar selecciones no permitidas para vuelos de Amadeus
           this.cleanupInvalidSelectionsForAmadeus();
           
           this.validateAmadeusPrice();
         } else {
           console.log('ℹ️ No hay vuelo Amadeus seleccionado');
+          this.hasSpecificSearchFlights = false;
+          this.specificSearchFlightsCost = 0;
         }
       },
       error: (error) => {
         console.error('❌ Error al verificar estado de vuelo Amadeus:', error);
         this.hasAmadeusFlight = false;
+        this.hasSpecificSearchFlights = false;
+        this.specificSearchFlightsCost = 0;
       }
+    });
+  }
+
+  /**
+   * Verifica si hay vuelos de specific-search y calcula su coste
+   */
+  private checkSpecificSearchFlights(): void {
+    if (!this.reservationId) return;
+
+    // TODO: Implementar llamada al servicio para obtener vuelos de specific-search
+    // Por ahora, simulamos que no hay vuelos de specific-search
+    this.hasSpecificSearchFlights = false;
+    this.specificSearchFlightsCost = 0;
+    
+    console.log('🔍 Verificando vuelos de specific-search...');
+    console.log('📊 Estado actual:', {
+      hasSpecificSearchFlights: this.hasSpecificSearchFlights,
+      specificSearchFlightsCost: this.specificSearchFlightsCost
     });
   }
 
@@ -126,17 +155,19 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
    * Limpia las selecciones de pago no permitidas para vuelos de Amadeus
    */
   private cleanupInvalidSelectionsForAmadeus(): void {
-    // Si estaba seleccionado pagos a plazos, limpiarlo
-    if (this.paymentState.type === 'installments') {
-      console.log('🔄 Limpiando selección de plazos (no permitido para Amadeus)');
-      this.paymentState.type = null;
-      this.paymentState.installmentOption = null;
-    }
-    
-    // Si estaba seleccionado transferencia, limpiarlo
+    // Si estaba seleccionado transferencia, limpiarlo (nunca permitida para Amadeus)
     if (this.paymentState.method === 'transfer') {
       console.log('🔄 Limpiando selección de transferencia (no permitido para Amadeus)');
       this.paymentState.method = null;
+    }
+    
+    // Si estaba seleccionado depósito, verificar si se permite
+    if (this.paymentState.type === 'deposit' && this.hasAmadeusFlight) {
+      // Solo permitir depósito si hay vuelos de specific-search
+      if (!this.hasSpecificSearchFlights) {
+        console.log('🔄 Limpiando selección de depósito (no permitido para Amadeus sin vuelos de specific-search)');
+        this.paymentState.type = null;
+      }
     }
     
     // Actualizar visibilidad de dropdowns
@@ -258,9 +289,28 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
     
     const daysBeforeDeparture = parseInt(deadlineMatch[1]);
     const deadlineDate = new Date(departureDate);
-    deadlineDate.setDate(departureDate.getDate() - daysBeforeDeparture);
+    deadlineDate.setDate(departureDate.getDate() + daysBeforeDeparture);
     
-    return today < deadlineDate;
+    const isWithinDeadline = today < deadlineDate;
+    
+    // Para vuelos de Amadeus, solo permitir depósito si hay vuelos de specific-search
+    if (this.hasAmadeusFlight) {
+      return this.hasSpecificSearchFlights && isWithinDeadline;
+    }
+    
+    return isWithinDeadline;
+  }
+
+  /**
+   * Calcula el monto total del depósito
+   * Para vuelos de Amadeus con specific-search: depósito + coste de vuelos
+   * Para otros casos: solo el depósito
+   */
+  get depositTotalAmount(): number {
+    if (this.hasAmadeusFlight && this.hasSpecificSearchFlights) {
+      return this.depositAmount + this.specificSearchFlightsCost;
+    }
+    return this.depositAmount;
   }
 
   /**
@@ -273,10 +323,10 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
 
   /**
    * Controla si se debe mostrar la opción de pagos a plazos (Scalapay)
-   * Para vuelos de Amadeus, solo se permite pago completo con tarjeta
+   * Para vuelos de Amadeus: Siempre se permite Scalapay
    */
   get shouldShowInstallmentsOption(): boolean {
-    return !this.hasAmadeusFlight;
+    return true; // Siempre mostrar Scalapay para todos los tipos de vuelos
   }
 
   // Payment type management

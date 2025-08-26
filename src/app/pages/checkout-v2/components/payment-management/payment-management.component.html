@@ -286,16 +286,11 @@
           </span>
         </div>
         
-        <div class="price-row" *ngIf="priceValidation.percentageChange">
-          <span class="price-label">Cambio porcentual:</span>
-          <span class="price-value percentage-change" [ngClass]="priceValidation.isPriceIncrease ? 'increase' : 'decrease'">
-            {{ priceValidation.isPriceIncrease ? '+' : '' }}{{ priceValidation.percentageChange | number:'1.1-1' }}%
-          </span>
-        </div>
+
       </div>
       
       <p class="price-change-message">
-        El precio del vuelo seleccionado ha cambiado desde que se almacenó en nuestra base de datos. 
+        El precio del vuelo seleccionado ha cambiado desde su búsqueda. <br>
         ¿Desea continuar con el nuevo precio o volver a seleccionar un vuelo?
       </p>
     </div>

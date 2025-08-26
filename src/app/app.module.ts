@@ -241,8 +241,8 @@ import { SectionFlightComponent } from './pages/checkout-v2/components/new-reser
 import { PaymentInfoComponent } from './pages/checkout-v2/components/new-reservation/payment-info/payment-info.component';
 import { SummaryInfoComponent } from './pages/checkout-v2/components/new-reservation/summary-info/summary-info.component';
 import { ImageCropperComponent } from './shared/components/image-cropper/image-cropper.component';
-import { ReviewsComponent as ReviewsPageComponent } from './pages/reviews/reviews.component';
-import { ImageUploadModalComponent } from './pages/reviews/image-upload-modal/image-upload-modal.component';
+import { ReviewSurveyComponent } from './pages/review-survey/review-survey.component';
+import { ImageUploadModalComponent } from './pages/review-survey/image-upload-modal/image-upload-modal.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -390,7 +390,7 @@ registerLocaleData(localeEs);
     PaymentInfoComponent,
     SummaryInfoComponent,
     ImageCropperComponent,
-    ReviewsPageComponent,
+    ReviewSurveyComponent,
     ImageUploadModalComponent,
   ],
   imports: [

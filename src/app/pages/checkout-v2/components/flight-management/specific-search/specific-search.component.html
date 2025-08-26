@@ -80,19 +80,18 @@
             emptyMessage="No se encontraron ciudades"
           >
             <!-- Plantilla personalizada para los elementos del dropdown -->
-            <ng-template pTemplate="item" let-city>
+            <ng-template #item let-city>
               <div class="city-item">
                 {{ city.codigo }} - {{ city.nombre }}
               </div>
             </ng-template>
             <!-- Plantilla personalizada para el input cuando está seleccionado -->
-            <ng-template pTemplate="selectedItem" let-city>
+            <ng-template #selectedItem let-city>
               <div class="selected-city">
                 {{ city.codigo }} - {{ city.nombre }}
               </div>
             </ng-template>
           </p-autocomplete>
-          <a href="#" class="change"></a>
         </div>
         <div class="input destination">
           <div class="dest-lbl">Llegada</div>
@@ -130,12 +129,12 @@
             [showEmptyMessage]="true"
             emptyMessage="No se encontraron ciudades"
           >
-            <ng-template pTemplate="item" let-city>
+            <ng-template #item let-city>
               <div class="city-item">
                 {{ city.codigo }} - {{ city.nombre }}
               </div>
             </ng-template>
-            <ng-template pTemplate="selectedItem" let-city>
+            <ng-template #selectedItem let-city>
               <div class="selected-city">
                 {{ city.codigo }} - {{ city.nombre }}
               </div>
@@ -183,7 +182,7 @@
 
     <div class="search-opts">
       <div class="sort">
-        <p-dropdown
+        <!-- <p-dropdown
           [options]="sortOptions"
           [(ngModel)]="selectedSortOption"
           [ngModelOptions]="{ standalone: true }"
@@ -192,7 +191,7 @@
           styleClass="p-button-outlined mobile-friendly-dropdown"
           [showClear]="false"
           appendTo="body"
-        ></p-dropdown>
+        ></p-dropdown> -->
       </div>
       <div class="filter">
         <!--   <p-dropdown
@@ -230,31 +229,47 @@
   </p-panel>
 </div>
 
-<!-- Lista de resultados de vuelos -->
-<div
-  class="flt-results"
-  *ngIf="!isLoading && searchPerformed && filteredOffers.length > 0"
->
-  <p-panel styleClass="results-panel">
-    <ng-template #header>
-      <div class="res-header">
-        <h3>Resultados de búsqueda</h3>
-        -
-        <div class="count">
-          {{ transformedFlights.length }} vuelos encontrados
+<!-- Warnings de búsqueda -->
+<div *ngIf="hasSearchWarnings && searchWarnings.length > 0" class="warning-message-panel">
+  <p-panel styleClass="warning-panel">
+    <div class="msg">
+      <i class="pi pi-exclamation-triangle"></i>
+      <h3>
+        Advertencias en la búsqueda
+        <i class="pi pi-info-circle amadeus-info-icon" 
+           pTooltip="Estas advertencias son proporcionadas por el servicio de búsqueda de vuelos de Amadeus"
+           tooltipPosition="top"
+           [showDelay]="300"></i>
+      </h3>
+      <div class="warnings-container">
+        <div *ngFor="let warning of searchWarnings" class="warning-item">
+          <div class="warning-header">
+            <span class="warning-title">{{ warning.title }}</span>
+            <span class="warning-status">({{ warning.status }})</span>
+          </div>
+          <div class="warning-detail">{{ warning.detail }}</div>
+          <div *ngIf="warning.code !== 0" class="warning-code">Código: {{ warning.code }}</div>
         </div>
       </div>
-    </ng-template>
+    </div>
+  </p-panel>
+</div>
 
-    <!-- Lista de vuelos usando el componente flight-itinerary -->
-    <div class="flt-list">
-      <div *ngFor="let flight of transformedFlights" class="item">
-        <app-flight-itinerary
-          [flight]="flight"
-          [selectFlight]="selectFlight.bind(this)"
-          [isFlightSelected]="isFlightSelected.bind(this)"
-        >
-        </app-flight-itinerary>
+<!-- Meta información de búsqueda -->
+<div *ngIf="searchMeta" class="meta-info-panel">
+  <p-panel styleClass="info-panel">
+    <div class="msg">
+      <i class="pi pi-info-circle"></i>
+      <h3>Información de la búsqueda</h3>
+      <div class="meta-container">
+        <div class="meta-item">
+          <span class="meta-label">Total de resultados:</span>
+          <span class="meta-value">{{ searchMeta.count }}</span>
+        </div>
+        <div *ngIf="searchMeta.oneWayCombinations" class="meta-item">
+          <span class="meta-label">Combinaciones de ida:</span>
+          <span class="meta-value">{{ searchMeta.oneWayCombinations }}</span>
+        </div>
       </div>
     </div>
   </p-panel>
@@ -279,124 +294,77 @@
   </p-panel>
 </div>
 
-<!-- Estado de error o sin resultados -->
-<div
-  class="no-results"
-  *ngIf="!isLoading && searchPerformed && filteredOffers.length === 0"
->
+<!-- Sección de resultados de búsqueda usando app-flight-item -->
+<div *ngIf="!isLoading && searchPerformed && flightOffersRaw && flightOffersRaw.length > 0" class="flight-results">
+  <h3>Resultados de búsqueda de vuelos:</h3>
+  
+  <!-- Filtros de ordenación -->
+  <div class="sort-controls" *ngIf="flightOffersRaw.length > 1">
+    <label for="sortSelect">Ordenar por:</label>
+    <p-dropdown
+      id="sortSelect"
+      [options]="sortOptions"
+      [(ngModel)]="selectedSortOption"
+      (onChange)="onSortChange($event)"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="Seleccionar orden"
+    ></p-dropdown>
+    
+    <!-- Indicador de carga de detalles -->
+    <div *ngIf="isLoadingDetails" class="loading-details">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Cargando detalles de escalas...</span>
+    </div>
+  </div>
+
+  <!-- Lista de vuelos usando app-flight-item -->
+  <!-- 
+    Nota: Se pasa autoSearch="false" para evitar que cada flight-item haga 
+    búsquedas automáticas al cargar, lo que causaría múltiples llamadas al API.
+    
+    Los detalles de vuelos (escalas, duración, aerolíneas) se cargan automáticamente
+    dentro de cada flight-item cuando useNewService="true", usando el endpoint 
+    /api/FlightSearch/{packId}/details/{flightId}.
+    
+    Esto evita el bucle de peticiones y mejora el rendimiento.
+    
+    Se pasa useNewService="true" para que flight-item y flight-stops usen el nuevo
+    FlightSearchService en lugar del FlightsNetService.
+    
+    Los detalles se mapean internamente al formato esperado por FlightsNetService
+    para mantener compatibilidad con el resto de la aplicación.
+  -->
+  
+  <!-- Indicador de carga de nombres de ciudades -->
+  <div *ngIf="hasPendingCities() && flightOffersRaw.length > 0" class="loading-cities">
+    <p-progressSpinner size="small"></p-progressSpinner>
+    <div class="msg">Cargando nombres de ciudades y aeropuertos...</div>
+  </div>
+  
+  <div class="flight-list" *ngIf="!hasPendingCities()">
+    <app-flight-item
+      *ngFor="let flightPack of adaptedFlightPacks; trackBy: trackByFlightId"
+      [flightPack]="flightPack"
+      [selectedFlight]="selectedFlight ? adaptFlightPackForFlightItem(selectedFlight) : null"
+      [useNewService]="true"
+      (flightSelected)="selectFlight($event)"
+    ></app-flight-item>
+  </div>
+</div>
+
+<!-- Mensaje cuando no hay resultados después de una búsqueda -->
+<div *ngIf="!isLoading && searchPerformed && (!flightOffersRaw || flightOffersRaw.length === 0)" class="no-results">
   <p-panel>
     <div class="msg">
       <i class="pi pi-info-circle"></i>
       <h3>No se encontraron vuelos</h3>
-      <p>
-        No hay vuelos disponibles con los criterios seleccionados. Por favor,
-        intenta modificar tu búsqueda.
-      </p>
+      <p>{{ getNoResultsMessage() }}</p>
     </div>
   </p-panel>
 </div>
 
-<!-- Mostrar warnings de la búsqueda de vuelos si existen -->
-<div *ngIf="flightOffersRaw?.warnings?.length" class="flight-warnings-panel">
-  <p-panel styleClass="warning-panel">
-    <div class="msg">
-      <i class="pi pi-exclamation-triangle"></i>
-      <h3>Advertencias de la búsqueda:</h3>
-      <ul>
-        <li *ngFor="let warning of flightOffersRaw.warnings">
-          <b>{{ warning.title }}</b>: {{ warning.detail }}
-        </li>
-      </ul>
-    </div>
-  </p-panel>
-</div>
-
-<!-- Sección de debug: mostrar ofertas crudas de la API de forma amigable -->
-<div *ngIf="flightOffersRaw?.data?.flightOffers?.length" class="api-flight-offers">
-  <h3>Ofertas de vuelo (API cruda):</h3>
-  <div *ngFor="let offer of flightOffersRaw.data.flightOffers">
-    <strong>ID:</strong> {{ offer.id }}<br>
-    <strong>Precio total:</strong> {{ offer.price.total }} {{ offer.price.currency }}<br>
-    <strong>Aerolínea principal:</strong> {{ offer.validatingAirlineCodes?.[0] || offer.itineraries[0]?.segments[0]?.carrierCode }}<br>
-    <strong>Último día para ticket:</strong> {{ offer.lastTicketingDate || '-' }}<br>
-    <strong>Tipo de tarifa:</strong> {{ offer.pricingOptions?.fareType?.join(', ') || '-' }}<br>
-    <strong>Tasas:</strong>
-    <ul *ngIf="offer.price.fees?.length">
-      <li *ngFor="let fee of offer.price.fees">
-        {{ fee.type }}: {{ fee.amount }} {{ offer.price.currency }}
-      </li>
-    </ul>
-    <strong>Precios por pasajero:</strong>
-    <ul *ngIf="offer.travelerPricings?.length">
-      <li *ngFor="let tp of offer.travelerPricings">
-        <b>Tipo:</b> {{ tp.travelerType }}<br>
-        <b>Precio total:</b> {{ tp.price.total }} {{ tp.price.currency }}<br>
-        <b>Precio base:</b> {{ tp.price.base }} {{ tp.price.currency }}<br>
-        <b>Tarifa:</b> {{ tp.fareOption || '-' }}<br>
-        <b>Detalles de tarifa por segmento:</b>
-        <ul *ngIf="tp.fareDetailsBySegment?.length">
-          <li *ngFor="let fd of tp.fareDetailsBySegment">
-            <span>
-              <b>Segmento:</b> {{ fd.segmentId }} |
-              <b>Cabina:</b> {{ fd.cabin || '-' }} |
-              <b>Clase:</b> {{ fd.class || '-' }} |
-              <b>BrandedFare:</b> {{ fd.brandedFare || '-' }} |
-              <b>FareBasis:</b> {{ fd.fareBasis || '-' }} |
-              <b>Maletas:</b> {{ fd.includedCheckedBags?.quantity ?? '-' }}
-              <span *ngIf="fd.includedCheckedBags?.weight">({{ fd.includedCheckedBags.weight }} {{ fd.includedCheckedBags.weightUnit || 'kg' }})</span>
-              <span *ngIf="fd.includedCabinBags"> | <b>Cabina:</b> {{ fd.includedCabinBags.quantity ?? '-' }}</span>
-              <span *ngIf="fd.mealServices"> | <b>Comidas:</b> {{ fd.mealServices }}</span>
-              <span *ngIf="fd.amenities"> | <b>Servicios:</b> {{ fd.amenities }}</span>
-            </span>
-          </li>
-        </ul>
-        <b>Tasas por pasajero:</b>
-        <ul *ngIf="tp.price.taxes?.length">
-          <li *ngFor="let tax of tp.price.taxes">
-            {{ tax.code }}: {{ tax.amount }} {{ tp.price.currency }}
-          </li>
-        </ul>
-      </li>
-    </ul>
-    <strong>Itinerarios:</strong>
-    <ul>
-      <li *ngFor="let itin of offer.itineraries; let i = index">
-        <b>Itinerario {{ i + 1 }}</b>
-        <ul>
-          <li *ngFor="let seg of itin.segments">
-            <div class="segment-detail">
-              <b>Salida:</b>
-              <ul>
-                <li><b>Aeropuerto:</b> {{ seg.departure.iataCode }} <span *ngIf="flightOffersRaw?.dictionaries?.locations?.[seg.departure.iataCode]">({{ flightOffersRaw.dictionaries.locations[seg.departure.iataCode].cityCode }}, {{ flightOffersRaw.dictionaries.locations[seg.departure.iataCode].countryCode }})</span></li>
-                <li><b>Terminal:</b> {{ seg.departure.terminal || '-' }}</li>
-                <li><b>Fecha y hora:</b> {{ seg.departure.at | date:'yyyy-MM-dd HH:mm' }}</li>
-              </ul>
-              <b>Llegada:</b>
-              <ul>
-                <li><b>Aeropuerto:</b> {{ seg.arrival.iataCode }} <span *ngIf="flightOffersRaw?.dictionaries?.locations?.[seg.arrival.iataCode]">({{ flightOffersRaw.dictionaries.locations[seg.arrival.iataCode].cityCode }}, {{ flightOffersRaw.dictionaries.locations[seg.arrival.iataCode].countryCode }})</span></li>
-                <li><b>Terminal:</b> {{ seg.arrival.terminal || '-' }}</li>
-                <li><b>Fecha y hora:</b> {{ seg.arrival.at | date:'yyyy-MM-dd HH:mm' }}</li>
-              </ul>
-              <b>Detalles del vuelo:</b>
-              <ul>
-                <li><b>Compañía:</b> {{ seg.carrierCode }}</li>
-                <li><b>Número de vuelo:</b> {{ seg.number || '-' }}</li>
-                <li><b>Operado por:</b> {{ seg.operating?.carrierCode || '-' }}</li>
-                <li><b>Modelo avión:</b> {{ seg.aircraft?.code || '-' }}</li>
-                <li><b>Duración:</b> {{ seg.duration || '-' }}</li>
-                <li><b>Paradas:</b> {{ seg.numberOfStops || 0 }}</li>
-                <li><b>Blacklist UE:</b> <span [ngStyle]="{color: seg.blacklistedInEU ? 'red' : 'inherit'}">{{ seg.blacklistedInEU ? 'Sí' : 'No' }}</span></li>
-                <li><b>Emisiones CO₂:</b> {{ seg.co2Emissions ? (seg.co2Emissions | json) : '-' }}</li>
-                <li><b>Cabina:</b> {{ seg.cabin || seg.class || '-' }}</li>
-                <li><b>Clase:</b> {{ seg.class || '-' }}</li>
-                <li><b>Maletas incluidas:</b> {{ seg.includedCheckedBags?.quantity || '-' }}</li>
-              </ul>
-            </div>
-            <hr>
-          </li>
-        </ul>
-      </li>
-    </ul>
-    <hr>
-  </div>
+<!-- Mensaje de error -->
+<div *ngIf="errorMessage" class="error-message">
+  <p>{{ errorMessage }}</p>
 </div>

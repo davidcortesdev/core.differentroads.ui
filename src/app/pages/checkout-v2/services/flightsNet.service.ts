@@ -95,6 +95,9 @@ export class FlightsNetService {
   private readonly API_URL_DEPARTURE = `${environment.toursApiUrl}/Departure`;
   private readonly API_URL_SEGMENT = `${environment.toursApiUrl}/FlightSegment`;
   private readonly API_URL_AIRLINE = `${environment.hotelsApiUrl}/Airline`;
+  
+  // Cache para nombres de aerolíneas
+  private airlineNamesCache: Map<string, string> = new Map();
 
   constructor(private http: HttpClient) {}
 
@@ -129,11 +132,84 @@ export class FlightsNetService {
   }
 
   getAirline(airlineCode: string): Observable<string> {
+    // Verificar si ya tenemos el nombre en cache
+    if (this.airlineNamesCache.has(airlineCode)) {
+      return new Observable(observer => {
+        observer.next(this.airlineNamesCache.get(airlineCode)!);
+        observer.complete();
+      });
+    }
+
+    // Si no está en cache, hacer la llamada al API
     const params = new HttpParams().set('codeIata', airlineCode);
     return this.http.get<IAirlineResponse[]>(`${this.API_URL_AIRLINE}`, { params }).pipe(
       map((airline: IAirlineResponse[]) => {
-        return airline[0].name;
+        const airlineName = airline[0]?.name || airlineCode;
+        // Guardar en cache para futuras consultas
+        this.airlineNamesCache.set(airlineCode, airlineName);
+        return airlineName;
       })
     );
+  }
+
+  /**
+   * Limpia la cache de nombres de aerolíneas
+   */
+  clearAirlineCache(): void {
+    this.airlineNamesCache.clear();
+  }
+
+  /**
+   * Obtiene el nombre de una aerolínea desde la cache (síncrono)
+   * @param airlineCode Código IATA de la aerolínea
+   * @returns Nombre de la aerolínea o el código si no está en cache
+   */
+  getAirlineNameFromCache(airlineCode: string): string {
+    return this.airlineNamesCache.get(airlineCode) || airlineCode;
+  }
+
+  /**
+   * Precarga múltiples aerolíneas de una vez para mejorar el rendimiento
+   * @param airlineCodes Array de códigos IATA de aerolíneas
+   * @returns Observable que se completa cuando todas las aerolíneas están cargadas
+   */
+  preloadAirlines(airlineCodes: string[]): Observable<string[]> {
+    const uniqueCodes = [...new Set(airlineCodes)]; // Eliminar duplicados
+    const codesToLoad = uniqueCodes.filter(code => !this.airlineNamesCache.has(code));
+    
+    if (codesToLoad.length === 0) {
+      // Todas las aerolíneas ya están en cache
+      return new Observable(observer => {
+        observer.next(uniqueCodes.map(code => this.airlineNamesCache.get(code)!));
+        observer.complete();
+      });
+    }
+
+    // Cargar las aerolíneas que no están en cache
+    const loadRequests = codesToLoad.map(code => this.getAirline(code));
+    
+    return new Observable(observer => {
+      // Usar Promise.all para cargar todas las aerolíneas en paralelo
+      Promise.all(loadRequests.map(req => req.toPromise()))
+        .then(() => {
+          const results = uniqueCodes.map(code => this.airlineNamesCache.get(code)!);
+          observer.next(results);
+          observer.complete();
+        })
+        .catch(error => {
+          observer.error(error);
+        });
+    });
+  }
+
+  /**
+   * Obtiene estadísticas de la cache de aerolíneas
+   * @returns Objeto con información sobre el estado de la cache
+   */
+  getAirlineCacheStats(): { size: number; keys: string[] } {
+    return {
+      size: this.airlineNamesCache.size,
+      keys: Array.from(this.airlineNamesCache.keys())
+    };
   }
 }

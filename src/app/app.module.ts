@@ -240,6 +240,9 @@ import { TravelersInfoComponent } from './pages/checkout-v2/components/new-reser
 import { SectionFlightComponent } from './pages/checkout-v2/components/new-reservation/section-flight/section-flight.component';
 import { PaymentInfoComponent } from './pages/checkout-v2/components/new-reservation/payment-info/payment-info.component';
 import { SummaryInfoComponent } from './pages/checkout-v2/components/new-reservation/summary-info/summary-info.component';
+import { ImageCropperComponent } from './shared/components/image-cropper/image-cropper.component';
+import { ReviewsComponent as ReviewsPageComponent } from './pages/reviews/reviews.component';
+import { ImageUploadModalComponent } from './pages/reviews/image-upload-modal/image-upload-modal.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -386,6 +389,9 @@ registerLocaleData(localeEs);
     SectionFlightComponent,
     PaymentInfoComponent,
     SummaryInfoComponent,
+    ImageCropperComponent,
+    ReviewsPageComponent,
+    ImageUploadModalComponent,
   ],
   imports: [
     // Angular Modules

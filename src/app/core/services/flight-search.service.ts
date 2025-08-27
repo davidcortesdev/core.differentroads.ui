@@ -150,6 +150,273 @@ export interface IPriceChangeInfo {
   message?: string | null;
 }
 
+// ✅ NUEVAS INTERFACES para el endpoint de book
+export interface IAmadeusFlightCreateOrderResponse {
+  meta?: ICollectionMeta | null;
+  warnings?: IIssue[] | null;
+  data?: IFlightOrder | null;
+  dictionaries?: IDictionaries | null;
+}
+
+export interface ICollectionMeta {
+  count?: number | null;
+  links?: any | null;
+}
+
+export interface IIssue {
+  status?: number | null;
+  code?: number | null;
+  title?: string | null;
+  detail?: string | null;
+  source?: any | null;
+}
+
+export interface IFlightOrder {
+  type?: string | null;
+  id?: string | null;
+  queuingOfficeId?: string | null;
+  ownerOfficeId?: string | null;
+  flightOffers?: IFlightOffer[] | null;
+  travelers?: IOrderTraveler[] | null;
+  remarks?: IRemarks | null;
+  formOfPayments?: IFormOfPayment[] | null;
+  ticketingAgreement?: ITicketingAgreement | null;
+  automatedProcess?: IAutomatedProcess[] | null;
+  contacts?: IContact[] | null;
+  tickets?: IAirTravelDocument[] | null;
+  formOfIdentifications?: IFormOfIdentification[] | null;
+}
+
+export interface IFlightOffer {
+  type?: string | null;
+  id?: string | null;
+  source?: 'GDS' | 'LTC' | 'PYTON' | 'EAC' | 'NDC' | null;
+  sourceReference?: string | null;
+  instantTicketingRequired?: boolean;
+  disablePricing?: boolean;
+  nonHomogeneous?: boolean;
+  oneWay?: boolean;
+  isUpsellOffer?: boolean;
+  upsellFlightOfferIds?: string[] | null;
+  paymentCardRequired?: boolean;
+  lastTicketingDate?: string | null;
+  lastTicketingDateTime?: string | null;
+  numberOfBookableSeats?: number | null;
+  itineraries?: IItinerary[] | null;
+  price?: IPrice | null;
+  pricingOptions?: IPricingOptions | null;
+  validatingAirlineCodes?: string[] | null;
+  travelerPricings?: ITravelerPricing[] | null;
+  fareRules?: IFareRules | null;
+}
+
+export interface IItinerary {
+  duration?: string | null;
+  segments?: ISegment[] | null;
+}
+
+export interface ISegment {
+  id?: string | null;
+  numberOfStops: number;
+  blacklistedInEU: boolean;
+  co2Emissions?: ICo2Emission[] | null;
+  departure?: IFlightEndPoint | null;
+  arrival?: IFlightEndPoint | null;
+  carrierCode?: string | null;
+  number?: string | null;
+  aircraft?: IAircraft | null;
+  operating?: IOperating | null;
+  duration?: string | null;
+  stops?: IFlightStop[] | null;
+  bookingStatus?: 'CONFIRMED' | 'WAITLISTED' | 'CANCELLED' | 'PENDING' | 'DENIED' | null;
+  segmentType?: 'ACTIVE' | 'PASSIVE' | 'GHOST' | 'STAFF' | null;
+  isFlown?: boolean | null;
+}
+
+export interface IFlightEndPoint {
+  iataCode?: string | null;
+  terminal?: string | null;
+  at?: string | null;
+}
+
+export interface IAircraft {
+  code?: string | null;
+}
+
+export interface IOperating {
+  carrierCode?: string | null;
+}
+
+export interface IFlightStop {
+  iataCode?: string | null;
+  duration?: string | null;
+  arrivalAt?: string | null;
+  departureAt?: string | null;
+}
+
+export interface ICo2Emission {
+  weight?: number | null;
+  weightUnit?: string | null;
+  cabin?: string | null;
+}
+
+export interface IPrice {
+  margin?: string | null;
+  grandTotal?: string | null;
+  billingCurrency?: string | null;
+  additionalServices?: IAdditionalService[] | null;
+  currency?: string | null;
+  total?: string | null;
+  base?: string | null;
+  fees?: IFee[] | null;
+  taxes?: ITax[] | null;
+  refundableTaxes?: string | null;
+  margins?: IMargin[] | null;
+  discounts?: IPriceDiscount[] | null;
+}
+
+export interface IAdditionalService {
+  amount?: string | null;
+  type?: string | null;
+}
+
+export interface IFee {
+  amount?: string | null;
+  type?: string | null;
+}
+
+export interface ITax {
+  amount?: string | null;
+  code?: string | null;
+}
+
+export interface IMargin {
+  amount?: string | null;
+  type?: string | null;
+}
+
+export interface IPriceDiscount {
+  amount?: string | null;
+  type?: string | null;
+}
+
+export interface IPricingOptions {
+  fareType?: string[] | null;
+  includedCheckedBagsOnly?: boolean;
+}
+
+export interface ITravelerPricing {
+  travelerId?: string | null;
+  fareOption?: string | null;
+  travelerType?: string | null;
+  price?: IPrice | null;
+  fareDetails?: IFareDetails[] | null;
+}
+
+export interface IFareDetails {
+  segmentId?: string | null;
+  cabin?: string | null;
+  fareBasis?: string | null;
+  brandedFare?: string | null;
+  classOfService?: string | null;
+  includedCheckedBags?: ICheckedBags | null;
+}
+
+export interface ICheckedBags {
+  weight?: number | null;
+  weightUnit?: string | null;
+}
+
+export interface IFareRules {
+  refundable?: boolean;
+  changeable?: boolean;
+  cancellationPenalty?: string | null;
+  changePenalty?: string | null;
+}
+
+export interface IOrderTraveler {
+  id?: string | null;
+  dateOfBirth?: string | null;
+  name?: IName | null;
+  gender?: 'MALE' | 'FEMALE' | 'UNSPECIFIED' | 'UNDISCLOSED' | null;
+  contact?: IContact | null;
+  documents?: IIdentityDocument[] | null;
+  emergencyContact?: IEmergencyContact | null;
+  loyaltyPrograms?: ILoyaltyProgram[] | null;
+  discountEligibility?: IDiscount[] | null;
+  travelerType?: string | null;
+  fareOptions?: ('STANDARD' | 'INCLUSIVE_TOUR' | 'SPANISH_MELILLA_RESIDENT' | 'SPANISH_CEUTA_RESIDENT' | 'SPANISH_CANARY_RESIDENT' | 'SPANISH_BALEARIC_RESIDENT' | 'AIR_FRANCE_METROPOLITAN_DISCOUNT_PASS' | 'AIR_FRANCE_DOM_DISCOUNT_PASS' | 'AIR_FRANCE_COMBINED_DISCOUNT_PASS' | 'AIR_FRANCE_FAMILY' | 'ADULT_WITH_COMPANION' | 'COMPANION')[] | null;
+}
+
+export interface IName {
+  firstName?: string | null;
+  lastName?: string | null;
+  title?: string | null;
+}
+
+export interface IContact {
+  emailAddress?: string | null;
+  phones?: IPhone[] | null;
+}
+
+export interface IPhone {
+  deviceType?: string | null;
+  countryCallingCode?: string | null;
+  number?: string | null;
+}
+
+export interface IIdentityDocument {
+  number?: string | null;
+  expiryDate?: string | null;
+  issuanceCountry?: string | null;
+  documentType?: string | null;
+  nationality?: string | null;
+  holder?: boolean;
+}
+
+export interface IEmergencyContact {
+  name?: IName | null;
+  contact?: IContact | null;
+}
+
+export interface ILoyaltyProgram {
+  companyCode?: string | null;
+  membershipNumber?: string | null;
+}
+
+export interface IDiscount {
+  type?: string | null;
+  amount?: string | null;
+}
+
+export interface IRemarks {
+  // Añadir propiedades según sea necesario
+}
+
+export interface IFormOfPayment {
+  // Añadir propiedades según sea necesario
+}
+
+export interface ITicketingAgreement {
+  // Añadir propiedades según sea necesario
+}
+
+export interface IAutomatedProcess {
+  // Añadir propiedades según sea necesario
+}
+
+export interface IAirTravelDocument {
+  // Añadir propiedades según sea necesario
+}
+
+export interface IDictionaries {
+  // Añadir propiedades según sea necesario
+}
+
+export interface IFormOfIdentification {
+  // Añadir propiedades según sea necesario
+}
+
 export type FlightSearchResponse = IFlightSearchResultDTO;
 
 // Interfaces para respuestas de operaciones PUT
@@ -273,6 +540,18 @@ export class FlightSearchService {
   validatePriceChange(reservationId: number): Observable<IPriceChangeInfo | null> {
     return this.http.get<IPriceChangeInfo | null>(
       `${this.API_URL}/reservation/${reservationId}/validate-price-change`
+    );
+  }
+
+  /**
+   * ✅ NUEVO: Reserva un vuelo recuperando el último FlightOffer no obsoleto para una reserva
+   * @param reservationId ID de la reserva
+   * @returns Observable con la respuesta de la operación de reserva
+   */
+  bookFlight(reservationId: number): Observable<IAmadeusFlightCreateOrderResponse> {
+    return this.http.post<IAmadeusFlightCreateOrderResponse>(
+      `${this.API_URL}/reservation/${reservationId}/book`,
+      {}
     );
   }
 

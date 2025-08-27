@@ -16,7 +16,6 @@ import { BookingsService } from '../../core/services/bookings.service';
 import {
   ReservationInfo,
   BankInfo,
-  Flight,
   PriceDetail,
 } from '../../core/models/reservation/reservation.model';
 import { BookingMappingService } from '../../core/services/booking-mapping.service';
@@ -28,6 +27,7 @@ import {
 } from '../../core/models/bookings/payment.model';
 import { Booking } from '../../core/models/bookings/booking.model';
 import { CloudinaryResponse } from '../../core/services/file-upload.service';
+import { Flight } from '../../core/models/tours/flight.model';
 import { ScalapayService } from '../../core/services/checkout/payment/scalapay.service';
 import { ScalapayGetOrdersDetailsResponse } from '../../core/models/scalapay/ScalapayGetOrdersDetailsResponse';
 import { ScalapayCaptureOrderRespone } from '../../core/models/scalapay/ScalapayCaptureOrderRespone';
@@ -120,8 +120,13 @@ export class ReservationComponent implements OnInit, OnDestroy {
         }
         if (params['status']) {
           // Almacenar el valor original, la comparación se hará con toLowerCase()
-          this.scalapayPaymentStatus = params['status'] as ScalapayPaymentStatus;
-          console.log('[Scalapay Debug] Estado de pago recibido:', this.scalapayPaymentStatus);
+          this.scalapayPaymentStatus = params[
+            'status'
+          ] as ScalapayPaymentStatus;
+          console.log(
+            '[Scalapay Debug] Estado de pago recibido:',
+            this.scalapayPaymentStatus
+          );
         }
       });
 
@@ -130,7 +135,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
       .subscribe((params: Params) => {
         this.bookingId = params['id'];
         this.paymentID = params['paymentID'];
-        
+
         // Iniciar el flujo secuencial
         this.initializeDataFlow();
       });
@@ -141,16 +146,17 @@ export class ReservationComponent implements OnInit, OnDestroy {
    */
   private initializeDataFlow(): void {
     this.loading = true;
-    
+
     if (!this.bookingId) {
       this.error = true;
       this.loading = false;
       this.showErrorMessage('No se pudo encontrar el ID de reserva en la URL.');
       return;
     }
-    
+
     // Primero obtenemos los datos de la reserva
-    this.bookingsService.getBookingById(this.bookingId)
+    this.bookingsService
+      .getBookingById(this.bookingId)
       .pipe(
         takeUntil(this.destroy$),
         catchError((err) => {
@@ -163,12 +169,12 @@ export class ReservationComponent implements OnInit, OnDestroy {
         switchMap((booking: Booking) => {
           // Procesamos los datos de la reserva
           this.processBookingData(booking);
-          
+
           // Si tenemos un paymentID, obtenemos los datos del pago
           if (this.paymentID) {
             return this.bookingsService.getPaymentsByPublicID(this.paymentID);
           }
-          
+
           // Si no hay paymentID, terminamos el flujo
           this.loading = false;
           return EMPTY;
@@ -183,17 +189,17 @@ export class ReservationComponent implements OnInit, OnDestroy {
         switchMap((payment: Payment) => {
           // Procesamos los datos del pago
           this.processPaymentData(payment);
-          
+
           // Si tenemos los datos necesarios para procesar el pago de Scalapay, lo hacemos
           if (
-            this.orderToken && 
-            this.scalapayPaymentStatus && 
+            this.orderToken &&
+            this.scalapayPaymentStatus &&
             this.paymentInfo?.provider?.toLowerCase() === 'scalapay' &&
             this.paymentInfo.status === 'PENDING'
           ) {
             return this.processScalapayPaymentFlow();
           }
-          
+
           // Si no hay que procesar el pago de Scalapay, terminamos el flujo
           return of(null);
         }),
@@ -201,15 +207,13 @@ export class ReservationComponent implements OnInit, OnDestroy {
           this.loading = false;
         })
       )
-      .subscribe(
-        (result) => {
-          if (result) {
-            this.showPaymentResultMessage();
-            // Refrescar los datos después de procesar el pago
-            this.refreshData();
-          }
+      .subscribe((result) => {
+        if (result) {
+          this.showPaymentResultMessage();
+          // Refrescar los datos después de procesar el pago
+          this.refreshData();
         }
-      );
+      });
   }
 
   /**
@@ -223,7 +227,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
       this.paymentInfo
     );
 
-    this.flights = this.bookingMapper.mapToFlights(booking);
+    this.flights = booking.flights?.[0] ? [booking.flights[0]] : [];
     this.priceDetails = this.bookingMapper.mapToPriceDetails(booking);
 
     // Actualizar bankInfo con datos específicos del booking.
@@ -278,7 +282,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
     // Obtener detalles de la orden de Scalapay
     const externalId = this.paymentInfo?.externalID || this.orderToken;
     console.log('[Scalapay Debug] ID externo a utilizar:', externalId);
-    
+
     if (!externalId) {
       console.error('[Scalapay Debug] No se encontró ID externo para la orden');
       return of(null);
@@ -286,7 +290,10 @@ export class ReservationComponent implements OnInit, OnDestroy {
 
     return this.scalapayService.getOrderDetails(externalId).pipe(
       switchMap((orderDetails: ScalapayGetOrdersDetailsResponse) => {
-        console.log('[Scalapay Debug] Detalles de la orden obtenidos:', orderDetails);
+        console.log(
+          '[Scalapay Debug] Detalles de la orden obtenidos:',
+          orderDetails
+        );
         const providerResponse = JSON.stringify(orderDetails);
 
         // Si la orden está autorizada, capturarla
@@ -294,22 +301,33 @@ export class ReservationComponent implements OnInit, OnDestroy {
           orderDetails.status === 'authorized' &&
           this.scalapayPaymentStatus?.toLowerCase() === 'success'
         ) {
-          console.log('[Scalapay Debug] Orden autorizada, procediendo a capturar');
+          console.log(
+            '[Scalapay Debug] Orden autorizada, procediendo a capturar'
+          );
           return this.scalapayService.captureOrder({ token: externalId }).pipe(
             switchMap((captureResponse: ScalapayCaptureOrderRespone) => {
-              console.log('[Scalapay Debug] Respuesta de captura:', captureResponse);
+              console.log(
+                '[Scalapay Debug] Respuesta de captura:',
+                captureResponse
+              );
               // Actualizar el estado del pago en nuestra base de datos
-              return this.completeScalapayPayment(externalId, JSON.stringify(captureResponse));
+              return this.completeScalapayPayment(
+                externalId,
+                JSON.stringify(captureResponse)
+              );
             }),
             catchError((error) => {
-              console.error('[Scalapay Debug] Error al capturar la orden:', error);
+              console.error(
+                '[Scalapay Debug] Error al capturar la orden:',
+                error
+              );
               // Si hay un error en la captura, registramos el pago como fallido
               return this.completeScalapayPayment(
                 externalId,
                 JSON.stringify({
                   error: error.message || 'Error en la captura del pago',
                   timestamp: new Date().toISOString(),
-                  orderDetails
+                  orderDetails,
                 })
               );
             })
@@ -323,17 +341,22 @@ export class ReservationComponent implements OnInit, OnDestroy {
               error: 'Pago rechazado por Scalapay',
               status: orderDetails.status,
               timestamp: new Date().toISOString(),
-              orderDetails
+              orderDetails,
             })
           );
         } else {
-          console.log('[Scalapay Debug] Orden no autorizada o pago fallido, actualizando estado');
+          console.log(
+            '[Scalapay Debug] Orden no autorizada o pago fallido, actualizando estado'
+          );
           // Actualizar el estado del pago sin capturar
           return this.completeScalapayPayment(externalId, providerResponse);
         }
       }),
       catchError((error) => {
-        console.error('[Scalapay Debug] Error al obtener detalles de la orden:', error);
+        console.error(
+          '[Scalapay Debug] Error al obtener detalles de la orden:',
+          error
+        );
         return of(null);
       })
     );
@@ -344,7 +367,8 @@ export class ReservationComponent implements OnInit, OnDestroy {
    */
   private refreshData(): void {
     // Refrescar los datos de la reserva
-    this.bookingsService.getBookingById(this.bookingId)
+    this.bookingsService
+      .getBookingById(this.bookingId)
       .pipe(
         takeUntil(this.destroy$),
         catchError((err) => {
@@ -354,10 +378,11 @@ export class ReservationComponent implements OnInit, OnDestroy {
       )
       .subscribe((booking: Booking) => {
         this.processBookingData(booking);
-        
+
         // Refrescar los datos del pago
         if (this.paymentID) {
-          this.bookingsService.getPaymentsByPublicID(this.paymentID)
+          this.bookingsService
+            .getPaymentsByPublicID(this.paymentID)
             .pipe(
               takeUntil(this.destroy$),
               catchError((err) => {
@@ -557,7 +582,6 @@ export class ReservationComponent implements OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
   }
-
 
   /**
    * Actualiza el estado del pago basado en la información recibida

@@ -1,7 +1,24 @@
+// Variables principales
 $azul: var(--background-azul);
-$coral: #ea685c;
-$border: #f59188;
+$coral: var(--primary-color-500);
+$border: var(--primary-color-400);
+$border-radius: 11.434px;
+$panel-margin: 1.5rem;
 
+// Mixins para reutilización
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@mixin panel-base {
+  margin-bottom: $panel-margin;
+  border-radius: $border-radius;
+  overflow: hidden;
+}
+
+// Estilos principales
 .res-conf {
   max-width: 800px;
   margin: 2rem auto;
@@ -12,16 +29,16 @@ $border: #f59188;
     margin-bottom: 2rem;
   }
 
-  &.rq {
-    .hdr .status-icon {
-      color: #e35959;
-    }
+  // Estados de la reserva
+  &.rq .hdr .status-icon {
+    color: #e35959;
   }
-  &.confirm {
-    .hdr .status-icon {
-      color: #177903;
-    }
+
+  &.confirm .hdr .status-icon {
+    color: #177903;
   }
+
+  // Secciones principales
   .hdr,
   .wel,
   .lnk {
@@ -35,6 +52,7 @@ $border: #f59188;
       margin-bottom: 1rem;
       display: block;
     }
+
     h1 {
       font-size: 2.5rem;
       font-weight: 500;
@@ -47,9 +65,11 @@ $border: #f59188;
     .hl {
       font-weight: 600;
     }
+
     .msg {
       margin: 1rem 0;
     }
+
     .status-msg {
       font-weight: 500;
     }
@@ -57,18 +77,22 @@ $border: #f59188;
 
   .lnk {
     padding: 1.25rem;
-    border-radius: 11.434px;
+    border-radius: $border-radius;
     border: 2px solid $border;
+
     p {
       margin-bottom: 0.5rem;
     }
+
     a {
       color: $coral;
       text-decoration: none;
       font-weight: 500;
+
       &:hover {
         text-decoration: underline;
       }
+
       &.pwd {
         display: block;
         margin-top: 0.5rem;
@@ -76,66 +100,73 @@ $border: #f59188;
     }
   }
 
+  // Estilos para componentes PrimeNG
   ::ng-deep {
+    // Panel de detalles
     .det-panel {
       background: #c3dcf6;
       border: 0;
-      margin-bottom: 1.5rem;
-      border-radius: 11.434px;
-      overflow: hidden;
+      @include panel-base;
 
       .p-panel-header {
         display: none;
       }
+
       .p-panel-content {
         background: #c3dcf6;
         padding: 1rem;
         border: 0;
       }
+
       .det-item {
         display: flex;
         gap: 0.5rem;
         margin-bottom: 0.5rem;
         color: $azul;
+
         &:last-child {
           margin-bottom: 0;
         }
+
         .val {
           font-weight: 600;
           color: $azul;
         }
+
         span {
           color: $azul;
         }
       }
     }
 
+    // Botones
     .p-button {
       border-radius: 114.398px;
     }
 
+    // Panel bancario
     .bank-panel {
       background: #ffe4e4;
       border: 2px solid #fac8c3;
-      margin-bottom: 1.5rem;
-      border-radius: 11.434px;
-      overflow: hidden;
+      @include panel-base;
 
-      .p-panel-content {
-        background: #fac8c3;
-        border: 2px solid #fac8c3;
-        text-align: left;
-        padding: 1rem;
-        color: $azul;
-      }
+      .p-panel-content,
       .p-panel-header {
         background: #fac8c3;
-        border: none;
         text-align: left;
         padding: 1rem;
         color: $azul;
+      }
+
+      .p-panel-content {
+        border: 2px solid #fac8c3;
+      }
+
+      .p-panel-header {
+        border: none;
         font-weight: 600;
       }
+
       .bank-info {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -144,11 +175,13 @@ $border: #f59188;
 
         .bank-row {
           margin-bottom: 0.5rem;
+
           .label {
             font-weight: 600;
             margin-right: 0.5rem;
             color: $azul;
           }
+
           .value {
             color: $azul;
           }
@@ -156,34 +189,33 @@ $border: #f59188;
       }
     }
 
+    // Botón de subida
     .upload-button {
       margin-top: 1rem;
       display: block;
       text-align: center;
 
-      .p-fileupload {
-        .p-button {
-          border-radius: 114.398px;
-          background-color: $coral;
-          border-color: $coral;
-          color: white;
+      .p-fileupload .p-button {
+        border-radius: 114.398px;
+        background-color: $coral;
+        border-color: $coral;
+        color: white;
 
-          .pi-upload {
-            margin-right: 0.5rem;
-          }
+        .pi-upload {
+          margin-right: 0.5rem;
         }
       }
     }
   }
 }
 
+// Contenedor de carga
 .loading-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  @include flex-center;
   height: 60vh;
 }
 
+// Media queries
 @media (max-width: 1024px) {
   .res-conf {
     margin: 1.5rem auto;
@@ -205,6 +237,7 @@ $border: #f59188;
     max-width: 90%;
     font-size: 12px;
     padding: 0.5rem;
+
     ::ng-deep {
       .bank-panel .bank-info {
         grid-template-columns: 1fr;
@@ -241,6 +274,7 @@ $border: #f59188;
 @media (max-width: 480px) {
   .res-conf {
     font-size: 14px;
+
     ::ng-deep {
       .bank-panel {
         .p-panel-content,
@@ -248,39 +282,33 @@ $border: #f59188;
           padding: 0.75rem;
         }
 
-        .bank-info {
-          .bank-row {
-            margin-bottom: 1rem;
-          }
-        }
-      }
-
-      .det-panel .det-item {
-        flex-direction: row !important;
-        color: $azul;
-
-        .val {
-          min-width: 130px;
-          color: $azul;
-        }
-
-        span {
-          color: $azul;
+        .bank-info .bank-row {
+          margin-bottom: 1rem;
         }
       }
 
       .det-panel {
+        .det-item {
+          flex-direction: row !important;
+          color: $azul;
+
+          .val {
+            min-width: 130px;
+            color: $azul;
+          }
+
+          span {
+            color: $azul;
+          }
+        }
+
         .p-panel-content {
           padding: 0.5rem;
         }
       }
 
-      .upload-button {
-        .p-fileupload {
-          .p-button {
-            width: 100%; // Asegura que el botón ocupe todo el ancho en móviles
-          }
-        }
+      .upload-button .p-fileupload .p-button {
+        width: 100%; // Asegura que el botón ocupe todo el ancho en móviles
       }
     }
   }

@@ -1,12 +1,46 @@
 // new-reservation.component.scss
-// Variables principales
+
+// ========================================
+// VARIABLES DE COLORES
+// ========================================
+// Colores principales (ya existentes)
 $azul: var(--background-azul);
 $coral: var(--primary-color-500);
 $border: var(--primary-color-400);
+
+// Colores de estado
+$success-green: #177903;
+$error-red: #e35959;
+$warning-orange: #856404;
+$danger-red: #f05a4c;
+
+// Colores de fondo
+$panel-blue: #c3dcf6;
+$panel-coral: #ffe4e4;
+$panel-coral-border: #fac8c3;
+$panel-light-gray: #f8f9fa;
+$panel-light-gray-border: #e9ecef;
+$panel-white: #fff;
+$panel-white-border: #dee2e6;
+$panel-warning: #fff3cd;
+$panel-warning-border: #ffeaa7;
+
+// Colores de texto
+$text-gray: #666;
+$text-dark-gray: #2d3748;
+$text-light-gray: #e2e8f0;
+$text-border-gray: #4a5568;
+
+// ========================================
+// VARIABLES DE DISEÑO
+// ========================================
 $border-radius: 11.434px;
 $panel-margin: 1.5rem;
+$button-border-radius: 114.398px;
 
-// Mixins para reutilización
+// ========================================
+// MIXINS
+// ========================================
 @mixin flex-center {
   display: flex;
   justify-content: center;
@@ -19,7 +53,9 @@ $panel-margin: 1.5rem;
   overflow: hidden;
 }
 
-// Estilos principales
+// ========================================
+// ESTILOS PRINCIPALES
+// ========================================
 .res-conf {
   max-width: 800px;
   margin: 2rem auto;
@@ -32,11 +68,11 @@ $panel-margin: 1.5rem;
 
   // Estados de la reserva
   &.rq .hdr .status-icon {
-    color: #e35959;
+    color: $error-red;
   }
 
   &.confirm .hdr .status-icon {
-    color: #177903;
+    color: $success-green;
   }
 
   // Secciones principales
@@ -105,7 +141,7 @@ $panel-margin: 1.5rem;
   ::ng-deep {
     // Panel de detalles
     .det-panel {
-      background: #c3dcf6;
+      background: $panel-blue;
       border: 0;
       @include panel-base;
 
@@ -114,7 +150,7 @@ $panel-margin: 1.5rem;
       }
 
       .p-panel-content {
-        background: #c3dcf6;
+        background: $panel-blue;
         padding: 1rem;
         border: 0;
       }
@@ -142,25 +178,25 @@ $panel-margin: 1.5rem;
 
     // Botones
     .p-button {
-      border-radius: 114.398px;
+      border-radius: $button-border-radius;
     }
 
     // Panel bancario
     .bank-panel {
-      background: #ffe4e4;
-      border: 2px solid #fac8c3;
+      background: $panel-coral;
+      border: 2px solid $panel-coral-border;
       @include panel-base;
 
       .p-panel-content,
       .p-panel-header {
-        background: #fac8c3;
+        background: $panel-coral-border;
         text-align: left;
         padding: 1rem;
         color: $azul;
       }
 
       .p-panel-content {
-        border: 2px solid #fac8c3;
+        border: 2px solid $panel-coral-border;
       }
 
       .p-panel-header {
@@ -197,10 +233,10 @@ $panel-margin: 1.5rem;
       text-align: center;
 
       .p-fileupload .p-button {
-        border-radius: 114.398px;
+        border-radius: $button-border-radius;
         background-color: $coral;
         border-color: $coral;
-        color: white;
+        color: $panel-white;
 
         .pi-upload {
           margin-right: 0.5rem;
@@ -216,12 +252,12 @@ $panel-margin: 1.5rem;
 
   ::ng-deep {
     .amadeus-panel {
-      background: #f8f9fa;
-      border: 2px solid #e9ecef;
+      background: $panel-light-gray;
+      border: 2px solid $panel-light-gray-border;
       @include panel-base;
 
       .p-panel-header {
-        background: #e9ecef;
+        background: $panel-light-gray-border;
         border: none;
         padding: 1rem;
         color: $azul;
@@ -229,7 +265,7 @@ $panel-margin: 1.5rem;
       }
 
       .p-panel-content {
-        background: #f8f9fa;
+        background: $panel-light-gray;
         padding: 1.5rem;
         border: 0;
       }
@@ -256,9 +292,9 @@ $panel-margin: 1.5rem;
         text-align: center;
         margin-top: 1rem;
         padding: 1rem;
-        background: #fff;
+        background: $panel-white;
         border-radius: 8px;
-        border: 1px solid #dee2e6;
+        border: 1px solid $panel-white-border;
 
         p {
           margin-top: 0.5rem;
@@ -275,16 +311,16 @@ $panel-margin: 1.5rem;
 
         h3 {
           margin: 0.5rem 0 0 0;
-          color: #177903;
+          color: $success-green;
           font-size: 1.3rem;
         }
       }
 
       .flight-details {
-        background: #fff;
+        background: $panel-white;
         padding: 1rem;
         border-radius: 8px;
-        border: 1px solid #dee2e6;
+        border: 1px solid $panel-white-border;
         margin-bottom: 1rem;
 
         .detail-item {
@@ -306,7 +342,7 @@ $panel-margin: 1.5rem;
           span {
             color: $azul;
             font-family: monospace;
-            background: #f8f9fa;
+            background: $panel-light-gray;
             padding: 0.25rem 0.5rem;
             border-radius: 4px;
           }
@@ -315,7 +351,7 @@ $panel-margin: 1.5rem;
         // ✅ NUEVOS ESTILOS para información detallada
         .flight-offers {
           margin-top: 1.5rem;
-          border-top: 1px solid #dee2e6;
+          border-top: 1px solid $panel-white-border;
           padding-top: 1rem;
 
           h4 {
@@ -325,8 +361,8 @@ $panel-margin: 1.5rem;
           }
 
           .offer-item {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
+            background: $panel-light-gray;
+            border: 1px solid $panel-white-border;
             border-radius: 8px;
             padding: 1rem;
             margin-bottom: 1rem;
@@ -341,11 +377,11 @@ $panel-margin: 1.5rem;
               align-items: center;
               margin-bottom: 0.75rem;
               padding-bottom: 0.5rem;
-              border-bottom: 1px solid #dee2e6;
+              border-bottom: 1px solid $panel-white-border;
 
               .offer-id {
                 font-size: 0.9rem;
-                color: #666;
+                color: $text-gray;
                 font-family: monospace;
               }
             }
@@ -372,7 +408,7 @@ $panel-margin: 1.5rem;
             .price-info {
               margin-top: 1rem;
               padding-top: 1rem;
-              border-top: 1px solid #dee2e6;
+              border-top: 1px solid $panel-white-border;
 
               h5 {
                 color: $azul;
@@ -398,7 +434,7 @@ $panel-margin: 1.5rem;
 
                     &.price-value {
                       font-weight: 600;
-                      color: #177903;
+                      color: $success-green;
                       font-size: 1.1rem;
                     }
                   }
@@ -409,7 +445,7 @@ $panel-margin: 1.5rem;
             .itineraries-info {
               margin-top: 1rem;
               padding-top: 1rem;
-              border-top: 1px solid #dee2e6;
+              border-top: 1px solid $panel-white-border;
 
               h5 {
                 color: $azul;
@@ -418,8 +454,8 @@ $panel-margin: 1.5rem;
               }
 
               .itinerary-item {
-                background: #fff;
-                border: 1px solid #dee2e6;
+                background: $panel-white;
+                border: 1px solid $panel-white-border;
                 border-radius: 6px;
                 padding: 0.75rem;
                 margin-bottom: 0.75rem;
@@ -434,18 +470,18 @@ $panel-margin: 1.5rem;
                   align-items: center;
                   margin-bottom: 0.75rem;
                   padding-bottom: 0.5rem;
-                  border-bottom: 1px solid #dee2e6;
+                  border-bottom: 1px solid $panel-white-border;
 
                   span {
                     font-size: 0.9rem;
-                    color: #666;
+                    color: $text-gray;
                   }
                 }
 
                 .segments-info {
                   .segment-item {
-                    background: #f8f9fa;
-                    border: 1px solid #dee2e6;
+                    background: $panel-light-gray;
+                    border: 1px solid $panel-white-border;
                     border-radius: 4px;
                     padding: 0.75rem;
                     margin-bottom: 0.75rem;
@@ -460,10 +496,10 @@ $panel-margin: 1.5rem;
                       align-items: center;
                       margin-bottom: 0.75rem;
                       padding-bottom: 0.5rem;
-                      border-bottom: 1px solid #dee2e6;
+                      border-bottom: 1px solid $panel-white-border;
 
                       .carrier {
-                        background: #e9ecef;
+                        background: $panel-light-gray-border;
                         padding: 0.25rem 0.5rem;
                         border-radius: 4px;
                         font-size: 0.9rem;
@@ -471,7 +507,7 @@ $panel-margin: 1.5rem;
                       }
 
                       .flight-number {
-                        background: #c3dcf6;
+                        background: $panel-blue;
                         padding: 0.25rem 0.5rem;
                         border-radius: 4px;
                         font-size: 0.9rem;
@@ -498,7 +534,7 @@ $panel-margin: 1.5rem;
                           color: $azul;
 
                           &.time {
-                            background: #e9ecef;
+                            background: $panel-light-gray-border;
                             padding: 0.25rem 0.5rem;
                             border-radius: 4px;
                             font-family: monospace;
@@ -506,27 +542,27 @@ $panel-margin: 1.5rem;
                           }
 
                           &.status-confirmed {
-                            color: #177903;
+                            color: $success-green;
                             font-weight: 600;
                           }
 
                           &.status-pending {
-                            color: #856404;
+                            color: $warning-orange;
                             font-weight: 600;
                           }
 
                           &.status-cancelled {
-                            color: #f05a4c;
+                            color: $danger-red;
                             font-weight: 600;
                           }
 
                           &.status-waitlisted {
-                            color: #e35959;
+                            color: $error-red;
                             font-weight: 600;
                           }
 
                           &.status-denied {
-                            color: #dc3545;
+                            color: $danger-red;
                             font-weight: 600;
                           }
                         }
@@ -541,7 +577,7 @@ $panel-margin: 1.5rem;
 
         .travelers-info {
           margin-top: 1.5rem;
-          border-top: 1px solid #dee2e6;
+          border-top: 1px solid $panel-white-border;
           padding-top: 1rem;
 
           h4 {
@@ -551,8 +587,8 @@ $panel-margin: 1.5rem;
           }
 
           .traveler-item {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
+            background: $panel-light-gray;
+            border: 1px solid $panel-white-border;
             border-radius: 8px;
             padding: 1rem;
             margin-bottom: 1rem;
@@ -567,11 +603,11 @@ $panel-margin: 1.5rem;
               align-items: center;
               margin-bottom: 0.75rem;
               padding-bottom: 0.5rem;
-              border-bottom: 1px solid #dee2e6;
+              border-bottom: 1px solid $panel-white-border;
 
               .traveler-id {
                 font-size: 0.9rem;
-                color: #666;
+                color: $text-gray;
                 font-family: monospace;
               }
             }
@@ -599,15 +635,15 @@ $panel-margin: 1.5rem;
       }
 
       .flight-warnings {
-        background: #fff3cd;
-        border: 1px solid #ffeaa7;
+        background: $panel-warning;
+        border: 1px solid $panel-warning-border;
         border-radius: 8px;
         padding: 1rem;
         margin-bottom: 1rem;
 
         h4 {
           margin: 0 0 0.5rem 0;
-          color: #856404;
+          color: $warning-orange;
           font-size: 1rem;
         }
 
@@ -615,7 +651,7 @@ $panel-margin: 1.5rem;
           display: flex;
           align-items: center;
           margin-bottom: 0.5rem;
-          color: #856404;
+          color: $warning-orange;
           font-size: 0.9rem;
 
           &:last-child {
@@ -626,14 +662,14 @@ $panel-margin: 1.5rem;
 
       .debug-section {
         margin-top: 1rem;
-        border-top: 1px solid #dee2e6;
+        border-top: 1px solid $panel-white-border;
         padding-top: 1rem;
 
         .debug-content {
           pre {
-            background: #2d3748 !important;
-            color: #e2e8f0 !important;
-            border: 1px solid #4a5568;
+            background: $text-dark-gray !important;
+            color: $text-light-gray !important;
+            border: 1px solid $text-border-gray;
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
             line-height: 1.4;
           }
@@ -644,9 +680,9 @@ $panel-margin: 1.5rem;
             align-items: center;
             margin-bottom: 0.5rem;
             padding: 0.5rem;
-            background: #f8f9fa;
+            background: $panel-light-gray;
             border-radius: 4px;
-            border: 1px solid #dee2e6;
+            border: 1px solid $panel-white-border;
 
             &:last-child {
               margin-bottom: 0;
@@ -664,7 +700,7 @@ $panel-margin: 1.5rem;
 
           .debug-actions {
             .debug-button {
-              border-radius: 114.398px;
+              border-radius: $button-border-radius;
               font-size: 0.9rem;
             }
           }
@@ -682,7 +718,7 @@ $panel-margin: 1.5rem;
 
         h3 {
           margin: 0.5rem 0 0 0;
-          color: #f05a4c;
+          color: $danger-red;
           font-size: 1.3rem;
         }
       }
@@ -693,7 +729,7 @@ $panel-margin: 1.5rem;
       }
 
       .retry-button {
-        border-radius: 114.398px;
+        border-radius: $button-border-radius;
       }
     }
 

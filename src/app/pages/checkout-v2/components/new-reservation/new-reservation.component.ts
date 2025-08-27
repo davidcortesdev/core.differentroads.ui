@@ -25,6 +25,7 @@ import {
   ReservationTravelerFieldService,
   IReservationTravelerFieldResponse,
 } from '../../../../core/services/reservation/reservation-traveler-field.service';
+import { FlightSearchService, IAmadeusFlightCreateOrderResponse } from '../../../../core/services/flight-search.service';
 
 // Interfaz para información bancaria
 interface BankInfo {
@@ -38,7 +39,7 @@ interface BankInfo {
   selector: 'app-new-reservation',
   standalone: false,
   templateUrl: './new-reservation.component.html',
-  styleUrl: './new-reservation.component.scss',
+  styleUrls: ['./new-reservation.component.scss', './amadeus-flight-section.scss'],
   providers: [MessageService],
 })
 export class NewReservationComponent implements OnInit {
@@ -84,6 +85,12 @@ export class NewReservationComponent implements OnInit {
     },
   ];
 
+  // Estados de reserva de vuelos
+  hasAmadeusFlight: boolean = false;
+  flightBookingLoading: boolean = false;
+  flightBookingError: boolean = false;
+  flightBookingResponse: IAmadeusFlightCreateOrderResponse | undefined;
+
   constructor(
     private route: ActivatedRoute,
     private reservationService: ReservationService,
@@ -94,7 +101,8 @@ export class NewReservationComponent implements OnInit {
     private messageService: MessageService,
     // SERVICIOS PARA OBTENER LEAD TRAVELER NAME
     private reservationTravelerService: ReservationTravelerService,
-    private reservationTravelerFieldService: ReservationTravelerFieldService
+    private reservationTravelerFieldService: ReservationTravelerFieldService,
+    private flightSearchService: FlightSearchService
   ) {
     // Calcular la fecha del día siguiente
     const tomorrow = new Date();
@@ -294,6 +302,12 @@ export class NewReservationComponent implements OnInit {
         // Cargar estado de pago
         this.loadPaymentStatus(payment.paymentStatusId);
 
+        // ✅ NUEVO: Verificar si el pago ya está completado al cargarlo
+        if (payment.paymentStatusId === this.successId) {
+          console.log('✅ Pago ya completado al cargar, verificando vuelos Amadeus...');
+          // No es necesario esperar aquí, loadPaymentStatus ya manejará la verificación
+        }
+
         this.loading = false;
       },
       error: (error) => {
@@ -343,6 +357,12 @@ export class NewReservationComponent implements OnInit {
           this.status = 'PENDING';
         } else if (status.code === 'COMPLETED') {
           this.status = 'SUCCESS';
+          
+          // ✅ NUEVO: Si el pago está completado, verificar y reservar vuelos Amadeus
+          console.log('✅ Pago completado, verificando vuelos Amadeus...');
+          setTimeout(() => {
+            this.checkAndBookAmadeusFlight();
+          }, 1000); // Pequeño delay para asegurar que la UI se actualice primero
         } else if (status.code === 'FAILED') {
           this.status = 'FAILED';
         }
@@ -357,8 +377,19 @@ export class NewReservationComponent implements OnInit {
    * Maneja el pago de Scalapay
    */
   private handleScalapayPayment(): void {
+    // ✅ NUEVO: Validar que el pago no esté ya completado antes de intentar capturar
+    if (this.payment?.paymentStatusId === this.successId) {
+      console.log('✅ Pago ya completado, no es necesario capturar de nuevo');
+      // Llamar al servicio de vuelos ya que el pago está completado
+      this.checkAndBookAmadeusFlight();
+      return;
+    }
+
     if (this.payment?.transactionReference) {
+      console.log('🔄 Pago pendiente, procediendo con captura...');
       this.captureOrder();
+    } else {
+      console.log('❌ No hay transaction reference disponible para captura');
     }
   }
 
@@ -370,6 +401,16 @@ export class NewReservationComponent implements OnInit {
       console.error('No transaction reference available');
       return;
     }
+
+    // ✅ NUEVO: Validar que el pago no esté ya completado antes de capturar
+    if (this.payment.paymentStatusId === this.successId) {
+      console.log('✅ Pago ya completado, no es necesario capturar de nuevo');
+      // Llamar al servicio de vuelos ya que el pago está completado
+      this.checkAndBookAmadeusFlight();
+      return;
+    }
+
+    console.log('🚀 Iniciando captura de orden Scalapay...');
 
     this.scalapayService
       .captureOrder(this.payment.transactionReference)
@@ -388,6 +429,11 @@ export class NewReservationComponent implements OnInit {
               'Pago completado',
               'El pago se ha procesado correctamente'
             );
+            
+            // ✅ NUEVO: Verificar y reservar vuelos Amadeus después del pago exitoso
+            setTimeout(() => {
+              this.checkAndBookAmadeusFlight();
+            }, 1000); // Pequeño delay para asegurar que el mensaje se muestre primero
           }
         },
         error: (error: any) => {
@@ -488,6 +534,75 @@ export class NewReservationComponent implements OnInit {
       severity,
       summary,
       detail,
+    });
+  }
+
+  /**
+   * ✅ NUEVO: Verifica si hay vuelos Amadeus seleccionados y procede con la reserva
+   */
+  public checkAndBookAmadeusFlight(): void {
+    if (!this.reservationId) {
+      console.log('❌ No hay reservationId disponible para verificar vuelos');
+      return;
+    }
+
+    console.log('🔍 Verificando si hay vuelos Amadeus seleccionados...');
+    
+    this.flightSearchService.getSelectionStatus(this.reservationId).subscribe({
+      next: (hasSelection: boolean) => {
+        this.hasAmadeusFlight = hasSelection;
+        console.log('✅ Estado de selección de vuelos:', hasSelection);
+        
+        if (hasSelection) {
+          console.log('✈️ Vuelo Amadeus detectado, procediendo con la reserva...');
+          this.bookAmadeusFlight();
+        } else {
+          console.log('ℹ️ No hay vuelos Amadeus seleccionados');
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error al verificar estado de vuelos:', error);
+        this.flightBookingError = true;
+      }
+    });
+  }
+
+  /**
+   * ✅ NUEVO: Realiza la reserva del vuelo Amadeus
+   */
+  private bookAmadeusFlight(): void {
+    if (!this.reservationId) return;
+
+    this.flightBookingLoading = true;
+    this.flightBookingError = false;
+    
+    console.log('🚀 Iniciando reserva de vuelo Amadeus...');
+    
+    this.flightSearchService.bookFlight(this.reservationId).subscribe({
+      next: (response: IAmadeusFlightCreateOrderResponse) => {
+        console.log('✅ Reserva de vuelo exitosa:', response);
+        this.flightBookingResponse = response;
+        this.flightBookingLoading = false;
+        
+        // Mostrar mensaje de éxito
+        this.showMessage(
+          'success',
+          'Vuelo reservado',
+          'El vuelo se ha reservado correctamente en Amadeus.'
+        );
+      },
+      error: (error) => {
+        console.error('❌ Error al reservar vuelo:', error);
+        this.flightBookingError = true;
+        this.flightBookingLoading = false;
+        
+        // Mostrar mensaje de error
+        this.showMessage(
+          'error',
+          'Error en reserva de vuelo',
+          'No se pudo completar la reserva del vuelo. Contacta con soporte.'
+        );
+      }
     });
   }
 

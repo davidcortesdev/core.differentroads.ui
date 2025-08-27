@@ -1,0 +1,307 @@
+// amadeus-flight-section.scss
+// Estilos simplificados para la sección de reserva de vuelos Amadeus
+
+.amadeus-flight-section {
+  margin-bottom: 1.5rem;
+
+  ::ng-deep {
+    .amadeus-panel {
+      border: 2px solid var(--primary-color-400);
+      border-radius: 11.434px;
+      overflow: hidden;
+
+      .p-panel-header {
+        color: var(--background-azul);
+        font-weight: 600;
+      }
+
+      .amadeus-header {
+        display: flex;
+        align-items: center;
+        color: var(--background-azul);
+        font-size: 1.1rem;
+      }
+    }
+
+    // Estados básicos
+    .flight-status {
+      .status-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        color: var(--background-azul);
+      }
+
+      .booking-loading {
+        text-align: center;
+        margin: 1rem 0;
+        padding: 1rem;
+      }
+    }
+
+    // Respuesta exitosa
+    .flight-success {
+      .success-header {
+        text-align: center;
+        margin-bottom: 1.5rem;
+
+        .success-icon {
+          color: #177903;
+          font-size: 2rem;
+          margin-bottom: 0.5rem;
+          display: block;
+        }
+
+        h3 {
+          margin: 0.5rem 0 0 0;
+          color: #177903;
+          font-size: 1.3rem;
+        }
+      }
+
+      .flight-details {
+        background: #fff;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        margin-bottom: 1rem;
+
+        .detail-item {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 0.5rem;
+          padding: 0.25rem 0;
+
+          label {
+            font-weight: 600;
+            color: var(--background-azul);
+            min-width: 120px;
+          }
+
+          span {
+            color: var(--background-azul);
+            background: #f8f9fa;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+          }
+        }
+
+        // Información básica de vuelos
+        .flight-offers {
+          margin-top: 1.5rem;
+          border-top: 1px solid #dee2e6;
+          padding-top: 1rem;
+
+          h4 {
+            color: var(--background-azul);
+            margin-bottom: 1rem;
+          }
+
+          .offer-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+
+            .offer-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 0.75rem;
+              padding-bottom: 0.5rem;
+              border-bottom: 1px solid #dee2e6;
+            }
+
+            .detail-row {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 0.5rem;
+
+              label {
+                font-weight: 600;
+                color: var(--background-azul);
+                min-width: 140px;
+              }
+
+              span {
+                color: var(--background-azul);
+              }
+            }
+          }
+        }
+
+        // Información de viajeros
+        .travelers-info {
+          margin-top: 1.5rem;
+          border-top: 1px solid #dee2e6;
+          padding-top: 1rem;
+
+          h4 {
+            color: var(--background-azul);
+            margin-bottom: 1rem;
+          }
+
+          .traveler-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+
+            .traveler-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 0.75rem;
+              padding-bottom: 0.5rem;
+              border-bottom: 1px solid #dee2e6;
+            }
+
+            .detail-row {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 0.5rem;
+
+              label {
+                font-weight: 600;
+                color: var(--background-azul);
+                min-width: 140px;
+              }
+
+              span {
+                color: var(--background-azul);
+              }
+            }
+          }
+        }
+      }
+
+      // Warnings
+      .flight-warnings {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+
+        h4 {
+          margin: 0 0 0.5rem 0;
+          color: #856404;
+        }
+
+        .warning-item {
+          display: flex;
+          align-items: center;
+          margin-bottom: 0.5rem;
+          color: #856404;
+
+          .warning-icon {
+            color: #856404;
+            margin-right: 0.5rem;
+          }
+        }
+      }
+
+      // Debug simplificado
+      .debug-section {
+        margin-top: 1rem;
+        border-top: 1px solid #dee2e6;
+        padding-top: 1rem;
+
+        .debug-summary {
+          cursor: pointer;
+          color: #666;
+          font-size: 0.9rem;
+          margin-top: 1rem;
+          display: block;
+        }
+
+        .debug-content {
+          .debug-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+
+            strong {
+              color: var(--background-azul);
+              min-width: 150px;
+            }
+
+            .debug-value {
+              &.success { color: #177903; }
+              &.error { color: #f05a4c; }
+              &.loading { color: #666; }
+            }
+
+            .debug-id {
+              font-family: monospace;
+              background: #f8f9fa;
+              padding: 0.25rem 0.5rem;
+              border-radius: 4px;
+              color: var(--background-azul);
+            }
+          }
+
+          .debug-actions {
+            margin-top: 1rem;
+            text-align: center;
+          }
+
+          .debug-json {
+            background: #2d3748 !important;
+            color: #e2e8f0 !important;
+            border: 1px solid #4a5568;
+            font-family: monospace;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+          }
+        }
+      }
+    }
+
+    // Error
+    .flight-error {
+      text-align: center;
+      padding: 1rem;
+
+      .error-header {
+        margin-bottom: 1rem;
+
+        .error-icon {
+          color: #f05a4c;
+          font-size: 2rem;
+          margin-bottom: 0.5rem;
+          display: block;
+        }
+
+        h3 {
+          margin: 0.5rem 0 0 0;
+          color: #f05a4c;
+          font-size: 1.3rem;
+        }
+      }
+
+      p {
+        color: var(--background-azul);
+        margin-bottom: 1rem;
+      }
+    }
+
+    // Spinner
+    .flight-loader {
+      .p-progress-spinner {
+        width: 2rem;
+        height: 2rem;
+      }
+    }
+  }
+}

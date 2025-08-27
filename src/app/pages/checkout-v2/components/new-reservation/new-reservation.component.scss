@@ -1,12 +1,46 @@
 // new-reservation.component.scss
-// Variables principales
+
+// ========================================
+// VARIABLES DE COLORES
+// ========================================
+// Colores principales (ya existentes)
 $azul: var(--background-azul);
 $coral: var(--primary-color-500);
 $border: var(--primary-color-400);
+
+// Colores de estado
+$success-green: #177903;
+$error-red: #e35959;
+$warning-orange: #856404;
+$danger-red: #f05a4c;
+
+// Colores de fondo
+$panel-blue: #c3dcf6;
+$panel-coral: #ffe4e4;
+$panel-coral-border: #fac8c3;
+$panel-light-gray: #f8f9fa;
+$panel-light-gray-border: #e9ecef;
+$panel-white: #fff;
+$panel-white-border: #dee2e6;
+$panel-warning: #fff3cd;
+$panel-warning-border: #ffeaa7;
+
+// Colores de texto
+$text-gray: #666;
+$text-dark-gray: #2d3748;
+$text-light-gray: #e2e8f0;
+$text-border-gray: #4a5568;
+
+// ========================================
+// VARIABLES DE DISEÑO
+// ========================================
 $border-radius: 11.434px;
 $panel-margin: 1.5rem;
+$button-border-radius: 114.398px;
 
-// Mixins para reutilización
+// ========================================
+// MIXINS
+// ========================================
 @mixin flex-center {
   display: flex;
   justify-content: center;
@@ -19,7 +53,9 @@ $panel-margin: 1.5rem;
   overflow: hidden;
 }
 
-// Estilos principales
+// ========================================
+// ESTILOS PRINCIPALES
+// ========================================
 .res-conf {
   max-width: 800px;
   margin: 2rem auto;
@@ -32,11 +68,11 @@ $panel-margin: 1.5rem;
 
   // Estados de la reserva
   &.rq .hdr .status-icon {
-    color: #e35959;
+    color: $error-red;
   }
 
   &.confirm .hdr .status-icon {
-    color: #177903;
+    color: $success-green;
   }
 
   // Secciones principales
@@ -105,18 +141,12 @@ $panel-margin: 1.5rem;
   ::ng-deep {
     // Panel de detalles
     .det-panel {
-      background: #c3dcf6;
-      border: 0;
+      --p-panel-background: #c3dcf6;
+      --p-panel-content-padding: 1rem;
       @include panel-base;
 
       .p-panel-header {
         display: none;
-      }
-
-      .p-panel-content {
-        background: #c3dcf6;
-        padding: 1rem;
-        border: 0;
       }
 
       .det-item {
@@ -142,25 +172,25 @@ $panel-margin: 1.5rem;
 
     // Botones
     .p-button {
-      border-radius: 114.398px;
+      border-radius: $button-border-radius;
     }
 
     // Panel bancario
     .bank-panel {
-      background: #ffe4e4;
-      border: 2px solid #fac8c3;
+      background: $panel-coral;
+      border: 2px solid $panel-coral-border;
       @include panel-base;
 
       .p-panel-content,
       .p-panel-header {
-        background: #fac8c3;
+        background: $panel-coral-border;
         text-align: left;
         padding: 1rem;
         color: $azul;
       }
 
       .p-panel-content {
-        border: 2px solid #fac8c3;
+        border: 2px solid $panel-coral-border;
       }
 
       .p-panel-header {
@@ -197,10 +227,10 @@ $panel-margin: 1.5rem;
       text-align: center;
 
       .p-fileupload .p-button {
-        border-radius: 114.398px;
+        border-radius: $button-border-radius;
         background-color: $coral;
         border-color: $coral;
-        color: white;
+        color: $panel-white;
 
         .pi-upload {
           margin-right: 0.5rem;

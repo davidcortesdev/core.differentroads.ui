@@ -302,6 +302,12 @@ export class NewReservationComponent implements OnInit {
         // Cargar estado de pago
         this.loadPaymentStatus(payment.paymentStatusId);
 
+        // ✅ NUEVO: Verificar si el pago ya está completado al cargarlo
+        if (payment.paymentStatusId === this.successId) {
+          console.log('✅ Pago ya completado al cargar, verificando vuelos Amadeus...');
+          // No es necesario esperar aquí, loadPaymentStatus ya manejará la verificación
+        }
+
         this.loading = false;
       },
       error: (error) => {
@@ -351,6 +357,12 @@ export class NewReservationComponent implements OnInit {
           this.status = 'PENDING';
         } else if (status.code === 'COMPLETED') {
           this.status = 'SUCCESS';
+          
+          // ✅ NUEVO: Si el pago está completado, verificar y reservar vuelos Amadeus
+          console.log('✅ Pago completado, verificando vuelos Amadeus...');
+          setTimeout(() => {
+            this.checkAndBookAmadeusFlight();
+          }, 1000); // Pequeño delay para asegurar que la UI se actualice primero
         } else if (status.code === 'FAILED') {
           this.status = 'FAILED';
         }
@@ -365,8 +377,19 @@ export class NewReservationComponent implements OnInit {
    * Maneja el pago de Scalapay
    */
   private handleScalapayPayment(): void {
+    // ✅ NUEVO: Validar que el pago no esté ya completado antes de intentar capturar
+    if (this.payment?.paymentStatusId === this.successId) {
+      console.log('✅ Pago ya completado, no es necesario capturar de nuevo');
+      // Llamar al servicio de vuelos ya que el pago está completado
+      this.checkAndBookAmadeusFlight();
+      return;
+    }
+
     if (this.payment?.transactionReference) {
+      console.log('🔄 Pago pendiente, procediendo con captura...');
       this.captureOrder();
+    } else {
+      console.log('❌ No hay transaction reference disponible para captura');
     }
   }
 
@@ -378,6 +401,16 @@ export class NewReservationComponent implements OnInit {
       console.error('No transaction reference available');
       return;
     }
+
+    // ✅ NUEVO: Validar que el pago no esté ya completado antes de capturar
+    if (this.payment.paymentStatusId === this.successId) {
+      console.log('✅ Pago ya completado, no es necesario capturar de nuevo');
+      // Llamar al servicio de vuelos ya que el pago está completado
+      this.checkAndBookAmadeusFlight();
+      return;
+    }
+
+    console.log('🚀 Iniciando captura de orden Scalapay...');
 
     this.scalapayService
       .captureOrder(this.payment.transactionReference)

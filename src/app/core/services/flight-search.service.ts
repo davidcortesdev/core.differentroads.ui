@@ -150,6 +150,85 @@ export interface IPriceChangeInfo {
   message?: string | null;
 }
 
+// ✅ NUEVAS INTERFACES para el endpoint de book
+export interface IAmadeusFlightCreateOrderResponse {
+  meta?: ICollectionMeta | null;
+  warnings?: IIssue[] | null;
+  data?: IFlightOrder | null;
+  dictionaries?: IDictionaries | null;
+}
+
+export interface ICollectionMeta {
+  count?: number | null;
+  links?: any | null;
+}
+
+export interface IIssue {
+  status?: number | null;
+  code?: number | null;
+  title?: string | null;
+  detail?: string | null;
+  source?: any | null;
+}
+
+export interface IFlightOrder {
+  type?: string | null;
+  id?: string | null;
+  queuingOfficeId?: string | null;
+  ownerOfficeId?: string | null;
+  flightOffers?: IFlightOffer[] | null;
+  travelers?: ITraveler[] | null;
+  remarks?: IRemarks | null;
+  formOfPayments?: IFormOfPayment[] | null;
+  ticketingAgreement?: ITicketingAgreement | null;
+  automatedProcess?: IAutomatedProcess[] | null;
+  contacts?: IContact[] | null;
+  tickets?: IAirTravelDocument[] | null;
+  formOfIdentifications?: IFormOfIdentification[] | null;
+}
+
+export interface IFlightOffer {
+  id?: string | null;
+  // Añadir más propiedades según sea necesario
+}
+
+export interface ITraveler {
+  id?: string | null;
+  // Añadir más propiedades según sea necesario
+}
+
+export interface IRemarks {
+  // Añadir propiedades según sea necesario
+}
+
+export interface IFormOfPayment {
+  // Añadir propiedades según sea necesario
+}
+
+export interface ITicketingAgreement {
+  // Añadir propiedades según sea necesario
+}
+
+export interface IAutomatedProcess {
+  // Añadir propiedades según sea necesario
+}
+
+export interface IContact {
+  // Añadir propiedades según sea necesario
+}
+
+export interface IAirTravelDocument {
+  // Añadir propiedades según sea necesario
+}
+
+export interface IDictionaries {
+  // Añadir propiedades según sea necesario
+}
+
+export interface IFormOfIdentification {
+  // Añadir propiedades según sea necesario
+}
+
 export type FlightSearchResponse = IFlightSearchResultDTO;
 
 // Interfaces para respuestas de operaciones PUT
@@ -273,6 +352,18 @@ export class FlightSearchService {
   validatePriceChange(reservationId: number): Observable<IPriceChangeInfo | null> {
     return this.http.get<IPriceChangeInfo | null>(
       `${this.API_URL}/reservation/${reservationId}/validate-price-change`
+    );
+  }
+
+  /**
+   * ✅ NUEVO: Reserva un vuelo recuperando el último FlightOffer no obsoleto para una reserva
+   * @param reservationId ID de la reserva
+   * @returns Observable con la respuesta de la operación de reserva
+   */
+  bookFlight(reservationId: number): Observable<IAmadeusFlightCreateOrderResponse> {
+    return this.http.post<IAmadeusFlightCreateOrderResponse>(
+      `${this.API_URL}/reservation/${reservationId}/book`,
+      {}
     );
   }
 

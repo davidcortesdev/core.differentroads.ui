@@ -216,6 +216,129 @@
     [bookingData]="bookingData!"
     [currentPayment]="paymentInfo!"
   ></app-payments-information-section>
+
+  <!-- ✅ NUEVA SECCIÓN: Información de reserva de vuelos Amadeus -->
+  <div class="amadeus-flight-section" *ngIf="hasAmadeusFlight || flightBookingResponse">
+    <p-panel styleClass="amadeus-panel">
+      <ng-template pTemplate="header">
+        <div class="amadeus-header">
+          <i class="pi pi-plane" style="margin-right: 0.5rem;"></i>
+          Reserva de Vuelos Amadeus
+        </div>
+      </ng-template>
+      
+      <!-- Estado de verificación -->
+      <div class="flight-status" *ngIf="!flightBookingResponse && !flightBookingError">
+        <div class="status-item">
+          <i class="pi pi-check-circle" style="color: #177903; margin-right: 0.5rem;"></i>
+          <span>Vuelos Amadeus detectados y seleccionados</span>
+        </div>
+        
+        <!-- Loading durante la reserva -->
+        <div class="booking-loading" *ngIf="flightBookingLoading">
+          <p-progressSpinner styleClass="flight-loader"></p-progressSpinner>
+          <p>Procesando reserva de vuelos...</p>
+        </div>
+
+        <!-- ✅ DEBUG: Estado actual de vuelos -->
+        <div class="debug-section">
+          <details>
+            <summary style="cursor: pointer; color: #666; font-size: 0.9rem; margin-top: 1rem;">
+              🔍 Ver estado actual (Debug)
+            </summary>
+            <div class="debug-content">
+              <div class="debug-item">
+                <strong>hasAmadeusFlight:</strong> 
+                <span [style.color]="hasAmadeusFlight ? '#177903' : '#f05a4c'">{{ hasAmadeusFlight }}</span>
+              </div>
+              <div class="debug-item">
+                <strong>flightBookingLoading:</strong> 
+                <span [style.color]="flightBookingLoading ? '#177903' : '#666'">{{ flightBookingLoading }}</span>
+              </div>
+              <div class="debug-item">
+                <strong>flightBookingError:</strong> 
+                <span [style.color]="flightBookingError ? '#f05a4c' : '#666'">{{ flightBookingError }}</span>
+              </div>
+              <div class="debug-item">
+                <strong>bookingData._id:</strong> 
+                <span style="font-family: monospace; background: #f8f9fa; padding: 0.25rem 0.5rem; border-radius: 4px;">{{ bookingData?._id || 'No disponible' }}</span>
+              </div>
+              
+              <!-- Botón manual para probar -->
+              <div class="debug-actions" style="margin-top: 1rem; text-align: center;">
+                <p-button 
+                  label="🔄 Verificar vuelos manualmente" 
+                  (onClick)="checkAndBookAmadeusFlight()" 
+                  severity="info"
+                  [disabled]="!bookingData?._id || flightBookingLoading"
+                  styleClass="debug-button">
+                </p-button>
+              </div>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- Respuesta exitosa de la reserva -->
+      <div class="flight-success" *ngIf="flightBookingResponse && !flightBookingLoading">
+        <div class="success-header">
+          <i class="pi pi-check-circle" style="color: #177903; font-size: 2rem;"></i>
+          <h3>¡Vuelos reservados exitosamente!</h3>
+        </div>
+        
+        <div class="flight-details" *ngIf="flightBookingResponse.data">
+          <div class="detail-item" *ngIf="flightBookingResponse.data.id">
+            <label>ID de Orden:</label>
+            <span>{{ flightBookingResponse.data.id }}</span>
+          </div>
+          <div class="detail-item" *ngIf="flightBookingResponse.data.type">
+            <label>Tipo de Orden:</label>
+            <span>{{ flightBookingResponse.data.type }}</span>
+          </div>
+          <div class="detail-item" *ngIf="flightBookingResponse.data.queuingOfficeId">
+            <label>Oficina de Cola:</label>
+            <span>{{ flightBookingResponse.data.queuingOfficeId }}</span>
+          </div>
+        </div>
+
+        <!-- Warnings si existen -->
+        <div class="flight-warnings" *ngIf="flightBookingResponse.warnings && flightBookingResponse.warnings.length > 0">
+          <h4>Advertencias:</h4>
+          <div class="warning-item" *ngFor="let warning of flightBookingResponse.warnings">
+            <i class="pi pi-exclamation-triangle" style="color: #f05a4c; margin-right: 0.5rem;"></i>
+            <span>{{ warning.title }}: {{ warning.detail }}</span>
+          </div>
+        </div>
+
+        <!-- ✅ SECCIÓN DEBUG: Información completa en JSON -->
+        <div class="debug-section">
+          <details>
+            <summary style="cursor: pointer; color: #666; font-size: 0.9rem; margin-top: 1rem;">
+              🔍 Ver información completa (Debug)
+            </summary>
+            <div class="debug-content">
+              <pre style="background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: 0.8rem; margin-top: 0.5rem;">{{ flightBookingResponse | json }}</pre>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- Error en la reserva -->
+      <div class="flight-error" *ngIf="flightBookingError && !flightBookingLoading">
+        <div class="error-header">
+          <i class="pi pi-exclamation-triangle" style="color: #f05a4c; font-size: 2rem;"></i>
+          <h3>Error en la reserva de vuelos</h3>
+        </div>
+        <p>No se pudo completar la reserva de vuelos. Por favor, contacta con soporte técnico.</p>
+        <p-button 
+          label="Reintentar" 
+          (onClick)="checkAndBookAmadeusFlight()" 
+          severity="warn"
+          styleClass="retry-button">
+        </p-button>
+      </div>
+    </p-panel>
+  </div>
 </div>
 
 <div *ngIf="error" class="error-container">

@@ -54,12 +54,12 @@ const routes: Routes = [
       { path: 'collection/:slug', component: ContentPageComponent },
       { path: 'press/:slug', component: ContentPageComponent },
       { path: 'blog/:slug', component: ContentPageComponent },
-      { path: 'reservation/:id', component: ReservationComponent },
+      { path: 'reservation/:id', component: ReservationComponent }, //OJO es el viejo
       {
         path: 'reservation/:id/:status/:paymentID',
         component: ReservationComponent,
-      },
-      { path: 'reservation/:reservationId/:paymentId', component: NewReservationComponent },
+      },//OJO es el viejo
+      { path: 'reservation/:reservationId/:paymentId', component: NewReservationComponent }, //OJO es el nuevo
       { path: 'bookings/:id', component: BookingsComponent },
       { path: 'aeropuertos', component: AirportSearchComponent },
       {path: 'reviews/:id', component: ReviewSurveyComponent},

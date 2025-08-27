@@ -137,22 +137,17 @@ $button-border-radius: 114.398px;
     }
   }
 
+
   // Estilos para componentes PrimeNG
   ::ng-deep {
     // Panel de detalles
     .det-panel {
-      background: $panel-blue;
-      border: 0;
+      --p-panel-background: #c3dcf6;
+      --p-panel-content-padding: 1rem;
       @include panel-base;
 
       .p-panel-header {
         display: none;
-      }
-
-      .p-panel-content {
-        background: $panel-blue;
-        padding: 1rem;
-        border: 0;
       }
 
       .det-item {
@@ -252,29 +247,12 @@ $button-border-radius: 114.398px;
 
   ::ng-deep {
     .amadeus-panel {
-      background: $panel-light-gray;
-      border: 2px solid $panel-light-gray-border;
+      border: 2px solid $border;
       @include panel-base;
 
       .p-panel-header {
-        background: $panel-light-gray-border;
-        border: none;
-        padding: 1rem;
         color: $azul;
         font-weight: 600;
-      }
-
-      .p-panel-content {
-        background: $panel-light-gray;
-        padding: 1.5rem;
-        border: 0;
-      }
-
-      .amadeus-header {
-        display: flex;
-        align-items: center;
-        color: $azul;
-        font-size: 1.1rem;
       }
     }
 
@@ -308,6 +286,13 @@ $button-border-radius: 114.398px;
       .success-header {
         text-align: center;
         margin-bottom: 1.5rem;
+
+        .success-icon {
+          color: $success-green;
+          font-size: 2rem;
+          margin-bottom: 0.5rem;
+          display: block;
+        }
 
         h3 {
           margin: 0.5rem 0 0 0;
@@ -654,6 +639,11 @@ $button-border-radius: 114.398px;
           color: $warning-orange;
           font-size: 0.9rem;
 
+          .warning-icon {
+            color: $warning-orange;
+            margin-right: 0.5rem;
+          }
+
           &:last-child {
             margin-bottom: 0;
           }
@@ -665,15 +655,15 @@ $button-border-radius: 114.398px;
         border-top: 1px solid $panel-white-border;
         padding-top: 1rem;
 
-        .debug-content {
-          pre {
-            background: $text-dark-gray !important;
-            color: $text-light-gray !important;
-            border: 1px solid $text-border-gray;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            line-height: 1.4;
-          }
+        .debug-summary {
+          cursor: pointer;
+          color: $text-gray;
+          font-size: 0.9rem;
+          margin-top: 1rem;
+          display: block;
+        }
 
+        .debug-content {
           .debug-item {
             display: flex;
             justify-content: space-between;
@@ -693,16 +683,52 @@ $button-border-radius: 114.398px;
               min-width: 150px;
             }
 
-            span {
+            .debug-value {
               font-weight: 500;
+
+              &.success {
+                color: $success-green;
+              }
+
+              &.error {
+                color: $danger-red;
+              }
+
+              &.loading {
+                color: $text-gray;
+              }
+            }
+
+            .debug-id {
+              font-family: monospace;
+              background: $panel-light-gray;
+              padding: 0.25rem 0.5rem;
+              border-radius: 4px;
+              color: $azul;
             }
           }
 
           .debug-actions {
+            margin-top: 1rem;
+            text-align: center;
+
             .debug-button {
               border-radius: $button-border-radius;
               font-size: 0.9rem;
             }
+          }
+
+          .debug-json {
+            background: $text-dark-gray !important;
+            color: $text-light-gray !important;
+            border: 1px solid $text-border-gray;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            line-height: 1.4;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
           }
         }
       }
@@ -715,6 +741,13 @@ $button-border-radius: 114.398px;
 
       .error-header {
         margin-bottom: 1rem;
+
+        .error-icon {
+          color: $danger-red;
+          font-size: 2rem;
+          margin-bottom: 0.5rem;
+          display: block;
+        }
 
         h3 {
           margin: 0.5rem 0 0 0;

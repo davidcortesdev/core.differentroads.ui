@@ -311,6 +311,291 @@ $panel-margin: 1.5rem;
             border-radius: 4px;
           }
         }
+
+        // ✅ NUEVOS ESTILOS para información detallada
+        .flight-offers {
+          margin-top: 1.5rem;
+          border-top: 1px solid #dee2e6;
+          padding-top: 1rem;
+
+          h4 {
+            color: $azul;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+          }
+
+          .offer-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+
+            &:last-child {
+              margin-bottom: 0;
+            }
+
+            .offer-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 0.75rem;
+              padding-bottom: 0.5rem;
+              border-bottom: 1px solid #dee2e6;
+
+              .offer-id {
+                font-size: 0.9rem;
+                color: #666;
+                font-family: monospace;
+              }
+            }
+
+            .offer-details {
+              .detail-row {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 0.5rem;
+                padding: 0.25rem 0;
+
+                label {
+                  font-weight: 600;
+                  color: $azul;
+                  min-width: 140px;
+                }
+
+                span {
+                  color: $azul;
+                }
+              }
+            }
+
+            .price-info {
+              margin-top: 1rem;
+              padding-top: 1rem;
+              border-top: 1px solid #dee2e6;
+
+              h5 {
+                color: $azul;
+                margin-bottom: 0.75rem;
+                font-size: 1rem;
+              }
+
+              .price-details {
+                .price-row {
+                  display: flex;
+                  justify-content: space-between;
+                  margin-bottom: 0.5rem;
+                  padding: 0.25rem 0;
+
+                  label {
+                    font-weight: 600;
+                    color: $azul;
+                    min-width: 120px;
+                  }
+
+                  span {
+                    color: $azul;
+
+                    &.price-value {
+                      font-weight: 600;
+                      color: #177903;
+                      font-size: 1.1rem;
+                    }
+                  }
+                }
+              }
+            }
+
+            .itineraries-info {
+              margin-top: 1rem;
+              padding-top: 1rem;
+              border-top: 1px solid #dee2e6;
+
+              h5 {
+                color: $azul;
+                margin-bottom: 0.75rem;
+                font-size: 1rem;
+              }
+
+              .itinerary-item {
+                background: #fff;
+                border: 1px solid #dee2e6;
+                border-radius: 6px;
+                padding: 0.75rem;
+                margin-bottom: 0.75rem;
+
+                &:last-child {
+                  margin-bottom: 0;
+                }
+
+                .itinerary-header {
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-bottom: 0.75rem;
+                  padding-bottom: 0.5rem;
+                  border-bottom: 1px solid #dee2e6;
+
+                  span {
+                    font-size: 0.9rem;
+                    color: #666;
+                  }
+                }
+
+                .segments-info {
+                  .segment-item {
+                    background: #f8f9fa;
+                    border: 1px solid #dee2e6;
+                    border-radius: 4px;
+                    padding: 0.75rem;
+                    margin-bottom: 0.75rem;
+
+                    &:last-child {
+                      margin-bottom: 0;
+                    }
+
+                    .segment-header {
+                      display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                      margin-bottom: 0.75rem;
+                      padding-bottom: 0.5rem;
+                      border-bottom: 1px solid #dee2e6;
+
+                      .carrier {
+                        background: #e9ecef;
+                        padding: 0.25rem 0.5rem;
+                        border-radius: 4px;
+                        font-size: 0.9rem;
+                        font-weight: 600;
+                      }
+
+                      .flight-number {
+                        background: #c3dcf6;
+                        padding: 0.25rem 0.5rem;
+                        border-radius: 4px;
+                        font-size: 0.9rem;
+                        font-weight: 600;
+                        color: $azul;
+                      }
+                    }
+
+                    .segment-details {
+                      .segment-row {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-bottom: 0.5rem;
+                        padding: 0.25rem 0;
+
+                        label {
+                          font-weight: 600;
+                          color: $azul;
+                          min-width: 80px;
+                        }
+
+                        span {
+                          color: $azul;
+
+                          &.time {
+                            background: #e9ecef;
+                            padding: 0.25rem 0.5rem;
+                            border-radius: 4px;
+                            font-family: monospace;
+                            font-weight: 600;
+                          }
+
+                          &.status-confirmed {
+                            color: #177903;
+                            font-weight: 600;
+                          }
+
+                          &.status-pending {
+                            color: #856404;
+                            font-weight: 600;
+                          }
+
+                          &.status-cancelled {
+                            color: #f05a4c;
+                            font-weight: 600;
+                          }
+
+                          &.status-waitlisted {
+                            color: #e35959;
+                            font-weight: 600;
+                          }
+
+                          &.status-denied {
+                            color: #dc3545;
+                            font-weight: 600;
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        .travelers-info {
+          margin-top: 1.5rem;
+          border-top: 1px solid #dee2e6;
+          padding-top: 1rem;
+
+          h4 {
+            color: $azul;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+          }
+
+          .traveler-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+
+            &:last-child {
+              margin-bottom: 0;
+            }
+
+            .traveler-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 0.75rem;
+              padding-bottom: 0.5rem;
+              border-bottom: 1px solid #dee2e6;
+
+              .traveler-id {
+                font-size: 0.9rem;
+                color: #666;
+                font-family: monospace;
+              }
+            }
+
+            .traveler-details {
+              .detail-row {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 0.5rem;
+                padding: 0.25rem 0;
+
+                label {
+                  font-weight: 600;
+                  color: $azul;
+                  min-width: 140px;
+                }
+
+                span {
+                  color: $azul;
+                }
+              }
+            }
+          }
+        }
       }
 
       .flight-warnings {

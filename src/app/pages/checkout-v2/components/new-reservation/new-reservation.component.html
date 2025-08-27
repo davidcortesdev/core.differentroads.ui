@@ -294,6 +294,135 @@
             <label>Oficina de Cola:</label>
             <span>{{ flightBookingResponse.data.queuingOfficeId }}</span>
           </div>
+          <div class="detail-item" *ngIf="flightBookingResponse.data.ownerOfficeId">
+            <label>Oficina Propietaria:</label>
+            <span>{{ flightBookingResponse.data.ownerOfficeId }}</span>
+          </div>
+
+          <!-- Información de FlightOffers -->
+          <div class="flight-offers" *ngIf="flightBookingResponse.data.flightOffers && flightBookingResponse.data.flightOffers.length > 0">
+            <h4>Ofertas de Vuelo:</h4>
+            <div class="offer-item" *ngFor="let offer of flightBookingResponse.data.flightOffers; let i = index">
+              <div class="offer-header">
+                <strong>Oferta {{ i + 1 }}</strong>
+                <span class="offer-id" *ngIf="offer.id">ID: {{ offer.id }}</span>
+              </div>
+              
+              <div class="offer-details">
+                <div class="detail-row" *ngIf="offer.source">
+                  <label>Fuente:</label>
+                  <span>{{ offer.source }}</span>
+                </div>
+                <div class="detail-row" *ngIf="offer.oneWay !== null">
+                  <label>Ida y Vuelta:</label>
+                  <span>{{ offer.oneWay ? 'Solo Ida' : 'Ida y Vuelta' }}</span>
+                </div>
+                <div class="detail-row" *ngIf="offer.numberOfBookableSeats">
+                  <label>Asientos Disponibles:</label>
+                  <span>{{ offer.numberOfBookableSeats }}</span>
+                </div>
+                <div class="detail-row" *ngIf="offer.paymentCardRequired !== null">
+                  <label>Tarjeta Requerida:</label>
+                  <span>{{ offer.paymentCardRequired ? 'Sí' : 'No' }}</span>
+                </div>
+              </div>
+
+              <!-- Información de Precio -->
+              <div class="price-info" *ngIf="offer.price">
+                <h5>Precio:</h5>
+                <div class="price-details">
+                  <div class="price-row" *ngIf="offer.price.total">
+                    <label>Total:</label>
+                    <span class="price-value">{{ offer.price.total }} {{ offer.price.currency || 'EUR' }}</span>
+                  </div>
+                  <div class="price-row" *ngIf="offer.price.base">
+                    <label>Base:</label>
+                    <span>{{ offer.price.base }} {{ offer.price.currency || 'EUR' }}</span>
+                  </div>
+                  <div class="price-row" *ngIf="offer.price.grandTotal">
+                    <label>Total General:</label>
+                    <span>{{ offer.price.grandTotal }} {{ offer.price.billingCurrency || 'EUR' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Información de Itinerarios -->
+              <div class="itineraries-info" *ngIf="offer.itineraries && offer.itineraries.length > 0">
+                <h5>Itinerarios:</h5>
+                <div class="itinerary-item" *ngFor="let itinerary of offer.itineraries; let j = index">
+                  <div class="itinerary-header">
+                    <strong>Itinerario {{ j + 1 }}</strong>
+                    <span *ngIf="itinerary.duration">Duración: {{ itinerary.duration }}</span>
+                  </div>
+                  
+                  <div class="segments-info" *ngIf="itinerary.segments && itinerary.segments.length > 0">
+                    <div class="segment-item" *ngFor="let segment of itinerary.segments; let k = index">
+                      <div class="segment-header">
+                        <strong>Segmento {{ k + 1 }}</strong>
+                        <span class="carrier" *ngIf="segment.carrierCode">{{ segment.carrierCode }}</span>
+                        <span class="flight-number" *ngIf="segment.number">{{ segment.number }}</span>
+                      </div>
+                      
+                      <div class="segment-details">
+                        <div class="segment-row" *ngIf="segment.departure">
+                          <label>Salida:</label>
+                          <span>{{ segment.departure.iataCode ?? '' }} {{ segment.departure.terminal ? '(T' + segment.departure.terminal + ')' : '' }}</span>
+                          <span class="time" *ngIf="segment.departure.at">{{ segment.departure.at | date:'HH:mm' }}</span>
+                        </div>
+                        <div class="segment-row" *ngIf="segment.arrival">
+                          <label>Llegada:</label>
+                          <span>{{ segment.arrival.iataCode ?? '' }} {{ segment.arrival.terminal ? '(T' + segment.arrival.terminal + ')' : '' }}</span>
+                          <span class="time" *ngIf="segment.arrival?.at">{{ segment.arrival.at | date:'HH:mm' }}</span>
+                        </div>
+                        <div class="segment-row" *ngIf="segment.duration">
+                          <label>Duración:</label>
+                          <span>{{ segment.duration }}</span>
+                        </div>
+                        <div class="segment-row" *ngIf="segment.bookingStatus">
+                          <label>Estado:</label>
+                          <span [class]="'status-' + segment.bookingStatus.toLowerCase()">{{ segment.bookingStatus }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Información de Viajeros -->
+          <div class="travelers-info" *ngIf="flightBookingResponse.data.travelers && flightBookingResponse.data.travelers.length > 0">
+            <h4>Viajeros:</h4>
+            <div class="traveler-item" *ngFor="let traveler of flightBookingResponse.data.travelers; let i = index">
+              <div class="traveler-header">
+                <strong>Viajero {{ i + 1 }}</strong>
+                <span class="traveler-id" *ngIf="traveler.id">ID: {{ traveler.id }}</span>
+              </div>
+              
+              <div class="traveler-details">
+                <div class="detail-row" *ngIf="traveler.name">
+                  <label>Nombre:</label>
+                  <span>{{ traveler.name.title }} {{ traveler.name.firstName }} {{ traveler.name.lastName }}</span>
+                </div>
+                <div class="detail-row" *ngIf="traveler.dateOfBirth">
+                  <label>Fecha de Nacimiento:</label>
+                  <span>{{ traveler.dateOfBirth | date:'dd/MM/yyyy' }}</span>
+                </div>
+                <div class="detail-row" *ngIf="traveler.gender">
+                  <label>Género:</label>
+                  <span>{{ traveler.gender }}</span>
+                </div>
+                <div class="detail-row" *ngIf="traveler.travelerType">
+                  <label>Tipo:</label>
+                  <span>{{ traveler.travelerType }}</span>
+                </div>
+                <div class="detail-row" *ngIf="traveler.contact?.emailAddress">
+                  <label>Email:</label>
+                  <span>{{ traveler.contact?.emailAddress }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Warnings si existen -->

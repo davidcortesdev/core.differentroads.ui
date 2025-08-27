@@ -39,7 +39,7 @@ interface BankInfo {
   selector: 'app-new-reservation',
   standalone: false,
   templateUrl: './new-reservation.component.html',
-  styleUrl: './new-reservation.component.scss',
+  styleUrls: ['./new-reservation.component.scss', './amadeus-flight-section.scss'],
   providers: [MessageService],
 })
 export class NewReservationComponent implements OnInit {

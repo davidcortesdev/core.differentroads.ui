@@ -1,24 +1,7 @@
-// Variables principales
 $azul: var(--background-azul);
-$coral: var(--primary-color-500);
-$border: var(--primary-color-400);
-$border-radius: 11.434px;
-$panel-margin: 1.5rem;
+$coral: #ea685c;
+$border: #f59188;
 
-// Mixins para reutilización
-@mixin flex-center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-@mixin panel-base {
-  margin-bottom: $panel-margin;
-  border-radius: $border-radius;
-  overflow: hidden;
-}
-
-// Estilos principales
 .res-conf {
   max-width: 800px;
   margin: 2rem auto;
@@ -29,16 +12,16 @@ $panel-margin: 1.5rem;
     margin-bottom: 2rem;
   }
 
-  // Estados de la reserva
-  &.rq .hdr .status-icon {
-    color: #e35959;
+  &.rq {
+    .hdr .status-icon {
+      color: #e35959;
+    }
   }
-
-  &.confirm .hdr .status-icon {
-    color: #177903;
+  &.confirm {
+    .hdr .status-icon {
+      color: #177903;
+    }
   }
-
-  // Secciones principales
   .hdr,
   .wel,
   .lnk {
@@ -52,7 +35,6 @@ $panel-margin: 1.5rem;
       margin-bottom: 1rem;
       display: block;
     }
-
     h1 {
       font-size: 2.5rem;
       font-weight: 500;
@@ -65,11 +47,9 @@ $panel-margin: 1.5rem;
     .hl {
       font-weight: 600;
     }
-
     .msg {
       margin: 1rem 0;
     }
-
     .status-msg {
       font-weight: 500;
     }
@@ -77,22 +57,18 @@ $panel-margin: 1.5rem;
 
   .lnk {
     padding: 1.25rem;
-    border-radius: $border-radius;
+    border-radius: 11.434px;
     border: 2px solid $border;
-
     p {
       margin-bottom: 0.5rem;
     }
-
     a {
       color: $coral;
       text-decoration: none;
       font-weight: 500;
-
       &:hover {
         text-decoration: underline;
       }
-
       &.pwd {
         display: block;
         margin-top: 0.5rem;
@@ -100,73 +76,66 @@ $panel-margin: 1.5rem;
     }
   }
 
-  // Estilos para componentes PrimeNG
   ::ng-deep {
-    // Panel de detalles
     .det-panel {
       background: #c3dcf6;
       border: 0;
-      @include panel-base;
+      margin-bottom: 1.5rem;
+      border-radius: 11.434px;
+      overflow: hidden;
 
       .p-panel-header {
         display: none;
       }
-
       .p-panel-content {
         background: #c3dcf6;
         padding: 1rem;
         border: 0;
       }
-
       .det-item {
         display: flex;
         gap: 0.5rem;
         margin-bottom: 0.5rem;
         color: $azul;
-
         &:last-child {
           margin-bottom: 0;
         }
-
         .val {
           font-weight: 600;
           color: $azul;
         }
-
         span {
           color: $azul;
         }
       }
     }
 
-    // Botones
     .p-button {
       border-radius: 114.398px;
     }
 
-    // Panel bancario
     .bank-panel {
       background: #ffe4e4;
       border: 2px solid #fac8c3;
-      @include panel-base;
+      margin-bottom: 1.5rem;
+      border-radius: 11.434px;
+      overflow: hidden;
 
-      .p-panel-content,
-      .p-panel-header {
+      .p-panel-content {
         background: #fac8c3;
+        border: 2px solid #fac8c3;
         text-align: left;
         padding: 1rem;
         color: $azul;
       }
-
-      .p-panel-content {
-        border: 2px solid #fac8c3;
-      }
-
       .p-panel-header {
+        background: #fac8c3;
         border: none;
+        text-align: left;
+        padding: 1rem;
+        color: $azul;
         font-weight: 600;
       }
-
       .bank-info {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -175,13 +144,11 @@ $panel-margin: 1.5rem;
 
         .bank-row {
           margin-bottom: 0.5rem;
-
           .label {
             font-weight: 600;
             margin-right: 0.5rem;
             color: $azul;
           }
-
           .value {
             color: $azul;
           }
@@ -189,245 +156,34 @@ $panel-margin: 1.5rem;
       }
     }
 
-    // Botón de subida
     .upload-button {
       margin-top: 1rem;
       display: block;
       text-align: center;
 
-      .p-fileupload .p-button {
-        border-radius: 114.398px;
-        background-color: $coral;
-        border-color: $coral;
-        color: white;
+      .p-fileupload {
+        .p-button {
+          border-radius: 114.398px;
+          background-color: $coral;
+          border-color: $coral;
+          color: white;
 
-        .pi-upload {
-          margin-right: 0.5rem;
+          .pi-upload {
+            margin-right: 0.5rem;
+          }
         }
       }
     }
   }
 }
 
-// Contenedor de carga
 .loading-container {
-  @include flex-center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   height: 60vh;
 }
 
-// ✅ NUEVOS ESTILOS para la sección de vuelos Amadeus
-.amadeus-flight-section {
-  margin-bottom: $panel-margin;
-
-  ::ng-deep {
-    .amadeus-panel {
-      background: #f8f9fa;
-      border: 2px solid #e9ecef;
-      @include panel-base;
-
-      .p-panel-header {
-        background: #e9ecef;
-        border: none;
-        padding: 1rem;
-        color: $azul;
-        font-weight: 600;
-      }
-
-      .p-panel-content {
-        background: #f8f9fa;
-        padding: 1.5rem;
-        border: 0;
-      }
-
-      .amadeus-header {
-        display: flex;
-        align-items: center;
-        color: $azul;
-        font-size: 1.1rem;
-      }
-    }
-
-    // Estados de vuelo
-    .flight-status {
-      .status-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 1rem;
-        font-weight: 500;
-        color: $azul;
-      }
-
-      .booking-loading {
-        text-align: center;
-        margin-top: 1rem;
-        padding: 1rem;
-        background: #fff;
-        border-radius: 8px;
-        border: 1px solid #dee2e6;
-
-        p {
-          margin-top: 0.5rem;
-          color: $azul;
-        }
-      }
-    }
-
-    // Respuesta exitosa
-    .flight-success {
-      .success-header {
-        text-align: center;
-        margin-bottom: 1.5rem;
-
-        h3 {
-          margin: 0.5rem 0 0 0;
-          color: #177903;
-          font-size: 1.3rem;
-        }
-      }
-
-      .flight-details {
-        background: #fff;
-        padding: 1rem;
-        border-radius: 8px;
-        border: 1px solid #dee2e6;
-        margin-bottom: 1rem;
-
-        .detail-item {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 0.5rem;
-          padding: 0.25rem 0;
-
-          &:last-child {
-            margin-bottom: 0;
-          }
-
-          label {
-            font-weight: 600;
-            color: $azul;
-            min-width: 120px;
-          }
-
-          span {
-            color: $azul;
-            font-family: monospace;
-            background: #f8f9fa;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-          }
-        }
-      }
-
-      .flight-warnings {
-        background: #fff3cd;
-        border: 1px solid #ffeaa7;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-
-        h4 {
-          margin: 0 0 0.5rem 0;
-          color: #856404;
-          font-size: 1rem;
-        }
-
-        .warning-item {
-          display: flex;
-          align-items: center;
-          margin-bottom: 0.5rem;
-          color: #856404;
-          font-size: 0.9rem;
-
-          &:last-child {
-            margin-bottom: 0;
-          }
-        }
-      }
-
-      .debug-section {
-        margin-top: 1rem;
-        border-top: 1px solid #dee2e6;
-        padding-top: 1rem;
-
-        .debug-content {
-          pre {
-            background: #2d3748 !important;
-            color: #e2e8f0 !important;
-            border: 1px solid #4a5568;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            line-height: 1.4;
-          }
-
-          .debug-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-            padding: 0.5rem;
-            background: #f8f9fa;
-            border-radius: 4px;
-            border: 1px solid #dee2e6;
-
-            &:last-child {
-              margin-bottom: 0;
-            }
-
-            strong {
-              color: $azul;
-              min-width: 150px;
-            }
-
-            span {
-              font-weight: 500;
-            }
-          }
-
-          .debug-actions {
-            .debug-button {
-              border-radius: 114.398px;
-              font-size: 0.9rem;
-            }
-          }
-        }
-      }
-    }
-
-    // Error en la reserva
-    .flight-error {
-      text-align: center;
-      padding: 1rem;
-
-      .error-header {
-        margin-bottom: 1rem;
-
-        h3 {
-          margin: 0.5rem 0 0 0;
-          color: #f05a4c;
-          font-size: 1.3rem;
-        }
-      }
-
-      p {
-        color: $azul;
-        margin-bottom: 1rem;
-      }
-
-      .retry-button {
-        border-radius: 114.398px;
-      }
-    }
-
-    // Spinner personalizado
-    .flight-loader {
-      .p-progress-spinner {
-        width: 2rem;
-        height: 2rem;
-      }
-    }
-  }
-}
-
-// Media queries
 @media (max-width: 1024px) {
   .res-conf {
     margin: 1.5rem auto;
@@ -449,7 +205,6 @@ $panel-margin: 1.5rem;
     max-width: 90%;
     font-size: 12px;
     padding: 0.5rem;
-
     ::ng-deep {
       .bank-panel .bank-info {
         grid-template-columns: 1fr;
@@ -486,7 +241,6 @@ $panel-margin: 1.5rem;
 @media (max-width: 480px) {
   .res-conf {
     font-size: 14px;
-
     ::ng-deep {
       .bank-panel {
         .p-panel-content,
@@ -494,33 +248,39 @@ $panel-margin: 1.5rem;
           padding: 0.75rem;
         }
 
-        .bank-info .bank-row {
-          margin-bottom: 1rem;
+        .bank-info {
+          .bank-row {
+            margin-bottom: 1rem;
+          }
+        }
+      }
+
+      .det-panel .det-item {
+        flex-direction: row !important;
+        color: $azul;
+
+        .val {
+          min-width: 130px;
+          color: $azul;
+        }
+
+        span {
+          color: $azul;
         }
       }
 
       .det-panel {
-        .det-item {
-          flex-direction: row !important;
-          color: $azul;
-
-          .val {
-            min-width: 130px;
-            color: $azul;
-          }
-
-          span {
-            color: $azul;
-          }
-        }
-
         .p-panel-content {
           padding: 0.5rem;
         }
       }
 
-      .upload-button .p-fileupload .p-button {
-        width: 100%; // Asegura que el botón ocupe todo el ancho en móviles
+      .upload-button {
+        .p-fileupload {
+          .p-button {
+            width: 100%; // Asegura que el botón ocupe todo el ancho en móviles
+          }
+        }
       }
     }
   }

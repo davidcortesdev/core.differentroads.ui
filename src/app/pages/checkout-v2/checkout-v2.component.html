@@ -93,6 +93,7 @@
               [reservationId]="reservationId ?? 0"
               [tourId]="tourId ?? 0"
               [selectedFlight]="selectedFlight"
+              [departureActivityPackId]="departureActivityPackId"
               (flightSelectionChange)="onFlightSelectionChange($event)">
             </app-flight-management>
 
@@ -100,7 +101,10 @@
               <p-button
                 *ngIf="hasAvailableFlights"
                 class="without-flight"
-                label="Lo quiero sin vuelos"
+                [label]="isFlightlessProcessing ? flightlessProcessingMessage : 'Lo quiero sin vuelos'"
+                [icon]="isFlightlessProcessing ? 'pi pi-spinner pi-spin' : ''"
+                [disabled]="isFlightlessProcessing"
+                [loading]="isFlightlessProcessing"
                 (onClick)="checkAuthAndContinue(2, onActiveIndexChange.bind(this), true)"
               ></p-button>
               <p-button
@@ -108,8 +112,8 @@
                 label="Continuar"
                 icon="pi pi-arrow-right"
                 iconPos="right"
-                [disabled]="!selectedFlight"
-                [pTooltip]="!selectedFlight ? 'Debes seleccionar un vuelo para continuar' : ''"
+                [disabled]="!selectedFlight || isFlightlessProcessing"
+                [pTooltip]="getContinueButtonTooltip()"
                 tooltipPosition="top"
                 (onClick)="checkAuthAndContinue(2, onActiveIndexChange.bind(this), false)"
               ></p-button>
@@ -126,7 +130,7 @@
               #infoTravelers>
             </app-info-travelers>
 
-            <div class="flex pt-6 justify-between">
+            <div class="flight-buttons">
               <p-button
                 label="Continuar"
                 icon="pi pi-arrow-right"
@@ -142,7 +146,8 @@
              <app-payment-management 
                [totalPrice]="totalAmountCalculated" 
                [reservationId]="reservationId ?? 0"
-               [departureDate]="departureDate">
+               [departureDate]="departureDate"
+               (navigateToStep)="onNavigateToStep($event)">
              </app-payment-management>
           </div>
         </div>

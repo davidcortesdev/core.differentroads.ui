@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of, forkJoin } from 'rxjs';
+import { switchMap, map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 export interface ReservationTravelerActivityPackCreate {
@@ -157,6 +158,101 @@ export class ReservationTravelerActivityPackService {
       {
         params,
       }
+    );
+  }
+
+  /**
+   * Obtiene los activityPackId de vuelos guardados para una reservación específica.
+   * @param reservationId ID de la reservación.
+   * @returns Lista de activityPackId de vuelos guardados para la reservación.
+   */
+  getFlightActivityPackIdsByReservation(
+    reservationId: number
+  ): Observable<number[]> {
+    // Primero obtener todos los viajeros de la reservación
+    const travelersUrl = `${environment.reservationsApiUrl}/ReservationTraveler`;
+    const travelersParams = new HttpParams()
+      .set('ReservationId', reservationId.toString())
+      .set('useExactMatchForStrings', 'false');
+
+    return this.http.get<any[]>(travelersUrl, { params: travelersParams }).pipe(
+      switchMap((travelers) => {
+        if (travelers.length === 0) {
+          return of([]);
+        }
+
+        // Obtener las asignaciones de vuelos para cada viajero
+        const assignmentPromises = travelers.map((traveler) => {
+          const params = new HttpParams()
+            .set('ReservationTravelerId', traveler.id.toString())
+            .set('useExactMatchForStrings', 'false');
+
+          return this.http.get<IReservationTravelerActivityPackResponse[]>(
+            this.API_URL,
+            { params }
+          );
+        });
+
+        return forkJoin(assignmentPromises).pipe(
+          map((assignmentsArrays) => {
+            // Extraer todos los activityPackId únicos de vuelos (activityPackId > 0)
+            const allActivityPackIds = assignmentsArrays
+              .flat()
+              .map((a) => a.activityPackId);
+            const flightActivityPackIds = allActivityPackIds.filter(
+              (id) => id > 0
+            );
+
+            // Retornar solo los IDs únicos
+            return [...new Set(flightActivityPackIds)];
+          })
+        );
+      })
+    );
+  }
+
+  /**
+   * Obtiene las asignaciones de vuelos completas para una reservación específica.
+   * @param reservationId ID de la reservación.
+   * @returns Lista completa de asignaciones de vuelos para la reservación.
+   */
+  getFlightAssignmentsByReservation(
+    reservationId: number
+  ): Observable<IReservationTravelerActivityPackResponse[]> {
+    // Primero obtener todos los viajeros de la reservación
+    const travelersUrl = `${environment.reservationsApiUrl}/ReservationTraveler`;
+    const travelersParams = new HttpParams()
+      .set('ReservationId', reservationId.toString())
+      .set('useExactMatchForStrings', 'false');
+
+    return this.http.get<any[]>(travelersUrl, { params: travelersParams }).pipe(
+      switchMap((travelers) => {
+        if (travelers.length === 0) {
+          return of([]);
+        }
+
+        // Obtener las asignaciones de vuelos para cada viajero
+        const assignmentPromises = travelers.map((traveler) => {
+          const params = new HttpParams()
+            .set('ReservationTravelerId', traveler.id.toString())
+            .set('useExactMatchForStrings', 'false');
+
+          return this.http.get<IReservationTravelerActivityPackResponse[]>(
+            this.API_URL,
+            { params }
+          );
+        });
+
+        return forkJoin(assignmentPromises).pipe(
+          map((assignmentsArrays) => {
+            // Filtrar solo las asignaciones de vuelos (activityPackId > 0)
+            const allAssignments = assignmentsArrays.flat();
+            return allAssignments.filter(
+              (assignment) => assignment.activityPackId > 0
+            );
+          })
+        );
+      })
     );
   }
 }

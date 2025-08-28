@@ -2,80 +2,43 @@ $primary: var(--background-azul);
 $accent: #f67362;
 $light: #f5f5f5;
 $border: #ddd;
+
+* {
+  --p-radiobutton-border-color: var(--background-azul);
+  --p-radiobutton-checked-border-color: var(--background-azul);
+  --p-radiobutton-checked-background: white;
+  --p-radiobutton-checked-hover-background: white;
+  --p-radiobutton-icon-checked-color: var(--background-azul);
+  --p-radiobutton-icon-checked-hover-color: var(--background-azul);
+  --p-panel-background: white;
+  --p-panel-color: var(--background-azul);
+}
+
 %flex-c {
   display: flex;
   align-items: center;
 }
+
 %small {
   font-size: 0.8rem;
   color: $primary;
 }
+
 %shadow {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
 }
+
 ::ng-deep {
-  .p-autocomplete {
-    .p-autocomplete-input {
-      padding: 1rem !important;
-    }
-    .p-inputtext {
-      border-radius: 10px !important;
-      padding-right: 55px !important;
-    }
-  }
   .p-panel {
-    font-family: Arial, sans-serif;
     margin: 0 0 20px 0;
-    background-color: #fff !important;
-    color: $primary;
     @extend %shadow;
     .p-panel-header {
-      border-bottom: 1px solid #e9ecef;
       padding: 1rem;
-    }
-    .p-panel-content {
-      width: 100%;
-      border: none;
-    }
-  }
-  .p-radiobutton .p-radiobutton-box {
-    border-color: $primary;
-  }
-  .p-radiobutton-checked {
-    .p-radiobutton-box {
-      border-color: $primary !important;
-      background: white !important;
-    }
-    .p-radiobutton-icon {
-      background-color: $primary !important;
-    }
-  }
-  .p-button {
-    &.p-button-danger {
-      background: $accent;
-      border-color: $accent;
-      font-weight: 600;
-      padding: 0.5rem 2rem;
-      border-radius: 4px;
-    }
-    &.p-button-success {
-      background: var(--p-primary-color);
-      border-color: var(--p-primary-color);
-    }
-  }
-  .p-calendar {
-    width: 100%;
-    .p-inputtext {
-      font-size: 0.9rem;
-    }
-    .p-datepicker-trigger {
-      background-color: transparent;
-      border-color: $border;
-      color: $primary;
     }
   }
 }
+
 .flt-hdr {
   h2 {
     margin: 0 0 5px 0;
@@ -89,6 +52,7 @@ $border: #ddd;
     font-size: 0.9rem;
   }
 }
+
 .travel-type {
   @extend %flex-c;
   margin: 10px 0;
@@ -132,10 +96,6 @@ $border: #ddd;
           transform: translateY(-50%) rotate(45deg);
           color: #999;
           z-index: 1;
-        }
-        ::ng-deep .p-dropdown .p-dropdown-label {
-          padding-left: 25px;
-          font-size: 0.9rem;
         }
         .change {
           position: absolute;
@@ -196,175 +156,6 @@ $border: #ddd;
   }
 }
 
-.res-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  h3 {
-    margin: 0;
-    font-size: 1.2rem;
-    color: $primary;
-    margin-right: 10px;
-  }
-  .count {
-    @extend %small;
-  }
-}
-
-.flt-list {
-  .item {
-    margin-bottom: 15px;
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  .card {
-    display: grid;
-    grid-template-columns: 100px 1fr 1fr 150px 150px;
-    align-items: center;
-    background: #fff;
-    @extend %shadow;
-    padding: 15px;
-    transition: box-shadow 0.3s ease;
-    &:hover {
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    }
-
-    .airline {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-
-      .logo {
-        background: $light;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        @extend %flex-c;
-        justify-content: center;
-        margin-bottom: 5px;
-        .code {
-          font-weight: bold;
-          color: $primary;
-        }
-      }
-
-      .name {
-        font-size: 0.8rem;
-        color: $primary;
-        text-align: center;
-        max-width: 90px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-    }
-
-    .segment {
-      padding: 0 15px;
-      .seg-hdr {
-        font-size: 0.8rem;
-        color: #999;
-        margin-bottom: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      .route {
-        @extend %flex-c;
-        .dep,
-        .arr {
-          width: 70px;
-          .time {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: $primary;
-          }
-          .airport {
-            font-size: 0.9rem;
-            color: $primary;
-          }
-        }
-
-        .path {
-          flex: 1;
-          padding: 0 15px;
-          text-align: center;
-          .duration {
-            font-size: 0.9rem;
-            color: $primary;
-            margin-bottom: 5px;
-          }
-
-          .line {
-            position: relative;
-            height: 2px;
-            background: $border;
-            margin: 10px 0;
-            .stops {
-              position: absolute;
-              top: -4px;
-              left: 0;
-              right: 0;
-              display: flex;
-              justify-content: space-evenly;
-              .stop {
-                width: 10px;
-                height: 10px;
-                background: #999;
-                border-radius: 50%;
-              }
-            }
-          }
-
-          .stop-info {
-            font-size: 0.8rem;
-            color: #999;
-            span.direct {
-              color: red;
-            }
-          }
-        }
-      }
-    }
-
-    .baggage {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      .bag-item {
-        @extend %flex-c;
-        color: #999;
-        font-size: 0.9rem;
-        i {
-          margin-right: 5px;
-        }
-        &.included {
-          color: var(--p-primary-color);
-          font-weight: 500;
-        }
-      }
-    }
-
-    .price-box {
-      text-align: right;
-      .price {
-        margin-bottom: 10px;
-        .amount {
-          font-size: 1.3rem;
-          font-weight: bold;
-          color: $primary;
-        }
-        .detail {
-          font-size: 0.8rem;
-          color: #999;
-        }
-      }
-    }
-  }
-}
-
 .loading {
   display: flex;
   flex-direction: column;
@@ -374,6 +165,31 @@ $border: #ddd;
   .msg {
     margin-top: 20px;
     color: $primary;
+  }
+}
+
+.loading-cities {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 0;
+  margin: 20px 0;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  
+  .msg {
+    margin-top: 15px;
+    color: $primary;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+  
+  .p-progressspinner {
+    .p-progressspinner-circle {
+      stroke: $primary;
+    }
   }
 }
 
@@ -400,6 +216,7 @@ $border: #ddd;
     margin: 0;
   }
 }
+
 @media (max-width: 767px) {
   .travel-type {
     display: flex;
@@ -408,7 +225,7 @@ $border: #ddd;
   .flt-details {
     .row {
       .input {
-        margin-left: 00px;
+        margin-left: 0px;
       }
       &:first-child {
         display: block;
@@ -508,6 +325,251 @@ $border: #ddd;
           margin-left: 22%;
         }
       }
+    }
+  }
+}
+
+.flight-results {
+  margin-top: 2rem;
+  
+  h3 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+  }
+}
+
+.sort-controls {
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  
+  label {
+    font-weight: 600;
+    color: #555;
+  }
+  
+  p-dropdown {
+    min-width: 200px;
+  }
+  
+  .loading-details {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #666;
+    font-size: 0.9rem;
+    
+    .pi-spinner {
+      color: #007bff;
+    }
+  }
+}
+
+.flight-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.no-results {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}
+
+.error-message {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  color: #c33;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-top: 1rem;
+  
+  p {
+    margin: 0;
+  }
+}
+
+.error-message-panel {
+  margin-bottom: 1rem;
+  
+  .msg {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    
+    i {
+      color: #dc3545;
+      font-size: 1.2rem;
+    }
+    
+    h3 {
+      margin: 0;
+      color: #dc3545;
+      font-size: 1rem;
+    }
+  }
+}
+
+.warning-message-panel {
+  margin-bottom: 1rem;
+  
+  .msg {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    
+    i {
+      color: #ffc107;
+      font-size: 1.2rem;
+    }
+    
+    h3 {
+      margin: 0;
+      color: #856404;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      
+      .amadeus-info-icon {
+        color: #6c757d;
+        font-size: 0.9rem;
+        cursor: help;
+        transition: color 0.2s ease;
+        
+        &:hover {
+          color: #495057;
+        }
+      }
+    }
+    
+    .warnings-container {
+      margin-top: 0.5rem;
+      
+      .warning-item {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 4px;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+        
+        .warning-header {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 0.5rem;
+          
+          .warning-title {
+            font-weight: 600;
+            color: #856404;
+            font-size: 0.9rem;
+          }
+          
+          .warning-status {
+            color: #6c757d;
+            font-size: 0.8rem;
+            background-color: #e9ecef;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+          }
+        }
+        
+        .warning-detail {
+          color: #856404;
+          font-size: 0.9rem;
+          margin-bottom: 0.25rem;
+        }
+        
+        .warning-code {
+          color: #6c757d;
+          font-size: 0.8rem;
+          font-family: monospace;
+        }
+      }
+    }
+  }
+}
+
+.meta-info-panel {
+  margin-bottom: 1rem;
+  
+  .msg {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    
+    i {
+      color: #17a2b8;
+      font-size: 1.2rem;
+    }
+    
+    h3 {
+      margin: 0;
+      color: #0c5460;
+      font-size: 1rem;
+    }
+    
+    .meta-container {
+      margin-top: 0.5rem;
+      
+      .meta-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        background-color: #d1ecf1;
+        border: 1px solid #bee5eb;
+        border-radius: 4px;
+        margin-bottom: 0.25rem;
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+        
+        .meta-label {
+          color: #0c5460;
+          font-size: 0.9rem;
+          font-weight: 500;
+        }
+        
+        .meta-value {
+          color: #0c5460;
+          font-size: 0.9rem;
+          font-weight: 600;
+          background-color: #fff;
+          padding: 0.2rem 0.5rem;
+          border-radius: 3px;
+          border: 1px solid #bee5eb;
+        }
+      }
+    }
+  }
+}
+
+.no-search {
+  .msg {
+    text-align: center;
+  }
+}
+
+// Estilos para el botón de vuelo seleccionado
+::ng-deep {
+  .selected-flight-button {
+    background-color: var(--p-primary-color) !important;
+    color: white !important;
+    border-color: var(--p-primary-color) !important;
+    
+    &:hover {
+      background-color: var(--p-primary-color) !important;
+      opacity: 0.9;
     }
   }
 }

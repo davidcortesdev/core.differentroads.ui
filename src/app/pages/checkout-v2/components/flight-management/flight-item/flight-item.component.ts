@@ -1,8 +1,12 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import {
   IFlightPackDTO,
   IFlightDetailDTO,
 } from '../../../services/flightsNet.service';
+import { FlightSearchService, IFlightDetailDTO as IFlightSearchFlightDetailDTO } from '../../../../../core/services/flight-search.service';
+import { FlightsNetService } from '../../../services/flightsNet.service';
 
 @Component({
   selector: 'app-flight-item',
@@ -10,13 +14,28 @@ import {
   templateUrl: './flight-item.component.html',
   styleUrl: './flight-item.component.scss',
 })
-export class FlightItemComponent implements OnInit {
+export class FlightItemComponent implements OnInit, OnDestroy {
   @Input() flightPack: IFlightPackDTO | null = null;
   @Input() selectedFlight: IFlightPackDTO | null = null;
   @Input() flightDetails: Map<number, IFlightDetailDTO> = new Map();
+  /**
+   * Controla qué servicio usar en el componente flight-stops:
+   * - false (default): Usa FlightsNetService (comportamiento actual)
+   * - true: Usa FlightSearchService (nuevo servicio)
+   */
+  @Input() useNewService: boolean = false;
   @Output() flightSelected = new EventEmitter<IFlightPackDTO>();
 
   FLIGHT_TYPE_SALIDA = 4;
+  
+  // Propiedades privadas para manejo interno
+  private internalFlightDetails: Map<number, IFlightDetailDTO | IFlightSearchFlightDetailDTO> = new Map();
+  private readonly destroy$ = new Subject<void>();
+
+  constructor(
+    private flightSearchService: FlightSearchService,
+    private flightsNetService: FlightsNetService
+  ) {}
 
   ngOnInit(): void {
     console.log('=== VUELOS RECIBIDOS ===');
@@ -44,6 +63,14 @@ export class FlightItemComponent implements OnInit {
           horaLlegada: flight.arrivalTime,
         });
       });
+
+      // Si useNewService es true, cargar detalles internamente
+      if (this.useNewService) {
+        //console.log('🔄 FlightItem: Iniciando carga de detalles y aerolíneas con nuevo servicio');
+        this.loadFlightDetailsInternally();
+      } else {
+        //console.log('ℹ️ FlightItem: Usando servicio actual, no se cargan detalles internamente');
+      }
     } else {
       console.log('No hay vuelos disponibles');
     }
@@ -51,10 +78,177 @@ export class FlightItemComponent implements OnInit {
     console.log('========================');
   }
 
+  ngOnDestroy(): void {
+    this.internalFlightDetails.clear();
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  /**
+   * Verifica si este vuelo está seleccionado, considerando que selectedFlight
+   * puede venir de diferentes fuentes (default-flights o specific-search)
+   */
+  isFlightSelected(): boolean {
+    if (!this.selectedFlight || !this.flightPack) {
+      return false;
+    }
+
+    const isSelected = this.selectedFlight.id === this.flightPack.id;
+    
+    // Logging para debugging
+    if (isSelected) {
+      //console.log(`✅ FlightItem: Vuelo ${this.flightPack.id} está seleccionado`);
+      //console.log(`📊 selectedFlight ID: ${this.selectedFlight.id}, flightPack ID: ${this.flightPack.id}`);
+    }
+
+    return isSelected;
+  }
+
+  /**
+   * Obtiene el texto del botón de selección
+   */
+  getSelectionButtonText(): string {
+    return this.isFlightSelected() ? 'Seleccionado' : 'Seleccionar';
+  }
+
+  /**
+   * Obtiene la clase CSS del botón de selección
+   */
+  getSelectionButtonClass(): string {
+    return this.isFlightSelected() ? 'selected-flight-button' : '';
+  }
+
+  /**
+   * Obtiene información del estado de selección para debugging
+   */
+  getSelectionDebugInfo(): string {
+    if (!this.selectedFlight) {
+      return 'No hay vuelo seleccionado';
+    }
+    
+    if (!this.flightPack) {
+      return 'No hay paquete de vuelo';
+    }
+    
+    return `Selected: ${this.selectedFlight.id} (${this.selectedFlight.name || 'Sin nombre'}), Current: ${this.flightPack.id} (${this.flightPack.name || 'Sin nombre'})`;
+  }
+
+  /**
+   * Carga los detalles de vuelos internamente cuando useNewService es true
+   */
+  private loadFlightDetailsInternally(): void {
+    if (!this.flightPack || !this.flightPack.flights) return;
+
+    //console.log(`🔄 FlightItem: Cargando detalles internamente para paquete ${this.flightPack.id}`);
+
+    this.flightPack.flights.forEach(flight => {
+      this.flightSearchService.getFlightDetails(this.flightPack!.id, flight.id.toString())
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (detail) => {
+            // Mapear los datos del nuevo servicio al formato esperado por FlightsNetService
+            const mappedDetail: IFlightDetailDTO = {
+              numScales: detail.numScales,
+              duration: detail.duration,
+              airlines: detail.airlines || [],
+              segments: detail.segments?.map(segment => ({
+                id: segment.id,
+                tkId: segment.tkId || '',
+                flightId: segment.flightId,
+                tkServiceId: segment.tkServiceId || '',
+                tkJourneyId: segment.tkJourneyId || '',
+                segmentRank: segment.segmentRank,
+                departureCity: segment.departureCity || '',
+                departureTime: segment.departureTime || '',
+                departureIata: segment.departureIata || '',
+                arrivalCity: segment.arrivalCity || '',
+                arrivalTime: segment.arrivalTime || '',
+                arrivalIata: segment.arrivalIata || '',
+                flightNumber: segment.flightNumber || '',
+                goSegment: segment.goSegment,
+                returnSegment: segment.returnSegment,
+                duringSegment: segment.duringSegment,
+                type: segment.type || '',
+                numNights: segment.numNights,
+                differential: segment.differential,
+                tkProviderId: segment.tkProviderId,
+                departureDate: segment.departureDate || '',
+                arrivalDate: segment.arrivalDate || ''
+              })) || []
+            };
+            
+            this.internalFlightDetails.set(flight.id, mappedDetail);
+            //console.log(`✅ FlightItem: Detalles cargados para vuelo ${flight.id}:`, mappedDetail);
+
+            // Precargar nombres de aerolíneas en el servicio (la cache se maneja automáticamente)
+            if (detail.airlines && detail.airlines.length > 0) {
+              this.preloadAirlineNames(detail.airlines);
+            }
+          },
+          error: (error) => {
+            console.warn(`⚠️ FlightItem: Error al cargar detalles para vuelo ${flight.id}:`, error);
+          }
+        });
+    });
+  }
+
+  /**
+   * Precarga los nombres de las aerolíneas en el servicio (la cache se maneja automáticamente)
+   */
+  private preloadAirlineNames(airlineCodes: string[]): void {
+    // Usar el método optimizado del servicio para precargar múltiples aerolíneas
+    this.flightsNetService.preloadAirlines(airlineCodes)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (airlineNames) => {
+          //console.log(`✅ FlightItem: ${airlineNames.length} aerolíneas precargadas exitosamente`);
+        },
+        error: (error) => {
+          console.warn(`⚠️ FlightItem: Error al precargar aerolíneas:`, error);
+        }
+      });
+  }
+
+  /**
+   * Obtiene los detalles de vuelo, priorizando los internos si useNewService es true
+   */
+  getFlightDetails(flightId: number): IFlightDetailDTO | IFlightSearchFlightDetailDTO | undefined {
+    if (this.useNewService) {
+      return this.internalFlightDetails.get(flightId);
+    } else {
+      return this.flightDetails.get(flightId);
+    }
+  }
+
+  /**
+   * Obtiene el nombre de una aerolínea por su código IATA
+   * @param airlineCode Código IATA de la aerolínea
+   * @returns Nombre de la aerolínea o el código si no se encuentra
+   */
+  getAirlineName(airlineCode: string): string {
+    if (this.useNewService) {
+      return this.flightsNetService.getAirlineNameFromCache(airlineCode);
+    } else {
+      // Para el servicio actual, devolver el código tal como está
+      return airlineCode;
+    }
+  }
+
   getAirlinesText(flightId: number): string {
-    const detail = this.flightDetails.get(flightId);
-    if (!detail || !detail.airlines) return '';
-    return detail.airlines.join(', ');
+    if (this.useNewService) {
+      // Para el nuevo servicio, usar los nombres de aerolíneas desde la cache del servicio
+      const detail = this.getFlightDetails(flightId);
+      if (!detail || !detail.airlines) return '';
+      
+      return detail.airlines.map(code => {
+        return this.flightsNetService.getAirlineNameFromCache(code);
+      }).join(', ');
+    } else {
+      // Para el servicio actual, usar el comportamiento original
+      const detail = this.getFlightDetails(flightId);
+      if (!detail || !detail.airlines) return '';
+      return detail.airlines.join(', ');
+    }
   }
 
   formatTime(time: any): string {

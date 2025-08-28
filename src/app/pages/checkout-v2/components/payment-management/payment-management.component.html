@@ -13,7 +13,7 @@
 
 <!-- Main Content -->
 <div class="container" *ngIf="!isLoading">
-  
+  {{ hasSpecificSearchFlights}} -- {{specificSearchFlightsCost}}
   <!-- Payment Type Selection -->
   <section class="payment-type-section">
     <div class="header-container" (click)="toggleDropdown('main')">
@@ -56,14 +56,18 @@
             (ngModelChange)="selectPaymentType('deposit')">
           </p-radioButton>
           <span class="option-text">
-            Paga ahora {{ depositAmount | currencyFormat }} y el resto antes del {{ paymentDeadline }}
+            Paga ahora {{ depositTotalAmount | currencyFormat }} y el resto antes del {{ paymentDeadline }}
+            <span *ngIf="hasAmadeusFlight && hasSpecificSearchFlights" class="specific-search-info">
+              (incluye {{ depositAmount | currencyFormat }} depósito + {{ specificSearchFlightsCost | currencyFormat }} vuelos)
+            </span>
           </span>
-          <span class="option-price">{{ depositAmount | currencyFormat }}</span>
+          <span class="option-price">{{ depositTotalAmount | currencyFormat }}</span>
         </div>
       </p-panel>
 
       <!-- Installments Payment Panel -->
       <p-panel 
+        *ngIf="shouldShowInstallmentsOption"
         styleClass="payment-panel" 
         [ngClass]="{ 'selected': paymentType === 'installments' }" 
         (click)="selectPaymentType('installments')">
@@ -111,7 +115,7 @@
       </div>
       
       <!-- Bank Transfer Method -->
-      <div class="payment-method-container">
+      <div class="payment-method-container" *ngIf="shouldShowTransferOption">
         <p-panel 
           styleClass="payment-panel payment-method-panel" 
           [ngClass]="{ selected: paymentMethod === 'transfer' }" 
@@ -124,6 +128,20 @@
               (ngModelChange)="selectPaymentMethod('transfer')">
             </p-radioButton>
             <span class="option-text">Transferencia bancaria</span>
+          </div>
+        </p-panel>
+      </div>
+      
+      <!-- Mensaje informativo para vuelos Amadeus -->
+      <div class="payment-method-container" *ngIf="hasAmadeusFlight">
+        <p-panel styleClass="payment-panel payment-method-panel" >
+          <div class="payment-option">
+            <i class="pi pi-info-circle"></i>
+            <span style="font-weight: 300;padding-left: 10px;">
+              Para vuelos de búsqueda directa:<br>
+              • Pago completo: Tarjeta bancaria o Scalapay<br>
+              • Pago parcial: Tarjeta bancaria (depósito + vuelos de specific-search)
+            </span>
           </div>
         </p-panel>
       </div>
@@ -241,4 +259,65 @@
       (click)="submitPayment()">
     </p-button>
   </footer>
+
+  <!-- Dialog para cambio de precio de vuelo Amadeus -->
+  <p-dialog 
+    [(visible)]="showPriceChangeDialog" 
+    header="Precio del vuelo cambiado" 
+    [modal]="true" 
+    [closable]="false"
+    styleClass="price-change-dialog">
+    
+    <div class="price-change-content">
+      <div class="price-change-icon">
+        <i class="pi pi-exclamation-triangle"></i>
+      </div>
+      
+      <h3>El precio del vuelo ha cambiado</h3>
+      
+      <div class="price-details" *ngIf="priceValidation">
+        <div class="price-row">
+          <span class="price-label">Precio anterior:</span>
+          <span class="price-value previous-price">{{ priceValidation.previousPrice | currency:'EUR':'symbol':'1.2-2' }}</span>
+        </div>
+        
+        <div class="price-row">
+          <span class="price-label">Precio actual:</span>
+          <span class="price-value current-price">{{ priceValidation.currentPrice | currency:'EUR':'symbol':'1.2-2' }}</span>
+        </div>
+        
+        <div class="price-row">
+          <span class="price-label">Diferencia:</span>
+          <span class="price-value difference-price" [ngClass]="priceValidation.isPriceIncrease ? 'increase' : 'decrease'">
+            {{ priceValidation.isPriceIncrease ? '+' : '' }}{{ priceValidation.priceDifference | currency:'EUR':'symbol':'1.2-2' }}
+          </span>
+        </div>
+        
+
+      </div>
+      
+      <p class="price-change-message">
+        El precio del vuelo seleccionado ha cambiado desde su búsqueda. <br>
+        ¿Desea continuar con el nuevo precio o volver a seleccionar un vuelo?
+      </p>
+    </div>
+    
+    <ng-template #footer>
+      <div class="dialog-footer">
+        <p-button 
+          label="Volver a seleccionar vuelo" 
+          severity="secondary" 
+          icon="pi pi-arrow-left" 
+          (click)="handlePriceChangeDecision(false)">
+        </p-button>
+        
+        <p-button 
+          label="Continuar con nuevo precio" 
+          severity="success" 
+          icon="pi pi-check" 
+          (click)="handlePriceChangeDecision(true)">
+        </p-button>
+      </div>
+    </ng-template>
+  </p-dialog>
 </div>

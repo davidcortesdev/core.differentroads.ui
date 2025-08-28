@@ -3,20 +3,20 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { 
-  IUserResponse, 
-  UserCreate, 
-  UserUpdate, 
-  UserFilter 
+import {
+  IUserResponse,
+  UserCreate,
+  UserUpdate,
+  UserFilter,
 } from '../models/users/user.model';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class UsersNetService {
   private apiUrl = environment.usersApiUrl;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   /**
    * Obtiene usuarios basados en criterios de filtro
@@ -35,12 +35,13 @@ export class UsersNetService {
       });
     }
 
-    return this.http.get<IUserResponse[]>(`${this.apiUrl}/User`, { params }).pipe(
-      catchError(error => {
-        console.error('❌ Error fetching users:', error);
-        return of([]);
-      })
-    );
+    return this.http
+      .get<IUserResponse[]>(`${this.apiUrl}/User`, { params })
+      .pipe(
+        catchError((error) => {
+          return of([]);
+        })
+      );
   }
 
   /**
@@ -51,8 +52,7 @@ export class UsersNetService {
    */
   getUserById(id: number): Observable<IUserResponse> {
     return this.http.get<IUserResponse>(`${this.apiUrl}/User/${id}`).pipe(
-      catchError(error => {
-        console.error(`❌ Error getting user by ID ${id}:`, error);
+      catchError((error) => {
         throw error;
       })
     );
@@ -65,16 +65,11 @@ export class UsersNetService {
    * @returns Usuario creado
    */
   createUser(user: UserCreate): Observable<IUserResponse> {
-    console.log('🚀 UsersNetService.createUser() ejecutándose...');
-    console.log('📝 URL de la petición:', `${this.apiUrl}/User`);
-    console.log('📝 Datos del usuario:', user);
-    
     return this.http.post<IUserResponse>(`${this.apiUrl}/User`, user).pipe(
-      tap(response => {
-        console.log('✅ UsersNetService.createUser() - Respuesta exitosa:', response);
+      tap((response) => {
+        // Response handling if needed
       }),
-      catchError(error => {
-        console.error('❌ UsersNetService.createUser() - Error:', error);
+      catchError((error) => {
         throw error;
       })
     );
@@ -88,16 +83,11 @@ export class UsersNetService {
    * @returns true si se actualizó correctamente
    */
   updateUser(id: number, user: UserUpdate): Observable<boolean> {
-    console.log('🚀 UsersNetService.updateUser() ejecutándose...');
-    console.log('📝 URL de la petición:', `${this.apiUrl}/User/${id}`);
-    console.log('📝 Datos de actualización:', user);
-    
     return this.http.put<boolean>(`${this.apiUrl}/User/${id}`, user).pipe(
-      tap(response => {
-        console.log('✅ UsersNetService.updateUser() - Respuesta exitosa:', response);
+      tap((response) => {
+        // Response handling if needed
       }),
-      catchError(error => {
-        console.error(`❌ UsersNetService.updateUser() - Error:`, error);
+      catchError((error) => {
         throw error;
       })
     );
@@ -111,8 +101,7 @@ export class UsersNetService {
    */
   deleteUser(id: number): Observable<boolean> {
     return this.http.delete<boolean>(`${this.apiUrl}/User/${id}`).pipe(
-      catchError(error => {
-        console.error(`❌ Error deleting user ${id}:`, error);
+      catchError((error) => {
         throw error;
       })
     );
@@ -124,15 +113,11 @@ export class UsersNetService {
    * @returns Lista de usuarios con ese email
    */
   getUsersByEmail(email: string): Observable<IUserResponse[]> {
-    console.log('🔍 UsersNetService.getUsersByEmail() ejecutándose...');
-    console.log('📝 Email a buscar:', email);
-    
     return this.getUsers({ Email: email }).pipe(
-      tap(users => {
-        console.log('✅ UsersNetService.getUsersByEmail() - Usuarios encontrados:', users);
+      tap((users) => {
+        // Response handling if needed
       }),
-      catchError(error => {
-        console.error('❌ UsersNetService.getUsersByEmail() - Error:', error);
+      catchError((error) => {
         throw error;
       })
     );
@@ -153,15 +138,11 @@ export class UsersNetService {
    * @returns Lista de usuarios con ese Cognito ID
    */
   getUsersByCognitoId(cognitoId: string): Observable<IUserResponse[]> {
-    console.log('🔍 UsersNetService.getUsersByCognitoId() ejecutándose...');
-    console.log('📝 Cognito ID a buscar:', cognitoId);
-    
     return this.getUsers({ CognitoId: cognitoId }).pipe(
-      tap(users => {
-        console.log('✅ UsersNetService.getUsersByCognitoId() - Usuarios encontrados:', users);
+      tap((users) => {
+        // Response handling if needed
       }),
-      catchError(error => {
-        console.error('❌ UsersNetService.getUsersByCognitoId() - Error:', error);
+      catchError((error) => {
         throw error;
       })
     );
@@ -181,7 +162,9 @@ export class UsersNetService {
    * @param hasMiddleAccess true para usuarios con acceso middle, false para los que no
    * @returns Lista de usuarios con el acceso middle especificado
    */
-  getUsersByMiddleAccess(hasMiddleAccess: boolean): Observable<IUserResponse[]> {
+  getUsersByMiddleAccess(
+    hasMiddleAccess: boolean
+  ): Observable<IUserResponse[]> {
     return this.getUsers({ HasMiddleAccess: hasMiddleAccess });
   }
 
@@ -192,4 +175,4 @@ export class UsersNetService {
   getAllUsers(): Observable<IUserResponse[]> {
     return this.getUsers();
   }
-} 
+}

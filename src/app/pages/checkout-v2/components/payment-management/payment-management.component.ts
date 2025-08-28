@@ -10,6 +10,7 @@ import { ReservationStatusService } from '../../../../core/services/reservation/
 import { ReservationService } from '../../../../core/services/reservation/reservation.service';
 import { MessageService } from 'primeng/api';
 import { CurrencyService } from '../../../../core/services/currency.service';
+import { FlightSearchService, IPriceChangeInfo } from '../../../../core/services/flight-search.service';
 
 // Interfaces y tipos
 export type PaymentType = 'complete' | 'deposit' | 'installments';
@@ -39,11 +40,21 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
   // Outputs
   @Output() paymentCompleted = new EventEmitter<PaymentOption>();
   @Output() backRequested = new EventEmitter<void>();
+  @Output() navigateToStep = new EventEmitter<number>();
 
   // Payment IDs (se cargarán desde la API)
   transferMethodId: number = 0;
   redsysMethodId: number = 0;
   pendingStatusId: number = 0;
+
+  // Amadeus flight validation
+  hasAmadeusFlight: boolean = false;
+  priceValidation: IPriceChangeInfo | null = null;
+  showPriceChangeDialog: boolean = false;
+
+  // Specific search flights validation
+  hasSpecificSearchFlights: boolean = false;
+  specificSearchFlightsCost: number = 0;
 
   // State management
   readonly dropdownStates = {
@@ -69,12 +80,14 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
     private readonly reservationStatusService: ReservationStatusService,
     private readonly reservationService: ReservationService,
     private readonly messageService: MessageService,
-    private readonly currencyService: CurrencyService
+    private readonly currencyService: CurrencyService,
+    private readonly flightSearchService: FlightSearchService
   ) { }
 
   ngOnInit(): void {
     this.initializeScalapayScript();
     this.loadPaymentIds();
+    this.checkAmadeusFlightStatus();
   }
 
   ngOnChanges(): void {
@@ -83,6 +96,135 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
       this.paymentState.type = null;
       this.updateDropdownVisibility();
     }
+  }
+
+  /**
+   * Verifica si hay un vuelo Amadeus seleccionado y valida el precio
+   */
+  private checkAmadeusFlightStatus(): void {
+    if (!this.reservationId) return;
+
+    this.flightSearchService.getSelectionStatus(this.reservationId).subscribe({
+      next: (hasSelection: boolean) => {
+        this.hasAmadeusFlight = hasSelection;
+        
+        if (hasSelection) {
+          console.log('✅ Vuelo Amadeus detectado, validando precio...');
+          
+          // Verificar si hay vuelos de specific-search para depósito
+          this.checkSpecificSearchFlights();
+          
+          // Limpiar selecciones no permitidas para vuelos de Amadeus
+          this.cleanupInvalidSelectionsForAmadeus();
+          
+          this.validateAmadeusPrice();
+        } else {
+          console.log('ℹ️ No hay vuelo Amadeus seleccionado');
+          this.hasSpecificSearchFlights = false;
+          this.specificSearchFlightsCost = 0;
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error al verificar estado de vuelo Amadeus:', error);
+        this.hasAmadeusFlight = false;
+        this.hasSpecificSearchFlights = false;
+        this.specificSearchFlightsCost = 0;
+      }
+    });
+  }
+
+  /**
+   * Verifica si hay vuelos de specific-search y calcula su coste
+   */
+  private checkSpecificSearchFlights(): void {
+    if (!this.reservationId) return;
+
+    // ✅ NUEVO: Solo verificar si no se han establecido ya los valores
+    if (this.hasSpecificSearchFlights && this.specificSearchFlightsCost > 0) {
+      console.log('✅ Los valores de specific-search ya están establecidos:', {
+        hasSpecificSearchFlights: this.hasSpecificSearchFlights,
+        specificSearchFlightsCost: this.specificSearchFlightsCost
+      });
+      return;
+    }
+
+    // TODO: Implementar llamada al servicio para obtener vuelos de specific-search
+    // Por ahora, los valores se establecen en validateAmadeusPrice
+    console.log('🔍 Verificando vuelos de specific-search...');
+    console.log('📊 Estado actual:', {
+      hasSpecificSearchFlights: this.hasSpecificSearchFlights,
+      specificSearchFlightsCost: this.specificSearchFlightsCost
+    });
+  }
+
+  /**
+   * Limpia las selecciones de pago no permitidas para vuelos de Amadeus
+   */
+  private cleanupInvalidSelectionsForAmadeus(): void {
+    // Si estaba seleccionado transferencia, limpiarlo (nunca permitida para Amadeus)
+    if (this.paymentState.method === 'transfer') {
+      console.log('🔄 Limpiando selección de transferencia (no permitido para Amadeus)');
+      this.paymentState.method = null;
+    }
+    
+    // Si estaba seleccionado depósito, verificar si se permite
+    if (this.paymentState.type === 'deposit' && this.hasAmadeusFlight) {
+      // Solo permitir depósito si hay vuelos de specific-search
+      if (!this.hasSpecificSearchFlights) {
+        console.log('🔄 Limpiando selección de depósito (no permitido para Amadeus sin vuelos de specific-search)');
+        this.paymentState.type = null;
+      }
+    }
+    
+    // Actualizar visibilidad de dropdowns
+    this.updateDropdownVisibility();
+  }
+
+  /**
+   * Valida si ha cambiado el precio del vuelo Amadeus
+   */
+  private validateAmadeusPrice(): void {
+    if (!this.reservationId) return;
+
+    this.flightSearchService.validatePriceChange(this.reservationId).subscribe({
+      next: (validation: IPriceChangeInfo | null) => {
+        if (validation) {
+          this.priceValidation = validation;
+          
+          // ✅ NUEVO: Rellenar specificSearchFlightsCost con el precio actual del vuelo
+          this.specificSearchFlightsCost = validation.currentPrice;
+          this.hasSpecificSearchFlights = true;
+          
+          console.log('✅ Precio del vuelo obtenido:', validation.currentPrice);
+          console.log('📊 Estado actualizado:', {
+            hasSpecificSearchFlights: this.hasSpecificSearchFlights,
+            specificSearchFlightsCost: this.specificSearchFlightsCost
+          });
+          
+          if (validation.hasChanged) {
+            console.log('⚠️ Cambio de precio detectado:', validation);
+            this.showPriceChangeDialog = true;
+            
+            // Mostrar mensaje informativo
+            this.messageService.add({
+              severity: 'warn',
+              summary: 'Precio cambiado',
+              detail: `El precio del vuelo ha cambiado. Diferencia: ${validation.priceDifference.toFixed(2)} ${validation.currency || 'EUR'}`,
+              life: 5000,
+            });
+          } else {
+            console.log('✅ Precio del vuelo sin cambios');
+          }
+        } else {
+          console.log('ℹ️ No se pudo validar el precio del vuelo');
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error al validar precio del vuelo:', error);
+        // En caso de error, permitir continuar
+        this.priceValidation = null;
+      }
+    });
   }
 
   private loadPaymentIds(): void {
@@ -165,7 +307,42 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
     const deadlineDate = new Date(departureDate);
     deadlineDate.setDate(departureDate.getDate() - daysBeforeDeparture);
     
-    return today < deadlineDate;
+    const isWithinDeadline = today < deadlineDate;
+    
+    // Para vuelos de Amadeus, solo permitir depósito si hay vuelos de specific-search
+    if (this.hasAmadeusFlight) {
+      return this.hasSpecificSearchFlights && isWithinDeadline;
+    }
+    
+    return isWithinDeadline;
+  }
+
+  /**
+   * Calcula el monto total del depósito
+   * Para vuelos de Amadeus con specific-search: depósito + coste de vuelos
+   * Para otros casos: solo el depósito
+   */
+  get depositTotalAmount(): number {
+    if (this.hasAmadeusFlight && this.hasSpecificSearchFlights) {
+      return this.depositAmount + this.specificSearchFlightsCost;
+    }
+    return this.depositAmount;
+  }
+
+  /**
+   * Controla si se debe mostrar la opción de transferencia bancaria
+   * Para vuelos de Amadeus, solo se permite tarjeta bancaria
+   */
+  get shouldShowTransferOption(): boolean {
+    return !this.hasAmadeusFlight;
+  }
+
+  /**
+   * Controla si se debe mostrar la opción de pagos a plazos (Scalapay)
+   * Para vuelos de Amadeus: Siempre se permite Scalapay
+   */
+  get shouldShowInstallmentsOption(): boolean {
+    return true; // Siempre mostrar Scalapay para todos los tipos de vuelos
   }
 
   // Payment type management
@@ -204,6 +381,35 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
   // Actions
   goBack(): void {
     this.backRequested.emit();
+  }
+
+  /**
+   * Maneja la decisión del usuario sobre el cambio de precio
+   * @param continueWithNewPrice true para continuar con el nuevo precio, false para volver
+   */
+  handlePriceChangeDecision(continueWithNewPrice: boolean): void {
+    this.showPriceChangeDialog = false;
+    
+    if (continueWithNewPrice) {
+      console.log('✅ Usuario decidió continuar con el nuevo precio');
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Continuando con nuevo precio',
+        detail: 'Procediendo con el pago con el precio actualizado del vuelo',
+        life: 3000,
+      });
+    } else {
+      console.log('🔄 Usuario decidió volver a selección de vuelos (step 1)');
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Volviendo a selección de vuelos',
+        detail: 'Será redirigido al paso de selección de vuelos',
+        life: 3000,
+      });
+      
+      // Emitir evento para navegar al step 1 (selección de vuelos)
+      this.navigateToStep.emit(1);
+    }
   }
 
   async submitPayment(): Promise<void> {
@@ -348,7 +554,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
       await this.processInstallmentPayment();
     } else if (this.paymentMethod === 'creditCard') {
       if (this.paymentState.type === 'deposit') {
-        await this.processCreditCardPayment(200);
+        await this.processCreditCardPayment(this.depositAmount);
       } else {
         await this.processCreditCardPayment(this.totalPrice);
       }

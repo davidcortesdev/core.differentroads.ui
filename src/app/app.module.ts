@@ -243,6 +243,7 @@ import { SummaryInfoComponent } from './pages/checkout-v2/components/new-reserva
 import { ImageCropperComponent } from './shared/components/image-cropper/image-cropper.component';
 import { ReviewSurveyComponent } from './pages/review-survey/review-survey.component';
 import { ImageUploadModalComponent } from './pages/review-survey/image-upload-modal/image-upload-modal.component';
+import { TourInfoAccordionV2Component } from './pages/tour-v2/components/tour-info-accordion-v2/tour-info-accordion-v2.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -392,6 +393,7 @@ registerLocaleData(localeEs);
     ImageCropperComponent,
     ReviewSurveyComponent,
     ImageUploadModalComponent,
+    TourInfoAccordionV2Component,
   ],
   imports: [
     // Angular Modules

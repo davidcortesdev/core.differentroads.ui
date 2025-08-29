@@ -41,6 +41,9 @@ export class FlightItemComponent implements OnInit, OnDestroy {
     console.log('=== VUELOS RECIBIDOS ===');
 
     if (this.flightPack && this.flightPack.flights) {
+      // ✅ NUEVO: Ordenar flights por flightTypeId ascendente
+      this.flightPack.flights.sort((a, b) => a.flightTypeId - b.flightTypeId);
+      
       console.log('Paquete de vuelos:', {
         id: this.flightPack.id,
         code: this.flightPack.code,

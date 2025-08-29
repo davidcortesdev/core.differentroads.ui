@@ -125,8 +125,11 @@ export class DepartureService {
    * @param id ID de la departure.
    * @returns La departure encontrada.
    */
-  getById(id: number): Observable<IDepartureResponse> {
-    return this.http.get<IDepartureResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, previewMode: boolean = false): Observable<IDepartureResponse> {
+    let params = new HttpParams()
+      .set('FilterByVisible', !previewMode);
+
+    return this.http.get<IDepartureResponse>(`${this.API_URL}/${id}`, { params });
   }
 
   /**
@@ -155,11 +158,12 @@ export class DepartureService {
    * @param itineraryId ID del itinerario.
    * @returns Lista de departures del itinerario.
    */
-  getByItinerary(itineraryId: number): Observable<IDepartureResponse[]> {
-    const params = new HttpParams()
+  getByItinerary(itineraryId: number, previewMode: boolean = false): Observable<IDepartureResponse[]> {
+    let params = new HttpParams()
       .set('ItineraryId', itineraryId.toString())
-      .set('useExactMatchForStrings', 'false');
-    
+      .set('useExactMatchForStrings', 'false')
+      .set('FilterByVisible', !previewMode);
+
     return this.http.get<IDepartureResponse[]>(this.API_URL, { params });
   }
 

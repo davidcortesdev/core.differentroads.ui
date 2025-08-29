@@ -271,7 +271,7 @@ export class SelectorItineraryComponent
    * Cargar departures para un itinerario específico
    */
   private loadDeparturesForItinerary(itinerary: IItineraryResponse) {
-    return this.departureService.getByItinerary(itinerary.id).pipe(
+    return this.departureService.getByItinerary(itinerary.id, this.preview).pipe(
       map((departures) => {
         const departuresData: DepartureData[] = departures.map((departure) => ({
           departure,

@@ -24,10 +24,10 @@ export class TourAgeGroupsService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de IDs de grupos de edad del tour.
    */
-  getAll(tourId: number, filters?: TourAgeGroupFilters, tourVisibility?: boolean): Observable<number[]> {
+  getAll(tourId: number, filters?: TourAgeGroupFilters, previewMode?: boolean): Observable<number[]> {
     let params = new HttpParams();
-    if (tourVisibility !== undefined) {
-      params = params.set('tourVisibility', tourVisibility.toString());
+    if (previewMode !== undefined) {
+      params = params.set('tourVisibility', !previewMode);
     }
 
     // Add filter parameters if provided
@@ -102,9 +102,9 @@ export class TourAgeGroupsService {
    * @param tourId ID del tour.
    * @returns Número total de grupos de edad asignados.
    */
-  getCount(tourId: number): Observable<number> {
+  getCount(tourId: number, previewMode?: boolean): Observable<number> {
     return new Observable(observer => {
-      this.getAll(tourId).subscribe({
+      this.getAll(tourId, undefined, previewMode).subscribe({
         next: (ageGroupIds) => {
           observer.next(ageGroupIds.length);
           observer.complete();
@@ -237,9 +237,9 @@ export class TourAgeGroupsService {
    * @param tourId ID del tour.
    * @returns True si tiene grupos de edad asignados, false si no.
    */
-  hasAgeGroups(tourId: number): Observable<boolean> {
+  hasAgeGroups(tourId: number, previewMode?: boolean): Observable<boolean> {
     return new Observable(observer => {
-      this.getCount(tourId).subscribe({
+      this.getCount(tourId, previewMode).subscribe({
         next: (count) => {
           observer.next(count > 0);
           observer.complete();

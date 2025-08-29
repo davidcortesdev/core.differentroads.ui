@@ -23,6 +23,7 @@ import {
 import {
   ItineraryService,
   IItineraryResponse,
+  ItineraryFilters,
 } from '../../../../core/services/itinerary/itinerary.service';
 import {
   TourDepartureCitiesService,
@@ -358,7 +359,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     if (!this.tourId) return;
 
     this.tourAgeGroupsService
-      .getAll(this.tourId, {}, !this.preview)
+      .getAll(this.tourId, {}, this.preview)
       .pipe(
         takeUntil(this.destroy$),
         switchMap((ageGroupIds: number[]) => {
@@ -535,7 +536,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     if (!this.tourId) return;
 
     this.tourAgeGroupsService
-      .getCount(this.tourId)
+      .getCount(this.tourId, this.preview)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (count) => {
@@ -547,7 +548,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       });
 
     this.tourAgeGroupsService
-      .hasAgeGroups(this.tourId)
+      .hasAgeGroups(this.tourId, this.preview)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (hasAgeGroups) => {
@@ -576,14 +577,21 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     this.loading = true;
     this.error = undefined;
 
-    const itineraryFilters = {
+    let itineraryFilters : ItineraryFilters 
+    if (!this.preview) {
+    itineraryFilters = {
       tourId: this.tourId,
       isVisibleOnWeb: true,
       isBookable: true,
     };
+  } else {
+    itineraryFilters = {
+      tourId: this.tourId,
+    };
+  }
 
     this.itineraryService
-      .getAll(itineraryFilters)
+      .getAll(itineraryFilters, this.preview)
       .pipe(
         takeUntil(this.destroy$),
         switchMap((itineraries) => {
@@ -594,9 +602,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           if (this.allItineraries.length === 0) {
             return of([]);
           }
-
-          const departureRequests = this.allItineraries.map((itinerary) =>
-            this.departureService.getByItinerary(itinerary.id).pipe(
+          const departureRequests = this.allItineraries.map((itinerary) =>     
+            this.departureService.getByItinerary(itinerary.id, this.preview).pipe(
               catchError((error) => {
                 console.error(
                   `Error loading departures for itinerary ${itinerary.id}:`,
@@ -635,7 +642,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     this.error = undefined;
 
     this.departureService
-      .getById(departureId)
+      .getById(departureId, this.preview)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (departure) => {

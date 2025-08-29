@@ -62,6 +62,7 @@ interface DepartureFromParent {
 })
 export class TourItineraryV2Component implements OnInit {
   @Input() tourId: number | undefined;
+  @Input() preview: boolean = false;
 
   // ✅ TIPADO FUERTE: Para recibir el departure seleccionado desde el componente padre
   @Input() selectedDepartureFromParent: DepartureFromParent | null = null;
@@ -99,7 +100,7 @@ export class TourItineraryV2Component implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    if (this.tourId) {
+    if (this.tourId && !this.preview) {
       this.loadMapData(this.tourId);
     } else {
       console.warn('⚠️ No se proporcionó tourId para el itinerario');

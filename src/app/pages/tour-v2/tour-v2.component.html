@@ -43,6 +43,7 @@
     <!-- Tour Itinerary Section - MODIFICADO PARA RECIBIR EVENTOS DE ACTIVIDAD -->
     <section class="tour-section tour-itinerary-section">
       <app-tour-itinerary-v2
+        [preview]="preview"
         [tourId]="tour.id"
         [selectedDepartureFromParent]="selectedDepartureData"
         (departureSelected)="onDepartureSelected($event)"

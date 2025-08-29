@@ -74,8 +74,12 @@ export class ItineraryService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de itinerarios.
    */
-  getAll(filter?: ItineraryFilters): Observable<IItineraryResponse[]> {
+  getAll(filter?: ItineraryFilters, filterByVisible?: boolean): Observable<IItineraryResponse[]> {
     let params = new HttpParams();
+
+    if (filterByVisible) {
+      params = params.set('filterByVisible', !filterByVisible);
+    }
 
     // Add filter parameters if provided
     if (filter) {

@@ -536,7 +536,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     if (!this.tourId) return;
 
     this.tourAgeGroupsService
-      .getCount(this.tourId)
+      .getCount(this.tourId, this.preview)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (count) => {
@@ -548,7 +548,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       });
 
     this.tourAgeGroupsService
-      .hasAgeGroups(this.tourId)
+      .hasAgeGroups(this.tourId, this.preview)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (hasAgeGroups) => {
@@ -646,7 +646,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (departure) => {
-          console.log('departureDetails', departure);
           this.departureDetails = departure;
           this.updateDepartureInfo();
           this.loading = false;

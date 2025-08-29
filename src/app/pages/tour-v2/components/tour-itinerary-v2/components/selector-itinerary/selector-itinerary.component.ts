@@ -314,10 +314,9 @@ export class SelectorItineraryComponent
   private createDateOptions(): void {
     this.dateOptions = [];
 
-    this.itinerariesWithDepartures.forEach((itineraryData) => {console.log('itinerary',itineraryData.itinerary);
+    this.itinerariesWithDepartures.forEach((itineraryData) => {
       itineraryData.departures.forEach((departureData) => {
-        
-        console.log('departure',departureData.departure);
+
         const option: DateOption = {
           label: this.formatDate(departureData.departure?.departureDate ?? ''), // Solo la fecha en el dropdown
           value: departureData.departure.id,

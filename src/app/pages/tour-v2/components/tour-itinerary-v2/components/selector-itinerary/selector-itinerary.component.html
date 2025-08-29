@@ -43,7 +43,7 @@
     >
       <ng-template pTemplate="selectedItem">
         <div class="date-option-item">
-          <span>{{ selectedDeparture ? selectedDeparture.departureName : "Elige fecha" }}</span>
+          <span>{{ selectedDeparture ? (selectedDeparture.departureDate | date : "dd/MM/yyyy") : "Elige fecha" }}</span>
         </div>
       </ng-template>
            

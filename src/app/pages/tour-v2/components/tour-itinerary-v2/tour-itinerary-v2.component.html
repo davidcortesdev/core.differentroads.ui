@@ -1,9 +1,9 @@
 <!-- tour-itinerary-v2.component.html (COMPONENTE PADRE MODIFICADO) -->
 <div class="tour-itinerary">
-     
   <!-- ===== NUEVA SECCIÓN: SELECTOR DE ITINERARIOS ===== -->
   <div class="selector-section">
-    <app-selector-itinerary 
+    <app-selector-itinerary
+      [preview]="preview"
       [tourId]="tourId"
       [selectedDepartureFromParent]="selectedDepartureFromParent"
       (departureSelected)="onDepartureSelected($event)">

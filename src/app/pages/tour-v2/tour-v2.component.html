@@ -43,6 +43,7 @@
     <!-- Tour Itinerary Section - MODIFICADO PARA RECIBIR EVENTOS DE ACTIVIDAD -->
     <section class="tour-section tour-itinerary-section">
       <app-tour-itinerary-v2
+        [preview]="preview"
         [tourId]="tour.id"
         [selectedDepartureFromParent]="selectedDepartureData"
         (departureSelected)="onDepartureSelected($event)"
@@ -63,6 +64,11 @@
         [preview]="preview"
         (activityPackIdUpdate)="onActivityPackIdUpdate($event)">
       </app-tour-departures-v2>
+    </section>
+    
+    <!-- Tour Information Accordion Section -->
+    <section class="tour-section tour-info-accordion-section">
+      <app-tour-info-accordion-v2 [tourId]="tour.id"></app-tour-info-accordion-v2>
     </section>
     
     <!-- Tour Reviews Section -->

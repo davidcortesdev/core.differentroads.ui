@@ -86,7 +86,7 @@ export class SelectorItineraryComponent
   implements OnInit, OnDestroy, OnChanges
 {
   @Input() tourId: number | undefined;
-
+  @Input() preview: boolean = false;
   // ✅ NUEVO INPUT: Para recibir el departure seleccionado desde el componente departures
   @Input() selectedDepartureFromParent: DepartureFromParent | null = null;
 
@@ -230,13 +230,20 @@ export class SelectorItineraryComponent
    * Cargar itinerarios con sus departures correspondientes
    */
   private loadItinerariesWithDepartures(tourId: number) {
-    const itineraryFilters: ItineraryFilters = {
-      tourId: tourId,
-      isVisibleOnWeb: true,
-      isBookable: true,
-    };
+    let itineraryFilters: ItineraryFilters;
+    if (this.preview) {
+      itineraryFilters = {
+        tourId: tourId,
+      };
+    } else {
+      itineraryFilters = {
+        tourId: tourId,
+        isBookable: true,
+        isVisibleOnWeb: true,
+      };
+    }
 
-    return this.itineraryService.getAll(itineraryFilters).pipe(
+    return this.itineraryService.getAll(itineraryFilters, this.preview).pipe(
       map((itineraries) => {
         return itineraries.filter(
           (itinerary) => itinerary.tkId && itinerary.tkId.trim() !== ''
@@ -264,7 +271,7 @@ export class SelectorItineraryComponent
    * Cargar departures para un itinerario específico
    */
   private loadDeparturesForItinerary(itinerary: IItineraryResponse) {
-    return this.departureService.getByItinerary(itinerary.id).pipe(
+    return this.departureService.getByItinerary(itinerary.id, this.preview).pipe(
       map((departures) => {
         const departuresData: DepartureData[] = departures.map((departure) => ({
           departure,
@@ -309,6 +316,7 @@ export class SelectorItineraryComponent
 
     this.itinerariesWithDepartures.forEach((itineraryData) => {
       itineraryData.departures.forEach((departureData) => {
+
         const option: DateOption = {
           label: this.formatDate(departureData.departure?.departureDate ?? ''), // Solo la fecha en el dropdown
           value: departureData.departure.id,

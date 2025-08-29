@@ -250,7 +250,14 @@ export class ActivitysComponent implements OnInit, OnChanges {
           imageAlt: activity.imageAlt || activity.name || 'Sin título',
           type: activity.type as 'act' | 'pack',
         } as ActivityHighlight)
-    );
+    ).sort((a, b) => {
+      // Ordenar por opcional primero (true antes que false)
+      if (a.optional !== b.optional) {
+        return a.optional ? -1 : 1;
+      }
+      // Si ambas son opcionales o ambas no son opcionales, mantener el orden original
+      return 0;
+    });
   }
 
   /**

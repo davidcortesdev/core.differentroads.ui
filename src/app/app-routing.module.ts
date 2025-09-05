@@ -24,10 +24,22 @@ import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview
 import { ReviewSurveyComponent } from './pages/review-survey/review-survey.component';
 import { ReviewSectionComponent } from './pages/profile/components/review-section/review-section.component';
 import { NewReservationComponent } from './pages/checkout-v2/components/new-reservation/new-reservation.component';
+import { StandaloneComponent } from './layout/standalone/standalone.component';
 
 const routes: Routes = [
+  
+  // Rutas standalone (sin header ni footer)
+  {
+    path: 'standalone',
+    component: StandaloneComponent,
+    children: [
+      { path: 'checkout', component: CheckoutV2Component },
+      { path: 'checkout/:reservationId', component: CheckoutV2Component },
+    ],
+  },
   {
     path: '',
+    component: MainComponent,
     children: [
       { path: '', redirectTo: 'home', pathMatch: 'full' },
       { path: 'home', component: HomeComponent },
@@ -65,7 +77,7 @@ const routes: Routes = [
       {path: 'reviews/:id', component: ReviewSurveyComponent},
       { path: '**', component: NotFoundComponent },
     ],
-  },
+  }
 ];
 
 // Configure the router to scroll to top on navigation

@@ -35,6 +35,7 @@ export class FlightManagementComponent implements OnInit, OnChanges {
   @Input() tourId: number = 0;
   @Input() selectedFlight: IFlightPackDTO | null = null;
   @Input() departureActivityPackId: number | null = null; // ✅ NUEVO: ID del paquete del departure
+  @Input() isStandaloneMode: boolean = false; // ✅ NUEVO: Modo standalone
   @Output() flightSelectionChange = new EventEmitter<{
     selectedFlight: IFlightPackDTO | null;
     totalPrice: number;
@@ -223,6 +224,14 @@ export class FlightManagementComponent implements OnInit, OnChanges {
 
   // Métodos para autenticación
   checkAuthAndShowSpecificSearch(): void {
+    // ✅ NUEVO: En modo standalone, mostrar directamente la búsqueda específica
+    if (this.isStandaloneMode) {
+      console.log('🔓 Flight Management: Modo standalone - mostrando búsqueda específica sin autenticación');
+      this.specificSearchVisible = true;
+      return;
+    }
+
+    // Lógica normal para modo no-standalone
     this.authService.isLoggedIn().subscribe((isLoggedIn) => {
       if (isLoggedIn) {
         // Usuario está logueado, mostrar sección específica

@@ -152,6 +152,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     numPasajeros: number;
   } | null = null;
 
+  // ✅ NUEVO: Propiedad para detectar modo standalone
+  isStandaloneMode: boolean = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -175,13 +178,28 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
+    console.log('🔄 CheckoutV2Component ngOnInit iniciado');
+    
+    // ✅ NUEVO: Detectar si estamos en modo standalone
+    this.detectStandaloneMode();
+
     // Configurar los steps
     this.initializeSteps();
 
-    // Verificar estado de autenticación inicial
-    this.authService.isLoggedIn().subscribe((isLoggedIn) => {
-      this.isAuthenticated = isLoggedIn;
-    });
+    // Verificar estado de autenticación inicial (solo si NO es modo standalone)
+    if (!this.isStandaloneMode) {
+      console.log('🔒 Modo normal - verificando autenticación');
+      this.authService.isLoggedIn().subscribe((isLoggedIn) => {
+        this.isAuthenticated = isLoggedIn;
+        console.log('🔍 Estado de autenticación:', isLoggedIn);
+      });
+    } else {
+      // En modo standalone, asumir que no necesitamos autenticación
+      this.isAuthenticated = false;
+      console.log('🔓 Modo standalone detectado - omitiendo validación de autenticación');
+      console.log('🔓 isAuthenticated establecido a:', this.isAuthenticated);
+      console.log('🔓 isStandaloneMode establecido a:', this.isStandaloneMode);
+    }
 
     // Leer step de URL si está presente (para redirección después del login)
     this.route.queryParams.subscribe((params) => {
@@ -213,6 +231,27 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     // La verificación de precios se ejecutará cuando se carguen los datos de la reservación
     // No se ejecuta aquí para evitar llamadas duplicadas
+  }
+
+  /**
+   * ✅ NUEVO: Detectar si estamos en modo standalone basándose en la URL
+   */
+  private detectStandaloneMode(): void {
+    // Verificar tanto la URL del router como la URL del navegador
+    const routerUrl = this.router.url;
+    const windowUrl = window.location.pathname;
+    
+    this.isStandaloneMode = routerUrl.includes('/standalone/') || windowUrl.includes('/standalone/');
+    
+    console.log('🔍 Router URL:', routerUrl);
+    console.log('🔍 Window URL:', windowUrl);
+    console.log('🔍 ¿Modo standalone?', this.isStandaloneMode);
+    
+    if (this.isStandaloneMode) {
+      console.log('🔓 Modo standalone activado - las validaciones de autenticación serán omitidas');
+    } else {
+      console.log('🔒 Modo normal - las validaciones de autenticación están activas');
+    }
   }
 
   ngAfterViewInit(): void {
@@ -2146,18 +2185,33 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   async nextStepWithValidation(targetStep: number): Promise<void> {
-    // Verificar autenticación para pasos que la requieren
+    console.log('🔄 nextStepWithValidation llamado para targetStep:', targetStep);
+    console.log('🔍 Estado actual - isStandaloneMode:', this.isStandaloneMode);
+    console.log('🔍 Estado actual - isAuthenticated:', this.isAuthenticated);
+    
+    // ✅ NUEVO: En modo standalone, omitir validación de autenticación
+    if (this.isStandaloneMode) {
+      console.log('🔓 Modo standalone: omitiendo validación de autenticación para step', targetStep);
+      await this.performStepValidation(targetStep);
+      return;
+    }
+
+    // Verificar autenticación para pasos que la requieren (solo en modo normal)
     if (targetStep >= 2) {
+      console.log('🔒 Modo normal: verificando autenticación para step >= 2');
       return new Promise((resolve) => {
         this.authService.isLoggedIn().subscribe(async (isLoggedIn) => {
+          console.log('🔍 Resultado de isLoggedIn():', isLoggedIn);
           if (!isLoggedIn) {
             // Usuario no está logueado, mostrar modal
+            console.log('❌ Usuario no logueado - mostrando modal de login');
             sessionStorage.setItem('redirectUrl', window.location.pathname);
             this.loginDialogVisible = true;
             resolve();
             return;
           }
           // Usuario está logueado, actualizar variable local y continuar con la validación normal
+          console.log('✅ Usuario logueado - continuando con validación');
           this.isAuthenticated = true;
           await this.performStepValidation(targetStep);
           resolve();
@@ -2166,6 +2220,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     }
 
     // Para el paso 0 (personalizar viaje) y paso 1 (vuelos), no se requiere autenticación
+    console.log('ℹ️ Step < 2, no requiere autenticación - continuando directamente');
     await this.performStepValidation(targetStep);
   }
 
@@ -2701,6 +2756,22 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     activateCallback: (step: number) => void,
     useFlightless: boolean = false
   ): Promise<void> {
+    // ✅ NUEVO: En modo standalone, proceder directamente sin verificar autenticación
+    if (this.isStandaloneMode) {
+      console.log('🔓 Modo standalone: procediendo sin verificar autenticación');
+      
+      if (useFlightless) {
+        // Lógica para continuar sin vuelos - guardar como vuelo seleccionado
+        await this.handleFlightlessSelection();
+        await this.nextStepWithValidation(nextStep);
+      } else {
+        // Lógica normal
+        await this.nextStepWithValidation(nextStep);
+      }
+      return;
+    }
+
+    // Lógica normal para modo no-standalone
     this.authService.isLoggedIn().subscribe(async (isLoggedIn) => {
       if (isLoggedIn) {
         // Usuario está logueado, proceder normalmente
@@ -2918,8 +2989,16 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   // TODO: Implementar lógica para guardar el presupuesto
   handleSaveBudget(): void {
-    if (!this.isAuthenticated) {
+    // ✅ NUEVO: En modo standalone, mostrar mensaje informativo en lugar de requerir login
+    if (!this.isAuthenticated && !this.isStandaloneMode) {
       this.loginDialogVisible = true;
+    } else if (this.isStandaloneMode && !this.isAuthenticated) {
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Función no disponible',
+        detail: 'Para guardar tu presupuesto, debes acceder desde la plataforma principal e iniciar sesión.',
+        life: 6000,
+      });
     } else {
       this.reservationStatusService.getByCode('BUDGET').subscribe({
         next: (reservationStatus) => {

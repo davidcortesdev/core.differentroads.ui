@@ -8,11 +8,14 @@
       [link]="true" 
       [routerLink]="['/tour', tourSlug]" 
       class="tour-link plain-text"
-      *ngIf="tourSlug; else plainTitle">
+      *ngIf="tourSlug && !isStandaloneMode; else plainTitle">
       {{ tourName }}
     </p-button>
     <ng-template #plainTitle>
       {{ tourName }}
+      <span *ngIf="isStandaloneMode" class="standalone-badge">
+        <i class="pi pi-external-link"></i> Checkout Externo
+      </span>
     </ng-template>
   </h2>
 
@@ -94,6 +97,7 @@
               [tourId]="tourId ?? 0"
               [selectedFlight]="selectedFlight"
               [departureActivityPackId]="departureActivityPackId"
+              [isStandaloneMode]="isStandaloneMode"
               (flightSelectionChange)="onFlightSelectionChange($event)">
             </app-flight-management>
 
@@ -159,8 +163,10 @@
       styleClass="action-card"
       (click)="handleSaveBudget()"
       [pTooltip]="
-        !isAuthenticated
+        !isAuthenticated && !isStandaloneMode
           ? 'Para guardar tu presupuesto debes iniciar sesión o registrarte en la plataforma'
+          : isStandaloneMode && !isAuthenticated
+          ? 'Esta función requiere acceso desde la plataforma principal con sesión iniciada'
           : 'Guarda este presupuesto en tu perfil para consultarlo más tarde'
       "
       tooltipPosition="top"

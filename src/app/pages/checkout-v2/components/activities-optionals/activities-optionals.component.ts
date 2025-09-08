@@ -74,6 +74,9 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
   // Cache de grupos de edad
   private ageGroupsCache: IAgeGroupResponse[] = [];
 
+  // NUEVO: contador de operaciones pendientes para sincronización con backend
+  private pendingOperationsCount: number = 0;
+
   constructor(
     private activityService: ActivityService,
     private activityPriceService: ActivityPriceService,
@@ -366,19 +369,12 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
    */
   toggleActivity(item: ActivityWithPrice): void {
     if (this.addedActivities.has(item.id)) {
-      // Actualizar UI inmediatamente
-      this.addedActivities.delete(item.id);
-      // Eliminar de BD en background
+      // Eliminar de BD primero, luego actualizar UI
       this.removeActivityFromDatabase(item);
     } else {
-      // Actualizar UI inmediatamente
-      this.addedActivities.add(item.id);
-      // Guardar en BD en background
+      // Guardar en BD primero, luego actualizar UI
       this.addActivityToDatabase(item);
     }
-
-    // Emitir cambios inmediatamente
-    this.emitActivitiesChange();
   }
 
   /**
@@ -387,6 +383,7 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
   private addActivityToDatabase(item: ActivityWithPrice): void {
     if (!this.reservationId) return;
 
+    this.pendingOperationsCount++;
     this.reservationTravelerService
       .getByReservation(this.reservationId)
       .subscribe({
@@ -400,11 +397,17 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
                   activityId: item.id,
                 })
                 .subscribe({
+                  next: () => {
+                    // Solo actualizar UI después de guardar exitosamente
+                    this.addedActivities.add(item.id);
+                    this.emitActivitiesChange();
+                  },
                   error: (error) => {
                     console.error('Error guardando actividad:', error);
-                    // Si falla, revertir UI
-                    this.addedActivities.delete(item.id);
-                    this.emitActivitiesChange();
+                    // Si falla, no actualizar UI
+                  },
+                  complete: () => {
+                    this.pendingOperationsCount = Math.max(0, this.pendingOperationsCount - 1);
                   },
                 });
             } else if (item.type === 'pack') {
@@ -415,16 +418,25 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
                   activityPackId: item.id,
                 })
                 .subscribe({
+                  next: () => {
+                    // Solo actualizar UI después de guardar exitosamente
+                    this.addedActivities.add(item.id);
+                    this.emitActivitiesChange();
+                  },
                   error: (error) => {
                     console.error('Error guardando pack:', error);
-                    // Si falla, revertir UI
-                    this.addedActivities.delete(item.id);
-                    this.emitActivitiesChange();
+                    // Si falla, no actualizar UI
+                  },
+                  complete: () => {
+                    this.pendingOperationsCount = Math.max(0, this.pendingOperationsCount - 1);
                   },
                 });
             }
           });
         },
+        error: () => {
+          this.pendingOperationsCount = Math.max(0, this.pendingOperationsCount - 1);
+        }
       });
   }
 
@@ -434,6 +446,7 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
   private removeActivityFromDatabase(item: ActivityWithPrice): void {
     if (!this.reservationId) return;
 
+    this.pendingOperationsCount++;
     this.reservationTravelerService
       .getByReservation(this.reservationId)
       .subscribe({
@@ -451,15 +464,29 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
                       this.reservationTravelerActivityService
                         .delete(activityToDelete.id)
                         .subscribe({
-                          error: (error) => {
-                            console.error('Error eliminando actividad:', error);
-                            // Si falla, revertir UI
-                            this.addedActivities.add(item.id);
+                          next: () => {
+                            // Solo actualizar UI después de eliminar exitosamente
+                            this.addedActivities.delete(item.id);
                             this.emitActivitiesChange();
                           },
+                          error: (error) => {
+                            console.error('Error eliminando actividad:', error);
+                            // Si falla, no actualizar UI
+                          },
+                          complete: () => {
+                            this.pendingOperationsCount = Math.max(0, this.pendingOperationsCount - 1);
+                          },
                         });
+                    } else {
+                      // No se encontró la actividad, actualizar UI
+                      this.addedActivities.delete(item.id);
+                      this.emitActivitiesChange();
+                      this.pendingOperationsCount = Math.max(0, this.pendingOperationsCount - 1);
                     }
                   },
+                  error: () => {
+                    this.pendingOperationsCount = Math.max(0, this.pendingOperationsCount - 1);
+                  }
                 });
             } else if (item.type === 'pack') {
               this.reservationTravelerActivityPackService
@@ -473,19 +500,36 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
                       this.reservationTravelerActivityPackService
                         .delete(packToDelete.id)
                         .subscribe({
-                          error: (error) => {
-                            console.error('Error eliminando pack:', error);
-                            // Si falla, revertir UI
-                            this.addedActivities.add(item.id);
+                          next: () => {
+                            // Solo actualizar UI después de eliminar exitosamente
+                            this.addedActivities.delete(item.id);
                             this.emitActivitiesChange();
                           },
+                          error: (error) => {
+                            console.error('Error eliminando pack:', error);
+                            // Si falla, no actualizar UI
+                          },
+                          complete: () => {
+                            this.pendingOperationsCount = Math.max(0, this.pendingOperationsCount - 1);
+                          },
                         });
+                    } else {
+                      // No se encontró el pack, actualizar UI
+                      this.addedActivities.delete(item.id);
+                      this.emitActivitiesChange();
+                      this.pendingOperationsCount = Math.max(0, this.pendingOperationsCount - 1);
                     }
                   },
+                  error: () => {
+                    this.pendingOperationsCount = Math.max(0, this.pendingOperationsCount - 1);
+                  }
                 });
             }
           });
         },
+        error: () => {
+          this.pendingOperationsCount = Math.max(0, this.pendingOperationsCount - 1);
+        }
       });
   }
 
@@ -513,6 +557,17 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
       selectedActivities,
       totalPrice,
     });
+  }
+
+  // NUEVO: método público para esperar a que no haya operaciones pendientes
+  async waitForPendingSaves(timeoutMs: number = 4000): Promise<void> {
+    const start = Date.now();
+    while (this.pendingOperationsCount > 0) {
+      if (Date.now() - start > timeoutMs) {
+        break;
+      }
+      await new Promise((res) => setTimeout(res, 100));
+    }
   }
 
   /**

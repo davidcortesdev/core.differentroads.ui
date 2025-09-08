@@ -1,4 +1,23 @@
-<div class="order-summary" [ngClass]="customClass">
+<!-- NUEVO: Estados de carga y error -->
+<div class="loading-container" *ngIf="loading">
+  <p-progressSpinner styleClass="summary-loader"></p-progressSpinner>
+  <p>Cargando resumen del pedido...</p>
+  
+</div>
+
+<div *ngIf="error && !loading" class="error-container">
+  <i class="pi pi-exclamation-triangle" style="font-size: 2rem; color: #f05a4c"></i>
+  <p>Error al cargar el resumen del pedido</p>
+  <p-button 
+    label="Reintentar" 
+    icon="pi pi-refresh" 
+    size="small"
+    (onClick)="refreshSummary()">
+  </p-button>
+</div>
+
+<!-- Contenido existente con *ngIf="!loading && !error" -->
+<div class="order-summary" [ngClass]="customClass" *ngIf="!loading && !error">
   <h3 *ngIf="showTitle">{{ title }}</h3>
   <div class="summary-content">
     <!-- Tour base info -->
@@ -12,15 +31,22 @@
         >
           <span class="description">{{ getDescription(item) }}</span>
           <span class="value-container">
-            <span class="qty">{{ getQuantity(item) }}</span>
-            <span class="operator">x</span>
-            <span class="unit-price">{{
-              getValue(item) | currencyFormat : currency
-            }}</span>
-            <span class="operator">=</span>
-            <span class="total-price">{{
-              calculateTotal(item) | currencyFormat : currency
-            }}</span>
+            <!-- Mostrar "Incluido" para seguros básicos incluidos -->
+            <span *ngIf="isBasicInsuranceIncluded(item)" class="included-text">
+              Incluido
+            </span>
+            <!-- Mostrar cantidad y precio para otros items -->
+            <span *ngIf="!isBasicInsuranceIncluded(item)">
+              <span class="qty">{{ getQuantity(item) }}</span>
+              <span class="operator">x</span>
+              <span class="unit-price">{{
+                getValue(item) | currencyFormat : currency
+              }}</span>
+              <span class="operator">=</span>
+              <span class="total-price">{{
+                calculateTotal(item) | currencyFormat : currency
+              }}</span>
+            </span>
           </span>
         </div>
       </div>

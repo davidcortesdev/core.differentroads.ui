@@ -20,6 +20,7 @@ import { AppComponent } from './app.component';
 import { HeaderComponent } from './layout/header/header.component';
 import { FooterComponent } from './layout/footer/footer.component';
 import { MainComponent } from './layout/main/main.component';
+import { StandaloneComponent } from './layout/standalone/standalone.component';
 
 // Page Components
 import { HomeComponent } from './pages/home/home.component';
@@ -256,6 +257,7 @@ registerLocaleData(localeEs);
     HeaderComponent,
     FooterComponent,
     MainComponent,
+    StandaloneComponent,
 
     // Page Components
     HomeComponent,

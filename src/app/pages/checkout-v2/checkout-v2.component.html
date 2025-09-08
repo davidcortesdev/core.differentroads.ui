@@ -4,11 +4,12 @@
 
   <!-- Título del tour -->
   <h2 class="checkout-title">
-    <p-button 
-      [link]="true" 
-      [routerLink]="['/tour', tourSlug]" 
+    <p-button
+      [link]="true"
+      [routerLink]="['/tour', tourSlug]"
       class="tour-link plain-text"
-      *ngIf="tourSlug && !isStandaloneMode; else plainTitle">
+      *ngIf="tourSlug && !isStandaloneMode; else plainTitle"
+    >
       {{ tourName }}
     </p-button>
     <ng-template #plainTitle>
@@ -42,20 +43,22 @@
           <!-- Step 1: Personalizar viaje -->
           <div *ngSwitchCase="0">
             <!-- Componente selector de viajeros -->
-            <app-selector-traveler 
+            <app-selector-traveler
               [departureId]="departureId"
               [reservationId]="reservationId"
               [availableTravelers]="['Adultos', 'Niños', 'Bebés']"
               (travelersNumbersChange)="onTravelersNumbersChange($event)"
-              #travelerSelector>
+              #travelerSelector
+            >
             </app-selector-traveler>
-            
+
             <!-- Componente selector de habitaciones -->
-            <app-selector-room 
+            <app-selector-room
               [departureId]="departureId"
               [reservationId]="reservationId"
               (roomsSelectionChange)="onRoomsSelectionChange($event)"
-              #roomSelector>
+              #roomSelector
+            >
             </app-selector-room>
 
             <!-- Componente actividades opcionales -->
@@ -63,7 +66,10 @@
               [itineraryId]="itineraryId"
               [departureId]="departureId"
               [reservationId]="reservationId"
-              (activitiesSelectionChange)="onActivitiesSelectionChange($event)">
+              (activitiesSelectionChange)="onActivitiesSelectionChange($event)"
+              (saveCompleted)="onSaveCompleted($event)"
+              #activitiesSelector
+            >
             </app-activities-optionals>
 
             <!-- Componente de seguro -->
@@ -73,7 +79,8 @@
               [itineraryId]="itineraryId"
               [reservationId]="reservationId"
               (insuranceSelectionChange)="onInsuranceSelectionChange($event)"
-              #insuranceSelector>
+              #insuranceSelector
+            >
             </app-insurance>
 
             <div class="flex pt-6 justify-end">
@@ -98,18 +105,25 @@
               [selectedFlight]="selectedFlight"
               [departureActivityPackId]="departureActivityPackId"
               [isStandaloneMode]="isStandaloneMode"
-              (flightSelectionChange)="onFlightSelectionChange($event)">
+              (flightSelectionChange)="onFlightSelectionChange($event)"
+            >
             </app-flight-management>
 
             <div class="flight-buttons">
               <p-button
                 *ngIf="hasAvailableFlights"
                 class="without-flight"
-                [label]="isFlightlessProcessing ? flightlessProcessingMessage : 'Lo quiero sin vuelos'"
+                [label]="
+                  isFlightlessProcessing
+                    ? flightlessProcessingMessage
+                    : 'Lo quiero sin vuelos'
+                "
                 [icon]="isFlightlessProcessing ? 'pi pi-spinner pi-spin' : ''"
                 [disabled]="isFlightlessProcessing"
                 [loading]="isFlightlessProcessing"
-                (onClick)="checkAuthAndContinue(2, onActiveIndexChange.bind(this), true)"
+                (onClick)="
+                  checkAuthAndContinue(2, onActiveIndexChange.bind(this), true)
+                "
               ></p-button>
               <p-button
                 class="continue-button"
@@ -119,19 +133,24 @@
                 [disabled]="!selectedFlight || isFlightlessProcessing"
                 [pTooltip]="getContinueButtonTooltip()"
                 tooltipPosition="top"
-                (onClick)="checkAuthAndContinue(2, onActiveIndexChange.bind(this), false)"
+                (onClick)="
+                  checkAuthAndContinue(2, onActiveIndexChange.bind(this), false)
+                "
               ></p-button>
             </div>
           </div>
 
           <!-- Step 3: Viajeros -->
           <div *ngSwitchCase="2">
-            <app-info-travelers 
+            <app-info-travelers
               [departureId]="departureId"
               [reservationId]="reservationId"
               [itineraryId]="itineraryId"
-              (activitiesAssignmentChange)="onActivitiesAssignmentChange($event)"
-              #infoTravelers>
+              (activitiesAssignmentChange)="
+                onActivitiesAssignmentChange($event)
+              "
+              #infoTravelers
+            >
             </app-info-travelers>
 
             <div class="flight-buttons">
@@ -139,7 +158,9 @@
                 label="Continuar"
                 icon="pi pi-arrow-right"
                 iconPos="right"
-                (onClick)="checkAuthAndContinue(3, onActiveIndexChange.bind(this), false)"
+                (onClick)="
+                  checkAuthAndContinue(3, onActiveIndexChange.bind(this), false)
+                "
               ></p-button>
             </div>
           </div>
@@ -147,68 +168,69 @@
           <!-- Step 4: Pago -->
           <div *ngSwitchCase="3">
             <!-- Componente de pago -->
-             <app-payment-management 
-               [totalPrice]="totalAmountCalculated" 
-               [reservationId]="reservationId ?? 0"
-               [departureDate]="departureDate"
-               (navigateToStep)="onNavigateToStep($event)">
-             </app-payment-management>
+            <app-payment-management
+              [totalPrice]="totalAmountCalculated"
+              [reservationId]="reservationId ?? 0"
+              [departureDate]="departureDate"
+              (navigateToStep)="onNavigateToStep($event)"
+            >
+            </app-payment-management>
           </div>
         </div>
       </div>
-        <!-- Budget Options Section Footer -->
-  <div class="tour-additional-info-container">
-    <!-- Card para "Guarda tu presupuesto" con tooltip mejorado -->
-    <p-card
-      styleClass="action-card"
-      (click)="handleSaveBudget()"
-      [pTooltip]="
-        !isAuthenticated && !isStandaloneMode
-          ? 'Para guardar tu presupuesto debes iniciar sesión o registrarte en la plataforma'
-          : isStandaloneMode && !isAuthenticated
-          ? 'Esta función requiere acceso desde la plataforma principal con sesión iniciada'
-          : 'Guarda este presupuesto en tu perfil para consultarlo más tarde'
-      "
-      tooltipPosition="top"
-    >
-      <div class="card-content">
-        <span class="bg-pink-100">
-          <i class="pi pi-bookmark" aria-hidden="true"></i>
-        </span>
-        <span class="card-text">Guarda tu presupuesto</span>
+      <!-- Budget Options Section Footer -->
+      <div class="tour-additional-info-container">
+        <!-- Card para "Guarda tu presupuesto" con tooltip mejorado -->
+        <p-card
+          styleClass="action-card"
+          (click)="handleSaveBudget()"
+          [pTooltip]="
+            !isAuthenticated && !isStandaloneMode
+              ? 'Para guardar tu presupuesto debes iniciar sesión o registrarte en la plataforma'
+              : isStandaloneMode && !isAuthenticated
+              ? 'Esta función requiere acceso desde la plataforma principal con sesión iniciada'
+              : 'Guarda este presupuesto en tu perfil para consultarlo más tarde'
+          "
+          tooltipPosition="top"
+        >
+          <div class="card-content">
+            <span class="bg-pink-100">
+              <i class="pi pi-bookmark" aria-hidden="true"></i>
+            </span>
+            <span class="card-text">Guarda tu presupuesto</span>
+          </div>
+        </p-card>
+
+        <!-- Card para "Descarga tu presupuesto" con tooltip -->
+        <p-card
+          styleClass="action-card claseBord"
+          (click)="handleDownloadBudget()"
+          pTooltip="Envia un email con un PDF con toda la información de este presupuesto"
+          tooltipPosition="top"
+        >
+          <div class="card-content">
+            <span class="bg-pink-100">
+              <i class="pi pi-download" aria-hidden="true"></i>
+            </span>
+            <span class="card-text">Descarga tu presupuesto</span>
+          </div>
+        </p-card>
+
+        <!-- Card para "Comparte tu presupuesto con alguien" con tooltip (ahora abre el mismo modal) -->
+        <p-card
+          styleClass="action-card"
+          (click)="handleShareBudget()"
+          pTooltip="Comparte este presupuesto con amigos o familiares"
+          tooltipPosition="top"
+        >
+          <div class="card-content">
+            <span class="bg-pink-100">
+              <i class="pi pi-user-plus" aria-hidden="true"></i>
+            </span>
+            <span class="card-text">Comparte tu presupuesto con alguien</span>
+          </div>
+        </p-card>
       </div>
-    </p-card>
-  
-    <!-- Card para "Descarga tu presupuesto" con tooltip -->
-    <p-card
-       styleClass="action-card claseBord"
-       (click)="handleDownloadBudget()"
-      pTooltip="Envia un email con un PDF con toda la información de este presupuesto"
-      tooltipPosition="top"
-    >
-      <div class="card-content">
-        <span class="bg-pink-100">
-          <i class="pi pi-download" aria-hidden="true"></i>
-        </span>
-        <span class="card-text">Descarga tu presupuesto</span>
-      </div>
-    </p-card>
-  
-    <!-- Card para "Comparte tu presupuesto con alguien" con tooltip (ahora abre el mismo modal) -->
-    <p-card
-       styleClass="action-card"
-       (click)="handleShareBudget()"
-      pTooltip="Comparte este presupuesto con amigos o familiares"
-      tooltipPosition="top"
-    >
-      <div class="card-content">
-        <span class="bg-pink-100">
-          <i class="pi pi-user-plus" aria-hidden="true"></i>
-        </span>
-        <span class="card-text">Comparte tu presupuesto con alguien</span>
-      </div>
-    </p-card>
-  </div>
     </div>
 
     <!-- Columna derecha - Resumen -->

@@ -1,57 +1,92 @@
-<div class="optional-activities" *ngIf="optionalActivities && optionalActivities.length > 0">
-    <div class="step">
-      <div class="step-title">Agrega actividades</div>
-      <div class="step-description">
-        <i class="pi pi-info-circle"></i>También puedes añadirlas después desde tu perfil
-      </div>
+<div
+  class="optional-activities"
+  *ngIf="optionalActivities && optionalActivities.length > 0"
+>
+  <!-- Mensaje de error -->
+  <div *ngIf="errorMessage" class="error-message">
+    <i class="pi pi-exclamation-triangle"></i>
+    <p>{{ errorMessage }}</p>
+  </div>
+
+  <div class="step">
+    <div class="step-title">Agrega actividades</div>
+    <div class="step-description">
+      <i class="pi pi-info-circle"></i>También puedes añadirlas después desde tu
+      perfil
     </div>
-    
-    <p-dataview #dv [value]="optionalActivities">
-      <ng-template #list let-items>
-        <div class="dataview-grid">
-          <div class="dataview-item" *ngFor="let item of items; let first = first">
-            <div class="dataview-card" [ngClass]="{ 'dataview-card-border': !first }">
-              <div class="dataview-image">
-                <img
-                  class="dataview-img"
-                  [src]="item.imageUrl || ''"
-                  [alt]="item.name"
-                  loading="lazy"
-                />
-              </div>
-              
-              <div class="dataview-content">
-                <div class="dataview-info">
-                  <div>
-                    <div class="dataview-name">
-                      {{ item.name }}
-                    </div>
-                    <div class="dataview-description" [innerHTML]="item.description"></div>
+    <!-- NUEVO: Mensaje informativo sobre selección por usuario -->
+    <div
+      class="step-info"
+      [ngClass]="{ saving: saving }"
+      *ngIf="saving || hasSelectedActivities"
+    >
+      <i class="pi pi-check-circle" *ngIf="!saving"></i>
+      <i class="pi pi-spin pi-spinner" *ngIf="saving"></i>
+      <span *ngIf="saving">Guardando actividades...</span>
+      <span *ngIf="!saving && hasSelectedActivities">
+        ✅ Actividades guardadas. Podrás elegir por usuario en el paso 3 de
+        viajeros.
+      </span>
+    </div>
+  </div>
+
+  <p-dataview #dv [value]="optionalActivities">
+    <ng-template #list let-items>
+      <div class="dataview-grid">
+        <div
+          class="dataview-item"
+          *ngFor="let item of items; let first = first"
+        >
+          <div
+            class="dataview-card"
+            [ngClass]="{ 'dataview-card-border': !first }"
+          >
+            <div class="dataview-image">
+              <img
+                class="dataview-img"
+                [src]="item.imageUrl || ''"
+                [alt]="item.name"
+                loading="lazy"
+              />
+            </div>
+
+            <div class="dataview-content">
+              <div class="dataview-info">
+                <div>
+                  <div class="dataview-name">
+                    {{ item.name }}
                   </div>
+                  <div
+                    class="dataview-description"
+                    [innerHTML]="item.description"
+                  ></div>
                 </div>
-                
-                <div class="dataview-actions">
-                  <div class="dataview-price" *ngIf="getBasePrice(item) !== null">
-                    <span class="dataview-price-value">
-                      +{{ getBasePrice(item)! | currencyFormat : "EUR" }}
-                    </span>
-                    <span class="dataview-per-person"> por persona </span>
-                  </div>
-                  
-                  <div class="dataview-buttons">
-                    <p-button
-                      class="dataview-buy-button"
-                      [label]="isActivityAdded(item) ? 'Eliminar' : 'Añadir'"
-                      [rounded]="true"
-                      [styleClass]="isActivityAdded(item) ? 'added-button' : ''"
-                      (click)="toggleActivity(item)"
-                    />
-                  </div>
+              </div>
+
+              <div class="dataview-actions">
+                <div class="dataview-price" *ngIf="getBasePrice(item) !== null">
+                  <span class="dataview-price-value">
+                    +{{ getBasePrice(item)! | currencyFormat : "EUR" }}
+                  </span>
+                  <span class="dataview-per-person"> por persona </span>
+                </div>
+
+                <div class="dataview-buttons">
+                  <p-button
+                    class="dataview-buy-button"
+                    [label]="isActivityAdded(item) ? 'Eliminar' : 'Añadir'"
+                    [rounded]="true"
+                    [loading]="saving"
+                    [disabled]="saving"
+                    [styleClass]="isActivityAdded(item) ? 'added-button' : ''"
+                    (click)="toggleActivity(item)"
+                  />
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </ng-template>
-    </p-dataview>
-  </div>
+      </div>
+    </ng-template>
+  </p-dataview>
+</div>

@@ -139,7 +139,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   jobMonitoringSubscription: Subscription | null = null;
   isSyncInProgress: boolean = false;
   isAuthenticated: boolean = false;
-  
+
   // ✅ NUEVO: Propiedades para controlar el estado de carga del botón "Sin Vuelos"
   isFlightlessProcessing: boolean = false;
   flightlessProcessingMessage: string = '';
@@ -179,7 +179,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnInit(): void {
     console.log('🔄 CheckoutV2Component ngOnInit iniciado');
-    
+
     // ✅ NUEVO: Detectar si estamos en modo standalone
     this.detectStandaloneMode();
 
@@ -196,7 +196,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     } else {
       // En modo standalone, asumir que no necesitamos autenticación
       this.isAuthenticated = false;
-      console.log('🔓 Modo standalone detectado - omitiendo validación de autenticación');
+      console.log(
+        '🔓 Modo standalone detectado - omitiendo validación de autenticación'
+      );
       console.log('🔓 isAuthenticated establecido a:', this.isAuthenticated);
       console.log('🔓 isStandaloneMode establecido a:', this.isStandaloneMode);
     }
@@ -240,17 +242,22 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     // Verificar tanto la URL del router como la URL del navegador
     const routerUrl = this.router.url;
     const windowUrl = window.location.pathname;
-    
-    this.isStandaloneMode = routerUrl.includes('/standalone/') || windowUrl.includes('/standalone/');
-    
+
+    this.isStandaloneMode =
+      routerUrl.includes('/standalone/') || windowUrl.includes('/standalone/');
+
     console.log('🔍 Router URL:', routerUrl);
     console.log('🔍 Window URL:', windowUrl);
     console.log('🔍 ¿Modo standalone?', this.isStandaloneMode);
-    
+
     if (this.isStandaloneMode) {
-      console.log('🔓 Modo standalone activado - las validaciones de autenticación serán omitidas');
+      console.log(
+        '🔓 Modo standalone activado - las validaciones de autenticación serán omitidas'
+      );
     } else {
-      console.log('🔒 Modo normal - las validaciones de autenticación están activas');
+      console.log(
+        '🔒 Modo normal - las validaciones de autenticación están activas'
+      );
     }
   }
 
@@ -575,6 +582,41 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     ) {
       this.updateOrderSummary(this.travelerSelector.travelersNumbers);
     }
+  }
+
+  /**
+   * 🔥 NUEVO: Maneja el evento de guardado completado desde actividades opcionales
+   */
+  onSaveCompleted(event: {
+    component: string;
+    success: boolean;
+    error?: string;
+  }): void {
+    if (event.success) {
+      console.log(`✅ Guardado exitoso en ${event.component}`);
+      // El padre se encarga de obtener la información por su cuenta
+      if (this.travelerSelector && this.travelerSelector.travelersNumbers) {
+        this.updateOrderSummary(this.travelerSelector.travelersNumbers);
+      }
+    } else {
+      console.error(`❌ Error en guardado de ${event.component}:`, event.error);
+      // Mostrar error al usuario si es necesario
+      this.showErrorToast(
+        `Error al guardar ${event.component}: ${event.error}`
+      );
+    }
+  }
+
+  /**
+   * 🔥 NUEVO: Muestra un toast de error
+   */
+  private showErrorToast(message: string): void {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: message,
+      life: 5000,
+    });
   }
 
   /**
@@ -1062,14 +1104,18 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   private checkIfFlightsAvailable(): boolean {
     // ✅ NUEVA LÓGICA: Mostrar la opción "Sin Vuelos" solo cuando hay flightPacks disponibles
     // Esto asegura que la opción esté disponible cuando realmente hay vuelos en el sistema
-    
+
     // Verificar si hay flightPacks disponibles
     if (this.availableFlights && this.availableFlights.length > 0) {
-      console.log('✅ Hay flightPacks disponibles - mostrando opción "Sin Vuelos"');
+      console.log(
+        '✅ Hay flightPacks disponibles - mostrando opción "Sin Vuelos"'
+      );
       return true;
     }
-    
-    console.log('❌ No hay flightPacks disponibles - ocultando opción "Sin Vuelos"');
+
+    console.log(
+      '❌ No hay flightPacks disponibles - ocultando opción "Sin Vuelos"'
+    );
     return false;
   }
 
@@ -1682,29 +1728,46 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         try {
           // Usar Promise.allSettled para manejar mejor los errores y asegurar que todas las operaciones se completen
           const results = await Promise.allSettled(createPromises);
-          
+
           // Verificar el estado de cada operación
-          const successful = results.filter(result => result.status === 'fulfilled');
-          const failed = results.filter(result => result.status === 'rejected');
-          
-          console.log(`Operaciones completadas: ${successful.length} exitosas, ${failed.length} fallidas`);
-          
+          const successful = results.filter(
+            (result) => result.status === 'fulfilled'
+          );
+          const failed = results.filter(
+            (result) => result.status === 'rejected'
+          );
+
+          console.log(
+            `Operaciones completadas: ${successful.length} exitosas, ${failed.length} fallidas`
+          );
+
           // Si hay operaciones fallidas, mostrar detalles y fallar
           if (failed.length > 0) {
             console.error('Operaciones fallidas:', failed);
             const errorMessages = failed.map((result, index) => {
-              const reason = result.status === 'rejected' ? result.reason : 'Error desconocido';
-              return `Operación ${index + 1}: ${(reason as any)?.message || reason}`;
+              const reason =
+                result.status === 'rejected'
+                  ? result.reason
+                  : 'Error desconocido';
+              return `Operación ${index + 1}: ${
+                (reason as any)?.message || reason
+              }`;
             });
-            
-            throw new Error(`Fallaron ${failed.length} operaciones:\n${errorMessages.join('\n')}`);
+
+            throw new Error(
+              `Fallaron ${failed.length} operaciones:\n${errorMessages.join(
+                '\n'
+              )}`
+            );
           }
-          
+
           // Verificar que todas las operaciones fueron exitosas
           if (successful.length !== createPromises.length) {
-            throw new Error(`Se esperaban ${createPromises.length} operaciones exitosas, pero solo se completaron ${successful.length}`);
+            throw new Error(
+              `Se esperaban ${createPromises.length} operaciones exitosas, pero solo se completaron ${successful.length}`
+            );
           }
-          
+
           console.log('Todas las actividades se guardaron exitosamente');
         } catch (error) {
           console.error(
@@ -2167,7 +2230,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }
 
       console.log('Validación exitosa, guardando datos...');
-      
+
       // Llamar al método saveAllTravelersData del componente hijo y esperar a que se complete
       await this.infoTravelers.saveAllTravelersData();
       console.log('Datos guardados exitosamente, retornando true');
@@ -2185,13 +2248,19 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   async nextStepWithValidation(targetStep: number): Promise<void> {
-    console.log('🔄 nextStepWithValidation llamado para targetStep:', targetStep);
+    console.log(
+      '🔄 nextStepWithValidation llamado para targetStep:',
+      targetStep
+    );
     console.log('🔍 Estado actual - isStandaloneMode:', this.isStandaloneMode);
     console.log('🔍 Estado actual - isAuthenticated:', this.isAuthenticated);
-    
+
     // ✅ NUEVO: En modo standalone, omitir validación de autenticación
     if (this.isStandaloneMode) {
-      console.log('🔓 Modo standalone: omitiendo validación de autenticación para step', targetStep);
+      console.log(
+        '🔓 Modo standalone: omitiendo validación de autenticación para step',
+        targetStep
+      );
       await this.performStepValidation(targetStep);
       return;
     }
@@ -2220,7 +2289,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     }
 
     // Para el paso 0 (personalizar viaje) y paso 1 (vuelos), no se requiere autenticación
-    console.log('ℹ️ Step < 2, no requiere autenticación - continuando directamente');
+    console.log(
+      'ℹ️ Step < 2, no requiere autenticación - continuando directamente'
+    );
     await this.performStepValidation(targetStep);
   }
 
@@ -2270,7 +2341,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           console.log('Guardando cambios de travelers...');
           this.travelerSelector.saveTravelersChanges();
           // Esperar a que se complete la operación verificando el estado real
-          await this.waitForOperation(() => !this.travelerSelector.hasUnsavedChanges, 5000, 'guardar cambios de travelers');
+          await this.waitForOperation(
+            () => !this.travelerSelector.hasUnsavedChanges,
+            5000,
+            'guardar cambios de travelers'
+          );
         }
 
         // 2. Verificar habitaciones seleccionadas inmediatamente
@@ -2359,7 +2434,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
         // 6. Guardar asignaciones de habitaciones, seguros y actividades EN PARALELO con verificación de estado
         console.log('Guardando asignaciones en paralelo...');
-        
+
         // Ejecutar todas las operaciones con Promise.allSettled para mejor manejo de errores
         const [roomsSaved, insuranceSaved, activitiesSaved] =
           await Promise.allSettled([
@@ -2371,7 +2446,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         console.log('Resultados de las operaciones:', {
           rooms: roomsSaved,
           insurance: insuranceSaved,
-          activities: activitiesSaved
+          activities: activitiesSaved,
         });
 
         // Verificar que las operaciones con manejo detallado de errores fueron exitosas
@@ -2440,8 +2515,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         if (this.insuranceSelector.selectedInsurance) {
           console.log('Verificando asignaciones de seguro...');
           // Verificar que las asignaciones se guardaron correctamente
-          const verificationResult = await this.insuranceSelector.verifyInsuranceAssignments();
-          
+          const verificationResult =
+            await this.insuranceSelector.verifyInsuranceAssignments();
+
           if (!verificationResult) {
             this.messageService.add({
               severity: 'warn',
@@ -2527,70 +2603,83 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                       this.totalAmountCalculated;
                     this.totalAmount = this.totalAmountCalculated;
 
-                      // Mostrar toast de éxito
-                      const flightInfo = this.selectedFlight
-                        ? ' con vuelo seleccionado'
-                        : '';
-                      this.messageService.add({
-                        severity: 'success',
-                        summary: 'Guardado exitoso',
-                        detail: `Datos guardados correctamente para ${
-                          this.totalPassengers
-                        } viajeros con ${
-                          this.selectedActivities?.length || 0
-                        } actividades${flightInfo}.`,
-                        life: 3000,
-                      });
+                    // Mostrar toast de éxito
+                    const flightInfo = this.selectedFlight
+                      ? ' con vuelo seleccionado'
+                      : '';
+                    this.messageService.add({
+                      severity: 'success',
+                      summary: 'Guardado exitoso',
+                      detail: `Datos guardados correctamente para ${
+                        this.totalPassengers
+                      } viajeros con ${
+                        this.selectedActivities?.length || 0
+                      } actividades${flightInfo}.`,
+                      life: 3000,
+                    });
 
                     console.log('Datos locales actualizados:', {
                       totalPassengers: this.totalPassengers,
                       totalAmount: this.totalAmount,
-                      totalAmountCalculated: this.totalAmountCalculated
+                      totalAmountCalculated: this.totalAmountCalculated,
                     });
 
                     resolve(response);
                   } else {
-                    console.error('La actualización no fue exitosa. Respuesta:', response);
+                    console.error(
+                      'La actualización no fue exitosa. Respuesta:',
+                      response
+                    );
                     console.error('Tipo de respuesta:', typeof response);
                     console.error('¿Response es null?', response === null);
-                    console.error('¿Response es undefined?', response === undefined);
-                    
+                    console.error(
+                      '¿Response es undefined?',
+                      response === undefined
+                    );
+
                     // Crear un error más detallado
-                    const errorMessage = `Error al actualizar la reserva. Respuesta del servicio: ${JSON.stringify(response)}`;
+                    const errorMessage = `Error al actualizar la reserva. Respuesta del servicio: ${JSON.stringify(
+                      response
+                    )}`;
                     console.error(errorMessage);
-                    
+
                     reject(new Error(errorMessage));
                   }
                 },
                 error: (error) => {
-                  console.error('Error en la llamada al servicio de actualización:', error);
+                  console.error(
+                    'Error en la llamada al servicio de actualización:',
+                    error
+                  );
                   console.error('Tipo de error:', typeof error);
                   console.error('Stack trace del error:', error?.stack);
                   console.error('Mensaje del error:', error?.message);
                   console.error('Código de estado HTTP:', error?.status);
                   console.error('Respuesta del servidor:', error?.error);
-                  
+
                   // Crear un error más detallado
                   let errorDetail = 'Error desconocido en el servicio';
-                  
+
                   if (error?.status) {
                     errorDetail += ` (HTTP ${error.status})`;
                   }
-                  
+
                   if (error?.message) {
                     errorDetail += `: ${error.message}`;
                   }
-                  
+
                   if (error?.error) {
-                    errorDetail += ` - Detalles: ${JSON.stringify(error.error)}`;
+                    errorDetail += ` - Detalles: ${JSON.stringify(
+                      error.error
+                    )}`;
                   }
-                  
+
                   console.error('Error detallado:', errorDetail);
                   reject(new Error(errorDetail));
                 },
                 complete: () => {
                   console.log('Observable de actualización completado');
-                }
+                },
               });
           });
         }
@@ -2643,17 +2732,19 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   // Método auxiliar para esperar a que una operación se complete
   private async waitForOperation(
-    condition: () => boolean, 
-    maxWaitTime: number, 
+    condition: () => boolean,
+    maxWaitTime: number,
     operationName: string
   ): Promise<void> {
     const startTime = Date.now();
-    
+
     while (!condition()) {
       if (Date.now() - startTime > maxWaitTime) {
-        throw new Error(`La operación "${operationName}" no se completó en ${maxWaitTime}ms`);
+        throw new Error(
+          `La operación "${operationName}" no se completó en ${maxWaitTime}ms`
+        );
       }
-      await new Promise(resolve => setTimeout(resolve, 100)); // Esperar 100ms antes de verificar de nuevo
+      await new Promise((resolve) => setTimeout(resolve, 100)); // Esperar 100ms antes de verificar de nuevo
     }
   }
 
@@ -2758,8 +2849,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   ): Promise<void> {
     // ✅ NUEVO: En modo standalone, proceder directamente sin verificar autenticación
     if (this.isStandaloneMode) {
-      console.log('🔓 Modo standalone: procediendo sin verificar autenticación');
-      
+      console.log(
+        '🔓 Modo standalone: procediendo sin verificar autenticación'
+      );
+
       if (useFlightless) {
         // Lógica para continuar sin vuelos - guardar como vuelo seleccionado
         await this.handleFlightlessSelection();
@@ -2853,20 +2946,28 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
           // ✅ NUEVO: Usar la lógica simplificada del componente default-flights y ESPERAR
           if (this.flightManagement && this.reservationId) {
-            console.log('🔄 Usando lógica simplificada del componente default-flights...');
-            
+            console.log(
+              '🔄 Usando lógica simplificada del componente default-flights...'
+            );
+
             // ✅ NUEVO: Actualizar mensaje de procesamiento
-            this.flightlessProcessingMessage = 'Guardando asignaciones sin vuelos...';
-            
+            this.flightlessProcessingMessage =
+              'Guardando asignaciones sin vuelos...';
+
             // ✅ NUEVO: Llamar al método del componente default-flights para asignar "sin vuelos" y ESPERAR
-            await this.flightManagement.defaultFlightsComponent.saveFlightAssignmentsForAllTravelers(0, true);
-            
+            await this.flightManagement.defaultFlightsComponent.saveFlightAssignmentsForAllTravelers(
+              0,
+              true
+            );
+
             console.log('✅ Asignaciones sin vuelos guardadas exitosamente');
-            
+
             // ✅ NUEVO: Continuar con la selección de "Sin Vuelos" y ESPERAR
             await this.continueWithFlightlessSelection(flightlessPack);
           } else {
-            console.log('⚠️ No se puede acceder al componente default-flights, continuando directamente...');
+            console.log(
+              '⚠️ No se puede acceder al componente default-flights, continuando directamente...'
+            );
             await this.continueWithFlightlessSelection(flightlessPack);
           }
         } else {
@@ -2879,7 +2980,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               description: p.description,
             }))
           );
-          
+
           // ✅ NUEVO: Mostrar error y desactivar procesamiento
           this.messageService.add({
             severity: 'error',
@@ -2895,7 +2996,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           '📦 availableFlights length:',
           this.availableFlights?.length || 0
         );
-        
+
         // ✅ NUEVO: Mostrar error y desactivar procesamiento
         this.messageService.add({
           severity: 'error',
@@ -2910,12 +3011,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         '💥 Stack trace:',
         error instanceof Error ? error.stack : 'No stack trace available'
       );
-      
+
       // ✅ NUEVO: Mostrar error y desactivar procesamiento
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
-        detail: 'Error al procesar la selección sin vuelos. Por favor, inténtalo de nuevo.',
+        detail:
+          'Error al procesar la selección sin vuelos. Por favor, inténtalo de nuevo.',
         life: 5000,
       });
     } finally {
@@ -2929,17 +3031,22 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   /**
    * ✅ MÉTODO MEJORADO: Continuar con la selección de "Sin Vuelos" (sin cambio automático de paso)
    */
-  private async continueWithFlightlessSelection(flightlessPack: IFlightPackDTO): Promise<void> {
+  private async continueWithFlightlessSelection(
+    flightlessPack: IFlightPackDTO
+  ): Promise<void> {
     console.log('🔄 Continuando con selección de "Sin Vuelos"');
     console.log('📦 Paquete sin vuelos:', flightlessPack);
-    
+
     // ✅ NUEVO: Actualizar mensaje de procesamiento
     this.flightlessProcessingMessage = 'Actualizando resumen y datos...';
-    
+
     // Actualizar el selectedFlight
     this.selectedFlight = flightlessPack;
-    console.log('✅ selectedFlight actualizado con el paquete sin vuelos:', this.selectedFlight);
-    
+    console.log(
+      '✅ selectedFlight actualizado con el paquete sin vuelos:',
+      this.selectedFlight
+    );
+
     // Llamar a onFlightSelectionChange para actualizar el resumen
     this.onFlightSelectionChange({
       selectedFlight: flightlessPack,
@@ -2948,7 +3055,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     // ✅ NUEVO: Actualizar mensaje de procesamiento
     this.flightlessProcessingMessage = 'Recalculando precios...';
-    
+
     // Actualizar el resumen
     if (this.travelerSelector && this.travelerSelector.travelersNumbers) {
       this.updateOrderSummary(this.travelerSelector.travelersNumbers);
@@ -2965,12 +3072,15 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     this.messageService.add({
       severity: 'success',
       summary: 'Sin vuelos seleccionado',
-      detail: 'La opción sin vuelos ha sido seleccionada y guardada correctamente. Ahora puedes continuar al siguiente paso.',
+      detail:
+        'La opción sin vuelos ha sido seleccionada y guardada correctamente. Ahora puedes continuar al siguiente paso.',
       life: 5000,
     });
 
     // ✅ NUEVO: NO cambiar automáticamente de paso - el usuario debe hacer clic en "Continuar"
-    console.log('✅ Selección sin vuelos completada. El usuario debe hacer clic en "Continuar" para avanzar.');
+    console.log(
+      '✅ Selección sin vuelos completada. El usuario debe hacer clic en "Continuar" para avanzar.'
+    );
   }
 
   closeLoginModal(): void {
@@ -2996,7 +3106,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       this.messageService.add({
         severity: 'info',
         summary: 'Función no disponible',
-        detail: 'Para guardar tu presupuesto, debes acceder desde la plataforma principal e iniciar sesión.',
+        detail:
+          'Para guardar tu presupuesto, debes acceder desde la plataforma principal e iniciar sesión.',
         life: 6000,
       });
     } else {
@@ -3100,22 +3211,23 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    */
   public onNavigateToStep(stepNumber: number): void {
     console.log(`🔄 Navegando al step ${stepNumber} desde payment-management`);
-    
+
     if (stepNumber === 1) {
       // Navegar al step 1 (selección de vuelos)
       console.log('📍 Navegando a selección de vuelos (step 1)');
-      
+
       // Cambiar al step 1
       this.onActiveIndexChange(1);
-      
+
       // Mostrar mensaje informativo al usuario
       this.messageService.add({
         severity: 'info',
         summary: 'Navegación',
-        detail: 'Has sido redirigido a la selección de vuelos para elegir una nueva opción',
+        detail:
+          'Has sido redirigido a la selección de vuelos para elegir una nueva opción',
         life: 4000,
       });
-      
+
       // Opcional: Limpiar estado relacionado con vuelos si es necesario
       this.clearFlightSelectionState();
     } else {
@@ -3130,16 +3242,16 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    */
   private clearFlightSelectionState(): void {
     console.log('🧹 Limpiando estado de selección de vuelos...');
-    
+
     // Resetear vuelo seleccionado
     this.selectedFlight = null;
     this.flightPrice = 0;
-    
+
     // Actualizar el resumen sin vuelos
     if (this.travelerSelector && this.travelerSelector.travelersNumbers) {
       this.updateOrderSummary(this.travelerSelector.travelersNumbers);
     }
-    
+
     console.log('✅ Estado de vuelos limpiado');
   }
 }

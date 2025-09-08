@@ -1052,7 +1052,6 @@ export class TourHeaderV2Component
               }
 
               const travelerData: ReservationTravelerCreate = {
-                id: 0,
                 reservationId: createdReservation.id,
                 travelerNumber: travelerNumber,
                 isLeadTraveler: isLeadTraveler,
@@ -1078,7 +1077,6 @@ export class TourHeaderV2Component
               }
 
               const travelerData: ReservationTravelerCreate = {
-                id: 0,
                 reservationId: createdReservation.id,
                 travelerNumber: travelerNumber,
                 isLeadTraveler: false,
@@ -1104,7 +1102,6 @@ export class TourHeaderV2Component
               }
 
               const travelerData: ReservationTravelerCreate = {
-                id: 0,
                 reservationId: createdReservation.id,
                 travelerNumber: travelerNumber,
                 isLeadTraveler: false,

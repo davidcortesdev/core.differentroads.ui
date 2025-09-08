@@ -13,6 +13,19 @@ export interface IFooterLinkResponse {
   isActive: boolean;
 }
 
+/**
+ * Interfaz para los filtros disponibles en el método getAllFooterLinks.
+ */
+export interface FooterLinkFilters {
+  id?: number;
+  name?: string;
+  footerColumnId?: number;
+  url?: string;
+  esExterno?: boolean;
+  orden?: number;
+  isActive?: boolean;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -21,15 +34,9 @@ export class CMSFooterLinkService {
 
   constructor(private http: HttpClient) {}
 
-  getAllFooterLinks(params?: {
-    id?: number;
-    name?: string;
-    footerColumnId?: number;
-    url?: string;
-    esExterno?: boolean;
-    orden?: number;
-    isActive?: boolean;
-  }): Observable<IFooterLinkResponse[]> {
+  getAllFooterLinks(
+    params?: FooterLinkFilters
+  ): Observable<IFooterLinkResponse[]> {
     let httpParams = new HttpParams();
 
     if (params) {

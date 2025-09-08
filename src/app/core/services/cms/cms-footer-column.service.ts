@@ -12,6 +12,18 @@ export interface IFooterColumnResponse {
   isActive: boolean;
 }
 
+/**
+ * Interfaz para los filtros disponibles en el método getAllFooterColumns.
+ */
+export interface FooterColumnFilters {
+  id?: number;
+  code?: string;
+  name?: string;
+  description?: string;
+  orden?: number;
+  isActive?: boolean;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -20,14 +32,9 @@ export class CMSFooterColumnService {
 
   constructor(private http: HttpClient) {}
 
-  getAllFooterColumns(params?: {
-    id?: number;
-    code?: string;
-    name?: string;
-    description?: string;
-    orden?: number;
-    isActive?: boolean;
-  }): Observable<IFooterColumnResponse[]> {
+  getAllFooterColumns(
+    params?: FooterColumnFilters
+  ): Observable<IFooterColumnResponse[]> {
     let httpParams = new HttpParams();
 
     if (params) {

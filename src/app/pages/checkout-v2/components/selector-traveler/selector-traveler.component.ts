@@ -3,6 +3,7 @@ import {
   Input,
   OnInit,
   OnChanges,
+  OnDestroy,
   SimpleChanges,
   Output,
   EventEmitter,
@@ -31,7 +32,7 @@ import { forkJoin } from 'rxjs';
   templateUrl: './selector-traveler.component.html',
   styleUrl: './selector-traveler.component.scss',
 })
-export class SelectorTravelerComponent implements OnInit, OnChanges {
+export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
   @Input() departureId: number | null = null;
   @Input() reservationId: number | null = null;
   @Input() availableTravelers: string[] = ['Adultos', 'Niños', 'Bebés'];
@@ -84,6 +85,8 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
   error: string | null = null;
   saving: boolean = false; // NUEVO: Estado de guardado
   needsDataReload: boolean = false; // NUEVO: Control de recarga de datos
+  private saveTimeout: any = null; // NUEVO: Timeout para debounce
+  private pendingSave: boolean = false; // NUEVO: Indica si hay un guardado pendiente
 
   // Datos del departure y travelers
   departureData: any = null;
@@ -600,13 +603,64 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
     // Emitir cambios para el componente de habitaciones
     this.travelersNumbersChange.emit(this.travelersNumbers);
 
-    // GUARDAR INMEDIATAMENTE - Sin debounce
+    // OPTIMIZADO: Guardar con debounce para cambios rápidos
     if (this.reservationId && isValid) {
-      this.syncTravelersWithReservation();
+      this.scheduleSave();
     } else if (!isValid) {
       // Mostrar toast de validación si hay error
       this.showValidationToast();
     }
+  }
+
+  /**
+   * NUEVO: Programar guardado con debounce para cambios rápidos
+   * Evita múltiples llamadas simultáneas al guardado
+   */
+  private scheduleSave(): void {
+    // Cancelar timeout anterior si existe
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout);
+    }
+
+    // Marcar que hay un guardado pendiente
+    this.pendingSave = true;
+
+    // Programar guardado con debounce de 300ms
+    this.saveTimeout = setTimeout(() => {
+      this.executePendingSave();
+    }, 300);
+  }
+
+  /**
+   * NUEVO: Ejecutar guardado pendiente
+   * Solo ejecuta si hay cambios pendientes y no hay otra operación en curso
+   */
+  private async executePendingSave(): Promise<void> {
+    if (!this.pendingSave || this.saving) {
+      return;
+    }
+
+    this.pendingSave = false;
+    this.saveTimeout = null;
+
+    await this.syncTravelersWithReservation();
+  }
+
+  /**
+   * NUEVO: Forzar guardado inmediato
+   * Útil para casos donde se necesita guardar inmediatamente sin debounce
+   */
+  public async forceSave(): Promise<void> {
+    // Cancelar cualquier guardado pendiente
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout);
+      this.saveTimeout = null;
+    }
+
+    this.pendingSave = false;
+
+    // Ejecutar guardado inmediatamente
+    await this.syncTravelersWithReservation();
   }
 
   /**
@@ -677,12 +731,16 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
     }
 
     const newTotal = this.totalPassengers;
-    const currentTotal = this.totalExistingTravelers;
+    const existingTotal = this.totalExistingTravelers;
 
     // Solo sincronizar si hay cambios reales
-    if (newTotal === currentTotal && this.areValuesInSync()) {
+    if (newTotal === existingTotal && this.areValuesInSync()) {
       return;
     }
+
+    // Capturar los valores actuales para evitar cambios durante el guardado
+    const currentTravelersNumbers = { ...this.travelersNumbers };
+    const currentTotal = this.totalPassengers;
 
     this.saving = true;
     this.saveStatusChange.emit({ saving: true });
@@ -691,13 +749,13 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
     this.showSavingToast();
 
     try {
-      // Lógica de sincronización optimizada
-      if (newTotal > currentTotal) {
-        const travelersToCreate = newTotal - currentTotal;
+      // Lógica de sincronización optimizada usando valores capturados
+      if (currentTotal > this.totalExistingTravelers) {
+        const travelersToCreate = currentTotal - this.totalExistingTravelers;
         await this.createAdditionalTravelersOptimized(travelersToCreate);
         this.needsDataReload = true; // Marcar que necesitamos recargar
-      } else {
-        const travelersToRemove = currentTotal - newTotal;
+      } else if (currentTotal < this.totalExistingTravelers) {
+        const travelersToRemove = this.totalExistingTravelers - currentTotal;
         await this.removeExcessTravelers(travelersToRemove);
         this.needsDataReload = true; // Marcar que necesitamos recargar
       }
@@ -711,8 +769,8 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
         this.needsDataReload = false;
       }
 
-      // Actualizar números originales después del guardado exitoso
-      this.originalTravelersNumbers = { ...this.travelersNumbers };
+      // Actualizar números originales después del guardado exitoso usando valores capturados
+      this.originalTravelersNumbers = { ...currentTravelersNumbers };
 
       // Mostrar toast de éxito
       this.showSuccessToast();
@@ -723,8 +781,8 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
         component: 'selector-traveler',
         success: true,
         data: {
-          travelersNumbers: this.travelersNumbers,
-          totalPassengers: this.totalPassengers,
+          travelersNumbers: currentTravelersNumbers,
+          totalPassengers: currentTotal,
           existingTravelers: this.existingTravelers,
         },
       });
@@ -758,12 +816,12 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
   ): Promise<void> {
     if (!this.reservationId || count <= 0) return;
 
-    // Calcular números de viajero localmente sin llamada al API
-    const nextTravelerNumber = this.totalExistingTravelers + 1;
+    // CORREGIDO: Calcular el siguiente número de viajero basado en los existentes
+    const nextTravelerNumber = this.getNextAvailableTravelerNumberSafe();
 
-    // Calcular cuántos de cada tipo necesitamos agregar
+    // CORREGIDO: Crear travelers con números secuenciales únicos
     const travelersToCreate: ReservationTravelerCreate[] = [];
-    let travelerIndex = 0;
+    let currentTravelerNumber = nextTravelerNumber;
 
     // Procesar cada tipo de viajero en orden
     for (const travelerType of this.travelerTypes) {
@@ -774,29 +832,33 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
       const neededCount = currentCount - existingCount;
 
       if (neededCount > 0) {
-        for (let i = 0; i < neededCount && travelerIndex < count; i++) {
+        for (
+          let i = 0;
+          i < neededCount && travelersToCreate.length < count;
+          i++
+        ) {
           travelersToCreate.push({
             reservationId: this.reservationId!,
-            travelerNumber: nextTravelerNumber + travelerIndex,
+            travelerNumber: currentTravelerNumber,
             isLeadTraveler: false,
             tkId: '',
             ageGroupId: travelerType.ageGroup.id,
           });
-          travelerIndex++;
+          currentTravelerNumber++; // Incrementar para el siguiente
         }
       }
     }
 
     // Si aún necesitamos más travelers, usar el grupo por defecto
-    while (travelerIndex < count) {
+    while (travelersToCreate.length < count) {
       travelersToCreate.push({
         reservationId: this.reservationId!,
-        travelerNumber: nextTravelerNumber + travelerIndex,
+        travelerNumber: currentTravelerNumber,
         isLeadTraveler: false,
         tkId: '',
         ageGroupId: this.getDefaultAgeGroupId(),
       });
-      travelerIndex++;
+      currentTravelerNumber++; // Incrementar para el siguiente
     }
 
     // Crear todos los travelers en paralelo con timeout optimizado
@@ -817,12 +879,83 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
       const newTravelers = await Promise.all(createPromises);
       console.log(`✅ Creados ${newTravelers.length} travelers exitosamente`);
 
-      // Actualizar contadores localmente sin llamada al API
+      // CORREGIDO: Actualizar lista local de travelers para evitar conflictos futuros
+      this.existingTravelers.push(...newTravelers);
       this.totalExistingTravelers += newTravelers.length;
+
+      console.log(
+        `📊 Total travelers actualizado: ${this.totalExistingTravelers}`
+      );
     } catch (error) {
       console.error('❌ Error creando múltiples travelers:', error);
       throw error;
     }
+  }
+
+  /**
+   * CORREGIDO: Obtener el siguiente número de viajero disponible
+   * Calcula basándose en los travelers existentes en memoria
+   */
+  private getNextAvailableTravelerNumber(): number {
+    if (!this.existingTravelers || this.existingTravelers.length === 0) {
+      return 1; // Primer viajero
+    }
+
+    // Encontrar el número más alto de viajero existente
+    const maxTravelerNumber = Math.max(
+      ...this.existingTravelers.map((t) => t.travelerNumber)
+    );
+
+    return maxTravelerNumber + 1;
+  }
+
+  /**
+   * NUEVO: Verificar si un número de viajero ya existe
+   * Previene conflictos de números duplicados
+   */
+  private isTravelerNumberAvailable(travelerNumber: number): boolean {
+    return !this.existingTravelers.some(
+      (t) => t.travelerNumber === travelerNumber
+    );
+  }
+
+  /**
+   * NUEVO: Obtener el siguiente número de viajero disponible con verificación
+   * Asegura que el número no esté en uso
+   */
+  private getNextAvailableTravelerNumberSafe(): number {
+    let candidateNumber = this.getNextAvailableTravelerNumber();
+
+    // Buscar el siguiente número disponible si el candidato ya existe
+    while (!this.isTravelerNumberAvailable(candidateNumber)) {
+      candidateNumber++;
+    }
+
+    return candidateNumber;
+  }
+
+  /**
+   * RESPALDO: Obtener el siguiente número de viajero desde el API
+   * Solo se usa si hay problemas con el cálculo local
+   */
+  private async getNextAvailableTravelerNumberFromAPI(): Promise<number> {
+    return new Promise((resolve, reject) => {
+      this.reservationTravelerService
+        .getByReservationOrdered(this.reservationId!)
+        .subscribe({
+          next: (travelers) => {
+            if (travelers.length === 0) {
+              resolve(1);
+            } else {
+              const maxTravelerNumber = Math.max(
+                ...travelers.map((t) => t.travelerNumber)
+              );
+              resolve(maxTravelerNumber + 1);
+            }
+          },
+          error: reject,
+        });
+    });
   }
 
   /**
@@ -917,8 +1050,16 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
         `✅ Eliminados ${travelersToRemove.length} travelers exitosamente`
       );
 
-      // Actualizar contadores localmente sin llamada al API
+      // CORREGIDO: Actualizar lista local de travelers para mantener consistencia
+      const removedIds = travelersToRemove.map((t) => t.id);
+      this.existingTravelers = this.existingTravelers.filter(
+        (t) => !removedIds.includes(t.id)
+      );
       this.totalExistingTravelers -= travelersToRemove.length;
+
+      console.log(
+        `📊 Total travelers actualizado: ${this.totalExistingTravelers}`
+      );
     } catch (error) {
       console.error('❌ Error eliminando múltiples travelers:', error);
       throw error;
@@ -1197,5 +1338,14 @@ export class SelectorTravelerComponent implements OnInit, OnChanges {
    */
   getAgeRangeText(ageGroup: IAgeGroupResponse): string {
     return this.ageGroupService.getAgeRangeText(ageGroup);
+  }
+
+  ngOnDestroy(): void {
+    // Limpiar timeouts y subscripciones
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout);
+      this.saveTimeout = null;
+    }
+    this.pendingSave = false;
   }
 }

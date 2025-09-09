@@ -38,6 +38,7 @@ export class HeroSectionV2Component implements OnInit {
 
   destinations: string[] = ['Europa', 'Asia', 'África', 'América'];
 
+  // Hardcoded trip types
   tripTypes = [
     { label: 'Tours Organizados', value: 'tours-organizados' },
     { label: 'Viajes Familiares', value: 'viajes-familiares' },
@@ -109,7 +110,6 @@ export class HeroSectionV2Component implements OnInit {
     if (this.initialTripType) {
       this.selectedTripType = this.initialTripType.trim();
     } else {
-      // Asegurarse de que selectedTripType sea null para que muestre el placeholder
       this.selectedTripType = null;
     }
   }

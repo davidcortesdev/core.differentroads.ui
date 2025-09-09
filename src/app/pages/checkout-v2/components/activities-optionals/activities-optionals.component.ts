@@ -64,34 +64,28 @@ export class ActivitiesOptionalsComponent
   @Input() departureId: number | null = null;
   @Input() reservationId: number | null = null; // Nuevo input para la reservación
 
-  // 🔥 NUEVO: Output para notificar cambios al componente padre
+  // Outputs para comunicación con componente padre
   @Output() activitiesSelectionChange = new EventEmitter<{
     selectedActivities: ActivityWithPrice[];
     totalPrice: number;
   }>();
 
-  // 🔥 NUEVO: Output para notificar el estado de guardado
   @Output() saveCompleted = new EventEmitter<{
     component: string;
     success: boolean;
     error?: string;
   }>();
 
-  // Variables siguiendo el patrón del ejemplo
+  // Estado del componente
   optionalActivities: ActivityWithPrice[] = [];
   addedActivities: Set<number> = new Set();
-
-  // Cache de grupos de edad
-  private ageGroupsCache: IAgeGroupResponse[] = [];
-
-  // 🔥 NUEVO: Propiedades para controlar el estado de guardado
   public saving: boolean = false;
-
-  // 🔥 NUEVO: Propiedad para debounce
-  private saveTimeout: any;
-
-  // 🔥 NUEVO: Propiedad para mensajes de error
   public errorMessage: string | null = null;
+
+  // Cache y control de carga
+  private ageGroupsCache: IAgeGroupResponse[] = [];
+  private saveTimeout: any;
+  private activitiesByTravelerLoaded: boolean = false;
 
   constructor(
     private activityService: ActivityService,
@@ -116,20 +110,19 @@ export class ActivitiesOptionalsComponent
       this.loadActivities();
     }
 
-    // Si cambia reservationId, mostrar actividades por pasajero
-    if (changes['reservationId'] && this.reservationId) {
+    if (
+      changes['reservationId'] &&
+      this.reservationId &&
+      !this.activitiesByTravelerLoaded
+    ) {
       this.showActivitiesByTraveler();
     }
   }
 
   ngOnDestroy(): void {
-    // Limpiar timeout pendiente para evitar memory leaks
     this.clearPendingOperations();
   }
 
-  /**
-   * Carga los grupos de edad desde el servicio
-   */
   private loadAgeGroups(): void {
     this.ageGroupService.getAll().subscribe({
       next: (ageGroups) => {
@@ -138,29 +131,21 @@ export class ActivitiesOptionalsComponent
       },
       error: (error) => {
         console.error('Error loading age groups:', error);
-        // Continuar sin grupos de edad, usar valores por defecto
         this.initializeComponent();
       },
     });
   }
 
-  /**
-   * Inicializa el componente después de cargar los grupos de edad
-   */
   private initializeComponent(): void {
     if (this.itineraryId && this.departureId) {
       this.loadActivities();
     }
 
-    // Mostrar actividades por pasajero si tenemos reservationId
-    if (this.reservationId) {
+    if (this.reservationId && !this.activitiesByTravelerLoaded) {
       this.showActivitiesByTraveler();
     }
   }
 
-  /**
-   * Carga actividades siguiendo el patrón del ejemplo
-   */
   private loadActivities(): void {
     if (!this.itineraryId || !this.departureId) return;
 
@@ -174,13 +159,11 @@ export class ActivitiesOptionalsComponent
       )
       .subscribe({
         next: (activities) => {
-          // Procesar actividades y cargar precios
           this.optionalActivities = activities.map((activity) => ({
             ...activity,
-            priceData: [], // Inicializar array vacío
+            priceData: [],
           }));
 
-          // Cargar precios para cada actividad
           this.loadPricesForActivities();
         },
         error: (error) => {
@@ -190,23 +173,17 @@ export class ActivitiesOptionalsComponent
   }
 
   /**
-   * Muestra las actividades por pasajero usando los servicios y marca como añadidas
+   * Carga las actividades asignadas por viajero y las marca como añadidas
    */
   private showActivitiesByTraveler(): void {
-    if (!this.reservationId) return;
+    if (!this.reservationId || this.activitiesByTravelerLoaded) return;
 
-    // Obtener todos los viajeros de la reservación
     this.reservationTravelerService
       .getByReservation(this.reservationId!)
       .subscribe({
         next: (travelers) => {
-          // Set para almacenar todas las actividades asignadas
           const assignedActivities = new Set<number>();
-
-          // Contador para saber cuándo terminar de procesar todos los viajeros
           let processedTravelers = 0;
-
-          // Para cada viajero, obtener sus actividades individuales y packs
           travelers.forEach((traveler) => {
             forkJoin({
               activities:
@@ -219,22 +196,19 @@ export class ActivitiesOptionalsComponent
                 ),
             }).subscribe({
               next: (result) => {
-                // Agregar actividades individuales al set
                 result.activities.forEach((activity) => {
                   assignedActivities.add(activity.activityId);
                 });
 
-                // Agregar packs de actividades al set
                 result.activityPacks.forEach((pack) => {
                   assignedActivities.add(pack.activityPackId);
                 });
 
-                // Incrementar contador de viajeros procesados
                 processedTravelers++;
 
-                // Si ya procesamos todos los viajeros, marcar actividades como añadidas
                 if (processedTravelers === travelers.length) {
                   this.markAssignedActivitiesAsAdded(assignedActivities);
+                  this.activitiesByTravelerLoaded = true;
                 }
               },
               error: (error) => {
@@ -244,9 +218,9 @@ export class ActivitiesOptionalsComponent
                 );
                 processedTravelers++;
 
-                // Verificar si terminamos de procesar incluso con error
                 if (processedTravelers === travelers.length) {
                   this.markAssignedActivitiesAsAdded(assignedActivities);
+                  this.activitiesByTravelerLoaded = true;
                 }
               },
             });
@@ -258,25 +232,14 @@ export class ActivitiesOptionalsComponent
       });
   }
 
-  /**
-   * Marca las actividades asignadas como añadidas en la interfaz
-   */
   private markAssignedActivitiesAsAdded(assignedActivities: Set<number>): void {
-    // Limpiar actividades añadidas previamente
     this.addedActivities.clear();
-
-    // Agregar todas las actividades asignadas al set
     assignedActivities.forEach((activityId) => {
       this.addedActivities.add(activityId);
     });
-
-    // Emitir cambios para actualizar el componente padre si es necesario
     this.emitActivitiesChange();
   }
 
-  /**
-   * Carga precios para todas las actividades
-   */
   private loadPricesForActivities(): void {
     if (!this.departureId) return;
 
@@ -285,9 +248,6 @@ export class ActivitiesOptionalsComponent
     });
   }
 
-  /**
-   * Carga precio para una actividad específica
-   */
   private loadPriceForActivity(
     activity: ActivityWithPrice,
     index: number
@@ -295,7 +255,6 @@ export class ActivitiesOptionalsComponent
     if (!this.departureId) return;
 
     if (activity.type === 'act') {
-      // Cargar precio de actividad individual
       this.activityPriceService
         .getAll({
           ActivityId: [activity.id],
@@ -312,22 +271,19 @@ export class ActivitiesOptionalsComponent
           })
         )
         .subscribe((prices) => {
-          // Transformar precios al formato esperado (similar al ejemplo)
           this.optionalActivities[index].priceData = prices.map(
             (price: IActivityPriceResponse) => ({
               age_group_name: this.getAgeGroupName(price.ageGroupId),
               value: price.campaignPrice || price.basePrice,
-              currency: 'EUR', // Ajustar según tu moneda
+              currency: 'EUR',
             })
           );
 
-          // 🔥 NUEVO: Emitir cambios después de cargar precios si la actividad está seleccionada
           if (this.addedActivities.has(activity.id)) {
             this.emitActivitiesChange();
           }
         });
     } else if (activity.type === 'pack') {
-      // Cargar precio de pack
       this.activityPackPriceService
         .getAll({
           activityPackId: activity.id,
@@ -344,7 +300,6 @@ export class ActivitiesOptionalsComponent
           })
         )
         .subscribe((prices) => {
-          // Transformar precios al formato esperado
           this.optionalActivities[index].priceData = prices.map(
             (price: IActivityPackPriceResponse) => ({
               age_group_name: this.getAgeGroupName(price.ageGroupId),
@@ -353,7 +308,6 @@ export class ActivitiesOptionalsComponent
             })
           );
 
-          // 🔥 NUEVO: Emitir cambios después de cargar precios si la actividad está seleccionada
           if (this.addedActivities.has(activity.id)) {
             this.emitActivitiesChange();
           }
@@ -361,35 +315,23 @@ export class ActivitiesOptionalsComponent
     }
   }
 
-  /**
-   * Obtiene el nombre del grupo de edad basado en el ID
-   */
   private getAgeGroupName(ageGroupId: number): string {
     const ageGroup = this.ageGroupsCache.find(
       (group) => group.id === ageGroupId
     );
-    return ageGroup ? ageGroup.name : 'Adultos'; // Por defecto
+    return ageGroup ? ageGroup.name : 'Adultos';
   }
 
-  /**
-   * Obtiene precios de adultos (siguiendo el patrón del ejemplo)
-   */
   getAdultPrices(priceData: PriceData[]): PriceData[] {
     if (!priceData) return [];
     return priceData.filter((price) => price.age_group_name === 'Adultos');
   }
 
-  /**
-   * Obtiene el precio base para mostrar
-   */
   getBasePrice(item: ActivityWithPrice): number | null {
     const adultPrices = this.getAdultPrices(item.priceData);
     return adultPrices.length > 0 ? adultPrices[0].value : null;
   }
 
-  /**
-   * 🔥 NUEVO: Método con debounce para guardar
-   */
   private debouncedSave(
     item: ActivityWithPrice,
     action: 'add' | 'remove'
@@ -404,25 +346,15 @@ export class ActivitiesOptionalsComponent
     }, 300);
   }
 
-  /**
-   * 🔥 NUEVO: Método para verificar si hay operaciones pendientes
-   */
   private hasPendingOperations(): boolean {
     return this.saving;
   }
 
-  /**
-   * 🔥 NUEVO: Método para limpiar operaciones pendientes
-   */
   private clearPendingOperations(): void {
     clearTimeout(this.saveTimeout);
   }
 
-  /**
-   * 🔥 NUEVO: Validar que existe reserva y limpiar errores
-   */
   private validateReservation(): boolean {
-    // Limpiar mensaje de error anterior
     this.errorMessage = null;
 
     if (!this.reservationId) {
@@ -432,41 +364,27 @@ export class ActivitiesOptionalsComponent
     return true;
   }
 
-  /**
-   * 🔥 MODIFICADO: Alterna la selección de actividad con debounce y operaciones robustas
-   */
   toggleActivity(item: ActivityWithPrice): void {
-    // Si hay operaciones pendientes, no permitir nuevas
     if (this.hasPendingOperations()) {
-      console.log('⏳ Operación de guardado en curso, esperando...');
       return;
     }
 
     if (this.addedActivities.has(item.id)) {
-      // Actualizar UI inmediatamente
       this.addedActivities.delete(item.id);
-      // Eliminar de BD con debounce
       this.debouncedSave(item, 'remove');
     } else {
-      // Actualizar UI inmediatamente
       this.addedActivities.add(item.id);
-      // Guardar en BD con debounce
       this.debouncedSave(item, 'add');
     }
 
-    // Emitir cambios inmediatamente
     this.emitActivitiesChange();
   }
 
-  /**
-   * 🔥 NUEVO: Método optimizado para añadir actividad a todos los viajeros
-   */
   private addActivityToAllTravelers(item: ActivityWithPrice): void {
     if (!this.validateReservation() || this.saving) return;
 
     this.saving = true;
 
-    // SIEMPRE obtener viajeros frescos (sin cache)
     this.reservationTravelerService
       .getByReservation(this.reservationId!)
       .subscribe({
@@ -481,7 +399,6 @@ export class ActivitiesOptionalsComponent
             return;
           }
 
-          // Crear todas las asignaciones en paralelo
           const savePromises = travelers.map((traveler) => {
             if (item.type === 'act') {
               return firstValueFrom(
@@ -507,30 +424,21 @@ export class ActivitiesOptionalsComponent
             .then(() => {
               this.saving = false;
 
-              // NUEVO: Limpiar errores y emitir evento de guardado exitoso
+              this.updateActivityState(item.id, true);
               this.errorMessage = null;
               this.saveCompleted.emit({
                 component: 'activities-optionals',
                 success: true,
               });
-
-              console.log(
-                `✅ Actividad "${item.name}" añadida a ${travelers.length} viajeros`
-              );
             })
             .catch((error) => {
               this.saving = false;
               console.error('❌ Error guardando actividad:', error);
 
-              // Revertir UI en caso de error
               this.addedActivities.delete(item.id);
               this.emitActivitiesChange();
-
-              // NUEVO: Mostrar error al usuario
               this.errorMessage =
                 'Error al guardar la actividad. Inténtalo de nuevo.';
-
-              // NUEVO: Emitir evento de error
               this.saveCompleted.emit({
                 component: 'activities-optionals',
                 success: false,
@@ -542,11 +450,8 @@ export class ActivitiesOptionalsComponent
           this.saving = false;
           console.error('❌ Error obteniendo viajeros:', error);
 
-          // Revertir UI en caso de error
           this.addedActivities.delete(item.id);
           this.emitActivitiesChange();
-
-          // NUEVO: Mostrar error al usuario
           this.errorMessage =
             'Error al obtener información de viajeros. Inténtalo de nuevo.';
 
@@ -559,15 +464,11 @@ export class ActivitiesOptionalsComponent
       });
   }
 
-  /**
-   * 🔥 NUEVO: Método optimizado para eliminar actividad de todos los viajeros
-   */
   private removeActivityFromAllTravelers(item: ActivityWithPrice): void {
     if (!this.validateReservation() || this.saving) return;
 
     this.saving = true;
 
-    // SIEMPRE obtener viajeros frescos (sin cache)
     this.reservationTravelerService
       .getByReservation(this.reservationId!)
       .subscribe({
@@ -582,7 +483,6 @@ export class ActivitiesOptionalsComponent
             return;
           }
 
-          // Obtener todas las asignaciones existentes en paralelo
           const getAssignmentsPromises = travelers.map((traveler) => {
             if (item.type === 'act') {
               return firstValueFrom(
@@ -606,7 +506,6 @@ export class ActivitiesOptionalsComponent
 
           Promise.all(getAssignmentsPromises)
             .then((assignmentsArrays) => {
-              // Aplanar todas las asignaciones
               const allAssignments = assignmentsArrays.flat();
 
               if (allAssignments.length === 0) {
@@ -619,7 +518,6 @@ export class ActivitiesOptionalsComponent
                 return;
               }
 
-              // Eliminar todas las asignaciones en paralelo
               const deletePromises = allAssignments.map((assignment) => {
                 if (item.type === 'act') {
                   return firstValueFrom(
@@ -642,30 +540,21 @@ export class ActivitiesOptionalsComponent
             .then(() => {
               this.saving = false;
 
-              // NUEVO: Limpiar errores y emitir evento de guardado exitoso
+              this.updateActivityState(item.id, false);
               this.errorMessage = null;
               this.saveCompleted.emit({
                 component: 'activities-optionals',
                 success: true,
               });
-
-              console.log(
-                `✅ Actividad "${item.name}" eliminada de ${travelers.length} viajeros`
-              );
             })
             .catch((error) => {
               this.saving = false;
               console.error('❌ Error eliminando actividad:', error);
 
-              // Revertir UI en caso de error
               this.addedActivities.add(item.id);
               this.emitActivitiesChange();
-
-              // NUEVO: Mostrar error al usuario
               this.errorMessage =
                 'Error al eliminar la actividad. Inténtalo de nuevo.';
-
-              // NUEVO: Emitir evento de error
               this.saveCompleted.emit({
                 component: 'activities-optionals',
                 success: false,
@@ -677,11 +566,8 @@ export class ActivitiesOptionalsComponent
           this.saving = false;
           console.error('❌ Error obteniendo viajeros:', error);
 
-          // Revertir UI en caso de error
           this.addedActivities.add(item.id);
           this.emitActivitiesChange();
-
-          // NUEVO: Mostrar error al usuario
           this.errorMessage =
             'Error al obtener información de viajeros. Inténtalo de nuevo.';
 
@@ -694,16 +580,19 @@ export class ActivitiesOptionalsComponent
       });
   }
 
-  /**
-   * Verifica si la actividad está añadida (siguiendo el patrón del ejemplo)
-   */
+  private updateActivityState(activityId: number, isAdded: boolean): void {
+    if (isAdded) {
+      this.addedActivities.add(activityId);
+    } else {
+      this.addedActivities.delete(activityId);
+    }
+    this.emitActivitiesChange();
+  }
+
   isActivityAdded(item: ActivityWithPrice): boolean {
     return this.addedActivities.has(item.id);
   }
 
-  /**
-   * 🔥 NUEVO: Emite los cambios de actividades seleccionadas al componente padre
-   */
   private emitActivitiesChange(): void {
     const selectedActivities = this.optionalActivities.filter((activity) =>
       this.addedActivities.has(activity.id)
@@ -720,18 +609,12 @@ export class ActivitiesOptionalsComponent
     });
   }
 
-  /**
-   * 🔥 NUEVO: Getter para obtener las actividades seleccionadas
-   */
   get selectedActivities(): ActivityWithPrice[] {
     return this.optionalActivities.filter((activity) =>
       this.addedActivities.has(activity.id)
     );
   }
 
-  /**
-   * 🔥 NUEVO: Getter para obtener el precio total de actividades seleccionadas
-   */
   get totalActivitiesPrice(): number {
     return this.selectedActivities.reduce((total, activity) => {
       const price = this.getBasePrice(activity);
@@ -739,9 +622,6 @@ export class ActivitiesOptionalsComponent
     }, 0);
   }
 
-  /**
-   * 🔥 NUEVO: Getter para verificar si hay actividades seleccionadas
-   */
   get hasSelectedActivities(): boolean {
     return this.addedActivities.size > 0;
   }

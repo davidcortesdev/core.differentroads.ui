@@ -14,7 +14,7 @@
       <i class="pi pi-info-circle"></i>También puedes añadirlas después desde tu
       perfil
     </div>
-    <!-- NUEVO: Mensaje informativo sobre selección por usuario -->
+    <!-- OPTIMIZADO: Mensaje informativo sobre selección por usuario -->
     <div
       class="step-info"
       [ngClass]="{ saving: saving }"
@@ -22,7 +22,7 @@
     >
       <i class="pi pi-check-circle" *ngIf="!saving"></i>
       <i class="pi pi-spin pi-spinner" *ngIf="saving"></i>
-      <span *ngIf="saving">Guardando actividades...</span>
+      <span *ngIf="saving">Guardando actividad...</span>
       <span *ngIf="!saving && hasSelectedActivities">
         ✅ Actividades guardadas. Podrás elegir por usuario en el paso 3 de
         viajeros.

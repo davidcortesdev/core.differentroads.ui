@@ -5,6 +5,7 @@ import {
   EventEmitter,
   OnInit,
   OnChanges,
+  OnDestroy,
   SimpleChanges,
 } from '@angular/core';
 import {
@@ -36,7 +37,7 @@ import {
   IAgeGroupResponse,
 } from '../../../../core/services/agegroup/age-group.service';
 import { catchError, map } from 'rxjs/operators';
-import { of, forkJoin } from 'rxjs';
+import { of, forkJoin, firstValueFrom } from 'rxjs';
 
 // Interface para el formato de precio esperado (siguiendo el ejemplo)
 interface PriceData {
@@ -56,23 +57,37 @@ interface ActivityWithPrice extends IActivityResponse {
   templateUrl: './activities-optionals.component.html',
   styleUrl: './activities-optionals.component.scss',
 })
-export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
+export class ActivitiesOptionalsComponent
+  implements OnInit, OnChanges, OnDestroy
+{
   @Input() itineraryId: number | null = null;
   @Input() departureId: number | null = null;
   @Input() reservationId: number | null = null; // Nuevo input para la reservación
 
-  // 🔥 NUEVO: Output para notificar cambios al componente padre
+  // Outputs para comunicación con componente padre
   @Output() activitiesSelectionChange = new EventEmitter<{
     selectedActivities: ActivityWithPrice[];
     totalPrice: number;
   }>();
 
-  // Variables siguiendo el patrón del ejemplo
+  @Output() saveCompleted = new EventEmitter<{
+    component: string;
+    success: boolean;
+    error?: string;
+  }>();
+
+  // Estado del componente
   optionalActivities: ActivityWithPrice[] = [];
   addedActivities: Set<number> = new Set();
-  
-  // Cache de grupos de edad
+  public errorMessage: string | null = null;
+
+  // Individual loading states per activity
+  private activityLoadingStates: Map<number, boolean> = new Map();
+
+  // Cache y control de carga
   private ageGroupsCache: IAgeGroupResponse[] = [];
+  private saveTimeout: any;
+  private activitiesByTravelerLoaded: boolean = false;
 
   constructor(
     private activityService: ActivityService,
@@ -97,15 +112,19 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
       this.loadActivities();
     }
 
-    // Si cambia reservationId, mostrar actividades por pasajero
-    if (changes['reservationId'] && this.reservationId) {
+    if (
+      changes['reservationId'] &&
+      this.reservationId &&
+      !this.activitiesByTravelerLoaded
+    ) {
       this.showActivitiesByTraveler();
     }
   }
 
-  /**
-   * Carga los grupos de edad desde el servicio
-   */
+  ngOnDestroy(): void {
+    this.clearPendingOperations();
+  }
+
   private loadAgeGroups(): void {
     this.ageGroupService.getAll().subscribe({
       next: (ageGroups) => {
@@ -114,29 +133,21 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
       },
       error: (error) => {
         console.error('Error loading age groups:', error);
-        // Continuar sin grupos de edad, usar valores por defecto
         this.initializeComponent();
-      }
+      },
     });
   }
 
-  /**
-   * Inicializa el componente después de cargar los grupos de edad
-   */
   private initializeComponent(): void {
     if (this.itineraryId && this.departureId) {
       this.loadActivities();
     }
 
-    // Mostrar actividades por pasajero si tenemos reservationId
-    if (this.reservationId) {
+    if (this.reservationId && !this.activitiesByTravelerLoaded) {
       this.showActivitiesByTraveler();
     }
   }
 
-  /**
-   * Carga actividades siguiendo el patrón del ejemplo
-   */
   private loadActivities(): void {
     if (!this.itineraryId || !this.departureId) return;
 
@@ -150,13 +161,11 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
       )
       .subscribe({
         next: (activities) => {
-          // Procesar actividades y cargar precios
           this.optionalActivities = activities.map((activity) => ({
             ...activity,
-            priceData: [], // Inicializar array vacío
+            priceData: [],
           }));
 
-          // Cargar precios para cada actividad
           this.loadPricesForActivities();
         },
         error: (error) => {
@@ -166,23 +175,17 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
   }
 
   /**
-   * Muestra las actividades por pasajero usando los servicios y marca como añadidas
+   * Carga las actividades asignadas por viajero y las marca como añadidas
    */
   private showActivitiesByTraveler(): void {
-    if (!this.reservationId) return;
+    if (!this.reservationId || this.activitiesByTravelerLoaded) return;
 
-    // Obtener todos los viajeros de la reservación
     this.reservationTravelerService
-      .getByReservation(this.reservationId)
+      .getByReservation(this.reservationId!)
       .subscribe({
         next: (travelers) => {
-          // Set para almacenar todas las actividades asignadas
           const assignedActivities = new Set<number>();
-
-          // Contador para saber cuándo terminar de procesar todos los viajeros
           let processedTravelers = 0;
-
-          // Para cada viajero, obtener sus actividades individuales y packs
           travelers.forEach((traveler) => {
             forkJoin({
               activities:
@@ -195,22 +198,19 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
                 ),
             }).subscribe({
               next: (result) => {
-                // Agregar actividades individuales al set
                 result.activities.forEach((activity) => {
                   assignedActivities.add(activity.activityId);
                 });
 
-                // Agregar packs de actividades al set
                 result.activityPacks.forEach((pack) => {
                   assignedActivities.add(pack.activityPackId);
                 });
 
-                // Incrementar contador de viajeros procesados
                 processedTravelers++;
 
-                // Si ya procesamos todos los viajeros, marcar actividades como añadidas
                 if (processedTravelers === travelers.length) {
                   this.markAssignedActivitiesAsAdded(assignedActivities);
+                  this.activitiesByTravelerLoaded = true;
                 }
               },
               error: (error) => {
@@ -220,9 +220,9 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
                 );
                 processedTravelers++;
 
-                // Verificar si terminamos de procesar incluso con error
                 if (processedTravelers === travelers.length) {
                   this.markAssignedActivitiesAsAdded(assignedActivities);
+                  this.activitiesByTravelerLoaded = true;
                 }
               },
             });
@@ -234,25 +234,14 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
       });
   }
 
-  /**
-   * Marca las actividades asignadas como añadidas en la interfaz
-   */
   private markAssignedActivitiesAsAdded(assignedActivities: Set<number>): void {
-    // Limpiar actividades añadidas previamente
     this.addedActivities.clear();
-
-    // Agregar todas las actividades asignadas al set
     assignedActivities.forEach((activityId) => {
       this.addedActivities.add(activityId);
     });
-
-    // Emitir cambios para actualizar el componente padre si es necesario
     this.emitActivitiesChange();
   }
 
-  /**
-   * Carga precios para todas las actividades
-   */
   private loadPricesForActivities(): void {
     if (!this.departureId) return;
 
@@ -261,9 +250,6 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
     });
   }
 
-  /**
-   * Carga precio para una actividad específica
-   */
   private loadPriceForActivity(
     activity: ActivityWithPrice,
     index: number
@@ -271,7 +257,6 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
     if (!this.departureId) return;
 
     if (activity.type === 'act') {
-      // Cargar precio de actividad individual
       this.activityPriceService
         .getAll({
           ActivityId: [activity.id],
@@ -288,22 +273,19 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
           })
         )
         .subscribe((prices) => {
-          // Transformar precios al formato esperado (similar al ejemplo)
           this.optionalActivities[index].priceData = prices.map(
             (price: IActivityPriceResponse) => ({
               age_group_name: this.getAgeGroupName(price.ageGroupId),
               value: price.campaignPrice || price.basePrice,
-              currency: 'EUR', // Ajustar según tu moneda
+              currency: 'EUR',
             })
           );
 
-          // 🔥 NUEVO: Emitir cambios después de cargar precios si la actividad está seleccionada
           if (this.addedActivities.has(activity.id)) {
             this.emitActivitiesChange();
           }
         });
     } else if (activity.type === 'pack') {
-      // Cargar precio de pack
       this.activityPackPriceService
         .getAll({
           activityPackId: activity.id,
@@ -320,7 +302,6 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
           })
         )
         .subscribe((prices) => {
-          // Transformar precios al formato esperado
           this.optionalActivities[index].priceData = prices.map(
             (price: IActivityPackPriceResponse) => ({
               age_group_name: this.getAgeGroupName(price.ageGroupId),
@@ -329,7 +310,6 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
             })
           );
 
-          // 🔥 NUEVO: Emitir cambios después de cargar precios si la actividad está seleccionada
           if (this.addedActivities.has(activity.id)) {
             this.emitActivitiesChange();
           }
@@ -337,168 +317,294 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
     }
   }
 
-  /**
-   * Obtiene el nombre del grupo de edad basado en el ID
-   */
   private getAgeGroupName(ageGroupId: number): string {
-    const ageGroup = this.ageGroupsCache.find(group => group.id === ageGroupId);
-    return ageGroup ? ageGroup.name : 'Adultos'; // Por defecto
+    const ageGroup = this.ageGroupsCache.find(
+      (group) => group.id === ageGroupId
+    );
+    return ageGroup ? ageGroup.name : 'Adultos';
   }
 
-  /**
-   * Obtiene precios de adultos (siguiendo el patrón del ejemplo)
-   */
   getAdultPrices(priceData: PriceData[]): PriceData[] {
     if (!priceData) return [];
     return priceData.filter((price) => price.age_group_name === 'Adultos');
   }
 
-  /**
-   * Obtiene el precio base para mostrar
-   */
   getBasePrice(item: ActivityWithPrice): number | null {
     const adultPrices = this.getAdultPrices(item.priceData);
     return adultPrices.length > 0 ? adultPrices[0].value : null;
   }
 
-  /**
-   * 🔥 MODIFICADO: Alterna la selección de actividad y emite cambios
-   */
+  private debouncedSave(
+    item: ActivityWithPrice,
+    action: 'add' | 'remove'
+  ): void {
+    clearTimeout(this.saveTimeout);
+    this.saveTimeout = setTimeout(() => {
+      if (action === 'add') {
+        this.addActivityToAllTravelers(item);
+      } else {
+        this.removeActivityFromAllTravelers(item);
+      }
+    }, 300);
+  }
+
+  private clearPendingOperations(): void {
+    clearTimeout(this.saveTimeout);
+  }
+
+  private validateReservation(): boolean {
+    this.errorMessage = null;
+
+    if (!this.reservationId) {
+      this.errorMessage = 'No hay reserva seleccionada';
+      return false;
+    }
+    return true;
+  }
+
   toggleActivity(item: ActivityWithPrice): void {
-    if (this.addedActivities.has(item.id)) {
-      // Actualizar UI inmediatamente
-      this.addedActivities.delete(item.id);
-      // Eliminar de BD en background
-      this.removeActivityFromDatabase(item);
-    } else {
-      // Actualizar UI inmediatamente
-      this.addedActivities.add(item.id);
-      // Guardar en BD en background
-      this.addActivityToDatabase(item);
+    if (this.isActivityLoading(item)) {
+      return;
     }
 
-    // Emitir cambios inmediatamente
+    if (this.addedActivities.has(item.id)) {
+      this.addedActivities.delete(item.id);
+      this.debouncedSave(item, 'remove');
+    } else {
+      this.addedActivities.add(item.id);
+      this.debouncedSave(item, 'add');
+    }
+
     this.emitActivitiesChange();
   }
 
-  /**
-   * Guarda en BD pero no afecta la UI
-   */
-  private addActivityToDatabase(item: ActivityWithPrice): void {
-    if (!this.reservationId) return;
+  private addActivityToAllTravelers(item: ActivityWithPrice): void {
+    if (!this.validateReservation() || this.isActivityLoading(item)) return;
+
+    this.setActivityLoading(item, true);
 
     this.reservationTravelerService
-      .getByReservation(this.reservationId)
+      .getByReservation(this.reservationId!)
       .subscribe({
         next: (travelers) => {
-          travelers.forEach((traveler) => {
+          if (travelers.length === 0) {
+            this.setActivityLoading(item, false);
+            this.saveCompleted.emit({
+              component: 'activities-optionals',
+              success: false,
+              error: 'No hay viajeros en la reserva',
+            });
+            return;
+          }
+
+          const savePromises = travelers.map((traveler) => {
             if (item.type === 'act') {
-              this.reservationTravelerActivityService
-                .create({
+              return firstValueFrom(
+                this.reservationTravelerActivityService.create({
                   id: 0,
                   reservationTravelerId: traveler.id,
                   activityId: item.id,
                 })
-                .subscribe({
-                  error: (error) => {
-                    console.error('Error guardando actividad:', error);
-                    // Si falla, revertir UI
-                    this.addedActivities.delete(item.id);
-                    this.emitActivitiesChange();
-                  },
-                });
+              );
             } else if (item.type === 'pack') {
-              this.reservationTravelerActivityPackService
-                .create({
+              return firstValueFrom(
+                this.reservationTravelerActivityPackService.create({
                   id: 0,
                   reservationTravelerId: traveler.id,
                   activityPackId: item.id,
                 })
-                .subscribe({
-                  error: (error) => {
-                    console.error('Error guardando pack:', error);
-                    // Si falla, revertir UI
-                    this.addedActivities.delete(item.id);
-                    this.emitActivitiesChange();
-                  },
-                });
+              );
             }
+            return Promise.resolve(null);
+          });
+
+          Promise.all(savePromises)
+            .then(() => {
+              this.setActivityLoading(item, false);
+
+              this.updateActivityState(item.id, true);
+              this.errorMessage = null;
+              this.saveCompleted.emit({
+                component: 'activities-optionals',
+                success: true,
+              });
+            })
+            .catch((error) => {
+              this.setActivityLoading(item, false);
+              console.error('❌ Error guardando actividad:', error);
+
+              this.addedActivities.delete(item.id);
+              this.emitActivitiesChange();
+              this.errorMessage =
+                'Error al guardar la actividad. Inténtalo de nuevo.';
+              this.saveCompleted.emit({
+                component: 'activities-optionals',
+                success: false,
+                error: 'Error al guardar la actividad',
+              });
+            });
+        },
+        error: (error) => {
+          this.setActivityLoading(item, false);
+          console.error('❌ Error obteniendo viajeros:', error);
+
+          this.addedActivities.delete(item.id);
+          this.emitActivitiesChange();
+          this.errorMessage =
+            'Error al obtener información de viajeros. Inténtalo de nuevo.';
+
+          this.saveCompleted.emit({
+            component: 'activities-optionals',
+            success: false,
+            error: 'Error al obtener viajeros',
           });
         },
       });
   }
 
-  /**
-   * Elimina de BD pero no afecta la UI
-   */
-  private removeActivityFromDatabase(item: ActivityWithPrice): void {
-    if (!this.reservationId) return;
+  private removeActivityFromAllTravelers(item: ActivityWithPrice): void {
+    if (!this.validateReservation() || this.isActivityLoading(item)) return;
+
+    this.setActivityLoading(item, true);
 
     this.reservationTravelerService
-      .getByReservation(this.reservationId)
+      .getByReservation(this.reservationId!)
       .subscribe({
         next: (travelers) => {
-          travelers.forEach((traveler) => {
+          if (travelers.length === 0) {
+            this.setActivityLoading(item, false);
+            this.saveCompleted.emit({
+              component: 'activities-optionals',
+              success: false,
+              error: 'No hay viajeros en la reserva',
+            });
+            return;
+          }
+
+          const getAssignmentsPromises = travelers.map((traveler) => {
             if (item.type === 'act') {
-              this.reservationTravelerActivityService
-                .getByReservationTraveler(traveler.id)
-                .subscribe({
-                  next: (activities) => {
-                    const activityToDelete = activities.find(
-                      (a) => a.activityId === item.id
-                    );
-                    if (activityToDelete) {
-                      this.reservationTravelerActivityService
-                        .delete(activityToDelete.id)
-                        .subscribe({
-                          error: (error) => {
-                            console.error('Error eliminando actividad:', error);
-                            // Si falla, revertir UI
-                            this.addedActivities.add(item.id);
-                            this.emitActivitiesChange();
-                          },
-                        });
-                    }
-                  },
-                });
+              return firstValueFrom(
+                this.reservationTravelerActivityService.getByReservationTraveler(
+                  traveler.id
+                )
+              ).then((activities) =>
+                (activities || []).filter((a) => a.activityId === item.id)
+              );
             } else if (item.type === 'pack') {
-              this.reservationTravelerActivityPackService
-                .getByReservationTraveler(traveler.id)
-                .subscribe({
-                  next: (packs) => {
-                    const packToDelete = packs.find(
-                      (p) => p.activityPackId === item.id
-                    );
-                    if (packToDelete) {
-                      this.reservationTravelerActivityPackService
-                        .delete(packToDelete.id)
-                        .subscribe({
-                          error: (error) => {
-                            console.error('Error eliminando pack:', error);
-                            // Si falla, revertir UI
-                            this.addedActivities.add(item.id);
-                            this.emitActivitiesChange();
-                          },
-                        });
-                    }
-                  },
-                });
+              return firstValueFrom(
+                this.reservationTravelerActivityPackService.getByReservationTraveler(
+                  traveler.id
+                )
+              ).then((packs) =>
+                (packs || []).filter((p) => p.activityPackId === item.id)
+              );
             }
+            return Promise.resolve([]);
+          });
+
+          Promise.all(getAssignmentsPromises)
+            .then((assignmentsArrays) => {
+              const allAssignments = assignmentsArrays.flat();
+
+              if (allAssignments.length === 0) {
+                this.setActivityLoading(item, false);
+                this.errorMessage = null;
+                this.saveCompleted.emit({
+                  component: 'activities-optionals',
+                  success: true,
+                });
+                return;
+              }
+
+              const deletePromises = allAssignments.map((assignment) => {
+                if (item.type === 'act') {
+                  return firstValueFrom(
+                    this.reservationTravelerActivityService.delete(
+                      assignment.id
+                    )
+                  );
+                } else if (item.type === 'pack') {
+                  return firstValueFrom(
+                    this.reservationTravelerActivityPackService.delete(
+                      assignment.id
+                    )
+                  );
+                }
+                return Promise.resolve(null);
+              });
+
+              return Promise.all(deletePromises);
+            })
+            .then(() => {
+              this.setActivityLoading(item, false);
+
+              this.updateActivityState(item.id, false);
+              this.errorMessage = null;
+              this.saveCompleted.emit({
+                component: 'activities-optionals',
+                success: true,
+              });
+            })
+            .catch((error) => {
+              this.setActivityLoading(item, false);
+              console.error('❌ Error eliminando actividad:', error);
+
+              this.addedActivities.add(item.id);
+              this.emitActivitiesChange();
+              this.errorMessage =
+                'Error al eliminar la actividad. Inténtalo de nuevo.';
+              this.saveCompleted.emit({
+                component: 'activities-optionals',
+                success: false,
+                error: 'Error al eliminar la actividad',
+              });
+            });
+        },
+        error: (error) => {
+          this.setActivityLoading(item, false);
+          console.error('❌ Error obteniendo viajeros:', error);
+
+          this.addedActivities.add(item.id);
+          this.emitActivitiesChange();
+          this.errorMessage =
+            'Error al obtener información de viajeros. Inténtalo de nuevo.';
+
+          this.saveCompleted.emit({
+            component: 'activities-optionals',
+            success: false,
+            error: 'Error al obtener viajeros',
           });
         },
       });
   }
 
-  /**
-   * Verifica si la actividad está añadida (siguiendo el patrón del ejemplo)
-   */
+  private updateActivityState(activityId: number, isAdded: boolean): void {
+    if (isAdded) {
+      this.addedActivities.add(activityId);
+    } else {
+      this.addedActivities.delete(activityId);
+    }
+    this.emitActivitiesChange();
+  }
+
   isActivityAdded(item: ActivityWithPrice): boolean {
     return this.addedActivities.has(item.id);
   }
 
-  /**
-   * 🔥 NUEVO: Emite los cambios de actividades seleccionadas al componente padre
-   */
+  isActivityLoading(item: ActivityWithPrice): boolean {
+    return this.activityLoadingStates.get(item.id) || false;
+  }
+
+  private setActivityLoading(item: ActivityWithPrice, loading: boolean): void {
+    this.activityLoadingStates.set(item.id, loading);
+  }
+
+  hasAnyActivityLoading(): boolean {
+    return Array.from(this.activityLoadingStates.values()).some(
+      (loading) => loading
+    );
+  }
+
   private emitActivitiesChange(): void {
     const selectedActivities = this.optionalActivities.filter((activity) =>
       this.addedActivities.has(activity.id)
@@ -515,22 +621,20 @@ export class ActivitiesOptionalsComponent implements OnInit, OnChanges {
     });
   }
 
-  /**
-   * 🔥 NUEVO: Getter para obtener las actividades seleccionadas
-   */
   get selectedActivities(): ActivityWithPrice[] {
     return this.optionalActivities.filter((activity) =>
       this.addedActivities.has(activity.id)
     );
   }
 
-  /**
-   * 🔥 NUEVO: Getter para obtener el precio total de actividades seleccionadas
-   */
   get totalActivitiesPrice(): number {
     return this.selectedActivities.reduce((total, activity) => {
       const price = this.getBasePrice(activity);
       return total + (price || 0);
     }, 0);
+  }
+
+  get hasSelectedActivities(): boolean {
+    return this.addedActivities.size > 0;
   }
 }

@@ -1,4 +1,4 @@
-<div class="room-selector">
+<div class="room-selector" [class.saving]="saving">
   <div
     *ngFor="let room of roomsAvailabilityForTravelersNumber; let i = index"
     class="room-item"
@@ -8,9 +8,13 @@
       <p>
         {{ room.name }}
       </p>
-      <p *ngIf="room.basePrice > 0">+{{ room.basePrice | currencyFormat : "EUR" }}</p>
-      <p *ngIf="room.basePrice < 0">{{ room.basePrice | currencyFormat : "EUR" }}</p>
-      
+      <p *ngIf="room.basePrice > 0">
+        +{{ room.basePrice | currencyFormat : "EUR" }}
+      </p>
+      <p *ngIf="room.basePrice < 0">
+        {{ room.basePrice | currencyFormat : "EUR" }}
+      </p>
+
       <p-inputNumber
         [(ngModel)]="selectedRooms[room.tkId]"
         (ngModelChange)="onRoomSpacesChange(room, $event)"
@@ -29,7 +33,7 @@
         </ng-template>
       </p-inputNumber>
     </div>
-    
+
     <p class="room-description">
       {{ room.description }}
     </p>
@@ -46,7 +50,7 @@
       habitación.
     </p>
   </div>
-  
+
   <div *ngIf="hasBabies()" class="info-message">
     <i class="pi pi-info-circle"></i>
     <p>
@@ -54,9 +58,15 @@
       con 2 espacios.
     </p>
   </div>
-  
+
   <div *ngIf="errorMsg" class="error-message">
     <i class="pi pi-info-circle"></i>
     <p>{{ errorMsg }}</p>
   </div>
+</div>
+
+<!-- Indicador de carga de viajeros -->
+<div *ngIf="loadingTravelers" class="loading-indicator">
+  <i class="pi pi-spin pi-spinner"></i>
+  <span>Cargando viajeros...</span>
 </div>

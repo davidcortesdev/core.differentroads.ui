@@ -2,9 +2,9 @@
   <div class="step">
     <div class="step-title">Agrega los viajeros y las habitaciones</div>
   </div>
-  
+
   <h3 class="traveler-selector-title">Número de pasajeros</h3>
-  
+
   <!-- Error message -->
   <div *ngIf="error && !loading" class="messages">
     <div class="error-message">
@@ -12,85 +12,34 @@
       <p>{{ error }}</p>
     </div>
   </div>
-  
+
   <div class="traveler-selector-wrap" *ngIf="!loading && !loadingAgeGroups">
-    <!-- Adultos -->
     <div
       class="traveler-selector-wrap-item"
-      *ngIf="dynamicAvailableTravelers.includes('Adultos')"
+      *ngFor="let travelerType of travelerTypes; trackBy: trackByTravelerType"
     >
       <div class="traveler-selector-wrap-item-group">
-        <span class="traveler-selector-wrap-item-name">Adultos</span>
+        <span class="traveler-selector-wrap-item-name">{{
+          travelerType.label
+        }}</span>
         <span class="traveler-selector-wrap-item-description">
-          {{ getAgeRangeText('adults') }}
+          {{ getAgeRangeText(travelerType.ageGroup) }}
         </span>
       </div>
       <p-inputNumber
-        [(ngModel)]="travelersNumbers.adults"
-        (ngModelChange)="handlePassengers($event, 'adults')"
+        [(ngModel)]="travelersNumbers[travelerType.key]"
+        (ngModelChange)="handlePassengers($event, travelerType.key)"
         [showButtons]="true"
         buttonLayout="horizontal"
         spinnerMode="horizontal"
+        [min]="travelerType.min"
+        [max]="travelerType.max"
         placeholder="0"
         [disabled]="loading"
-      >
-        <ng-template #incrementbuttonicon>
-          <span class="pi pi-chevron-up"></span>
-        </ng-template>
-        <ng-template #decrementbuttonicon>
-          <span class="pi pi-chevron-down"></span>
-        </ng-template>
-      </p-inputNumber>
-    </div>
-    
-    <!-- Niños -->
-    <div
-      class="traveler-selector-wrap-item"
-      *ngIf="dynamicAvailableTravelers.includes('Niños')"
-    >
-      <div class="traveler-selector-wrap-item-group">
-        <span class="traveler-selector-wrap-item-name">Niños</span>
-        <span class="traveler-selector-wrap-item-description">
-          {{ getAgeRangeText('childs') }}
-        </span>
-      </div>
-      <p-inputNumber
-        [(ngModel)]="travelersNumbers.childs"
-        (ngModelChange)="handlePassengers($event, 'childs')"
-        [showButtons]="true"
-        buttonLayout="horizontal"
-        spinnerMode="horizontal"
-        placeholder="0"
-        [disabled]="loading"
-      >
-        <ng-template #incrementbuttonicon>
-          <span class="pi pi-chevron-up"></span>
-        </ng-template>
-        <ng-template #decrementbuttonicon>
-          <span class="pi pi-chevron-down"></span>
-        </ng-template>
-      </p-inputNumber>
-    </div>
-    
-    <!-- Bebés -->
-    <div
-      class="traveler-selector-wrap-item"
-      *ngIf="dynamicAvailableTravelers.includes('Bebés')"
-    >
-      <div class="traveler-selector-wrap-item-group">
-        <span class="traveler-selector-wrap-item-name">Bebés</span>
-        <span class="traveler-selector-wrap-item-description">
-          {{ getAgeRangeText('babies') }}
-        </span>
-      </div>
-      <p-inputNumber
-        [(ngModel)]="travelersNumbers.babies"
-        (ngModelChange)="handlePassengers($event, 'babies')"
-        [showButtons]="true"
-        buttonLayout="horizontal"
-        spinnerMode="horizontal"
-        placeholder="0"
-        [disabled]="loading"
+        [class.input-error]="adultsErrorMsg && travelerType.key === 'adults'"
+        [class.input-warning]="
+          travelerType.key === 'adults' && travelersNumbers.adults === 0
+        "
       >
         <ng-template #incrementbuttonicon>
           <span class="pi pi-chevron-up"></span>
@@ -101,7 +50,7 @@
       </p-inputNumber>
     </div>
   </div>
-  
+
   <!-- Messages -->
   <div class="messages">
     <div *ngIf="adultsErrorMsg" class="error-message">

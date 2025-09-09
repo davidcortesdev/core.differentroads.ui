@@ -1,16 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { map, switchMap, catchError, retry, delay } from 'rxjs/operators';
+import { of, throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 export interface ReservationTravelerCreate {
-  id: number;
   reservationId: number;
   travelerNumber: number;
   isLeadTraveler: boolean;
-  tkId: string;
-  ageGroupId: number;
+  tkId: string | null;
+  ageGroupId: number | null;
 }
 
 export interface ReservationTravelerUpdate {
@@ -18,7 +18,7 @@ export interface ReservationTravelerUpdate {
   reservationId: number;
   travelerNumber: number;
   isLeadTraveler: boolean;
-  tkId: string;
+  tkId: string | null;
   ageGroupId: number;
 }
 
@@ -27,7 +27,7 @@ export interface IReservationTravelerResponse {
   reservationId: number;
   travelerNumber: number;
   isLeadTraveler: boolean;
-  tkId: string;
+  tkId: string | null;
   ageGroupId: number;
 }
 
@@ -39,8 +39,8 @@ export interface ReservationTravelerFilters {
   reservationId?: number;
   travelerNumber?: number;
   isLeadTraveler?: boolean;
-  tkId?: string;
-  ageGroupId?: number;
+  tkId?: string | null;
+  ageGroupId?: number | null;
 }
 
 @Injectable({
@@ -112,7 +112,6 @@ export class ReservationTravelerService {
     return this.getNextTravelerNumber(reservationId).pipe(
       switchMap((nextNumber) => {
         const data: ReservationTravelerCreate = {
-          id: 0, // Se asigna en el backend
           reservationId,
           travelerNumber: nextNumber,
           isLeadTraveler,
@@ -148,10 +147,25 @@ export class ReservationTravelerService {
   /**
    * Elimina un viajero de reservación existente.
    * @param id ID del viajero de reservación a eliminar.
-   * @returns Resultado de la operación.
+   * @returns Observable que emite true si la eliminación fue exitosa, false si no se encontró el recurso.
    */
   delete(id: number): Observable<boolean> {
-    return this.http.delete<boolean>(`${this.API_URL}/${id}`);
+    return this.http
+      .delete(`${this.API_URL}/${id}`, { observe: 'response' })
+      .pipe(
+        map((response) => {
+          // 204 No Content indica eliminación exitosa
+          return response.status === 204;
+        }),
+        catchError((error) => {
+          // 404 Not Found indica que el recurso no existe
+          if (error.status === 404) {
+            return of(false);
+          }
+          // Re-lanzar otros errores
+          throw error;
+        })
+      );
   }
 
   /**
@@ -301,5 +315,33 @@ export class ReservationTravelerService {
         travelers.sort((a, b) => a.travelerNumber - b.travelerNumber)
       )
     );
+  }
+
+  /**
+   * Obtiene el primer viajero de una reservación con un ageGroupId específico.
+   * @param reservationId ID de la reservación.
+   * @param ageGroupId ID del grupo de edad.
+   * @returns El primer viajero con el ageGroupId especificado, o null si no se encuentra.
+   */
+  getFirstTravelerByAgeGroup(
+    reservationId: number,
+    ageGroupId: number
+  ): Observable<IReservationTravelerResponse | null> {
+    const params = new HttpParams()
+      .set('ReservationId', reservationId.toString())
+      .set('AgeGroupId', ageGroupId.toString())
+      .set('useExactMatchForStrings', 'false');
+
+    return this.http
+      .get<IReservationTravelerResponse[]>(this.API_URL, { params })
+      .pipe(
+        map((travelers) => {
+          // Ordenar por travelerNumber y tomar el primero
+          const sortedTravelers = travelers.sort(
+            (a, b) => a.travelerNumber - b.travelerNumber
+          );
+          return sortedTravelers.length > 0 ? sortedTravelers[0] : null;
+        })
+      );
   }
 }

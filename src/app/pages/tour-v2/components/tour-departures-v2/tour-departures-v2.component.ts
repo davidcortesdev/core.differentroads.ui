@@ -446,18 +446,18 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     if (this.isAdultGroup(groupCode, groupName)) {
       this.allowedPassengerTypes.adults = true;
       this.ageGroupCategories.adults.id = group.id;
-      this.ageGroupCategories.adults.lowerAge = group.lowerLimitAge;
-      this.ageGroupCategories.adults.upperAge = group.upperLimitAge;
+      this.ageGroupCategories.adults.lowerAge = group.lowerLimitAge ?? null;
+      this.ageGroupCategories.adults.upperAge = group.upperLimitAge ?? null;
     } else if (this.isChildGroup(groupCode, groupName)) {
       this.allowedPassengerTypes.children = true;
       this.ageGroupCategories.children.id = group.id;
-      this.ageGroupCategories.children.lowerAge = group.lowerLimitAge;
-      this.ageGroupCategories.children.upperAge = group.upperLimitAge;
+      this.ageGroupCategories.children.lowerAge = group.lowerLimitAge ?? null;
+      this.ageGroupCategories.children.upperAge = group.upperLimitAge ?? null;
     } else if (this.isBabyGroup(groupCode, groupName)) {
       this.allowedPassengerTypes.babies = true;
       this.ageGroupCategories.babies.id = group.id;
-      this.ageGroupCategories.babies.lowerAge = group.lowerLimitAge;
-      this.ageGroupCategories.babies.upperAge = group.upperLimitAge;
+      this.ageGroupCategories.babies.lowerAge = group.lowerLimitAge ?? null;
+      this.ageGroupCategories.babies.upperAge = group.upperLimitAge ?? null;
     } else {
       this.categorizeByAgeRange(group);
     }
@@ -486,25 +486,25 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
   private categorizeByAgeRange(group: IAgeGroupResponse): void {
     const sortedGroups = [...this.tourAgeGroups].sort(
-      (a, b) => a.lowerLimitAge - b.lowerLimitAge
+      (a, b) => (a.lowerLimitAge ?? 0) - (b.lowerLimitAge ?? 0)
     );
     const currentIndex = sortedGroups.findIndex((g) => g.id === group.id);
 
     if (currentIndex === 0 && group.lowerLimitAge === 0) {
       this.allowedPassengerTypes.babies = true;
       this.ageGroupCategories.babies.id = group.id;
-      this.ageGroupCategories.babies.lowerAge = group.lowerLimitAge;
-      this.ageGroupCategories.babies.upperAge = group.upperLimitAge;
+      this.ageGroupCategories.babies.lowerAge = group.lowerLimitAge ?? null;
+      this.ageGroupCategories.babies.upperAge = group.upperLimitAge ?? null;
     } else if (currentIndex === sortedGroups.length - 1) {
       this.allowedPassengerTypes.adults = true;
       this.ageGroupCategories.adults.id = group.id;
-      this.ageGroupCategories.adults.lowerAge = group.lowerLimitAge;
-      this.ageGroupCategories.adults.upperAge = group.upperLimitAge;
+      this.ageGroupCategories.adults.lowerAge = group.lowerLimitAge ?? null;
+      this.ageGroupCategories.adults.upperAge = group.upperLimitAge ?? null;
     } else {
       this.allowedPassengerTypes.children = true;
       this.ageGroupCategories.children.id = group.id;
-      this.ageGroupCategories.children.lowerAge = group.lowerLimitAge;
-      this.ageGroupCategories.children.upperAge = group.upperLimitAge;
+      this.ageGroupCategories.children.lowerAge = group.lowerLimitAge ?? null;
+      this.ageGroupCategories.children.upperAge = group.upperLimitAge ?? null;
     }
   }
 
@@ -577,18 +577,18 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     this.loading = true;
     this.error = undefined;
 
-    let itineraryFilters : ItineraryFilters 
+    let itineraryFilters: ItineraryFilters;
     if (!this.preview) {
-    itineraryFilters = {
-      tourId: this.tourId,
-      isVisibleOnWeb: true,
-      isBookable: true,
-    };
-  } else {
-    itineraryFilters = {
-      tourId: this.tourId,
-    };
-  }
+      itineraryFilters = {
+        tourId: this.tourId,
+        isVisibleOnWeb: true,
+        isBookable: true,
+      };
+    } else {
+      itineraryFilters = {
+        tourId: this.tourId,
+      };
+    }
 
     this.itineraryService
       .getAll(itineraryFilters, this.preview)
@@ -602,16 +602,18 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           if (this.allItineraries.length === 0) {
             return of([]);
           }
-          const departureRequests = this.allItineraries.map((itinerary) =>     
-            this.departureService.getByItinerary(itinerary.id, this.preview).pipe(
-              catchError((error) => {
-                console.error(
-                  `Error loading departures for itinerary ${itinerary.id}:`,
-                  error
-                );
-                return of([]);
-              })
-            )
+          const departureRequests = this.allItineraries.map((itinerary) =>
+            this.departureService
+              .getByItinerary(itinerary.id, this.preview)
+              .pipe(
+                catchError((error) => {
+                  console.error(
+                    `Error loading departures for itinerary ${itinerary.id}:`,
+                    error
+                  );
+                  return of([]);
+                })
+              )
           );
 
           return forkJoin(departureRequests);

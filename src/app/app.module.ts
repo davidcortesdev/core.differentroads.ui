@@ -245,6 +245,9 @@ import { ImageCropperComponent } from './shared/components/image-cropper/image-c
 import { ReviewSurveyComponent } from './pages/review-survey/review-survey.component';
 import { ImageUploadModalComponent } from './pages/review-survey/image-upload-modal/image-upload-modal.component';
 import { TourInfoAccordionV2Component } from './pages/tour-v2/components/tour-info-accordion-v2/tour-info-accordion-v2.component';
+import { HomeV2Component } from './pages/home-v2/home-v2.component';
+import { HeroSectionV2Component } from './pages/home-v2/components/hero-section-v2/hero-section-v2.component';
+import { TripTypesSectionV2Component } from './pages/home-v2/components/trip-types-section-v2/trip-types-section-v2.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -396,6 +399,9 @@ registerLocaleData(localeEs);
     ReviewSurveyComponent,
     ImageUploadModalComponent,
     TourInfoAccordionV2Component,
+    HomeV2Component,
+    HeroSectionV2Component,
+    TripTypesSectionV2Component,
   ],
   imports: [
     // Angular Modules

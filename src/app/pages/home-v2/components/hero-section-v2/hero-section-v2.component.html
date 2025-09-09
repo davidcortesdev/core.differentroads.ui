@@ -1,0 +1,85 @@
+<section class="hero">
+  <!-- Video de fondo hardcodeado -->
+  <video
+    class="hero-bg"
+    autoplay
+    loop
+    muted
+  >
+    <source [src]="bannerSection['banner-video']" type="video/mp4" />
+  </video>
+  
+  <div class="hero-search">
+    <div class="hero-form">
+      <div class="input-lg">
+        <p-iftalabel>
+          <input
+            pInputText
+            id="destionationInput"
+            autocomplete="off"
+            placeholder="Pais, Ciudad, Ofertas, Destinos, todo lo que se te ocurra..."
+            class="input-text radius firstElement"
+            fluid="true"
+            [(ngModel)]="destinationInput"
+            (keyup.enter)="searchTrips()"
+          />
+          <label for="destionationInput" class="label">¿Cuál es tu próximo destino?</label>
+        </p-iftalabel>
+      </div>
+      <div class="input-sm">
+        <p-iftaLabel>
+          <p-datepicker
+            [(ngModel)]="departureDate"
+            [showIcon]="false"
+            id="departureDateInput"
+            fluid="true"
+            placeholder="DD/MM/AAAA"
+          >
+          </p-datepicker>
+          <label for="departureDateInput" class="label">Ida</label>
+        </p-iftaLabel>
+      </div>
+      <div class="input-sm">
+        <p-iftaLabel>
+          <p-datepicker
+            [(ngModel)]="returnDate"
+            [showIcon]="false"
+            id="returnDateInput"
+            fluid="true"
+            placeholder="DD/MM/AAAA"
+          >
+          </p-datepicker>
+          <label for="returnDateInput" class="label">Vuelta</label>
+        </p-iftaLabel>
+      </div>
+      <div class="input-md">
+        <p-iftaLabel>
+          <p-select
+            [options]="tripTypes"
+            [(ngModel)]="selectedTripType"
+            id="tripTypeInput"
+            placeholder="Seleccionar tipo"
+            [style]="{'width': '100%'}"
+            class="border"
+            [appendTo]="'body'"
+            [showClear]="true"
+            styleClass="custom-select-panel"
+            [inputId]="'tripTypeInput'"
+            fluid="true"
+          >
+          </p-select>
+          <label for="tripTypeInput" class="label">Tipo de viaje</label>
+        </p-iftaLabel>
+      </div>
+      <div class="input-sm">
+        <p-button
+          type="button"
+          icon="pi pi-search"
+          fluid="true"
+          styleClass="btn-search radius"
+          (click)="searchTrips()"
+        ></p-button>
+      </div>
+    </div>
+  </div>
+</section>

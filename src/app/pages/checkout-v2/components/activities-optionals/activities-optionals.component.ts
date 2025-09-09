@@ -79,8 +79,10 @@ export class ActivitiesOptionalsComponent
   // Estado del componente
   optionalActivities: ActivityWithPrice[] = [];
   addedActivities: Set<number> = new Set();
-  public saving: boolean = false;
   public errorMessage: string | null = null;
+
+  // Individual loading states per activity
+  private activityLoadingStates: Map<number, boolean> = new Map();
 
   // Cache y control de carga
   private ageGroupsCache: IAgeGroupResponse[] = [];
@@ -346,10 +348,6 @@ export class ActivitiesOptionalsComponent
     }, 300);
   }
 
-  private hasPendingOperations(): boolean {
-    return this.saving;
-  }
-
   private clearPendingOperations(): void {
     clearTimeout(this.saveTimeout);
   }
@@ -365,7 +363,7 @@ export class ActivitiesOptionalsComponent
   }
 
   toggleActivity(item: ActivityWithPrice): void {
-    if (this.hasPendingOperations()) {
+    if (this.isActivityLoading(item)) {
       return;
     }
 
@@ -381,16 +379,16 @@ export class ActivitiesOptionalsComponent
   }
 
   private addActivityToAllTravelers(item: ActivityWithPrice): void {
-    if (!this.validateReservation() || this.saving) return;
+    if (!this.validateReservation() || this.isActivityLoading(item)) return;
 
-    this.saving = true;
+    this.setActivityLoading(item, true);
 
     this.reservationTravelerService
       .getByReservation(this.reservationId!)
       .subscribe({
         next: (travelers) => {
           if (travelers.length === 0) {
-            this.saving = false;
+            this.setActivityLoading(item, false);
             this.saveCompleted.emit({
               component: 'activities-optionals',
               success: false,
@@ -422,7 +420,7 @@ export class ActivitiesOptionalsComponent
 
           Promise.all(savePromises)
             .then(() => {
-              this.saving = false;
+              this.setActivityLoading(item, false);
 
               this.updateActivityState(item.id, true);
               this.errorMessage = null;
@@ -432,7 +430,7 @@ export class ActivitiesOptionalsComponent
               });
             })
             .catch((error) => {
-              this.saving = false;
+              this.setActivityLoading(item, false);
               console.error('❌ Error guardando actividad:', error);
 
               this.addedActivities.delete(item.id);
@@ -447,7 +445,7 @@ export class ActivitiesOptionalsComponent
             });
         },
         error: (error) => {
-          this.saving = false;
+          this.setActivityLoading(item, false);
           console.error('❌ Error obteniendo viajeros:', error);
 
           this.addedActivities.delete(item.id);
@@ -465,16 +463,16 @@ export class ActivitiesOptionalsComponent
   }
 
   private removeActivityFromAllTravelers(item: ActivityWithPrice): void {
-    if (!this.validateReservation() || this.saving) return;
+    if (!this.validateReservation() || this.isActivityLoading(item)) return;
 
-    this.saving = true;
+    this.setActivityLoading(item, true);
 
     this.reservationTravelerService
       .getByReservation(this.reservationId!)
       .subscribe({
         next: (travelers) => {
           if (travelers.length === 0) {
-            this.saving = false;
+            this.setActivityLoading(item, false);
             this.saveCompleted.emit({
               component: 'activities-optionals',
               success: false,
@@ -509,7 +507,7 @@ export class ActivitiesOptionalsComponent
               const allAssignments = assignmentsArrays.flat();
 
               if (allAssignments.length === 0) {
-                this.saving = false;
+                this.setActivityLoading(item, false);
                 this.errorMessage = null;
                 this.saveCompleted.emit({
                   component: 'activities-optionals',
@@ -538,7 +536,7 @@ export class ActivitiesOptionalsComponent
               return Promise.all(deletePromises);
             })
             .then(() => {
-              this.saving = false;
+              this.setActivityLoading(item, false);
 
               this.updateActivityState(item.id, false);
               this.errorMessage = null;
@@ -548,7 +546,7 @@ export class ActivitiesOptionalsComponent
               });
             })
             .catch((error) => {
-              this.saving = false;
+              this.setActivityLoading(item, false);
               console.error('❌ Error eliminando actividad:', error);
 
               this.addedActivities.add(item.id);
@@ -563,7 +561,7 @@ export class ActivitiesOptionalsComponent
             });
         },
         error: (error) => {
-          this.saving = false;
+          this.setActivityLoading(item, false);
           console.error('❌ Error obteniendo viajeros:', error);
 
           this.addedActivities.add(item.id);
@@ -591,6 +589,20 @@ export class ActivitiesOptionalsComponent
 
   isActivityAdded(item: ActivityWithPrice): boolean {
     return this.addedActivities.has(item.id);
+  }
+
+  isActivityLoading(item: ActivityWithPrice): boolean {
+    return this.activityLoadingStates.get(item.id) || false;
+  }
+
+  private setActivityLoading(item: ActivityWithPrice, loading: boolean): void {
+    this.activityLoadingStates.set(item.id, loading);
+  }
+
+  hasAnyActivityLoading(): boolean {
+    return Array.from(this.activityLoadingStates.values()).some(
+      (loading) => loading
+    );
   }
 
   private emitActivitiesChange(): void {

@@ -585,6 +585,41 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
+   * 🔥 NUEVO: Maneja el evento de guardado completado desde actividades opcionales
+   */
+  onSaveCompleted(event: {
+    component: string;
+    success: boolean;
+    error?: string;
+  }): void {
+    if (event.success) {
+      console.log(`✅ Guardado exitoso en ${event.component}`);
+      // El padre se encarga de obtener la información por su cuenta
+      if (this.travelerSelector && this.travelerSelector.travelersNumbers) {
+        this.updateOrderSummary(this.travelerSelector.travelersNumbers);
+      }
+    } else {
+      console.error(`❌ Error en guardado de ${event.component}:`, event.error);
+      // Mostrar error al usuario si es necesario
+      this.showErrorToast(
+        `Error al guardar ${event.component}: ${event.error}`
+      );
+    }
+  }
+
+  /**
+   * 🔥 NUEVO: Muestra un toast de error
+   */
+  private showErrorToast(message: string): void {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: message,
+      life: 5000,
+    });
+  }
+
+  /**
    * Maneja los cambios de asignación de actividades por viajero
    */
   onActivitiesAssignmentChange(event: {

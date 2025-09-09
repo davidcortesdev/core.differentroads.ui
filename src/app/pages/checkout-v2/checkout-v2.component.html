@@ -48,6 +48,8 @@
               [reservationId]="reservationId"
               [availableTravelers]="['Adultos', 'Niños', 'Bebés']"
               (travelersNumbersChange)="onTravelersNumbersChange($event)"
+              (saveStatusChange)="onTravelerSelectorSaveStatusChange($event)"
+              (saveCompleted)="onTravelerSelectorSaveCompleted($event)"
               #travelerSelector
             >
             </app-selector-traveler>
@@ -67,8 +69,6 @@
               [departureId]="departureId"
               [reservationId]="reservationId"
               (activitiesSelectionChange)="onActivitiesSelectionChange($event)"
-              (saveCompleted)="onSaveCompleted($event)"
-              #activitiesSelector
             >
             </app-activities-optionals>
 

@@ -972,6 +972,54 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
+   * Método llamado cuando cambia el estado de guardado en el selector de travelers
+   * @param event - Evento con información del estado de guardado
+   */
+  onTravelerSelectorSaveStatusChange(event: {
+    saving: boolean;
+    success?: boolean;
+    error?: string;
+  }): void {
+    if (event.saving) {
+      console.log('💾 Guardando información de viajeros...');
+      // Aquí podrías mostrar un indicador de carga si es necesario
+    } else if (event.success !== undefined) {
+      if (event.success) {
+        console.log('✅ Guardado exitoso de información de viajeros');
+        // Aquí podrías mostrar un mensaje de éxito si es necesario
+      } else {
+        console.error(
+          '❌ Error al guardar información de viajeros:',
+          event.error
+        );
+        // Aquí podrías mostrar un mensaje de error si es necesario
+      }
+    }
+  }
+
+  /**
+   * Método llamado cuando se completa un guardado exitoso en el selector de travelers
+   * @param event - Evento con información del guardado completado
+   */
+  onTravelerSelectorSaveCompleted(event: {
+    component: string;
+    success: boolean;
+    data?: any;
+    error?: string;
+  }): void {
+    if (event.success) {
+      console.log(`✅ Guardado exitoso en ${event.component}:`, event.data);
+      // Actualizar resumen del pedido si es necesario
+      if (this.travelerSelector && this.travelerSelector.travelersNumbers) {
+        this.updateOrderSummary(this.travelerSelector.travelersNumbers);
+      }
+    } else {
+      console.error(`❌ Error en guardado de ${event.component}:`, event.error);
+      // Mostrar error al usuario si es necesario
+    }
+  }
+
+  /**
    * OPTIMIZADO: Método llamado cuando cambian las habitaciones seleccionadas
    */
   onRoomsSelectionChange(selectedRooms: { [tkId: string]: number }): void {

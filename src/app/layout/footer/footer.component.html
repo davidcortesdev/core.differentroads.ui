@@ -3,7 +3,11 @@
     <!-- Logo Section -->
     <div class="section logo-section">
       <div class="logo">
-        <img src="assets/images/white-logo.svg" alt="Different Roads" loading="lazy" />
+        <img
+          src="assets/images/white-logo.svg"
+          alt="Different Roads"
+          loading="lazy"
+        />
       </div>
     </div>
 
@@ -46,7 +50,11 @@
                             autocomplete="email"
                             formControlName="email"
                           />
-                          <button type="submit" aria-label="Enviar" [disabled]="emailForm.invalid">
+                          <button
+                            type="submit"
+                            aria-label="Enviar"
+                            [disabled]="emailForm.invalid"
+                          >
                             <i class="pi pi-arrow-right"></i>
                           </button>
                           <button
@@ -70,10 +78,23 @@
             </div>
           </div>
         </div>
-        <div class="ml-form-embedPermissions" style="margin-top: 0px;margin-bottom: 15px;"> 
-          <div class="ml-form-embedPermissionsContent horizontal privacy-policy"> 
-            <p style="font-size: 11px; color: #999; ">Puedes darte de baja en cualquier momento. Para más detalles, consulta nuestra <a href="pages/politica-de-privacidad" style="color: #999; text-decoration: underline;">Política de Privacidad</a>.</p> 
-          </div> 
+        <div
+          class="ml-form-embedPermissions"
+          style="margin-top: 0px; margin-bottom: 15px"
+        >
+          <div
+            class="ml-form-embedPermissionsContent horizontal privacy-policy"
+          >
+            <p style="font-size: 11px; color: #999">
+              Puedes darte de baja en cualquier momento. Para más detalles,
+              consulta nuestra
+              <a
+                href="pages/politica-de-privacidad"
+                style="color: #999; text-decoration: underline"
+                >Política de Privacidad</a
+              >.
+            </p>
+          </div>
         </div>
         <div class="ml-form-successBody row-success" style="display: none">
           <div class="ml-form-successContent">
@@ -111,55 +132,24 @@
         </a>
       </div>
       <div class="contactInfo">
-        <p>{{ footerSection?.['contact-info']?.phone }}</p>
-        <p>{{ footerSection?.['contact-info']?.email }}</p>
+        <p>{{ contactInfo.PHONE }}</p>
+        <p>{{ contactInfo.EMAIL }}</p>
       </div>
     </div>
 
-    <!-- About Us Section -->
-    <div class="section">
-      <h3>{{footerSection?.['section-1']?.['section-title']}}</h3>
+    <!-- Footer Columns from CMS -->
+    <div class="section" *ngFor="let column of footerColumns; let i = index">
+      <h3>
+        {{ column.name }}
+      </h3>
       <ul class="links">
-        <li
-          *ngFor="let link of (footerSection?.['section-1']?.links || []) | sortBy:'order'"
-        >
-          <a [href]="link.url" *ngIf="link">{{ link.text }}</a>
-        </li>
-      </ul>
-    </div>
-
-    <!-- Our Trips Section -->
-    <div class="section">
-      <h3>{{footerSection?.['section-2']?.['section-title']}}</h3>
-      <ul class="links">
-        <li
-          *ngFor="let link of (footerSection?.['section-2']?.links || []) | sortBy:'order'"
-        >
-          <a [href]="link.url" *ngIf="link">{{ link.text }}</a>
-        </li>
-      </ul>
-    </div>
-
-    <!-- Travel Types Section -->
-    <div class="section">
-      <h3>{{footerSection?.['section-3']?.['section-title']}}</h3>
-      <ul class="links">
-        <li
-          *ngFor="let link of (footerSection?.['section-3']?.links || []) | sortBy:'order'"
-        >
-          <a [href]="link.url" *ngIf="link">{{ link.text }}</a>
-        </li>
-      </ul>
-    </div>
-
-    <!-- Tour Operator Section -->
-    <div class="section">
-      <h3>{{footerSection?.['section-4']?.['section-title']}}</h3>
-      <ul class="links">
-        <li
-          *ngFor="let link of (footerSection?.['section-4']?.links || []) | sortBy:'order'"
-        >
-          <a [href]="link.url" *ngIf="link">{{ link.text }}</a>
+        <li *ngFor="let link of getFooterLinksByColumnId(column.id)">
+          <a
+            [href]="link.url"
+            [target]="link.esExterno ? '_blank' : '_self'"
+            *ngIf="link"
+            >{{ link.name }}</a
+          >
         </li>
       </ul>
     </div>
@@ -167,18 +157,33 @@
 
   <!-- Bottom Section -->
   <div class="bottom">
-    <div class="copyright">
-      {{ footerSection?.copyright?.text }} {{ footerSection?.copyright?.year }}
-    </div>
+    <div class="copyright">© Different Roads 2025</div>
     <div class="payment">
-      <img src="assets/images/scalapay.svg" alt="Scalapay" style="filter: invert(1)" loading="lazy" />
-      <img src="assets/images/visa.svg" alt="Visa"  loading="lazy"/>
-      <img src="assets/images/master.svg" alt="Mastercard"  loading="lazy"/>
-      <img src="assets/images/confianzaonline.svg" alt="confianzaonline"  loading="lazy"/>
-      <img src="assets/images/ssl.svg" alt="SSL"  loading="lazy"/>
+      <img
+        src="assets/images/scalapay.svg"
+        alt="Scalapay"
+        style="filter: invert(1)"
+        loading="lazy"
+      />
+      <img src="assets/images/visa.svg" alt="Visa" loading="lazy" />
+      <img src="assets/images/master.svg" alt="Mastercard" loading="lazy" />
+      <img
+        src="assets/images/confianzaonline.svg"
+        alt="confianzaonline"
+        loading="lazy"
+      />
+      <img src="assets/images/ssl.svg" alt="SSL" loading="lazy" />
     </div>
-    <div class="cookie-preferences" style="text-align: center; margin-top: 10px; font-size: 11px;">
-      <a href="#" class="termly-display-preferences" style="color: #999; text-decoration: underline;">Preferencias de Cookies</a>
+    <div
+      class="cookie-preferences"
+      style="text-align: center; margin-top: 10px; font-size: 11px"
+    >
+      <a
+        href="#"
+        class="termly-display-preferences"
+        style="color: #999; text-decoration: underline"
+        >Preferencias de Cookies</a
+      >
     </div>
   </div>
 </footer>

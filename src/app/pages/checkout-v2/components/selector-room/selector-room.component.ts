@@ -199,7 +199,7 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     // Configurar debounce para guardado automático
     this.saveSubject
       .pipe(
-        debounceTime(1000), // 1 segundo de debounce
+        debounceTime(1200),
         tap(() => {
           console.log('ROOM_VALIDATION: ⏳ Iniciando guardado con debounce...');
         }),

@@ -14,16 +14,16 @@
       <i class="pi pi-info-circle"></i>También puedes añadirlas después desde tu
       perfil
     </div>
-    <!-- NUEVO: Mensaje informativo sobre selección por usuario -->
+    <!-- OPTIMIZADO: Mensaje informativo sobre selección por usuario -->
     <div
       class="step-info"
-      [ngClass]="{ saving: saving }"
-      *ngIf="saving || hasSelectedActivities"
+      [ngClass]="{ saving: hasAnyActivityLoading() }"
+      *ngIf="hasAnyActivityLoading() || hasSelectedActivities"
     >
-      <i class="pi pi-check-circle" *ngIf="!saving"></i>
-      <i class="pi pi-spin pi-spinner" *ngIf="saving"></i>
-      <span *ngIf="saving">Guardando actividades...</span>
-      <span *ngIf="!saving && hasSelectedActivities">
+      <i class="pi pi-check-circle" *ngIf="!hasAnyActivityLoading()"></i>
+      <i class="pi pi-spin pi-spinner" *ngIf="hasAnyActivityLoading()"></i>
+      <span *ngIf="hasAnyActivityLoading()">Guardando actividad...</span>
+      <span *ngIf="!hasAnyActivityLoading() && hasSelectedActivities">
         ✅ Actividades guardadas. Podrás elegir por usuario en el paso 3 de
         viajeros.
       </span>
@@ -76,8 +76,8 @@
                     class="dataview-buy-button"
                     [label]="isActivityAdded(item) ? 'Eliminar' : 'Añadir'"
                     [rounded]="true"
-                    [loading]="saving"
-                    [disabled]="saving"
+                    [loading]="isActivityLoading(item)"
+                    [disabled]="isActivityLoading(item)"
                     [styleClass]="isActivityAdded(item) ? 'added-button' : ''"
                     (click)="toggleActivity(item)"
                   />

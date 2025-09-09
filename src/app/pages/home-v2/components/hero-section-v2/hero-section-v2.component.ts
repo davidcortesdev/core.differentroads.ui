@@ -38,7 +38,6 @@ export class HeroSectionV2Component implements OnInit {
 
   destinations: string[] = ['Europa', 'Asia', 'África', 'América'];
 
-  // Hardcoded trip types
   tripTypes = [
     { label: 'Tours Organizados', value: 'tours-organizados' },
     { label: 'Viajes Familiares', value: 'viajes-familiares' },

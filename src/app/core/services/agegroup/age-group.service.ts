@@ -218,31 +218,45 @@ export class AgeGroupService {
   }
 
   /**
-   * Obtiene grupos de edad para adultos (típicamente mayores de 18 años).
+   * Obtiene grupos de edad para adultos usando estrategia híbrida (límites de edad + nombre/código).
    * @returns Lista de grupos de edad para adultos.
    */
   getAdultGroups(): Observable<IAgeGroupResponse[]> {
     return this.getAll().pipe(
       map((ageGroups) =>
-        ageGroups.filter(
-          (group) =>
-            group.lowerLimitAge !== undefined && group.lowerLimitAge >= 18
-        )
+        ageGroups.filter((group) => {
+          const name = group.name?.toLowerCase() || '';
+          const code = group.code?.toLowerCase() || '';
+          return (
+            name.includes('adult') ||
+            name.includes('adulto') ||
+            code.includes('adult') ||
+            code.includes('adulto')
+          );
+        })
       )
     );
   }
 
   /**
-   * Obtiene grupos de edad para menores (típicamente menores de 18 años).
+   * Obtiene grupos de edad para menores usando estrategia híbrida (límites de edad + nombre/código).
    * @returns Lista de grupos de edad para menores.
    */
   getChildGroups(): Observable<IAgeGroupResponse[]> {
     return this.getAll().pipe(
       map((ageGroups) =>
-        ageGroups.filter(
-          (group) =>
-            group.upperLimitAge !== undefined && group.upperLimitAge < 18
-        )
+        ageGroups.filter((group) => {
+          const name = group.name?.toLowerCase() || '';
+          const code = group.code?.toLowerCase() || '';
+          return (
+            name.includes('child') ||
+            name.includes('niño') ||
+            name.includes('menor') ||
+            code.includes('child') ||
+            code.includes('niño') ||
+            code.includes('menor')
+          );
+        })
       )
     );
   }

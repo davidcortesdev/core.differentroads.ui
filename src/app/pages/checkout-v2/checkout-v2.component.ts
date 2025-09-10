@@ -231,15 +231,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     this.summaryRefreshTrigger = { timestamp: Date.now() };
   }
 
-  // ✅ NUEVO: Handler genérico para eventos de guardado de hijos
-  onSaveCompleted(event: { component: string; success: boolean; data?: any; error?: string }): void {
-    if (event?.success) {
-      console.log(`✅ Guardado exitoso en ${event.component}`);
-      this.triggerSummaryRefresh();
-    } else {
-      console.error(`❌ Error en guardado de ${event?.component}:`, event?.error);
-    }
-  }
 
   /**
    * ✅ NUEVO: Detectar si estamos en modo standalone basándose en la URL
@@ -413,6 +404,41 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     // ✅ Disparar actualización del summary inmediatamente
     this.triggerSummaryRefresh();
+  }
+
+  /**
+   * 🔥 NUEVO: Maneja el evento de guardado completado desde actividades opcionales
+   */
+  onSaveCompleted(event: {
+    component: string;
+    success: boolean;
+    error?: string;
+  }): void {
+    if (event.success) {
+      console.log(`✅ Guardado exitoso en ${event.component}`);
+      // El padre se encarga de obtener la información por su cuenta
+      if (this.travelerSelector && this.travelerSelector.travelersNumbers) {
+        this.updateOrderSummary(this.travelerSelector.travelersNumbers);
+      }
+    } else {
+      console.error(`❌ Error en guardado de ${event.component}:`, event.error);
+      // Mostrar error al usuario si es necesario
+      this.showErrorToast(
+        `Error al guardar ${event.component}: ${event.error}`
+      );
+    }
+  }
+
+  /**
+   * 🔥 NUEVO: Muestra un toast de error
+   */
+  private showErrorToast(message: string): void {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: message,
+      life: 5000,
+    });
   }
 
   /**

@@ -43,14 +43,9 @@ import {
   ReservationTravelerService,
   IReservationTravelerResponse,
 } from '../../core/services/reservation/reservation-traveler.service';
-import { PriceCheckService } from './services/price-check.service';
-import {
-  IPriceCheckResponse,
-  IJobStatusResponse,
-} from './services/price-check.service';
+// Eliminado: price-check imports
 import { environment } from '../../../environments/environment';
-import { interval, Subscription } from 'rxjs';
-import { takeWhile } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 import { ReservationStatusService } from '../../core/services/reservation/reservation-status.service';
 
 @Component({
@@ -66,6 +61,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('insuranceSelector') insuranceSelector!: InsuranceComponent;
   @ViewChild('infoTravelers') infoTravelers!: InfoTravelersComponent;
   @ViewChild('flightManagement') flightManagement!: any; // Referencia al componente de gestión de vuelos
+  @ViewChild('activitiesOptionals') activitiesOptionals!: any; // Referencia al componente de actividades opcionales
 
   // Datos del tour
   tourName: string = '';
@@ -134,26 +130,20 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   // Propiedades para autenticación
   loginDialogVisible: boolean = false;
 
-  // Propiedades para monitoreo de jobs de sincronización
-  currentJobId: string | null = null;
-  jobMonitoringSubscription: Subscription | null = null;
-  isSyncInProgress: boolean = false;
+  // Eliminado: monitoreo de sincronización de precios
   isAuthenticated: boolean = false;
 
   // ✅ NUEVO: Propiedades para controlar el estado de carga del botón "Sin Vuelos"
   isFlightlessProcessing: boolean = false;
   flightlessProcessingMessage: string = '';
 
-  // Propiedades para controlar la verificación de precios
-  priceCheckExecuted: boolean = false;
-  lastPriceCheckParams: {
-    retailerID: number;
-    departureID: number;
-    numPasajeros: number;
-  } | null = null;
+  // Eliminado: verificación de precios
 
   // ✅ NUEVO: Propiedad para detectar modo standalone
   isStandaloneMode: boolean = false;
+
+  // ✅ NUEVO: Trigger para refrescar el resumen
+  summaryRefreshTrigger: any = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -172,7 +162,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     private usersNetService: UsersNetService,
     private reservationTravelerService: ReservationTravelerService,
     private cdr: ChangeDetectorRef,
-    private priceCheckService: PriceCheckService,
+    // Eliminado: PriceCheckService
     private reservationStatusService: ReservationStatusService,
     private http: HttpClient
   ) {}
@@ -235,6 +225,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     // No se ejecuta aquí para evitar llamadas duplicadas
   }
 
+  // ✅ NUEVO: Método para disparar la actualización del resumen del pedido
+  triggerSummaryRefresh(): void {
+    console.log('🔄 Actualizando resumen del pedido...');
+    this.summaryRefreshTrigger = { timestamp: Date.now() };
+  }
+
+
   /**
    * ✅ NUEVO: Detectar si estamos en modo standalone basándose en la URL
    */
@@ -280,222 +277,37 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Ejecuta la verificación de precios cuando se tienen los datos necesarios
    * Evita llamadas duplicadas verificando si ya se ejecutó con los mismos parámetros
    */
-  private executePriceCheck(): void {
-    // Verificar que tengamos los datos mínimos necesarios
-    if (!this.departureId || !this.reservationId) {
-      return;
-    }
-
-    // Usar el número de pasajeros de la reservación si no tenemos uno específico
-    const numPasajeros = this.totalPassengers > 0 ? this.totalPassengers : 1;
-
-    // Obtener el retailer ID del departure o usar el valor por defecto
-    let retailerID = environment.retaileriddefault;
-
-    // Si tenemos datos del departure, intentar obtener el retailer ID
-    if (this.departureData && this.departureData.retailerId) {
-      retailerID = this.departureData.retailerId;
-    }
-
-    // Crear parámetros actuales para comparar
-    const currentParams = {
-      retailerID,
-      departureID: this.departureId!,
-      numPasajeros,
-    };
-
-    // Verificar si ya se ejecutó con los mismos parámetros
-    if (
-      this.priceCheckExecuted &&
-      this.lastPriceCheckParams &&
-      JSON.stringify(this.lastPriceCheckParams) ===
-        JSON.stringify(currentParams)
-    ) {
-      return;
-    }
-
-    // Actualizar parámetros de la última ejecución
-    this.lastPriceCheckParams = currentParams;
-    this.priceCheckExecuted = true;
-
-    this.priceCheckService
-      .checkPrices(retailerID, this.departureId!, numPasajeros)
-      .subscribe({
-        next: (response: IPriceCheckResponse) => {
-          if (response.needsUpdate) {
-            if (response.jobStatus === 'ENQUEUED' && response.jobId) {
-              // Iniciar el monitoreo del job
-              this.startJobMonitoring(response.jobId);
-
-              // Mostrar mensaje al usuario sobre la actualización en curso
-              this.messageService.add({
-                severity: 'info',
-                summary: 'Actualización de precios',
-                detail:
-                  'Los precios se están actualizando en segundo plano. Te notificaremos cuando termine.',
-              });
-            } else if (response.jobStatus === 'EXISTING') {
-              this.messageService.add({
-                severity: 'info',
-                summary: 'Sincronización en curso',
-                detail:
-                  'Ya hay una actualización de precios en curso para este tour.',
-              });
-            }
-          } else {
-            // Los precios están actualizados
-          }
-        },
-        error: (error) => {
-          console.error('Error al verificar precios:', error);
-          // No mostramos error al usuario ya que esto es una verificación en segundo plano
-        },
-      });
-  }
+  private executePriceCheck(): void { return; }
 
   /**
    * Inicia el monitoreo de un job de Hangfire
    */
-  private startJobMonitoring(jobId: string): void {
-    this.currentJobId = jobId;
-    this.isSyncInProgress = true;
-
-    // Cancelar cualquier monitoreo anterior
-    if (this.jobMonitoringSubscription) {
-      this.jobMonitoringSubscription.unsubscribe();
-    }
-
-    // Verificar el estado del job cada 5 segundos
-    this.jobMonitoringSubscription = interval(5000)
-      .pipe(
-        takeWhile(() => this.isSyncInProgress, true) // Incluir la última emisión cuando se complete
-      )
-      .subscribe(() => {
-        if (this.currentJobId) {
-          this.checkJobStatus(this.currentJobId);
-        }
-      });
-  }
+  private startJobMonitoring(jobId: string): void {}
 
   /**
    * Verifica el estado de un job específico
    */
-  private checkJobStatus(jobId: string): void {
-    this.priceCheckService.checkJobStatus(jobId).subscribe({
-      next: (jobStatus: IJobStatusResponse) => {
-        // Estados de Hangfire: Enqueued, Processing, Succeeded, Failed, Deleted, Scheduled
-        switch (jobStatus.state) {
-          case 'Succeeded':
-            this.onJobCompleted(true);
-            break;
-          case 'Failed':
-          case 'Deleted':
-            this.onJobCompleted(false);
-            break;
-          case 'Processing':
-            // Job en proceso
-            break;
-          case 'Enqueued':
-          case 'Scheduled':
-            // Job en cola
-            break;
-          default:
-            // Estado desconocido del job
-            break;
-        }
-      },
-      error: (error) => {
-        console.error('Error al verificar estado del job:', error);
-        // Si hay error al verificar el job, asumir que terminó (podría haberse eliminado)
-        this.onJobCompleted(false);
-      },
-    });
-  }
+  private checkJobStatus(jobId: string): void {}
 
   /**
    * Se ejecuta cuando un job se completa (exitoso o fallido)
    */
-  private onJobCompleted(wasSuccessful: boolean): void {
-    this.isSyncInProgress = false;
-    this.currentJobId = null;
-
-    // Cancelar el monitoreo
-    if (this.jobMonitoringSubscription) {
-      this.jobMonitoringSubscription.unsubscribe();
-      this.jobMonitoringSubscription = null;
-    }
-
-    if (wasSuccessful) {
-      // Mostrar mensaje de éxito
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Sincronización completada',
-        detail:
-          'Los precios han sido actualizados correctamente. Recargando información...',
-      });
-
-      // Recargar todos los datos del componente
-      this.reloadComponentData();
-    } else {
-      // Mostrar mensaje de error
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Sincronización finalizada',
-        detail:
-          'La sincronización de precios ha finalizado. Puedes continuar con tu reserva.',
-      });
-    }
-  }
+  private onJobCompleted(wasSuccessful: boolean): void {}
 
   /**
    * Recarga todos los datos del componente
    */
-  private reloadComponentData(): void {
-    if (this.reservationId) {
-      // Resetear el estado de verificación de precios para permitir nueva verificación
-      this.resetPriceCheckState();
-
-      // Recargar datos de la reservación
-      this.loadReservationData(this.reservationId);
-
-      // Forzar actualización de todos los componentes hijos
-      setTimeout(() => {
-        // Los componentes hijos se recargarán automáticamente cuando cambie departureId/reservationId
-        // a través de sus métodos ngOnChanges
-
-        // Recargar datos de habitaciones si está disponible
-        if (this.roomSelector) {
-          this.roomSelector.initializeComponent();
-        }
-
-        // Recargar datos de seguros si está disponible
-        if (this.insuranceSelector) {
-          this.insuranceSelector.loadInsurances();
-        }
-
-        // Forzar actualización del resumen
-        this.forceSummaryUpdate();
-      }, 1000);
-    }
-  }
+  private reloadComponentData(): void {}
 
   /**
    * Resetea el estado de verificación de precios (útil después de recargar datos)
    */
-  private resetPriceCheckState(): void {
-    this.priceCheckExecuted = false;
-    this.lastPriceCheckParams = null;
-  }
+  private resetPriceCheckState(): void {}
 
   /**
    * Se ejecuta cuando el componente se destruye
    */
   ngOnDestroy(): void {
-    // Cancelar el monitoreo de jobs al destruir el componente
-    if (this.jobMonitoringSubscription) {
-      this.jobMonitoringSubscription.unsubscribe();
-    }
-
     // ✅ NUEVO: Limpiar el resumen del localStorage al destruir el componente
     this.clearSummaryFromLocalStorage();
   }
@@ -569,10 +381,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  onActivitiesSelectionChange(activitiesData: {
+  async onActivitiesSelectionChange(activitiesData: {
     selectedActivities: any[];
     totalPrice: number;
-  }): void {
+  }): Promise<void> {
     this.selectedActivities = activitiesData.selectedActivities;
     this.activitiesTotalPrice = activitiesData.totalPrice;
 
@@ -582,6 +394,16 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     ) {
       this.updateOrderSummary(this.travelerSelector.travelersNumbers);
     }
+
+    // ✅ Esperar a que terminen guardados pendientes en actividades antes de refrescar
+    try {
+      await this.activitiesOptionals?.waitForPendingSaves?.();
+    } catch (err) {
+      console.error('❌ Error esperando guardados de actividades:', err);
+    }
+
+    // ✅ Disparar actualización del summary inmediatamente
+    this.triggerSummaryRefresh();
   }
 
   /**
@@ -622,13 +444,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   /**
    * Maneja los cambios de asignación de actividades por viajero
    */
-  onActivitiesAssignmentChange(event: {
+  async onActivitiesAssignmentChange(event: {
     travelerId: number;
     activityId: number;
     isAssigned: boolean;
     activityName: string;
     activityPrice: number;
-  }): void {
+  }): Promise<void> {
     // Inicializar el objeto para el viajero si no existe
     if (!this.travelerActivities[event.travelerId]) {
       this.travelerActivities[event.travelerId] = {};
@@ -659,6 +481,16 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     // Forzar detección de cambios
     this.cdr.detectChanges();
+
+    // ✅ Esperar a que terminen guardados pendientes en actividades antes de refrescar
+    try {
+      await this.activitiesOptionals?.waitForPendingSaves?.();
+    } catch (err) {
+      console.error('❌ Error esperando guardados de actividades:', err);
+    }
+
+    // ✅ Disparar actualización del summary inmediatamente
+    this.triggerSummaryRefresh();
   }
 
   /**
@@ -940,11 +772,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Método llamado cuando cambian los números de viajeros en el selector de travelers
    * Este método actualiza el componente de habitaciones con los nuevos números
    */
-  onTravelersNumbersChange(travelersNumbers: {
+  async onTravelersNumbersChange(travelersNumbers: {
     adults: number;
     childs: number;
     babies: number;
-  }): void {
+  }): Promise<void> {
     // Actualizar el total de pasajeros
     this.totalPassengers =
       travelersNumbers.adults +
@@ -969,6 +801,16 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     if (newTotalPassengers !== this.totalPassengers && newTotalPassengers > 0) {
       this.executePriceCheck();
     }
+
+    // ✅ Guardar inmediatamente cambios de viajeros
+    try {
+      await this.travelerSelector?.saveTravelersChanges?.();
+    } catch (err) {
+      console.error('❌ Error guardando cambios de viajeros:', err);
+    }
+
+    // ✅ Disparar actualización del summary inmediatamente
+    this.triggerSummaryRefresh();
   }
 
   /**
@@ -1022,18 +864,28 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   /**
    * OPTIMIZADO: Método llamado cuando cambian las habitaciones seleccionadas
    */
-  onRoomsSelectionChange(selectedRooms: { [tkId: string]: number }): void {
+  async onRoomsSelectionChange(selectedRooms: { [tkId: string]: number }): Promise<void> {
     // NUEVO: Forzar actualización del summary cuando cambian las habitaciones
     this.forceSummaryUpdate();
+
+    // ✅ Guardar inmediatamente cambios de habitaciones
+    try {
+      await this.roomSelector?.saveRoomAssignments?.();
+    } catch (err) {
+      console.error('❌ Error guardando asignaciones de habitaciones:', err);
+    }
+
+    // ✅ Disparar actualización del summary inmediatamente
+    this.triggerSummaryRefresh();
   }
 
   /**
    * Método llamado cuando cambia la selección de seguro
    */
-  onInsuranceSelectionChange(insuranceData: {
+  async onInsuranceSelectionChange(insuranceData: {
     selectedInsurance: any;
     price: number;
-  }): void {
+  }): Promise<void> {
     this.selectedInsurance = insuranceData.selectedInsurance;
     this.insurancePrice = insuranceData.price;
 
@@ -1052,15 +904,25 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       };
       this.updateOrderSummary(basicTravelers);
     }
+
+    // ✅ Guardar inmediatamente cambios de seguro
+    try {
+      await this.insuranceSelector?.saveInsuranceAssignments?.();
+    } catch (err) {
+      console.error('❌ Error guardando asignaciones de seguro:', err);
+    }
+
+    // ✅ Disparar actualización del summary inmediatamente
+    this.triggerSummaryRefresh();
   }
 
   /**
    * Método llamado cuando cambia la selección de vuelos
    */
-  onFlightSelectionChange(flightData: {
+  async onFlightSelectionChange(flightData: {
     selectedFlight: IFlightPackDTO | null;
     totalPrice: number;
-  }): void {
+  }): Promise<void> {
     console.log(
       '🔄 checkout-v2: onFlightSelectionChange llamado con:',
       flightData
@@ -1142,6 +1004,18 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       localStorage.removeItem(`checkout_summary_${this.reservationId}`);
       console.log('🗑️ Resumen anterior del localStorage eliminado');
     }
+
+    // ✅ Guardar inmediatamente cambios de vuelos
+    try {
+      if (this.flightManagement?.defaultFlightsComponent?.saveFlightAssignments) {
+        await this.flightManagement.defaultFlightsComponent.saveFlightAssignments();
+      }
+    } catch (err) {
+      console.error('❌ Error guardando asignaciones de vuelos:', err);
+    }
+
+    // ✅ Disparar actualización del summary inmediatamente
+    this.triggerSummaryRefresh();
   }
 
   /**
@@ -1578,7 +1452,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   // Método para calcular totales
   calculateTotals(): void {
-    // Calcular subtotal (solo valores positivos)
+    // Calcular subtotal (solo valores positivos) - mantener para compatibilidad
     this.subtotal = this.summary.reduce((acc, item) => {
       const itemTotal = item.value * item.qty;
       if (item.value >= 0) {
@@ -1587,11 +1461,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       return acc;
     }, 0);
 
-    // Calcular total (todos los valores, incluyendo negativos)
-    this.totalAmountCalculated = this.summary.reduce((acc, item) => {
-      const itemTotal = item.value * item.qty;
-      return acc + itemTotal;
-    }, 0);
+    // MODIFICADO: No calcular total en frontend, usar el que viene del backend
+    // El totalAmountCalculated se actualizará desde el backend cuando se recargue el resumen
+    console.log('📊 Total calculado en frontend (solo para referencia):', this.subtotal);
+    console.log('📊 Total real debe venir del backend:', this.totalAmount);
   }
 
   // Método para actualizar totalAmount en la reserva
@@ -1600,12 +1473,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    // Solo actualizar si el monto ha cambiado
-    if (this.totalAmountCalculated !== this.reservationData.totalAmount) {
-      // Actualizar las variables locales inmediatamente para evitar conflictos
-      this.reservationData.totalAmount = this.totalAmountCalculated;
-      this.totalAmount = this.totalAmountCalculated;
-    }
+    // MODIFICADO: No sobrescribir el totalAmount del backend
+    // El total debe venir del backend, no calcularse en el frontend
+    console.log('📊 Total del backend (reservationData):', this.reservationData.totalAmount);
+    console.log('📊 Total local (no debe sobrescribir al backend):', this.totalAmountCalculated);
+    
+    // Solo actualizar la variable local para mantener consistencia, pero no sobrescribir el backend
+    this.totalAmount = this.reservationData.totalAmount;
+    this.totalAmountCalculated = this.reservationData.totalAmount;
   }
 
   // Método para guardar actividades seleccionadas (CON SOPORTE COMPLETO PARA PACKS)
@@ -2592,7 +2467,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           const reservationUpdateData = {
             ...this.reservationData,
             totalPassengers: this.totalPassengers,
-            totalAmount: this.totalAmountCalculated,
+            // MODIFICADO: No enviar totalAmount calculado en frontend, dejar que el backend lo calcule
+            // totalAmount: this.totalAmountCalculated,
             updatedAt: new Date().toISOString(),
           };
 
@@ -2647,9 +2523,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
                     // Actualizar datos locales
                     this.reservationData.totalPassengers = this.totalPassengers;
-                    this.reservationData.totalAmount =
-                      this.totalAmountCalculated;
-                    this.totalAmount = this.totalAmountCalculated;
+                    // MODIFICADO: No actualizar totalAmount local, debe venir del backend
+                    // this.reservationData.totalAmount = this.totalAmountCalculated;
+                    // this.totalAmount = this.totalAmountCalculated;
 
                     // Mostrar toast de éxito
                     const flightInfo = this.selectedFlight

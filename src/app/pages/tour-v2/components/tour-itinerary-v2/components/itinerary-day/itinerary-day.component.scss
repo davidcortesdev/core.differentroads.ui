@@ -239,10 +239,20 @@
         margin-top: -20px;
 
         p {
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
 
             &:last-child {
                 margin-bottom: 0;
+            }
+
+            // Reducir espacio para párrafos que solo contienen <br>
+            &:has(br:only-child) {
+                margin-bottom: 0rem;
+            }
+
+            // Para párrafos vacíos o con solo espacios
+            &:empty {
+                margin-bottom: 0rem;
             }
         }
 
@@ -290,10 +300,20 @@
             color: var(--background-azul);
 
             p {
-                margin-bottom: 0.75rem;
+                margin-bottom: 0.5rem;
 
                 &:last-child {
                     margin-bottom: 0;
+                }
+
+                // Reducir espacio para párrafos que solo contienen <br>
+                &:has(br:only-child) {
+                    margin-bottom: 0.25rem;
+                }
+
+                // Para párrafos vacíos o con solo espacios
+                &:empty {
+                    margin-bottom: 0.25rem;
                 }
             }
 

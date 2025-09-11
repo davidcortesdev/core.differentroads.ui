@@ -598,3 +598,14 @@ h3.title {
     }
   }
 }
+
+// NUEVO: Estilos para indicador de guardado de actividades
+.activity-toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  .activity-saving-spinner {
+    margin: 0;
+  }
+}

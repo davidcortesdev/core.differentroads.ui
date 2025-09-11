@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MessageService } from 'primeng/api';
 
 import { SelectorRoomComponent } from './selector-room.component';
 
@@ -8,9 +9,9 @@ describe('SelectorRoomComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [SelectorRoomComponent]
-    })
-    .compileComponents();
+      declarations: [SelectorRoomComponent],
+      providers: [MessageService],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(SelectorRoomComponent);
     component = fixture.componentInstance;

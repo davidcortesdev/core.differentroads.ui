@@ -231,6 +231,7 @@ import { DefaultFlightsComponent } from './pages/checkout-v2/components/flight-m
 import { SpecificSearchComponent } from './pages/checkout-v2/components/flight-management/specific-search/specific-search.component';
 import { ActivitiesOptionalsComponent } from './pages/checkout-v2/components/activities-optionals/activities-optionals.component';
 import { InfoTravelersComponent } from './pages/checkout-v2/components/info-travelers/info-travelers.component';
+import { InfoTravelersRoomComponent } from './pages/checkout-v2/components/info-travelers/components/info-travelers-room/info-travelers-room.component';
 import { PaymentManagementComponent } from './pages/checkout-v2/components/payment-management/payment-management.component';
 import { NewReservationComponent } from './pages/checkout-v2/components/new-reservation/new-reservation.component';
 import { FlightSectionV2Component } from './pages/checkout-v2/components/flight-section/flight-section.component';
@@ -382,6 +383,7 @@ registerLocaleData(localeEs);
     SpecificSearchComponent,
     ActivitiesOptionalsComponent,
     InfoTravelersComponent,
+    InfoTravelersRoomComponent,
     PaymentManagementComponent,
     NewReservationComponent,
     FlightSectionV2Component,

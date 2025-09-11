@@ -438,6 +438,15 @@
     </div>
   </div>
 
+            <!-- NUEVO: Componente de personalización de habitaciones -->
+            <app-info-travelers-room
+              [travelers]="travelers"
+              [ageGroups]="ageGroups"
+              [reservationId]="reservationId"
+              [departureId]="departureId"
+              (roomAssignmentsChange)="onRoomAssignmentsChange($event)">
+            </app-info-travelers-room>
+
 
 
 </div>

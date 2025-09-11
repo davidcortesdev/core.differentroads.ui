@@ -93,6 +93,9 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
   @Output() formValidityChange = new EventEmitter<boolean>();
 
+  // NUEVO: Output para cambios en asignaciones de habitaciones
+  @Output() roomAssignmentsChange = new EventEmitter<{ [travelerId: number]: number }>();
+
 
   // Formulario reactivo principal
   travelersForm: FormGroup;
@@ -2559,6 +2562,16 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         this.loadReservationStatuses();
       }
     });
+  }
+
+  /**
+   * NUEVO: Manejar cambios en asignaciones de habitaciones desde el componente hijo
+   */
+  onRoomAssignmentsChange(roomAssignments: { [travelerId: number]: number }): void {
+    console.log('Asignaciones de habitaciones recibidas:', roomAssignments);
+    
+    // Emitir el evento al componente padre
+    this.roomAssignmentsChange.emit(roomAssignments);
   }
 
   /**

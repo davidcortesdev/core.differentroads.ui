@@ -1,5 +1,23 @@
-import { Component, Input, OnInit } from '@angular/core';
+import {
+  Component,
+  Input,
+  OnInit,
+  AfterViewInit,
+  ViewChild,
+  ElementRef,
+} from '@angular/core';
 import { Router } from '@angular/router';
+import {
+  HomeSectionContentService,
+  IHomeSectionContentResponse,
+  ContentType,
+} from '../../../../core/services/home/home-section-content.service';
+import {
+  TripTypeService,
+  ITripTypeResponse,
+} from '../../../../core/services/trip-type/trip-type.service';
+import { CountriesService } from '../../../../core/services/countries.service';
+import { Country } from '../../../../shared/models/country.model';
 
 interface TripQueryParams {
   destination?: string;
@@ -14,18 +32,19 @@ interface TripQueryParams {
   templateUrl: './hero-section-v2.component.html',
   styleUrls: ['./hero-section-v2.component.scss'],
 })
-export class HeroSectionV2Component implements OnInit {
+export class HeroSectionV2Component implements OnInit, AfterViewInit {
   @Input() initialDestination: string | null = null;
   @Input() initialDepartureDate: Date | null = null;
   @Input() initialReturnDate: Date | null = null;
   @Input() initialTripType: string | null = null;
 
-  // Hardcoded banner data
-  bannerSection = {
-    bType: true,
-    'banner-video':
-      'https://d2sk3o7yhm4ek9.cloudfront.net/public/main-banner/desktop/fdb7592e-79e7-41bf-b1dd-36db39611353/different_roads_2025_tours_organizados_video_home.mp4',
-  };
+  @ViewChild('videoElement', { static: false })
+  videoElement!: ElementRef<HTMLVideoElement>;
+
+  // Banner content from service
+  bannerContent: IHomeSectionContentResponse | null = null;
+  isVideo: boolean = false;
+  isImage: boolean = false;
 
   selectedDestination: string | null = null;
   departureDate: Date | null = null;
@@ -33,39 +52,157 @@ export class HeroSectionV2Component implements OnInit {
   selectedTripType: string | null = null;
   destinationInput: string | null = null;
 
-  filteredDestinations: string[] = [];
-  filteredTripTypes: string[] = [];
+  filteredDestinations: Country[] = [];
+  filteredTripTypes: ITripTypeResponse[] = [];
 
-  destinations: string[] = ['Europa', 'Asia', 'África', 'América'];
+  destinations: Country[] = [];
+  tripTypes: ITripTypeResponse[] = [];
 
-  // Hardcoded trip types
-  tripTypes = [
-    { label: 'Tours Organizados', value: 'tours-organizados' },
-    { label: 'Viajes Familiares', value: 'viajes-familiares' },
-    { label: 'Aventura', value: 'aventura' },
-    { label: 'Cultural', value: 'cultural' },
-    { label: 'Playa', value: 'playa' },
-    { label: 'Montaña', value: 'montana' },
-  ];
-
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private homeSectionContentService: HomeSectionContentService,
+    private tripTypeService: TripTypeService,
+    private countriesService: CountriesService
+  ) {}
 
   ngOnInit(): void {
     this.setInitialValues();
+    this.loadBannerContent();
+    this.loadDestinations();
+    this.loadTripTypes();
+  }
+
+  ngAfterViewInit(): void {
+    // Ensure video plays when view is initialized
+    if (this.isVideo && this.bannerContent) {
+      setTimeout(() => this.playVideo(), 200);
+    }
+  }
+
+  private loadBannerContent(): void {
+    // Assuming banner content has a specific configuration ID
+    // You may need to adjust this based on your actual configuration
+    this.homeSectionContentService.getVideos(true).subscribe({
+      next: (videos) => {
+        if (videos && videos.length > 0) {
+          // Get the first video content
+          this.bannerContent = videos[0];
+          this.isVideo = true;
+          this.isImage = false;
+          // Trigger video play after content is set
+          setTimeout(() => this.playVideo(), 100);
+        } else {
+          // Fallback to images if no videos
+          this.homeSectionContentService.getImages(true).subscribe({
+            next: (images) => {
+              if (images && images.length > 0) {
+                this.bannerContent = images[0];
+                this.isVideo = false;
+                this.isImage = true;
+              }
+            },
+            error: (error) => {
+              console.error('Error loading banner images:', error);
+            },
+          });
+        }
+      },
+      error: (error) => {
+        console.error('Error loading banner videos:', error);
+        // Fallback to images on error
+        this.homeSectionContentService.getImages(true).subscribe({
+          next: (images) => {
+            if (images && images.length > 0) {
+              this.bannerContent = images[0];
+              this.isVideo = false;
+              this.isImage = true;
+            }
+          },
+          error: (imageError) => {
+            console.error('Error loading banner images:', imageError);
+          },
+        });
+      },
+    });
+  }
+
+  getBannerUrl(): string | null {
+    return this.bannerContent?.contentUrl || null;
+  }
+
+  getBannerAltText(): string {
+    return this.bannerContent?.altText || '';
+  }
+
+  onVideoLoaded(): void {
+    console.log('Video loaded, attempting to play...');
+    this.playVideo();
+  }
+
+  onVideoCanPlay(): void {
+    console.log('Video can play, attempting to play...');
+    this.playVideo();
+  }
+
+  private playVideo(): void {
+    if (this.videoElement && this.videoElement.nativeElement) {
+      const video = this.videoElement.nativeElement;
+      video.muted = true; // Ensure muted for autoplay
+      video
+        .play()
+        .then(() => {
+          console.log('Video is playing successfully');
+        })
+        .catch((error) => {
+          console.error('Error playing video:', error);
+          // Try to play again after a short delay
+          setTimeout(() => {
+            video.play().catch((retryError) => {
+              console.error('Retry failed:', retryError);
+            });
+          }, 100);
+        });
+    }
+  }
+
+  private loadDestinations(): void {
+    this.countriesService.getCountries().subscribe({
+      next: (countries) => {
+        this.destinations = countries;
+      },
+      error: (error) => {
+        console.error('Error loading destinations:', error);
+      },
+    });
+  }
+
+  private loadTripTypes(): void {
+    this.tripTypeService.getActiveTripTypes().subscribe({
+      next: (tripTypes) => {
+        this.tripTypes = tripTypes;
+      },
+      error: (error) => {
+        console.error('Error loading trip types:', error);
+      },
+    });
   }
 
   filterDestinations(event: { query: string }): void {
     const query = event.query.toLowerCase().trim();
-    this.filteredDestinations = this.destinations.filter((destination) =>
-      destination.toLowerCase().includes(query)
+    this.filteredDestinations = this.destinations.filter(
+      (destination) =>
+        destination.name.toLowerCase().includes(query) ||
+        destination.code.toLowerCase().includes(query)
     );
   }
 
   filterTripTypes(event: { query: string }): void {
     const query = event.query.toLowerCase().trim();
-    this.filteredTripTypes = this.tripTypes
-      .map((t) => t.label)
-      .filter((type) => type.toLowerCase().includes(query));
+    this.filteredTripTypes = this.tripTypes.filter(
+      (tripType) =>
+        tripType.name.toLowerCase().includes(query) ||
+        tripType.code.toLowerCase().includes(query)
+    );
   }
 
   searchTrips(): void {

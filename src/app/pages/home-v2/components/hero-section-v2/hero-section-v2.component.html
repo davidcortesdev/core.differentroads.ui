@@ -1,13 +1,27 @@
 <section class="hero">
-  <!-- Video de fondo hardcodeado -->
+  <!-- Video de fondo dinámico -->
   <video
+    *ngIf="isVideo && getBannerUrl()"
     class="hero-bg"
     autoplay
     loop
     muted
+    playsinline
+    preload="auto"
+    (loadeddata)="onVideoLoaded()"
+    (canplay)="onVideoCanPlay()"
+    #videoElement
   >
-    <source [src]="bannerSection['banner-video']" type="video/mp4" />
+    <source [src]="getBannerUrl()" type="video/mp4" />
   </video>
+  
+  <!-- Imagen de fondo dinámica -->
+  <img
+    *ngIf="isImage && getBannerUrl()"
+    class="hero-bg"
+    [src]="getBannerUrl()"
+    [alt]="getBannerAltText()"
+  />
   
   <div class="hero-search">
     <div class="hero-form">
@@ -66,6 +80,8 @@
             styleClass="custom-select-panel"
             [inputId]="'tripTypeInput'"
             fluid="true"
+            optionLabel="name"
+            optionValue="code"
           >
           </p-select>
           <label for="tripTypeInput" class="label">Tipo de viaje</label>

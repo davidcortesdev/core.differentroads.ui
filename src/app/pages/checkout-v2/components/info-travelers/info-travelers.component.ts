@@ -2230,6 +2230,35 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
+   * Obtiene el nombre y apellido del leader traveler
+   */
+  getLeaderTravelerInfo(): { name: string; lastName: string } {
+    const leaderTraveler = this.travelers.find(t => t.isLeadTraveler);
+    
+    if (!leaderTraveler) {
+      return { name: '', lastName: '' };
+    }
+
+    // Buscar campos de nombre y apellido
+    const nameField = this.reservationFields.find(f => f.code === 'name');
+    
+    const lastNameField = this.reservationFields.find(f => f.code === 'surname');
+
+    let name = '';
+    let lastName = '';
+
+    if (nameField) {
+      name = this.getExistingFieldValue(leaderTraveler.id, nameField.id);
+    }
+
+    if (lastNameField) {
+      lastName = this.getExistingFieldValue(leaderTraveler.id, lastNameField.id);
+    }
+
+    return { name: name || '', lastName: lastName || '' };
+  }
+
+  /**
    * Obtiene información de debugging sobre los campos obligatorios
    */
   getMandatoryFieldsDebugInfo(): any {

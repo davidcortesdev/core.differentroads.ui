@@ -36,6 +36,8 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
   @Input() depositAmount: number = 200;
   @Input() paymentDeadline: string = '30 días antes del tour';
   @Input() departureDate: string = '';
+  @Input() leaderTravelerName: string = '';
+  @Input() leaderTravelerLastName: string = '';
 
   // Outputs
   @Output() paymentCompleted = new EventEmitter<PaymentOption>();
@@ -652,7 +654,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
       throw new Error('Error al crear el pago');
     }
 
-    const formData: IFormData | undefined = await this.redsysService.generateFormData(response.id, "https://www.differentroads.es/", "https://redsys-dev.differentroads.es").toPromise();
+    const formData: IFormData | undefined = await this.redsysService.generateFormData(response.id, "https://www.differentroads.es/", "https://redsys-dev.differentroads.es", this.leaderTravelerName, this.leaderTravelerLastName).toPromise();
     if (formData) {
       await this.enviarFormARedsys(formData);
     }

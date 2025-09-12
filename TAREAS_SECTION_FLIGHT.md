@@ -12,6 +12,8 @@ Los componentes de vuelos deben ser independientes y obtener su información dir
   - `src/app/pages/checkout-v2/components/new-reservation/section-flight/section-flight.component.scss`
 - **Selector**: `app-section-flight`
 - **Propósito**: Mostrar información detallada de vuelos en la página de reservas
+- **Resolución**:
+  - No se crea CRUD para llamada a TK, se hace una petición GET al endpoint "core.differentroads.tourknife"
 
 ### **2. FLIGHT-SECTION** (Checkout summary)
 - **Archivos**:

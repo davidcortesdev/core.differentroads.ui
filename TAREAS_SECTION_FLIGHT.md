@@ -34,7 +34,10 @@ Los componentes de vuelos deben ser independientes y obtener su información dir
   - Si no hay vuelo de TK, comprobar consolidador usando endpoint existente
   - Devolver objeto estándar de vuelos (mismo formato que selección de vuelos)
 - **Resolución**:
-  - No se crea CRUD para llamada a TK, se hace una petición GET al endpoint "core.differentroads.tourknife"
+  - Se crea endpoint en "tourknife.differentroads.es/api/ReservationTK" que devuelve el campo Flight de la reserva de TK.
+  - Se llama desde "core.differentroads.reservations" a este nuevo endpoint.
+  - Si no devuelve nada se revisa en el consolidador.
+  - Se devuelve la respuesta obtenida.
 
 ### **Tarea 2: Crear endpoint para detalle de escalas**
 - **Problema**: No existe endpoint específico para detalles de escalas del vuelo seleccionado

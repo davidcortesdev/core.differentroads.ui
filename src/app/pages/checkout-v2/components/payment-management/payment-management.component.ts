@@ -295,6 +295,13 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
     return this.paymentState.isLoading ? 'Procesando...' : 'Realizar pago';
   }
 
+  get leaderTravelerFullName(): string {
+    if (this.leaderTravelerName && this.leaderTravelerLastName) {
+      return `${this.leaderTravelerName} ${this.leaderTravelerLastName}`;
+    }
+    return this.leaderTravelerName || this.leaderTravelerLastName || '';
+  }
+
   get shouldShowDepositOption(): boolean {
     if (!this.departureDate) return false;
     

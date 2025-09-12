@@ -951,7 +951,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   updateLeaderTravelerInfo(): void {
     if (this.infoTravelers) {
       this.leaderTravelerInfo = this.infoTravelers.getLeaderTravelerInfo();
-      console.log('📝 Información del leader traveler actualizada:', this.leaderTravelerInfo);
     }
   }
 

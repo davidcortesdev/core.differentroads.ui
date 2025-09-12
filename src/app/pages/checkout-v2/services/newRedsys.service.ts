@@ -31,6 +31,7 @@ export class NewRedsysService {
         if (leaderTravelerLastName) {
             params = params.set('leaderTravelerLastName', leaderTravelerLastName);
         }
+
         return this.http.post<IFormData>(`${environment.redsysApiUrl}/Redsys/generate-payment-form/${paymentId}`, { params });
     }
 }

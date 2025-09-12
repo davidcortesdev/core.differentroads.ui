@@ -98,15 +98,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     [activityId: number]: { count: number; price: number; name: string };
   } = {};
 
-  // Información del leader traveler
-  leaderTravelerInfo: {
-    name: string;
-    lastName: string;
-  } = {
-    name: '',
-    lastName: ''
-  };
-
   // Variables para el resumen del pedido
   summary: Array<{
     qty: number;
@@ -943,15 +934,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     }
 
     return ageGroupName; // Devolver original si no se puede mapear
-  }
-
-  /**
-   * Actualiza la información del leader traveler desde el componente info-travelers
-   */
-  updateLeaderTravelerInfo(): void {
-    if (this.infoTravelers) {
-      this.leaderTravelerInfo = this.infoTravelers.getLeaderTravelerInfo();
-    }
   }
 
   /**
@@ -2299,10 +2281,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
       // Llamar al método saveAllTravelersData del componente hijo y esperar a que se complete
       await this.infoTravelers.saveAllTravelersData();
-      
-      // Actualizar información del leader traveler después de guardar
-      this.updateLeaderTravelerInfo();
-      
       console.log('Datos guardados exitosamente, retornando true');
       return true;
     } catch (error) {

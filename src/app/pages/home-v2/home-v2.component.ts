@@ -1,14 +1,15 @@
-import { Component, OnInit } from '@angular/core';
-import { HomeService } from '../../core/services/home.service';
-import { Block, BlockType } from '../../core/models/blocks/block.model';
-import { FullSliderContent } from '../../core/models/blocks/full-slider-content.model';
-import { SingleFeaturedContent } from '../../core/models/blocks/single-featured-content.model';
-import { TravelersSection } from '../../core/models/blocks/travelers/travelers-section.model';
-import { FeaturedToursSection } from '../../core/models/home/featured-tours/featured-tour.model';
-import { AuthenticateService } from '../../core/services/auth-service.service';
-import { BlogListContent } from '../../core/models/blocks/blog-list-content.model';
-import { PressListContent } from '../../core/models/blocks/press-list-content.model';
-import { Observable } from 'rxjs';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subject, takeUntil } from 'rxjs';
+
+// SOLO servicios de configuración del home
+import {
+  HomeSectionService,
+  IHomeSectionResponse,
+} from '../../core/services/home/home-section.service';
+import {
+  HomeSectionConfigurationService,
+  IHomeSectionConfigurationResponse,
+} from '../../core/services/home/home-section-configuration.service';
 
 @Component({
   selector: 'app-home-v2',
@@ -16,104 +17,251 @@ import { Observable } from 'rxjs';
   templateUrl: './home-v2.component.html',
   styleUrls: ['./home-v2.component.scss'],
 })
-export class HomeV2Component implements OnInit {
-  blocks$: Observable<Block[]>;
-  featuredTours?: FeaturedToursSection;
-  tourSectionContent: any = null;
+export class HomeV2Component implements OnInit, OnDestroy {
+  // Configuraciones por tipo de sección
+  bannerConfigurations: IHomeSectionConfigurationResponse[] = [];
+  tourCarouselConfigurations: IHomeSectionConfigurationResponse[] = [];
+  fullscreenCardsConfigurations: IHomeSectionConfigurationResponse[] = [];
+  mixedSectionConfigurations: IHomeSectionConfigurationResponse[] = [];
+  travelerSectionConfigurations: IHomeSectionConfigurationResponse[] = [];
+  reviewsSectionConfigurations: IHomeSectionConfigurationResponse[] = [];
+  featuredSectionConfigurations: IHomeSectionConfigurationResponse[] = [];
+  partnersSectionConfigurations: IHomeSectionConfigurationResponse[] = [];
+
+  // Estado de carga
+  isLoading = true;
+  hasError = false;
+
+  private destroy$ = new Subject<void>();
 
   constructor(
-    private homeService: HomeService,
-    private authService: AuthenticateService
-  ) {
-    this.blocks$ = this.homeService.getDynamicSections();
-  }
+    private homeSectionService: HomeSectionService,
+    private homeSectionConfigurationService: HomeSectionConfigurationService
+  ) {}
 
   ngOnInit() {
-    this.homeService.getHomeData().subscribe({
-      next: (data) => {
-        console.log('Home data:', data);
-        this.featuredTours = data['featured-tours'];
+    this.loadAllHomeSections();
+  }
 
-        // Crear el contenido para el tour-carrussel-v2
-        this.tourSectionContent = {
-          title: 'Planea tu viaje de este verano',
-          'featured-tours': this.featuredTours?.['featured-tours'] || [],
-        };
-      },
-      error: (error) => {
-        console.error('Error fetching home data:', error);
-      },
-    });
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
-    // Debug: Log blocks data
-    this.blocks$.subscribe((blocks) => {
-      console.log('Blocks received in home-v2:', blocks);
-      blocks.forEach((block, index) => {
-        console.log(`Block ${index}:`, {
-          type: block.type,
-          name: block.name,
-          content: block.content,
-        });
-        if (
-          block.type === BlockType.BlogList ||
-          block.type === BlockType.PressList
-        ) {
-          console.log('Found BlogList or PressList block:', block);
-        }
+  private loadAllHomeSections(): void {
+    this.isLoading = true;
+    this.hasError = false;
+
+    // Cargar todas las configuraciones activas ordenadas
+    this.homeSectionConfigurationService
+      .getActiveOrdered()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (configurations) => {
+          this.distributeConfigurationsBySection(configurations);
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error loading home configurations:', error);
+          this.hasError = true;
+          this.isLoading = false;
+        },
       });
-    });
   }
 
-  getFullSliderContent(block: Block): FullSliderContent | null {
-    if (block.type === BlockType.FullSlider && block.content) {
-      return block.content as FullSliderContent;
-    }
-    return null;
-  }
+  private distributeConfigurationsBySection(
+    configurations: IHomeSectionConfigurationResponse[]
+  ): void {
+    console.log('🔍 HomeV2 - All configurations received:', configurations);
 
-  getCarouselContent(block: Block): FullSliderContent | null {
-    if (block.type === BlockType.CardSliderVertical && block.content) {
-      return block.content as FullSliderContent;
-    }
-    return null;
-  }
-
-  getCommunityContent(block: Block): TravelersSection | null {
-    if (block.type === BlockType.TravelersSection && block.content) {
-      return block.content as TravelersSection;
-    }
-    return null;
-  }
-
-  getHighlightContent(block: Block): SingleFeaturedContent | null {
-    if (block.type === BlockType.SingleFeatured && block.content) {
-      return block.content as SingleFeaturedContent;
-    }
-    return null;
-  }
-
-  getContentListContent(
-    block: Block
-  ): BlogListContent | PressListContent | null {
-    console.log('getContentListContent called with block:', block);
-    console.log(
-      'Block type:',
-      block.type,
-      'BlockType.BlogList:',
-      BlockType.BlogList,
-      'BlockType.PressList:',
-      BlockType.PressList
+    // Agrupar configuraciones por tipo de sección
+    this.bannerConfigurations = configurations.filter(
+      (c) => c.homeSectionId === 1
+    );
+    this.tourCarouselConfigurations = configurations.filter(
+      (c) => c.homeSectionId === 2
+    );
+    this.fullscreenCardsConfigurations = configurations.filter(
+      (c) => c.homeSectionId === 4
+    );
+    this.mixedSectionConfigurations = configurations.filter(
+      (c) => c.homeSectionId === 5
+    );
+    this.travelerSectionConfigurations = configurations.filter(
+      (c) => c.homeSectionId === 6
+    );
+    this.reviewsSectionConfigurations = configurations.filter(
+      (c) => c.homeSectionId === 7
+    );
+    this.featuredSectionConfigurations = configurations.filter(
+      (c) => c.homeSectionId === 8
+    );
+    this.partnersSectionConfigurations = configurations.filter(
+      (c) => c.homeSectionId === 10
     );
 
-    if (
-      (block.type === BlockType.BlogList ||
-        block.type === BlockType.PressList) &&
-      block.content
-    ) {
-      console.log('Returning content for content-list:', block.content);
-      return block.content as BlogListContent | PressListContent;
-    }
-    console.log('No content returned for content-list');
-    return null;
+    console.log(
+      '🔍 HomeV2 - Mixed Section Configurations (ID: 5):',
+      this.mixedSectionConfigurations
+    );
+  }
+
+  // Métodos helper para verificar si las secciones tienen configuraciones
+  hasBannerSection(): boolean {
+    return this.bannerConfigurations.length > 0;
+  }
+
+  hasTourCarouselSection(): boolean {
+    return this.tourCarouselConfigurations.length > 0;
+  }
+
+  hasFullscreenCardsSection(): boolean {
+    return this.fullscreenCardsConfigurations.length > 0;
+  }
+
+  hasMixedSection(): boolean {
+    return this.mixedSectionConfigurations.length > 0;
+  }
+
+  hasTravelerSection(): boolean {
+    return this.travelerSectionConfigurations.length > 0;
+  }
+
+  hasReviewsSection(): boolean {
+    return this.reviewsSectionConfigurations.length > 0;
+  }
+
+  hasFeaturedSection(): boolean {
+    return this.featuredSectionConfigurations.length > 0;
+  }
+
+  hasPartnersSection(): boolean {
+    return this.partnersSectionConfigurations.length > 0;
+  }
+
+  // Métodos para obtener configuraciones específicas por orden
+  getBannerConfiguration(
+    displayOrder: number = 1
+  ): IHomeSectionConfigurationResponse | null {
+    return (
+      this.bannerConfigurations.find((c) => c.displayOrder === displayOrder) ||
+      this.bannerConfigurations[0] ||
+      null
+    );
+  }
+
+  getTourCarouselConfiguration(
+    displayOrder: number = 1
+  ): IHomeSectionConfigurationResponse | null {
+    return (
+      this.tourCarouselConfigurations.find(
+        (c) => c.displayOrder === displayOrder
+      ) ||
+      this.tourCarouselConfigurations[0] ||
+      null
+    );
+  }
+
+  getFullscreenCardsConfiguration(
+    displayOrder: number = 1
+  ): IHomeSectionConfigurationResponse | null {
+    return (
+      this.fullscreenCardsConfigurations.find(
+        (c) => c.displayOrder === displayOrder
+      ) ||
+      this.fullscreenCardsConfigurations[0] ||
+      null
+    );
+  }
+
+  getMixedSectionConfiguration(
+    displayOrder: number = 1
+  ): IHomeSectionConfigurationResponse | null {
+    return (
+      this.mixedSectionConfigurations.find(
+        (c) => c.displayOrder === displayOrder
+      ) ||
+      this.mixedSectionConfigurations[0] ||
+      null
+    );
+  }
+
+  getTravelerSectionConfiguration(
+    displayOrder: number = 1
+  ): IHomeSectionConfigurationResponse | null {
+    return (
+      this.travelerSectionConfigurations.find(
+        (c) => c.displayOrder === displayOrder
+      ) ||
+      this.travelerSectionConfigurations[0] ||
+      null
+    );
+  }
+
+  getReviewsSectionConfiguration(
+    displayOrder: number = 1
+  ): IHomeSectionConfigurationResponse | null {
+    return (
+      this.reviewsSectionConfigurations.find(
+        (c) => c.displayOrder === displayOrder
+      ) ||
+      this.reviewsSectionConfigurations[0] ||
+      null
+    );
+  }
+
+  getFeaturedSectionConfiguration(
+    displayOrder: number = 1
+  ): IHomeSectionConfigurationResponse | null {
+    return (
+      this.featuredSectionConfigurations.find(
+        (c) => c.displayOrder === displayOrder
+      ) ||
+      this.featuredSectionConfigurations[0] ||
+      null
+    );
+  }
+
+  getPartnersSectionConfiguration(
+    displayOrder: number = 1
+  ): IHomeSectionConfigurationResponse | null {
+    return (
+      this.partnersSectionConfigurations.find(
+        (c) => c.displayOrder === displayOrder
+      ) ||
+      this.partnersSectionConfigurations[0] ||
+      null
+    );
+  }
+
+  // Método para obtener todas las configuraciones ordenadas globalmente
+  getAllConfigurationsOrdered(): IHomeSectionConfigurationResponse[] {
+    const allConfigurations = [
+      ...this.bannerConfigurations,
+      ...this.tourCarouselConfigurations,
+      ...this.fullscreenCardsConfigurations,
+      ...this.mixedSectionConfigurations,
+      ...this.travelerSectionConfigurations,
+      ...this.reviewsSectionConfigurations,
+      ...this.featuredSectionConfigurations,
+      ...this.partnersSectionConfigurations,
+    ];
+
+    return allConfigurations.sort((a, b) => a.displayOrder - b.displayOrder);
+  }
+
+  // Método para obtener el nombre de la sección por ID
+  getSectionName(sectionId: number): string {
+    const sectionNames: { [key: number]: string } = {
+      1: 'Banner',
+      2: 'Carrusel de Tours',
+      4: 'Cards a Pantalla Completa',
+      5: 'Sección Mixta',
+      6: 'Sección de Viajeros',
+      7: 'Sección de Reviews',
+      8: 'Sección Destacada',
+      10: 'Carrusel de Colaboradores',
+    };
+    return sectionNames[sectionId] || 'Sección desconocida';
   }
 }

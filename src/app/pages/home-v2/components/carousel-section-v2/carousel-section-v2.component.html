@@ -1,10 +1,16 @@
-<section class="carousel-section">
-  <div
-    class="carousel-section-description"
-    [innerHTML]="sanitizeHtml(textoquill)"
-  ></div>
+<section *ngIf="isActive" class="carousel-section">
+  <!-- Título y descripción de la sección -->
+  <div class="carousel-section-description">
+    <h2 *ngIf="title" class="section-title">{{ title }}</h2>
+    <div
+      *ngIf="textContent"
+      class="description"
+      [innerHTML]="sanitizeHtml(textContent)"
+    ></div>
+  </div>
 
-  <div class="carousel-section-carousel">
+  <!-- Carrusel de cards -->
+  <div class="carousel-section-carousel" *ngIf="cards.length > 0; else noCards">
     <p-carousel
       [value]="cards"
       [numVisible]="3.25"
@@ -23,12 +29,14 @@
                 loading="lazy"
               />
               <div class="info-image">
+                <h4 *ngIf="card.title" class="card-title">{{ card.title }}</h4>
                 <p
+                  *ngIf="card.description"
                   class="description-image"
                   [innerHTML]="sanitizeHtml(card.description)"
                 ></p>
                 <p-button
-                  *ngIf="card.buttonText"
+                  *ngIf="card.buttonText && card.link"
                   type="button"
                   [label]="card.buttonText"
                   class="buttonVertour p-button-rounded"
@@ -45,4 +53,11 @@
       </ng-template>
     </p-carousel>
   </div>
+
+  <!-- Estado sin cards -->
+  <ng-template #noCards>
+    <div class="no-cards-message">
+      <p>No hay contenido disponible para mostrar en el carrusel.</p>
+    </div>
+  </ng-template>
 </section>

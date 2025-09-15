@@ -1,38 +1,71 @@
 <div class="home-v2-container">
-  <app-hero-section-v2></app-hero-section-v2>
-  <app-trip-types-section-v2></app-trip-types-section-v2>
-  <app-tour-carrussel-v2 
-    *ngIf="tourSectionContent"
-    [content]="tourSectionContent"
-    [type]="'TourSection'">
-  </app-tour-carrussel-v2>
-  <ng-container *ngFor="let block of blocks$ | async">
+  <!-- Estado de carga -->
+  <div *ngIf="isLoading" class="loading-state">
+    <p>Cargando contenido del home...</p>
+  </div>
+
+  <!-- Estado de error -->
+  <div *ngIf="hasError" class="error-state">
+    <p>Error al cargar el contenido. Intente nuevamente.</p>
+  </div>
+
+  <!-- Contenido principal -->
+  <div *ngIf="!isLoading && !hasError">
+    
+    <!-- BANNER SECTION (ID: 1) -->
+    <app-hero-section-v2 
+      *ngIf="hasBannerSection()"
+      [configurationId]="getBannerConfiguration()?.id">
+    </app-hero-section-v2>
+
+    <!-- Tipos de viaje (probablemente hardcodeado o desde otro servicio) -->
+    <app-trip-types-section-v2></app-trip-types-section-v2>
+
+    <!-- TOUR CAROUSEL SECTION (ID: 2) -->
+    <app-tour-carrussel-v2
+      *ngFor="let config of tourCarouselConfigurations"
+      [configurationId]="config.id">
+    </app-tour-carrussel-v2>
+
+    <!-- FULLSCREEN CARDS SECTION (ID: 4) -->
     <app-full-card-section-v2
-      *ngIf="getFullSliderContent(block)"
-      [content]="getFullSliderContent(block)!"
-      [type]="block.type">
+      *ngFor="let config of fullscreenCardsConfigurations"
+      [configurationId]="config.id">
     </app-full-card-section-v2>
+
+    <!-- MIXED SECTION (ID: 5) -->
     <app-carousel-section-v2
-      *ngIf="getCarouselContent(block)"
-      [content]="getCarouselContent(block)!"
-      [type]="block.type">
+      *ngFor="let config of mixedSectionConfigurations"
+      [configurationId]="config.id"
+      [sectionType]="5">
     </app-carousel-section-v2>
+
+    <!-- TRAVELER SECTION (ID: 6) -->
     <app-community-section-v2
-      *ngIf="getCommunityContent(block)"
-      [content]="getCommunityContent(block)!"
-      [type]="block.type">
+      *ngFor="let config of travelerSectionConfigurations"
+      [configurationId]="config.id">
     </app-community-section-v2>
+
+    <!-- REVIEWS SECTION (ID: 7) -->
+    <app-reviews-section-v2
+      *ngFor="let config of reviewsSectionConfigurations"
+      [configurationId]="config.id">
+    </app-reviews-section-v2>
+
+    <!-- FEATURED SECTION (ID: 8) -->
     <app-highlight-section-v2
-      *ngIf="getHighlightContent(block)"
-      [content]="getHighlightContent(block)!"
-      [type]="block.type">
+      *ngFor="let config of featuredSectionConfigurations"
+      [configurationId]="config.id">
     </app-highlight-section-v2>
-    <app-content-list-section-v2
-      *ngIf="getContentListContent(block)"
-      [content]="getContentListContent(block)!"
-      [type]="block.type">
-    </app-content-list-section-v2>
-  </ng-container>
-  <app-publicity-section-v2></app-publicity-section-v2>
-  <app-partners-section-v2></app-partners-section-v2>
+
+    <!-- Secciones fijas que no dependen de configuración -->
+    <app-publicity-section-v2></app-publicity-section-v2>
+
+    <!-- PARTNERS SECTION (ID: 10) -->
+    <app-partners-section-v2
+      *ngFor="let config of partnersSectionConfigurations"
+      [configurationId]="config.id">
+    </app-partners-section-v2>
+
+  </div>
 </div>

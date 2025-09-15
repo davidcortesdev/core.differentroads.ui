@@ -1,11 +1,22 @@
-<section class="highlight-section">
+<section *ngIf="isActive" class="highlight-section">
   <div class="highlight-section-image-container">
-    <img [src]="imageUrl" [alt]="imageAlt" loading="lazy"/>
+    <img 
+      [src]="image?.imageUrl || '/image-highligths.jpg'" 
+      [alt]="image?.imageAlt || ''" 
+      loading="lazy"
+    />
   </div>
 
   <div class="highlight-section-content">
-    <div class="highlight-section-descripcion formated-content" [innerHTML]="sanitizedDescription"></div>
+    <h2 *ngIf="image?.title" class="highlight-section-title">
+      {{ image?.title }}
+    </h2>
+    <div 
+      class="highlight-section-descripcion formated-content" 
+      [innerHTML]="sanitizeHtml(image?.description || '')"
+    ></div>
     <p-button
+      *ngIf="image?.linkUrl"
       type="button"
       label="Ver tour"
       class="p-button-rounded, buttonVertour"

@@ -6,4 +6,11 @@
     [content]="tourSectionContent"
     [type]="'TourSection'">
   </app-tour-carrussel-v2>
+  <ng-container *ngFor="let block of blocks$ | async">
+    <app-full-card-section-v2
+      *ngIf="getFullSliderContent(block)"
+      [content]="getFullSliderContent(block)!"
+      [type]="block.type">
+    </app-full-card-section-v2>
+  </ng-container>
 </div>

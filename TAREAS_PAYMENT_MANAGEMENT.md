@@ -13,6 +13,10 @@ El componente `payment-management` debe mantener su funcionalidad actual de gest
   - Obtener información del líder de la reserva antes de crear el pago
   - Incluir datos del líder en la creación del pago de Redsys
   - Incluir datos del líder en la creación del pago de Scalapay
+- **Resolución**:
+  - Creados métodos privados : getLeaderData, en ambos proyectos junto a todos los CRUDs necesarios.
+  - Llamada ambos métodos desde las conexiones de envío de pago a ambas Apis.
+  - Los datos son: Scalapay -> nombre, apellidos, telefono y email (Revisra y decidir que campos se envían); redsys -> nombre y apellido (Comprobado, se muestra)
 
 ### **Tarea 2: Ajustar nombre del producto en Redsys**
 - **Problema**: El nombre del producto en Redsys no incluye información del tour y fecha

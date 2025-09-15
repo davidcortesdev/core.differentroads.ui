@@ -26,7 +26,7 @@ El componente `payment-management` debe mantener su funcionalidad actual de gest
 - **Resolución**:
   - Creado método getProductName en core.differentroads.redsys
   - Este método, a partir del reservationId y diferentes CRUDs añadidos extrae el nombre del tour y la departure date y lo pasa a redsys mediante el parámetro ds_merchant_productDescription.
-  - Se han hecho pruebas y el nombre aparece en el carrusel de pago de redsys con el formato correspondiente.
+  - Se han hecho pruebas y el nombre aparece en la pasarela de pago de redsys con el formato correspondiente.
 
 ### **Tarea 3: Ajustar nombre del producto en Scalapay**
 - **Problema**: El nombre del producto en Scalapay no incluye información del tour y fecha
@@ -36,7 +36,7 @@ El componente `payment-management` debe mantener su funcionalidad actual de gest
 - **Resolución**:
   - Creado método getProductName en core.differentroads.scalapay
   - Este método, a partir del tourId, el departureId y diferentes CRUDs añadidos extrae el nombre del tour y la departure date y lo pasa a scalapay mediante el parámetro Items={new TypedScalapayItem{Name}}.
-  - Se han hecho pruebas y el nombre aparece en el carrusel de pago de redsys con el formato correspondiente.
+  - El nombre del producto no aparece en la pasarela de pago de Scalapay; ni el extraido ni el mock anterior (en revisión); .
 
 ## **BENEFICIOS ESPERADOS**
 

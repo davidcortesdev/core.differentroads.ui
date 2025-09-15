@@ -1,5 +1,4 @@
-import { Component, Input } from '@angular/core';
-import { Reviews } from '../../../../../../core/models/blocks/travelers/reviews.model';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-community-reviews-v2',
@@ -8,7 +7,5 @@ import { Reviews } from '../../../../../../core/models/blocks/travelers/reviews.
   styleUrls: ['./community-reviews-v2.component.scss'],
 })
 export class CommunityReviewsV2Component {
-  @Input() reviews: Reviews | null = null;
-
-  constructor() {}
+  // Componente simple que usa app-reviews de shared
 }

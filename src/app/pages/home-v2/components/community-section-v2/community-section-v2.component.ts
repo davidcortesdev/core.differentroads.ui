@@ -8,6 +8,5 @@ import { Component } from '@angular/core';
 })
 export class CommunitySectionV2Component {
   // Este componente ahora solo actúa como contenedor
-  // Los componentes hijos (community-hero-v2 y community-gallery-v2)
-  // obtienen sus propios datos usando los servicios de home section
+  // Los componentes hijos obtienen sus propios datos usando los servicios
 }

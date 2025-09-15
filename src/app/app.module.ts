@@ -248,6 +248,7 @@ import { TourInfoAccordionV2Component } from './pages/tour-v2/components/tour-in
 import { HomeV2Component } from './pages/home-v2/home-v2.component';
 import { HeroSectionV2Component } from './pages/home-v2/components/hero-section-v2/hero-section-v2.component';
 import { TripTypesSectionV2Component } from './pages/home-v2/components/trip-types-section-v2/trip-types-section-v2.component';
+import { TourCarrusselV2Component } from './pages/home-v2/components/tour-carrussel-v2/tour-carrussel-v2.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -402,6 +403,7 @@ registerLocaleData(localeEs);
     HomeV2Component,
     HeroSectionV2Component,
     TripTypesSectionV2Component,
+    TourCarrusselV2Component,
   ],
   imports: [
     // Angular Modules

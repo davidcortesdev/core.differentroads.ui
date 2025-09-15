@@ -33,6 +33,10 @@ El componente `payment-management` debe mantener su funcionalidad actual de gest
 - **Solución**: Modificar el nombre del producto para incluir nombre del tour + fecha de salida
 - **Archivo**: Backend - Servicio de Scalapay
 - **Formato**: `[Nombre del Tour] - [Fecha de Salida]`
+- **Resolución**:
+  - Creado método getProductName en core.differentroads.scalapay
+  - Este método, a partir del tourId, el departureId y diferentes CRUDs añadidos extrae el nombre del tour y la departure date y lo pasa a scalapay mediante el parámetro Items={new TypedScalapayItem{Name}}.
+  - Se han hecho pruebas y el nombre aparece en el carrusel de pago de redsys con el formato correspondiente.
 
 ## **BENEFICIOS ESPERADOS**
 

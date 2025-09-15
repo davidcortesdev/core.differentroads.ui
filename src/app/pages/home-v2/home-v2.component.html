@@ -22,5 +22,15 @@
       [content]="getCommunityContent(block)!"
       [type]="block.type">
     </app-community-section-v2>
+    <app-highlight-section-v2
+      *ngIf="getHighlightContent(block)"
+      [content]="getHighlightContent(block)!"
+      [type]="block.type">
+    </app-highlight-section-v2>
+    <app-content-list-section-v2
+      *ngIf="getContentListContent(block)"
+      [content]="getContentListContent(block)!"
+      [type]="block.type">
+    </app-content-list-section-v2>
   </ng-container>
 </div>

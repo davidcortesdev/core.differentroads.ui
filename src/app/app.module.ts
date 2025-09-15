@@ -256,6 +256,8 @@ import { CommunityGalleryV2Component } from './pages/home-v2/components/communit
 import { CommunityHeroV2Component } from './pages/home-v2/components/community-section-v2/components/community-hero-v2/community-hero-v2.component';
 import { CommunityReviewsV2Component } from './pages/home-v2/components/community-section-v2/components/community-reviews-v2/community-reviews-v2.component';
 import { NewsLetterSectionV2Component } from './pages/home-v2/components/community-section-v2/components/newsletter-section-v2/newsletter-section-v2.component';
+import { HighlightSectionV2Component } from './pages/home-v2/components/highlight-section-v2/highlight-section-v2.component';
+import { ContentListV2Component } from './pages/home-v2/components/content-list-v2/content-list-v2.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -417,6 +419,8 @@ registerLocaleData(localeEs);
     CommunityGalleryV2Component,
     CommunityHeroV2Component,
     CommunityReviewsV2Component,
+    HighlightSectionV2Component,
+    ContentListV2Component,
   ],
   imports: [
     // Angular Modules

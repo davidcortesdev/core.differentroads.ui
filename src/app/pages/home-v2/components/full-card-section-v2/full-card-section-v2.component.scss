@@ -71,23 +71,33 @@
                     font-size: 24px;
                     font-weight: bold;
                     line-height: 27px;
+                    margin: 0 0 8px 0;
+                    min-height: 54px; // Altura mínima para mantener consistencia
+                    display: flex;
+                    align-items: center;
 
                     @media (max-width: 1200px) {
                         font-size: 22px;
+                        min-height: 50px;
                     }
 
                     @media (max-width: 768px) {
                         font-size: 20px;
+                        min-height: 46px;
                     }
 
                     @media (max-width: 480px) {
                         font-size: 18px;
+                        min-height: 42px;
                     }
                 }
 
                 .card-description {
                     font-size: 14px;
-                    line-height: 0.1px;
+                    line-height: 1.4;
+                    margin-bottom: 10px;
+
+                    color: rgba(255, 255, 255, 0.9);
 
                     @media (max-width: 1200px) {
                         font-size: 13px;
@@ -102,7 +112,8 @@
                     }
                 }
 
-                p {
+                p,
+                h3 {
                     cursor: pointer;
                     transition: opacity 0.2s ease;
 

@@ -3,10 +3,14 @@
     <div class="card-image">
       <img [src]="card.image.url" [alt]="card.image.alt" loading="lazy" />
       <div class="card-info">
-        <p class="card-subtitle"
-           [innerHTML]="sanitizeHtml(card.subtitle)"
-           (click)="onClick(card.link)"
-           class="clickable">
+        <h3 class="card-title"
+            [innerHTML]="sanitizeHtml(card.subtitle)"
+            (click)="onClick(card.link)"
+            class="clickable">
+        </h3>
+        <p class="card-description"
+           [innerHTML]="sanitizeHtml(card.content)"
+           *ngIf="card.content">
         </p>
       </div>
     </div>

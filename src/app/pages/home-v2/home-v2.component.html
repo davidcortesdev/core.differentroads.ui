@@ -12,5 +12,15 @@
       [content]="getFullSliderContent(block)!"
       [type]="block.type">
     </app-full-card-section-v2>
+    <app-carousel-section-v2
+      *ngIf="getCarouselContent(block)"
+      [content]="getCarouselContent(block)!"
+      [type]="block.type">
+    </app-carousel-section-v2>
+    <app-community-section-v2
+      *ngIf="getCommunityContent(block)"
+      [content]="getCommunityContent(block)!"
+      [type]="block.type">
+    </app-community-section-v2>
   </ng-container>
 </div>

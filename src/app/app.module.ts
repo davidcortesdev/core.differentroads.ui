@@ -250,6 +250,12 @@ import { HeroSectionV2Component } from './pages/home-v2/components/hero-section-
 import { TripTypesSectionV2Component } from './pages/home-v2/components/trip-types-section-v2/trip-types-section-v2.component';
 import { TourCarrusselV2Component } from './pages/home-v2/components/tour-carrussel-v2/tour-carrussel-v2.component';
 import { FullCardSectionV2Component } from './pages/home-v2/components/full-card-section-v2/full-card-section-v2.component';
+import { CarouselSectionV2Component } from './pages/home-v2/components/carousel-section-v2/carousel-section-v2.component';
+import { CommunitySectionV2Component } from './pages/home-v2/components/community-section-v2/community-section-v2.component';
+import { CommunityGalleryV2Component } from './pages/home-v2/components/community-section-v2/components/community-gallery-v2/community-gallery-v2.component';
+import { CommunityHeroV2Component } from './pages/home-v2/components/community-section-v2/components/community-hero-v2/community-hero-v2.component';
+import { CommunityReviewsV2Component } from './pages/home-v2/components/community-section-v2/components/community-reviews-v2/community-reviews-v2.component';
+import { NewsLetterSectionV2Component } from './pages/home-v2/components/community-section-v2/components/newsletter-section-v2/newsletter-section-v2.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -406,6 +412,11 @@ registerLocaleData(localeEs);
     TripTypesSectionV2Component,
     TourCarrusselV2Component,
     FullCardSectionV2Component,
+    CarouselSectionV2Component,
+    CommunitySectionV2Component,
+    CommunityGalleryV2Component,
+    CommunityHeroV2Component,
+    CommunityReviewsV2Component,
   ],
   imports: [
     // Angular Modules
@@ -413,6 +424,7 @@ registerLocaleData(localeEs);
     BrowserAnimationsModule,
     AppRoutingModule,
     FormsModule,
+    NewsLetterSectionV2Component,
     CommonModule,
     NgComponentOutlet,
     NewsLetterSectionComponent,

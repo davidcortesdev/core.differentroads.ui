@@ -24,7 +24,7 @@ El componente `payment-management` debe mantener su funcionalidad actual de gest
 - **Archivo**: Backend - Servicio de Redsys
 - **Formato**: `[Nombre del Tour] - [Fecha de Salida]`
 - **Resolución**:
-  - Creado método getProductName en core.diffrenetroads.redsys
+  - Creado método getProductName en core.differentroads.redsys
   - Este método, a partir del reservationId y diferentes CRUDs añadidos extrae el nombre del tour y la departure date y lo pasa a redsys mediante el parámetro ds_merchant_productDescription.
   - Se han hecho pruebas y el nombre aparece en el carrusel de pago de redsys con el formato correspondiente.
 

@@ -2493,6 +2493,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     return mandatoryFields;
   }
 
+
   /**
    * Obtiene información de debugging sobre los campos obligatorios
    */

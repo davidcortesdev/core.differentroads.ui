@@ -43,10 +43,16 @@ import {
   ReservationTravelerService,
   IReservationTravelerResponse,
 } from '../../core/services/reservation/reservation-traveler.service';
-// Eliminado: price-check imports
+import { PriceCheckService } from './services/price-check.service';
+import {
+  IPriceCheckResponse,
+  IJobStatusResponse,
+} from './services/price-check.service';
 import { environment } from '../../../environments/environment';
-import { Subscription } from 'rxjs';
+import { interval, Subscription } from 'rxjs';
+import { takeWhile } from 'rxjs/operators';
 import { ReservationStatusService } from '../../core/services/reservation/reservation-status.service';
+
 
 @Component({
   selector: 'app-checkout-v2',
@@ -130,14 +136,23 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   // Propiedades para autenticación
   loginDialogVisible: boolean = false;
 
-  // Eliminado: monitoreo de sincronización de precios
+  // Propiedades para monitoreo de jobs de sincronización
+  currentJobId: string | null = null;
+  jobMonitoringSubscription: Subscription | null = null;
+  isSyncInProgress: boolean = false;
   isAuthenticated: boolean = false;
 
   // ✅ NUEVO: Propiedades para controlar el estado de carga del botón "Sin Vuelos"
   isFlightlessProcessing: boolean = false;
   flightlessProcessingMessage: string = '';
 
-  // Eliminado: verificación de precios
+  // Propiedades para controlar la verificación de precios
+  priceCheckExecuted: boolean = false;
+  lastPriceCheckParams: {
+    retailerID: number;
+    departureID: number;
+    numPasajeros: number;
+  } | null = null;
 
   // ✅ NUEVO: Propiedad para detectar modo standalone
   isStandaloneMode: boolean = false;
@@ -162,7 +177,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     private usersNetService: UsersNetService,
     private reservationTravelerService: ReservationTravelerService,
     private cdr: ChangeDetectorRef,
-    // Eliminado: PriceCheckService
+    private priceCheckService: PriceCheckService,
     private reservationStatusService: ReservationStatusService,
     private http: HttpClient
   ) {}
@@ -277,37 +292,222 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Ejecuta la verificación de precios cuando se tienen los datos necesarios
    * Evita llamadas duplicadas verificando si ya se ejecutó con los mismos parámetros
    */
-  private executePriceCheck(): void { return; }
+  private executePriceCheck(): void {
+    // Verificar que tengamos los datos mínimos necesarios
+    if (!this.departureId || !this.reservationId) {
+      return;
+    }
+
+    // Usar el número de pasajeros de la reservación si no tenemos uno específico
+    const numPasajeros = this.totalPassengers > 0 ? this.totalPassengers : 1;
+
+    // Obtener el retailer ID del departure o usar el valor por defecto
+    let retailerID = environment.retaileriddefault;
+
+    // Si tenemos datos del departure, intentar obtener el retailer ID
+    if (this.departureData && this.departureData.retailerId) {
+      retailerID = this.departureData.retailerId;
+    }
+
+    // Crear parámetros actuales para comparar
+    const currentParams = {
+      retailerID,
+      departureID: this.departureId!,
+      numPasajeros,
+    };
+
+    // Verificar si ya se ejecutó con los mismos parámetros
+    if (
+      this.priceCheckExecuted &&
+      this.lastPriceCheckParams &&
+      JSON.stringify(this.lastPriceCheckParams) ===
+        JSON.stringify(currentParams)
+    ) {
+      return;
+    }
+
+    // Actualizar parámetros de la última ejecución
+    this.lastPriceCheckParams = currentParams;
+    this.priceCheckExecuted = true;
+
+    this.priceCheckService
+      .checkPrices(retailerID, this.departureId!, numPasajeros)
+      .subscribe({
+        next: (response: IPriceCheckResponse) => {
+          if (response.needsUpdate) {
+            if (response.jobStatus === 'ENQUEUED' && response.jobId) {
+              // Iniciar el monitoreo del job
+              this.startJobMonitoring(response.jobId);
+
+              // Mostrar mensaje al usuario sobre la actualización en curso
+              this.messageService.add({
+                severity: 'info',
+                summary: 'Actualización de precios',
+                detail:
+                  'Los precios se están actualizando en segundo plano. Te notificaremos cuando termine.',
+              });
+            } else if (response.jobStatus === 'EXISTING') {
+              this.messageService.add({
+                severity: 'info',
+                summary: 'Sincronización en curso',
+                detail:
+                  'Ya hay una actualización de precios en curso para este tour.',
+              });
+            }
+          } else {
+            // Los precios están actualizados
+          }
+        },
+        error: (error) => {
+          console.error('Error al verificar precios:', error);
+          // No mostramos error al usuario ya que esto es una verificación en segundo plano
+        },
+      });
+  }
 
   /**
    * Inicia el monitoreo de un job de Hangfire
    */
-  private startJobMonitoring(jobId: string): void {}
+  private startJobMonitoring(jobId: string): void {
+    this.currentJobId = jobId;
+    this.isSyncInProgress = true;
+
+    // Cancelar cualquier monitoreo anterior
+    if (this.jobMonitoringSubscription) {
+      this.jobMonitoringSubscription.unsubscribe();
+    }
+
+    // Verificar el estado del job cada 5 segundos
+    this.jobMonitoringSubscription = interval(5000)
+      .pipe(
+        takeWhile(() => this.isSyncInProgress, true) // Incluir la última emisión cuando se complete
+      )
+      .subscribe(() => {
+        if (this.currentJobId) {
+          this.checkJobStatus(this.currentJobId);
+        }
+      });
+  }
 
   /**
    * Verifica el estado de un job específico
    */
-  private checkJobStatus(jobId: string): void {}
+  private checkJobStatus(jobId: string): void {
+    this.priceCheckService.checkJobStatus(jobId).subscribe({
+      next: (jobStatus: IJobStatusResponse) => {
+        // Estados de Hangfire: Enqueued, Processing, Succeeded, Failed, Deleted, Scheduled
+        switch (jobStatus.state) {
+          case 'Succeeded':
+            this.onJobCompleted(true);
+            break;
+          case 'Failed':
+          case 'Deleted':
+            this.onJobCompleted(false);
+            break;
+          case 'Processing':
+            // Job en proceso
+            break;
+          case 'Enqueued':
+          case 'Scheduled':
+            // Job en cola
+            break;
+          default:
+            // Estado desconocido del job
+            break;
+        }
+      },
+      error: (error) => {
+        console.error('Error al verificar estado del job:', error);
+        // Si hay error al verificar el job, asumir que terminó (podría haberse eliminado)
+        this.onJobCompleted(false);
+      },
+    });
+  }
 
   /**
    * Se ejecuta cuando un job se completa (exitoso o fallido)
    */
-  private onJobCompleted(wasSuccessful: boolean): void {}
+  private onJobCompleted(wasSuccessful: boolean): void {
+    this.isSyncInProgress = false;
+    this.currentJobId = null;
+
+    // Cancelar el monitoreo
+    if (this.jobMonitoringSubscription) {
+      this.jobMonitoringSubscription.unsubscribe();
+      this.jobMonitoringSubscription = null;
+    }
+
+    if (wasSuccessful) {
+      // Mostrar mensaje de éxito
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Sincronización completada',
+        detail:
+          'Los precios han sido actualizados correctamente. Recargando información...',
+      });
+
+      // Recargar todos los datos del componente
+      this.reloadComponentData();
+    } else {
+      // Mostrar mensaje de error
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Sincronización finalizada',
+        detail:
+          'La sincronización de precios ha finalizado. Puedes continuar con tu reserva.',
+      });
+    }
+  }
 
   /**
    * Recarga todos los datos del componente
    */
-  private reloadComponentData(): void {}
+  private reloadComponentData(): void {
+    if (this.reservationId) {
+      // Resetear el estado de verificación de precios para permitir nueva verificación
+      this.resetPriceCheckState();
+
+      // Recargar datos de la reservación
+      this.loadReservationData(this.reservationId);
+
+      // Forzar actualización de todos los componentes hijos
+      setTimeout(() => {
+        // Los componentes hijos se recargarán automáticamente cuando cambie departureId/reservationId
+        // a través de sus métodos ngOnChanges
+
+        // Recargar datos de habitaciones si está disponible
+        if (this.roomSelector) {
+          this.roomSelector.initializeComponent();
+        }
+
+        // Recargar datos de seguros si está disponible
+        if (this.insuranceSelector) {
+          this.insuranceSelector.loadInsurances();
+        }
+
+        // Forzar actualización del resumen
+        this.forceSummaryUpdate();
+      }, 1000);
+    }
+  }
 
   /**
    * Resetea el estado de verificación de precios (útil después de recargar datos)
    */
-  private resetPriceCheckState(): void {}
+  private resetPriceCheckState(): void {
+    this.priceCheckExecuted = false;
+    this.lastPriceCheckParams = null;
+  }
 
   /**
    * Se ejecuta cuando el componente se destruye
    */
   ngOnDestroy(): void {
+    // Cancelar el monitoreo de jobs al destruir el componente
+    if (this.jobMonitoringSubscription) {
+      this.jobMonitoringSubscription.unsubscribe();
+    }
+
     // ✅ NUEVO: Limpiar el resumen del localStorage al destruir el componente
     this.clearSummaryFromLocalStorage();
   }

@@ -246,6 +246,21 @@ import { ImageCropperComponent } from './shared/components/image-cropper/image-c
 import { ReviewSurveyComponent } from './pages/review-survey/review-survey.component';
 import { ImageUploadModalComponent } from './pages/review-survey/image-upload-modal/image-upload-modal.component';
 import { TourInfoAccordionV2Component } from './pages/tour-v2/components/tour-info-accordion-v2/tour-info-accordion-v2.component';
+import { HomeV2Component } from './pages/home-v2/home-v2.component';
+import { HeroSectionV2Component } from './pages/home-v2/components/hero-section-v2/hero-section-v2.component';
+import { TripTypesSectionV2Component } from './pages/home-v2/components/trip-types-section-v2/trip-types-section-v2.component';
+import { TourCarrusselV2Component } from './pages/home-v2/components/tour-carrussel-v2/tour-carrussel-v2.component';
+import { FullCardSectionV2Component } from './pages/home-v2/components/full-card-section-v2/full-card-section-v2.component';
+import { CarouselSectionV2Component } from './pages/home-v2/components/carousel-section-v2/carousel-section-v2.component';
+import { CommunitySectionV2Component } from './pages/home-v2/components/community-section-v2/community-section-v2.component';
+import { CommunityGalleryV2Component } from './pages/home-v2/components/community-section-v2/components/community-gallery-v2/community-gallery-v2.component';
+import { CommunityHeroV2Component } from './pages/home-v2/components/community-section-v2/components/community-hero-v2/community-hero-v2.component';
+import { CommunityReviewsV2Component } from './pages/home-v2/components/community-section-v2/components/community-reviews-v2/community-reviews-v2.component';
+import { NewsLetterSectionV2Component } from './pages/home-v2/components/community-section-v2/components/newsletter-section-v2/newsletter-section-v2.component';
+import { HighlightSectionV2Component } from './pages/home-v2/components/highlight-section-v2/highlight-section-v2.component';
+import { ContentListV2Component } from './pages/home-v2/components/content-list-v2/content-list-v2.component';
+import { PartnersSectionV2Component } from './pages/home-v2/components/partners-section-v2/partners-section-v2.component';
+import { PublicitySectionV2Component } from './pages/home-v2/components/publicity-section-v2/publicity-section-v2.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -398,6 +413,20 @@ registerLocaleData(localeEs);
     ReviewSurveyComponent,
     ImageUploadModalComponent,
     TourInfoAccordionV2Component,
+    HomeV2Component,
+    HeroSectionV2Component,
+    TripTypesSectionV2Component,
+    TourCarrusselV2Component,
+    FullCardSectionV2Component,
+    CarouselSectionV2Component,
+    CommunitySectionV2Component,
+    CommunityGalleryV2Component,
+    CommunityHeroV2Component,
+    CommunityReviewsV2Component,
+    HighlightSectionV2Component,
+    ContentListV2Component,
+    PartnersSectionV2Component,
+    PublicitySectionV2Component,
   ],
   imports: [
     // Angular Modules
@@ -405,6 +434,7 @@ registerLocaleData(localeEs);
     BrowserAnimationsModule,
     AppRoutingModule,
     FormsModule,
+    NewsLetterSectionV2Component,
     CommonModule,
     NgComponentOutlet,
     NewsLetterSectionComponent,

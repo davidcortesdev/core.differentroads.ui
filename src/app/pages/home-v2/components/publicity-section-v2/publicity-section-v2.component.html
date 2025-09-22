@@ -1,0 +1,31 @@
+<section class="publicity">
+  <div class="publicity-head">
+    <p class="publicity-head-subtitle">
+      ¿Por qué somos realmente diferentes al resto?
+    </p>
+    <h1 class="publicity-head-title">
+      Porque llevamos más de 14 años creando <br />
+      tours desde cero, sin intermediarios.
+    </h1>
+    <p class="publicity-head-description">
+      Nuestro equipo de expertos en los destinos se encarga de encontrar lo
+      mejor para asegurarte siempre
+    </p>
+  </div>
+
+  <div class="publicity-items">
+    <p-panel
+      *ngFor="let item of texto"
+      class="publicity-items-panel"
+      [toggleable]="true"
+      [collapsed]="true"
+    >
+      <ng-template #header>
+        <h3 class="panel-header">{{ item.content }}</h3>
+      </ng-template>
+      <ng-template #content>
+        <p class="panel-content">{{ item.description }}</p>
+      </ng-template>
+    </p-panel>
+  </div>
+</section>

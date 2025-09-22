@@ -65,6 +65,7 @@
 
             <!-- Componente actividades opcionales -->
             <app-activities-optionals
+              #activitiesOptionals
               [itineraryId]="itineraryId"
               [departureId]="departureId"
               [reservationId]="reservationId"
@@ -237,9 +238,8 @@
     <div class="right-column">
       <!-- Resumen del pedido usando SummaryTableComponent -->
       <app-summary-table
-        [summary]="summary"
-        [subtotal]="subtotal"
-        [total]="totalAmountCalculated"
+        [reservationId]="reservationId || undefined"
+        [refreshTrigger]="summaryRefreshTrigger"
         [isAuthenticated]="false"
         [selectedFlight]="selectedFlight"
         [showPointsSection]="false"

@@ -31,7 +31,7 @@
     <!-- Layout Principal: Timeline + Mapa -->
     <div class="main-layout">
                         
-      <!-- Sección Izquierda: Timeline de Días (COMPONENTE HIJO CON PARÁMETROS DINÁMICOS Y EVENTOS) -->
+      <!-- Sección Derecha: Timeline de Días (COMPONENTE HIJO CON PARÁMETROS DINÁMICOS Y EVENTOS) -->
       <div class="timeline-section">
         <app-itinerary-day 
           [tourId]="tourId"
@@ -41,7 +41,7 @@
         </app-itinerary-day>
       </div>
                         
-      <!-- Sección Derecha: Mapa (MANEJADO POR EL PADRE) -->
+      <!-- Sección Izquierda: Mapa (MANEJADO POR EL PADRE) -->
       <div class="map-section" *ngIf="hasValidMapData">
         <div class="map-container">
           <!-- Componente de mapa compartido -->

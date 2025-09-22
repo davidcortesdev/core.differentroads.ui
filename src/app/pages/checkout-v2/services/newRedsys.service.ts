@@ -25,6 +25,7 @@ export class NewRedsysService {
         if (baseUrlFront) {
             params = params.set('baseUrlFront', baseUrlFront);
         }
+
         return this.http.post<IFormData>(`${environment.redsysApiUrl}/Redsys/generate-payment-form/${paymentId}`, { params });
     }
 }

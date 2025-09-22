@@ -260,6 +260,7 @@ import { HighlightSectionV2Component } from './pages/home-v2/components/highligh
 import { ContentListV2Component } from './pages/home-v2/components/content-list-v2/content-list-v2.component';
 import { PartnersSectionV2Component } from './pages/home-v2/components/partners-section-v2/partners-section-v2.component';
 import { PublicitySectionV2Component } from './pages/home-v2/components/publicity-section-v2/publicity-section-v2.component';
+import { HeaderV2Component } from './layout/header-v2/header-v2.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -425,6 +426,7 @@ registerLocaleData(localeEs);
     ContentListV2Component,
     PartnersSectionV2Component,
     PublicitySectionV2Component,
+    HeaderV2Component,
   ],
   imports: [
     // Angular Modules

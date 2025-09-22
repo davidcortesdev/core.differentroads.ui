@@ -13,18 +13,30 @@ El componente `payment-management` debe mantener su funcionalidad actual de gest
   - Obtener información del líder de la reserva antes de crear el pago
   - Incluir datos del líder en la creación del pago de Redsys
   - Incluir datos del líder en la creación del pago de Scalapay
+- **Resolución**:
+  - Creados métodos privados : getLeaderData, en ambos proyectos junto a todos los CRUDs necesarios.
+  - Llamados ambos métodos desde las conexiones de envío de pago a ambas Apis.
+  - Los datos son: Scalapay -> nombre, apellidos, telefono y email (Revisra y decidir que campos se envían); redsys -> nombre y apellido (Comprobado, se muestra)
 
 ### **Tarea 2: Ajustar nombre del producto en Redsys**
 - **Problema**: El nombre del producto en Redsys no incluye información del tour y fecha
 - **Solución**: Modificar el nombre del producto para incluir nombre del tour + fecha de salida
 - **Archivo**: Backend - Servicio de Redsys
 - **Formato**: `[Nombre del Tour] - [Fecha de Salida]`
+- **Resolución**:
+  - Creado método getProductName en core.differentroads.redsys
+  - Este método, a partir del reservationId y diferentes CRUDs añadidos extrae el nombre del tour y la departure date y lo pasa a redsys mediante el parámetro ds_merchant_productDescription.
+  - Se han hecho pruebas y el nombre aparece en la pasarela de pago de redsys con el formato correspondiente.
 
 ### **Tarea 3: Ajustar nombre del producto en Scalapay**
 - **Problema**: El nombre del producto en Scalapay no incluye información del tour y fecha
 - **Solución**: Modificar el nombre del producto para incluir nombre del tour + fecha de salida
 - **Archivo**: Backend - Servicio de Scalapay
 - **Formato**: `[Nombre del Tour] - [Fecha de Salida]`
+- **Resolución**:
+  - Creado método getProductName en core.differentroads.scalapay
+  - Este método, a partir del tourId, el departureId y diferentes CRUDs añadidos extrae el nombre del tour y la departure date y lo pasa a scalapay mediante el parámetro Items={new TypedScalapayItem{Name}}.
+  - El nombre del producto no aparece en la pasarela de pago de Scalapay; ni el extraido ni el mock anterior (en revisión); .
 
 ## **BENEFICIOS ESPERADOS**
 

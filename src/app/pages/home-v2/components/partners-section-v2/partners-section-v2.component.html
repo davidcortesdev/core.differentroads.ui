@@ -1,0 +1,24 @@
+<section class="partners-section">
+  <h2 class="title">{{ title }}</h2>
+  <p-carousel
+    [value]="partners"
+    [numVisible]="numVisible"
+    [numScroll]="1"
+    [circular]="true"
+    [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
+    [responsiveOptions]="responsiveOptions"
+    showIndicators="false"
+    showNavigators="false"
+  >
+    <ng-template let-image pTemplate="item">
+      <div class="partner-figure">
+        <img
+          [src]="image.imageUrl"
+          [alt]="image.altText"
+          class="partner-img"
+          loading="lazy"
+        />
+      </div>
+    </ng-template>
+  </p-carousel>
+</section>

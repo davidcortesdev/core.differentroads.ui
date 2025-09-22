@@ -1,0 +1,42 @@
+<section class="tours-section">
+  <div class="section-header">
+    <h2 class="title">{{ title }}</h2>
+    <p *ngIf="description" class="description">{{ description }}</p>
+  </div>
+  
+  <div *ngIf="tours.length > 0; else noTours">
+    <p-carousel
+      [value]="tours"
+      [numVisible]="5"
+      [numScroll]="1"
+      [circular]="true"
+      [responsiveOptions]="responsiveOptions"
+      [showNavigators]="true"
+      [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
+    >
+      <ng-template let-tour pTemplate="item">
+        <app-tour-card
+          [tourData]="tour"
+          [showScalapayPrice]="true"
+          [isLargeCard]="true"
+        ></app-tour-card>
+      </ng-template>
+    </p-carousel>
+    
+    <div *ngIf="viewMoreButton" class="view-more-container">
+      <button 
+        class="view-more-btn"
+        (click)="onViewMore()"
+        type="button"
+      >
+        {{ viewMoreButton.text }}
+      </button>
+    </div>
+  </div>
+
+  <ng-template #noTours>
+    <div class="no-tours-message">
+      <p>No hay tours disponibles en este momento.</p>
+    </div>
+  </ng-template>
+</section>

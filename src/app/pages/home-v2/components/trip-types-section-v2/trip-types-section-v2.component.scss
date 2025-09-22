@@ -1,0 +1,136 @@
+// Variables for reusability
+$breakpoint-mobile: 480px;
+$breakpoint-tablet: 992px;
+$border-radius-sm: 0.5rem;
+$border-radius-md: 8px;
+$spacing-sm: 0.4rem;
+$spacing-md: 1rem;
+$spacing-lg: 1.5rem;
+
+// Base styles
+.trip-types-section {
+    width: 100%;
+    padding: $spacing-md 0;
+    margin-bottom: -70px; // Removed bottom margin
+}
+
+.trip-types-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch; // Cambiado a stretch para igualar alturas
+    padding: $spacing-md;
+    gap: $spacing-md;
+
+    // Estilos para tablets (entre 481px y 992px)
+    @media (min-width: ($breakpoint-mobile + 1)) and (max-width: $breakpoint-tablet) {
+        flex-wrap: nowrap; // Asegura que permanezcan en una sola fila
+        overflow-x: auto; // Permite scroll horizontal si no caben
+        padding-bottom: $spacing-md; // Espacio para scroll
+    }
+
+    // Estilos para móviles (hasta 480px)
+    @media (max-width: $breakpoint-mobile) {
+        flex-direction: column;
+        gap: $spacing-lg;
+        align-items: center;
+    }
+}
+
+.trip-type-item {
+    display: flex;
+    flex-direction: column; // Siempre columna (título arriba, descripción abajo)
+    gap: $spacing-sm;
+    padding: $spacing-md;
+    border-radius: $border-radius-sm;
+    transition: transform 0.3s ease;
+    cursor: pointer;
+    flex: 1;
+    min-width: 200px; // Ancho mínimo para cada item
+    align-items: center; // Center items in all views
+    text-align: center; // Center text in all views
+
+    &:hover {
+        transform: translateY(-5px);
+    }
+
+    // Tablet styles
+    @media (min-width: ($breakpoint-mobile + 1)) and (max-width: $breakpoint-tablet) {
+        flex: 0 0 auto; // Permite que se ajusten al contenido
+        width: 30%; // Ancho similar al desktop
+    }
+
+    // Mobile styles
+    @media (max-width: $breakpoint-mobile) {
+        width: 100%;
+        align-items: center;
+        text-align: center;
+    }
+}
+
+.trip-type-content {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-sm;
+    width: 100%;
+    height: 100%;
+    align-items: center; // Center content in all views
+
+    .title-container {
+        display: inline-block;
+        padding: $spacing-sm $spacing-md;
+        border-radius: $border-radius-md;
+        border: none;
+        width: fit-content; // Solo el ancho necesario para el contenido
+
+        h3 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 500; // Aumentado para mejor legibilidad
+            white-space: nowrap;
+            color: white;
+        }
+    }
+
+    p {
+        margin: 0;
+        font-size: 0.9rem; // Un poco más grande
+        color: #666;
+        line-height: 1.4; // Mejor espaciado
+        flex-grow: 1; // Ocupa el espacio disponible
+        text-align: center; // Center text in all views
+    }
+
+    // Mobile styles - already centered, can keep as is
+    @media (max-width: $breakpoint-mobile) {
+        align-items: center;
+
+        .title-container {
+            margin: 0 auto; // Centra el título
+        }
+
+        p {
+            text-align: center;
+        }
+    }
+}
+
+// Trip type specific styles
+@mixin trip-type-colors($color) {
+    .title-container {
+        background-color: $color;
+    }
+}
+
+.group {
+    @include trip-type-colors(var(--color-group));
+}
+
+.singles {
+    @include trip-type-colors(var(--color-single));
+}
+
+.private {
+    @include trip-type-colors(var(--color-private));
+}

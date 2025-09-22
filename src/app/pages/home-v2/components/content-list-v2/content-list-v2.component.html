@@ -1,0 +1,60 @@
+<div class="content-list-section">
+  <div class="container">
+    <!-- Debug info -->
+    <div style="background: #f0f0f0; padding: 10px; margin: 10px 0; border: 1px solid #ccc;">
+      <h4>Debug Info:</h4>
+      <p><strong>Content:</strong> {{ content | json }}</p>
+      <p><strong>Type:</strong> {{ type }}</p>
+      <p><strong>Loading:</strong> {{ loading }}</p>
+      <p><strong>Error:</strong> {{ error }}</p>
+      <p><strong>ContentData length:</strong> {{ contentData.length }}</p>
+      <p><strong>ContentData:</strong> {{ contentData | json }}</p>
+    </div>
+    
+    <div class="section-header" *ngIf="content.title">
+      <h2 class="section-title" *ngIf="content.title">{{ content.title }}</h2>
+    </div>
+
+    <div class="content-grid" *ngIf="!loading && !error && contentData.length > 0">
+      <div 
+        class="content-card" 
+        *ngFor="let item of contentData; trackBy: trackByContentId"
+        (click)="onContentClick(item)">
+        
+        <div class="card-image">
+          <img 
+            [src]="getImageUrl(item)" 
+            [alt]="getImageAlt(item)"
+            loading="lazy">
+        </div>
+        
+        <div class="card-content">
+          <h3 class="card-title">{{ item.title }}</h3>
+          <p class="card-subtitle" *ngIf="item.subtitle">{{ item.subtitle }}</p>
+          
+          <div class="card-actions" *ngIf="item.travels">
+            <button 
+              class="travel-btn"
+              (click)="onTravelClick($event, item)">
+              {{ item.travels.btntext }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="loading-state" *ngIf="loading">
+      <div class="spinner"></div>
+      <p>Cargando contenido...</p>
+    </div>
+
+    <div class="error-state" *ngIf="error">
+      <p>Error al cargar el contenido. Inténtalo de nuevo.</p>
+      <button class="retry-btn" (click)="loadContent()">Reintentar</button>
+    </div>
+
+    <div class="empty-state" *ngIf="!loading && !error && contentData.length === 0">
+      <p>No hay contenido disponible.</p>
+    </div>
+  </div>
+</div>

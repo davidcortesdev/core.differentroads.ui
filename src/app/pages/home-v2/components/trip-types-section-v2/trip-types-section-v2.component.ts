@@ -9,12 +9,12 @@ interface TripType {
 }
 
 @Component({
-  selector: 'app-trip-types-section',
+  selector: 'app-trip-types-section-v2',
   standalone: false,
-  templateUrl: './trip-types-section.component.html',
-  styleUrls: ['./trip-types-section.component.scss'],
+  templateUrl: './trip-types-section-v2.component.html',
+  styleUrls: ['./trip-types-section-v2.component.scss'],
 })
-export class TripTypesSectionComponent {
+export class TripTypesSectionV2Component {
   tripTypes: TripType[] = [
     {
       title: 'En grupo',

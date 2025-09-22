@@ -1,0 +1,42 @@
+<div class="community-gallery">
+  <!-- Loading state -->
+  <div *ngIf="loading" class="loading-message">
+    <i class="pi pi-spin pi-spinner"></i>
+    <span>Loading community images...</span>
+  </div>
+
+  <!-- Error state -->
+  <div *ngIf="error && !loading" class="error-message">
+    <i class="pi pi-exclamation-triangle"></i>
+    <span>{{ error }}</span>
+  </div>
+
+  <!-- Community images -->
+  <div
+    *ngFor="let card of communityImages"
+    class="community-gallery-card"
+    [attr.aria-label]="'Community post: ' + card.title"
+  >
+    <img
+      [src]="card.imageUrl"
+      [alt]="card.imageAlt"
+      class="community-gallery-card-img"
+      loading="lazy"
+    />
+    <div class="community-gallery-card-info-location" aria-label="Location" *ngIf="card.location">
+      <span>{{ card.location }}</span>
+      <i class="pi pi-map-marker" aria-hidden="true"></i>
+    </div>
+    <!-- Image source positioned at bottom left -->
+    <div class="community-gallery-card-info-source-bottom" aria-label="Image source" *ngIf="card.imageSource">
+      <i class="pi pi-camera" aria-hidden="true"></i>
+      <span>{{ card.imageSource }}</span>
+    </div>
+  </div>
+
+  <!-- No data state -->
+  <div *ngIf="!loading && !error && communityImages.length === 0" class="no-data-message">
+    <i class="pi pi-image"></i>
+    <span>No community images available</span>
+  </div>
+</div>

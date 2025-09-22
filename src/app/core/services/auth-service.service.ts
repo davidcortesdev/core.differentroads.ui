@@ -356,8 +356,8 @@ export class AuthenticateService {
   }
 
   // Navegar al perfil del usuario
-  navigateToProfile() {
-    this.router.navigate(['/profile']);
+  navigateToProfile(userId: string) {
+    this.router.navigate(['/profile-v2', userId]);
   }
 
   // Navegar a la página de login

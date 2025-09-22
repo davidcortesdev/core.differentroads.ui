@@ -45,7 +45,11 @@ const routes: Routes = [
       {
         path: 'profile',
         component: ProfileComponent,
-      },
+      },   
+      /*{
+        path: 'profile-v2/:userId',
+        component: ProfileV2Component,
+      },*/
       { path: 'login', component: LoginComponent },
       { path: 'sign-up', component: SignUpComponent },
       { path: 'forget-password', component: ForgetPasswordComponent },

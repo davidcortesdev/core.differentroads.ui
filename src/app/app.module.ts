@@ -245,6 +245,12 @@ import { ImageCropperComponent } from './shared/components/image-cropper/image-c
 import { ReviewSurveyComponent } from './pages/review-survey/review-survey.component';
 import { ImageUploadModalComponent } from './pages/review-survey/image-upload-modal/image-upload-modal.component';
 import { TourInfoAccordionV2Component } from './pages/tour-v2/components/tour-info-accordion-v2/tour-info-accordion-v2.component';
+import { ProfileV2Component } from './pages/profile-v2/profile-v2.component';
+import { BookingListSectionV2Component } from './pages/profile-v2/components/booking-list-section-v2/booking-list-section-v2.component';
+import { PersonalInfoSectionV2Component } from './pages/profile-v2/components/personal-info-section-v2/personal-info-section-v2.component';
+import { PointsSectionV2Component } from './pages/profile-v2/components/points-section-v2/points-section-v2.component';
+import { ReviewSectionV2Component } from './pages/profile-v2/components/review-section-v2/review-section-v2.component';
+import { UpdateProfileSectionV2Component } from './pages/profile-v2/components/update-profile-section-v2/update-profile-section-v2.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -396,6 +402,14 @@ registerLocaleData(localeEs);
     ReviewSurveyComponent,
     ImageUploadModalComponent,
     TourInfoAccordionV2Component,
+    ProfileV2Component,
+    BookingListSectionV2Component,
+    PersonalInfoSectionV2Component,
+    PointsSectionV2Component,
+    ReviewSectionV2Component,
+    UpdateProfileSectionV2Component
+
+
   ],
   imports: [
     // Angular Modules

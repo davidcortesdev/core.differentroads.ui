@@ -25,6 +25,7 @@ import { ReviewSurveyComponent } from './pages/review-survey/review-survey.compo
 import { ReviewSectionComponent } from './pages/profile/components/review-section/review-section.component';
 import { NewReservationComponent } from './pages/checkout-v2/components/new-reservation/new-reservation.component';
 import { StandaloneComponent } from './layout/standalone/standalone.component';
+import { ProfileV2Component } from './pages/profile-v2/profile-v2.component';
 
 const routes: Routes = [
   
@@ -46,10 +47,10 @@ const routes: Routes = [
         path: 'profile',
         component: ProfileComponent,
       },   
-      /*{
+      {
         path: 'profile-v2/:userId',
         component: ProfileV2Component,
-      },*/
+      },
       { path: 'login', component: LoginComponent },
       { path: 'sign-up', component: SignUpComponent },
       { path: 'forget-password', component: ForgetPasswordComponent },

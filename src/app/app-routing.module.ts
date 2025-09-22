@@ -33,7 +33,6 @@ const routes: Routes = [
     path: 'standalone',
     component: StandaloneComponent,
     children: [
-      { path: 'checkout', component: CheckoutV2Component },
       { path: 'checkout/:reservationId', component: CheckoutV2Component },
     ],
   },
@@ -57,9 +56,7 @@ const routes: Routes = [
       { path: 'pages/:slug', component: BasicPageComponent },
       // Nueva ruta para previsualización
       { path: 'preview/pages', component: BasicPagePreviewComponent },
-      { path: 'checkout', component: CheckoutComponent },
       { path: 'checkout/:id', component: CheckoutComponent },
-      { path: 'checkout-v2', component: CheckoutV2Component },
       { path: 'checkout-v2/:reservationId', component: CheckoutV2Component },
       { path: 'payment/:id', component: PaymentsComponent },
       { path: 'landing/:slug', component: ContentPageComponent },
@@ -74,7 +71,7 @@ const routes: Routes = [
       { path: 'reservation/:reservationId/:paymentId', component: NewReservationComponent }, //OJO es el nuevo
       { path: 'bookings/:id', component: BookingsComponent },
       { path: 'aeropuertos', component: AirportSearchComponent },
-      {path: 'reviews/:id', component: ReviewSurveyComponent},
+      { path: 'reviews/:id', component: ReviewSurveyComponent },
       { path: '**', component: NotFoundComponent },
     ],
   }

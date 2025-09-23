@@ -385,7 +385,6 @@
     }
 }
 
-// ===== ESTILOS COMPARTIDOS PARA BADGES =====
 .category-badge,
 .card-category-badge {
     display: inline-flex;
@@ -452,7 +451,6 @@
     }
 }
 
-// ===== ESTILOS PARA PUNTOS CLICKEABLES =====
 .points-display {
     &.clickable {
         cursor: pointer;
@@ -473,7 +471,6 @@
     }
 }
 
-// ===== MEJORAS EN LA TABLA =====
 .date-column {
     font-size: 0.9rem;
     color: var(--text-color-secondary);
@@ -506,7 +503,6 @@
     color: var(--text-color-secondary);
 }
 
-// ===== SECCIÓN DE BENEFICIOS =====
 .benefits-section {
     margin-top: 2rem;
     background: white;

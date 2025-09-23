@@ -27,11 +27,14 @@ export class DataMappingV2Service {
     tour: TourV2 | null = null,
     listType: 'active-bookings' | 'travel-history' | 'recent-budgets' = 'active-bookings'
   ): BookingItem {
+    // Usar tkId si existe, sino usar el id de la reserva
+    const reservationNumber = reservation.tkId || `RES-${reservation.id}`;
+    
     const bookingItem: BookingItem = {
       id: reservation.id.toString(),
-      title: tour?.name || `Reserva ${reservation.tkId}`,
-      number: reservation.tkId,
-      reservationNumber: reservation.tkId,
+      title: tour?.name || `Reserva ${reservationNumber}`,
+      number: reservationNumber,
+      reservationNumber: reservationNumber,
       creationDate: new Date(reservation.createdAt),
       status: this.mapReservationStatus(reservation.reservationStatusId),
       departureDate: this.extractReservationDepartureDate(reservation),
@@ -39,14 +42,14 @@ export class DataMappingV2Service {
       passengers: reservation.totalPassengers,
       price: reservation.totalAmount,
       tourID: reservation.tourId.toString(),
-      code: reservation.tkId,
+      code: reservationNumber,
       imageLoading: false,
       imageLoaded: true
     };
 
     // Configurar campos específicos según el tipo de lista
     if (listType === 'recent-budgets') {
-      bookingItem.budgetNumber = reservation.tkId;
+      bookingItem.budgetNumber = reservationNumber;
       bookingItem.ID = reservation.id.toString();
       bookingItem._id = reservation.id.toString();
     }

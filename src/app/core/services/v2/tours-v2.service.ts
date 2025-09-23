@@ -73,10 +73,6 @@ export class ToursServiceV2 {
       .set('Id', id.toString())
       .set('FilterByVisible', filterByVisible.toString());
 
-    console.log('🔍 DEBUG: ToursServiceV2.getTourById() - ID:', id, 'Type:', typeof id);
-    console.log('🔍 DEBUG: ToursServiceV2.getTourById() - URL:', this.API_URL);
-    console.log('🔍 DEBUG: ToursServiceV2.getTourById() - Params:', params.toString());
-
     return this.http.get<any>(this.API_URL, {
       params,
       headers: {
@@ -96,8 +92,6 @@ export class ToursServiceV2 {
       })),
       catchError(error => {
         console.error(`Error obteniendo tour con ID ${id}:`, error);
-        console.error('Error details:', error.error);
-        console.error('Error status:', error.status);
         return of({
           id: typeof id === 'string' ? parseInt(id) : id,
           code: 'unknown',

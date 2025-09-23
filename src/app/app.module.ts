@@ -71,6 +71,7 @@ import { CardModule } from 'primeng/card';
 import { DatePickerModule } from 'primeng/datepicker';
 import { RippleModule } from 'primeng/ripple';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ProgressBarModule } from 'primeng/progressbar';
 import { DataViewModule } from 'primeng/dataview';
 import { DynamicComponentsComponent } from './pages/home/components/dynamic-components/dynamic-components.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
@@ -498,6 +499,7 @@ registerLocaleData(localeEs);
     FloatLabelModule,
     IftaLabelModule,
     ProgressSpinnerModule,
+    ProgressBarModule,
     DataViewModule,
     BreadcrumbModule,
     DividerModule,

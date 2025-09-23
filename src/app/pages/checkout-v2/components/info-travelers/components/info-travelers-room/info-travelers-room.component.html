@@ -1,0 +1,76 @@
+<!-- NUEVO: Sección de personalización de habitaciones -->
+<div class="room-assignment-section" *ngIf="showRoomAssignment">
+  <!-- Header colapsable -->
+  <div class="room-assignment-header" [ngClass]="{'expanded': isExpanded}" (click)="toggleExpansion()">
+    <h4>Personalización de habitaciones</h4>
+    <i class="pi" [ngClass]="isExpanded ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+  </div>
+  
+  <!-- Contenido colapsable -->
+  <div class="room-assignment-content" [ngClass]="{'expanded': isExpanded}">
+    <p class="room-assignment-description">
+      Asigna a cada viajero a una habitación específica. Puedes cambiar estas asignaciones en cualquier momento.
+    </p>
+
+  <!-- Indicador de carga -->
+  <div *ngIf="loading" class="loading-indicator">
+    <p-progressSpinner></p-progressSpinner>
+    <p>Cargando asignaciones de habitaciones...</p>
+  </div>
+  
+  <div class="room-assignment-grid" *ngIf="!loading">
+    <div *ngFor="let traveler of travelers" class="traveler-room-assignment">
+      <div class="traveler-info">
+        <i class="pi pi-user"></i>
+        <span>{{ getAgeGroupName(traveler.ageGroupId) }} {{ traveler.travelerNumber }}</span>
+        <span *ngIf="traveler.isLeadTraveler" class="lead-traveler-badge">(Líder)</span>
+      </div>
+      
+      <div class="room-selector">
+        <label>Habitación:</label>
+        <!-- NUEVO: Usar p-dropdown para selección de habitaciones -->
+        <p-dropdown
+          [(ngModel)]="roomAssignmentsObjects[traveler.id]"
+          [options]="availableRooms"
+          [disabled]="saving"
+          (onChange)="onRoomAssignmentChange(traveler.id, $event)"
+          placeholder="Seleccionar habitación"
+          [ngModelOptions]="{standalone: true}"
+          optionLabel="name"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="name,description">
+        </p-dropdown>
+        
+        <!-- Indicador de guardado -->
+        <p-progressSpinner 
+          *ngIf="saving" 
+          styleClass="saving-spinner"
+          [style]="{ width: '20px', height: '20px' }">
+        </p-progressSpinner>
+      </div>
+    </div>
+  </div>
+  
+  <div class="room-summary" *ngIf="getRoomSummary().length > 0">
+    <h5>Resumen de habitaciones:</h5>
+    <div *ngFor="let roomInfo of getRoomSummary()" class="room-info">
+      <strong>{{ roomInfo.roomName }}:</strong>
+      <span *ngFor="let traveler of roomInfo.travelers; let last = last">
+        {{ getAgeGroupName(traveler.ageGroupId) }} {{ traveler.travelerNumber }}<span *ngIf="!last">, </span>
+      </span>
+    </div>
+  </div>
+
+    <!-- Botón para validar y actualizar asignaciones -->
+    <div class="room-actions">
+      <p-button 
+        label="Validar y Actualizar Asignaciones" 
+        icon="pi pi-check" 
+        (onClick)="validateAndUpdateAssignments()"
+        [disabled]="saving"
+        severity="success">
+      </p-button>
+    </div>
+  </div>
+</div>

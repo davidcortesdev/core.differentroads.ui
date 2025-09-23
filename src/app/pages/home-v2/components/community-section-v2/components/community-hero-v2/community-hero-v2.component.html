@@ -1,0 +1,83 @@
+<div class="community-hero">
+
+  <!-- Error state -->
+  <div *ngIf="error && !loading" class="error-message">
+    <i class="pi pi-exclamation-triangle"></i>
+    <span>{{ error }}</span>
+  </div>
+
+  <!-- Main content -->
+  <div *ngIf="!loading && !error">
+    <div class="header">
+      <h2>{{ data.title }}</h2>
+      <div class="google-rating-container">
+        <div class="content">
+          <div class="svg-wrapper">
+            <svg
+              width="41"
+              height="41"
+              viewBox="0 0 41 41"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M37.9059 20.9132C37.9059 19.6193 37.7898 18.3751 37.5741 17.1807H20.3877V24.2477H30.2085C29.7772 26.5204 28.4832 28.4448 26.5423 29.7387V34.3339H32.4647C35.9152 31.1488 37.9059 26.4706 37.9059 20.9132Z"
+                fill="#4F82D9"
+              />
+              <path
+                d="M20.3873 38.7478C25.3143 38.7478 29.445 37.1221 32.4643 34.3351L26.5419 29.7399C24.9162 30.8348 22.8425 31.4983 20.3873 31.4983C15.6428 31.4983 11.6116 28.2966 10.1683 23.9834H4.09668V28.6947C7.09933 34.6503 13.2539 38.7478 20.3873 38.7478Z"
+                fill="#0E9D31"
+              />
+              <path
+                d="M10.168 23.9669C9.80302 22.872 9.58736 21.7108 9.58736 20.4998C9.58736 19.2888 9.80302 18.1275 10.168 17.0326V12.3213H4.09632C2.85213 14.7765 2.13879 17.5469 2.13879 20.4998C2.13879 23.4527 2.85213 26.2231 4.09632 28.6783L8.82426 24.9955L10.168 23.9669Z"
+                fill="#FFDD00"
+              />
+              <path
+                d="M20.3873 9.51706C23.0748 9.51706 25.4636 10.4461 27.3714 12.2377L32.597 7.01209C29.4285 4.0592 25.3143 2.25098 20.3873 2.25098C13.2539 2.25098 7.09933 6.34852 4.09668 12.3206L10.1683 17.032C11.6116 12.7188 15.6428 9.51706 20.3873 9.51706Z"
+                fill="#FF4736"
+              />
+            </svg>
+          </div>
+          <div class="text-content">
+            <div class="text-block">
+              <div class="rating-label">Google Rating</div>
+              <div class="rating-value">
+                <div class="value">4.5</div>
+                <div class="rating-stars">
+                  <p-rating
+                    [ngModel]="data.googleRating"
+                    [readonly]="true"
+                    [stars]="5"
+                  ></p-rating>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="featured-content">
+      <div class="featured-images-container">
+        <div *ngFor="let card of data.featured.featuredCards; let i = index" class="featured-images">
+          <img [src]="card.imageUrl" [alt]="card.imageAlt" loading="lazy"/>
+        </div>
+      </div>
+      <div class="featured-text" *ngIf="data.featured.orderOneCard">
+        <div class="featured-info-location" *ngIf="data.featured.orderOneCard.location">
+          <span>{{ data.featured.orderOneCard.location }}</span>
+          <i class="pi pi-map-marker" aria-hidden="true"></i>
+        </div>
+        <div class="featured-info-title" *ngIf="data.featured.orderOneCard.title">
+          <span>{{ data.featured.orderOneCard.title }}</span>
+        </div>
+        <div class="featured-info-content" *ngIf="data.featured.orderOneCard.content">
+          <div [innerHTML]="data.featured.orderOneCard.content"></div>
+        </div>
+        <div class="featured-info-source" *ngIf="data.featured.orderOneCard.imageSource">
+          <span>{{ data.featured.orderOneCard.imageSource }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

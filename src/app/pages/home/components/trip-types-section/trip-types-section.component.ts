@@ -20,20 +20,20 @@ export class TripTypesSectionComponent {
       title: 'En grupo',
       description: 'Viajes para todos: solos, con amigos o en pareja',
       class: 'group',
-      value: 'Grupo'
+      value: 'Grupo',
     },
     {
       title: 'Singles',
       description: 'Viaja solo y conoce a gente nueva',
       class: 'singles',
-      value: 'Singles'
+      value: 'Singles',
     },
     {
       title: 'Privados',
       description: 'Viajes a medida para ti y los tuyos',
       class: 'private',
-      value: 'private'
-    }
+      value: 'private',
+    },
   ];
 
   constructor(private router: Router) {}

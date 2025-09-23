@@ -310,7 +310,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
       }
 
       this.updateUIFromData();
-      this.emitRoomsSelectionChange();
     } catch (error) {
       console.error('Error initializing component:', error);
     }
@@ -344,6 +343,11 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     this.roomsSelectionChange.emit(this.selectedRooms);
   }
 
+  // NUEVO: Método para emisión inicial sin debounce
+  private emitInitialRoomsSelection(): void {
+    this.roomsSelectionChange.emit(this.selectedRooms);
+  }
+
   // Método para actualizar la UI después de cargar todos los datos
   updateUIFromData(): void {
     // Ordenar por capacidad
@@ -373,6 +377,9 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
 
     // Limpiar errores de inicialización
     this.errorMsg = null;
+
+    // Emitir datos iniciales inmediatamente (sin debounce)
+    this.emitInitialRoomsSelection();
   }
 
   updateRoomSharedStatus(): void {

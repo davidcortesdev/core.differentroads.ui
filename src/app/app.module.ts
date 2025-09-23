@@ -1,4 +1,4 @@
-import { NgModule, CUSTOM_ELEMENTS_SCHEMA, LOCALE_ID } from '@angular/core';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, LOCALE_ID } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule } from '@angular/forms';
@@ -190,6 +190,20 @@ import { BookingPaymentHistoryComponent } from './pages/bookings/booking-payment
 import { BookingPersonalDataComponent } from './pages/bookings/booking-personal-data/booking-personal-data.component';
 import { BookingUpdateTravelComponent } from './pages/bookings/booking-update-travel/booking-update-travel.component';
 import { PassengerCardComponent } from './pages/bookings/passenger-card/passenger-card.component';
+
+// BookingsV2 Components
+import { Bookingsv2Component } from './pages/bookingsv2/bookings.component';
+import { BookingActivitiesV2Component } from './pages/bookingsv2/booking-activities/booking-activities.component';
+import { BookingCodeSectionV2Component } from './pages/bookingsv2/booking-code-section/booking-code-section.component';
+import { BookingDetailsViewV2Component } from './pages/bookingsv2/booking-details-view/booking-details-view.component';
+import { BookingDocumentActionsV2Component } from './pages/bookingsv2/booking-document-actions/booking-document-actions.component';
+import { BookingFlightsV2Component } from './pages/bookingsv2/booking-flights/booking-flights.component';
+import { BookingHeaderSectionV2Component } from './pages/bookingsv2/booking-header-section/booking-header-section.component';
+import { BookingPaymentHistoryV2Component } from './pages/bookingsv2/booking-payment-history/booking-payment-history.component';
+import { BookingPersonalDataV2Component } from './pages/bookingsv2/booking-personal-data/booking-personal-data.component';
+import { BookingUpdateTravelV2Component } from './pages/bookingsv2/booking-update-travel/booking-update-travel.component';
+import { PassengerCardV2Component } from './pages/bookingsv2/passenger-card/passenger-card.component';
+import { BookingDocumentationV2Component } from './pages/bookingsv2/booking-documentation/booking-documentation.component';
 import { UploadButtonComponent } from './shared/components/upload-button/upload-button.component';
 import { PaymentsComponent } from './pages/payments/payments.component';
 import { TourInfoAccordionComponent } from './pages/tour/components/tour-info-accordion/tour-info-accordion.component';
@@ -261,6 +275,9 @@ import { HighlightSectionV2Component } from './pages/home-v2/components/highligh
 import { ContentListV2Component } from './pages/home-v2/components/content-list-v2/content-list-v2.component';
 import { PartnersSectionV2Component } from './pages/home-v2/components/partners-section-v2/partners-section-v2.component';
 import { PublicitySectionV2Component } from './pages/home-v2/components/publicity-section-v2/publicity-section-v2.component';
+
+// Services
+import { RetailerService } from './core/services/retailer/retailer.service';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -357,6 +374,21 @@ registerLocaleData(localeEs);
     BookingPersonalDataComponent,
     BookingUpdateTravelComponent,
     PassengerCardComponent,
+    
+    // BookingsV2 Components
+    Bookingsv2Component,
+    BookingActivitiesV2Component,
+    BookingCodeSectionV2Component,
+    BookingDetailsViewV2Component,
+    BookingDocumentActionsV2Component,
+    BookingFlightsV2Component,
+    BookingHeaderSectionV2Component,
+    BookingPaymentHistoryV2Component,
+    BookingPersonalDataV2Component,
+    BookingUpdateTravelV2Component,
+    PassengerCardV2Component,
+    BookingDocumentationV2Component,
+    
     UploadButtonComponent,
     PaymentsComponent,
     TourInfoAccordionComponent,
@@ -388,7 +420,6 @@ registerLocaleData(localeEs);
     HotelDetailsComponent,
     ActivitysComponent,
     TourDeparturesV2Component,
-    ActivitysComponent,
     CheckoutV2Component,
     SelectorRoomComponent,
     SelectorTravelerComponent,
@@ -530,9 +561,10 @@ registerLocaleData(localeEs);
     MessageService,
     CookieService,
     DatePipe, // Añadimos DatePipe a los providers
+    RetailerService,
   ],
   bootstrap: [AppComponent],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA],
 })
 export class AppModule {
   constructor() {

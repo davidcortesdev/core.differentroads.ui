@@ -19,6 +19,7 @@ import { ContentPageComponent } from './pages/content-page/content-page.componen
 import { ToursComponent } from './shared/components/tours/tours.component';
 import { ReservationComponent } from './pages/reservation/reservation.component';
 import { BookingsComponent } from './pages/bookings/bookings.component';
+import { Bookingsv2Component } from './pages/bookingsv2/bookings.component';
 import { PaymentsComponent } from './pages/payments/payments.component';
 import { AirportSearchComponent } from './features/airports/airport-search/airport-search.component';
 import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
@@ -77,6 +78,7 @@ const routes: Routes = [
         component: NewReservationComponent,
       }, //OJO es el nuevo
       { path: 'bookings/:id', component: BookingsComponent },
+      { path: 'bookingsv2/:id', component: Bookingsv2Component },
       { path: 'aeropuertos', component: AirportSearchComponent },
       { path: 'reviews/:id', component: ReviewSurveyComponent },
       { path: '**', component: NotFoundComponent },

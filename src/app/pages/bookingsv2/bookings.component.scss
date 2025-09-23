@@ -1,0 +1,73 @@
+.container {
+    background: var(--light-blue-50);
+    padding: 0.1rem 0;
+
+    :host ::ng-deep {
+        .p-toast {
+            position: fixed;
+            z-index: 9999;
+
+            @media (max-width: 480px) {
+                width: 90% !important;
+                left: 50% !important;
+                top: 20px !important;
+                transform: translateX(-50%) !important;
+            }
+
+            @media (min-width: 481px) and (max-width: 768px) {
+                top: 20px !important;
+                right: 20px !important;
+                width: auto !important;
+                max-width: 400px !important;
+            }
+
+            @media (min-width: 769px) {
+                top: 20px !important;
+                right: 20px !important;
+                width: auto !important;
+                max-width: 350px !important;
+            }
+        }
+    }
+
+    :host {
+        color: var(--background-azul);
+
+        ::ng-deep {
+            /* Apply to all child components */
+            * {
+                color: var(--background-azul);
+            }
+
+            /* Exceptions for elements that should maintain their original colors */
+            .p-button,
+            .p-tag,
+            button,
+            [class*="p-button"] {
+                /* These elements should keep their original colors */
+                color: inherit;
+            }
+        }
+    }
+
+    .booking-container {
+        display: flex;
+        flex-direction: column;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1rem;
+        background-color: red;
+        color: var(--background-azul);
+
+        @media (max-width: 480px) {
+            padding: 0.5rem;
+        }
+    }
+    .loading-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        color: var(--background-azul);
+    }
+}

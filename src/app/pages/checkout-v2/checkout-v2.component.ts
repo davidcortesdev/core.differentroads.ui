@@ -694,6 +694,29 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
+   * Manejar cambios en asignaciones de habitaciones
+   */
+  onRoomAssignmentsChange(roomAssignments: { [travelerId: number]: number }): void {
+    console.log('🏨 Cambios en asignaciones de habitaciones recibidos en checkout-v2:', roomAssignments);
+    
+    // Actualizar el resumen del pedido cuando cambien las habitaciones
+    if (
+      this.travelerSelector &&
+      this.travelerSelector.travelersNumbers &&
+      Object.keys(this.pricesByAgeGroup).length > 0
+    ) {
+      console.log('🔄 Actualizando resumen del pedido por cambios en habitaciones...');
+      this.updateOrderSummary(this.travelerSelector.travelersNumbers);
+    }
+
+    // Forzar detección de cambios
+    this.cdr.detectChanges();
+
+    // ✅ Disparar actualización del summary inmediatamente
+    this.triggerSummaryRefresh();
+  }
+
+  /**
    * Actualiza el conteo de actividades por actividad
    */
   private updateActivitiesByTraveler(

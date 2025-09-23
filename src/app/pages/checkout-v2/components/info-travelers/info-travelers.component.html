@@ -202,6 +202,7 @@
                             placeholder="dd/mm/yyyy"
                             dateFormat="dd/mm/yy"
                             (onSelect)="onDateFieldChange(traveler.id, fieldDetails.code, $event)"
+                            (onBlur)="onDateFieldBlur(traveler.id, fieldDetails.code)"
                             [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"></p-datePicker>
                           <small *ngIf="hasFieldError(traveler.id, fieldDetails.code)" class="p-error">
                             {{ getErrorMessage(fieldDetails.code, getFieldErrors(traveler.id, fieldDetails.code)) }}
@@ -335,7 +336,12 @@
                             appendTo="body" 
                             placeholder="dd/mm/yyyy"
                             dateFormat="dd/mm/yy"
-                            (onSelect)="onDateFieldChange(traveler.id, fieldDetails.code, $event)"></p-datePicker>
+                            (onSelect)="onDateFieldChange(traveler.id, fieldDetails.code, $event)"
+                            (onBlur)="onDateFieldBlur(traveler.id, fieldDetails.code)"
+                            [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"></p-datePicker>
+                          <small *ngIf="hasFieldError(traveler.id, fieldDetails.code)" class="p-error">
+                            {{ getErrorMessage(fieldDetails.code, getFieldErrors(traveler.id, fieldDetails.code)) }}
+                          </small>
                         </div>
                         
                         <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'country'">
@@ -381,11 +387,20 @@
                         <div class="activity-info">
                           <h5><strong>{{ getActivityName(travelerActivity.activityId) }}</strong> </h5>
                         </div>
-                        <p-toggleSwitch 
-                          [ngModel]="true"
-                          (ngModelChange)="onActivityToggleChange(traveler.id, travelerActivity.activityId, $event)"
-                          [ngModelOptions]="{standalone: true}">
-                        </p-toggleSwitch>
+                        <div class="activity-toggle-container">
+                          <p-progressSpinner 
+                            *ngIf="isSavingActivity(traveler.id, travelerActivity.activityId)"
+                            styleClass="activity-saving-spinner"
+                            [style]="{ width: '20px', height: '20px' }">
+                          </p-progressSpinner>
+                          <p-toggleSwitch 
+                            *ngIf="!isSavingActivity(traveler.id, travelerActivity.activityId)"
+                            [ngModel]="true"
+                            [disabled]="isSavingActivity(traveler.id, travelerActivity.activityId)"
+                            (ngModelChange)="onActivityToggleChange(traveler.id, travelerActivity.activityId, $event)"
+                            [ngModelOptions]="{standalone: true}">
+                          </p-toggleSwitch>
+                        </div>
                       </div>
                     </ng-container>
                     
@@ -395,11 +410,20 @@
                         <div class="activity-info">
                           <h5><strong>{{ getActivityName(travelerActivityPack.activityPackId) }}</strong> </h5>
                         </div>
-                        <p-toggleSwitch 
-                          [ngModel]="true"
-                          (ngModelChange)="onActivityToggleChange(traveler.id, travelerActivityPack.activityPackId, $event)"
-                          [ngModelOptions]="{standalone: true}">
-                        </p-toggleSwitch>
+                        <div class="activity-toggle-container">
+                          <p-progressSpinner 
+                            *ngIf="isSavingActivity(traveler.id, travelerActivityPack.activityPackId)"
+                            styleClass="activity-saving-spinner"
+                            [style]="{ width: '20px', height: '20px' }">
+                          </p-progressSpinner>
+                          <p-toggleSwitch 
+                            *ngIf="!isSavingActivity(traveler.id, travelerActivityPack.activityPackId)"
+                            [ngModel]="true"
+                            [disabled]="isSavingActivity(traveler.id, travelerActivityPack.activityPackId)"
+                            (ngModelChange)="onActivityToggleChange(traveler.id, travelerActivityPack.activityPackId, $event)"
+                            [ngModelOptions]="{standalone: true}">
+                          </p-toggleSwitch>
+                        </div>
                       </div>
                     </ng-container>
                   </div>
@@ -413,4 +437,16 @@
       </div>
     </div>
   </div>
+
+            <!-- NUEVO: Componente de personalización de habitaciones -->
+            <app-info-travelers-room
+              [travelers]="travelers"
+              [ageGroups]="ageGroups"
+              [reservationId]="reservationId"
+              [departureId]="departureId"
+              (roomAssignmentsChange)="onRoomAssignmentsChange($event)">
+            </app-info-travelers-room>
+
+
+
 </div>

@@ -29,6 +29,8 @@ import {
 } from '../../../../core/services/reservation/reservation-traveler-activity.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { forkJoin } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-insurance',
@@ -46,6 +48,17 @@ export class InsuranceComponent implements OnInit, OnChanges {
   @Output() insuranceSelectionChange = new EventEmitter<{
     selectedInsurance: IActivityResponse | null;
     price: number;
+  }>();
+  // Outputs de estado de guardado como en habitaciones
+  @Output() saveStatusChange = new EventEmitter<{
+    saving: boolean;
+    success?: boolean;
+    error?: string;
+  }>();
+  @Output() saveCompleted = new EventEmitter<{
+    component: 'insurance';
+    success: boolean;
+    error?: string;
   }>();
 
   insurances: IActivityResponse[] = [];
@@ -69,6 +82,7 @@ export class InsuranceComponent implements OnInit, OnChanges {
   isSaving: boolean = false;
   errorMsg: string | null = null;
   userHasMadeSelection: boolean = false;
+  private saveTimeout: any;
 
   constructor(
     private activityService: ActivityService,
@@ -76,7 +90,8 @@ export class InsuranceComponent implements OnInit, OnChanges {
     private activityCompetitionGroupService: ActivityCompetitionGroupService,
     private reservationTravelerService: ReservationTravelerService,
     private reservationTravelerActivityService: ReservationTravelerActivityService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private messageService: MessageService
   ) {}
 
   ngOnInit(): void {
@@ -305,6 +320,9 @@ export class InsuranceComponent implements OnInit, OnChanges {
 
     // Emitir el cambio al componente padre
     this.emitInsuranceChange();
+
+    // Guardado automático con debounce, como actividades/habitaciones
+    this.debouncedSave();
   }
 
   // Emitir cambio de seguro
@@ -325,9 +343,8 @@ export class InsuranceComponent implements OnInit, OnChanges {
       return false;
     }
 
-    // Guardar si hay cambios pendientes o hay un seguro seleccionado
-    const shouldSave =
-      this.hasUnsavedChanges || this.selectedInsurance !== null;
+    // Guardar SOLO si el usuario realizó cambios
+    const shouldSave = this.hasUnsavedChanges === true;
 
     if (!shouldSave) {
       return true;
@@ -335,6 +352,8 @@ export class InsuranceComponent implements OnInit, OnChanges {
 
     this.isSaving = true;
     this.errorMsg = null;
+    this.saveStatusChange.emit({ saving: true });
+    this.showSavingToast();
 
     try {
       // Asegurar que tenemos travelers cargados
@@ -386,6 +405,9 @@ export class InsuranceComponent implements OnInit, OnChanges {
 
       this.hasUnsavedChanges = false;
       this.isSaving = false;
+      this.showSuccessToast();
+      this.saveStatusChange.emit({ saving: false, success: true });
+      this.saveCompleted.emit({ component: 'insurance', success: true });
       return true;
     } catch (error) {
       console.error(
@@ -395,8 +417,51 @@ export class InsuranceComponent implements OnInit, OnChanges {
       this.errorMsg =
         'Error al guardar las asignaciones de seguro. Por favor, inténtalo de nuevo.';
       this.isSaving = false;
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error al guardar seguros',
+        detail: 'No se pudo actualizar el seguro seleccionado',
+        life: 5000,
+      });
+      this.saveStatusChange.emit({
+        saving: false,
+        success: false,
+        error: 'Error al guardar seguros',
+      });
+      this.saveCompleted.emit({
+        component: 'insurance',
+        success: false,
+        error: 'Error al guardar seguros',
+      });
       return false;
     }
+  }
+
+  // Guardado con debounce
+  private debouncedSave(): void {
+    clearTimeout(this.saveTimeout);
+    this.saveTimeout = setTimeout(() => {
+      this.saveInsuranceAssignments();
+    }, 1200);
+  }
+
+  // Toasts como en habitaciones
+  private showSavingToast(): void {
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Guardando...',
+      detail: 'Actualizando seguro para los viajeros',
+      life: 2000,
+    });
+  }
+
+  private showSuccessToast(): void {
+    this.messageService.add({
+      severity: 'success',
+      summary: '¡Guardado!',
+      detail: 'Seguro actualizado correctamente',
+      life: 3000,
+    });
   }
 
   // Método para ordenar seguros por precio (básico primero)

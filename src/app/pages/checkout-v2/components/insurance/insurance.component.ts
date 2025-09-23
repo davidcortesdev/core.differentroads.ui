@@ -82,7 +82,7 @@ export class InsuranceComponent implements OnInit, OnChanges {
   isSaving: boolean = false;
   errorMsg: string | null = null;
   userHasMadeSelection: boolean = false;
-  private saveTimeout: any;
+  private saveTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private activityService: ActivityService,
@@ -439,7 +439,9 @@ export class InsuranceComponent implements OnInit, OnChanges {
 
   // Guardado con debounce
   private debouncedSave(): void {
-    clearTimeout(this.saveTimeout);
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout);
+    }
     this.saveTimeout = setTimeout(() => {
       this.saveInsuranceAssignments();
     }, 1200);

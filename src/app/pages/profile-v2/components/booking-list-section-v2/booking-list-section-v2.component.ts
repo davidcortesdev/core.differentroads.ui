@@ -7,7 +7,7 @@ import { ReservationResponse } from '../../../../core/models/v2/profile-v2.model
 import { ToursServiceV2, TourV2 } from '../../../../core/services/v2/tours-v2.service';
 import { OrdersServiceV2, OrderV2 } from '../../../../core/services/v2/orders-v2.service';
 import { DataMappingV2Service } from '../../../../core/services/v2/data-mapping-v2.service';
-import { NotificationsServiceV2 } from '../../../checkout-v2/services/notifications.service';
+import { NotificationsServiceV2 } from '../../../../core/services/v2/notifications-v2.service';
 import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
 
 
@@ -323,6 +323,16 @@ export class BookingListSectionV2Component implements OnInit {
 
 
   downloadItem(item: BookingItem) {
+    // TEMPORAL: Deshabilitar descarga hasta que la API esté disponible
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Función no disponible',
+      detail: 'La descarga de documentos no está disponible temporalmente. Contacta con soporte si necesitas el documento.',
+    });
+    return;
+
+    // Código original comentado hasta que la API funcione
+    /*
     this.downloadLoading[item.id] = true;
     this.messageService.add({
       severity: 'info',
@@ -330,7 +340,8 @@ export class BookingListSectionV2Component implements OnInit {
       detail: 'Generando documento...',
     });
 
-    this.bookingsService.downloadBookingDocument(item.id).subscribe({
+    // Intentar descarga con NotificationsServiceV2
+    this.notificationsService.downloadBookingDocument(item.id).subscribe({
       next: (response) => {
         this.downloadLoading[item.id] = false;
         // Abrir el documento en una nueva pestaña
@@ -342,15 +353,43 @@ export class BookingListSectionV2Component implements OnInit {
         });
       },
       error: (error) => {
-        this.downloadLoading[item.id] = false;
-        console.error('Error descargando documento:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Error al descargar el documento',
+        console.error('Error con NotificationsServiceV2:', error);
+        
+        // Fallback: Intentar con BookingsServiceV2
+        this.bookingsService.downloadBookingDocument(item.id).subscribe({
+          next: (response) => {
+            this.downloadLoading[item.id] = false;
+            window.open(response.fileUrl, '_blank');
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Éxito',
+              detail: 'Documento descargado exitosamente',
+            });
+          },
+          error: (fallbackError) => {
+            this.downloadLoading[item.id] = false;
+            console.error('Error con BookingsServiceV2:', fallbackError);
+            
+            // Mostrar error final
+            let errorMessage = 'Error al descargar el documento';
+            if (fallbackError.status === 500) {
+              errorMessage = 'El documento no está disponible en este momento. Inténtalo más tarde.';
+            } else if (fallbackError.status === 404) {
+              errorMessage = 'Documento no encontrado.';
+            } else if (fallbackError.status === 403) {
+              errorMessage = 'No tienes permisos para descargar este documento.';
+            }
+            
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: errorMessage,
+            });
+          }
         });
       }
     });
+    */
   }
 
   reserveItem(item: BookingItem) {

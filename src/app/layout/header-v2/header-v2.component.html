@@ -46,20 +46,11 @@
       </p-menubar>
     </ng-container>
     
-    <!-- Para desktop - menús separados -->
+    <!-- Para desktop - menú único -->
     <ng-template #desktopMenus>
-      <p-menubar styleClass="nav-menu">
-        <ng-template #start>
-          <ng-container *ngIf="!isLoadingMenu; else menuSkeleton">
-            <p-menubar [model]="leftMenuItems" styleClass="left-menu" autoZIndex="true" autoDisplay="true" baseZIndex="1000"></p-menubar>
-          </ng-container>
-        </ng-template>
-        <ng-template #end>
-          <ng-container *ngIf="!isLoadingMenu; else menuSkeleton">
-            <p-menubar [model]="rightMenuItems" styleClass="right-menu" autoZIndex="true" autoDisplay="true" baseZIndex="1000"></p-menubar>
-          </ng-container>
-        </ng-template>
-      </p-menubar>
+      <ng-container *ngIf="!isLoadingMenu; else menuSkeleton">
+        <p-menubar [model]="leftMenuItems" styleClass="nav-menu" autoZIndex="true" autoDisplay="true" baseZIndex="1000"></p-menubar>
+      </ng-container>
     </ng-template>
   </div>
 </div>

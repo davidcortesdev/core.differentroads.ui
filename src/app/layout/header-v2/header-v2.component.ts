@@ -11,10 +11,6 @@ import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 import { AuthenticateService } from '../../core/services/auth-service.service';
 import { UsersNetService } from '../../core/services/usersNet.service';
 import {
-  MenuTipoService,
-  IMenuTipoResponse,
-} from '../../core/services/menu/menu-tipo.service';
-import {
   MenuItemService,
   IMenuItemResponse,
 } from '../../core/services/menu/menu-item.service';
@@ -79,7 +75,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
     private languageService: LanguageService,
     private authService: AuthenticateService,
     private usersNetService: UsersNetService,
-    private menuTipoService: MenuTipoService,
     private menuItemService: MenuItemService,
     private tourLocationService: TourLocationService,
     private locationNetService: LocationNetService,
@@ -242,46 +237,17 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   private fetchMenuConfig(): void {
     this.isLoadingMenu = true;
 
-    // Obtener tipos de menú activos
-    this.menuTipoService
+    // Obtener todos los elementos de menú activos sin importar el tipo
+    this.menuItemService
       .getAll({ isActive: true })
       .pipe(
         takeUntil(this.destroy$),
-        switchMap((menuTipos: IMenuTipoResponse[]) => {
-          // Separar tipos de menú por código
-          const categoriaTipo = menuTipos.find(
-            (tipo) => tipo.code === 'CATEGORIA'
-          );
-          const otrosTipos = menuTipos.filter(
-            (tipo) => tipo.code !== 'CATEGORIA'
-          );
-
-          // Crear requests para cada tipo
-          const categoriaRequest = categoriaTipo
-            ? this.menuItemService
-                .getAll({ menuTipoId: categoriaTipo.id, isActive: true })
-                .pipe(takeUntil(this.destroy$))
-            : of([]);
-
-          const otrosRequests = otrosTipos.map((tipo) =>
-            this.menuItemService
-              .getAll({
-                menuTipoId: tipo.id,
-                isActive: true,
-              })
-              .pipe(takeUntil(this.destroy$))
-          );
-
-          // Combinar todos los requests
-          const allRequests = [categoriaRequest, ...otrosRequests];
-          return forkJoin(allRequests).pipe(takeUntil(this.destroy$));
-        }),
         finalize(() => (this.isLoadingMenu = false))
       )
       .subscribe({
-        next: (menuItemsArrays: IMenuItemResponse[][]) => {
-          // Procesar los elementos de menú y crear los menús
-          this.processMenuItems(menuItemsArrays);
+        next: (menuItems: IMenuItemResponse[]) => {
+          // Procesar los elementos de menú y crear el menú unificado
+          this.processMenuItems([menuItems]);
         },
         error: (error) => {
           this.isLoadingMenu = false;
@@ -290,27 +256,19 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   }
 
   private processMenuItems(menuItemsArrays: IMenuItemResponse[][]): void {
-    // El primer array contiene los elementos de CATEGORIA (menú derecho)
-    // Los demás arrays contienen otros tipos (menú izquierdo)
-    const categoriaItems = menuItemsArrays[0] || [];
-    const otrosItems = menuItemsArrays.slice(1).flat();
+    // Combinar todos los elementos de menú en un solo array
+    const allMenuItems = menuItemsArrays.flat();
 
-    // Ordenar elementos por orden
-    const sortedCategoriaItems = categoriaItems.sort(
-      (a, b) => a.orden - b.orden
-    );
-    const sortedOtrosItems = otrosItems.sort((a, b) => a.orden - b.orden);
+    // Ordenar todos los elementos por el campo orden
+    const sortedAllItems = allMenuItems.sort((a, b) => a.orden - b.orden);
 
-    // Asignar a menús
-    this.leftMenuItems = this.mapMenuItemResponseToPrimeNG(sortedOtrosItems);
-    this.rightMenuItems =
-      this.mapMenuItemResponseToPrimeNG(sortedCategoriaItems);
+    // Crear un solo menú con todos los elementos ordenados
+    const singleMenuItems = this.mapMenuItemResponseToPrimeNG(sortedAllItems);
 
-    // Combinar menús para vista móvil
-    this.combinedMenuItems = [
-      ...(this.leftMenuItems || []),
-      ...(this.rightMenuItems || []),
-    ];
+    // Asignar el mismo menú a todas las propiedades para mantener compatibilidad
+    this.leftMenuItems = singleMenuItems;
+    this.rightMenuItems = [];
+    this.combinedMenuItems = singleMenuItems;
 
     // Ahora que los menús están cargados, obtener países para los continentes
     this.loadContinentsFromLeftMenu();
@@ -389,7 +347,7 @@ export class HeaderV2Component implements OnInit, OnDestroy {
       return;
     }
 
-    // Actualizar menú izquierdo (continentes) con países como submenús
+    // Actualizar menú único (continentes) con países como submenús
     if (this.leftMenuItems && this.leftMenuItems.length > 0) {
       this.leftMenuItems = this.leftMenuItems.map((menuItem) => {
         // Usar directamente el ID del menú como continentId
@@ -415,11 +373,8 @@ export class HeaderV2Component implements OnInit, OnDestroy {
       });
     }
 
-    // Actualizar menú combinado para móvil
-    this.combinedMenuItems = [
-      ...(this.leftMenuItems || []),
-      ...(this.rightMenuItems || []),
-    ];
+    // Actualizar menú combinado para móvil (ahora es el mismo que el menú principal)
+    this.combinedMenuItems = this.leftMenuItems;
   }
 
   private findContinentIdByName(continentName: string): number | null {

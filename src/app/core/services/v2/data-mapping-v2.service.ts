@@ -3,6 +3,7 @@ import { BookingItem } from '../../models/v2/profile-v2.model';
 import { ReservationResponse } from '../../models/v2/profile-v2.model';
 import { TourV2 } from './tours-v2.service';
 import { OrderV2 } from './orders-v2.service';
+import { ICMSTourResponse } from '../cms/cms-tour.service';
 
 /**
  * Servicio para mapear datos de APIs a BookingItem V2
@@ -20,15 +21,17 @@ export class DataMappingV2Service {
    * @param reservation - Datos de reserva de la API
    * @param tour - Información del tour (opcional)
    * @param listType - Tipo de lista para configurar campos específicos
+   * @param cmsTour - Información del tour CMS con imagen (opcional)
    * @returns BookingItem V2
    */
   mapReservationToBookingItem(
     reservation: ReservationResponse, 
     tour: TourV2 | null = null,
-    listType: 'active-bookings' | 'travel-history' | 'recent-budgets' = 'active-bookings'
+    listType: 'active-bookings' | 'travel-history' | 'recent-budgets' = 'active-bookings',
+    cmsTour: ICMSTourResponse | null = null
   ): BookingItem {
     // Usar tkId si existe, sino usar el id de la reserva
-    const reservationNumber = reservation.tkId || `RES-${reservation.id}`;
+    const reservationNumber = reservation.tkId || reservation.id.toString();
     
     const bookingItem: BookingItem = {
       id: reservation.id.toString(),
@@ -38,7 +41,7 @@ export class DataMappingV2Service {
       creationDate: new Date(reservation.createdAt),
       status: this.mapReservationStatus(reservation.reservationStatusId),
       departureDate: this.extractReservationDepartureDate(reservation),
-      image: this.getDefaultImage(),
+      image: this.getImageFromCMS(cmsTour) || this.getDefaultImage(),
       passengers: reservation.totalPassengers,
       price: reservation.totalAmount,
       tourID: reservation.tourId.toString(),
@@ -61,9 +64,10 @@ export class DataMappingV2Service {
    * Mapea una orden (presupuesto) con información de tour a BookingItem V2
    * @param order - Datos de orden de la API
    * @param tour - Información del tour (opcional)
+   * @param cmsTour - Información del tour CMS con imagen (opcional)
    * @returns BookingItem V2
    */
-  mapOrderToBookingItem(order: OrderV2, tour: TourV2 | null = null): BookingItem {
+  mapOrderToBookingItem(order: OrderV2, tour: TourV2 | null = null, cmsTour: ICMSTourResponse | null = null): BookingItem {
     return {
       id: order._id,
       title: tour?.name || `Presupuesto ${order.ID}`,
@@ -74,7 +78,7 @@ export class DataMappingV2Service {
       creationDate: order.createdAt ? new Date(order.createdAt) : new Date(),
       status: this.mapOrderStatus(order.status),
       departureDate: this.extractOrderDepartureDate(order),
-      image: this.getDefaultImage(),
+      image: this.getImageFromCMS(cmsTour) || this.getDefaultImage(),
       passengers: order.travelers?.length || 1,
       price: order.price || 0,
       tourID: order.periodID,
@@ -90,15 +94,22 @@ export class DataMappingV2Service {
    * @param reservations - Array de reservas
    * @param tours - Array de tours correspondientes
    * @param listType - Tipo de lista
+   * @param cmsTours - Array de tours CMS con imágenes (opcional)
    * @returns Array de BookingItem V2
    */
   mapReservationsToBookingItems(
     reservations: ReservationResponse[],
     tours: (TourV2 | null)[],
-    listType: 'active-bookings' | 'travel-history' | 'recent-budgets' = 'active-bookings'
+    listType: 'active-bookings' | 'travel-history' | 'recent-budgets' = 'active-bookings',
+    cmsTours: (ICMSTourResponse | null)[] = []
   ): BookingItem[] {
     return reservations.map((reservation, index) => 
-      this.mapReservationToBookingItem(reservation, tours[index] || null, listType)
+      this.mapReservationToBookingItem(
+        reservation, 
+        tours[index] || null, 
+        listType,
+        cmsTours[index] || null
+      )
     );
   }
 
@@ -106,11 +117,12 @@ export class DataMappingV2Service {
    * Mapea múltiples órdenes con tours a array de BookingItem V2
    * @param orders - Array de órdenes
    * @param tours - Array de tours correspondientes
+   * @param cmsTours - Array de tours CMS con imágenes (opcional)
    * @returns Array de BookingItem V2
    */
-  mapOrdersToBookingItems(orders: OrderV2[], tours: (TourV2 | null)[]): BookingItem[] {
+  mapOrdersToBookingItems(orders: OrderV2[], tours: (TourV2 | null)[], cmsTours: (ICMSTourResponse | null)[] = []): BookingItem[] {
     return orders.map((order, index) => 
-      this.mapOrderToBookingItem(order, tours[index] || null)
+      this.mapOrderToBookingItem(order, tours[index] || null, cmsTours[index] || null)
     );
   }
 
@@ -188,6 +200,18 @@ export class DataMappingV2Service {
     return 'assets/images/icon-different.svg';
   }
 
+  /**
+   * Obtiene imagen desde CMSTour si está disponible
+   * @param cmsTour - Datos del tour CMS
+   * @returns URL de la imagen o null si no está disponible
+   */
+  private getImageFromCMS(cmsTour: ICMSTourResponse | null): string | null {
+    if (cmsTour?.imageUrl) {
+      return cmsTour.imageUrl;
+    }
+    return null;
+  }
+
   // ===== MÉTODOS COMPATIBILIDAD (mantener para compatibilidad) =====
 
   /**
@@ -199,7 +223,7 @@ export class DataMappingV2Service {
     return {
       id: apiResponse.id || apiResponse.reservation_id || `booking-${Date.now()}`,
       title: this.extractBookingTitle(apiResponse),
-      number: apiResponse.number || apiResponse.reservation_number || `RES-${apiResponse.id}`,
+      number: apiResponse.number || apiResponse.reservation_number || apiResponse.id.toString(),
       reservationNumber: apiResponse.reservation_number || apiResponse.number,
       creationDate: apiResponse.created_at ? new Date(apiResponse.created_at) : new Date(),
       status: this.mapBookingStatus(apiResponse.status),

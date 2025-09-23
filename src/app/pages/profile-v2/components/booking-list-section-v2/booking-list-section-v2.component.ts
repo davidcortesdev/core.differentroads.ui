@@ -8,6 +8,7 @@ import { ToursServiceV2, TourV2 } from '../../../../core/services/v2/tours-v2.se
 import { OrdersServiceV2, OrderV2 } from '../../../../core/services/v2/orders-v2.service';
 import { DataMappingV2Service } from '../../../../core/services/v2/data-mapping-v2.service';
 import { NotificationsServiceV2 } from '../../../../core/services/v2/notifications-v2.service';
+import { CMSTourService, ICMSTourResponse } from '../../../../core/services/cms/cms-tour.service';
 import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
 
 
@@ -34,7 +35,8 @@ export class BookingListSectionV2Component implements OnInit {
     private toursService: ToursServiceV2,
     private ordersService: OrdersServiceV2,
     private dataMappingService: DataMappingV2Service,
-    private notificationsService: NotificationsServiceV2
+    private notificationsService: NotificationsServiceV2,
+    private cmsTourService: CMSTourService
   ) {}
 
   ngOnInit() {
@@ -81,25 +83,36 @@ export class BookingListSectionV2Component implements OnInit {
           return of([]);
         }
 
-        // Obtener información de tours para cada reserva
+        // Obtener información de tours y imágenes CMS para cada reserva
         const tourPromises = reservations.map(reservation => 
-          this.toursService.getTourById(reservation.tourId).pipe(
-            map(tour => ({ reservation, tour })),
-            catchError(error => {
-              console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
-              return of({ reservation, tour: null });
-            })
+          forkJoin({
+            tour: this.toursService.getTourById(reservation.tourId).pipe(
+              catchError(error => {
+                console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
+                return of(null);
+              })
+            ),
+            cmsTour: this.cmsTourService.getAllTours({ tourId: reservation.tourId }).pipe(
+              map((cmsTours: ICMSTourResponse[]) => cmsTours.length > 0 ? cmsTours[0] : null),
+              catchError(error => {
+                console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
+                return of(null);
+              })
+            )
+          }).pipe(
+            map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
           )
         );
 
         return forkJoin(tourPromises);
       }),
       map((reservationTourPairs: any[]) => {
-        // Mapear usando el servicio de mapeo
+        // Mapear usando el servicio de mapeo con imágenes CMS
         return this.dataMappingService.mapReservationsToBookingItems(
           reservationTourPairs.map(pair => pair.reservation),
           reservationTourPairs.map(pair => pair.tour),
-          'active-bookings'
+          'active-bookings',
+          reservationTourPairs.map(pair => pair.cmsTour)
         );
       }),
       catchError(error => {
@@ -134,25 +147,36 @@ export class BookingListSectionV2Component implements OnInit {
           return of([]);
         }
 
-        // Obtener información de tours para cada reserva
+        // Obtener información de tours y imágenes CMS para cada reserva
         const tourPromises = reservations.map(reservation => 
-          this.toursService.getTourById(reservation.tourId).pipe(
-            map(tour => ({ reservation, tour })),
-            catchError(error => {
-              console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
-              return of({ reservation, tour: null });
-            })
+          forkJoin({
+            tour: this.toursService.getTourById(reservation.tourId).pipe(
+              catchError(error => {
+                console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
+                return of(null);
+              })
+            ),
+            cmsTour: this.cmsTourService.getAllTours({ tourId: reservation.tourId }).pipe(
+              map((cmsTours: ICMSTourResponse[]) => cmsTours.length > 0 ? cmsTours[0] : null),
+              catchError(error => {
+                console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
+                return of(null);
+              })
+            )
+          }).pipe(
+            map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
           )
         );
 
         return forkJoin(tourPromises);
       }),
       map((reservationTourPairs: any[]) => {
-        // Mapear usando el servicio de mapeo
+        // Mapear usando el servicio de mapeo con imágenes CMS
         return this.dataMappingService.mapReservationsToBookingItems(
           reservationTourPairs.map(pair => pair.reservation),
           reservationTourPairs.map(pair => pair.tour),
-          'travel-history'
+          'travel-history',
+          reservationTourPairs.map(pair => pair.cmsTour)
         );
       }),
       catchError(error => {
@@ -191,24 +215,35 @@ export class BookingListSectionV2Component implements OnInit {
           return of([]);
         }
 
-        // Obtener información de tours para cada orden
+        // Obtener información de tours y imágenes CMS para cada orden
         const tourPromises = orders.map((order: OrderV2) => 
-          this.toursService.getTourById(parseInt(order.periodID)).pipe(
-            map(tour => ({ order, tour })),
-            catchError(error => {
-              console.warn(`Error obteniendo tour ${order.periodID}:`, error);
-              return of({ order, tour: null });
-            })
+          forkJoin({
+            tour: this.toursService.getTourById(parseInt(order.periodID)).pipe(
+              catchError(error => {
+                console.warn(`Error obteniendo tour ${order.periodID}:`, error);
+                return of(null);
+              })
+            ),
+            cmsTour: this.cmsTourService.getAllTours({ tourId: parseInt(order.periodID) }).pipe(
+              map((cmsTours: ICMSTourResponse[]) => cmsTours.length > 0 ? cmsTours[0] : null),
+              catchError(error => {
+                console.warn(`Error obteniendo CMS tour ${order.periodID}:`, error);
+                return of(null);
+              })
+            )
+          }).pipe(
+            map(({ tour, cmsTour }) => ({ order, tour, cmsTour }))
           )
         );
 
         return forkJoin(tourPromises);
       }),
       map((orderTourPairs: any[]) => {
-        // Mapear usando el servicio de mapeo
+        // Mapear usando el servicio de mapeo con imágenes CMS
         return this.dataMappingService.mapOrdersToBookingItems(
           orderTourPairs.map(pair => pair.order),
-          orderTourPairs.map(pair => pair.tour)
+          orderTourPairs.map(pair => pair.tour),
+          orderTourPairs.map(pair => pair.cmsTour)
         );
       }),
       catchError(error => {

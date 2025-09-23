@@ -16,29 +16,32 @@
   <div class="traveler-selector-wrap" *ngIf="!loading && !loadingAgeGroups">
     <div
       class="traveler-selector-wrap-item"
-      *ngFor="let travelerType of travelerTypes; trackBy: trackByTravelerType"
+      *ngFor="let ageGroup of orderedAgeGroups; trackBy: trackByAgeGroup"
     >
       <div class="traveler-selector-wrap-item-group">
         <span class="traveler-selector-wrap-item-name">{{
-          travelerType.label
+          ageGroup.name
         }}</span>
         <span class="traveler-selector-wrap-item-description">
-          {{ getAgeRangeText(travelerType.ageGroup) }}
+          {{ getAgeRangeText(ageGroup) }}
         </span>
       </div>
       <p-inputNumber
-        [(ngModel)]="travelersNumbers[travelerType.key]"
-        (ngModelChange)="handlePassengers($event, travelerType.key)"
+        [(ngModel)]="ageGroupCounts[ageGroup.id]"
+        (ngModelChange)="handlePassengersForAgeGroup(ageGroup.id, $event)"
         [showButtons]="true"
         buttonLayout="horizontal"
         spinnerMode="horizontal"
-        [min]="travelerType.min"
-        [max]="travelerType.max"
+        [min]="getMinForAgeGroup(ageGroup.id)"
+        [max]="getMaxForAgeGroup(ageGroup.id)"
         placeholder="0"
         [disabled]="loading"
-        [class.input-error]="adultsErrorMsg && travelerType.key === 'adults'"
+        [class.input-error]="
+          adultsErrorMsg && ageGroup.id === orderedAgeGroups[0]?.id
+        "
         [class.input-warning]="
-          travelerType.key === 'adults' && travelersNumbers.adults === 0
+          ageGroup.id === orderedAgeGroups[0]?.id &&
+          (ageGroupCounts[ageGroup.id] || 0) === 0
         "
       >
         <ng-template #incrementbuttonicon>

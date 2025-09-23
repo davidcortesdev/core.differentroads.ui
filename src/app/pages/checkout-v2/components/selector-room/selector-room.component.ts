@@ -114,6 +114,9 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
   private destroy$ = new Subject<void>();
   private saveSubject = new Subject<void>();
 
+  // NUEVO: Subject para debounce de selección de habitaciones
+  private roomSelectionSubject = new Subject<void>();
+
   // NUEVO: Propiedades para controlar el estado de carga de viajeros
   loadingTravelers: boolean = false;
   travelersError: string | null = null;
@@ -209,9 +212,20 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
         next: (success) => {
           // Guardado completado
         },
-        error: (error) => {
-          console.error('Error en guardado:', error);
+        error: () => {},
+      });
+
+    // NUEVO: Configurar debounce para selección de habitaciones
+    this.roomSelectionSubject
+      .pipe(
+        debounceTime(500), // Debounce de 500ms para permitir clics rápidos
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: () => {
+          this.processAllRoomSelections();
         },
+        error: () => {},
       });
   }
 
@@ -256,7 +270,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     } catch (error) {
       this.travelersError = 'Error al cargar los viajeros';
       this.loadingTravelers = false;
-      console.error('Error loading travelers:', error);
       return [];
     }
   }
@@ -760,27 +773,38 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     );
   }
 
-  // Manejar cambios en selección
+  // Manejar cambios en selección (ahora con debounce)
   onRoomSpacesChange(changedRoom: RoomAvailability, newValue: number): void {
+    // Actualizar SOLO la UI local inmediatamente - SIN BLOQUEOS
     if (newValue === 0) {
       delete this.selectedRooms[changedRoom.tkId];
     } else {
       this.selectedRooms[changedRoom.tkId] = newValue;
     }
 
-    // Validar selecciones antes de continuar
+    // Solo disparar el debounce - permite múltiples clics rápidos
+    this.roomSelectionSubject.next();
+  }
+
+  // NUEVO: Procesar todas las selecciones después del debounce
+  private processAllRoomSelections(): void {
+    // Emitir cambios al componente padre DESPUÉS del debounce
+    this.roomsSelectionChange.emit(this.selectedRooms);
+
+    // Validar todas las selecciones actuales
     const validationResult = this.validateRoomSelections();
     if (!validationResult.isValid) {
       this.errorMsg = validationResult.message;
       return;
     }
 
-    // Emitir cambios al componente padre
-    this.roomsSelectionChange.emit(this.selectedRooms);
+    // Limpiar errores si la validación es exitosa
+    this.errorMsg = null;
 
+    // Actualizar habitaciones con todas las selecciones
     this.updateRooms();
 
-    // NUEVO: Guardar con debounce para no interferir con la selección del usuario
+    // Guardar con debounce para no interferir con la selección del usuario
     this.saveSubject.next();
   }
 
@@ -880,16 +904,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
         });
       }
     });
-
-    console.log(
-      'ROOM_VALIDATION: 🏨 Habitaciones disponibles:',
-      availableRooms.map((r) => ({
-        name: r.roomName,
-        capacity: r.capacity,
-        isShared: r.isShared,
-        instance: r.instanceNumber,
-      }))
-    );
 
     // Distribuir travelers a habitaciones de manera inteligente
     const roomAssignments: Array<{
@@ -1058,9 +1072,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
             addTravelerToSpecificRoom(children[childIndex], room);
             childIndex++;
           } else {
-            console.error(
-              `No se puede asignar niño ${children[childIndex].travelerNumber} sin adulto en ${room.roomName}`
-            );
             break;
           }
         }
@@ -1266,7 +1277,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
       this.existingTravelers = currentTravelers;
 
       if (!currentTravelers || currentTravelers.length === 0) {
-        console.error('No hay viajeros en la reserva');
         throw new Error(
           'No se encontraron viajeros en la reserva. Por favor, verifica los datos.'
         );
@@ -1309,7 +1319,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
       );
 
       if (missingTravelers.length > 0) {
-        console.error('Viajeros faltantes en DB:', missingTravelers);
         throw new Error(
           `No se encontraron ${missingTravelers.length} viajero(s) en la base de datos. Por favor, recarga la página.`
         );
@@ -1353,10 +1362,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
               })
             );
           } else {
-            console.error('No se encontró viajero en DB para asignación:', {
-              assignmentTravelerNumber: assignment.travelerNumber,
-              assignmentIsLeadTraveler: assignment.isLeadTraveler,
-            });
             return Promise.resolve(null);
           }
         })
@@ -1386,8 +1391,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
 
       return true;
     } catch (error) {
-      console.error('Error completo en guardado:', error);
-
       // Determinar el tipo de error y mensaje específico
       let errorMessage = 'Error al guardar las asignaciones de habitaciones';
       let errorDetail = '';
@@ -1549,7 +1552,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
       // Actualizar UI
       this.updateUIFromData();
     } catch (error) {
-      console.error('Error recargando habitaciones:', error);
       this.errorMsg = 'Error al recargar las habitaciones.';
     }
   }

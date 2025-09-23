@@ -1,3 +1,9 @@
+export interface SummaryItem {
+  qty: number;
+  value: number;
+  description: string;
+}
+
 export interface BookingItem {
     id: string;
     title: string;
@@ -15,6 +21,7 @@ export interface BookingItem {
     tourID?: string;
     origin?: string;
     departureName?: string;
+    summary?: SummaryItem[]; // For budgets
     imageLoading?: boolean; // Track if image is loading
     imageLoaded?: boolean; // Track if image loaded successfully
     code?: string; // For bookings compatibility

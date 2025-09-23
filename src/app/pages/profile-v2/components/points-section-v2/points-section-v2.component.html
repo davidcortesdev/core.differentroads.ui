@@ -32,11 +32,26 @@
     >
       <ng-template pTemplate="header">
         <tr>
-          <th>Reserva</th>
-          <th>Categoría</th>
-          <th>Concepto</th>
-          <th>Tour</th>
-          <th>Puntos</th>
+          <th pSortableColumn="booking">
+            Reserva
+            <p-sortIcon field="booking"></p-sortIcon>
+          </th>
+          <th pSortableColumn="category">
+            Categoría
+            <p-sortIcon field="category"></p-sortIcon>
+          </th>
+          <th pSortableColumn="concept">
+            Concepto
+            <p-sortIcon field="concept"></p-sortIcon>
+          </th>
+          <th pSortableColumn="tour">
+            Tour
+            <p-sortIcon field="tour"></p-sortIcon>
+          </th>
+          <th pSortableColumn="points">
+            Puntos
+            <p-sortIcon field="points"></p-sortIcon>
+          </th>
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-point>
@@ -56,7 +71,7 @@
       <p-card
         *ngFor="let card of membershipCards"
         [styleClass]="getCardClass(card)"
-        [style]="{ width: '100%' }"
+        [style]="{ width: '100%', height: '400px' }"
       >
         <ng-template pTemplate="header">
           <div class="card-image-container">

@@ -63,11 +63,11 @@ export class PointsV2Service {
    */
   calculateTotalPoints(points: PointsRecord[]): number {
     const incomePoints = points
-      .filter(p => p.type === 'acumular')
+      .filter(p => p.type === 'Acumular')
       .reduce((total, point) => total + point.points, 0);
     
     const redemptionPoints = points
-      .filter(p => p.type === 'canjear')
+      .filter(p => p.type === 'Canjear')
       .reduce((total, point) => total + point.points, 0);
     
     return incomePoints - redemptionPoints;
@@ -308,7 +308,6 @@ export class PointsV2Service {
    * @returns Array de registros de puntos
    */
   generateMockPoints(userId: string): PointsRecord[] {
-    const userSuffix = userId.slice(-3);
     
     // Simular viajes con diferentes importes para calcular puntos realistas
     const mockBookings = [
@@ -326,15 +325,15 @@ export class PointsV2Service {
       if (booking.amount > 0) {
         const points = this.calculatePointsFromAmount(booking.amount);
         pointsRecords.push({
-          booking: `RES-${userSuffix}-${booking.id}`,
-          category: 'viaje',
+          booking: booking.id,
+          category: 'Viaje',
           concept: 'Puntos por reserva de tour',
           tour: booking.tour,
           points: points,
-          type: 'acumular',
+          type: 'Acumular',
           amount: booking.amount,
           date: booking.date,
-          status: 'confirmed'
+          status: 'Confirmed'
         });
       }
     });
@@ -348,15 +347,15 @@ export class PointsV2Service {
 
     redemptions.forEach(redemption => {
       pointsRecords.push({
-        booking: `CAN-${userSuffix}-${redemption.id}`,
-        category: 'canje',
+        booking: redemption.id,
+        category: 'Canje',
         concept: redemption.concept,
         tour: 'Descuento aplicado',
         points: redemption.points,
-        type: 'canjear',
+        type: 'Canjear',
         amount: redemption.amount,
         date: redemption.date,
-        status: 'confirmed'
+        status: 'Confirmed'
       });
     });
 
@@ -375,11 +374,7 @@ export class PointsV2Service {
    */
   generateMockTripsCount(userId: string): number {
     // Simular cantidad de viajes basada en el userId
-    const userSuffix = userId.slice(-3);
-    const hash = userSuffix.split('').reduce((a, b) => {
-      a = ((a << 5) - a) + b.charCodeAt(0);
-      return a & a;
-    }, 0);
+    
     
     // Retornar 5 viajes para que le falte 1 para ser Nómada (6 viajes)
     return 5;

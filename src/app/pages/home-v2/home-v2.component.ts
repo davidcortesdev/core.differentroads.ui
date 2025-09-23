@@ -72,8 +72,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
   private distributeConfigurationsBySection(
     configurations: IHomeSectionConfigurationResponse[]
   ): void {
-    console.log('🔍 HomeV2 - All configurations received:', configurations);
-
     // Agrupar configuraciones por tipo de sección
     this.bannerConfigurations = configurations.filter(
       (c) => c.homeSectionId === 1
@@ -98,11 +96,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
     );
     this.partnersSectionConfigurations = configurations.filter(
       (c) => c.homeSectionId === 10
-    );
-
-    console.log(
-      '🔍 HomeV2 - Mixed Section Configurations (ID: 5):',
-      this.mixedSectionConfigurations
     );
   }
 

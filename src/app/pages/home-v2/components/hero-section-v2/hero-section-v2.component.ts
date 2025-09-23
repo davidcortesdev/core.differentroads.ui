@@ -135,12 +135,10 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
   }
 
   onVideoLoaded(): void {
-    console.log('Video loaded, attempting to play...');
     this.playVideo();
   }
 
   onVideoCanPlay(): void {
-    console.log('Video can play, attempting to play...');
     this.playVideo();
   }
 
@@ -151,7 +149,7 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
       video
         .play()
         .then(() => {
-          console.log('Video is playing successfully');
+          // Video playing successfully
         })
         .catch((error) => {
           console.error('Error playing video:', error);
@@ -226,7 +224,6 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
       queryParams.tripType = this.selectedTripType.toString().trim();
     }
 
-    console.log('queryParams', queryParams);
     this.router.navigate(['/tours'], { queryParams });
   }
 

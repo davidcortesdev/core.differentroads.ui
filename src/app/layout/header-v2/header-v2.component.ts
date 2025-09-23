@@ -19,6 +19,16 @@ import {
   IMenuItemResponse,
 } from '../../core/services/menu/menu-item.service';
 import {
+  TourLocationService,
+  CountryWithToursResponse,
+} from '../../core/services/tour/tour-location.service';
+import {
+  LocationNetService,
+  Location,
+} from '../../core/services/locations/locationNet.service';
+import { TourTagService } from '../../core/services/tag/tour-tag.service';
+
+import {
   Subject,
   takeUntil,
   finalize,
@@ -54,6 +64,9 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   rightMenuItems?: MenuItem[];
   userMenuItems?: MenuItem[];
   combinedMenuItems?: MenuItem[];
+
+  // Almacenar países por continente para submenús
+  countriesByContinent: { [continentId: number]: Location[] } = {};
   isLoggedIn = false;
   isMobileView = false;
 
@@ -68,6 +81,9 @@ export class HeaderV2Component implements OnInit, OnDestroy {
     private usersNetService: UsersNetService,
     private menuTipoService: MenuTipoService,
     private menuItemService: MenuItemService,
+    private tourLocationService: TourLocationService,
+    private locationNetService: LocationNetService,
+    private tourTagService: TourTagService,
     private elementRef: ElementRef,
     private renderer: Renderer2,
     private router: Router
@@ -147,7 +163,7 @@ export class HeaderV2Component implements OnInit, OnDestroy {
     try {
       await this.authService.handleAuthRedirect();
     } catch (error) {
-      console.error('Error al manejar la redirección de autenticación:', error);
+      // Error handling - could be logged to a service in production
     }
   }
 
@@ -268,7 +284,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
           this.processMenuItems(menuItemsArrays);
         },
         error: (error) => {
-          console.error('Error loading menu configuration:', error);
           this.isLoadingMenu = false;
         },
       });
@@ -296,6 +311,135 @@ export class HeaderV2Component implements OnInit, OnDestroy {
       ...(this.leftMenuItems || []),
       ...(this.rightMenuItems || []),
     ];
+
+    // Ahora que los menús están cargados, obtener países para los continentes
+    this.loadContinentsFromLeftMenu();
+  }
+
+  private loadCountriesWithTours(): void {
+    // Solo procesar continentes del menú izquierdo
+    this.loadContinentsFromLeftMenu();
+  }
+
+  private loadContinentsFromLeftMenu(): void {
+    // Usar los IDs de los elementos del menú izquierdo directamente
+    if (this.leftMenuItems && this.leftMenuItems.length > 0) {
+      this.leftMenuItems.forEach((menuItem, index) => {
+        const continentId = (menuItem as any).id as string;
+
+        // Verificar que el ID existe
+        if (!continentId) {
+          return;
+        }
+
+        this.tourLocationService
+          .getCountriesWithToursByContinent(parseInt(continentId))
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: (countries: CountryWithToursResponse[]) => {
+              // Extraer countryIds para este continente
+              const countryIds = countries.map(
+                (country) => (country as any).countryId
+              );
+
+              // Obtener nombres de países usando los countryIds
+              this.loadCountryNames(countryIds, parseInt(continentId));
+            },
+            error: (error: any) => {
+              // Error handling - could be logged to a service in production
+            },
+          });
+      });
+    }
+  }
+
+  private loadCountryNames(countryIds: number[], continentId?: number): void {
+    if (countryIds.length === 0) {
+      return;
+    }
+
+    countryIds.forEach((countryId, index) => {
+      this.locationNetService.getLocationById(countryId).subscribe({
+        next: (location) => {
+          // Almacenar país para el continente
+          if (continentId && !this.countriesByContinent[continentId]) {
+            this.countriesByContinent[continentId] = [];
+          }
+          if (continentId) {
+            this.countriesByContinent[continentId].push(location);
+          }
+
+          // Actualizar menús cuando se complete la carga
+          if (index === countryIds.length - 1) {
+            this.updateMenusWithCountries();
+          }
+        },
+        error: (error) => {
+          // Error handling - could be logged to a service in production
+        },
+      });
+    });
+  }
+
+  private updateMenusWithCountries(): void {
+    // Verificar si tenemos países cargados
+    const hasCountries = Object.keys(this.countriesByContinent).length > 0;
+
+    if (!hasCountries) {
+      return;
+    }
+
+    // Actualizar menú izquierdo (continentes) con países como submenús
+    if (this.leftMenuItems && this.leftMenuItems.length > 0) {
+      this.leftMenuItems = this.leftMenuItems.map((menuItem) => {
+        // Usar directamente el ID del menú como continentId
+        const continentId = (menuItem as any).id;
+
+        if (continentId && this.countriesByContinent[parseInt(continentId)]) {
+          const countries = this.countriesByContinent[parseInt(continentId)];
+
+          const updatedMenuItem = {
+            ...menuItem,
+            items: countries.map((country: Location) => ({
+              label: country.name,
+              command: () => {
+                this.router.navigate([`/tours/${country.code.toLowerCase()}`]);
+              },
+            })),
+          };
+
+          return updatedMenuItem;
+        }
+
+        return menuItem;
+      });
+    }
+
+    // Actualizar menú combinado para móvil
+    this.combinedMenuItems = [
+      ...(this.leftMenuItems || []),
+      ...(this.rightMenuItems || []),
+    ];
+  }
+
+  private findContinentIdByName(continentName: string): number | null {
+    // Buscar el continentId basado en el nombre del continente desde los datos de la API
+    for (const [continentId, countries] of Object.entries(
+      this.countriesByContinent
+    )) {
+      if (countries.length > 0) {
+        // Usar el continentName del primer país como referencia
+        const firstCountry = countries[0];
+        if (
+          firstCountry &&
+          (firstCountry as any).continentName === continentName
+        ) {
+          return parseInt(continentId);
+        }
+      }
+    }
+
+    return null;
   }
 
   private mapMenuItemResponseToPrimeNG(
@@ -303,7 +447,9 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   ): MenuItem[] {
     return menuItems.map((item) => ({
       label: item.name,
-      routerLink: this.createRouteFromSlug(item.slugContenido),
+      // Preservar el ID original para las URLs
+      id: item.id.toString(),
+      // No agregar routerLink aquí para permitir submenús
       command: () => {
         this.navigateToSlug(item.slugContenido);
       },

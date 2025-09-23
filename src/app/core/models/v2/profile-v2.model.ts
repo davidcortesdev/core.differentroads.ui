@@ -49,6 +49,26 @@ export interface PersonalInfo {
     paisExpedicion?: string;
   }
 
+
+// Interfaces para la respuesta de la API
+export interface ReservationResponse {
+  id: number;
+  tkId: string;
+  reservationStatusId: number;
+  retailerId: number;
+  tourId: number;
+  departureId: number;
+  userId: number;
+  totalPassengers: number;
+  totalAmount: number;
+  budgetAt: string;
+  cartAt: string;
+  abandonedAt: string;
+  reservedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ===== SISTEMA DE PUNTOS =====
 
 export enum TravelerCategory {

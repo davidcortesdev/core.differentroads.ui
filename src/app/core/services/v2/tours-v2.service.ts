@@ -68,15 +68,19 @@ export class ToursServiceV2 {
    * @param filterByVisible - Filtrar por tours visibles
    * @returns Observable de TourV2
    */
-  getTourById(id: number, filterByVisible: boolean = false): Observable<TourV2> {
+  getTourById(id: number | string, filterByVisible: boolean = false): Observable<TourV2> {
     let params = new HttpParams()
       .set('Id', id.toString())
       .set('FilterByVisible', filterByVisible.toString());
 
+    console.log('🔍 DEBUG: ToursServiceV2.getTourById() - ID:', id, 'Type:', typeof id);
+    console.log('🔍 DEBUG: ToursServiceV2.getTourById() - URL:', this.API_URL);
+    console.log('🔍 DEBUG: ToursServiceV2.getTourById() - Params:', params.toString());
+
     return this.http.get<any>(this.API_URL, {
       params,
       headers: {
-        'Accept': 'text/plain'
+        'Accept': 'application/json'
       }
     }).pipe(
       map(response => {
@@ -92,8 +96,10 @@ export class ToursServiceV2 {
       })),
       catchError(error => {
         console.error(`Error obteniendo tour con ID ${id}:`, error);
+        console.error('Error details:', error.error);
+        console.error('Error status:', error.status);
         return of({
-          id: id,
+          id: typeof id === 'string' ? parseInt(id) : id,
           code: 'unknown',
           name: `Tour ${id}`,
           description: ''

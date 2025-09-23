@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 
 @Component({
@@ -8,16 +9,24 @@ import { ActivatedRoute } from '@angular/router';
   templateUrl: './profile-v2.component.html',
   styleUrl: './profile-v2.component.scss',
 })
-export class ProfileV2Component implements OnInit {
+export class ProfileV2Component implements OnInit, OnDestroy {
   userId: string = '';
+  private routeSubscription: Subscription = new Subscription();
 
   constructor(
     private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
-    // Obtener userId desde la ruta
-    const routeUserId = this.route.snapshot.paramMap.get('userId');
-    this.userId = routeUserId ? routeUserId : 'user1';
+    // Suscribirse a cambios en los parámetros de la ruta
+    this.routeSubscription = this.route.paramMap.subscribe(params => {
+      const routeUserId = params.get('userId');
+      this.userId = routeUserId ? routeUserId : '';
+    });
+  }
+
+  ngOnDestroy() {
+    // Limpiar suscripción para evitar memory leaks
+    this.routeSubscription.unsubscribe();
   }
 }

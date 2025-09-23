@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BookingItem } from '../../models/v2/profile-v2.model';
-import { ReservationResponse } from './bookings-v2.service';
+import { ReservationResponse } from '../../models/v2/profile-v2.model';
 import { TourV2 } from './tours-v2.service';
 import { OrderV2 } from './orders-v2.service';
 
@@ -182,7 +182,7 @@ export class DataMappingV2Service {
    * Obtiene imagen por defecto
    */
   private getDefaultImage(): string {
-    return 'https://via.placeholder.com/300x200?text=Tour+Image';
+    return 'assets/images/icon-different.svg';
   }
 
   // ===== MÉTODOS COMPATIBILIDAD (mantener para compatibilidad) =====

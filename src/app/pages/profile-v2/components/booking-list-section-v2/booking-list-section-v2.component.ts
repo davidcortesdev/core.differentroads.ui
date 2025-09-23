@@ -2,7 +2,8 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { BookingItem } from '../../../../core/models/v2/profile-v2.model';
-import { BookingsServiceV2, ReservationResponse } from '../../../../core/services/v2/bookings-v2.service';
+import { BookingsServiceV2 } from '../../../../core/services/v2/bookings-v2.service';
+import { ReservationResponse } from '../../../../core/models/v2/profile-v2.model';
 import { ToursServiceV2, TourV2 } from '../../../../core/services/v2/tours-v2.service';
 import { OrdersServiceV2, OrderV2 } from '../../../../core/services/v2/orders-v2.service';
 import { DataMappingV2Service } from '../../../../core/services/v2/data-mapping-v2.service';
@@ -329,14 +330,12 @@ export class BookingListSectionV2Component implements OnInit {
       detail: 'Generando documento...',
     });
 
-    // TODO: Implementar downloadBookingDocument en BookingsServiceV2
-    // Por ahora usar datos mock
-    of({ fileUrl: `https://mock-api.com/documents/${item.id}/voucher.pdf` }).subscribe({
+    this.bookingsService.downloadBookingDocument(item.id).subscribe({
       next: (response) => {
         this.downloadLoading[item.id] = false;
-        // Simular descarga del archivo
-          window.open(response.fileUrl, '_blank');
-          this.messageService.add({
+        // Abrir el documento en una nueva pestaña
+        window.open(response.fileUrl, '_blank');
+        this.messageService.add({
           severity: 'success',
           summary: 'Éxito',
           detail: 'Documento descargado exitosamente',
@@ -344,6 +343,7 @@ export class BookingListSectionV2Component implements OnInit {
       },
       error: (error) => {
         this.downloadLoading[item.id] = false;
+        console.error('Error descargando documento:', error);
         this.messageService.add({
           severity: 'error',
           summary: 'Error',

@@ -2,25 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+import { ReservationResponse } from '../../models/v2/profile-v2.model';
 
-// Interfaces para la respuesta de la API
-export interface ReservationResponse {
-  id: number;
-  tkId: string;
-  reservationStatusId: number;
-  retailerId: number;
-  tourId: number;
-  departureId: number;
-  userId: number;
-  totalPassengers: number;
-  totalAmount: number;
-  budgetAt: string;
-  cartAt: string;
-  abandonedAt: string;
-  reservedAt: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
 @Injectable({
   providedIn: 'root',
@@ -121,5 +104,16 @@ export class BookingsServiceV2 {
         throw new Error('Reserva no encontrada');
       })
     );
+  }
+
+  /**
+   * Descarga documento de reserva (voucher)
+   * @param bookingId - ID de la reserva
+   * @param force - Forzar regeneración del documento
+   * @returns Observable con URL del documento
+   */
+  downloadBookingDocument(bookingId: string, force = false): Observable<{ fileUrl: string }> {
+    const url = `${environment.notificationsApiUrl}/documents/bookingBone/${bookingId}?force=${force}`;
+    return this.http.get<{ fileUrl: string }>(url);
   }
 }

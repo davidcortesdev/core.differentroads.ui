@@ -1,4 +1,9 @@
-import { NgModule, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, LOCALE_ID } from '@angular/core';
+import {
+  NgModule,
+  CUSTOM_ELEMENTS_SCHEMA,
+  NO_ERRORS_SCHEMA,
+  LOCALE_ID,
+} from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule } from '@angular/forms';
@@ -275,6 +280,7 @@ import { HighlightSectionV2Component } from './pages/home-v2/components/highligh
 import { ContentListV2Component } from './pages/home-v2/components/content-list-v2/content-list-v2.component';
 import { PartnersSectionV2Component } from './pages/home-v2/components/partners-section-v2/partners-section-v2.component';
 import { PublicitySectionV2Component } from './pages/home-v2/components/publicity-section-v2/publicity-section-v2.component';
+import { HeaderV2Component } from './layout/header-v2/header-v2.component';
 
 // Services
 import { RetailerService } from './core/services/retailer/retailer.service';
@@ -374,7 +380,7 @@ registerLocaleData(localeEs);
     BookingPersonalDataComponent,
     BookingUpdateTravelComponent,
     PassengerCardComponent,
-    
+
     // BookingsV2 Components
     Bookingsv2Component,
     BookingActivitiesV2Component,
@@ -388,7 +394,7 @@ registerLocaleData(localeEs);
     BookingUpdateTravelV2Component,
     PassengerCardV2Component,
     BookingDocumentationV2Component,
-    
+
     UploadButtonComponent,
     PaymentsComponent,
     TourInfoAccordionComponent,
@@ -458,6 +464,7 @@ registerLocaleData(localeEs);
     ContentListV2Component,
     PartnersSectionV2Component,
     PublicitySectionV2Component,
+    HeaderV2Component,
   ],
   imports: [
     // Angular Modules

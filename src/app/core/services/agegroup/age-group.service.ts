@@ -231,7 +231,8 @@ export class AgeGroupService {
             name.includes('adult') ||
             name.includes('adulto') ||
             code.includes('adult') ||
-            code.includes('adulto')
+            code.includes('adulto') ||
+            (group.lowerLimitAge || 0) >= 18
           );
         })
       )
@@ -254,7 +255,8 @@ export class AgeGroupService {
             name.includes('menor') ||
             code.includes('child') ||
             code.includes('niño') ||
-            code.includes('menor')
+            code.includes('menor') ||
+            (group.lowerLimitAge || 0) < 12
           );
         })
       )

@@ -1,0 +1,328 @@
+// Variables principales
+$azul: var(--background-azul);
+$text-muted: #64748b;
+$border-color: #e2e8f0;
+
+// Mixins básicos
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// Panel principal
+:host ::ng-deep {
+  .points-redemption-panel {
+    margin-top: 2rem;
+    margin-bottom: 1.5rem;
+    
+    .p-panel-header {
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      border-bottom: 2px solid $azul;
+      
+      .panel-header {
+        @include flex-between;
+        gap: 0.5rem;
+        color: $azul;
+        font-weight: 500;
+        font-size: 1.2rem;
+        
+        i {
+          color: $azul;
+        }
+      }
+    }
+  }
+
+  // Mensaje informativo
+  .points-info-message {
+    margin-bottom: 1.5rem;
+    
+    .info-content {
+      .info-title {
+        font-weight: 600;
+        color: $azul;
+        margin-bottom: 0.5rem;
+      }
+      
+      .info-text {
+        color: $text-muted;
+        margin: 0;
+      }
+    }
+  }
+
+  // Card de saldo
+  .balance-card {
+    margin-bottom: 1.5rem;
+    
+    .p-card-header {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border-bottom: 1px solid $border-color;
+      
+      .balance-header {
+        @include flex-between;
+        gap: 0.5rem;
+        color: $azul;
+        font-weight: 500;
+        
+        i {
+          color: $azul;
+        }
+      }
+    }
+    
+    .balance-details {
+      margin-bottom: 1rem;
+      
+      .points-amount {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: $azul;
+        display: block;
+      }
+      
+      .points-value {
+        color: $text-muted;
+        font-size: 0.9rem;
+      }
+    }
+    
+    .category-info {
+      @include flex-between;
+      margin-bottom: 1rem;
+      
+      .max-discount {
+        color: $text-muted;
+        font-size: 0.9rem;
+      }
+    }
+    
+    .progress-section {
+      .progress-info {
+        .progress-text {
+          display: block;
+          margin-bottom: 0.5rem;
+          color: $text-muted;
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+
+  // Toggle de canje
+  .redemption-toggle {
+    @include flex-between;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border: 1px solid $border-color;
+    border-radius: 8px;
+    
+    .toggle-label {
+      font-weight: 500;
+      color: $azul;
+      cursor: pointer;
+    }
+  }
+
+  // Card de input
+  .points-input-card {
+    margin-bottom: 1.5rem;
+    
+    .p-card-header {
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      border-bottom: 1px solid $border-color;
+      
+      .card-header {
+        @include flex-between;
+        gap: 0.5rem;
+        color: $azul;
+        font-weight: 500;
+        
+        i {
+          color: $azul;
+        }
+      }
+    }
+    
+    .input-group {
+      margin-bottom: 1.5rem;
+      
+      .input-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: $azul;
+      }
+      
+      .input-with-button {
+        @include flex-between;
+        gap: 0.75rem;
+        
+        .p-inputnumber {
+          flex: 1;
+        }
+      }
+    }
+  }
+
+  // Accordion de viajeros
+  .travelers-accordion {
+    margin-bottom: 1.5rem;
+    
+    .p-accordion-tab {
+      .p-accordion-header {
+        .traveler-header {
+          @include flex-between;
+          width: 100%;
+          
+          .traveler-info {
+            @include flex-between;
+            gap: 0.5rem;
+            
+            i {
+              color: $azul;
+            }
+            
+            .name-text {
+              font-weight: 500;
+              color: $azul;
+            }
+          }
+          
+          .traveler-email {
+            color: $text-muted;
+            font-size: 0.9rem;
+          }
+        }
+      }
+      
+      .traveler-points {
+        padding: 1rem;
+        
+        .points-input-group {
+          margin-bottom: 1rem;
+          
+          .points-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: $azul;
+          }
+          
+          .input-with-max {
+            @include flex-between;
+            gap: 0.5rem;
+            align-items: center;
+            
+            .max-points {
+              color: $text-muted;
+              font-size: 0.9rem;
+            }
+          }
+        }
+        
+        .points-discount {
+          margin-bottom: 1rem;
+        }
+      }
+    }
+  }
+
+  // Cards de resumen
+  .distribution-summary-card,
+  .redemption-summary-card {
+    margin-bottom: 1.5rem;
+    
+    .p-card-header {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border-bottom: 1px solid $border-color;
+      
+      .card-header,
+      .summary-header {
+        @include flex-between;
+        gap: 0.5rem;
+        color: $azul;
+        font-weight: 500;
+        
+        i {
+          color: $azul;
+        }
+      }
+    }
+    
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      
+      .summary-item {
+        @include flex-between;
+        gap: 0.5rem;
+        
+        .summary-label {
+          font-weight: 500;
+          color: $azul;
+        }
+      }
+    }
+    
+    .summary-content {
+      .summary-row {
+        @include flex-between;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        
+        .summary-label {
+          font-weight: 500;
+          color: $azul;
+        }
+      }
+    }
+  }
+
+  // Estados de error
+  .global-error {
+    margin-bottom: 1rem;
+  }
+
+  // Loading state
+  .loading-container {
+    @include flex-center;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 2rem;
+    color: $text-muted;
+  }
+
+  // Responsive
+  @media (max-width: 768px) {
+    .points-redemption-panel {
+      margin-top: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .input-with-button {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .summary-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .traveler-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+  }
+}

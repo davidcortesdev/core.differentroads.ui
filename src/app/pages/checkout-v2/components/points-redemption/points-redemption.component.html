@@ -1,0 +1,276 @@
+<!-- Points Redemption Section -->
+<p-panel *ngIf="pointsSummary && pointsSummary.availablePoints > 0" 
+         [toggleable]="true" 
+         [collapsed]="!isExpanded"
+         (onBeforeToggle)="toggleExpansion()"
+         styleClass="points-redemption-panel">
+  
+  <ng-template #header>
+    <div class="panel-header">
+      <i class="pi pi-star-fill"></i>
+      <span>Canje de puntos</span>
+    </div>
+  </ng-template>
+
+  <!-- Mensaje informativo 3% según especificaciones -->
+  <p-message *ngIf="isExpanded" 
+             severity="info" 
+             [closable]="false"
+             styleClass="points-info-message">
+    <ng-template pTemplate>
+      <div class="info-content">
+        <p class="info-title">¡Gana puntos en cada viaje!</p>
+        <p class="info-text">Obtienes el <strong>3% del importe</strong> de tu viaje en puntos que podrás canjear en futuras reservas.</p>
+      </div>
+    </ng-template>
+  </p-message>
+
+  <div *ngIf="isExpanded" class="points-redemption-content">
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-container">
+      <p-progressSpinner></p-progressSpinner>
+      <p>Cargando información de puntos...</p>
+    </div>
+
+    <!-- Points Balance Info -->
+    <p-card *ngIf="!isLoading" styleClass="balance-card">
+      <ng-template #header>
+        <div class="balance-header">
+          <i class="pi pi-star-fill"></i>
+          <span>Tu saldo de puntos</span>
+        </div>
+      </ng-template>
+      
+      <div class="balance-details">
+        <div class="points-amount">{{ getAvailablePoints() }} puntos</div>
+        <div class="points-value">({{ getAvailablePoints() | currency:'EUR':'symbol':'1.2-2' }})</div>
+      </div>
+      
+      <div class="category-info">
+        <p-tag [value]="getCategoryDisplayName()" 
+               [icon]="getCategoryIcon()" 
+               [severity]="getCategoryBadgeClass()">
+        </p-tag>
+        <span class="max-discount">Máximo: {{ getMaxDiscountForCategory() | currency:'EUR':'symbol':'1.2-2' }}</span>
+      </div>
+      
+      <!-- Progress to next category -->
+      <div *ngIf="pointsSummary?.nextCategory" class="progress-section">
+        <div class="progress-info">
+          <span class="progress-text">{{ getProgressText() }}</span>
+          <p-progressBar [value]="getProgressPercentage()" 
+                         [showValue]="false"
+                         styleClass="category-progress">
+          </p-progressBar>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Points Redemption Toggle -->
+    <div class="redemption-toggle" *ngIf="!isLoading">
+      <p-checkbox 
+        [ngModel]="pointsRedemption.enabled"
+        (onChange)="onPointsRedemptionChange($event)"
+        [binary]="true"
+        inputId="points-redemption-toggle">
+      </p-checkbox>
+      <label for="points-redemption-toggle" class="toggle-label">
+        Usar puntos para descuento
+      </label>
+    </div>
+
+    <!-- Points Input (only when enabled) -->
+    <p-card *ngIf="pointsRedemption.enabled && !isLoading" 
+            styleClass="points-input-card">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <i class="pi pi-calculator"></i>
+          <span>Configurar canje de puntos</span>
+        </div>
+      </ng-template>
+      
+      <div class="input-group">
+        <label for="points-input" class="input-label">
+          Puntos a canjear (máximo {{ getMaxAllowedPoints() }})
+        </label>
+        <div class="input-with-button">
+          <p-inputNumber 
+            id="points-input"
+            [(ngModel)]="pointsRedemption.totalPointsToUse"
+            (ngModelChange)="updatePointsToUse($event)"
+            [max]="getMaxAllowedPoints()"
+            [min]="0"
+            [showButtons]="true"
+            [useGrouping]="false"
+            placeholder="0"
+            [class.error]="pointsRedemption.totalPointsToUse > getMaxAllowedPoints()"
+            styleClass="points-input">
+          </p-inputNumber>
+          <p-button 
+            label="Máximo" 
+            size="small" 
+            severity="secondary"
+            (onClick)="setMaximumPoints()">
+          </p-button>
+        </div>
+      </div>
+
+      <!-- Points Distribution Section -->
+      <div class="points-distribution-section" *ngIf="travelers.length > 0">
+        <div class="distribution-header">
+          <h4>Distribución de puntos por viajero</h4>
+          <div class="distribution-actions">
+            <p-button 
+              label="Equitativo" 
+              size="small" 
+              severity="secondary"
+              icon="pi pi-users"
+              (onClick)="distributePointsEqually()">
+            </p-button>
+          </div>
+        </div>
+
+        <p-accordion *ngIf="travelers.length > 0" styleClass="travelers-accordion">
+          <p-accordionTab 
+            *ngFor="let traveler of travelers; let i = index"
+            [header]="traveler.name"
+            [disabled]="!traveler.hasEmail">
+            
+            <ng-template pTemplate="header">
+              <div class="traveler-header">
+                <div class="traveler-info">
+                  <i class="pi pi-user"></i>
+                  <span class="name-text">{{ traveler.name }}</span>
+                  <p-tag *ngIf="!traveler.hasEmail" 
+                         value="Sin email" 
+                         severity="warning" 
+                         size="small">
+                  </p-tag>
+                </div>
+                <div class="traveler-email" *ngIf="traveler.hasEmail">
+                  {{ traveler.email }}
+                </div>
+              </div>
+            </ng-template>
+
+            <div class="traveler-points" *ngIf="traveler.hasEmail">
+              <div class="points-input-group">
+                <label class="points-label">Puntos asignados:</label>
+                <div class="input-with-max">
+                  <p-inputNumber 
+                    [ngModel]="getTravelerAssignedPoints(traveler.id)"
+                    (ngModelChange)="assignPointsToTraveler(traveler.id, +$event)"
+                    [max]="getTravelerMaxPoints(traveler.id)"
+                    [min]="0"
+                    [showButtons]="true"
+                    [useGrouping]="false"
+                    [class.error]="!canAssignPointsToTraveler(traveler.id, getTravelerAssignedPoints(traveler.id)) || getTravelerAssignedPoints(traveler.id) > getTravelerMaxPoints(traveler.id)"
+                    [disabled]="!traveler.hasEmail"
+                    styleClass="traveler-points-input">
+                  </p-inputNumber>
+                  <span class="max-points">/ {{ getTravelerMaxPointsDisplay(traveler.id) }}</span>
+                </div>
+              </div>
+              
+              <div class="points-discount">
+                <p-tag [value]="'Descuento: ' + (getTravelerAssignedPoints(traveler.id) | currency:'EUR':'symbol':'1.2-2')" 
+                       severity="success">
+                </p-tag>
+              </div>
+              
+              <!-- Mensaje de error para este viajero -->
+              <p-message *ngIf="(!canAssignPointsToTraveler(traveler.id, getTravelerAssignedPoints(traveler.id)) || getTravelerAssignedPoints(traveler.id) > getTravelerMaxPoints(traveler.id)) && getTravelerAssignedPoints(traveler.id) > 0"
+                         severity="warn"
+                         [closable]="false">
+                <ng-template pTemplate>
+                  <span>Límite excedido (máximo: {{ getTravelerMaxPointsDisplay(traveler.id) }} puntos)</span>
+                </ng-template>
+              </p-message>
+            </div>
+
+            <div class="traveler-points-disabled" *ngIf="!traveler.hasEmail">
+              <p-message severity="info" [closable]="false">
+                <ng-template pTemplate>
+                  <span>No puede recibir puntos (sin email)</span>
+                </ng-template>
+              </p-message>
+            </div>
+          </p-accordionTab>
+        </p-accordion>
+
+        <!-- Global Error Message -->
+        <p-message *ngIf="isTotalExceeded()" 
+                   severity="error" 
+                   [closable]="false"
+                   styleClass="global-error">
+          <ng-template pTemplate>
+            <span>El total de puntos asignados ({{ getPointsDistributionSummary().totalPoints }}) excede el máximo disponible ({{ getMaxAllowedPoints() }})</span>
+          </ng-template>
+        </p-message>
+
+        <!-- Distribution Summary -->
+        <p-card styleClass="distribution-summary-card">
+          <ng-template pTemplate="header">
+            <div class="card-header">
+              <i class="pi pi-chart-bar"></i>
+              <span>Resumen de distribución</span>
+            </div>
+          </ng-template>
+          
+          <div class="summary-grid">
+            <div class="summary-item">
+              <span class="summary-label">Total puntos asignados:</span>
+              <p-tag [value]="getPointsDistributionSummary().totalPoints.toString()" 
+                     [severity]="isTotalExceeded() ? 'danger' : 'info'">
+              </p-tag>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Máximo disponible:</span>
+              <p-tag [value]="getMaxAllowedPoints().toString()" severity="secondary">
+              </p-tag>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Viajeros con puntos:</span>
+              <p-tag [value]="getPointsDistributionSummary().travelersWithPoints.toString()" severity="success">
+              </p-tag>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Puntos al titular:</span>
+              <p-tag [value]="getPointsDistributionSummary().mainTravelerPoints.toString()" severity="warning">
+              </p-tag>
+            </div>
+          </div>
+        </p-card>
+
+        <!-- Redemption Summary -->
+        <p-card *ngIf="pointsRedemption.enabled && pointsRedemption.totalPointsToUse > 0" 
+                styleClass="redemption-summary-card">
+          <ng-template pTemplate="header">
+            <div class="summary-header">
+              <i class="pi pi-check-circle"></i>
+              <span>Resumen de canje de puntos</span>
+            </div>
+          </ng-template>
+          
+          <div class="summary-content">
+            <div class="summary-row">
+              <span class="summary-label">Total de puntos a canjear:</span>
+              <p-tag [value]="getRedemptionSummary().totalPoints + ' puntos'" severity="info">
+              </p-tag>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Descuento total:</span>
+              <p-tag [value]="getRedemptionSummary().totalPoints | currency:'EUR':'symbol':'1.2-2'" severity="success">
+              </p-tag>
+            </div>
+            <div class="summary-row" *ngIf="getRedemptionSummary().travelersWithPoints > 1">
+              <span class="summary-label">Distribución entre viajeros:</span>
+              <p-tag [value]="getRedemptionSummary().travelersWithPoints + ' viajeros'" severity="warning">
+              </p-tag>
+            </div>
+          </div>
+        </p-card>
+      </div>
+    </p-card>
+  </div>
+</p-panel>

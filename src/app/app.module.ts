@@ -279,6 +279,9 @@ import { ProfileV2Component } from './pages/profile-v2/profile-v2.component';
 import { BookingListSectionV2Component } from './pages/profile-v2/components/booking-list-section-v2/booking-list-section-v2.component';
 import { PersonalInfoSectionV2Component } from './pages/profile-v2/components/personal-info-section-v2/personal-info-section-v2.component';
 import { PointsSectionV2Component } from './pages/profile-v2/components/points-section-v2/points-section-v2.component';
+import { PointsTableComponent } from './pages/profile-v2/components/points-table/points-table.component';
+import { MembershipCardsComponent } from './pages/profile-v2/components/membership-cards/membership-cards.component';
+import { MembershipBenefitsComponent } from './pages/profile-v2/components/membership-benefits/membership-benefits.component';
 import { ReviewSectionV2Component } from './pages/profile-v2/components/review-section-v2/review-section-v2.component';
 import { UpdateProfileSectionV2Component } from './pages/profile-v2/components/update-profile-section-v2/update-profile-section-v2.component';
 import { NewsLetterSectionV2Component } from './pages/home-v2/components/community-section-v2/components/newsletter-section-v2/newsletter-section-v2.component';
@@ -468,6 +471,9 @@ registerLocaleData(localeEs);
     BookingListSectionV2Component,
     PersonalInfoSectionV2Component,
     PointsSectionV2Component,
+    PointsTableComponent,
+    MembershipCardsComponent,
+    MembershipBenefitsComponent,
     ReviewSectionV2Component,
     UpdateProfileSectionV2Component
   ],

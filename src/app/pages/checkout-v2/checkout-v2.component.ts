@@ -76,6 +76,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   reservationId: number | null = null;
   totalAmount: number = 0;
   loading: boolean = false;
+  isStep0Saving: boolean = false; // NUEVO: Variable para controlar el loading del botón de continuar del paso 0
   error: string | null = null;
 
   // Variables adicionales para mostrar información completa
@@ -696,6 +697,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   /**
    * Manejar cambios en asignaciones de habitaciones
    */
+  onRoomAssignmentsChange(roomAssignments: {
+    [travelerId: number]: number;
+  }): void {
+    console.log(
+      '🏨 Cambios en asignaciones de habitaciones recibidos en checkout-v2:',
+      roomAssignments
+    );
+
   onRoomAssignmentsChange(roomAssignments: {
     [travelerId: number]: number;
   }): void {
@@ -2254,7 +2263,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Inicializa componentes de personalización
    */
   private initializePersonalizationComponents(): void {
-    // Lógica para componentes de personalización si es necesaria
     console.log('🎨 Inicializando componentes de personalización...');
   }
 
@@ -2358,6 +2366,265 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  // NUEVO: Método para guardar todos los datos del paso 0 (personaliza tu viaje)
+  private async saveStep0Data(): Promise<boolean> {
+    console.log('=== DEBUG: saveStep0Data iniciado ===');
+
+    try {
+      // Verificar que los componentes necesarios estén disponibles
+      if (
+        !this.travelerSelector ||
+        !this.roomSelector ||
+        !this.insuranceSelector ||
+        !this.activitiesOptionals
+      ) {
+        console.error('Componentes requeridos no están disponibles:', {
+          travelerSelector: !!this.travelerSelector,
+          roomSelector: !!this.roomSelector,
+          insuranceSelector: !!this.insuranceSelector,
+          activitiesOptionals: !!this.activitiesOptionals,
+        });
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error de inicialización',
+          detail:
+            'Los componentes necesarios no están disponibles. Por favor, recarga la página.',
+          life: 5000,
+        });
+        return false;
+      }
+
+      console.log('Guardando datos del paso 0 (personaliza tu viaje)...');
+
+      // 1. Guardar cambios de travelers si hay pendientes
+      if (this.travelerSelector.hasUnsavedChanges) {
+        console.log('Guardando cambios de travelers...');
+        const travelersSaved =
+          await this.travelerSelector.saveTravelersChanges();
+        if (!travelersSaved) {
+          console.log('Error al guardar travelers, retornando false');
+          return false;
+        }
+      }
+
+      // 2. Verificar habitaciones seleccionadas
+      const hasSelectedRooms = Object.values(
+        this.roomSelector.selectedRooms
+      ).some((qty: number) => qty > 0);
+      if (!hasSelectedRooms) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Habitación requerida',
+          detail:
+            'Por favor, selecciona al menos una habitación antes de continuar.',
+          life: 5000,
+        });
+        console.log('No hay habitaciones seleccionadas, retornando false');
+        return false;
+      }
+
+        // 3. Validar que las habitaciones seleccionadas puedan acomodar a todos los pasajeros
+        const currentTravelers = this.ageGroupCounts;
+        const totalPassengers = Object.values(currentTravelers).reduce(
+          (a, b) => a + b,
+          0
+        );
+
+      console.log(`Total de pasajeros: ${totalPassengers}`);
+
+      // Calcular la capacidad total de las habitaciones seleccionadas
+      let totalCapacity = 0;
+      Object.entries(this.roomSelector.selectedRooms).forEach(([tkId, qty]) => {
+        if (qty > 0) {
+          const room = this.roomSelector.allRoomsAvailability.find(
+            (r) => r.tkId === tkId
+          );
+          if (room) {
+            const roomCapacity = room.isShared ? 1 : room.capacity || 1;
+            totalCapacity += roomCapacity * qty;
+            console.log(
+              `Habitación ${tkId}: capacidad ${roomCapacity}, cantidad ${qty}, subtotal ${
+                roomCapacity * qty
+              }`
+            );
+          }
+        }
+      });
+
+      console.log(`Capacidad total de habitaciones: ${totalCapacity}`);
+
+      // Validar que la capacidad sea suficiente
+      if (totalCapacity < totalPassengers) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Capacidad insuficiente',
+          detail: `Las habitaciones seleccionadas tienen capacidad para ${totalCapacity} personas, pero tienes ${totalPassengers} viajeros. Por favor, selecciona más habitaciones o habitaciones de mayor capacidad.`,
+          life: 7000,
+        });
+        return false;
+      }
+
+      // 4. Recargar travelers después de guardar cambios
+      console.log('Recargando travelers...');
+      await this.roomSelector.loadExistingTravelers();
+      this.insuranceSelector.loadExistingTravelers();
+
+      // 5. Actualizar el número de pasajeros total y recalcular resumen
+      this.totalPassengers = totalPassengers;
+      this.updateOrderSummary(currentTravelers);
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      // 6. Guardar asignaciones de habitaciones y actividades EN PARALELO (SIN seguros)
+      console.log('Guardando asignaciones en paralelo (sin seguros)...');
+
+      const [roomsSaved, activitiesSaved] = await Promise.allSettled([
+        this.roomSelector.saveRoomAssignments(),
+        this.saveActivitiesAssignments(),
+      ]);
+
+      console.log('Resultados de las operaciones:', {
+        rooms: roomsSaved,
+        activities: activitiesSaved,
+      });
+
+      // Verificar que las operaciones fueron exitosas
+      if (roomsSaved.status === 'rejected') {
+        console.error('Error al guardar habitaciones:', roomsSaved.reason);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error al guardar habitaciones',
+          detail:
+            'Hubo un error al guardar las asignaciones de habitaciones. Por favor, inténtalo de nuevo.',
+          life: 5000,
+        });
+        return false;
+      }
+
+      if (activitiesSaved.status === 'rejected') {
+        console.error('Error al guardar actividades:', activitiesSaved.reason);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error al guardar actividades',
+          detail:
+            'Hubo un error al guardar las actividades seleccionadas. Por favor, inténtalo de nuevo.',
+          life: 5000,
+        });
+        return false;
+      }
+
+      // Verificar que las operaciones fueron exitosas
+      if (!roomsSaved.value || !activitiesSaved.value) {
+        const failedOperations = [];
+        if (!roomsSaved.value) failedOperations.push('habitaciones');
+        if (!activitiesSaved.value) failedOperations.push('actividades');
+
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error al guardar',
+          detail: `No se pudieron guardar: ${failedOperations.join(
+            ', '
+          )}. Por favor, inténtalo de nuevo.`,
+          life: 5000,
+        });
+        return false;
+      }
+
+      // 7. Actualizar datos de la reserva
+      if (this.reservationId && this.reservationData) {
+        console.log('Actualizando datos de la reserva...');
+        const reservationUpdateData = {
+          ...this.reservationData,
+          totalPassengers: this.totalPassengers,
+          updatedAt: new Date().toISOString(),
+        };
+
+        await new Promise((resolve, reject) => {
+          this.reservationService
+            .update(this.reservationId!, reservationUpdateData)
+            .subscribe({
+              next: (response) => {
+                console.log(
+                  'Respuesta del servicio de actualización:',
+                  response
+                );
+                let isSuccess = false;
+
+                if (typeof response === 'boolean') {
+                  isSuccess = response;
+                } else if (typeof response === 'object' && response !== null) {
+                  const responseObj = response as any;
+                  isSuccess =
+                    responseObj.success !== false &&
+                    responseObj.error === undefined &&
+                    responseObj.status !== 'error';
+                } else if (response !== null && response !== undefined) {
+                  isSuccess = true;
+                }
+
+                if (isSuccess) {
+                  console.log(
+                    'Actualización exitosa, actualizando datos locales...'
+                  );
+                  this.reservationData.totalPassengers = this.totalPassengers;
+
+                  this.messageService.add({
+                    severity: 'success',
+                    summary: 'Guardado exitoso',
+                    detail: `Datos guardados correctamente para ${
+                      this.totalPassengers
+                    } viajeros con ${
+                      this.selectedActivities?.length || 0
+                    } actividades.`,
+                    life: 3000,
+                  });
+
+                  resolve(response);
+                } else {
+                  console.error(
+                    'La actualización no fue exitosa. Respuesta:',
+                    response
+                  );
+                  reject(
+                    new Error(
+                      `Error al actualizar la reserva. Respuesta del servicio: ${JSON.stringify(
+                        response
+                      )}`
+                    )
+                  );
+                }
+              },
+              error: (error) => {
+                console.error(
+                  'Error en la llamada al servicio de actualización:',
+                  error
+                );
+                reject(
+                  new Error(
+                    `Error al actualizar la reserva: ${
+                      error.message || 'Error desconocido'
+                    }`
+                  )
+                );
+              },
+            });
+        });
+      }
+
+      console.log('=== DEBUG: saveStep0Data completado exitosamente ===');
+      return true;
+    } catch (error) {
+      console.error('Error en saveStep0Data:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error inesperado',
+        detail:
+          'Hubo un error al guardar los datos. Por favor, inténtalo de nuevo.',
+        life: 5000,
+      });
+      return false;
+    }
+  }
+
   async nextStepWithValidation(targetStep: number): Promise<void> {
     console.log(
       '🔄 nextStepWithValidation llamado para targetStep:',
@@ -2366,44 +2633,56 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     console.log('🔍 Estado actual - isStandaloneMode:', this.isStandaloneMode);
     console.log('🔍 Estado actual - isAuthenticated:', this.isAuthenticated);
 
-    // ✅ NUEVO: En modo standalone, omitir validación de autenticación
-    if (this.isStandaloneMode) {
+    // NUEVO: Activar loading para el paso 0
+    if (targetStep === 1) {
+      this.isStep0Saving = true;
+    }
+
+    try {
+      // ✅ NUEVO: En modo standalone, omitir validación de autenticación
+      if (this.isStandaloneMode) {
+        console.log(
+          '🔓 Modo standalone: omitiendo validación de autenticación para step',
+          targetStep
+        );
+        await this.performStepValidation(targetStep);
+        return;
+      }
+
+      // Verificar autenticación para pasos que la requieren (solo en modo normal)
+      if (targetStep >= 2) {
+        console.log('🔒 Modo normal: verificando autenticación para step >= 2');
+        return new Promise((resolve) => {
+          this.authService.isLoggedIn().subscribe(async (isLoggedIn) => {
+            console.log('🔍 Resultado de isLoggedIn():', isLoggedIn);
+            if (!isLoggedIn) {
+              // Usuario no está logueado, mostrar modal
+              console.log('❌ Usuario no logueado - mostrando modal de login');
+              sessionStorage.setItem('redirectUrl', window.location.pathname);
+              this.loginDialogVisible = true;
+              resolve();
+              return;
+            }
+            // Usuario está logueado, actualizar variable local y continuar con la validación normal
+            console.log('✅ Usuario logueado - continuando con validación');
+            this.isAuthenticated = true;
+            await this.performStepValidation(targetStep);
+            resolve();
+          });
+        });
+      }
+
+      // Para el paso 0 (personalizar viaje) y paso 1 (vuelos), no se requiere autenticación
       console.log(
-        '🔓 Modo standalone: omitiendo validación de autenticación para step',
-        targetStep
+        'ℹ️ Step < 2, no requiere autenticación - continuando directamente'
       );
       await this.performStepValidation(targetStep);
-      return;
+    } finally {
+      // NUEVO: Desactivar loading para el paso 0
+      if (targetStep === 1) {
+        this.isStep0Saving = false;
+      }
     }
-
-    // Verificar autenticación para pasos que la requieren (solo en modo normal)
-    if (targetStep >= 2) {
-      console.log('🔒 Modo normal: verificando autenticación para step >= 2');
-      return new Promise((resolve) => {
-        this.authService.isLoggedIn().subscribe(async (isLoggedIn) => {
-          console.log('🔍 Resultado de isLoggedIn():', isLoggedIn);
-          if (!isLoggedIn) {
-            // Usuario no está logueado, mostrar modal
-            console.log('❌ Usuario no logueado - mostrando modal de login');
-            sessionStorage.setItem('redirectUrl', window.location.pathname);
-            this.loginDialogVisible = true;
-            resolve();
-            return;
-          }
-          // Usuario está logueado, actualizar variable local y continuar con la validación normal
-          console.log('✅ Usuario logueado - continuando con validación');
-          this.isAuthenticated = true;
-          await this.performStepValidation(targetStep);
-          resolve();
-        });
-      });
-    }
-
-    // Para el paso 0 (personalizar viaje) y paso 1 (vuelos), no se requiere autenticación
-    console.log(
-      'ℹ️ Step < 2, no requiere autenticación - continuando directamente'
-    );
-    await this.performStepValidation(targetStep);
   }
 
   private async performStepValidation(targetStep: number): Promise<void> {
@@ -2438,378 +2717,19 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }
     }
 
-    // Guardar cambios de travelers, habitaciones, seguros y actividades antes de continuar
-    if (
-      targetStep === 1 &&
-      this.travelerSelector &&
-      this.roomSelector &&
-      this.insuranceSelector
-    ) {
-      console.log('Validando paso 1 (habitaciones, etc.)...');
-      try {
-        // 1. Guardar cambios de travelers si hay pendientes
-        if (this.travelerSelector.hasUnsavedChanges) {
-          console.log('Guardando cambios de travelers...');
-          this.travelerSelector.saveTravelersChanges();
-          // Esperar a que se complete la operación verificando el estado real
-          await this.waitForOperation(
-            () => !this.travelerSelector.hasUnsavedChanges,
-            5000,
-            'guardar cambios de travelers'
-          );
-        }
-
-        // 2. Verificar habitaciones seleccionadas inmediatamente
-        const hasSelectedRooms = Object.values(
-          this.roomSelector.selectedRooms
-        ).some((qty: number) => qty > 0);
-        if (!hasSelectedRooms) {
-          this.messageService.add({
-            severity: 'warn',
-            summary: 'Habitación requerida',
-            detail:
-              'Por favor, selecciona al menos una habitación antes de continuar.',
-            life: 5000,
-          });
-          console.log('No hay habitaciones seleccionadas, retornando');
-          return;
-        }
-
-        // 3. Validar que las habitaciones seleccionadas puedan acomodar a todos los pasajeros
-        const currentTravelers = this.ageGroupCounts;
-        const totalPassengers = Object.values(currentTravelers).reduce(
-          (a, b) => a + b,
-          0
+    // NUEVO: Guardar datos del paso 0 (personaliza tu viaje) antes de continuar al paso 1
+    if (targetStep === 1) {
+      console.log('Validando paso 0 (personaliza tu viaje)...');
+      const step0Saved = await this.saveStep0Data();
+      if (!step0Saved) {
+        console.log(
+          'Error al guardar datos del paso 0, NO continuando al siguiente paso'
         );
-
-        console.log(`Total de pasajeros: ${totalPassengers}`);
-
-        // Calcular la capacidad total de las habitaciones seleccionadas
-        let totalCapacity = 0;
-        Object.entries(this.roomSelector.selectedRooms).forEach(
-          ([tkId, qty]) => {
-            if (qty > 0) {
-              const room = this.roomSelector.allRoomsAvailability.find(
-                (r) => r.tkId === tkId
-              );
-              if (room) {
-                const roomCapacity = room.isShared ? 1 : room.capacity || 1;
-                totalCapacity += roomCapacity * qty;
-                console.log(
-                  `Habitación ${tkId}: capacidad ${roomCapacity}, cantidad ${qty}, subtotal ${
-                    roomCapacity * qty
-                  }`
-                );
-              }
-            }
-          }
-        );
-
-        console.log(`Capacidad total de habitaciones: ${totalCapacity}`);
-
-        // Validar que la capacidad sea suficiente
-        if (totalCapacity < totalPassengers) {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Capacidad insuficiente',
-            detail: `Las habitaciones seleccionadas tienen capacidad para ${totalCapacity} personas, pero tienes ${totalPassengers} viajeros. Por favor, selecciona más habitaciones o habitaciones de mayor capacidad.`,
-            life: 7000,
-          });
-          return;
-        }
-
-        // Validar que la capacidad no sea excesiva (más del 150% necesario)
-        if (totalCapacity > totalPassengers * 1.5) {
-          this.messageService.add({
-            severity: 'warn',
-            summary: 'Capacidad excesiva',
-            detail: `Las habitaciones seleccionadas tienen capacidad para ${totalCapacity} personas, pero solo tienes ${totalPassengers} viajeros. Esto puede generar costos innecesarios.`,
-            life: 6000,
-          });
-          // No retornamos aquí, solo advertimos pero permitimos continuar
-        }
-
-        // 4. Recargar travelers después de guardar cambios
-        console.log('Recargando travelers...');
-        await this.roomSelector.loadExistingTravelers();
-        this.insuranceSelector.loadExistingTravelers();
-
-        // 5. Actualizar el número de pasajeros total y recalcular resumen
-        this.totalPassengers = totalPassengers;
-        this.updateOrderSummary(currentTravelers);
-        await new Promise((resolve) => setTimeout(resolve, 300));
-
-        // Log del estado después de actualizar datos
-        console.log('Estado después de actualizar datos:');
-        this.logComponentState();
-
-        // 6. Guardar asignaciones de habitaciones, seguros y actividades EN PARALELO con verificación de estado
-        console.log('Guardando asignaciones en paralelo...');
-
-        // Ejecutar todas las operaciones con Promise.allSettled para mejor manejo de errores
-        const [roomsSaved, insuranceSaved, activitiesSaved] =
-          await Promise.allSettled([
-            this.roomSelector.saveRoomAssignments(),
-            this.insuranceSelector.saveInsuranceAssignments(),
-            this.saveActivitiesAssignments(),
-          ]);
-
-        console.log('Resultados de las operaciones:', {
-          rooms: roomsSaved,
-          insurance: insuranceSaved,
-          activities: activitiesSaved,
-        });
-
-        // Verificar que las operaciones con manejo detallado de errores fueron exitosas
-        if (roomsSaved.status === 'rejected') {
-          console.error('Error al guardar habitaciones:', roomsSaved.reason);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error al guardar habitaciones',
-            detail:
-              'Hubo un error al guardar las asignaciones de habitaciones. Por favor, inténtalo de nuevo.',
-            life: 5000,
-          });
-          return;
-        }
-
-        if (insuranceSaved.status === 'rejected') {
-          console.error('Error al guardar seguro:', insuranceSaved.reason);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error al guardar seguro',
-            detail:
-              'Hubo un error al guardar las asignaciones de seguro. Por favor, inténtalo de nuevo.',
-            life: 5000,
-          });
-          return;
-        }
-
-        if (activitiesSaved.status === 'rejected') {
-          console.error(
-            'Error al guardar actividades:',
-            activitiesSaved.reason
-          );
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error al guardar actividades',
-            detail:
-              'Hubo un error al guardar las actividades seleccionadas. Por favor, inténtalo de nuevo.',
-            life: 5000,
-          });
-          return;
-        }
-
-        // Verificar que las operaciones fueron exitosas
-        if (
-          !roomsSaved.value ||
-          !insuranceSaved.value ||
-          !activitiesSaved.value
-        ) {
-          const failedOperations = [];
-          if (!roomsSaved.value) failedOperations.push('habitaciones');
-          if (!insuranceSaved.value) failedOperations.push('seguro');
-          if (!activitiesSaved.value) failedOperations.push('actividades');
-
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error al guardar',
-            detail: `No se pudieron guardar: ${failedOperations.join(
-              ', '
-            )}. Por favor, inténtalo de nuevo.`,
-            life: 5000,
-          });
-          return;
-        }
-
-        // Verificación adicional de que el seguro se guardó correctamente
-        if (this.insuranceSelector.selectedInsurance) {
-          console.log('Verificando asignaciones de seguro...');
-          // Verificar que las asignaciones se guardaron correctamente
-          const verificationResult =
-            await this.insuranceSelector.verifyInsuranceAssignments();
-
-          if (!verificationResult) {
-            this.messageService.add({
-              severity: 'warn',
-              summary: 'Advertencia',
-              detail:
-                'El seguro se guardó pero podría no haberse aplicado a todos los viajeros. Verifica en el siguiente paso.',
-              life: 5000,
-            });
-          }
-        }
-
-        // 7. Actualizar el totalPassengers en la reserva con verificación de estado
-        if (this.reservationId && this.reservationData) {
-          console.log('Actualizando datos de la reserva...');
-          console.log('Datos a actualizar:', {
-            reservationId: this.reservationId,
-            currentTotalPassengers: this.reservationData.totalPassengers,
-            newTotalPassengers: this.totalPassengers,
-            currentTotalAmount: this.reservationData.totalAmount,
-            newTotalAmount: this.totalAmountCalculated,
-            reservationDataKeys: Object.keys(this.reservationData),
-          });
-
-          const reservationUpdateData = {
-            ...this.reservationData,
-            totalPassengers: this.totalPassengers,
-            // MODIFICADO: No enviar totalAmount calculado en frontend, dejar que el backend lo calcule
-            // totalAmount: this.totalAmountCalculated,
-            updatedAt: new Date().toISOString(),
-          };
-
-          console.log(
-            'Datos completos de actualización:',
-            reservationUpdateData
-          );
-
-          await new Promise((resolve, reject) => {
-            console.log('Iniciando llamada al servicio de actualización...');
-
-            this.reservationService
-              .update(this.reservationId!, reservationUpdateData)
-              .subscribe({
-                next: (response) => {
-                  console.log(
-                    'Respuesta del servicio de actualización:',
-                    response
-                  );
-                  console.log('Tipo de respuesta:', typeof response);
-                  console.log('¿Response es truthy?', !!response);
-
-                  // Verificar si la respuesta es exitosa
-                  let isSuccess = false;
-
-                  if (typeof response === 'boolean') {
-                    isSuccess = response;
-                  } else if (
-                    typeof response === 'object' &&
-                    response !== null
-                  ) {
-                    // Si es un objeto, verificar propiedades comunes de éxito
-                    const responseObj = response as any;
-                    isSuccess =
-                      responseObj.success !== false &&
-                      responseObj.error === undefined &&
-                      responseObj.status !== 'error';
-                  } else if (response !== null && response !== undefined) {
-                    // Para otros tipos, considerar exitoso si no es null/undefined
-                    isSuccess = true;
-                  }
-
-                  console.log(
-                    'Resultado de la verificación de éxito:',
-                    isSuccess
-                  );
-
-                  if (isSuccess) {
-                    console.log(
-                      'Actualización exitosa, actualizando datos locales...'
-                    );
-
-                    // Actualizar datos locales
-                    this.reservationData.totalPassengers = this.totalPassengers;
-                    // MODIFICADO: No actualizar totalAmount local, debe venir del backend
-                    // this.reservationData.totalAmount = this.totalAmountCalculated;
-                    // this.totalAmount = this.totalAmountCalculated;
-
-                    // Mostrar toast de éxito
-                    const flightInfo = this.selectedFlight
-                      ? ' con vuelo seleccionado'
-                      : '';
-                    this.messageService.add({
-                      severity: 'success',
-                      summary: 'Guardado exitoso',
-                      detail: `Datos guardados correctamente para ${
-                        this.totalPassengers
-                      } viajeros con ${
-                        this.selectedActivities?.length || 0
-                      } actividades${flightInfo}.`,
-                      life: 3000,
-                    });
-
-                    console.log('Datos locales actualizados:', {
-                      totalPassengers: this.totalPassengers,
-                      totalAmount: this.totalAmount,
-                      totalAmountCalculated: this.totalAmountCalculated,
-                    });
-
-                    resolve(response);
-                  } else {
-                    console.error(
-                      'La actualización no fue exitosa. Respuesta:',
-                      response
-                    );
-                    console.error('Tipo de respuesta:', typeof response);
-                    console.error('¿Response es null?', response === null);
-                    console.error(
-                      '¿Response es undefined?',
-                      response === undefined
-                    );
-
-                    // Crear un error más detallado
-                    const errorMessage = `Error al actualizar la reserva. Respuesta del servicio: ${JSON.stringify(
-                      response
-                    )}`;
-                    console.error(errorMessage);
-
-                    reject(new Error(errorMessage));
-                  }
-                },
-                error: (error) => {
-                  console.error(
-                    'Error en la llamada al servicio de actualización:',
-                    error
-                  );
-                  console.error('Tipo de error:', typeof error);
-                  console.error('Stack trace del error:', error?.stack);
-                  console.error('Mensaje del error:', error?.message);
-                  console.error('Código de estado HTTP:', error?.status);
-                  console.error('Respuesta del servidor:', error?.error);
-
-                  // Crear un error más detallado
-                  let errorDetail = 'Error desconocido en el servicio';
-
-                  if (error?.status) {
-                    errorDetail += ` (HTTP ${error.status})`;
-                  }
-
-                  if (error?.message) {
-                    errorDetail += `: ${error.message}`;
-                  }
-
-                  if (error?.error) {
-                    errorDetail += ` - Detalles: ${JSON.stringify(
-                      error.error
-                    )}`;
-                  }
-
-                  console.error('Error detallado:', errorDetail);
-                  reject(new Error(errorDetail));
-                },
-                complete: () => {
-                  console.log('Observable de actualización completado');
-                },
-              });
-          });
-        }
-
-        // Log del estado final después de guardar todo
-        console.log('Estado final después de guardar todo:');
-        this.logComponentState();
-      } catch (error) {
-        console.error('Error en performStepValidation paso 1:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error inesperado',
-          detail:
-            'Hubo un error al guardar los datos. Por favor, inténtalo de nuevo.',
-          life: 5000,
-        });
-        return;
+        return; // No continuar si no se pudieron guardar los datos
       }
+      console.log(
+        'Datos del paso 0 guardados exitosamente, continuando al siguiente paso'
+      );
     }
 
     // Guardar datos de viajeros antes de continuar al paso de pago (targetStep === 3)

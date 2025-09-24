@@ -97,36 +97,18 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
   }
 
   private loadCarouselSection(): void {
-    console.log('🔍 CarouselSectionV2 - loadCarouselSection called', {
-      configurationId: this.configurationId,
-      sectionType: this.sectionType,
-      sectionDisplayOrder: this.sectionDisplayOrder,
-    });
-
     // Si se proporciona un configurationId específico, úsalo
     if (this.configurationId) {
-      console.log(
-        '🔍 CarouselSectionV2 - Using specific configurationId:',
-        this.configurationId
-      );
       this.loadSpecificConfiguration(this.configurationId);
       return;
     }
 
     // Si no, cargar la primera configuración activa del tipo de sección especificado
-    console.log(
-      '🔍 CarouselSectionV2 - Loading configurations by section type:',
-      this.sectionType
-    );
     this.homeSectionConfigurationService
       .getBySectionType(this.sectionType, true)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (configurations) => {
-          console.log(
-            '🔍 CarouselSectionV2 - Configurations received:',
-            configurations
-          );
           if (configurations.length > 0) {
             // Si se especifica un orden de visualización, buscar esa configuración
             let targetConfig = configurations[0];
@@ -138,10 +120,6 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
                 targetConfig = foundConfig;
               }
             }
-            console.log(
-              '🔍 CarouselSectionV2 - Target config selected:',
-              targetConfig
-            );
             this.loadSpecificConfiguration(targetConfig.id);
           } else {
             console.warn(
@@ -160,30 +138,15 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
   }
 
   private loadSpecificConfiguration(configId: number): void {
-    console.log(
-      '🔍 CarouselSectionV2 - Loading specific configuration:',
-      configId
-    );
-
     // Cargar la configuración específica
     this.homeSectionConfigurationService
       .getById(configId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (configuration) => {
-          console.log(
-            '🔍 CarouselSectionV2 - Configuration loaded:',
-            configuration
-          );
-
           // Establecer datos de la configuración
           this.title = configuration.title || '';
           this.isActive = configuration.isActive;
-
-          console.log('🔍 CarouselSectionV2 - Configuration state:', {
-            title: this.title,
-            isActive: this.isActive,
-          });
 
           // Forzar detección de cambios
           this.cdr.markForCheck();
@@ -210,35 +173,19 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
   }
 
   private loadSectionContent(configId: number): void {
-    console.log(
-      '🔍 CarouselSectionV2 - Loading section content for config:',
-      configId
-    );
-
     this.homeSectionContentService
       .getByConfigurationOrdered(configId, true)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (contents) => {
-          console.log(
-            '🔍 CarouselSectionV2 - Section content received:',
-            contents
-          );
-
           // Buscar contenido de texto para la descripción
           const textContent = contents.find(
             (content) => content.contentType === 'text'
           );
           if (textContent) {
             this.textContent = textContent.textContent || '';
-            console.log(
-              '🔍 CarouselSectionV2 - Text content set:',
-              this.textContent
-            );
             // Forzar detección de cambios
             this.cdr.markForCheck();
-          } else {
-            console.log('🔍 CarouselSectionV2 - No text content found');
           }
         },
         error: (error) => {
@@ -251,19 +198,12 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
   }
 
   private loadSectionCards(configId: number): void {
-    console.log(
-      '🔍 CarouselSectionV2 - Loading section cards for config:',
-      configId
-    );
-
     this.homeSectionCardService
       .getByConfigurationOrdered(configId, true)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (cards) => {
-          console.log('🔍 CarouselSectionV2 - Section cards received:', cards);
           this.cards = this.transformCardsToCarouselFormat(cards);
-          console.log('🔍 CarouselSectionV2 - Cards transformed:', this.cards);
           // Forzar detección de cambios
           this.cdr.markForCheck();
         },

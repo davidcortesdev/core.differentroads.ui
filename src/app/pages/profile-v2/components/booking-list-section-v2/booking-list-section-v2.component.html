@@ -1,0 +1,137 @@
+<div class="active">
+  <!-- Header with toggle functionality -->
+  <div class="header" (click)="toggleContent()">
+    <span>{{ getTitle() }}</span>
+    <i class="pi" [ngClass]="{
+      'pi-chevron-down arrow-down': !isExpanded,
+      'pi-chevron-up arrow-up': isExpanded
+    }"></i>
+  </div>
+
+  <!-- Collapsible content section -->
+  <div class="content" [ngClass]="{ hidden: !isExpanded }">
+    <!-- Loading indicator -->
+    <div class="loading" *ngIf="loading">
+      <p-progressSpinner strokeWidth="3" animationDuration=".5s"></p-progressSpinner>
+    </div>
+
+    <!-- Empty state message when no items are available -->
+    <div class="empty" *ngIf="!loading && (!bookingItems || bookingItems.length === 0)">
+      <p>{{ getEmptyMessage() }}</p>
+    </div>
+
+    <!-- Bookings data view -->
+    <p-dataView #dv [value]="bookingItems" [rows]="5" [paginator]="true" styleClass="transparent-dataview"
+    *ngIf="!loading && bookingItems.length > 0">
+      <ng-template #list let-items>
+        <div class="list">
+          <div class="item" *ngFor="let item of items; trackBy: trackById">
+            <div class="item-content">
+              <!-- Item image -->
+              <div class="image">
+                <p-skeleton *ngIf="!item.image || (item.imageLoading === true)" width="100%" height="100%"
+                  styleClass="booking-image-skeleton"></p-skeleton>
+                <img *ngIf="item.image && (item.imageLoading !== true)" [src]="item.image" [alt]="item.title" 
+                  (error)="imageLoadError(item)" loading="eager"/>
+              </div>
+
+              <!-- Item information -->
+              <div class="sect">
+                <div class="title-section">
+                  <h2>{{ item.title }}</h2>
+                </div>
+                <div class="cont">
+                  <!-- Show the appropriate ID field based on component type -->
+                  <div class="info-row">
+                    <span class="label">{{ 
+                      listType === 'active-bookings' ? 'Nº Reserva:' : 
+                      listType === 'recent-budgets' ? 'Nº Presupuesto:' : 
+                      'Nº Reserva:'
+                    }}</span>
+                    <span class="value budget">
+                      {{ 
+                        listType === 'active-bookings' ? (item.reservationNumber || '') : 
+                        listType === 'recent-budgets' ? (item.ID || '') : 
+                        (item.number || item.code || '')
+                      }}
+                    </span>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">Fecha de creación:</span>
+                    <span class="value">{{ item.creationDate | date : "dd/MM/yyyy" }}</span>
+                  </div>
+                  <div class="info-row status">
+                    <span class="label">Estado:</span>
+                    <span class="value">{{ item.status }}</span>
+                  </div>
+                  <!-- Show origin only for travel history -->
+                  <div class="info-row" *ngIf="item.origin && listType === 'travel-history'">
+                    <span class="label">Origen:</span>
+                    <span class="value">{{ item.origin }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Departure and passenger info -->
+              <div class="right">
+                <div class="departure-info">
+                  <span>Salida: </span>
+                  <strong>
+                    {{ item.departureDate | date : "dd/MM/yyyy" }}
+                  </strong>
+                </div>
+                <div class="price" *ngIf="item.passengers || item.price">
+                  <div class="info" *ngIf="item.passengers">
+                    <span class="num-users">{{ item.passengers }}</span>
+                    <i class="pi pi-users"></i>
+                  </div>
+                  <!-- Use currencyFormat pipe for budgets if available -->
+                  <strong *ngIf="item.price && listType === 'recent-budgets'">
+                    {{ item.price | currency : "EUR" }}
+                  </strong>
+                  <!-- Use currency pipe for other types -->
+                  <strong *ngIf="item.price && listType !== 'recent-budgets'">
+                    {{ item.price | currency : "EUR" }}
+                  </strong>
+                </div>
+              </div>
+
+              <!-- Action buttons -->
+              <div class="buttons">
+                <div class="top-buttons">
+                  <p-button *ngIf="shouldShowDownload()" 
+                    [label]="getDownloadLabel()" 
+                    styleClass="p-button-outlined" 
+                    [loading]="downloadLoading[item.id]"
+                    (click)="downloadItem(item)"></p-button>
+                  <p-button *ngIf="shouldShowSend()" 
+                    [label]="getSendLabel()" 
+                    styleClass="sendbtn"
+                    [loading]="notificationLoading[item.id]"
+                    (click)="sendItem(item)"></p-button>
+                </div>
+                <div class="bottom-buttons">
+                  <p-button *ngIf="shouldShowView()" 
+                    [label]="getViewLabel()" 
+                    styleClass="p-button-rounded" 
+                    (click)="viewItem(item)"></p-button>
+                  <p-button *ngIf="shouldShowReserve()" 
+                    [label]="getReserveLabel()" 
+                    styleClass="p-button-rounded" 
+                    (click)="reserveItem(item)"></p-button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-template>
+
+      <!-- Empty state template -->
+      <ng-template #empty>
+        <div class="empty-message">
+          {{ getEmptyMessage() }}
+        </div>
+      </ng-template>
+    </p-dataView>
+  </div>
+</div>

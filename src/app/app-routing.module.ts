@@ -27,6 +27,7 @@ import { ReviewSurveyComponent } from './pages/review-survey/review-survey.compo
 import { ReviewSectionComponent } from './pages/profile/components/review-section/review-section.component';
 import { NewReservationComponent } from './pages/checkout-v2/components/new-reservation/new-reservation.component';
 import { StandaloneComponent } from './layout/standalone/standalone.component';
+import { ProfileV2Component } from './pages/profile-v2/profile-v2.component';
 
 const routes: Routes = [
   // Rutas standalone (sin header ni footer)
@@ -34,7 +35,6 @@ const routes: Routes = [
     path: 'standalone',
     component: StandaloneComponent,
     children: [
-      { path: 'checkout', component: CheckoutV2Component },
       { path: 'checkout/:reservationId', component: CheckoutV2Component },
     ],
   },
@@ -48,6 +48,10 @@ const routes: Routes = [
       {
         path: 'profile',
         component: ProfileComponent,
+      },   
+      {
+        path: 'profile-v2/:userId',
+        component: ProfileV2Component,
       },
       { path: 'login', component: LoginComponent },
       { path: 'sign-up', component: SignUpComponent },
@@ -59,9 +63,7 @@ const routes: Routes = [
       { path: 'pages/:slug', component: BasicPageComponent },
       // Nueva ruta para previsualización
       { path: 'preview/pages', component: BasicPagePreviewComponent },
-      { path: 'checkout', component: CheckoutComponent },
       { path: 'checkout/:id', component: CheckoutComponent },
-      { path: 'checkout-v2', component: CheckoutV2Component },
       { path: 'checkout-v2/:reservationId', component: CheckoutV2Component },
       { path: 'payment/:id', component: PaymentsComponent },
       { path: 'landing/:slug', component: ContentPageComponent },

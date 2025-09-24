@@ -90,6 +90,8 @@
                 label="Continuar"
                 icon="pi pi-arrow-right"
                 iconPos="right"
+                [loading]="isStep0Saving"
+                [disabled]="isStep0Saving"
                 (onClick)="nextStepWithValidation(1)"
               ></p-button>
             </div>

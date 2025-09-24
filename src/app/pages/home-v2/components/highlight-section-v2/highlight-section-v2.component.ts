@@ -75,36 +75,18 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
   }
 
   private loadHighlightSection(): void {
-    console.log('🔍 HighlightSectionV2 - loadHighlightSection called', {
-      configurationId: this.configurationId,
-      sectionType: this.sectionType,
-      sectionDisplayOrder: this.sectionDisplayOrder,
-    });
-
     // Si se proporciona un configurationId específico, úsalo
     if (this.configurationId) {
-      console.log(
-        '🔍 HighlightSectionV2 - Using specific configurationId:',
-        this.configurationId
-      );
       this.loadSpecificConfiguration(this.configurationId);
       return;
     }
 
     // Si no, cargar la primera configuración activa del tipo de sección especificado
-    console.log(
-      '🔍 HighlightSectionV2 - Loading configurations by section type:',
-      this.sectionType
-    );
     this.homeSectionConfigurationService
       .getBySectionType(this.sectionType, true)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (configurations) => {
-          console.log(
-            '🔍 HighlightSectionV2 - Configurations received:',
-            configurations
-          );
           if (configurations.length > 0) {
             // Si se especifica un orden de visualización, buscar esa configuración
             let targetConfig = configurations[0];
@@ -116,10 +98,6 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
                 targetConfig = foundConfig;
               }
             }
-            console.log(
-              '🔍 HighlightSectionV2 - Target config selected:',
-              targetConfig
-            );
             this.loadSpecificConfiguration(targetConfig.id);
           } else {
             console.warn(
@@ -138,28 +116,14 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
   }
 
   private loadSpecificConfiguration(configId: number): void {
-    console.log(
-      '🔍 HighlightSectionV2 - Loading specific configuration:',
-      configId
-    );
-
     // Cargar la configuración específica
     this.homeSectionConfigurationService
       .getById(configId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (configuration) => {
-          console.log(
-            '🔍 HighlightSectionV2 - Configuration loaded:',
-            configuration
-          );
-
           // Establecer datos de la configuración
           this.isActive = configuration.isActive;
-
-          console.log('🔍 HighlightSectionV2 - Configuration state:', {
-            isActive: this.isActive,
-          });
 
           // Forzar detección de cambios
           this.cdr.markForCheck();
@@ -184,21 +148,11 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
   }
 
   private loadSectionImage(configId: number): void {
-    console.log(
-      '🔍 HighlightSectionV2 - Loading section image for config:',
-      configId
-    );
-
     this.homeSectionImageService
       .getByConfigurationOrdered(configId, true)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (images) => {
-          console.log(
-            '🔍 HighlightSectionV2 - Section images received:',
-            images
-          );
-
           if (images.length > 0) {
             // Tomar la primera imagen (o la que tenga displayOrder más bajo)
             const sortedImages = images.sort(
@@ -206,28 +160,9 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
             );
             const selectedImage = sortedImages[0];
 
-            console.log(
-              '🔍 HighlightSectionV2 - Selected image raw data:',
-              selectedImage
-            );
-            console.log(
-              '🔍 HighlightSectionV2 - Image description field:',
-              selectedImage.description
-            );
-            console.log(
-              '🔍 HighlightSectionV2 - Image title field:',
-              selectedImage.title
-            );
-
             this.image = this.transformImageToHighlightFormat(selectedImage);
-            console.log(
-              '🔍 HighlightSectionV2 - Image transformed:',
-              this.image
-            );
             // Forzar detección de cambios
             this.cdr.markForCheck();
-          } else {
-            console.log('🔍 HighlightSectionV2 - No images found');
           }
         },
         error: (error) => {

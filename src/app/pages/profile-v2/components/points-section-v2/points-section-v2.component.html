@@ -20,148 +20,22 @@
     </div>
   </p-toolbar>
 
-  <div class="table-container" *ngIf="showTable">
-    <p-table
-      [value]="points"
-      [paginator]="true"
-      [rows]="5"
-      [showCurrentPageReport]="true"
-      [tableStyle]="{ 'min-width': '50rem' }"
-      styleClass="p-datatable-striped"
-      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
-    >
-      <ng-template pTemplate="header">
-        <tr>
-          <th pSortableColumn="booking">
-            Reserva
-          </th>
-          <th pSortableColumn="category">
-            Categoría
-          </th>
-          <th pSortableColumn="concept">
-            Concepto
-          </th>
-          <th pSortableColumn="tour">
-            Tour
-          </th>
-          <th pSortableColumn="points">
-            Puntos
-          </th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-point>
-        <tr>
-          <td class="booking-column">{{ point.booking }}</td>
-          <td>{{ point.category }}</td>
-          <td>{{ point.concept }}</td>
-          <td>{{ point.tour }}</td>
-          <td [ngClass]="getPointsClass(point.type)" class="points-column">{{ getFormattedPoints(point) }}</td>
-        </tr>
-      </ng-template>
-    </p-table>
-  </div>
+  <!-- Componente de tabla de puntos -->
+  <app-points-table 
+    [points]="points" 
+    [showTable]="showTable">
+  </app-points-table>
 
-  <div class="cards-container">
-    <div class="cards-grid">
-      <p-card
-        *ngFor="let card of membershipCards"
-        [styleClass]="getCardClass(card)"
-        [style]="{ width: '100%', height: '400px' }"
-      >
-        <ng-template pTemplate="header">
-          <div class="card-image-container">
-            <div class="card-image-wrapper">
-              <img [alt]="card.title" [src]="card.image" class="card-image" loading="lazy"/>
-            </div>
-          </div>
-        </ng-template>
-        <ng-template pTemplate="title">
-          <div class="card-header">
-            <span class="card-type">{{ card.type }}</span>
-            <h2 class="card-title">{{ card.title }}</h2>
-          </div>
-        </ng-template>
-        <div class="card-content">
-          <div [innerHTML]="card.benefits" class="formated-content"></div>
-        </div>
-        <ng-template pTemplate="footer">
-          <div class="card-status">
-            <span [class.unlocked]="card.unlocked">
-              {{ getRemainingTripsText(card) }}
-            </span>
-          </div>
-        </ng-template>
-      </p-card>
-    </div>
-  </div>
+  <!-- Componente de tarjetas de membresía -->
+  <app-membership-cards 
+    [membershipCards]="membershipCards" 
+    [currentTrips]="currentTrips">
+  </app-membership-cards>
 
-  <!-- Sección de beneficios por categoría -->
-  <div class="benefits-section" *ngIf="pointsSummary">
-    <p-panel styleClass="benefits-panel">
-      <ng-template pTemplate="header">
-        <div class="benefits-header">
-          <h3 class="benefits-title">
-            <i [class]="getCategoryIcon(currentCategory)"></i>
-            Beneficios de {{ getCategoryDisplayName(currentCategory) }}
-          </h3>
-          <div class="category-progress" *ngIf="getNextCategoryFromSummary()">
-            <div class="progress-info">
-              <span class="progress-text">
-                {{ getProgressText() }}
-              </span>
-              <p-progressbar 
-                [value]="getProgressPercentage()" 
-                styleClass="progress-bar-custom"
-                [showValue]="false">
-              </p-progressbar>
-            </div>
-          </div>
-        </div>
-      </ng-template>
-      
-      <div class="benefits-content">
-        <div class="benefits-grid">
-          <div class="benefit-item">
-            <div class="benefit-icon">
-              <i class="pi pi-euro"></i>
-            </div>
-            <div class="benefit-info">
-              <h4>Descuento máximo</h4>
-              <p>{{ getMaxDiscountForCurrentCategory() }}€ por compra</p>
-            </div>
-          </div>
-          
-          <div class="benefit-item">
-            <div class="benefit-icon">
-              <i class="pi pi-percentage"></i>
-            </div>
-            <div class="benefit-info">
-              <h4>Acumulación</h4>
-              <p>3% del PVP en puntos</p>
-            </div>
-          </div>
-          
-          <div class="benefit-item">
-            <div class="benefit-icon">
-              <i class="pi pi-users"></i>
-            </div>
-            <div class="benefit-info">
-              <h4>Límite por persona</h4>
-              <p>50€ máximo por viajero</p>
-            </div>
-          </div>
-          
-          <div class="benefit-item">
-            <div class="benefit-icon">
-              <i class="pi pi-calendar"></i>
-            </div>
-            <div class="benefit-info">
-              <h4>Validez</h4>
-              <p>Sin fecha de caducidad</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </p-panel>
-  </div>
+  <!-- Componente de beneficios de membresía -->
+  <app-membership-benefits 
+    [currentCategory]="currentCategory"
+    [pointsSummary]="pointsSummary"
+    [currentTrips]="currentTrips">
+  </app-membership-benefits>
 </div>

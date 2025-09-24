@@ -1,0 +1,68 @@
+<div class="benefits-section" *ngIf="pointsSummary">
+  <p-panel styleClass="benefits-panel">
+    <ng-template pTemplate="header">
+      <div class="benefits-header">
+        <h3 class="benefits-title">
+          <i [class]="getCategoryIcon(currentCategory)"></i>
+          Beneficios de {{ getCategoryDisplayName(currentCategory) }}
+        </h3>
+        <div class="category-progress" *ngIf="getNextCategoryFromSummary()">
+          <div class="progress-info">
+            <span class="progress-text">
+              {{ getProgressText() }}
+            </span>
+            <p-progressbar 
+              [value]="getProgressPercentage()" 
+              styleClass="progress-bar-custom"
+              [showValue]="false">
+            </p-progressbar>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+    
+    <div class="benefits-content">
+      <div class="benefits-grid">
+        <div class="benefit-item">
+          <div class="benefit-icon">
+            <i class="pi pi-euro"></i>
+          </div>
+          <div class="benefit-info">
+            <h4>Descuento máximo</h4>
+            <p>{{ getMaxDiscountForCurrentCategory() }}€ por compra</p>
+          </div>
+        </div>
+        
+        <div class="benefit-item">
+          <div class="benefit-icon">
+            <i class="pi pi-percentage"></i>
+          </div>
+          <div class="benefit-info">
+            <h4>Acumulación</h4>
+            <p>3% del PVP en puntos</p>
+          </div>
+        </div>
+        
+        <div class="benefit-item">
+          <div class="benefit-icon">
+            <i class="pi pi-users"></i>
+          </div>
+          <div class="benefit-info">
+            <h4>Límite por persona</h4>
+            <p>50€ máximo por viajero</p>
+          </div>
+        </div>
+        
+        <div class="benefit-item">
+          <div class="benefit-icon">
+            <i class="pi pi-calendar"></i>
+          </div>
+          <div class="benefit-info">
+            <h4>Validez</h4>
+            <p>Sin fecha de caducidad</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </p-panel>
+</div>

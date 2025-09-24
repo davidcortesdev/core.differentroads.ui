@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { MembershipCard } from '../../../../core/models/v2/profile-v2.model';
-import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
+import { MembershipCard } from '../../../../../../core/models/v2/profile-v2.model';
+import { PointsV2Service } from '../../../../../../core/services/v2/points-v2.service';
 
 @Component({
   selector: 'app-membership-cards',

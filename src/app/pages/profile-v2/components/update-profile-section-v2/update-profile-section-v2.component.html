@@ -1,0 +1,317 @@
+<div class="view-profile-container">
+  <p-panel class="avatar-panel">
+    <div class="avatar-name-section">
+      <p-avatar
+      [icon]="personalInfo.avatarUrl != '' ? '' : 'pi pi-user'"
+      [image]="personalInfo.avatarUrl || ''"
+        size="xlarge"
+        shape="circle"
+        [style]="{ width: '100px', height: '100px' }"
+      ></p-avatar>
+      <h3>{{ personalInfo.nombre}} {{personalInfo.apellido}}</h3>
+    </div>
+  </p-panel>
+
+  <p-panel class="datos-panel">
+    <div class="update-profile-container">
+      <form class="profile-form">
+        <!-- Sección de Avatar -->
+        <div class="form-field">
+          <label>Adjuntar foto</label>
+          <p-fileUpload
+            chooseIcon="pi pi-upload"
+            mode="advanced"
+            [maxFileSize]="maxFileSize"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
+            [auto]="true"
+            (onSelect)="onUpload($event)"
+            [showUploadButton]="false"
+            [showCancelButton]="false"
+            chooseLabel="Adjuntar foto"
+            (onRemove)="uploadedFiles = []"
+            styleClass="custom-upload"
+          >
+            <ng-template pTemplate="content" let-files>
+              <div class="upload-list" *ngIf="uploadedFiles.length">
+                <div class="file-item" *ngFor="let file of uploadedFiles">
+                  <span class="file-name">{{ file.name }}</span>
+                </div>
+              </div>
+            </ng-template>
+          </p-fileUpload>
+        </div>
+
+        <!-- Datos de Contacto -->
+        <div class="form-field">
+          <label>Nombre:</label>
+          <input
+            pInputText
+            [value]="personalInfo.nombre"
+            name="nombre"
+            placeholder="Ingrese su nombre"
+            (input)="onNombreInput($event)"
+            [class.error]="hasFieldError('nombre')"
+          />
+          <small class="error-message" *ngIf="hasFieldError('nombre')">
+            {{ getFieldError('nombre') }}
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label>Apellido:</label>
+          <input
+            pInputText
+            [value]="personalInfo.apellido"
+            name="apellido"
+            placeholder="Ingrese su apellido"
+            (input)="onApellidoInput($event)"
+            [class.error]="hasFieldError('apellido')"
+          />
+          <small class="error-message" *ngIf="hasFieldError('apellido')">
+            {{ getFieldError('apellido') }}
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label>Email:</label>
+          <input
+            pInputText
+            [(ngModel)]="personalInfo.email"
+            name="email"
+            placeholder="Ingrese su email"
+            (input)="onEmailInput($event)"
+            [class.error]="hasFieldError('email')"
+          />
+          <small class="error-message" *ngIf="hasFieldError('email')">
+            {{ getFieldError('email') }}
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label>Teléfono:</label>
+          <input
+            pInputText
+            [(ngModel)]="personalInfo.telefono"
+            name="telefono"
+            placeholder="Ingrese su teléfono"
+            (input)="onTelefonoInput($event)"
+            [class.error]="hasFieldError('telefono')"
+            styleClass="p-inputtext-sm"
+          />
+          <small class="error-message" *ngIf="hasFieldError('telefono')">
+            {{ getFieldError('telefono') }}
+          </small>
+        </div>
+
+        <!-- Datos Personales -->
+        <div class="form-field">
+          <label>Sexo:</label>
+          <p-autocomplete
+            [(ngModel)]="personalInfo.sexo"
+            name="sexo"
+            [suggestions]="filteredSexoOptions"
+            (completeMethod)="filterSexo($event)"
+            field="label"
+            [style]="{ width: '100%' }"
+            [forceSelection]="true"
+            [dropdown]="true"
+            placeholder="Seleccione su sexo"
+            styleClass="custom-autocomplete"
+          >
+          </p-autocomplete>
+        </div>
+
+        <div class="form-field">
+          <label>Fecha de nacimiento:</label>
+          <p-datepicker 
+            [(ngModel)]="personalInfo.fechaNacimiento"
+            name="fechaNacimiento"
+            dateFormat="dd/mm/yy"
+            placeholder="Seleccione una fecha"
+            styleClass="p-datepicker -sm custom-calendar"
+            [showIcon]="true"
+            (onSelect)="onFechaNacimientoChange($event)"
+            [class.error]="hasFieldError('fechaNacimiento')"
+          >
+          </p-datepicker >
+          <small class="error-message" *ngIf="hasFieldError('fechaNacimiento')">
+            {{ getFieldError('fechaNacimiento') }}
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label>Ciudad:</label>
+          <input
+            pInputText
+            [(ngModel)]="personalInfo.ciudad"
+            name="ciudad"
+            placeholder="Ingrese su ciudad"
+            (input)="onCiudadInput($event)"
+          />
+        </div>
+
+        <div class="form-field">
+          <label>Código postal:</label>
+          <input
+            pInputText
+            [(ngModel)]="personalInfo.codigoPostal"
+            name="codigoPostal"
+            placeholder="Ingrese su código postal"
+            (input)="onCodigoPostalInput($event)"
+            [class.error]="hasFieldError('codigoPostal')"
+          />
+          <small class="error-message" *ngIf="hasFieldError('codigoPostal')">
+            {{ getFieldError('codigoPostal') }}
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label>Nacionalidad:</label>
+          <input
+            pInputText
+            [(ngModel)]="personalInfo.nacionalidad"
+            name="nacionalidad"
+            placeholder="Ingrese su nacionalidad"
+            (input)="onNacionalidadInput($event)"
+          />
+        </div>
+
+        <!-- DNI -->
+        <div class="form-field">
+          <label>DNI:</label>
+          <input
+            pInputText
+            [(ngModel)]="personalInfo.dni"
+            name="dni"
+            placeholder="Ingrese su DNI"
+            (input)="onDniInput($event)"
+            [class.error]="hasFieldError('dni')"
+          />
+          <small class="error-message" *ngIf="hasFieldError('dni')">
+            {{ getFieldError('dni') }}
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label>Fecha de expedición (DNI):</label>
+          <p-datepicker 
+            [(ngModel)]="personalInfo.fechaExpedicionDni"
+            name="fechaExpedicionDni"
+            dateFormat="dd/mm/yy"
+            placeholder="Seleccione una fecha"
+            styleClass="p-datepicker -sm custom-calendar"
+            [showIcon]="true"
+            (onSelect)="onFechaExpedicionDniChange($event)"
+            [class.error]="hasFieldError('fechaExpedicionDni')"
+          >
+          </p-datepicker >
+          <small class="error-message" *ngIf="hasFieldError('fechaExpedicionDni')">
+            {{ getFieldError('fechaExpedicionDni') }}
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label>Fecha de caducidad (DNI):</label>
+          <p-datepicker 
+            [(ngModel)]="personalInfo.fechaCaducidadDni"
+            name="fechaCaducidadDni"
+            dateFormat="dd/mm/yy"
+            placeholder="Seleccione una fecha"
+            styleClass="p-datepicker -sm custom-calendar"
+            [showIcon]="true"
+            (onSelect)="onFechaCaducidadDniChange($event)"
+            [class.error]="hasFieldError('fechaCaducidadDni')"
+          >
+          </p-datepicker >
+          <small class="error-message" *ngIf="hasFieldError('fechaCaducidadDni')">
+            {{ getFieldError('fechaCaducidadDni') }}
+          </small>
+        </div>
+
+        <!-- Datos Pasaporte -->
+        <div class="form-field">
+          <label>Número de Pasaporte:</label>
+          <input
+            pInputText
+            [(ngModel)]="personalInfo.pasaporte"
+            name="pasaporte"
+            placeholder="Ingrese su número de pasaporte"
+            (input)="onPasaporteInput($event)"
+            [class.error]="hasFieldError('pasaporte')"
+          />
+          <small class="error-message" *ngIf="hasFieldError('pasaporte')">
+            {{ getFieldError('pasaporte') }}
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label>País de expedición (Pasaporte):</label>
+          <input
+            pInputText
+            [(ngModel)]="personalInfo.paisExpedicion"
+            name="paisExpedicion"
+            placeholder="Ingrese el país de expedición"
+            (input)="onPaisExpedicionInput($event)"
+          />
+        </div>
+
+        <div class="form-field">
+          <label>Fecha de expedición (Pasaporte):</label>
+          <p-datepicker 
+            [(ngModel)]="personalInfo.fechaExpedicionPasaporte"
+            name="fechaExpedicion"
+            dateFormat="dd/mm/yy"
+            placeholder="Seleccione una fecha"
+            styleClass="p-datepicker -sm custom-calendar"
+            [showIcon]="true"
+            (onSelect)="onFechaExpedicionPasaporteChange($event)"
+            [class.error]="hasFieldError('fechaExpedicionPasaporte')"
+          >
+          </p-datepicker >
+          <small class="error-message" *ngIf="hasFieldError('fechaExpedicionPasaporte')">
+            {{ getFieldError('fechaExpedicionPasaporte') }}
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label>Fecha de vencimiento (Pasaporte):</label>
+          <p-datepicker 
+            [(ngModel)]="personalInfo.fechaVencimientoPasaporte"
+            name="fechaVencimiento"
+            dateFormat="dd/mm/yy"
+            placeholder="Seleccione una fecha"
+            styleClass="p-datepicker -sm custom-calendar"
+            [showIcon]="true"
+            (onSelect)="onFechaVencimientoPasaporteChange($event)"
+            [class.error]="hasFieldError('fechaVencimientoPasaporte')"
+          >
+          </p-datepicker>
+          <small class="error-message" *ngIf="hasFieldError('fechaVencimientoPasaporte')">
+            {{ getFieldError('fechaVencimientoPasaporte') }}
+          </small>
+        </div>
+
+      <!-- Botones -->
+      <div class="button-container">
+        <div class="btn-save">
+          <p-button
+            label="Guardar"
+            styleClass="p-button-primary"
+            (onClick)="onSubmit()"
+          >
+          </p-button>
+        </div>
+        <div class="btn-cancel">
+          <p-button
+            label="Cancelar"
+            styleClass="p-button-text"
+            (onClick)="onCancel()"
+          >
+          </p-button>
+        </div>
+      </div>
+    </form>
+  </div>
+</p-panel>
+
+</div>

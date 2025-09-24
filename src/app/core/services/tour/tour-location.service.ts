@@ -42,6 +42,18 @@ export interface TourLocationFilters {
   displayOrder?: number;
 }
 
+/**
+ * Interfaz para la respuesta de países con tours por continente.
+ */
+export interface CountryWithToursResponse {
+  id: number;
+  name: string;
+  code: string;
+  continentId: number;
+  continentName: string;
+  tourCount: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -83,8 +95,26 @@ export class TourLocationService {
    * @param typeCode Código del tipo de relación
    * @returns Lista de relaciones tour-localización
    */
-  getByTourAndType(tourId: number, typeCode: string): Observable<ITourLocationResponse> {
-    return this.http.get<ITourLocationResponse>(`${this.API_URL}/bytourandtype/${tourId}/${typeCode}`);
+  getByTourAndType(
+    tourId: number,
+    typeCode: string
+  ): Observable<ITourLocationResponse> {
+    return this.http.get<ITourLocationResponse>(
+      `${this.API_URL}/bytourandtype/${tourId}/${typeCode}`
+    );
+  }
+
+  /**
+   * Obtiene todos los países relacionados con tours a partir del ID de un continente.
+   * @param continentId ID del continente
+   * @returns Lista de países con tours
+   */
+  getCountriesWithToursByContinent(
+    continentId: number
+  ): Observable<CountryWithToursResponse[]> {
+    return this.http.get<CountryWithToursResponse[]>(
+      `${this.API_URL}/countries-with-tours/${continentId}`
+    );
   }
 
   create(data: TourLocationCreate): Observable<ITourLocationResponse> {

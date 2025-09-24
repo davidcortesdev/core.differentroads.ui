@@ -7,7 +7,7 @@
 </div>
 
 <!-- Points Redemption Section -->
-<div *ngIf="pointsSummary && pointsSummary.availablePoints > 0" class="container">
+<div *ngIf="pointsSummary" class="container">
   <div class="header-container" (click)="toggleExpansion()">
     <div class="title-with-icon">
       <span class="title">Canje de puntos</span>
@@ -173,13 +173,8 @@
           <div *ngIf="!traveler.hasEmail" class="blocked-section">
             <div class="blocked-message">
               <i class="pi pi-lock"></i>
-              <span>Bloqueado - Sin email asignado</span>
+              <span>Bloqueado: Sin email asignado</span>
             </div>
-            <p-message severity="info" [closable]="false">
-              <ng-template pTemplate>
-                <span>Este viajero no puede recibir puntos porque no tiene email configurado</span>
-              </ng-template>
-            </p-message>
           </div>
           
           <!-- Descuento solo para viajeros con email -->

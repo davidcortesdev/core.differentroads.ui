@@ -147,9 +147,8 @@ export class PointsRedemptionComponent implements OnInit, OnDestroy {
       // TODO: Reemplazar con llamada real a la API
       // const travelers = await this.reservationService.getTravelers(this.reservationId).toPromise();
       
-      // TEMPORAL: Usar datos mock si no se proporcionaron viajeros
-      if (!this.travelers || this.travelers.length === 0) {
-        this.travelers = [
+      // TEMPORAL: Usar datos mock para desarrollo (forzar siempre)
+      this.travelers = [
           {
             id: 'traveler-1',
             name: 'Juan Pérez',
@@ -175,9 +174,6 @@ export class PointsRedemptionComponent implements OnInit, OnDestroy {
             assignedPoints: 0
           }
         ];
-      }
-
-      console.log('✅ Datos de viajeros cargados:', this.travelers);
       
     } catch (error) {
       console.error('❌ Error al cargar datos de viajeros:', error);

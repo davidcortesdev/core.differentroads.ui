@@ -705,14 +705,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       roomAssignments
     );
 
-  onRoomAssignmentsChange(roomAssignments: {
-    [travelerId: number]: number;
-  }): void {
-    console.log(
-      '🏨 Cambios en asignaciones de habitaciones recibidos en checkout-v2:',
-      roomAssignments
-    );
-
     // Actualizar el resumen del pedido cuando cambien las habitaciones
     if (
       Object.keys(this.ageGroupCounts).length > 0 &&

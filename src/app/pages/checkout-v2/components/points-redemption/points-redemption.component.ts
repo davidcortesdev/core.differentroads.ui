@@ -75,7 +75,7 @@ export class PointsRedemptionComponent implements OnInit, OnDestroy {
   };
 
   // UI State
-  isExpanded: boolean = true;
+  isExpanded: boolean = false;
   isLoading: boolean = false;
 
   constructor(
@@ -164,6 +164,14 @@ export class PointsRedemptionComponent implements OnInit, OnDestroy {
             email: 'maria@example.com',
             hasEmail: true,
             maxPoints: 50,
+            assignedPoints: 0
+          },
+          {
+            id: 'traveler-3',
+            name: 'Carlos López',
+            email: '',
+            hasEmail: false,
+            maxPoints: 0,
             assignedPoints: 0
           }
         ];

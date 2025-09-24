@@ -241,6 +241,17 @@
     </div>
   </section>
 
+  <!-- Points Redemption Section -->
+  <app-points-redemption
+    [reservationId]="reservationId"
+    [travelers]="travelers"
+    [totalPrice]="totalPrice"
+    [depositAmount]="depositAmount"
+    [paymentType]="paymentState.type"
+    (pointsDiscountChange)="onPointsDiscountChange($event)"
+    (redemptionEnabledChange)="onRedemptionEnabledChange($event)">
+  </app-points-redemption>
+
   <!-- Action Buttons -->
   <footer class="buttons-container">
     <p-button 
@@ -320,15 +331,4 @@
       </div>
     </ng-template>
     </p-dialog>
-
-    <!-- Points Redemption Section -->
-    <app-points-redemption
-      [reservationId]="reservationId"
-      [travelers]="travelers"
-      [totalPrice]="totalPrice"
-      [depositAmount]="depositAmount"
-      [paymentType]="paymentState.type"
-      (pointsDiscountChange)="onPointsDiscountChange($event)"
-      (redemptionEnabledChange)="onRedemptionEnabledChange($event)">
-    </app-points-redemption>
 </div>

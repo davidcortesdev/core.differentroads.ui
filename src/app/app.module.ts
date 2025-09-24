@@ -482,7 +482,7 @@ registerLocaleData(localeEs);
     MembershipCardsComponent,
     MembershipBenefitsComponent,
     ReviewSectionV2Component,
-    UpdateProfileSectionV2Component
+    UpdateProfileSectionV2Component,
     HeaderV2Component,
   ],
   imports: [

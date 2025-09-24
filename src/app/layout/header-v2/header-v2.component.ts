@@ -520,7 +520,11 @@ export class HeaderV2Component implements OnInit, OnDestroy {
       {
         label: 'Ver Perfil',
         icon: 'pi pi-user',
-        command: () => this.authService.navigateToProfile(),
+        command: () => {
+          this.authService.getCognitoId().subscribe(userId => {
+            this.authService.navigateToProfile(userId);
+          });
+        },
       },
       {
         label: 'Desconectar',

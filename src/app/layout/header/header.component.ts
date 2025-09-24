@@ -345,7 +345,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
                 this.chipLabel = `Hola, ${displayName}`;
                 this.chipImage = ''; // El nuevo modelo no tiene profileImage
-                this.setUserMenuItems();
+                this.setUserMenuItems(user.id.toString());
 
                 // Asegurar que el estado se actualice correctamente
                 this.isLoadingUser = false;
@@ -375,12 +375,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
   /**
    * Configura los elementos del menú de usuario
    */
-  private setUserMenuItems(): void {
+  private setUserMenuItems(userId?: string | undefined): void {
     this.userMenuItems = [
       {
         label: 'Ver Perfil',
         icon: 'pi pi-user',
-        command: () => this.authService.navigateToProfile(),
+        command: () => this.authService.navigateToProfile(userId || ''),
       },
       {
         label: 'Desconectar',

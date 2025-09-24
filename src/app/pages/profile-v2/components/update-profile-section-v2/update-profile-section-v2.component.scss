@@ -1,0 +1,239 @@
+:host {
+    display: block;
+    --p-panel-background: var(--background-azul-color-letra);
+    --p-fileupload-background: transparent;
+    --p-inputtext-background: transparent;
+    --p-inputtext-hover-border-color: none;
+
+    ::ng-deep {
+        .p-panel {
+            border-radius: 0.875rem;
+            margin-bottom: 1rem;
+
+            .p-panel-header {
+                padding: 1.4rem 1.4rem 0.7rem;
+                border: none;
+                border-radius: 0.875rem 0.875rem 0 0;
+            }
+
+            .p-panel-content {
+                padding: 0 1.5rem 1rem 1.5rem;
+                border: none;
+                border-radius: 0 0 0.875rem 0.875rem;
+                font-size: 12px;
+                font-weight: 600;
+            }
+        }
+
+        .avatar-panel {
+            .p-panel-header {
+                display: none;
+            }
+
+            .p-panel-content {
+                padding: 1rem;
+            }
+        }
+
+        .p-inputtext,
+        .p-inputtext:enabled:focus {
+            border-color: var(--background-azul);
+            box-shadow: var(--background-azul);
+            outline: var(--background-azul);
+            outline-offset: var(--background-azul);
+        }
+        .p-calendar input,
+        .p-autocomplete input {
+            &::placeholder {
+                font-size: 12px !important;
+            }
+        }
+
+        .custom-calendar {
+            width: 100% !important;
+
+            .p-calendar {
+                width: 100% !important;
+            }
+
+            input {
+                width: 100% !important;
+                font-size: 12px !important;
+
+                &::placeholder {
+                    font-size: 12px !important;
+                }
+            }
+            .p-datepicker-dropdown {
+                color: var(--background-azul);
+                border: 1px solid var(--background-azul);
+            }
+            /* .p-datepicker {
+                font-size: 12px !important;
+
+                .p-datepicker-header {
+                    .p-datepicker-title {
+                        .p-datepicker-month,
+                        .p-datepicker-year {
+                            font-size: 12px !important;
+                        }
+                    }
+                }
+
+                table {
+                    th,
+                    td {
+                        font-size: 12px !important;
+                    }
+                }
+            } */
+        }
+
+        .custom-autocomplete {
+            width: 100% !important;
+            .p-autocomplete-dropdown {
+                color: var(--background-azul);
+                border: 1px solid var(--background-azul);
+            }
+            input {
+                width: 100% !important;
+                font-size: 12px !important;
+
+                &::placeholder {
+                    font-size: 12px !important;
+                }
+            }
+
+            .p-autocomplete-option-selected {
+                background: #fff;
+                color: var(--background-azul);
+            }
+
+            /*   .p-autocomplete-panel {
+                .p-autocomplete-items {
+                    .p-autocomplete-item {
+                        font-size: 12px !important;
+                    }
+                }
+            } */
+        }
+
+        .custom-upload {
+            border: none;
+            margin-bottom: -20px;
+
+            .p-button {
+                margin: -20px;
+                font-size: 12px;
+                background-color: var(--background-azul);
+                border: none;
+            }
+        }
+    }
+}
+
+.avatar-name-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem;
+
+    h3 {
+        margin-top: 0.5rem;
+        margin-bottom: 0;
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--background-azul);
+    }
+}
+
+.update-profile-container {
+    .form-field {
+        margin-bottom: 10px;
+
+        label {
+            display: block;
+            color: var(--background-azul);
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .p-inputtext,
+        .p-dropdown,
+        .p-calendar,
+        .p-autocomplete,
+        .p-inputmask {
+            background: transparent;
+            width: 100%;
+            border: none;
+            border-bottom: 1px solid var(--background-azul);
+            border-radius: 0;
+            padding: 4px 0;
+            font-size: 12px;
+            line-height: 1.2;
+
+            &.error {
+                border-bottom-color: #dc3545;
+            }
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 11px;
+            margin-top: 4px;
+            display: block;
+        }
+
+        /* .p-dropdown {
+            &:enabled:focus {
+                border-color: var(--background-azul); // Cambia el color del borde cuando se selecciona
+                box-shadow: none;
+            }
+
+            &:enabled:hover {
+                border-color: var(--background-azul);
+            }
+
+            &.p-dropdown-open {
+                border-color: #ced4da; // Cambia el color del borde cuando está abierto
+            }
+        } */
+    }
+
+    .button-container {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .btn-save {
+        text-align: center;
+
+        ::ng-deep .p-button {
+            font-size: 12px;
+            background-color: var(--background-azul);
+            border: none;
+            width: 5rem;
+            color: #fff;
+        }
+    }
+
+    .btn-cancel {
+        text-align: center;
+
+        ::ng-deep .p-button {
+            font-size: 12px;
+            border: 1px solid var(--background-azul);
+            color: var(--background-azul);
+            width: 5rem;
+            background-color: transparent;
+
+            &:hover {
+                color: var(--p-primary-color);
+                border: 1px solid var(--p-primary-color);
+            }
+        }
+    }
+}

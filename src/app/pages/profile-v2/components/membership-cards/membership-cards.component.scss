@@ -1,3 +1,8 @@
+:host {
+    --p-datatable-row-background: var(--background-azul-color-letra);
+    --p-paginator-background: var(--background-azul-color-letra);
+}
+
 .cards-container {
     margin-bottom: 1rem;
 }
@@ -55,63 +60,65 @@
     }
 }
 
-.p-card {
-    height: 400px;
-    border-radius: 1rem;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
+::ng-deep {
+    .p-card {
+        height: 420px;
+        border-radius: 1rem;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
 
-    &:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    }
-
-    &.locked-card {
-        border: 1px solid var(--background-azul);
-        background: transparent;
-        position: relative;
-
-        &::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.6);
-            pointer-events: none;
+        &:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
 
-        .card-image-container {
-            opacity: 0.6;
+        &.locked-card {
+            border: 1px solid var(--background-azul);
+            background: transparent;
+            position: relative;
+
+            &::after {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(255, 255, 255, 0.6);
+                pointer-events: none;
+            }
+
+            .card-image-container {
+                opacity: 0.6;
+            }
+
+            .card-status span {
+                color: var(--background-azul);
+                font-size: 12px;
+                display: block;
+                margin-bottom: 0.25rem;
+            }
         }
 
-        .card-status span {
-            color: var(--background-azul);
-            font-size: 12px;
-            display: block;
-            margin-bottom: 0.25rem;
+        &.unlocked-card {
+            border: 1px solid var(--background-azul);
+            background: transparent;
+
+            .card-status span {
+                color: var(--background-azul);
+                font-size: 14px;
+                font-weight: 600;
+                margin-left: 4px;
+            }
         }
-    }
 
-    &.unlocked-card {
-        background: var(--background-azul-color-letra);
-        border: 2px solid var(--background-azul);
-
-        .card-status span {
-            color: var(--background-azul);
-            font-size: 14px;
-            font-weight: 600;
-            margin-left: 4px;
+        &.current-card {
+            background: var(--background-azul-color-letra);
+            border: 2px solid var(--background-azul);
         }
-    }
-
-    &.current-card {
-        background: var(--background-azul-color-letra);
-        border: 2px solid var(--background-azul);
     }
 }
 
@@ -141,9 +148,6 @@
 .card-header {
     padding: 0.3rem 1rem;
     background-color: transparent;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
 
     .card-type {
         color: var(--background-azul);
@@ -162,10 +166,6 @@
 
 .card-content {
     padding: 0rem 1rem;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
 }
 
 .formated-content p {
@@ -179,7 +179,9 @@
 
 .card-status {
     text-align: start;
-    padding: 0.75rem;
+    padding: 0.5rem;
+    margin-top: auto;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
 
     span {
         color: var(--background-azul);
@@ -189,11 +191,13 @@
     }
 }
 
-.p-card-body {
-    padding: 0px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    flex: 1;
-    justify-content: space-between;
+::ng-deep {
+    .p-card-body {
+        padding: 0px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        flex: 1;
+        justify-content: space-between;
+    }
 }

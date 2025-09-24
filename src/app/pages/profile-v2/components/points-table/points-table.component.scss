@@ -1,3 +1,36 @@
+:host {
+    --p-datatable-row-background: var(--background-azul-color-letra);
+    --p-paginator-background: var(--background-azul-color-letra);
+}
+
+::ng-deep {
+    .p-paginator-page.p-paginator-page-selected {
+        background: var(--p-primary-color);
+        color: #fff;
+    }
+
+    .p-button-rounded {
+        border-radius: 20px !important;
+        height: 30px !important;
+        font-size: 12px !important;
+        
+        &.search-button {
+            width: 50px;
+            height: 30px;
+            background-color: transparent;
+            color: var(--p-primary-color);
+            border: 1px solid var(--p-primary-color);
+            border-radius: 20px !important;
+
+            &.active {
+                background-color: var(--p-primary-color);
+                color: #fff;
+                border: 1px solid var(--p-primary-color);
+            }
+        }
+    }
+}
+
 .table-container {
     margin-bottom: 2rem;
     border-radius: 8px;
@@ -37,6 +70,16 @@
         .points-column,
         .booking-column {
             color: var(--background-azul);
+            font-weight: 600;
+        }
+
+        .income-points {
+            color: #059669 !important;
+            font-weight: 600;
+        }
+
+        .redemption-points {
+            color: #f66b5b !important;
             font-weight: 600;
         }
 

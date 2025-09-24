@@ -1,0 +1,173 @@
+<div class="travel-data-container">
+    <p-panel header="Información de Viaje">
+      <div class="travels-container">
+        <!-- Filas de viajes -->
+        <div *ngFor="let row of travelsInRows" class="travel-row">
+          <!-- Tarjetas de viajes (3 por fila) -->
+          <div *ngFor="let travel of row" class="travel-card">
+            <p-card styleClass="travel-card-panel">
+              <ng-template pTemplate="header">
+                <div class="travel-header">
+                  <i class="pi pi-plane"></i>
+                  <span class="travel-type">{{getTravelTypeLabel(travel.travelType)}}</span>
+                </div>
+              </ng-template>
+              
+              <!-- Modo Visualización -->
+              <div class="travel-content" *ngIf="!isEditing(travel.id)">
+                <div class="travel-destination">
+                  <h3>{{travel.origin}} - {{travel.destination}}</h3>
+                </div>
+                
+                <div class="travel-details">
+                  <div class="detail-row">
+                    <span class="detail-label">Fecha de ida:</span>
+                    <span class="detail-value">{{formatDate(travel.departureDate)}}</span>
+                  </div>
+                  
+                  <div class="detail-row" *ngIf="travel.returnDate">
+                    <span class="detail-label">Fecha de regreso:</span>
+                    <span class="detail-value">{{formatDate(travel.returnDate)}}</span>
+                  </div>
+                  
+                  <div class="detail-row">
+                    <span class="detail-label">Pasajeros:</span>
+                    <span class="detail-value">{{travel.passengers}}</span>
+                  </div>
+                  
+                  <div class="detail-row" *ngIf="travel.hotelName">
+                    <span class="detail-label">Hotel:</span>
+                    <span class="detail-value">{{travel.hotelName}}</span>
+                  </div>
+                  
+                  <div class="detail-row" *ngIf="travel.roomType">
+                    <span class="detail-label">Tipo de habitación:</span>
+                    <span class="detail-value">{{travel.roomType}}</span>
+                  </div>
+                  
+                  <div class="detail-row" *ngIf="travel.mealPlan">
+                    <span class="detail-label">Régimen de comidas:</span>
+                    <span class="detail-value">{{travel.mealPlan}}</span>
+                  </div>
+                  
+                  <div class="detail-row" *ngIf="travel.transportation">
+                    <span class="detail-label">Transporte:</span>
+                    <span class="detail-value">{{travel.transportation}}</span>
+                  </div>
+                  
+                  <div class="detail-row" *ngIf="travel.activities && travel.activities.length > 0">
+                    <span class="detail-label">Actividades:</span>
+                    <span class="detail-value">{{travel.activities.join(', ')}}</span>
+                  </div>
+                  
+                  <div class="detail-row" *ngIf="travel.specialRequests">
+                    <span class="detail-label">Peticiones especiales:</span>
+                    <span class="detail-value">{{travel.specialRequests}}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Modo Edición -->
+              <div class="travel-content edit-mode" *ngIf="isEditing(travel.id)">
+                <form [formGroup]="travelForm">
+                  <div class="travel-destination">
+                    <div class="edit-destination-row">
+                      <input type="text" pInputText formControlName="origin" placeholder="Origen" class="destination-input">
+                      <span class="destination-separator">-</span>
+                      <input type="text" pInputText formControlName="destination" placeholder="Destino" class="destination-input">
+                    </div>
+                  </div>
+                  
+                  <div class="travel-details">
+                    <div class="detail-row">
+                      <span class="detail-label">Fecha de ida:</span>
+                      <input type="text" pInputText formControlName="departureDate" placeholder="dd/mm/yyyy" class="detail-value">
+                    </div>
+                    
+                    <div class="detail-row">
+                      <span class="detail-label">Fecha de regreso:</span>
+                      <input type="text" pInputText formControlName="returnDate" placeholder="dd/mm/yyyy" class="detail-value">
+                    </div>
+                    
+                    <div class="detail-row">
+                      <span class="detail-label">Pasajeros:</span>
+                      <input type="number" pInputText formControlName="passengers" class="detail-value">
+                    </div>
+                    
+                    <div class="detail-row">
+                      <span class="detail-label">Tipo de viaje:</span>
+                      <input type="text" pInputText formControlName="travelType" class="detail-value">
+                    </div>
+                    
+                    <div class="detail-row">
+                      <span class="detail-label">Hotel:</span>
+                      <input type="text" pInputText formControlName="hotelName" class="detail-value">
+                    </div>
+                    
+                    <div class="detail-row">
+                      <span class="detail-label">Tipo de habitación:</span>
+                      <input type="text" pInputText formControlName="roomType" class="detail-value">
+                    </div>
+                    
+                    <div class="detail-row">
+                      <span class="detail-label">Régimen de comidas:</span>
+                      <input type="text" pInputText formControlName="mealPlan" class="detail-value">
+                    </div>
+                    
+                    <div class="detail-row">
+                      <span class="detail-label">Transporte:</span>
+                      <input type="text" pInputText formControlName="transportation" class="detail-value">
+                    </div>
+                    
+                    <div class="detail-row">
+                      <span class="detail-label">Peticiones especiales:</span>
+                      <textarea pInputTextarea formControlName="specialRequests" rows="3" class="detail-value"></textarea>
+                    </div>
+                  </div>
+                </form>
+              </div>
+              
+              <ng-template pTemplate="footer">
+                <div class="travel-footer">
+                  <!-- Botón de editar en modo visualización (alineado a la derecha) -->
+                  <div *ngIf="!isEditing(travel.id)" class="view-button">
+                    <p-button 
+                      icon="pi pi-pencil" 
+                      styleClass="p-button-rounded p-button-text" 
+                      pTooltip="Editar viaje"
+                      (onClick)="editTravel(travel)">
+                    </p-button>
+                  </div>
+                  
+                  <!-- Botones de guardar/cancelar en modo edición (centrados) -->
+                  <div *ngIf="isEditing(travel.id)" class="edit-buttons">
+                    <p-button 
+                      label="Guardar" 
+                      icon="pi pi-check" 
+                      styleClass="p-button-success"
+                      (onClick)="saveTravel()">
+                    </p-button>
+                    <p-button 
+                      icon="pi pi-times" 
+                      styleClass="p-button-text p-button-danger ml-2"
+                      (onClick)="cancelEditing()">
+                    </p-button>
+                  </div>
+                </div>
+              </ng-template>
+            </p-card>
+          </div>
+        </div>
+        
+        <!-- Botón para mostrar más viajes -->
+        <div *ngIf="hasHiddenTravels" class="show-more-container">
+          <p-button 
+            [label]="displayAllTravels ? 'Ver menos' : 'Ver más viajes'"
+            icon="pi {{displayAllTravels ? 'pi-chevron-up' : 'pi-chevron-down'}}"
+            styleClass="p-button-outlined"
+            (onClick)="toggleTravelsDisplay()">
+          </p-button>
+        </div>
+      </div>
+    </p-panel>
+  </div>

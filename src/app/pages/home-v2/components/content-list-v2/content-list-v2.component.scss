@@ -1,0 +1,175 @@
+.content-list-section {
+    padding: 4rem 0;
+    background-color: #f8f9fa;
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+
+    .section-header {
+        text-align: center;
+        margin-bottom: 3rem;
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            font-size: 1.2rem;
+            color: #6c757d;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+
+        @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+    }
+
+    .content-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        cursor: pointer;
+
+        &:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-image {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                transition: transform 0.3s ease;
+            }
+
+            &:hover img {
+                transform: scale(1.05);
+            }
+        }
+
+        .card-content {
+            padding: 1.5rem;
+
+            .card-title {
+                font-size: 1.3rem;
+                font-weight: 600;
+                color: #2c3e50;
+                margin-bottom: 0.5rem;
+                line-height: 1.4;
+            }
+
+            .card-subtitle {
+                color: #6c757d;
+                font-size: 0.95rem;
+                line-height: 1.5;
+                margin-bottom: 1rem;
+            }
+
+            .card-actions {
+                .travel-btn {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    border: none;
+                    padding: 0.75rem 1.5rem;
+                    border-radius: 25px;
+                    font-size: 0.9rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+
+                    &:hover {
+                        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+                        transform: translateY(-2px);
+                    }
+                }
+            }
+        }
+    }
+
+    .loading-state {
+        text-align: center;
+        padding: 3rem 0;
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        p {
+            color: #6c757d;
+            font-size: 1.1rem;
+        }
+    }
+
+    .error-state {
+        text-align: center;
+        padding: 3rem 0;
+
+        p {
+            color: #dc3545;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .retry-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+
+            &:hover {
+                background: #c82333;
+            }
+        }
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 0;
+
+        p {
+            color: #6c757d;
+            font-size: 1.1rem;
+        }
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}

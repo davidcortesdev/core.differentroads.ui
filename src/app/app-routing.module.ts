@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes, ExtraOptions } from '@angular/router';
 import { MainComponent } from './layout/main/main.component';
 import { HomeComponent } from './pages/home/home.component';
+import { HomeV2Component } from './pages/home-v2/home-v2.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { TourComponent } from './pages/tour/tour.component';
 import { TourV2Component } from './pages/tour-v2/tour-v2.component';
@@ -18,6 +19,7 @@ import { ContentPageComponent } from './pages/content-page/content-page.componen
 import { ToursComponent } from './shared/components/tours/tours.component';
 import { ReservationComponent } from './pages/reservation/reservation.component';
 import { BookingsComponent } from './pages/bookings/bookings.component';
+import { Bookingsv2Component } from './pages/bookingsv2/bookings.component';
 import { PaymentsComponent } from './pages/payments/payments.component';
 import { AirportSearchComponent } from './features/airports/airport-search/airport-search.component';
 import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
@@ -27,7 +29,6 @@ import { NewReservationComponent } from './pages/checkout-v2/components/new-rese
 import { StandaloneComponent } from './layout/standalone/standalone.component';
 
 const routes: Routes = [
-  
   // Rutas standalone (sin header ni footer)
   {
     path: 'standalone',
@@ -43,6 +44,7 @@ const routes: Routes = [
     children: [
       { path: '', redirectTo: 'home', pathMatch: 'full' },
       { path: 'home', component: HomeComponent },
+      { path: 'home-v2', component: HomeV2Component },
       {
         path: 'profile',
         component: ProfileComponent,
@@ -70,14 +72,18 @@ const routes: Routes = [
       {
         path: 'reservation/:id/:status/:paymentID',
         component: ReservationComponent,
-      },//OJO es el viejo
-      { path: 'reservation/:reservationId/:paymentId', component: NewReservationComponent }, //OJO es el nuevo
+      }, //OJO es el viejo
+      {
+        path: 'reservation/:reservationId/:paymentId',
+        component: NewReservationComponent,
+      }, //OJO es el nuevo
       { path: 'bookings/:id', component: BookingsComponent },
+      { path: 'bookingsv2/:id', component: Bookingsv2Component },
       { path: 'aeropuertos', component: AirportSearchComponent },
-      {path: 'reviews/:id', component: ReviewSurveyComponent},
+      { path: 'reviews/:id', component: ReviewSurveyComponent },
       { path: '**', component: NotFoundComponent },
     ],
-  }
+  },
 ];
 
 // Configure the router to scroll to top on navigation
@@ -85,7 +91,7 @@ const routerOptions: ExtraOptions = {
   scrollPositionRestoration: 'enabled',
   anchorScrolling: 'enabled',
   scrollOffset: [0, 0],
-  onSameUrlNavigation: 'reload'  // Añadir esta línea para forzar recarga en la misma URL
+  onSameUrlNavigation: 'reload', // Añadir esta línea para forzar recarga en la misma URL
 };
 
 @NgModule({

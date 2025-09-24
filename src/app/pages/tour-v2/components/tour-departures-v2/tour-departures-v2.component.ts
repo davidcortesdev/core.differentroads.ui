@@ -370,6 +370,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
               children: true,
               babies: true,
             };
+            console.log('⚠️',this.tourAgeGroups)
             return of([]);
           }
 
@@ -763,7 +764,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       selectedDeparture.group?.toLowerCase().includes('single') ||
       this.getTripTypeInfo(selectedDeparture.group)?.class === 'single';
 
-    return isSingleTrip || selectedDeparture.price === 0;
+    return isSingleTrip; //|| selectedDeparture.price === 0;
   }
 
   showBlockedPassengersToast(): void {

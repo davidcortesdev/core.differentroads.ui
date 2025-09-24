@@ -100,7 +100,7 @@ export class TourItineraryV2Component implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    if (this.tourId && !this.preview) {
+    if (this.tourId) {
       this.loadMapData(this.tourId);
     } else {
       console.warn('⚠️ No se proporcionó tourId para el itinerario');

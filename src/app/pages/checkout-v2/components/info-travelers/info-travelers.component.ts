@@ -93,6 +93,10 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
   @Output() formValidityChange = new EventEmitter<boolean>();
 
+  // NUEVO: Output para cambios en asignaciones de habitaciones
+  @Output() roomAssignmentsChange = new EventEmitter<{ [travelerId: number]: number }>();
+
+
   // Formulario reactivo principal
   travelersForm: FormGroup;
 
@@ -132,6 +136,11 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     };
   } = {};
 
+  // NUEVO: Propiedades para controlar el estado de guardado de actividades
+  private savingActivities: { [key: string]: boolean } = {};
+
+
+
   sexOptions = [
     { label: 'Masculino', value: 'M' },
     { label: 'Femenino', value: 'F' },
@@ -152,42 +161,44 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   isCheckingFlightStatus: boolean = false;
 
   // Mensajes de error personalizados
-  errorMessages: { [key: string]: { [key: string]: string } } = {
+  // NUEVO: Mensajes de error como funciones para mejor manejo de parámetros
+  errorMessages: { [key: string]: { [key: string]: (params?: any) => string } } = {
     email: {
-      required: 'El correo electrónico es requerido.',
-      email: 'Ingresa un correo electrónico válido.',
+      required: () => 'El correo electrónico es requerido.',
+      email: () => 'Ingresa un correo electrónico válido.',
     },
     phone: {
-      required: 'El teléfono es requerido.',
-      pattern:
-        'Ingresa un número de teléfono válido. Puede incluir código de país.',
+      required: () => 'El teléfono es requerido.',
+      pattern: () => 'Ingresa un número de teléfono válido. Puede incluir código de país.',
     },
     text: {
-      required: 'Este campo es obligatorio.',
-      minlength: 'Debe tener al menos {minLength} caracteres.',
-      maxlength: 'No puede tener más de {maxLength} caracteres.',
-      pattern:
-        'Ingresa un número de teléfono válido. Puede incluir código de país.', // Para el campo phone con fieldType text
+      required: () => 'Este campo es obligatorio.',
+      minlength: (params) => `Debe tener al menos ${params.minLength} caracteres.`,
+      maxlength: (params) => `No puede tener más de ${params.maxLength} caracteres.`,
+      pattern: () => 'Ingresa un número de teléfono válido. Puede incluir código de país.',
     },
     number: {
-      required: 'Este campo es obligatorio.',
-      min: 'El valor mínimo es {min}.',
-      max: 'El valor máximo es {max}.',
+      required: () => 'Este campo es obligatorio.',
+      min: (params) => `El valor mínimo es ${params.min}.`,
+      max: (params) => `El valor máximo es ${params.max}.`,
     },
     date: {
-      required: 'Esta fecha es obligatoria.',
-      invalidDate: 'Fecha inválida.',
-      pastDate: 'La fecha debe ser anterior a hoy.',
-      futureDate: 'La fecha debe ser posterior a hoy.',
+      required: () => 'Esta fecha es obligatoria.',
+      invalidDate: () => 'Fecha inválida.',
+      pastDate: () => 'La fecha debe ser anterior a hoy.',
+      futureDate: () => 'La fecha debe ser posterior a hoy.',
+      birthdateTooRecent: () => 'La fecha de nacimiento no puede ser posterior a la fecha máxima permitida. La edad mínima para este grupo no corresponde.',
+      birthdateFuture: () => 'La fecha de nacimiento no puede ser futura.',
+      expirationDatePast: () => 'La fecha de expiración no puede ser anterior a hoy.'
     },
     sex: {
-      required: 'Debe seleccionar un sexo.',
+      required: () => 'Debe seleccionar un sexo.',
     },
     country: {
-      required: 'Debe seleccionar un país.',
+      required: () => 'Debe seleccionar un país.',
     },
     required: {
-      required: 'Este campo es obligatorio.',
+      required: () => 'Este campo es obligatorio.',
     },
   };
 
@@ -209,7 +220,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     private fb: FormBuilder,
     private reservationStatusService: ReservationStatusService,
     private reservationService: ReservationService,
-    private flightSearchService: FlightSearchService
+    private flightSearchService: FlightSearchService,
   ) {
     this.travelersForm = this.fb.group({
       travelers: this.fb.array([]),
@@ -393,7 +404,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         const validators = this.getValidatorsForField(
           fieldDetails,
           field,
-          traveler.isLeadTraveler
+          traveler.isLeadTraveler,
+          traveler
         );
 
         formGroup.addControl(
@@ -412,7 +424,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   private getValidatorsForField(
     fieldDetails: IReservationFieldResponse,
     field: IDepartureReservationFieldResponse,
-    isLeadTraveler: boolean
+    isLeadTraveler: boolean,
+    traveler: IReservationTravelerResponse
   ): any[] {
     const validators: any[] = [];
 
@@ -448,6 +461,30 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       case 'date':
         // Para campos de fecha, agregar validación de fecha válida
         validators.push(this.dateValidator());
+        
+        // NUEVO: Validación específica según el código del campo
+        // Detección más robusta de campos de fecha de nacimiento
+        const isBirthDate = fieldDetails.code.toLowerCase().includes('birth') || 
+                           fieldDetails.code.toLowerCase().includes('nacimiento') ||
+                           fieldDetails.name.toLowerCase().includes('nacimiento') ||
+                           fieldDetails.name.toLowerCase().includes('birth') ||
+                           fieldDetails.code.toLowerCase().includes('fecha_nacimiento') ||
+                           fieldDetails.code.toLowerCase().includes('birth_date');
+        
+        const isExpirationDate = fieldDetails.code.toLowerCase().includes('expir') || 
+                                fieldDetails.code.toLowerCase().includes('venc') ||
+                                fieldDetails.name.toLowerCase().includes('expiración') ||
+                                fieldDetails.name.toLowerCase().includes('vencimiento') ||
+                                fieldDetails.code.toLowerCase().includes('expiration') ||
+                                fieldDetails.code.toLowerCase().includes('expiry');
+        
+        if (isBirthDate) {
+          // Es fecha de nacimiento, usar validador con edad mínima
+          validators.push(this.birthdateValidator(traveler.ageGroupId));
+        } else if (isExpirationDate) {
+          // Es fecha de expiración, usar validador de expiración
+          validators.push(this.expirationDateValidator());
+        }
         break;
       case 'sex':
         // Para campos de sexo, validar que sea M o F
@@ -504,6 +541,125 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
+   * NUEVO: Validador para fecha de nacimiento con edad mínima por AgeGroup
+   */
+  private birthdateValidator(ageGroupId: number) {
+    return (control: FormControl): { [key: string]: any } | null => {
+      if (!control.value) {
+        return null; // Si no hay valor, la validación required se encargará
+      }
+
+      const ageGroup = this.ageGroups.find(group => group.id === ageGroupId);
+      if (!ageGroup || !ageGroup.lowerLimitAge) {
+        return null; // Si no hay AgeGroup o edad mínima, no validar
+      }
+
+      let date: Date;
+      if (control.value instanceof Date) {
+        date = control.value;
+      } else if (typeof control.value === 'string') {
+        if (control.value.includes('/')) {
+          // Formato dd/mm/yyyy
+          const parts = control.value.split('/');
+          if (parts.length === 3) {
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const year = parseInt(parts[2], 10);
+            date = new Date(year, month, day);
+          } else {
+            return { invalidDate: true };
+          }
+        } else {
+          date = new Date(control.value);
+        }
+      } else {
+        return { invalidDate: true };
+      }
+
+      if (isNaN(date.getTime())) {
+        return { invalidDate: true };
+      }
+
+      // Calcular fecha máxima permitida (hoy - edad mínima)
+      const today = new Date();
+      const maxDate = new Date(today.getFullYear() - ageGroup.lowerLimitAge, today.getMonth(), today.getDate());
+      
+      if (date > maxDate) {
+        return { 
+          birthdateTooRecent: true, 
+          minAge: ageGroup.lowerLimitAge,
+          maxAllowedDate: this.formatDateToDDMMYYYY(maxDate)
+        };
+      }
+
+      // No puede ser mayor a hoy
+      if (date > today) {
+        return { birthdateFuture: true };
+      }
+
+      return null;
+    };
+  }
+
+  /**
+   * NUEVO: Validador para fechas de expiración
+   */
+  private expirationDateValidator() {
+    return (control: FormControl): { [key: string]: any } | null => {
+      if (!control.value) {
+        return null; // Si no hay valor, la validación required se encargará
+      }
+
+      let date: Date;
+      if (control.value instanceof Date) {
+        date = control.value;
+      } else if (typeof control.value === 'string') {
+        if (control.value.includes('/')) {
+          // Formato dd/mm/yyyy
+          const parts = control.value.split('/');
+          if (parts.length === 3) {
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const year = parseInt(parts[2], 10);
+            date = new Date(year, month, day);
+          } else {
+            return { invalidDate: true };
+          }
+        } else {
+          date = new Date(control.value);
+        }
+      } else {
+        return { invalidDate: true };
+      }
+
+      if (isNaN(date.getTime())) {
+        return { invalidDate: true };
+      }
+
+      // No puede ser anterior a hoy
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Resetear horas para comparar solo fechas
+      date.setHours(0, 0, 0, 0);
+
+      if (date < today) {
+        return { expirationDatePast: true };
+      }
+
+      return null;
+    };
+  }
+
+  /**
+   * NUEVO: Formatear fecha a dd/mm/yyyy
+   */
+  private formatDateToDDMMYYYY(date: Date): string {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  /**
    * Inicializa los formularios para todos los viajeros
    */
   private initializeTravelerForms(): void {
@@ -518,9 +674,9 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       this.travelerForms.push(travelerForm);
     });
 
-    // Emitir el estado de validez inicial
+    // NUEVO: Validación inicial en tiempo real
     setTimeout(() => {
-      this.emitFormValidity();
+      this.validateFormInRealTime();
     }, 50);
   }
 
@@ -567,6 +723,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
           // Cargar campos existentes primero, luego inicializar formularios
           this.loadExistingTravelerFields();
           this.loadOptionalActivitiesAndThenTravelerActivities();
+          
 
           this.loading = false;
         },
@@ -1311,6 +1468,15 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
+   * NUEVO: Verificar si se está guardando una actividad específica
+   */
+  public isSavingActivity(travelerId: number, activityId: number): boolean {
+    const key = `${travelerId}_${activityId}`;
+    return !!this.savingActivities[key];
+  }
+
+
+  /**
    * Obtener el tipo de la actividad por ID
    */
   getActivityType(activityId: number): string {
@@ -1358,6 +1524,15 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     activityName: string,
     activityPrice: number
   ): void {
+    const key = `${travelerId}_${activityId}`;
+    
+    if (this.savingActivities[key]) {
+      console.log('⏳ Guardado de actividad en curso, esperando...');
+      return;
+    }
+
+    this.savingActivities[key] = true;
+
     const isCurrentlyAssigned = this.isTravelerActivityAssigned(
       travelerId,
       activityId
@@ -1365,6 +1540,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     const wasDeletedFromDB = this.deletedFromDB[travelerId]?.[activityId];
 
     if (isCurrentlyAssigned && !wasDeletedFromDB) {
+      this.savingActivities[key] = false;
       this.activitiesAssignmentChange.emit({
         travelerId,
         activityId,
@@ -1377,6 +1553,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
     const activity = this.optionalActivities.find((a) => a.id === activityId);
     if (!activity) {
+      this.savingActivities[key] = false;
       return;
     }
 
@@ -1394,6 +1571,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (response) => {
+            this.savingActivities[key] = false;
+            
             if (wasDeletedFromDB) {
               const existingPackIndex = this.travelerActivityPacks[
                 travelerId
@@ -1435,6 +1614,18 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             });
           },
           error: (error) => {
+            this.savingActivities[key] = false;
+            console.error('❌ Error guardando actividad:', error);
+            
+            // Revertir UI en caso de error
+            this.activitiesAssignmentChange.emit({
+              travelerId,
+              activityId,
+              isAssigned: false,
+              activityName,
+              activityPrice,
+            });
+
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
@@ -1457,6 +1648,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (response) => {
+            this.savingActivities[key] = false;
+            
             if (wasDeletedFromDB) {
               const existingActivityIndex = this.travelerActivities[
                 travelerId
@@ -1501,6 +1694,18 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             });
           },
           error: (error) => {
+            this.savingActivities[key] = false;
+            console.error('❌ Error guardando actividad:', error);
+            
+            // Revertir UI en caso de error
+            this.activitiesAssignmentChange.emit({
+              travelerId,
+              activityId,
+              isAssigned: false,
+              activityName,
+              activityPrice,
+            });
+
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
@@ -1523,6 +1728,15 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     activityName: string,
     activityPrice: number
   ): void {
+    const key = `${travelerId}_${activityId}`;
+    
+    if (this.savingActivities[key]) {
+      console.log('⏳ Eliminación de actividad en curso, esperando...');
+      return;
+    }
+
+    this.savingActivities[key] = true;
+
     const individualActivities = this.travelerActivities[travelerId] || [];
     const individualActivity = individualActivities.find(
       (activity) => activity.activityId === activityId
@@ -1539,6 +1753,15 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
+            this.savingActivities[key] = false;
+            
+            // NUEVO: Actualizar estado local inmediatamente
+            if (this.travelerActivities[travelerId]) {
+              this.travelerActivities[travelerId] = this.travelerActivities[travelerId].filter(
+                activity => activity.activityId !== activityId
+              );
+            }
+            
             if (!this.deletedFromDB[travelerId]) {
               this.deletedFromDB[travelerId] = {};
             }
@@ -1551,8 +1774,13 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
               activityName,
               activityPrice,
             });
+
+            console.log(`✅ Actividad "${activityName}" eliminada inmediatamente`);
           },
           error: (error) => {
+            this.savingActivities[key] = false;
+            console.error('❌ Error eliminando actividad:', error);
+            
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
@@ -1569,6 +1797,15 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
+            this.savingActivities[key] = false;
+            
+            // NUEVO: Actualizar estado local inmediatamente
+            if (this.travelerActivityPacks[travelerId]) {
+              this.travelerActivityPacks[travelerId] = this.travelerActivityPacks[travelerId].filter(
+                pack => pack.activityPackId !== activityId
+              );
+            }
+            
             if (!this.deletedFromDB[travelerId]) {
               this.deletedFromDB[travelerId] = {};
             }
@@ -1581,8 +1818,13 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
               activityName,
               activityPrice,
             });
+
+            console.log(`✅ Actividad "${activityName}" eliminada inmediatamente`);
           },
           error: (error) => {
+            this.savingActivities[key] = false;
+            console.error('❌ Error eliminando actividad:', error);
+            
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
@@ -1594,6 +1836,20 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
           },
         });
     } else {
+      this.savingActivities[key] = false;
+      
+      // NUEVO: Actualizar estado local inmediatamente para casos edge
+      if (this.travelerActivities[travelerId]) {
+        this.travelerActivities[travelerId] = this.travelerActivities[travelerId].filter(
+          activity => activity.activityId !== activityId
+        );
+      }
+      if (this.travelerActivityPacks[travelerId]) {
+        this.travelerActivityPacks[travelerId] = this.travelerActivityPacks[travelerId].filter(
+          pack => pack.activityPackId !== activityId
+        );
+      }
+      
       this.activitiesAssignmentChange.emit({
         travelerId,
         activityId,
@@ -1627,15 +1883,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     return hasIndividualActivity || hasActivityPack;
   }
 
-  /**
-   * Formatear fecha a dd/mm/yyyy
-   */
-  private formatDateToDDMMYYYY(date: Date): string {
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  }
 
   /**
    * Parsear string dd/mm/yyyy a Date
@@ -1682,10 +1929,39 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       ?.get(controlName);
 
     if (control) {
-      // Forzar que el control se marque como modificado
+      // NUEVO: Forzar que el control se marque como modificado y actualizar el valor
+      control.setValue(value);
       control.markAsDirty();
       control.markAsTouched();
-      this.emitFormValidity();
+      
+      // NUEVO: Forzar la validación manualmente
+      control.updateValueAndValidity();
+      
+      
+      // NUEVO: Validación en tiempo real
+      this.validateFormInRealTime();
+    }
+  }
+
+  /**
+   * NUEVO: Manejar pérdida de foco en campo de fecha
+   */
+  onDateFieldBlur(travelerId: number, fieldCode: string): void {
+    const controlName = `${fieldCode}_${travelerId}`;
+    const control = this.travelerForms.controls
+      .find((form) => form instanceof FormGroup && form.get(controlName))
+      ?.get(controlName);
+
+    if (control) {
+      // Forzar que el control se marque como touched cuando pierde el foco
+      control.markAsTouched();
+      
+      // NUEVO: Forzar la validación manualmente
+      control.updateValueAndValidity();
+      
+      
+      // Validación en tiempo real
+      this.validateFormInRealTime();
     }
   }
 
@@ -1701,7 +1977,9 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     if (control) {
       control.markAsDirty();
       control.markAsTouched();
-      this.emitFormValidity();
+      
+      // NUEVO: Validación en tiempo real
+      this.validateFormInRealTime();
     }
   }
 
@@ -1724,7 +2002,9 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       control.setValue(filteredValue);
       control.markAsDirty();
       control.markAsTouched();
-      this.emitFormValidity();
+      
+      // NUEVO: Validación en tiempo real
+      this.validateFormInRealTime();
     }
   }
 
@@ -1812,37 +2092,19 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   /**
    * Obtiene el mensaje de error para un campo específico
    */
+  // NUEVO: Método simplificado para obtener mensajes de error usando funciones
   getErrorMessage(fieldCode: string, errors: any): string {
     if (!errors) return '';
 
     const fieldType = this.getFieldTypeByCode(fieldCode);
-    const errorMessages =
-      this.errorMessages[fieldType] || this.errorMessages['required'];
+    const errorMessages = this.errorMessages[fieldType] || this.errorMessages['required'];
 
     for (const errorKey in errors) {
-      if (errorMessages[errorKey]) {
-        let message = errorMessages[errorKey];
-
-        // Reemplazar placeholders en los mensajes
-        if (errorKey === 'minlength' && errors[errorKey]?.requiredLength) {
-          message = message.replace(
-            '{minLength}',
-            errors[errorKey].requiredLength
-          );
-        } else if (
-          errorKey === 'maxlength' &&
-          errors[errorKey]?.requiredLength
-        ) {
-          message = message.replace(
-            '{maxLength}',
-            errors[errorKey].requiredLength
-          );
-        } else if (errorKey === 'min' && errors[errorKey]?.min) {
-          message = message.replace('{min}', errors[errorKey].min);
-        } else if (errorKey === 'max' && errors[errorKey]?.max) {
-          message = message.replace('{max}', errors[errorKey].max);
-        }
-
+      const messageFunction = errorMessages[errorKey];
+      if (messageFunction) {
+        // NUEVO: Usar la función de mensaje con los parámetros del error
+        const params = errors[errorKey];
+        const message = messageFunction(params);
         return message;
       }
     }
@@ -1915,6 +2177,19 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
+   * NUEVO: Validación en tiempo real del formulario
+   */
+  private validateFormInRealTime(): void {
+    const isValid = this.areAllMandatoryFieldsCompleted();
+    this.formValidityChange.emit(isValid);
+    
+    // Mostrar errores inmediatamente si el formulario es inválido
+    if (!isValid) {
+      this.markAllFieldsAsTouched();
+    }
+  }
+
+  /**
    * Verifica si todos los campos obligatorios están completados
    */
   areAllMandatoryFieldsCompleted(): boolean {
@@ -1974,9 +2249,17 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             const controlName = `${fieldDetails.code}_${traveler.id}`;
             const control = travelerForm.get(controlName);
 
-            if (!control || !control.value || control.invalid) {
+            // NUEVO: Detección mejorada de errores de validación
+            if (!control || control.invalid) {
+              // Si no hay control o es inválido, agregar a la lista
+              const errorMessage = control?.errors ? this.getErrorMessage(fieldDetails.code, control.errors) : 'Campo requerido';
               missingFields.push(
-                `${fieldDetails.name} (Viajero ${traveler.travelerNumber})`
+                `${fieldDetails.name} (Viajero ${traveler.travelerNumber}): ${errorMessage}`
+              );
+            } else if (!control.value && this.isFieldMandatory(field, traveler.isLeadTraveler)) {
+              // Si no hay valor y es obligatorio, agregar a la lista
+              missingFields.push(
+                `${fieldDetails.name} (Viajero ${traveler.travelerNumber}): Campo requerido`
               );
             }
           }
@@ -1991,17 +2274,12 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
    * Muestra un toast informativo cuando faltan campos obligatorios
    */
   showMissingFieldsToast(): void {
-    console.log('=== DEBUG: showMissingFieldsToast iniciado ===');
-
     const missingFields = this.getMissingFieldsList();
-    console.log('Campos faltantes:', missingFields);
 
     if (missingFields.length > 0) {
       const message = `Por favor completa los siguientes campos obligatorios: ${missingFields.join(
         ', '
       )}`;
-
-      console.log('Mensaje del toast:', message);
 
       this.messageService.add({
         severity: 'warn',
@@ -2009,34 +2287,20 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         detail: message,
         life: 5000,
       });
-
-      console.log('Toast agregado al MessageService');
-    } else {
-      console.log('No hay campos faltantes');
     }
-
-    console.log('=== DEBUG: showMissingFieldsToast terminado ===');
   }
 
   /**
    * Valida el formulario y muestra toast si hay errores
    */
   validateFormAndShowToast(): boolean {
-    console.log('=== DEBUG: validateFormAndShowToast iniciado ===');
-
     const isValid = this.isFormValid();
-    console.log('Formulario válido:', isValid);
 
     if (!isValid) {
-      console.log('Formulario NO válido, marcando campos como touched...');
       this.markAllFieldsAsTouched();
-      console.log('Mostrando toast de campos faltantes...');
       this.showMissingFieldsToast();
-    } else {
-      console.log('Formulario válido, no se muestra toast');
     }
 
-    console.log('=== DEBUG: validateFormAndShowToast terminado ===');
     return isValid;
   }
 
@@ -2229,6 +2493,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     return mandatoryFields;
   }
 
+
   /**
    * Obtiene información de debugging sobre los campos obligatorios
    */
@@ -2301,6 +2566,16 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
+   * NUEVO: Manejar cambios en asignaciones de habitaciones desde el componente hijo
+   */
+  onRoomAssignmentsChange(roomAssignments: { [travelerId: number]: number }): void {
+    console.log('Asignaciones de habitaciones recibidas:', roomAssignments);
+    
+    // Emitir el evento al componente padre
+    this.roomAssignmentsChange.emit(roomAssignments);
+  }
+
+  /**
    * Obtiene los requisitos de reserva de Amadeus para la reserva actual
    */
   private getAmadeusBookingRequirements(): void {
@@ -2337,4 +2612,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       }
     });
   }
+
+
 }

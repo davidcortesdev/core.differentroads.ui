@@ -1,0 +1,37 @@
+<div class="personal-data-container">
+  <p-panel header="Pasajeros">
+    <div class="passengers-container">
+      <!-- Indicador de carga -->
+      <div *ngIf="loading" class="loading-container">
+        <p-progressSpinner 
+          [style]="{ width: '50px', height: '50px' }" 
+          strokeWidth="4"
+          animationDuration="1s">
+        </p-progressSpinner>
+        <p>Cargando datos de pasajeros...</p>
+      </div>
+
+      <!-- Mensaje cuando no hay pasajeros -->
+      <div *ngIf="!loading && passengers.length === 0" class="no-passengers">
+        <p>No se encontraron pasajeros para esta reserva.</p>
+      </div>
+
+      <!-- Lista de pasajeros -->
+      <div *ngIf="!loading && passengers.length > 0" class="passenger-row">
+        <div *ngFor="let pass of passengers" class="passenger-card">
+          <app-passenger-card-v2
+            [passenger]="pass"
+            [bookingId]="bookingId"
+            [travelerId]="pass._id || ''"
+            [reservationFields]="reservationFields"
+            [availableFields]="availableFields"
+            [mandatoryFields]="mandatoryFields"
+            [isLeadTraveler]="pass.type === 'lead'"
+            (passengerUpdated)="updatePassenger($event)"
+          >
+          </app-passenger-card-v2>
+        </div>
+      </div>
+    </div>
+  </p-panel>
+</div>

@@ -162,8 +162,16 @@ export class ReservationService {
    * @returns El resumen de la reservación.
    */
   getSummary(id: number): Observable<IReservationSummaryResponse> {
+    const headers = new HttpHeaders({
+      'Cache-Control': 'no-cache',
+      Pragma: 'no-cache',
+      Expires: '0',
+    });
+    const params = new HttpParams().set('_ts', Date.now().toString());
+
     return this.http.get<IReservationSummaryResponse>(
-      `${this.API_URL}/${id}/summary`
+      `${this.API_URL}/${id}/summary`,
+      { headers, params }
     );
   }
 

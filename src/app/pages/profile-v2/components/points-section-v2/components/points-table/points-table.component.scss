@@ -1,0 +1,141 @@
+:host {
+    --p-datatable-row-background: var(--background-azul-color-letra);
+    --p-paginator-background: var(--background-azul-color-letra);
+}
+
+::ng-deep {
+    .p-paginator-page.p-paginator-page-selected {
+        background: var(--p-primary-color);
+        color: #fff;
+    }
+
+    .p-button-rounded {
+        border-radius: 20px !important;
+        height: 30px !important;
+        font-size: 12px !important;
+        
+        &.search-button {
+            width: 50px;
+            height: 30px;
+            background-color: transparent;
+            color: var(--p-primary-color);
+            border: 1px solid var(--p-primary-color);
+            border-radius: 20px !important;
+
+            &.active {
+                background-color: var(--p-primary-color);
+                color: #fff;
+                border: 1px solid var(--p-primary-color);
+            }
+        }
+    }
+}
+
+.table-container {
+    margin-bottom: 2rem;
+    border-radius: 8px;
+    overflow: hidden;
+
+    .p-datatable {
+        font-size: 12px;
+
+        .p-datatable-thead > tr > th {
+            text-align: center;
+            background-color: var(--p-primary-color);
+            color: #fff;
+            padding: 0.5rem;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            white-space: nowrap;
+            min-width: 60px;
+
+            @media screen and (max-width: 768px) {
+                min-width: 45px;
+                padding: 0.5rem 0.15rem;
+            }
+        }
+
+        .p-datatable-tbody > tr > td {
+            text-align: center;
+            padding: 0.5rem;
+            font-size: 12px;
+            border: none;
+            border-bottom: 1px solid var(--background-azul);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .points-column,
+        .booking-column {
+            color: var(--background-azul);
+            font-weight: 600;
+        }
+
+        .income-points {
+            color: #059669 !important;
+            font-weight: 600;
+        }
+
+        .redemption-points {
+            color: #f66b5b !important;
+            font-weight: 600;
+        }
+
+        .p-paginator {
+            font-size: 12px;
+            padding: 0.5rem;
+
+            .p-paginator-current {
+                color: var(--background-azul);
+                font-weight: 600;
+            }
+
+            @media screen and (max-width: 768px) {
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.5rem;
+                flex-wrap: wrap;
+
+                .p-paginator-current {
+                    color: var(--background-azul);
+                    font-weight: 600;
+                    font-size: 11px;
+                    width: 100%;
+                    text-align: center;
+                    margin-bottom: 0.5rem;
+                }
+
+                .p-paginator-pages,
+                .p-paginator-first,
+                .p-paginator-prev,
+                .p-paginator-next,
+                .p-paginator-last {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 0.25rem;
+                    min-width: 1.25rem;
+                    height: 1.25rem;
+                    font-size: 10px;
+                }
+
+                .p-paginator-element {
+                    min-width: 1.25rem !important;
+                    height: 1.25rem !important;
+                    font-size: 10px !important;
+                }
+
+                .p-paginator-pages {
+                    display: flex;
+                    gap: 0.25rem;
+                    padding: 0.8rem;
+                }
+            }
+        }
+    }
+}

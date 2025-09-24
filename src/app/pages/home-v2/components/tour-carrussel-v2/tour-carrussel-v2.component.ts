@@ -196,14 +196,12 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
   private loadToursByTag(tagId: number): void {
     // Aquí necesitarías adaptar tu ToursService para aceptar filtro por tag
     // Por ahora, usar el método existente como fallback
-    console.log('Loading tours by tag:', tagId);
     // TODO: Implementar this.toursService.getToursByTag(tagId, this.maxToursToShow)
     this.tours = [];
   }
 
   private loadToursByLocation(locationId: number): void {
     // Aquí necesitarías adaptar tu ToursService para aceptar filtro por localización
-    console.log('Loading tours by location:', locationId);
     // TODO: Implementar this.toursService.getToursByLocation(locationId, this.maxToursToShow)
     this.tours = [];
   }

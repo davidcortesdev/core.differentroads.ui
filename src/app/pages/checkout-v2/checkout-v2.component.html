@@ -46,8 +46,8 @@
             <app-selector-traveler
               [departureId]="departureId"
               [reservationId]="reservationId"
-              [availableTravelers]="['Adultos', 'Niños', 'Bebés']"
-              (travelersNumbersChange)="onTravelersNumbersChange($event)"
+              [availableTravelers]="[]"
+              (ageGroupCountsChange)="onAgeGroupCountsChange($event)"
               (saveStatusChange)="onTravelerSelectorSaveStatusChange($event)"
               (saveCompleted)="onTravelerSelectorSaveCompleted($event)"
               #travelerSelector

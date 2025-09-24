@@ -112,7 +112,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   // Datos de precios por grupo de edad
   departurePriceSupplements: IDeparturePriceSupplementResponse[] = [];
   ageGroups: IAgeGroupResponse[] = [];
-  pricesByAgeGroup: { [ageGroupName: string]: number } = {};
+  pricesByAgeGroup: { [ageGroupId: number]: number } = {};
+  ageGroupCounts: { [ageGroupId: number]: number } = {};
   reservationData: any = null;
 
   // Propiedades para seguros
@@ -591,7 +592,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       this.travelerSelector &&
       Object.keys(this.pricesByAgeGroup).length > 0
     ) {
-      this.updateOrderSummary(this.travelerSelector.travelersNumbers);
+      this.updateOrderSummary(this.ageGroupCounts);
     }
 
     // ✅ Esperar a que terminen guardados pendientes en actividades antes de refrescar
@@ -616,8 +617,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     if (event.success) {
       console.log(`✅ Guardado exitoso en ${event.component}`);
       // El padre se encarga de obtener la información por su cuenta
-      if (this.travelerSelector && this.travelerSelector.travelersNumbers) {
-        this.updateOrderSummary(this.travelerSelector.travelersNumbers);
+      if (
+        this.travelerSelector &&
+        Object.keys(this.ageGroupCounts).length > 0
+      ) {
+        this.updateOrderSummary(this.ageGroupCounts);
       }
     } else {
       console.error(`❌ Error en guardado de ${event.component}:`, event.error);
@@ -668,13 +672,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     // Recalcular el resumen del pedido
     if (
-      this.travelerSelector &&
-      this.travelerSelector.travelersNumbers &&
+      Object.keys(this.ageGroupCounts).length > 0 &&
       Object.keys(this.pricesByAgeGroup).length > 0
     ) {
-      this.updateOrderSummary(this.travelerSelector.travelersNumbers);
+      this.updateOrderSummary(this.ageGroupCounts);
     } else {
-      // Intentar recalcular solo las actividades si no tenemos travelerSelector
       this.updateActivitiesOnly();
     }
 
@@ -705,14 +707,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     // Actualizar el resumen del pedido cuando cambien las habitaciones
     if (
-      this.travelerSelector &&
-      this.travelerSelector.travelersNumbers &&
+      Object.keys(this.ageGroupCounts).length > 0 &&
       Object.keys(this.pricesByAgeGroup).length > 0
     ) {
       console.log(
         '🔄 Actualizando resumen del pedido por cambios en habitaciones...'
       );
-      this.updateOrderSummary(this.travelerSelector.travelersNumbers);
+      this.updateOrderSummary(this.ageGroupCounts);
     }
 
     // Forzar detección de cambios
@@ -914,8 +915,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         (ag) => ag.id === supplement.ageGroupId
       );
       if (ageGroup) {
-        const ageGroupName = this.normalizeAgeGroupName(ageGroup.name);
-        this.pricesByAgeGroup[ageGroupName] = supplement.basePeriodPrice;
+        this.pricesByAgeGroup[ageGroup.id] = supplement.basePeriodPrice;
       }
     });
 
@@ -975,70 +975,47 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   // Método para normalizar nombres de grupos de edad
-  private normalizeAgeGroupName(ageGroupName: string): string {
-    const name = ageGroupName.toLowerCase();
-
-    if (name.includes('adult') || name.includes('adulto')) {
-      return 'Adultos';
-    } else if (
-      name.includes('child') ||
-      name.includes('niño') ||
-      name.includes('menor')
-    ) {
-      return 'Niños';
-    } else if (
-      name.includes('baby') ||
-      name.includes('bebé') ||
-      name.includes('infant')
-    ) {
-      return 'Bebés';
-    }
-
-    return ageGroupName; // Devolver original si no se puede mapear
-  }
+  // Eliminado: no se usan nombres fijos de grupos de edad, se trabaja por ID
 
   /**
    * Método llamado cuando cambian los números de viajeros en el selector de travelers
    * Este método actualiza el componente de habitaciones con los nuevos números
    */
-  async onTravelersNumbersChange(travelersNumbers: {
-    adults: number;
-    childs: number;
-    babies: number;
+  async onAgeGroupCountsChange(counts: {
+    [ageGroupId: number]: number;
   }): Promise<void> {
-    // Actualizar el total de pasajeros
-    this.totalPassengers =
-      travelersNumbers.adults +
-      travelersNumbers.childs +
-      travelersNumbers.babies;
+    this.ageGroupCounts = { ...counts };
+    const newTotal = Object.values(this.ageGroupCounts).reduce(
+      (a, b) => a + b,
+      0
+    );
+    const prevTotal = this.totalPassengers;
+    this.totalPassengers = newTotal;
 
-    // Comunicar el cambio al componente de habitaciones
+    // Compat: informar a rooms con un fallback
     if (this.roomSelector) {
-      this.roomSelector.updateTravelersNumbers(travelersNumbers);
+      const fallback = {
+        adults: this.totalPassengers,
+        childs: 0,
+        babies: 0,
+      } as any;
+      this.roomSelector.updateTravelersNumbers(fallback);
     }
 
-    // Actualizar el resumen del pedido (solo si ya tenemos precios cargados)
     if (Object.keys(this.pricesByAgeGroup).length > 0) {
-      this.updateOrderSummary(travelersNumbers);
+      this.updateOrderSummary(this.ageGroupCounts);
     }
-    // Ejecutar verificación de precios solo si el número de pasajeros cambió significativamente
-    // (evita llamadas innecesarias por cambios menores)
-    const newTotalPassengers =
-      travelersNumbers.adults +
-      travelersNumbers.childs +
-      travelersNumbers.babies;
-    if (newTotalPassengers !== this.totalPassengers && newTotalPassengers > 0) {
+
+    if (newTotal !== prevTotal && newTotal > 0) {
       this.executePriceCheck();
     }
 
-    // ✅ Guardar inmediatamente cambios de viajeros
     try {
       await this.travelerSelector?.saveTravelersChanges?.();
     } catch (err) {
       console.error('❌ Error guardando cambios de viajeros:', err);
     }
 
-    // ✅ Disparar actualización del summary inmediatamente
     this.triggerSummaryRefresh();
   }
 
@@ -1081,8 +1058,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     if (event.success) {
       console.log(`✅ Guardado exitoso en ${event.component}:`, event.data);
       // Actualizar resumen del pedido si es necesario
-      if (this.travelerSelector && this.travelerSelector.travelersNumbers) {
-        this.updateOrderSummary(this.travelerSelector.travelersNumbers);
+      if (
+        this.travelerSelector &&
+        Object.keys(this.ageGroupCounts).length > 0
+      ) {
+        this.updateOrderSummary(this.ageGroupCounts);
       }
     } else {
       console.error(`❌ Error en guardado de ${event.component}:`, event.error);
@@ -1125,7 +1105,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       this.travelerSelector &&
       Object.keys(this.pricesByAgeGroup).length > 0
     ) {
-      this.updateOrderSummary(this.travelerSelector.travelersNumbers);
+      this.updateOrderSummary(this.ageGroupCounts);
     } else {
       // Forzar actualización con datos básicos si no tenemos travelerSelector
       const basicTravelers = {
@@ -1201,18 +1181,17 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     if (Object.keys(this.pricesByAgeGroup).length > 0) {
       let travelersToUse;
 
-      if (this.travelerSelector && this.travelerSelector.travelersNumbers) {
-        travelersToUse = this.travelerSelector.travelersNumbers;
+      if (
+        this.travelerSelector &&
+        Object.keys(this.ageGroupCounts).length > 0
+      ) {
+        travelersToUse = this.ageGroupCounts;
         console.log(
           '📊 Actualizando resumen con datos de viajeros existentes:',
           travelersToUse
         );
       } else {
-        travelersToUse = {
-          adults: Math.max(1, this.totalPassengers),
-          childs: 0,
-          babies: 0,
-        };
+        travelersToUse = this.buildFallbackAgeGroupCounts(this.totalPassengers);
         console.log(
           '📊 Actualizando resumen con datos básicos de viajeros:',
           travelersToUse
@@ -1333,8 +1312,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     // Verificar si tenemos todo lo necesario para inicializar
     const hasPrices = Object.keys(this.pricesByAgeGroup).length > 0;
-    const hasTravelers =
-      this.travelerSelector && this.travelerSelector.travelersNumbers;
+    const hasTravelers = Object.keys(this.ageGroupCounts).length > 0;
 
     console.log('🔄 checkAndInitializeSummary - Estado:', {
       hasPrices,
@@ -1343,15 +1321,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     });
 
     if (hasPrices && hasTravelers) {
-      this.updateOrderSummary(this.travelerSelector.travelersNumbers);
+      this.updateOrderSummary(this.ageGroupCounts);
     } else if (hasPrices && this.totalPassengers > 0) {
       // Si no tenemos travelers específicos, usar los de la reserva
-      const fallbackTravelers = {
-        adults: Math.max(1, this.totalPassengers),
-        childs: 0,
-        babies: 0,
-      };
-      this.updateOrderSummary(fallbackTravelers);
+      const fallbackCounts = this.buildFallbackAgeGroupCounts(
+        this.totalPassengers
+      );
+      this.updateOrderSummary(fallbackCounts);
     }
   }
 
@@ -1368,66 +1344,36 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     }
 
     if (Object.keys(this.pricesByAgeGroup).length > 0) {
-      const currentTravelers = this.travelerSelector?.travelersNumbers || {
-        adults: Math.max(1, this.totalPassengers),
-        childs: 0,
-        babies: 0,
-      };
-
-      // ✅ SIMPLIFICADO: Solo actualizar el summary sin lógica adicional
-      this.updateOrderSummary(currentTravelers);
+      const counts =
+        Object.keys(this.ageGroupCounts).length > 0
+          ? this.ageGroupCounts
+          : this.buildFallbackAgeGroupCounts(this.totalPassengers);
+      this.updateOrderSummary(counts);
     }
   }
   // Método para actualizar el resumen del pedido
-  updateOrderSummary(travelersNumbers: {
-    adults: number;
-    childs: number;
-    babies: number;
-  }): void {
+  updateOrderSummary(ageGroupCounts: { [ageGroupId: number]: number }): void {
     console.log(
-      '🔄 updateOrderSummary llamado con travelersNumbers:',
-      travelersNumbers
+      '🔄 updateOrderSummary llamado con ageGroupCounts:',
+      ageGroupCounts
     );
     console.log('📊 selectedFlight actual:', this.selectedFlight);
     console.log('💰 flightPrice actual:', this.flightPrice);
 
     this.summary = [];
 
-    // Plan básico - Adultos
-    if (travelersNumbers.adults > 0) {
-      const adultPrice = this.pricesByAgeGroup['Adultos'] || 0;
-      if (adultPrice > 0) {
+    // Plan básico por grupo de edad (dinámico)
+    this.ageGroups.forEach((ag) => {
+      const qty = ageGroupCounts[ag.id] || 0;
+      const price = this.pricesByAgeGroup[ag.id] || 0;
+      if (qty > 0 && price > 0) {
         this.summary.push({
-          qty: travelersNumbers.adults,
-          value: adultPrice,
-          description: 'Plan básico adultos',
+          qty,
+          value: price,
+          description: `Plan básico ${ag.name}`,
         });
       }
-    }
-
-    // Plan básico - Niños
-    if (travelersNumbers.childs > 0) {
-      const childPrice = this.pricesByAgeGroup['Niños'] || 0;
-      if (childPrice > 0) {
-        this.summary.push({
-          qty: travelersNumbers.childs,
-          value: childPrice,
-          description: 'Plan básico niños',
-        });
-      }
-    }
-
-    // Plan básico - Bebés
-    if (travelersNumbers.babies > 0) {
-      const babyPrice = this.pricesByAgeGroup['Bebés'] || 0;
-      if (babyPrice > 0) {
-        this.summary.push({
-          qty: travelersNumbers.babies,
-          value: babyPrice,
-          description: 'Plan básico bebés',
-        });
-      }
-    }
+    });
 
     // ✅ CORREGIDO: Manejo mejorado de vuelos
     if (this.selectedFlight) {
@@ -1436,10 +1382,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
       if (isNoFlightOption) {
         // ✅ CASO "Sin Vuelos": Agregar al resumen con precio 0 y texto "incluido"
-        const totalTravelers =
-          travelersNumbers.adults +
-          travelersNumbers.childs +
-          travelersNumbers.babies;
+        const totalTravelers = Object.values(ageGroupCounts).reduce(
+          (a, b) => a + b,
+          0
+        );
 
         const noFlightItem = {
           qty: totalTravelers,
@@ -1453,10 +1399,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         );
       } else if (this.flightPrice > 0) {
         // Vuelo con precio: agregar normalmente
-        const totalTravelers =
-          travelersNumbers.adults +
-          travelersNumbers.childs +
-          travelersNumbers.babies;
+        const totalTravelers = Object.values(ageGroupCounts).reduce(
+          (a, b) => a + b,
+          0
+        );
 
         const flightItem = {
           qty: totalTravelers,
@@ -1474,10 +1420,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }
     } else {
       // ✅ CASO: No hay vuelo seleccionado (estado inicial o después de recarga)
-      const totalTravelers =
-        travelersNumbers.adults +
-        travelersNumbers.childs +
-        travelersNumbers.babies;
+      const totalTravelers = Object.values(ageGroupCounts).reduce(
+        (a, b) => a + b,
+        0
+      );
 
       const noFlightItem = {
         qty: totalTravelers,
@@ -1530,15 +1476,16 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       this.selectedActivities.length > 0 &&
       Object.keys(this.activitiesByTraveler).length === 0
     ) {
-      const totalTravelers =
-        travelersNumbers.adults +
-        travelersNumbers.childs +
-        travelersNumbers.babies;
+      const totalTravelers = Object.values(ageGroupCounts).reduce(
+        (a, b) => a + b,
+        0
+      );
 
       this.selectedActivities.forEach((activity) => {
         const activityPrice =
           activity.priceData?.find(
-            (price: any) => price.age_group_name === 'Adultos'
+            (price: any) =>
+              price.age_group_name === this.ageGroups[0]?.name || 'Adultos'
           )?.value || 0;
 
         if (activityPrice > 0) {
@@ -1553,10 +1500,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     // ✅ SEGURO SELECCIONADO (solo desde BD)
     if (this.selectedInsurance) {
-      const totalTravelers =
-        travelersNumbers.adults +
-        travelersNumbers.childs +
-        travelersNumbers.babies;
+      const totalTravelers = Object.values(ageGroupCounts).reduce(
+        (a, b) => a + b,
+        0
+      );
 
       if (this.insurancePrice === 0) {
         // Seguro básico incluido (precio 0)
@@ -2346,7 +2293,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     console.log('travelerSelector:', {
       available: !!this.travelerSelector,
       hasUnsavedChanges: this.travelerSelector?.hasUnsavedChanges,
-      travelersNumbers: this.travelerSelector?.travelersNumbers,
+      travelersNumbers: this.travelerSelector?.ageGroupCounts,
       existingTravelers: this.travelerSelector?.existingTravelers?.length || 0,
     });
     console.log('roomSelector:', {
@@ -2468,12 +2415,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         return false;
       }
 
-      // 3. Validar que las habitaciones seleccionadas puedan acomodar a todos los pasajeros
-      const currentTravelers = this.travelerSelector.travelersNumbers;
-      const totalPassengers =
-        currentTravelers.adults +
-        currentTravelers.childs +
-        currentTravelers.babies;
+        // 3. Validar que las habitaciones seleccionadas puedan acomodar a todos los pasajeros
+        const currentTravelers = this.ageGroupCounts;
+        const totalPassengers = Object.values(currentTravelers).reduce(
+          (a, b) => a + b,
+          0
+        );
 
       console.log(`Total de pasajeros: ${totalPassengers}`);
 
@@ -3134,14 +3081,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     this.flightlessProcessingMessage = 'Recalculando precios...';
 
     // Actualizar el resumen
-    if (this.travelerSelector && this.travelerSelector.travelersNumbers) {
-      this.updateOrderSummary(this.travelerSelector.travelersNumbers);
+    if (this.travelerSelector && Object.keys(this.ageGroupCounts).length > 0) {
+      this.updateOrderSummary(this.ageGroupCounts);
     } else {
-      const basicTravelers = {
-        adults: Math.max(1, this.totalPassengers),
-        childs: 0,
-        babies: 0,
-      };
+      const basicTravelers = this.buildFallbackAgeGroupCounts(
+        this.totalPassengers
+      );
       this.updateOrderSummary(basicTravelers);
     }
 
@@ -3242,6 +3187,20 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     // TODO: Implementar lógica para compartir el presupuesto
   }
 
+  // Construir conteo de grupos de edad de fallback usando el primer grupo
+  private buildFallbackAgeGroupCounts(total: number): {
+    [ageGroupId: number]: number;
+  } {
+    const counts: { [id: number]: number } = {};
+    if (this.ageGroups && this.ageGroups.length > 0) {
+      const firstId = this.ageGroups
+        .slice()
+        .sort((a, b) => a.displayOrder - b.displayOrder)[0].id;
+      counts[firstId] = Math.max(1, total || 1);
+    }
+    return counts;
+  }
+
   // ✅ NUEVO: Método para limpiar el resumen del localStorage
   private clearSummaryFromLocalStorage(): void {
     if (this.reservationId) {
@@ -3325,8 +3284,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     this.flightPrice = 0;
 
     // Actualizar el resumen sin vuelos
-    if (this.travelerSelector && this.travelerSelector.travelersNumbers) {
-      this.updateOrderSummary(this.travelerSelector.travelersNumbers);
+    if (this.travelerSelector && Object.keys(this.ageGroupCounts).length > 0) {
+      this.updateOrderSummary(this.ageGroupCounts);
     }
 
     console.log('✅ Estado de vuelos limpiado');

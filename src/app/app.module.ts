@@ -1,4 +1,9 @@
-import { NgModule, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, LOCALE_ID } from '@angular/core';
+import {
+  NgModule,
+  CUSTOM_ELEMENTS_SCHEMA,
+  NO_ERRORS_SCHEMA,
+  LOCALE_ID,
+} from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule } from '@angular/forms';
@@ -285,6 +290,8 @@ import { MembershipBenefitsComponent } from './pages/profile-v2/components/membe
 import { ReviewSectionV2Component } from './pages/profile-v2/components/review-section-v2/review-section-v2.component';
 import { UpdateProfileSectionV2Component } from './pages/profile-v2/components/update-profile-section-v2/update-profile-section-v2.component';
 import { NewsLetterSectionV2Component } from './pages/home-v2/components/community-section-v2/components/newsletter-section-v2/newsletter-section-v2.component';
+import { HeaderV2Component } from './layout/header-v2/header-v2.component';
+
 // Services
 import { RetailerService } from './core/services/retailer/retailer.service';
 // Register Spanish locale data
@@ -383,7 +390,7 @@ registerLocaleData(localeEs);
     BookingPersonalDataComponent,
     BookingUpdateTravelComponent,
     PassengerCardComponent,
-    
+
     // BookingsV2 Components
     Bookingsv2Component,
     BookingActivitiesV2Component,
@@ -397,7 +404,7 @@ registerLocaleData(localeEs);
     BookingUpdateTravelV2Component,
     PassengerCardV2Component,
     BookingDocumentationV2Component,
-    
+
     UploadButtonComponent,
     PaymentsComponent,
     TourInfoAccordionComponent,
@@ -476,6 +483,7 @@ registerLocaleData(localeEs);
     MembershipBenefitsComponent,
     ReviewSectionV2Component,
     UpdateProfileSectionV2Component
+    HeaderV2Component,
   ],
   imports: [
     // Angular Modules

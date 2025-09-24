@@ -250,28 +250,40 @@ export class PointsRedemptionComponent implements OnInit, OnDestroy {
 
   /**
    * Obtiene el descuento máximo disponible según la categoría
+   * Según documento: Trotamundos: 50€, Viajante: 75€, Nómada: 100€
    */
   getMaxDiscountForCategory(): number {
     if (!this.pointsSummary) return 0;
     
-    // Lógica simplificada para obtener el descuento máximo por categoría
+    // Lógica según documento: límites por categoría de viajero
     switch (this.pointsSummary.currentCategory) {
       case 'TROTAMUNDOS':
-        return 100; // 100€ máximo
-      case 'VIAJERO':
-        return 200; // 200€ máximo
+        return 50; // 50€ máximo por compra
+      case 'VIAJANTE':
+        return 75; // 75€ máximo por compra
       case 'NOMADA':
-        return 500; // 500€ máximo
+        return 100; // 100€ máximo por compra
       default:
-        return 50; // 50€ por defecto
+        return 50; // Por defecto, categoría inicial (Trotamundos)
     }
   }
 
   /**
-   * Obtiene el máximo de puntos permitidos (menor entre disponibles y límite de categoría)
+   * Obtiene el máximo de puntos permitidos según las reglas del documento:
+   * - Menor entre puntos disponibles y límite de categoría
+   * - Límite total por reserva: 50€ × número de viajeros con email
    */
   getMaxAllowedPoints(): number {
-    return Math.min(this.getAvailablePoints(), this.getMaxDiscountForCategory());
+    const availablePoints = this.getAvailablePoints();
+    const categoryLimit = this.getMaxDiscountForCategory();
+    
+    // Calcular límite total por reserva (50€ × número de viajeros con email)
+    const eligibleTravelers = this.travelers.filter(t => t.hasEmail);
+    const maxPointsPerPerson = this.pointsRedemption.maxDiscountPerTraveler; // 50€
+    const reservationLimit = eligibleTravelers.length * maxPointsPerPerson;
+    
+    // El máximo es el menor entre los tres límites
+    return Math.min(availablePoints, categoryLimit, reservationLimit);
   }
 
   /**
@@ -371,6 +383,48 @@ export class PointsRedemptionComponent implements OnInit, OnDestroy {
     traveler.assignedPoints = points;
     this.pointsRedemption.pointsPerTraveler[travelerId] = points;
     this.recalculatePointsTotals();
+  }
+
+  /**
+   * Incrementa los puntos de un viajero en 1
+   */
+  incrementPoints(travelerId: string): void {
+    const currentPoints = this.getTravelerAssignedPoints(travelerId);
+    const maxPoints = this.getTravelerMaxPoints(travelerId);
+    if (currentPoints < maxPoints) {
+      this.assignPointsToTraveler(travelerId, currentPoints + 1);
+    }
+  }
+
+  /**
+   * Decrementa los puntos de un viajero en 1
+   */
+  decrementPoints(travelerId: string): void {
+    const currentPoints = this.getTravelerAssignedPoints(travelerId);
+    if (currentPoints > 0) {
+      this.assignPointsToTraveler(travelerId, currentPoints - 1);
+    }
+  }
+
+  /**
+   * Incrementa el total de puntos a canjear en 1
+   */
+  incrementTotalPoints(): void {
+    const currentPoints = this.pointsRedemption.totalPointsToUse;
+    const maxPoints = this.getMaxAllowedPoints();
+    if (currentPoints < maxPoints) {
+      this.updatePointsToUse(currentPoints + 1);
+    }
+  }
+
+  /**
+   * Decrementa el total de puntos a canjear en 1
+   */
+  decrementTotalPoints(): void {
+    const currentPoints = this.pointsRedemption.totalPointsToUse;
+    if (currentPoints > 0) {
+      this.updatePointsToUse(currentPoints - 1);
+    }
   }
 
   /**

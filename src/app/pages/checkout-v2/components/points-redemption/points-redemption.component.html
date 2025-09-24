@@ -35,10 +35,10 @@
       </div>
       
       <div class="category-info">
-        <p-tag [value]="getCategoryDisplayName()" 
-               [icon]="getCategoryIcon()" 
-               [severity]="getCategoryBadgeClass()">
-        </p-tag>
+        <div class="category-badge">
+          <i [class]="getCategoryIcon()" class="category-icon"></i>
+          <span class="category-text">{{ getCategoryDisplayName() }}</span>
+        </div>
         <span class="max-discount">Máximo: {{ getMaxDiscountForCategory() | currency:'EUR':'symbol':'1.2-2' }}</span>
       </div>
       
@@ -46,10 +46,10 @@
       <div *ngIf="pointsSummary?.nextCategory" class="progress-section">
         <div class="progress-info">
           <span class="progress-text">{{ getProgressText() }}</span>
-          <p-progressBar [value]="getProgressPercentage()" 
+          <p-progressbar [value]="getProgressPercentage()" 
                          [showValue]="false"
                          styleClass="category-progress">
-          </p-progressBar>
+          </p-progressbar>
         </div>
       </div>
     </div>
@@ -75,35 +75,6 @@
         <label for="points-input" class="input-label">
           Puntos a canjear (máximo {{ getMaxAllowedPoints() }})
         </label>
-        <div class="input-with-button">
-          <p-inputNumber 
-            id="points-input"
-            [(ngModel)]="pointsRedemption.totalPointsToUse"
-            (ngModelChange)="updatePointsToUse($event)"
-            [max]="getMaxAllowedPoints()"
-            [min]="0"
-            [showButtons]="true"
-            buttonLayout="horizontal" 
-            inputId="horizontal" 
-            spinnerMode="horizontal"
-            [useGrouping]="false"
-            placeholder="0"
-            [class.error]="pointsRedemption.totalPointsToUse > getMaxAllowedPoints()"
-            styleClass="points-input">
-            <ng-template #incrementbuttonicon>
-                <span class="pi pi-plus"></span>
-            </ng-template>
-            <ng-template #decrementbuttonicon>
-                <span class="pi pi-minus"></span>
-            </ng-template>
-          </p-inputNumber>
-          <p-button 
-            label="Máximo" 
-            size="small" 
-            severity="secondary"
-            (onClick)="setMaximumPoints()">
-          </p-button>
-        </div>
       </div>
 
       <!-- Points Distribution Section -->
@@ -120,44 +91,43 @@
         </div>
       </div>
 
-      <!-- Lista de viajeros rediseñada -->
+      <!-- Lista de viajeros compacta -->
       <div *ngFor="let traveler of travelers; let i = index" 
-           class="traveler-card"
+           class="traveler-card-compact"
            [class.traveler-disabled]="!traveler.hasEmail">
         
-        <!-- Header del viajero -->
-        <div class="traveler-header">
-          <div class="traveler-info">
+        <!-- Contenido compacto en una sola línea -->
+        <div class="traveler-content">
+          <!-- Info del viajero -->
+          <div class="traveler-info-compact">
             <i class="pi pi-user traveler-icon"></i>
             <div class="traveler-details">
               <div class="traveler-name">{{ traveler.name }}</div>
               <div class="traveler-email" *ngIf="traveler.hasEmail">{{ traveler.email }}</div>
             </div>
+            <p-tag *ngIf="!traveler.hasEmail" 
+                   value="Sin email" 
+                   severity="warning" 
+                   size="small">
+            </p-tag>
           </div>
-          <p-tag *ngIf="!traveler.hasEmail" 
-                 value="Sin email" 
-                 severity="warning" 
-                 size="small">
-          </p-tag>
-        </div>
 
-        <!-- Sección de puntos -->
-        <div class="points-section">
-          <!-- Para viajeros con email -->
-          <div *ngIf="traveler.hasEmail" class="points-input-container">
-            <label class="points-label">Puntos asignados:</label>
-            <div class="points-input-wrapper">
+          <!-- Puntos y descuento en línea -->
+          <div *ngIf="traveler.hasEmail" class="points-controls-compact">
+            <div class="traveler-input-wrapper">
               <p-inputNumber 
+                styleClass="compact-traveler-input"
                 [ngModel]="getTravelerAssignedPoints(traveler.id)"
-                (ngModelChange)="assignPointsToTraveler(traveler.id, +$event)"
+                (ngModelChange)="assignPointsToTraveler(traveler.id, $event)"
                 [max]="getTravelerMaxPoints(traveler.id)"
                 [min]="0"
+                [size]="'small'"
                 [showButtons]="true"
-                buttonLayout="horizontal"
-                inputId="horizontal"
+                buttonLayout="horizontal" 
+                spinnerMode="horizontal"
                 [useGrouping]="false"
-                [class.error]="!canAssignPointsToTraveler(traveler.id, getTravelerAssignedPoints(traveler.id)) || getTravelerAssignedPoints(traveler.id) > getTravelerMaxPoints(traveler.id)"
-                styleClass="points-input">
+                placeholder="0"
+                [class.error]="!canAssignPointsToTraveler(traveler.id, getTravelerAssignedPoints(traveler.id)) || getTravelerAssignedPoints(traveler.id) > getTravelerMaxPoints(traveler.id)">
                 <ng-template #incrementbuttonicon>
                     <span class="pi pi-plus"></span>
                 </ng-template>
@@ -167,32 +137,29 @@
               </p-inputNumber>
               <span class="max-indicator">/ {{ getTravelerMaxPointsDisplay(traveler.id) }}</span>
             </div>
+            <div class="discount-badge">
+              Descuento: {{ getTravelerAssignedPoints(traveler.id) | currency:'EUR':'symbol':'1.2-2' }}
+            </div>
           </div>
           
           <!-- Para viajeros sin email -->
-          <div *ngIf="!traveler.hasEmail" class="blocked-section">
+          <div *ngIf="!traveler.hasEmail" class="blocked-section-compact">
             <div class="blocked-message">
               <i class="pi pi-lock"></i>
               <span>Bloqueado: Sin email asignado</span>
             </div>
           </div>
-          
-          <!-- Descuento solo para viajeros con email -->
-          <div *ngIf="traveler.hasEmail" class="discount-display">
-            <p-tag [value]="'Descuento: ' + (getTravelerAssignedPoints(traveler.id) | currency:'EUR':'symbol':'1.2-2')" 
-                   severity="success">
-            </p-tag>
-          </div>
-          
-          <!-- Error message solo para viajeros con email -->
-          <p-message *ngIf="traveler.hasEmail && (!canAssignPointsToTraveler(traveler.id, getTravelerAssignedPoints(traveler.id)) || getTravelerAssignedPoints(traveler.id) > getTravelerMaxPoints(traveler.id)) && getTravelerAssignedPoints(traveler.id) > 0"
-                     severity="warn"
-                     [closable]="false">
-            <ng-template pTemplate>
-              <span>Límite excedido (máximo: {{ getTravelerMaxPointsDisplay(traveler.id) }} puntos)</span>
-            </ng-template>
-          </p-message>
         </div>
+        
+        <!-- Error message solo para viajeros con email -->
+        <p-message *ngIf="traveler.hasEmail && (!canAssignPointsToTraveler(traveler.id, getTravelerAssignedPoints(traveler.id)) || getTravelerAssignedPoints(traveler.id) > getTravelerMaxPoints(traveler.id)) && getTravelerAssignedPoints(traveler.id) > 0"
+                   severity="warn"
+                   [closable]="false"
+                   styleClass="error-message-compact">
+          <ng-template pTemplate>
+            <span>Límite excedido (máximo: {{ getTravelerMaxPointsDisplay(traveler.id) }} puntos)</span>
+          </ng-template>
+        </p-message>
       </div>
 
         <!-- Global Error Message -->
@@ -236,7 +203,7 @@
             </div>
           </div>
         </div>
-
+      </div>
         <!-- Redemption Summary -->
         <div *ngIf="pointsRedemption.enabled && pointsRedemption.totalPointsToUse > 0" 
              class="redemption-summary-card">
@@ -262,7 +229,7 @@
               </p-tag>
             </div>
           </div>
-        </div>
+        
     </div>
   </div>
 </div>

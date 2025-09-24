@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, Output, EventEmitter, OnChanges } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, Output, EventEmitter, OnChanges, AfterViewInit } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { IScalapayOrderResponse, NewScalapayService } from '../../services/newScalapay.service';
 import { Router } from '@angular/router';
@@ -15,12 +15,11 @@ import { FlightSearchService, IPriceChangeInfo } from '../../../../core/services
 // Interfaces y tipos
 export type PaymentType = 'complete' | 'deposit' | 'installments';
 export type PaymentMethod = 'creditCard' | 'transfer';
-export type InstallmentOption = 'three' | 'four';
+// Removed InstallmentOption type since we no longer have specific installment options
 
 export interface PaymentOption {
   type: PaymentType;
   method?: PaymentMethod;
-  installments?: InstallmentOption;
 }
 
 @Component({
@@ -29,9 +28,23 @@ export interface PaymentOption {
   standalone: false,
   styleUrl: './payment-management.component.scss'
 })
-export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges {
+export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
   // Inputs
-  @Input() totalPrice: number = 0;
+  @Input() set totalPrice(value: number) {
+    this._totalPrice = value;
+    if (value && this.paymentState.type === 'installments') {
+      // Recargar el widget cuando cambie el precio y esté seleccionado installments
+      setTimeout(() => {
+        this.initializeScalapayWidget();
+      }, 200);
+    }
+  }
+  
+  get totalPrice(): number {
+    return this._totalPrice;
+  }
+  
+  private _totalPrice: number = 0;
   @Input() reservationId!: number;
   @Input() depositAmount: number = 200;
   @Input() paymentDeadline: string = '30 días antes del tour';
@@ -59,16 +72,15 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
   // State management
   readonly dropdownStates = {
     main: true,
-    paymentMethods: true,
-    installments: true
+    paymentMethods: true
   };
 
   readonly paymentState = {
     type: null as PaymentType | null,
     method: null as PaymentMethod | null,
-    installmentOption: null as InstallmentOption | null,
     isLoading: false
   };
+
 
   constructor(
     private readonly scalapayService: NewScalapayService, 
@@ -85,9 +97,16 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
   ) { }
 
   ngOnInit(): void {
-    this.initializeScalapayScript();
     this.loadPaymentIds();
     this.checkAmadeusFlightStatus();
+  }
+
+  ngAfterViewInit(): void {
+    this.initializeScalapayScript();
+    // Inicializar el widget después de que la vista esté lista
+    setTimeout(() => {
+      this.initializeScalapayWidget();
+    }, 100);
   }
 
   ngOnChanges(): void {
@@ -275,15 +294,12 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
     return this.paymentState.method;
   }
 
-  get installmentOption(): InstallmentOption | null {
-    return this.paymentState.installmentOption;
-  }
 
   get isPaymentValid(): boolean {
     if (!this.paymentState.type) return false;
 
     if (this.paymentState.type === 'installments') {
-      return !!this.paymentState.installmentOption;
+      return true; // Para installments, siempre es válido ya que no hay opciones específicas
     }
 
     return !!this.paymentState.method;
@@ -355,6 +371,14 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
     this.paymentState.type = type;
     this.updateDropdownVisibility();
     this.resetRelatedSelections(type);
+    
+    // Si se selecciona installments, recargar el widget de Scalapay
+    if (type === 'installments') {
+      console.log('💳 Opción de installments seleccionada, inicializando widget...');
+      setTimeout(() => {
+        this.forceScalapayReload();
+      }, 100);
+    }
   }
 
   // Payment method management
@@ -362,18 +386,12 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
     this.paymentState.method = method;
   }
 
-  // Installment management
-  selectInstallmentOption(option: InstallmentOption): void {
-    this.paymentState.installmentOption = option;
-    this.reloadScalapayWidgets();
-  }
 
   // Dropdown management
   toggleDropdown(dropdown: keyof typeof this.dropdownStates): void {
     this.dropdownStates[dropdown] = !this.dropdownStates[dropdown];
 
     if (dropdown === 'main' && !this.dropdownStates.main) {
-      this.dropdownStates.installments = false;
       this.dropdownStates.paymentMethods = false;
     }
   }
@@ -567,33 +585,49 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
 
   // Private methods
   private initializeScalapayScript(): void {
-    if (this.isScalapayScriptLoaded()) return;
+    if (this.isScalapayScriptLoaded()) {
+      console.log('📄 Script de Scalapay ya existe');
+      return;
+    }
 
+    console.log('🚀 Cargando script de Scalapay...');
     const script = document.createElement('script');
     script.type = 'module';
-    script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js';
+    script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js?version=V5';
+    
+    script.onload = () => {
+      console.log('✅ Script de Scalapay cargado correctamente');
+      // Inicializar el widget después de que se cargue el script
+      setTimeout(() => {
+        this.initializeScalapayWidget();
+      }, 500);
+    };
+    
+    script.onerror = (error) => {
+      console.error('❌ Error al cargar script de Scalapay:', error);
+    };
+    
     document.head.appendChild(script);
   }
 
   private isScalapayScriptLoaded(): boolean {
-    return !!document.querySelector('script[src*="scalapay-widget-loader.js"]');
+    return !!document.querySelector('script[src*="scalapay-widget-loader.js?version=V5"]');
   }
 
+
   private updateDropdownVisibility(): void {
-    this.dropdownStates.installments = this.paymentState.type === 'installments';
     this.dropdownStates.paymentMethods = ['complete', 'deposit'].includes(this.paymentState.type!);
   }
 
   private resetRelatedSelections(type: PaymentType): void {
-    if (type !== 'installments') {
-      this.paymentState.installmentOption = null;
-    }
     if (type === 'installments') {
       this.paymentState.method = null;
     }
   }
 
   private reloadScalapayWidgets(): void {
+    if (!this.totalPrice) return;
+    
     setTimeout(() => {
       this.updatePriceContainers();
       this.dispatchScalapayReloadEvent();
@@ -601,23 +635,120 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
   }
 
   private updatePriceContainers(): void {
-    const formattedPrice = `€ ${this.totalPrice?.toFixed?.(2) ?? this.totalPrice}`;
-
-    ['three', 'four'].forEach(option => {
-      const container = document.getElementById(`price-container-${option}`);
-      if (container) {
-        container.textContent = formattedPrice;
-      }
-    });
+    if (!this.totalPrice) {
+      console.warn('⚠️ No hay precio disponible para actualizar');
+      return;
+    }
+    
+    const formattedPrice = `€ ${this.totalPrice.toFixed(2)}`;
+    const mainContainer = document.getElementById('price-container-main');
+    if (mainContainer) {
+      mainContainer.textContent = formattedPrice;
+      console.log('💰 Precio actualizado en contenedor:', formattedPrice);
+      console.log('🔍 Estado del contenedor:', {
+        id: mainContainer.id,
+        content: mainContainer.textContent,
+        visible: mainContainer.style.display !== 'none'
+      });
+    } else {
+      console.warn('⚠️ Contenedor de precio no encontrado - ID: price-container-main');
+      console.log('🔍 Elementos disponibles:', 
+        Array.from(document.querySelectorAll('[id*="price"]')).map(el => el.id)
+      );
+    }
   }
 
   private dispatchScalapayReloadEvent(): void {
     const event = new CustomEvent('scalapay-widget-reload');
     window.dispatchEvent(event);
+    console.log('🔄 Evento de recarga de Scalapay enviado');
+  }
+
+  /**
+   * Inicializa el widget de Scalapay después de que esté cargado el script
+   */
+  private initializeScalapayWidget(): void {
+    if (!this.totalPrice) {
+      console.log('⏳ Esperando a que el precio esté disponible...');
+      // Intentar de nuevo en 500ms
+      setTimeout(() => {
+        this.initializeScalapayWidget();
+      }, 500);
+      return;
+    }
+    
+    console.log('🚀 Inicializando widget de Scalapay con precio:', this.totalPrice);
+    this.updatePriceContainers();
+    
+    // Dar tiempo para que el DOM se actualice antes de disparar el evento
+    setTimeout(() => {
+      this.dispatchScalapayReloadEvent();
+    }, 100);
+  }
+
+  /**
+   * Verifica si el widget de Scalapay está listo para ser inicializado
+   */
+  private isScalapayWidgetReady(): boolean {
+    const container = document.getElementById('price-container-main');
+    const widget = document.querySelector('scalapay-widget');
+    const isReady = !!(container && widget && this.totalPrice);
+    
+    console.log('🔍 Estado de readiness del widget:', {
+      containerExists: !!container,
+      widgetExists: !!widget,
+      priceAvailable: !!this.totalPrice,
+      ready: isReady
+    });
+    
+    return isReady;
+  }
+
+  /**
+   * Fuerza la recarga completa del widget de Scalapay
+   */
+  private forceScalapayReload(): void {
+    console.log('🔄 Forzando recarga completa del widget de Scalapay');
+    
+    // Primero actualizar el precio
+    this.updatePriceContainers();
+    
+    // Luego disparar los eventos necesarios
+    setTimeout(() => {
+      this.dispatchScalapayReloadEvent();
+      
+      // Si no funciona, intentar inicializar de nuevo
+      setTimeout(() => {
+        if (!this.isScalapayWidgetVisible()) {
+          console.log('⚠️ Widget no visible, reintentando...');
+          this.initializeScalapayWidget();
+        }
+      }, 1000);
+    }, 100);
+  }
+
+  /**
+   * Verifica si el widget de Scalapay está visible
+   */
+  private isScalapayWidgetVisible(): boolean {
+    const widget = document.querySelector('scalapay-widget');
+    if (!widget) return false;
+    
+    const hasContent = widget.children.length > 0 || 
+                      (widget.textContent?.trim().length || 0) > 0 || 
+                      (widget.innerHTML?.trim().length || 0) > 0;
+    
+    console.log('👁️ Widget visibility check:', {
+      exists: !!widget,
+      hasContent,
+      innerHTML: widget.innerHTML?.slice(0, 100)
+    });
+    
+    return hasContent;
   }
 
   private async processInstallmentPayment(): Promise<void> {
-    const payments = this.paymentState.installmentOption === 'three' ? 3 : 4;
+    const payments = 3; // Valor por defecto ya que no hay opciones específicas
 
     const baseUrl = (window.location.href).replace(this.router.url, '');
 

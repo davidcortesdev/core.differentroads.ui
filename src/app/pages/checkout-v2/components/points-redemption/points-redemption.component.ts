@@ -38,6 +38,7 @@ export class PointsRedemptionComponent implements OnInit, OnDestroy {
   isExpanded: boolean = false;
   isLoading: boolean = false;
 
+
   constructor(
     private readonly pointsV2Service: PointsV2Service,
     private readonly messageService: MessageService
@@ -769,4 +770,36 @@ export class PointsRedemptionComponent implements OnInit, OnDestroy {
   toggleExpansion(): void {
     this.isExpanded = !this.isExpanded;
   }
+
+  /**
+   * Maneja el cambio de puntos de un viajero desde el componente hijo
+   */
+  onTravelerPointsChange(event: { travelerId: string; points: number }): void {
+    const { travelerId, points } = event;
+    this.assignPointsToTraveler(travelerId, points);
+  }
+
+  /**
+   * Obtiene los datos de máximos de puntos por viajero para el componente hijo
+   */
+  getTravelerMaxPointsData(): { [key: string]: number } {
+    const data: { [key: string]: number } = {};
+    this.travelers.forEach(traveler => {
+      data[traveler.id] = this.calculateMaxPointsForTraveler(traveler.id);
+    });
+    return data;
+  }
+
+  /**
+   * Obtiene los datos de validación de asignación de puntos para el componente hijo
+   */
+  getCanAssignPointsData(): { [key: string]: boolean } {
+    const data: { [key: string]: boolean } = {};
+    this.travelers.forEach(traveler => {
+      data[traveler.id] = this.canAssignPointsToTraveler(traveler.id, this.getTravelerAssignedPoints(traveler.id));
+    });
+    return data;
+  }
+
+
 }

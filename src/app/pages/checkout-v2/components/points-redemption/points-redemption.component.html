@@ -31,7 +31,7 @@
       
       <div class="balance-details">
         <div class="points-amount">{{ getAvailablePoints() }} puntos</div>
-        <div class="points-value">({{ getAvailablePoints() | currency:'EUR':'symbol':'1.2-2' }})</div>
+        <div class="points-value">Equivale a {{ getAvailablePoints() | currency:'EUR':'symbol':'1.0-0' }}</div>
       </div>
       
       <div class="category-info">
@@ -39,7 +39,7 @@
           <i [class]="getCategoryIcon()" class="category-icon"></i>
           <span class="category-text">{{ getCategoryDisplayName() }}</span>
         </div>
-        <span class="max-discount">Máximo: {{ getMaxDiscountForCategory() | currency:'EUR':'symbol':'1.2-2' }}</span>
+        <span class="max-discount">Máximo por membresía: {{ getMaxDiscountForCategory() | currency:'EUR':'symbol':'1.0-0' }}</span>
       </div>
       
       <!-- Progress to next category -->
@@ -118,7 +118,7 @@
               <p-inputNumber 
                 styleClass="compact-traveler-input"
                 [ngModel]="getTravelerAssignedPoints(traveler.id)"
-                (ngModelChange)="assignPointsToTraveler(traveler.id, $event)"
+                (onBlur)="onTravelerPointsBlur(traveler.id, $event)"
                 [max]="getTravelerMaxPoints(traveler.id)"
                 [min]="0"
                 [size]="'small'"

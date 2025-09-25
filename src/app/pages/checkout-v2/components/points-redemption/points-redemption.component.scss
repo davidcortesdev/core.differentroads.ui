@@ -244,9 +244,9 @@ $border-color: #e2e8f0;
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
-      border: 1px solid #d1e7ff;
-      border-radius: 20px;
+      background: linear-gradient(135deg, #f8f9ff 0%, #84afe6ba 100%);
+      border: 1px solid #31617999;
+      border-radius: 4px;
       padding: 0.5rem 1rem;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
       
@@ -759,6 +759,7 @@ $border-color: #e2e8f0;
               
               &[type=number] {
                 -moz-appearance: textfield;
+                appearance: textfield;
               }
             }
             
@@ -900,6 +901,7 @@ $border-color: #e2e8f0;
       
       &[type=number] {
         -moz-appearance: textfield;
+        appearance: textfield;
       }
     }
     

@@ -54,6 +54,7 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
   @Input() total: number = 0;
   @Input() isAuthenticated: boolean = false;
   @Input() selectedFlight: any = null;
+  @Input() pointsDiscount: number = 0;
 
   // NUEVO: Propiedades para gestión de datos
   private destroy$: Subject<void> = new Subject<void>();
@@ -87,6 +88,11 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
     
     if (changes['refreshTrigger'] && this.refreshTrigger) {
       this.refreshSummary();
+    }
+    
+    // Actualizar descuento por puntos cuando cambie
+    if (changes['pointsDiscount'] && this.reservationSummary) {
+      this.updatePointsDiscount();
     }
   }
 
@@ -131,17 +137,51 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
         item.included === true
     })) || [];
 
-    // Usar el totalAmount que viene del backend en lugar de calcularlo
+    // Agregar descuento por puntos si existe
+    if (this.pointsDiscount > 0) {
+      this.summary.push({
+        description: `Descuento por puntos ${this.pointsDiscount}€`,
+        qty: 1,
+        value: -this.pointsDiscount, // Valor negativo para descuento
+        isDiscount: true
+      });
+    }
+
+    // Usar el totalAmount que viene del backend y restar el descuento de puntos
     this.subtotal = summary.totalAmount;
-    this.total = summary.totalAmount;
+    this.total = summary.totalAmount - this.pointsDiscount;
   }
 
   // NUEVO: Método para recargar información
   refreshSummary(): void {
     if (this.reservationId) {
-      console.log('🔄 Actualizando resumen del pedido...');
       this.loadReservationSummary();
     }
+  }
+
+  // NUEVO: Actualizar descuento por puntos
+  private updatePointsDiscount(): void {
+    if (!this.reservationSummary) return;
+    
+    console.log('💰 Actualizando descuento por puntos:', this.pointsDiscount);
+    
+    // Filtrar descuentos de puntos existentes
+    this.summary = this.summary.filter(item => 
+      !item.description?.toLowerCase().includes('descuento por puntos')
+    );
+    
+    // Agregar nuevo descuento si existe
+    if (this.pointsDiscount > 0) {
+      this.summary.push({
+        description: `Descuento por puntos ${this.pointsDiscount}€`,
+        qty: 1,
+        value: -this.pointsDiscount, // Valor negativo para descuento
+        isDiscount: true
+      });
+    }
+    
+    // Recalcular total
+    this.total = this.reservationSummary.totalAmount - this.pointsDiscount;
   }
 
   getDescription(item: any): string {

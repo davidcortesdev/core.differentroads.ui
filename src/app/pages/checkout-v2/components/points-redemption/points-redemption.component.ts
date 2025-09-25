@@ -356,6 +356,16 @@ export class PointsRedemptionComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Maneja el evento blur del input de puntos de viajero
+   */
+  onTravelerPointsBlur(travelerId: string, event: any): void {
+    // Para p-inputNumber, el valor está en event.value
+    const inputValue = event.value || event.target?.value || 0;
+    const points = parseFloat(inputValue) || 0;
+    this.assignPointsToTraveler(travelerId, points);
+  }
+
+  /**
    * Asigna puntos manualmente a un viajero específico
    */
   assignPointsToTraveler(travelerId: string, points: number): void {

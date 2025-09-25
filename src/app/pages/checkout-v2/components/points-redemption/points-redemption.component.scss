@@ -241,25 +241,26 @@ $border-color: #e2e8f0;
     align-items: center;
     
     .category-badge {
+      
       display: flex;
       align-items: center;
       gap: 0.5rem;
       background: linear-gradient(135deg, #f8f9ff 0%, #84afe6ba 100%);
-      border: 1px solid #31617999;
+      border: 1px solid #00000099;
       border-radius: 4px;
       padding: 0.5rem 1rem;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
       
       .category-icon {
         font-size: 1rem;
-        color: #1e40af;
+        color: #000000;
         margin-right: 0.25rem;
       }
       
       .category-text {
         font-weight: 600;
         font-size: 0.9rem;
-        color: #1e40af;
+        color: #000000;
         letter-spacing: 0.025em;
       }
     }

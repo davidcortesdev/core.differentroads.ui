@@ -2153,6 +2153,18 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
+   * Obtiene el valor de un campo específico
+   */
+  getFieldValue(travelerId: number, fieldCode: string): any {
+    const controlName = `${fieldCode}_${travelerId}`;
+    const control = this.travelerForms.controls
+      .find((form) => form instanceof FormGroup && form.get(controlName))
+      ?.get(controlName);
+
+    return control ? control.value : null;
+  }
+
+  /**
    * Marca todos los campos como touched para mostrar errores
    */
   markAllFieldsAsTouched(): void {
@@ -2302,6 +2314,38 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     return isValid;
+  }
+
+  /**
+   * Fuerza la validación de todos los campos y marca como touched
+   */
+  forceValidation(): void {
+    this.markAllFieldsAsTouched();
+    this.validateFormInRealTime();
+  }
+
+  /**
+   * Obtiene el estado de validación de un campo específico
+   */
+  getFieldValidationState(travelerId: number, fieldCode: string): 'valid' | 'invalid' | 'empty' | 'untouched' {
+    const controlName = `${fieldCode}_${travelerId}`;
+    const control = this.travelerForms.controls
+      .find((form) => form instanceof FormGroup && form.get(controlName))
+      ?.get(controlName);
+
+    if (!control) {
+      return 'untouched';
+    }
+
+    if (!control.touched && !control.dirty) {
+      return 'untouched';
+    }
+
+    if (!control.value || control.value === '') {
+      return 'empty';
+    }
+
+    return control.valid ? 'valid' : 'invalid';
   }
 
   /**

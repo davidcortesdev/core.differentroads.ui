@@ -28,6 +28,10 @@ import {
   IHomeSectionTourFilterResponse,
 } from '../../../../core/services/home/home-section-tour-filter.service';
 
+// Importar servicios para filtros por tag y ubicación
+import { TourTagService } from '../../../../core/services/tag/tour-tag.service';
+import { TourLocationService } from '../../../../core/services/tour/tour-location.service';
+
 @Component({
   selector: 'app-tour-carrussel-v2',
   standalone: false,
@@ -47,6 +51,9 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
     text: string;
     url: string;
   };
+  
+  // Debug: IDs de tours para mostrar en pantalla
+  debugTourIds: number[] = [];
 
   private destroy$ = new Subject<void>();
   protected carouselConfig = CAROUSEL_CONFIG;
@@ -78,7 +85,9 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
     private readonly router: Router,
     private readonly toursService: ToursService,
     private readonly homeSectionConfigurationService: HomeSectionConfigurationService,
-    private readonly homeSectionTourFilterService: HomeSectionTourFilterService
+    private readonly homeSectionTourFilterService: HomeSectionTourFilterService,
+    private readonly tourTagService: TourTagService,
+    private readonly tourLocationService: TourLocationService
   ) {}
 
   ngOnInit(): void {
@@ -91,6 +100,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
   }
 
   private loadTourCarousel(): void {
+    console.log('loadTourCarousel', this.configurationId);
     // Si se proporciona un configurationId específico, úsalo
     if (this.configurationId) {
       this.loadSpecificConfiguration(this.configurationId);
@@ -161,10 +171,13 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
   private loadToursFromFilters(
     filters: IHomeSectionTourFilterResponse[]
   ): void {
-    // Tomar el primer filtro activo para simplificar
-    // En una implementación más compleja, podrías combinar múltiples filtros
-    const primaryFilter = filters[0];
+    if (filters.length === 0) {
+      this.tours = [];
+      return;
+    }
 
+    // Configurar el botón "Ver más" del primer filtro
+    const primaryFilter = filters[0];
     if (primaryFilter.viewMoreButtonText && primaryFilter.viewMoreButtonUrl) {
       this.viewMoreButton = {
         text: primaryFilter.viewMoreButtonText,
@@ -172,8 +185,129 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
       };
     }
 
-    // Cargar tours según el tipo de filtro
-    this.loadToursByFilter(primaryFilter);
+    console.log('loadToursFromFilters', filters);
+    
+    // Recopilar todos los IDs de tours de todos los filtros
+    this.loadToursFromAllFilters(filters);
+  }
+
+  /**
+   * Procesa todos los filtros y combina los IDs de tours de cada uno
+   * @param filters Array de filtros a procesar
+   */
+  private loadToursFromAllFilters(filters: IHomeSectionTourFilterResponse[]): void {
+    console.log('🔍 DEBUG: Procesando', filters.length, 'filtros:', filters.map(f => ({ 
+      type: f.filterType, 
+      tagId: f.tagId, 
+      locationId: f.locationId, 
+      specificTourIds: f.specificTourIds 
+    })));
+
+    // Crear observables para cada filtro
+    const filterObservables = filters.map((filter, index) => 
+      this.getTourIdsFromFilter(filter).pipe(
+        map(tourIds => {
+          console.log(`📋 DEBUG: Filtro ${index + 1} (${filter.filterType}):`, tourIds.length, 'tours encontrados:', tourIds);
+          return tourIds;
+        })
+      )
+    );
+    
+    // Combinar todos los observables usando forkJoin
+    forkJoin(filterObservables)
+      .pipe(
+        takeUntil(this.destroy$),
+        map((tourIdArrays: number[][]) => {
+          // Combinar todos los arrays de IDs y eliminar duplicados
+          const allTourIds = tourIdArrays.flat();
+          const uniqueTourIds = [...new Set(allTourIds)];
+          
+          console.log('🔄 DEBUG: IDs combinados antes de eliminar duplicados:', allTourIds.length, 'tours');
+          console.log('✨ DEBUG: IDs únicos después de eliminar duplicados:', uniqueTourIds.length, 'tours');
+          console.log('📊 DEBUG: IDs únicos:', uniqueTourIds);
+          
+          // NO limitar por ahora - mostrar todos los tours
+          console.log('🎯 DEBUG: Mostrando TODOS los tours sin limitación:', uniqueTourIds.length, 'tours finales');
+          console.log('🏷️ DEBUG: IDs finales a cargar:', uniqueTourIds);
+          
+          return uniqueTourIds;
+        }),
+        catchError((error) => {
+          console.error('❌ DEBUG: Error loading tours from filters:', error);
+          return of([]);
+        })
+      )
+      .subscribe((tourIds: number[]) => {
+        if (tourIds.length === 0) {
+          console.log('⚠️ DEBUG: No se encontraron tours, array vacío');
+          this.tours = [];
+          this.debugTourIds = [];
+          return;
+        }
+
+        console.log('🚀 DEBUG: Iniciando carga de', tourIds.length, 'tours');
+        
+        // Guardar IDs para mostrar en pantalla
+        this.debugTourIds = tourIds;
+        
+        // Convertir a strings y cargar los tours
+        const tourIdsAsStrings = tourIds.map(id => id.toString());
+        this.loadToursFromIds(tourIdsAsStrings);
+      });
+  }
+
+  /**
+   * Obtiene los IDs de tours de un filtro específico
+   * @param filter Filtro a procesar
+   * @returns Observable con array de IDs de tours
+   */
+  private getTourIdsFromFilter(filter: IHomeSectionTourFilterResponse): Observable<number[]> {
+    console.log(`🔎 DEBUG: Procesando filtro tipo '${filter.filterType}'`);
+    
+    switch (filter.filterType) {
+      case 'tag':
+        console.log(`🏷️ DEBUG: Buscando tours por tag ID: ${filter.tagId}`);
+        return this.tourTagService.getToursByTags([filter.tagId!]).pipe(
+          map(tourIds => {
+            console.log(`✅ DEBUG: Tag ${filter.tagId} devolvió ${tourIds.length} tours:`, tourIds);
+            return tourIds;
+          }),
+          catchError((error) => {
+            console.error(`❌ DEBUG: Error loading tours by tag ${filter.tagId}:`, error);
+            return of([]);
+          })
+        );
+      
+      case 'location':
+        console.log(`📍 DEBUG: Buscando tours por location ID: ${filter.locationId}`);
+        return this.tourLocationService.getToursByLocations([filter.locationId!]).pipe(
+          map(tourIds => {
+            console.log(`✅ DEBUG: Location ${filter.locationId} devolvió ${tourIds.length} tours:`, tourIds);
+            return tourIds;
+          }),
+          catchError((error) => {
+            console.error(`❌ DEBUG: Error loading tours by location ${filter.locationId}:`, error);
+            return of([]);
+          })
+        );
+      
+      case 'specific_tours':
+        console.log(`🎯 DEBUG: Procesando tours específicos: ${filter.specificTourIds}`);
+        try {
+          const tourIds = this.homeSectionTourFilterService.parseSpecificTourIds(
+            filter.specificTourIds!
+          );
+          console.log(`✅ DEBUG: Tours específicos parseados: ${tourIds.length} tours:`, tourIds);
+          return of(tourIds);
+        } catch (error) {
+          console.error('❌ DEBUG: Error parsing specific tour IDs:', error);
+          return of([]);
+        }
+      
+      default:
+        console.warn(`⚠️ DEBUG: Unknown filter type: ${filter.filterType}`);
+        return of([]);
+    }
   }
 
   private loadToursByFilter(filter: IHomeSectionTourFilterResponse): void {
@@ -194,16 +328,57 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
   }
 
   private loadToursByTag(tagId: number): void {
-    // Aquí necesitarías adaptar tu ToursService para aceptar filtro por tag
-    // Por ahora, usar el método existente como fallback
-    // TODO: Implementar this.toursService.getToursByTag(tagId, this.maxToursToShow)
-    this.tours = [];
+    // Obtener IDs de tours relacionados con la etiqueta
+    this.tourTagService
+      .getToursByTags([tagId])
+      .pipe(
+        takeUntil(this.destroy$),
+        catchError((error) => {
+          console.error('Error loading tours by tag:', error);
+          return of([]);
+        })
+      )
+      .subscribe((tourIds: number[]) => {
+        if (tourIds.length === 0) {
+          this.tours = [];
+          return;
+        }
+
+        // Limitar a maxToursToShow y convertir a strings
+        const limitedTourIds = tourIds
+          .slice(0, this.maxToursToShow)
+          .map((id) => id.toString());
+
+        // Cargar los tours usando el método existente
+        this.loadToursFromIds(limitedTourIds);
+      });
   }
 
   private loadToursByLocation(locationId: number): void {
-    // Aquí necesitarías adaptar tu ToursService para aceptar filtro por localización
-    // TODO: Implementar this.toursService.getToursByLocation(locationId, this.maxToursToShow)
-    this.tours = [];
+    // Obtener IDs de tours relacionados con la ubicación
+    this.tourLocationService
+      .getToursByLocations([locationId])
+      .pipe(
+        takeUntil(this.destroy$),
+        catchError((error) => {
+          console.error('Error loading tours by location:', error);
+          return of([]);
+        })
+      )
+      .subscribe((tourIds: number[]) => {
+        if (tourIds.length === 0) {
+          this.tours = [];
+          return;
+        }
+
+        // Limitar a maxToursToShow y convertir a strings
+        const limitedTourIds = tourIds
+          .slice(0, this.maxToursToShow)
+          .map((id) => id.toString());
+
+        // Cargar los tours usando el método existente
+        this.loadToursFromIds(limitedTourIds);
+      });
   }
 
   private loadSpecificTours(specificTourIdsJson: string): void {

@@ -12,7 +12,9 @@
     <p style="margin: 5px 0;"><strong>Tours cargados:</strong> {{ tours.length }}</p>
   </div>
   
+  
   <div *ngIf="tours.length > 0; else noTours">
+    <!-- TODO: Cambiar y usar toursids-->
     <p-carousel
       [value]="tours"
       [numVisible]="5"
@@ -23,6 +25,7 @@
       [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
     >
       <ng-template let-tour #item>
+        <!-- TODO: Cambiar a tour-card-v2 y pasar solo el id del tour-->
         <app-tour-card
           [tourData]="tour"
           [showScalapayPrice]="true"

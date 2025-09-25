@@ -1755,13 +1755,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
           next: () => {
             this.savingActivities[key] = false;
             
-            // NUEVO: Actualizar estado local inmediatamente
-            if (this.travelerActivities[travelerId]) {
-              this.travelerActivities[travelerId] = this.travelerActivities[travelerId].filter(
-                activity => activity.activityId !== activityId
-              );
-            }
-            
+            // Marcar como eliminada (deseleccionada)
             if (!this.deletedFromDB[travelerId]) {
               this.deletedFromDB[travelerId] = {};
             }
@@ -1775,7 +1769,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
               activityPrice,
             });
 
-            console.log(`✅ Actividad "${activityName}" eliminada inmediatamente`);
+            console.log(`✅ Actividad "${activityName}" deseleccionada`);
           },
           error: (error) => {
             this.savingActivities[key] = false;
@@ -1784,7 +1778,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
-              detail: `Error al eliminar ${activityName}: ${
+              detail: `Error al deseleccionar ${activityName}: ${
                 error.message || 'Error desconocido'
               }`,
               life: 5000,
@@ -1799,13 +1793,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
           next: () => {
             this.savingActivities[key] = false;
             
-            // NUEVO: Actualizar estado local inmediatamente
-            if (this.travelerActivityPacks[travelerId]) {
-              this.travelerActivityPacks[travelerId] = this.travelerActivityPacks[travelerId].filter(
-                pack => pack.activityPackId !== activityId
-              );
-            }
-            
+            // Marcar como eliminada (deseleccionada)
             if (!this.deletedFromDB[travelerId]) {
               this.deletedFromDB[travelerId] = {};
             }
@@ -1819,7 +1807,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
               activityPrice,
             });
 
-            console.log(`✅ Actividad "${activityName}" eliminada inmediatamente`);
+            console.log(`✅ Actividad "${activityName}" deseleccionada`);
           },
           error: (error) => {
             this.savingActivities[key] = false;
@@ -1828,7 +1816,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
-              detail: `Error al eliminar ${activityName}: ${
+              detail: `Error al deseleccionar ${activityName}: ${
                 error.message || 'Error desconocido'
               }`,
               life: 5000,
@@ -1838,17 +1826,11 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     } else {
       this.savingActivities[key] = false;
       
-      // NUEVO: Actualizar estado local inmediatamente para casos edge
-      if (this.travelerActivities[travelerId]) {
-        this.travelerActivities[travelerId] = this.travelerActivities[travelerId].filter(
-          activity => activity.activityId !== activityId
-        );
+      // Marcar como eliminada para casos edge
+      if (!this.deletedFromDB[travelerId]) {
+        this.deletedFromDB[travelerId] = {};
       }
-      if (this.travelerActivityPacks[travelerId]) {
-        this.travelerActivityPacks[travelerId] = this.travelerActivityPacks[travelerId].filter(
-          pack => pack.activityPackId !== activityId
-        );
-      }
+      this.deletedFromDB[travelerId][activityId] = true;
       
       this.activitiesAssignmentChange.emit({
         travelerId,
@@ -1881,6 +1863,13 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       : false;
 
     return hasIndividualActivity || hasActivityPack;
+  }
+
+  /**
+   * Verificar si una actividad fue eliminada (deseleccionada)
+   */
+  isTravelerActivityDeleted(travelerId: number, activityId: number): boolean {
+    return this.deletedFromDB[travelerId]?.[activityId] || false;
   }
 
 

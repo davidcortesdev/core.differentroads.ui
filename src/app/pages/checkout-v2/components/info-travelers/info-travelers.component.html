@@ -439,7 +439,7 @@
                           </p-progressSpinner>
                           <p-toggleSwitch 
                             *ngIf="!isSavingActivity(traveler.id, travelerActivity.activityId)"
-                            [ngModel]="true"
+                            [ngModel]="!isTravelerActivityDeleted(traveler.id, travelerActivity.activityId)"
                             [disabled]="isSavingActivity(traveler.id, travelerActivity.activityId)"
                             (ngModelChange)="onActivityToggleChange(traveler.id, travelerActivity.activityId, $event)"
                             [ngModelOptions]="{standalone: true}">
@@ -462,7 +462,7 @@
                           </p-progressSpinner>
                           <p-toggleSwitch 
                             *ngIf="!isSavingActivity(traveler.id, travelerActivityPack.activityPackId)"
-                            [ngModel]="true"
+                            [ngModel]="!isTravelerActivityDeleted(traveler.id, travelerActivityPack.activityPackId)"
                             [disabled]="isSavingActivity(traveler.id, travelerActivityPack.activityPackId)"
                             (ngModelChange)="onActivityToggleChange(traveler.id, travelerActivityPack.activityPackId, $event)"
                             [ngModelOptions]="{standalone: true}">

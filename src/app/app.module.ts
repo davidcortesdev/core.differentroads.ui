@@ -295,6 +295,7 @@ import { HeaderV2Component } from './layout/header-v2/header-v2.component';
 
 // Services
 import { RetailerService } from './core/services/retailer/retailer.service';
+import { MessagePointsComponent } from './pages/checkout-v2/components/points-redemption/components/message-points/message-points.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -486,6 +487,7 @@ registerLocaleData(localeEs);
     ReviewSectionV2Component,
     UpdateProfileSectionV2Component,
     HeaderV2Component,
+    MessagePointsComponent,
   ],
   imports: [
     // Angular Modules

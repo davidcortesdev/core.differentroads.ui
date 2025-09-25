@@ -64,7 +64,6 @@ export class FullCardSectionV2Component implements OnInit {
         next: (sections) => {
           if (sections.length > 0) {
             const fullScreenSection = sections[0];
-            console.log('FullScreen section found:', fullScreenSection);
 
             // 2. Obtener las configuraciones de esta sección
             this.homeSectionConfigurationService
@@ -72,8 +71,6 @@ export class FullCardSectionV2Component implements OnInit {
               .subscribe({
                 next: (configurations) => {
                   if (configurations.length > 0) {
-                    console.log('Configurations found:', configurations);
-
                     // Usar la primera configuración para título y descripción
                     const firstConfiguration = configurations[0];
                     this.sectionTitle = firstConfiguration.title || '';
@@ -111,11 +108,6 @@ export class FullCardSectionV2Component implements OnInit {
         .getByConfiguration(configuration.id, true)
         .subscribe({
           next: (cards) => {
-            console.log(
-              `Cards found for configuration ${configuration.id}:`,
-              cards
-            );
-
             // Mapear las cards de esta configuración
             const mappedCards = cards.map((card) => ({
               id: card.id,
@@ -134,7 +126,6 @@ export class FullCardSectionV2Component implements OnInit {
             // Si hemos completado todas las peticiones, actualizar el array de cards
             if (completedRequests === totalRequests) {
               this.cards = allCards;
-              console.log('All cards loaded:', this.cards);
               this.cdr.detectChanges();
             }
           },
@@ -148,7 +139,6 @@ export class FullCardSectionV2Component implements OnInit {
             // Si hemos completado todas las peticiones (incluso con errores), actualizar
             if (completedRequests === totalRequests) {
               this.cards = allCards;
-              console.log('All cards loaded (with some errors):', this.cards);
               this.cdr.detectChanges();
             }
           },

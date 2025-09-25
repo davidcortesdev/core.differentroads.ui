@@ -1,49 +1,9 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { MessageService } from 'primeng/api';
-import { PointsService } from '../../../../core/services/points.service';
+import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
+import { PointsDistributionSummary, PointsRedemptionConfig, TravelerData, TravelerPointsSummary, ValidationResult } from '../../../../core/models/v2/checkout-v2.model';
 
-// Simplified interfaces for points redemption
-export interface TravelerData {
-  id: string;
-  name: string;
-  email: string;
-  hasEmail: boolean;
-  maxPoints: number;
-  assignedPoints: number;
-}
 
-export interface PointsRedemptionConfig {
-  enabled: boolean;
-  totalPointsToUse: number;
-  pointsPerTraveler: { [travelerId: string]: number };
-  maxDiscountPerTraveler: number;
-  totalDiscount: number;
-}
-
-export interface TravelerPointsSummary {
-  travelerId: string;
-  currentCategory: string;
-  totalPoints: number;
-  availablePoints: number;
-  usedPoints: number;
-  categoryStartDate: Date;
-  nextCategory?: string;
-  pointsToNextCategory?: number;
-}
-
-export interface ValidationResult {
-  isValid: boolean;
-  message: string;
-  errorType: string;
-  details?: string[];
-}
-
-export interface PointsDistributionSummary {
-  totalPoints: number;
-  totalDiscount: number;
-  travelersWithPoints: number;
-  mainTravelerPoints: number;
-}
 
 
 @Component({
@@ -79,7 +39,7 @@ export class PointsRedemptionComponent implements OnInit, OnDestroy {
   isLoading: boolean = false;
 
   constructor(
-    private readonly pointsService: PointsService,
+    private readonly pointsV2Service: PointsV2Service,
     private readonly messageService: MessageService
   ) { }
 

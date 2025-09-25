@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MessageModule } from 'primeng/message';
-import { PointsCalculatorService } from '../../core/services/checkout/points-calculator.service';
+import { PointsV2Service } from '../../core/services/v2/points-v2.service';
 import { ReservationService, IReservationSummaryResponse } from '../../core/services/reservation/reservation.service';
 import { MessageService } from 'primeng/api';
 import { Subject, EMPTY } from 'rxjs';
@@ -64,7 +64,7 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
 
   // NUEVO: Inyectar servicios necesarios
   constructor(
-    private pointsCalculator: PointsCalculatorService,
+    private pointsV2Service: PointsV2Service,
     private reservationService: ReservationService,
     private messageService: MessageService
   ) {}
@@ -214,6 +214,6 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   getEarnedPoints(): number {
-    return this.pointsCalculator.calculateEarnedPoints(this.subtotal);
+    return this.pointsV2Service.calculatePointsFromAmount(this.subtotal);
   }
 }

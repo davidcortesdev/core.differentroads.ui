@@ -130,6 +130,16 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     };
   } = {};
 
+  // Fechas calculadas para cada viajero y campo
+  travelerFieldDates: {
+    [fieldCode: string]: {
+      [travelerId: number]: {
+        minDate: Date;
+        maxDate: Date;
+      };
+    };
+  } = {};
+
   private deletedFromDB: {
     [travelerId: number]: {
       [activityId: number]: boolean;
@@ -229,10 +239,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
   ngOnInit(): void {
     if (this.departureId && this.reservationId) {
-      console.log('departureId:', this.departureId);
-      console.log('reservationId:', this.reservationId);
-      console.log('itineraryId:', this.itineraryId);
-
       // PRIMERO: Verificar si hay un vuelo seleccionado en Amadeus
       this.checkFlightSelectionStatus();
     } else {
@@ -258,12 +264,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         this.budgetStatusId = statuses.budgetStatus[0].id;
         this.draftStatusId = statuses.draftStatus[0].id;
         
-        console.log('Estados de reserva cargados:', {
-          cart: this.cartStatusId,
-          budget: this.budgetStatusId,
-          draft: this.draftStatusId
-        });
-        
         // Ahora verificar el estado actual de la reserva
         this.checkReservationStatus();
       },
@@ -281,48 +281,34 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   private checkReservationStatus(): void {
     this.reservationService.getById(this.reservationId!).subscribe({
       next: (reservation) => {
-        console.log('Estado actual de la reserva:', reservation.reservationStatusId);
-        
         if (reservation.reservationStatusId === this.budgetStatusId) {
-          console.log('Reserva en estado BUDGET');
           this.checkingReservationStatus = false;
-          // Cargar datos después de verificar el estado
           this.loadAllData();
         } else if (reservation.reservationStatusId === this.draftStatusId) {
-          console.log('Reserva en estado DRAFT');
-          console.log('Pasando a estado CART');
-          
           // Actualizar estado y luego cargar datos
           this.reservationService
             .updateStatus(this.reservationId!, this.cartStatusId!)
             .subscribe({
               next: (success) => {
                 if (success) {
-                  console.log('Estado actualizado correctamente a CART');
                   this.checkingReservationStatus = false;
-                  // Solo cargar datos después de actualizar el estado
                   this.loadAllData();
                 } else {
-                  console.error('Error al actualizar estado de la reserva');
                   this.error = 'Error al actualizar estado de la reserva';
                   this.checkingReservationStatus = false;
                 }
               },
               error: (error) => {
-                console.error('Error al actualizar estado:', error);
                 this.error = 'Error al actualizar estado de la reserva';
                 this.checkingReservationStatus = false;
               }
             });
         } else {
-          console.log('Reserva en otro estado, cargando datos directamente');
           this.checkingReservationStatus = false;
-          // Para otros estados, cargar datos directamente
           this.loadAllData();
         }
       },
       error: (error) => {
-        console.error('Error al obtener la reserva:', error);
         this.error = 'Error al obtener información de la reserva';
         this.checkingReservationStatus = false;
       }
@@ -330,12 +316,10 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('ngOnChanges - info-travelers:', changes);
     if (
       (changes['departureId'] && changes['departureId'].currentValue) ||
       (changes['reservationId'] && changes['reservationId'].currentValue)
     ) {
-      console.log('🔄 Recargando datos de info-travelers');
       if (this.departureId && this.reservationId) {
         // Reinicializar control de eliminados
         this.deletedFromDB = {};
@@ -602,6 +586,99 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
+   * Obtener fecha mínima para el campo de fecha basado en el age group
+   */
+  getMinDateForField(fieldCode: string, traveler: IReservationTravelerResponse): Date {
+    if (fieldCode === 'birthdate') {
+      const ageGroup = this.ageGroups.find(ag => ag.id === traveler.ageGroupId);
+      const today = new Date();
+      
+      if (ageGroup && ageGroup.upperLimitAge) {
+        // Para fechas de nacimiento: fecha mínima = hoy - edad máxima del age group
+        const minDate = new Date(today.getFullYear() - ageGroup.upperLimitAge, today.getMonth(), today.getDate());
+        return minDate;
+      } else {
+        // Si no hay límite superior, permitir fechas hasta 100 años atrás
+        const minDate = new Date(today.getFullYear() - 100, 0, 1);
+        return minDate;
+      }
+    } else if (fieldCode === 'expirationdate') {
+      // Para fechas de expiración: fecha mínima = hoy
+      const today = new Date();
+      return today;
+    }
+    
+    // Fecha por defecto: 100 años atrás
+    const today = new Date();
+    return new Date(today.getFullYear() - 100, 0, 1);
+  }
+
+  /**
+   * Obtener fecha máxima para el campo de fecha basado en el age group
+   */
+  getMaxDateForField(fieldCode: string, traveler: IReservationTravelerResponse): Date {
+    if (fieldCode === 'birthdate') {
+      const ageGroup = this.ageGroups.find(ag => ag.id === traveler.ageGroupId);
+      const today = new Date();
+      
+      if (ageGroup && ageGroup.lowerLimitAge) {
+        // Para fechas de nacimiento: fecha máxima = hoy - edad mínima del age group
+        const maxDate = new Date(today.getFullYear() - ageGroup.lowerLimitAge, today.getMonth(), today.getDate());
+        return maxDate;
+      } else {
+        // Si no hay límite inferior, permitir fechas hasta hoy
+        return today;
+      }
+    } else if (fieldCode === 'expirationdate') {
+      // Para fechas de expiración: fecha máxima = 30 años en el futuro
+      const today = new Date();
+      return new Date(today.getFullYear() + 30, 11, 31);
+    }
+    
+    // Fecha por defecto: hoy
+    return new Date();
+  }
+
+  /**
+   * Calcular y almacenar fechas para todos los viajeros y campos
+   */
+  private calculateTravelerFieldDates(): void {
+    // Limpiar fechas anteriores
+    this.travelerFieldDates = {};
+    
+    // Procesar cada campo de fecha
+    const dateFields = ['birthdate', 'expirationdate'];
+    
+    dateFields.forEach(fieldCode => {
+      this.travelerFieldDates[fieldCode] = {};
+      
+      this.travelers.forEach(traveler => {
+        const minDate = this.getMinDateForField(fieldCode, traveler);
+        const maxDate = this.getMaxDateForField(fieldCode, traveler);
+        
+        this.travelerFieldDates[fieldCode][traveler.id] = {
+          minDate: minDate,
+          maxDate: maxDate
+        };
+      });
+    });
+  }
+
+  /**
+   * Obtener fecha mínima almacenada para un campo específico
+   */
+  getStoredMinDate(fieldCode: string, travelerId: number): Date {
+    return this.travelerFieldDates[fieldCode]?.[travelerId]?.minDate || new Date(1924, 0, 1);
+  }
+
+  /**
+   * Obtener fecha máxima almacenada para un campo específico
+   */
+  getStoredMaxDate(fieldCode: string, travelerId: number): Date {
+    return this.travelerFieldDates[fieldCode]?.[travelerId]?.maxDate || new Date();
+  }
+
+  /**
    * NUEVO: Validador para fechas de expiración
    */
   private expirationDateValidator() {
@@ -673,6 +750,9 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       const travelerForm = this.createTravelerForm(traveler);
       this.travelerForms.push(travelerForm);
     });
+
+    // Calcular fechas para cada viajero y campo
+    this.calculateTravelerFieldDates();
 
     // NUEVO: Validación inicial en tiempo real
     setTimeout(() => {
@@ -1043,21 +1123,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         next: (responses) => {
           this.existingTravelerFields = responses.flat();
 
-          // Debug para campos existentes de fecha
-          const existingDateFields = this.existingTravelerFields.filter(
-            (field) => {
-              const fieldDetails = this.getReservationFieldDetails(
-                field.reservationFieldId
-              );
-              return fieldDetails?.fieldType === 'date';
-            }
-          );
-
           // Inicializar formularios con los valores existentes
           this.initializeTravelerForms();
-
-          // Debug: Log de tipos de campos para debugging
-          this.logFieldTypesForDebugging();
         },
         error: (error) => {
           // Error handling
@@ -1431,7 +1498,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
    */
   reloadData(): void {
     if (this.departureId && this.reservationId) {
-      console.log('🔄 Recarga manual de datos solicitada');
       this.deletedFromDB = {};
       // Reiniciar estados de carga
       this.loading = false;
@@ -2369,70 +2435,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     return debugInfo;
   }
 
-  /**
-   * Console log para debugging de tipos de campos
-   */
-  logFieldTypesForDebugging(): void {
-    console.log('=== DEBUG: Tipos de campos disponibles ===');
 
-    if (this.reservationFields) {
-      this.reservationFields.forEach((field) => {
-        console.log(
-          `Campo: ${field.name} (${field.code}) - Tipo: ${field.fieldType}`
-        );
-      });
-    }
 
-    if (this.departureReservationFields) {
-      console.log('=== DEBUG: Campos de departure ===');
-      this.departureReservationFields.forEach((field) => {
-        const fieldDetails = this.getReservationFieldDetails(
-          field.reservationFieldId
-        );
-        console.log(
-          `Departure Field: ${
-            fieldDetails?.name
-          } - Mandatory: ${this.isFieldMandatory(field, false)}`
-        );
-      });
-    }
-  }
-
-  /**
-   * Método de prueba para verificar que el toast funciona
-   */
-  testToast(): void {
-    this.messageService.add({
-      severity: 'info',
-      summary: 'Prueba de Toast',
-      detail:
-        'Este es un mensaje de prueba para verificar que el toast funciona correctamente',
-      life: 3000,
-    });
-  }
-
-  /**
-   * Método para debuggear los tipos de campo de teléfono
-   */
-  debugPhoneFieldTypes(): void {
-    console.log('=== DEBUG: Tipos de campo de teléfono ===');
-    this.departureReservationFields.forEach((field) => {
-      const fieldDetails = this.getReservationFieldDetails(
-        field.reservationFieldId
-      );
-      if (fieldDetails && fieldDetails.code.toLowerCase().includes('phone')) {
-        console.log(
-          'Campo:',
-          fieldDetails.name,
-          'Código:',
-          fieldDetails.code,
-          'Tipo:',
-          fieldDetails.fieldType
-        );
-      }
-    });
-    console.log('=== FIN DEBUG ===');
-  }
 
   /**
    * Obtiene información sobre los requisitos de reserva de Amadeus
@@ -2569,31 +2573,24 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
    */
   private checkFlightSelectionStatus(): void {
     if (!this.reservationId) {
-      console.log('No hay reservationId, continuando con carga normal...');
       this.loadReservationStatuses();
       return;
     }
 
-    console.log('=== Verificando estado de selección de vuelos en Amadeus ===');
     this.isCheckingFlightStatus = true;
 
     this.flightSearchService.getSelectionStatus(this.reservationId).subscribe({
       next: (hasSelection: boolean) => {
-        console.log('Estado de selección de vuelos:', hasSelection);
         this.hasFlightSelected = hasSelection;
 
         if (hasSelection) {
-          console.log('✅ Vuelo seleccionado encontrado, obteniendo requisitos de reserva...');
           this.getAmadeusBookingRequirements();
         } else {
-          console.log('ℹ️ No hay vuelo seleccionado, continuando con carga normal...');
           this.isCheckingFlightStatus = false;
           this.loadReservationStatuses();
         }
       },
       error: (error) => {
-        console.error('❌ Error al verificar estado de selección de vuelos:', error);
-        console.log('⚠️ Continuando con carga normal debido al error...');
         this.isCheckingFlightStatus = false;
         this.loadReservationStatuses();
       }
@@ -2604,8 +2601,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
    * NUEVO: Manejar cambios en asignaciones de habitaciones desde el componente hijo
    */
   onRoomAssignmentsChange(roomAssignments: { [travelerId: number]: number }): void {
-    console.log('Asignaciones de habitaciones recibidas:', roomAssignments);
-    
     // Emitir el evento al componente padre
     this.roomAssignmentsChange.emit(roomAssignments);
   }
@@ -2615,23 +2610,18 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
    */
   private getAmadeusBookingRequirements(): void {
     if (!this.reservationId) {
-      console.log('No hay reservationId, continuando con carga normal...');
       this.isCheckingFlightStatus = false;
       this.loadReservationStatuses();
       return;
     }
 
-    console.log('=== Obteniendo requisitos de reserva de Amadeus ===');
-
     this.flightSearchService.getBookingRequirements(this.reservationId).subscribe({
       next: (requirements: IBookingRequirements) => {
-        console.log('✅ Requisitos de reserva obtenidos:', requirements);
         this.amadeusBookingRequirements = requirements;
         this.isCheckingFlightStatus = false;
 
         // Si ya tenemos formularios inicializados, reinicializarlos para aplicar las nuevas validaciones
         if (this.travelerForms.length > 0) {
-          console.log('🔄 Reinicializando formularios con nuevos requisitos de Amadeus...');
           this.initializeTravelerForms();
         }
 
@@ -2639,8 +2629,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         this.loadReservationStatuses();
       },
       error: (error) => {
-        console.error('❌ Error al obtener requisitos de reserva:', error);
-        console.log('⚠️ Continuando con carga normal debido al error...');
         this.amadeusBookingRequirements = null;
         this.isCheckingFlightStatus = false;
         this.loadReservationStatuses();

@@ -215,15 +215,17 @@
                              [ngClass]="{ 'required-empty': isFieldMandatory(field, traveler.isLeadTraveler) && !getFieldValue(traveler.id, fieldDetails.code) }"
                              *ngIf="fieldDetails.fieldType === 'date'">
                           <label>{{ fieldDetails.name }}*</label>
-                          <p-datePicker 
+                          <p-datepicker 
                             [formControlName]="fieldDetails.code + '_' + traveler.id"
+                            [minDate]="getStoredMinDate(fieldDetails.code, traveler.id)"
+                            [maxDate]="getStoredMaxDate(fieldDetails.code, traveler.id)"
                             showIcon 
                             appendTo="body" 
                             placeholder="dd/mm/yyyy"
                             dateFormat="dd/mm/yy"
                             (onSelect)="onDateFieldChange(traveler.id, fieldDetails.code, $event)"
                             (onBlur)="onDateFieldBlur(traveler.id, fieldDetails.code)"
-                            [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"></p-datePicker>
+                            [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"></p-datepicker>
                           <small *ngIf="hasFieldError(traveler.id, fieldDetails.code)" class="p-error">
                             {{ getErrorMessage(fieldDetails.code, getFieldErrors(traveler.id, fieldDetails.code)) }}
                           </small>
@@ -367,15 +369,17 @@
                              [ngClass]="{ 'required-empty': isFieldMandatory(field, traveler.isLeadTraveler) && !getFieldValue(traveler.id, fieldDetails.code) }"
                              *ngIf="fieldDetails.fieldType === 'date'">
                           <label>{{ fieldDetails.name }}</label>
-                          <p-datePicker 
+                          <p-datepicker 
                             [formControlName]="fieldDetails.code + '_' + traveler.id"
+                            [minDate]="getStoredMinDate(fieldDetails.code, traveler.id)"
+                            [maxDate]="getStoredMaxDate(fieldDetails.code, traveler.id)"
                             showIcon 
                             appendTo="body" 
                             placeholder="dd/mm/yyyy"
                             dateFormat="dd/mm/yy"
                             (onSelect)="onDateFieldChange(traveler.id, fieldDetails.code, $event)"
                             (onBlur)="onDateFieldBlur(traveler.id, fieldDetails.code)"
-                            [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"></p-datePicker>
+                            [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"></p-datepicker>
                           <small *ngIf="hasFieldError(traveler.id, fieldDetails.code)" class="p-error">
                             {{ getErrorMessage(fieldDetails.code, getFieldErrors(traveler.id, fieldDetails.code)) }}
                           </small>

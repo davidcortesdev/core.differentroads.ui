@@ -409,25 +409,64 @@ export class InfoTravelersRoomComponent implements OnInit, OnChanges, OnDestroy 
     const roomSummary = this.getRoomSummary();
     let totalRoomSpaces = 0;
     
+    // Validar capacidades de habitaciones compartidas primero
+    for (const roomInfo of roomSummary) {
+      const room = this.availableRooms.find(r => r.id === roomInfo.roomId);
+      if (room) {
+        const travelersInRoom = roomInfo.travelers.length;
+        const roomCapacity = room.capacity;
+        
+        // Solo validar capacidad para habitaciones compartidas (no individuales)
+        const isIndividualRoom = room.name.toLowerCase().includes('individual') || roomCapacity === 1;
+        
+        if (!isIndividualRoom && travelersInRoom > roomCapacity) {
+          console.log(`❌ ${room.name} (ID: ${roomInfo.roomId}): ${travelersInRoom} viajeros exceden la capacidad de ${roomCapacity}`);
+          return {
+            isValid: false,
+            message: `La habitación ${room.name} tiene capacidad para ${roomCapacity} personas, pero se han asignado ${travelersInRoom} viajeros.`
+          };
+        }
+      }
+    }
+    
+    // Calcular espacios totales después de validar capacidades
     roomSummary.forEach(roomInfo => {
       const room = this.availableRooms.find(r => r.id === roomInfo.roomId);
       if (room) {
-        // CORRECCIÓN: Cada viajero ocupa una instancia de habitación
-        // No agrupamos por capacidad, cada viajero tiene su propia habitación
-        const roomInstances = roomInfo.travelers.length; // 1 instancia por viajero
-        totalRoomSpaces += roomInstances; // Cada viajero ocupa 1 espacio
-        console.log(`🏨 ${room.name}: ${roomInfo.travelers.length} viajeros, ${roomInstances} instancia(s) = ${roomInstances} espacios`);
+        const travelersInRoom = roomInfo.travelers.length;
+        const roomCapacity = room.capacity;
+        
+        // Determinar si es habitación individual o compartida basado en el nombre o capacidad
+        const isIndividualRoom = room.name.toLowerCase().includes('individual') || roomCapacity === 1;
+        
+        if (isIndividualRoom) {
+          // HABITACIONES INDIVIDUALES: Cada viajero necesita su propia habitación física
+          // Si 3 viajeros eligen Individual, necesitan 3 habitaciones individuales separadas
+          const individualRoomInstances = travelersInRoom; // 1 instancia por viajero
+          const totalSpacesForIndividual = individualRoomInstances * roomCapacity; // 3 × 1 = 3 espacios
+          
+          totalRoomSpaces += totalSpacesForIndividual;
+          console.log(`🏨 ${room.name} (ID: ${roomInfo.roomId}): ${travelersInRoom} viajeros en ${individualRoomInstances} habitaciones individuales separadas, capacidad ${roomCapacity} cada una = ${totalSpacesForIndividual} espacios`);
+        } else {
+          // HABITACIONES COMPARTIDAS (Twin, Double, Triple): Los viajeros comparten la misma habitación física
+          const sharedRoomInstances = 1; // Solo 1 habitación física compartida
+          const totalSpacesForShared = sharedRoomInstances * roomCapacity; // 1 × 2 = 2 espacios
+          
+          totalRoomSpaces += totalSpacesForShared;
+          console.log(`🏨 ${room.name} (ID: ${roomInfo.roomId}): ${travelersInRoom} viajeros compartiendo 1 habitación, capacidad ${roomCapacity} = ${totalSpacesForShared} espacios`);
+        }
       }
     });
     
     console.log('📊 Total espacios de habitación:', totalRoomSpaces);
     console.log('👥 Total viajeros:', totalTravelers);
     
-    // Verificar que no exceda el número de viajeros
+    // Verificar que la capacidad total de las habitaciones no exceda el número de viajeros
+    // Nota: totalRoomSpaces representa la suma de todas las capacidades de las habitaciones seleccionadas
     if (totalRoomSpaces > totalTravelers) {
       return {
         isValid: false,
-        message: `Las habitaciones seleccionadas exceden la cantidad de viajeros. Espacios: ${totalRoomSpaces}, Viajeros: ${totalTravelers}`
+        message: `La capacidad total de las habitaciones seleccionadas (${totalRoomSpaces} espacios) excede la cantidad de viajeros (${totalTravelers}). Cada viajero debe ocupar exactamente 1 espacio. Por favor, ajuste las asignaciones de habitaciones.`
       };
     }
     
@@ -573,28 +612,77 @@ export class InfoTravelersRoomComponent implements OnInit, OnChanges, OnDestroy 
     
     // Log detallado de lo que se va a enviar al backend
     console.log('📋 Resumen de asignaciones a enviar:');
-    Object.entries(this.roomAssignments).forEach(([travelerId, roomId]) => {
-      const traveler = this.travelers.find(t => t.id === parseInt(travelerId));
-      const room = this.availableRooms.find(r => r.id === roomId);
-      console.log(`  - Viajero ${traveler?.travelerNumber} (ID: ${travelerId}) → ${room?.name} (ID: ${roomId})`);
-    });
-
-    // Crear array de operaciones para cada viajero
-    const saveOperations = this.travelers.map(traveler => {
-      const roomId = this.roomAssignments[traveler.id];
+    const roomSummary = this.getRoomSummary();
+    roomSummary.forEach(roomInfo => {
+      const room = this.availableRooms.find(r => r.id === roomInfo.roomId);
+      const travelersInRoom = roomInfo.travelers;
+      const isIndividualRoom = room?.name.toLowerCase().includes('individual') || room?.capacity === 1;
       
-      if (roomId) {
-        // Actualizar o crear asignación de habitación
-        return this.updateOrCreateRoomAssignment(traveler.id, roomId);
+      if (isIndividualRoom) {
+        console.log(`  🏨 ${room?.name}: ${travelersInRoom.length} habitaciones individuales separadas`);
+        travelersInRoom.forEach(traveler => {
+          console.log(`    - Viajero ${traveler.travelerNumber} (ID: ${traveler.id}) → Habitación individual separada`);
+        });
       } else {
-        // Si no hay habitación asignada, eliminar todas las acomodaciones
-        return this.reservationTravelerAccommodationService.deleteByReservationTraveler(traveler.id);
+        console.log(`  🏨 ${room?.name}: 1 habitación compartida para ${travelersInRoom.length} viajeros`);
+        travelersInRoom.forEach(traveler => {
+          console.log(`    - Viajero ${traveler.travelerNumber} (ID: ${traveler.id}) → Comparte habitación con otros`);
+        });
       }
     });
 
-    // Ejecutar todas las operaciones en paralelo
-    forkJoin(saveOperations)
-      .pipe(takeUntil(this.destroy$))
+    // NUEVA LÓGICA: Agrupar por habitación y tipo para evitar duplicados
+    const saveOperations: any[] = [];
+    
+    // Primero: Limpiar todas las asignaciones existentes
+    const cleanupOperations = this.travelers.map(traveler => 
+      this.reservationTravelerAccommodationService.deleteByReservationTraveler(traveler.id)
+    );
+    
+    // Ejecutar limpieza primero
+    forkJoin(cleanupOperations)
+      .pipe(
+        switchMap(() => {
+          // Segundo: Crear nuevas asignaciones agrupadas por habitación
+          const roomSummary = this.getRoomSummary();
+          const createOperations: any[] = [];
+          
+          roomSummary.forEach(roomInfo => {
+            const room = this.availableRooms.find(r => r.id === roomInfo.roomId);
+            const travelersInRoom = roomInfo.travelers;
+            const isIndividualRoom = room?.name.toLowerCase().includes('individual') || room?.capacity === 1;
+            
+            if (isIndividualRoom) {
+              // HABITACIONES INDIVIDUALES: Crear una asignación por cada viajero
+              travelersInRoom.forEach(traveler => {
+                const createData = {
+                  id: 0,
+                  reservationTravelerId: traveler.id,
+                  departureAccommodationId: roomInfo.roomId
+                };
+                console.log(`📤 Creando asignación individual:`, createData);
+                createOperations.push(this.reservationTravelerAccommodationService.create(createData));
+              });
+            } else {
+              // HABITACIONES COMPARTIDAS: Crear asignaciones para todos los viajeros
+              // El backend deberá interpretar que múltiples viajeros con el mismo departureAccommodationId
+              // están compartiendo la misma habitación física
+              travelersInRoom.forEach(traveler => {
+                const createData = {
+                  id: 0,
+                  reservationTravelerId: traveler.id,
+                  departureAccommodationId: roomInfo.roomId
+                };
+                console.log(`📤 Creando asignación compartida:`, createData);
+                createOperations.push(this.reservationTravelerAccommodationService.create(createData));
+              });
+            }
+          });
+          
+          return forkJoin(createOperations);
+        }),
+        takeUntil(this.destroy$)
+      )
       .subscribe({
         next: (results) => {
           this.saving = false;

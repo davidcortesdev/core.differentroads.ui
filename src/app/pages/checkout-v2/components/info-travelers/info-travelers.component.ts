@@ -1409,19 +1409,21 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Ordenar travelers con el lead traveler siempre primero
+   * También asegura que solo un viajero sea marcado como líder
    */
   private sortTravelersWithLeadFirst(
     travelers: IReservationTravelerResponse[]
   ): IReservationTravelerResponse[] {
-    return travelers.sort((a, b) => {
-      if (a.isLeadTraveler && !b.isLeadTraveler) {
-        return -1;
-      }
-      if (b.isLeadTraveler && !a.isLeadTraveler) {
-        return 1;
-      }
-      return a.travelerNumber - b.travelerNumber;
-    });
+    // Primero, asegurar que solo el primer viajero (por travelerNumber) sea el líder
+    const sortedTravelers = travelers.sort((a, b) => a.travelerNumber - b.travelerNumber);
+    
+    // Marcar solo el primer viajero como líder
+    const correctedTravelers = sortedTravelers.map((traveler, index) => ({
+      ...traveler,
+      isLeadTraveler: index === 0 // Solo el primer viajero es líder
+    }));
+    
+    return correctedTravelers;
   }
 
   /**

@@ -172,7 +172,16 @@ export class PointsRedemptionComponent implements OnInit, OnDestroy {
             hasEmail: false,
             maxPoints: 0,
             assignedPoints: 0
-          }
+          },
+          {
+            id: 'traveler-4',
+            name: 'David Cortés',
+            email: 'dcortes@differentroads.es',
+            hasEmail: true,
+            maxPoints: 50,
+            assignedPoints: 0
+          },
+          
         ];
       
     } catch (error) {
@@ -250,7 +259,7 @@ export class PointsRedemptionComponent implements OnInit, OnDestroy {
 
   /**
    * Obtiene el descuento máximo disponible según la categoría
-   * Según documento: Trotamundos: 50€, Viajante: 75€, Nómada: 100€
+   * Según documento: Trotamundos: 50€, Viajero: 75€, Nómada: 100€
    */
   getMaxDiscountForCategory(): number {
     if (!this.pointsSummary) return 0;
@@ -259,7 +268,7 @@ export class PointsRedemptionComponent implements OnInit, OnDestroy {
     switch (this.pointsSummary.currentCategory) {
       case 'TROTAMUNDOS':
         return 50; // 50€ máximo por compra
-      case 'VIAJANTE':
+      case 'VIAJERO':
         return 75; // 75€ máximo por compra
       case 'NOMADA':
         return 100; // 100€ máximo por compra
@@ -622,7 +631,7 @@ export class PointsRedemptionComponent implements OnInit, OnDestroy {
     if (!this.pointsSummary) return '';
     // Simplified mock logic
     switch (this.pointsSummary.currentCategory) {
-      case 'TROTAMUNDOS': return 'pi pi-leaf';
+      case 'TROTAMUNDOS': return 'pi pi-globe';
       case 'VIAJERO': return 'pi pi-send';
       case 'NOMADA': return 'pi pi-globe';
       default: return 'pi pi-star';
@@ -636,7 +645,7 @@ export class PointsRedemptionComponent implements OnInit, OnDestroy {
     if (!this.pointsSummary) return '';
     // Simplified mock logic
     switch (this.pointsSummary.currentCategory) {
-      case 'TROTAMUNDOS': return 'category-trotamundos';
+      case 'TROTAMUNDOS': return 'category-globe';
       case 'VIAJERO': return 'category-viajero';
       case 'NOMADA': return 'category-nomada';
       default: return '';

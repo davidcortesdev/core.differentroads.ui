@@ -127,7 +127,7 @@
                 spinnerMode="horizontal"
                 [useGrouping]="false"
                 placeholder="0"
-                [class.error]="!canAssignPointsToTraveler(traveler.id, getTravelerAssignedPoints(traveler.id)) || getTravelerAssignedPoints(traveler.id) > getTravelerMaxPoints(traveler.id)">
+                [class.error]="!canAssignPointsToTraveler(traveler.id, getTravelerAssignedPoints(traveler.id))">
                 <ng-template #incrementbuttonicon>
                     <span class="pi pi-plus"></span>
                 </ng-template>

@@ -355,15 +355,6 @@ export class PointsRedemptionComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Maneja el evento blur del input de puntos de viajero
-   */
-  onTravelerPointsBlur(travelerId: string, event: any): void {
-    // Para p-inputNumber, el valor está en event.value
-    const inputValue = event.value || event.target?.value || 0;
-    const points = parseFloat(inputValue) || 0;
-    this.assignPointsToTraveler(travelerId, points);
-  }
 
   /**
    * Asigna puntos manualmente a un viajero específico
@@ -439,14 +430,27 @@ export class PointsRedemptionComponent implements OnInit, OnDestroy {
 
   /**
    * Calcula el máximo de puntos que puede recibir un viajero específico
+   * Considera el límite de membresía entre todos los viajeros
    */
   private calculateMaxPointsForTraveler(travelerId: string): number {
     const maxPointsPerPerson = this.pointsRedemption.maxDiscountPerTraveler;
     const availablePoints = this.getAvailablePoints();
     const maxDiscount = this.getMaxDiscountForCategory();
     
-    // El máximo es el menor entre el límite por persona y los puntos disponibles
-    return Math.min(maxPointsPerPerson, availablePoints, maxDiscount);
+    // Calcular puntos ya asignados a otros viajeros
+    const pointsAlreadyAssigned = Object.entries(this.pointsRedemption.pointsPerTraveler)
+      .filter(([id, points]) => id !== travelerId)
+      .reduce((sum, [id, points]) => sum + points, 0);
+    
+    // Puntos disponibles para este viajero considerando el límite de membresía
+    const remainingPointsFromMembership = Math.max(0, maxDiscount - pointsAlreadyAssigned);
+    const remainingPointsFromAvailable = Math.max(0, availablePoints - pointsAlreadyAssigned);
+    
+    // El máximo es el menor entre:
+    // 1. Límite por persona (50€)
+    // 2. Puntos restantes del límite de membresía
+    // 3. Puntos restantes disponibles
+    return Math.min(maxPointsPerPerson, remainingPointsFromMembership, remainingPointsFromAvailable);
   }
 
   /**
@@ -508,13 +512,63 @@ export class PointsRedemptionComponent implements OnInit, OnDestroy {
 
   /**
    * Valida si se puede asignar la cantidad de puntos especificada a un viajero
+   * Considera el límite de membresía entre todos los viajeros
    */
   canAssignPointsToTraveler(travelerId: string, points: number): boolean {
     const traveler = this.travelers.find(t => t.id === travelerId);
     if (!traveler || (travelerId !== 'main-traveler' && !traveler.hasEmail)) return false;
 
+    // Validar que los puntos no sean negativos
+    if (points < 0) return false;
+
+    // Obtener el máximo permitido para este viajero
     const maxForThisTraveler = this.calculateMaxPointsForTraveler(travelerId);
-    return points >= 0 && points <= maxForThisTraveler;
+    
+    // Validar que no exceda el máximo permitido
+    return points <= maxForThisTraveler;
+  }
+
+  /**
+   * Maneja el cambio de puntos de un viajero con validación de límite de membresía
+   */
+  onTravelerPointsBlur(travelerId: string, event: any): void {
+    const inputValue = event.value || event.target?.value || 0;
+    const points = Math.max(0, parseFloat(inputValue) || 0);
+    
+    const traveler = this.travelers.find(t => t.id === travelerId);
+    if (!traveler) {
+      console.error('❌ Viajero no encontrado:', travelerId);
+      return;
+    }
+
+    // Validar que el viajero pueda recibir puntos
+    if (travelerId !== 'main-traveler' && !traveler.hasEmail) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Asignación no permitida',
+        detail: 'Este viajero no puede recibir puntos (sin email)',
+        life: 3000,
+      });
+      return;
+    }
+
+    // Validar límite de membresía entre todos los viajeros
+    const maxForThisTraveler = this.calculateMaxPointsForTraveler(travelerId);
+    if (points > maxForThisTraveler) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Límite de membresía alcanzado',
+        detail: `No se pueden asignar ${points} puntos. Máximo disponible: ${maxForThisTraveler} puntos (considerando el límite de membresía entre todos los viajeros).`,
+        life: 5000,
+      });
+      
+      // Ajustar automáticamente al máximo permitido
+      this.assignPointsToTraveler(travelerId, maxForThisTraveler);
+      return;
+    }
+
+    // Si todas las validaciones pasan, actualizar los puntos
+    this.assignPointsToTraveler(travelerId, points);
   }
 
   /**
@@ -635,9 +689,10 @@ export class PointsRedemptionComponent implements OnInit, OnDestroy {
 
   /**
    * Verifica si el total de puntos asignados excede el máximo permitido
+   * DESHABILITADO: Ya no se deshabilita el botón por exceder el máximo
    */
   isTotalExceeded(): boolean {
-    return this.getPointsDistributionSummary().totalPoints > this.getMaxAllowedPoints();
+    return false; // Siempre retorna false para permitir cualquier cantidad de puntos
   }
 
   /**

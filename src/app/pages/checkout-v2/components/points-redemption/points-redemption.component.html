@@ -150,27 +150,7 @@
             </div>
           </div>
         </div>
-        
-        <!-- Error message solo para viajeros con email -->
-        <p-message *ngIf="traveler.hasEmail && (!canAssignPointsToTraveler(traveler.id, getTravelerAssignedPoints(traveler.id)) || getTravelerAssignedPoints(traveler.id) > getTravelerMaxPoints(traveler.id)) && getTravelerAssignedPoints(traveler.id) > 0"
-                   severity="warn"
-                   [closable]="false"
-                   styleClass="error-message-compact">
-          <ng-template pTemplate>
-            <span>Límite excedido (máximo: {{ getTravelerMaxPointsDisplay(traveler.id) }} puntos)</span>
-          </ng-template>
-        </p-message>
       </div>
-
-        <!-- Global Error Message -->
-        <p-message *ngIf="isTotalExceeded()" 
-                   severity="error" 
-                   [closable]="false"
-                   styleClass="global-error">
-          <ng-template pTemplate>
-            <span>El total de puntos asignados ({{ getPointsDistributionSummary().totalPoints }}) excede el máximo disponible ({{ getMaxAllowedPoints() }})</span>
-          </ng-template>
-        </p-message>
 
         <!-- Distribution Summary -->
         <div class="distribution-summary-card">

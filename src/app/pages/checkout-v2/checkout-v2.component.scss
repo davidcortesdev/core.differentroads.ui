@@ -7,36 +7,28 @@
     &-title {
         font-size: 1.3rem;
         font-weight: 700;
-        padding: 0 2rem;
-        padding-top: 2rem;
-        margin: 0;
+        padding: 2rem 2rem 0;
 
-        .tour-link {
-            &:hover::after {
-                content: "";
-                position: absolute;
-                left: 0;
-                bottom: 1px;
-                width: 100%;
-                height: 2px;
-                background-color: var(--secondary-color-500);
-                transition: width 0.3s ease;
-            }
+        .tour-link:hover::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: 1px;
+            width: 100%;
+            height: 2px;
+            background-color: var(--secondary-color-500);
+            transition: width 0.3s ease;
         }
 
-        @media screen and (min-width: 481px) and (max-width: 1024px) {
+        @media (max-width: 1024px) {
             font-size: 1.2rem;
-            padding: 0 1.5rem;
-            padding-top: 1.8rem;
+            padding: 1.8rem 1.5rem 0;
         }
 
-        @media screen and (max-width: 480px) {
-            font-size: 1.2rem;
-            padding: 0 1rem;
-            padding-top: 1.5rem;
+        @media (max-width: 480px) {
+            padding: 1.5rem 1rem 0;
         }
 
-        // ✅ NUEVO: Estilos para la etiqueta de modo standalone
         .standalone-badge {
             display: inline-flex;
             align-items: center;
@@ -50,20 +42,17 @@
             font-weight: 500;
             color: #ff6f61;
             
-            i {
-                font-size: 0.6rem;
-            }
+            i { font-size: 0.6rem; }
 
-            @media screen and (max-width: 768px) {
+            @media (max-width: 768px) {
                 margin-left: 0.5rem;
                 font-size: 0.6rem;
                 padding: 0.15rem 0.4rem;
             }
 
-            @media screen and (max-width: 480px) {
+            @media (max-width: 480px) {
                 display: block;
-                margin-left: 0;
-                margin-top: 0.3rem;
+                margin: 0.3rem 0 0;
                 font-size: 0.6rem;
             }
         }
@@ -75,12 +64,8 @@
         margin-top: 0.1rem;
         padding: 0 2rem;
 
-        @media screen and (min-width: 481px) and (max-width: 1024px) {
-            font-size: 0.8rem;
-            padding: 0 1.5rem;
-        }
-
-        @media screen and (max-width: 480px) {
+        @media (max-width: 1024px) { padding: 0 1.5rem; }
+        @media (max-width: 480px) {
             font-size: 0.7rem;
             padding: 0 1rem;
         }
@@ -95,78 +80,63 @@
         max-width: 100%;
         box-sizing: border-box;
 
-        @media screen and (min-width: 769px) and (max-width: 1024px) {
+        @media (max-width: 1024px) {
             gap: 0.8rem;
             padding: 0 1rem;
         }
 
-        @media screen and (min-width: 481px) and (max-width: 768px) {
+        @media (max-width: 768px) {
             grid-template-columns: 3fr 2fr;
             gap: 0.75rem;
             padding: 0 1.25rem;
         }
 
-        @media screen and (max-width: 480px) {
-            grid-template-columns: repeat(1, 1fr);
+        @media (max-width: 480px) {
+            grid-template-columns: 1fr;
             padding: 0 1rem;
             gap: 1rem;
         }
 
-        .main-content {
-            .steps-container {
-                margin-bottom: 5rem;
+        .main-content .steps-container {
+            margin-bottom: 5rem;
 
-                ::ng-deep .p-steps {
-                    font-size: 14px;
-                    margin-bottom: 1rem !important;
+            ::ng-deep .p-steps {
+                font-size: 14px;
+                margin-bottom: 1rem !important;
 
-                    .p-steps-item {
-                        &:before {
-                            border-top: 2px solid var(--background-azul);
-                        }
-                    }
-
-                    .p-steps-item-active .p-steps-item-label {
-                        color: var(--background-azul);
-                    }
-
-                    .p-steps-item-label {
-                        font-size: 0.8rem;
-                        color: var(--background-azul);
-                        white-space: normal;
-                        text-align: center;
-
-                        @media screen and (min-width: 481px) and (max-width: 1024px) {
-                            font-size: 0.8rem;
-                            white-space: normal;
-                            overflow: visible;
-                        }
-                    }
-
-                    .p-steps-item-active .p-steps-item-number {
-                        border-color: var(--p-primary-color);
-                        color: var(--p-steps-item-number-active-color);
-                    }
-
-                    .p-steps-item-number {
-                        border-color: var(--background-azul);
-                        color: var(--background-azul);
-                    }
+                .p-steps-item:before {
+                    border-top: 2px solid var(--background-azul);
                 }
 
-                > div:nth-child(2) {
-                    margin-top: 1.5rem;
-                    padding-top: 1rem;
+                .p-steps-item-active .p-steps-item-label {
+                    color: var(--background-azul);
+                }
 
-                    @media screen and (min-width: 481px) and (max-width: 1024px) {
-                        margin-top: 1.5rem;
-                        padding-top: 1rem;
-                    }
+                .p-steps-item-label {
+                    font-size: 0.8rem;
+                    color: var(--background-azul);
+                    white-space: normal;
+                    text-align: center;
+                }
 
-                    @media screen and (max-width: 480px) {
-                        margin-top: 1rem;
-                        padding-top: 0.5rem;
-                    }
+                .p-steps-item-active .p-steps-item-number {
+                    border-color: var(--p-primary-color);
+                    color: var(--p-steps-item-number-active-color);
+                }
+
+                .p-steps-item-number {
+                    border-color: var(--background-azul);
+                    color: var(--background-azul);
+                }
+            }
+
+            > div:nth-child(2) {
+                margin-top: 1.5rem;
+                padding-top: 1rem;
+
+                @media (max-width: 480px) {
+                    margin-top: 1rem;
+                    padding-top: 0.5rem;
                 }
             }
         }
@@ -176,27 +146,16 @@
             top: 2rem;
             height: fit-content;
             align-self: start;
-
-            @media screen and (min-width: 481px) and (max-width: 1024px) {
-                position: sticky;
-                top: 2rem;
-            }
         }
     }
 }
 
-// Estilos para responsive en móvil
-@media screen and (max-width: 480px) {
-    .checkout .checkout-container {
-        grid-template-columns: 1fr;
-
-        .right-column {
-            position: static;
-        }
+@media (max-width: 480px) {
+    .checkout .checkout-container .right-column {
+        position: static;
     }
 }
 
-// Estilos para botones
 p-button.next ::ng-deep .p-button {
     border-radius: 50px;
     width: 100%;
@@ -210,9 +169,7 @@ p-button.next ::ng-deep .p-button {
     gap: 1rem;
     width: 100%;
 
-    @media screen and (min-width: 481px) and (max-width: 1024px) {
-        gap: 0.8rem;
-    }
+    @media (max-width: 1024px) { gap: 0.8rem; }
 }
 
 p-button.without-flight ::ng-deep .p-button {
@@ -228,7 +185,6 @@ p-button.without-flight ::ng-deep .p-button {
         color: var(--background-azul-color-letra);
     }
 
-    // ✅ NUEVO: Estilos para estado de carga
     &:disabled {
         opacity: 0.7;
         cursor: not-allowed;
@@ -237,32 +193,26 @@ p-button.without-flight ::ng-deep .p-button {
         color: #6c757d;
     }
 
-    // ✅ NUEVO: Estilos para el spinner de carga
     .p-button-icon.pi-spinner {
         animation: spin 1s linear infinite;
         margin-right: 0.5rem;
     }
 
-    @media screen and (min-width: 481px) and (max-width: 1024px) {
+    @media (max-width: 1024px) {
         min-width: 180px;
         font-size: 0.85rem;
         padding: 0.5rem 1rem;
     }
 
-    @media screen and (max-width: 480px) {
+    @media (max-width: 480px) {
         min-width: auto;
         font-size: 0.85rem;
     }
 }
 
-// ✅ NUEVO: Animación para el spinner
 @keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 p-button.continue-button ::ng-deep .p-button {
@@ -270,7 +220,6 @@ p-button.continue-button ::ng-deep .p-button {
     min-width: 150px;
     transition: all 0.3s ease;
 
-    // ✅ NUEVO: Estilos para estado deshabilitado durante procesamiento
     &:disabled {
         opacity: 0.7;
         cursor: not-allowed;
@@ -278,17 +227,16 @@ p-button.continue-button ::ng-deep .p-button {
         border-color: #6c757d;
     }
 
-    @media screen and (min-width: 481px) and (max-width: 1024px) {
-        min-width: 120px;
-    }
-
-    @media screen and (max-width: 480px) {
-        min-width: auto;
-    }
+    @media (max-width: 1024px) { min-width: 120px; }
+    @media (max-width: 480px) { min-width: auto; }
 }
 
-// Estilos para el botón del título del tour
 .checkout-title {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+
     p-button.tour-link ::ng-deep .p-button {
         background-color: transparent;
         border: none;
@@ -316,49 +264,22 @@ p-button.continue-button ::ng-deep .p-button {
             }
         }
 
-        &:focus {
-            box-shadow: none;
-        }
-
-        .p-button-label {
-            font-weight: 700;
-        }
-
-        @media screen and (min-width: 481px) and (max-width: 1024px) {
-            font-size: 1.2rem;
-        }
-
-        @media screen and (max-width: 480px) {
-            font-size: 1.2rem;
-        }
+        &:focus { box-shadow: none; }
+        .p-button-label { font-weight: 700; }
+        @media (max-width: 1024px) { font-size: 1.2rem; }
     }
 }
 
-// Alineación para el título del tour y las fechas
-.checkout-title,
 .checkout-subtitle {
     display: flex;
     align-items: center;
     justify-content: flex-start;
     width: 100%;
-}
-
-.checkout-subtitle {
     margin-top: 0.1rem;
 }
 
-// Estilos globales para el contenido
 ::ng-deep .checkout {
-    p,
-    span,
-    div,
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6,
-    label {
+    p, span, div, h1, h2, h3, h4, h5, h6, label {
         color: var(--background-azul);
     }
 
@@ -368,46 +289,38 @@ p-button.continue-button ::ng-deep .p-button {
     }
 }
 
-:host ::ng-deep {
-    .p-button {
-        border-radius: 50px;
-        margin: 20px 0px;
-    }
+:host ::ng-deep .p-button {
+    border-radius: 50px;
+    margin: 20px 0;
 }
 
-// Estilos para Steps responsivos
-@media screen and (min-width: 481px) and (max-width: 768px) {
-    .checkout ::ng-deep .p-steps {
-        .p-steps-item {
-            flex: 1;
+@media (max-width: 768px) {
+    .checkout ::ng-deep .p-steps .p-steps-item {
+        flex: 1;
 
-            .p-menuitem-link {
-                .p-steps-title {
-                    font-size: 0.8rem;
-                    white-space: normal;
-                }
+        .p-menuitem-link {
+            .p-steps-title {
+                font-size: 0.8rem;
+                white-space: normal;
+            }
 
-                .p-steps-number {
-                    width: 32px;
-                    height: 32px;
-                    font-size: 0.9rem;
-                    min-width: 32px;
-                }
+            .p-steps-number {
+                width: 32px;
+                height: 32px;
+                font-size: 0.9rem;
+                min-width: 32px;
             }
         }
     }
 }
 
-@media screen and (max-width: 480px) {
-    .checkout ::ng-deep .p-steps {
-        .p-steps-item {
-            display: flex;
-            flex-direction: column;
-        }
+@media (max-width: 480px) {
+    .checkout ::ng-deep .p-steps .p-steps-item {
+        display: flex;
+        flex-direction: column;
     }
 }
 
-// Estilos para indicadores de carga y error
 .loading-indicator,
 .error-message {
     text-align: center;
@@ -425,12 +338,9 @@ p-button.continue-button ::ng-deep .p-button {
     border-radius: 8px;
     margin: 1rem 2rem;
 
-    p {
-        color: #721c24;
-    }
+    p { color: #721c24; }
 }
 
-// Estilos para tour-additional-info-container (copiados de tour-additional-info.component.scss)
 .tour-additional-info-container {
     display: flex;
     align-items: center;
@@ -439,19 +349,16 @@ p-button.continue-button ::ng-deep .p-button {
     flex-wrap: wrap;
     margin: 1rem 0;
 
-    // Small desktop view - adjust gap and centering
     @media (max-width: 1366px) {
         gap: 3rem;
         justify-content: center;
     }
 
-    // Tablet view
     @media (max-width: 992px) {
         gap: 1.5rem;
         justify-content: center;
     }
 
-    // Mobile view
     @media (max-width: 576px) {
         flex-direction: column;
         align-items: center;
@@ -462,22 +369,11 @@ p-button.continue-button ::ng-deep .p-button {
 
 .action-card {
     cursor: pointer;
-    transition:
-        transform 0.2s,
-        box-shadow 0.2s,
-        border-color 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
     width: 250px;
 
-    // Small desktop view - adjust width for better proportions
-    @media (max-width: 1366px) {
-        width: 230px;
-    }
-
-    // Mobile view - full width with margins
-    @media (max-width: 576px) {
-        width: 100%;
-        max-width: 100%;
-    }
+    @media (max-width: 1366px) { width: 230px; }
+    @media (max-width: 576px) { width: 100%; max-width: 100%; }
 
     &:hover {
         transform: translateY(-3px);
@@ -499,51 +395,12 @@ p-button.continue-button ::ng-deep .p-button {
 .card-content {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
-    gap: 1rem;
-
-    // Small desktop view
-    @media (max-width: 1366px) {
-        justify-content: center;
-    }
-
-    // Mobile view - center content
-    @media (max-width: 576px) {
-        justify-content: center;
-    }
-}
-
-.card-text {
-    color: var(--background-azul);
-    font-weight: 500;
-}
-
-.claseBord {
-    border-radius: 0.875rem;
-    border: 1px solid #002b57;
-}
-
-.bg-pink-100 {
-    background-color: #ff6f61;
-    border-radius: 25%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    i {
-        color: #fff;
-    }
-}
-
-// Estilos para las tarjetas de acción
-.card-content {
-    display: flex;
-    align-items: center;
     gap: 0.75rem;
     padding: 0.5rem;
     min-height: auto;
+    
+    @media (max-width: 1366px) { justify-content: center; }
+    @media (max-width: 576px) { justify-content: center; }
     
     .bg-pink-100 {
         display: flex;
@@ -569,31 +426,26 @@ p-button.continue-button ::ng-deep .p-button {
     }
 }
 
-// Deep styles para las tarjetas
+.claseBord {
+    border-radius: 0.875rem;
+    border: 1px solid #002b57;
+}
+
 :host ::ng-deep {
     .p-card.action-card {
         .p-card-body {
             padding: 0.5rem;
-        }
-
-        .p-card-content {
-            padding: 0;
-        }
-        
-        // Reducir el alto de las tarjetas
-        min-height: auto;
-        height: auto;
-        
-        // Asegurar que el contenido no se estire
-        .p-card-body {
             display: flex;
             align-items: center;
             min-height: auto;
             height: auto;
         }
+
+        .p-card-content { padding: 0; }
+        min-height: auto;
+        height: auto;
     }
 
-    // Tooltip styles
     .p-tooltip {
         max-width: 250px;
         text-align: center;

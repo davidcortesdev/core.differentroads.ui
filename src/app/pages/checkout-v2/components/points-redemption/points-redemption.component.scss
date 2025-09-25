@@ -1,13 +1,8 @@
-// Points Redemption Component Styles
-// Usando PrimeNG v19 con estilos que mantienen concordancia con el resto de la página
-
-// Variables del sistema de colores
 $azul: var(--background-azul);
 $azul-letra: var(--background-azul-color-letra);
 $text-muted: #64748b;
 $border-color: #e2e8f0;
 
-// Mixins para consistencia
 @mixin flex-center {
   display: flex;
   align-items: center;
@@ -41,46 +36,21 @@ $border-color: #e2e8f0;
   }
 }
 
-// Container principal con estilos que coinciden con payment-management
 .container {
   width: 100%;
   padding: 0;
   margin-top: 1rem;
   
-  // Responsive padding
-  @media (max-width: 480px) {
-    padding: 0 0.5rem;
-  }
-  
-  @media (max-width: 768px) {
-    padding: 0 1rem;
-  }
-  
-  @media (min-width: 769px) {
-    padding: 0;
-  }
+  @media (max-width: 480px) { padding: 0 0.5rem; }
+  @media (max-width: 768px) { padding: 0 1rem; }
+  @media (min-width: 769px) { padding: 0; }
 
   .header-container {
     cursor: pointer;
-    margin-bottom: 1.5rem;
-    margin-top: 0;
+    margin: 0 0 1.5rem;
     width: 100%;
 
-    // Responsive margins
-    @media (max-width: 480px) {
-      margin-bottom: 1.25rem;
-      margin-top: 0;
-    }
-    
-    @media (max-width: 768px) {
-      margin-bottom: 1.5rem;
-      margin-top: 0;
-    }
-    
-    @media (min-width: 769px) {
-      margin-bottom: 1.5rem;
-      margin-top: 0;
-    }
+    @media (max-width: 480px) { margin-bottom: 1.25rem; }
   }
 
   .title-with-icon {
@@ -93,9 +63,7 @@ $border-color: #e2e8f0;
     gap: 1rem;
 
     .title,
-    .pi {
-      color: $azul;
-    }
+    .pi { color: $azul; }
 
     .title {
       font-weight: 500;
@@ -105,18 +73,8 @@ $border-color: #e2e8f0;
       word-wrap: break-word;
       overflow-wrap: break-word;
       
-      // Responsive font sizes
-      @media (max-width: 480px) {
-        font-size: 1.1rem;
-      }
-      
-      @media (max-width: 768px) {
-        font-size: 1.15rem;
-      }
-      
-      @media (min-width: 769px) {
-        font-size: 1.21rem;
-      }
+      @media (max-width: 480px) { font-size: 1.1rem; }
+      @media (max-width: 768px) { font-size: 1.15rem; }
     }
 
     .pi {
@@ -124,9 +82,7 @@ $border-color: #e2e8f0;
       flex-shrink: 0;
       font-size: 1rem;
       
-      @media (max-width: 480px) {
-        font-size: 0.9rem;
-      }
+      @media (max-width: 480px) { font-size: 0.9rem; }
     }
   }
 
@@ -137,18 +93,8 @@ $border-color: #e2e8f0;
     width: 100%;
     max-width: 278px;
     
-    // Responsive max-width
-    @media (max-width: 480px) {
-      max-width: 100%;
-    }
-    
-    @media (max-width: 768px) {
-      max-width: 255px;
-    }
-    
-    @media (min-width: 769px) {
-      max-width: 278px;
-    }
+    @media (max-width: 480px) { max-width: 100%; }
+    @media (max-width: 768px) { max-width: 255px; }
   }
 }
 

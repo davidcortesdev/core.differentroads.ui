@@ -1027,6 +1027,109 @@ export class PointsV2Service {
   }
 
   /**
+   * Calcula el máximo de puntos permitidos según las reglas
+   */
+  calculateMaxAllowedPoints(
+    availablePoints: number,
+    category: string,
+    eligibleTravelersCount: number,
+    maxPointsPerPerson: number = 50
+  ): number {
+    const categoryLimit = this.getMaxDiscountForCategory(category as any);
+    const reservationLimit = eligibleTravelersCount * maxPointsPerPerson;
+    
+    return Math.min(availablePoints, categoryLimit, reservationLimit);
+  }
+
+  /**
+   * Calcula la distribución de puntos entre viajeros según las reglas del documento
+   */
+  calculatePointsDistribution(
+    subtotal: number,
+    travelers: Array<{ id: string; name: string; email?: string; isLeadTraveler?: boolean }>,
+    mainTravelerId: string
+  ) {
+    const totalPoints = this.calculatePointsFromAmount(subtotal);
+    const pointsPerTraveler = Math.floor(totalPoints / travelers.length);
+    
+    const travelersWithEmail: any[] = [];
+    const travelersWithoutEmail: any[] = [];
+    let mainTravelerPoints = 0;
+
+    travelers.forEach(traveler => {
+      const hasEmail = Boolean(traveler.email && traveler.email.trim() !== '');
+      const travelerPoints = {
+        travelerId: traveler.id,
+        travelerName: traveler.name,
+        email: traveler.email || '',
+        hasEmail,
+        points: hasEmail ? pointsPerTraveler : 0,
+        assignedToMainTraveler: !hasEmail
+      };
+
+      if (hasEmail) {
+        travelersWithEmail.push(travelerPoints);
+      } else {
+        travelersWithoutEmail.push(travelerPoints);
+        // Los puntos de viajeros sin email se asignan al titular
+        if (traveler.id === mainTravelerId) {
+          mainTravelerPoints += pointsPerTraveler;
+        }
+      }
+    });
+
+    // Si el titular no tiene email, también recibe sus propios puntos
+    const mainTraveler = travelers.find(t => t.id === mainTravelerId);
+    if (mainTraveler && (!mainTraveler.email || mainTraveler.email.trim() === '')) {
+      mainTravelerPoints += pointsPerTraveler;
+    }
+
+    const distribution = [
+      ...travelersWithEmail,
+      ...travelersWithoutEmail.map(t => ({
+        ...t,
+        points: t.travelerId === mainTravelerId ? mainTravelerPoints : 0
+      }))
+    ];
+
+    return {
+      totalPoints,
+      mainTravelerPoints,
+      travelersWithEmail,
+      travelersWithoutEmail,
+      distribution
+    };
+  }
+
+  /**
+   * Obtiene un resumen legible de la distribución de puntos
+   */
+  getPointsDistributionSummary(result: any): string {
+    const summary: string[] = [];
+    
+    summary.push(`Total de puntos generados: ${result.totalPoints}`);
+    summary.push(`Puntos del titular: ${result.mainTravelerPoints}`);
+    summary.push(`Viajeros con email: ${result.travelersWithEmail.length}`);
+    summary.push(`Viajeros sin email: ${result.travelersWithoutEmail.length}`);
+
+    if (result.travelersWithEmail.length > 0) {
+      summary.push('\nViajeros con email (puntos individuales):');
+      result.travelersWithEmail.forEach((traveler: any) => {
+        summary.push(`- ${traveler.travelerName}: ${traveler.points} puntos`);
+      });
+    }
+
+    if (result.travelersWithoutEmail.length > 0) {
+      summary.push('\nViajeros sin email (puntos asignados al titular):');
+      result.travelersWithoutEmail.forEach((traveler: any) => {
+        summary.push(`- ${traveler.travelerName}: puntos asignados al titular`);
+      });
+    }
+
+    return summary.join('\n');
+  }
+
+  /**
    * Valida la asignación de puntos a un viajero
    * @param travelerId ID del viajero
    * @param points Puntos a asignar

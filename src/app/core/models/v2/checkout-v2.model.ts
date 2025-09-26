@@ -35,3 +35,47 @@ export interface DepartureData {
     total: number;
     isDiscount?: boolean;
   }
+
+
+// Interfaces for points redemption
+export interface TravelerData {
+  id: string;
+  name: string;
+  email: string;
+  hasEmail: boolean;
+  maxPoints: number;
+  assignedPoints: number;
+}
+
+export interface PointsRedemptionConfig {
+  enabled: boolean;
+  totalPointsToUse: number;
+  pointsPerTraveler: { [travelerId: string]: number };
+  maxDiscountPerTraveler: number;
+  totalDiscount: number;
+}
+
+export interface TravelerPointsSummary {
+  travelerId: string;
+  currentCategory: string;
+  totalPoints: number;
+  availablePoints: number;
+  usedPoints: number;
+  categoryStartDate: Date;
+  nextCategory?: string;
+  pointsToNextCategory?: number;
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  message: string;
+  errorType: string;
+  details?: string[];
+}
+
+export interface PointsDistributionSummary {
+  totalPoints: number;
+  totalDiscount: number;
+  travelersWithPoints: number;
+  mainTravelerPoints: number;
+}

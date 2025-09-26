@@ -1,0 +1,28 @@
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-container-scalapay {
+    @include flex-center;
+    flex-direction: column;
+    min-height: 300px;
+    padding: 2rem;
+
+    span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.1rem;
+      color: #666;
+      margin-bottom: 1.5rem;
+
+      .scalapay-logo {
+        width: 80px;
+        height: auto;
+        vertical-align: middle;
+        display: inline-block;
+      }
+    }
+  }

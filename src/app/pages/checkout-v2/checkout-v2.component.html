@@ -177,6 +177,7 @@
               [reservationId]="reservationId ?? 0"
               [departureDate]="departureDate"
               (navigateToStep)="onNavigateToStep($event)"
+              (pointsDiscountChange)="onPointsDiscountChange($event)"
             >
             </app-payment-management>
           </div>
@@ -250,6 +251,7 @@
         [showFlightSection]="true"
         [currency]="'EUR'"
         [title]="'Resumen del pedido'"
+        [pointsDiscount]="pointsDiscount"
       >
       </app-summary-table>
     </div>

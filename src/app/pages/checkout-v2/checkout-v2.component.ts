@@ -108,6 +108,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }> = [];
   subtotal: number = 0;
   totalAmountCalculated: number = 0;
+  
+  // Descuento por puntos
+  pointsDiscount: number = 0;
 
   // Datos de precios por grupo de edad
   departurePriceSupplements: IDeparturePriceSupplementResponse[] = [];
@@ -3271,6 +3274,18 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       // Para otros steps, usar la navegación estándar
       this.onActiveIndexChange(stepNumber);
     }
+  }
+
+  /**
+   * Maneja el cambio de descuento por puntos
+   * @param discount Cantidad del descuento en euros
+   */
+  onPointsDiscountChange(discount: number): void {
+    console.log('💰 Descuento por puntos actualizado:', discount);
+    this.pointsDiscount = discount;
+    
+    // Actualizar el resumen del pedido para reflejar el descuento
+    this.forceSummaryUpdate();
   }
 
   /**

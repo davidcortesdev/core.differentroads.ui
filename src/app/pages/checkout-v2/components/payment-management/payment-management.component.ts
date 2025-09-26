@@ -11,17 +11,55 @@ import { ReservationService } from '../../../../core/services/reservation/reserv
 import { MessageService } from 'primeng/api';
 import { CurrencyService } from '../../../../core/services/currency.service';
 import { FlightSearchService, IPriceChangeInfo } from '../../../../core/services/flight-search.service';
+import { PointsService } from '../../../../core/services/points.service';
+import { PaymentOption } from '../../../../core/models/orders/order.model';
 
-// Interfaces y tipos
+// Simplified interfaces for points redemption
+export interface PointsRedemptionConfig {
+  enabled: boolean;
+  totalPointsToUse: number;
+  pointsPerTraveler: { [travelerId: string]: number };
+  maxDiscountPerTraveler: number;
+  totalDiscount: number;
+}
+
+export interface TravelerData {
+  id: string;
+  name: string;
+  email: string;
+  hasEmail: boolean;
+  maxPoints: number;
+  assignedPoints: number;
+}
+
+export interface TravelerPointsSummary {
+  travelerId: string;
+  currentCategory: string;
+  totalPoints: number;
+  availablePoints: number;
+  usedPoints: number;
+  categoryStartDate: Date;
+  nextCategory?: string;
+  pointsToNextCategory?: number;
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  message: string;
+  errorType: string;
+  details?: string[];
+}
+
+export interface PointsDistributionSummary {
+  totalPoints: number;
+  totalDiscount: number;
+  travelersWithPoints: number;
+  mainTravelerPoints: number;
+}
+
 export type PaymentType = 'complete' | 'deposit' | 'installments';
 export type PaymentMethod = 'creditCard' | 'transfer';
 export type InstallmentOption = 'three' | 'four';
-
-export interface PaymentOption {
-  type: PaymentType;
-  method?: PaymentMethod;
-  installments?: InstallmentOption;
-}
 
 @Component({
   selector: 'app-payment-management',
@@ -41,6 +79,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
   @Output() paymentCompleted = new EventEmitter<PaymentOption>();
   @Output() backRequested = new EventEmitter<void>();
   @Output() navigateToStep = new EventEmitter<number>();
+  @Output() pointsDiscountChange = new EventEmitter<number>();
 
   // Payment IDs (se cargarán desde la API)
   transferMethodId: number = 0;
@@ -56,11 +95,25 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
   hasSpecificSearchFlights: boolean = false;
   specificSearchFlightsCost: number = 0;
 
+  // Points redemption
+  pointsSummary: TravelerPointsSummary | null = null;
+  pointsRedemption: PointsRedemptionConfig = {
+    enabled: false,
+    totalPointsToUse: 0,
+    pointsPerTraveler: {},
+    maxDiscountPerTraveler: 50, // 50€ máximo por persona
+    totalDiscount: 0
+  };
+
+  // Travelers data for points distribution
+  travelers: TravelerData[] = [];
+
   // State management
   readonly dropdownStates = {
     main: true,
     paymentMethods: true,
-    installments: true
+    installments: true,
+    pointsRedemption: true
   };
 
   readonly paymentState = {
@@ -81,13 +134,16 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
     private readonly reservationService: ReservationService,
     private readonly messageService: MessageService,
     private readonly currencyService: CurrencyService,
-    private readonly flightSearchService: FlightSearchService
+    private readonly flightSearchService: FlightSearchService,
+    private readonly pointsService: PointsService
   ) { }
 
   ngOnInit(): void {
     this.initializeScalapayScript();
     this.loadPaymentIds();
     this.checkAmadeusFlightStatus();
+    this.loadUserPoints();
+    this.loadTravelersData();
   }
 
   ngOnChanges(): void {
@@ -111,7 +167,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
         if (hasSelection) {
           console.log('✅ Vuelo Amadeus detectado, validando precio...');
           
-          // Verificar si hay vuelos de specific-search para depósito
+          // Verificar vuelos de specific-search para depósito
           this.checkSpecificSearchFlights();
           
           // Limpiar selecciones no permitidas para vuelos de Amadeus
@@ -139,7 +195,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
   private checkSpecificSearchFlights(): void {
     if (!this.reservationId) return;
 
-    // ✅ NUEVO: Solo verificar si no se han establecido ya los valores
+    // Verificar si ya se establecieron los valores
     if (this.hasSpecificSearchFlights && this.specificSearchFlightsCost > 0) {
       console.log('✅ Los valores de specific-search ya están establecidos:', {
         hasSpecificSearchFlights: this.hasSpecificSearchFlights,
@@ -148,7 +204,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
       return;
     }
 
-    // TODO: Implementar llamada al servicio para obtener vuelos de specific-search
+    // Implementar llamada al servicio para obtener vuelos de specific-search
     // Por ahora, los valores se establecen en validateAmadeusPrice
     console.log('🔍 Verificando vuelos de specific-search...');
     console.log('📊 Estado actual:', {
@@ -191,7 +247,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
         if (validation) {
           this.priceValidation = validation;
           
-          // ✅ NUEVO: Rellenar specificSearchFlightsCost con el precio actual del vuelo
+          // Rellenar specificSearchFlightsCost con el precio actual del vuelo
           this.specificSearchFlightsCost = validation.currentPrice;
           this.hasSpecificSearchFlights = true;
           
@@ -415,6 +471,19 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
   async submitPayment(): Promise<void> {
     if (!this.isPaymentValid) return;
 
+    // Validar canje de puntos antes del pago
+    if (this.pointsRedemption.enabled && this.pointsRedemption.totalPointsToUse > 0) {
+      const validationResult = this.validatePointsRedemption(
+        this.pointsRedemption.totalPointsToUse,
+        this.pointsRedemption.pointsPerTraveler
+      );
+      
+      if (!validationResult.isValid) {
+        this.showValidationError(validationResult);
+        return; // No proceder con el pago si hay errores de validación
+      }
+    }
+
     this.paymentState.isLoading = true;
 
     try {
@@ -437,7 +506,21 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
         life: 3000,
       });
 
-      // Solo después de actualizar el estado, procesar el pago
+      // Procesar canje de puntos antes del pago
+      if (this.pointsRedemption.enabled && this.pointsRedemption.totalPointsToUse > 0) {
+        const redemptionSuccess = await this.processPointsRedemption(this.reservationId.toString());
+        if (!redemptionSuccess) {
+          // Si falla el canje de puntos, continuar sin descuento
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Canje de puntos no procesado',
+            detail: 'El pago continuará sin descuento de puntos.',
+            life: 4000,
+          });
+        }
+      }
+
+      // Solo después de procesar puntos, procesar el pago
       await this.processPaymentBasedOnMethod();
 
       // Mensaje de éxito final
@@ -481,7 +564,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
     try {
       console.log('🔄 Actualizando estado de reservación a PREBOOKED...');
       
-      // Obtener el estado PREBOOKED usando firstValueFrom (alternativa moderna a toPromise)
+      // Obtener estado PREBOOKED
       const reservationStatus = await firstValueFrom(
         this.reservationStatusService.getByCode('PREBOOKED')
       );
@@ -490,7 +573,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
         throw new Error('No se pudo obtener el estado PREBOOKED');
       }
 
-      // Actualizar el estado de la reservación
+      // Actualizar estado de la reservación
       const success = await firstValueFrom(
         this.reservationService.updateStatus(this.reservationId!, reservationStatus[0].id)
       );
@@ -498,8 +581,6 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
       if (success) {
         console.log('✅ Estado de reservación actualizado correctamente a PREBOOKED');
         
-        // Verificar que el estado se haya actualizado correctamente
-        await this.verifyReservationStatusUpdate(reservationStatus[0].id);
         
         return true;
       } else {
@@ -518,31 +599,6 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
     }
   }
 
-  /**
-   * Verifica que el estado de la reservación se haya actualizado correctamente
-   * @param expectedStatusId - ID del estado esperado
-   */
-  private async verifyReservationStatusUpdate(expectedStatusId: number): Promise<void> {
-    try {
-      console.log('🔍 Verificando actualización del estado de la reservación...');
-      
-      // Obtener la reservación actualizada para verificar el estado
-      const updatedReservation = await firstValueFrom(
-        this.reservationService.getById(this.reservationId!)
-      );
-      
-      if (updatedReservation.reservationStatusId === expectedStatusId) {
-        console.log('✅ Verificación exitosa: Estado de reservación actualizado correctamente');
-      } else {
-        console.warn('⚠️ Verificación fallida: Estado esperado', expectedStatusId, 'vs actual', updatedReservation.reservationStatusId);
-        // No lanzar error aquí, solo log de advertencia
-      }
-      
-    } catch (error) {
-      console.warn('⚠️ No se pudo verificar el estado de la reservación:', error);
-      // No lanzar error aquí, solo log de advertencia
-    }
-  }
 
   /**
    * Procesa el pago según el método seleccionado
@@ -632,7 +688,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
   }
 
   private async processCreditCardPayment(amount: number): Promise<void> {
-    // Obtener el currencyId para EUR
+    // Obtener currencyId para EUR
     const currencyId = await this.currencyService.getCurrencyIdByCode('EUR').toPromise();
 
     if (!currencyId) {
@@ -693,7 +749,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
     // Determinar el importe según el tipo de pago
     const amount = this.paymentState.type === 'deposit' ? this.depositAmount : this.totalPrice;
 
-    // Obtener el currencyId para EUR
+    // Obtener currencyId para EUR
     const currencyId = await this.currencyService.getCurrencyIdByCode('EUR').toPromise();
 
     if (!currencyId) {
@@ -718,5 +774,863 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges 
     this.router.navigate([
       `/reservation/${this.reservationId}/${response.id}`
     ]);
+  }
+
+  // ===== MÉTODOS PARA CANJE DE PUNTOS =====
+
+  /**
+   * Carga los puntos del usuario autenticado
+   * 
+   * NOTA PARA INTEGRACIÓN CON API:
+   * Este método debe ser reemplazado por una llamada al endpoint de saldo de puntos.
+   */
+  private loadUserPoints(): void {
+    // TODO: Reemplazar con llamada real a la API
+    // const balance = await this.pointsService.getTravelerPoints(email).toPromise();
+    // this.pointsSummary = balance;
+    
+    // TEMPORAL: Usar datos mock para desarrollo
+    const userId = 'mock-user-id';
+    
+    // Datos mock simplificados
+    this.pointsSummary = {
+      travelerId: userId,
+      currentCategory: 'VIAJERO',
+      totalPoints: 1500,
+      availablePoints: 1200,
+      usedPoints: 300,
+      categoryStartDate: new Date('2024-01-01'),
+      nextCategory: 'NOMADA',
+      pointsToNextCategory: 2
+    };
+  }
+
+  /**
+   * Carga los datos de los viajeros para la distribución de puntos
+   * 
+   * NOTA PARA INTEGRACIÓN CON API:
+   * Este método debe ser reemplazado por una llamada al endpoint de viajeros de la reserva.
+   */
+  private loadTravelersData(): void {
+    // TODO: Reemplazar con llamada real a la API
+    // const travelers = await this.reservationService.getTravelers(this.reservationId).toPromise();
+    
+    // TEMPORAL: Usar datos mock si no se proporcionaron viajeros
+    if (!this.travelers || this.travelers.length === 0) {
+      this.travelers = [
+        {
+          id: 'traveler-1',
+          name: 'Juan Pérez',
+          email: 'juan@example.com',
+          hasEmail: true,
+          maxPoints: 50,
+      assignedPoints: 0
+        },
+        {
+          id: 'traveler-2',
+          name: 'María García',
+          email: 'maria@example.com',
+          hasEmail: true,
+          maxPoints: 50,
+          assignedPoints: 0
+        }
+      ];
+    }
+  }
+
+  /**
+   * Obtiene la siguiente categoría de viajero
+   */
+  private getNextCategory(currentCategory: string): string | undefined {
+    switch (currentCategory) {
+      case 'TROTAMUNDOS':
+        return 'VIAJERO';
+      case 'VIAJERO':
+        return 'NOMADA';
+      default:
+        return undefined;
+    }
+  }
+
+  /**
+   * Calcula los puntos necesarios para la siguiente categoría
+   */
+  private calculatePointsToNextCategory(currentTrips: number, currentCategory: string): number | undefined {
+    const nextCategory = this.getNextCategory(currentCategory);
+    if (!nextCategory) return undefined;
+    
+    switch (nextCategory) {
+      case 'VIAJERO':
+        return Math.max(0, 3 - currentTrips);
+      case 'NOMADA':
+        return Math.max(0, 6 - currentTrips);
+      default:
+        return undefined;
+    }
+  }
+
+  /**
+   * Maneja el cambio del checkbox de canje de puntos
+   */
+  onPointsRedemptionChange(event: any): void {
+    this.pointsRedemption.enabled = event.checked;
+    if (!this.pointsRedemption.enabled) {
+      this.resetPointsRedemption();
+    } else {
+      // Si se habilita, inicializar con 0 puntos
+      this.updatePointsToUse(0);
+    }
+  }
+
+  /**
+   * Habilita/deshabilita el canje de puntos (método alternativo)
+   */
+  togglePointsRedemption(): void {
+    this.pointsRedemption.enabled = !this.pointsRedemption.enabled;
+    if (!this.pointsRedemption.enabled) {
+      this.resetPointsRedemption();
+    } else {
+      // Si se habilita, inicializar con 0 puntos
+      this.updatePointsToUse(0);
+    }
+  }
+
+  /**
+   * Resetea la configuración de canje de puntos
+   */
+  private resetPointsRedemption(): void {
+    this.pointsRedemption.totalPointsToUse = 0;
+    this.pointsRedemption.pointsPerTraveler = {};
+    this.pointsRedemption.totalDiscount = 0;
+  }
+
+  /**
+   * Obtiene el descuento máximo disponible según la categoría
+   */
+  getMaxDiscountForCategory(): number {
+    if (!this.pointsSummary) return 0;
+    
+    // Lógica simplificada para obtener el descuento máximo por categoría
+    switch (this.pointsSummary.currentCategory) {
+      case 'TROTAMUNDOS':
+        return 100; // 100€ máximo
+      case 'VIAJERO':
+        return 200; // 200€ máximo
+      case 'NOMADA':
+        return 500; // 500€ máximo
+      default:
+        return 50; // 50€ por defecto
+    }
+  }
+
+  /**
+   * Obtiene el saldo de puntos disponible
+   */
+  getAvailablePoints(): number {
+    return this.pointsSummary?.availablePoints || 0;
+  }
+
+  /**
+   * Valida si se puede usar la cantidad de puntos especificada
+   */
+  canUsePoints(pointsToUse: number): boolean {
+    if (!this.pointsSummary) return false;
+    const availablePoints = this.getAvailablePoints();
+    const maxDiscount = this.getMaxDiscountForCategory();
+    return pointsToUse <= availablePoints && pointsToUse <= maxDiscount;
+  }
+
+  /**
+   * Obtiene el nombre de un viajero por su ID
+   * @param travelerId ID del viajero
+   */
+  private getTravelerName(travelerId: string): string {
+    if (travelerId === 'main-traveler') {
+      return 'Titular de la reserva';
+    }
+    
+    const traveler = this.travelers.find(t => t.id === travelerId);
+    return traveler ? traveler.name : 'Viajero desconocido';
+  }
+
+  /**
+   * Valida todos los aspectos del canje de puntos
+   * @param pointsToUse Puntos totales a usar
+   * @param distribution Distribución de puntos por viajero
+   * @returns Objeto con resultado de validación completo
+   */
+  validatePointsRedemption(
+    pointsToUse: number, 
+    distribution: { [travelerId: string]: number }
+  ): ValidationResult {
+    if (!this.pointsSummary) {
+      return {
+        isValid: false,
+        message: 'No se pudo validar el canje de puntos.',
+        errorType: 'distribution_error'
+      };
+    }
+
+    const availablePoints = this.getAvailablePoints();
+    const maxDiscount = this.getMaxDiscountForCategory();
+    
+    if (pointsToUse > availablePoints) {
+      return {
+        isValid: false,
+        message: 'No tienes suficientes puntos disponibles.',
+        errorType: 'insufficient_points'
+      };
+    }
+    
+    if (pointsToUse > maxDiscount) {
+      return {
+        isValid: false,
+        message: 'Excedes el límite de descuento para tu categoría.',
+        errorType: 'category_limit'
+      };
+    }
+
+    return {
+      isValid: true,
+      message: 'Validación exitosa',
+      errorType: 'success'
+    };
+  }
+
+  /**
+   * Muestra mensajes de error de validación
+   * @param validationResult Resultado de la validación
+   */
+  showValidationError(validationResult: { isValid: boolean; message: string; errorType: string; details?: string[] }): void {
+    if (validationResult.isValid) return;
+    
+    // Mostrar mensaje principal
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error en validación de puntos',
+      detail: validationResult.message,
+      life: 5000,
+    });
+    
+    // Mostrar detalles adicionales si existen
+    if (validationResult.details && validationResult.details.length > 0) {
+      validationResult.details.forEach(detail => {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Detalle adicional',
+          detail: detail,
+          life: 4000,
+        });
+      });
+    }
+  }
+
+  /**
+   * Valida la asignación de puntos a un viajero
+   * @param travelerId ID del viajero
+   * @param points Puntos a asignar
+   * @returns true si la asignación es válida, false en caso contrario
+   */
+  validateAndAssignPoints(travelerId: string, points: number): boolean {
+    const maxPointsPerPerson = this.pointsRedemption.maxDiscountPerTraveler;
+    return points >= 0 && points <= maxPointsPerPerson;
+  }
+
+  /**
+   * Actualiza la cantidad de puntos a usar con validaciones estrictas
+   */
+  updatePointsToUse(pointsToUse: number): void {
+    if (pointsToUse < 0) pointsToUse = 0;
+    
+    // Obtener límites máximos
+    const availablePoints = this.getAvailablePoints();
+    const maxDiscountForCategory = this.getMaxDiscountForCategory();
+    const maxAllowed = Math.min(availablePoints, maxDiscountForCategory);
+    
+    // Limitar estrictamente al máximo permitido
+    if (pointsToUse > maxAllowed) {
+      pointsToUse = maxAllowed;
+      
+      // Mostrar mensaje informativo
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Límite aplicado',
+        detail: `Se ha limitado a ${maxAllowed} puntos (máximo disponible)`,
+        life: 3000,
+      });
+    }
+    
+    this.pointsRedemption.totalPointsToUse = pointsToUse;
+    this.pointsRedemption.totalDiscount = pointsToUse; // 1 punto = 1 euro
+    
+    // Distribuir puntos entre viajeros automáticamente
+    this.distributePointsAmongTravelers(pointsToUse);
+  }
+
+  /**
+   * Establece el máximo de puntos disponibles sin mostrar errores (para el botón "Máximo")
+   */
+  setMaximumPoints(): void {
+    const availablePoints = this.getAvailablePoints();
+    const maxDiscountForCategory = this.getMaxDiscountForCategory();
+    
+    // El máximo real es el menor entre los puntos disponibles y el límite de categoría
+    const maximumPoints = Math.min(availablePoints, maxDiscountForCategory);
+    
+    this.pointsRedemption.totalPointsToUse = maximumPoints;
+    this.pointsRedemption.totalDiscount = maximumPoints; // 1 punto = 1 euro
+    
+    // Distribuir puntos entre viajeros automáticamente
+    this.distributePointsAmongTravelers(maximumPoints);
+  }
+
+  // ===== MÉTODOS PARA DISTRIBUCIÓN DE PUNTOS POR PERSONA =====
+
+  /**
+   * Distribuye puntos automáticamente entre los viajeros disponibles
+   * @param totalPoints Puntos totales a distribuir
+   */
+  private distributePointsAmongTravelers(totalPoints: number): void {
+    // Resetear asignaciones
+    this.travelers.forEach(traveler => {
+      traveler.assignedPoints = 0;
+    });
+
+    const maxPointsPerPerson = this.pointsRedemption.maxDiscountPerTraveler;
+    let remainingPoints = totalPoints;
+    const eligibleTravelers = this.travelers.filter(t => t.hasEmail);
+    const pointsPerEligibleTraveler = eligibleTravelers.length > 0 ? Math.floor(totalPoints / eligibleTravelers.length) : 0;
+
+    eligibleTravelers.forEach(traveler => {
+      let pointsToAssign = Math.min(pointsPerEligibleTraveler, maxPointsPerPerson);
+      if (remainingPoints > 0) {
+        pointsToAssign = Math.min(pointsToAssign, remainingPoints);
+        traveler.assignedPoints = pointsToAssign;
+        this.pointsRedemption.pointsPerTraveler[traveler.id] = pointsToAssign;
+        remainingPoints -= pointsToAssign;
+      }
+    });
+
+    // Distribute any remaining points to the first eligible traveler
+    if (remainingPoints > 0 && eligibleTravelers.length > 0) {
+      const firstTraveler = eligibleTravelers[0];
+      const currentAssigned = firstTraveler.assignedPoints || 0;
+      const canAssignMore = maxPointsPerPerson - currentAssigned;
+      const pointsToAdd = Math.min(remainingPoints, canAssignMore);
+      firstTraveler.assignedPoints = currentAssigned + pointsToAdd;
+      this.pointsRedemption.pointsPerTraveler[firstTraveler.id] = firstTraveler.assignedPoints;
+    }
+  }
+
+  /**
+   * Asigna puntos manualmente a un viajero específico con validaciones estrictas
+   * @param travelerId ID del viajero
+   * @param points Puntos a asignar
+   */
+  assignPointsToTraveler(travelerId: string, points: number): void {
+    const traveler = this.travelers.find(t => t.id === travelerId);
+    if (!traveler) return;
+
+    // Validar que el viajero pueda recibir puntos
+    if (travelerId !== 'main-traveler' && !traveler.hasEmail) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error de asignación',
+        detail: 'Este viajero no puede recibir puntos (sin email)',
+        life: 4000,
+      });
+      return;
+    }
+
+    // Calcular el máximo permitido para este viajero
+    const maxForThisTraveler = this.calculateMaxPointsForTraveler(travelerId);
+    
+    // Aplicar límites automáticamente
+    const originalPoints = points;
+    points = Math.max(0, Math.min(points, maxForThisTraveler));
+
+    // Si se aplicó algún límite, mostrar mensaje informativo
+    if (originalPoints !== points) {
+      this.showLimitAppliedMessage(originalPoints, points, travelerId, maxForThisTraveler);
+    }
+
+    // Actualizar asignación del viajero
+    traveler.assignedPoints = points;
+    this.pointsRedemption.pointsPerTraveler[travelerId] = points;
+
+    // Recalcular totales
+    this.recalculatePointsTotals();
+  }
+
+  /**
+   * Calcula el máximo de puntos que puede recibir un viajero específico
+   * @param travelerId ID del viajero
+   * @returns Máximo de puntos permitidos
+   */
+  private calculateMaxPointsForTraveler(travelerId: string): number {
+    const maxPointsPerPerson = this.pointsRedemption.maxDiscountPerTraveler;
+    const availablePoints = this.getAvailablePoints();
+    const maxDiscount = this.getMaxDiscountForCategory();
+    
+    // El máximo es el menor entre el límite por persona y los puntos disponibles
+    return Math.min(maxPointsPerPerson, availablePoints, maxDiscount);
+  }
+
+  /**
+   * Muestra mensaje cuando se aplica un límite
+   * @param originalPoints Puntos originales intentados
+   * @param finalPoints Puntos finales aplicados
+   * @param travelerId ID del viajero
+   * @param maxAllowed Máximo permitido
+   */
+  private showLimitAppliedMessage(originalPoints: number, finalPoints: number, travelerId: string, maxAllowed: number): void {
+    const traveler = this.travelers.find(t => t.id === travelerId);
+    const travelerName = traveler ? traveler.name : 'Viajero';
+    
+    let reason = '';
+    if (originalPoints > (traveler?.maxPoints || 0)) {
+      reason = `límite por persona (${traveler?.maxPoints || 0}€)`;
+    } else {
+      reason = `límite total disponible (${maxAllowed}€)`;
+    }
+
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Límite aplicado',
+      detail: `${travelerName}: Se limitó a ${finalPoints}€ por ${reason}`,
+      life: 3000,
+    });
+  }
+
+  /**
+   * Recalcula los totales de puntos después de cambios manuales
+   */
+  private recalculatePointsTotals(): void {
+    const totalAssigned = Object.values(this.pointsRedemption.pointsPerTraveler)
+      .reduce((sum, points) => sum + points, 0);
+
+    this.pointsRedemption.totalPointsToUse = totalAssigned;
+    this.pointsRedemption.totalDiscount = totalAssigned;
+    
+    // Emitir el cambio de descuento por puntos
+    this.pointsDiscountChange.emit(this.pointsRedemption.totalDiscount);
+  }
+
+  /**
+   * Obtiene el total de puntos asignados a un viajero
+   * @param travelerId ID del viajero
+   */
+  getTravelerAssignedPoints(travelerId: string): number {
+    return this.pointsRedemption.pointsPerTraveler[travelerId] || 0;
+  }
+
+  /**
+   * Obtiene el máximo de puntos que puede recibir un viajero según el documento (50€ por persona)
+   * @param travelerId ID del viajero
+   */
+  getTravelerMaxPoints(travelerId: string): number {
+    return this.calculateMaxPointsForTraveler(travelerId);
+  }
+
+  /**
+   * Obtiene el máximo fijo de puntos por persona para mostrar en la UI (siempre 50€)
+   * @param travelerId ID del viajero
+   */
+  getTravelerMaxPointsDisplay(travelerId: string): number {
+    const traveler = this.travelers.find(t => t.id === travelerId);
+    if (!traveler) return 0;
+    
+    // Siempre mostrar el límite fijo por persona (50€ según el documento)
+    return traveler.maxPoints;
+  }
+
+  /**
+   * Valida si se puede asignar la cantidad de puntos especificada a un viajero
+   * @param travelerId ID del viajero
+   * @param points Puntos a validar
+   */
+  canAssignPointsToTraveler(travelerId: string, points: number): boolean {
+    const traveler = this.travelers.find(t => t.id === travelerId);
+    if (!traveler || (travelerId !== 'main-traveler' && !traveler.hasEmail)) return false;
+
+    const maxForThisTraveler = this.calculateMaxPointsForTraveler(travelerId);
+    return points >= 0 && points <= maxForThisTraveler;
+  }
+
+  /**
+   * Distribuye puntos automáticamente de forma equitativa
+   */
+  distributePointsEqually(): void {
+    const totalPoints = this.pointsRedemption.totalPointsToUse;
+    this.distributePointsAmongTravelers(totalPoints);
+  }
+
+  /**
+   * Obtiene el resumen de distribución de puntos
+   */
+  getPointsDistributionSummary(): {
+    totalPoints: number;
+    totalDiscount: number;
+    travelersWithPoints: number;
+    mainTravelerPoints: number;
+  } {
+    const travelersWithPoints = this.travelers.filter(t => t.assignedPoints > 0).length;
+    const mainTravelerPoints = this.pointsRedemption.pointsPerTraveler['main-traveler'] || 0;
+
+    return {
+      totalPoints: this.pointsRedemption.totalPointsToUse,
+      totalDiscount: this.pointsRedemption.totalDiscount,
+      travelersWithPoints,
+      mainTravelerPoints
+    };
+  }
+
+  /**
+   * Obtiene el precio final después de aplicar descuentos de puntos
+   */
+  getFinalPrice(): number {
+    const basePrice = this.paymentState.type === 'deposit' ? this.depositTotalAmount : this.totalPrice;
+    return Math.max(0, basePrice - this.pointsRedemption.totalDiscount);
+  }
+
+  /**
+   * Obtiene el nombre de la categoría para mostrar
+   */
+  getCategoryDisplayName(): string {
+    if (!this.pointsSummary) return '';
+    return this.pointsSummary.currentCategory; // Simplified
+  }
+
+  /**
+   * Obtiene el icono de la categoría
+   */
+  getCategoryIcon(): string {
+    if (!this.pointsSummary) return '';
+    // Simplified mock logic
+    switch (this.pointsSummary.currentCategory) {
+      case 'TROTAMUNDOS': return 'pi pi-leaf';
+      case 'VIAJERO': return 'pi pi-send';
+      case 'NOMADA': return 'pi pi-globe';
+      default: return 'pi pi-star';
+    }
+  }
+
+  /**
+   * Obtiene la clase CSS para el badge de categoría
+   */
+  getCategoryBadgeClass(): string {
+    if (!this.pointsSummary) return '';
+    // Simplified mock logic
+    switch (this.pointsSummary.currentCategory) {
+      case 'TROTAMUNDOS': return 'category-trotamundos';
+      case 'VIAJERO': return 'category-viajero';
+      case 'NOMADA': return 'category-nomada';
+      default: return '';
+    }
+  }
+
+  /**
+   * Obtiene el texto de progreso hacia la siguiente categoría
+   */
+  getProgressText(): string {
+    if (!this.pointsSummary || !this.pointsSummary.nextCategory) return '';
+    
+    const nextCategoryName = this.pointsSummary.nextCategory;
+    const tripsNeeded = this.pointsSummary.pointsToNextCategory || 0;
+    
+    if (tripsNeeded <= 0) {
+      return `¡Felicidades! Has alcanzado el nivel ${nextCategoryName}`;
+    }
+    
+    return `Te faltan ${tripsNeeded} viaje${tripsNeeded > 1 ? 's' : ''} para ser ${nextCategoryName}`;
+  }
+
+  /**
+   * Obtiene el porcentaje de progreso hacia la siguiente categoría
+   */
+  getProgressPercentage(): number {
+    if (!this.pointsSummary || !this.pointsSummary.pointsToNextCategory) return 100;
+    
+    // Simplified mock logic
+    const currentTrips = 1; // Mock value
+    const totalTripsNeeded = 3; // Mock value for VIAJERO
+    
+    return Math.min(100, (currentTrips / totalTripsNeeded) * 100);
+  }
+
+  // ===== MÉTODOS PARA CONFIRMACIÓN Y REGISTRO DE CANJE (E3-04) =====
+
+  /**
+   * Registra las transacciones de canje de puntos en el sistema
+   * @param reservationId ID de la reserva
+   * @param pointsDistribution Distribución de puntos por viajero
+   * @returns Array de transacciones registradas
+   */
+  async registerPointsRedemption(
+    reservationId: string, 
+    pointsDistribution: { [travelerId: string]: number }
+  ): Promise<any[]> {
+    const transactions: any[] = [];
+    
+    try {
+      // Crear transacción para cada viajero que recibió puntos
+      Object.entries(pointsDistribution).forEach(([travelerId, points]) => {
+        if (points > 0) {
+          const transaction = {
+            travelerId,
+            points,
+            type: 'redemption',
+            category: 'travel',
+            concept: `Canje de puntos en reserva ${reservationId}`,
+            reservationId
+          };
+          
+          transactions.push(transaction);
+        }
+      });
+      
+      // TODO: Implementar llamada a la API para registrar transacciones
+      // await this.pointsService.registerTransactions(transactions);
+      
+      return transactions;
+      
+    } catch (error) {
+      console.error('❌ Error al registrar transacciones de canje:', error);
+      throw new Error('No se pudieron registrar las transacciones de puntos');
+    }
+  }
+
+  /**
+   * Actualiza el saldo de puntos del usuario después del canje
+   * @param pointsUsed Puntos utilizados en el canje
+   */
+  private updateUserPointsAfterRedemption(pointsUsed: number): void {
+    if (this.pointsSummary) {
+      // Reducir puntos disponibles
+      this.pointsSummary.availablePoints -= pointsUsed;
+      this.pointsSummary.usedPoints += pointsUsed;
+      
+    }
+  }
+
+  /**
+   * Muestra la confirmación de canje de puntos al usuario
+   * @param transactions Transacciones registradas
+   * @param totalDiscount Descuento total aplicado
+   */
+  private showRedemptionConfirmation(transactions: any[], totalDiscount: number): void {
+    const travelersCount = transactions.length;
+    const totalPoints = transactions.reduce((sum, t) => sum + t.points, 0);
+    
+    // Mensaje principal
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Canje de puntos exitoso',
+      detail: `Se han canjeado ${totalPoints} puntos por ${totalDiscount.toFixed(2)}€ de descuento.`,
+      life: 6000,
+    });
+    
+    // Mensaje adicional con detalles
+    if (travelersCount > 1) {
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Distribución de puntos',
+        detail: `Los puntos se distribuyeron entre ${travelersCount} viajeros.`,
+        life: 4000,
+      });
+    }
+  }
+
+  /**
+   * Procesa el canje de puntos completo (registro + confirmación)
+   * @param reservationId ID de la reserva
+   * @returns Promise<boolean> - true si el canje fue exitoso
+   */
+  async processPointsRedemption(reservationId: string): Promise<boolean> {
+    if (!this.pointsRedemption.enabled || this.pointsRedemption.totalPointsToUse <= 0) {
+      return true; // No hay canje de puntos
+    }
+    
+    try {
+      // TODO: Implementar llamada real a la API
+      console.log(`Processing points redemption for reservation ${reservationId}`);
+      
+      // Simular éxito
+      const success = true;
+      
+      if (success) {
+        // Actualizar saldo del usuario
+        this.updateUserPointsAfterRedemption(this.pointsRedemption.totalPointsToUse);
+        
+        // Mostrar confirmación al usuario
+        this.showRedemptionConfirmation([], this.pointsRedemption.totalDiscount);
+      }
+      
+      return success;
+      
+    } catch (error) {
+      console.error('❌ Error al procesar canje de puntos:', error);
+      
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error en canje de puntos',
+        detail: 'No se pudo procesar el canje de puntos. El pago continuará sin descuento.',
+        life: 5000,
+      });
+      
+      return false;
+    }
+  }
+
+  /**
+   * Obtiene el resumen de canje para mostrar en la confirmación
+   */
+  getRedemptionSummary(): PointsDistributionSummary {
+    const travelersWithPoints = this.travelers.filter(t => t.assignedPoints > 0).length;
+    const mainTravelerPoints = this.pointsRedemption.pointsPerTraveler['main-traveler'] || 0;
+
+    return {
+      totalPoints: this.pointsRedemption.totalPointsToUse,
+      totalDiscount: this.pointsRedemption.totalDiscount,
+      travelersWithPoints,
+      mainTravelerPoints
+    };
+  }
+
+  /**
+   * Obtiene el máximo de puntos permitidos (menor entre disponibles y límite de categoría)
+   */
+  getMaxAllowedPoints(): number {
+    return Math.min(this.getAvailablePoints(), this.getMaxDiscountForCategory());
+  }
+
+  /**
+   * Verifica si el total de puntos asignados excede el máximo permitido
+   */
+  isTotalExceeded(): boolean {
+    return this.getPointsDistributionSummary().totalPoints > this.getMaxAllowedPoints();
+  }
+
+  // ===== MÉTODOS PARA REVERSO POR CANCELACIÓN =====
+
+  /**
+   * Procesa la cancelación de la reserva y revierte los puntos usados
+   * @param reservationId ID de la reserva a cancelar
+   * @param reason Razón de la cancelación
+   */
+  async processReservationCancellation(reservationId: string, reason: string = 'Usuario canceló la reserva'): Promise<boolean> {
+    try {
+      console.log(`Processing reservation cancellation for ${reservationId} due to: ${reason}`);
+
+      // Verificar uso de puntos en la reserva
+      if (this.pointsRedemption.enabled && this.pointsRedemption.totalPointsToUse > 0) {
+        // TODO: Implementar reverso real de puntos
+        console.log(`Reverting ${this.pointsRedemption.totalPointsToUse} points for cancellation`);
+          
+          // Mostrar mensaje de confirmación al usuario
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Puntos revertidos',
+            detail: `Se han revertido ${this.pointsRedemption.totalPointsToUse} puntos a tu cuenta por la cancelación de la reserva.`,
+            life: 5000,
+          });
+
+          // Actualizar saldo de puntos del usuario
+          this.updateUserPointsAfterReversal(this.pointsRedemption.totalPointsToUse);
+      }
+
+      // TODO: Cancelar la reserva en el sistema
+      return true;
+
+    } catch (error) {
+      console.error('❌ Error al procesar cancelación de reserva:', error);
+      
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error en cancelación',
+        detail: 'No se pudo procesar la cancelación de la reserva. Contacta con soporte.',
+        life: 5000,
+      });
+      
+      return false;
+    }
+  }
+
+  /**
+   * Actualiza el saldo de puntos del usuario después de un reverso
+   * @param pointsReversed Puntos que se revirtieron
+   */
+  private updateUserPointsAfterReversal(pointsReversed: number): void {
+    if (this.pointsSummary) {
+      // Añadir los puntos revertidos al saldo disponible
+      this.pointsSummary.availablePoints += pointsReversed;
+      this.pointsSummary.totalPoints += pointsReversed;
+      
+    }
+  }
+
+  /**
+   * Simula la cancelación de una reserva (para testing)
+   */
+  simulateReservationCancellation(): void {
+    const reservationId = `reservation_${Date.now()}`;
+    this.processReservationCancellation(reservationId, 'Simulación de cancelación');
+  }
+
+  /**
+   * Simula la finalización de un viaje para probar la generación automática de puntos
+   */
+  async simulateTripCompletion(): Promise<void> {
+    try {
+      console.log('Simulating trip completion');
+      
+      // TODO: Implementar llamada real a la API para generar puntos
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Simulación de finalización',
+        detail: 'La simulación de finalización de viaje se ha ejecutado (sin API real).',
+        life: 3000,
+      });
+      
+    } catch (error) {
+      console.error('Error en simulación de finalización:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Ocurrió un error durante la simulación de finalización.',
+        life: 4000,
+      });
+    }
+  }
+
+  /**
+   * Obtiene información sobre los puntos usados en la reserva actual
+   */
+  getPointsUsedInReservation(): { used: boolean; amount: number; canRevert: boolean } {
+    return {
+      used: this.pointsRedemption.enabled && this.pointsRedemption.totalPointsToUse > 0,
+      amount: this.pointsRedemption.totalPointsToUse,
+      canRevert: true // Simplified - always allow reversal
+    };
+  }
+
+  /**
+   * Maneja el cambio de descuento por puntos desde el componente de canje
+   */
+  onPointsDiscountChange(discount: number): void {
+    this.pointsRedemption.totalDiscount = discount;
+    this.pointsDiscountChange.emit(discount);
+  }
+
+  /**
+   * Maneja el cambio de estado de habilitación del canje de puntos
+   */
+  onRedemptionEnabledChange(enabled: boolean): void {
+    this.pointsRedemption.enabled = enabled;
+    if (!enabled) {
+      this.pointsRedemption.totalPointsToUse = 0;
+      this.pointsRedemption.totalDiscount = 0;
+      this.pointsDiscountChange.emit(0);
+    }
   }
 }

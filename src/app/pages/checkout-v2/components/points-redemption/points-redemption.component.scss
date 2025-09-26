@@ -48,125 +48,347 @@ $border-color: #e2e8f0;
   .header-container {
     cursor: pointer;
     margin: 0 0 1.5rem;
-    padding: 0;
-    border: none;
-    background: none;
     width: 100%;
-    text-align: left;
-    transition: all 0.2s ease;
 
-    &:hover {
-      .title {
-        color: $azul;
-    }
+    @media (max-width: 480px) { margin-bottom: 1.25rem; }
   }
 
   .title-with-icon {
-      @include flex-between;
-      margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    width: 100%;
+    gap: 1rem;
+
+    .title,
+    .pi { color: $azul; }
 
     .title {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: #1f2937;
-        margin: 0;
-        transition: color 0.2s ease;
-      }
+      font-weight: 500;
+      font-size: 1.21rem;
+      flex: 1;
+      min-width: 0;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
       
-      .pi {
-        font-size: 0.875rem;
-        color: $text-muted;
-        transition: transform 0.2s ease;
-      }
+      @media (max-width: 480px) { font-size: 1.1rem; }
+      @media (max-width: 768px) { font-size: 1.15rem; }
     }
 
-    .title-underline {
-      height: 2px;
-      background: linear-gradient(90deg, $azul 0%, transparent 100%);
-      border-radius: 1px;
+    .pi {
+      margin-left: 8px;
+      flex-shrink: 0;
+      font-size: 1rem;
+      
+      @media (max-width: 480px) { font-size: 0.9rem; }
     }
   }
 
-  .points-redemption-content {
-    padding: 0;
-      margin: 0;
+  .title-underline {
+    height: 1px;
+    background-color: $azul;
+    margin-top: -15px;
+    width: 100%;
+    max-width: 278px;
+    
+    @media (max-width: 480px) { max-width: 100%; }
+    @media (max-width: 768px) { max-width: 255px; }
   }
 }
 
+// Mensaje informativo mejorado
+.points-info-message {
+  margin-bottom: 2rem;
+  margin-top: 5rem;
+  border-radius: 12px;
+  padding: 1.5rem;
+  background: #3d77c31b;
+  box-shadow: 0 2px 8px rgba(0, 43, 87, 0.1);
+  border: 2px solid rgb(48, 98, 129);
+  
+  .info-content {
+    padding: 0.5rem 0;
+    
+    .info-title {
+      font-weight: 700;
+      color: $azul;
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+    }
+    
+    .info-text {
+      color: $text-muted;
+      margin: 0;
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+  }
+}
+
+// Estado de carga
 .loading-container {
   @include flex-center;
   flex-direction: column;
   gap: 1rem;
   padding: 2rem;
-  text-align: center;
   color: $text-muted;
-  
-  p {
-    margin: 0;
-    font-size: 0.875rem;
-  }
 }
 
+
+// Toggle de canje simplificado
 .redemption-toggle {
-  @include flex-between;
+  display: flex;
+  align-items: center;
   gap: 0.75rem;
-  padding: 1rem;
-  background: #f8fafc;
-  border: 1px solid $border-color;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-  
-  .toggle-label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #374151;
-    cursor: pointer;
-    margin: 0;
-    flex: 1;
-  }
-}
-
-.points-input-card {
+  margin-bottom: 2rem;
+  padding: 1.25rem;
   background: white;
   border: 1px solid $border-color;
   border-radius: 8px;
-  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 43, 87, 0.1);
+  
+  .toggle-label {
+    font-weight: 500;
+    color: $azul;
+    cursor: pointer;
+    font-size: 1rem;
+    margin: 0;
+  }
+}
+
+// Card de input simplificado
+.points-input-card {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 43, 87, 0.1);
+  background: white !important;
+  border: 1px solid $border-color;
   
   .input-group {
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     
     .input-label {
       display: block;
-      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
       font-weight: 500;
-      color: #374151;
-      margin-bottom: 0.5rem;
+      color: $azul;
+      font-size: 1rem;
+    }
+    
+    .input-with-button {
+      @include flex-between;
+      gap: 0.75rem;
+      
+      .p-inputnumber {
+        flex: 1;
+        
+         .p-inputnumber-input {
+           border-radius: 6px;
+           border: 1px solid $border-color;
+           font-size: 0.9rem;
+           padding: 0.4rem;
+           transition: all 0.3s ease;
+          
+          &:focus {
+            border-color: $azul;
+            box-shadow: 0 0 0 2px rgba(0, 43, 87, 0.1);
+          }
+        }
+      }
     }
   }
 }
 
-.distribution-summary-card {
-  background: #f8fafc;
-  border: 1px solid $border-color;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
+// Header de distribución simplificado
+.distribution-header {
+  @include flex-between;
+  margin: 1.5rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid $border-color;
   
-  .card-header {
-    @include flex-between;
-    padding: 1rem;
+  h4 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: $azul;
+    font-weight: 600;
+  }
+  
+  .distribution-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
+// Cards de viajeros rediseñados
+.traveler-card {
+  background: white !important;
+  border: 1px solid $border-color;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 43, 87, 0.08);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0, 43, 87, 0.12);
+    transform: translateY(-1px);
+  }
+  
+  &.traveler-disabled {
+    background: #f8fafc !important;
+    opacity: 0.9;
+    border-color: #cbd5e1;
+  }
+  
+  .traveler-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
     border-bottom: 1px solid $border-color;
-    background: #f1f5f9;
-    border-radius: 8px 8px 0 0;
     
-    .pi {
+    .traveler-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      
+      .traveler-icon {
+        color: $azul;
+        font-size: 1.2rem;
+        background: white;
+        padding: 0.5rem;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0, 43, 87, 0.1);
+      }
+      
+      .traveler-details {
+        .traveler-name {
+          font-weight: 600;
+          color: $azul;
+          font-size: 1.1rem;
+          margin-bottom: 0.25rem;
+        }
+        
+        .traveler-email {
+          color: $text-muted;
+          font-size: 0.9rem;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+  
+  .points-section {
+    padding: 1.5rem;
+    
+    .points-input-container {
+      margin-bottom: 1rem;
+      
+      .points-label {
+        display: block;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
         color: $azul;
         font-size: 1rem;
       }
       
+      .points-input-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        
+        .points-input {
+          flex: 1;
+          
+          .p-inputnumber-input {
+            border-radius: 8px;
+            border: 2px solid $border-color;
+            font-size: 1rem;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+            background: white;
+            
+            &:focus {
+              border-color: $azul;
+              box-shadow: 0 0 0 3px rgba(0, 43, 87, 0.1);
+            }
+          }
+        }
+        
+        .max-indicator {
+          color: $text-muted;
+          font-size: 0.9rem;
+          font-weight: 500;
+          white-space: nowrap;
+        }
+      }
+    }
+    
+    .discount-display {
+      margin-bottom: 1rem;
+    }
+  }
+  
+  .blocked-section {
+    padding: 1.5rem;
+    text-align: center;
+    background: #f8fafc;
+    border-top: 1px solid $border-color;
+    
+    .blocked-message {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      background: #f1f5f9;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      
+      i {
+        color: #64748b;
+        font-size: 1.1rem;
+      }
+      
       span {
+        color: #64748b;
         font-weight: 600;
-      color: #374151;
-      font-size: 0.875rem;
+        font-size: 1rem;
+      }
+    }
+  }
+}
+
+// Cards de resumen simplificados
+.distribution-summary-card,
+.redemption-summary-card {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 43, 87, 0.1);
+  background: white !important;
+  border: 1px solid $border-color;
+  
+  .card-header,
+  .summary-header {
+    @include flex-between;
+    gap: 0.5rem;
+    color: $azul;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #f59e0b;
+    
+    i {
+      color: $azul;
+      font-size: 1.2rem;
     }
   }
   
@@ -174,100 +396,459 @@ $border-color: #e2e8f0;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
-    padding: 1rem;
     
     .summary-item {
       @include flex-between;
       gap: 0.5rem;
+      padding: 0.75rem;
+      background: #f8fafc;
+      border-radius: 6px;
+      border: 1px solid $border-color;
       
       .summary-label {
-        font-size: 0.75rem;
-        color: $text-muted;
         font-weight: 500;
+        color: $azul;
+        font-size: 0.9rem;
       }
-    }
-  }
-}
-
-.redemption-summary-card {
-  background: #f0f9ff;
-  border: 1px solid #0ea5e9;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-  
-  .summary-header {
-    @include flex-between;
-    padding: 1rem;
-    border-bottom: 1px solid #0ea5e9;
-    background: #e0f2fe;
-    border-radius: 8px 8px 0 0;
-    
-    .pi {
-      color: #0ea5e9;
-      font-size: 1rem;
-    }
-    
-    span {
-      font-weight: 600;
-      color: #0c4a6e;
-      font-size: 0.875rem;
     }
   }
   
   .summary-content {
-    padding: 1rem;
-    
     .summary-row {
       @include flex-between;
+      gap: 0.5rem;
       margin-bottom: 0.75rem;
-      
-      &:last-child {
-        margin-bottom: 0;
-      }
+      padding: 0.75rem;
+      background: #f8fafc;
+      border-radius: 6px;
+      border: 1px solid $border-color;
       
       .summary-label {
-        font-size: 0.75rem;
-        color: $text-muted;
         font-weight: 500;
+        color: $azul;
+        font-size: 0.9rem;
       }
     }
   }
 }
 
-// Responsive adjustments
+// Mensaje de error global
+.global-error {
+  margin-top: 1rem;
+}
+
+// Responsive
 @media (max-width: 768px) {
-  .container {
-    .header-container {
-      .title-with-icon {
-        .title {
+  .points-redemption-panel {
+    margin: 1rem 0;
+  }
+  
+  .input-with-button {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .traveler-item {
+    .traveler-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+      
+      .traveler-name {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+      }
+    }
+  }
+  
+  .distribution-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+// Cards de viajeros compactos mejorados
+.traveler-card-compact {
+  background: white !important;
+  border: 1px solid $border-color;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  padding: 0;
+  box-shadow: 0 1px 4px rgba(0, 43, 87, 0.06);
+  overflow: hidden;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 43, 87, 0.1);
+  }
+  
+  &.traveler-disabled {
+    background: #f8fafc !important;
+    opacity: 0.9;
+    border-color: #cbd5e1;
+  }
+  
+  .traveler-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    gap: 1rem;
+    min-height: 60px;
+    
+    .traveler-info-compact {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex: 1;
+      min-width: 0;
+      
+      .traveler-icon {
+        color: $azul;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        background: #f0f4ff;
+        padding: 0.5rem;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .traveler-details {
+        min-width: 0;
+        flex: 1;
+        
+        .traveler-name {
+          font-weight: 600;
+          color: $azul;
           font-size: 1rem;
+          margin-bottom: 0.25rem;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        
+        .traveler-email {
+          color: $text-muted;
+          font-size: 0.85rem;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+    
+    .points-controls-compact {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-shrink: 0;
+      
+      .traveler-input-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        overflow: hidden;
+        background: white;
+        
+        ::ng-deep .compact-traveler-input {
+          .p-inputnumber {
+            border: none !important;
+            border-radius: 0 !important;
+            
+            &:focus-within {
+              box-shadow: none !important;
+            }
+            
+            .p-inputnumber-input {
+              width: 50px !important;
+              height: 24px !important;
+              padding: 0 !important;
+              text-align: center;
+              font-size: 0.8rem !important;
+              font-weight: 500;
+              color: #374151;
+              border: none !important;
+              outline: none;
+              background: white !important;
+              
+              &:focus {
+                background: #f0f9ff !important;
+              }
+              
+              &.error {
+                color: #dc2626;
+                background: #fef2f2 !important;
+              }
+              
+              /* Ocultar las flechas del input number */
+              &::-webkit-outer-spin-button,
+              &::-webkit-inner-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+              }
+              
+              &[type=number] {
+                -moz-appearance: textfield;
+                appearance: textfield;
+              }
+            }
+            
+            .p-inputnumber-button-group {
+              .p-inputnumber-increment-button,
+              .p-inputnumber-decrement-button {
+                width: 24px !important;
+                height: 24px !important;
+                border: none !important;
+                background: #f9fafb !important;
+                color: #6b7280;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+                padding: 0 !important;
+                
+                &:hover:not(:disabled) {
+                  background: #f3f4f6 !important;
+                  color: #374151;
+                }
+                
+                &:disabled {
+                  background: #f9fafb !important;
+                  color: #d1d5db;
+                  cursor: not-allowed;
+                }
+                
+                .p-button-icon {
+                  font-size: 0.7rem !important;
+                }
+              }
+            }
+          }
+        }
+        
+        .max-indicator {
+          color: $text-muted;
+          font-size: 0.75rem;
+          font-weight: 500;
+          white-space: nowrap;
+          padding: 0 0.5rem;
+          background: #f9fafb;
+          height: 24px;
+          display: flex;
+          align-items: center;
+        }
+      }
+      
+      .discount-badge {
+        background: #dcfce7;
+        color: #166534;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        white-space: nowrap;
+        border: 1px solid #bbf7d0;
+      }
+    }
+    
+    .blocked-section-compact {
+      flex-shrink: 0;
+      
+      .blocked-message {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: $text-muted;
+        font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
+        background: #fef3c7;
+        border-radius: 6px;
+        border: 1px solid #f59e0b;
+        
+        i {
+          color: #f59e0b;
         }
       }
     }
   }
   
-  .distribution-summary-card {
-    .summary-grid {
-      grid-template-columns: 1fr;
-      gap: 0.75rem;
+  .error-message-compact {
+    margin: 0;
+    padding: 0.5rem 1rem;
+    border-top: 1px solid #fecaca;
+    background: #fef2f2;
+    
+    ::ng-deep .p-message-wrapper {
+      padding: 0.25rem 0;
     }
   }
 }
 
-@media (max-width: 480px) {
-  .redemption-toggle {
-    padding: 0.75rem;
+// Estilos para el p-inputNumber
+::ng-deep .compact-input-number {
+  .p-inputnumber {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    overflow: hidden;
+    background: white;
+    display: flex;
+    align-items: center;
+    gap: 0;
     
-    .toggle-label {
-      font-size: 0.8rem;
+    &:focus-within {
+      border-color: $azul;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    }
+    
+    .p-inputnumber-input {
+      width: 40px !important;
+      height: 20px !important;
+      padding: 0 !important;
+      text-align: center;
+      font-size: 0.8rem !important;
+      font-weight: 500;
+      color: #374151;
+      border: none !important;
+      outline: none;
+      background: white !important;
+      
+      &:focus {
+        background: #f0f9ff !important;
+      }
+      
+      &.error {
+        color: #dc2626;
+        background: #fef2f2 !important;
+      }
+      
+      /* Ocultar las flechas del input number */
+      &::-webkit-outer-spin-button,
+      &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      
+      &[type=number] {
+        -moz-appearance: textfield;
+        appearance: textfield;
+      }
+    }
+    
+    .p-inputnumber-button-group {
+      .p-inputnumber-increment-button,
+      .p-inputnumber-decrement-button {
+        width: 20px !important;
+        height: 20px !important;
+        border: none !important;
+        background: #f9fafb !important;
+        color: #6b7280;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        padding: 0 !important;
+        
+        &:hover:not(:disabled) {
+          background: #f3f4f6 !important;
+          color: #374151;
+        }
+        
+        &:disabled {
+          background: #f9fafb !important;
+          color: #d1d5db;
+          cursor: not-allowed;
+        }
+        
+        .p-button-icon {
+          font-size: 0.6rem !important;
+        }
+      }
     }
   }
+}
+
+// Estilos para el botón "Máximo"
+.max-button {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   
-  .points-input-card {
-    .input-group {
-      .input-label {
-        font-size: 0.8rem;
+  &:hover {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+  }
+  
+  &:active {
+    background: #d1d5db;
+  }
+}
+
+// Ajustes para el contenedor con botón
+.input-with-button {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: nowrap;
+  width: fit-content;
+  
+  .compact-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    overflow: hidden;
+    background: white;
+    
+    ::ng-deep .compact-input-number {
+      flex: 0 0 auto;
+      max-width: 200px;
+      
+      .p-inputnumber {
+        border: none !important;
+        border-radius: 0 !important;
+        
+        &:focus-within {
+          box-shadow: none !important;
+        }
       }
+    }
+    
+    .max-indicator {
+      color: $text-muted;
+      font-size: 0.7rem;
+      font-weight: 500;
+      white-space: nowrap;
+      padding: 0 0.4rem;
+      background: #f9fafb;
+      height: 20px;
+      display: flex;
+      align-items: center;
     }
   }
 }

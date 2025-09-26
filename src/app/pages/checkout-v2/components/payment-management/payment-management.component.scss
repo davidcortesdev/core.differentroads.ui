@@ -74,255 +74,584 @@ $border-color: #e2e8f0;
       word-wrap: break-word;
       overflow-wrap: break-word;
       
-      @include mobile { font-size: 1.1rem; }
-      @include tablet { font-size: 1.15rem; }
-      @include desktop { font-size: 1.21rem; }
+      // R font sizes
+      @include mobile {
+        font-size: 1.1rem;
+      }
+      
+      @include tablet {
+        font-size: 1.15rem;
+      }
+      
+      @include desktop {
+        font-size: 1.21rem;
+      }
     }
 
     .pi {
       margin-left: 8px;
       flex-shrink: 0;
       font-size: 1rem;
-      @include mobile { font-size: 0.9rem; }
+      
+      @include mobile {
+        font-size: 0.9rem;
+      }
     }
   }
 
   .title-underline {
-    height: 2px;
-    background: linear-gradient(90deg, $azul 0%, transparent 100%);
-    border-radius: 1px;
+    height: 1px;
+    background-color: $azul;
+    margin-top: -15px;
     width: 100%;
+    max-width: 278px;
+    
+    // R max-width
+    @include mobile {
+      max-width: 100%;
+    }
+    
+    @include tablet {
+      max-width: 255px;
+    }
+    
+    @include desktop {
+      max-width: 278px;
+    }
 
     &.pay { 
-      background: linear-gradient(90deg, $azul 0%, transparent 100%);
+      max-width: 200px;
+      
+      @include mobile {
+        max-width: 100%;
+      }
+    }
+  }
+
+  ::ng-deep .payment-panel {
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    width: 100%;
+    
+    // R
+    @include mobile {
+      margin-bottom: 1rem;
+    }
+    
+    @include tablet {
+      margin-bottom: 0.875rem;
+    }
+    
+    @include desktop {
+      margin-bottom: 0.75rem;
+    }
+
+    .p-panel-header {
+      display: none;
+    }
+
+    .p-panel-content {
+      @include panel-padding;
+      width: 100%;
+    }
+  }
+
+  .payment-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    width: 100%;
+    gap: 1rem;
+
+    // En móviles, cambiar a layout vertical
+    @include mobile {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .option-text {
+      margin-left: 1rem;
+      flex-grow: 1;
+      min-width: 0;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      
+      @include mobile {
+        margin-left: 0;
+        font-size: 0.85rem;
+        max-width: 100%;
+        width: 100%;
+      }
+      
+      @include tablet {
+        font-size: 0.95rem;
+      }
+      
+      @include desktop {
+        font-size: 1rem;
+      }
+      
+      .specific-search-info {
+        display: block;
+        font-size: 0.8rem;
+        color: #666;
+        margin-top: 0.25rem;
+        font-style: italic;
+        
+        @include mobile {
+          font-size: 0.75rem;
+        }
+      }
+    }
+
+    .option-price,
+    .scalapay-logo {
+      margin-left: auto;
+      flex-shrink: 0;
+      @include mobile { margin-left: 0; }
+    }
+
+    .option-price {
+      font-weight: bold;
+      font-size: 1.125rem;
+      white-space: nowrap;
+      @include mobile { font-size: 0.95rem; }
+    }
+
+    .scalapay-logo {
+      height: 24px;
+      @include mobile { height: 20px; }
+    }
+  }
+
+  .payment-methods-section,
+  .installments-section {
+    margin-top: 2rem;
+    
+    // R
+    @include mobile {
+      margin-top: 2.5rem;
+    }
+    
+    @include tablet {
+      margin-top: 2.25rem;
+    }
+    
+    @include desktop {
+      margin-top: 2rem;
+    }
+  }
+
+  .payment-methods-row,
+  .installment-panels-row {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    width: 100%;
+    
+    // R layout
+    @include mobile {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    
+    @include tablet {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    
+    @include desktop {
+      flex-direction: row;
+      gap: 1rem;
+    }
+  }
+
+  .payment-method-container,
+  .installment-panel-container {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    
+    // En móviles, ocupar todo el ancho
+    @include mobile {
+      flex: 1 1 100%;
+    }
+    
+    @include tablet {
+      flex: 1 1 100%;
+    }
+    
+    @include desktop {
+      flex: 1;
+    }
+
+    ::ng-deep .p-panel-content {
+      @include panel-padding;
+    }
+  }
+
+  .payment-method-panel {
+    transition: all 0.2s ease;
+    cursor: pointer;
+
+    &.selected .p-panel-content {
+      border: 2px solid $azul;
+    }
+  }
+
+  .installment-content {
+    margin-left: 1rem;
+    width: 100%;
+    @include mobile { margin-left: 0.5rem; }
+  }
+
+  .scalapay-widget-container {
+    width: 100%;
+    text-align: center;
+    font-size: 14px;
+  }
+
+  ::ng-deep scalapay-widget {
+    .info-container p.installment-info {
+      display: none !important;
+    }
+    img.logo {
+      max-width: 120px !important;
+      margin: 0 auto;
+    }
+  }
+
+
+  .buttons-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 1rem;
+    margin-top: 2rem;
+    
+    // R layout
+    @include mobile {
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    
+    @include tablet {
+      flex-direction: row;
+      gap: 1rem;
+      margin-top: 1.75rem;
+    }
+    
+    @include desktop {
+      flex-direction: row;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .back-button {
+      flex-shrink: 0;
+      
+      // R sizing
+      @include mobile {
+        width: 100%;
+        order: 2;
+      }
+      
+      @include tablet {
+        margin-right: 1rem;
+        width: auto;
+        order: 1;
+      }
+      
+      @include desktop {
+        margin-right: 1rem;
+        width: auto;
+        order: 1;
+      }
+    }
+
+    .payment-button {
+      flex-grow: 1;
+      max-width: 300px;
+      
+      // R sizing
+      @include mobile {
+        width: 100%;
+        max-width: 100%;
+        order: 1;
+      }
+      
+      @include tablet {
+        flex-grow: 1;
+        max-width: 300px;
+        order: 2;
+      }
+      
+      @include desktop {
+        flex-grow: 1;
+        max-width: 300px;
+        order: 2;
+      }
+
+      ::ng-deep .p-button {
+        border-radius: 50px;
+        height: 50px;
+        width: 100%;
+        
+        // R height
+        @include mobile {
+          height: 45px;
+          border-radius: 45px;
+        }
+        
+        @include tablet {
+          height: 47px;
+          border-radius: 47px;
+        }
+        
+        @include desktop {
+          height: 50px;
+          border-radius: 50px;
+        }
+      }
     }
   }
 }
 
-// Loading States
-.loading-container {
-  @include flex-center;
-      flex-direction: column;
-    gap: 1rem;
-  padding: 2rem;
-    text-align: center;
-  color: $text-muted;
+:host ::ng-deep {
+  .payment-button {
+    margin: 10px 0;
+
+    &.p-button {
+      width: 100%;
+      border-radius: 100px;
+      height: 40px;
+      background-color: var(--p-primary-color);
+      margin-top: 20px;
+      
+      // R sizing
+      @include mobile {
+        height: 45px;
+        border-radius: 45px;
+        margin-top: 0;
+      }
+      
+      @include tablet {
+        height: 47px;
+        border-radius: 47px;
+        margin-top: 10px;
+      }
+      
+      @include desktop {
+        height: 50px;
+        border-radius: 50px;
+        margin-top: 20px;
+      }
+
+      &.p-disabled,
+      &.payment-button-disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .p-button-label {
+        font-weight: 500;
+        font-size: 1rem;
+        @include flex-center;
+        width: 100%;
+        
+        // R font sizes
+        @include mobile {
+          font-size: 0.9rem;
+        }
+        
+        @include tablet {
+          font-size: 0.95rem;
+        }
+        
+        @include desktop {
+          font-size: 1rem;
+        }
+      }
+    }
+
+    &.p-disabled {
+      opacity: 0.6;
+    }
+  }
   
-  p {
-    margin: 0;
-      font-size: 0.875rem;
+  .back-button {
+    &.p-button {
+      width: 100%;
+      border-radius: 100px;
+      height: 40px;
+      margin-top: 20px;
+      
+      // R sizing
+      @include mobile {
+        height: 45px;
+        border-radius: 45px;
+        margin-top: 0;
+      }
+      
+      @include tablet {
+        height: 47px;
+        border-radius: 47px;
+        margin-top: 10px;
+        width: auto;
+      }
+      
+      @include desktop {
+        height: 50px;
+        border-radius: 50px;
+        margin-top: 20px;
+        width: auto;
+      }
+
+      .p-button-label {
+        font-weight: 500;
+        font-size: 1rem;
+        @include flex-center;
+        width: 100%;
+        
+        // R font sizes
+        @include mobile {
+          font-size: 0.9rem;
+        }
+        
+        @include tablet {
+          font-size: 0.95rem;
+        }
+        
+        @include desktop {
+          font-size: 1rem;
+        }
+      }
+    }
+  }
+
+  .p-checkbox .p-checkbox-box.p-focus {
+    box-shadow: 0 0 0 0.2rem rgba($azul, 0.25) !important;
+  }
+
+  @include mobile {
+    .p-radiobutton {
+      margin-right: 0.25rem;
     }
   }
 
   .loading-container-scalapay {
     @include flex-center;
     flex-direction: column;
-  gap: 1rem;
+    min-height: 300px;
     padding: 2rem;
-  text-align: center;
-  color: $text-muted;
 
     span {
-    display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-    font-size: 0.875rem;
-  }
+      font-size: 1.1rem;
+      color: #666;
+      margin-bottom: 1.5rem;
 
       .scalapay-logo {
-    height: 20px;
-    width: auto;
-  }
-}
-
-// Payment Type Section
-.payment-type-section {
-  margin-bottom: 2rem;
-  
-  .payment-panels {
-      display: flex;
-    flex-direction: column;
-  gap: 1rem;
-    margin-top: 1rem;
-    
-    .payment-panel {
-      cursor: pointer;
-      transition: all 0.2s ease;
-      border: 2px solid $border-color;
-      
-      &:hover {
-        border-color: $azul;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      }
-      
-      &.selected {
-        border-color: $azul;
-        background: #f0f9ff;
-      }
-      
-      .payment-option {
-        @include flex-between;
-        padding: 1rem;
-    gap: 1rem;
-        
-        .option-text {
-          font-weight: 500;
-          color: #374151;
-      flex: 1;
-        }
-        
-        .option-price {
-          font-weight: 600;
-          color: $azul;
-        font-size: 1.1rem;
-      }
-
-        .scalapay-logo {
-          height: 24px;
-          width: auto;
-        }
-        
-        .specific-search-info {
-          font-size: 0.75rem;
-          color: $text-muted;
-          font-style: italic;
-        }
+        width: 80px;
+        height: auto;
+        vertical-align: middle;
+        display: inline-block;
       }
     }
   }
 }
 
-// Payment Methods Section
-.payment-methods-section {
-    margin-bottom: 2rem;
-
-  .payment-methods-row {
-        display: flex;
-          flex-direction: column;
-    gap: 1rem;
-    margin-top: 1rem;
+.price-change-dialog {
+  ::ng-deep .p-dialog {
+    min-width: 500px;
+    max-width: 600px;
     
-    .payment-method-container {
-      .payment-option {
-        @include flex-between;
-        padding: 1rem;
-        border: 1px solid $border-color;
-        border-radius: 8px;
-      cursor: pointer;
-        transition: all 0.2s ease;
-        
-        &:hover {
-          border-color: $azul;
-          background: #f8fafc;
-        }
-        
-        .option-text {
-          font-weight: 500;
-          color: #374151;
-          flex: 1;
-        }
-        
-        .pi {
-          color: $azul;
-          font-size: 1rem;
-        }
+    .p-dialog-header {
+      background-color: #fff3cd;
+      border-bottom: 1px solid #ffeaa7;
+      
+      .p-dialog-title {
+        color: #856404;
+        font-weight: 600;
       }
+    }
+    
+    .p-dialog-content { padding: 1.5rem; }
+    .p-dialog-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #dee2e6;
     }
   }
 }
 
-// Installments Section
-.installments-section {
-    margin-bottom: 2rem;
-  
-  .installment-panels-row {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    margin-top: 1rem;
-    
-    .installment-panel-container {
-      .payment-option {
-        @include flex-between;
-        padding: 1rem;
-        border: 1px solid $border-color;
-      border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-
-      &:hover {
-          border-color: $azul;
-        background: #f8fafc;
-        }
-        
-        .installment-content {
-            flex: 1;
-          
-          .scalapay-widget-container {
-            margin-top: 0.5rem;
-          }
-        }
-      }
-    }
-  }
-}
-
-// Buttons Container
-.buttons-container {
-  @include flex-center;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding: 1rem 0;
-  
-          @include mobile {
-            flex-direction: column;
-            gap: 0.75rem;
-          }
-}
-
-// Price Change Dialog
 .price-change-content {
+  text-align: center;
+  
   .price-change-icon {
-    @include flex-center;
     margin-bottom: 1rem;
     
-    .pi {
-      font-size: 2rem;
-      color: #f59e0b;
+    i {
+      font-size: 3rem;
+      color: #f39c12;
     }
+  }
+  
+  h3 {
+    color: #856404;
+    margin-bottom: 1.5rem;
+    font-size: 1.25rem;
   }
   
   .price-details {
-    margin-bottom: 1rem;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
     
     .price-row {
-      @include flex-between;
-      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #e9ecef;
+      
+      &:last-child {
+        border-bottom: none;
+      }
       
       .price-label {
-            font-weight: 500;
-        color: #374151;
+        font-weight: 500;
+        color: #495057;
       }
       
       .price-value {
         font-weight: 600;
+        font-size: 1.1rem;
         
         &.previous-price {
-          color: $text-muted;
+          color: #6c757d;
           text-decoration: line-through;
         }
         
         &.current-price {
-          color: #059669;
+          color: #28a745;
         }
         
         &.difference-price {
           &.increase {
-          color: #dc2626;
+            color: #dc3545;
           }
           
           &.decrease {
-            color: #059669;
+            color: #28a745;
           }
         }
       }
@@ -330,48 +659,800 @@ $border-color: #e2e8f0;
   }
   
   .price-change-message {
-    color: $text-muted;
-    font-size: 0.875rem;
-    margin-bottom: 1rem;
-  }
-  
-  .dialog-footer {
-    @include flex-center;
-    gap: 1rem;
-    margin-top: 1.5rem;
+    color: #495057;
+    line-height: 1.5;
+    margin: 0;
   }
 }
 
-// Responsive adjustments
+.dialog-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  
+  .p-button {
+    min-width: 180px;
+  }
+}
+
+// ===== ESTILOS PARA CANJE DE PUNTOS =====
+
+.points-redemption-section {
+  margin-top: 2rem;
+  padding: 2rem;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  .distribution-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+
+    h4 {
+      margin: 0;
+      color: #1e293b;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .distribution-actions {
+      display: flex;
+      gap: 0.75rem;
+
+      .p-button {
+        font-size: 0.8rem;
+        padding: 0.5rem 1rem;
+        height: auto;
+        border-radius: 6px;
+        font-weight: 600;
+      }
+    }
+
+    @include tablet {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+
+      h4 {
+        font-size: 1rem;
+      }
+
+      .distribution-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+
+    @include mobile {
+      h4 {
+        font-size: 0.95rem;
+      }
+
+      .distribution-actions {
+        flex-direction: column;
+        width: 100%;
+
+        .p-button {
+          width: 100%;
+          justify-content: center;
+          font-size: 0.75rem;
+          padding: 0.5rem 0.875rem;
+        }
+      }
+    }
+  }
+
+  .travelers-list {
+    margin-top: 1rem;
+    width: 100%;
+    
+    .traveler-item {
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #ffffff;
+      transition: all 0.3s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      
+      // R
+      @include mobile {
+        padding: 1.25rem 1rem;
+        margin-bottom: 1.25rem;
+      }
+      
+      @include tablet {
+        padding: 1.5rem 1.25rem;
+        margin-bottom: 1rem;
+      }
+      
+      @include desktop {
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      &:hover {
+        border-color: #{$azul};
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+      }
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      &.no-email {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        opacity: 0.8;
+      }
+
+      .traveler-info {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.25rem;
+        border-bottom: 1px solid #f1f5f9;
+        width: 100%;
+        min-width: 0;
+        overflow: hidden;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        display: flex;
+        flex-direction: column;
+        
+        // R layout
+        @include mobile {
+          flex-direction: column;
+          gap: 1rem;
+          margin-bottom: 1.75rem;
+          padding-bottom: 1.5rem;
+        }
+        
+        @include tablet {
+          flex-direction: column;
+          gap: 0.875rem;
+          margin-bottom: 1.625rem;
+          padding-bottom: 1.375rem;
+        }
+        
+        @include desktop {
+          flex-direction: column;
+          gap: 0.5rem;
+          margin-bottom: 1.5rem;
+          padding-bottom: 1.25rem;
+        }
+
+        .traveler-name {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          margin-bottom: 0.75rem;
+          width: 100%;
+
+          i {
+            color: #64748b;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+          }
+
+          .name-text {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 1rem;
+            line-height: 1.4;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+            flex: 1;
+            min-width: 0;
+          }
+
+          .no-email-badge {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 1px solid #fbbf24;
+            flex-shrink: 0;
+          }
+
+          // R layout
+          @include mobile {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+
+            i {
+              align-self: flex-start;
+            }
+
+            .name-text {
+              width: 100%;
+            }
+
+            .no-email-badge {
+              align-self: flex-start;
+            }
+          }
+          
+          @include tablet {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+
+            i {
+              align-self: flex-start;
+            }
+
+            .name-text {
+              width: 100%;
+            }
+
+            .no-email-badge {
+              align-self: flex-start;
+            }
+          }
+          
+          @include desktop {
+            flex-direction: row;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+          }
+        }
+
+        .traveler-email {
+          color: #64748b;
+          font-size: 0.85rem;
+          font-weight: 500;
+          background: #f8fafc;
+          padding: 0.5rem 0.75rem;
+          border-radius: 6px;
+          border: 1px solid #e2e8f0;
+          display: block;
+          width: 100%;
+          max-width: 100%;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          hyphens: auto;
+          line-height: 1.4;
+          margin-top: 0.5rem;
+          box-sizing: border-box;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          
+          // R font sizes
+          @include mobile {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.6rem;
+          }
+          
+          @include tablet {
+            font-size: 0.825rem;
+            padding: 0.45rem 0.675rem;
+          }
+          
+          @include desktop {
+            font-size: 0.85rem;
+            padding: 0.5rem 0.75rem;
+          }
+        }
+      }
+
+      .traveler-points {
+        .points-input-group {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 1rem;
+          flex-wrap: nowrap;
+
+          // R layout
+          @include mobile {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+          }
+          
+          @include tablet {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+          }
+          
+          @include desktop {
+            flex-direction: row;
+            align-items: center;
+            gap: 0.5rem;
+          }
+
+          .points-label {
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.9rem;
+            min-width: 120px;
+            
+            // R font sizes
+            @include mobile {
+              font-size: 0.85rem;
+              min-width: auto;
+              width: 100%;
+            }
+            
+            @include tablet {
+              font-size: 0.875rem;
+              min-width: auto;
+              width: 100%;
+            }
+            
+            @include desktop {
+              font-size: 0.9rem;
+              min-width: 120px;
+              width: auto;
+            }
+          }
+
+          .traveler-points-input {
+            width: 70px;
+            height: 2.5rem;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            
+            // R sizing
+            @include mobile {
+              width: 100%;
+              height: 2.25rem;
+              font-size: 0.85rem;
+              padding: 0.4rem 0.6rem;
+            }
+            
+            @include tablet {
+              width: 100%;
+              height: 2.375rem;
+              font-size: 0.875rem;
+              padding: 0.45rem 0.675rem;
+            }
+            
+            @include desktop {
+              width: 70px;
+              height: 2.5rem;
+              font-size: 0.9rem;
+              padding: 0.5rem 0.75rem;
+            }
+            text-align: center;
+            transition: border-color 0.2s ease;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            &:focus {
+              outline: none;
+              border-color: #{$azul};
+              box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+
+            &:disabled {
+              background: #f3f4f6;
+              color: #9ca3af;
+              cursor: not-allowed;
+              border-color: #d1d5db;
+            }
+
+            &.error {
+              border-color: #ef4444;
+              background-color: #fef2f2;
+              
+              &:focus {
+                border-color: #ef4444;
+                box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+              }
+            }
+          }
+
+          .max-points {
+            color: #64748b;
+            font-size: 0.9rem;
+            font-weight: 500;
+            background: #f8fafc;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            
+            // R sizing
+            @include mobile {
+              height: 2.25rem;
+              font-size: 0.85rem;
+              padding: 0.4rem 0.6rem;
+            }
+            
+            @include tablet {
+              height: 2.375rem;
+              font-size: 0.875rem;
+              padding: 0.45rem 0.675rem;
+            }
+            
+            @include desktop {
+              height: 2.5rem;
+              font-size: 0.9rem;
+              padding: 0.5rem 0.75rem;
+            }
+            justify-content: center;
+            min-width: 50px;
+          }
+        }
+
+        .points-discount {
+          color: #059669;
+          font-size: 0.85rem;
+          font-weight: 600;
+          background: #f0fdf4;
+          padding: 0.5rem 1rem;
+          border-radius: 6px;
+          border: 1px solid #bbf7d0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: fit-content;
+          min-width: 120px;
+        }
+
+        .traveler-error {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-top: 0.5rem;
+          padding: 0.5rem 0.75rem;
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          border-radius: 6px;
+          color: #dc2626;
+          font-size: 0.8rem;
+          font-weight: 500;
+
+          i {
+            font-size: 0.9rem;
+            color: #ef4444;
+          }
+        }
+      }
+
+      .traveler-points-disabled {
+        padding: 0.75rem;
+        background: #f3f4f6;
+        border-radius: 6px;
+        text-align: center;
+        border: 1px solid #d1d5db;
+
+        .disabled-text {
+          color: #6b7280;
+          font-size: 0.85rem;
+          font-style: italic;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+
+  .global-error {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    color: #dc2626;
+
+    i {
+      font-size: 1.25rem;
+      color: #ef4444;
+      flex-shrink: 0;
+    }
+
+    span {
+      font-size: 0.9rem;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+  }
+
+  .distribution-summary {
+    margin-top: 1.5rem;
+    padding: 1.25rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      padding: 0.375rem 0;
+      border-bottom: 1px solid #e2e8f0;
+
+      &:last-child {
+        margin-bottom: 0;
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+
+      .summary-label {
+        color: #64748b;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+
+      .summary-value {
+        color: #1e293b;
+        font-weight: 600;
+        font-size: 0.9rem;
+
+        &.error {
+          color: #dc2626;
+        }
+      }
+    }
+  }
+
+  // R
+  @include tablet {
+    padding: 1.5rem;
+
+    .distribution-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1.5rem;
+
+      h4 {
+        font-size: 1.2rem;
+      }
+
+      .distribution-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+
+    .travelers-list {
+      .traveler-item {
+        padding: 1.25rem;
+
+        .traveler-info {
+          .traveler-name {
+            gap: 0.5rem;
+
+            i {
+              font-size: 1.1rem;
+            }
+
+            .name-text {
+              font-size: 0.95rem;
+              line-height: 1.3;
+            }
+          }
+
+          .traveler-email {
+            font-size: 0.85rem;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+        }
+
+        .traveler-points {
+          .points-input-group {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+
+            .points-label {
+              min-width: auto;
+              font-size: 0.9rem;
+            }
+
+            .traveler-points-input {
+              width: 80px;
+              height: 2.25rem;
+              padding: 0.5rem 0.75rem;
+              font-size: 0.9rem;
+            }
+
+            .max-points {
+              height: 2.25rem;
+              font-size: 0.85rem;
+              padding: 0.5rem 0.75rem;
+            }
+          }
+
+          .points-discount {
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            padding: 0.5rem 0.875rem;
+            min-width: 100px;
+          }
+        }
+      }
+    }
+
+    .distribution-summary {
+      padding: 1.25rem;
+
+      .summary-item {
+        .summary-label {
+          font-size: 0.9rem;
+        }
+
+        .summary-value {
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+
   @include mobile {
-  .payment-type-section {
-    .payment-panels {
-      .payment-panel {
-        .payment-option {
-          padding: 0.75rem;
+    padding: 1rem;
+
+    .distribution-header {
+      h4 {
+        font-size: 1.1rem;
         flex-direction: column;
         align-items: flex-start;
         gap: 0.5rem;
+
+        &::before {
+          font-size: 1.25rem;
+        }
+      }
+
+      .distribution-actions {
+        flex-direction: column;
+        width: 100%;
+
+        .p-button {
+          width: 100%;
+          justify-content: center;
+          padding: 0.625rem 1rem;
+          font-size: 0.8rem;
         }
       }
     }
-  }
-  
-  .payment-methods-section {
-    .payment-methods-row {
-      .payment-method-container {
-        .payment-option {
-          padding: 0.75rem;
+
+    .travelers-list {
+      .traveler-item {
+        padding: 1rem;
+
+        .traveler-info {
+          .traveler-name {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+
+            i {
+              font-size: 1rem;
+            }
+
+            .name-text {
+              font-size: 0.9rem;
+              line-height: 1.3;
+            }
+
+            .no-email-badge {
+              font-size: 0.7rem;
+              padding: 0.2rem 0.625rem;
+            }
+          }
+
+          .traveler-email {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            padding: 0.2rem 0.625rem;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+        }
+
+        .traveler-points {
+          .points-input-group {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+
+            .points-label {
+              font-size: 0.85rem;
+            }
+
+            .traveler-points-input {
+              width: 70px;
+              height: 2rem;
+              padding: 0.5rem 0.75rem;
+              font-size: 0.85rem;
+            }
+
+            .max-points {
+              height: 2rem;
+              font-size: 0.8rem;
+              padding: 0.5rem 0.75rem;
+            }
+          }
+
+          .points-discount {
+            margin-top: 0.75rem;
+            font-size: 0.8rem;
+            padding: 0.375rem 0.75rem;
+            min-width: 90px;
+          }
+
+          .traveler-error {
+            padding: 0.625rem 0.875rem;
+            font-size: 0.8rem;
+            gap: 0.5rem;
+
+            i {
+              font-size: 0.9rem;
+            }
+          }
+        }
+
+        .traveler-points-disabled {
+          padding: 0.875rem;
+
+          .disabled-text {
+            font-size: 0.8rem;
+          }
         }
       }
     }
-  }
-  
-  .installments-section {
-    .installment-panels-row {
-      .installment-panel-container {
-        .payment-option {
-          padding: 0.75rem;
+
+    .global-error {
+      padding: 1rem;
+      gap: 0.75rem;
+
+      i {
+        font-size: 1.25rem;
+      }
+
+      span {
+        font-size: 0.85rem;
+      }
+    }
+
+    .distribution-summary {
+      padding: 1rem;
+
+      .summary-item {
+        margin-bottom: 0.625rem;
+        padding: 0.375rem 0;
+
+        .summary-label {
+          font-size: 0.85rem;
+        }
+
+        .summary-value {
+          font-size: 0.85rem;
         }
       }
     }

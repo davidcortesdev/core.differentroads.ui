@@ -743,6 +743,14 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
       currentTravelerNumber++;
     }
 
+    // CORREGIDO: Asegurar que el primer viajero (por travelerNumber) sea el líder
+    if (travelersToCreate.length > 0) {
+      // Ordenar por travelerNumber para asegurar que el primero sea el líder
+      travelersToCreate.sort((a, b) => a.travelerNumber - b.travelerNumber);
+      // Marcar solo el primer viajero como líder
+      travelersToCreate[0].isLeadTraveler = true;
+    }
+
     // Crear todos los travelers en paralelo con timeout optimizado
     const createPromises = travelersToCreate.map(
       (travelerData) =>

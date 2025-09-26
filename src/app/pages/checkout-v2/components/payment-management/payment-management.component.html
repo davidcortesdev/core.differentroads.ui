@@ -21,7 +21,8 @@
       <p-panel 
         styleClass="payment-panel" 
         [ngClass]="{ 'selected': paymentType === 'complete' }" 
-        (click)="selectPaymentType('complete')">
+        (click)="selectPaymentType('complete')"
+        showHeader="false">
         <div class="payment-option">
           <p-radioButton 
             name="paymentType" 
@@ -39,7 +40,8 @@
         *ngIf="shouldShowDepositOption"
         styleClass="payment-panel" 
         [ngClass]="{ 'selected': paymentType === 'deposit' }" 
-        (click)="selectPaymentType('deposit')">
+        (click)="selectPaymentType('deposit')"
+        showHeader="false">
         <div class="payment-option">
           <p-radioButton 
             name="paymentType" 
@@ -62,7 +64,8 @@
         *ngIf="shouldShowInstallmentsOption"
         styleClass="payment-panel" 
         [ngClass]="{ 'selected': paymentType === 'installments' }" 
-        (click)="selectPaymentType('installments')">
+        (click)="selectPaymentType('installments')"
+        showHeader="false">
         <div class="payment-option">
           <p-radioButton 
             name="paymentType" 
@@ -93,7 +96,8 @@
         <p-panel 
           styleClass="payment-panel payment-method-panel" 
           [ngClass]="{ selected: paymentMethod === 'creditCard' }" 
-          (click)="selectPaymentMethod('creditCard')">
+          (click)="selectPaymentMethod('creditCard')"
+          showHeader="false">
           <div class="payment-option">
             <p-radioButton 
               name="paymentMethod" 
@@ -111,7 +115,8 @@
         <p-panel 
           styleClass="payment-panel payment-method-panel" 
           [ngClass]="{ selected: paymentMethod === 'transfer' }" 
-          (click)="selectPaymentMethod('transfer')">
+          (click)="selectPaymentMethod('transfer')"
+          showHeader="false">
           <div class="payment-option">
             <p-radioButton 
               name="paymentMethod" 
@@ -126,7 +131,8 @@
       
       <!-- Mensaje informativo para vuelos Amadeus -->
       <div class="payment-method-container" *ngIf="hasAmadeusFlight">
-        <p-panel styleClass="payment-panel payment-method-panel" >
+        <p-panel styleClass="payment-panel payment-method-panel"
+          showHeader="false">
           <div class="payment-option">
             <i class="pi pi-info-circle"></i>
             <span style="font-weight: 300;padding-left: 10px;">
@@ -156,7 +162,8 @@
         <p-panel
           styleClass="payment-panel installment-panel"
           [ngClass]="{ selected: installmentOption === 'three' }"
-          (click)="selectInstallmentOption('three')">
+          (click)="selectInstallmentOption('three')"
+          showHeader="false">
           <div class="payment-option">
             <p-radioButton
               name="installmentOption"
@@ -196,7 +203,8 @@
         <p-panel
           styleClass="payment-panel installment-panel"
           [ngClass]="{ selected: installmentOption === 'four' }"
-          (click)="selectInstallmentOption('four')">
+          (click)="selectInstallmentOption('four')"
+          showHeader="false">
           <div class="payment-option">
             <p-radioButton
               name="installmentOption"

@@ -1,8 +1,8 @@
-<div class="cont">
+  <div class="cont" style="margin-top: -20px;">
   <!-- Toast para mensajes informativos -->
   <p-toast position="top-right"></p-toast>
   
-  <h3 class="title">Agrega los datos del viajero</h3>
+  <h3 class="title" style="padding-bottom: 4px; border-bottom: 1px solid var(--background-azul); display: inline-block; margin: 0 0 15px 0; font-weight: 600; font-size: 1.21rem;">Agrega los datos del viajero</h3>
   
   <!-- Información de requisitos de reserva de Amadeus -->
   <div *ngIf="amadeusBookingRequirements && hasFlightSelected" class="amadeus-requirements-info">
@@ -118,7 +118,7 @@
               <div class="traveler-header">
                 <p-panel class="user-button">
                   <i class="pi pi-user"></i>
-                  <p class="user">{{ getAgeGroupName(traveler.ageGroupId) }}</p>
+                  <p class="user" style="display: inline; margin-left: 14px;">{{ getAgeGroupName(traveler.ageGroupId) }}</p>
                 </p-panel>
                 <p class="user-description">
                   <i class="pi pi-exclamation-circle info-icon"></i>
@@ -137,20 +137,30 @@
                     <ng-container *ngFor="let field of departureReservationFields; let fieldIndex = index">
                       <ng-container *ngIf="isFieldMandatory(field, traveler.isLeadTraveler) && getReservationFieldDetails(field.reservationFieldId) as fieldDetails">
                         
-                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'text' && fieldDetails.code !== 'phone'">
+                        <div class="form-column form-field half-width" 
+                             [ngClass]="{ 
+                               'required-empty': isFieldMandatory(field, traveler.isLeadTraveler) && !getFieldValue(traveler.id, fieldDetails.code),
+                               'field-valid': getFieldValidationState(traveler.id, fieldDetails.code) === 'valid',
+                               'field-invalid': getFieldValidationState(traveler.id, fieldDetails.code) === 'invalid'
+                             }"
+                             *ngIf="fieldDetails.fieldType === 'text' && fieldDetails.code !== 'phone'">
                           <label>{{ fieldDetails.name }}*</label>
-                          <input 
-                            pInputText 
-                            [formControlName]="fieldDetails.code + '_' + traveler.id"
-                            [placeholder]="'Introduce tu ' + fieldDetails.name.toLowerCase()"
-                            [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"
-                            (input)="onFieldChange(traveler.id, fieldDetails.code)" />
+                          <div class="field-container">
+                            <input 
+                              pInputText 
+                              [formControlName]="fieldDetails.code + '_' + traveler.id"
+                              [placeholder]="'Introduce tu ' + fieldDetails.name.toLowerCase()"
+                              [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"
+                              (input)="onFieldChange(traveler.id, fieldDetails.code)" />
+                          </div>
                           <small *ngIf="hasFieldError(traveler.id, fieldDetails.code)" class="p-error">
                             {{ getErrorMessage(fieldDetails.code, getFieldErrors(traveler.id, fieldDetails.code)) }}
                           </small>
                         </div>
                         
-                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'email'">
+                        <div class="form-column form-field half-width" 
+                             [ngClass]="{ 'required-empty': isFieldMandatory(field, traveler.isLeadTraveler) && !getFieldValue(traveler.id, fieldDetails.code) }"
+                             *ngIf="fieldDetails.fieldType === 'email'">
                           <label>{{ fieldDetails.name }}*</label>
                           <input 
                             pInputText 
@@ -164,7 +174,9 @@
                           </small>
                         </div>
                         
-                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'phone' || (fieldDetails.fieldType === 'text' && fieldDetails.code === 'phone')">
+                        <div class="form-column form-field half-width" 
+                             [ngClass]="{ 'required-empty': isFieldMandatory(field, traveler.isLeadTraveler) && !getFieldValue(traveler.id, fieldDetails.code) }"
+                             *ngIf="fieldDetails.fieldType === 'phone' || (fieldDetails.fieldType === 'text' && fieldDetails.code === 'phone')">
                           <label>{{ fieldDetails.name }}*</label>
                           <input 
                             pInputText 
@@ -178,7 +190,9 @@
                           </small>
                         </div>
                         
-                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'sex'">
+                        <div class="form-column form-field half-width" 
+                             [ngClass]="{ 'required-empty': isFieldMandatory(field, traveler.isLeadTraveler) && !getFieldValue(traveler.id, fieldDetails.code) }"
+                             *ngIf="fieldDetails.fieldType === 'sex'">
                           <label>{{ fieldDetails.name }}*</label>
                           <p-dropdown 
                             [formControlName]="fieldDetails.code + '_' + traveler.id"
@@ -193,23 +207,29 @@
                           </small>
                         </div>
                         
-                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'date'">
+                        <div class="form-column form-field half-width" 
+                             [ngClass]="{ 'required-empty': isFieldMandatory(field, traveler.isLeadTraveler) && !getFieldValue(traveler.id, fieldDetails.code) }"
+                             *ngIf="fieldDetails.fieldType === 'date'">
                           <label>{{ fieldDetails.name }}*</label>
-                          <p-datePicker 
+                          <p-datepicker 
                             [formControlName]="fieldDetails.code + '_' + traveler.id"
+                            [minDate]="getStoredMinDate(fieldDetails.code, traveler.id)"
+                            [maxDate]="getStoredMaxDate(fieldDetails.code, traveler.id)"
                             showIcon 
                             appendTo="body" 
                             placeholder="dd/mm/yyyy"
                             dateFormat="dd/mm/yy"
                             (onSelect)="onDateFieldChange(traveler.id, fieldDetails.code, $event)"
                             (onBlur)="onDateFieldBlur(traveler.id, fieldDetails.code)"
-                            [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"></p-datePicker>
+                            [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"></p-datepicker>
                           <small *ngIf="hasFieldError(traveler.id, fieldDetails.code)" class="p-error">
                             {{ getErrorMessage(fieldDetails.code, getFieldErrors(traveler.id, fieldDetails.code)) }}
                           </small>
                         </div>
                         
-                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'country'">
+                        <div class="form-column form-field half-width" 
+                             [ngClass]="{ 'required-empty': isFieldMandatory(field, traveler.isLeadTraveler) && !getFieldValue(traveler.id, fieldDetails.code) }"
+                             *ngIf="fieldDetails.fieldType === 'country'">
                           <label>{{ fieldDetails.name }}*</label>
                           <p-autocomplete 
                             [formControlName]="fieldDetails.code + '_' + traveler.id"
@@ -276,7 +296,9 @@
                     <ng-container *ngFor="let field of departureReservationFields">
                       <ng-container *ngIf="!isFieldMandatory(field, traveler.isLeadTraveler) && getReservationFieldDetails(field.reservationFieldId) as fieldDetails">
                         
-                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'text' && fieldDetails.code !== 'phone'">
+                        <div class="form-column form-field half-width" 
+                             [ngClass]="{ 'required-empty': isFieldMandatory(field, traveler.isLeadTraveler) && !getFieldValue(traveler.id, fieldDetails.code) }"
+                             *ngIf="fieldDetails.fieldType === 'text' && fieldDetails.code !== 'phone'">
                           <label>{{ fieldDetails.name }}</label>
                           <input 
                             pInputText 
@@ -289,7 +311,9 @@
                           </small>
                         </div>
                         
-                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'email'">
+                        <div class="form-column form-field half-width" 
+                             [ngClass]="{ 'required-empty': isFieldMandatory(field, traveler.isLeadTraveler) && !getFieldValue(traveler.id, fieldDetails.code) }"
+                             *ngIf="fieldDetails.fieldType === 'email'">
                           <label>{{ fieldDetails.name }}</label>
                           <input 
                             pInputText 
@@ -303,7 +327,9 @@
                           </small>
                         </div>
                         
-                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'phone' || (fieldDetails.fieldType === 'text' && fieldDetails.code === 'phone')">
+                        <div class="form-column form-field half-width" 
+                             [ngClass]="{ 'required-empty': isFieldMandatory(field, traveler.isLeadTraveler) && !getFieldValue(traveler.id, fieldDetails.code) }"
+                             *ngIf="fieldDetails.fieldType === 'phone' || (fieldDetails.fieldType === 'text' && fieldDetails.code === 'phone')">
                           <label>{{ fieldDetails.name }}</label>
                           <input 
                             pInputText 
@@ -317,33 +343,46 @@
                           </small>
                         </div>
                         
-                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'sex'">
+                        <div class="form-column form-field half-width" 
+                             [ngClass]="{ 'required-empty': isFieldMandatory(field, traveler.isLeadTraveler) && !getFieldValue(traveler.id, fieldDetails.code) }"
+                             *ngIf="fieldDetails.fieldType === 'sex'">
                           <label>{{ fieldDetails.name }}</label>
                           <p-dropdown 
                             [formControlName]="fieldDetails.code + '_' + traveler.id"
                             [options]="sexOptions" 
                             optionLabel="label" 
                             optionValue="value" 
-                            placeholder="Seleccione"></p-dropdown>
+                            placeholder="Seleccione"
+                            [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"
+                            (onChange)="onFieldChange(traveler.id, fieldDetails.code)"></p-dropdown>
+                          <small *ngIf="hasFieldError(traveler.id, fieldDetails.code)" class="p-error">
+                            {{ getErrorMessage(fieldDetails.code, getFieldErrors(traveler.id, fieldDetails.code)) }}
+                          </small>
                         </div>
                         
-                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'date'">
+                        <div class="form-column form-field half-width" 
+                             [ngClass]="{ 'required-empty': isFieldMandatory(field, traveler.isLeadTraveler) && !getFieldValue(traveler.id, fieldDetails.code) }"
+                             *ngIf="fieldDetails.fieldType === 'date'">
                           <label>{{ fieldDetails.name }}</label>
-                          <p-datePicker 
+                          <p-datepicker 
                             [formControlName]="fieldDetails.code + '_' + traveler.id"
+                            [minDate]="getStoredMinDate(fieldDetails.code, traveler.id)"
+                            [maxDate]="getStoredMaxDate(fieldDetails.code, traveler.id)"
                             showIcon 
                             appendTo="body" 
                             placeholder="dd/mm/yyyy"
                             dateFormat="dd/mm/yy"
                             (onSelect)="onDateFieldChange(traveler.id, fieldDetails.code, $event)"
                             (onBlur)="onDateFieldBlur(traveler.id, fieldDetails.code)"
-                            [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"></p-datePicker>
+                            [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"></p-datepicker>
                           <small *ngIf="hasFieldError(traveler.id, fieldDetails.code)" class="p-error">
                             {{ getErrorMessage(fieldDetails.code, getFieldErrors(traveler.id, fieldDetails.code)) }}
                           </small>
                         </div>
                         
-                        <div class="form-column form-field half-width" *ngIf="fieldDetails.fieldType === 'country'">
+                        <div class="form-column form-field half-width" 
+                             [ngClass]="{ 'required-empty': isFieldMandatory(field, traveler.isLeadTraveler) && !getFieldValue(traveler.id, fieldDetails.code) }"
+                             *ngIf="fieldDetails.fieldType === 'country'">
                           <label>{{ fieldDetails.name }}</label>
                           <p-autocomplete 
                             [formControlName]="fieldDetails.code + '_' + traveler.id"
@@ -351,7 +390,12 @@
                             field="name" 
                             [placeholder]="'Introduce tu ' + fieldDetails.name.toLowerCase()" 
                             appendTo="body" 
-                            [dropdown]="true"></p-autocomplete>
+                            [dropdown]="true"
+                            [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"
+                            (onSelect)="onFieldChange(traveler.id, fieldDetails.code)"></p-autocomplete>
+                          <small *ngIf="hasFieldError(traveler.id, fieldDetails.code)" class="p-error">
+                            {{ getErrorMessage(fieldDetails.code, getFieldErrors(traveler.id, fieldDetails.code)) }}
+                          </small>
                         </div>
                         
                       </ng-container>
@@ -394,7 +438,7 @@
                           </p-progressSpinner>
                           <p-toggleSwitch 
                             *ngIf="!isSavingActivity(traveler.id, travelerActivity.activityId)"
-                            [ngModel]="true"
+                            [ngModel]="!isTravelerActivityDeleted(traveler.id, travelerActivity.activityId)"
                             [disabled]="isSavingActivity(traveler.id, travelerActivity.activityId)"
                             (ngModelChange)="onActivityToggleChange(traveler.id, travelerActivity.activityId, $event)"
                             [ngModelOptions]="{standalone: true}">
@@ -417,7 +461,7 @@
                           </p-progressSpinner>
                           <p-toggleSwitch 
                             *ngIf="!isSavingActivity(traveler.id, travelerActivityPack.activityPackId)"
-                            [ngModel]="true"
+                            [ngModel]="!isTravelerActivityDeleted(traveler.id, travelerActivityPack.activityPackId)"
                             [disabled]="isSavingActivity(traveler.id, travelerActivityPack.activityPackId)"
                             (ngModelChange)="onActivityToggleChange(traveler.id, travelerActivityPack.activityPackId, $event)"
                             [ngModelOptions]="{standalone: true}">

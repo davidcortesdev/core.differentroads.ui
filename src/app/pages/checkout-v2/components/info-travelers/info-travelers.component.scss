@@ -2,8 +2,6 @@
   --form-spacing: 10px;
   --mobile-breakpoint: 768px;
   --content-horizontal-padding: 16px;
-  --color-primary: var(--background-azul);
-  --color-primary-light: var(--background-azul-color-letra);
 }
 
 :host {
@@ -12,7 +10,6 @@
   --p-datepicker-panel-background: #fff !important;
 }
 
-// 1. MIXINS CONSOLIDADOS
 @mixin form-input-base {
   width: 100%;
   border: none;
@@ -24,55 +21,12 @@
   box-shadow: none !important;
 }
 
-@mixin responsive-columns {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 15px;
-  flex-wrap: wrap;
-  gap: 10px;
-  flex-direction: row;
-  @media (max-width: var(--mobile-breakpoint)) {
-    flex-direction: column;
-  }
-}
-
-// 2. CLASES BASE CON %placeholder
-%title-base {
-  font-weight: 600;
-  font-size: 1.21rem;
-  color: var(--background-azul);
-  @media (max-width: 480px) {
-    margin-top: -10px;
-    font-size: 1.1rem;
-  }
-}
-
-%button-dropdown-base {
-  background: transparent !important;
-  border-radius: 0 !important;
-  border-top: none !important;
-  border-right: none !important;
-  border-left: none !important;
-  border-bottom: 1px solid var(--background-azul) !important;
-}
-
-%validation-invalid {
-  border-bottom: 2px solid #dc3545 !important;
-  background-color: rgba(220, 53, 69, 0.05) !important;
-}
-
-%validation-valid {
-  border-bottom: 2px solid #28a745 !important;
-}
-
-// 3. ESTILOS GLOBALES SIMPLIFICADOS
 * { color: var(--background-azul); }
 
-.cont { margin-top: -20px; }
 
 .content-form {
-  --p-panel-background: var(--color-primary-light) !important;
-  --p-accordion-content-background: var(--color-primary-light) !important;
+  --p-panel-background: var(--background-azul-color-letra) !important;
+  --p-accordion-content-background: var(--background-azul-color-letra) !important;
   --p-accordion-content-padding: 15px !important;
   --p-accordion-content-border-radius: 10px !important;
   padding: var(--form-spacing);
@@ -82,23 +36,14 @@
   @media (max-width: var(--mobile-breakpoint)) {
     padding: var(--content-horizontal-padding);
   }
-  .travel-title .title { @extend %title-base; }
 }
 
-.user {
-  display: inline-block;
-  margin: 0 0 0 14px;
-  padding: 0;
-}
-
-.user-description { font-size: 12px; }
 
 .title {
-  @extend %title-base;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--background-azul);
-  display: inline-block;
-  margin: 0 0 15px 0;
+  @media (max-width: 480px) {
+    margin-top: -10px;
+    font-size: 1.1rem;
+  }
 }
 
 h3.title {
@@ -113,24 +58,30 @@ h3.title {
   }
 }
 
-// 4. FORMULARIOS CONSOLIDADOS
-.traveler-header {
-  margin-bottom: 1rem;
-  .user-description .info-icon {
-    font-size: 0.8rem;
-    font-weight: bold;
-  }
-}
 
 .traveler-form {
   margin-top: 15px;
   width: 100%;
-  .form-section { margin-bottom: 1rem; }
-  .form-row { @include responsive-columns; }
+  .form-section {
+    margin-bottom: 1rem;
+  }
+  .form-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+    flex-direction: row;
+    @media (max-width: var(--mobile-breakpoint)) {
+      flex-direction: column;
+    }
+  }
   .form-column {
     flex: 1;
     margin-right: 10px;
-    &:last-child { margin-right: 0; }
+    &:last-child {
+      margin-right: 0;
+    }
     @media (max-width: var(--mobile-breakpoint)) {
       margin-right: 0;
     }
@@ -153,341 +104,288 @@ h3.title {
   }
 }
 
-// 5. FORM FIELD SIMPLIFICADO
 .form-field {
-  margin-bottom: 10px;
-  font-size: 14px;
+  margin-bottom: 10px; 
+  font-size: 14px; 
   position: relative;
   
-  label {
-    display: block;
-    margin-bottom: 5px;
-    color: var(--background-azul);
+  label { 
+    display: block; 
+    margin-bottom: 5px; 
+    color: var(--background-azul); 
   }
   
   .field-container {
-    position: relative;
-    display: flex;
+    position: relative; 
+    display: flex; 
     align-items: center;
-    input, p-autocomplete, p-calendar, p-select, p-datepicker {
-      width: 100%;
-      flex: 1;
+    input, p-autocomplete, p-calendar, p-select, p-datepicker { 
+      width: 100%; 
+      flex: 1; 
     }
-    .field-valid-icon, .field-invalid-icon {
-      position: absolute;
-      right: 8px;
-      font-size: 1.1rem;
-      z-index: 10;
-      pointer-events: none;
-    }
-    .field-valid-icon { color: #28a745; }
-    .field-invalid-icon { color: #dc3545; }
   }
   
-  input, p-autocomplete, p-calendar, p-select, p-datepicker { width: 100%; }
+  input, p-autocomplete, p-calendar, p-select, p-datepicker { 
+    width: 100%; 
+  }
   
   &.checkbox-field {
-    display: flex;
-    align-items: center;
+    display: flex; 
+    align-items: center; 
     margin-bottom: 15px;
-    .checkbox-label {
-      margin-left: 10px;
-      margin-bottom: 0;
-      cursor: pointer;
-      font-size: 14px;
+    .checkbox-label { 
+      margin-left: 10px; 
+      margin-bottom: 0; 
+      cursor: pointer; 
+      font-size: 14px; 
     }
   }
   
-  // Estados de validación consolidados
-  &.field-valid .field-container input,
-  &.field-valid .field-container .p-inputtext {
-    @extend %validation-valid;
+  &.field-valid .field-container input, 
+  &.field-valid .field-container .p-inputtext { 
+    border-bottom: 2px solid #28a745 !important; 
   }
-  &.field-invalid .field-container input,
-  &.field-invalid .field-container .p-inputtext {
-    @extend %validation-invalid;
+  &.field-invalid .field-container input, 
+  &.field-invalid .field-container .p-inputtext { 
+    border-bottom: 2px solid #dc3545 !important; 
+    background-color: rgba(220, 53, 69, 0.05) !important; 
   }
 }
 
-// 6. ACTIVIDADES SIMPLIFICADAS
+.checkbox-field {
+  display: flex; 
+  align-items: flex-start; 
+  gap: 10px;
+  .checkbox-label { 
+    margin-bottom: 0; 
+    cursor: pointer; 
+    line-height: 1.4; 
+  }
+}
+
 .traveler-activities {
   margin: 15px 0;
-  h5 {
-    margin: 0 0 10px 0;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--background-azul);
+  h5 { 
+    margin: 0 0 10px 0; 
+    font-size: 14px; 
+    font-weight: 600; 
+    color: var(--background-azul); 
   }
   .activities-list .activity-item {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    padding: 8px 0 !important;
+    display: flex !important; 
+    justify-content: space-between !important; 
+    align-items: center !important; 
+    padding: 8px 0 !important; 
     border-bottom: 1px solid #f0f0f0;
     &:last-child { border-bottom: none; }
     .activity-info {
       flex: 1;
-      p {
-        margin: 0 0 3px 0;
-        font-size: 13px;
-        line-height: 1.3;
-        &:last-child {
-          margin-bottom: 0;
-          font-size: 11px;
-          color: #666;
-        }
-        strong {
-          font-weight: 600;
-          color: var(--background-azul);
-        }
+      p { 
+        margin: 0 0 3px 0; 
+        font-size: 13px; 
+        line-height: 1.3; 
+      }
+      p strong { 
+        font-weight: 600; 
+        color: var(--background-azul); 
+      }
+      p:last-child { 
+        margin-bottom: 0; 
+        font-size: 11px; 
+        color: #666; 
       }
     }
-    p-toggleSwitch {
-      flex-shrink: 0;
-      margin-left: 15px;
+    p-toggleSwitch { 
+      flex-shrink: 0; 
+      margin-left: 15px; 
     }
   }
 }
 
-// 7. RESPONSIVE CONSOLIDADO
 @media (min-width: 577px) {
-  .traveler-form .form-row {
-    display: flex;
-    flex-direction: row !important;
-    flex-wrap: wrap;
+  .traveler-form .form-row { 
+    display: flex; 
+    flex-direction: row !important; 
+    flex-wrap: wrap; 
   }
-  .traveler-form .form-column {
-    &.half-width {
-      flex: 0 0 48% !important;
-      max-width: 48% !important;
+  .traveler-form .form-column.half-width { 
+    flex: 0 0 48% !important; 
+    max-width: 48% !important; 
+  }
+  .traveler-form .form-column.full-width { 
+    flex: 0 0 100% !important; 
+    max-width: 100% !important; 
+  }
+}
+
+.content-form {
+  ::ng-deep {
+    .p-inputtext, .p-dropdown, .p-datepicker, .p-autocomplete, .p-select {
+      @include form-input-base;
     }
-    &.full-width {
-      flex: 0 0 100% !important;
-      max-width: 100% !important;
+    
+    .p-dropdown .p-dropdown-label, 
+    .p-select .p-select-label { 
+      padding-top: 0 !important; 
+    }
+    
+    .p-datepicker .p-inputtext, 
+    .p-autocomplete .p-autocomplete-input { 
+      @include form-input-base;
+    }
+    
+    .p-select { cursor: pointer; }
+    .p-select .p-select-dropdown { color: var(--background-azul); }
+    
+    .p-datepicker-dropdown, 
+    .p-autocomplete-dropdown, 
+    .p-select-dropdown, 
+    .p-dropdown-trigger { 
+      background: transparent !important; 
+      border-radius: 0 !important; 
+      border-top: none !important; 
+      border-right: none !important; 
+      border-left: none !important; 
+      border-bottom: 1px solid var(--background-azul) !important; 
+    }
+    
+    .p-checkbox .p-checkbox-box { 
+      border: 1px solid var(--background-azul); 
+      border-radius: 3px; 
+      background: transparent; 
+    }
+    .p-checkbox .p-checkbox-box.p-highlight { 
+      background: var(--background-azul); 
+      border-color: var(--background-azul); 
+    }
+    
+    .p-toggleswitch { 
+      width: 2.5rem; 
+      height: 1.5rem; 
+    }
+    .p-toggleswitch .p-toggleswitch-slider { 
+      border-radius: 0.75rem; 
+    }
+    
+    .p-panel .p-panel-content { 
+      padding: 10px; 
+      border: 1px solid #d1c1c1; 
+      border-radius: 9px; 
+      width: 100%; 
+      display: block; 
+    }
+    .p-panel .p-panel-header { 
+      padding: 0; 
+    }
+    .p-panel.user-button .p-panel-content { 
+      width: auto; 
+      display: inline-block; 
+    }
+    
+    .p-inputtext:focus, 
+    .p-dropdown:focus, 
+    .p-autocomplete-input:focus, 
+    .p-select:focus { 
+      outline: none !important; 
+      box-shadow: none !important; 
+      border-bottom: 2px solid var(--background-azul) !important; 
+    }
+    
+    .p-invalid {
+      border-bottom: 2px solid #dc3545 !important;
+      background-color: rgba(220, 53, 69, 0.05) !important;
+      &:focus { 
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important; 
+      }
+    }
+    
+    .p-dropdown.p-invalid .p-dropdown-label,
+    .p-select.p-invalid .p-select-label { 
+      color: #dc3545 !important; 
+    }
+    
+    .p-datepicker.p-invalid .p-inputtext,
+    .p-autocomplete.p-invalid .p-autocomplete-input { 
+      border-bottom: 2px solid #dc3545 !important;
+      background-color: rgba(220, 53, 69, 0.05) !important;
+    }
+    
+    .p-error { 
+      color: #dc3545 !important; 
+      font-size: 0.875rem !important; 
+      margin-top: 0.25rem !important; 
+      display: block !important; 
+    }
+    
+    .form-field:has(.p-invalid) label { 
+      color: #dc3545 !important; 
+      font-weight: 600 !important; 
+    }
+    
+    .form-field.required-empty label::after { 
+      content: " *"; 
+      color: #dc3545; 
+      font-weight: bold; 
+    }
+    
+    .form-field:has(.p-invalid)::before { 
+      content: "⚠"; 
+      position: absolute; 
+      right: 8px; 
+      top: 50%; 
+      transform: translateY(-50%); 
+      color: #dc3545; 
+      font-size: 1.2rem; 
+      z-index: 10; 
+      pointer-events: none; 
     }
   }
 }
 
-// 8. NG-DEEP CONSOLIDADO
-.content-form ::ng-deep {
-  .p-inputtext, .p-dropdown, .p-datepicker, .p-autocomplete, .p-select {
-    @include form-input-base;
-  }
-  
-  .p-dropdown .p-dropdown-label,
-  .p-select .p-select-label {
-    padding-top: 0 !important;
-  }
-  
-  .p-datepicker .p-inputtext,
-  .p-autocomplete .p-autocomplete-input {
-    @include form-input-base;
-  }
-  
-  .p-select { cursor: pointer; }
-  .p-select .p-select-dropdown { color: var(--background-azul); }
-  
-  .p-datepicker-dropdown,
-  .p-autocomplete-dropdown,
-  .p-select-dropdown,
-  .p-dropdown-trigger {
-    @extend %button-dropdown-base;
-  }
-  
-  .p-checkbox .p-checkbox-box {
-    border: 1px solid var(--background-azul);
-    border-radius: 3px;
-    background: transparent;
-    &.p-highlight {
-      background: var(--background-azul);
-      border-color: var(--background-azul);
-    }
-  }
-  
-  .p-toggleswitch {
-    width: 2.5rem;
-    height: 1.5rem;
-    .p-toggleswitch-slider { border-radius: 0.75rem; }
-  }
-  
-  .p-panel {
-    .p-panel-content {
-      padding: 10px;
-      border: 1px solid #d1c1c1;
-      border-radius: 9px;
-      width: 100%;
-      display: block;
-    }
-    .p-panel-header { padding: 0; }
-    &.user-button .p-panel-content {
-      width: auto;
-      display: inline-block;
-    }
-  }
-  
-  .p-inputtext:focus,
-  .p-dropdown:focus,
-  .p-autocomplete-input:focus,
-  .p-select:focus {
-    outline: none !important;
-    box-shadow: none !important;
-    border-bottom: 2px solid var(--background-azul) !important;
-  }
-  
-  // Validaciones consolidadas
-  .p-invalid { @extend %validation-invalid; }
-  .p-dropdown.p-invalid .p-dropdown-label,
-  .p-select.p-invalid .p-select-label { color: #dc3545 !important; }
-  .p-datepicker.p-invalid .p-inputtext,
-  .p-autocomplete.p-invalid .p-autocomplete-input { @extend %validation-invalid; }
-  
-  .p-error {
-    color: #dc3545 !important;
-    font-size: 0.875rem !important;
-    margin-top: 0.25rem !important;
-    display: block !important;
-  }
-  
-  .form-field:has(.p-invalid) label {
-    color: #dc3545 !important;
-    font-weight: 600 !important;
-  }
-  
-  .form-field.required-empty label::after {
-    content: " *";
-    color: #dc3545;
-    font-weight: bold;
-  }
-}
-
-// 9. ACCORDION Y OTROS ELEMENTOS
 .p-accordion {
-  .p-accordionheader {
-    background: white !important;
-    border-radius: 10px !important;
-    color: var(--background-azul) !important;
+  .p-accordionheader { 
+    background: white !important; 
+    border-radius: 10px !important; 
+    color: var(--background-azul) !important; 
   }
-  .p-accordioncontent { border-radius: 10px !important; }
+  .p-accordioncontent { 
+    border-radius: 10px !important; 
+  }
   .p-accordionpanel {
-    border: 1px solid #e0e0e0 !important;
-    border-radius: 10px !important;
-    margin: 20px 0 15px 0 !important;
-    background: white !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    &:last-child { margin-bottom: 0; }
-  }
-}
-
-.show-more-button {
-  margin: -10px 0 0 -1px;
-  color: var(--background-azul);
-  font-size: 0.9rem;
-  &:hover { background-color: rgba(0, 0, 0, 0.04); }
-}
-
-.additional-fields {
-  margin-top: 15px;
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-// 10. UTILIDADES FINALES
-.flex.flex-col {
-  width: 100%;
-  overflow-x: hidden;
-}
-
-.border-2.border-dashed {
-  width: 100%;
-  padding: var(--content-horizontal-padding);
-  box-sizing: border-box;
-}
-
-.datos-adicionales-info {
-  margin: -30px 0 1rem 0;
-  .mensaje-info { font-size: 12px; }
-  .icono-info { font-size: 0.8rem; font-weight: bold; }
-}
-
-.loading-indicator, .error-message {
-  text-align: center;
-  padding: 2rem;
-  p { margin: 0; color: var(--background-azul); }
-}
-
-// 11. AMADEUS INFO CONSOLIDADA
-.amadeus-requirements-info {
-  margin-bottom: 1.5rem;
-  .msg {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    i { color: #17a2b8; font-size: 1.2rem; }
-    h4 { margin: 0; color: #0c5460; font-size: 1.1rem; font-weight: 600; }
-    .requirements-description { margin: 0; color: #495057; font-size: 0.9rem; font-style: italic; }
-    .requirements-list, .mandatory-fields-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      .requirement-item, .mandatory-field-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem;
-        border-radius: 4px;
-        i { font-size: 1rem; }
-        span { font-size: 0.9rem; font-weight: 500; }
-      }
-      .requirement-item {
-        background-color: #d1ecf1;
-        border: 1px solid #bee5eb;
-        i { color: #28a745; }
-        span { color: #0c5460; }
-      }
-      .mandatory-field-item {
-        background-color: #fff8e1;
-        border: 1px solid #ffe082;
-        i { color: #f57c00; }
-        span { color: #856404; }
-      }
-    }
-    .traveler-requirements {
-      margin-top: 1rem;
-      h5 { margin: 0 0 0.75rem 0; color: #0c5460; font-size: 1rem; font-weight: 600; }
-      .traveler-requirement {
-        margin-bottom: 1rem;
-        padding: 0.75rem;
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
-        strong { color: #0c5460; font-size: 0.9rem; display: block; margin-bottom: 0.5rem; }
-        ul { margin: 0; padding-left: 1.5rem; }
-        li {
-          color: #495057;
-          font-size: 0.85rem;
-          margin-bottom: 0.25rem;
-          &:last-child { margin-bottom: 0; }
-        }
-      }
-    }
-    .amadeus-mandatory-fields {
-      margin-top: 1rem;
-      padding: 1rem;
-      background-color: #fff3cd;
-      border: 1px solid #ffeaa7;
-      border-radius: 4px;
-      h5 { margin: 0 0 0.75rem 0; color: #856404; font-size: 1rem; font-weight: 600; }
+    border: 1px solid #e0e0e0 !important; 
+    border-radius: 10px !important; 
+    margin-bottom: 15px !important; 
+    background: white !important; 
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); 
+    margin-top: 20px;
+    &:last-child { 
+      margin-bottom: 0; 
     }
   }
 }
 
-.activity-toggle-container {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  .activity-saving-spinner { margin: 0; }
+.show-more-button { 
+  margin-top: -10px; 
+  margin-left: -1px; 
+  color: var(--background-azul); 
+  font-size: 0.9rem; 
+  &:hover { 
+    background-color: rgba(0, 0, 0, 0.04); 
+  } 
+}
+
+.additional-fields { 
+  margin-top: 15px; 
+  animation: fadeIn 0.3s ease-in-out; 
+}
+
+@keyframes fadeIn { 
+  from { 
+    opacity: 0; 
+    transform: translateY(-10px); 
+  } 
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  } 
 }

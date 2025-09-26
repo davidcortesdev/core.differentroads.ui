@@ -1,8 +1,8 @@
-<div class="cont">
+  <div class="cont" style="margin-top: -20px;">
   <!-- Toast para mensajes informativos -->
   <p-toast position="top-right"></p-toast>
   
-  <h3 class="title">Agrega los datos del viajero</h3>
+  <h3 class="title" style="padding-bottom: 4px; border-bottom: 1px solid var(--background-azul); display: inline-block; margin: 0 0 15px 0; font-weight: 600; font-size: 1.21rem;">Agrega los datos del viajero</h3>
   
   <!-- Información de requisitos de reserva de Amadeus -->
   <div *ngIf="amadeusBookingRequirements && hasFlightSelected" class="amadeus-requirements-info">
@@ -118,7 +118,7 @@
               <div class="traveler-header">
                 <p-panel class="user-button">
                   <i class="pi pi-user"></i>
-                  <p class="user">{{ getAgeGroupName(traveler.ageGroupId) }}</p>
+                  <p class="user" style="display: inline; margin-left: 14px;">{{ getAgeGroupName(traveler.ageGroupId) }}</p>
                 </p-panel>
                 <p class="user-description">
                   <i class="pi pi-exclamation-circle info-icon"></i>
@@ -152,10 +152,6 @@
                               [placeholder]="'Introduce tu ' + fieldDetails.name.toLowerCase()"
                               [ngClass]="{ 'p-invalid': hasFieldError(traveler.id, fieldDetails.code) }"
                               (input)="onFieldChange(traveler.id, fieldDetails.code)" />
-                            <i *ngIf="getFieldValidationState(traveler.id, fieldDetails.code) === 'valid'" 
-                               class="pi pi-check-circle field-valid-icon"></i>
-                            <i *ngIf="getFieldValidationState(traveler.id, fieldDetails.code) === 'invalid'" 
-                               class="pi pi-exclamation-circle field-invalid-icon"></i>
                           </div>
                           <small *ngIf="hasFieldError(traveler.id, fieldDetails.code)" class="p-error">
                             {{ getErrorMessage(fieldDetails.code, getFieldErrors(traveler.id, fieldDetails.code)) }}

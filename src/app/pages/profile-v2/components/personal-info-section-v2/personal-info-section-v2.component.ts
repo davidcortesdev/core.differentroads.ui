@@ -16,6 +16,12 @@ export class PersonalInfoSectionV2Component implements OnInit {
   isEditing: boolean = false;
   private originalPersonalInfo!: PersonalInfo; // Para almacenar datos originales
 
+  // Estados de carga y errores
+  isLoading: boolean = false;
+  isSaving: boolean = false;
+  errorMessage: string = '';
+  successMessage: string = '';
+
   // Datos para cambio de contraseña con código de verificación
   verificationData = {
     code: '',

@@ -521,8 +521,24 @@ export class HeaderV2Component implements OnInit, OnDestroy {
         label: 'Ver Perfil',
         icon: 'pi pi-user',
         command: () => {
-          this.authService.getCognitoId().subscribe(userId => {
-            this.authService.navigateToProfile(userId);
+          // Obtener el userId real del usuario, no el cognitoId
+          this.authService.getCognitoId().pipe(
+            takeUntil(this.destroy$),
+            switchMap((cognitoId: string) => {
+              if (cognitoId) {
+                return this.usersNetService.getUsersByCognitoId(cognitoId);
+              } else {
+                return of([]);
+              }
+            })
+          ).subscribe((users: any[]) => {
+            if (users && users.length > 0) {
+              const user = users[0];
+              const userId = user?.id; // Usar el ID real del usuario, no el cognitoId
+              if (userId) {
+                this.authService.navigateToProfile(userId);
+              }
+            }
           });
         },
       },

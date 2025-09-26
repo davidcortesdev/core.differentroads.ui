@@ -1,0 +1,74 @@
+<!-- Points Distribution Section -->
+<div *ngIf="travelers.length > 0" class="distribution-header">
+  <h4>Distribución de puntos por viajero</h4>
+  <div class="distribution-actions">
+    <p-button 
+      label="Equitativo" 
+      size="small" 
+      severity="secondary"
+      icon="pi pi-users"
+      (onClick)="onDistributeEqually()">
+    </p-button>
+  </div>
+</div>
+
+<!-- Lista de viajeros compacta -->
+<div *ngFor="let traveler of travelers; let i = index" 
+     class="traveler-card-compact"
+     [class.traveler-disabled]="!traveler.hasEmail">
+  
+  <!-- Contenido compacto en una sola línea -->
+  <div class="traveler-content">
+    <!-- Info del viajero -->
+    <div class="traveler-info-compact">
+      <i class="pi pi-user traveler-icon"></i>
+      <div class="traveler-details">
+        <div class="traveler-name">{{ traveler.name }}</div>
+        <div class="traveler-email" *ngIf="traveler.hasEmail">{{ traveler.email }}</div>
+      </div>
+      <p-tag *ngIf="!traveler.hasEmail" 
+             value="Sin email" 
+             severity="warning" 
+             size="small">
+      </p-tag>
+    </div>
+
+    <!-- Puntos y descuento en línea -->
+    <div *ngIf="traveler.hasEmail" class="points-controls-compact">
+      <div class="traveler-input-wrapper">
+        <p-inputNumber 
+          styleClass="compact-traveler-input"
+          [ngModel]="getTravelerAssignedPoints(traveler.id)"
+          (onBlur)="onTravelerPointsBlur(traveler.id, $event)"
+          [max]="getTravelerMaxPoints(traveler.id)"
+          [min]="0"
+          [size]="'small'"
+          [showButtons]="true"
+          buttonLayout="horizontal" 
+          spinnerMode="horizontal"
+          [useGrouping]="false"
+          placeholder="0"
+          [class.error]="!canAssignPointsToTraveler(traveler.id, getTravelerAssignedPoints(traveler.id))">
+          <ng-template #incrementbuttonicon>
+              <span class="pi pi-plus"></span>
+          </ng-template>
+          <ng-template #decrementbuttonicon>
+              <span class="pi pi-minus"></span>
+          </ng-template>
+        </p-inputNumber>
+        <span class="max-indicator">/ {{ getTravelerMaxPointsDisplay(traveler.id) }}</span>
+      </div>
+      <div class="discount-badge">
+        Descuento: {{ getTravelerAssignedPoints(traveler.id) | currency:'EUR':'symbol':'1.2-2' }}
+      </div>
+    </div>
+    
+    <!-- Para viajeros sin email -->
+    <div *ngIf="!traveler.hasEmail" class="blocked-section-compact">
+      <div class="blocked-message">
+        <i class="pi pi-lock"></i>
+        <span>Bloqueado: Sin email asignado</span>
+      </div>
+    </div>
+  </div>
+</div>

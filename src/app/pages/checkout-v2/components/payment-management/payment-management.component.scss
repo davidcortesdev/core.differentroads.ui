@@ -1,6 +1,4 @@
 $azul: var(--background-azul);
-$text-muted: #64748b;
-$border-color: #e2e8f0;
 
 @mixin mobile { @media (max-width: 480px) { @content; } }
 @mixin tablet { @media (max-width: 768px) { @content; } }
@@ -58,14 +56,11 @@ $border-color: #e2e8f0;
 .container {
   --p-panel-background: var(--background-azul-color-letra);
   --p-panel-border-radius: 10px;
-  --p-accordion-content-background: transparent !important;
-  --p-accordion-header-background: transparent !important;
   --p-radiobutton-border-color: #{$azul};
   --p-radiobutton-checked-background: var(--background-azul-color-letra);
   --p-radiobutton-checked-border-color: #{$azul};
   --p-radiobutton-icon-checked-color: #{$azul};
 
-  width: 100%;
   padding: 0;
   margin-top: -20px;
   
@@ -76,7 +71,6 @@ $border-color: #e2e8f0;
   .header-container {
     cursor: pointer;
     margin: 1rem 0 2.5rem;
-    width: 100%;
 
     @include mobile { margin: 1rem 0 2rem; }
     @include tablet { margin: 1.25rem 0 2.25rem; }
@@ -89,7 +83,6 @@ $border-color: #e2e8f0;
     justify-content: space-between;
     margin-bottom: 0.75rem;
     padding-bottom: 0.5rem;
-    width: 100%;
     gap: 1rem;
 
     .title,
@@ -101,7 +94,6 @@ $border-color: #e2e8f0;
       font-weight: 500;
       flex: 1;
       word-wrap: break-word;
-      overflow-wrap: break-word;
       @include responsive-font(1.1rem, 1.15rem, 1.21rem);
     }
 
@@ -116,10 +108,8 @@ $border-color: #e2e8f0;
     height: 1px;
     background-color: $azul;
     margin-top: -15px;
-    width: 100%;
     max-width: 278px;
     
-    // R max-width
     @include mobile {
       max-width: 100%;
     }
@@ -156,18 +146,12 @@ $border-color: #e2e8f0;
     @include desktop {
       margin-bottom: 0.75rem;
     }
-
-
-    .p-panel-content {
-      --p-panel-content-padding: 1.25rem;
-    }
   }
 
   .payment-option {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: nowrap;
     gap: 1rem;
 
     @include mobile {
@@ -180,7 +164,6 @@ $border-color: #e2e8f0;
       margin-left: 1rem;
       flex-grow: 1;
       word-wrap: break-word;
-      overflow-wrap: break-word;
       
       @include mobile {
         margin-left: 0;
@@ -238,14 +221,8 @@ $border-color: #e2e8f0;
     display: flex;
     gap: 1rem;
     margin-top: 1rem;
-    width: 100%;
     
     @include mobile {
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-    
-    @include tablet {
       flex-direction: column;
       gap: 0.75rem;
     }
@@ -258,20 +235,7 @@ $border-color: #e2e8f0;
   .payment-method-container,
   .installment-panel-container {
     flex: 1;
-    width: 100%;
     height: 100%;
-    
-    @include mobile {
-      flex: 1 1 100%;
-    }
-    
-    @include tablet {
-      flex: 1 1 100%;
-    }
-    
-    @include desktop {
-      flex: 1;
-    }
   }
 
   .payment-method-panel {
@@ -285,12 +249,10 @@ $border-color: #e2e8f0;
 
   .installment-content {
     margin-left: 1rem;
-    width: 100%;
     @include mobile { margin-left: 0.5rem; }
   }
 
   .scalapay-widget-container {
-    width: 100%;
     text-align: center;
     font-size: 14px;
   }
@@ -305,86 +267,20 @@ $border-color: #e2e8f0;
     }
   }
 
-
   .buttons-container {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    width: 100%;
     gap: 1rem;
     @include responsive-margin(2rem, 1.75rem, 2rem);
     
-    @include mobile {
-      flex-direction: column;
-    }
-    
-    @include tablet {
-      flex-direction: row;
-    }
-    
-    @include desktop {
-      flex-direction: row;
-    }
-
     .back-button {
       flex-shrink: 0;
-      
-      @include mobile {
-        width: 100%;
-        order: 2;
-      }
-      
-      @include tablet {
-        margin-right: 1rem;
-        width: auto;
-        order: 1;
-      }
-      
-      @include desktop {
-        margin-right: 1rem;
-        width: auto;
-        order: 1;
-      }
     }
 
     .payment-button {
       flex-grow: 1;
-      max-width: 300px;
-      
-      @include mobile {
-        width: 100%;
-        max-width: 100%;
-        order: 1;
-      }
-      
-      @include tablet {
-        order: 2;
-      }
-      
-      @include desktop {
-        order: 2;
-      }
-
-      ::ng-deep .p-button {
-        border-radius: 50px;
-        height: 50px;
-        width: 100%;
-        
-        @include mobile {
-          height: 45px;
-          border-radius: 45px;
-        }
-        
-        @include tablet {
-          height: 47px;
-          border-radius: 47px;
-        }
-        
-        @include desktop {
-          height: 50px;
-          border-radius: 50px;
-        }
-      }
+      max-width: 300px;      
     }
   }
 }
@@ -410,25 +306,11 @@ $border-color: #e2e8f0;
         @include responsive-font(0.9rem, 0.95rem, 1rem);
       }
     }
-
-    &.p-disabled {
-      opacity: 0.6;
-    }
   }
   
   .back-button {
     &.p-button {
       @include button-styles;
-      
-      @include tablet { width: auto; }
-      @include desktop { width: auto; }
-
-      .p-button-label {
-        font-weight: 500;
-        @include flex-center;
-        width: 100%;
-        @include responsive-font(0.9rem, 0.95rem, 1rem);
-      }
     }
   }
 
@@ -437,7 +319,6 @@ $border-color: #e2e8f0;
   }
 
 }
-
 
 .price-change-content {
   text-align: center;

@@ -1,3 +1,9 @@
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .loading-container-scalapay {
     @include flex-center;
     flex-direction: column;

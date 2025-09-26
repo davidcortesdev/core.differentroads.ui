@@ -1,15 +1,8 @@
 <!-- Loading States -->
-<div *ngIf="isLoading && paymentType === 'installments'" class="loading-container-scalapay">
-  <span>
-    Espere un momento, le estamos redirigiendo a 
-    <img src="assets/images/scalapay.svg" alt="ScalaPay" class="scalapay-logo" loading="lazy" />
-  </span>
-  <p-progressSpinner></p-progressSpinner>
-</div>
-
-<div *ngIf="isLoading && paymentType !== 'installments'" class="loading-container">
-  <p-progressSpinner></p-progressSpinner>
-</div>
+<app-loading-section 
+  [isLoading]="isLoading" 
+  [paymentType]="paymentType">
+</app-loading-section>
 
 <!-- Main Content -->
 <div class="container" *ngIf="!isLoading">

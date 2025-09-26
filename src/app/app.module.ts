@@ -298,6 +298,7 @@ import { HeaderV2Component } from './layout/header-v2/header-v2.component';
 // Services
 import { RetailerService } from './core/services/retailer/retailer.service';
 import { BalanceInfoComponent } from './pages/checkout-v2/components/points-redemption/components/balance-info/balance-info.component';
+import { LoadingSectionComponent } from './pages/checkout-v2/components/payment-management/components/loading-section/loading-section.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -492,6 +493,7 @@ registerLocaleData(localeEs);
     UpdateProfileSectionV2Component,
     HeaderV2Component,
     BalanceInfoComponent,
+    LoadingSectionComponent,
   ],
   imports: [
     // Angular Modules

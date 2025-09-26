@@ -543,29 +543,6 @@ $border-color: #e2e8f0;
       margin-right: 0.25rem;
     }
   }
-
-  .loading-container-scalapay {
-    @include flex-center;
-    flex-direction: column;
-    min-height: 300px;
-    padding: 2rem;
-
-    span {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 1.1rem;
-      color: #666;
-      margin-bottom: 1.5rem;
-
-      .scalapay-logo {
-        width: 80px;
-        height: auto;
-        vertical-align: middle;
-        display: inline-block;
-      }
-    }
-  }
 }
 
 

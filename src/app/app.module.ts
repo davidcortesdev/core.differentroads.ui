@@ -255,6 +255,7 @@ import { InfoTravelersRoomComponent } from './pages/checkout-v2/components/info-
 import { PaymentManagementComponent } from './pages/checkout-v2/components/payment-management/payment-management.component';
 import { PointsRedemptionComponent } from './pages/checkout-v2/components/points-redemption/points-redemption.component';
 import { TravelersListComponent } from './pages/checkout-v2/components/points-redemption/components/travelers-list/travelers-list.component';
+import { MessagePointsComponent } from './pages/checkout-v2/components/points-redemption/components/message-points/message-points.component';
 import { NewReservationComponent } from './pages/checkout-v2/components/new-reservation/new-reservation.component';
 import { FlightSectionV2Component } from './pages/checkout-v2/components/flight-section/flight-section.component';
 import { FlightStopsComponent } from './pages/checkout-v2/components/flight-management/flight-stops/flight-stops.component';
@@ -296,6 +297,7 @@ import { HeaderV2Component } from './layout/header-v2/header-v2.component';
 
 // Services
 import { RetailerService } from './core/services/retailer/retailer.service';
+import { BalanceInfoComponent } from './pages/checkout-v2/components/points-redemption/components/balance-info/balance-info.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -451,6 +453,7 @@ registerLocaleData(localeEs);
     PaymentManagementComponent,
     PointsRedemptionComponent,
     TravelersListComponent,
+    MessagePointsComponent,
     NewReservationComponent,
     FlightSectionV2Component,
     FlightStopsComponent,
@@ -488,6 +491,7 @@ registerLocaleData(localeEs);
     ReviewSectionV2Component,
     UpdateProfileSectionV2Component,
     HeaderV2Component,
+    BalanceInfoComponent,
   ],
   imports: [
     // Angular Modules

@@ -79,7 +79,7 @@ export class PointsRedemptionComponent implements OnInit, OnDestroy {
         usedPoints: 300,
         categoryStartDate: new Date('2024-01-01'),
         nextCategory: 'NOMADA',
-        pointsToNextCategory: 2
+      pointsToNextCategory: 4 // Le faltan 4 viajes para NOMADA (tiene 2, necesita 6)
       };
 
       console.log('✅ Puntos del usuario cargados:', this.pointsSummary);
@@ -799,6 +799,70 @@ export class PointsRedemptionComponent implements OnInit, OnDestroy {
       data[traveler.id] = this.canAssignPointsToTraveler(traveler.id, this.getTravelerAssignedPoints(traveler.id));
     });
     return data;
+  }
+
+  /**
+   * Obtiene los datos de balance para el componente balance-info
+   */
+  getBalanceInfoData(): any {
+    if (!this.pointsSummary) return null;
+    
+    // Calcular progreso real basado en los datos disponibles
+    const currentProgress = this.calculateCurrentProgress();
+    const requiredPoints = this.pointsSummary.pointsToNextCategory || 0;
+    
+    return {
+      availablePoints: this.pointsSummary.availablePoints,
+      category: this.pointsSummary.currentCategory.toLowerCase(),
+      categoryDisplayName: this.pointsSummary.currentCategory,
+      maxDiscount: this.getMaxDiscountForCategory(),
+      nextCategory: this.pointsSummary.nextCategory ? {
+        name: this.pointsSummary.nextCategory,
+        requiredPoints: requiredPoints,
+        currentProgress: currentProgress
+      } : undefined
+    };
+  }
+
+  /**
+   * Calcula el progreso actual hacia la siguiente categoría
+   */
+  private calculateCurrentProgress(): number {
+    if (!this.pointsSummary || !this.pointsSummary.nextCategory) return 0;
+    
+    const currentTrips = this.getCurrentTrips();
+    const totalTripsNeeded = this.getTotalTripsNeededForNextCategory();
+    
+    // El progreso es cuántos viajes ya tiene de los necesarios
+    return Math.min(currentTrips, totalTripsNeeded);
+  }
+
+  /**
+   * Obtiene el total de viajes necesarios para la siguiente categoría
+   */
+  private getTotalTripsNeededForNextCategory(): number {
+    if (!this.pointsSummary?.nextCategory) return 0;
+    
+    switch (this.pointsSummary.nextCategory) {
+      case 'VIAJERO':
+        return 3; // Para pasar de TROTAMUNDOS a VIAJERO
+      case 'NOMADA':
+        return 6; // Para pasar de VIAJERO a NOMADA
+      default:
+        return 0;
+    }
+  }
+
+  /**
+   * Obtiene los viajes actuales (mock para desarrollo)
+   */
+  private getCurrentTrips(): number {
+    // TODO: Reemplazar con datos reales de la API
+    // Por ahora usar un valor mock basado en los puntos
+    if (!this.pointsSummary) return 0;
+    
+    // Simular viajes basado en puntos (cada viaje = 500 puntos)
+    return Math.floor(this.pointsSummary.availablePoints / 500);
   }
 
 

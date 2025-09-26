@@ -1,5 +1,8 @@
 <!-- Mensaje informativo 3% según especificaciones -->
-<app-message-points></app-message-points>
+<app-message-points 
+  [totalPrice]="totalPrice"
+  [paymentType]="paymentType">
+</app-message-points>
 
 <!-- Points Redemption Section -->
 <div *ngIf="pointsSummary" class="container">
@@ -19,35 +22,10 @@
     </div>
 
     <!-- Points Balance Info -->
-    <div *ngIf="!isLoading" class="balance-card">
-      <div class="balance-header">
-        <span>Tu saldo de puntos</span>
-      </div>
-      
-      <div class="balance-details">
-        <div class="points-amount">{{ getAvailablePoints() }} puntos</div>
-        <div class="points-value">Equivale a {{ getAvailablePoints() | currency:'EUR':'symbol':'1.0-0' }}</div>
-      </div>
-      
-      <div class="category-info">
-        <div class="category-badge">
-          <i [class]="getCategoryIcon()" class="category-icon"></i>
-          <span class="category-text">{{ getCategoryDisplayName() }}</span>
-        </div>
-        <span class="max-discount">Máximo por membresía: {{ getMaxDiscountForCategory() | currency:'EUR':'symbol':'1.0-0' }}</span>
-      </div>
-      
-      <!-- Progress to next category -->
-      <div *ngIf="pointsSummary?.nextCategory" class="progress-section">
-        <div class="progress-info">
-          <span class="progress-text">{{ getProgressText() }}</span>
-          <p-progressbar [value]="getProgressPercentage()" 
-                         [showValue]="false"
-                         styleClass="category-progress">
-          </p-progressbar>
-        </div>
-      </div>
-    </div>
+    <app-balance-info 
+      [isLoading]="isLoading"
+      [pointsSummary]="getBalanceInfoData()">
+    </app-balance-info>
 
     <!-- Points Redemption Toggle -->
     <div class="redemption-toggle" *ngIf="!isLoading">

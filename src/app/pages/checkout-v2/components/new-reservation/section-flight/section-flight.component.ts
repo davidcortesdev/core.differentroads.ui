@@ -5,18 +5,19 @@ import {
   OnInit,
   OnChanges,
   SimpleChanges,
+  Inject,
 } from '@angular/core';
 import { forkJoin, Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 
 // Importaciones de servicios
 import {
-  FlightsNetService,
+  ReservationFlightService,
   IFlightPackDTO,
-  IFlightDetailDTO,
+} from '../../../../../core/services/flight/reservationflight.service';
+import {
   IFlightResponse,
-  IFlightSegmentResponse,
-} from '../../../services/flightsNet.service';
+} from '../../../../../core/services/flight-search.service';
 
 // Interfaces para el template
 interface FormattedFlight {
@@ -55,6 +56,7 @@ interface FormattedFlights {
 })
 export class SectionFlightComponent implements OnInit, OnChanges {
   @Input() departureId: number | undefined;
+  @Input() reservationId: number | undefined;
 
   // Datos del componente
   formattedFlights: FormattedFlights | null = null;
@@ -68,33 +70,33 @@ export class SectionFlightComponent implements OnInit, OnChanges {
   private airlinesCache: Map<string, string> = new Map();
   private logoUrlCache: Map<string, string> = new Map();
 
-  constructor(private flightsNetService: FlightsNetService) {}
+  constructor(@Inject(ReservationFlightService) private reservationFlightService: ReservationFlightService) {}
 
   ngOnInit(): void {
     this.loadFlights();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['departureId'] && changes['departureId'].currentValue) {
+    if ((changes['departureId'] && changes['departureId'].currentValue) ||
+        (changes['reservationId'] && changes['reservationId'].currentValue)) {
       this.loadFlights();
     }
   }
 
   private loadFlights(): void {
-    if (!this.departureId || this.departureId <= 0) {
+    if (!this.reservationId || this.reservationId <= 0) {
       this.formattedFlights = null;
       return;
     }
 
     this.loading = true;
 
-    this.flightsNetService.getFlights(this.departureId).subscribe({
-      next: (flightPacks) => {
-        console.log('Flight packs obtenidos:', flightPacks);
+    this.reservationFlightService.getSelectedFlightPack(this.reservationId).subscribe({
+      next: (flightPacks: IFlightPackDTO | IFlightPackDTO[]) => {
         this.processFlightPacks(flightPacks);
         this.loading = false;
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error loading flights:', error);
         this.formattedFlights = null;
         this.loading = false;
@@ -103,16 +105,25 @@ export class SectionFlightComponent implements OnInit, OnChanges {
   }
 
   private async processFlightPacks(
-    flightPacks: IFlightPackDTO[]
+    flightPacks: IFlightPackDTO | IFlightPackDTO[]
   ): Promise<void> {
-    if (!flightPacks || flightPacks.length === 0) {
+    // Manejar tanto arrays como objetos individuales
+    let flightPackData: IFlightPackDTO | null = null;
+    
+    if (Array.isArray(flightPacks)) {
+      if (flightPacks.length > 0) {
+        flightPackData = flightPacks[0];
+      }
+    } else if (flightPacks && typeof flightPacks === 'object') {
+      flightPackData = flightPacks as IFlightPackDTO;
+    }
+
+    if (!flightPackData) {
       this.formattedFlights = null;
       return;
     }
 
-    // Tomar el primer pack de vuelos
-    const flightPack = flightPacks[0];
-    const flights = flightPack.flights;
+    const flights = flightPackData.flights;
 
     if (!flights || flights.length === 0) {
       this.formattedFlights = null;
@@ -121,10 +132,10 @@ export class SectionFlightComponent implements OnInit, OnChanges {
 
     // Separar vuelos de ida y vuelta
     const outboundFlights = flights.filter(
-      (f) => f.flightTypeId === this.FLIGHT_TYPE_SALIDA
+      (f: IFlightResponse) => f.flightTypeId === this.FLIGHT_TYPE_SALIDA
     );
     const inboundFlights = flights.filter(
-      (f) => f.flightTypeId === this.FLIGHT_TYPE_VUELTA
+      (f: IFlightResponse) => f.flightTypeId === this.FLIGHT_TYPE_VUELTA
     );
 
     // Formatear vuelos
@@ -142,74 +153,18 @@ export class SectionFlightComponent implements OnInit, OnChanges {
       outbound: formattedOutbound,
       inbound: formattedInbound,
     };
-
-    console.log('Formatted flights:', this.formattedFlights);
   }
 
   private async formatFlight(
     flight: IFlightResponse
   ): Promise<FormattedFlight> {
-    // Obtener detalles del vuelo (segmentos)
-    const flightDetail = await this.flightsNetService
-      .getFlightDetail(flight.id)
-      .toPromise();
-
-    if (
-      !flightDetail ||
-      !flightDetail.segments ||
-      flightDetail.segments.length === 0
-    ) {
-      // Si no hay segmentos, crear un vuelo básico
-      return this.createBasicFlight(flight);
-    }
-
-    const segments = flightDetail.segments;
-    const firstSegment = segments[0];
-    const lastSegment = segments[segments.length - 1];
-
-    // Formatear segmentos - usar las aerolíneas del detalle del vuelo
-    const formattedSegments: FormattedSegment[] = segments.map((segment) => {
-      return {
-        flightNumber: segment.flightNumber,
-        airline: flightDetail.airlines
-          ? flightDetail.airlines.join(', ')
-          : this.extractAirlineCode(segment.flightNumber),
-        departureTime: this.formatTime(segment.departureTime),
-        arrivalTime: this.formatTime(segment.arrivalTime),
-        departureIata: segment.departureIata,
-        arrivalIata: segment.arrivalIata,
-        isNextDay: this.isNextDay(segment.departureTime, segment.arrivalTime),
-      };
-    });
-
-    // Calcular duración
-    const duration = this.calculateDuration(
-      firstSegment.departureTime,
-      lastSegment.arrivalTime,
-      firstSegment.departureDate,
-      lastSegment.arrivalDate
-    );
-
-    return {
-      date: firstSegment.departureDate || flight.departureDate || '',
-      departureTime: this.formatTime(firstSegment.departureTime),
-      arrivalTime: this.formatTime(lastSegment.arrivalTime),
-      departureAirport: `${firstSegment.departureCity} (${firstSegment.departureIata})`,
-      arrivalAirport: `${lastSegment.arrivalCity} (${lastSegment.arrivalIata})`,
-      duration: duration,
-      hasStops: segments.length > 1,
-      stops: segments.length - 1,
-      segments: formattedSegments,
-      isNextDay: this.isNextDay(
-        firstSegment.departureTime,
-        lastSegment.arrivalTime
-      ),
-    };
+    // Crear un vuelo básico usando los datos directos del flight
+    return this.createBasicFlight(flight);
   }
 
   private createBasicFlight(flight: IFlightResponse): FormattedFlight {
     return {
-      date: flight.departureDate || '',
+      date: flight.departureDate || flight.date || '',
       departureTime: this.formatTime(flight.departureTime || ''),
       arrivalTime: this.formatTime(flight.arrivalTime || ''),
       departureAirport: `${flight.departureCity || ''} (${
@@ -219,13 +174,21 @@ export class SectionFlightComponent implements OnInit, OnChanges {
         flight.arrivalIATACode || ''
       })`,
       duration: this.calculateBasicDuration(
-        flight.departureTime,
-        flight.arrivalTime
+        flight.departureTime || undefined,
+        flight.arrivalTime || undefined
       ),
       hasStops: false,
       stops: 0,
-      segments: [],
-      isNextDay: this.isNextDay(flight.departureTime, flight.arrivalTime),
+      segments: [{
+        flightNumber: flight.tkId || flight.id?.toString() || '',
+        airline: this.extractAirlineName(flight),
+        departureTime: this.formatTime(flight.departureTime || ''),
+        arrivalTime: this.formatTime(flight.arrivalTime || ''),
+        departureIata: flight.departureIATACode || '',
+        arrivalIata: flight.arrivalIATACode || '',
+        isNextDay: this.isNextDay(flight.departureTime || undefined, flight.arrivalTime || undefined),
+      }],
+      isNextDay: this.isNextDay(flight.departureTime || undefined, flight.arrivalTime || undefined),
     };
   }
 
@@ -305,6 +268,52 @@ export class SectionFlightComponent implements OnInit, OnChanges {
     return flightNumber.substring(0, 2);
   }
 
+  private extractAirlineName(flight: IFlightResponse): string {
+    // Si no encuentra, intentar derivar del nombre del vuelo o código
+    const flightName = flight.name || '';
+    const flightNumber = flight.tkId || flight.id?.toString() || '';
+    
+    // Buscar patrones en el nombre como "Vuelo EDI - VLC - KL928"
+    const airlineCodeMatch = flightName.match(/([A-Z]{2}\d+)/);
+    if (airlineCodeMatch) {
+      const code = airlineCodeMatch[1].substring(0, 2);
+      return this.getAirlineNameFromCode(code);
+    }
+    
+    // Derivar de códigos IATA si es posible
+    return this.deriveAirlineFromRoute(
+      flight.departureIATACode || '',
+      flight.arrivalIATACode || ''
+    );
+  }
+
+  private getAirlineNameFromCode(code: string): string {
+    const commonCodes: { [key: string]: string } = {
+      'IB': 'Iberia',
+      'VY': 'Vueling', 
+      'FR': 'Ryanair',
+      'KL': 'KLM',
+      'UX': 'Air Europa',
+      'AV': 'Avianca',
+      'LA': 'LATAM'
+    };
+    
+    return commonCodes[code] || 'Aerolínea';
+  }
+
+  private deriveAirlineFromRoute(departureIata: string, arrivalIata: string): string {
+    // Lógica muy básica basada en aeropuertos principales
+    if (!departureIata || !arrivalIata) return 'Aerolínea';
+    
+    // Si es una ruta europea, probablemente low-cost
+    const europeanAirports = ['MAD', 'BCN', 'VLC', 'EDI', 'LGW', 'STN'];
+    if (europeanAirports.includes(departureIata) && europeanAirports.includes(arrivalIata)) {
+      return 'Aerolínea Europea';
+    }
+    
+    return 'Aerolínea';
+  }
+
   private async getAirlineName(airlineCode: string): Promise<string> {
     if (!airlineCode) return '';
 
@@ -313,17 +322,10 @@ export class SectionFlightComponent implements OnInit, OnChanges {
       return this.airlinesCache.get(airlineCode)!;
     }
 
-    try {
-      const airlineName = await this.flightsNetService
-        .getAirline(airlineCode)
-        .toPromise();
-      this.airlinesCache.set(airlineCode, airlineName || airlineCode);
-      return airlineName || airlineCode;
-    } catch (error) {
-      console.error('Error getting airline name:', error);
-      this.airlinesCache.set(airlineCode, airlineCode);
-      return airlineCode;
-    }
+    // Por ahora, usar el método extractAirlineName para obtener el nombre
+    const airlineName = this.getAirlineNameFromCode(airlineCode);
+    this.airlinesCache.set(airlineCode, airlineName);
+    return airlineName;
   }
 
   // Métodos para el template
@@ -344,7 +346,7 @@ export class SectionFlightComponent implements OnInit, OnChanges {
 
     // Obtener nombres de aerolíneas
     const requests = uniqueCodes.map((code) =>
-      this.flightsNetService.getAirline(code).pipe(catchError(() => of(code)))
+      of(this.getAirlineNameFromCode(code)).pipe(catchError(() => of(code)))
     );
 
     return forkJoin(requests).pipe(map((names) => names.join(', ')));

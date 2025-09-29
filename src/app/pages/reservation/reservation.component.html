@@ -18,15 +18,13 @@
       "
     ></span>
     <h1 *ngIf="(paymentStatus || reservationInfo?.status) === 'confirm'">
-      ¡Tu reserva con número {{ reservationInfo?.reservationNumber }} ha sido
-      confirmada!
+      Reserva Confirmada: {{ reservationInfo?.reservationNumber }}
     </h1>
     <h1 *ngIf="(paymentStatus || reservationInfo?.status) === 'rq'">
-      ¡Tu reserva con número {{ reservationInfo?.reservationNumber }} está en
-      petición!
+      Reserva en Proceso: {{ reservationInfo?.reservationNumber }}
     </h1>
     <h1 *ngIf="(paymentStatus || reservationInfo?.status) === 'transfer'">
-      Confirma tu petición de reserva realizando el pago por transferencia
+      Completar Pago por Transferencia
     </h1>
   </div>
 

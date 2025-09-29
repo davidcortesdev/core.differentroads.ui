@@ -65,20 +65,22 @@ import {
 } from '../../../../core/services/tour/tour-base-price.service';
 
 @Component({
-  selector: 'app-tour-carrussel-v2',
+  selector: 'app-tour-list-v2',
   standalone: false,
-  templateUrl: './tour-carrussel-v2.component.html',
-  styleUrls: ['./tour-carrussel-v2.component.scss'],
+  templateUrl: './tour-list-v2.component.html',
+  styleUrls: ['./tour-list-v2.component.scss'],
 })
-export class TourCarrusselV2Component implements OnInit, OnDestroy {
+export class TourListV2Component implements OnInit, OnDestroy {
   @Input() configurationId?: number; // ID de la configuración específica (opcional)
   @Input() sectionDisplayOrder?: number; // Orden de visualización de la sección (opcional)
+  @Input() sectionType?: number; // Tipo de sección (3 = TOUR_GRID, 5 = MIXED_SECTION)
 
   tours: TourDataV2[] = [];
   title: string = '';
   description: string = '';
   showMonthTags: boolean = false;
   maxToursToShow: number = 6;
+  layout: string = 'grid';
   viewMoreButton?: {
     text: string;
     url: string;
@@ -131,7 +133,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.loadTourCarousel();
+    this.loadTourList();
   }
 
   ngOnDestroy(): void {
@@ -139,50 +141,130 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private loadTourCarousel(): void {
+  private loadTourList(): void {
+    console.log('🔍 TourListV2 - loadTourList iniciado');
+    console.log('🔍 configurationId:', this.configurationId);
+    console.log('🔍 sectionDisplayOrder:', this.sectionDisplayOrder);
+
     // Si se proporciona un configurationId específico, úsalo
     if (this.configurationId) {
+      console.log(
+        '✅ Usando configurationId específico:',
+        this.configurationId
+      );
       this.loadSpecificConfiguration(this.configurationId);
       return;
     }
 
-    // Si no, cargar la primera configuración activa del carrusel de tours
-    this.homeSectionConfigurationService
-      .getTourCarouselConfigurations()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (configurations) => {
-          if (configurations.length > 0) {
-            // Si se especifica un orden de visualización, buscar esa configuración
-            let targetConfig = configurations[0];
-            if (this.sectionDisplayOrder !== undefined) {
-              const foundConfig = configurations.find(
-                (c) => c.displayOrder === this.sectionDisplayOrder
+    // Determinar el tipo de sección a cargar
+    const sectionType = this.sectionType || 3; // Por defecto TOUR_GRID (ID: 3)
+    console.log('🔍 Buscando configuraciones para sectionType:', sectionType);
+
+    // Cargar configuraciones según el tipo de sección
+    let configObservable;
+    if (sectionType === 3) {
+      console.log('📋 Cargando TOUR_GRID (ID: 3)...');
+      configObservable =
+        this.homeSectionConfigurationService.getTourGridConfigurations();
+    } else {
+      console.log('📋 Cargando sección ID:', sectionType);
+      configObservable = this.homeSectionConfigurationService.getBySectionType(
+        sectionType,
+        true
+      );
+    }
+
+    configObservable.pipe(takeUntil(this.destroy$)).subscribe({
+      next: (configurations) => {
+        console.log(
+          '📋 Configuraciones encontradas para sectionType',
+          sectionType,
+          ':',
+          configurations
+        );
+        console.log('📊 Total de configuraciones:', configurations.length);
+
+        if (configurations.length > 0) {
+          // Si se especifica un orden de visualización, buscar esa configuración
+          let targetConfig = configurations[0];
+          console.log('🎯 Configuración inicial seleccionada:', targetConfig);
+
+          if (this.sectionDisplayOrder !== undefined) {
+            console.log(
+              '🔍 Buscando configuración con displayOrder:',
+              this.sectionDisplayOrder
+            );
+            const foundConfig = configurations.find(
+              (c) => c.displayOrder === this.sectionDisplayOrder
+            );
+            if (foundConfig) {
+              targetConfig = foundConfig;
+              console.log(
+                '✅ Configuración encontrada por displayOrder:',
+                targetConfig
               );
-              if (foundConfig) {
-                targetConfig = foundConfig;
-              }
+            } else {
+              console.warn(
+                '⚠️ No se encontró configuración con displayOrder:',
+                this.sectionDisplayOrder
+              );
             }
-            this.loadSpecificConfiguration(targetConfig.id);
           }
-        },
-        error: (error) => {
-          // Error loading tour carousel configurations
-        },
-      });
+
+          console.log(
+            '🚀 Cargando configuración específica con ID:',
+            targetConfig.id
+          );
+          this.loadSpecificConfiguration(targetConfig.id);
+        } else {
+          console.warn(
+            '⚠️ TourListV2 - No configurations found for sectionType:',
+            sectionType
+          );
+          console.warn(
+            '⚠️ Esto puede indicar que no hay configuraciones activas para esta sección'
+          );
+        }
+      },
+      error: (error) => {
+        console.error(
+          '❌ Error loading TOUR_GRID configurations (ID: 3):',
+          error
+        );
+        console.error('❌ Error completo:', error);
+      },
+    });
   }
 
   private loadSpecificConfiguration(configId: number): void {
+    console.log(
+      '🔧 TourListV2 - loadSpecificConfiguration iniciado con ID:',
+      configId
+    );
+
     // Cargar la configuración específica
     this.homeSectionConfigurationService
       .getById(configId)
       .pipe(
         switchMap((configuration) => {
+          console.log('📋 Configuración cargada:', configuration);
+
           // Establecer datos de la configuración
           this.title = configuration.title || '';
           this.description = configuration.content || '';
           this.showMonthTags = configuration.showMonthTags || false;
           this.maxToursToShow = configuration.maxToursToShow || 6;
+
+          console.log('⚙️ Datos de configuración establecidos:');
+          console.log('  - title:', this.title);
+          console.log('  - description:', this.description);
+          console.log('  - showMonthTags:', this.showMonthTags);
+          console.log('  - maxToursToShow:', this.maxToursToShow);
+
+          console.log(
+            '🔍 Cargando filtros de tours para configuración ID:',
+            configId
+          );
 
           // Cargar filtros de tours para esta configuración
           return this.homeSectionTourFilterService.getByConfigurationOrdered(
@@ -194,26 +276,23 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (filters) => {
-          console.log('⚙️ [Tour Carrussel V2] Configuración cargada:', {
-            title: this.title,
-            description: this.description,
-            showMonthTags: this.showMonthTags,
-            maxToursToShow: this.maxToursToShow,
-          });
-          console.log('🔍 [Tour Carrussel V2] Filtros encontrados:', filters);
+          console.log('🎯 Filtros cargados:', filters);
+          console.log('📊 Total de filtros:', filters.length);
 
           if (filters.length > 0) {
+            console.log('✅ Procesando filtros...');
             this.loadToursFromFilters(filters);
           } else {
-            console.log('⚠️ [Tour Carrussel V2] No se encontraron filtros');
+            console.warn(
+              '⚠️ No se encontraron filtros para la configuración ID:',
+              configId
+            );
             this.tours = [];
           }
         },
         error: (error) => {
-          console.error(
-            '❌ [Tour Carrussel V2] Error loading configuration or filters:',
-            error
-          );
+          console.error('❌ Error loading configuration or filters:', error);
+          console.error('❌ Error completo:', error);
           this.tours = [];
         },
       });
@@ -222,19 +301,30 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
   private loadToursFromFilters(
     filters: IHomeSectionTourFilterResponse[]
   ): void {
+    console.log('🎪 TourListV2 - loadToursFromFilters iniciado');
+    console.log('📋 Filtros recibidos:', filters);
+
     if (filters.length === 0) {
+      console.warn('⚠️ No hay filtros para procesar');
       this.tours = [];
       return;
     }
 
     // Configurar el botón "Ver más" del primer filtro
     const primaryFilter = filters[0];
+    console.log('🔘 Filtro primario:', primaryFilter);
+
     if (primaryFilter.viewMoreButtonText && primaryFilter.viewMoreButtonUrl) {
       this.viewMoreButton = {
         text: primaryFilter.viewMoreButtonText,
         url: primaryFilter.viewMoreButtonUrl,
       };
+      console.log('🔗 Botón "Ver más" configurado:', this.viewMoreButton);
+    } else {
+      console.log('ℹ️ No se configuró botón "Ver más"');
     }
+
+    console.log('🚀 Iniciando procesamiento de todos los filtros...');
 
     // Recopilar todos los IDs de tours de todos los filtros
     this.loadToursFromAllFilters(filters);
@@ -247,10 +337,28 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
   private loadToursFromAllFilters(
     filters: IHomeSectionTourFilterResponse[]
   ): void {
+    console.log(
+      '🔍 DEBUG: Procesando',
+      filters.length,
+      'filtros:',
+      filters.map((f) => ({
+        type: f.filterType,
+        tagId: f.tagId,
+        locationId: f.locationId,
+        specificTourIds: f.specificTourIds,
+      }))
+    );
+
     // Crear observables para cada filtro
     const filterObservables = filters.map((filter, index) =>
       this.getTourIdsFromFilter(filter).pipe(
         map((tourIds) => {
+          console.log(
+            `📋 DEBUG: Filtro ${index + 1} (${filter.filterType}):`,
+            tourIds.length,
+            'tours encontrados:',
+            tourIds
+          );
           return tourIds;
         })
       )
@@ -265,38 +373,52 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
           const allTourIds = tourIdArrays.flat();
           const uniqueTourIds = [...new Set(allTourIds)];
 
+          console.log(
+            '🔄 DEBUG: IDs combinados antes de eliminar duplicados:',
+            allTourIds.length,
+            'tours'
+          );
+          console.log(
+            '✨ DEBUG: IDs únicos después de eliminar duplicados:',
+            uniqueTourIds.length,
+            'tours'
+          );
+          console.log('📊 DEBUG: IDs únicos:', uniqueTourIds);
+
           // NO limitar por ahora - mostrar todos los tours
+          console.log(
+            '🎯 DEBUG: Mostrando TODOS los tours sin limitación:',
+            uniqueTourIds.length,
+            'tours finales'
+          );
+          console.log('🏷️ DEBUG: IDs finales a cargar:', uniqueTourIds);
 
           return uniqueTourIds;
         }),
         catchError((error) => {
-          // Error loading tours from filters
+          console.error('❌ DEBUG: Error loading tours from filters:', error);
           return of([]);
         })
       )
       .subscribe((tourIds: number[]) => {
         if (tourIds.length === 0) {
+          console.log('⚠️ DEBUG: No se encontraron tours, array vacío');
           this.tours = [];
           this.debugTourIds = [];
-          console.log('🔍 [Tour Carrussel V2] No tours found after filtering');
           return;
         }
+
+        console.log('🚀 DEBUG: Iniciando carga de', tourIds.length, 'tours');
 
         // Guardar IDs para mostrar en pantalla
         this.debugTourIds = tourIds;
 
-        // Console log para mostrar tours filtrados y cantidad
-        console.log(
-          '🔍 [Tour Carrussel V2] Tours filtrados encontrados:',
-          tourIds
-        );
-        console.log(
-          '📊 [Tour Carrussel V2] Cantidad total de tours filtrados:',
-          tourIds.length
-        );
-
         // Convertir a strings y cargar los tours
         const tourIdsAsStrings = tourIds.map((id) => id.toString());
+        console.log(
+          '🔗 DEBUG: Llamando loadToursFromIds con:',
+          tourIdsAsStrings
+        );
         this.loadToursFromIds(tourIdsAsStrings);
       });
   }
@@ -309,26 +431,22 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
   private getTourIdsFromFilter(
     filter: IHomeSectionTourFilterResponse
   ): Observable<number[]> {
-    console.log('🔧 [Tour Carrussel V2] Procesando filtro:', {
-      filterType: filter.filterType,
-      tagId: filter.tagId,
-      locationId: filter.locationId,
-      specificTourIds: filter.specificTourIds,
-    });
+    console.log(`🔎 DEBUG: Procesando filtro tipo '${filter.filterType}'`);
 
     switch (filter.filterType) {
       case 'tag':
+        console.log(`🏷️ DEBUG: Buscando tours por tag ID: ${filter.tagId}`);
         return this.tourTagService.getToursByTags([filter.tagId!]).pipe(
           map((tourIds) => {
             console.log(
-              `🏷️ [Tour Carrussel V2] Tours encontrados por tag ${filter.tagId}:`,
+              `✅ DEBUG: Tag ${filter.tagId} devolvió ${tourIds.length} tours:`,
               tourIds
             );
             return tourIds;
           }),
           catchError((error) => {
             console.error(
-              '❌ [Tour Carrussel V2] Error loading tours by tag:',
+              `❌ DEBUG: Error loading tours by tag ${filter.tagId}:`,
               error
             );
             return of([]);
@@ -336,19 +454,22 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
         );
 
       case 'location':
+        console.log(
+          `📍 DEBUG: Buscando tours por location ID: ${filter.locationId}`
+        );
         return this.tourLocationService
           .getToursByLocations([filter.locationId!])
           .pipe(
             map((tourIds) => {
               console.log(
-                `📍 [Tour Carrussel V2] Tours encontrados por ubicación ${filter.locationId}:`,
+                `✅ DEBUG: Location ${filter.locationId} devolvió ${tourIds.length} tours:`,
                 tourIds
               );
               return tourIds;
             }),
             catchError((error) => {
               console.error(
-                '❌ [Tour Carrussel V2] Error loading tours by location:',
+                `❌ DEBUG: Error loading tours by location ${filter.locationId}:`,
                 error
               );
               return of([]);
@@ -356,153 +477,55 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
           );
 
       case 'specific_tours':
+        console.log(
+          `🎯 DEBUG: Procesando tours específicos: ${filter.specificTourIds}`
+        );
         try {
           const tourIds =
             this.homeSectionTourFilterService.parseSpecificTourIds(
               filter.specificTourIds!
             );
           console.log(
-            `🎯 [Tour Carrussel V2] Tours específicos parseados:`,
+            `✅ DEBUG: Tours específicos parseados: ${tourIds.length} tours:`,
             tourIds
           );
           return of(tourIds);
         } catch (error) {
-          console.error(
-            '❌ [Tour Carrussel V2] Error parsing specific tour IDs:',
-            error
-          );
+          console.error('❌ DEBUG: Error parsing specific tour IDs:', error);
           return of([]);
         }
 
       default:
-        // Unknown filter type
+        console.warn(`⚠️ DEBUG: Unknown filter type: ${filter.filterType}`);
         return of([]);
-    }
-  }
-
-  private loadToursByFilter(filter: IHomeSectionTourFilterResponse): void {
-    switch (filter.filterType) {
-      case 'tag':
-        this.loadToursByTag(filter.tagId!);
-        break;
-      case 'location':
-        this.loadToursByLocation(filter.locationId!);
-        break;
-      case 'specific_tours':
-        this.loadSpecificTours(filter.specificTourIds!);
-        break;
-      default:
-        // Unknown filter type
-        this.tours = [];
-    }
-  }
-
-  private loadToursByTag(tagId: number): void {
-    // Obtener IDs de tours relacionados con la etiqueta
-    this.tourTagService
-      .getToursByTags([tagId])
-      .pipe(
-        takeUntil(this.destroy$),
-        catchError((error) => {
-          // Error loading tours by tag
-          return of([]);
-        })
-      )
-      .subscribe((tourIds: number[]) => {
-        if (tourIds.length === 0) {
-          this.tours = [];
-          return;
-        }
-
-        // Limitar a maxToursToShow y convertir a strings
-        const limitedTourIds = tourIds
-          .slice(0, this.maxToursToShow)
-          .map((id) => id.toString());
-
-        // Cargar los tours usando el método existente
-        this.loadToursFromIds(limitedTourIds);
-      });
-  }
-
-  private loadToursByLocation(locationId: number): void {
-    // Obtener IDs de tours relacionados con la ubicación
-    this.tourLocationService
-      .getToursByLocations([locationId])
-      .pipe(
-        takeUntil(this.destroy$),
-        catchError((error) => {
-          // Error loading tours by location
-          return of([]);
-        })
-      )
-      .subscribe((tourIds: number[]) => {
-        if (tourIds.length === 0) {
-          this.tours = [];
-          return;
-        }
-
-        // Limitar a maxToursToShow y convertir a strings
-        const limitedTourIds = tourIds
-          .slice(0, this.maxToursToShow)
-          .map((id) => id.toString());
-
-        // Cargar los tours usando el método existente
-        this.loadToursFromIds(limitedTourIds);
-      });
-  }
-
-  private loadSpecificTours(specificTourIdsJson: string): void {
-    try {
-      const tourIds =
-        this.homeSectionTourFilterService.parseSpecificTourIds(
-          specificTourIdsJson
-        );
-
-      if (tourIds.length === 0) {
-        this.tours = [];
-        return;
-      }
-
-      // Convertir números a strings si es necesario (según tu API)
-      const tourIdsAsStrings = tourIds.map((id) => id.toString());
-
-      // Usar tu método existente pero adaptado
-      this.loadToursFromIds(tourIdsAsStrings);
-    } catch (error) {
-      // Error parsing specific tour IDs
-      this.tours = [];
     }
   }
 
   // ✅ MÉTODO AUXILIAR: Obtener precios base usando TourBasePriceService
   private getBasePricesForTour(tourId: number): Observable<TourBasePrice[]> {
+    console.log(`💰 DEBUG: Obteniendo precios base para tour ${tourId}`);
+
     return this.tourBasePriceService.getByTourId(tourId).pipe(
       map((prices: TourBasePrice[]) => {
+        console.log(
+          `💰 DEBUG: Precios base encontrados para tour ${tourId}:`,
+          prices.length,
+          'precios:',
+          prices.map((p) => ({
+            id: p.id,
+            ageGroupId: p.ageGroupId,
+            basePrice: p.basePrice,
+            campaignPrice: p.campaignPrice,
+          }))
+        );
         return prices;
       }),
       catchError((error) => {
-        // Error obteniendo precios base
-        return of([]);
-      })
-    );
-  }
-
-  // ✅ MÉTODO AUXILIAR: Obtener precios para el primer departure (similar a tour-departures-v2)
-  private getPricesForFirstDeparture(
-    tourId: number,
-    departureId: number,
-    itineraryId: number
-  ): Observable<ITourDeparturesPriceResponse[]> {
-    // ✅ CORRECCIÓN: Usar itineraryId en lugar de tourId como activityId
-    const activityId = itineraryId;
-
-    return this.tourDeparturesPricesService.getAll(activityId).pipe(
-      map((prices: ITourDeparturesPriceResponse[]) => {
-        // Filtrar precios solo para el departure específico
-        const departurePrices = prices.filter(
-          (price) => price.departureId === departureId
+        console.error(
+          `❌ Error obteniendo precios base para tour ${tourId}:`,
+          error
         );
-        return departurePrices;
+        return of([]);
       })
     );
   }
@@ -514,6 +537,8 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
     tags: string[];
     itineraryDays: IItineraryDayResponse[];
   }> {
+    console.log(`🔍 DEBUG: Obteniendo datos adicionales para tour ${tourId}`);
+
     // ✅ USAR LOS MISMOS FILTROS QUE TOUR-DEPARTURES-V2
     const itineraryFilters: ItineraryFilters = {
       tourId: tourId,
@@ -521,9 +546,18 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
       isBookable: true, // ✅ FILTRO ADICIONAL
     };
 
+    console.log(
+      `🔍 DEBUG: Filtros de itinerarios para tour ${tourId}:`,
+      itineraryFilters
+    );
+
     // Obtener itinerarios del tour para luego obtener departures
     return this.itineraryService.getAll(itineraryFilters, false).pipe(
       switchMap((itineraries: IItineraryResponse[]) => {
+        console.log(
+          `📅 DEBUG: Tour ${tourId} tiene ${itineraries.length} itinerarios`
+        );
+
         if (itineraries.length === 0) {
           return of({
             basePrices: [],
@@ -537,7 +571,10 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
         const departureRequests = itineraries.map((itinerary) =>
           this.departureService.getByItinerary(itinerary.id, false).pipe(
             catchError((error) => {
-              // Error obteniendo departures
+              console.error(
+                `❌ Error obteniendo departures para itinerary ${itinerary.id}:`,
+                error
+              );
               return of([]);
             })
           )
@@ -546,6 +583,9 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
         return forkJoin(departureRequests).pipe(
           switchMap((departureArrays: IDepartureResponse[][]) => {
             const allDepartures = departureArrays.flat();
+            console.log(
+              `✈️ DEBUG: Tour ${tourId} tiene ${allDepartures.length} departures`
+            );
 
             // Obtener días de itinerario del primer itinerario disponible
             const itineraryDaysRequest =
@@ -554,7 +594,10 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                     .getAll({ itineraryId: itineraries[0].id })
                     .pipe(
                       catchError((error) => {
-                        // Error obteniendo días de itinerario
+                        console.error(
+                          `❌ Error obteniendo días de itinerario para itinerary ${itineraries[0].id}:`,
+                          error
+                        );
                         return of([]);
                       })
                     )
@@ -563,7 +606,10 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
             // ✅ OBTENER PRECIOS BASE: Usar TourBasePriceService para obtener precios base
             const basePriceRequest = this.getBasePricesForTour(tourId).pipe(
               catchError((error) => {
-                // Error obteniendo precios base
+                console.error(
+                  `❌ Error obteniendo precios base para tour ${tourId}:`,
+                  error
+                );
                 return of([]);
               })
             );
@@ -575,7 +621,10 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                 return [];
               }),
               catchError((error) => {
-                // Error obteniendo tags
+                console.error(
+                  `❌ Error obteniendo tags para tour ${tourId}:`,
+                  error
+                );
                 return of([]);
               })
             );
@@ -592,6 +641,24 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                   tags: tags as string[],
                   itineraryDays: itineraryDays as IItineraryDayResponse[],
                 };
+                console.log(
+                  `🔍 DEBUG: Datos adicionales obtenidos para tour ${tourId}:`,
+                  {
+                    basePrices: result.basePrices.length,
+                    departures: result.departures.length,
+                    tags: result.tags.length,
+                    itineraryDays: result.itineraryDays.length,
+                    primerDeparture: result.departures[0]?.departureDate,
+                    primerPrecioBase: result.basePrices[0]?.basePrice,
+                    totalDias: result.itineraryDays.length,
+                    todosLosPreciosBase: result.basePrices.map((p) => ({
+                      id: p.id,
+                      ageGroupId: p.ageGroupId,
+                      basePrice: p.basePrice,
+                      campaignPrice: p.campaignPrice,
+                    })),
+                  }
+                );
 
                 return result;
               })
@@ -600,7 +667,10 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
         );
       }),
       catchError((error) => {
-        // Error obteniendo datos adicionales
+        console.error(
+          `❌ Error obteniendo datos adicionales para tour ${tourId}:`,
+          error
+        );
         return of({
           basePrices: [],
           departures: [],
@@ -612,8 +682,16 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
   }
 
   private loadToursFromIds(tourIds: string[]): void {
+    console.log('🚀 DEBUG: loadToursFromIds llamado con IDs:', tourIds);
+
     // Usar tu lógica existente pero limitando a maxToursToShow
     const limitedTourIds = tourIds.slice(0, this.maxToursToShow);
+    console.log(
+      '📊 DEBUG: IDs limitados a mostrar:',
+      limitedTourIds,
+      'maxToursToShow:',
+      this.maxToursToShow
+    );
 
     // Reset tours array
     this.tours = [];
@@ -622,6 +700,8 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
     of(...limitedTourIds)
       .pipe(
         concatMap((id: string) => {
+          console.log(`🔄 DEBUG: Procesando tour ID: ${id}`);
+
           // Combinar datos del TourNetService, CMSTourService y datos adicionales
           return forkJoin({
             tourData: this.tourNetService.getTourById(Number(id)),
@@ -629,7 +709,10 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
             additionalData: this.getAdditionalTourData(Number(id)),
           }).pipe(
             catchError((error: Error) => {
-              // Error loading tour
+              console.error(
+                `❌ DEBUG: Error loading tour with ID ${id}:`,
+                error
+              );
               return of(null);
             }),
             map(
@@ -645,8 +728,10 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                   };
                 } | null
               ): TourDataV2 | null => {
-                if (combinedData) {
-                }
+                console.log(
+                  `📋 DEBUG: Tour ${id} recibido:`,
+                  combinedData ? '✅ Datos recibidos' : '❌ Sin datos'
+                );
                 if (!combinedData) return null;
 
                 // Mapear datos combinados de TourNetService, CMSTourService y datos adicionales a TourDataV2
@@ -658,6 +743,11 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
 
                 // ✅ OBTENER PRECIO: Usar TourBasePriceService para obtener precios base
                 let tourPrice = 0;
+                console.log(`💰 ===== CÁLCULO DE PRECIO PARA TOUR ${id} =====`);
+                console.log(
+                  `💰 Precios base disponibles:`,
+                  additional.basePrices?.length || 0
+                );
 
                 if (additional.basePrices && additional.basePrices.length > 0) {
                   // Buscar precio para adultos (ageGroupId = 1 por defecto, o el primer precio disponible)
@@ -672,8 +762,22 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                       adultPrice.campaignPrice > 0
                         ? adultPrice.campaignPrice
                         : adultPrice.basePrice;
+                    console.log(
+                      `💰 ✅ Precio encontrado para tour ${id}: ${tourPrice}€ (ageGroupId: ${adultPrice.ageGroupId}, basePrice: ${adultPrice.basePrice}, campaignPrice: ${adultPrice.campaignPrice})`
+                    );
+                  } else {
+                    console.log(
+                      `⚠️ DEBUG: No se encontró precio para adultos en el tour ${id}`
+                    );
                   }
+                } else {
+                  console.log(
+                    `⚠️ DEBUG: No hay precios base disponibles para el tour ${id}`
+                  );
                 }
+                console.log(
+                  `💰 ===== FIN CÁLCULO DE PRECIO PARA TOUR ${id} =====`
+                );
 
                 // ✅ OBTENER FECHAS: Extraer fechas de los departures
                 const availableMonths: string[] = [];
@@ -714,6 +818,16 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                   if (futureDepartures.length > 0) {
                     nextDepartureDate = futureDepartures[0].departureDate!;
                   }
+
+                  console.log(
+                    `📅 DEBUG: Tour ${id} - Meses: ${availableMonths.join(
+                      ', '
+                    )}, Próxima salida: ${nextDepartureDate}`
+                  );
+                } else {
+                  console.log(
+                    `⚠️ DEBUG: No hay departures con fechas para el tour ${id}`
+                  );
                 }
 
                 // ✅ OBTENER TAG: Usar el primer tag disponible
@@ -739,6 +853,18 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
 
                 // ✅ APLICAR IMAGEN COMO EN TOUR-OVERVIEW-V2
                 const imageUrl = cms?.imageUrl || '';
+                console.log(`🖼️ DEBUG: Imagen para tour ${id}:`, {
+                  cmsArrayLength: cmsArray.length,
+                  selectedCms: cms
+                    ? {
+                        id: cms.id,
+                        tourId: cms.tourId,
+                        imageUrl: cms.imageUrl,
+                      }
+                    : null,
+                  finalImageUrl: imageUrl,
+                  hasImage: !!imageUrl,
+                });
 
                 return {
                   imageUrl: imageUrl, // ✅ IMAGEN CORRECTA DEL CMS
@@ -766,6 +892,12 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
         }),
         // Accumulate tours as they arrive
         scan((acc: TourDataV2[], tour: TourDataV2 | null) => {
+          console.log(
+            `📈 DEBUG: Scan - Tour procesado:`,
+            tour ? '✅ Agregado' : '❌ Null',
+            'Total acumulado:',
+            acc.length + (tour ? 1 : 0)
+          );
           if (tour) {
             return [...acc, tour];
           }
@@ -774,26 +906,13 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       )
       .subscribe((accumulatedTours: TourDataV2[]) => {
+        console.log(
+          '🎯 DEBUG: Subscribe - Tours acumulados:',
+          accumulatedTours.length,
+          'tours'
+        );
+        console.log('📋 DEBUG: Tours finales:', accumulatedTours);
         this.tours = accumulatedTours;
-
-        // Console log para mostrar tours finales cargados
-        console.log(
-          '✅ [Tour Carrussel V2] Tours finales cargados:',
-          accumulatedTours
-        );
-        console.log(
-          '📈 [Tour Carrussel V2] Cantidad de tours mostrados:',
-          accumulatedTours.length
-        );
-        console.log(
-          '🎯 [Tour Carrussel V2] Tours mostrados:',
-          accumulatedTours.map((tour) => ({
-            id: tour.externalID,
-            title: tour.title,
-            price: tour.price,
-            tag: tour.tag,
-          }))
-        );
       });
   }
 

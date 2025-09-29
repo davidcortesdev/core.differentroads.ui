@@ -8,12 +8,6 @@ $spacing-xs: 0.2rem;
 $spacing-sm: 0.5rem;
 $spacing-md: 1rem;
 
-::ng-deep {
-    .p-card {
-        background: transparent !important;
-    }
-}
-
 // Mixins
 @mixin responsive-font($mobile, $tablet, $desktop) {
     font-size: $desktop;
@@ -46,6 +40,11 @@ $spacing-md: 1rem;
 
 // Componente principal
 .tour-card {
+    ::ng-deep {
+        .p-card {
+            background: transparent !important;
+        }
+    }
     padding: var(--tour-card-spacing-sm, 0.5rem);
     height: 100%;
 

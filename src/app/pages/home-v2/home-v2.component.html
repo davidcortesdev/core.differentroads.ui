@@ -26,6 +26,12 @@
         [configurationId]="config.id">
       </app-tour-carrussel-v2>
 
+      <!-- TOUR GRID SECTION (ID: 3) -->
+      <app-tour-list-v2
+        *ngIf="getComponentType(config.homeSectionId) === 'tour-grid'"
+        [configurationId]="config.id">
+      </app-tour-list-v2>
+
       <!-- FULLSCREEN CARDS SECTION (ID: 4) -->
       <app-full-card-section-v2
         *ngIf="getComponentType(config.homeSectionId) === 'fullscreen-cards'"
@@ -35,8 +41,7 @@
       <!-- MIXED SECTION (ID: 5) -->
       <app-carousel-section-v2
         *ngIf="getComponentType(config.homeSectionId) === 'mixed-section'"
-        [configurationId]="config.id"
-        [sectionType]="5">
+        [configurationId]="config.id">
       </app-carousel-section-v2>
 
       <!-- TRAVELER SECTION (ID: 6) -->

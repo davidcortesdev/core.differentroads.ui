@@ -1,53 +1,20 @@
 <section class="tours-section">
-  <div class="section-header">
-    <h2 class="title">{{ title }}</h2>
-    <p *ngIf="description" class="description">{{ description }}</p>
-  </div>
-  
-  <!-- DEBUG: Mostrar IDs de tours -->
-  <div class="debug-info" style="background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; font-family: monospace;">
-    <h4 style="margin: 0 0 10px 0; color: #333;">🔍 DEBUG - IDs de Tours:</h4>
-    <p style="margin: 5px 0;"><strong>Total de tours:</strong> {{ debugTourIds.length }}</p>
-    <p style="margin: 5px 0;"><strong>IDs:</strong> {{ debugTourIds.join(', ') }}</p>
-    <p style="margin: 5px 0;"><strong>Tours cargados:</strong> {{ tours.length }}</p>
-  </div>
-  
-  
-  <div *ngIf="tours.length > 0; else noTours">
-    <!-- TODO: Cambiar y usar toursids-->
-    <p-carousel
-      [value]="tours"
-      [numVisible]="5"
-      [numScroll]="1"
-      [circular]="true"
-      [responsiveOptions]="responsiveOptions"
-      [showNavigators]="true"
-      [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
-    >
-      <ng-template let-tour #item>
-        <!-- TODO: Cambiar a tour-card-v2 y pasar solo el id del tour-->
-        <app-tour-card
-          [tourData]="tour"
-          [showScalapayPrice]="true"
-          [isLargeCard]="true"
-        ></app-tour-card>
-      </ng-template>
-    </p-carousel>
-    
-    <div *ngIf="viewMoreButton" class="view-more-container">
-      <button 
-        class="view-more-btn"
-        (click)="onViewMore()"
-        type="button"
-      >
-        {{ viewMoreButton.text }}
-      </button>
-    </div>
-  </div>
-
-  <ng-template #noTours>
-    <div class="no-tours-message">
-      <p>No hay tours disponibles en este momento.</p>
-    </div>
-  </ng-template>
+  <h2 class="title">{{ title }}</h2>
+  <p-carousel
+    [value]="tours"
+    [numVisible]="5"
+    [numScroll]="1"
+    [circular]="true"
+    [responsiveOptions]="responsiveOptions"
+    [showNavigators]="false"
+    [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
+  >
+    <ng-template let-tour pTemplate="item">
+      <app-tour-card-v2
+        [tourData]="tour"
+        [showScalapayPrice]="true"
+        [isLargeCard]="true"
+      ></app-tour-card-v2>
+    </ng-template>
+  </p-carousel>
 </section>

@@ -132,6 +132,7 @@ import { FlightsComponent } from './pages/checkout/components/flights/flights.co
 import { TravelersComponent } from './pages/checkout/components/travelers/travelers.component';
 import { PaymentComponent } from './pages/checkout/components/payment/payment.component';
 import { TourCardComponent } from './shared/components/tour-card/tour-card.component';
+import { TourCardV2Component } from './shared/components/tour-card-v2/tour-card-v2.component';
 import { ReactiveFormsModule } from '@angular/forms';
 
 import { StepsModule } from 'primeng/steps';
@@ -227,6 +228,8 @@ import { BookingListSectionComponent } from './pages/profile/components/booking-
 import { BookingDocumentationComponent } from './pages/bookings/booking-documentation/booking-documentation.component';
 import { TourCardHeaderComponent } from './shared/components/tour-card/tour-card-header/tour-card-header.component';
 import { TourCardContentComponent } from './shared/components/tour-card/tour-card-content/tour-card-content.component';
+import { TourCardHeaderV2Component } from './shared/components/tour-card-v2/tour-card-header-v2/tour-card-header-v2.component';
+import { TourCardContentV2Component } from './shared/components/tour-card-v2/tour-card-content-v2/tour-card-content-v2.component';
 import { CookiesComponent } from './shared/components/cookies/cookies.component';
 import { CookiesConsentComponent } from './shared/components/cookies-consent/cookies-consent.component';
 import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
@@ -331,6 +334,7 @@ registerLocaleData(localeEs);
     // Tours List
     ToursListComponent,
     TourCardComponent,
+    TourCardV2Component,
 
     // Content List
     ContentListComponent,
@@ -425,6 +429,8 @@ registerLocaleData(localeEs);
     BookingDocumentationComponent,
     TourCardHeaderComponent,
     TourCardContentComponent,
+    TourCardHeaderV2Component,
+    TourCardContentV2Component,
     CookiesComponent,
     CookiesConsentComponent,
     BasicPagePreviewComponent,

@@ -66,17 +66,24 @@ export class HomeV2Component implements OnInit, OnDestroy {
     configurations: IHomeSectionConfigurationResponse[]
   ): void {
     // Ordenar configuraciones por displayOrder y almacenar globalmente
-    this.orderedConfigurations = configurations.sort((a, b) => a.displayOrder - b.displayOrder);
+    this.orderedConfigurations = configurations.sort(
+      (a, b) => a.displayOrder - b.displayOrder
+    );
   }
 
   // Método para obtener la configuración del banner (siempre la primera)
   getBannerConfiguration(): IHomeSectionConfigurationResponse | null {
-    return this.orderedConfigurations.find(config => config.homeSectionId === 1) || null;
+    return (
+      this.orderedConfigurations.find((config) => config.homeSectionId === 1) ||
+      null
+    );
   }
 
   // Método para obtener configuraciones ordenadas excluyendo el banner
   getOrderedConfigurationsExcludingBanner(): IHomeSectionConfigurationResponse[] {
-    return this.orderedConfigurations.filter(config => config.homeSectionId !== 1);
+    return this.orderedConfigurations.filter(
+      (config) => config.homeSectionId !== 1
+    );
   }
 
   // Método para determinar qué componente renderizar según el homeSectionId
@@ -84,6 +91,7 @@ export class HomeV2Component implements OnInit, OnDestroy {
     const componentMap: { [key: number]: string } = {
       1: 'banner', // app-hero-section-v2
       2: 'tour-carousel', // app-tour-carrussel-v2
+      3: 'tour-grid', // app-carousel-section-v2
       4: 'fullscreen-cards', // app-full-card-section-v2
       5: 'mixed-section', // app-carousel-section-v2
       6: 'traveler-section', // app-community-section-v2
@@ -100,6 +108,7 @@ export class HomeV2Component implements OnInit, OnDestroy {
     const sectionNames: { [key: number]: string } = {
       1: 'Banner',
       2: 'Carrusel de Tours',
+      3: 'Lista de Tours en Cuadrícula',
       4: 'Cards a Pantalla Completa',
       5: 'Sección Mixta',
       6: 'Sección de Viajeros',

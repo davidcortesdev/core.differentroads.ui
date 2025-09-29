@@ -276,6 +276,7 @@ import { HomeV2Component } from './pages/home-v2/home-v2.component';
 import { HeroSectionV2Component } from './pages/home-v2/components/hero-section-v2/hero-section-v2.component';
 import { TripTypesSectionV2Component } from './pages/home-v2/components/trip-types-section-v2/trip-types-section-v2.component';
 import { TourCarrusselV2Component } from './pages/home-v2/components/tour-carrussel-v2/tour-carrussel-v2.component';
+import { TourListV2Component } from './pages/home-v2/components/tour-list-v2/tour-list-v2.component';
 import { FullCardSectionV2Component } from './pages/home-v2/components/full-card-section-v2/full-card-section-v2.component';
 import { CarouselSectionV2Component } from './pages/home-v2/components/carousel-section-v2/carousel-section-v2.component';
 import { CommunitySectionV2Component } from './pages/home-v2/components/community-section-v2/community-section-v2.component';
@@ -478,6 +479,7 @@ registerLocaleData(localeEs);
     HeroSectionV2Component,
     TripTypesSectionV2Component,
     TourCarrusselV2Component,
+    TourListV2Component,
     FullCardSectionV2Component,
     CarouselSectionV2Component,
     CommunitySectionV2Component,

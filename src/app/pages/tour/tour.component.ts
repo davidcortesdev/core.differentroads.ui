@@ -202,10 +202,20 @@ export class TourComponent implements OnInit, OnDestroy {
       // Actualizar título
       this.titleService.setTitle(`${this.tour.name} - Different Roads`);
       // Actualizar meta tags
-      // Meta descripción limitada a 160 caracteres
-      const description = this.tour.seo.description || `Descubre ${this.tour.seo.title} con Different Roads`;
-      const shortDescription = description.length > 160 ? description.substring(0, 157) + '...' : description;
-      this.metaService.updateTag({ name: 'description', content: shortDescription });
+      // Meta descripción optimizada para SEO (70-155 caracteres)
+      const defaultDescription = `Descubre ${this.tour.seo.title} con Different Roads. Experiencias únicas de viaje y aventuras inolvidables te esperan. ¡Reserva ahora!`;
+      const description = this.tour.seo.description || defaultDescription;
+      let shortDescription = description;
+      
+      // Asegurar que esté entre 70 y 155 caracteres
+      if (description.length < 70) {
+        shortDescription = description + '. Descubre experiencias únicas de viaje con Different Roads. ¡Reserva ahora!';
+      } else if (description.length > 155) {
+        shortDescription = description.substring(0, 152) + '...';
+      }
+      // Eliminar meta description existente y añadir nueva
+      this.metaService.removeTag("name='description'");
+      this.metaService.addTag({ name: 'description', content: shortDescription });
       
       // Añadir meta tags para redes sociales si hay imagen disponible
       if (this.tour.image && this.tour.image[0]?.url) {

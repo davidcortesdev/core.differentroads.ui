@@ -86,9 +86,17 @@ export class BasicPagePreviewComponent implements OnInit {
       // Eliminar cualquier meta descripción existente
       this.meta.removeTag("name='description'");
       
-      // Añadir la nueva meta descripción limitada a 160 caracteres
-      const fullDescription = pageData.seoDescription + ' (Vista previa)';
-      const shortDescription = fullDescription.length > 160 ? fullDescription.substring(0, 157) + '...' : fullDescription;
+      // Añadir la nueva meta descripción optimizada para SEO (70-155 caracteres)
+      const baseDescription = pageData.seoDescription || 'Descubre información importante sobre Different Roads';
+      const fullDescription = baseDescription + ' (Vista previa)';
+      let shortDescription = fullDescription;
+      
+      // Asegurar que esté entre 70 y 155 caracteres
+      if (fullDescription.length < 70) {
+        shortDescription = fullDescription + '. Información detallada sobre nuestros servicios y experiencias de viaje únicas.';
+      } else if (fullDescription.length > 155) {
+        shortDescription = fullDescription.substring(0, 152) + '...';
+      }
       this.meta.addTag({
         name: 'description',
         content: shortDescription

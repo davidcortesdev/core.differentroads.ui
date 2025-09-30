@@ -10,7 +10,7 @@ import { filter, Observable, Subject, takeUntil } from 'rxjs';
 import { Press } from '../../core/models/press/press.model';
 import { Collection } from '../../core/models/collections/collection.model';
 import { Landing } from '../../core/models/landings/landing.model';
-import { Title } from '@angular/platform-browser';
+import { Title, Meta } from '@angular/platform-browser';
 
 export interface ITour {
   imageUrl: string;
@@ -78,7 +78,8 @@ export class ContentPageComponent implements OnInit, OnChanges, OnDestroy {
     private blogService: BlogsService,
     private pressService: PressService,
     private sanitizer: DomSanitizer,
-    private titleService: Title
+    private titleService: Title,
+    private meta: Meta
   ) {}
 
   ngOnInit(): void {
@@ -156,6 +157,35 @@ export class ContentPageComponent implements OnInit, OnChanges, OnDestroy {
   private updatePageTitle(title: string): void {
     if (title) {
       this.titleService.setTitle(`${title} - Different Roads`);
+      
+      // Meta descripción optimizada para SEO (70-155 caracteres)
+      const contentType = this.getContentTypeDescription();
+      const defaultDescription = `Descubre ${title} en Different Roads. ${contentType} Experiencias únicas de viaje te esperan. ¡Explora ahora!`;
+      
+      // Asegurar que esté entre 70 y 155 caracteres
+      let finalDescription = defaultDescription;
+      if (defaultDescription.length < 70) {
+        finalDescription = defaultDescription + ' Descubre más sobre nuestros servicios y aventuras.';
+      } else if (defaultDescription.length > 155) {
+        finalDescription = defaultDescription.substring(0, 152) + '...';
+      }
+      
+      this.meta.updateTag({ name: 'description', content: finalDescription });
+    }
+  }
+
+  private getContentTypeDescription(): string {
+    switch (this.contentType) {
+      case 'landing':
+        return 'Ofertas especiales y promociones exclusivas. ';
+      case 'collection':
+        return 'Colección de experiencias de viaje únicas. ';
+      case 'press':
+        return 'Noticias y artículos sobre nuestros viajes. ';
+      case 'blog':
+        return 'Consejos, guías y experiencias de viaje. ';
+      default:
+        return 'Información importante sobre nuestros servicios. ';
     }
   }
 

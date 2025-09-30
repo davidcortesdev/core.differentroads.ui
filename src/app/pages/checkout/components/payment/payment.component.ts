@@ -230,14 +230,14 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
   // Los siguientes métodos permanecen exactamente como estaban en el original
 
   loadScalapayScript() {
-    if (
-      !this.document.querySelector('script[src*="scalapay-widget-loader.js"]')
-    ) {
-      const script = this.document.createElement('script');
-      script.type = 'module';
-      script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js';
-      this.document.head.appendChild(script);
-    }
+    // if (
+    //   !this.document.querySelector('script[src*="scalapay-widget-loader.js"]')
+    // ) {
+    //   const script = this.document.createElement('script');
+    //   script.type = 'module';
+    //   script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js';
+    //   this.document.head.appendChild(script);
+    // }
   }
 
   toggleDropdown() {

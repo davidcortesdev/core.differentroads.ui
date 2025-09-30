@@ -160,14 +160,32 @@ export class ContentPageComponent implements OnInit, OnChanges, OnDestroy {
       
       // Meta descripción optimizada para SEO (70-155 caracteres)
       const contentType = this.getContentTypeDescription();
-      const defaultDescription = `Descubre ${title} en Different Roads. ${contentType} Experiencias únicas de viaje te esperan. ¡Explora ahora!`;
+      let description = '';
+      
+      // Crear descripción específica según el tipo de contenido
+      switch (this.contentType) {
+        case 'landing':
+          description = `${title} - Ofertas especiales y promociones exclusivas de viajes. Aprovecha descuentos únicos en Different Roads.`;
+          break;
+        case 'collection':
+          description = `${title} - Colección curada de experiencias de viaje únicas. Descubre destinos increíbles con Different Roads.`;
+          break;
+        case 'press':
+          description = `${title} - Noticias y artículos sobre nuestros viajes y experiencias. Mantente informado con Different Roads.`;
+          break;
+        case 'blog':
+          description = `${title} - Consejos, guías y experiencias de viaje. Aprende de nuestros expertos en Different Roads.`;
+          break;
+        default:
+          description = `${title} - Información importante sobre nuestros servicios de viaje. Conoce más en Different Roads.`;
+      }
       
       // Asegurar que esté entre 70 y 155 caracteres
-      let finalDescription = defaultDescription;
-      if (defaultDescription.length < 70) {
-        finalDescription = defaultDescription + ' Descubre más sobre nuestros servicios y aventuras.';
-      } else if (defaultDescription.length > 155) {
-        finalDescription = defaultDescription.substring(0, 152) + '...';
+      let finalDescription = description;
+      if (description.length < 70) {
+        finalDescription = description + ' Explora nuestras opciones de viaje.';
+      } else if (description.length > 155) {
+        finalDescription = description.substring(0, 152) + '...';
       }
       
       this.meta.updateTag({ name: 'description', content: finalDescription });

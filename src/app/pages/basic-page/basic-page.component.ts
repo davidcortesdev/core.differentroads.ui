@@ -67,14 +67,14 @@ export class BasicPageComponent implements OnInit {
       // Meta descripción optimizada para SEO (70-155 caracteres)
       let fullDescription = description;
       if (description.length < 70) {
-        fullDescription = description + '. Descubre más información sobre nuestros servicios y experiencias de viaje únicas.';
+        fullDescription = description + '. Información detallada sobre nuestros servicios de viaje.';
       } else if (description.length > 155) {
         fullDescription = description.substring(0, 152) + '...';
       }
       this.meta.updateTag({ name: 'description', content: fullDescription });
     } else if (title) {
       // Meta descripción por defecto basada en el título (70-155 caracteres)
-      const defaultDescription = `Descubre ${title} en Different Roads. Información importante sobre nuestros servicios y experiencias de viaje únicas.`;
+      const defaultDescription = `${title} - Información importante sobre nuestros servicios de viaje. Conoce más sobre Different Roads.`;
       this.meta.updateTag({ name: 'description', content: defaultDescription });
     }
   }

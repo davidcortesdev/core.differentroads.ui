@@ -87,13 +87,13 @@ export class BasicPagePreviewComponent implements OnInit {
       this.meta.removeTag("name='description'");
       
       // Añadir la nueva meta descripción optimizada para SEO (70-155 caracteres)
-      const baseDescription = pageData.seoDescription || 'Descubre información importante sobre Different Roads';
+      const baseDescription = pageData.seoDescription || 'Vista previa de página de Different Roads';
       const fullDescription = baseDescription + ' (Vista previa)';
       let shortDescription = fullDescription;
       
       // Asegurar que esté entre 70 y 155 caracteres
       if (fullDescription.length < 70) {
-        shortDescription = fullDescription + '. Información detallada sobre nuestros servicios y experiencias de viaje únicas.';
+        shortDescription = fullDescription + '. Previsualiza el contenido antes de publicar.';
       } else if (fullDescription.length > 155) {
         shortDescription = fullDescription.substring(0, 152) + '...';
       }

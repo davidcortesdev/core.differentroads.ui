@@ -1,6 +1,7 @@
 import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { PersonalInfo } from '../../../../core/models/v2/profile-v2.model';
 import { UpdateProfileV2Service } from '../../../../core/services/v2/update-profile-v2.service';
+import { PersonalInfoV2Service } from '../../../../core/services/v2/personal-info-v2.service';
 
 @Component({
   selector: 'app-update-profile-section-v2',
@@ -18,6 +19,11 @@ export class UpdateProfileSectionV2Component implements OnInit {
   maxFileSize: number = 5000000; // 5MB
   formErrors: { [key: string]: string } = {};
   isFormSubmitted: boolean = false;
+  
+  // Estados de carga y errores
+  isSaving: boolean = false;
+  errorMessage: string = '';
+  successMessage: string = '';
 
 
   sexoOptions = [
@@ -27,7 +33,10 @@ export class UpdateProfileSectionV2Component implements OnInit {
 
   filteredSexoOptions: any[] = [];
 
-  constructor(private updateProfileService: UpdateProfileV2Service) {}
+  constructor(
+    private updateProfileService: UpdateProfileV2Service,
+    private personalInfoService: PersonalInfoV2Service
+  ) {}
 
   ngOnInit() {
     // Generar datos mock si no se proporcionan
@@ -90,7 +99,6 @@ export class UpdateProfileSectionV2Component implements OnInit {
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.previewImageUrl = e.target.result;
-        this.personalInfo.avatarUrl = e.target.result;
       };
       reader.readAsDataURL(file);
     }
@@ -100,93 +108,81 @@ export class UpdateProfileSectionV2Component implements OnInit {
   onTelefonoInput(event: any) {
     const input = event.target as HTMLInputElement;
     input.value = this.updateProfileService.validateTelefonoInput(input.value);
-    this.personalInfo.telefono = input.value;
     this.clearFieldError('telefono');
   }
 
   onDniInput(event: any) {
     const input = event.target as HTMLInputElement;
     input.value = this.updateProfileService.validateDniInput(input.value);
-    this.personalInfo.dni = input.value;
     this.clearFieldError('dni');
   }
 
   onNacionalidadInput(event: any) {
     const input = event.target as HTMLInputElement;
     input.value = this.updateProfileService.validateNacionalidadInput(input.value);
-    this.personalInfo.nacionalidad = input.value;
   }
 
   onPasaporteInput(event: any) {
     const input = event.target as HTMLInputElement;
     input.value = this.updateProfileService.validatePasaporteInput(input.value);
-    this.personalInfo.pasaporte = input.value;
     this.clearFieldError('pasaporte');
   }
 
   onCiudadInput(event: any) {
     const input = event.target as HTMLInputElement;
     input.value = this.updateProfileService.validateCiudadInput(input.value);
-    this.personalInfo.ciudad = input.value;
   }
 
   onCodigoPostalInput(event: any) {
     const input = event.target as HTMLInputElement;
     input.value = this.updateProfileService.validateCodigoPostalInput(input.value);
-    this.personalInfo.codigoPostal = input.value;
     this.clearFieldError('codigoPostal');
   }
 
   onPaisExpedicionInput(event: any) {
     const input = event.target as HTMLInputElement;
     input.value = this.updateProfileService.validatePaisExpedicionInput(input.value);
-    this.personalInfo.paisExpedicion = input.value;
   }
 
   // Métodos para limpiar errores en otros campos
   onNombreInput(event: any) {
     const input = event.target as HTMLInputElement;
-    input.value = this.updateProfileService.validateNombreInput(input.value);
-    // NO actualizar personalInfo.nombre aquí - solo se actualiza al guardar
+    const filteredValue = this.updateProfileService.validateNombreInput(input.value);
+    input.value = filteredValue;
     this.clearFieldError('nombre');
   }
 
   onApellidoInput(event: any) {
     const input = event.target as HTMLInputElement;
-    input.value = this.updateProfileService.validateApellidoInput(input.value);
+    const filteredValue = this.updateProfileService.validateApellidoInput(input.value);
+    input.value = filteredValue;
     this.clearFieldError('apellido');
   }
 
   onEmailInput(event: any) {
-    this.personalInfo.email = event.target.value;
     this.clearFieldError('email');
   }
 
   onFechaNacimientoChange(event: any) {
-    this.personalInfo.fechaNacimiento = event;
     this.clearFieldError('fechaNacimiento');
   }
 
   onFechaExpedicionDniChange(event: any) {
-    this.personalInfo.fechaExpedicionDni = event;
     this.clearFieldError('fechaExpedicionDni');
     this.clearFieldError('fechaCaducidadDni'); // Limpiar también el error de caducidad
   }
 
   onFechaCaducidadDniChange(event: any) {
-    this.personalInfo.fechaCaducidadDni = event;
     this.clearFieldError('fechaCaducidadDni');
     this.clearFieldError('fechaExpedicionDni'); // Limpiar también el error de expedición
   }
 
   onFechaExpedicionPasaporteChange(event: any) {
-    this.personalInfo.fechaExpedicionPasaporte = event;
     this.clearFieldError('fechaExpedicionPasaporte');
     this.clearFieldError('fechaVencimientoPasaporte'); // Limpiar también el error de vencimiento
   }
 
   onFechaVencimientoPasaporteChange(event: any) {
-    this.personalInfo.fechaVencimientoPasaporte = event;
     this.clearFieldError('fechaVencimientoPasaporte');
     this.clearFieldError('fechaExpedicionPasaporte'); // Limpiar también el error de expedición
   }
@@ -194,37 +190,105 @@ export class UpdateProfileSectionV2Component implements OnInit {
   onSubmit() {
     this.isFormSubmitted = true;
     
+    // Capturar todos los valores del formulario
+    const formData = this.captureFormData();
+    
     // Validar formulario antes de enviar
-    if (this.validateForm()) {
-      // Capturar valores actuales de los inputs y actualizar personalInfo
-      const nombreInput = document.querySelector('input[name="nombre"]') as HTMLInputElement;
-      const apellidoInput = document.querySelector('input[name="apellido"]') as HTMLInputElement;
+    if (this.validateForm(formData)) {
+      // Actualizar el modelo principal con los datos capturados
+      this.personalInfo = { ...this.personalInfo, ...formData };
       
-      if (nombreInput) {
-        this.personalInfo.nombre = nombreInput.value.trim();
-      }
-      if (apellidoInput) {
-        this.personalInfo.apellido = apellidoInput.value.trim();
-      }
+      // Asegurar que el userData tenga el ID del usuario
+      const userData = { 
+        ...this.personalInfo,
+        id: this.personalInfo.id || this.userId
+      };
       
-      const userData = this.updateProfileService.prepareDataForAPI(this.personalInfo, this.uploadedFiles);
+      // Actualizar perfil del usuario usando la API real
+      this.isSaving = true;
+      this.errorMessage = '';
+      this.successMessage = '';
       
-      // Actualizar perfil del usuario
-      // this.usersServiceV2.updateUser(this.userId, userData).subscribe({
-      //   next: (response) => {
-      //     // Mostrar mensaje de éxito
-      //     // this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Perfil actualizado correctamente' });
-      //   },
-      //   error: (error) => {
-      //     // Mostrar mensaje de error
-      //     // this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el perfil' });
-      //   }
-      // });
+      this.personalInfoService.saveUserData(userData).subscribe({
+        next: (response) => {
+          this.isSaving = false;
+          this.successMessage = 'Perfil actualizado correctamente';
+          this.isFormSubmitted = false;
+          
+          // Emitir evento para notificar al componente padre
+          this.cancelEdit.emit();
+        },
+        error: (error) => {
+          this.isSaving = false;
+          this.errorMessage = 'Error al actualizar el perfil. Por favor, inténtalo de nuevo.';
+          console.error('Error al actualizar perfil:', error);
+        }
+      });
       
     } else {
       // TODO: Mostrar mensaje de error de validación
       // this.messageService.add({ severity: 'warn', summary: 'Validación', detail: 'Por favor, revisa los campos marcados en rojo' });
     }
+  }
+
+  /**
+   * Captura todos los valores actuales del formulario
+   * @returns Objeto con los datos del formulario
+   */
+  private captureFormData(): Partial<PersonalInfo> {
+    const formData: Partial<PersonalInfo> = {};
+
+    // Función auxiliar para obtener valor de input de texto
+    const getInputValue = (name: string): string => {
+      const input = document.querySelector(`input[name="${name}"]`) as HTMLInputElement;
+      return input ? input.value.trim() : '';
+    };
+
+    // Función auxiliar para obtener valor de dropdown
+    const getDropdownValue = (name: string): string => {
+      const dropdown = document.querySelector(`p-dropdown[name="${name}"]`) as any;
+      if (dropdown) {
+        if (dropdown.selectedOption) {
+          return dropdown.selectedOption.value || '';
+        } else if (dropdown.value) {
+          return dropdown.value || '';
+        }
+      }
+      return '';
+    };
+
+    // Función auxiliar para obtener valor de calendar
+    const getCalendarValue = (name: string): string => {
+      const calendar = document.querySelector(`p-calendar[name="${name}"]`) as any;
+      if (calendar && calendar.value) {
+        return this.updateProfileService.formatDate(calendar.value);
+      }
+      return '';
+    };
+
+    // Capturar valores de inputs de texto
+    formData.nombre = getInputValue('nombre');
+    formData.apellido = getInputValue('apellido');
+    formData.email = getInputValue('email');
+    formData.telefono = getInputValue('telefono');
+    formData.dni = getInputValue('dni');
+    formData.nacionalidad = getInputValue('nacionalidad');
+    formData.pasaporte = getInputValue('pasaporte');
+    formData.ciudad = getInputValue('ciudad');
+    formData.codigoPostal = getInputValue('codigoPostal');
+    formData.paisExpedicion = getInputValue('paisExpedicion');
+
+    // Capturar valores de selects
+    formData.sexo = getDropdownValue('sexo');
+
+    // Capturar valores de fechas
+    formData.fechaNacimiento = getCalendarValue('fechaNacimiento');
+    formData.fechaExpedicionDni = getCalendarValue('fechaExpedicionDni');
+    formData.fechaCaducidadDni = getCalendarValue('fechaCaducidadDni');
+    formData.fechaExpedicionPasaporte = getCalendarValue('fechaExpedicion');
+    formData.fechaVencimientoPasaporte = getCalendarValue('fechaVencimiento');
+
+    return formData;
   }
 
 
@@ -245,8 +309,8 @@ export class UpdateProfileSectionV2Component implements OnInit {
     }
   }
 
-  private validateForm(): boolean {
-    const validation = this.updateProfileService.validateForm(this.personalInfo);
+  private validateForm(formData: Partial<PersonalInfo>): boolean {
+    const validation = this.updateProfileService.validateForm(formData as PersonalInfo);
     this.formErrors = validation.errors;
     return validation.isValid;
   }

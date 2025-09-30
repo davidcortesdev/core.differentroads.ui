@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { BookingItem } from '../../models/v2/profile-v2.model';
+import { BookingItem, PersonalInfo } from '../../models/v2/profile-v2.model';
 import { ReservationResponse } from '../../models/v2/profile-v2.model';
 import { TourV2 } from './tours-v2.service';
 import { OrderV2 } from './orders-v2.service';
 import { ICMSTourResponse } from '../cms/cms-tour.service';
 
 /**
- * Servicio para mapear datos de APIs a BookingItem V2
+ * Servicio para mapear datos de APIs a modelos V2
  * Transforma respuestas de API al formato que necesita el componente
  */
 @Injectable({
@@ -275,5 +275,162 @@ export class DataMappingV2Service {
       'Budget': 'Budget'
     };
     return statusMap[status] || 'pending';
+  }
+
+  // ===== MÉTODOS DE MAPEO PARA DATOS DE USUARIO =====
+
+  /**
+   * Combina los datos del usuario con los campos adicionales
+   * @param user - Datos básicos del usuario
+   * @param userFields - Campos disponibles
+   * @param userFieldValues - Valores de campos del usuario
+   * @returns PersonalInfo combinado
+   */
+  combineUserData(user: any, userFields: any[], userFieldValues: any[]): PersonalInfo {
+    // Crear un mapa de valores de campos para acceso rápido
+    const fieldValueMap = new Map();
+    userFieldValues.forEach(fieldValue => {
+      fieldValueMap.set(fieldValue.fieldId, fieldValue.value);
+    });
+
+    // Crear un mapa de campos para obtener nombres
+    const fieldMap = new Map();
+    userFields.forEach(field => {
+      fieldMap.set(field.id, field.name);
+    });
+
+    // Combinar datos básicos del usuario con campos adicionales
+    const combinedData: PersonalInfo = {
+      id: user.id,
+      nombre: user.nombre || user.firstName || '',
+      apellido: user.apellido || user.lastName || '',
+      email: user.email || '',
+      telefono: user.telefono || user.phone || '',
+      avatarUrl: user.avatarUrl || user.avatar || '',
+      dni: user.dni || '',
+      nacionalidad: user.nacionalidad || user.nationality || '',
+      pasaporte: user.pasaporte || user.passport || '',
+      fechaExpedicionPasaporte: user.fechaExpedicionPasaporte || user.passportIssueDate || '',
+      fechaVencimientoPasaporte: user.fechaVencimientoPasaporte || user.passportExpiryDate || '',
+      sexo: user.sexo || user.gender || '',
+      fechaNacimiento: user.fechaNacimiento || user.birthDate || '',
+      ciudad: user.ciudad || user.city || '',
+      codigoPostal: user.codigoPostal || user.postalCode || '',
+      fechaExpedicionDni: user.fechaExpedicionDni || user.dniIssueDate || '',
+      fechaCaducidadDni: user.fechaCaducidadDni || user.dniExpiryDate || '',
+      paisExpedicion: user.paisExpedicion || user.issueCountry || '',
+    };
+
+    // Agregar campos adicionales desde userFieldValues
+    userFieldValues.forEach(fieldValue => {
+      const fieldName = fieldMap.get(fieldValue.fieldId);
+      if (fieldName && fieldValue.value) {
+        // Mapear nombres de campos a propiedades de PersonalInfo
+        switch (fieldName.toLowerCase()) {
+          case 'dni':
+          case 'document_number':
+            combinedData.dni = fieldValue.value;
+            break;
+          case 'nacionalidad':
+          case 'nationality':
+            combinedData.nacionalidad = fieldValue.value;
+            break;
+          case 'pasaporte':
+          case 'passport':
+            combinedData.pasaporte = fieldValue.value;
+            break;
+          case 'telefono':
+          case 'phone':
+            combinedData.telefono = fieldValue.value;
+            break;
+          case 'ciudad':
+          case 'city':
+            combinedData.ciudad = fieldValue.value;
+            break;
+          case 'codigo_postal':
+          case 'postal_code':
+            combinedData.codigoPostal = fieldValue.value;
+            break;
+          case 'sexo':
+          case 'gender':
+            combinedData.sexo = fieldValue.value;
+            break;
+          case 'fecha_nacimiento':
+          case 'birth_date':
+            combinedData.fechaNacimiento = fieldValue.value;
+            break;
+          case 'fecha_expedicion_dni':
+          case 'dni_issue_date':
+            combinedData.fechaExpedicionDni = fieldValue.value;
+            break;
+          case 'fecha_caducidad_dni':
+          case 'dni_expiry_date':
+            combinedData.fechaCaducidadDni = fieldValue.value;
+            break;
+          case 'fecha_expedicion_pasaporte':
+          case 'passport_issue_date':
+            combinedData.fechaExpedicionPasaporte = fieldValue.value;
+            break;
+          case 'fecha_vencimiento_pasaporte':
+          case 'passport_expiry_date':
+            combinedData.fechaVencimientoPasaporte = fieldValue.value;
+            break;
+          case 'pais_expedicion':
+          case 'issue_country':
+            combinedData.paisExpedicion = fieldValue.value;
+            break;
+        }
+      }
+    });
+
+    return combinedData;
+  }
+
+  /**
+   * Prepara los valores de campos para guardar
+   * @param userId - ID del usuario
+   * @param userData - Datos del usuario
+   * @param userFields - Campos disponibles
+   * @returns Array de valores de campos
+   */
+  prepareFieldValues(userId: string, userData: PersonalInfo, userFields: any[]): any[] {
+    const fieldValues: any[] = [];
+    
+    // Mapear campos de PersonalInfo a userFieldValues
+    const fieldMappings = [
+      { fieldName: 'dni', value: userData.dni },
+      { fieldName: 'nacionalidad', value: userData.nacionalidad },
+      { fieldName: 'pasaporte', value: userData.pasaporte },
+      { fieldName: 'telefono', value: userData.telefono },
+      { fieldName: 'ciudad', value: userData.ciudad },
+      { fieldName: 'codigo_postal', value: userData.codigoPostal },
+      { fieldName: 'sexo', value: userData.sexo },
+      { fieldName: 'fecha_nacimiento', value: userData.fechaNacimiento },
+      { fieldName: 'fecha_expedicion_dni', value: userData.fechaExpedicionDni },
+      { fieldName: 'fecha_caducidad_dni', value: userData.fechaCaducidadDni },
+      { fieldName: 'fecha_expedicion_pasaporte', value: userData.fechaExpedicionPasaporte },
+      { fieldName: 'fecha_vencimiento_pasaporte', value: userData.fechaVencimientoPasaporte },
+      { fieldName: 'pais_expedicion', value: userData.paisExpedicion }
+    ];
+
+    fieldMappings.forEach(mapping => {
+      if (mapping.value) {
+        // Buscar el campo correspondiente
+        const field = userFields.find(f => 
+          f.name.toLowerCase() === mapping.fieldName.toLowerCase() ||
+          f.name.toLowerCase() === mapping.fieldName.replace('_', ' ').toLowerCase()
+        );
+        
+        if (field) {
+          fieldValues.push({
+            userId: userId,
+            fieldId: field.id,
+            value: mapping.value
+          });
+        }
+      }
+    });
+
+    return fieldValues;
   }
 }

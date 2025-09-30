@@ -1,22 +1,28 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { Observable, of, throwError, forkJoin } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { PersonalInfo } from '../../models/v2/profile-v2.model';
 import { environment } from '../../../../environments/environment';
+import { DataMappingV2Service } from './data-mapping-v2.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PersonalInfoV2Service {
   private readonly API_URL = `${environment.usersApiUrl}/User`;
+  private readonly USER_FIELD_API_URL = `${environment.usersApiUrl}/UserField`;
+  private readonly USER_FIELD_VALUE_API_URL = `${environment.usersApiUrl}/UserFieldValue`;
   private readonly httpOptions = {
     headers: new HttpHeaders({
       'Content-Type': 'application/json',
     }),
   };
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+    private dataMappingService: DataMappingV2Service
+  ) { }
 
   /**
    * Formatea una fecha a formato DD/MM/YYYY para mostrar
@@ -108,22 +114,63 @@ export class PersonalInfoV2Service {
   }
 
   /**
-   * Obtiene los datos de un usuario por ID, con fallback a datos mock si falla la API
+   * Obtiene los datos completos de un usuario por ID desde múltiples APIs
    * @param userId - ID del usuario
-   * @returns Observable con los datos del usuario
+   * @returns Observable con los datos combinados del usuario
    */
   getUserData(userId: string): Observable<PersonalInfo> {
     if (!userId) {
       return throwError(() => new Error('ID de usuario requerido'));
     }
 
-    return this.getUserById(userId).pipe(
+    // Hacer llamadas paralelas a las tres APIs
+    return forkJoin({
+      user: this.getUserById(userId),
+      userFields: this.getUserFields(),
+      userFieldValues: this.getUserFieldValues(userId)
+    }).pipe(
+      map(({ user, userFields, userFieldValues }) => {
+        // Combinar los datos del usuario con los campos adicionales
+        return this.dataMappingService.combineUserData(user, userFields, userFieldValues);
+      }),
       catchError((error) => {
-        console.warn('Error al obtener datos del usuario desde la API, usando datos mock:', error);
+        console.warn('Error al obtener datos del usuario desde las APIs, usando datos mock:', error);
         return of(this.generateMockData(userId));
       })
     );
   }
+
+  /**
+   * Obtiene los campos de usuario disponibles
+   * @returns Observable con la lista de campos de usuario
+   */
+  private getUserFields(): Observable<any[]> {
+    return this.http.get<any[]>(this.USER_FIELD_API_URL, this.httpOptions).pipe(
+      catchError((error) => {
+        console.warn('Error al obtener campos de usuario:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Obtiene los valores de campos de usuario para un usuario específico
+   * @param userId - ID del usuario
+   * @returns Observable con los valores de campos del usuario
+   */
+  private getUserFieldValues(userId: string): Observable<any[]> {
+    const params = new HttpParams().set('userId', userId);
+    return this.http.get<any[]>(this.USER_FIELD_VALUE_API_URL, { 
+      params, 
+      ...this.httpOptions 
+    }).pipe(
+      catchError((error) => {
+        console.warn('Error al obtener valores de campos de usuario:', error);
+        return of([]);
+      })
+    );
+  }
+
 
   /**
    * Guarda los datos de un usuario (crear o actualizar según si existe ID)
@@ -132,10 +179,58 @@ export class PersonalInfoV2Service {
    */
   saveUserData(userData: PersonalInfo): Observable<PersonalInfo> {
     if (userData.id) {
+      // Actualizar solo el usuario básico por ahora
       return this.updateUser(userData.id, userData);
     } else {
+      // Crear usuario
       return this.createUser(userData);
     }
+  }
+
+  /**
+   * Guarda los valores de campos de usuario
+   * @param userId - ID del usuario
+   * @param userData - Datos del usuario
+   * @returns Observable con el resultado de la operación
+   */
+  private saveUserFieldValues(userId: string, userData: PersonalInfo): Observable<any> {
+    // Obtener campos disponibles primero
+    return this.getUserFields().pipe(
+      switchMap((userFields) => {
+        // Crear array de valores de campos a guardar
+        const fieldValues = this.dataMappingService.prepareFieldValues(userId, userData, userFields);
+        
+        if (fieldValues.length === 0) {
+          return of([]);
+        }
+
+        // Hacer llamadas paralelas para guardar cada campo
+        const saveObservables = fieldValues.map(fieldValue => 
+          this.saveUserFieldValue(fieldValue)
+        );
+
+        return forkJoin(saveObservables);
+      }),
+      catchError((error) => {
+        console.warn('Error al guardar campos de usuario:', error);
+        return of([]);
+      })
+    );
+  }
+
+
+  /**
+   * Guarda un valor de campo de usuario individual
+   * @param fieldValue - Valor del campo a guardar
+   * @returns Observable con el resultado de la operación
+   */
+  private saveUserFieldValue(fieldValue: any): Observable<any> {
+    return this.http.post<any>(this.USER_FIELD_VALUE_API_URL, fieldValue, this.httpOptions).pipe(
+      catchError((error) => {
+        console.warn(`Error al guardar campo ${fieldValue.fieldId}:`, error);
+        return of(null);
+      })
+    );
   }
 
   /**

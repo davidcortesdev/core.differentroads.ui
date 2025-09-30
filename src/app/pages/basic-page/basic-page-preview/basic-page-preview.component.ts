@@ -86,10 +86,12 @@ export class BasicPagePreviewComponent implements OnInit {
       // Eliminar cualquier meta descripción existente
       this.meta.removeTag("name='description'");
       
-      // Añadir la nueva meta descripción
+      // Añadir la nueva meta descripción limitada a 160 caracteres
+      const fullDescription = pageData.seoDescription + ' (Vista previa)';
+      const shortDescription = fullDescription.length > 160 ? fullDescription.substring(0, 157) + '...' : fullDescription;
       this.meta.addTag({
         name: 'description',
-        content: pageData.seoDescription + ' (Vista previa)'
+        content: shortDescription
       });
     }
   }

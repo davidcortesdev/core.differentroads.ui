@@ -202,13 +202,16 @@ export class TourComponent implements OnInit, OnDestroy {
       // Actualizar título
       this.titleService.setTitle(`${this.tour.name} - Different Roads`);
       // Actualizar meta tags
-      this.metaService.updateTag({ name: 'description', content: this.tour.seo.description || `Descubre ${this.tour.seo.title} con Different Roads` });
+      // Meta descripción limitada a 160 caracteres
+      const description = this.tour.seo.description || `Descubre ${this.tour.seo.title} con Different Roads`;
+      const shortDescription = description.length > 160 ? description.substring(0, 157) + '...' : description;
+      this.metaService.updateTag({ name: 'description', content: shortDescription });
       
       // Añadir meta tags para redes sociales si hay imagen disponible
       if (this.tour.image && this.tour.image[0]?.url) {
         this.metaService.updateTag({ property: 'og:image', content: this.tour.image[0].url });
         this.metaService.updateTag({ property: 'og:title', content: this.tour.name });
-        this.metaService.updateTag({ property: 'og:description', content: this.tour.seo.description || `Descubre ${this.tour.seo.title} con Different Roads` });
+        this.metaService.updateTag({ property: 'og:description', content: shortDescription });
       }
     }
   }

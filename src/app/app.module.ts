@@ -160,7 +160,7 @@ import { GoogleMapsModule } from '@angular/google-maps';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SortByPipe } from './shared/pipes/sort-by.pipe';
 import { InsurancesComponent } from './pages/checkout/components/customize-trip/components/insurances/insurances.component';
-import { Dialog } from 'primeng/dialog';
+import { Dialog, DialogModule } from 'primeng/dialog';
 import { BudgetDialogComponent } from './shared/components/budget-dialog/budget-dialog.component';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { Amplify } from 'aws-amplify';
@@ -184,8 +184,7 @@ import { FlightSearchComponent } from './pages/checkout/components/flights/compo
 import { TravelerItemComponent } from './pages/checkout/components/traveler-item/traveler-item.component';
 import { FlightSectionComponent } from './pages/checkout/components/flight-section/flight-section.component';
 import { LoginModalComponent } from './shared/components/login-modal/login-modal.component';
-/* import { LoginModalComponent } from './pages/checkout/components/flights/components/login-modal/login-modal.component';
- */ import { BookingsComponent } from './pages/bookings/bookings.component';
+import { LoginModalComponent as FlightLoginModalComponent } from './pages/checkout/components/flights/components/login-modal/login-modal.component'; import { BookingsComponent } from './pages/bookings/bookings.component';
 import { BookingActivitiesComponent } from './pages/bookings/booking-activities/booking-activities.component';
 import { BookingCodeSectionComponent } from './pages/bookings/booking-code-section/booking-code-section.component';
 import { BookingDetailsViewComponent } from './pages/bookings/booking-details-view/booking-details-view.component';
@@ -384,6 +383,7 @@ registerLocaleData(localeEs);
     TravelerItemComponent,
     FlightSectionComponent,
     LoginModalComponent,
+    FlightLoginModalComponent,
     BookingsComponent,
     BookingActivitiesComponent,
     BookingCodeSectionComponent,
@@ -554,7 +554,7 @@ registerLocaleData(localeEs);
     GoogleMapsModule,
     MenuModule,
     SkeletonModule,
-    Dialog,
+    DialogModule,
     OverlayPanelModule,
     ToggleSwitchModule,
     PopoverModule,

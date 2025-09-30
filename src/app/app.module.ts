@@ -293,6 +293,7 @@ import { ReviewSectionV2Component } from './pages/profile-v2/components/review-s
 import { UpdateProfileSectionV2Component } from './pages/profile-v2/components/update-profile-section-v2/update-profile-section-v2.component';
 import { NewsLetterSectionV2Component } from './pages/home-v2/components/community-section-v2/components/newsletter-section-v2/newsletter-section-v2.component';
 import { HeaderV2Component } from './layout/header-v2/header-v2.component';
+import { SeoLinksComponent } from './shared/components/seo-links/seo-links.component';
 
 // Services
 import { RetailerService } from './core/services/retailer/retailer.service';
@@ -494,6 +495,7 @@ registerLocaleData(localeEs);
     HeaderV2Component,
     BalanceInfoComponent,
     LoadingSectionComponent,
+    SeoLinksComponent,
   ],
   imports: [
     // Angular Modules

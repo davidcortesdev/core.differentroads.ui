@@ -46,8 +46,8 @@
             <app-selector-traveler
               [departureId]="departureId"
               [reservationId]="reservationId"
-              [availableTravelers]="['Adultos', 'Niños', 'Bebés']"
-              (travelersNumbersChange)="onTravelersNumbersChange($event)"
+              [availableTravelers]="[]"
+              (ageGroupCountsChange)="onAgeGroupCountsChange($event)"
               (saveStatusChange)="onTravelerSelectorSaveStatusChange($event)"
               (saveCompleted)="onTravelerSelectorSaveCompleted($event)"
               #travelerSelector
@@ -90,6 +90,8 @@
                 label="Continuar"
                 icon="pi pi-arrow-right"
                 iconPos="right"
+                [loading]="isStep0Saving"
+                [disabled]="isStep0Saving"
                 (onClick)="nextStepWithValidation(1)"
               ></p-button>
             </div>
@@ -175,6 +177,7 @@
               [reservationId]="reservationId ?? 0"
               [departureDate]="departureDate"
               (navigateToStep)="onNavigateToStep($event)"
+              (pointsDiscountChange)="onPointsDiscountChange($event)"
             >
             </app-payment-management>
           </div>
@@ -248,6 +251,7 @@
         [showFlightSection]="true"
         [currency]="'EUR'"
         [title]="'Resumen del pedido'"
+        [pointsDiscount]="pointsDiscount"
       >
       </app-summary-table>
     </div>

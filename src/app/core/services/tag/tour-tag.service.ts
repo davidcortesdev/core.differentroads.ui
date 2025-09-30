@@ -36,6 +36,29 @@ export interface TourTagFilters {
   displayOrder?: number;
 }
 
+/**
+ * Interfaz para la respuesta de tours por tipo de etiqueta.
+ */
+export interface ToursByTagTypeResponse {
+  id: number;
+  name: string;
+  description?: string;
+  tagTypeId: number;
+  tagTypeName: string;
+  tourCount: number;
+  tours?: TourSummary[];
+}
+
+/**
+ * Interfaz para resumen de tour.
+ */
+export interface TourSummary {
+  id: number;
+  name: string;
+  code?: string;
+  isActive: boolean;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -114,7 +137,23 @@ export class TourTagService {
    * @param typeCode Código de tipo de relación.
    * @returns Lista de relaciones que coinciden con los criterios.
    */
-  getByTourAndType(tourId: number, typeCode: string): Observable<ITourTagResponse[]> {
-    return this.http.get<ITourTagResponse[]>(`${this.API_URL}/bytourandtype/${tourId}/${typeCode}`);
+  getByTourAndType(
+    tourId: number,
+    typeCode: string
+  ): Observable<ITourTagResponse[]> {
+    return this.http.get<ITourTagResponse[]>(
+      `${this.API_URL}/bytourandtype/${tourId}/${typeCode}`
+    );
+  }
+
+  /**
+   * Obtiene todos los tours relacionados con etiquetas de un tipo específico.
+   * @param tagTypeId ID del tipo de etiqueta.
+   * @returns Lista de tours agrupados por etiquetas del tipo especificado.
+   */
+  getToursByTagType(tagTypeId: number): Observable<ToursByTagTypeResponse[]> {
+    return this.http.get<ToursByTagTypeResponse[]>(
+      `${this.API_URL}/tours-by-tagtype/${tagTypeId}`
+    );
   }
 }

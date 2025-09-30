@@ -1,0 +1,122 @@
+<!-- Mensaje informativo 3% según especificaciones -->
+<app-message-points 
+  [totalPrice]="totalPrice">
+</app-message-points>
+
+<!-- Points Redemption Section -->
+<div *ngIf="pointsSummary" class="container">
+  <div class="header-container" (click)="toggleExpansion()">
+    <div class="title-with-icon">
+      <span class="title">Canje de puntos</span>
+      <i class="pi" [ngClass]="isExpanded ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+    </div>
+    <div class="title-underline"></div>
+  </div>
+
+  <div *ngIf="isExpanded" class="points-redemption-content">
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-container">
+      <p-progressSpinner></p-progressSpinner>
+      <p>Cargando información de puntos...</p>
+    </div>
+
+    <!-- Points Balance Info -->
+    <app-balance-info 
+      [isLoading]="isLoading"
+      [pointsSummary]="getBalanceInfoData()">
+    </app-balance-info>
+
+    <!-- Points Redemption Toggle -->
+    <div class="redemption-toggle" *ngIf="!isLoading">
+      <p-checkbox 
+        [ngModel]="pointsRedemption.enabled"
+        (onChange)="onPointsRedemptionChange($event)"
+        [binary]="true"
+        inputId="points-redemption-toggle">
+      </p-checkbox>
+      <label for="points-redemption-toggle" class="toggle-label">
+        Usar puntos para descuento
+      </label>
+    </div>
+
+    <!-- Points Input (only when enabled) -->
+    <div *ngIf="pointsRedemption.enabled && !isLoading" 
+         class="points-input-card">
+      
+      <div class="input-group">
+        <label for="points-input" class="input-label">
+          <strong>Puntos a canjear:</strong> Máximo {{ getMaxAllowedPoints() }} por reserva
+        </label>
+      </div>
+
+      <!-- Points Distribution Section -->
+      <app-travelers-list
+        [travelers]="travelers"
+        [maxAllowedPoints]="getMaxAllowedPoints()"
+        [travelerMaxPoints]="getTravelerMaxPointsData()"
+        [canAssignPoints]="getCanAssignPointsData()"
+        (travelerPointsChange)="onTravelerPointsChange($event)"
+        (distributeEqually)="distributePointsEqually()">
+      </app-travelers-list>
+
+        <!-- Distribution Summary -->
+        <div class="distribution-summary-card">
+          <div class="card-header">
+            <i class="pi pi-chart-bar"></i>
+            <span>Resumen de distribución</span>
+          </div>
+          
+          <div class="summary-grid">
+            <div class="summary-item">
+              <span class="summary-label">Total puntos asignados:</span>
+              <p-tag [value]="getPointsDistributionSummary().totalPoints.toString()" 
+                     [severity]="isTotalExceeded() ? 'danger' : 'info'">
+              </p-tag>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Máximo disponible:</span>
+              <p-tag [value]="getMaxAllowedPoints().toString()" severity="secondary">
+              </p-tag>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Viajeros con puntos:</span>
+              <p-tag [value]="getPointsDistributionSummary().travelersWithPoints.toString()" severity="success">
+              </p-tag>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Puntos al titular:</span>
+              <p-tag [value]="getPointsDistributionSummary().mainTravelerPoints.toString()" severity="warning">
+              </p-tag>
+            </div>
+          </div>
+        </div>
+      </div>
+        <!-- Redemption Summary -->
+        <div *ngIf="pointsRedemption.enabled && pointsRedemption.totalPointsToUse > 0" 
+             class="redemption-summary-card">
+          <div class="summary-header">
+            <i class="pi pi-check-circle"></i>
+            <span>Resumen de canje de puntos</span>
+          </div>
+          
+          <div class="summary-content">
+            <div class="summary-row">
+              <span class="summary-label">Total de puntos a canjear:</span>
+              <p-tag [value]="getRedemptionSummary().totalPoints + ' puntos'" severity="info">
+              </p-tag>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Descuento total:</span>
+              <p-tag [value]="getRedemptionSummary().totalPoints | currency:'EUR':'symbol':'1.2-2'" severity="success">
+              </p-tag>
+            </div>
+            <div class="summary-row" *ngIf="getRedemptionSummary().travelersWithPoints > 1">
+              <span class="summary-label">Distribución entre viajeros:</span>
+              <p-tag [value]="getRedemptionSummary().travelersWithPoints + ' viajeros'" severity="warning">
+              </p-tag>
+            </div>
+          </div>
+        
+    </div>
+  </div>
+</div>

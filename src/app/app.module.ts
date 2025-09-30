@@ -1,4 +1,9 @@
-import { NgModule, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, LOCALE_ID } from '@angular/core';
+import {
+  NgModule,
+  CUSTOM_ELEMENTS_SCHEMA,
+  NO_ERRORS_SCHEMA,
+  LOCALE_ID,
+} from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule } from '@angular/forms';
@@ -71,6 +76,7 @@ import { CardModule } from 'primeng/card';
 import { DatePickerModule } from 'primeng/datepicker';
 import { RippleModule } from 'primeng/ripple';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ProgressBarModule } from 'primeng/progressbar';
 import { DataViewModule } from 'primeng/dataview';
 import { DynamicComponentsComponent } from './pages/home/components/dynamic-components/dynamic-components.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
@@ -247,6 +253,9 @@ import { ActivitiesOptionalsComponent } from './pages/checkout-v2/components/act
 import { InfoTravelersComponent } from './pages/checkout-v2/components/info-travelers/info-travelers.component';
 import { InfoTravelersRoomComponent } from './pages/checkout-v2/components/info-travelers/components/info-travelers-room/info-travelers-room.component';
 import { PaymentManagementComponent } from './pages/checkout-v2/components/payment-management/payment-management.component';
+import { PointsRedemptionComponent } from './pages/checkout-v2/components/points-redemption/points-redemption.component';
+import { TravelersListComponent } from './pages/checkout-v2/components/points-redemption/components/travelers-list/travelers-list.component';
+import { MessagePointsComponent } from './pages/checkout-v2/components/points-redemption/components/message-points/message-points.component';
 import { NewReservationComponent } from './pages/checkout-v2/components/new-reservation/new-reservation.component';
 import { FlightSectionV2Component } from './pages/checkout-v2/components/flight-section/flight-section.component';
 import { FlightStopsComponent } from './pages/checkout-v2/components/flight-management/flight-stops/flight-stops.component';
@@ -270,14 +279,26 @@ import { CommunitySectionV2Component } from './pages/home-v2/components/communit
 import { CommunityGalleryV2Component } from './pages/home-v2/components/community-section-v2/components/community-gallery-v2/community-gallery-v2.component';
 import { CommunityHeroV2Component } from './pages/home-v2/components/community-section-v2/components/community-hero-v2/community-hero-v2.component';
 import { CommunityReviewsV2Component } from './pages/home-v2/components/community-section-v2/components/community-reviews-v2/community-reviews-v2.component';
-import { NewsLetterSectionV2Component } from './pages/home-v2/components/community-section-v2/components/newsletter-section-v2/newsletter-section-v2.component';
 import { HighlightSectionV2Component } from './pages/home-v2/components/highlight-section-v2/highlight-section-v2.component';
 import { ContentListV2Component } from './pages/home-v2/components/content-list-v2/content-list-v2.component';
 import { PartnersSectionV2Component } from './pages/home-v2/components/partners-section-v2/partners-section-v2.component';
 import { PublicitySectionV2Component } from './pages/home-v2/components/publicity-section-v2/publicity-section-v2.component';
+import { ProfileV2Component } from './pages/profile-v2/profile-v2.component';
+import { BookingListSectionV2Component } from './pages/profile-v2/components/booking-list-section-v2/booking-list-section-v2.component';
+import { PersonalInfoSectionV2Component } from './pages/profile-v2/components/personal-info-section-v2/personal-info-section-v2.component';
+import { PointsSectionV2Component } from './pages/profile-v2/components/points-section-v2/points-section-v2.component';
+import { PointsTableComponent } from './pages/profile-v2/components/points-section-v2/components/points-table/points-table.component';
+import { MembershipCardsComponent } from './pages/profile-v2/components/points-section-v2/components/membership-cards/membership-cards.component';
+import { MembershipBenefitsComponent } from './pages/profile-v2/components/points-section-v2/components/membership-benefits/membership-benefits.component';
+import { ReviewSectionV2Component } from './pages/profile-v2/components/review-section-v2/review-section-v2.component';
+import { UpdateProfileSectionV2Component } from './pages/profile-v2/components/update-profile-section-v2/update-profile-section-v2.component';
+import { NewsLetterSectionV2Component } from './pages/home-v2/components/community-section-v2/components/newsletter-section-v2/newsletter-section-v2.component';
+import { HeaderV2Component } from './layout/header-v2/header-v2.component';
 
 // Services
 import { RetailerService } from './core/services/retailer/retailer.service';
+import { BalanceInfoComponent } from './pages/checkout-v2/components/points-redemption/components/balance-info/balance-info.component';
+import { LoadingSectionComponent } from './pages/checkout-v2/components/payment-management/components/loading-section/loading-section.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -374,7 +395,7 @@ registerLocaleData(localeEs);
     BookingPersonalDataComponent,
     BookingUpdateTravelComponent,
     PassengerCardComponent,
-    
+
     // BookingsV2 Components
     Bookingsv2Component,
     BookingActivitiesV2Component,
@@ -388,7 +409,7 @@ registerLocaleData(localeEs);
     BookingUpdateTravelV2Component,
     PassengerCardV2Component,
     BookingDocumentationV2Component,
-    
+
     UploadButtonComponent,
     PaymentsComponent,
     TourInfoAccordionComponent,
@@ -431,6 +452,9 @@ registerLocaleData(localeEs);
     InfoTravelersComponent,
     InfoTravelersRoomComponent,
     PaymentManagementComponent,
+    PointsRedemptionComponent,
+    TravelersListComponent,
+    MessagePointsComponent,
     NewReservationComponent,
     FlightSectionV2Component,
     FlightStopsComponent,
@@ -458,6 +482,18 @@ registerLocaleData(localeEs);
     ContentListV2Component,
     PartnersSectionV2Component,
     PublicitySectionV2Component,
+    ProfileV2Component,
+    BookingListSectionV2Component,
+    PersonalInfoSectionV2Component,
+    PointsSectionV2Component,
+    PointsTableComponent,
+    MembershipCardsComponent,
+    MembershipBenefitsComponent,
+    ReviewSectionV2Component,
+    UpdateProfileSectionV2Component,
+    HeaderV2Component,
+    BalanceInfoComponent,
+    LoadingSectionComponent,
   ],
   imports: [
     // Angular Modules
@@ -487,6 +523,7 @@ registerLocaleData(localeEs);
     FloatLabelModule,
     IftaLabelModule,
     ProgressSpinnerModule,
+    ProgressBarModule,
     DataViewModule,
     BreadcrumbModule,
     DividerModule,

@@ -12,7 +12,6 @@ import { MessageService } from 'primeng/api';
 import { CurrencyService } from '../../../../core/services/currency.service';
 import { FlightSearchService, IPriceChangeInfo } from '../../../../core/services/flight-search.service';
 import { PointsService } from '../../../../core/services/points.service';
-import { PaymentOption } from '../../../../core/models/orders/order.model';
 
 // Simplified interfaces for points redemption
 export interface PointsRedemptionConfig {
@@ -75,13 +74,22 @@ export interface PaymentOption {
 export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
   // Inputs
   @Input() set totalPrice(value: number) {
+    const previousPrice = this._totalPrice;
     this._totalPrice = value;
-    if (value && this.paymentState.type === 'installments') {
-      // Recargar el widget cuando cambie el precio y esté seleccionado installments
+    
+    // Solo reinicializar el widget si el precio cambió y hay un valor válido
+    if (value && value !== previousPrice && this.paymentState.type === 'installments') {
+      console.log(`💰 Precio actualizado: ${previousPrice} → ${value}`);
       setTimeout(() => {
-        this.initializeScalapayWidget();
-      }, 200);
+        this.forceScalapayReload();
+      }, 100);
     }
+  }
+
+  ngAfterViewInit(): void {
+    console.log('🔧 Inicializando componente de pago...');
+    // Primero cargar el script de ScalaPay
+    this.initializeScalapayScript();
   }
   
   get totalPrice(): number {
@@ -426,12 +434,19 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     this.updateDropdownVisibility();
     this.resetRelatedSelections(type);
     
-    // Si se selecciona installments, recargar el widget de Scalapay
+    // Si se selecciona installments, inicializar/recargar el widget de Scalapay
     if (type === 'installments') {
       console.log('💳 Opción de installments seleccionada, inicializando widget...');
+      // Dar tiempo para que el DOM se actualice
       setTimeout(() => {
-        this.forceScalapayReload();
-      }, 100);
+        // Asegurarse de que el script esté cargado
+        if (!this.isScalapayScriptLoaded()) {
+          console.log('📜 Script no cargado, cargando...');
+          this.initializeScalapayScript();
+        }
+        // Inicializar el widget
+        this.initializeScalapayWidget();
+      }, 200);
     }
   }
 
@@ -722,12 +737,34 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
    * Inicializa el widget de Scalapay después de que esté cargado el script
    */
   private initializeScalapayWidget(): void {
+    console.log('🔄 Intentando inicializar widget de Scalapay...');
+    console.log('📊 Estado actual:', {
+      totalPrice: this.totalPrice,
+      paymentType: this.paymentState.type,
+      scriptLoaded: this.isScalapayScriptLoaded(),
+      containerExists: !!document.getElementById('price-container-main'),
+      widgetExists: !!document.querySelector('scalapay-widget')
+    });
+    
     if (!this.totalPrice) {
-      console.log('⏳ Esperando a que el precio esté disponible...');
-      // Intentar de nuevo en 500ms
+      console.log('⏳ Sin precio disponible, reintentando en 500ms...');
       setTimeout(() => {
         this.initializeScalapayWidget();
       }, 500);
+      return;
+    }
+    
+    // Verificar que los elementos DOM estén presentes
+    const container = document.getElementById('price-container-main');
+    const widget = document.querySelector('scalapay-widget');
+    
+    if (!container) {
+      console.error('❌ Contenedor de precio no encontrado!');
+      return;
+    }
+    
+    if (!widget) {
+      console.error('❌ Elemento scalapay-widget no encontrado!');
       return;
     }
     
@@ -737,7 +774,12 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     // Dar tiempo para que el DOM se actualice antes de disparar el evento
     setTimeout(() => {
       this.dispatchScalapayReloadEvent();
-    }, 100);
+      
+      // Verificar si el widget se inicializó correctamente después de un tiempo
+      setTimeout(() => {
+        this.verifyWidgetInitialization();
+      }, 2000);
+    }, 200);
   }
 
   /**
@@ -801,15 +843,50 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     return hasContent;
   }
 
+  /**
+   * Verifica que el widget se haya inicializado correctamente
+   */
+  private verifyWidgetInitialization(): void {
+    const widget = document.querySelector('scalapay-widget');
+    const container = document.getElementById('price-container-main');
+    
+    if (!widget) {
+      console.error('❌ Widget no encontrado después de la inicialización');
+      return;
+    }
+    
+    if (!container) {
+      console.error('❌ Contenedor de precio no encontrado después de la inicialización');
+      return;
+    }
+    
+    const isVisible = this.isScalapayWidgetVisible();
+    console.log('✅ Verificación de inicialización:', {
+      widgetExists: !!widget,
+      containerExists: !!container,
+      containerContent: container.textContent,
+      widgetVisible: isVisible,
+      widgetHTML: widget.innerHTML?.slice(0, 200)
+    });
+    
+    if (!isVisible) {
+      console.warn('⚠️ El widget no parece haberse inicializado correctamente. Reintentando...');
+      setTimeout(() => {
+        this.forceScalapayReload();
+      }, 1000);
+    } else {
+      console.log('🎉 Widget de Scalapay inicializado correctamente!');
+    }
+  }
+
   private async processInstallmentPayment(): Promise<void> {
-    const payments = 3; // Valor por defecto ya que no hay opciones específicas
 
     const baseUrl = (window.location.href).replace(this.router.url, '');
 
     console.log('baseUrl', baseUrl);
 
     //El payment se crea en el backend
-    const response = await this.scalapayService.createOrder(this.reservationId, payments, baseUrl).toPromise();
+    const response = await this.scalapayService.createOrder(this.reservationId, baseUrl).toPromise();
 
     if (response?.checkoutUrl) {
       window.location.href = response.checkoutUrl;

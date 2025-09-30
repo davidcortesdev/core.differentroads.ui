@@ -1,6 +1,5 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { ToursService } from '../../../../core/services/tours.service';
 import {
   TourNetService,
   Tour as TourNetTour,
@@ -23,7 +22,6 @@ import {
   switchMap,
 } from 'rxjs';
 
-import { ProcessedTour } from '../../../../core/models/tours/processed-tour.model';
 import { CAROUSEL_CONFIG } from '../../../../shared/constants/carousel.constants';
 import { TourDataV2 } from '../../../../shared/components/tour-card-v2/tour-card-v2.model';
 
@@ -41,11 +39,7 @@ import {
 import { TourTagService } from '../../../../core/services/tag/tour-tag.service';
 import { TourLocationService } from '../../../../core/services/tour/tour-location.service';
 
-// ✅ NUEVOS SERVICIOS: Para precios, fechas y tags
-import {
-  TourDeparturesPricesService,
-  ITourDeparturesPriceResponse,
-} from '../../../../core/services/tour/tour-departures-prices.service';
+// ✅ NUEVOS SERVICIOS: Para fechas y tags
 import {
   DepartureService,
   IDepartureResponse,
@@ -59,10 +53,6 @@ import {
   ItineraryDayService,
   IItineraryDayResponse,
 } from '../../../../core/services/itinerary/itinerary-day/itinerary-day.service';
-import {
-  TourBasePriceService,
-  TourBasePrice,
-} from '../../../../core/services/tour/tour-base-price.service';
 
 @Component({
   selector: 'app-tour-carrussel-v2',
@@ -115,7 +105,6 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
 
   constructor(
     private readonly router: Router,
-    private readonly toursService: ToursService,
     private readonly tourNetService: TourNetService,
     private readonly cmsTourService: CMSTourService,
     private readonly homeSectionConfigurationService: HomeSectionConfigurationService,
@@ -123,11 +112,9 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
     private readonly tourTagService: TourTagService,
     private readonly tourLocationService: TourLocationService,
     // ✅ NUEVOS SERVICIOS: Para precios, fechas y tags
-    private readonly tourDeparturesPricesService: TourDeparturesPricesService,
     private readonly departureService: DepartureService,
     private readonly itineraryService: ItineraryService,
-    private readonly itineraryDayService: ItineraryDayService,
-    private readonly tourBasePriceService: TourBasePriceService
+    private readonly itineraryDayService: ItineraryDayService
   ) {}
 
   ngOnInit(): void {
@@ -194,18 +181,9 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (filters) => {
-          console.log('⚙️ [Tour Carrussel V2] Configuración cargada:', {
-            title: this.title,
-            description: this.description,
-            showMonthTags: this.showMonthTags,
-            maxToursToShow: this.maxToursToShow,
-          });
-          console.log('🔍 [Tour Carrussel V2] Filtros encontrados:', filters);
-
           if (filters.length > 0) {
             this.loadToursFromFilters(filters);
           } else {
-            console.log('⚠️ [Tour Carrussel V2] No se encontraron filtros');
             this.tours = [];
           }
         },
@@ -278,22 +256,11 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
         if (tourIds.length === 0) {
           this.tours = [];
           this.debugTourIds = [];
-          console.log('🔍 [Tour Carrussel V2] No tours found after filtering');
           return;
         }
 
         // Guardar IDs para mostrar en pantalla
         this.debugTourIds = tourIds;
-
-        // Console log para mostrar tours filtrados y cantidad
-        console.log(
-          '🔍 [Tour Carrussel V2] Tours filtrados encontrados:',
-          tourIds
-        );
-        console.log(
-          '📊 [Tour Carrussel V2] Cantidad total de tours filtrados:',
-          tourIds.length
-        );
 
         // Convertir a strings y cargar los tours
         const tourIdsAsStrings = tourIds.map((id) => id.toString());
@@ -309,21 +276,10 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
   private getTourIdsFromFilter(
     filter: IHomeSectionTourFilterResponse
   ): Observable<number[]> {
-    console.log('🔧 [Tour Carrussel V2] Procesando filtro:', {
-      filterType: filter.filterType,
-      tagId: filter.tagId,
-      locationId: filter.locationId,
-      specificTourIds: filter.specificTourIds,
-    });
-
     switch (filter.filterType) {
       case 'tag':
         return this.tourTagService.getToursByTags([filter.tagId!]).pipe(
           map((tourIds) => {
-            console.log(
-              `🏷️ [Tour Carrussel V2] Tours encontrados por tag ${filter.tagId}:`,
-              tourIds
-            );
             return tourIds;
           }),
           catchError((error) => {
@@ -340,10 +296,6 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
           .getToursByLocations([filter.locationId!])
           .pipe(
             map((tourIds) => {
-              console.log(
-                `📍 [Tour Carrussel V2] Tours encontrados por ubicación ${filter.locationId}:`,
-                tourIds
-              );
               return tourIds;
             }),
             catchError((error) => {
@@ -361,10 +313,6 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
             this.homeSectionTourFilterService.parseSpecificTourIds(
               filter.specificTourIds!
             );
-          console.log(
-            `🎯 [Tour Carrussel V2] Tours específicos parseados:`,
-            tourIds
-          );
           return of(tourIds);
         } catch (error) {
           console.error(
@@ -380,136 +328,8 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
     }
   }
 
-  private loadToursByFilter(filter: IHomeSectionTourFilterResponse): void {
-    switch (filter.filterType) {
-      case 'tag':
-        this.loadToursByTag(filter.tagId!);
-        break;
-      case 'location':
-        this.loadToursByLocation(filter.locationId!);
-        break;
-      case 'specific_tours':
-        this.loadSpecificTours(filter.specificTourIds!);
-        break;
-      default:
-        // Unknown filter type
-        this.tours = [];
-    }
-  }
-
-  private loadToursByTag(tagId: number): void {
-    // Obtener IDs de tours relacionados con la etiqueta
-    this.tourTagService
-      .getToursByTags([tagId])
-      .pipe(
-        takeUntil(this.destroy$),
-        catchError((error) => {
-          // Error loading tours by tag
-          return of([]);
-        })
-      )
-      .subscribe((tourIds: number[]) => {
-        if (tourIds.length === 0) {
-          this.tours = [];
-          return;
-        }
-
-        // Limitar a maxToursToShow y convertir a strings
-        const limitedTourIds = tourIds
-          .slice(0, this.maxToursToShow)
-          .map((id) => id.toString());
-
-        // Cargar los tours usando el método existente
-        this.loadToursFromIds(limitedTourIds);
-      });
-  }
-
-  private loadToursByLocation(locationId: number): void {
-    // Obtener IDs de tours relacionados con la ubicación
-    this.tourLocationService
-      .getToursByLocations([locationId])
-      .pipe(
-        takeUntil(this.destroy$),
-        catchError((error) => {
-          // Error loading tours by location
-          return of([]);
-        })
-      )
-      .subscribe((tourIds: number[]) => {
-        if (tourIds.length === 0) {
-          this.tours = [];
-          return;
-        }
-
-        // Limitar a maxToursToShow y convertir a strings
-        const limitedTourIds = tourIds
-          .slice(0, this.maxToursToShow)
-          .map((id) => id.toString());
-
-        // Cargar los tours usando el método existente
-        this.loadToursFromIds(limitedTourIds);
-      });
-  }
-
-  private loadSpecificTours(specificTourIdsJson: string): void {
-    try {
-      const tourIds =
-        this.homeSectionTourFilterService.parseSpecificTourIds(
-          specificTourIdsJson
-        );
-
-      if (tourIds.length === 0) {
-        this.tours = [];
-        return;
-      }
-
-      // Convertir números a strings si es necesario (según tu API)
-      const tourIdsAsStrings = tourIds.map((id) => id.toString());
-
-      // Usar tu método existente pero adaptado
-      this.loadToursFromIds(tourIdsAsStrings);
-    } catch (error) {
-      // Error parsing specific tour IDs
-      this.tours = [];
-    }
-  }
-
-  // ✅ MÉTODO AUXILIAR: Obtener precios base usando TourBasePriceService
-  private getBasePricesForTour(tourId: number): Observable<TourBasePrice[]> {
-    return this.tourBasePriceService.getByTourId(tourId).pipe(
-      map((prices: TourBasePrice[]) => {
-        return prices;
-      }),
-      catchError((error) => {
-        // Error obteniendo precios base
-        return of([]);
-      })
-    );
-  }
-
-  // ✅ MÉTODO AUXILIAR: Obtener precios para el primer departure (similar a tour-departures-v2)
-  private getPricesForFirstDeparture(
-    tourId: number,
-    departureId: number,
-    itineraryId: number
-  ): Observable<ITourDeparturesPriceResponse[]> {
-    // ✅ CORRECCIÓN: Usar itineraryId en lugar de tourId como activityId
-    const activityId = itineraryId;
-
-    return this.tourDeparturesPricesService.getAll(activityId).pipe(
-      map((prices: ITourDeparturesPriceResponse[]) => {
-        // Filtrar precios solo para el departure específico
-        const departurePrices = prices.filter(
-          (price) => price.departureId === departureId
-        );
-        return departurePrices;
-      })
-    );
-  }
-
-  // ✅ MÉTODO AUXILIAR: Obtener datos adicionales (precios base, fechas, tags, días)
+  // ✅ MÉTODO AUXILIAR: Obtener datos adicionales (fechas, tags, días)
   private getAdditionalTourData(tourId: number): Observable<{
-    basePrices: TourBasePrice[];
     departures: IDepartureResponse[];
     tags: string[];
     itineraryDays: IItineraryDayResponse[];
@@ -526,7 +346,6 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
       switchMap((itineraries: IItineraryResponse[]) => {
         if (itineraries.length === 0) {
           return of({
-            basePrices: [],
             departures: [],
             tags: [],
             itineraryDays: [],
@@ -560,14 +379,6 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                     )
                 : of([]);
 
-            // ✅ OBTENER PRECIOS BASE: Usar TourBasePriceService para obtener precios base
-            const basePriceRequest = this.getBasePricesForTour(tourId).pipe(
-              catchError((error) => {
-                // Error obteniendo precios base
-                return of([]);
-              })
-            );
-
             // Obtener tags del tour
             const tagRequest = this.tourTagService.getAll({ tourId }).pipe(
               map((tourTags) => {
@@ -580,14 +391,9 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
               })
             );
 
-            return forkJoin([
-              basePriceRequest,
-              tagRequest,
-              itineraryDaysRequest,
-            ]).pipe(
-              map(([basePrices, tags, itineraryDays]) => {
+            return forkJoin([tagRequest, itineraryDaysRequest]).pipe(
+              map(([tags, itineraryDays]) => {
                 const result = {
-                  basePrices: basePrices as TourBasePrice[],
                   departures: allDepartures,
                   tags: tags as string[],
                   itineraryDays: itineraryDays as IItineraryDayResponse[],
@@ -602,7 +408,6 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
       catchError((error) => {
         // Error obteniendo datos adicionales
         return of({
-          basePrices: [],
           departures: [],
           tags: [],
           itineraryDays: [],
@@ -638,7 +443,6 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                   tourData: TourNetTour;
                   cmsData: ICMSTourResponse[];
                   additionalData: {
-                    basePrices: TourBasePrice[];
                     departures: IDepartureResponse[];
                     tags: string[];
                     itineraryDays: IItineraryDayResponse[];
@@ -656,24 +460,8 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                   cmsArray && cmsArray.length > 0 ? cmsArray[0] : null;
                 const additional = combinedData.additionalData;
 
-                // ✅ OBTENER PRECIO: Usar TourBasePriceService para obtener precios base
-                let tourPrice = 0;
-
-                if (additional.basePrices && additional.basePrices.length > 0) {
-                  // Buscar precio para adultos (ageGroupId = 1 por defecto, o el primer precio disponible)
-                  const adultPrice =
-                    additional.basePrices.find(
-                      (price: TourBasePrice) => price.ageGroupId === 1
-                    ) || additional.basePrices[0]; // Fallback al primer precio
-
-                  if (adultPrice) {
-                    // Usar campaignPrice si está disponible, sino basePrice
-                    tourPrice =
-                      adultPrice.campaignPrice > 0
-                        ? adultPrice.campaignPrice
-                        : adultPrice.basePrice;
-                  }
-                }
+                // ✅ OBTENER PRECIO: Usar minPrice del TourNetService
+                let tourPrice = tour.minPrice || 0;
 
                 // ✅ OBTENER FECHAS: Extraer fechas de los departures
                 const availableMonths: string[] = [];
@@ -775,25 +563,6 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
       )
       .subscribe((accumulatedTours: TourDataV2[]) => {
         this.tours = accumulatedTours;
-
-        // Console log para mostrar tours finales cargados
-        console.log(
-          '✅ [Tour Carrussel V2] Tours finales cargados:',
-          accumulatedTours
-        );
-        console.log(
-          '📈 [Tour Carrussel V2] Cantidad de tours mostrados:',
-          accumulatedTours.length
-        );
-        console.log(
-          '🎯 [Tour Carrussel V2] Tours mostrados:',
-          accumulatedTours.map((tour) => ({
-            id: tour.externalID,
-            title: tour.title,
-            price: tour.price,
-            tag: tour.tag,
-          }))
-        );
       });
   }
 

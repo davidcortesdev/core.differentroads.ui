@@ -13,12 +13,12 @@ import { PersonalInfoV2Service } from '../../../../core/services/v2/personal-inf
 export class PersonalInfoSectionV2Component implements OnInit {
   @Input() userId: string = '';
   personalInfo!: PersonalInfo;
-  isEditing: boolean = false;
   private originalPersonalInfo!: PersonalInfo; // Para almacenar datos originales
 
   // Estados de carga y errores
   isLoading: boolean = false;
   isSaving: boolean = false;
+  isEditing: boolean = false;
   errorMessage: string = '';
   successMessage: string = '';
 
@@ -36,20 +36,33 @@ export class PersonalInfoSectionV2Component implements OnInit {
   constructor(private personalInfoService: PersonalInfoV2Service) {}
 
   ngOnInit() {
-    // Generar datos mock basados en userId
-    this.generateMockData();
+    this.loadUserData();
   }
   
-  private generateMockData() {
-    this.personalInfo = this.personalInfoService.generateMockData(this.userId);
+  loadUserData() {
+    this.isLoading = true;
+    this.errorMessage = '';
     
-    // Formatear fecha de nacimiento para mostrar
-    if (this.personalInfo.fechaNacimiento) {
-      this.personalInfo.fechaNacimiento = this.personalInfoService.formatDateForDisplay(this.personalInfo.fechaNacimiento);
-    }
+    this.personalInfoService.getUserData(this.userId).subscribe({
+      next: (data) => {
+        this.personalInfo = data;
+        
+        // Formatear fecha de nacimiento para mostrar
+        if (this.personalInfo.fechaNacimiento) {
+          this.personalInfo.fechaNacimiento = this.personalInfoService.formatDateForDisplay(this.personalInfo.fechaNacimiento);
+        }
 
-    // Guardar datos originales para poder restaurarlos
-    this.originalPersonalInfo = { ...this.personalInfo };
+        // Guardar datos originales para poder restaurarlos
+        this.originalPersonalInfo = { ...this.personalInfo };
+        
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error al cargar datos del usuario:', error);
+        this.errorMessage = 'Error al cargar los datos del usuario. Por favor, inténtalo de nuevo.';
+        this.isLoading = false;
+      }
+    });
   }
   
   private formatDate(dateInput: Date | string): string {

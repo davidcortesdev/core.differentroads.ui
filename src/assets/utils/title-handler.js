@@ -20,14 +20,18 @@
       title = 'Registrarse - Different Roads';
     } else if (path === '/forget-password') {
       title = 'Recuperar Contraseña - Different Roads';
-    } else if (path === '/profile') {
+    } else if (path === '/profile' || path.startsWith('/profile-v2/')) {
       title = 'Mi Perfil - Different Roads';
-    } else if (path === '/bookings' || path === '/bookingsv2') {
+    } else if (path.startsWith('/bookings/') || path.startsWith('/bookingsv2/')) {
       title = 'Mis Reservas - Different Roads';
-    } else if (path === '/payments') {
+    } else if (path.startsWith('/payment/')) {
       title = 'Pagos - Different Roads';
     } else if (path === '/aeropuertos') {
       title = 'Búsqueda de Aeropuertos - Different Roads';
+    } else if (path.startsWith('/standalone/')) {
+      title = 'Checkout - Different Roads';
+    } else if (path.startsWith('/preview/pages')) {
+      title = 'Vista Previa - Different Roads';
     } else if (path.startsWith('/tour/') || path.startsWith('/tour-old/')) {
       title = 'Tour - Different Roads';
     } else if (path.startsWith('/pages/')) {
@@ -46,6 +50,8 @@
       title = 'Reserva - Different Roads';
     } else if (path.startsWith('/reviews/')) {
       title = 'Reseñas - Different Roads';
+    } else if (path === '/**' || path.includes('404') || path.includes('not-found')) {
+      title = 'Página No Encontrada - Different Roads';
     }
     
     // Establecer el título

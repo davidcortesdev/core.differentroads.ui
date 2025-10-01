@@ -1,0 +1,71 @@
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  ChangeDetectionStrategy,
+  OnInit,
+} from '@angular/core';
+import { TourDataV2 } from '../tour-card-v2.model';
+
+@Component({
+  selector: 'app-tour-card-content-v2',
+  standalone: false,
+  templateUrl: './tour-card-content-v2.component.html',
+  styleUrls: ['./tour-card-content-v2.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class TourCardContentV2Component implements OnInit {
+  @Input() tourData!: TourDataV2;
+  @Input() showScalapayPrice = false;
+  @Input() isLargeCard = false;
+  @Input() scalapayWidgetId = '';
+  @Output() tourClick = new EventEmitter<void>();
+
+  filteredTripTypes: string[] = [];
+
+  readonly tripTypeMap: Record<string, { label: string; class: string }> = {
+    single: { label: 'S', class: 'trip-type-s' },
+    grupo: { label: 'G', class: 'trip-type-g' },
+    propios: { label: 'P', class: 'trip-type-p' },
+    fit: { label: 'F', class: 'trip-type-f' },
+  };
+
+  ngOnInit(): void {
+    this.updateFilteredTripTypes();
+  }
+
+  private updateFilteredTripTypes(): void {
+    if (!this.tourData.tripType) {
+      this.filteredTripTypes = [];
+      return;
+    }
+
+    this.filteredTripTypes = this.tourData.tripType.filter((type) => {
+      const lowerType = type.toLowerCase();
+      return (
+        lowerType === 'single' ||
+        lowerType === 'grupo' ||
+        lowerType === 'propios'
+      );
+    });
+  }
+
+  getFilteredTripTypes(): string[] {
+    return this.filteredTripTypes;
+  }
+
+  getTripTypeLabel(type: string): string {
+    const lowerType = type.toLowerCase();
+    return this.tripTypeMap[lowerType]?.label || type.charAt(0).toUpperCase();
+  }
+
+  getTripTypeClass(type: string): string {
+    const lowerType = type.toLowerCase();
+    return this.tripTypeMap[lowerType]?.class || '';
+  }
+
+  handleTourClick(): void {
+    this.tourClick.emit();
+  }
+}

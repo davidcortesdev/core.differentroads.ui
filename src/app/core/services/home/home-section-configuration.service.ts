@@ -262,6 +262,14 @@ export class HomeSectionConfigurationService {
   }
 
   /**
+   * Obtiene configuraciones de lista de tours en cuadrícula (típicamente HomeSectionId = 3).
+   * @returns Lista de configuraciones de lista de tours en cuadrícula.
+   */
+  getTourGridConfigurations(): Observable<IHomeSectionConfigurationResponse[]> {
+    return this.getBySectionType(3, true); // HomeSectionId 3 = TOUR_GRID
+  }
+
+  /**
    * Obtiene configuraciones de sección de viajeros (típicamente HomeSectionId = 6).
    * @returns Lista de configuraciones de sección de viajeros.
    */

@@ -1,0 +1,24 @@
+<section class="tours-section">
+  <h2 class="title">{{ title }}</h2>
+  <p-dataView #dv [value]="tours" [layout]="'grid'">
+    <ng-template let-tours #grid>
+      <div class="grid">
+        <div
+          *ngFor="let tour of tours"
+          class="col-12 sm:col-6 lg:col-3"
+        >
+          <app-tour-card-v2 [tourData]="tour"></app-tour-card-v2>
+        </div>
+      </div>
+    </ng-template>
+  </p-dataView>
+
+  <div *ngIf="viewMoreButton" class="tours-sectionMore">
+    <p-button
+      [label]="viewMoreButton.text"
+      styleClass="p-button-rounded main-btn-circle"
+      (onClick)="onViewMore()"
+    >
+    </p-button>
+  </div>
+</section>

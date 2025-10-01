@@ -156,4 +156,20 @@ export class TourTagService {
       `${this.API_URL}/tours-by-tagtype/${tagTypeId}`
     );
   }
+
+  /**
+   * Obtiene todos los IDs de tours relacionados con una o más etiquetas específicas.
+   * @param tagIds Lista de IDs de etiquetas
+   * @returns Lista de IDs de tours
+   */
+  getToursByTags(tagIds: number[]): Observable<number[]> {
+    let params = new HttpParams();
+    
+    // Agregar cada tagId como parámetro de consulta
+    tagIds.forEach(id => {
+      params = params.append('tagIds', id.toString());
+    });
+
+    return this.http.get<number[]>(`${this.API_URL}/tours-by-tags`, { params });
+  }
 }

@@ -1,0 +1,25 @@
+<div class="tour-card" [ngClass]="{ isLarge: isLargeCard }">
+  <p-card
+    [style]="{
+      'border-radius': '1rem',
+      overflow: 'hidden',
+      border: 'none',
+      boxShadow: 'none'
+    }"
+    [styleClass]="'tour-card-wrapper'"
+  >
+    <ng-template pTemplate="header">
+      <app-tour-card-header-v2 [tourData]="tourData" (tourClick)="handleTourClick()"></app-tour-card-header-v2>
+    </ng-template>
+    
+    <ng-template pTemplate="content">
+      <app-tour-card-content-v2 
+        [tourData]="tourData" 
+        [showScalapayPrice]="showScalapayPrice"
+        [isLargeCard]="isLargeCard"
+        [scalapayWidgetId]="scalapayWidgetId"
+        (tourClick)="handleTourClick()">
+      </app-tour-card-content-v2>
+    </ng-template>
+  </p-card>
+</div>

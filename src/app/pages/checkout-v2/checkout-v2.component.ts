@@ -112,6 +112,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   
   // Descuento por puntos
   pointsDiscount: number = 0;
+  
+  // Flag para controlar si ya se disparó el evento view_cart
+  private viewCartEventFired: boolean = false;
 
   // Datos de precios por grupo de edad
   departurePriceSupplements: IDeparturePriceSupplementResponse[] = [];
@@ -569,6 +572,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
         // Ejecutar verificación de precios inmediatamente cuando tengamos los datos básicos
         this.executePriceCheck();
+
+        // Disparar evento view_cart SOLO la primera vez que se visualiza el checkout
+        if (!this.viewCartEventFired && this.activeIndex === 0) {
+          this.trackViewCart();
+          this.viewCartEventFired = true;
+        }
 
         // Si hay un step activo, inicializar el componente correspondiente
         if (this.activeIndex >= 0) {
@@ -3309,6 +3318,45 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     }
 
     console.log('✅ Estado de vuelos limpiado');
+  }
+
+  /**
+   * Disparar evento view_cart cuando se visualiza el checkout paso 1
+   */
+  private trackViewCart(): void {
+    if (!this.reservationData) return;
+
+    const tourData = this.reservationData.tour || {};
+    
+    this.analyticsService.viewCart(
+      'EUR',
+      this.totalAmountCalculated || this.totalAmount || 0,
+      {
+        item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+        item_name: this.tourName || tourData.name || '',
+        coupon: '',
+        discount: 0,
+        index: 0,
+        item_brand: 'Different Roads',
+        item_category: tourData.destination?.continent || '',
+        item_category2: tourData.destination?.country || '',
+        item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+        item_category4: tourData.monthTags?.join(', ') || '',
+        item_category5: tourData.tourType || '',
+        item_list_id: 'checkout',
+        item_list_name: 'Carrito de compra',
+        item_variant: `${tourData.tkId || tourData.id} - ${this.selectedFlight?.name || 'Sin vuelo'}`,
+        price: this.totalAmountCalculated || this.totalAmount || 0,
+        quantity: 1,
+        puntuacion: tourData.rating?.toString() || '',
+        duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+        start_date: this.departureDate || '',
+        end_date: this.returnDate || '',
+        pasajeros_adultos: this.totalPassengers?.toString() || '0',
+        pasajeros_niños: '0'
+      },
+      this.getUserData()
+    );
   }
 
   /**

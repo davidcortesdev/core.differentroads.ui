@@ -18,15 +18,8 @@ import {
   styleUrls: ['./home-v2.component.scss'],
 })
 export class HomeV2Component implements OnInit, OnDestroy {
-  // Configuraciones por tipo de sección
-  bannerConfigurations: IHomeSectionConfigurationResponse[] = [];
-  tourCarouselConfigurations: IHomeSectionConfigurationResponse[] = [];
-  fullscreenCardsConfigurations: IHomeSectionConfigurationResponse[] = [];
-  mixedSectionConfigurations: IHomeSectionConfigurationResponse[] = [];
-  travelerSectionConfigurations: IHomeSectionConfigurationResponse[] = [];
-  reviewsSectionConfigurations: IHomeSectionConfigurationResponse[] = [];
-  featuredSectionConfigurations: IHomeSectionConfigurationResponse[] = [];
-  partnersSectionConfigurations: IHomeSectionConfigurationResponse[] = [];
+  // Configuraciones ordenadas globalmente por displayOrder
+  orderedConfigurations: IHomeSectionConfigurationResponse[] = [];
 
   // Estado de carga
   isLoading = true;
@@ -72,175 +65,42 @@ export class HomeV2Component implements OnInit, OnDestroy {
   private distributeConfigurationsBySection(
     configurations: IHomeSectionConfigurationResponse[]
   ): void {
-    // Agrupar configuraciones por tipo de sección
-    this.bannerConfigurations = configurations.filter(
-      (c) => c.homeSectionId === 1
-    );
-    this.tourCarouselConfigurations = configurations.filter(
-      (c) => c.homeSectionId === 2
-    );
-    this.fullscreenCardsConfigurations = configurations.filter(
-      (c) => c.homeSectionId === 4
-    );
-    this.mixedSectionConfigurations = configurations.filter(
-      (c) => c.homeSectionId === 5
-    );
-    this.travelerSectionConfigurations = configurations.filter(
-      (c) => c.homeSectionId === 6
-    );
-    this.reviewsSectionConfigurations = configurations.filter(
-      (c) => c.homeSectionId === 7
-    );
-    this.featuredSectionConfigurations = configurations.filter(
-      (c) => c.homeSectionId === 8
-    );
-    this.partnersSectionConfigurations = configurations.filter(
-      (c) => c.homeSectionId === 10
+    // Ordenar configuraciones por displayOrder y almacenar globalmente
+    this.orderedConfigurations = configurations.sort(
+      (a, b) => a.displayOrder - b.displayOrder
     );
   }
 
-  // Métodos helper para verificar si las secciones tienen configuraciones
-  hasBannerSection(): boolean {
-    return this.bannerConfigurations.length > 0;
-  }
-
-  hasTourCarouselSection(): boolean {
-    return this.tourCarouselConfigurations.length > 0;
-  }
-
-  hasFullscreenCardsSection(): boolean {
-    return this.fullscreenCardsConfigurations.length > 0;
-  }
-
-  hasMixedSection(): boolean {
-    return this.mixedSectionConfigurations.length > 0;
-  }
-
-  hasTravelerSection(): boolean {
-    return this.travelerSectionConfigurations.length > 0;
-  }
-
-  hasReviewsSection(): boolean {
-    return this.reviewsSectionConfigurations.length > 0;
-  }
-
-  hasFeaturedSection(): boolean {
-    return this.featuredSectionConfigurations.length > 0;
-  }
-
-  hasPartnersSection(): boolean {
-    return this.partnersSectionConfigurations.length > 0;
-  }
-
-  // Métodos para obtener configuraciones específicas por orden
-  getBannerConfiguration(
-    displayOrder: number = 1
-  ): IHomeSectionConfigurationResponse | null {
+  // Método para obtener la configuración del banner (siempre la primera)
+  getBannerConfiguration(): IHomeSectionConfigurationResponse | null {
     return (
-      this.bannerConfigurations.find((c) => c.displayOrder === displayOrder) ||
-      this.bannerConfigurations[0] ||
+      this.orderedConfigurations.find((config) => config.homeSectionId === 1) ||
       null
     );
   }
 
-  getTourCarouselConfiguration(
-    displayOrder: number = 1
-  ): IHomeSectionConfigurationResponse | null {
-    return (
-      this.tourCarouselConfigurations.find(
-        (c) => c.displayOrder === displayOrder
-      ) ||
-      this.tourCarouselConfigurations[0] ||
-      null
+  // Método para obtener configuraciones ordenadas excluyendo el banner
+  getOrderedConfigurationsExcludingBanner(): IHomeSectionConfigurationResponse[] {
+    return this.orderedConfigurations.filter(
+      (config) => config.homeSectionId !== 1
     );
   }
 
-  getFullscreenCardsConfiguration(
-    displayOrder: number = 1
-  ): IHomeSectionConfigurationResponse | null {
-    return (
-      this.fullscreenCardsConfigurations.find(
-        (c) => c.displayOrder === displayOrder
-      ) ||
-      this.fullscreenCardsConfigurations[0] ||
-      null
-    );
-  }
-
-  getMixedSectionConfiguration(
-    displayOrder: number = 1
-  ): IHomeSectionConfigurationResponse | null {
-    return (
-      this.mixedSectionConfigurations.find(
-        (c) => c.displayOrder === displayOrder
-      ) ||
-      this.mixedSectionConfigurations[0] ||
-      null
-    );
-  }
-
-  getTravelerSectionConfiguration(
-    displayOrder: number = 1
-  ): IHomeSectionConfigurationResponse | null {
-    return (
-      this.travelerSectionConfigurations.find(
-        (c) => c.displayOrder === displayOrder
-      ) ||
-      this.travelerSectionConfigurations[0] ||
-      null
-    );
-  }
-
-  getReviewsSectionConfiguration(
-    displayOrder: number = 1
-  ): IHomeSectionConfigurationResponse | null {
-    return (
-      this.reviewsSectionConfigurations.find(
-        (c) => c.displayOrder === displayOrder
-      ) ||
-      this.reviewsSectionConfigurations[0] ||
-      null
-    );
-  }
-
-  getFeaturedSectionConfiguration(
-    displayOrder: number = 1
-  ): IHomeSectionConfigurationResponse | null {
-    return (
-      this.featuredSectionConfigurations.find(
-        (c) => c.displayOrder === displayOrder
-      ) ||
-      this.featuredSectionConfigurations[0] ||
-      null
-    );
-  }
-
-  getPartnersSectionConfiguration(
-    displayOrder: number = 1
-  ): IHomeSectionConfigurationResponse | null {
-    return (
-      this.partnersSectionConfigurations.find(
-        (c) => c.displayOrder === displayOrder
-      ) ||
-      this.partnersSectionConfigurations[0] ||
-      null
-    );
-  }
-
-  // Método para obtener todas las configuraciones ordenadas globalmente
-  getAllConfigurationsOrdered(): IHomeSectionConfigurationResponse[] {
-    const allConfigurations = [
-      ...this.bannerConfigurations,
-      ...this.tourCarouselConfigurations,
-      ...this.fullscreenCardsConfigurations,
-      ...this.mixedSectionConfigurations,
-      ...this.travelerSectionConfigurations,
-      ...this.reviewsSectionConfigurations,
-      ...this.featuredSectionConfigurations,
-      ...this.partnersSectionConfigurations,
-    ];
-
-    return allConfigurations.sort((a, b) => a.displayOrder - b.displayOrder);
+  // Método para determinar qué componente renderizar según el homeSectionId
+  getComponentType(homeSectionId: number): string {
+    const componentMap: { [key: number]: string } = {
+      1: 'banner', // app-hero-section-v2
+      2: 'tour-carousel', // app-tour-carrussel-v2
+      3: 'tour-grid', // app-carousel-section-v2
+      4: 'fullscreen-cards', // app-full-card-section-v2
+      5: 'mixed-section', // app-carousel-section-v2
+      6: 'traveler-section', // app-community-section-v2
+      7: 'reviews-section', // app-reviews-section-v2
+      8: 'featured-section', // app-highlight-section-v2
+      10: 'partners-section', // app-partners-section-v2
+      11: 'publicity-section', // app-publicity-section-v2
+    };
+    return componentMap[homeSectionId] || 'unknown';
   }
 
   // Método para obtener el nombre de la sección por ID
@@ -248,12 +108,14 @@ export class HomeV2Component implements OnInit, OnDestroy {
     const sectionNames: { [key: number]: string } = {
       1: 'Banner',
       2: 'Carrusel de Tours',
+      3: 'Lista de Tours en Cuadrícula',
       4: 'Cards a Pantalla Completa',
       5: 'Sección Mixta',
       6: 'Sección de Viajeros',
       7: 'Sección de Reviews',
       8: 'Sección Destacada',
       10: 'Carrusel de Colaboradores',
+      11: 'Sección de Publicidad',
     };
     return sectionNames[sectionId] || 'Sección desconocida';
   }

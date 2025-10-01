@@ -5,6 +5,7 @@ import {
   ElementRef,
   Renderer2,
 } from '@angular/core';
+import { HEADER_NAVIGATION_LINKS } from '../../shared/constants/seo-links.constants';
 import { MenuItem } from 'primeng/api';
 import { LanguageService } from '../../core/services/language.service';
 import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
@@ -39,6 +40,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private documentClickListener: Function | null = null;
   isLoadingMenu = true;
   isLoadingUser = false;
+  
+  // Enlaces de navegación para SEO
+  headerNavigationLinks = HEADER_NAVIGATION_LINKS;
 
   // Estado para controlar la visibilidad y transiciones
   showUserInfo = false;

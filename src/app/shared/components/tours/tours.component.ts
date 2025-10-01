@@ -250,19 +250,23 @@ export class ToursComponent implements OnInit, OnChanges {
     const items: EcommerceItem[] = tours.map((tour, index) => ({
       item_id: tour.externalID?.toString() || tour.id?.toString() || '',
       item_name: tour.name || '',
+      coupon: '',
+      discount: 0,
       index: index + 1,
       item_brand: 'Different Roads',
       item_category: tour.continent || '',
       item_category2: tour.country || '',
       item_category3: tour.marketingSection?.marketingSeasonTag || '',
-      item_category4: Array.isArray(tour.monthTags) ? tour.monthTags.join(', ') : (tour.monthTags || ''),      
+      item_category4: Array.isArray(tour.monthTags) ? tour.monthTags.join(', ') : (tour.monthTags || ''),
       item_category5: tour.tourType === 'FIT' ? 'Privados' : 'Grupos',
       item_list_id: this.getListId(),
       item_list_name: this.getListName(),
+      item_variant: '',
       price: tour.price || 0,
       quantity: 1,
+      puntuacion: tour.rating?.toString() || '',
       duracion: tour.activePeriods?.[0]?.days 
-        ? `${tour.activePeriods[0].days} días` 
+        ? `${tour.activePeriods[0].days} días, ${tour.activePeriods[0].nights || tour.activePeriods[0].days - 1} noches` 
         : ''
     }));
 

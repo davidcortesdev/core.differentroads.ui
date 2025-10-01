@@ -282,15 +282,22 @@ export class TourV2Component implements OnInit {
       {
         item_id: tourData.tkId?.toString() || tour.id?.toString() || '',
         item_name: tour.name || '',
+        coupon: '',
+        discount: 0,
+        index: 0,
         item_brand: 'Different Roads',
         item_category: tourData.destination?.continent || '',
         item_category2: tourData.destination?.country || '',
         item_category3: tourData.marketingSection?.marketingSeasonTag || '',
         item_category4: tourData.monthTags?.join(', ') || '',
         item_category5: tourData.tourType || '',
+        item_list_id: 'tour_detail',
+        item_list_name: 'Ficha de tour',
+        item_variant: '',
         price: tourData.basePrice || 0,
         quantity: 1,
-        duracion: tourData.days ? `${tourData.days} días` : ''
+        puntuacion: tourData.rating?.toString() || '',
+        duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : ''
       },
       this.getUserData()
     );

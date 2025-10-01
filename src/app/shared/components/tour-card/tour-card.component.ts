@@ -100,10 +100,22 @@ export class TourCardComponent implements OnInit, AfterViewInit {
         {
           item_id: this.tourData.externalID?.toString() || '',
           item_name: this.tourData.title || '',
+          coupon: '',
+          discount: 0,
           index: this.index || 0,
           item_brand: 'Different Roads',
+          item_category: (this.tourData as any).continent || '',
+          item_category2: (this.tourData as any).country || '',
+          item_category3: (this.tourData as any).marketingSeasonTag || '',
+          item_category4: (this.tourData as any).monthTags?.join(', ') || '',
+          item_category5: Array.isArray(this.tourData.tripType) ? this.tourData.tripType.join(', ') : '',
+          item_list_id: this.itemListId,
+          item_list_name: this.itemListName,
+          item_variant: '',
           price: this.tourData.price || 0,
-          quantity: 1
+          quantity: 1,
+          puntuacion: this.tourData.rating?.toString() || '',
+          duracion: (this.tourData as any).days ? `${(this.tourData as any).days} días, ${(this.tourData as any).nights || (this.tourData as any).days - 1} noches` : ''
         },
         this.getUserData()
       );

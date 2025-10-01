@@ -185,7 +185,7 @@ import { FlightSearchComponent } from './pages/checkout/components/flights/compo
 import { TravelerItemComponent } from './pages/checkout/components/traveler-item/traveler-item.component';
 import { FlightSectionComponent } from './pages/checkout/components/flight-section/flight-section.component';
 import { LoginModalComponent } from './shared/components/login-modal/login-modal.component';
-import { LoginModalComponent as FlightLoginModalComponent } from './pages/checkout/components/flights/components/login-modal/login-modal.component'; import { BookingsComponent } from './pages/bookings/bookings.component';
+import { BookingsComponent } from './pages/bookings/bookings.component';
 import { BookingActivitiesComponent } from './pages/bookings/booking-activities/booking-activities.component';
 import { BookingCodeSectionComponent } from './pages/bookings/booking-code-section/booking-code-section.component';
 import { BookingDetailsViewComponent } from './pages/bookings/booking-details-view/booking-details-view.component';
@@ -389,7 +389,7 @@ registerLocaleData(localeEs);
     TravelerItemComponent,
     FlightSectionComponent,
     LoginModalComponent,
-    FlightLoginModalComponent,
+    
     BookingsComponent,
     BookingActivitiesComponent,
     BookingCodeSectionComponent,

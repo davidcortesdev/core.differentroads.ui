@@ -10,7 +10,7 @@ import { filter, Observable, Subject, takeUntil } from 'rxjs';
 import { Press } from '../../core/models/press/press.model';
 import { Collection } from '../../core/models/collections/collection.model';
 import { Landing } from '../../core/models/landings/landing.model';
-import { Title } from '@angular/platform-browser';
+import { Title, Meta } from '@angular/platform-browser';
 
 export interface ITour {
   imageUrl: string;
@@ -78,7 +78,8 @@ export class ContentPageComponent implements OnInit, OnChanges, OnDestroy {
     private blogService: BlogsService,
     private pressService: PressService,
     private sanitizer: DomSanitizer,
-    private titleService: Title
+    private titleService: Title,
+    private meta: Meta
   ) {}
 
   ngOnInit(): void {
@@ -156,6 +157,53 @@ export class ContentPageComponent implements OnInit, OnChanges, OnDestroy {
   private updatePageTitle(title: string): void {
     if (title) {
       this.titleService.setTitle(`${title} - Different Roads`);
+      
+      // Meta descripción optimizada para SEO (70-155 caracteres)
+      const contentType = this.getContentTypeDescription();
+      let description = '';
+      
+      // Crear descripción específica según el tipo de contenido
+      switch (this.contentType) {
+        case 'landing':
+          description = `${title} - Ofertas especiales y promociones exclusivas de viajes. Aprovecha descuentos únicos en Different Roads.`;
+          break;
+        case 'collection':
+          description = `${title} - Colección curada de experiencias de viaje únicas. Descubre destinos increíbles con Different Roads.`;
+          break;
+        case 'press':
+          description = `${title} - Noticias y artículos sobre nuestros viajes y experiencias. Mantente informado con Different Roads.`;
+          break;
+        case 'blog':
+          description = `${title} - Consejos, guías y experiencias de viaje. Aprende de nuestros expertos en Different Roads.`;
+          break;
+        default:
+          description = `${title} - Información importante sobre nuestros servicios de viaje. Conoce más en Different Roads.`;
+      }
+      
+      // Asegurar que esté entre 70 y 155 caracteres
+      let finalDescription = description;
+      if (description.length < 70) {
+        finalDescription = description + ' Explora nuestras opciones de viaje.';
+      } else if (description.length > 155) {
+        finalDescription = description.substring(0, 152) + '...';
+      }
+      
+      this.meta.updateTag({ name: 'description', content: finalDescription });
+    }
+  }
+
+  private getContentTypeDescription(): string {
+    switch (this.contentType) {
+      case 'landing':
+        return 'Ofertas especiales y promociones exclusivas. ';
+      case 'collection':
+        return 'Colección de experiencias de viaje únicas. ';
+      case 'press':
+        return 'Noticias y artículos sobre nuestros viajes. ';
+      case 'blog':
+        return 'Consejos, guías y experiencias de viaje. ';
+      default:
+        return 'Información importante sobre nuestros servicios. ';
     }
   }
 

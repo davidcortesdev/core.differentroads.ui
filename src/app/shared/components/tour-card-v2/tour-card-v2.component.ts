@@ -22,7 +22,6 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
   @Input() showScalapayPrice = false;
 
   monthlyPrice = 0;
-  scalapayWidgetId = '';
   private originalConsoleWarn: any = null;
   constructor(
     private router: Router,
@@ -45,19 +44,16 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
 
     // Pre-calculate monthly price to avoid recalculation in template
     this.monthlyPrice = this.calculateMonthlyPrice();
-    // Generar ID único para el widget de Scalapay
-    this.scalapayWidgetId = `scalapay-widget-${Math.random()
-      .toString(36)
-      .substr(2, 9)}`;
   }
 
   ngAfterViewInit(): void {
+    console.log('🔧 Inicializando componente tour-card-v2...');
     if (this.showScalapayPrice) {
       // Suprimir warnings específicos de Scalapay en la consola
       this.suppressScalapayWarnings();
 
-      // Cargar el script de Scalapay
-      this.loadScalapayScript();
+      // Primero cargar el script de ScalaPay
+      this.initializeScalapayScript();
     }
   }
 
@@ -97,64 +93,151 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
     };
   }
 
-  private loadScalapayScript(): void {
-    // Verificar si el script ya está cargado
-    const scriptExists = !!this.document.querySelector(
-      'script[src*="scalapay-widget-loader.js"]'
-    );
-
-    if (!scriptExists) {
-      console.log('Cargando script de Scalapay...');
-
-      // Crear el script
-      const script = this.document.createElement('script');
-      script.type = 'module';
-      script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js';
-
-      // Manejar los eventos del script
-      script.onload = () => {
-        this.configureScalapayWidget();
-      };
-
-      script.onerror = (error) => {
-        console.error('Error al cargar script de Scalapay:', error);
-      };
-
-      // Añadir el script al head
-      this.document.head.appendChild(script);
-    } else {
-      this.configureScalapayWidget();
-    }
-  }
-
-  private configureScalapayWidget(): void {
-    // Verificar si el objeto Scalapay está disponible en window
-    if (!(window as any).ScalapayWidgetUI) {
-      // Intentar de nuevo después de un tiempo
+  /**
+   * Inicializa el script de Scalapay
+   */
+  private initializeScalapayScript(): void {
+    if (this.isScalapayScriptLoaded()) {
+      console.log('📄 Script de Scalapay ya existe');
+      // Si el script ya existe, inicializar el widget directamente
       setTimeout(() => {
-        this.configureScalapayWidget();
-      }, 500);
-
+        this.initializeScalapayWidget();
+      }, 100);
       return;
     }
 
-    try {
-      // Configurar Scalapay con los datos del producto
+    console.log('🚀 Cargando script de Scalapay...');
+    const script = this.document.createElement('script');
+    script.type = 'module';
+    script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js?version=V5';
+    
+    script.onload = () => {
+      console.log('✅ Script de Scalapay cargado correctamente');
+      // Inicializar el widget después de que se cargue el script
+      setTimeout(() => {
+        this.initializeScalapayWidget();
+      }, 500);
+    };
+    
+    script.onerror = (error) => {
+      console.error('❌ Error al cargar script de Scalapay:', error);
+    };
+    
+    this.document.head.appendChild(script);
+  }
 
-      (window as any).ScalapayWidgetUI.configure({
-        amount: this.tourData.price,
-        currency: 'EUR',
-        numberOfInstallments: 4,
-        locale: 'es',
-        channel: 'travel',
-        environment: 'integration',
-        merchantToken: '8KDS3SPEL',
-      });
+  /**
+   * Verifica si el script de Scalapay ya está cargado
+   */
+  private isScalapayScriptLoaded(): boolean {
+    return !!this.document.querySelector('script[src*="scalapay-widget-loader.js?version=V5"]');
+  }
 
-      // Disparar evento para recargar widgets
-      window.dispatchEvent(new CustomEvent('scalapay-widget-reload'));
-    } catch (error) {
-      console.error('Error al configurar Scalapay:', error);
+  /**
+   * Inicializa el widget de Scalapay después de que esté cargado el script
+   */
+  private initializeScalapayWidget(): void {
+    console.log('🔄 Intentando inicializar widget de Scalapay...');
+    console.log('📊 Estado actual:', {
+      price: this.tourData.price,
+      scriptLoaded: this.isScalapayScriptLoaded()
+    });
+    
+    if (!this.tourData.price) {
+      console.log('⏳ Sin precio disponible, reintentando en 500ms...');
+      setTimeout(() => {
+        this.initializeScalapayWidget();
+      }, 500);
+      return;
     }
+    
+    console.log('🚀 Inicializando widget de Scalapay con precio:', this.tourData.price);
+    
+    // Dar tiempo para que el DOM se actualice antes de disparar el evento
+    setTimeout(() => {
+      this.dispatchScalapayReloadEvent();
+      
+      // Verificar si el widget se inicializó correctamente después de un tiempo
+      setTimeout(() => {
+        this.verifyWidgetInitialization();
+      }, 2000);
+    }, 200);
+  }
+
+  /**
+   * Dispara el evento de recarga de Scalapay
+   */
+  private dispatchScalapayReloadEvent(): void {
+    const event = new CustomEvent('scalapay-widget-reload');
+    window.dispatchEvent(event);
+    console.log('🔄 Evento de recarga de Scalapay enviado');
+  }
+
+  /**
+   * Verifica que el widget se haya inicializado correctamente
+   */
+  private verifyWidgetInitialization(): void {
+    const widget = this.document.querySelector('scalapay-widget');
+    
+    if (!widget) {
+      console.error('❌ Widget no encontrado después de la inicialización');
+      return;
+    }
+    
+    const isVisible = this.isScalapayWidgetVisible();
+    console.log('✅ Verificación de inicialización:', {
+      widgetExists: !!widget,
+      widgetVisible: isVisible,
+      widgetHTML: (widget as HTMLElement).innerHTML?.slice(0, 200)
+    });
+    
+    if (!isVisible) {
+      console.warn('⚠️ El widget no parece haberse inicializado correctamente. Reintentando...');
+      setTimeout(() => {
+        this.forceScalapayReload();
+      }, 1000);
+    } else {
+      console.log('🎉 Widget de Scalapay inicializado correctamente!');
+    }
+  }
+
+  /**
+   * Verifica si el widget de Scalapay está visible
+   */
+  private isScalapayWidgetVisible(): boolean {
+    const widget = this.document.querySelector('scalapay-widget');
+    if (!widget) return false;
+    
+    const hasContent = widget.children.length > 0 || 
+                      (widget.textContent?.trim().length || 0) > 0 || 
+                      ((widget as HTMLElement).innerHTML?.trim().length || 0) > 0;
+    
+    console.log('👁️ Widget visibility check:', {
+      exists: !!widget,
+      hasContent,
+      innerHTML: (widget as HTMLElement).innerHTML?.slice(0, 100)
+    });
+    
+    return hasContent;
+  }
+
+  /**
+   * Fuerza la recarga completa del widget de Scalapay
+   */
+  private forceScalapayReload(): void {
+    console.log('🔄 Forzando recarga completa del widget de Scalapay');
+    
+    // Disparar los eventos necesarios
+    setTimeout(() => {
+      this.dispatchScalapayReloadEvent();
+      
+      // Si no funciona, intentar inicializar de nuevo
+      setTimeout(() => {
+        if (!this.isScalapayWidgetVisible()) {
+          console.log('⚠️ Widget no visible, reintentando...');
+          this.initializeScalapayWidget();
+        }
+      }, 1000);
+    }, 100);
   }
 }

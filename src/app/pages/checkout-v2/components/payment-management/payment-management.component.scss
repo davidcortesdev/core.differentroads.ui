@@ -53,40 +53,29 @@ $azul: var(--background-azul);
   }
 }
 
-  .container {
-    --p-panel-background: var(--background-azul-color-letra);
-    --p-panel-border-radius: 10px;
-    --p-radiobutton-border-color: #{$azul};
-    --p-radiobutton-checked-background: var(--background-azul-color-letra);
-    --p-radiobutton-checked-border-color: #{$azul};
-    --p-radiobutton-icon-checked-color: #{$azul};
+.container {
+  --p-panel-background: var(--background-azul-color-letra);
+  --p-panel-border-radius: 10px;
+  --p-radiobutton-border-color: #{$azul};
+  --p-radiobutton-checked-background: var(--background-azul-color-letra);
+  --p-radiobutton-checked-border-color: #{$azul};
+  --p-radiobutton-icon-checked-color: #{$azul};
 
-    padding: 0;
-    margin-top: -20px;
-    
-    @include mobile { padding: 0 0.5rem; }
-    @include tablet { padding: 0 1rem; }
-    @include desktop { padding: 0; }
+  padding: 0;
+  margin-top: -20px;
+  
+  @include mobile { padding: 0 0.5rem; }
+  @include tablet { padding: 0 1rem; }
+  @include desktop { padding: 0; }
 
-    // Estilos para headers de sección
-    .section-header,
-    .header-container {
-      cursor: pointer;
-      margin: 1rem 0 2.5rem;
+  .header-container {
+    cursor: pointer;
+    margin: 1rem 0 2.5rem;
 
-      @include mobile { margin: 1rem 0 2rem; }
-      @include tablet { margin: 1.25rem 0 2.25rem; }
-      @include desktop { margin: 1rem 0 2.5rem; }
-    }
-
-    // Estilos para wrappers de paneles
-    .payment-panel-wrapper {
-      margin-bottom: 0.75rem;
-      
-      @include mobile { margin-bottom: 1rem; }
-      @include tablet { margin-bottom: 0.875rem; }
-      @include desktop { margin-bottom: 0.75rem; }
-    }
+    @include mobile { margin: 1rem 0 2rem; }
+    @include tablet { margin: 1.25rem 0 2.25rem; }
+    @include desktop { margin: 1rem 0 2.5rem; }
+  }
 
   .title-with-icon {
     display: flex;
@@ -145,6 +134,7 @@ $azul: var(--background-azul);
   ::ng-deep .payment-panel {
     font-weight: 500;
     margin-bottom: 0.75rem;
+    padding-top: 1.125rem;
     
     @include mobile {
       margin-bottom: 1rem;
@@ -221,42 +211,22 @@ $azul: var(--background-azul);
       @include mobile { height: 20px; }
     }
 
-    // Estilos específicos para el panel de información de vuelos
-    .info-content {
-      align-items: flex-start;
-      gap: 0.75rem;
+    .scalapay-inline-logo {
+      height: 20px;
+      vertical-align: middle;
+      margin-left: 4px;
+      display: inline-block;
       
-      .pi-info-circle {
-        margin-top: 0.125rem;
-        font-size: 1.1rem;
-        color: #007acc;
-        flex-shrink: 0;
+      @include mobile {
+        height: 16px;
       }
-
-      .info-text {
-        flex-grow: 1;
-        font-weight: 300;
-        line-height: 1.4;
-
-        strong {
-          font-weight: 500;
-          display: block;
-          margin-bottom: 0.5rem;
-        }
-
-        ul {
-          margin: 0;
-          padding-left: 1.25rem;
-          
-          li {
-            margin-bottom: 0.25rem;
-            font-size: 0.9rem;
-            
-            &:last-child {
-              margin-bottom: 0;
-            }
-          }
-        }
+      
+      @include tablet {
+        height: 18px;
+      }
+      
+      @include desktop {
+        height: 20px;
       }
     }
   }

@@ -117,6 +117,22 @@ export class TourLocationService {
     );
   }
 
+  /**
+   * Obtiene todos los IDs de tours relacionados con una o más ubicaciones específicas.
+   * @param locationIds Lista de IDs de ubicaciones (países, continentes, etc.)
+   * @returns Lista de IDs de tours
+   */
+  getToursByLocations(locationIds: number[]): Observable<number[]> {
+    let params = new HttpParams();
+    
+    // Agregar cada locationId como parámetro de consulta
+    locationIds.forEach(id => {
+      params = params.append('locationIds', id.toString());
+    });
+
+    return this.http.get<number[]>(`${this.API_URL}/tours-by-locations`, { params });
+  }
+
   create(data: TourLocationCreate): Observable<ITourLocationResponse> {
     return this.http.post<ITourLocationResponse>(this.API_URL, data, {
       headers: new HttpHeaders({ 'Content-Type': 'application/json' }),

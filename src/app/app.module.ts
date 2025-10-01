@@ -117,6 +117,7 @@ import { AccordionModule } from 'primeng/accordion';
 import { ChipModule } from 'primeng/chip';
 import { TagModule } from 'primeng/tag';
 import { SecondFooterSectionComponent } from './layout/footer/components/second-footer-section/second-footer-section.component';
+import { Footer2Component } from './layout/footer/components/footer2/footer2.component';
 import { TimelineModule } from 'primeng/timeline';
 import { BadgeModule } from 'primeng/badge';
 import { OverlayBadgeModule } from 'primeng/overlaybadge';
@@ -360,6 +361,7 @@ registerLocaleData(localeEs);
     ReviewSectionComponent,
     ReviewsComponent,
     SecondFooterSectionComponent,
+    Footer2Component,
     BasicPageComponent,
     TitleAndQuillComponent,
     CheckoutComponent,
@@ -389,7 +391,7 @@ registerLocaleData(localeEs);
     TravelerItemComponent,
     FlightSectionComponent,
     LoginModalComponent,
-    
+
     BookingsComponent,
     BookingActivitiesComponent,
     BookingCodeSectionComponent,

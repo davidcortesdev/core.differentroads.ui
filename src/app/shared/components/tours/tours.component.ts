@@ -2,6 +2,8 @@ import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Outpu
 import { catchError } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { ToursService } from '../../../core/services/tours.service';
+import { AnalyticsService, EcommerceItem } from '../../../core/services/analytics.service';
+import { AuthenticateService } from '../../../core/services/auth-service.service';
 
 interface ITour {
   imageUrl: string;
@@ -73,7 +75,9 @@ export class ToursComponent implements OnInit, OnChanges {
 
   constructor(
     private readonly toursService: ToursService,
-    private readonly route: ActivatedRoute
+    private readonly route: ActivatedRoute,
+    private readonly analyticsService: AnalyticsService,
+    private readonly authService: AuthenticateService
   ) {}
 
   ngOnInit() {
@@ -199,6 +203,11 @@ export class ToursComponent implements OnInit, OnChanges {
           };
         });
 
+        // Disparar evento de analytics view_item_list
+        if (tours.data && tours.data.length > 0) {
+          this.trackViewItemList(tours.data);
+        }
+
         // Emit tours to parent component
         this.toursLoaded.emit(this.displayedTours);
       });
@@ -210,26 +219,139 @@ export class ToursComponent implements OnInit, OnChanges {
   }
 
   onTagFilterChange() {
+    this.trackFilter();
     this.loadTours();
   }
 
   onPriceFilterChange() {
+    this.trackFilter();
     this.loadTours();
   }
 
   onSeasonFilterChange() {
+    this.trackFilter();
     this.loadTours();
   }
 
   onMonthFilterChange() {
+    this.trackFilter();
     this.loadTours();
   }
 
   onOrderChange() {
+    this.trackFilterOrder();
     this.loadTours();
   }
 
   toggleLayout() {
     this.layout = this.layout === 'grid' ? 'list' : 'grid';
+  }
+
+  /**
+   * Disparar evento view_item_list cuando se cargan tours
+   */
+  private trackViewItemList(tours: any[]): void {
+    const items: EcommerceItem[] = tours.map((tour, index) => ({
+      item_id: tour.externalID?.toString() || tour.id?.toString() || '',
+      item_name: tour.name || '',
+      index: index + 1,
+      item_brand: 'Different Roads',
+      item_category: tour.continent || '',
+      item_category2: tour.country || '',
+      item_category3: tour.marketingSection?.marketingSeasonTag || '',
+      item_category4: tour.monthTags?.join(', ') || '',
+      item_category5: tour.tourType === 'FIT' ? 'Privados' : 'Grupos',
+      item_list_id: this.getListId(),
+      item_list_name: this.getListName(),
+      price: tour.price || 0,
+      quantity: 1,
+      duracion: tour.activePeriods?.[0]?.days 
+        ? `${tour.activePeriods[0].days} días` 
+        : ''
+    }));
+
+    this.analyticsService.viewItemList(
+      this.getListId(),
+      this.getListName(),
+      items,
+      this.getUserData()
+    );
+  }
+
+  /**
+   * Disparar evento filter cuando se aplican filtros
+   */
+  private trackFilter(): void {
+    this.analyticsService.filter(
+      {
+        filter_categoria: this.selectedTagOption.join(', ') || undefined,
+        filter_temporada: this.selectedSeasonOption.join(', ') || undefined,
+        filter_mes: this.selectedMonthOption.join(', ') || undefined,
+        filter_precio: this.selectedPriceOption.join(', ') || undefined
+      },
+      this.getUserData()
+    );
+  }
+
+  /**
+   * Disparar evento filter_order cuando se cambia el orden
+   */
+  private trackFilterOrder(): void {
+    const selectedOption = this.orderOptions.find(
+      opt => opt.value === this.selectedOrderOption
+    );
+    
+    if (selectedOption) {
+      this.analyticsService.filterOrder(
+        selectedOption.name,
+        this.getUserData()
+      );
+    }
+  }
+
+  /**
+   * Obtener ID de lista para analytics
+   */
+  private getListId(): string {
+    if (this.destination) {
+      return `destination_${this.destination.toLowerCase().replace(/\s+/g, '_')}`;
+    }
+    if (this.isOffersCollection) {
+      return 'ofertas';
+    }
+    if (this.selectedTagOption.length > 0) {
+      return `tags_${this.selectedTagOption[0].toLowerCase().replace(/\s+/g, '_')}`;
+    }
+    return 'todos_los_tours';
+  }
+
+  /**
+   * Obtener nombre de lista para analytics
+   */
+  private getListName(): string {
+    if (this.destination) {
+      return `Tours en ${this.destination}`;
+    }
+    if (this.isOffersCollection) {
+      return 'Ofertas especiales';
+    }
+    if (this.selectedTagOption.length > 0) {
+      return `Tours ${this.selectedTagOption[0]}`;
+    }
+    return 'Todos los tours';
+  }
+
+  /**
+   * Obtener datos del usuario actual si está logueado
+   */
+  private getUserData() {
+    if (this.authService.isAuthenticatedValue()) {
+      return this.analyticsService.getUserData(
+        this.authService.getUserEmailValue(),
+        undefined,
+        this.authService.getCognitoIdValue()
+      );
+    }
+    return undefined;
   }
 }

@@ -214,10 +214,6 @@ export class ToursComponent implements OnInit, OnChanges {
   }
 
   // Filter change methods
-  onFilterChange() {
-    this.loadTours();
-  }
-
   onTagFilterChange() {
     this.trackFilter();
     this.loadTours();
@@ -259,7 +255,7 @@ export class ToursComponent implements OnInit, OnChanges {
       item_category: tour.continent || '',
       item_category2: tour.country || '',
       item_category3: tour.marketingSection?.marketingSeasonTag || '',
-      item_category4: tour.monthTags?.join(', ') || '',
+      item_category4: Array.isArray(tour.monthTags) ? tour.monthTags.join(', ') : (tour.monthTags || ''),      
       item_category5: tour.tourType === 'FIT' ? 'Privados' : 'Grupos',
       item_list_id: this.getListId(),
       item_list_name: this.getListName(),

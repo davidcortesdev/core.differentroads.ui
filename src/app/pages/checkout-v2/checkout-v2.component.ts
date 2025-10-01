@@ -3340,6 +3340,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
+   * Maneja el evento de pago completado
+   * @param paymentOption Opción de pago seleccionada
+   */
+  public onPaymentCompleted(paymentOption: any): void {
+    this.trackAddPaymentInfo(paymentOption);
+  }
+
+  /**
    * ✅ NUEVO: Limpia el estado relacionado con la selección de vuelos
    */
   private clearFlightSelectionState(): void {
@@ -3580,6 +3588,72 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         currency: 'EUR',
         value: this.totalAmountCalculated || this.totalAmount || 0,
         coupon: this.reservationData.coupon?.code || '',
+        items: [{
+          item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+          item_name: this.tourName || tourData.name || '',
+          coupon: '',
+          discount: 0,
+          index: 0,
+          item_brand: 'Different Roads',
+          item_category: tourData.destination?.continent || '',
+          item_category2: tourData.destination?.country || '',
+          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+          item_category4: tourData.monthTags?.join(', ') || '',
+          item_category5: tourData.tourType || '',
+          item_list_id: 'checkout',
+          item_list_name: 'Carrito de compra',
+          item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
+          price: this.totalAmountCalculated || this.totalAmount || 0,
+          quantity: 1,
+          puntuacion: tourData.rating?.toString() || '',
+          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+          start_date: this.departureDate || '',
+          end_date: this.returnDate || '',
+          pasajeros_adultos: this.totalPassengers?.toString() || '0',
+          pasajeros_niños: '0',
+          actividades: activitiesText,
+          seguros: selectedInsurance,
+          vuelo: flightCity
+        }]
+      },
+      this.getUserData()
+    );
+  }
+
+  /**
+   * Disparar evento add_payment_info cuando el usuario selecciona método de pago
+   */
+  private trackAddPaymentInfo(paymentOption?: any): void {
+    if (!this.reservationData) return;
+
+    const tourData = this.reservationData.tour || {};
+    
+    // Obtener actividades seleccionadas
+    const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
+      ? this.selectedActivities.map(a => a.description || a.name).join(', ')
+      : '';
+    
+    // Obtener seguro seleccionado
+    const selectedInsurance = this.reservationData.insurance?.name || '';
+    
+    // Obtener ciudad de vuelo seleccionado
+    const flightCity = this.selectedFlight?.name || 'Sin vuelo';
+    
+    // Obtener método de pago seleccionado
+    let paymentType = 'completo, transferencia'; // Valor por defecto
+    
+    if (paymentOption) {
+      const method = paymentOption.method === 'creditCard' ? 'tarjeta' : 'transferencia';
+      const type = paymentOption.type === 'deposit' ? 'depósito' : 'completo';
+      paymentType = `${type}, ${method}`;
+    }
+    
+    this.analyticsService.addPaymentInfo(
+      {
+        currency: 'EUR',
+        value: this.totalAmountCalculated || this.totalAmount || 0,
+        coupon: this.reservationData.coupon?.code || '',
+        payment_type: paymentType,
         items: [{
           item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
           item_name: this.tourName || tourData.name || '',

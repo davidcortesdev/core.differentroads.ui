@@ -87,12 +87,15 @@
       <ng-template let-tours #grid>
         <div class="grid">
           <div
-            *ngFor="let tour of displayedTours"
+            *ngFor="let tour of displayedTours; let i = index"
             class="col-12 sm:col-6 lg:col-3"
           >
             <app-tour-card
               [tourData]="tour"
               [showScalapayPrice]="true"
+              [itemListId]="getListId()"
+              [itemListName]="getListName()"
+              [index]="i + 1"
             ></app-tour-card>
           </div>
         </div>

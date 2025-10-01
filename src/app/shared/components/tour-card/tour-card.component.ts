@@ -1,6 +1,8 @@
 import { Component, Input, ChangeDetectionStrategy, OnInit, AfterViewInit, Inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { DOCUMENT } from '@angular/common';
+import { AnalyticsService } from '../../../core/services/analytics.service';
+import { AuthenticateService } from '../../../core/services/auth-service.service';
 
 interface TourData {
   imageUrl: string;
@@ -40,13 +42,18 @@ export class TourCardComponent implements OnInit, AfterViewInit {
   @Input() tourData!: TourData;
   @Input() isLargeCard = false;
   @Input() showScalapayPrice = false;
+  @Input() itemListId?: string;
+  @Input() itemListName?: string;
+  @Input() index?: number;
 
   monthlyPrice = 0;
   scalapayWidgetId = '';
   private originalConsoleWarn: any = null;
   constructor(
     private router: Router,
-    @Inject(DOCUMENT) private document: Document
+    @Inject(DOCUMENT) private document: Document,
+    private analyticsService: AnalyticsService,
+    private authService: AuthenticateService
   ) {}
 
   ngOnInit(): void {
@@ -85,7 +92,38 @@ export class TourCardComponent implements OnInit, AfterViewInit {
   }
 
   handleTourClick(): void {
+    // Disparar evento select_item si tenemos información de la lista
+    if (this.itemListId && this.itemListName) {
+      this.analyticsService.selectItem(
+        this.itemListId,
+        this.itemListName,
+        {
+          item_id: this.tourData.externalID?.toString() || '',
+          item_name: this.tourData.title || '',
+          index: this.index || 0,
+          item_brand: 'Different Roads',
+          price: this.tourData.price || 0,
+          quantity: 1
+        },
+        this.getUserData()
+      );
+    }
+    
     this.router.navigate(['/tour', this.tourData.webSlug]);
+  }
+
+  /**
+   * Obtener datos del usuario actual si está logueado
+   */
+  private getUserData() {
+    if (this.authService.isAuthenticatedValue()) {
+      return this.analyticsService.getUserData(
+        this.authService.getUserEmailValue(),
+        undefined,
+        this.authService.getCognitoIdValue()
+      );
+    }
+    return undefined;
   }
 
   private calculateMonthlyPrice(): number {

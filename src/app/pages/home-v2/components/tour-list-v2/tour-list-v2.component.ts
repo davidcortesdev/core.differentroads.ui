@@ -8,7 +8,6 @@ import {
   CMSTourService,
   ICMSTourResponse,
 } from '../../../../core/services/cms/cms-tour.service';
-import { Tour } from '../../../../core/models/tours/tour.model';
 import {
   catchError,
   Observable,
@@ -21,8 +20,6 @@ import {
   forkJoin,
   switchMap,
 } from 'rxjs';
-
-import { CAROUSEL_CONFIG } from '../../../../shared/constants/carousel.constants';
 import { TourDataV2 } from '../../../../shared/components/tour-card-v2/tour-card-v2.model';
 
 // Importar los servicios de configuración del home
@@ -55,14 +52,15 @@ import {
 } from '../../../../core/services/itinerary/itinerary-day/itinerary-day.service';
 
 @Component({
-  selector: 'app-tour-carrussel-v2',
+  selector: 'app-tour-list-v2',
   standalone: false,
-  templateUrl: './tour-carrussel-v2.component.html',
-  styleUrls: ['./tour-carrussel-v2.component.scss'],
+  templateUrl: './tour-list-v2.component.html',
+  styleUrls: ['./tour-list-v2.component.scss'],
 })
-export class TourCarrusselV2Component implements OnInit, OnDestroy {
+export class TourListV2Component implements OnInit, OnDestroy {
   @Input() configurationId?: number; // ID de la configuración específica (opcional)
   @Input() sectionDisplayOrder?: number; // Orden de visualización de la sección (opcional)
+  @Input() sectionType?: number; // Tipo de sección (3 = TOUR_GRID, 5 = MIXED_SECTION)
 
   tours: TourDataV2[] = [];
   title: string = '';
@@ -74,34 +72,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
     url: string;
   };
 
-  // Debug: IDs de tours para mostrar en pantalla
-  debugTourIds: number[] = [];
-
   private destroy$ = new Subject<void>();
-  protected carouselConfig = CAROUSEL_CONFIG;
-
-  responsiveOptions = [
-    {
-      breakpoint: '2100px',
-      numVisible: 4,
-      numScroll: 1,
-    },
-    {
-      breakpoint: '1700px',
-      numVisible: 3,
-      numScroll: 1,
-    },
-    {
-      breakpoint: '1024px',
-      numVisible: 2,
-      numScroll: 1,
-    },
-    {
-      breakpoint: '560px',
-      numVisible: 1,
-      numScroll: 1,
-    },
-  ];
 
   constructor(
     private readonly router: Router,
@@ -111,14 +82,14 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
     private readonly homeSectionTourFilterService: HomeSectionTourFilterService,
     private readonly tourTagService: TourTagService,
     private readonly tourLocationService: TourLocationService,
-    // ✅ NUEVOS SERVICIOS: Para precios, fechas y tags
+    // ✅ NUEVOS SERVICIOS: Para fechas y tags
     private readonly departureService: DepartureService,
     private readonly itineraryService: ItineraryService,
     private readonly itineraryDayService: ItineraryDayService
   ) {}
 
   ngOnInit(): void {
-    this.loadTourCarousel();
+    this.loadTourList();
   }
 
   ngOnDestroy(): void {
@@ -126,37 +97,67 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private loadTourCarousel(): void {
+  private loadTourList(): void {
     // Si se proporciona un configurationId específico, úsalo
     if (this.configurationId) {
       this.loadSpecificConfiguration(this.configurationId);
       return;
     }
 
-    // Si no, cargar la primera configuración activa del carrusel de tours
-    this.homeSectionConfigurationService
-      .getTourCarouselConfigurations()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (configurations) => {
-          if (configurations.length > 0) {
-            // Si se especifica un orden de visualización, buscar esa configuración
-            let targetConfig = configurations[0];
-            if (this.sectionDisplayOrder !== undefined) {
-              const foundConfig = configurations.find(
-                (c) => c.displayOrder === this.sectionDisplayOrder
+    // Determinar el tipo de sección a cargar
+    const sectionType = this.sectionType || 3; // Por defecto TOUR_GRID (ID: 3)
+
+    // Cargar configuraciones según el tipo de sección
+    let configObservable;
+    if (sectionType === 3) {
+      configObservable =
+        this.homeSectionConfigurationService.getTourGridConfigurations();
+    } else {
+      configObservable = this.homeSectionConfigurationService.getBySectionType(
+        sectionType,
+        true
+      );
+    }
+
+    configObservable.pipe(takeUntil(this.destroy$)).subscribe({
+      next: (configurations) => {
+        if (configurations.length > 0) {
+          // Si se especifica un orden de visualización, buscar esa configuración
+          let targetConfig = configurations[0];
+
+          if (this.sectionDisplayOrder !== undefined) {
+            const foundConfig = configurations.find(
+              (c) => c.displayOrder === this.sectionDisplayOrder
+            );
+            if (foundConfig) {
+              targetConfig = foundConfig;
+            } else {
+              console.warn(
+                '⚠️ No se encontró configuración con displayOrder:',
+                this.sectionDisplayOrder
               );
-              if (foundConfig) {
-                targetConfig = foundConfig;
-              }
             }
-            this.loadSpecificConfiguration(targetConfig.id);
           }
-        },
-        error: (error) => {
-          // Error loading tour carousel configurations
-        },
-      });
+
+          this.loadSpecificConfiguration(targetConfig.id);
+        } else {
+          console.warn(
+            '⚠️ TourListV2 - No configurations found for sectionType:',
+            sectionType
+          );
+          console.warn(
+            '⚠️ Esto puede indicar que no hay configuraciones activas para esta sección'
+          );
+        }
+      },
+      error: (error) => {
+        console.error(
+          '❌ Error loading TOUR_GRID configurations (ID: 3):',
+          error
+        );
+        console.error('❌ Error completo:', error);
+      },
+    });
   }
 
   private loadSpecificConfiguration(configId: number): void {
@@ -184,14 +185,16 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
           if (filters.length > 0) {
             this.loadToursFromFilters(filters);
           } else {
+            console.warn(
+              '⚠️ No se encontraron filtros para la configuración ID:',
+              configId
+            );
             this.tours = [];
           }
         },
         error: (error) => {
-          console.error(
-            '❌ [Tour Carrussel V2] Error loading configuration or filters:',
-            error
-          );
+          console.error('❌ Error loading configuration or filters:', error);
+          console.error('❌ Error completo:', error);
           this.tours = [];
         },
       });
@@ -201,12 +204,14 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
     filters: IHomeSectionTourFilterResponse[]
   ): void {
     if (filters.length === 0) {
+      console.warn('⚠️ No hay filtros para procesar');
       this.tours = [];
       return;
     }
 
     // Configurar el botón "Ver más" del primer filtro
     const primaryFilter = filters[0];
+
     if (primaryFilter.viewMoreButtonText && primaryFilter.viewMoreButtonUrl) {
       this.viewMoreButton = {
         text: primaryFilter.viewMoreButtonText,
@@ -243,24 +248,18 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
           const allTourIds = tourIdArrays.flat();
           const uniqueTourIds = [...new Set(allTourIds)];
 
-          // NO limitar por ahora - mostrar todos los tours
-
           return uniqueTourIds;
         }),
         catchError((error) => {
-          // Error loading tours from filters
+          console.error('❌ DEBUG: Error loading tours from filters:', error);
           return of([]);
         })
       )
       .subscribe((tourIds: number[]) => {
         if (tourIds.length === 0) {
           this.tours = [];
-          this.debugTourIds = [];
           return;
         }
-
-        // Guardar IDs para mostrar en pantalla
-        this.debugTourIds = tourIds;
 
         // Convertir a strings y cargar los tours
         const tourIdsAsStrings = tourIds.map((id) => id.toString());
@@ -284,7 +283,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
           }),
           catchError((error) => {
             console.error(
-              '❌ [Tour Carrussel V2] Error loading tours by tag:',
+              `❌ DEBUG: Error loading tours by tag ${filter.tagId}:`,
               error
             );
             return of([]);
@@ -300,7 +299,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
             }),
             catchError((error) => {
               console.error(
-                '❌ [Tour Carrussel V2] Error loading tours by location:',
+                `❌ DEBUG: Error loading tours by location ${filter.locationId}:`,
                 error
               );
               return of([]);
@@ -315,15 +314,12 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
             );
           return of(tourIds);
         } catch (error) {
-          console.error(
-            '❌ [Tour Carrussel V2] Error parsing specific tour IDs:',
-            error
-          );
+          console.error('❌ DEBUG: Error parsing specific tour IDs:', error);
           return of([]);
         }
 
       default:
-        // Unknown filter type
+        console.warn(`⚠️ DEBUG: Unknown filter type: ${filter.filterType}`);
         return of([]);
     }
   }
@@ -356,7 +352,10 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
         const departureRequests = itineraries.map((itinerary) =>
           this.departureService.getByItinerary(itinerary.id, false).pipe(
             catchError((error) => {
-              // Error obteniendo departures
+              console.error(
+                `❌ Error obteniendo departures para itinerary ${itinerary.id}:`,
+                error
+              );
               return of([]);
             })
           )
@@ -373,7 +372,10 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                     .getAll({ itineraryId: itineraries[0].id })
                     .pipe(
                       catchError((error) => {
-                        // Error obteniendo días de itinerario
+                        console.error(
+                          `❌ Error obteniendo días de itinerario para itinerary ${itineraries[0].id}:`,
+                          error
+                        );
                         return of([]);
                       })
                     )
@@ -386,7 +388,10 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                 return [];
               }),
               catchError((error) => {
-                // Error obteniendo tags
+                console.error(
+                  `❌ Error obteniendo tags para tour ${tourId}:`,
+                  error
+                );
                 return of([]);
               })
             );
@@ -406,7 +411,10 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
         );
       }),
       catchError((error) => {
-        // Error obteniendo datos adicionales
+        console.error(
+          `❌ Error obteniendo datos adicionales para tour ${tourId}:`,
+          error
+        );
         return of({
           departures: [],
           tags: [],
@@ -434,7 +442,10 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
             additionalData: this.getAdditionalTourData(Number(id)),
           }).pipe(
             catchError((error: Error) => {
-              // Error loading tour
+              console.error(
+                `❌ DEBUG: Error loading tour with ID ${id}:`,
+                error
+              );
               return of(null);
             }),
             map(
@@ -449,8 +460,6 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                   };
                 } | null
               ): TourDataV2 | null => {
-                if (combinedData) {
-                }
                 if (!combinedData) return null;
 
                 // Mapear datos combinados de TourNetService, CMSTourService y datos adicionales a TourDataV2

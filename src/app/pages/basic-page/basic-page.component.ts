@@ -4,7 +4,7 @@ import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { Page } from '../../core/models/pages/page.model';
 import { PagesService } from '../../core/services/pages.service';
-import { Title } from '@angular/platform-browser';
+import { Title, Meta } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-basic-page',
@@ -20,7 +20,8 @@ export class BasicPageComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private pageService: PagesService, // Inyecta el servicio
-    private titleService: Title
+    private titleService: Title,
+    private meta: Meta
   ) {}
 
   ngOnInit(): void {
@@ -46,7 +47,7 @@ export class BasicPageComponent implements OnInit {
         this.pageData = data;
         this.isLoading = false;
         if (data && data.title) {
-          this.updatePageTitle(data.title);
+          this.updatePageMetadata(data.title, data.description);
         }
       });
   }
@@ -54,6 +55,27 @@ export class BasicPageComponent implements OnInit {
   private updatePageTitle(title: string): void {
     if (title) {
       this.titleService.setTitle(`${title} - Different Roads`);
+    }
+  }
+
+  private updatePageMetadata(title: string, description?: string): void {
+    if (title) {
+      this.titleService.setTitle(`${title} - Different Roads`);
+    }
+    
+    if (description) {
+      // Meta descripción optimizada para SEO (70-155 caracteres)
+      let fullDescription = description;
+      if (description.length < 70) {
+        fullDescription = description + '. Información detallada sobre nuestros servicios de viaje.';
+      } else if (description.length > 155) {
+        fullDescription = description.substring(0, 152) + '...';
+      }
+      this.meta.updateTag({ name: 'description', content: fullDescription });
+    } else if (title) {
+      // Meta descripción por defecto basada en el título (70-155 caracteres)
+      const defaultDescription = `${title} - Información importante sobre nuestros servicios de viaje. Conoce más sobre Different Roads.`;
+      this.meta.updateTag({ name: 'description', content: defaultDescription });
     }
   }
 

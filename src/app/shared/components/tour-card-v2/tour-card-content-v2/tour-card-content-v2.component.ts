@@ -19,7 +19,6 @@ export class TourCardContentV2Component implements OnInit {
   @Input() tourData!: TourDataV2;
   @Input() showScalapayPrice = false;
   @Input() isLargeCard = false;
-  @Input() scalapayWidgetId = '';
   @Output() tourClick = new EventEmitter<void>();
 
   filteredTripTypes: string[] = [];

@@ -161,7 +161,7 @@ import { GoogleMapsModule } from '@angular/google-maps';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SortByPipe } from './shared/pipes/sort-by.pipe';
 import { InsurancesComponent } from './pages/checkout/components/customize-trip/components/insurances/insurances.component';
-import { Dialog } from 'primeng/dialog';
+import { Dialog, DialogModule } from 'primeng/dialog';
 import { BudgetDialogComponent } from './shared/components/budget-dialog/budget-dialog.component';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { Amplify } from 'aws-amplify';
@@ -185,8 +185,7 @@ import { FlightSearchComponent } from './pages/checkout/components/flights/compo
 import { TravelerItemComponent } from './pages/checkout/components/traveler-item/traveler-item.component';
 import { FlightSectionComponent } from './pages/checkout/components/flight-section/flight-section.component';
 import { LoginModalComponent } from './shared/components/login-modal/login-modal.component';
-/* import { LoginModalComponent } from './pages/checkout/components/flights/components/login-modal/login-modal.component';
- */ import { BookingsComponent } from './pages/bookings/bookings.component';
+import { BookingsComponent } from './pages/bookings/bookings.component';
 import { BookingActivitiesComponent } from './pages/bookings/booking-activities/booking-activities.component';
 import { BookingCodeSectionComponent } from './pages/bookings/booking-code-section/booking-code-section.component';
 import { BookingDetailsViewComponent } from './pages/bookings/booking-details-view/booking-details-view.component';
@@ -298,6 +297,7 @@ import { ReviewSectionV2Component } from './pages/profile-v2/components/review-s
 import { UpdateProfileSectionV2Component } from './pages/profile-v2/components/update-profile-section-v2/update-profile-section-v2.component';
 import { NewsLetterSectionV2Component } from './pages/home-v2/components/community-section-v2/components/newsletter-section-v2/newsletter-section-v2.component';
 import { HeaderV2Component } from './layout/header-v2/header-v2.component';
+import { SeoLinksComponent } from './shared/components/seo-links/seo-links.component';
 
 // Services
 import { RetailerService } from './core/services/retailer/retailer.service';
@@ -389,6 +389,7 @@ registerLocaleData(localeEs);
     TravelerItemComponent,
     FlightSectionComponent,
     LoginModalComponent,
+    
     BookingsComponent,
     BookingActivitiesComponent,
     BookingCodeSectionComponent,
@@ -502,6 +503,7 @@ registerLocaleData(localeEs);
     HeaderV2Component,
     BalanceInfoComponent,
     LoadingSectionComponent,
+    SeoLinksComponent,
   ],
   imports: [
     // Angular Modules
@@ -562,7 +564,7 @@ registerLocaleData(localeEs);
     GoogleMapsModule,
     MenuModule,
     SkeletonModule,
-    Dialog,
+    DialogModule,
     OverlayPanelModule,
     ToggleSwitchModule,
     PopoverModule,

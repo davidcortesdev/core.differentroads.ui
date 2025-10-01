@@ -6,6 +6,7 @@ import {
   Renderer2,
   OnDestroy,
 } from '@angular/core';
+import { FOOTER_LINKS } from '../../shared/constants/seo-links.constants';
 import {
   CMSFooterColumnService,
   IFooterColumnResponse,
@@ -37,6 +38,9 @@ export class FooterComponent implements OnInit, AfterViewInit, OnDestroy {
   private scriptLoaded = false;
   emailForm: FormGroup;
   private subscription: Subscription = new Subscription();
+  
+  // Enlaces del footer para SEO
+  seoFooterLinks = FOOTER_LINKS;
 
   // Contact info constants
   readonly contactInfo = CONTACT_INFO;

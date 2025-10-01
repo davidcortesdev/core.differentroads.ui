@@ -161,32 +161,32 @@ export class TourCardComponent implements OnInit, AfterViewInit {
   }
  
   private loadScalapayScript(): void {
-    // Verificar si el script ya está cargado
-    const scriptExists = !!this.document.querySelector('script[src*="scalapay-widget-loader.js"]');
+    // // Verificar si el script ya está cargado
+    // const scriptExists = !!this.document.querySelector('script[src*="scalapay-widget-loader.js"]');
    
-    if (!scriptExists) {
-      console.log('Cargando script de Scalapay...');
+    // if (!scriptExists) {
+    //   console.log('Cargando script de Scalapay...');
      
-      // Crear el script
-      const script = this.document.createElement('script');
-      script.type = 'module';
-      script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js';
+    //   // Crear el script
+    //   const script = this.document.createElement('script');
+    //   script.type = 'module';
+    //   script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js';
      
-      // Manejar los eventos del script
-      script.onload = () => {
-        this.configureScalapayWidget();
-      };
+    //   // Manejar los eventos del script
+    //   script.onload = () => {
+    //     this.configureScalapayWidget();
+    //   };
      
-      script.onerror = (error) => {
-        console.error('Error al cargar script de Scalapay:', error);
-      };
+    //   script.onerror = (error) => {
+    //     console.error('Error al cargar script de Scalapay:', error);
+    //   };
      
-      // Añadir el script al head
-      this.document.head.appendChild(script);
-    } else {
+    //   // Añadir el script al head
+    //   this.document.head.appendChild(script);
+    // } else {
  
-      this.configureScalapayWidget();
-    }
+    //   this.configureScalapayWidget();
+    // }
   }
  
   private configureScalapayWidget(): void {

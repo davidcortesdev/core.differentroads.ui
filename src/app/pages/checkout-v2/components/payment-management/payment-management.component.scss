@@ -134,6 +134,7 @@ $azul: var(--background-azul);
   ::ng-deep .payment-panel {
     font-weight: 500;
     margin-bottom: 0.75rem;
+    padding-top: 1.125rem;
     
     @include mobile {
       margin-bottom: 1rem;
@@ -208,6 +209,25 @@ $azul: var(--background-azul);
     .scalapay-logo {
       height: 24px;
       @include mobile { height: 20px; }
+    }
+
+    .scalapay-inline-logo {
+      height: 20px;
+      vertical-align: middle;
+      margin-left: 4px;
+      display: inline-block;
+      
+      @include mobile {
+        height: 16px;
+      }
+      
+      @include tablet {
+        height: 18px;
+      }
+      
+      @include desktop {
+        height: 20px;
+      }
     }
   }
 

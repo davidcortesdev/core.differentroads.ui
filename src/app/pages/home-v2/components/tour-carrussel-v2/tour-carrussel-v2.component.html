@@ -9,7 +9,7 @@
     [showNavigators]="false"
     [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
   >
-    <ng-template let-tour pTemplate="item">
+    <ng-template let-tour #item>
       <app-tour-card-v2
         [tourData]="tour"
         [showScalapayPrice]="true"

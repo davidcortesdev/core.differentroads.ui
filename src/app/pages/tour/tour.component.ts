@@ -202,13 +202,42 @@ export class TourComponent implements OnInit, OnDestroy {
       // Actualizar título
       this.titleService.setTitle(`${this.tour.name} - Different Roads`);
       // Actualizar meta tags
-      this.metaService.updateTag({ name: 'description', content: this.tour.seo.description || `Descubre ${this.tour.seo.title} con Different Roads` });
+      // Meta descripción optimizada para SEO (70-155 caracteres)
+      // Usar descripción del backend si existe, sino crear una específica del tour
+      let description = this.tour.seo.description;
+      
+      if (!description) {
+        // Crear descripción específica basada en datos del tour
+        const tourName = this.tour.name;
+        const tourSubtitle = this.tour.subtitle || '';
+        const countries = this.tour.cities?.join(', ') || '';
+        
+        if (tourSubtitle && countries) {
+          description = `${tourName}: ${tourSubtitle}. Explora ${countries} con Different Roads.`;
+        } else if (tourSubtitle) {
+          description = `${tourName}: ${tourSubtitle}. Una experiencia única de viaje con Different Roads.`;
+        } else {
+          description = `${tourName} - Experiencia de viaje única con Different Roads.`;
+        }
+      }
+      
+      let shortDescription = description;
+      
+      // Asegurar que esté entre 70 y 155 caracteres
+      if (description.length < 70) {
+        shortDescription = description + ' Reserva tu aventura ahora.';
+      } else if (description.length > 155) {
+        shortDescription = description.substring(0, 152) + '...';
+      }
+      // Eliminar meta description existente y añadir nueva
+      this.metaService.removeTag("name='description'");
+      this.metaService.addTag({ name: 'description', content: shortDescription });
       
       // Añadir meta tags para redes sociales si hay imagen disponible
       if (this.tour.image && this.tour.image[0]?.url) {
         this.metaService.updateTag({ property: 'og:image', content: this.tour.image[0].url });
         this.metaService.updateTag({ property: 'og:title', content: this.tour.name });
-        this.metaService.updateTag({ property: 'og:description', content: this.tour.seo.description || `Descubre ${this.tour.seo.title} con Different Roads` });
+        this.metaService.updateTag({ property: 'og:description', content: shortDescription });
       }
     }
   }

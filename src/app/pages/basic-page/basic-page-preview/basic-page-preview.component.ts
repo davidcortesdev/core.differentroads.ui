@@ -86,10 +86,20 @@ export class BasicPagePreviewComponent implements OnInit {
       // Eliminar cualquier meta descripción existente
       this.meta.removeTag("name='description'");
       
-      // Añadir la nueva meta descripción
+      // Añadir la nueva meta descripción optimizada para SEO (70-155 caracteres)
+      const baseDescription = pageData.seoDescription || 'Vista previa de página de Different Roads';
+      const fullDescription = baseDescription + ' (Vista previa)';
+      let shortDescription = fullDescription;
+      
+      // Asegurar que esté entre 70 y 155 caracteres
+      if (fullDescription.length < 70) {
+        shortDescription = fullDescription + '. Previsualiza el contenido antes de publicar.';
+      } else if (fullDescription.length > 155) {
+        shortDescription = fullDescription.substring(0, 152) + '...';
+      }
       this.meta.addTag({
         name: 'description',
-        content: pageData.seoDescription + ' (Vista previa)'
+        content: shortDescription
       });
     }
   }

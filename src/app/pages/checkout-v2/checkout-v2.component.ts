@@ -38,6 +38,7 @@ import { forkJoin } from 'rxjs';
 import { PaymentsNetService } from './services/paymentsNet.service';
 import { AuthenticateService } from '../../core/services/auth-service.service';
 import { UsersNetService } from '../../core/services/usersNet.service';
+import { AnalyticsService } from '../../core/services/analytics.service';
 import { IFlightPackDTO } from './services/flightsNet.service';
 import {
   ReservationTravelerService,
@@ -183,7 +184,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     private cdr: ChangeDetectorRef,
     private priceCheckService: PriceCheckService,
     private reservationStatusService: ReservationStatusService,
-    private http: HttpClient
+    private http: HttpClient,
+    private analyticsService: AnalyticsService
   ) {}
 
   ngOnInit(): void {
@@ -3144,6 +3146,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               .subscribe({
                 next: (success) => {
                   if (success) {
+                    // Disparar evento add_to_wishlist
+                    this.trackAddToWishlist();
+                    
                     this.messageService.add({
                       severity: 'success',
                       summary: 'Presupuesto guardado',
@@ -3304,5 +3309,58 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     }
 
     console.log('✅ Estado de vuelos limpiado');
+  }
+
+  /**
+   * Disparar evento add_to_wishlist cuando se guarda presupuesto desde checkout
+   */
+  private trackAddToWishlist(): void {
+    if (!this.reservationData) return;
+
+    const tourData = this.reservationData.tour || {};
+    
+    this.analyticsService.addToWishlist(
+      'saved_budgets',
+      'Presupuestos guardados',
+      {
+        item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+        item_name: this.tourName || tourData.name || '',
+        coupon: '',
+        discount: 0,
+        index: 0,
+        item_brand: 'Different Roads',
+        item_category: tourData.destination?.continent || '',
+        item_category2: tourData.destination?.country || '',
+        item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+        item_category4: tourData.monthTags?.join(', ') || '',
+        item_category5: tourData.tourType || '',
+        item_list_id: 'saved_budgets',
+        item_list_name: 'Presupuestos guardados',
+        item_variant: '',
+        price: this.totalAmountCalculated || 0,
+        quantity: 1,
+        puntuacion: tourData.rating?.toString() || '',
+        duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+        start_date: this.departureDate || '',
+        end_date: this.returnDate || '',
+        pasajeros_adultos: this.totalPassengers?.toString() || '0',
+        pasajeros_niños: '0'
+      },
+      this.getUserData()
+    );
+  }
+
+  /**
+   * Obtener datos del usuario actual si está logueado
+   */
+  private getUserData() {
+    if (this.authService.isAuthenticatedValue()) {
+      return this.analyticsService.getUserData(
+        this.authService.getUserEmailValue(),
+        undefined,
+        this.authService.getCognitoIdValue()
+      );
+    }
+    return undefined;
   }
 }

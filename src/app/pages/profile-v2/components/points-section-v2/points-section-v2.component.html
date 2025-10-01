@@ -1,0 +1,41 @@
+<div class="points-section">
+  <p-toolbar styleClass="toolbar-custom mb-4">
+    <div class="p-toolbar-group-start">
+      <h1 class="program-title">Gestión de Puntos</h1>
+    </div>
+
+    <div class="p-toolbar-group-end">
+      <div class="points-display">
+        <span class="points-value">{{ totalPoints }}</span>
+        <span class="points-label"> puntos</span>
+      </div>
+      <button
+        pButton
+        class="p-button-rounded search-button"
+        [ngClass]="{'active': showTable}"
+        (click)="toggleTable()"
+      >
+        <i class="pi pi-search"></i>
+      </button>
+    </div>
+  </p-toolbar>
+
+  <!-- Componente de tabla de puntos -->
+  <app-points-table 
+    [points]="points" 
+    [showTable]="showTable">
+  </app-points-table>
+
+  <!-- Componente de tarjetas de membresía -->
+  <app-membership-cards 
+    [membershipCards]="membershipCards" 
+    [currentTrips]="currentTrips">
+  </app-membership-cards>
+
+  <!-- Componente de beneficios de membresía -->
+  <app-membership-benefits 
+    [currentCategory]="currentCategory"
+    [pointsSummary]="pointsSummary"
+    [currentTrips]="currentTrips">
+  </app-membership-benefits>
+</div>

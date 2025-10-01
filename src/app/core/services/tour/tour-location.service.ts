@@ -42,6 +42,18 @@ export interface TourLocationFilters {
   displayOrder?: number;
 }
 
+/**
+ * Interfaz para la respuesta de países con tours por continente.
+ */
+export interface CountryWithToursResponse {
+  id: number;
+  name: string;
+  code: string;
+  continentId: number;
+  continentName: string;
+  tourCount: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -83,8 +95,42 @@ export class TourLocationService {
    * @param typeCode Código del tipo de relación
    * @returns Lista de relaciones tour-localización
    */
-  getByTourAndType(tourId: number, typeCode: string): Observable<ITourLocationResponse> {
-    return this.http.get<ITourLocationResponse>(`${this.API_URL}/bytourandtype/${tourId}/${typeCode}`);
+  getByTourAndType(
+    tourId: number,
+    typeCode: string
+  ): Observable<ITourLocationResponse> {
+    return this.http.get<ITourLocationResponse>(
+      `${this.API_URL}/bytourandtype/${tourId}/${typeCode}`
+    );
+  }
+
+  /**
+   * Obtiene todos los países relacionados con tours a partir del ID de un continente.
+   * @param continentId ID del continente
+   * @returns Lista de países con tours
+   */
+  getCountriesWithToursByContinent(
+    continentId: number
+  ): Observable<CountryWithToursResponse[]> {
+    return this.http.get<CountryWithToursResponse[]>(
+      `${this.API_URL}/countries-with-tours/${continentId}`
+    );
+  }
+
+  /**
+   * Obtiene todos los IDs de tours relacionados con una o más ubicaciones específicas.
+   * @param locationIds Lista de IDs de ubicaciones (países, continentes, etc.)
+   * @returns Lista de IDs de tours
+   */
+  getToursByLocations(locationIds: number[]): Observable<number[]> {
+    let params = new HttpParams();
+    
+    // Agregar cada locationId como parámetro de consulta
+    locationIds.forEach(id => {
+      params = params.append('locationIds', id.toString());
+    });
+
+    return this.http.get<number[]>(`${this.API_URL}/tours-by-locations`, { params });
   }
 
   create(data: TourLocationCreate): Observable<ITourLocationResponse> {

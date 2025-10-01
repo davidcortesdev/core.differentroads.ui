@@ -1,0 +1,58 @@
+<div class="card-footer">
+  <div class="price-content">
+    <div class="price-section">
+      <div class="price-info">
+        <span class="desde">Desde</span>
+        <span class="price">{{ tourData.price | currencyFormat : "EUR" }}</span>
+      </div>
+      <div class="button-container">
+        <div class="trip-type-container">
+          <p-tag
+            *ngFor="let type of getFilteredTripTypes()"
+            class="trip-type"
+            [styleClass]="getTripTypeClass(type)"
+            [title]="type"
+          >
+            {{ getTripTypeLabel(type) }}
+          </p-tag>
+        </div>
+        <p-button
+          type="button"
+          label="Ver tour"
+          class="p-button-rounded buttonVertour"
+          [rounded]="true"
+          (onClick)="handleTourClick()"
+        ></p-button>
+      </div>
+    </div>
+    <ng-container *ngIf="showScalapayPrice">
+      <div class="priceScalapay">
+        <div class="widget" #widgetContainer>
+          <span class="amount" id="amount" style="display: none;">{{ tourData.price }}</span>
+          
+          <scalapay-widget
+          merchant-token="9MFV6DMBA" 
+          amount-selectors='["#amount"]' 
+          channel="travel"
+          type="product"
+          environment="integration"
+          locale="es"
+          currency-display="symbol"
+          hide-installments="true"
+          alignment="left"
+          >
+          </scalapay-widget>
+        </div>
+      </div>
+    </ng-container>
+    <div class="months" *ngIf="tourData.availableMonths?.length">
+      <p-tag
+        *ngFor="let month of tourData.availableMonths"
+        class="month"
+        severity="info"
+      >
+        {{ month }}
+      </p-tag>
+    </div>
+  </div>
+</div>

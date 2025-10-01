@@ -1,4 +1,9 @@
-import { NgModule, CUSTOM_ELEMENTS_SCHEMA, LOCALE_ID } from '@angular/core';
+import {
+  NgModule,
+  CUSTOM_ELEMENTS_SCHEMA,
+  NO_ERRORS_SCHEMA,
+  LOCALE_ID,
+} from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule } from '@angular/forms';
@@ -71,6 +76,7 @@ import { CardModule } from 'primeng/card';
 import { DatePickerModule } from 'primeng/datepicker';
 import { RippleModule } from 'primeng/ripple';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ProgressBarModule } from 'primeng/progressbar';
 import { DataViewModule } from 'primeng/dataview';
 import { DynamicComponentsComponent } from './pages/home/components/dynamic-components/dynamic-components.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
@@ -126,6 +132,7 @@ import { FlightsComponent } from './pages/checkout/components/flights/flights.co
 import { TravelersComponent } from './pages/checkout/components/travelers/travelers.component';
 import { PaymentComponent } from './pages/checkout/components/payment/payment.component';
 import { TourCardComponent } from './shared/components/tour-card/tour-card.component';
+import { TourCardV2Component } from './shared/components/tour-card-v2/tour-card-v2.component';
 import { ReactiveFormsModule } from '@angular/forms';
 
 import { StepsModule } from 'primeng/steps';
@@ -154,7 +161,7 @@ import { GoogleMapsModule } from '@angular/google-maps';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SortByPipe } from './shared/pipes/sort-by.pipe';
 import { InsurancesComponent } from './pages/checkout/components/customize-trip/components/insurances/insurances.component';
-import { Dialog } from 'primeng/dialog';
+import { Dialog, DialogModule } from 'primeng/dialog';
 import { BudgetDialogComponent } from './shared/components/budget-dialog/budget-dialog.component';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { Amplify } from 'aws-amplify';
@@ -178,8 +185,7 @@ import { FlightSearchComponent } from './pages/checkout/components/flights/compo
 import { TravelerItemComponent } from './pages/checkout/components/traveler-item/traveler-item.component';
 import { FlightSectionComponent } from './pages/checkout/components/flight-section/flight-section.component';
 import { LoginModalComponent } from './shared/components/login-modal/login-modal.component';
-/* import { LoginModalComponent } from './pages/checkout/components/flights/components/login-modal/login-modal.component';
- */ import { BookingsComponent } from './pages/bookings/bookings.component';
+import { LoginModalComponent as FlightLoginModalComponent } from './pages/checkout/components/flights/components/login-modal/login-modal.component'; import { BookingsComponent } from './pages/bookings/bookings.component';
 import { BookingActivitiesComponent } from './pages/bookings/booking-activities/booking-activities.component';
 import { BookingCodeSectionComponent } from './pages/bookings/booking-code-section/booking-code-section.component';
 import { BookingDetailsViewComponent } from './pages/bookings/booking-details-view/booking-details-view.component';
@@ -190,6 +196,20 @@ import { BookingPaymentHistoryComponent } from './pages/bookings/booking-payment
 import { BookingPersonalDataComponent } from './pages/bookings/booking-personal-data/booking-personal-data.component';
 import { BookingUpdateTravelComponent } from './pages/bookings/booking-update-travel/booking-update-travel.component';
 import { PassengerCardComponent } from './pages/bookings/passenger-card/passenger-card.component';
+
+// BookingsV2 Components
+import { Bookingsv2Component } from './pages/bookingsv2/bookings.component';
+import { BookingActivitiesV2Component } from './pages/bookingsv2/booking-activities/booking-activities.component';
+import { BookingCodeSectionV2Component } from './pages/bookingsv2/booking-code-section/booking-code-section.component';
+import { BookingDetailsViewV2Component } from './pages/bookingsv2/booking-details-view/booking-details-view.component';
+import { BookingDocumentActionsV2Component } from './pages/bookingsv2/booking-document-actions/booking-document-actions.component';
+import { BookingFlightsV2Component } from './pages/bookingsv2/booking-flights/booking-flights.component';
+import { BookingHeaderSectionV2Component } from './pages/bookingsv2/booking-header-section/booking-header-section.component';
+import { BookingPaymentHistoryV2Component } from './pages/bookingsv2/booking-payment-history/booking-payment-history.component';
+import { BookingPersonalDataV2Component } from './pages/bookingsv2/booking-personal-data/booking-personal-data.component';
+import { BookingUpdateTravelV2Component } from './pages/bookingsv2/booking-update-travel/booking-update-travel.component';
+import { PassengerCardV2Component } from './pages/bookingsv2/passenger-card/passenger-card.component';
+import { BookingDocumentationV2Component } from './pages/bookingsv2/booking-documentation/booking-documentation.component';
 import { UploadButtonComponent } from './shared/components/upload-button/upload-button.component';
 import { PaymentsComponent } from './pages/payments/payments.component';
 import { TourInfoAccordionComponent } from './pages/tour/components/tour-info-accordion/tour-info-accordion.component';
@@ -207,6 +227,8 @@ import { BookingListSectionComponent } from './pages/profile/components/booking-
 import { BookingDocumentationComponent } from './pages/bookings/booking-documentation/booking-documentation.component';
 import { TourCardHeaderComponent } from './shared/components/tour-card/tour-card-header/tour-card-header.component';
 import { TourCardContentComponent } from './shared/components/tour-card/tour-card-content/tour-card-content.component';
+import { TourCardHeaderV2Component } from './shared/components/tour-card-v2/tour-card-header-v2/tour-card-header-v2.component';
+import { TourCardContentV2Component } from './shared/components/tour-card-v2/tour-card-content-v2/tour-card-content-v2.component';
 import { CookiesComponent } from './shared/components/cookies/cookies.component';
 import { CookiesConsentComponent } from './shared/components/cookies-consent/cookies-consent.component';
 import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
@@ -231,7 +253,11 @@ import { DefaultFlightsComponent } from './pages/checkout-v2/components/flight-m
 import { SpecificSearchComponent } from './pages/checkout-v2/components/flight-management/specific-search/specific-search.component';
 import { ActivitiesOptionalsComponent } from './pages/checkout-v2/components/activities-optionals/activities-optionals.component';
 import { InfoTravelersComponent } from './pages/checkout-v2/components/info-travelers/info-travelers.component';
+import { InfoTravelersRoomComponent } from './pages/checkout-v2/components/info-travelers/components/info-travelers-room/info-travelers-room.component';
 import { PaymentManagementComponent } from './pages/checkout-v2/components/payment-management/payment-management.component';
+import { PointsRedemptionComponent } from './pages/checkout-v2/components/points-redemption/points-redemption.component';
+import { TravelersListComponent } from './pages/checkout-v2/components/points-redemption/components/travelers-list/travelers-list.component';
+import { MessagePointsComponent } from './pages/checkout-v2/components/points-redemption/components/message-points/message-points.component';
 import { NewReservationComponent } from './pages/checkout-v2/components/new-reservation/new-reservation.component';
 import { FlightSectionV2Component } from './pages/checkout-v2/components/flight-section/flight-section.component';
 import { FlightStopsComponent } from './pages/checkout-v2/components/flight-management/flight-stops/flight-stops.component';
@@ -245,6 +271,38 @@ import { ImageCropperComponent } from './shared/components/image-cropper/image-c
 import { ReviewSurveyComponent } from './pages/review-survey/review-survey.component';
 import { ImageUploadModalComponent } from './pages/review-survey/image-upload-modal/image-upload-modal.component';
 import { TourInfoAccordionV2Component } from './pages/tour-v2/components/tour-info-accordion-v2/tour-info-accordion-v2.component';
+import { HomeV2Component } from './pages/home-v2/home-v2.component';
+import { HeroSectionV2Component } from './pages/home-v2/components/hero-section-v2/hero-section-v2.component';
+import { TripTypesSectionV2Component } from './pages/home-v2/components/trip-types-section-v2/trip-types-section-v2.component';
+import { TourCarrusselV2Component } from './pages/home-v2/components/tour-carrussel-v2/tour-carrussel-v2.component';
+import { TourListV2Component } from './pages/home-v2/components/tour-list-v2/tour-list-v2.component';
+import { FullCardSectionV2Component } from './pages/home-v2/components/full-card-section-v2/full-card-section-v2.component';
+import { CarouselSectionV2Component } from './pages/home-v2/components/carousel-section-v2/carousel-section-v2.component';
+import { CommunitySectionV2Component } from './pages/home-v2/components/community-section-v2/community-section-v2.component';
+import { CommunityGalleryV2Component } from './pages/home-v2/components/community-section-v2/components/community-gallery-v2/community-gallery-v2.component';
+import { CommunityHeroV2Component } from './pages/home-v2/components/community-section-v2/components/community-hero-v2/community-hero-v2.component';
+import { CommunityReviewsV2Component } from './pages/home-v2/components/community-section-v2/components/community-reviews-v2/community-reviews-v2.component';
+import { HighlightSectionV2Component } from './pages/home-v2/components/highlight-section-v2/highlight-section-v2.component';
+import { ContentListV2Component } from './pages/home-v2/components/content-list-v2/content-list-v2.component';
+import { PartnersSectionV2Component } from './pages/home-v2/components/partners-section-v2/partners-section-v2.component';
+import { PublicitySectionV2Component } from './pages/home-v2/components/publicity-section-v2/publicity-section-v2.component';
+import { ProfileV2Component } from './pages/profile-v2/profile-v2.component';
+import { BookingListSectionV2Component } from './pages/profile-v2/components/booking-list-section-v2/booking-list-section-v2.component';
+import { PersonalInfoSectionV2Component } from './pages/profile-v2/components/personal-info-section-v2/personal-info-section-v2.component';
+import { PointsSectionV2Component } from './pages/profile-v2/components/points-section-v2/points-section-v2.component';
+import { PointsTableComponent } from './pages/profile-v2/components/points-section-v2/components/points-table/points-table.component';
+import { MembershipCardsComponent } from './pages/profile-v2/components/points-section-v2/components/membership-cards/membership-cards.component';
+import { MembershipBenefitsComponent } from './pages/profile-v2/components/points-section-v2/components/membership-benefits/membership-benefits.component';
+import { ReviewSectionV2Component } from './pages/profile-v2/components/review-section-v2/review-section-v2.component';
+import { UpdateProfileSectionV2Component } from './pages/profile-v2/components/update-profile-section-v2/update-profile-section-v2.component';
+import { NewsLetterSectionV2Component } from './pages/home-v2/components/community-section-v2/components/newsletter-section-v2/newsletter-section-v2.component';
+import { HeaderV2Component } from './layout/header-v2/header-v2.component';
+import { SeoLinksComponent } from './shared/components/seo-links/seo-links.component';
+
+// Services
+import { RetailerService } from './core/services/retailer/retailer.service';
+import { BalanceInfoComponent } from './pages/checkout-v2/components/points-redemption/components/balance-info/balance-info.component';
+import { LoadingSectionComponent } from './pages/checkout-v2/components/payment-management/components/loading-section/loading-section.component';
 // Register Spanish locale data
 registerLocaleData(localeEs);
 
@@ -277,6 +335,7 @@ registerLocaleData(localeEs);
     // Tours List
     ToursListComponent,
     TourCardComponent,
+    TourCardV2Component,
 
     // Content List
     ContentListComponent,
@@ -330,6 +389,7 @@ registerLocaleData(localeEs);
     TravelerItemComponent,
     FlightSectionComponent,
     LoginModalComponent,
+    FlightLoginModalComponent,
     BookingsComponent,
     BookingActivitiesComponent,
     BookingCodeSectionComponent,
@@ -341,6 +401,21 @@ registerLocaleData(localeEs);
     BookingPersonalDataComponent,
     BookingUpdateTravelComponent,
     PassengerCardComponent,
+
+    // BookingsV2 Components
+    Bookingsv2Component,
+    BookingActivitiesV2Component,
+    BookingCodeSectionV2Component,
+    BookingDetailsViewV2Component,
+    BookingDocumentActionsV2Component,
+    BookingFlightsV2Component,
+    BookingHeaderSectionV2Component,
+    BookingPaymentHistoryV2Component,
+    BookingPersonalDataV2Component,
+    BookingUpdateTravelV2Component,
+    PassengerCardV2Component,
+    BookingDocumentationV2Component,
+
     UploadButtonComponent,
     PaymentsComponent,
     TourInfoAccordionComponent,
@@ -356,6 +431,8 @@ registerLocaleData(localeEs);
     BookingDocumentationComponent,
     TourCardHeaderComponent,
     TourCardContentComponent,
+    TourCardHeaderV2Component,
+    TourCardContentV2Component,
     CookiesComponent,
     CookiesConsentComponent,
     BasicPagePreviewComponent,
@@ -372,7 +449,6 @@ registerLocaleData(localeEs);
     HotelDetailsComponent,
     ActivitysComponent,
     TourDeparturesV2Component,
-    ActivitysComponent,
     CheckoutV2Component,
     SelectorRoomComponent,
     SelectorTravelerComponent,
@@ -382,7 +458,11 @@ registerLocaleData(localeEs);
     SpecificSearchComponent,
     ActivitiesOptionalsComponent,
     InfoTravelersComponent,
+    InfoTravelersRoomComponent,
     PaymentManagementComponent,
+    PointsRedemptionComponent,
+    TravelersListComponent,
+    MessagePointsComponent,
     NewReservationComponent,
     FlightSectionV2Component,
     FlightStopsComponent,
@@ -396,6 +476,34 @@ registerLocaleData(localeEs);
     ReviewSurveyComponent,
     ImageUploadModalComponent,
     TourInfoAccordionV2Component,
+    HomeV2Component,
+    HeroSectionV2Component,
+    TripTypesSectionV2Component,
+    TourCarrusselV2Component,
+    TourListV2Component,
+    FullCardSectionV2Component,
+    CarouselSectionV2Component,
+    CommunitySectionV2Component,
+    CommunityGalleryV2Component,
+    CommunityHeroV2Component,
+    CommunityReviewsV2Component,
+    HighlightSectionV2Component,
+    ContentListV2Component,
+    PartnersSectionV2Component,
+    PublicitySectionV2Component,
+    ProfileV2Component,
+    BookingListSectionV2Component,
+    PersonalInfoSectionV2Component,
+    PointsSectionV2Component,
+    PointsTableComponent,
+    MembershipCardsComponent,
+    MembershipBenefitsComponent,
+    ReviewSectionV2Component,
+    UpdateProfileSectionV2Component,
+    HeaderV2Component,
+    BalanceInfoComponent,
+    LoadingSectionComponent,
+    SeoLinksComponent,
   ],
   imports: [
     // Angular Modules
@@ -403,6 +511,7 @@ registerLocaleData(localeEs);
     BrowserAnimationsModule,
     AppRoutingModule,
     FormsModule,
+    NewsLetterSectionV2Component,
     CommonModule,
     NgComponentOutlet,
     NewsLetterSectionComponent,
@@ -424,6 +533,7 @@ registerLocaleData(localeEs);
     FloatLabelModule,
     IftaLabelModule,
     ProgressSpinnerModule,
+    ProgressBarModule,
     DataViewModule,
     BreadcrumbModule,
     DividerModule,
@@ -454,7 +564,7 @@ registerLocaleData(localeEs);
     GoogleMapsModule,
     MenuModule,
     SkeletonModule,
-    Dialog,
+    DialogModule,
     OverlayPanelModule,
     ToggleSwitchModule,
     PopoverModule,
@@ -498,9 +608,10 @@ registerLocaleData(localeEs);
     MessageService,
     CookieService,
     DatePipe, // Añadimos DatePipe a los providers
+    RetailerService,
   ],
   bootstrap: [AppComponent],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA],
 })
 export class AppModule {
   constructor() {

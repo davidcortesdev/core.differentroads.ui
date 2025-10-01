@@ -1,10 +1,8 @@
 $azul: var(--background-azul);
-$text-muted: #64748b;
-$border-color: #e2e8f0;
 
 @mixin mobile { @media (max-width: 480px) { @content; } }
 @mixin tablet { @media (max-width: 768px) { @content; } }
-@mixin desktop { @media (min-width: 768px) { @content; } }
+@mixin desktop { @media (min-width: 769px) { @content; } }
 
 @mixin flex-center {
   display: flex;
@@ -18,36 +16,74 @@ $border-color: #e2e8f0;
   justify-content: space-between;
 }
 
-@mixin panel-padding {
-  padding: 1.25rem 1rem;
-  @include desktop { padding: 1.75rem 1.5rem; }
-  @include mobile { padding: 1rem 0.75rem; }
+@mixin responsive-font($mobile, $tablet, $desktop) {
+  @include mobile { font-size: $mobile; }
+  @include tablet { font-size: $tablet; }
+  @include desktop { font-size: $desktop; }
+}
+
+@mixin responsive-margin($mobile, $tablet, $desktop) {
+  @include mobile { margin-top: $mobile; }
+  @include tablet { margin-top: $tablet; }
+  @include desktop { margin-top: $desktop; }
+}
+
+@mixin button-styles {
+  width: 100%;
+  border-radius: 100px;
+  height: 40px;
+  margin-top: 20px;
+  
+  @include mobile {
+    height: 45px;
+    border-radius: 45px;
+    margin-top: 0;
+  }
+  
+  @include tablet {
+    height: 47px;
+    border-radius: 47px;
+    margin-top: 10px;
+  }
+  
+  @include desktop {
+    height: 50px;
+    border-radius: 50px;
+    margin-top: 20px;
+  }
 }
 
 .container {
   --p-panel-background: var(--background-azul-color-letra);
   --p-panel-border-radius: 10px;
-  --p-accordion-content-background: transparent !important;
-  --p-accordion-header-background: transparent !important;
   --p-radiobutton-border-color: #{$azul};
   --p-radiobutton-checked-background: var(--background-azul-color-letra);
   --p-radiobutton-checked-border-color: #{$azul};
   --p-radiobutton-icon-checked-color: #{$azul};
 
-  width: 100%;
   padding: 0;
   margin-top: -20px;
+  
+  @include mobile { padding: 0 0.5rem; }
+  @include tablet { padding: 0 1rem; }
+  @include desktop { padding: 0; }
 
   .header-container {
     cursor: pointer;
-    margin-bottom: 15px;
+    margin: 1rem 0 2.5rem;
+
+    @include mobile { margin: 1rem 0 2rem; }
+    @include tablet { margin: 1.25rem 0 2.25rem; }
+    @include desktop { margin: 1rem 0 2.5rem; }
   }
 
   .title-with-icon {
-    @include flex-center;
-    justify-content: flex-start;
-    margin-bottom: 5px;
-    padding-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    gap: 1rem;
 
     .title,
     .pi {
@@ -56,12 +92,15 @@ $border-color: #e2e8f0;
 
     .title {
       font-weight: 500;
-      font-size: 1.21rem;
-      @include mobile { font-size: 1.1rem; }
+      flex: 1;
+      word-wrap: break-word;
+      @include responsive-font(1.1rem, 1.15rem, 1.21rem);
     }
 
     .pi {
       margin-left: 8px;
+      flex-shrink: 0;
+      @include responsive-font(0.9rem, 1rem, 1rem);
     }
   }
 
@@ -70,36 +109,74 @@ $border-color: #e2e8f0;
     background-color: $azul;
     margin-top: -15px;
     max-width: 278px;
-    @include tablet { max-width: 255px; }
-    @include mobile { max-width: 280px; }
+    
+    @include mobile {
+      max-width: 100%;
+    }
+    
+    @include tablet {
+      max-width: 255px;
+    }
+    
+    @include desktop {
+      max-width: 278px;
+    }
 
-    &.pay { max-width: 200px; }
+    &.pay { 
+      max-width: 200px;
+      
+      @include mobile {
+        max-width: 100%;
+      }
+    }
   }
 
   ::ng-deep .payment-panel {
     font-weight: 500;
     margin-bottom: 0.75rem;
-
-    .p-panel-header {
-      display: none;
+    padding-top: 1.125rem;
+    
+    @include mobile {
+      margin-bottom: 1rem;
     }
-
-    .p-panel-content {
-      @include panel-padding;
+    
+    @include tablet {
+      margin-bottom: 0.875rem;
+    }
+    
+    @include desktop {
+      margin-bottom: 0.75rem;
     }
   }
 
   .payment-option {
-    @include flex-between;
-    flex-wrap: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+
+    @include mobile {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
 
     .option-text {
       margin-left: 1rem;
       flex-grow: 1;
+      word-wrap: break-word;
+      
       @include mobile {
-        margin-left: 0.5rem;
+        margin-left: 0;
         font-size: 0.85rem;
-        max-width: 70%;
+      }
+      
+      @include tablet {
+        font-size: 0.95rem;
+      }
+      
+      @include desktop {
+        font-size: 1rem;
       }
       
       .specific-search-info {
@@ -108,12 +185,17 @@ $border-color: #e2e8f0;
         color: #666;
         margin-top: 0.25rem;
         font-style: italic;
+        
+        @include mobile {
+          font-size: 0.75rem;
+        }
       }
     }
 
     .option-price,
     .scalapay-logo {
       margin-left: auto;
+      flex-shrink: 0;
       @include mobile { margin-left: 0; }
     }
 
@@ -128,11 +210,30 @@ $border-color: #e2e8f0;
       height: 24px;
       @include mobile { height: 20px; }
     }
+
+    .scalapay-inline-logo {
+      height: 20px;
+      vertical-align: middle;
+      margin-left: 4px;
+      display: inline-block;
+      
+      @include mobile {
+        height: 16px;
+      }
+      
+      @include tablet {
+        height: 18px;
+      }
+      
+      @include desktop {
+        height: 20px;
+      }
+    }
   }
 
   .payment-methods-section,
   .installments-section {
-    margin-top: 2rem;
+    @include responsive-margin(2.5rem, 2.25rem, 2rem);
   }
 
   .payment-methods-row,
@@ -140,21 +241,21 @@ $border-color: #e2e8f0;
     display: flex;
     gap: 1rem;
     margin-top: 1rem;
-    @include tablet {
+    
+    @include mobile {
       flex-direction: column;
       gap: 0.75rem;
+    }
+    
+    @include desktop {
+      flex-direction: row;
     }
   }
 
   .payment-method-container,
   .installment-panel-container {
     flex: 1;
-    width: 100%;
     height: 100%;
-
-    ::ng-deep .p-panel-content {
-      @include panel-padding;
-    }
   }
 
   .payment-method-panel {
@@ -168,12 +269,10 @@ $border-color: #e2e8f0;
 
   .installment-content {
     margin-left: 1rem;
-    width: 100%;
     @include mobile { margin-left: 0.5rem; }
   }
 
   .scalapay-widget-container {
-    width: 100%;
     text-align: center;
     font-size: 14px;
   }
@@ -188,132 +287,20 @@ $border-color: #e2e8f0;
     }
   }
 
-  .travelers-points-section {
-    .title-underline {
-      max-width: 200px;
-      @include mobile { max-width: 160px; }
-    }
-
-    ::ng-deep .p-accordion {
-      .p-accordioncontent-content {
-        padding: 0;
-      }
-      .p-accordioncontent {
-        margin-top: -15px;
-      }
-      .p-accordionheader {
-        padding: 0;
-        color: $azul;
-        background: transparent;
-      }
-      .p-accordion-header-text {
-        font-size: 1rem;
-      }
-      .p-accordion-toggle-icon {
-        color: $azul;
-      }
-    }
-  }
-
-  .travelers-list {
-    margin-top: 15px;
-
-    .traveler-item {
-      padding: 0.75rem 0;
-      border-bottom: 1px solid $border-color;
-
-      &:last-child {
-        border-bottom: none;
-      }
-    }
-
-    .traveler-row {
-      @include flex-between;
-      cursor: pointer;
-    }
-
-    .checkbox-container {
-      margin-right: 1rem;
-      width: 1.5rem;
-      cursor: pointer;
-      @include mobile { margin-right: 0.2rem; }
-    }
-
-    .checkbox-placeholder {
-      width: 1.5rem;
-      height: 1.5rem;
-    }
-
-    .traveler-info {
-      @include flex-between;
-      flex-grow: 1;
-      cursor: pointer;
-    }
-
-    .traveler-name {
-      font-weight: 500;
-      color: $azul;
-    }
-
-    .points-badge {
-      display: inline-flex;
-      padding: 0.25rem 0.5rem;
-      border-radius: 1rem;
-      font-size: 0.875rem;
-      background-color: #f1f5f9;
-      align-self: center;
-      white-space: nowrap;
-      @include mobile {
-        font-size: 0.75rem;
-        padding: 0.2rem 0.4rem;
-      }
-    }
-
-    .points-redeemed-label {
-      font-weight: 500;
-    }
-  }
-
-  .terms-container {
-    margin-top: 20px;
-    display: flex;
-    align-items: flex-start;
-
-    ::ng-deep .p-checkbox {
-      margin: 0.125rem 0.75rem 0 0;
-      @include mobile { margin-right: 0.5rem; }
-    }
-  }
-
-  .terms-text {
-    color: $azul;
-    font-weight: 500;
-  }
-
-  .terms-details {
-    font-size: 0.875rem;
-    color: $text-muted;
-    font-weight: 400;
-    margin-top: 0.5rem;
-    line-height: 1.25rem;
-    @include tablet { font-size: 0.8125rem; }
-  }
-
   .buttons-container {
-    @include flex-between;
-
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    @include responsive-margin(2rem, 1.75rem, 2rem);
+    
     .back-button {
-      margin-right: 1rem;
+      flex-shrink: 0;
     }
 
     .payment-button {
       flex-grow: 1;
-      max-width: 300px;
-
-      ::ng-deep .p-button {
-        border-radius: 50px;
-        height: 50px;
-      }
+      max-width: 300px;      
     }
   }
 }
@@ -323,11 +310,8 @@ $border-color: #e2e8f0;
     margin: 10px 0;
 
     &.p-button {
-      width: 150px;
-      border-radius: 100px;
-      height: 40px;
+      @include button-styles;
       background-color: var(--p-primary-color);
-      margin-top: 20px;
 
       &.p-disabled,
       &.payment-button-disabled {
@@ -337,14 +321,16 @@ $border-color: #e2e8f0;
 
       .p-button-label {
         font-weight: 500;
-        font-size: 1rem;
         @include flex-center;
         width: 100%;
+        @include responsive-font(0.9rem, 0.95rem, 1rem);
       }
     }
-
-    &.p-disabled {
-      opacity: 0.6;
+  }
+  
+  .back-button {
+    &.p-button {
+      @include button-styles;
     }
   }
 
@@ -352,61 +338,6 @@ $border-color: #e2e8f0;
     box-shadow: 0 0 0 0.2rem rgba($azul, 0.25) !important;
   }
 
-  @include mobile {
-    .p-radiobutton {
-      margin-right: 0.25rem;
-    }
-  }
-
-  .loading-container-scalapay {
-    @include flex-center;
-    flex-direction: column;
-    min-height: 300px;
-    padding: 2rem;
-
-    span {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 1.1rem;
-      color: #666;
-      margin-bottom: 1.5rem;
-
-      .scalapay-logo {
-        width: 80px;
-        height: auto;
-        vertical-align: middle;
-        display: inline-block;
-      }
-    }
-  }
-}
-
-// Estilos para el diálogo de cambio de precio
-.price-change-dialog {
-  ::ng-deep .p-dialog {
-    min-width: 500px;
-    max-width: 600px;
-    
-    .p-dialog-header {
-      background-color: #fff3cd;
-      border-bottom: 1px solid #ffeaa7;
-      
-      .p-dialog-title {
-        color: #856404;
-        font-weight: 600;
-      }
-    }
-    
-    .p-dialog-content {
-      padding: 1.5rem;
-    }
-    
-    .p-dialog-footer {
-      padding: 1rem 1.5rem;
-      border-top: 1px solid #dee2e6;
-    }
-  }
 }
 
 .price-change-content {

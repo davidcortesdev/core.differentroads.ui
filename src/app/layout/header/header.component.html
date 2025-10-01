@@ -1,4 +1,7 @@
 <!-- header.component.html -->
+<!-- Enlaces de navegación para SEO -->
+<app-seo-links [links]="headerNavigationLinks"></app-seo-links>
+
 <div class="header-wrapper">
   <div class="top-section">
     <p-menubar styleClass="top-menu">
@@ -42,7 +45,7 @@
     <!-- Para dispositivos móviles y tablets - un único menú combinado -->
     <ng-container *ngIf="isMobileView; else desktopMenus">
       <p-menubar styleClass="nav-menu" [model]="combinedMenuItems">
-        <!-- No separate templates for mobile view -->
+        
       </p-menubar>
     </ng-container>
     

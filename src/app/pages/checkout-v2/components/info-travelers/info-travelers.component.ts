@@ -93,6 +93,10 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
   @Output() formValidityChange = new EventEmitter<boolean>();
 
+  // NUEVO: Output para cambios en asignaciones de habitaciones
+  @Output() roomAssignmentsChange = new EventEmitter<{ [travelerId: number]: number }>();
+
+
   // Formulario reactivo principal
   travelersForm: FormGroup;
 
@@ -126,11 +130,26 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     };
   } = {};
 
+  // Fechas calculadas para cada viajero y campo
+  travelerFieldDates: {
+    [fieldCode: string]: {
+      [travelerId: number]: {
+        minDate: Date;
+        maxDate: Date;
+      };
+    };
+  } = {};
+
   private deletedFromDB: {
     [travelerId: number]: {
       [activityId: number]: boolean;
     };
   } = {};
+
+  // NUEVO: Propiedades para controlar el estado de guardado de actividades
+  private savingActivities: { [key: string]: boolean } = {};
+
+
 
   sexOptions = [
     { label: 'Masculino', value: 'M' },
@@ -152,42 +171,44 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   isCheckingFlightStatus: boolean = false;
 
   // Mensajes de error personalizados
-  errorMessages: { [key: string]: { [key: string]: string } } = {
+  // NUEVO: Mensajes de error como funciones para mejor manejo de parámetros
+  errorMessages: { [key: string]: { [key: string]: (params?: any) => string } } = {
     email: {
-      required: 'El correo electrónico es requerido.',
-      email: 'Ingresa un correo electrónico válido.',
+      required: () => 'El correo electrónico es requerido.',
+      email: () => 'Ingresa un correo electrónico válido.',
     },
     phone: {
-      required: 'El teléfono es requerido.',
-      pattern:
-        'Ingresa un número de teléfono válido. Puede incluir código de país.',
+      required: () => 'El teléfono es requerido.',
+      pattern: () => 'Ingresa un número de teléfono válido. Puede incluir código de país.',
     },
     text: {
-      required: 'Este campo es obligatorio.',
-      minlength: 'Debe tener al menos {minLength} caracteres.',
-      maxlength: 'No puede tener más de {maxLength} caracteres.',
-      pattern:
-        'Ingresa un número de teléfono válido. Puede incluir código de país.', // Para el campo phone con fieldType text
+      required: () => 'Este campo es obligatorio.',
+      minlength: (params) => `Debe tener al menos ${params.minLength} caracteres.`,
+      maxlength: (params) => `No puede tener más de ${params.maxLength} caracteres.`,
+      pattern: () => 'Ingresa un número de teléfono válido. Puede incluir código de país.',
     },
     number: {
-      required: 'Este campo es obligatorio.',
-      min: 'El valor mínimo es {min}.',
-      max: 'El valor máximo es {max}.',
+      required: () => 'Este campo es obligatorio.',
+      min: (params) => `El valor mínimo es ${params.min}.`,
+      max: (params) => `El valor máximo es ${params.max}.`,
     },
     date: {
-      required: 'Esta fecha es obligatoria.',
-      invalidDate: 'Fecha inválida.',
-      pastDate: 'La fecha debe ser anterior a hoy.',
-      futureDate: 'La fecha debe ser posterior a hoy.',
+      required: () => 'Esta fecha es obligatoria.',
+      invalidDate: () => 'Fecha inválida.',
+      pastDate: () => 'La fecha debe ser anterior a hoy.',
+      futureDate: () => 'La fecha debe ser posterior a hoy.',
+      birthdateTooRecent: () => 'La fecha de nacimiento no puede ser posterior a la fecha máxima permitida. La edad mínima para este grupo no corresponde.',
+      birthdateFuture: () => 'La fecha de nacimiento no puede ser futura.',
+      expirationDatePast: () => 'La fecha de expiración no puede ser anterior a hoy.'
     },
     sex: {
-      required: 'Debe seleccionar un sexo.',
+      required: () => 'Debe seleccionar un sexo.',
     },
     country: {
-      required: 'Debe seleccionar un país.',
+      required: () => 'Debe seleccionar un país.',
     },
     required: {
-      required: 'Este campo es obligatorio.',
+      required: () => 'Este campo es obligatorio.',
     },
   };
 
@@ -209,7 +230,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     private fb: FormBuilder,
     private reservationStatusService: ReservationStatusService,
     private reservationService: ReservationService,
-    private flightSearchService: FlightSearchService
+    private flightSearchService: FlightSearchService,
   ) {
     this.travelersForm = this.fb.group({
       travelers: this.fb.array([]),
@@ -218,10 +239,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
   ngOnInit(): void {
     if (this.departureId && this.reservationId) {
-      console.log('departureId:', this.departureId);
-      console.log('reservationId:', this.reservationId);
-      console.log('itineraryId:', this.itineraryId);
-
       // PRIMERO: Verificar si hay un vuelo seleccionado en Amadeus
       this.checkFlightSelectionStatus();
     } else {
@@ -247,12 +264,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         this.budgetStatusId = statuses.budgetStatus[0].id;
         this.draftStatusId = statuses.draftStatus[0].id;
         
-        console.log('Estados de reserva cargados:', {
-          cart: this.cartStatusId,
-          budget: this.budgetStatusId,
-          draft: this.draftStatusId
-        });
-        
         // Ahora verificar el estado actual de la reserva
         this.checkReservationStatus();
       },
@@ -270,48 +281,34 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   private checkReservationStatus(): void {
     this.reservationService.getById(this.reservationId!).subscribe({
       next: (reservation) => {
-        console.log('Estado actual de la reserva:', reservation.reservationStatusId);
-        
         if (reservation.reservationStatusId === this.budgetStatusId) {
-          console.log('Reserva en estado BUDGET');
           this.checkingReservationStatus = false;
-          // Cargar datos después de verificar el estado
           this.loadAllData();
         } else if (reservation.reservationStatusId === this.draftStatusId) {
-          console.log('Reserva en estado DRAFT');
-          console.log('Pasando a estado CART');
-          
           // Actualizar estado y luego cargar datos
           this.reservationService
             .updateStatus(this.reservationId!, this.cartStatusId!)
             .subscribe({
               next: (success) => {
                 if (success) {
-                  console.log('Estado actualizado correctamente a CART');
                   this.checkingReservationStatus = false;
-                  // Solo cargar datos después de actualizar el estado
                   this.loadAllData();
                 } else {
-                  console.error('Error al actualizar estado de la reserva');
                   this.error = 'Error al actualizar estado de la reserva';
                   this.checkingReservationStatus = false;
                 }
               },
               error: (error) => {
-                console.error('Error al actualizar estado:', error);
                 this.error = 'Error al actualizar estado de la reserva';
                 this.checkingReservationStatus = false;
               }
             });
         } else {
-          console.log('Reserva en otro estado, cargando datos directamente');
           this.checkingReservationStatus = false;
-          // Para otros estados, cargar datos directamente
           this.loadAllData();
         }
       },
       error: (error) => {
-        console.error('Error al obtener la reserva:', error);
         this.error = 'Error al obtener información de la reserva';
         this.checkingReservationStatus = false;
       }
@@ -319,12 +316,10 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('ngOnChanges - info-travelers:', changes);
     if (
       (changes['departureId'] && changes['departureId'].currentValue) ||
       (changes['reservationId'] && changes['reservationId'].currentValue)
     ) {
-      console.log('🔄 Recargando datos de info-travelers');
       if (this.departureId && this.reservationId) {
         // Reinicializar control de eliminados
         this.deletedFromDB = {};
@@ -393,7 +388,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         const validators = this.getValidatorsForField(
           fieldDetails,
           field,
-          traveler.isLeadTraveler
+          traveler.isLeadTraveler,
+          traveler
         );
 
         formGroup.addControl(
@@ -412,7 +408,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   private getValidatorsForField(
     fieldDetails: IReservationFieldResponse,
     field: IDepartureReservationFieldResponse,
-    isLeadTraveler: boolean
+    isLeadTraveler: boolean,
+    traveler: IReservationTravelerResponse
   ): any[] {
     const validators: any[] = [];
 
@@ -448,6 +445,30 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       case 'date':
         // Para campos de fecha, agregar validación de fecha válida
         validators.push(this.dateValidator());
+        
+        // NUEVO: Validación específica según el código del campo
+        // Detección más robusta de campos de fecha de nacimiento
+        const isBirthDate = fieldDetails.code.toLowerCase().includes('birth') || 
+                           fieldDetails.code.toLowerCase().includes('nacimiento') ||
+                           fieldDetails.name.toLowerCase().includes('nacimiento') ||
+                           fieldDetails.name.toLowerCase().includes('birth') ||
+                           fieldDetails.code.toLowerCase().includes('fecha_nacimiento') ||
+                           fieldDetails.code.toLowerCase().includes('birth_date');
+        
+        const isExpirationDate = fieldDetails.code.toLowerCase().includes('expir') || 
+                                fieldDetails.code.toLowerCase().includes('venc') ||
+                                fieldDetails.name.toLowerCase().includes('expiración') ||
+                                fieldDetails.name.toLowerCase().includes('vencimiento') ||
+                                fieldDetails.code.toLowerCase().includes('expiration') ||
+                                fieldDetails.code.toLowerCase().includes('expiry');
+        
+        if (isBirthDate) {
+          // Es fecha de nacimiento, usar validador con edad mínima
+          validators.push(this.birthdateValidator(traveler.ageGroupId));
+        } else if (isExpirationDate) {
+          // Es fecha de expiración, usar validador de expiración
+          validators.push(this.expirationDateValidator());
+        }
         break;
       case 'sex':
         // Para campos de sexo, validar que sea M o F
@@ -504,6 +525,218 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
+   * NUEVO: Validador para fecha de nacimiento con edad mínima por AgeGroup
+   */
+  private birthdateValidator(ageGroupId: number) {
+    return (control: FormControl): { [key: string]: any } | null => {
+      if (!control.value) {
+        return null; // Si no hay valor, la validación required se encargará
+      }
+
+      const ageGroup = this.ageGroups.find(group => group.id === ageGroupId);
+      if (!ageGroup || !ageGroup.lowerLimitAge) {
+        return null; // Si no hay AgeGroup o edad mínima, no validar
+      }
+
+      let date: Date;
+      if (control.value instanceof Date) {
+        date = control.value;
+      } else if (typeof control.value === 'string') {
+        if (control.value.includes('/')) {
+          // Formato dd/mm/yyyy
+          const parts = control.value.split('/');
+          if (parts.length === 3) {
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const year = parseInt(parts[2], 10);
+            date = new Date(year, month, day);
+          } else {
+            return { invalidDate: true };
+          }
+        } else {
+          date = new Date(control.value);
+        }
+      } else {
+        return { invalidDate: true };
+      }
+
+      if (isNaN(date.getTime())) {
+        return { invalidDate: true };
+      }
+
+      // Calcular fecha máxima permitida (hoy - edad mínima)
+      const today = new Date();
+      const maxDate = new Date(today.getFullYear() - ageGroup.lowerLimitAge, today.getMonth(), today.getDate());
+      
+      if (date > maxDate) {
+        return { 
+          birthdateTooRecent: true, 
+          minAge: ageGroup.lowerLimitAge,
+          maxAllowedDate: this.formatDateToDDMMYYYY(maxDate)
+        };
+      }
+
+      // No puede ser mayor a hoy
+      if (date > today) {
+        return { birthdateFuture: true };
+      }
+
+      return null;
+    };
+  }
+
+  /**
+   * Obtener fecha mínima para el campo de fecha basado en el age group
+   */
+  getMinDateForField(fieldCode: string, traveler: IReservationTravelerResponse): Date {
+    if (fieldCode === 'birthdate') {
+      const ageGroup = this.ageGroups.find(ag => ag.id === traveler.ageGroupId);
+      const today = new Date();
+      
+      if (ageGroup && ageGroup.upperLimitAge) {
+        // Para fechas de nacimiento: fecha mínima = hoy - edad máxima del age group
+        const minDate = new Date(today.getFullYear() - ageGroup.upperLimitAge, today.getMonth(), today.getDate());
+        return minDate;
+      } else {
+        // Si no hay límite superior, permitir fechas hasta 100 años atrás
+        const minDate = new Date(today.getFullYear() - 100, 0, 1);
+        return minDate;
+      }
+    } else if (fieldCode === 'expirationdate') {
+      // Para fechas de expiración: fecha mínima = hoy
+      const today = new Date();
+      return today;
+    }
+    
+    // Fecha por defecto: 100 años atrás
+    const today = new Date();
+    return new Date(today.getFullYear() - 100, 0, 1);
+  }
+
+  /**
+   * Obtener fecha máxima para el campo de fecha basado en el age group
+   */
+  getMaxDateForField(fieldCode: string, traveler: IReservationTravelerResponse): Date {
+    if (fieldCode === 'birthdate') {
+      const ageGroup = this.ageGroups.find(ag => ag.id === traveler.ageGroupId);
+      const today = new Date();
+      
+      if (ageGroup && ageGroup.lowerLimitAge) {
+        // Para fechas de nacimiento: fecha máxima = hoy - edad mínima del age group
+        const maxDate = new Date(today.getFullYear() - ageGroup.lowerLimitAge, today.getMonth(), today.getDate());
+        return maxDate;
+      } else {
+        // Si no hay límite inferior, permitir fechas hasta hoy
+        return today;
+      }
+    } else if (fieldCode === 'expirationdate') {
+      // Para fechas de expiración: fecha máxima = 30 años en el futuro
+      const today = new Date();
+      return new Date(today.getFullYear() + 30, 11, 31);
+    }
+    
+    // Fecha por defecto: hoy
+    return new Date();
+  }
+
+  /**
+   * Calcular y almacenar fechas para todos los viajeros y campos
+   */
+  private calculateTravelerFieldDates(): void {
+    // Limpiar fechas anteriores
+    this.travelerFieldDates = {};
+    
+    // Procesar cada campo de fecha
+    const dateFields = ['birthdate', 'expirationdate'];
+    
+    dateFields.forEach(fieldCode => {
+      this.travelerFieldDates[fieldCode] = {};
+      
+      this.travelers.forEach(traveler => {
+        const minDate = this.getMinDateForField(fieldCode, traveler);
+        const maxDate = this.getMaxDateForField(fieldCode, traveler);
+        
+        this.travelerFieldDates[fieldCode][traveler.id] = {
+          minDate: minDate,
+          maxDate: maxDate
+        };
+      });
+    });
+  }
+
+  /**
+   * Obtener fecha mínima almacenada para un campo específico
+   */
+  getStoredMinDate(fieldCode: string, travelerId: number): Date {
+    return this.travelerFieldDates[fieldCode]?.[travelerId]?.minDate || new Date(1924, 0, 1);
+  }
+
+  /**
+   * Obtener fecha máxima almacenada para un campo específico
+   */
+  getStoredMaxDate(fieldCode: string, travelerId: number): Date {
+    return this.travelerFieldDates[fieldCode]?.[travelerId]?.maxDate || new Date();
+  }
+
+  /**
+   * NUEVO: Validador para fechas de expiración
+   */
+  private expirationDateValidator() {
+    return (control: FormControl): { [key: string]: any } | null => {
+      if (!control.value) {
+        return null; // Si no hay valor, la validación required se encargará
+      }
+
+      let date: Date;
+      if (control.value instanceof Date) {
+        date = control.value;
+      } else if (typeof control.value === 'string') {
+        if (control.value.includes('/')) {
+          // Formato dd/mm/yyyy
+          const parts = control.value.split('/');
+          if (parts.length === 3) {
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const year = parseInt(parts[2], 10);
+            date = new Date(year, month, day);
+          } else {
+            return { invalidDate: true };
+          }
+        } else {
+          date = new Date(control.value);
+        }
+      } else {
+        return { invalidDate: true };
+      }
+
+      if (isNaN(date.getTime())) {
+        return { invalidDate: true };
+      }
+
+      // No puede ser anterior a hoy
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Resetear horas para comparar solo fechas
+      date.setHours(0, 0, 0, 0);
+
+      if (date < today) {
+        return { expirationDatePast: true };
+      }
+
+      return null;
+    };
+  }
+
+  /**
+   * NUEVO: Formatear fecha a dd/mm/yyyy
+   */
+  private formatDateToDDMMYYYY(date: Date): string {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  /**
    * Inicializa los formularios para todos los viajeros
    */
   private initializeTravelerForms(): void {
@@ -518,9 +751,12 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       this.travelerForms.push(travelerForm);
     });
 
-    // Emitir el estado de validez inicial
+    // Calcular fechas para cada viajero y campo
+    this.calculateTravelerFieldDates();
+
+    // NUEVO: Validación inicial en tiempo real
     setTimeout(() => {
-      this.emitFormValidity();
+      this.validateFormInRealTime();
     }, 50);
   }
 
@@ -567,6 +803,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
           // Cargar campos existentes primero, luego inicializar formularios
           this.loadExistingTravelerFields();
           this.loadOptionalActivitiesAndThenTravelerActivities();
+          
 
           this.loading = false;
         },
@@ -886,21 +1123,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         next: (responses) => {
           this.existingTravelerFields = responses.flat();
 
-          // Debug para campos existentes de fecha
-          const existingDateFields = this.existingTravelerFields.filter(
-            (field) => {
-              const fieldDetails = this.getReservationFieldDetails(
-                field.reservationFieldId
-              );
-              return fieldDetails?.fieldType === 'date';
-            }
-          );
-
           // Inicializar formularios con los valores existentes
           this.initializeTravelerForms();
-
-          // Debug: Log de tipos de campos para debugging
-          this.logFieldTypesForDebugging();
         },
         error: (error) => {
           // Error handling
@@ -1252,19 +1476,21 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Ordenar travelers con el lead traveler siempre primero
+   * También asegura que solo un viajero sea marcado como líder
    */
   private sortTravelersWithLeadFirst(
     travelers: IReservationTravelerResponse[]
   ): IReservationTravelerResponse[] {
-    return travelers.sort((a, b) => {
-      if (a.isLeadTraveler && !b.isLeadTraveler) {
-        return -1;
-      }
-      if (b.isLeadTraveler && !a.isLeadTraveler) {
-        return 1;
-      }
-      return a.travelerNumber - b.travelerNumber;
-    });
+    // Primero, asegurar que solo el primer viajero (por travelerNumber) sea el líder
+    const sortedTravelers = travelers.sort((a, b) => a.travelerNumber - b.travelerNumber);
+    
+    // Marcar solo el primer viajero como líder
+    const correctedTravelers = sortedTravelers.map((traveler, index) => ({
+      ...traveler,
+      isLeadTraveler: index === 0 // Solo el primer viajero es líder
+    }));
+    
+    return correctedTravelers;
   }
 
   /**
@@ -1272,7 +1498,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
    */
   reloadData(): void {
     if (this.departureId && this.reservationId) {
-      console.log('🔄 Recarga manual de datos solicitada');
       this.deletedFromDB = {};
       // Reiniciar estados de carga
       this.loading = false;
@@ -1309,6 +1534,15 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     const activity = this.optionalActivities.find((a) => a.id === activityId);
     return activity ? activity.name || 'Sin nombre' : '';
   }
+
+  /**
+   * NUEVO: Verificar si se está guardando una actividad específica
+   */
+  public isSavingActivity(travelerId: number, activityId: number): boolean {
+    const key = `${travelerId}_${activityId}`;
+    return !!this.savingActivities[key];
+  }
+
 
   /**
    * Obtener el tipo de la actividad por ID
@@ -1358,6 +1592,15 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     activityName: string,
     activityPrice: number
   ): void {
+    const key = `${travelerId}_${activityId}`;
+    
+    if (this.savingActivities[key]) {
+      console.log('⏳ Guardado de actividad en curso, esperando...');
+      return;
+    }
+
+    this.savingActivities[key] = true;
+
     const isCurrentlyAssigned = this.isTravelerActivityAssigned(
       travelerId,
       activityId
@@ -1365,6 +1608,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     const wasDeletedFromDB = this.deletedFromDB[travelerId]?.[activityId];
 
     if (isCurrentlyAssigned && !wasDeletedFromDB) {
+      this.savingActivities[key] = false;
       this.activitiesAssignmentChange.emit({
         travelerId,
         activityId,
@@ -1377,6 +1621,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
     const activity = this.optionalActivities.find((a) => a.id === activityId);
     if (!activity) {
+      this.savingActivities[key] = false;
       return;
     }
 
@@ -1394,6 +1639,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (response) => {
+            this.savingActivities[key] = false;
+            
             if (wasDeletedFromDB) {
               const existingPackIndex = this.travelerActivityPacks[
                 travelerId
@@ -1435,6 +1682,18 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             });
           },
           error: (error) => {
+            this.savingActivities[key] = false;
+            console.error('❌ Error guardando actividad:', error);
+            
+            // Revertir UI en caso de error
+            this.activitiesAssignmentChange.emit({
+              travelerId,
+              activityId,
+              isAssigned: false,
+              activityName,
+              activityPrice,
+            });
+
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
@@ -1457,6 +1716,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (response) => {
+            this.savingActivities[key] = false;
+            
             if (wasDeletedFromDB) {
               const existingActivityIndex = this.travelerActivities[
                 travelerId
@@ -1501,6 +1762,18 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             });
           },
           error: (error) => {
+            this.savingActivities[key] = false;
+            console.error('❌ Error guardando actividad:', error);
+            
+            // Revertir UI en caso de error
+            this.activitiesAssignmentChange.emit({
+              travelerId,
+              activityId,
+              isAssigned: false,
+              activityName,
+              activityPrice,
+            });
+
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
@@ -1523,6 +1796,15 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     activityName: string,
     activityPrice: number
   ): void {
+    const key = `${travelerId}_${activityId}`;
+    
+    if (this.savingActivities[key]) {
+      console.log('⏳ Eliminación de actividad en curso, esperando...');
+      return;
+    }
+
+    this.savingActivities[key] = true;
+
     const individualActivities = this.travelerActivities[travelerId] || [];
     const individualActivity = individualActivities.find(
       (activity) => activity.activityId === activityId
@@ -1539,6 +1821,9 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
+            this.savingActivities[key] = false;
+            
+            // Marcar como eliminada (deseleccionada)
             if (!this.deletedFromDB[travelerId]) {
               this.deletedFromDB[travelerId] = {};
             }
@@ -1551,12 +1836,17 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
               activityName,
               activityPrice,
             });
+
+            console.log(`✅ Actividad "${activityName}" deseleccionada`);
           },
           error: (error) => {
+            this.savingActivities[key] = false;
+            console.error('❌ Error eliminando actividad:', error);
+            
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
-              detail: `Error al eliminar ${activityName}: ${
+              detail: `Error al deseleccionar ${activityName}: ${
                 error.message || 'Error desconocido'
               }`,
               life: 5000,
@@ -1569,6 +1859,9 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
+            this.savingActivities[key] = false;
+            
+            // Marcar como eliminada (deseleccionada)
             if (!this.deletedFromDB[travelerId]) {
               this.deletedFromDB[travelerId] = {};
             }
@@ -1581,12 +1874,17 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
               activityName,
               activityPrice,
             });
+
+            console.log(`✅ Actividad "${activityName}" deseleccionada`);
           },
           error: (error) => {
+            this.savingActivities[key] = false;
+            console.error('❌ Error eliminando actividad:', error);
+            
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
-              detail: `Error al eliminar ${activityName}: ${
+              detail: `Error al deseleccionar ${activityName}: ${
                 error.message || 'Error desconocido'
               }`,
               life: 5000,
@@ -1594,6 +1892,14 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
           },
         });
     } else {
+      this.savingActivities[key] = false;
+      
+      // Marcar como eliminada para casos edge
+      if (!this.deletedFromDB[travelerId]) {
+        this.deletedFromDB[travelerId] = {};
+      }
+      this.deletedFromDB[travelerId][activityId] = true;
+      
       this.activitiesAssignmentChange.emit({
         travelerId,
         activityId,
@@ -1628,14 +1934,12 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
-   * Formatear fecha a dd/mm/yyyy
+   * Verificar si una actividad fue eliminada (deseleccionada)
    */
-  private formatDateToDDMMYYYY(date: Date): string {
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
+  isTravelerActivityDeleted(travelerId: number, activityId: number): boolean {
+    return this.deletedFromDB[travelerId]?.[activityId] || false;
   }
+
 
   /**
    * Parsear string dd/mm/yyyy a Date
@@ -1682,10 +1986,39 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       ?.get(controlName);
 
     if (control) {
-      // Forzar que el control se marque como modificado
+      // NUEVO: Forzar que el control se marque como modificado y actualizar el valor
+      control.setValue(value);
       control.markAsDirty();
       control.markAsTouched();
-      this.emitFormValidity();
+      
+      // NUEVO: Forzar la validación manualmente
+      control.updateValueAndValidity();
+      
+      
+      // NUEVO: Validación en tiempo real
+      this.validateFormInRealTime();
+    }
+  }
+
+  /**
+   * NUEVO: Manejar pérdida de foco en campo de fecha
+   */
+  onDateFieldBlur(travelerId: number, fieldCode: string): void {
+    const controlName = `${fieldCode}_${travelerId}`;
+    const control = this.travelerForms.controls
+      .find((form) => form instanceof FormGroup && form.get(controlName))
+      ?.get(controlName);
+
+    if (control) {
+      // Forzar que el control se marque como touched cuando pierde el foco
+      control.markAsTouched();
+      
+      // NUEVO: Forzar la validación manualmente
+      control.updateValueAndValidity();
+      
+      
+      // Validación en tiempo real
+      this.validateFormInRealTime();
     }
   }
 
@@ -1701,7 +2034,9 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     if (control) {
       control.markAsDirty();
       control.markAsTouched();
-      this.emitFormValidity();
+      
+      // NUEVO: Validación en tiempo real
+      this.validateFormInRealTime();
     }
   }
 
@@ -1724,7 +2059,9 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       control.setValue(filteredValue);
       control.markAsDirty();
       control.markAsTouched();
-      this.emitFormValidity();
+      
+      // NUEVO: Validación en tiempo real
+      this.validateFormInRealTime();
     }
   }
 
@@ -1812,37 +2149,19 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   /**
    * Obtiene el mensaje de error para un campo específico
    */
+  // NUEVO: Método simplificado para obtener mensajes de error usando funciones
   getErrorMessage(fieldCode: string, errors: any): string {
     if (!errors) return '';
 
     const fieldType = this.getFieldTypeByCode(fieldCode);
-    const errorMessages =
-      this.errorMessages[fieldType] || this.errorMessages['required'];
+    const errorMessages = this.errorMessages[fieldType] || this.errorMessages['required'];
 
     for (const errorKey in errors) {
-      if (errorMessages[errorKey]) {
-        let message = errorMessages[errorKey];
-
-        // Reemplazar placeholders en los mensajes
-        if (errorKey === 'minlength' && errors[errorKey]?.requiredLength) {
-          message = message.replace(
-            '{minLength}',
-            errors[errorKey].requiredLength
-          );
-        } else if (
-          errorKey === 'maxlength' &&
-          errors[errorKey]?.requiredLength
-        ) {
-          message = message.replace(
-            '{maxLength}',
-            errors[errorKey].requiredLength
-          );
-        } else if (errorKey === 'min' && errors[errorKey]?.min) {
-          message = message.replace('{min}', errors[errorKey].min);
-        } else if (errorKey === 'max' && errors[errorKey]?.max) {
-          message = message.replace('{max}', errors[errorKey].max);
-        }
-
+      const messageFunction = errorMessages[errorKey];
+      if (messageFunction) {
+        // NUEVO: Usar la función de mensaje con los parámetros del error
+        const params = errors[errorKey];
+        const message = messageFunction(params);
         return message;
       }
     }
@@ -1891,6 +2210,18 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
+   * Obtiene el valor de un campo específico
+   */
+  getFieldValue(travelerId: number, fieldCode: string): any {
+    const controlName = `${fieldCode}_${travelerId}`;
+    const control = this.travelerForms.controls
+      .find((form) => form instanceof FormGroup && form.get(controlName))
+      ?.get(controlName);
+
+    return control ? control.value : null;
+  }
+
+  /**
    * Marca todos los campos como touched para mostrar errores
    */
   markAllFieldsAsTouched(): void {
@@ -1912,6 +2243,19 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   private emitFormValidity(): void {
     const isValid = this.isFormValid();
     this.formValidityChange.emit(isValid);
+  }
+
+  /**
+   * NUEVO: Validación en tiempo real del formulario
+   */
+  private validateFormInRealTime(): void {
+    const isValid = this.areAllMandatoryFieldsCompleted();
+    this.formValidityChange.emit(isValid);
+    
+    // Mostrar errores inmediatamente si el formulario es inválido
+    if (!isValid) {
+      this.markAllFieldsAsTouched();
+    }
   }
 
   /**
@@ -1974,9 +2318,17 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             const controlName = `${fieldDetails.code}_${traveler.id}`;
             const control = travelerForm.get(controlName);
 
-            if (!control || !control.value || control.invalid) {
+            // NUEVO: Detección mejorada de errores de validación
+            if (!control || control.invalid) {
+              // Si no hay control o es inválido, agregar a la lista
+              const errorMessage = control?.errors ? this.getErrorMessage(fieldDetails.code, control.errors) : 'Campo requerido';
               missingFields.push(
-                `${fieldDetails.name} (Viajero ${traveler.travelerNumber})`
+                `${fieldDetails.name} (Viajero ${traveler.travelerNumber}): ${errorMessage}`
+              );
+            } else if (!control.value && this.isFieldMandatory(field, traveler.isLeadTraveler)) {
+              // Si no hay valor y es obligatorio, agregar a la lista
+              missingFields.push(
+                `${fieldDetails.name} (Viajero ${traveler.travelerNumber}): Campo requerido`
               );
             }
           }
@@ -1991,17 +2343,12 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
    * Muestra un toast informativo cuando faltan campos obligatorios
    */
   showMissingFieldsToast(): void {
-    console.log('=== DEBUG: showMissingFieldsToast iniciado ===');
-
     const missingFields = this.getMissingFieldsList();
-    console.log('Campos faltantes:', missingFields);
 
     if (missingFields.length > 0) {
       const message = `Por favor completa los siguientes campos obligatorios: ${missingFields.join(
         ', '
       )}`;
-
-      console.log('Mensaje del toast:', message);
 
       this.messageService.add({
         severity: 'warn',
@@ -2009,35 +2356,53 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         detail: message,
         life: 5000,
       });
-
-      console.log('Toast agregado al MessageService');
-    } else {
-      console.log('No hay campos faltantes');
     }
-
-    console.log('=== DEBUG: showMissingFieldsToast terminado ===');
   }
 
   /**
    * Valida el formulario y muestra toast si hay errores
    */
   validateFormAndShowToast(): boolean {
-    console.log('=== DEBUG: validateFormAndShowToast iniciado ===');
-
     const isValid = this.isFormValid();
-    console.log('Formulario válido:', isValid);
 
     if (!isValid) {
-      console.log('Formulario NO válido, marcando campos como touched...');
       this.markAllFieldsAsTouched();
-      console.log('Mostrando toast de campos faltantes...');
       this.showMissingFieldsToast();
-    } else {
-      console.log('Formulario válido, no se muestra toast');
     }
 
-    console.log('=== DEBUG: validateFormAndShowToast terminado ===');
     return isValid;
+  }
+
+  /**
+   * Fuerza la validación de todos los campos y marca como touched
+   */
+  forceValidation(): void {
+    this.markAllFieldsAsTouched();
+    this.validateFormInRealTime();
+  }
+
+  /**
+   * Obtiene el estado de validación de un campo específico
+   */
+  getFieldValidationState(travelerId: number, fieldCode: string): 'valid' | 'invalid' | 'empty' | 'untouched' {
+    const controlName = `${fieldCode}_${travelerId}`;
+    const control = this.travelerForms.controls
+      .find((form) => form instanceof FormGroup && form.get(controlName))
+      ?.get(controlName);
+
+    if (!control) {
+      return 'untouched';
+    }
+
+    if (!control.touched && !control.dirty) {
+      return 'untouched';
+    }
+
+    if (!control.value || control.value === '') {
+      return 'empty';
+    }
+
+    return control.valid ? 'valid' : 'invalid';
   }
 
   /**
@@ -2070,70 +2435,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     return debugInfo;
   }
 
-  /**
-   * Console log para debugging de tipos de campos
-   */
-  logFieldTypesForDebugging(): void {
-    console.log('=== DEBUG: Tipos de campos disponibles ===');
 
-    if (this.reservationFields) {
-      this.reservationFields.forEach((field) => {
-        console.log(
-          `Campo: ${field.name} (${field.code}) - Tipo: ${field.fieldType}`
-        );
-      });
-    }
 
-    if (this.departureReservationFields) {
-      console.log('=== DEBUG: Campos de departure ===');
-      this.departureReservationFields.forEach((field) => {
-        const fieldDetails = this.getReservationFieldDetails(
-          field.reservationFieldId
-        );
-        console.log(
-          `Departure Field: ${
-            fieldDetails?.name
-          } - Mandatory: ${this.isFieldMandatory(field, false)}`
-        );
-      });
-    }
-  }
-
-  /**
-   * Método de prueba para verificar que el toast funciona
-   */
-  testToast(): void {
-    this.messageService.add({
-      severity: 'info',
-      summary: 'Prueba de Toast',
-      detail:
-        'Este es un mensaje de prueba para verificar que el toast funciona correctamente',
-      life: 3000,
-    });
-  }
-
-  /**
-   * Método para debuggear los tipos de campo de teléfono
-   */
-  debugPhoneFieldTypes(): void {
-    console.log('=== DEBUG: Tipos de campo de teléfono ===');
-    this.departureReservationFields.forEach((field) => {
-      const fieldDetails = this.getReservationFieldDetails(
-        field.reservationFieldId
-      );
-      if (fieldDetails && fieldDetails.code.toLowerCase().includes('phone')) {
-        console.log(
-          'Campo:',
-          fieldDetails.name,
-          'Código:',
-          fieldDetails.code,
-          'Tipo:',
-          fieldDetails.fieldType
-        );
-      }
-    });
-    console.log('=== FIN DEBUG ===');
-  }
 
   /**
    * Obtiene información sobre los requisitos de reserva de Amadeus
@@ -2229,6 +2532,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     return mandatoryFields;
   }
 
+
   /**
    * Obtiene información de debugging sobre los campos obligatorios
    */
@@ -2269,31 +2573,24 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
    */
   private checkFlightSelectionStatus(): void {
     if (!this.reservationId) {
-      console.log('No hay reservationId, continuando con carga normal...');
       this.loadReservationStatuses();
       return;
     }
 
-    console.log('=== Verificando estado de selección de vuelos en Amadeus ===');
     this.isCheckingFlightStatus = true;
 
     this.flightSearchService.getSelectionStatus(this.reservationId).subscribe({
       next: (hasSelection: boolean) => {
-        console.log('Estado de selección de vuelos:', hasSelection);
         this.hasFlightSelected = hasSelection;
 
         if (hasSelection) {
-          console.log('✅ Vuelo seleccionado encontrado, obteniendo requisitos de reserva...');
           this.getAmadeusBookingRequirements();
         } else {
-          console.log('ℹ️ No hay vuelo seleccionado, continuando con carga normal...');
           this.isCheckingFlightStatus = false;
           this.loadReservationStatuses();
         }
       },
       error: (error) => {
-        console.error('❌ Error al verificar estado de selección de vuelos:', error);
-        console.log('⚠️ Continuando con carga normal debido al error...');
         this.isCheckingFlightStatus = false;
         this.loadReservationStatuses();
       }
@@ -2301,27 +2598,30 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
+   * NUEVO: Manejar cambios en asignaciones de habitaciones desde el componente hijo
+   */
+  onRoomAssignmentsChange(roomAssignments: { [travelerId: number]: number }): void {
+    // Emitir el evento al componente padre
+    this.roomAssignmentsChange.emit(roomAssignments);
+  }
+
+  /**
    * Obtiene los requisitos de reserva de Amadeus para la reserva actual
    */
   private getAmadeusBookingRequirements(): void {
     if (!this.reservationId) {
-      console.log('No hay reservationId, continuando con carga normal...');
       this.isCheckingFlightStatus = false;
       this.loadReservationStatuses();
       return;
     }
 
-    console.log('=== Obteniendo requisitos de reserva de Amadeus ===');
-
     this.flightSearchService.getBookingRequirements(this.reservationId).subscribe({
       next: (requirements: IBookingRequirements) => {
-        console.log('✅ Requisitos de reserva obtenidos:', requirements);
         this.amadeusBookingRequirements = requirements;
         this.isCheckingFlightStatus = false;
 
         // Si ya tenemos formularios inicializados, reinicializarlos para aplicar las nuevas validaciones
         if (this.travelerForms.length > 0) {
-          console.log('🔄 Reinicializando formularios con nuevos requisitos de Amadeus...');
           this.initializeTravelerForms();
         }
 
@@ -2329,12 +2629,12 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         this.loadReservationStatuses();
       },
       error: (error) => {
-        console.error('❌ Error al obtener requisitos de reserva:', error);
-        console.log('⚠️ Continuando con carga normal debido al error...');
         this.amadeusBookingRequirements = null;
         this.isCheckingFlightStatus = false;
         this.loadReservationStatuses();
       }
     });
   }
+
+
 }

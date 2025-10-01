@@ -89,6 +89,9 @@ export class ActivitiesOptionalsComponent
   private saveTimeout: any;
   private activitiesByTravelerLoaded: boolean = false;
 
+  // NUEVO: contador de operaciones pendientes para sincronización con backend
+  private pendingOperationsCount: number = 0;
+
   constructor(
     private activityService: ActivityService,
     private activityPriceService: ActivityPriceService,
@@ -383,6 +386,7 @@ export class ActivitiesOptionalsComponent
 
     this.setActivityLoading(item, true);
 
+    this.pendingOperationsCount++;
     this.reservationTravelerService
       .getByReservation(this.reservationId!)
       .subscribe({
@@ -459,6 +463,9 @@ export class ActivitiesOptionalsComponent
             error: 'Error al obtener viajeros',
           });
         },
+        complete: () => {
+          this.pendingOperationsCount = Math.max(0, this.pendingOperationsCount - 1);
+        }
       });
   }
 
@@ -467,6 +474,7 @@ export class ActivitiesOptionalsComponent
 
     this.setActivityLoading(item, true);
 
+    this.pendingOperationsCount++;
     this.reservationTravelerService
       .getByReservation(this.reservationId!)
       .subscribe({
@@ -575,6 +583,9 @@ export class ActivitiesOptionalsComponent
             error: 'Error al obtener viajeros',
           });
         },
+        complete: () => {
+          this.pendingOperationsCount = Math.max(0, this.pendingOperationsCount - 1);
+        }
       });
   }
 
@@ -621,6 +632,20 @@ export class ActivitiesOptionalsComponent
     });
   }
 
+  // NUEVO: método público para esperar a que no haya operaciones pendientes
+  async waitForPendingSaves(timeoutMs: number = 4000): Promise<void> {
+    const start = Date.now();
+    while (this.pendingOperationsCount > 0) {
+      if (Date.now() - start > timeoutMs) {
+        break;
+      }
+      await new Promise((res) => setTimeout(res, 100));
+    }
+  }
+
+  /**
+   * 🔥 NUEVO: Getter para obtener las actividades seleccionadas
+   */
   get selectedActivities(): ActivityWithPrice[] {
     return this.optionalActivities.filter((activity) =>
       this.addedActivities.has(activity.id)

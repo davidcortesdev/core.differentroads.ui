@@ -1,0 +1,80 @@
+<div class="home-v2-container">
+  <!-- Estado de error -->
+  <div *ngIf="hasError" class="error-state">
+    <p>Error al cargar el contenido. Intente nuevamente.</p>
+  </div>
+
+  <!-- Contenido principal -->
+  <div *ngIf="!isLoading && !hasError">
+    
+    <!-- Secciones fijas al principio -->
+    <!-- BANNER SECTION (ID: 1) - SIEMPRE FIJA -->
+    <app-hero-section-v2 
+      *ngIf="getBannerConfiguration()"
+      [configurationId]="getBannerConfiguration()!.id">
+    </app-hero-section-v2>
+
+    <!-- Tipos de viaje - SIEMPRE FIJA -->
+    <app-trip-types-section-v2></app-trip-types-section-v2>
+
+    <!-- Secciones dinámicas ordenadas por displayOrder (excluyendo banner) -->
+    <ng-container *ngFor="let config of getOrderedConfigurationsExcludingBanner()">
+      
+      <!-- TOUR CAROUSEL SECTION (ID: 2) -->
+      <app-tour-carrussel-v2
+        *ngIf="getComponentType(config.homeSectionId) === 'tour-carousel'"
+        [configurationId]="config.id">
+      </app-tour-carrussel-v2>
+
+      <!-- TOUR GRID SECTION (ID: 3) -->
+      <app-tour-list-v2
+        *ngIf="getComponentType(config.homeSectionId) === 'tour-grid'"
+        [configurationId]="config.id">
+      </app-tour-list-v2>
+
+      <!-- FULLSCREEN CARDS SECTION (ID: 4) -->
+      <app-full-card-section-v2
+        *ngIf="getComponentType(config.homeSectionId) === 'fullscreen-cards'"
+        [configurationId]="config.id">
+      </app-full-card-section-v2>
+
+      <!-- MIXED SECTION (ID: 5) -->
+      <app-carousel-section-v2
+        *ngIf="getComponentType(config.homeSectionId) === 'mixed-section'"
+        [configurationId]="config.id">
+      </app-carousel-section-v2>
+
+      <!-- TRAVELER SECTION (ID: 6) -->
+      <app-community-section-v2
+        *ngIf="getComponentType(config.homeSectionId) === 'traveler-section'"
+        [configurationId]="config.id">
+      </app-community-section-v2>
+
+      <!-- REVIEWS SECTION (ID: 7) -->
+      <app-reviews-section-v2
+        *ngIf="getComponentType(config.homeSectionId) === 'reviews-section'"
+        [configurationId]="config.id">
+      </app-reviews-section-v2>
+
+      <!-- FEATURED SECTION (ID: 8) -->
+      <app-highlight-section-v2
+        *ngIf="getComponentType(config.homeSectionId) === 'featured-section'"
+        [configurationId]="config.id">
+      </app-highlight-section-v2>
+
+      <!-- PARTNERS SECTION (ID: 10) -->
+      <app-partners-section-v2
+        *ngIf="getComponentType(config.homeSectionId) === 'partners-section'"
+        [configurationId]="config.id">
+      </app-partners-section-v2>
+
+      <!-- PUBLICITY SECTION (ID: 11) -->
+      <app-publicity-section-v2
+        *ngIf="getComponentType(config.homeSectionId) === 'publicity-section'"
+        [configurationId]="config.id">
+      </app-publicity-section-v2>
+
+    </ng-container>
+
+  </div>
+</div>

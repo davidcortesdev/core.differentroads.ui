@@ -1,0 +1,20 @@
+<section class="tours-section">
+  <h2 class="title">{{ title }}</h2>
+  <p-carousel
+    [value]="tours"
+    [numVisible]="5"
+    [numScroll]="1"
+    [circular]="true"
+    [responsiveOptions]="responsiveOptions"
+    [showNavigators]="false"
+    [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
+  >
+    <ng-template let-tour pTemplate="item">
+      <app-tour-card-v2
+        [tourData]="tour"
+        [showScalapayPrice]="true"
+        [isLargeCard]="true"
+      ></app-tour-card-v2>
+    </ng-template>
+  </p-carousel>
+</section>

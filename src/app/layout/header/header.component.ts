@@ -5,6 +5,7 @@ import {
   ElementRef,
   Renderer2,
 } from '@angular/core';
+import { HEADER_NAVIGATION_LINKS } from '../../shared/constants/seo-links.constants';
 import { MenuItem } from 'primeng/api';
 import { LanguageService } from '../../core/services/language.service';
 import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
@@ -39,6 +40,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private documentClickListener: Function | null = null;
   isLoadingMenu = true;
   isLoadingUser = false;
+  
+  // Enlaces de navegación para SEO
+  headerNavigationLinks = HEADER_NAVIGATION_LINKS;
 
   // Estado para controlar la visibilidad y transiciones
   showUserInfo = false;
@@ -345,7 +349,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
                 this.chipLabel = `Hola, ${displayName}`;
                 this.chipImage = ''; // El nuevo modelo no tiene profileImage
-                this.setUserMenuItems();
+                this.setUserMenuItems(user.id.toString());
 
                 // Asegurar que el estado se actualice correctamente
                 this.isLoadingUser = false;
@@ -375,12 +379,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
   /**
    * Configura los elementos del menú de usuario
    */
-  private setUserMenuItems(): void {
+  private setUserMenuItems(userId?: string | undefined): void {
     this.userMenuItems = [
       {
         label: 'Ver Perfil',
         icon: 'pi pi-user',
-        command: () => this.authService.navigateToProfile(),
+        command: () => this.authService.navigateToProfile(userId || ''),
       },
       {
         label: 'Desconectar',

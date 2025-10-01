@@ -33,7 +33,7 @@ import { FlightsService } from '../../../../core/services/checkout/flights.servi
 
 import { PeriodsService } from '../../../../core/services/periods.service';
 import { UsersService } from '../../../../core/services/users.service';
-import { PointsCalculatorService } from '../../../../core/services/checkout/points-calculator.service';
+import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
 interface TravelerWithPoints {
   id: string;
   firstName: string;
@@ -133,7 +133,7 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     private flightsService: FlightsService,
     private periodsService: PeriodsService,
     private usersService: UsersService,
-    private pointsCalculator: PointsCalculatorService
+    private pointsV2Service: PointsV2Service
   ) {}
 
   ngOnInit() {
@@ -230,14 +230,14 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
   // Los siguientes métodos permanecen exactamente como estaban en el original
 
   loadScalapayScript() {
-    if (
-      !this.document.querySelector('script[src*="scalapay-widget-loader.js"]')
-    ) {
-      const script = this.document.createElement('script');
-      script.type = 'module';
-      script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js';
-      this.document.head.appendChild(script);
-    }
+    // if (
+    //   !this.document.querySelector('script[src*="scalapay-widget-loader.js"]')
+    // ) {
+    //   const script = this.document.createElement('script');
+    //   script.type = 'module';
+    //   script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js';
+    //   this.document.head.appendChild(script);
+    // }
   }
 
   toggleDropdown() {
@@ -975,11 +975,11 @@ export class PaymentComponent implements OnInit, OnChanges, OnDestroy {
     if (adultTravelers.length === 0) return 0;
     console.log(
       'puntos totales',
-      this.pointsCalculator.calculateEarnedPoints(this.subtotalPrice),
+      this.pointsV2Service.calculatePointsFromAmount(this.subtotalPrice),
       ',totalprice',
       this.subtotalPrice
     );
-    return this.pointsCalculator.calculateEarnedPoints(this.subtotalPrice);
+    return this.pointsV2Service.calculatePointsFromAmount(this.subtotalPrice);
   }
 
   async createReservationPoints(

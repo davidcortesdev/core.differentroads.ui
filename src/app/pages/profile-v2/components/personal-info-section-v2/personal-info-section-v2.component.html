@@ -1,0 +1,226 @@
+<!-- Mostrar información personal o formulario de edición -->
+<div *ngIf="!isEditing">
+  <p-panel class="avatar-panel">
+    <div class="avatar-name-section">
+      <p-avatar
+        *ngIf="personalInfo"
+        [icon]="personalInfo.avatarUrl != '' ? '' : 'pi pi-user'"
+        [image]="personalInfo.avatarUrl || ''"
+        size="xlarge"
+        shape="circle"
+        [style]="{ width: '100px', height: '100px' }"
+      ></p-avatar>
+      <h3 *ngIf="personalInfo">{{ personalInfo.nombre}} {{personalInfo.apellido}}</h3>
+    </div>
+  </p-panel>
+  
+  <p-panel class="datos-panel">
+    <ng-template pTemplate="header">
+      <div class="panel-header">
+        <span>Datos personales</span>
+        <button class="edit-button" (click)="toggleEditMode()">
+          <i class="pi pi-pen-to-square"></i>
+        </button>
+      </div>
+    </ng-template>
+  
+    <p-divider></p-divider>
+  
+    <div class="info-grid" *ngIf="personalInfo">
+      <!-- Datos de contacto -->
+      <div class="info-item">
+        <span class="label">Teléfono:</span>
+        <span class="value" [class.pending]="!personalInfo.telefono">
+          {{ personalInfo.telefono || 'Pendiente' }}
+        </span>
+      </div>
+      <div class="info-item">
+        <span class="label">Email:</span>
+        <span class="value" [class.pending]="!personalInfo.email">
+          {{ personalInfo.email || 'Pendiente' }}
+        </span>
+      </div>
+  
+      <!-- Datos personales -->
+      <div class="info-item">
+        <span class="label">Sexo:</span>
+        <span class="value" [class.pending]="!personalInfo.sexo">
+          {{ personalInfo.sexo || 'Pendiente' }}
+        </span>
+      </div>
+      <div class="info-item">
+        <span class="label">Fecha de nacimiento:</span>
+        <span class="value" [class.pending]="!personalInfo.fechaNacimiento">
+          {{ personalInfo.fechaNacimiento || 'Pendiente' }}
+        </span>
+      </div>
+      <div class="info-item">
+        <span class="label">Ciudad:</span>
+        <span class="value" [class.pending]="!personalInfo.ciudad">
+          {{ personalInfo.ciudad || 'Pendiente' }}
+        </span>
+      </div>
+      <div class="info-item">
+        <span class="label">Código postal:</span>
+        <span class="value" [class.pending]="!personalInfo.codigoPostal">
+          {{ personalInfo.codigoPostal || 'Pendiente' }}
+        </span>
+      </div>
+      <div class="info-item">
+        <span class="label">Nacionalidad:</span>
+        <span class="value" [class.pending]="!personalInfo.nacionalidad">
+          {{ personalInfo.nacionalidad || 'Pendiente' }}
+        </span>
+      </div>
+  
+      <p-divider></p-divider>
+  
+      <!-- DNI -->
+      <div class="info-item">
+        <span class="label">DNI:</span>
+        <span class="value" [class.pending]="!personalInfo.dni">
+          {{ personalInfo.dni || 'Pendiente' }}
+        </span>
+      </div>
+  
+      <p-divider></p-divider>
+  
+      <!-- Datos Pasaporte -->
+      <div class="info-item">
+        <span class="label">Pasaporte:</span>
+        <span class="value" [class.pending]="!personalInfo.pasaporte">
+          {{ personalInfo.pasaporte || 'Pendiente' }}
+        </span>
+      </div>
+    </div>
+  
+    <div class="alert-message">
+      <i class="pi pi-info-circle"></i>
+      <span>Completa tus datos personales pendientes antes de tu viaje. Estos datos son necesarios para la emisión de tus billetes.</span>
+    </div>
+  </p-panel>
+</div>
+
+<!-- Mostrar formulario de edición -->
+<app-update-profile-section-v2 
+  *ngIf="isEditing"
+  [userId]="userId"
+  [personalInfo]="personalInfo"
+  (cancelEdit)="toggleEditMode()">
+</app-update-profile-section-v2>
+
+<!-- Sección de Cambio de Contraseña (siempre visible) -->
+<p-panel class="password-panel">
+  <ng-template pTemplate="header">
+    <div class="panel-header">
+      <span>Cambiar contraseña</span>
+    </div>
+  </ng-template>
+  
+  <p-divider></p-divider>
+  
+  <div class="password-container">
+    <!-- Paso 1: Enviar código de verificación -->
+    <div *ngIf="!isCodeSent" class="verification-step">
+      <div class="button-container">
+        <p-button
+          label="Enviar código de verificación"
+          styleClass="p-button-outlined p-button-sm"
+          (onClick)="sendVerificationCode()"
+          [loading]="isSendingCode"
+          [disabled]="isSendingCode"
+          icon="pi pi-send"
+        >
+        </p-button>
+      </div>
+    </div>
+
+    <!-- Paso 2: Ingresar código y nueva contraseña -->
+    <div *ngIf="isCodeSent" class="password-form">
+      <p class="step-description">
+        Hemos enviado un código de verificación a tu email. 
+        Ingresa el código y tu nueva contraseña.
+      </p>
+      
+      <form (ngSubmit)="onPasswordSubmit()">
+        <div class="form-field">
+          <label for="verificationCode">Código de verificación:</label>
+          <input
+            id="verificationCode"
+            pInputText
+            [(ngModel)]="verificationData.code"
+            name="verificationCode"
+            placeholder="Ingrese el código de 6 dígitos"
+            maxlength="6"
+            (input)="onVerificationCodeInput($event)"
+            [class.error]="hasPasswordError('code')"
+            autocomplete="one-time-code"
+            inputmode="numeric"
+          />
+          <small class="error-message" *ngIf="hasPasswordError('code')">
+            {{ getPasswordError('code') }}
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label for="newPassword">Nueva contraseña:</label>
+          <p-password
+            id="newPassword"
+            [(ngModel)]="verificationData.newPassword"
+            name="newPassword"
+            placeholder="Ingrese su nueva contraseña"
+            [toggleMask]="true"
+            [feedback]="false"
+            [class.error]="hasPasswordError('newPassword')"
+            (ngModelChange)="onNewPasswordChange($event)"
+            autocomplete="new-password"
+            ngDefaultControl
+          ></p-password>
+          <small class="error-message" *ngIf="hasPasswordError('newPassword')">
+            {{ getPasswordError('newPassword') }}
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label for="confirmPassword">Confirmar nueva contraseña:</label>
+          <p-password
+            id="confirmPassword"
+            [(ngModel)]="verificationData.confirmPassword"
+            name="confirmPassword"
+            placeholder="Confirme su nueva contraseña"
+            [toggleMask]="true"
+            [feedback]="false"
+            [class.error]="hasPasswordError('confirmPassword')"
+            (ngModelChange)="onConfirmPasswordChange($event)"
+            autocomplete="new-password"
+            ngDefaultControl
+          ></p-password>
+          <small class="error-message" *ngIf="hasPasswordError('confirmPassword')">
+            {{ getPasswordError('confirmPassword') }}
+          </small>
+        </div>
+
+        <div class="button-container">
+          <div class="btn-save">
+            <p-button
+              label="Cambiar Contraseña"
+              styleClass="p-button-outlined p-button-sm"
+              type="submit"
+              [loading]="isPasswordLoading"
+              [disabled]="isPasswordLoading"
+            >
+            </p-button>
+          </div>
+          <div class="btn-cancel">
+            <p-button
+              label="Cancelar"
+              (onClick)="cancelPasswordChange()"
+              icon="pi pi-times"
+            >
+            </p-button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</p-panel>

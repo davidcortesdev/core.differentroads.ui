@@ -46,8 +46,8 @@
             <app-selector-traveler
               [departureId]="departureId"
               [reservationId]="reservationId"
-              [availableTravelers]="['Adultos', 'Niños', 'Bebés']"
-              (travelersNumbersChange)="onTravelersNumbersChange($event)"
+              [availableTravelers]="[]"
+              (ageGroupCountsChange)="onAgeGroupCountsChange($event)"
               (saveStatusChange)="onTravelerSelectorSaveStatusChange($event)"
               (saveCompleted)="onTravelerSelectorSaveCompleted($event)"
               #travelerSelector
@@ -65,6 +65,7 @@
 
             <!-- Componente actividades opcionales -->
             <app-activities-optionals
+              #activitiesOptionals
               [itineraryId]="itineraryId"
               [departureId]="departureId"
               [reservationId]="reservationId"
@@ -89,6 +90,8 @@
                 label="Continuar"
                 icon="pi pi-arrow-right"
                 iconPos="right"
+                [loading]="isStep0Saving"
+                [disabled]="isStep0Saving"
                 (onClick)="nextStepWithValidation(1)"
               ></p-button>
             </div>
@@ -149,6 +152,7 @@
               (activitiesAssignmentChange)="
                 onActivitiesAssignmentChange($event)
               "
+              (roomAssignmentsChange)="onRoomAssignmentsChange($event)"
               #infoTravelers
             >
             </app-info-travelers>
@@ -173,6 +177,7 @@
               [reservationId]="reservationId ?? 0"
               [departureDate]="departureDate"
               (navigateToStep)="onNavigateToStep($event)"
+              (pointsDiscountChange)="onPointsDiscountChange($event)"
             >
             </app-payment-management>
           </div>
@@ -237,9 +242,8 @@
     <div class="right-column">
       <!-- Resumen del pedido usando SummaryTableComponent -->
       <app-summary-table
-        [summary]="summary"
-        [subtotal]="subtotal"
-        [total]="totalAmountCalculated"
+        [reservationId]="reservationId || undefined"
+        [refreshTrigger]="summaryRefreshTrigger"
         [isAuthenticated]="false"
         [selectedFlight]="selectedFlight"
         [showPointsSection]="false"
@@ -247,6 +251,7 @@
         [showFlightSection]="true"
         [currency]="'EUR'"
         [title]="'Resumen del pedido'"
+        [pointsDiscount]="pointsDiscount"
       >
       </app-summary-table>
     </div>

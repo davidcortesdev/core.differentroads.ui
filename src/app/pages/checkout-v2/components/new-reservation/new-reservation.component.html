@@ -24,13 +24,13 @@
       "
     ></span>
     <h1 *ngIf="status === 'SUCCESS'">
-      ¡Tu reserva con número {{ reservation?.id }} ha sido confirmada!
+      ¡Reserva Confirmada! Número {{ reservation?.id }}
     </h1>
     <h1 *ngIf="status === 'PENDING' && paymentType !== 'Transfer'">
-      ¡Tu reserva con número #{{ reservation?.id }} está en petición!
+      Reserva Pendiente de Confirmación #{{ reservation?.id }}
     </h1>
     <h1 *ngIf="paymentType === 'Transfer'">
-      Confirma tu petición de reserva realizando el pago por transferencia
+      Confirmar Reserva con Transferencia Bancaria
     </h1>
   </div>
 
@@ -199,7 +199,8 @@
 
   <!-- Panel de información de vuelos -->
   <app-section-flight 
-    [departureId]="reservation?.departureId">
+    [departureId]="reservation?.departureId"
+    [reservationId]="reservationId">
   </app-section-flight>
 
   <!-- Panel de resumen de precios -->
@@ -471,7 +472,7 @@
     class="pi pi-exclamation-triangle"
     style="font-size: 3rem; color: #f05a4c"
   ></i>
-  <h2>No se pudo cargar la información de la reserva</h2>
+  <h2>Error en nueva reserva - Datos no disponibles</h2>
   <p>
     Por favor, inténtalo de nuevo más tarde o ponte en contacto con nuestro
     equipo de soporte.

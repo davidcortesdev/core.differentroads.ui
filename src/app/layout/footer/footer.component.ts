@@ -223,6 +223,9 @@ export class FooterComponent implements OnInit, AfterViewInit, OnDestroy {
       if (titleElement) this.renderer.setStyle(titleElement, 'display', 'none');
 
       this.isSubscribed = true;
+      
+      // Disparar evento generated_lead cuando la suscripción sea exitosa
+      this.trackGeneratedLead(email);
     }, 2000);
   }
 
@@ -256,6 +259,20 @@ export class FooterComponent implements OnInit, AfterViewInit, OnDestroy {
       clickElement,
       contactUrl,
       this.getUserData()
+    );
+  }
+
+  /**
+   * Disparar evento generated_lead cuando la suscripción a newsletter sea exitosa
+   */
+  private trackGeneratedLead(email: string): void {
+    this.analyticsService.generatedLead(
+      'Newsletter',
+      this.analyticsService.getUserData(
+        email,
+        undefined, // No tenemos teléfono en la suscripción
+        this.authService.getCognitoIdValue()
+      )
     );
   }
 

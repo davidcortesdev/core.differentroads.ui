@@ -299,6 +299,7 @@ import { UpdateProfileSectionV2Component } from './pages/profile-v2/components/u
 import { NewsLetterSectionV2Component } from './pages/home-v2/components/community-section-v2/components/newsletter-section-v2/newsletter-section-v2.component';
 import { HeaderV2Component } from './layout/header-v2/header-v2.component';
 import { SeoLinksComponent } from './shared/components/seo-links/seo-links.component';
+import { ConsentBannerComponent } from './shared/components/consent-banner/consent-banner.component';
 
 // Services
 import { RetailerService } from './core/services/retailer/retailer.service';
@@ -506,6 +507,7 @@ registerLocaleData(localeEs);
     BalanceInfoComponent,
     LoadingSectionComponent,
     SeoLinksComponent,
+    ConsentBannerComponent,
   ],
   imports: [
     // Angular Modules

@@ -141,14 +141,14 @@
         <p>
           <a 
             href="tel:{{ contactInfo.PHONE }}" 
-            (click)="onFooterInteraction('Teléfono')"
+            (click)="onContactClick('Teléfono', 'tel:' + contactInfo.PHONE)"
             style="color: inherit; text-decoration: none;"
           >{{ contactInfo.PHONE }}</a>
         </p>
         <p>
           <a 
             href="mailto:{{ contactInfo.EMAIL }}" 
-            (click)="onFooterInteraction('Email')"
+            (click)="onContactClick('Email', 'mailto:' + contactInfo.EMAIL)"
             style="color: inherit; text-decoration: none;"
           >{{ contactInfo.EMAIL }}</a>
         </p>

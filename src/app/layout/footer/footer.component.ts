@@ -249,6 +249,17 @@ export class FooterComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
+   * Disparar evento click_contact cuando el usuario hace clic en elementos de contacto
+   */
+  onContactClick(clickElement: string, contactUrl: string): void {
+    this.analyticsService.clickContact(
+      clickElement,
+      contactUrl,
+      this.getUserData()
+    );
+  }
+
+  /**
    * Obtener datos del usuario para analytics
    */
   private getUserData() {

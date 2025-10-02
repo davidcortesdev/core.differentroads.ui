@@ -15,6 +15,7 @@ import { UsersService } from '../../../core/services/users.service';
 import { Subscription } from 'rxjs';
 // Importamos MessageService para los Toast
 import { MessageService } from 'primeng/api';
+import { AnalyticsService } from '../../../core/services/analytics.service';
 
 @Component({
   selector: 'app-budget-dialog',
@@ -93,7 +94,8 @@ export class BudgetDialogComponent implements OnInit, OnDestroy, OnChanges {
     private summaryService: SummaryService,
     private authService: AuthenticateService, // Inyectamos servicio de autenticación
     private usersService: UsersService, // Inyectamos servicio de usuarios
-    private messageService: MessageService // Inyectamos MessageService para los toast
+    private messageService: MessageService, // Inyectamos MessageService para los toast
+    private analyticsService: AnalyticsService // Inyectamos servicio de analytics
   ) {}
 
   ngOnInit(): void {
@@ -340,6 +342,10 @@ export class BudgetDialogComponent implements OnInit, OnDestroy, OnChanges {
               next: (response) => {
                 this.loading = false;
                 this.showSuccessToast('¡Presupuesto enviado correctamente a tu correo!');
+                
+                // Disparar evento contact_form cuando el envío sea exitoso
+                this.trackContactForm();
+                
                 setTimeout(() => {
                   if (this.handleCloseModal) {
                     this.handleCloseModal();
@@ -434,6 +440,10 @@ export class BudgetDialogComponent implements OnInit, OnDestroy, OnChanges {
                           next: (response) => {
                             this.loading = false;
                             this.showSuccessToast('¡Presupuesto enviado correctamente a tu correo!');
+                            
+                            // Disparar evento contact_form cuando el envío sea exitoso
+                            this.trackContactForm();
+                            
                             setTimeout(() => {
                               if (this.handleCloseModal) {
                                 this.handleCloseModal();
@@ -540,5 +550,19 @@ export class BudgetDialogComponent implements OnInit, OnDestroy, OnChanges {
   // Helper method to get trip type
   getDisplayTripType(): string {
     return this.tripType || this.selectedPeriod?.tripType || '';
+  }
+
+  /**
+   * Disparar evento generated_lead (contact_form) cuando el formulario de contacto se envíe con éxito
+   */
+  private trackContactForm(): void {
+    this.analyticsService.generatedLead(
+      'ficha_tour',
+      this.analyticsService.getUserData(
+        this.traveler.email,
+        this.traveler.phone,
+        this.authService.getCognitoIdValue()
+      )
+    );
   }
 }

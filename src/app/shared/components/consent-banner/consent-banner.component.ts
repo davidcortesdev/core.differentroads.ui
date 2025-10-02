@@ -1,4 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter, takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { ConsentBannerService } from '../../../core/services/consent-banner.service';
 
 @Component({
   selector: 'app-consent-banner',
@@ -8,24 +12,72 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 })
 export class ConsentBannerComponent implements OnInit, OnDestroy {
   showBanner: boolean = false;
+  blockWebsite: boolean = true;
   private termlyScript: any;
+  private currentRoute: string = '';
+  private destroy$ = new Subject<void>();
+
+  constructor(
+    private router: Router,
+    private consentBannerService: ConsentBannerService
+  ) {}
 
   ngOnInit(): void {
+    this.setupServiceSubscriptions();
     this.checkConsentStatus();
     this.setupTermlyListeners();
+    this.setupRouteListener();
   }
 
   ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
     if (this.termlyScript) {
       this.termlyScript.removeEventListener('consentChanged', this.onConsentChanged);
     }
   }
 
+  private setupServiceSubscriptions(): void {
+    // Suscribirse a cambios en el estado del banner
+    this.consentBannerService.showBanner$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((show: boolean) => this.showBanner = show);
+
+    this.consentBannerService.blockWebsite$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((block: boolean) => this.blockWebsite = block);
+  }
+
+  private setupRouteListener(): void {
+    this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe((event: NavigationEnd) => {
+        this.currentRoute = event.url;
+        this.updateBannerVisibility();
+      });
+  }
+
   private checkConsentStatus(): void {
     // Verificar si ya hay consentimiento guardado
     const hasConsent = localStorage.getItem('termly-consent');
-    if (!hasConsent) {
-      this.showBanner = true;
+    this.updateBannerVisibility();
+  }
+
+  private updateBannerVisibility(): void {
+    const hasConsent = this.consentBannerService.hasConsent();
+    const isCookiePolicyPage = this.currentRoute.includes('politica-de-cookies') || 
+                               this.currentRoute.includes('cookie-policy') ||
+                               this.currentRoute.includes('privacy-policy');
+    
+    if (hasConsent) {
+      // Si ya hay consentimiento, no mostrar banner y no bloquear
+      this.consentBannerService.updateBannerState(false, false);
+    } else if (isCookiePolicyPage) {
+      // Si está en página de política de cookies, no mostrar banner pero permitir navegación
+      this.consentBannerService.updateBannerState(false, false);
+    } else {
+      // En cualquier otra página sin consentimiento, mostrar banner y bloquear
+      this.consentBannerService.updateBannerState(true, true);
     }
   }
 
@@ -48,9 +100,7 @@ export class ConsentBannerComponent implements OnInit, OnDestroy {
   }
 
   acceptConsent(): void {
-    this.showBanner = false;
-    localStorage.setItem('termly-consent', 'accepted');
-    localStorage.setItem('termly-consent-date', new Date().toISOString());
+    this.consentBannerService.acceptConsent();
     
     // Notificar a Termly que se aceptó el consentimiento
     if (this.termlyScript && this.termlyScript.acceptAll) {
@@ -59,9 +109,7 @@ export class ConsentBannerComponent implements OnInit, OnDestroy {
   }
 
   rejectConsent(): void {
-    this.showBanner = false;
-    localStorage.setItem('termly-consent', 'rejected');
-    localStorage.setItem('termly-consent-date', new Date().toISOString());
+    this.consentBannerService.rejectConsent();
     
     // Notificar a Termly que se rechazó el consentimiento
     if (this.termlyScript && this.termlyScript.rejectAll) {
@@ -69,11 +117,18 @@ export class ConsentBannerComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Método público para mostrar el banner desde páginas externas
   showConsentBanner(): void {
-    this.showBanner = true;
+    this.consentBannerService.showBanner();
   }
 
+  // Método público para ocultar el banner
   hideConsentBanner(): void {
-    this.showBanner = false;
+    this.consentBannerService.hideBanner();
+  }
+
+  // Método para obtener el estado del bloqueo
+  isWebsiteBlocked(): boolean {
+    return this.consentBannerService.isWebsiteBlocked();
   }
 }

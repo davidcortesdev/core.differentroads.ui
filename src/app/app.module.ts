@@ -300,6 +300,7 @@ import { NewsLetterSectionV2Component } from './pages/home-v2/components/communi
 import { HeaderV2Component } from './layout/header-v2/header-v2.component';
 import { SeoLinksComponent } from './shared/components/seo-links/seo-links.component';
 import { ConsentBannerComponent } from './shared/components/consent-banner/consent-banner.component';
+import { ConsentBannerService } from './core/services/consent-banner.service';
 
 // Services
 import { RetailerService } from './core/services/retailer/retailer.service';
@@ -589,6 +590,7 @@ registerLocaleData(localeEs);
     provideHttpClient(),
     // Add this provider to set Spanish as the default locale
     { provide: LOCALE_ID, useValue: 'es-ES' },
+    ConsentBannerService,
     /*providePrimeNG({
       theme: {
         preset: Aura,

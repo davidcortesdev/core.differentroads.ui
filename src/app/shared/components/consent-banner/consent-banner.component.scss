@@ -1,3 +1,31 @@
+/* Overlay de bloqueo */
+.consent-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.039);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9998;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    pointer-events: none;
+  }
+}
+
 .consent-banner {
   position: fixed;
   bottom: 0;
@@ -9,6 +37,22 @@
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
   border-top: 3px solid var(--primary-color-500);
   animation: slideUp 0.5s ease-out;
+  
+  // Cuando está bloqueado, centrar el banner
+  &.blocked {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    bottom: auto;
+    right: auto;
+    width: 90%;
+    max-width: 600px;
+    border-radius: 12px;
+    border-top: 3px solid var(--primary-color-500);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: slideInCenter 0.4s ease-out;
+  }
 }
 
 @keyframes slideUp {
@@ -22,6 +66,17 @@
   }
 }
 
+@keyframes slideInCenter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -40%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
 .consent-banner-content {
   max-width: 1400px;
   margin: 0 auto;
@@ -29,6 +84,11 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  
+  // Cuando está bloqueado, ajustar el padding
+  .consent-banner.blocked & {
+    padding: 1.5rem;
+  }
 }
 
 .consent-banner-header {

@@ -1,7 +1,10 @@
-<!-- Enlaces principales para SEO -->
-<app-seo-links [links]="mainNavigationLinks"></app-seo-links>
-
 <!-- Banner de consentimiento de cookies -->
 <app-consent-banner></app-consent-banner>
 
-<router-outlet></router-outlet>
+<!-- Contenido principal - controlado por el servicio de consentimiento -->
+<div class="main-content" [class.blocked]="consentBannerService.isWebsiteBlocked()">
+  <!-- Enlaces principales para SEO -->
+  <app-seo-links [links]="mainNavigationLinks"></app-seo-links>
+  
+  <router-outlet></router-outlet>
+</div>

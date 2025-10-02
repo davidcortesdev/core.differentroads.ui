@@ -46,6 +46,8 @@ export class BudgetDialogComponent implements OnInit, OnDestroy, OnChanges {
     babies: number;
   } | null = null;
   @Input() periodId: string | null = null;
+  @Input() onlySendEmail: boolean = false; // Si true, solo envía email sin crear orden
+  @Input() isShareMode: boolean = false; // Si true, es modo compartir (dispara share en lugar de file_download)
 
   travelers: {
     adults: number;
@@ -253,6 +255,12 @@ export class BudgetDialogComponent implements OnInit, OnDestroy, OnChanges {
     }
     this.loading = true;
     
+    // Si solo se debe enviar email (desde "Descarga tu presupuesto")
+    if (this.onlySendEmail) {
+      this.sendEmailOnly();
+      return;
+    }
+    
     // Activar la bandera para permitir el envío de correos
     this.shouldSendEmails = true;
 
@@ -345,6 +353,9 @@ export class BudgetDialogComponent implements OnInit, OnDestroy, OnChanges {
                 
                 // Disparar evento contact_form cuando el envío sea exitoso
                 this.trackContactForm();
+                
+                // Disparar evento file_download cuando se descarga el presupuesto
+                this.trackFileDownload();
                 
                 setTimeout(() => {
                   if (this.handleCloseModal) {
@@ -443,6 +454,9 @@ export class BudgetDialogComponent implements OnInit, OnDestroy, OnChanges {
                             
                             // Disparar evento contact_form cuando el envío sea exitoso
                             this.trackContactForm();
+                            
+                            // Disparar evento file_download cuando se descarga el presupuesto
+                            this.trackFileDownload();
                             
                             setTimeout(() => {
                               if (this.handleCloseModal) {
@@ -564,5 +578,84 @@ export class BudgetDialogComponent implements OnInit, OnDestroy, OnChanges {
         this.authService.getCognitoIdValue()
       )
     );
+  }
+
+  /**
+   * Disparar evento file_download cuando el usuario descarga el presupuesto
+   */
+  private trackFileDownload(): void {
+    this.analyticsService.fileDownload(
+      'Presupuesto',
+      this.analyticsService.getUserData(
+        this.traveler.email,
+        this.traveler.phone,
+        this.authService.getCognitoIdValue()
+      )
+    );
+  }
+
+  /**
+   * Disparar evento share cuando el usuario comparte el presupuesto
+   */
+  private trackShare(): void {
+    this.analyticsService.share(
+      'Presupuesto',
+      this.analyticsService.getUserData(
+        this.traveler.email,
+        this.traveler.phone,
+        this.authService.getCognitoIdValue()
+      )
+    );
+  }
+
+  /**
+   * Solo envía el email sin crear una nueva orden (para "Descarga tu presupuesto")
+   */
+  private sendEmailOnly(): void {
+    // Construir productos para el email
+    this.tourOrderService
+      .buildOrderProducts(this.travelers, this.selectedPeriod)
+      .subscribe({
+        next: (products) => {
+          // Crear un ID temporal para el email
+          const tempOrderId = `temp_${Date.now()}`;
+          
+          // Enviar email de presupuesto
+          this.notificationsService
+            .sendBudgetNotificationEmail({
+              id: tempOrderId,
+              email: this.traveler.email,
+              products,
+            })
+            .subscribe({
+              next: (response) => {
+                this.loading = false;
+                this.showSuccessToast('¡Presupuesto enviado correctamente a tu correo!');
+                
+                // Disparar evento según el modo
+                if (this.isShareMode) {
+                  this.trackShare();
+                } else {
+                  this.trackFileDownload();
+                }
+                
+                setTimeout(() => {
+                  if (this.handleCloseModal) {
+                    this.handleCloseModal();
+                  }
+                  this.close.emit();
+                }, 1500);
+              },
+              error: (error) => {
+                this.loading = false;
+                this.showErrorToast('Error al enviar la notificación del presupuesto');
+              },
+            });
+        },
+        error: (error) => {
+          this.loading = false;
+          this.showErrorToast('Error al procesar los datos del presupuesto');
+        },
+      });
   }
 }

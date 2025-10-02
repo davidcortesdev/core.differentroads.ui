@@ -1,7 +1,15 @@
+<!-- Overlay de bloqueo cuando no hay consentimiento -->
+<div 
+  *ngIf="blockWebsite" 
+  class="consent-overlay"
+  aria-hidden="true"
+></div>
+
 <!-- Banner de consentimiento de cookies -->
 <div 
   *ngIf="showBanner" 
   class="consent-banner"
+  [class.blocked]="blockWebsite"
   role="dialog"
   aria-labelledby="consent-title"
   aria-describedby="consent-description"

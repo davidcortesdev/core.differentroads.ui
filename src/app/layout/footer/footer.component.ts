@@ -17,6 +17,8 @@ import {
 } from '../../core/services/cms/cms-footer-link.service';
 import { Subscription } from 'rxjs';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AnalyticsService } from '../../core/services/analytics.service';
+import { AuthenticateService } from '../../core/services/auth-service.service';
 
 // Constants for contact information
 const CONTACT_INFO = {
@@ -50,7 +52,9 @@ export class FooterComponent implements OnInit, AfterViewInit, OnDestroy {
     private cmsFooterLinkService: CMSFooterLinkService,
     private renderer: Renderer2,
     private el: ElementRef,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private analyticsService: AnalyticsService,
+    private authService: AuthenticateService
   ) {
     this.emailForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -225,4 +229,37 @@ export class FooterComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
   }
+
+  /**
+   * Disparar evento footer_interaction cuando el usuario hace clic en elementos del footer
+   */
+  onFooterInteraction(clickElement: string): void {
+    // Enviar evento inmediatamente al dataLayer ANTES de navegar
+    (window as any).dataLayer = (window as any).dataLayer || [];
+    (window as any).dataLayer.push({
+      event: 'footer_interaction',
+      clic_element: clickElement,
+      user_data: this.getUserData()
+    });
+    
+    this.analyticsService.footerInteraction(
+      clickElement,
+      this.getUserData()
+    );
+  }
+
+  /**
+   * Obtener datos del usuario para analytics
+   */
+  private getUserData() {
+    if (this.authService.isAuthenticatedValue()) {
+      return this.analyticsService.getUserData(
+        this.authService.getUserEmailValue(),
+        undefined, // No tenemos teléfono en el footer
+        this.authService.getCognitoIdValue()
+      );
+    }
+    return undefined;
+  }
+
 }

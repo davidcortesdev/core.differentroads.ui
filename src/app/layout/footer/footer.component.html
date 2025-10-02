@@ -116,6 +116,7 @@
           href="https://www.instagram.com/different_roads/"
           class="socialLink"
           aria-label="Follow us on Instagram"
+          (click)="onFooterInteraction('Instagram')"
         >
           <i class="pi pi-instagram"></i>
         </a>
@@ -123,6 +124,7 @@
           aria-label="Follow us on Facebook"
           href="https://www.facebook.com/DifferentRoadsViajes/"
           class="socialLink"
+          (click)="onFooterInteraction('Facebook')"
         >
           <i class="pi pi-facebook"></i>
         </a>
@@ -130,13 +132,26 @@
           aria-label="Follow us on YouTube"
           href="https://www.youtube.com/c/DifferentRoads_viajes"
           class="socialLink"
+          (click)="onFooterInteraction('YouTube')"
         >
           <i class="pi pi-youtube"></i>
         </a>
       </div>
       <div class="contactInfo">
-        <p>{{ contactInfo.PHONE }}</p>
-        <p>{{ contactInfo.EMAIL }}</p>
+        <p>
+          <a 
+            href="tel:{{ contactInfo.PHONE }}" 
+            (click)="onFooterInteraction('Teléfono')"
+            style="color: inherit; text-decoration: none;"
+          >{{ contactInfo.PHONE }}</a>
+        </p>
+        <p>
+          <a 
+            href="mailto:{{ contactInfo.EMAIL }}" 
+            (click)="onFooterInteraction('Email')"
+            style="color: inherit; text-decoration: none;"
+          >{{ contactInfo.EMAIL }}</a>
+        </p>
       </div>
     </div>
 
@@ -150,6 +165,7 @@
           <a
             [href]="link.url"
             [target]="link.esExterno ? '_blank' : '_self'"
+            (click)="onFooterInteraction(link.name)"
             *ngIf="link"
             >{{ link.name }}</a
           >

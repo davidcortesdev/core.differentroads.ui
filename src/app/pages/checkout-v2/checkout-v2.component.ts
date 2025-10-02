@@ -38,6 +38,7 @@ import { forkJoin } from 'rxjs';
 import { PaymentsNetService } from './services/paymentsNet.service';
 import { AuthenticateService } from '../../core/services/auth-service.service';
 import { UsersNetService } from '../../core/services/usersNet.service';
+import { AnalyticsService } from '../../core/services/analytics.service';
 import { IFlightPackDTO } from './services/flightsNet.service';
 import {
   ReservationTravelerService,
@@ -111,6 +112,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   
   // Descuento por puntos
   pointsDiscount: number = 0;
+  
+  // Flags para controlar eventos del funnel que se disparan solo una vez
+  private viewCartEventFired: boolean = false;
+  private viewFlightsInfoEventFired: boolean = false;
+  private viewPersonalInfoEventFired: boolean = false;
+  private viewPaymentInfoEventFired: boolean = false;
 
   // Datos de precios por grupo de edad
   departurePriceSupplements: IDeparturePriceSupplementResponse[] = [];
@@ -183,7 +190,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     private cdr: ChangeDetectorRef,
     private priceCheckService: PriceCheckService,
     private reservationStatusService: ReservationStatusService,
-    private http: HttpClient
+    private http: HttpClient,
+    private analyticsService: AnalyticsService
   ) {}
 
   ngOnInit(): void {
@@ -567,6 +575,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
         // Ejecutar verificación de precios inmediatamente cuando tengamos los datos básicos
         this.executePriceCheck();
+
+        // Disparar evento view_cart SOLO la primera vez que se visualiza el checkout
+        if (!this.viewCartEventFired && this.activeIndex === 0) {
+          this.trackViewCart();
+          this.viewCartEventFired = true;
+        }
 
         // Si hay un step activo, inicializar el componente correspondiente
         if (this.activeIndex >= 0) {
@@ -2177,8 +2191,42 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   // Manejar cambio de paso activo
   onActiveIndexChange(index: number): void {
+    const previousIndex = this.activeIndex;
     this.activeIndex = index;
     this.updateStepInUrl(index);
+
+    // Disparar evento begin_checkout cuando pasa del paso 0 al paso 1
+    if (previousIndex === 0 && index === 1) {
+      this.trackBeginCheckout();
+    }
+
+    // Disparar evento view_flights_info cuando visualiza el paso de vuelos
+    if (index === 1 && !this.viewFlightsInfoEventFired) {
+      this.trackViewFlightsInfo();
+      this.viewFlightsInfoEventFired = true;
+    }
+
+    // Disparar evento add_flights_info cuando pasa del paso 1 (vuelos) al paso 2 (datos pasajeros)
+    if (previousIndex === 1 && index === 2) {
+      this.trackAddFlightsInfo();
+    }
+
+    // Disparar evento view_personal_info cuando visualiza el paso de datos de pasajeros
+    if (index === 2 && !this.viewPersonalInfoEventFired) {
+      this.trackViewPersonalInfo();
+      this.viewPersonalInfoEventFired = true;
+    }
+
+    // Disparar evento add_personal_info cuando pasa del paso 2 (datos) al paso 3 (pago)
+    if (previousIndex === 2 && index === 3) {
+      this.trackAddPersonalInfo();
+    }
+
+    // Disparar evento view_payment_info cuando visualiza el paso de pago
+    if (index === 3 && !this.viewPaymentInfoEventFired) {
+      this.trackViewPaymentInfo();
+      this.viewPaymentInfoEventFired = true;
+    }
 
     // Forzar inicialización de componentes cuando se activan
     this.initializeComponentForStep(index);
@@ -3144,6 +3192,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               .subscribe({
                 next: (success) => {
                   if (success) {
+                    // Disparar evento add_to_wishlist
+                    this.trackAddToWishlist();
+                    
                     this.messageService.add({
                       severity: 'success',
                       summary: 'Presupuesto guardado',
@@ -3289,6 +3340,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
+   * Maneja el evento de pago completado
+   * @param paymentOption Opción de pago seleccionada
+   */
+  public onPaymentCompleted(paymentOption: any): void {
+    this.trackAddPaymentInfo(paymentOption);
+  }
+
+  /**
    * ✅ NUEVO: Limpia el estado relacionado con la selección de vuelos
    */
   private clearFlightSelectionState(): void {
@@ -3304,5 +3363,491 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     }
 
     console.log('✅ Estado de vuelos limpiado');
+  }
+
+  /**
+   * Disparar evento view_cart cuando se visualiza el checkout paso 1
+   */
+  private trackViewCart(): void {
+    if (!this.reservationData) return;
+
+    const tourData = this.reservationData.tour || {};
+    
+    this.analyticsService.viewCart(
+      'EUR',
+      this.totalAmountCalculated || this.totalAmount || 0,
+      {
+        item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+        item_name: this.tourName || tourData.name || '',
+        coupon: '',
+        discount: 0,
+        index: 0,
+        item_brand: 'Different Roads',
+        item_category: tourData.destination?.continent || '',
+        item_category2: tourData.destination?.country || '',
+        item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+        item_category4: tourData.monthTags?.join(', ') || '',
+        item_category5: tourData.tourType || '',
+        item_list_id: 'checkout',
+        item_list_name: 'Carrito de compra',
+        item_variant: `${tourData.tkId || tourData.id} - ${this.selectedFlight?.name || 'Sin vuelo'}`,
+        price: this.totalAmountCalculated || this.totalAmount || 0,
+        quantity: 1,
+        puntuacion: tourData.rating?.toString() || '',
+        duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+        start_date: this.departureDate || '',
+        end_date: this.returnDate || '',
+        pasajeros_adultos: this.totalPassengers?.toString() || '0',
+        pasajeros_niños: '0'
+      },
+      this.getUserData()
+    );
+  }
+
+  /**
+   * Disparar evento begin_checkout cuando el usuario continúa del paso 1
+   */
+  private trackBeginCheckout(): void {
+    if (!this.reservationData) return;
+
+    const tourData = this.reservationData.tour || {};
+    
+    // Obtener actividades seleccionadas
+    const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
+      ? this.selectedActivities.map(a => a.description || a.name).join(', ')
+      : '';
+    
+    // Obtener seguro seleccionado
+    const selectedInsurance = this.reservationData.insurance?.name || '';
+    
+    this.analyticsService.beginCheckout(
+      {
+        currency: 'EUR',
+        value: this.totalAmountCalculated || this.totalAmount || 0,
+        coupon: this.reservationData.coupon?.code || '',
+        items: [{
+          item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+          item_name: this.tourName || tourData.name || '',
+          coupon: '',
+          discount: 0,
+          index: 0,
+          item_brand: 'Different Roads',
+          item_category: tourData.destination?.continent || '',
+          item_category2: tourData.destination?.country || '',
+          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+          item_category4: tourData.monthTags?.join(', ') || '',
+          item_category5: tourData.tourType || '',
+          item_list_id: 'checkout',
+          item_list_name: 'Carrito de compra',
+          item_variant: `${tourData.tkId || tourData.id} - ${this.selectedFlight?.name || 'Sin vuelo'}`,
+          price: this.totalAmountCalculated || this.totalAmount || 0,
+          quantity: 1,
+          puntuacion: tourData.rating?.toString() || '',
+          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+          start_date: this.departureDate || '',
+          end_date: this.returnDate || '',
+          pasajeros_adultos: this.totalPassengers?.toString() || '0',
+          pasajeros_niños: '0',
+          actividades: activitiesText,
+          seguros: selectedInsurance
+        }]
+      },
+      this.getUserData()
+    );
+  }
+
+  /**
+   * Disparar evento view_flights_info cuando se visualiza el paso de vuelos
+   */
+  private trackViewFlightsInfo(): void {
+    if (!this.reservationData) return;
+
+    const tourData = this.reservationData.tour || {};
+    
+    // Obtener actividades seleccionadas
+    const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
+      ? this.selectedActivities.map(a => a.description || a.name).join(', ')
+      : '';
+    
+    // Obtener seguro seleccionado
+    const selectedInsurance = this.reservationData.insurance?.name || '';
+    
+    this.analyticsService.viewFlightsInfo(
+      {
+        currency: 'EUR',
+        value: this.totalAmountCalculated || this.totalAmount || 0,
+        coupon: this.reservationData.coupon?.code || '',
+        items: [{
+          item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+          item_name: this.tourName || tourData.name || '',
+          coupon: '',
+          discount: 0,
+          index: 0,
+          item_brand: 'Different Roads',
+          item_category: tourData.destination?.continent || '',
+          item_category2: tourData.destination?.country || '',
+          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+          item_category4: tourData.monthTags?.join(', ') || '',
+          item_category5: tourData.tourType || '',
+          item_list_id: 'checkout',
+          item_list_name: 'Carrito de compra',
+          item_variant: `${tourData.tkId || tourData.id} - ${this.selectedFlight?.name || 'Sin vuelo'}`,
+          price: this.totalAmountCalculated || this.totalAmount || 0,
+          quantity: 1,
+          puntuacion: tourData.rating?.toString() || '',
+          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+          start_date: this.departureDate || '',
+          end_date: this.returnDate || '',
+          pasajeros_adultos: this.totalPassengers?.toString() || '0',
+          pasajeros_niños: '0',
+          actividades: activitiesText,
+          seguros: selectedInsurance
+        }]
+      },
+      this.getUserData()
+    );
+  }
+
+  /**
+   * Disparar evento add_flights_info cuando el usuario selecciona vuelo y continúa
+   */
+  private trackAddFlightsInfo(): void {
+    if (!this.reservationData) return;
+
+    const tourData = this.reservationData.tour || {};
+    
+    // Obtener actividades seleccionadas
+    const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
+      ? this.selectedActivities.map(a => a.description || a.name).join(', ')
+      : '';
+    
+    // Obtener seguro seleccionado
+    const selectedInsurance = this.reservationData.insurance?.name || '';
+    
+    // Obtener ciudad de vuelo seleccionado
+    const flightCity = this.selectedFlight?.name || 'Sin vuelo';
+    
+    this.analyticsService.addFlightsInfo(
+      {
+        currency: 'EUR',
+        value: this.totalAmountCalculated || this.totalAmount || 0,
+        coupon: this.reservationData.coupon?.code || '',
+        items: [{
+          item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+          item_name: this.tourName || tourData.name || '',
+          coupon: '',
+          discount: 0,
+          index: 0,
+          item_brand: 'Different Roads',
+          item_category: tourData.destination?.continent || '',
+          item_category2: tourData.destination?.country || '',
+          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+          item_category4: tourData.monthTags?.join(', ') || '',
+          item_category5: tourData.tourType || '',
+          item_list_id: 'checkout',
+          item_list_name: 'Carrito de compra',
+          item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
+          price: this.totalAmountCalculated || this.totalAmount || 0,
+          quantity: 1,
+          puntuacion: tourData.rating?.toString() || '',
+          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+          start_date: this.departureDate || '',
+          end_date: this.returnDate || '',
+          pasajeros_adultos: this.totalPassengers?.toString() || '0',
+          pasajeros_niños: '0',
+          actividades: activitiesText,
+          seguros: selectedInsurance,
+          vuelo: flightCity
+        }]
+      },
+      this.getUserData()
+    );
+  }
+
+  /**
+   * Disparar evento view_personal_info cuando se visualiza el paso de datos de pasajeros
+   */
+  private trackViewPersonalInfo(): void {
+    if (!this.reservationData) return;
+
+    const tourData = this.reservationData.tour || {};
+    
+    // Obtener actividades seleccionadas
+    const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
+      ? this.selectedActivities.map(a => a.description || a.name).join(', ')
+      : '';
+    
+    // Obtener seguro seleccionado
+    const selectedInsurance = this.reservationData.insurance?.name || '';
+    
+    // Obtener ciudad de vuelo seleccionado
+    const flightCity = this.selectedFlight?.name || 'Sin vuelo';
+    
+    this.analyticsService.viewPersonalInfo(
+      {
+        currency: 'EUR',
+        value: this.totalAmountCalculated || this.totalAmount || 0,
+        coupon: this.reservationData.coupon?.code || '',
+        items: [{
+          item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+          item_name: this.tourName || tourData.name || '',
+          coupon: '',
+          discount: 0,
+          index: 0,
+          item_brand: 'Different Roads',
+          item_category: tourData.destination?.continent || '',
+          item_category2: tourData.destination?.country || '',
+          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+          item_category4: tourData.monthTags?.join(', ') || '',
+          item_category5: tourData.tourType || '',
+          item_list_id: 'checkout',
+          item_list_name: 'Carrito de compra',
+          item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
+          price: this.totalAmountCalculated || this.totalAmount || 0,
+          quantity: 1,
+          puntuacion: tourData.rating?.toString() || '',
+          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+          start_date: this.departureDate || '',
+          end_date: this.returnDate || '',
+          pasajeros_adultos: this.totalPassengers?.toString() || '0',
+          pasajeros_niños: '0',
+          actividades: activitiesText,
+          seguros: selectedInsurance,
+          vuelo: flightCity
+        }]
+      },
+      this.getUserData()
+    );
+  }
+
+  /**
+   * Disparar evento add_payment_info cuando el usuario selecciona método de pago
+   */
+  private trackAddPaymentInfo(paymentOption?: any): void {
+    if (!this.reservationData) return;
+
+    const tourData = this.reservationData.tour || {};
+    
+    // Obtener actividades seleccionadas
+    const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
+      ? this.selectedActivities.map(a => a.description || a.name).join(', ')
+      : '';
+    
+    // Obtener seguro seleccionado
+    const selectedInsurance = this.reservationData.insurance?.name || '';
+    
+    // Obtener ciudad de vuelo seleccionado
+    const flightCity = this.selectedFlight?.name || 'Sin vuelo';
+    
+    // Obtener método de pago seleccionado
+    let paymentType = 'completo, transferencia'; // Valor por defecto
+    
+    if (paymentOption) {
+      const method = paymentOption.method === 'creditCard' ? 'tarjeta' : 'transferencia';
+      const type = paymentOption.type === 'deposit' ? 'depósito' : 'completo';
+      paymentType = `${type}, ${method}`;
+    }
+    
+    this.analyticsService.addPaymentInfo(
+      {
+        currency: 'EUR',
+        value: this.totalAmountCalculated || this.totalAmount || 0,
+        coupon: this.reservationData.coupon?.code || '',
+        payment_type: paymentType,
+        items: [{
+          item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+          item_name: this.tourName || tourData.name || '',
+          coupon: '',
+          discount: 0,
+          index: 0,
+          item_brand: 'Different Roads',
+          item_category: tourData.destination?.continent || '',
+          item_category2: tourData.destination?.country || '',
+          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+          item_category4: tourData.monthTags?.join(', ') || '',
+          item_category5: tourData.tourType || '',
+          item_list_id: 'checkout',
+          item_list_name: 'Carrito de compra',
+          item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
+          price: this.totalAmountCalculated || this.totalAmount || 0,
+          quantity: 1,
+          puntuacion: tourData.rating?.toString() || '',
+          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+          start_date: this.departureDate || '',
+          end_date: this.returnDate || '',
+          pasajeros_adultos: this.totalPassengers?.toString() || '0',
+          pasajeros_niños: '0',
+          actividades: activitiesText,
+          seguros: selectedInsurance,
+          vuelo: flightCity
+        }]
+      },
+      this.getUserData()
+    );
+  }
+
+  /**
+   * Disparar evento view_payment_info cuando el usuario visualiza el paso de pago
+   */
+  private trackViewPaymentInfo(): void {
+    if (!this.reservationData) return;
+
+    const tourData = this.reservationData.tour || {};
+    
+    // Obtener actividades seleccionadas
+    const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
+      ? this.selectedActivities.map(a => a.description || a.name).join(', ')
+      : '';
+    
+    // Obtener seguro seleccionado
+    const selectedInsurance = this.reservationData.insurance?.name || '';
+    
+    // Obtener ciudad de vuelo seleccionado
+    const flightCity = this.selectedFlight?.name || 'Sin vuelo';
+    
+    this.analyticsService.viewPaymentInfo(
+      {
+        currency: 'EUR',
+        value: this.totalAmountCalculated || this.totalAmount || 0,
+        coupon: this.reservationData.coupon?.code || '',
+        items: [{
+          item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+          item_name: this.tourName || tourData.name || '',
+          coupon: '',
+          discount: 0,
+          index: 0,
+          item_brand: 'Different Roads',
+          item_category: tourData.destination?.continent || '',
+          item_category2: tourData.destination?.country || '',
+          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+          item_category4: tourData.monthTags?.join(', ') || '',
+          item_category5: tourData.tourType || '',
+          item_list_id: 'checkout',
+          item_list_name: 'Carrito de compra',
+          item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
+          price: this.totalAmountCalculated || this.totalAmount || 0,
+          quantity: 1,
+          puntuacion: tourData.rating?.toString() || '',
+          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+          start_date: this.departureDate || '',
+          end_date: this.returnDate || '',
+          pasajeros_adultos: this.totalPassengers?.toString() || '0',
+          pasajeros_niños: '0',
+          actividades: activitiesText,
+          seguros: selectedInsurance,
+          vuelo: flightCity
+        }]
+      },
+      this.getUserData()
+    );
+  }
+
+  /**
+   * Disparar evento add_personal_info cuando el usuario completa datos de pasajeros
+   */
+  private trackAddPersonalInfo(): void {
+    if (!this.reservationData) return;
+
+    const tourData = this.reservationData.tour || {};
+    
+    // Obtener actividades seleccionadas
+    const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
+      ? this.selectedActivities.map(a => a.description || a.name).join(', ')
+      : '';
+    
+    // Obtener seguro seleccionado
+    const selectedInsurance = this.reservationData.insurance?.name || '';
+    
+    // Obtener ciudad de vuelo seleccionado
+    const flightCity = this.selectedFlight?.name || 'Sin vuelo';
+    
+    this.analyticsService.addPersonalInfo(
+      {
+        currency: 'EUR',
+        value: this.totalAmountCalculated || this.totalAmount || 0,
+        coupon: this.reservationData.coupon?.code || '',
+        items: [{
+          item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+          item_name: this.tourName || tourData.name || '',
+          coupon: '',
+          discount: 0,
+          index: 0,
+          item_brand: 'Different Roads',
+          item_category: tourData.destination?.continent || '',
+          item_category2: tourData.destination?.country || '',
+          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+          item_category4: tourData.monthTags?.join(', ') || '',
+          item_category5: tourData.tourType || '',
+          item_list_id: 'checkout',
+          item_list_name: 'Carrito de compra',
+          item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
+          price: this.totalAmountCalculated || this.totalAmount || 0,
+          quantity: 1,
+          puntuacion: tourData.rating?.toString() || '',
+          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+          start_date: this.departureDate || '',
+          end_date: this.returnDate || '',
+          pasajeros_adultos: this.totalPassengers?.toString() || '0',
+          pasajeros_niños: '0',
+          actividades: activitiesText,
+          seguros: selectedInsurance,
+          vuelo: flightCity
+        }]
+      },
+      this.getUserData()
+    );
+  }
+
+  /**
+   * Disparar evento add_to_wishlist cuando se guarda presupuesto desde checkout
+   */
+  private trackAddToWishlist(): void {
+    if (!this.reservationData) return;
+
+    const tourData = this.reservationData.tour || {};
+    
+    this.analyticsService.addToWishlist(
+      'saved_budgets',
+      'Presupuestos guardados',
+      {
+        item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+        item_name: this.tourName || tourData.name || '',
+        coupon: '',
+        discount: 0,
+        index: 0,
+        item_brand: 'Different Roads',
+        item_category: tourData.destination?.continent || '',
+        item_category2: tourData.destination?.country || '',
+        item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+        item_category4: tourData.monthTags?.join(', ') || '',
+        item_category5: tourData.tourType || '',
+        item_list_id: 'saved_budgets',
+        item_list_name: 'Presupuestos guardados',
+        item_variant: '',
+        price: this.totalAmountCalculated || 0,
+        quantity: 1,
+        puntuacion: tourData.rating?.toString() || '',
+        duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+        start_date: this.departureDate || '',
+        end_date: this.returnDate || '',
+        pasajeros_adultos: this.totalPassengers?.toString() || '0',
+        pasajeros_niños: '0'
+      },
+      this.getUserData()
+    );
+  }
+
+  /**
+   * Obtener datos del usuario actual si está logueado
+   */
+  private getUserData() {
+    if (this.authService.isAuthenticatedValue()) {
+      return this.analyticsService.getUserData(
+        this.authService.getUserEmailValue(),
+        undefined,
+        this.authService.getCognitoIdValue()
+      );
+    }
+    return undefined;
   }
 }

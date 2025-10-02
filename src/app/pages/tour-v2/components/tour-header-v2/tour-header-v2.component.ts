@@ -49,6 +49,7 @@ import { ActivityHighlight } from '../../../../shared/components/activity-card/a
 import { environment } from '../../../../../environments/environment';
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
 import { UsersNetService } from '../../../../core/services/usersNet.service';
+import { AnalyticsService } from '../../../../core/services/analytics.service';
 
 // ✅ INTERFACES para tipado fuerte
 interface PassengersData {
@@ -147,7 +148,8 @@ export class TourHeaderV2Component
     private renderer: Renderer2,
     private router: Router,
     private authService: AuthenticateService,
-    private usersNetService: UsersNetService
+    private usersNetService: UsersNetService,
+    private analyticsService: AnalyticsService
   ) {}
 
   ngOnInit() {
@@ -1149,6 +1151,9 @@ export class TourHeaderV2Component
               activitiesFailed: activityResults.failed,
             });
 
+            // Disparar evento add_to_cart
+            this.trackAddToCart(reservation);
+
             this.router.navigate(['/checkout-v2', reservation.id]);
           },
           error: (error) => {
@@ -1183,5 +1188,58 @@ export class TourHeaderV2Component
           },
         })
     );
+  }
+
+  /**
+   * Disparar evento add_to_cart cuando se añade un tour al carrito
+   */
+  private trackAddToCart(reservation: IReservationResponse): void {
+    if (!this.tour) return;
+
+    const tourData = this.tour as any;
+    
+    this.analyticsService.addToCart(
+      'EUR',
+      this.totalPriceWithActivities || this.totalPrice || 0,
+      {
+        item_id: tourData.tkId?.toString() || this.tour.id?.toString() || '',
+        item_name: this.tour.name || '',
+        coupon: '',
+        discount: 0,
+        index: 0,
+        item_brand: 'Different Roads',
+        item_category: tourData.destination?.continent || '',
+        item_category2: tourData.destination?.country || '',
+        item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+        item_category4: tourData.monthTags?.join(', ') || '',
+        item_category5: tourData.tourType || '',
+        item_list_id: 'tour_detail',
+        item_list_name: 'Ficha de tour',
+        item_variant: `${tourData.tkId || this.tour.id} - ${this.selectedCity || 'Sin vuelo'}`,
+        price: this.totalPriceWithActivities || this.totalPrice || 0,
+        quantity: 1,
+        puntuacion: tourData.rating?.toString() || '',
+        duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+        start_date: this.selectedDeparture?.departureDate || '',
+        end_date: this.selectedDeparture?.returnDate || '',
+        pasajeros_adultos: this.passengersData?.adults?.toString() || '0',
+        pasajeros_niños: ((this.passengersData?.children || 0) + (this.passengersData?.babies || 0)).toString()
+      },
+      this.getUserData()
+    );
+  }
+
+  /**
+   * Obtener datos del usuario actual si está logueado
+   */
+  private getUserData() {
+    if (this.authService.isAuthenticatedValue()) {
+      return this.analyticsService.getUserData(
+        this.authService.getUserEmailValue(),
+        undefined,
+        this.authService.getCognitoIdValue()
+      );
+    }
+    return undefined;
   }
 }

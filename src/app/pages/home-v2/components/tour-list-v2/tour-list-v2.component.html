@@ -7,7 +7,7 @@
           *ngFor="let tour of tours"
           class="col-12 sm:col-6 lg:col-3"
         >
-          <app-tour-card-v2 [tourData]="tour"></app-tour-card-v2>
+          <app-tour-card-v2 [tourData]="tour" [showScalapayPrice]="false"></app-tour-card-v2>
         </div>
       </div>
     </ng-template>

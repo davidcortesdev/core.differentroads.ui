@@ -36,6 +36,7 @@ import {
   forkJoin,
 } from 'rxjs';
 import { Router } from '@angular/router';
+import { AnalyticsService } from '../../core/services/analytics.service';
 
 @Component({
   selector: 'app-header-v2',
@@ -81,7 +82,8 @@ export class HeaderV2Component implements OnInit, OnDestroy {
     private tourTagService: TourTagService,
     private elementRef: ElementRef,
     private renderer: Renderer2,
-    private router: Router
+    private router: Router,
+    private analyticsService: AnalyticsService
   ) {}
 
   ngOnInit(): void {
@@ -361,6 +363,9 @@ export class HeaderV2Component implements OnInit, OnDestroy {
             items: countries.map((country: Location) => ({
               label: country.name,
               command: () => {
+                // Disparar evento menu_interaction para submenús
+                this.onMenuInteraction(country.name);
+                
                 this.router.navigate([`/tours/${country.code.toLowerCase()}`]);
               },
             })),
@@ -406,6 +411,9 @@ export class HeaderV2Component implements OnInit, OnDestroy {
       id: item.id.toString(),
       // No agregar routerLink aquí para permitir submenús
       command: () => {
+        // Disparar evento menu_interaction
+        this.onMenuInteraction(item.name);
+        
         this.navigateToSlug(item.slugContenido);
       },
     }));
@@ -562,5 +570,38 @@ export class HeaderV2Component implements OnInit, OnDestroy {
           // Navigation error handling
         });
     }
+  }
+
+  /**
+   * Disparar evento menu_interaction cuando el usuario hace clic en elementos del menú
+   */
+  onMenuInteraction(clickElement: string): void {
+    this.analyticsService.menuInteraction(
+      clickElement,
+      this.getUserData()
+    );
+  }
+
+  /**
+   * Disparar evento click_logo cuando el usuario hace clic en el logo
+   */
+  onLogoClick(): void {
+    this.analyticsService.clickLogo(
+      this.getUserData()
+    );
+  }
+
+  /**
+   * Obtener datos del usuario para analytics
+   */
+  private getUserData() {
+    if (this.authService.isAuthenticatedValue()) {
+      return this.analyticsService.getUserData(
+        this.authService.getUserEmailValue(),
+        undefined, // No tenemos teléfono en el header
+        this.authService.getCognitoIdValue()
+      );
+    }
+    return undefined;
   }
 }

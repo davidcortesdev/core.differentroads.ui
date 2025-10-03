@@ -65,14 +65,9 @@ export class FlightManagementComponent implements OnInit, OnChanges {
 
     // Solo transformar si el vuelo ha cambiado
     if (this._lastSelectedFlightId !== this.selectedFlight.id) {
-      console.log('🔄 Transformando vuelo - ID anterior:', this._lastSelectedFlightId, 'ID actual:', this.selectedFlight.id);
       this._cachedTransformedFlight = this.convertFlightsNetToFlightSearch(this.selectedFlight);
       this._lastSelectedFlightId = this.selectedFlight.id;
-      console.log('✅ Vuelo transformado y cacheado');
-    } else {
-      console.log('📋 Usando vuelo cacheado - ID:', this._lastSelectedFlightId);
     }
-
     return this._cachedTransformedFlight;
   }
 
@@ -88,19 +83,12 @@ export class FlightManagementComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('🔄 flight-management: ngOnChanges llamado con:', changes);
-
-    // ✅ NUEVO: Manejar cambio en departureActivityPackId
+    // NUEVO: Manejar cambio en departureActivityPackId
     if (
       changes['departureActivityPackId'] &&
       changes['departureActivityPackId'].currentValue !==
         changes['departureActivityPackId'].previousValue
-    ) {
-      console.log(
-        '🔄 departureActivityPackId cambió en flight-management:',
-        changes['departureActivityPackId'].currentValue
-      );
-    }
+    )
 
     // Verificar si departureId o tourId han cambiado
     if (
@@ -110,7 +98,6 @@ export class FlightManagementComponent implements OnInit, OnChanges {
       (changes['tourId'] &&
         changes['tourId'].currentValue !== changes['tourId'].previousValue)
     ) {
-      console.log('🔄 departureId o tourId cambió, recargando datos...');
       this.loadTourAndDepartureData();
     }
 
@@ -122,7 +109,6 @@ export class FlightManagementComponent implements OnInit, OnChanges {
 
   // Método para limpiar el cache de vuelos
   private clearFlightCache(): void {
-    console.log('🧹 Limpiando cache de vuelos');
     this._cachedTransformedFlight = null;
     this._lastSelectedFlightId = null;
   }
@@ -131,22 +117,8 @@ export class FlightManagementComponent implements OnInit, OnChanges {
     let tourConsolidadorActive: boolean | null = null;
     let departureConsolidadorActive: boolean | null = null;
 
-    console.log(
-      '🔄 Iniciando carga de datos - tourId:',
-      this.tourId,
-      'departureId:',
-      this.departureId
-    );
-
     // Función para verificar si ambas respuestas han llegado
     const checkBothResponses = () => {
-      console.log(
-        '📊 Verificando respuestas - tour:',
-        tourConsolidadorActive,
-        'departure:',
-        departureConsolidadorActive
-      );
-
       if (
         tourConsolidadorActive !== null &&
         departureConsolidadorActive !== null
@@ -154,66 +126,42 @@ export class FlightManagementComponent implements OnInit, OnChanges {
         // Condición AND: ambas deben ser true
         this.isConsolidadorVuelosActive =
           tourConsolidadorActive && departureConsolidadorActive;
-        console.log(
-          '✅ Resultado final isConsolidadorVuelosActive:',
-          this.isConsolidadorVuelosActive
-        );
-      } else {
-        console.log('⏳ Esperando más respuestas...');
       }
     };
 
     // Cargar datos del tour
     if (this.tourId) {
-      console.log('🛫 Cargando datos del tour...');
       this.tourNetService.getTourById(this.tourId).subscribe({
         next: (tour: Tour) => {
           tourConsolidadorActive = !!tour.isConsolidadorVuelosActive;
-          console.log(
-            '🎯 Tour cargado - isConsolidadorVuelosActive:',
-            tour.isConsolidadorVuelosActive,
-            '-> procesado:',
-            tourConsolidadorActive
-          );
           checkBothResponses();
         },
         error: (error) => {
           tourConsolidadorActive = false;
-          console.log('❌ Error cargando tour:', error);
           checkBothResponses();
         },
       });
     } else {
       // Si no hay tourId, asumimos false
       tourConsolidadorActive = false;
-      console.log('🚫 No hay tourId, asumiendo false');
       checkBothResponses();
     }
 
     // Cargar datos del departure
     if (this.departureId) {
-      console.log('✈️ Cargando datos del departure...');
       this.departureService.getById(this.departureId).subscribe({
         next: (departure: IDepartureResponse) => {
           departureConsolidadorActive = !!departure.isConsolidadorVuelosActive;
-          console.log(
-            '🎯 Departure cargado - isConsolidadorVuelosActive:',
-            departure.isConsolidadorVuelosActive,
-            '-> procesado:',
-            departureConsolidadorActive
-          );
           checkBothResponses();
         },
         error: (error) => {
           departureConsolidadorActive = false;
-          console.log('❌ Error cargando departure:', error);
           checkBothResponses();
         },
       });
     } else {
       // Si no hay departureId, asumimos false
       departureConsolidadorActive = false;
-      console.log('🚫 No hay departureId, asumiendo false');
       checkBothResponses();
     }
   }
@@ -224,9 +172,8 @@ export class FlightManagementComponent implements OnInit, OnChanges {
 
   // Métodos para autenticación
   checkAuthAndShowSpecificSearch(): void {
-    // ✅ NUEVO: En modo standalone, mostrar directamente la búsqueda específica
+    // NUEVO: En modo standalone, mostrar directamente la búsqueda específica
     if (this.isStandaloneMode) {
-      console.log('🔓 Flight Management: Modo standalone - mostrando búsqueda específica sin autenticación');
       this.specificSearchVisible = true;
       return;
     }
@@ -265,33 +212,19 @@ export class FlightManagementComponent implements OnInit, OnChanges {
     selectedFlight: IFlightPackDTO | null;
     totalPrice: number;
   }): void {
-    console.log(
-      '🔄 flight-management: onFlightSelectionChange llamado con:',
-      flightData
-    );
-    console.log('🕐 Timestamp:', new Date().toISOString());
-    console.log('📊 selectedFlight:', flightData.selectedFlight);
-    console.log('💰 totalPrice:', flightData.totalPrice);
 
-    // ✅ NUEVO: Log específico para "Sin Vuelos"
+    // NUEVO: Log específico para "Sin Vuelos"
     if (!flightData.selectedFlight) {
-      console.log(
-        '🚫 flight-management: CASO ESPECIAL - Sin Vuelos seleccionado'
-      );
     }
 
-    // ✅ NUEVO: Actualizar el vuelo seleccionado internamente
+    // NUEVO: Actualizar el vuelo seleccionado internamente
     this.selectedFlight = flightData.selectedFlight;
 
     this.flightSelectionChange.emit(flightData);
-    console.log('✅ flight-management: Evento emitido al componente padre');
   }
 
   // Método para manejar la selección de vuelos desde specific-search
   onSpecificSearchFlightSelection(flightData: FlightSelectionState): void {
-    console.log('🔄 Selección de vuelo desde specific-search:', flightData);
-    console.log('📍 Origen:', flightData.source);
-    console.log('🆔 Pack ID:', flightData.packId);
     
     // Convertir el tipo del FlightSearchService al tipo de FlightsNetService
     const convertedFlight = flightData.selectedFlight ? this.convertFlightSearchToFlightsNet(flightData.selectedFlight) : null;
@@ -302,46 +235,37 @@ export class FlightManagementComponent implements OnInit, OnChanges {
     });
   }
 
-    // ✅ NUEVO: Método para manejar la selección de vuelos desde default-flights
+    // NUEVO: Método para manejar la selección de vuelos desde default-flights
   onDefaultFlightSelected(flightData: {
     selectedFlight: IFlightPackDTO | null;
     totalPrice: number;
   }): void {
-    console.log('🔄 Vuelo seleccionado desde default-flights:', flightData);
-    console.log('📍 Origen: default-flights');
     
     // Actualizar el vuelo seleccionado
     this.selectedFlight = flightData.selectedFlight;
     
-    // ✅ NUEVO: Deseleccionar vuelos en specific-search SOLO si isConsolidadorVuelosActive es true
+    // NUEVO: Deseleccionar vuelos en specific-search SOLO si isConsolidadorVuelosActive es true
     if (this.isConsolidadorVuelosActive && this.specificSearchComponent && this.reservationId) {
-      console.log('🔄 isConsolidadorVuelosActive es true - deseleccionando vuelos en specific-search');
       // Llamar al método unselectAllFlights del servicio
       this.specificSearchComponent.flightSearchService.unselectAllFlights(this.reservationId).subscribe({
-        next: () => {
-          console.log('✅ Vuelos de specific-search deseleccionados desde flight-management');
+        next: () => { 
         },
         error: (error: any) => {
-          console.error('❌ Error al deseleccionar vuelos de specific-search desde flight-management:', error);
+          console.error('Error al deseleccionar vuelos de specific-search desde flight-management:', error);
         }
       });
-    } else {
-      console.log('ℹ️ isConsolidadorVuelosActive es false - no se deseleccionan vuelos en specific-search');
     }
     
     // Emitir el cambio al componente padre
     this.flightSelectionChange.emit(flightData);
   }
 
-  // ✅ NUEVO: Método para manejar la selección de vuelos desde specific-search
+  // NUEVO: Método para manejar la selección de vuelos desde specific-search
   onSpecificFlightSelected(flightData: {
     selectedFlight: any | null; // Usar any para evitar conflictos de tipos
     totalPrice: number;
-    shouldAssignNoFlight?: boolean; // ✅ NUEVO: Indicar si se debe asignar "sin vuelos"
+    shouldAssignNoFlight?: boolean; // NUEVO: Indicar si se debe asignar "sin vuelos"
   }): void {
-    console.log('🔄 Vuelo seleccionado desde specific-search:', flightData);
-    console.log('📍 Origen: specific-search');
-    console.log('🔄 shouldAssignNoFlight:', flightData.shouldAssignNoFlight);
     
     // Convertir el vuelo al formato de FlightsNetService si existe
     const convertedFlight = flightData.selectedFlight ? this.convertFlightSearchToFlightsNet(flightData.selectedFlight) : null;
@@ -349,24 +273,18 @@ export class FlightManagementComponent implements OnInit, OnChanges {
     // Actualizar el vuelo seleccionado
     this.selectedFlight = convertedFlight;
     
-    // ✅ NUEVO: Si shouldAssignNoFlight es true, asignar "sin vuelos" a todos los viajeros
+    // NUEVO: Si shouldAssignNoFlight es true, asignar "sin vuelos" a todos los viajeros
     if (flightData.shouldAssignNoFlight && this.defaultFlightsComponent && this.reservationId) {
-      console.log('🔄 shouldAssignNoFlight es true - asignando "sin vuelos" a todos los viajeros');
-      // ✅ CORRECCIÓN: No deseleccionar vuelos de specific-search cuando asignamos "sin vuelos"
+      // CORRECCIÓN: No deseleccionar vuelos de specific-search cuando asignamos "sin vuelos"
       // porque acabamos de hacer la selección
       this.defaultFlightsComponent.saveFlightAssignmentsForAllTravelers(0, false);
     }
     
-    // ✅ MODIFICADO: NO marcar "Sin Vuelos" automáticamente, solo deseleccionar el vuelo del departure
+    // MODIFICADO: NO marcar "Sin Vuelos" automáticamente, solo deseleccionar el vuelo del departure
     if (this.isConsolidadorVuelosActive && this.defaultFlightsComponent && this.reservationId) {
-      console.log('🔄 isConsolidadorVuelosActive es true - deseleccionando vuelo del departure en default-flights');
       
       // Usar el nuevo método que deselecciona sin guardar en BD
       this.defaultFlightsComponent.deselectDepartureFlightWithoutSaving();
-      
-      console.log('✅ Vuelo del departure deseleccionado en default-flights, opción "Sin Vuelos" sigue visible');
-    } else {
-      console.log('ℹ️ isConsolidadorVuelosActive es false - no se deselecciona vuelo del departure en default-flights');
     }
     
     // Emitir el cambio al componente padre con el vuelo convertido

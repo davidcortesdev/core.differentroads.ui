@@ -18,6 +18,7 @@ import {
 } from '../../core/models/bookings/payment.model';
 import { NotificationsService } from '../../core/services/notifications.service';
 import { Booking } from '../../core/models/bookings/booking.model';
+import { Title } from '@angular/platform-browser';
 
 interface BookingData {
   title: string;
@@ -208,7 +209,8 @@ export class BookingsComponent implements OnInit {
     private bookingMappingService: BookingMappingService,
     private retailersService: RetailersService, // Nuevo servicio añadido
     private toursService: ToursService,
-    private notificationsService: NotificationsService
+    private notificationsService: NotificationsService,
+    private titleService: Title
   ) {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
@@ -216,6 +218,7 @@ export class BookingsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.titleService.setTitle('Mis Reservas - Different Roads');
     this.messageService.clear();
 
     // Obtenemos el ID de la URL

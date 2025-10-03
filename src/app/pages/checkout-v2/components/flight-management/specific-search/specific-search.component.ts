@@ -147,16 +147,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       changes['selectedFlightFromParent'].currentValue !==
         changes['selectedFlightFromParent'].previousValue
     ) {
-      console.log('🔄 selectedFlightFromParent cambió');
-      console.log(
-        '📊 Valor anterior:',
-        changes['selectedFlightFromParent'].previousValue
-      );
-      console.log(
-        '📊 Valor actual:',
-        changes['selectedFlightFromParent'].currentValue
-      );
-      console.log('🔄 Actualizando selectedFlight interno...');
 
       this.selectedFlight = changes['selectedFlightFromParent'].currentValue;
 
@@ -166,39 +156,21 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         this.selectedFlight &&
         this.reservationId
       ) {
-        console.log(
-          '💾 Guardando asignaciones para vuelo seleccionado desde padre...'
-        );
-        console.log('🎯 Vuelo seleccionado:', this.selectedFlight);
-        console.log('🆔 reservationId:', this.reservationId);
-        console.log('📍 Origen: default-flights (padre)');
 
         this.saveFlightAssignments()
           .then((success) => {
             if (success) {
-              console.log('✅ Asignaciones guardadas exitosamente desde padre');
+              console.log('Asignaciones guardadas exitosamente desde padre');
             } else {
-              console.error('❌ Error al guardar asignaciones desde padre');
+              console.error('Error al guardar asignaciones desde padre');
             }
           })
           .catch((error) => {
             console.error(
-              '💥 Error al guardar asignaciones desde padre:',
+              'Error al guardar asignaciones desde padre:',
               error
             );
           });
-      } else {
-        if (this.isInternalSelection) {
-          console.log(
-            '⚠️ No se guardan asignaciones - es una selección interna'
-          );
-        } else {
-          console.log(
-            '⚠️ No se puede guardar - selectedFlight o reservationId faltan'
-          );
-          console.log('📊 selectedFlight:', this.selectedFlight);
-          console.log('🆔 reservationId:', this.reservationId);
-        }
       }
 
       // Resetear la bandera después de procesar el cambio
@@ -445,12 +417,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
           this.searchWarnings.forEach(warning => {
             console.warn(`  - ${warning.title}: ${warning.detail} (Status: ${warning.status}, Code: ${warning.code})`);
           });
-        }
-        if (this.isEmptySearchResult) {
-          console.log('ℹ️ La búsqueda no retornó resultados');
-        }
-        if (this.searchMeta) {
-          console.log('📊 Meta información de búsqueda:', this.searchMeta);
         }
         
         // Transformar los datos directamente aquí para evitar recreaciones constantes
@@ -1005,9 +971,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
    * por lo que emitimos un evento para que el componente padre (flight-management) lo maneje
    */
   private async findAndAssignNoFlightOption(): Promise<void> {
-    console.log('🔍 findAndAssignNoFlightOption llamado');
-    console.log('📊 selectedFlight:', this.selectedFlight);
-    console.log('🆔 reservationId:', this.reservationId);
 
     if (!this.reservationId) {
       console.log('❌ No hay reservationId, no se puede asignar');
@@ -1062,7 +1025,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
             console.log('✅ Vuelo seleccionado en specific-search exitosamente');
           },
           error: (error) => {
-            console.error('❌ Error al seleccionar vuelo en specific-search:', error);
+            console.error('Error al seleccionar vuelo en specific-search:', error);
           },
         });
       }
@@ -1075,14 +1038,10 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
   // Método para guardar asignaciones de vuelos (similar a default-flights)
   async saveFlightAssignments(): Promise<boolean> {
-    console.log('🔍 saveFlightAssignments llamado');
-    console.log('📊 selectedFlight:', this.selectedFlight);
-    console.log('🆔 reservationId:', this.reservationId);
-    console.log('🕐 Timestamp:', new Date().toISOString());
 
     if (!this.selectedFlight || !this.reservationId) {
       console.log(
-        '❌ No se puede guardar - selectedFlight o reservationId faltan'
+        ' No se puede guardar - selectedFlight o reservationId faltan'
       );
       return true;
     }

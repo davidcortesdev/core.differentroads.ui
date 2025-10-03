@@ -28,6 +28,7 @@ import {
 import { FlightSearchService, IAmadeusFlightCreateOrderResponse } from '../../../../core/services/flight-search.service';
 import { AnalyticsService } from '../../../../core/services/analytics.service';
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
+import { Title } from '@angular/platform-browser';
 
 // Interfaz para información bancaria
 interface BankInfo {
@@ -94,6 +95,7 @@ export class NewReservationComponent implements OnInit {
   flightBookingResponse: IAmadeusFlightCreateOrderResponse | undefined;
 
   constructor(
+    private titleService: Title,
     private route: ActivatedRoute,
     private reservationService: ReservationService,
     private paymentService: PaymentsNetService,
@@ -120,7 +122,7 @@ export class NewReservationComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    console.log('NewReservationComponent initialized');
+    this.titleService.setTitle('Reserva - Different Roads');
 
     // Obtener parámetros de la ruta
     this.route.params.subscribe((params) => {

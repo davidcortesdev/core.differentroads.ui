@@ -1,0 +1,77 @@
+// Variables
+$breakpoint-tablet: 1024px;
+$breakpoint-mobile: 768px;
+$border-radius-sm: 4px;
+$border-radius-md: 9.586px;
+$border-radius-lg: 1rem;
+$spacing-xs: 0.2rem;
+$spacing-sm: 0.5rem;
+$spacing-md: 1rem;
+
+// Mixins
+@mixin responsive-font($mobile, $tablet, $desktop) {
+    font-size: $desktop;
+
+    @media screen and (max-width: $breakpoint-tablet) {
+        font-size: $tablet;
+    }
+
+    @media screen and (max-width: $breakpoint-mobile) {
+        font-size: $mobile;
+    }
+}
+
+@mixin tablet {
+    @media screen and (max-width: $breakpoint-tablet) {
+        @content;
+    }
+}
+
+@mixin mobile {
+    @media screen and (max-width: $breakpoint-mobile) {
+        @content;
+    }
+}
+
+:root {
+    --tour-card-border-radius-lg: 1rem;
+    --tour-card-spacing-md: 1rem;
+}
+
+// Componente principal
+.tour-card {
+    ::ng-deep {
+        .p-card {
+            background: transparent !important;
+        }
+    }
+    padding: var(--tour-card-spacing-sm, 0.5rem);
+    height: 100%;
+
+    // Estilos para el wrapper
+    ::ng-deep .tour-card-wrapper {
+        .p-card {
+            border-radius: $border-radius-lg;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: transparent !important;
+        }
+    }
+
+    // Variante grande de la tarjeta
+    &.isLarge ::ng-deep .tour-card-wrapper {
+        .p-card {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+            .p-card-body {
+                padding: 10px;
+            }
+
+            .p-card-content {
+                padding: 0;
+            }
+        }
+    }
+}

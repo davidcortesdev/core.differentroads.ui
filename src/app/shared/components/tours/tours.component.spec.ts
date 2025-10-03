@@ -17,6 +17,7 @@ describe('ToursComponent', () => {
     fixture.detectChanges();
   });
 
+  // @ts-ignore
   it('should create', () => {
     expect(component).toBeTruthy();
   });

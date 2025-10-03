@@ -31,7 +31,9 @@
             (ngModelChange)="selectPaymentType('complete')">
           </p-radioButton>
           <span class="option-text">Paga tu viaje al completo</span>
-          <span class="option-price">{{ totalPrice | currencyFormat }}</span>
+          <span class="option-price" aria-label="Precio total">
+            {{ totalPrice | currencyFormat }}
+          </span>
         </div>
       </p-panel>
 
@@ -73,8 +75,26 @@
             [ngModel]="paymentType"
             (ngModelChange)="selectPaymentType('installments')">
           </p-radioButton>
-          <span class="option-text">Paga a plazos</span>
-          <img src="assets/images/scalapay.svg" alt="ScalaPay" class="scalapay-logo" loading="lazy" />
+           <label for="payment-installments" class="option-text">
+             Paga a plazos con 
+             <img src="assets/images/scalapay.svg" 
+                  alt="Scalapay" 
+                  class="scalapay-inline-logo">
+           </label>
+            <div class="scalapay-widget-container" aria-label="Widget de pago fraccionado Scalapay">
+              <div id="price-container-main" style="display: none;" aria-hidden="true">
+                {{ totalPrice | currencyFormat }}
+              </div>
+              <scalapay-widget 
+                merchant-token="9MFV6DMBA" 
+                amount-selectors='["#price-container-main"]' 
+                channel="travel"
+                type="checkout"
+                environment="integration"
+                locale="es"
+                currency-display="symbol">
+              </scalapay-widget>
+            </div>
         </div>
       </p-panel>
     </div>
@@ -147,7 +167,7 @@
   </section>
 
   <!-- Installments Section (for installments) -->
-  <section *ngIf="paymentType === 'installments'" class="installments-section">
+  <!-- <section *ngIf="paymentType === 'installments'" class="installments-section">
     <div class="header-container" (click)="toggleDropdown('installments')">
       <div class="title-with-icon">
         <span class="title">Selecciona el plazo de pagos</span>
@@ -157,7 +177,6 @@
     </div>
 
     <div *ngIf="dropdownStates.installments" class="installment-panels-row">
-      <!-- 3 Installments Panel -->
       <div class="installment-panel-container">
         <p-panel
           styleClass="payment-panel installment-panel"
@@ -198,7 +217,6 @@
         </p-panel>
       </div>
 
-      <!-- 4 Installments Panel -->
       <div class="installment-panel-container">
         <p-panel
           styleClass="payment-panel installment-panel"
@@ -239,7 +257,7 @@
         </p-panel>
       </div>
     </div>
-  </section>
+  </section> -->
 
   <!-- Points Redemption Section -->
   <app-points-redemption

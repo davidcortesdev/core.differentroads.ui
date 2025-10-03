@@ -42,7 +42,7 @@ const routes: Routes = [
     path: '',
     component: MainComponent,
     children: [
-      { path: '', redirectTo: 'home', pathMatch: 'full' },
+      { path: '', redirectTo: 'home-v2', pathMatch: 'full' },
       { path: 'home', component: HomeComponent },
       { path: 'home-v2', component: HomeV2Component },
       {

@@ -117,6 +117,7 @@ import { AccordionModule } from 'primeng/accordion';
 import { ChipModule } from 'primeng/chip';
 import { TagModule } from 'primeng/tag';
 import { SecondFooterSectionComponent } from './layout/footer/components/second-footer-section/second-footer-section.component';
+import { Footer2Component } from './layout/footer/components/footer2/footer2.component';
 import { TimelineModule } from 'primeng/timeline';
 import { BadgeModule } from 'primeng/badge';
 import { OverlayBadgeModule } from 'primeng/overlaybadge';
@@ -132,6 +133,7 @@ import { FlightsComponent } from './pages/checkout/components/flights/flights.co
 import { TravelersComponent } from './pages/checkout/components/travelers/travelers.component';
 import { PaymentComponent } from './pages/checkout/components/payment/payment.component';
 import { TourCardComponent } from './shared/components/tour-card/tour-card.component';
+import { TourCardV2Component } from './shared/components/tour-card-v2/tour-card-v2.component';
 import { ReactiveFormsModule } from '@angular/forms';
 
 import { StepsModule } from 'primeng/steps';
@@ -160,7 +162,7 @@ import { GoogleMapsModule } from '@angular/google-maps';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SortByPipe } from './shared/pipes/sort-by.pipe';
 import { InsurancesComponent } from './pages/checkout/components/customize-trip/components/insurances/insurances.component';
-import { Dialog } from 'primeng/dialog';
+import { Dialog, DialogModule } from 'primeng/dialog';
 import { BudgetDialogComponent } from './shared/components/budget-dialog/budget-dialog.component';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { Amplify } from 'aws-amplify';
@@ -184,8 +186,7 @@ import { FlightSearchComponent } from './pages/checkout/components/flights/compo
 import { TravelerItemComponent } from './pages/checkout/components/traveler-item/traveler-item.component';
 import { FlightSectionComponent } from './pages/checkout/components/flight-section/flight-section.component';
 import { LoginModalComponent } from './shared/components/login-modal/login-modal.component';
-/* import { LoginModalComponent } from './pages/checkout/components/flights/components/login-modal/login-modal.component';
- */ import { BookingsComponent } from './pages/bookings/bookings.component';
+import { BookingsComponent } from './pages/bookings/bookings.component';
 import { BookingActivitiesComponent } from './pages/bookings/booking-activities/booking-activities.component';
 import { BookingCodeSectionComponent } from './pages/bookings/booking-code-section/booking-code-section.component';
 import { BookingDetailsViewComponent } from './pages/bookings/booking-details-view/booking-details-view.component';
@@ -227,6 +228,8 @@ import { BookingListSectionComponent } from './pages/profile/components/booking-
 import { BookingDocumentationComponent } from './pages/bookings/booking-documentation/booking-documentation.component';
 import { TourCardHeaderComponent } from './shared/components/tour-card/tour-card-header/tour-card-header.component';
 import { TourCardContentComponent } from './shared/components/tour-card/tour-card-content/tour-card-content.component';
+import { TourCardHeaderV2Component } from './shared/components/tour-card-v2/tour-card-header-v2/tour-card-header-v2.component';
+import { TourCardContentV2Component } from './shared/components/tour-card-v2/tour-card-content-v2/tour-card-content-v2.component';
 import { CookiesComponent } from './shared/components/cookies/cookies.component';
 import { CookiesConsentComponent } from './shared/components/cookies-consent/cookies-consent.component';
 import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
@@ -273,6 +276,7 @@ import { HomeV2Component } from './pages/home-v2/home-v2.component';
 import { HeroSectionV2Component } from './pages/home-v2/components/hero-section-v2/hero-section-v2.component';
 import { TripTypesSectionV2Component } from './pages/home-v2/components/trip-types-section-v2/trip-types-section-v2.component';
 import { TourCarrusselV2Component } from './pages/home-v2/components/tour-carrussel-v2/tour-carrussel-v2.component';
+import { TourListV2Component } from './pages/home-v2/components/tour-list-v2/tour-list-v2.component';
 import { FullCardSectionV2Component } from './pages/home-v2/components/full-card-section-v2/full-card-section-v2.component';
 import { CarouselSectionV2Component } from './pages/home-v2/components/carousel-section-v2/carousel-section-v2.component';
 import { CommunitySectionV2Component } from './pages/home-v2/components/community-section-v2/community-section-v2.component';
@@ -294,6 +298,7 @@ import { ReviewSectionV2Component } from './pages/profile-v2/components/review-s
 import { UpdateProfileSectionV2Component } from './pages/profile-v2/components/update-profile-section-v2/update-profile-section-v2.component';
 import { NewsLetterSectionV2Component } from './pages/home-v2/components/community-section-v2/components/newsletter-section-v2/newsletter-section-v2.component';
 import { HeaderV2Component } from './layout/header-v2/header-v2.component';
+import { SeoLinksComponent } from './shared/components/seo-links/seo-links.component';
 
 // Services
 import { RetailerService } from './core/services/retailer/retailer.service';
@@ -331,6 +336,7 @@ registerLocaleData(localeEs);
     // Tours List
     ToursListComponent,
     TourCardComponent,
+    TourCardV2Component,
 
     // Content List
     ContentListComponent,
@@ -355,6 +361,7 @@ registerLocaleData(localeEs);
     ReviewSectionComponent,
     ReviewsComponent,
     SecondFooterSectionComponent,
+    Footer2Component,
     BasicPageComponent,
     TitleAndQuillComponent,
     CheckoutComponent,
@@ -384,6 +391,7 @@ registerLocaleData(localeEs);
     TravelerItemComponent,
     FlightSectionComponent,
     LoginModalComponent,
+
     BookingsComponent,
     BookingActivitiesComponent,
     BookingCodeSectionComponent,
@@ -425,6 +433,8 @@ registerLocaleData(localeEs);
     BookingDocumentationComponent,
     TourCardHeaderComponent,
     TourCardContentComponent,
+    TourCardHeaderV2Component,
+    TourCardContentV2Component,
     CookiesComponent,
     CookiesConsentComponent,
     BasicPagePreviewComponent,
@@ -472,6 +482,7 @@ registerLocaleData(localeEs);
     HeroSectionV2Component,
     TripTypesSectionV2Component,
     TourCarrusselV2Component,
+    TourListV2Component,
     FullCardSectionV2Component,
     CarouselSectionV2Component,
     CommunitySectionV2Component,
@@ -494,6 +505,7 @@ registerLocaleData(localeEs);
     HeaderV2Component,
     BalanceInfoComponent,
     LoadingSectionComponent,
+    SeoLinksComponent,
   ],
   imports: [
     // Angular Modules
@@ -554,7 +566,7 @@ registerLocaleData(localeEs);
     GoogleMapsModule,
     MenuModule,
     SkeletonModule,
-    Dialog,
+    DialogModule,
     OverlayPanelModule,
     ToggleSwitchModule,
     PopoverModule,

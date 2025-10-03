@@ -15,6 +15,7 @@ import { Order } from '../../../../core/models/orders/order.model';
 import { OrdersService } from '../../../../core/services/orders.service';
 import { SummaryService } from '../../../../core/services/checkout/summary.service';
 import { InfoCard } from '../tour-info-accordion/tour-info-accordion.component';
+import { AnalyticsService } from '../../../../core/services/analytics.service';
 
 @Component({
   selector: 'app-tour-additional-info',
@@ -48,6 +49,12 @@ export class TourAdditionalInfoComponent implements OnInit, OnChanges, OnDestroy
   
   // Flag para indicar si limpiar los campos del formulario
   shouldClearFields: boolean = false;
+  
+  // Flag para indicar si es modo descarga (solo enviar email)
+  isDownloadMode: boolean = false;
+  
+  // Flag para indicar si es modo compartir
+  isShareMode: boolean = false;
 
   // Flag para indicar si estamos en modo actualización (checkout) o creación (tour detail)
   get isUpdateMode(): boolean {
@@ -74,7 +81,8 @@ export class TourAdditionalInfoComponent implements OnInit, OnChanges, OnDestroy
     private tourOrderService: TourOrderService,
     private messageService: MessageService,
     private ordersService: OrdersService,
-    private summaryService: SummaryService
+    private summaryService: SummaryService,
+    private analyticsService: AnalyticsService
   ) {}
 
   ngOnInit(): void {
@@ -254,6 +262,10 @@ export class TourAdditionalInfoComponent implements OnInit, OnChanges, OnDestroy
   }
 
   handleSaveTrip(): void {
+    // Desactivar modos especiales
+    this.isDownloadMode = false;
+    this.isShareMode = false;
+    
     // En lugar de usar la suscripción para determinar si mostrar el modal,
     // simplemente verificamos el estado actual
     if (this.isAuthenticated) {
@@ -338,6 +350,9 @@ export class TourAdditionalInfoComponent implements OnInit, OnChanges, OnDestroy
           console.log('Orden creada:', createdOrder);
           // Mostrar mensaje de éxito con Toast
           this.showSuccessToast('Presupuesto guardado correctamente');
+          
+          // Disparar evento generated_lead cuando se guarda el presupuesto
+          this.trackContactForm();
         },
         error: (error) => {
           this.loading = false;
@@ -449,6 +464,10 @@ export class TourAdditionalInfoComponent implements OnInit, OnChanges, OnDestroy
   handleDownloadTrip(): void {
     // Explícitamente establecer en falso para asegurar que mantenga los datos
     this.shouldClearFields = false;
+    // Activar modo descarga (solo enviar email)
+    this.isDownloadMode = true;
+    // Desactivar modo compartir
+    this.isShareMode = false;
     this.visible = true;
   }
 
@@ -456,6 +475,10 @@ export class TourAdditionalInfoComponent implements OnInit, OnChanges, OnDestroy
   handleInviteFriend(): void {
     // Activar el flag para limpiar campos
     this.shouldClearFields = true;
+    // Activar modo compartir
+    this.isShareMode = true;
+    // Desactivar modo descarga
+    this.isDownloadMode = false;
     // Mostrar el modal
     this.visible = true;
   }
@@ -473,5 +496,19 @@ export class TourAdditionalInfoComponent implements OnInit, OnChanges, OnDestroy
   navigateToRegister(): void {
     this.closeLoginModal();
     this.router.navigate(['/sign-up']);
+  }
+
+  /**
+   * Disparar evento generated_lead (contact_form) cuando el formulario de contacto se envíe con éxito
+   */
+  private trackContactForm(): void {
+    this.analyticsService.generatedLead(
+      'ficha_tour',
+      this.analyticsService.getUserData(
+        this.userEmail,
+        '', // No tenemos teléfono en este contexto
+        this.authService.getCognitoIdValue()
+      )
+    );
   }
 }

@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { MAIN_NAVIGATION_LINKS } from './shared/constants/seo-links.constants';
 
 @Component({
   selector: 'app-root',
@@ -8,4 +9,7 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'core.differentroads.ui';
+  mainNavigationLinks = MAIN_NAVIGATION_LINKS;
+
+  constructor() {}
 }

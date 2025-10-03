@@ -1,6 +1,8 @@
 import { Component, Input, ChangeDetectionStrategy, OnInit, AfterViewInit, Inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { DOCUMENT } from '@angular/common';
+import { AnalyticsService } from '../../../core/services/analytics.service';
+import { AuthenticateService } from '../../../core/services/auth-service.service';
 
 interface TourData {
   imageUrl: string;
@@ -40,13 +42,18 @@ export class TourCardComponent implements OnInit, AfterViewInit {
   @Input() tourData!: TourData;
   @Input() isLargeCard = false;
   @Input() showScalapayPrice = false;
+  @Input() itemListId?: string;
+  @Input() itemListName?: string;
+  @Input() index?: number;
 
   monthlyPrice = 0;
   scalapayWidgetId = '';
   private originalConsoleWarn: any = null;
   constructor(
     private router: Router,
-    @Inject(DOCUMENT) private document: Document
+    @Inject(DOCUMENT) private document: Document,
+    private analyticsService: AnalyticsService,
+    private authService: AuthenticateService
   ) {}
 
   ngOnInit(): void {
@@ -85,7 +92,50 @@ export class TourCardComponent implements OnInit, AfterViewInit {
   }
 
   handleTourClick(): void {
+    // Disparar evento select_item si tenemos información de la lista
+    if (this.itemListId && this.itemListName) {
+      this.analyticsService.selectItem(
+        this.itemListId,
+        this.itemListName,
+        {
+          item_id: this.tourData.externalID?.toString() || '',
+          item_name: this.tourData.title || '',
+          coupon: '',
+          discount: 0,
+          index: this.index || 0,
+          item_brand: 'Different Roads',
+          item_category: (this.tourData as any).continent || '',
+          item_category2: (this.tourData as any).country || '',
+          item_category3: (this.tourData as any).marketingSeasonTag || '',
+          item_category4: (this.tourData as any).monthTags?.join(', ') || '',
+          item_category5: Array.isArray(this.tourData.tripType) ? this.tourData.tripType.join(', ') : '',
+          item_list_id: this.itemListId,
+          item_list_name: this.itemListName,
+          item_variant: '',
+          price: this.tourData.price || 0,
+          quantity: 1,
+          puntuacion: this.tourData.rating?.toString() || '',
+          duracion: (this.tourData as any).days ? `${(this.tourData as any).days} días, ${(this.tourData as any).nights || (this.tourData as any).days - 1} noches` : ''
+        },
+        this.getUserData()
+      );
+    }
+    
     this.router.navigate(['/tour', this.tourData.webSlug]);
+  }
+
+  /**
+   * Obtener datos del usuario actual si está logueado
+   */
+  private getUserData() {
+    if (this.authService.isAuthenticatedValue()) {
+      return this.analyticsService.getUserData(
+        this.authService.getUserEmailValue(),
+        undefined,
+        this.authService.getCognitoIdValue()
+      );
+    }
+    return undefined;
   }
 
   private calculateMonthlyPrice(): number {
@@ -111,32 +161,32 @@ export class TourCardComponent implements OnInit, AfterViewInit {
   }
  
   private loadScalapayScript(): void {
-    // Verificar si el script ya está cargado
-    const scriptExists = !!this.document.querySelector('script[src*="scalapay-widget-loader.js"]');
+    // // Verificar si el script ya está cargado
+    // const scriptExists = !!this.document.querySelector('script[src*="scalapay-widget-loader.js"]');
    
-    if (!scriptExists) {
-      console.log('Cargando script de Scalapay...');
+    // if (!scriptExists) {
+    //   console.log('Cargando script de Scalapay...');
      
-      // Crear el script
-      const script = this.document.createElement('script');
-      script.type = 'module';
-      script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js';
+    //   // Crear el script
+    //   const script = this.document.createElement('script');
+    //   script.type = 'module';
+    //   script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js';
      
-      // Manejar los eventos del script
-      script.onload = () => {
-        this.configureScalapayWidget();
-      };
+    //   // Manejar los eventos del script
+    //   script.onload = () => {
+    //     this.configureScalapayWidget();
+    //   };
      
-      script.onerror = (error) => {
-        console.error('Error al cargar script de Scalapay:', error);
-      };
+    //   script.onerror = (error) => {
+    //     console.error('Error al cargar script de Scalapay:', error);
+    //   };
      
-      // Añadir el script al head
-      this.document.head.appendChild(script);
-    } else {
+    //   // Añadir el script al head
+    //   this.document.head.appendChild(script);
+    // } else {
  
-      this.configureScalapayWidget();
-    }
+    //   this.configureScalapayWidget();
+    // }
   }
  
   private configureScalapayWidget(): void {

@@ -6,6 +6,8 @@ import { catchError, of } from 'rxjs';
 import { ItineraryService } from '../../core/services/itinerary/itinerary.service';
 import { SelectedDepartureEvent } from './components/tour-itinerary-v2/components/selector-itinerary/selector-itinerary.component';
 import { ActivityHighlight } from '../../shared/components/activity-card/activity-card.component';
+import { AnalyticsService } from '../../core/services/analytics.service';
+import { AuthenticateService } from '../../core/services/auth-service.service';
 
 // ✅ INTERFACES para tipado fuerte
 interface PassengersData {
@@ -110,7 +112,9 @@ export class TourV2Component implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private tourNetService: TourNetService,
-    private ItineraryService: ItineraryService
+    private ItineraryService: ItineraryService,
+    private analyticsService: AnalyticsService,
+    private authService: AuthenticateService
   ) {}
 
   ngOnInit(): void {
@@ -152,6 +156,9 @@ export class TourV2Component implements OnInit {
       .subscribe((tours: Tour[]) => {
         if (tours && tours.length > 0) {
           this.tour = tours[0];
+          
+          // Disparar evento view_item cuando se carga el tour exitosamente
+          this.trackViewItem(this.tour);
         } else {
           this.error = 'No se encontró el tour solicitado';
         }
@@ -261,5 +268,52 @@ export class TourV2Component implements OnInit {
   // Recibir información de age groups desde el componente TourDeparturesV2Component
   onAgeGroupsUpdate(ageGroupCategories: AgeGroupCategories): void {
     this.ageGroupCategories = ageGroupCategories;
+  }
+
+  /**
+   * Disparar evento view_item cuando se visualiza la ficha del tour
+   */
+  private trackViewItem(tour: Tour): void {
+    const tourData = tour as any; // Usar any para acceder a propiedades dinámicas
+    
+    this.analyticsService.viewItem(
+      'tour_detail',
+      'Ficha de tour',
+      {
+        item_id: tourData.tkId?.toString() || tour.id?.toString() || '',
+        item_name: tour.name || '',
+        coupon: '',
+        discount: 0,
+        index: 0,
+        item_brand: 'Different Roads',
+        item_category: tourData.destination?.continent || '',
+        item_category2: tourData.destination?.country || '',
+        item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+        item_category4: tourData.monthTags?.join(', ') || '',
+        item_category5: tourData.tourType || '',
+        item_list_id: 'tour_detail',
+        item_list_name: 'Ficha de tour',
+        item_variant: '',
+        price: tourData.basePrice || 0,
+        quantity: 1,
+        puntuacion: tourData.rating?.toString() || '',
+        duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : ''
+      },
+      this.getUserData()
+    );
+  }
+
+  /**
+   * Obtener datos del usuario actual si está logueado
+   */
+  private getUserData() {
+    if (this.authService.isAuthenticatedValue()) {
+      return this.analyticsService.getUserData(
+        this.authService.getUserEmailValue(),
+        undefined,
+        this.authService.getCognitoIdValue()
+      );
+    }
+    return undefined;
   }
 }

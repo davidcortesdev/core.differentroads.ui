@@ -321,7 +321,7 @@ export class BookingListSectionV2Component implements OnInit {
 
   viewItem(item: BookingItem) {
     if (this.listType === 'active-bookings') {
-      this.router.navigate(['bookings', item.id]);
+      this.router.navigate(['bookingsv2', item.id]);
     } else if (this.listType === 'recent-budgets') {
       this.router.navigate(['/checkout', item.id]);
     }

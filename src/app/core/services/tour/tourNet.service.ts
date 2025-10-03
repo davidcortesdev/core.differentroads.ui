@@ -10,22 +10,33 @@ export interface TourFilter {
   description?: string;
   tkId?: string;
   slug?: string;
+  subtitle?: string;
+  responsible?: string;
+  isVisibleOnWeb?: boolean;
+  isBookable?: boolean;
+  isConsolidadorVuelosActive?: boolean;
+  tripTypeId?: number;
+  tourStatusId?: number;
+  productStyleId?: number;
+  minPrice?: number;
 }
 
 export interface Tour {
-  isBookable: boolean;
-  isVisibleOnWeb: boolean;
-  productStyleId: number | null;
-  responsible: string | null;
-  tourStatusId: number | null;
-  subtitle: string | null;
-  tripTypeId: number | null;
   id: number;
   code: string;
   name: string;
   description?: string;
   tkId?: string;
   slug?: string;
+  subtitle: string | null;
+  responsible: string | null;
+  isVisibleOnWeb: boolean;
+  isBookable: boolean;
+  isConsolidadorVuelosActive?: boolean;
+  tripTypeId: number | null;
+  tourStatusId: number | null;
+  productStyleId: number | null;
+  minPrice?: number;
 }
 
 @Injectable({
@@ -103,14 +114,15 @@ export class TourNetService {
             code: 'unknown',
             name: `Tour ${id}`,
             description: '',
-            // Add the missing required properties
+            subtitle: null,
+            responsible: null,
             isBookable: false,
             isVisibleOnWeb: false,
+            isConsolidadorVuelosActive: false,
             productStyleId: null,
-            responsible: null,
             tourStatusId: null,
-            subtitle: null,
             tripTypeId: null,
+            minPrice: 0,
           });
         })
       );
@@ -137,7 +149,7 @@ export class TourNetService {
           return id;
         }
         console.warn('No se encontró ningún tour con ese tkId');
-        return 0; // O puedes lanzar un error si prefieres
+        return 0;
       }),
       catchError((error) => {
         console.error('Error al buscar tours:', error);
@@ -185,5 +197,40 @@ export class TourNetService {
           return of(null);
         })
       );
+  }
+
+  /**
+   * Crea un nuevo tour
+   * @param tour Objeto Tour con los datos del nuevo tour
+   * @returns Observable del Tour creado
+   */
+  createTour(tour: Omit<Tour, 'id'>): Observable<Tour> {
+    return this.http
+      .post<Tour>(this.Reviews_API_URL, tour, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('Error al crear el tour:', error);
+          throw error;
+        })
+      );
+  }
+
+  /**
+   * Elimina un tour
+   * @param id ID del tour a eliminar
+   * @returns Observable del resultado de la operación
+   */
+  deleteTour(id: number): Observable<any> {
+    const url = `${this.Reviews_API_URL}/${id}`;
+    return this.http.delete(url).pipe(
+      catchError((error) => {
+        console.error(`Error al eliminar el tour con ID ${id}:`, error);
+        return of(null);
+      })
+    );
   }
 }

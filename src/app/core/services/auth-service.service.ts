@@ -97,6 +97,21 @@ export class AuthenticateService {
     return this.currentUserCognitoId.asObservable();
   }
 
+  // Obtener el valor actual del estado de autenticación
+  isAuthenticatedValue(): boolean {
+    return this.isAuthenticated.getValue();
+  }
+
+  // Obtener el valor actual del email del usuario
+  getUserEmailValue(): string {
+    return this.currentUserEmail.getValue();
+  }
+
+  // Obtener el valor actual del Cognito ID
+  getCognitoIdValue(): string {
+    return this.currentUserCognitoId.getValue();
+  }
+
   private getUserData(username: string): CognitoUser {
     return new CognitoUser({ Username: username, Pool: this.userPool });
   }

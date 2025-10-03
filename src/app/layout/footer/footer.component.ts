@@ -146,39 +146,9 @@ export class FooterComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private setupFormListener(): void {
-    // Usar un enfoque más robusto para encontrar el formulario
-    const maxRetries = 5;
-    let retries = 0;
-
-    const findAndSetupForm = () => {
-      const form = this.el.nativeElement.querySelector('.ml-block-form');
-      if (form) {
-        this.renderer.listen(form, 'submit', (event) =>
-          this.handleFormSubmit(event)
-        );
-        this.formLoaded = true;
-        return true;
-      }
-      return false;
-    };
-
-    // Intentar encontrar el formulario inmediatamente
-    if (findAndSetupForm()) {
-      return;
-    }
-
-    // Si no se encuentra, intentar con un intervalo
-    const intervalId = setInterval(() => {
-      retries++;
-      if (findAndSetupForm() || retries >= maxRetries) {
-        clearInterval(intervalId);
-        if (retries >= maxRetries && !this.formLoaded) {
-          console.warn(
-            'No se pudo encontrar el formulario después de varios intentos'
-          );
-        }
-      }
-    }, 300);
+    // El formulario ya tiene el listener de Angular (submit)="handleFormSubmit($event)"
+    // No necesitamos añadir un listener adicional con JavaScript
+    this.formLoaded = true;
   }
 
   handleFormSubmit(event: Event): void {
@@ -237,14 +207,6 @@ export class FooterComponent implements OnInit, AfterViewInit, OnDestroy {
    * Disparar evento footer_interaction cuando el usuario hace clic en elementos del footer
    */
   onFooterInteraction(clickElement: string): void {
-    // Enviar evento inmediatamente al dataLayer ANTES de navegar
-    (window as any).dataLayer = (window as any).dataLayer || [];
-    (window as any).dataLayer.push({
-      event: 'footer_interaction',
-      clic_element: clickElement,
-      user_data: this.getUserData()
-    });
-    
     this.analyticsService.footerInteraction(
       clickElement,
       this.getUserData()

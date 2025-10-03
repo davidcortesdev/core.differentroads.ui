@@ -302,7 +302,7 @@ export class DataMappingV2Service {
     // Combinar datos básicos del usuario con campos adicionales
     const combinedData: PersonalInfo = {
       id: user.id,
-      nombre: user.nombre || user.firstName || '',
+      nombre: user.nombre || user.firstName || user.name || '',
       apellido: user.apellido || user.lastName || '',
       email: user.email || '',
       telefono: user.telefono || user.phone || '',

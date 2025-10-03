@@ -18,6 +18,8 @@ import {
 } from '../../../../core/services/trip-type/trip-type.service';
 import { CountriesService } from '../../../../core/services/countries.service';
 import { Country } from '../../../../shared/models/country.model';
+import { AnalyticsService } from '../../../../core/services/analytics.service';
+import { AuthenticateService } from '../../../../core/services/auth-service.service';
 
 interface TripQueryParams {
   destination?: string;
@@ -62,7 +64,9 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     private router: Router,
     private homeSectionContentService: HomeSectionContentService,
     private tripTypeService: TripTypeService,
-    private countriesService: CountriesService
+    private countriesService: CountriesService,
+    private analyticsService: AnalyticsService,
+    private authService: AuthenticateService
   ) {}
 
   ngOnInit(): void {
@@ -224,6 +228,9 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
       queryParams.tripType = this.selectedTripType.toString().trim();
     }
 
+    // Disparar evento search antes de navegar
+    this.trackSearch(queryParams);
+
     this.router.navigate(['/tours'], { queryParams });
   }
 
@@ -246,5 +253,31 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     } else {
       this.selectedTripType = null;
     }
+  }
+
+  /**
+   * Disparar evento search cuando el usuario realiza una búsqueda
+   */
+  private trackSearch(queryParams: TripQueryParams): void {
+    this.analyticsService.search(
+      {
+        search_term: queryParams.destination || '',
+        start_date: queryParams.departureDate || '',
+        end_date: queryParams.returnDate || '',
+        trip_type: queryParams.tripType || ''
+      },
+      this.getUserData()
+    );
+  }
+
+  /**
+   * Obtener datos del usuario para analytics
+   */
+  private getUserData() {
+    return this.analyticsService.getUserData(
+      this.authService.getUserEmailValue(),
+      '', // No tenemos teléfono en este contexto
+      this.authService.getCognitoIdValue()
+    );
   }
 }

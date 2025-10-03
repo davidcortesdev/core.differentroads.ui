@@ -976,6 +976,12 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
       throw new Error('Error al crear el pago por transferencia');
     }
 
+    // Emitir evento de pago completado
+    this.paymentCompleted.emit({
+      method: this.paymentMethod || undefined,
+      type: this.paymentState.type!
+    });
+
     // Redirigir a new-reservation con los parámetros necesarios
     this.router.navigate([
       `/reservation/${this.reservationId}/${response.id}`

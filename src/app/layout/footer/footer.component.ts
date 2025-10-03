@@ -17,6 +17,8 @@ import {
 } from '../../core/services/cms/cms-footer-link.service';
 import { Subscription } from 'rxjs';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AnalyticsService } from '../../core/services/analytics.service';
+import { AuthenticateService } from '../../core/services/auth-service.service';
 
 // Constants for contact information
 const CONTACT_INFO = {
@@ -50,7 +52,9 @@ export class FooterComponent implements OnInit, AfterViewInit, OnDestroy {
     private cmsFooterLinkService: CMSFooterLinkService,
     private renderer: Renderer2,
     private el: ElementRef,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private analyticsService: AnalyticsService,
+    private authService: AuthenticateService
   ) {
     this.emailForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -142,39 +146,9 @@ export class FooterComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private setupFormListener(): void {
-    // Usar un enfoque más robusto para encontrar el formulario
-    const maxRetries = 5;
-    let retries = 0;
-
-    const findAndSetupForm = () => {
-      const form = this.el.nativeElement.querySelector('.ml-block-form');
-      if (form) {
-        this.renderer.listen(form, 'submit', (event) =>
-          this.handleFormSubmit(event)
-        );
-        this.formLoaded = true;
-        return true;
-      }
-      return false;
-    };
-
-    // Intentar encontrar el formulario inmediatamente
-    if (findAndSetupForm()) {
-      return;
-    }
-
-    // Si no se encuentra, intentar con un intervalo
-    const intervalId = setInterval(() => {
-      retries++;
-      if (findAndSetupForm() || retries >= maxRetries) {
-        clearInterval(intervalId);
-        if (retries >= maxRetries && !this.formLoaded) {
-          console.warn(
-            'No se pudo encontrar el formulario después de varios intentos'
-          );
-        }
-      }
-    }, 300);
+    // El formulario ya tiene el listener de Angular (submit)="handleFormSubmit($event)"
+    // No necesitamos añadir un listener adicional con JavaScript
+    this.formLoaded = true;
   }
 
   handleFormSubmit(event: Event): void {
@@ -219,10 +193,63 @@ export class FooterComponent implements OnInit, AfterViewInit, OnDestroy {
       if (titleElement) this.renderer.setStyle(titleElement, 'display', 'none');
 
       this.isSubscribed = true;
+      
+      // Disparar evento generated_lead cuando la suscripción sea exitosa
+      this.trackGeneratedLead(email);
     }, 2000);
   }
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
   }
+
+  /**
+   * Disparar evento footer_interaction cuando el usuario hace clic en elementos del footer
+   */
+  onFooterInteraction(clickElement: string): void {
+    this.analyticsService.footerInteraction(
+      clickElement,
+      this.getUserData()
+    );
+  }
+
+  /**
+   * Disparar evento click_contact cuando el usuario hace clic en elementos de contacto
+   */
+  onContactClick(clickElement: string, contactUrl: string): void {
+    this.analyticsService.clickContact(
+      clickElement,
+      contactUrl,
+      this.getUserData()
+    );
+  }
+
+  /**
+   * Disparar evento generated_lead cuando la suscripción a newsletter sea exitosa
+   */
+  private trackGeneratedLead(email: string): void {
+    this.analyticsService.generatedLead(
+      'Newsletter',
+      this.analyticsService.getUserData(
+        email,
+        undefined, // No tenemos teléfono en la suscripción
+        this.authService.getCognitoIdValue()
+      )
+    );
+  }
+
+  /**
+   * Obtener datos del usuario para analytics
+   */
+  private getUserData() {
+    if (this.authService.isAuthenticatedValue()) {
+      return this.analyticsService.getUserData(
+        this.authService.getUserEmailValue(),
+        undefined, // No tenemos teléfono en el footer
+        this.authService.getCognitoIdValue()
+      );
+    }
+    return undefined;
+  }
+
 }

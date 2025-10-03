@@ -10,6 +10,7 @@ import { PaymentOption } from '../../core/models/orders/order.model';
 import { SummaryService } from '../../core/services/checkout/summary.service';
 import { AuthenticateService } from '../../core/services/auth-service.service';
 import { environment } from '../../../environments/environment';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-payments',
@@ -64,10 +65,12 @@ export class PaymentsComponent implements OnInit {
     private paymentOptionsService: PaymentOptionsService,
     private summaryService: SummaryService,
     private messageService: MessageService,
-    private authService: AuthenticateService
+    private authService: AuthenticateService,
+    private titleService: Title
   ) {}
 
   ngOnInit() {
+    this.titleService.setTitle('Pagos - Different Roads');
     // Load booking ID from route params
     this.route.params.subscribe((params) => {
       this.bookingID = params['id'];

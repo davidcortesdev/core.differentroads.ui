@@ -1,15 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 
-// SOLO servicios de configuración del home
-import {
-  HomeSectionService,
-  IHomeSectionResponse,
-} from '../../core/services/home/home-section.service';
-import {
-  HomeSectionConfigurationService,
-  IHomeSectionConfigurationResponse,
-} from '../../core/services/home/home-section-configuration.service';
+import { HomeSectionService, IHomeSectionResponse, } from '../../core/services/home/home-section.service';
+import { HomeSectionConfigurationService, IHomeSectionConfigurationResponse, } from '../../core/services/home/home-section-configuration.service';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-home-v2',
@@ -28,11 +22,13 @@ export class HomeV2Component implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   constructor(
+    private titleService: Title,
     private homeSectionService: HomeSectionService,
     private homeSectionConfigurationService: HomeSectionConfigurationService
   ) {}
 
   ngOnInit() {
+    this.titleService.setTitle('Different Roads - Viajes y Experiencias Únicas');
     this.loadAllHomeSections();
   }
 

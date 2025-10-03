@@ -11,25 +11,25 @@
     
     // Mapeo de rutas a títulos específicos
     if (path === '/' || path === '/home' || path === '/home-v2') {
-      title = 'Different Roads - Viajes y Experiencias Únicas';
+    //  title = 'Different Roads - Viajes y Experiencias Únicas';
     } else if (path === '/tours') {
-      title = 'Tours y Experiencias - Different Roads';
+    //  title = 'Tours y Experiencias - Different Roads';
     } else if (path === '/login') {
-      title = 'Iniciar Sesión - Different Roads';
+    //  title = 'Iniciar Sesión - Different Roads';
     } else if (path === '/sign-up') {
-      title = 'Registrarse - Different Roads';
+    //  title = 'Registrarse - Different Roads';
     } else if (path === '/forget-password') {
-      title = 'Recuperar Contraseña - Different Roads';
+    //  title = 'Recuperar Contraseña - Different Roads';
     } else if (path === '/profile' || path.startsWith('/profile-v2/')) {
-      title = 'Mi Perfil - Different Roads';
+    //  title = 'Mi Perfil - Different Roads';
     } else if (path.startsWith('/bookings/') || path.startsWith('/bookingsv2/')) {
-      title = 'Mis Reservas - Different Roads';
+    //  title = 'Mis Reservas - Different Roads';
     } else if (path.startsWith('/payment/')) {
-      title = 'Pagos - Different Roads';
+    //  title = 'Pagos - Different Roads';
     } else if (path === '/aeropuertos') {
-      title = 'Búsqueda de Aeropuertos - Different Roads';
+    //  title = 'Búsqueda de Aeropuertos - Different Roads';
     } else if (path.startsWith('/standalone/')) {
-      title = 'Checkout - Different Roads';
+    //  title = 'Checkout - Different Roads';
     } else if (path.startsWith('/preview/pages')) {
       title = 'Vista Previa - Different Roads';
     } else if (path.startsWith('/tour/') || path.startsWith('/tour-old/')) {

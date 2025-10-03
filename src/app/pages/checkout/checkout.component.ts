@@ -16,10 +16,7 @@ import { Flight } from '../../core/models/tours/flight.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BookingsService } from '../../core/services/bookings.service';
 import { BookingCreateInput } from '../../core/models/bookings/booking.model';
-import {
-  Period,
-  ReservationFieldMandatory,
-} from '../../core/models/tours/period.model';
+import { Period, ReservationFieldMandatory, } from '../../core/models/tours/period.model';
 import { InsurancesService } from '../../core/services/checkout/insurances.service';
 import { Insurance } from '../../core/models/tours/insurance.model';
 import { PaymentOptionsService } from '../../core/services/checkout/paymentOptions.service';
@@ -30,8 +27,9 @@ import { TextsService } from '../../core/services/checkout/texts.service';
 import { AmadeusService } from '../../core/services/amadeus.service';
 import { ProcessBookingService } from '../../core/services/checkout/process-booking.service';
 import { ToursService } from '../../core/services/tours.service';
-
+import { Title } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
+
 @Component({
   selector: 'app-checkout',
   standalone: false,
@@ -137,6 +135,7 @@ export class CheckoutComponent implements OnInit {
   }[] = [];
 
   constructor(
+    private titleService: Title,
     private ordersService: OrdersService,
     private periodsService: PeriodsService,
     private travelersService: TravelersService,
@@ -157,9 +156,12 @@ export class CheckoutComponent implements OnInit {
     private amadeusService: AmadeusService, // <-- Nueva inyección
     private processBookingService: ProcessBookingService, // New service injection
     private toursService: ToursService
-  ) {}
+  ) {
+    this.titleService.setTitle('Checkout - Different Roads');
+  }
 
   ngOnInit() {
+    this.titleService.setTitle('Checkout - Different Roads');
     // Read step from URL if present
     this.route.queryParams.subscribe((params) => {
       if (params['step']) {

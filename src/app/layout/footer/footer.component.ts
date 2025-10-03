@@ -40,7 +40,6 @@ export class FooterComponent implements OnInit, AfterViewInit, OnDestroy {
   private scriptLoaded = false;
   emailForm: FormGroup;
   private subscription: Subscription = new Subscription();
-  private leadEventDispatched: boolean = false; // Flag para evitar duplicación de eventos
   
   // Enlaces del footer para SEO
   seoFooterLinks = FOOTER_LINKS;
@@ -225,11 +224,8 @@ export class FooterComponent implements OnInit, AfterViewInit, OnDestroy {
 
       this.isSubscribed = true;
       
-      // Solo disparar evento si no se ha disparado ya por el callback de MailerLite
-      if (!this.leadEventDispatched) {
-        this.trackGeneratedLead(email);
-        this.leadEventDispatched = true;
-      }
+      // Disparar evento generated_lead cuando la suscripción sea exitosa
+      this.trackGeneratedLead(email);
     }, 2000);
   }
 
@@ -264,30 +260,6 @@ export class FooterComponent implements OnInit, AfterViewInit, OnDestroy {
       contactUrl,
       this.getUserData()
     );
-  }
-
-  /**
-   * Callback global de MailerLite para manejar éxito de suscripción
-   * Este método se llama automáticamente por MailerLite cuando la suscripción es exitosa
-   */
-  ml_webform_success_6075553(): void {
-    // Solo disparar evento si no se ha disparado ya
-    if (!this.leadEventDispatched) {
-      const email = this.emailForm.get('email')?.value;
-      if (email) {
-        this.trackGeneratedLead(email);
-        this.leadEventDispatched = true;
-      }
-    }
-    
-    // Manejar UI
-    const r = (window as any)['ml_jQuery'] || (window as any)['jQuery'];
-    if (r) {
-      r('.ml-subscribe-form-6075553 .row-success').show();
-      r('.ml-subscribe-form-6075553 .row-form').hide();
-    }
-    
-    this.isSubscribed = true;
   }
 
   /**

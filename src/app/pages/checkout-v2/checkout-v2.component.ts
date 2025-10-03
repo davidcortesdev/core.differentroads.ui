@@ -53,6 +53,7 @@ import { environment } from '../../../environments/environment';
 import { interval, Subscription } from 'rxjs';
 import { takeWhile } from 'rxjs/operators';
 import { ReservationStatusService } from '../../core/services/reservation/reservation-status.service';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-checkout-v2',
@@ -135,7 +136,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   flightPrice: number = 0;
   hasAvailableFlights: boolean = false; // Nueva propiedad para controlar la visibilidad del botón
   availableFlights: IFlightPackDTO[] = []; // Nueva propiedad para almacenar los vuelos disponibles
-  departureActivityPackId: number | null = null; // ✅ NUEVO: ID del paquete de actividad del departure
+  departureActivityPackId: number | null = null; // NUEVO: ID del paquete de actividad del departure
 
   // Steps configuration
   items: MenuItem[] = [];
@@ -153,7 +154,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   isSyncInProgress: boolean = false;
   isAuthenticated: boolean = false;
 
-  // ✅ NUEVO: Propiedades para controlar el estado de carga del botón "Sin Vuelos"
+  // NUEVO: Propiedades para controlar el estado de carga del botón "Sin Vuelos"
   isFlightlessProcessing: boolean = false;
   flightlessProcessingMessage: string = '';
 
@@ -165,13 +166,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     numPasajeros: number;
   } | null = null;
 
-  // ✅ NUEVO: Propiedad para detectar modo standalone
+  // NUEVO: Propiedad para detectar modo standalone
   isStandaloneMode: boolean = false;
 
-  // ✅ NUEVO: Trigger para refrescar el resumen
+  // NUEVO: Trigger para refrescar el resumen
   summaryRefreshTrigger: any = null;
 
   constructor(
+    private titleService: Title,
     private route: ActivatedRoute,
     private router: Router,
     private tourNetService: TourNetService,
@@ -195,9 +197,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
-    console.log('🔄 CheckoutV2Component ngOnInit iniciado');
+    this.titleService.setTitle('Checkout - Different Roads');
 
-    // ✅ NUEVO: Detectar si estamos en modo standalone
+    // NUEVO: Detectar si estamos en modo standalone
     this.detectStandaloneMode();
 
     // Configurar los steps
@@ -205,19 +207,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     // Verificar estado de autenticación inicial (solo si NO es modo standalone)
     if (!this.isStandaloneMode) {
-      console.log('🔒 Modo normal - verificando autenticación');
       this.authService.isLoggedIn().subscribe((isLoggedIn) => {
         this.isAuthenticated = isLoggedIn;
-        console.log('🔍 Estado de autenticación:', isLoggedIn);
       });
     } else {
       // En modo standalone, asumir que no necesitamos autenticación
       this.isAuthenticated = false;
-      console.log(
-        '🔓 Modo standalone detectado - omitiendo validación de autenticación'
-      );
-      console.log('🔓 isAuthenticated establecido a:', this.isAuthenticated);
-      console.log('🔓 isStandaloneMode establecido a:', this.isStandaloneMode);
     }
 
     // Leer step de URL si está presente (para redirección después del login)
@@ -226,7 +221,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         const stepParam = parseInt(params['step']);
         if (!isNaN(stepParam) && stepParam >= 0 && stepParam <= 3) {
           this.activeIndex = stepParam;
-          console.log('📍 Step activo desde URL:', this.activeIndex);
         }
       }
     });
@@ -237,7 +231,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       if (reservationIdParam) {
         this.reservationId = +reservationIdParam;
 
-        // ✅ NUEVO: Restaurar resumen desde localStorage antes de cargar datos
+        // NUEVO: Restaurar resumen desde localStorage antes de cargar datos
         this.restoreSummaryFromLocalStorage();
 
         // Cargar datos de la reservación desde el backend
@@ -252,14 +246,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     // No se ejecuta aquí para evitar llamadas duplicadas
   }
 
-  // ✅ NUEVO: Método para disparar la actualización del resumen del pedido
+  // NUEVO: Método para disparar la actualización del resumen del pedido
   triggerSummaryRefresh(): void {
-    console.log('🔄 Actualizando resumen del pedido...');
     this.summaryRefreshTrigger = { timestamp: Date.now() };
   }
 
   /**
-   * ✅ NUEVO: Detectar si estamos en modo standalone basándose en la URL
+   * NUEVO: Detectar si estamos en modo standalone basándose en la URL
    */
   private detectStandaloneMode(): void {
     // Verificar tanto la URL del router como la URL del navegador
@@ -268,31 +261,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     this.isStandaloneMode =
       routerUrl.includes('/standalone/') || windowUrl.includes('/standalone/');
-
-    console.log('🔍 Router URL:', routerUrl);
-    console.log('🔍 Window URL:', windowUrl);
-    console.log('🔍 ¿Modo standalone?', this.isStandaloneMode);
-
-    if (this.isStandaloneMode) {
-      console.log(
-        '🔓 Modo standalone activado - las validaciones de autenticación serán omitidas'
-      );
-    } else {
-      console.log(
-        '🔒 Modo normal - las validaciones de autenticación están activas'
-      );
-    }
   }
 
   ngAfterViewInit(): void {
-    // Las referencias a los componentes hijos ya están disponibles
-    console.log('✅ Componentes hijos inicializados:', {
-      travelerSelector: !!this.travelerSelector,
-      roomSelector: !!this.roomSelector,
-      insuranceSelector: !!this.insuranceSelector,
-      infoTravelers: !!this.infoTravelers,
-    });
-
     // Si hay un step activo en la URL, inicializar el componente correspondiente
     if (this.activeIndex >= 0) {
       this.initializeComponentForStep(this.activeIndex);
@@ -519,7 +490,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       this.jobMonitoringSubscription.unsubscribe();
     }
 
-    // ✅ NUEVO: Limpiar el resumen del localStorage al destruir el componente
+    // NUEVO: Limpiar el resumen del localStorage al destruir el componente
     this.clearSummaryFromLocalStorage();
   }
 
@@ -612,19 +583,19 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       this.updateOrderSummary(this.ageGroupCounts);
     }
 
-    // ✅ Esperar a que terminen guardados pendientes en actividades antes de refrescar
+    // Esperar a que terminen guardados pendientes en actividades antes de refrescar
     try {
       await this.activitiesOptionals?.waitForPendingSaves?.();
     } catch (err) {
       console.error('❌ Error esperando guardados de actividades:', err);
     }
 
-    // ✅ Disparar actualización del summary inmediatamente
+    // Disparar actualización del summary inmediatamente
     this.triggerSummaryRefresh();
   }
 
   /**
-   * 🔥 NUEVO: Maneja el evento de guardado completado desde actividades opcionales
+   * xNUEVO: Maneja el evento de guardado completado desde actividades opcionales
    */
   onSaveCompleted(event: {
     component: string;
@@ -650,7 +621,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
-   * 🔥 NUEVO: Muestra un toast de error
+   * NUEVO: Muestra un toast de error
    */
   private showErrorToast(message: string): void {
     this.messageService.add({
@@ -727,16 +698,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       Object.keys(this.ageGroupCounts).length > 0 &&
       Object.keys(this.pricesByAgeGroup).length > 0
     ) {
-      console.log(
-        '🔄 Actualizando resumen del pedido por cambios en habitaciones...'
-      );
       this.updateOrderSummary(this.ageGroupCounts);
     }
 
     // Forzar detección de cambios
     this.cdr.detectChanges();
 
-    // ✅ Disparar actualización del summary inmediatamente
+    // Disparar actualización del summary inmediatamente
     this.triggerSummaryRefresh();
   }
 
@@ -853,7 +821,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         this.returnDate = departure.arrivalDate ?? '';
         this.departureData = departure; // Almacenar datos del departure
 
-        // ✅ NUEVO: Obtener el departureActivityPackId desde el departure
+        // NUEVO: Obtener el departureActivityPackId desde el departure
         // Por ahora, vamos a usar un valor por defecto o buscar en la BD
         this.loadDepartureActivityPackId(departureId);
 
@@ -868,17 +836,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  // ✅ NUEVO: Método para cargar el departureActivityPackId
+  // NUEVO: Método para cargar el departureActivityPackId
   private loadDepartureActivityPackId(departureId: number): void {
-    // ✅ SIMPLIFICADO: No hacer nada especial, solo mantener el departureId como referencia
+    // SIMPLIFICADO: No hacer nada especial, solo mantener el departureId como referencia
     this.departureActivityPackId = departureId;
-
-    console.log(
-      '🔄 departureActivityPackId cargado:',
-      this.departureActivityPackId
-    );
-
-    // ✅ ELIMINADO: No forzar actualización del summary automáticamente
   }
 
   // Método para cargar precios del departure
@@ -936,7 +897,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }
     });
 
-    // ✅ MEJORADO: Verificar si hay un resumen persistido en localStorage
+    // MEJORADO: Verificar si hay un resumen persistido en localStorage
     if (this.reservationId && this.summary.length === 0) {
       console.log(
         '🔄 Verificando si hay resumen persistido en localStorage...'
@@ -944,48 +905,32 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       this.restoreSummaryFromLocalStorage();
     }
 
-    // ✅ MEJORADO: Solo inicializar el resumen si no hay uno persistido
+    // MEJORADO: Solo inicializar el resumen si no hay uno persistido
     if (this.summary.length === 0) {
-      console.log(
-        '🔄 No hay resumen persistido, inicializando resumen automáticamente...'
-      );
       this.initializeOrderSummary();
     } else {
-      console.log(
-        '✅ Resumen restaurado desde localStorage, no se necesita inicialización'
-      );
-      // ✅ NUEVO: Recalcular totales del resumen restaurado
+      // NUEVO: Recalcular totales del resumen restaurado
       this.calculateTotals();
       this.updateReservationTotalAmount();
     }
 
-    // ✅ NUEVO: Forzar actualización adicional después de un delay para asegurar que los componentes estén listos
+    // NUEVO: Forzar actualización adicional después de un delay para asegurar que los componentes estén listos
     setTimeout(() => {
       if (this.summary.length === 0) {
-        console.log(
-          '⚠️ Resumen aún vacío después del delay, forzando actualización...'
-        );
         this.forceSummaryUpdate();
-      } else {
-        console.log(
-          '✅ Resumen ya tiene contenido, no se necesita actualización forzada'
-        );
       }
     }, 500);
   }
 
   // Método para inicializar el resumen automáticamente
   private initializeOrderSummary(): void {
-    // ✅ SIMPLIFICADO: Solo verificar una vez cuando se cargan los precios
+    // SIMPLIFICADO: Solo verificar una vez cuando se cargan los precios
     this.checkAndInitializeSummary();
 
-    // ✅ ELIMINADO: No llamar múltiples veces con delays que sobrescriben el summary
+    // ELIMINADO: No llamar múltiples veces con delays que sobrescriben el summary
     // Solo verificar una vez más después de un delay si el summary está vacío
     setTimeout(() => {
       if (this.summary.length === 0) {
-        console.log(
-          '🔄 Summary vacío después del delay, verificando nuevamente...'
-        );
         this.checkAndInitializeSummary();
       }
     }, 2000);

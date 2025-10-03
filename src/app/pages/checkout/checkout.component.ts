@@ -156,9 +156,7 @@ export class CheckoutComponent implements OnInit {
     private amadeusService: AmadeusService, // <-- Nueva inyección
     private processBookingService: ProcessBookingService, // New service injection
     private toursService: ToursService
-  ) {
-    this.titleService.setTitle('Checkout - Different Roads');
-  }
+  ) {}
 
   ngOnInit() {
     this.titleService.setTitle('Checkout - Different Roads');

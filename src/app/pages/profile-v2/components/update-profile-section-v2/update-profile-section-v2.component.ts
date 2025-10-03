@@ -33,7 +33,7 @@ export class UpdateProfileSectionV2Component{
 
   filteredSexoOptions: any[] = [];
 
-  constructor(private updateProfileService: UpdateProfileV2Service) {}
+  constructor(private updateProfileService: UpdateProfileV2Service) { }
 
 
   formatDate(dateInput: string | Date | undefined): string {
@@ -184,6 +184,7 @@ export class UpdateProfileSectionV2Component{
       this.errorMessage = 'Por favor, corrige los errores en el formulario antes de continuar.';
     }
   }
+
 
   // Método para obtener el mensaje de error de un campo
   getFieldError(fieldName: string): string {

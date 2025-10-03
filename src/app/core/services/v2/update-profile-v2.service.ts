@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, throwError, of, forkJoin } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { Observable, throwError, of } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
 import { PersonalInfo } from '../../models/v2/profile-v2.model';
 import { environment } from '../../../../environments/environment';
 
@@ -19,6 +19,7 @@ export class UpdateProfileV2Service {
   };
 
   constructor(private http: HttpClient) { }
+
 
   /**
    * Actualiza el perfil completo del usuario
@@ -56,31 +57,6 @@ export class UpdateProfileV2Service {
     );
   }
 
-  /**
-   * Actualiza los valores de campos adicionales del usuario
-   * @param userId - ID del usuario
-   * @param personalInfo - Datos personales del usuario
-   * @returns Observable con el resultado
-   */
-  private updateUserFieldValues(userId: string, personalInfo: PersonalInfo): Observable<any[]> {
-    const fieldValues = this.prepareFieldValuesForAPI(userId, personalInfo);
-    
-    console.log('=== UPDATING FIELD VALUES ===');
-    console.log('Field Values:', fieldValues);
-    
-    if (fieldValues.length === 0) {
-      console.log('No field values to update');
-      return of([]);
-    }
-    
-    // Enviar cada campo individualmente usando forkJoin
-    const updateObservables = fieldValues.map(fieldValue => {
-      console.log('Updating field:', fieldValue);
-      return this.http.post(this.USER_FIELD_VALUE_API_URL, fieldValue, this.httpOptions);
-    });
-    
-    return forkJoin(updateObservables);
-  }
 
   /**
    * Prepara los valores de campos adicionales para la API

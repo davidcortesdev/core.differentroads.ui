@@ -196,4 +196,19 @@ export class PersonalInfoSectionV2Component implements OnInit {
     this.isPasswordLoading = false;
     this.isSendingCode = false;
   }
+
+  /**
+   * Maneja el evento cuando el perfil se actualiza exitosamente
+   */
+  onProfileUpdated(): void {
+    // No recargar datos desde la API para evitar problemas de caché
+    // Los datos ya están actualizados en el componente
+    this.isEditing = false;
+    this.successMessage = 'Perfil actualizado correctamente';
+    
+    // Limpiar mensaje de éxito después de 3 segundos
+    setTimeout(() => {
+      this.successMessage = '';
+    }, 3000);
+  }
 }

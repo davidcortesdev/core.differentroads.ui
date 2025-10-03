@@ -55,7 +55,7 @@
           <label>Nombre:</label>
           <input
             pInputText
-            [value]="personalInfo.nombre"
+            [(ngModel)]="personalInfo.nombre"
             name="nombre"
             placeholder="Ingrese su nombre"
             (input)="onNombreInput($event)"
@@ -70,7 +70,7 @@
           <label>Apellido:</label>
           <input
             pInputText
-            [value]="personalInfo.apellido"
+            [(ngModel)]="personalInfo.apellido"
             name="apellido"
             placeholder="Ingrese su apellido"
             (input)="onApellidoInput($event)"
@@ -85,7 +85,7 @@
           <label>Email:</label>
           <input
             pInputText
-            [value]="personalInfo.email"
+            [(ngModel)]="personalInfo.email"
             name="email"
             placeholder="Ingrese su email"
             (input)="onEmailInput($event)"
@@ -100,7 +100,7 @@
           <label>Teléfono:</label>
           <input
             pInputText
-            [value]="personalInfo.telefono"
+            [(ngModel)]="personalInfo.telefono"
             name="telefono"
             placeholder="Ingrese su teléfono"
             (input)="onTelefonoInput($event)"
@@ -116,7 +116,7 @@
         <div class="form-field">
           <label>Sexo:</label>
           <p-autocomplete
-            [value]="personalInfo.sexo"
+            [(ngModel)]="personalInfo.sexo"
             name="sexo"
             [suggestions]="filteredSexoOptions"
             (completeMethod)="filterSexo($event)"
@@ -133,7 +133,7 @@
         <div class="form-field">
           <label>Fecha de nacimiento:</label>
           <p-datepicker 
-            [value]="personalInfo.fechaNacimiento"
+            [(ngModel)]="personalInfo.fechaNacimiento"
             name="fechaNacimiento"
             dateFormat="dd/mm/yy"
             placeholder="Seleccione una fecha"
@@ -152,7 +152,7 @@
           <label>Ciudad:</label>
           <input
             pInputText
-            [value]="personalInfo.ciudad"
+            [(ngModel)]="personalInfo.ciudad"
             name="ciudad"
             placeholder="Ingrese su ciudad"
             (input)="onCiudadInput($event)"
@@ -163,7 +163,7 @@
           <label>Código postal:</label>
           <input
             pInputText
-            [value]="personalInfo.codigoPostal"
+            [(ngModel)]="personalInfo.codigoPostal"
             name="codigoPostal"
             placeholder="Ingrese su código postal"
             (input)="onCodigoPostalInput($event)"
@@ -178,7 +178,7 @@
           <label>Nacionalidad:</label>
           <input
             pInputText
-            [value]="personalInfo.nacionalidad"
+            [(ngModel)]="personalInfo.nacionalidad"
             name="nacionalidad"
             placeholder="Ingrese su nacionalidad"
             (input)="onNacionalidadInput($event)"
@@ -190,7 +190,7 @@
           <label>DNI:</label>
           <input
             pInputText
-            [value]="personalInfo.dni"
+            [(ngModel)]="personalInfo.dni"
             name="dni"
             placeholder="Ingrese su DNI"
             (input)="onDniInput($event)"
@@ -204,7 +204,7 @@
         <div class="form-field">
           <label>Fecha de expedición (DNI):</label>
           <p-datepicker 
-            [value]="personalInfo.fechaExpedicionDni"
+            [(ngModel)]="personalInfo.fechaExpedicionDni"
             name="fechaExpedicionDni"
             dateFormat="dd/mm/yy"
             placeholder="Seleccione una fecha"
@@ -222,7 +222,7 @@
         <div class="form-field">
           <label>Fecha de caducidad (DNI):</label>
           <p-datepicker 
-            [value]="personalInfo.fechaCaducidadDni"
+            [(ngModel)]="personalInfo.fechaCaducidadDni"
             name="fechaCaducidadDni"
             dateFormat="dd/mm/yy"
             placeholder="Seleccione una fecha"
@@ -242,7 +242,7 @@
           <label>Número de Pasaporte:</label>
           <input
             pInputText
-            [value]="personalInfo.pasaporte"
+            [(ngModel)]="personalInfo.pasaporte"
             name="pasaporte"
             placeholder="Ingrese su número de pasaporte"
             (input)="onPasaporteInput($event)"
@@ -257,7 +257,7 @@
           <label>País de expedición (Pasaporte):</label>
           <input
             pInputText
-            [value]="personalInfo.paisExpedicion"
+            [(ngModel)]="personalInfo.paisExpedicion"
             name="paisExpedicion"
             placeholder="Ingrese el país de expedición"
             (input)="onPaisExpedicionInput($event)"
@@ -267,7 +267,7 @@
         <div class="form-field">
           <label>Fecha de expedición (Pasaporte):</label>
           <p-datepicker 
-            [value]="personalInfo.fechaExpedicionPasaporte"
+            [(ngModel)]="personalInfo.fechaExpedicionPasaporte"
             name="fechaExpedicion"
             dateFormat="dd/mm/yy"
             placeholder="Seleccione una fecha"
@@ -285,7 +285,7 @@
         <div class="form-field">
           <label>Fecha de vencimiento (Pasaporte):</label>
           <p-datepicker 
-            [value]="personalInfo.fechaVencimientoPasaporte"
+            [(ngModel)]="personalInfo.fechaVencimientoPasaporte"
             name="fechaVencimiento"
             dateFormat="dd/mm/yy"
             placeholder="Seleccione una fecha"

@@ -13,6 +13,7 @@ import { TourNetService } from '../../core/services/tour/tourNet.service';
 import { CMSTourService } from '../../core/services/cms/cms-tour.service';
 import { RetailerService } from '../../core/services/retailer/retailer.service';
 import { DepartureService } from '../../core/services/departure/departure.service';
+import { Title } from '@angular/platform-browser';
 
 interface BookingData {
   title: string;
@@ -203,7 +204,8 @@ export class Bookingsv2Component implements OnInit {
     private tourNetService: TourNetService,
     private cmsTourService: CMSTourService,
     @Inject(RetailerService) private retailerService: RetailerService,
-    private departureService: DepartureService
+    private departureService: DepartureService,
+    private titleService: Title
   ) {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
@@ -211,6 +213,7 @@ export class Bookingsv2Component implements OnInit {
   }
 
   ngOnInit(): void {
+    this.titleService.setTitle('Mis Reservas - Different Roads');
     this.messageService.clear();
 
     // Obtenemos el ID de la URL

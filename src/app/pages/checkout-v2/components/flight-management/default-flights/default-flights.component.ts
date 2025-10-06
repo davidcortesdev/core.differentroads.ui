@@ -75,9 +75,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('🔄 ngOnChanges ejecutado');
-    console.log('📊 Cambios detectados:', Object.keys(changes));
-    console.log('🕐 Timestamp:', new Date().toISOString());
 
     if (
       changes['departureId'] &&
@@ -85,10 +82,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       changes['departureId'].currentValue !==
         changes['departureId'].previousValue
     ) {
-      console.log(
-        '🔄 departureId cambió:',
-        changes['departureId'].currentValue
-      );
       this.getFlights();
     }
 
@@ -98,31 +91,22 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       changes['reservationId'].currentValue !==
         changes['reservationId'].previousValue
     ) {
-      console.log(
-        '🔄 reservationId cambió:',
-        changes['reservationId'].currentValue
-      );
       this.getTravelers();
 
-      // ✅ NUEVO: Cargar vuelo existente cuando cambie el reservationId
+      // NUEVO: Cargar vuelo existente cuando cambie el reservationId
       if (this.flightPacks && this.flightPacks.length > 0) {
         this.loadAndSelectExistingFlight();
       }
     }
 
-    // ✅ NUEVO: Manejar cambio en departureActivityPackId
+    // NUEVO: Manejar cambio en departureActivityPackId
     if (
       changes['departureActivityPackId'] &&
       changes['departureActivityPackId'].currentValue !==
         changes['departureActivityPackId'].previousValue
     ) {
-      console.log('🔄 departureActivityPackId cambió');
-      console.log(
-        '📦 ID del departure:',
-        changes['departureActivityPackId'].currentValue
-      );
 
-      // ✅ NUEVO: Cargar asignaciones existentes cuando cambie el departure
+      // NUEVO: Cargar asignaciones existentes cuando cambie el departure
       if (this.reservationId) {
         this.loadExistingFlightAssignments();
       }
@@ -139,16 +123,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       changes['selectedFlightFromParent'].currentValue !==
         changes['selectedFlightFromParent'].previousValue
     ) {
-      console.log('🔄 selectedFlightFromParent cambió');
-      console.log(
-        '📊 Valor anterior:',
-        changes['selectedFlightFromParent'].previousValue
-      );
-      console.log(
-        '📊 Valor actual:',
-        changes['selectedFlightFromParent'].currentValue
-      );
-      console.log('🔄 Actualizando selectedFlight interno...');
+     
 
       this.selectedFlight = changes['selectedFlightFromParent'].currentValue;
 
@@ -158,38 +133,19 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
         this.selectedFlight &&
         this.reservationId
       ) {
-        console.log(
-          '💾 Guardando asignaciones para vuelo seleccionado desde padre...'
-        );
-        console.log('🎯 Vuelo seleccionado:', this.selectedFlight);
-        console.log('🆔 reservationId:', this.reservationId);
+      
 
         this.saveFlightAssignments()
           .then((success) => {
             if (success) {
-              console.log('✅ Asignaciones guardadas exitosamente desde padre');
+            
             } else {
-              console.error('❌ Error al guardar asignaciones desde padre');
+              console.error('Error al guardar asignaciones desde padre');
             }
           })
           .catch((error) => {
-            console.error(
-              '💥 Error al guardar asignaciones desde padre:',
-              error
-            );
+            console.error('Error al guardar asignaciones desde padre:', error);
           });
-      } else {
-        if (this.isInternalSelection) {
-          console.log(
-            '⚠️ No se guardan asignaciones - es una selección interna'
-          );
-        } else {
-          console.log(
-            '⚠️ No se puede guardar - selectedFlight o reservationId faltan'
-          );
-          console.log('📊 selectedFlight:', this.selectedFlight);
-          console.log('🆔 reservationId:', this.reservationId);
-        }
       }
 
       // Resetear la bandera después de procesar el cambio
@@ -209,7 +165,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
         });
       });
 
-      // ✅ MODIFICADO: Ejecutar en orden correcto para asegurar actualización
+      // MODIFICADO: Ejecutar en orden correcto para asegurar actualización
       if (this.reservationId && this.departureActivityPackId) {
         // 1. Primero cargar asignaciones existentes
         this.loadExistingFlightAssignments().then(() => {
@@ -225,7 +181,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
           this.loadAndSelectExistingFlight();
         });
       } else {
-        // ✅ SELECCIONAR AUTOMÁTICAMENTE el vuelo del departure si existe
+        // SELECCIONAR AUTOMÁTICAMENTE el vuelo del departure si existe
         if (this.departureActivityPackId && this.departureActivityPackId > 0) {
           this.selectFlightFromDeparture(this.departureActivityPackId);
         }
@@ -240,18 +196,12 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
 
   // ✅ MÉTODO NUEVO: Cargar y mostrar como seleccionado el vuelo que ya existe en la BD
   private async loadAndSelectExistingFlight(): Promise<void> {
-    console.log('🔄 loadAndSelectExistingFlight iniciado');
-    console.log('🆔 reservationId:', this.reservationId);
-    console.log('📋 Vuelos disponibles:', this.flightPacks);
 
     if (
       !this.reservationId ||
       !this.flightPacks ||
       this.flightPacks.length === 0
     ) {
-      console.log(
-        '⚠️ No se puede cargar vuelo existente - faltan datos necesarios'
-      );
       return;
     }
 
@@ -269,7 +219,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       );
 
       if (travelers.length === 0) {
-        console.log('⚠️ No hay viajeros para verificar vuelos existentes');
         return;
       }
 
@@ -298,16 +247,11 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
         )[0];
         const flightId = mostRecentFlight.activityPackId;
 
-        console.log('🎯 Vuelo existente encontrado en BD:', flightId);
 
         // Buscar si este vuelo está disponible en la lista actual
         const matchingFlight = this.flightPacks.find((f) => f.id === flightId);
 
         if (matchingFlight) {
-          console.log(
-            '✅ Vuelo existente encontrado en lista de vuelos disponibles:',
-            matchingFlight
-          );
 
           // Seleccionar el vuelo existente
           this.isInternalSelection = true;
@@ -324,35 +268,19 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
             totalPrice: basePrice,
           });
 
-          console.log(
-            '✅ Vuelo existente de la BD seleccionado automáticamente'
-          );
         } else {
-          console.log(
-            '⚠️ Vuelo existente en BD no está disponible en la lista actual:',
-            flightId
-          );
         }
       } else {
-        console.log(
-          'ℹ️ No se encontraron asignaciones de vuelos existentes en la BD'
-        );
       }
     } catch (error) {
-      console.error('💥 Error al cargar vuelo existente:', error);
+      console.error('Error al cargar vuelo existente:', error);
     }
   }
 
   // ✅ MÉTODO NUEVO: Seleccionar vuelo basado en el departure
   private selectFlightFromDeparture(departureActivityPackId: number): void {
-    console.log('🎯 selectFlightFromDeparture llamado');
-    console.log('📦 ID del departure:', departureActivityPackId);
-    console.log('📋 Vuelos disponibles:', this.flightPacks);
 
     if (!this.flightPacks || this.flightPacks.length === 0) {
-      console.log(
-        '⚠️ No hay vuelos disponibles aún, se seleccionará cuando se carguen'
-      );
       return;
     }
 
@@ -362,7 +290,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
     );
 
     if (matchingFlight) {
-      console.log('✅ Vuelo del departure encontrado:', matchingFlight);
 
       // Seleccionar el vuelo sin emitir cambios (es interno)
       this.isInternalSelection = true;
@@ -379,16 +306,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
         totalPrice: basePrice,
       });
 
-      console.log('✅ Vuelo del departure seleccionado automáticamente');
-    } else {
-      console.log(
-        '⚠️ No se encontró vuelo que coincida con el departure ID:',
-        departureActivityPackId
-      );
-      console.log(
-        '📋 IDs de vuelos disponibles:',
-        this.flightPacks.map((f) => f.id)
-      );
     }
   }
 
@@ -481,14 +398,8 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
 
   // ✅ MÉTODO NUEVO: Forzar actualización de datos del departure
   async forceUpdateDepartureData(): Promise<void> {
-    console.log('🔄 forceUpdateDepartureData iniciado');
-    console.log('📦 departureActivityPackId:', this.departureActivityPackId);
-    console.log('🆔 reservationId:', this.reservationId);
 
     if (!this.departureActivityPackId || !this.reservationId) {
-      console.log(
-        '⚠️ No se puede forzar actualización - faltan datos necesarios'
-      );
       return;
     }
 
@@ -506,7 +417,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
         await this.loadAndSelectExistingFlight();
       }
 
-      console.log('✅ Actualización forzada del departure completada');
     } catch (error) {
       console.error('💥 Error en forceUpdateDepartureData:', error);
     }
@@ -514,12 +424,9 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
 
   // ✅ MÉTODO NUEVO: Deseleccionar vuelo del departure sin guardar en BD (para sincronización con specific-search)
   deselectDepartureFlightWithoutSaving(): void {
-    console.log('🔄 deselectDepartureFlightWithoutSaving llamado');
-    console.log('📦 departureActivityPackId:', this.departureActivityPackId);
-    console.log('🔄 selectedFlight actual:', this.selectedFlight);
+
     
     if (this.selectedFlight && this.selectedFlight.id === this.departureActivityPackId) {
-      console.log('✅ Deseleccionando vuelo del departure sin guardar en BD');
       
       // Marcar como selección interna para evitar guardar automáticamente
       this.isInternalSelection = true;
@@ -529,11 +436,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       
       // Emitir el cambio
       this.flightSelectionChange.emit({ selectedFlight: null, totalPrice: 0 });
-      
-      console.log('✅ Vuelo del departure deseleccionado, opción "Sin Vuelos" visible pero no seleccionada');
-    } else {
-      console.log('ℹ️ No hay vuelo del departure seleccionado para deseleccionar');
-    }
+    } 
   }
 
   getTravelers(): void {
@@ -602,25 +505,18 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
   }
 
   selectFlight(flightPack: IFlightPackDTO): void {
-    console.log('🎯 selectFlight llamado');
-    console.log('📦 flightPack:', flightPack);
-    console.log('🔄 selectedFlight actual:', this.selectedFlight);
-    console.log('🕐 Timestamp:', new Date().toISOString());
 
     if (this.selectedFlight === flightPack) {
       // Deseleccionar vuelo
-      console.log('🔄 Deseleccionando vuelo actual');
       this.selectedFlight = null;
 
       // Emitir "Sin Vuelos" con precio 0
       this.flightSelectionChange.emit({ selectedFlight: null, totalPrice: 0 });
 
       // Guardar estado "sin vuelo" para todos los viajeros
-      console.log('💾 Guardando estado "sin vuelo" para todos los viajeros...');
       this.saveFlightAssignmentsForAllTravelers(0, true); // 0 = sin vuelos, true = deseleccionar specific-search
     } else {
       // Seleccionar nuevo vuelo
-      console.log('✅ Seleccionando nuevo vuelo');
       this.selectedFlight = flightPack;
       
       const basePrice =
@@ -628,8 +524,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
           (price) => price.ageGroupId === this.travelers[0]?.ageGroupId
         )?.price || 0;
 
-      console.log('💰 Precio base:', basePrice);
-      console.log('👥 Total de viajeros:', this.travelers.length);
 
       // Emitir eventos
       this.defaultFlightSelected.emit({
@@ -643,7 +537,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       });
 
       // Guardar asignaciones del vuelo seleccionado para todos los viajeros
-      console.log('💾 Guardando asignaciones del vuelo seleccionado...');
       this.saveFlightAssignmentsForAllTravelers(flightPack.id, true); // flightPack.id, true = deseleccionar specific-search
     }
   }
@@ -738,20 +631,14 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
     targetFlightPackId: number,
     shouldUnselectSpecificSearch: boolean = false
   ): Promise<boolean> {
-    console.log('🔍 saveFlightAssignmentsForAllTravelers llamado');
-    console.log('🎯 targetFlightPackId:', targetFlightPackId);
-    console.log('🆔 reservationId:', this.reservationId);
-    console.log('🔄 shouldUnselectSpecificSearch:', shouldUnselectSpecificSearch);
 
     if (!this.reservationId) {
-      console.log('❌ No se puede guardar - reservationId faltante');
       return false;
     }
 
     // ✅ CORRECCIÓN: Si targetFlightPackId es 0, buscar automáticamente el flightPack "sin vuelos"
     let finalFlightPackId = targetFlightPackId;
     if (targetFlightPackId === 0) {
-      console.log('🔍 Buscando automáticamente flightPack "sin vuelos"...');
       const noFlightPack = this.flightPacks?.find((pack) => {
         const name = pack.name?.toLowerCase() || '';
         const description = pack.description?.toLowerCase() || '';
@@ -765,23 +652,19 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
 
       if (noFlightPack) {
         finalFlightPackId = noFlightPack.id;
-        console.log('✅ FlightPack "sin vuelos" encontrado automáticamente:', finalFlightPackId);
       } else {
-        console.log('⚠️ No se encontró flightPack "sin vuelos", usando 0 como fallback');
         finalFlightPackId = 0;
       }
     }
 
     try {
       // 1. Obtener todos los viajeros de la reserva
-      console.log('👥 Obteniendo viajeros...');
       const travelers = await new Promise<IReservationTravelerResponse[]>(
         (resolve, reject) => {
           this.reservationTravelerService
             .getAll({ reservationId: this.reservationId! })
             .subscribe({
               next: (travelers) => {
-                console.log('✅ Viajeros obtenidos:', travelers);
                 resolve(travelers);
               },
               error: (error) => {
@@ -793,7 +676,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       );
 
       if (travelers.length === 0) {
-        console.log('⚠️ No hay viajeros para asignar');
         return true;
       }
 
@@ -814,14 +696,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                   const mostRecentAssignment = flightPackAssignments.sort(
                     (a, b) => b.id - a.id
                   )[0];
-
-                  console.log(
-                    `🔄 Actualizando asignación ${mostRecentAssignment.id} para viajero ${traveler.id}`
-                  );
-                  console.log(
-                    `🔄 Cambio: ${mostRecentAssignment.activityPackId} -> ${finalFlightPackId}`
-                  );
-
                   const updateData = {
                     id: mostRecentAssignment.id,
                     reservationTravelerId: traveler.id,
@@ -834,20 +708,18 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                     .subscribe({
                       next: (updated) => {
                         if (updated) {
-                          console.log(
-                            `✅ Asignación actualizada para viajero ${traveler.id}`
-                          );
+
                           resolve(true);
                         } else {
                           console.error(
-                            `❌ Error al actualizar asignación para viajero ${traveler.id}`
+                            `Error al actualizar asignación para viajero ${traveler.id}`
                           );
                           resolve(false);
                         }
                       },
                       error: (error) => {
                         console.error(
-                          `❌ Error al actualizar asignación para viajero ${traveler.id}:`,
+                          `Error al actualizar asignación para viajero ${traveler.id}:`,
                           error
                         );
                         reject(error);
@@ -855,9 +727,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                     });
                 } else {
                   // Crear nueva asignación si no existe
-                  console.log(
-                    `➕ Creando nueva asignación para viajero ${traveler.id}`
-                  );
 
                   const newAssignment = {
                     id: 0,
@@ -872,20 +741,17 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                     .subscribe({
                       next: (created) => {
                         if (created) {
-                          console.log(
-                            `✅ Nueva asignación creada para viajero ${traveler.id}`
-                          );
                           resolve(true);
                         } else {
                           console.error(
-                            `❌ Error al crear asignación para viajero ${traveler.id}`
+                            `Error al crear asignación para viajero ${traveler.id}`
                           );
                           resolve(false);
                         }
                       },
                       error: (error) => {
                         console.error(
-                          `❌ Error al crear asignación para viajero ${traveler.id}:`,
+                          `Error al crear asignación para viajero ${traveler.id}:`,
                           error
                         );
                         reject(error);
@@ -895,7 +761,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
               },
               error: (error) => {
                 console.error(
-                  `❌ Error al obtener asignaciones para viajero ${traveler.id}:`,
+                  `Error al obtener asignaciones para viajero ${traveler.id}:`,
                   error
                 );
                 reject(error);
@@ -906,24 +772,21 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
 
       // 3. Esperar a que se completen todas las actualizaciones
       await Promise.all(updatePromises);
-      console.log('✅ Todas las asignaciones procesadas exitosamente');
 
       // 4. Deseleccionar vuelos de specific-search si es necesario
       if (shouldUnselectSpecificSearch && this.reservationId) {
-        console.log('🔄 Deseleccionando vuelos de specific-search...');
         this.flightSearchService.unselectAllFlights(this.reservationId).subscribe({
           next: () => {
-            console.log('✅ Vuelos de specific-search deseleccionados exitosamente');
           },
           error: (error) => {
-            console.error('❌ Error al deseleccionar vuelos de specific-search:', error);
+            console.error('Error al deseleccionar vuelos de specific-search:', error);
           },
         });
       }
 
       return true;
     } catch (error) {
-      console.error('💥 Error en saveFlightAssignmentsForAllTravelers:', error);
+      console.error('Error en saveFlightAssignmentsForAllTravelers:', error);
       return false;
     }
   }
@@ -931,35 +794,18 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
   async saveFlightAssignments(): Promise<boolean> {
     // Incrementar contador estático
     DefaultFlightsComponent.saveFlightAssignmentsCallCount++;
-
-    console.log('🔍 saveFlightAssignments llamado');
-    console.log(
-      '🔢 Número de llamada:',
-      DefaultFlightsComponent.saveFlightAssignmentsCallCount
-    );
-    console.log('📊 selectedFlight:', this.selectedFlight);
-    console.log('🆔 reservationId:', this.reservationId);
-    console.log('📦 departureActivityPackId:', this.departureActivityPackId);
-    console.log('🕐 Timestamp:', new Date().toISOString());
-    console.log('📍 Stack trace:', new Error().stack);
-
+      
     if (!this.selectedFlight || !this.reservationId) {
-      console.log(
-        '❌ No se puede guardar - selectedFlight o reservationId faltan'
-      );
       return true;
     }
 
     try {
-      console.log('👥 Obteniendo viajeros...');
       const travelers = await new Promise<IReservationTravelerResponse[]>(
         (resolve, reject) => {
           this.reservationTravelerService
             .getAll({ reservationId: this.reservationId! })
             .subscribe({
               next: (travelers) => {
-                console.log('✅ Viajeros obtenidos:', travelers);
-                console.log('👥 Cantidad de viajeros:', travelers.length);
                 resolve(travelers);
               },
               error: (error) => {
@@ -971,15 +817,11 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       );
 
       if (travelers.length === 0) {
-        console.log('⚠️ No hay viajeros para asignar');
-        return true;
+        return true;  
       }
 
       // ✅ MODIFICADO: Solo actualizar registros del departure existentes, NUNCA crear nuevos
       if (!this.selectedFlight) {
-        console.log(
-          '🔄 No hay vuelo seleccionado, actualizando registros del departure con activityPackId = 0...'
-        );
 
         const updatePromises = travelers.map((traveler) => {
           return new Promise<boolean>((resolve, reject) => {
@@ -993,9 +835,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                   );
 
                   if (departureAssignments.length === 0) {
-                    console.log(
-                      `ℹ️ Viajero ${traveler.id} no tiene asignaciones del departure para actualizar`
-                    );
                     resolve(true);
                     return;
                   }
@@ -1006,12 +845,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                   );
                   const mostRecentAssignment = sortedAssignments[0];
 
-                  console.log(
-                    `🔄 Actualizando asignación del departure ${mostRecentAssignment.id} para viajero ${traveler.id}`
-                  );
-                  console.log(
-                    `🔄 Cambio: departure ${mostRecentAssignment.activityPackId} -> sin vuelo (0)`
-                  );
 
                   const updateData = {
                     id: mostRecentAssignment.id,
@@ -1025,19 +858,16 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                     .subscribe({
                       next: (updated: boolean) => {
                         if (updated) {
-                          console.log(
-                            `✅ Asignación del departure ${mostRecentAssignment.id} actualizada para viajero ${traveler.id} (sin vuelo)`
-                          );
                         } else {
                           console.error(
-                            `❌ Error al actualizar asignación del departure ${mostRecentAssignment.id} para viajero ${traveler.id}`
+                            `Error al actualizar asignación del departure ${mostRecentAssignment.id} para viajero ${traveler.id}`
                           );
                         }
                         resolve(updated);
                       },
                       error: (error: any) => {
                         console.error(
-                          `❌ Error al actualizar asignación del departure para viajero ${traveler.id}:`,
+                          `Error al actualizar asignación del departure para viajero ${traveler.id}:`,
                           error
                         );
                         reject(error);
@@ -1046,7 +876,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                 },
                 error: (error: any) => {
                   console.error(
-                    `❌ Error al obtener asignaciones para viajero ${traveler.id}:`,
+                    `Error al obtener asignaciones para viajero ${traveler.id}:`,
                     error
                   );
                   reject(error);
@@ -1056,23 +886,13 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
         });
 
         await Promise.all(updatePromises);
-        console.log(
-          '✅ Todas las asignaciones del departure actualizadas exitosamente (sin vuelo)'
-        );
         return true;
       }
 
       const activityPackId = this.selectedFlight.id;
-      console.log('🎯 ID del paquete de actividad a asignar:', activityPackId);
 
-      console.log(
-        '📝 Procesando asignaciones del departure para',
-        travelers.length,
-        'viajeros...'
-      );
 
       // ✅ MODIFICADO: SOLO actualizar registros existentes del departure, NUNCA crear nuevos
-      console.log('🔍 Verificando asignaciones existentes del departure...');
       const existingAssignmentsPromises = travelers.map((traveler) => {
         return new Promise<{
           traveler: IReservationTravelerResponse;
@@ -1091,16 +911,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                 const sortedAssignments = departureAssignments.sort(
                   (a, b) => b.id - a.id
                 );
-
-                console.log(
-                  `🔍 Viajero ${traveler.id}: ${departureAssignments.length} asignaciones del departure encontradas`
-                );
-                console.log(
-                  `🔍 IDs de asignaciones del departure: ${departureAssignments
-                    .map((a) => a.id)
-                    .join(', ')}`
-                );
-
                 resolve({
                   traveler,
                   existingAssignments: sortedAssignments,
@@ -1108,7 +918,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
               },
               error: (error) => {
                 console.error(
-                  `❌ Error al obtener asignaciones para viajero ${traveler.id}:`,
+                  `Error al obtener asignaciones para viajero ${traveler.id}:`,
                   error
                 );
                 reject(error);
@@ -1127,9 +937,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       );
 
       if (hasExistingDepartureAssignments) {
-        console.log(
-          '🔄 Se encontraron asignaciones del departure existentes, actualizando el más reciente...'
-        );
 
         const updatePromises = existingAssignmentsResults.map((result) => {
           return new Promise<boolean>((resolve, reject) => {
@@ -1138,12 +945,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
             if (existingAssignments.length > 0) {
               // Siempre usar la primera asignación (la más reciente por ID)
               const mostRecentAssignment = existingAssignments[0];
-              console.log(
-                `🔄 Actualizando asignación del departure más reciente ${mostRecentAssignment.id} para viajero ${traveler.id}`
-              );
-              console.log(
-                `🔄 ID anterior: ${mostRecentAssignment.activityPackId} -> Nuevo ID: ${activityPackId}`
-              );
 
               const updateData = {
                 id: mostRecentAssignment.id,
@@ -1157,22 +958,16 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                 .subscribe({
                   next: (updated: boolean) => {
                     if (updated) {
-                      console.log(
-                        `✅ Asignación del departure ${mostRecentAssignment.id} actualizada para viajero ${traveler.id}`
-                      );
-                      console.log(
-                        `✅ Cambio: departure ${mostRecentAssignment.activityPackId} -> vuelo ${activityPackId}`
-                      );
                     } else {
                       console.error(
-                        `❌ Error al actualizar asignación del departure ${mostRecentAssignment.id} para viajero ${traveler.id}`
+                        `Error al actualizar asignación del departure ${mostRecentAssignment.id} para viajero ${traveler.id}`
                       );
                     }
                     resolve(updated);
                   },
                   error: (error: any) => {
                     console.error(
-                      `❌ Error al actualizar asignación del departure para viajero ${traveler.id}:`,
+                      `Error al actualizar asignación del departure para viajero ${traveler.id}:`,
                       error
                     );
                     reject(error);
@@ -1180,44 +975,28 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                 });
             } else {
               // ✅ MODIFICADO: NO crear nuevas asignaciones, solo log
-              console.log(
-                `⚠️ Viajero ${traveler.id} no tiene asignaciones del departure existentes. NO se creará nueva asignación.`
-              );
               resolve(true); // Resolver como éxito sin crear nada
             }
           });
         });
 
               await Promise.all(updatePromises);
-      console.log(
-        '✅ Todas las asignaciones del departure actualizadas exitosamente'
-      );
       
       // ✅ NUEVO: Deseleccionar todos los vuelos en specific-search después de guardar
       if (this.reservationId) {
         this.flightSearchService.unselectAllFlights(this.reservationId).subscribe({
           next: () => {
-            console.log('✅ Vuelos de specific-search deseleccionados exitosamente después de guardar');
           },
           error: (error) => {
-            console.error('❌ Error al deseleccionar vuelos de specific-search después de guardar:', error);
+            console.error('Error al deseleccionar vuelos de specific-search después de guardar:', error);
           }
         });
       }
     } else {
       // ✅ MODIFICADO: NO crear nuevas asignaciones si no existen
-      console.log(
-        '⚠️ No se encontraron asignaciones del departure existentes. NO se crearán nuevas asignaciones.'
-      );
-      console.log(
-        'ℹ️ Las asignaciones deben existir previamente en la BD para ser actualizadas.'
-      );
     }
 
       // ✅ MODIFICADO: Verificar solo las asignaciones del departure
-      console.log(
-        '🔍 Verificando estado final de asignaciones del departure...'
-      );
       for (const traveler of travelers) {
         this.reservationTravelerActivityPackService
           .getByReservationTraveler(traveler.id)
@@ -1227,45 +1006,10 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
               const departureAssignments = finalAssignments.filter(
                 (a) => a.activityPackId === this.selectedFlight!.id
               );
-
-              console.log(
-                `🔍 Estado final del departure para viajero ${traveler.id}:`,
-                departureAssignments
-              );
-              console.log(
-                `🔍 Cantidad final de asignaciones del departure:`,
-                departureAssignments.length
-              );
-
-              if (departureAssignments.length === 1) {
-                console.log(
-                  `✅ Estado final correcto para viajero ${
-                    traveler.id
-                  }: 1 asignación del departure para vuelo ${
-                    this.selectedFlight!.id
-                  }`
-                );
-              } else if (departureAssignments.length > 1) {
-                console.log(
-                  `⚠️ Estado final inesperado para viajero ${traveler.id}: ${
-                    departureAssignments.length
-                  } asignaciones del departure para vuelo ${
-                    this.selectedFlight!.id
-                  }`
-                );
-              } else {
-                console.warn(
-                  `⚠️ Estado final inesperado para viajero ${
-                    traveler.id
-                  }: 0 asignaciones del departure para vuelo ${
-                    this.selectedFlight!.id
-                  }`
-                );
-              }
             },
             error: (error) => {
               console.error(
-                `❌ Error al verificar estado final del departure para viajero ${traveler.id}:`,
+                `Error al verificar estado final del departure para viajero ${traveler.id}:`,
                 error
               );
             },
@@ -1274,20 +1018,14 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
 
       return true;
     } catch (error) {
-      console.error('💥 Error en saveFlightAssignments:', error);
+      console.error('Error en saveFlightAssignments:', error);
       return false;
     }
   }
 
   private async loadExistingFlightAssignments(): Promise<void> {
-    console.log('🔄 loadExistingFlightAssignments iniciado');
-    console.log('🆔 reservationId:', this.reservationId);
-    console.log('📦 departureActivityPackId:', this.departureActivityPackId);
 
     if (!this.reservationId) {
-      console.log(
-        '❌ No se puede cargar asignaciones - reservationId faltante'
-      );
       return;
     }
 
@@ -1298,15 +1036,11 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
             .getAll({ reservationId: this.reservationId! })
             .subscribe({
               next: (travelers) => {
-                console.log(
-                  '✅ Viajeros obtenidos para carga de asignaciones:',
-                  travelers
-                );
                 resolve(travelers);
               },
               error: (error) => {
                 console.error(
-                  '❌ Error al obtener viajeros para carga de asignaciones:',
+                  'Error al obtener viajeros para carga de asignaciones:',
                   error
                 );
                 reject(error);
@@ -1316,20 +1050,15 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       );
 
       if (travelers.length === 0) {
-        console.log('⚠️ No hay viajeros para cargar asignaciones');
         return;
       }
 
       // ✅ MODIFICADO: Usar departureActivityPackId en lugar de selectedFlightFromParent?.id
       const activityPackId = this.departureActivityPackId;
       if (!activityPackId || activityPackId <= 0) {
-        console.log(
-          '❌ No se puede cargar asignaciones - departureActivityPackId faltante o inválido'
-        );
         return;
       }
 
-      console.log('🎯 ID del paquete de actividad a cargar:', activityPackId);
 
       const updatePromises = travelers.map((traveler) => {
         return new Promise<boolean>((resolve, reject) => {
@@ -1346,12 +1075,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                   const mostRecentAssignment = departureAssignments.sort(
                     (a, b) => b.id - a.id
                   )[0];
-                  console.log(
-                    `🔄 Asignación del departure ${mostRecentAssignment.id} para viajero ${traveler.id} encontrada y actualizada`
-                  );
-                  console.log(
-                    `🔄 Cambio: departure ${mostRecentAssignment.activityPackId} -> vuelo ${activityPackId}`
-                  );
 
                   const updateData = {
                     id: mostRecentAssignment.id,
@@ -1364,29 +1087,23 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                     .update(mostRecentAssignment.id, updateData)
                     .subscribe({
                       next: (updated: boolean) => {
-                        if (updated) {
-                          console.log(
-                            `✅ Asignación del departure ${mostRecentAssignment.id} actualizada para viajero ${traveler.id}`
-                          );
+                        if (updated) {  
                         } else {
                           console.error(
-                            `❌ Error al actualizar asignación del departure ${mostRecentAssignment.id} para viajero ${traveler.id}`
+                            `Error al actualizar asignación del departure ${mostRecentAssignment.id} para viajero ${traveler.id}`
                           );
                         }
                         resolve(updated);
                       },
                       error: (error: any) => {
                         console.error(
-                          `❌ Error al actualizar asignación del departure para viajero ${traveler.id}:`,
+                          `Error al actualizar asignación del departure para viajero ${traveler.id}:`,
                           error
                         );
                         reject(error);
                       },
                     });
                 } else {
-                  console.log(
-                    `ℹ️ No hay asignaciones del departure para viajero ${traveler.id}. No se creará una nueva asignación automáticamente.`
-                  );
                   // No creamos asignaciones automáticamente durante la carga
                   // Solo resolvemos como true para continuar el proceso
                   resolve(true);
@@ -1394,7 +1111,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
               },
               error: (error: any) => {
                 console.error(
-                  `❌ Error al obtener asignaciones para viajero ${traveler.id}:`,
+                  `Error al obtener asignaciones para viajero ${traveler.id}:`,
                   error
                 );
                 reject(error);
@@ -1404,27 +1121,17 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       });
 
       await Promise.all(updatePromises);
-      console.log(
-        '✅ Todas las asignaciones del departure cargadas exitosamente'
-      );
     } catch (error) {
-      console.error('💥 Error en loadExistingFlightAssignments:', error);
+      console.error('Error en loadExistingFlightAssignments:', error);
     }
   }
 
   private async clearExistingFlightAssignments(
     travelers: IReservationTravelerResponse[]
   ): Promise<void> {
-    console.log('🧹 clearExistingFlightAssignments iniciado');
-    console.log('🎯 ID del vuelo seleccionado:', this.selectedFlight?.id);
-    console.log('📦 ID del departure:', this.departureActivityPackId);
-    console.log('👥 Cantidad de viajeros a procesar:', travelers.length);
 
     const clearPromises = travelers.map((traveler) => {
       return new Promise<void>((resolve, reject) => {
-        console.log(
-          `🧹 Procesando limpieza del departure para viajero ${traveler.id} (Viajero #${traveler.travelerNumber})`
-        );
 
         this.reservationTravelerActivityPackService
           .getByReservationTraveler(traveler.id)
@@ -1432,14 +1139,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
             next: (
               existingAssignments: IReservationTravelerActivityPackResponse[]
             ) => {
-              console.log(
-                `🧹 Asignaciones existentes para viajero ${traveler.id}:`,
-                existingAssignments
-              );
-              console.log(
-                `🧹 Cantidad de asignaciones existentes:`,
-                existingAssignments.length
-              );
 
               // ✅ MODIFICADO: Solo filtrar asignaciones del departure
               const departureAssignments = existingAssignments.filter(
@@ -1452,29 +1151,9 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                 (assignment) => {
                   const isCurrentDeparture =
                     assignment.activityPackId === this.departureActivityPackId;
-                  console.log(
-                    `🧹 Evaluando asignación del departure ${assignment.id}: activityPackId=${assignment.activityPackId}, departure actual=${this.departureActivityPackId}, es del departure actual=${isCurrentDeparture}`
-                  );
                   // No eliminar asignaciones del departure actual, solo las de otros departures
                   return !isCurrentDeparture;
                 }
-              );
-
-              console.log(
-                `🧹 Asignaciones del departure totales:`,
-                departureAssignments
-              );
-              console.log(
-                `🧹 ID del departure actual:`,
-                this.departureActivityPackId
-              );
-              console.log(
-                `🧹 Asignaciones a eliminar (diferentes del departure actual):`,
-                otherDepartureAssignments
-              );
-              console.log(
-                `🧹 Cantidad de asignaciones a eliminar:`,
-                otherDepartureAssignments.length
               );
 
               // Verificar si hay asignaciones para el departure actual
@@ -1482,20 +1161,8 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                 (assignment) =>
                   assignment.activityPackId === this.departureActivityPackId
               );
-              if (currentDepartureAssignments.length > 0) {
-                console.log(
-                  `ℹ️ Viajero ${traveler.id} tiene ${currentDepartureAssignments.length} asignaciones para el departure actual ${this.departureActivityPackId} (se mantendrán)`
-                );
-                console.log(
-                  `ℹ️ Asignaciones del departure actual:`,
-                  currentDepartureAssignments
-                );
-              }
 
               if (otherDepartureAssignments.length === 0) {
-                console.log(
-                  `🧹 No hay asignaciones del departure a eliminar para viajero ${traveler.id}`
-                );
                 resolve();
                 return;
               }
@@ -1503,18 +1170,12 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
               const deletePromises = otherDepartureAssignments.map(
                 (assignment: IReservationTravelerActivityPackResponse) => {
                   return new Promise<void>((resolveDelete, rejectDelete) => {
-                    console.log(
-                      `🗑️ Eliminando asignación del departure ${assignment.id} para viajero ${traveler.id}`
-                    );
 
                     this.reservationTravelerActivityPackService
                       .delete(assignment.id)
                       .subscribe({
                         next: (deleted: boolean) => {
                           if (deleted) {
-                            console.log(
-                              `✅ Asignación del departure ${assignment.id} eliminada exitosamente para viajero ${traveler.id}`
-                            );
 
                             // Verificar inmediatamente si se eliminó correctamente
                             this.reservationTravelerActivityPackService
@@ -1525,32 +1186,20 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                                     verificationAssignments.filter(
                                       (a) => a.id !== assignment.id
                                     );
-                                  console.log(
-                                    `🔍 Verificación después de eliminación del departure para viajero ${traveler.id}:`,
-                                    remainingAssignments
-                                  );
-                                  console.log(
-                                    `🔍 Cantidad de asignaciones del departure restantes:`,
-                                    remainingAssignments.length
-                                  );
                                 },
                                 error: (error) => {
                                   console.error(
-                                    `❌ Error en verificación después de eliminación del departure para viajero ${traveler.id}:`,
+                                    `Error en verificación después de eliminación del departure para viajero ${traveler.id}:`,
                                     error
                                   );
                                 },
                               });
-                          } else {
-                            console.log(
-                              `⚠️ Asignación del departure ${assignment.id} no se pudo eliminar para viajero ${traveler.id}`
-                            );
                           }
                           resolveDelete();
                         },
                         error: (error: any) => {
                           console.error(
-                            `❌ Error al eliminar asignación del departure ${assignment.id} para viajero ${traveler.id}:`,
+                            `Error al eliminar asignación del departure ${assignment.id} para viajero ${traveler.id}:`,
                             error
                           );
                           resolveDelete();
@@ -1562,14 +1211,11 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
 
               Promise.all(deletePromises)
                 .then(() => {
-                  console.log(
-                    `✅ Limpieza del departure completada para viajero ${traveler.id}`
-                  );
                   resolve();
                 })
                 .catch((error) => {
                   console.error(
-                    `❌ Error en limpieza del departure para viajero ${traveler.id}:`,
+                    `Error en limpieza del departure para viajero ${traveler.id}:`,
                     error
                   );
                   resolve();
@@ -1577,7 +1223,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
             },
             error: (error: any) => {
               console.error(
-                `❌ Error al obtener asignaciones del departure para limpieza del viajero ${traveler.id}:`,
+                `Error al obtener asignaciones del departure para limpieza del viajero ${traveler.id}:`,
                 error
               );
               resolve();
@@ -1586,13 +1232,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       });
     });
 
-    console.log(
-      '⏳ Esperando que se completen todas las limpiezas del departure...'
-    );
     await Promise.all(clearPromises);
-    console.log(
-      '✅ Todas las limpiezas del departure completadas exitosamente'
-    );
   }
 
   navigateToLogin(): void {

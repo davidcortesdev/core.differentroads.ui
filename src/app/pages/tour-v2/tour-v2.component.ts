@@ -8,6 +8,7 @@ import { SelectedDepartureEvent } from './components/tour-itinerary-v2/component
 import { ActivityHighlight } from '../../shared/components/activity-card/activity-card.component';
 import { AnalyticsService } from '../../core/services/analytics.service';
 import { AuthenticateService } from '../../core/services/auth-service.service';
+import { Title } from '@angular/platform-browser';
 
 // ✅ INTERFACES para tipado fuerte
 interface PassengersData {
@@ -109,6 +110,7 @@ export class TourV2Component implements OnInit {
   };
 
   constructor(
+    private titleService: Title,
     private route: ActivatedRoute,
     private router: Router,
     private tourNetService: TourNetService,
@@ -118,6 +120,7 @@ export class TourV2Component implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.titleService.setTitle('Tour - Different Roads');
     this.route.paramMap.subscribe((params) => {
       const slug: string | null = params.get('slug');
       

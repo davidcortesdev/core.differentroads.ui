@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { Title } from '@angular/platform-browser';
 
 
 @Component({
@@ -14,10 +15,12 @@ export class ProfileV2Component implements OnInit, OnDestroy {
   private routeSubscription: Subscription = new Subscription();
 
   constructor(
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private titleService: Title
   ) {}
 
   ngOnInit() {
+    this.titleService.setTitle('Mi Perfil - Different Roads');
     // Suscribirse a cambios en los parámetros de la ruta
     this.routeSubscription = this.route.paramMap.subscribe(params => {
       const routeUserId = params.get('userId');

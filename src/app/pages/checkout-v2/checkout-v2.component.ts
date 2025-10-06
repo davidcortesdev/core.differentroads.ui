@@ -2865,6 +2865,15 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
+   * Maneja el cambio de total desde el summary-table
+   * @param newTotal Nuevo total calculado
+   */
+  onTotalChanged(newTotal: number): void {
+    this.totalAmountCalculated = newTotal;
+    this.cdr.detectChanges();
+  }
+
+  /**
    * Maneja el evento de pago completado
    * @param paymentOption Opción de pago seleccionada
    */

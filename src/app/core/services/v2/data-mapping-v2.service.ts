@@ -307,77 +307,46 @@ export class DataMappingV2Service {
       email: user.email || '',
       telefono: user.telefono || user.phone || '',
       avatarUrl: user.avatarUrl || user.avatar || '',
-      dni: user.dni || '',
-      nacionalidad: user.nacionalidad || user.nationality || '',
-      pasaporte: user.pasaporte || user.passport || '',
-      fechaExpedicionPasaporte: user.fechaExpedicionPasaporte || user.passportIssueDate || '',
-      fechaVencimientoPasaporte: user.fechaVencimientoPasaporte || user.passportExpiryDate || '',
-      sexo: user.sexo || user.gender || '',
-      fechaNacimiento: user.fechaNacimiento || user.birthDate || '',
-      ciudad: user.ciudad || user.city || '',
-      codigoPostal: user.codigoPostal || user.postalCode || '',
-      fechaExpedicionDni: user.fechaExpedicionDni || user.dniIssueDate || '',
-      fechaCaducidadDni: user.fechaCaducidadDni || user.dniExpiryDate || '',
-      paisExpedicion: user.paisExpedicion || user.issueCountry || '',
+      // Campos adicionales que se mapearán desde userFieldValues
+      dni: '',
+      direccion: '',
+      ciudad: '',
+      codigoPostal: '',
+      pais: '',
+      fechaNacimiento: '',
+      notas: ''
     };
 
     // Agregar campos adicionales desde userFieldValues
     userFieldValues.forEach(fieldValue => {
-      const fieldName = fieldMap.get(fieldValue.fieldId);
+      const fieldName = fieldMap.get(fieldValue.userFieldId);
+      
       if (fieldName && fieldValue.value) {
-        // Mapear nombres de campos a propiedades de PersonalInfo
-        switch (fieldName.toLowerCase()) {
-          case 'dni':
-          case 'document_number':
-            combinedData.dni = fieldValue.value;
-            break;
-          case 'nacionalidad':
-          case 'nationality':
-            combinedData.nacionalidad = fieldValue.value;
-            break;
-          case 'pasaporte':
-          case 'passport':
-            combinedData.pasaporte = fieldValue.value;
-            break;
-          case 'telefono':
-          case 'phone':
+        // Mapear nombres de campos a propiedades de PersonalInfo según la API
+        switch (fieldName) {
+          case 'Teléfono':
             combinedData.telefono = fieldValue.value;
             break;
-          case 'ciudad':
-          case 'city':
-            combinedData.ciudad = fieldValue.value;
-            break;
-          case 'codigo_postal':
-          case 'postal_code':
-            combinedData.codigoPostal = fieldValue.value;
-            break;
-          case 'sexo':
-          case 'gender':
-            combinedData.sexo = fieldValue.value;
-            break;
-          case 'fecha_nacimiento':
-          case 'birth_date':
+          case 'Fecha de nacimiento':
             combinedData.fechaNacimiento = fieldValue.value;
             break;
-          case 'fecha_expedicion_dni':
-          case 'dni_issue_date':
-            combinedData.fechaExpedicionDni = fieldValue.value;
+          case 'DNI/NIE':
+            combinedData.dni = fieldValue.value;
             break;
-          case 'fecha_caducidad_dni':
-          case 'dni_expiry_date':
-            combinedData.fechaCaducidadDni = fieldValue.value;
+          case 'Dirección':
+            combinedData.direccion = fieldValue.value;
             break;
-          case 'fecha_expedicion_pasaporte':
-          case 'passport_issue_date':
-            combinedData.fechaExpedicionPasaporte = fieldValue.value;
+          case 'Ciudad':
+            combinedData.ciudad = fieldValue.value;
             break;
-          case 'fecha_vencimiento_pasaporte':
-          case 'passport_expiry_date':
-            combinedData.fechaVencimientoPasaporte = fieldValue.value;
+          case 'Código Postal':
+            combinedData.codigoPostal = fieldValue.value;
             break;
-          case 'pais_expedicion':
-          case 'issue_country':
-            combinedData.paisExpedicion = fieldValue.value;
+          case 'País':
+            combinedData.pais = fieldValue.value;
+            break;
+          case 'Notas':
+            combinedData.notas = fieldValue.value;
             break;
         }
       }
@@ -399,18 +368,11 @@ export class DataMappingV2Service {
     // Mapear campos de PersonalInfo a userFieldValues
     const fieldMappings = [
       { fieldName: 'dni', value: userData.dni },
-      { fieldName: 'nacionalidad', value: userData.nacionalidad },
-      { fieldName: 'pasaporte', value: userData.pasaporte },
+      { fieldName: 'nacionalidad', value: userData.pais },
       { fieldName: 'telefono', value: userData.telefono },
       { fieldName: 'ciudad', value: userData.ciudad },
       { fieldName: 'codigo_postal', value: userData.codigoPostal },
-      { fieldName: 'sexo', value: userData.sexo },
       { fieldName: 'fecha_nacimiento', value: userData.fechaNacimiento },
-      { fieldName: 'fecha_expedicion_dni', value: userData.fechaExpedicionDni },
-      { fieldName: 'fecha_caducidad_dni', value: userData.fechaCaducidadDni },
-      { fieldName: 'fecha_expedicion_pasaporte', value: userData.fechaExpedicionPasaporte },
-      { fieldName: 'fecha_vencimiento_pasaporte', value: userData.fechaVencimientoPasaporte },
-      { fieldName: 'pais_expedicion', value: userData.paisExpedicion }
     ];
 
     fieldMappings.forEach(mapping => {

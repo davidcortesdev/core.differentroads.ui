@@ -26,12 +26,6 @@ export class UpdateProfileSectionV2Component{
   successMessage: string = '';
 
 
-  sexoOptions = [
-    { label: 'Hombre', value: 'Hombre' },
-    { label: 'Mujer', value: 'Mujer' },
-  ];
-
-  filteredSexoOptions: any[] = [];
 
   constructor(private updateProfileService: UpdateProfileV2Service) { }
 
@@ -40,19 +34,6 @@ export class UpdateProfileSectionV2Component{
     return this.updateProfileService.formatDate(dateInput);
   }
 
-  filterSexo(event: any) {
-    let filtered: any[] = [];
-    let query = event.query;
-
-    for (let i = 0; i < this.sexoOptions.length; i++) {
-      let sexo = this.sexoOptions[i];
-      if (sexo.label.toLowerCase().indexOf(query.toLowerCase()) == 0) {
-        filtered.push(sexo);
-      }
-    }
-
-    this.filteredSexoOptions = filtered;
-  }
 
   onUpload(event: any) {
     for (let file of event.files) {
@@ -83,16 +64,6 @@ export class UpdateProfileSectionV2Component{
     this.clearFieldError('dni');
   }
 
-  onNacionalidadInput(event: any) {
-    const input = event.target as HTMLInputElement;
-    input.value = this.updateProfileService.validateNacionalidadInput(input.value);
-  }
-
-  onPasaporteInput(event: any) {
-    const input = event.target as HTMLInputElement;
-    input.value = this.updateProfileService.validatePasaporteInput(input.value);
-    this.clearFieldError('pasaporte');
-  }
 
   onCiudadInput(event: any) {
     const input = event.target as HTMLInputElement;
@@ -105,9 +76,18 @@ export class UpdateProfileSectionV2Component{
     this.clearFieldError('codigoPostal');
   }
 
-  onPaisExpedicionInput(event: any) {
+  onDireccionInput(event: any) {
     const input = event.target as HTMLInputElement;
-    input.value = this.updateProfileService.validatePaisExpedicionInput(input.value);
+    input.value = this.updateProfileService.validateDireccionInput(input.value);
+  }
+
+  onPaisInput(event: any) {
+    const input = event.target as HTMLInputElement;
+    input.value = this.updateProfileService.validatePaisInput(input.value);
+  }
+
+  onNotasInput(event: any) {
+    this.clearFieldError('notas');
   }
 
   // Métodos para limpiar errores en otros campos
@@ -133,25 +113,6 @@ export class UpdateProfileSectionV2Component{
     this.clearFieldError('fechaNacimiento');
   }
 
-  onFechaExpedicionDniChange(event: any) {
-    this.clearFieldError('fechaExpedicionDni');
-    this.clearFieldError('fechaCaducidadDni'); // Limpiar también el error de caducidad
-  }
-
-  onFechaCaducidadDniChange(event: any) {
-    this.clearFieldError('fechaCaducidadDni');
-    this.clearFieldError('fechaExpedicionDni'); // Limpiar también el error de expedición
-  }
-
-  onFechaExpedicionPasaporteChange(event: any) {
-    this.clearFieldError('fechaExpedicionPasaporte');
-    this.clearFieldError('fechaVencimientoPasaporte'); // Limpiar también el error de vencimiento
-  }
-
-  onFechaVencimientoPasaporteChange(event: any) {
-    this.clearFieldError('fechaVencimientoPasaporte');
-    this.clearFieldError('fechaExpedicionPasaporte'); // Limpiar también el error de expedición
-  }
 
   onSubmit() {
     this.isFormSubmitted = true;

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, throwError, of } from 'rxjs';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Observable, throwError, of, forkJoin } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { PersonalInfo } from '../../models/v2/profile-v2.model';
 import { environment } from '../../../../environments/environment';
@@ -28,67 +28,125 @@ export class UpdateProfileV2Service {
    * @returns Observable con el resultado de la actualización
    */
   updateUserProfile(userId: string, personalInfo: PersonalInfo): Observable<PersonalInfo> {
-    const userData = this.prepareUserDataForAPI(personalInfo);
+    const basicUserData = this.mapToBasicUserData(personalInfo);
     
-    // Actualizar los datos básicos del usuario
-    return this.updateUser(userId, userData).pipe(
-      switchMap(response => {
-        // Si la actualización del usuario es exitosa, devolver los datos actualizados
-        if (response === true || response === null || response === undefined) {
-          return of(personalInfo);
-        }
-        
-        // Si la API devuelve los datos actualizados, usarlos
-        return of(response as PersonalInfo);
-      }),
+    return this.updateBasicUserData(userId, basicUserData).pipe(
+      switchMap(() => this.updateAdditionalFields(userId, personalInfo)),
+      switchMap(() => of(personalInfo)),
       catchError(this.handleError)
     );
   }
 
   /**
-   * Actualiza los datos básicos del usuario
+   * Actualiza los datos básicos del usuario (nombre, apellido, email, teléfono, avatar)
    * @param userId - ID del usuario
    * @param userData - Datos del usuario en formato API
    * @returns Observable con la respuesta de la API
    */
-  private updateUser(userId: string, userData: any): Observable<any> {
+  private updateBasicUserData(userId: string, userData: any): Observable<any> {
     return this.http.put<any>(`${this.API_URL}/${userId}`, userData, this.httpOptions).pipe(
       catchError(this.handleError)
     );
   }
 
+  /**
+   * Obtiene los valores de campos adicionales existentes del usuario
+   * @param userId - ID del usuario
+   * @returns Observable con los valores de campos existentes
+   */
+  private getExistingFieldValues(userId: string): Observable<any[]> {
+    const params = new HttpParams().set('userId', userId);
+    return this.http.get<any[]>(this.USER_FIELD_VALUE_API_URL, { 
+      params, 
+      ...this.httpOptions 
+    }).pipe(
+      catchError(() => of([]))
+    );
+  }
 
   /**
-   * Prepara los valores de campos adicionales para la API
+   * Actualiza los campos adicionales del usuario (DNI, dirección, ciudad, etc.)
+   * @param userId - ID del usuario
+   * @param personalInfo - Datos personales del usuario
+   * @returns Observable con el resultado
+   */
+  private updateAdditionalFields(userId: string, personalInfo: PersonalInfo): Observable<any[]> {
+    return this.getExistingFieldValues(userId).pipe(
+      switchMap(existingFieldValues => {
+        const fieldValues = this.mapToFieldValues(userId, personalInfo);
+        
+        if (fieldValues.length === 0) {
+          return of([]);
+        }
+        
+        return this.processFieldUpdates(fieldValues, existingFieldValues);
+      }),
+      catchError(() => {
+        // Si no se pueden obtener los valores existentes, intentar crear nuevos
+        const fieldValues = this.mapToFieldValues(userId, personalInfo);
+        return this.processFieldUpdates(fieldValues, []);
+      })
+    );
+  }
+
+  /**
+   * Procesa las actualizaciones de campos (actualizar existentes o crear nuevos)
+   * @param fieldValues - Valores de campos a procesar
+   * @param existingFieldValues - Valores existentes
+   * @returns Observable con el resultado
+   */
+  private processFieldUpdates(fieldValues: any[], existingFieldValues: any[]): Observable<any[]> {
+    const existingMap = new Map();
+    existingFieldValues.forEach(existing => {
+      existingMap.set(existing.userFieldId, existing);
+    });
+    
+    const updateObservables = fieldValues.map(fieldValue => {
+      const existing = existingMap.get(fieldValue.userFieldId);
+      
+      if (existing) {
+        // Actualizar campo existente
+        const updateData = {
+          userId: fieldValue.userId,
+          userFieldId: fieldValue.userFieldId,
+          value: fieldValue.value
+        };
+        return this.http.put(`${this.USER_FIELD_VALUE_API_URL}/${existing.id}`, updateData, this.httpOptions);
+      } else {
+        // Crear nuevo campo
+        return this.http.post(this.USER_FIELD_VALUE_API_URL, fieldValue, this.httpOptions);
+      }
+    });
+    
+    return forkJoin(updateObservables);
+  }
+
+  /**
+   * Mapea los datos personales a valores de campos para la API
    * @param userId - ID del usuario
    * @param personalInfo - Datos personales del usuario
    * @returns Array de valores de campos
    */
-  private prepareFieldValuesForAPI(userId: string, personalInfo: PersonalInfo): any[] {
+  private mapToFieldValues(userId: string, personalInfo: PersonalInfo): any[] {
     const fieldValues: any[] = [];
     
-    // Mapear campos de PersonalInfo a UserFieldValue
     const fieldMappings = [
-      { fieldName: 'dni', value: personalInfo.dni },
-      { fieldName: 'nacionalidad', value: personalInfo.nacionalidad },
-      { fieldName: 'pasaporte', value: personalInfo.pasaporte },
-      { fieldName: 'ciudad', value: personalInfo.ciudad },
-      { fieldName: 'codigoPostal', value: personalInfo.codigoPostal },
-      { fieldName: 'sexo', value: personalInfo.sexo },
-      { fieldName: 'fechaNacimiento', value: personalInfo.fechaNacimiento },
-      { fieldName: 'fechaExpedicionDni', value: personalInfo.fechaExpedicionDni },
-      { fieldName: 'fechaCaducidadDni', value: personalInfo.fechaCaducidadDni },
-      { fieldName: 'fechaExpedicionPasaporte', value: personalInfo.fechaExpedicionPasaporte },
-      { fieldName: 'fechaVencimientoPasaporte', value: personalInfo.fechaVencimientoPasaporte },
-      { fieldName: 'paisExpedicion', value: personalInfo.paisExpedicion }
+      { fieldCode: 'phone', value: personalInfo.telefono },
+      { fieldCode: 'birth_date', value: this.formatDate(personalInfo.fechaNacimiento) },
+      { fieldCode: 'national_id', value: personalInfo.dni },
+      { fieldCode: 'address', value: personalInfo.direccion },
+      { fieldCode: 'city', value: personalInfo.ciudad },
+      { fieldCode: 'postal_code', value: personalInfo.codigoPostal },
+      { fieldCode: 'country', value: personalInfo.pais },
+      { fieldCode: 'notes', value: personalInfo.notas }
     ];
 
     fieldMappings.forEach(mapping => {
-      if (mapping.value && mapping.value.trim()) {
+      if (mapping.value && mapping.value.toString().trim()) {
         fieldValues.push({
           userId: parseInt(userId),
-          userFieldId: this.getFieldIdByName(mapping.fieldName),
-          value: mapping.value
+          userFieldId: this.getFieldIdByCode(mapping.fieldCode),
+          value: mapping.value.toString().trim()
         });
       }
     });
@@ -97,42 +155,40 @@ export class UpdateProfileV2Service {
   }
 
   /**
-   * Obtiene el ID del campo por nombre (esto debería venir de la API de UserField)
-   * @param fieldName - Nombre del campo
+   * Obtiene el ID del campo por código según la API de UserField
+   * @param fieldCode - Código del campo
    * @returns ID del campo
    */
-  private getFieldIdByName(fieldName: string): number {
-    // Mapeo de nombres de campos a IDs (esto debería obtenerse de la API)
+  private getFieldIdByCode(fieldCode: string): number {
     const fieldIdMap: { [key: string]: number } = {
-      'dni': 1,
-      'nacionalidad': 2,
-      'pasaporte': 3,
-      'ciudad': 4,
-      'codigoPostal': 5,
-      'sexo': 6,
-      'fechaNacimiento': 7,
-      'fechaExpedicionDni': 8,
-      'fechaCaducidadDni': 9,
-      'fechaExpedicionPasaporte': 10,
-      'fechaVencimientoPasaporte': 11,
-      'paisExpedicion': 12
+      'first_name': 1,
+      'last_name': 2,
+      'phone': 3,
+      'birth_date': 4,
+      'national_id': 5,
+      'address': 6,
+      'city': 7,
+      'postal_code': 8,
+      'country': 9,
+      'notes': 10
     };
     
-    return fieldIdMap[fieldName] || 0;
+    return fieldIdMap[fieldCode] || 0;
   }
 
   /**
-   * Prepara los datos del usuario para la API
+   * Mapea los datos personales a formato de datos básicos para la API
    * @param personalInfo - Datos personales del usuario
    * @returns Datos formateados para la API
    */
-  private prepareUserDataForAPI(personalInfo: PersonalInfo): any {
+  private mapToBasicUserData(personalInfo: PersonalInfo): any {
     return {
       cognitoId: personalInfo.id?.toString() || '',
       name: personalInfo.nombre || '',
       email: personalInfo.email || '',
       lastName: personalInfo.apellido || '',
       phone: personalInfo.telefono || '',
+      avatarUrl: personalInfo.avatarUrl || '',
       hasWebAccess: true,
       hasMiddleAccess: false,
       hasMiddleAtcAccess: false,
@@ -252,14 +308,6 @@ export class UpdateProfileV2Service {
       }
     }
 
-    // Validación de pasaporte
-    if (personalInfo.pasaporte?.trim()) {
-      const passportRegex = /^[A-Z0-9]{6,10}$/;
-      if (!passportRegex.test(personalInfo.pasaporte)) {
-        errors['pasaporte'] = 'El pasaporte debe tener entre 6 y 10 caracteres alfanuméricos';
-        isValid = false;
-      }
-    }
 
     // Validación de código postal
     if (personalInfo.codigoPostal?.trim()) {
@@ -310,23 +358,6 @@ export class UpdateProfileV2Service {
     return value.toUpperCase().slice(0, 9);
   }
 
-  /**
-   * Valida y filtra el input de nacionalidad
-   * @param value - Valor del input
-   * @returns Valor filtrado
-   */
-  validateNacionalidadInput(value: string): string {
-    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').slice(0, 50);
-  }
-
-  /**
-   * Valida y filtra el input de pasaporte
-   * @param value - Valor del input
-   * @returns Valor filtrado
-   */
-  validatePasaporteInput(value: string): string {
-    return value.toUpperCase().slice(0, 10);
-  }
 
   /**
    * Valida y filtra el input de ciudad
@@ -346,14 +377,6 @@ export class UpdateProfileV2Service {
     return value.replace(/\D/g, '').slice(0, 5);
   }
 
-  /**
-   * Valida y filtra el input de país de expedición
-   * @param value - Valor del input
-   * @returns Valor filtrado
-   */
-  validatePaisExpedicionInput(value: string): string {
-    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').slice(0, 50);
-  }
 
   /**
    * Valida y filtra el input de nombre
@@ -370,6 +393,24 @@ export class UpdateProfileV2Service {
    * @returns Valor filtrado
    */
   validateApellidoInput(value: string): string {
+    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').slice(0, 50);
+  }
+
+  /**
+   * Valida y filtra el input de dirección
+   * @param value - Valor del input
+   * @returns Valor filtrado
+   */
+  validateDireccionInput(value: string): string {
+    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s\-\.]/g, '').slice(0, 100);
+  }
+
+  /**
+   * Valida y filtra el input de país
+   * @param value - Valor del input
+   * @returns Valor filtrado
+   */
+  validatePaisInput(value: string): string {
     return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').slice(0, 50);
   }
 }

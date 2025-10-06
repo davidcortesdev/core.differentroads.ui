@@ -2,6 +2,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SignUpFormComponent } from './components/sign-up-form/sign-up-form.component';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-sign-up',
@@ -9,4 +10,12 @@ import { SignUpFormComponent } from './components/sign-up-form/sign-up-form.comp
   styleUrls: ['./sign-up.component.css'],
   imports: [CommonModule, SignUpFormComponent],
 })
-export class SignUpComponent {}
+export class SignUpComponent {
+  constructor(
+    private titleService: Title
+  ) {}
+
+  ngOnInit(): void {
+    this.titleService.setTitle('Registrarse - Different Roads');
+  }
+}

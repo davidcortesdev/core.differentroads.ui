@@ -36,17 +36,12 @@ export interface PersonalInfo {
     email?: string;
     telefono?: string;
     dni?: string;
-    nacionalidad?: string;
-    pasaporte?: string;
-    fechaExpedicionPasaporte?: string;
-    fechaVencimientoPasaporte?: string;
-    sexo?: string;
-    fechaNacimiento?: string;
+    direccion?: string;
     ciudad?: string;
     codigoPostal?: string;
-    fechaExpedicionDni?: string;
-    fechaCaducidadDni?: string;
-    paisExpedicion?: string;
+    pais?: string;
+    fechaNacimiento?: string;
+    notas?: string;
   }
 
 

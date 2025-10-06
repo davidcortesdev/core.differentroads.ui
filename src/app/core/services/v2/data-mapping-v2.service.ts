@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { BookingItem } from '../../models/v2/profile-v2.model';
+import { BookingItem, PersonalInfo } from '../../models/v2/profile-v2.model';
 import { ReservationResponse } from '../../models/v2/profile-v2.model';
 import { TourV2 } from './tours-v2.service';
 import { OrderV2 } from './orders-v2.service';
 import { ICMSTourResponse } from '../cms/cms-tour.service';
 
 /**
- * Servicio para mapear datos de APIs a BookingItem V2
+ * Servicio para mapear datos de APIs a modelos V2
  * Transforma respuestas de API al formato que necesita el componente
  */
 @Injectable({
@@ -275,5 +275,127 @@ export class DataMappingV2Service {
       'Budget': 'Budget'
     };
     return statusMap[status] || 'pending';
+  }
+
+  // ===== MÉTODOS DE MAPEO PARA DATOS DE USUARIO =====
+
+  /**
+   * Combina los datos del usuario con los campos adicionales
+   * @param user - Datos básicos del usuario
+   * @param userFields - Campos disponibles
+   * @param userFieldValues - Valores de campos del usuario
+   * @returns PersonalInfo combinado
+   */
+  combineUserData(user: any, userFields: any[], userFieldValues: any[]): PersonalInfo {
+    // Crear un mapa de valores de campos para acceso rápido
+    const fieldValueMap = new Map();
+    userFieldValues.forEach(fieldValue => {
+      fieldValueMap.set(fieldValue.fieldId, fieldValue.value);
+    });
+
+    // Crear un mapa de campos para obtener nombres
+    const fieldMap = new Map();
+    userFields.forEach(field => {
+      fieldMap.set(field.id, field.name);
+    });
+
+    // Combinar datos básicos del usuario con campos adicionales
+    const combinedData: PersonalInfo = {
+      id: user.id,
+      nombre: user.nombre || user.firstName || user.name || '',
+      apellido: user.apellido || user.lastName || '',
+      email: user.email || '',
+      telefono: user.telefono || user.phone || '',
+      avatarUrl: user.avatarUrl || user.avatar || '',
+      // Campos adicionales que se mapearán desde userFieldValues
+      dni: '',
+      direccion: '',
+      ciudad: '',
+      codigoPostal: '',
+      pais: '',
+      fechaNacimiento: '',
+      notas: ''
+    };
+
+    // Agregar campos adicionales desde userFieldValues
+    userFieldValues.forEach(fieldValue => {
+      const fieldName = fieldMap.get(fieldValue.userFieldId);
+      
+      if (fieldName && fieldValue.value) {
+        // Mapear nombres de campos a propiedades de PersonalInfo según la API
+        switch (fieldName) {
+          case 'Imagen de Perfil':
+            combinedData.avatarUrl = fieldValue.value;
+            break;
+          case 'Teléfono':
+            combinedData.telefono = fieldValue.value;
+            break;
+          case 'Fecha de nacimiento':
+            combinedData.fechaNacimiento = fieldValue.value;
+            break;
+          case 'DNI/NIE':
+            combinedData.dni = fieldValue.value;
+            break;
+          case 'Dirección':
+            combinedData.direccion = fieldValue.value;
+            break;
+          case 'Ciudad':
+            combinedData.ciudad = fieldValue.value;
+            break;
+          case 'Código Postal':
+            combinedData.codigoPostal = fieldValue.value;
+            break;
+          case 'País':
+            combinedData.pais = fieldValue.value;
+            break;
+          case 'Notas':
+            combinedData.notas = fieldValue.value;
+            break;
+        }
+      }
+    });
+
+    return combinedData;
+  }
+
+  /**
+   * Prepara los valores de campos para guardar
+   * @param userId - ID del usuario
+   * @param userData - Datos del usuario
+   * @param userFields - Campos disponibles
+   * @returns Array de valores de campos
+   */
+  prepareFieldValues(userId: string, userData: PersonalInfo, userFields: any[]): any[] {
+    const fieldValues: any[] = [];
+    
+    // Mapear campos de PersonalInfo a userFieldValues
+    const fieldMappings = [
+      { fieldName: 'dni', value: userData.dni },
+      { fieldName: 'nacionalidad', value: userData.pais },
+      { fieldName: 'telefono', value: userData.telefono },
+      { fieldName: 'ciudad', value: userData.ciudad },
+      { fieldName: 'codigo_postal', value: userData.codigoPostal },
+      { fieldName: 'fecha_nacimiento', value: userData.fechaNacimiento },
+    ];
+
+    fieldMappings.forEach(mapping => {
+      if (mapping.value) {
+        // Buscar el campo correspondiente
+        const field = userFields.find(f => 
+          f.name.toLowerCase() === mapping.fieldName.toLowerCase() ||
+          f.name.toLowerCase() === mapping.fieldName.replace('_', ' ').toLowerCase()
+        );
+        
+        if (field) {
+          fieldValues.push({
+            userId: userId,
+            fieldId: field.id,
+            value: mapping.value
+          });
+        }
+      }
+    });
+
+    return fieldValues;
   }
 }

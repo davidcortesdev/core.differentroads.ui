@@ -1,5 +1,22 @@
+<!-- Indicador de carga -->
+<div *ngIf="isLoading" class="loading-container">
+  <p-progressSpinner [style]="{ width: '50px', height: '50px' }"></p-progressSpinner>
+  <p>Cargando información del usuario...</p>
+</div>
+
+<!-- Mensaje de error -->
+<div *ngIf="errorMessage && !isLoading" class="error-container">
+  <p-message severity="error" [text]="errorMessage"></p-message>
+  <p-button label="Reintentar" (onClick)="loadUserData()" icon="pi pi-refresh"></p-button>
+</div>
+
+<!-- Mensaje de éxito -->
+<div *ngIf="successMessage && !isLoading" class="success-container">
+  <p-message severity="success" [text]="successMessage"></p-message>
+</div>
+
 <!-- Mostrar información personal o formulario de edición -->
-<div *ngIf="!isEditing">
+<div *ngIf="!isEditing && !isLoading && !errorMessage">
   <p-panel class="avatar-panel">
     <div class="avatar-name-section">
       <p-avatar
@@ -106,7 +123,8 @@
   *ngIf="isEditing"
   [userId]="userId"
   [personalInfo]="personalInfo"
-  (cancelEdit)="toggleEditMode()">
+  (cancelEdit)="toggleEditMode()"
+  (profileUpdated)="onProfileUpdated()">
 </app-update-profile-section-v2>
 
 <!-- Sección de Cambio de Contraseña (siempre visible) -->

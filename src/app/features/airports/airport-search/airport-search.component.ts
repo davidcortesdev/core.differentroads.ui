@@ -1,13 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import {
-  Observable,
-  debounceTime,
-  distinctUntilChanged,
-  switchMap,
-} from 'rxjs';
+import { Observable, debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import { AirportService } from '../../../core/services/airport.service';
 import { Airport } from '../../../shared/models/airport.model';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-airport-search',
@@ -20,12 +16,16 @@ export class AirportSearchComponent implements OnInit {
   language: 'en' | 'es' = 'es';
   loading = false;
 
-  constructor(private airportService: AirportService) {
+  constructor( 
+    private airportService: AirportService,
+    private titleService: Title
+  ) {
     // Inicializar con todos los aeropuertos
     this.airports$ = this.airportService.getLocalizedAirports(this.language);
   }
 
   ngOnInit(): void {
+    this.titleService.setTitle('Búsqueda de Aeropuertos - Different Roads');
     // Configurar la búsqueda reactiva
     this.searchControl.valueChanges
       .pipe(

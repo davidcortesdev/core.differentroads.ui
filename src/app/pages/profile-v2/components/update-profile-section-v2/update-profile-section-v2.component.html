@@ -14,6 +14,15 @@
 
   <p-panel class="datos-panel">
     <div class="update-profile-container">
+      <!-- Mensajes de estado -->
+      <div *ngIf="errorMessage" class="error-message">
+        <p-message severity="error" [text]="errorMessage"></p-message>
+      </div>
+      
+      <div *ngIf="successMessage" class="success-message">
+        <p-message severity="success" [text]="successMessage"></p-message>
+      </div>
+      
       <form class="profile-form">
         <!-- Sección de Avatar -->
         <div class="form-field">
@@ -46,7 +55,7 @@
           <label>Nombre:</label>
           <input
             pInputText
-            [value]="personalInfo.nombre"
+            [(ngModel)]="personalInfo.nombre"
             name="nombre"
             placeholder="Ingrese su nombre"
             (input)="onNombreInput($event)"
@@ -61,7 +70,7 @@
           <label>Apellido:</label>
           <input
             pInputText
-            [value]="personalInfo.apellido"
+            [(ngModel)]="personalInfo.apellido"
             name="apellido"
             placeholder="Ingrese su apellido"
             (input)="onApellidoInput($event)"
@@ -295,8 +304,10 @@
       <div class="button-container">
         <div class="btn-save">
           <p-button
-            label="Guardar"
+            [label]="isSaving ? 'Guardando...' : 'Guardar'"
             styleClass="p-button-primary"
+            [loading]="isSaving"
+            [disabled]="isSaving"
             (onClick)="onSubmit()"
           >
           </p-button>

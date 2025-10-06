@@ -20,6 +20,7 @@ import {
   IDepartureResponse,
 } from '../../core/services/departure/departure.service';
 import { ReviewImageService } from '../../core/services/reviews/review-image.service';
+import { Title } from '@angular/platform-browser';
 
 interface ReviewPayload {
   text: string;
@@ -97,6 +98,7 @@ export class ReviewSurveyComponent implements OnInit {
   uploadedImages: string[] = [];
 
   constructor(
+    private titleService: Title,
     private route: ActivatedRoute,
     private periodsService: PeriodsService,
     private reviewsService: ReviewsService,

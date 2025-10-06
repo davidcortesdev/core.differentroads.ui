@@ -53,6 +53,7 @@ import { environment } from '../../../environments/environment';
 import { interval, Subscription } from 'rxjs';
 import { takeWhile } from 'rxjs/operators';
 import { ReservationStatusService } from '../../core/services/reservation/reservation-status.service';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-checkout-v2',
@@ -135,7 +136,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   flightPrice: number = 0;
   hasAvailableFlights: boolean = false; // Nueva propiedad para controlar la visibilidad del botón
   availableFlights: IFlightPackDTO[] = []; // Nueva propiedad para almacenar los vuelos disponibles
-  departureActivityPackId: number | null = null; // ✅ NUEVO: ID del paquete de actividad del departure
+  departureActivityPackId: number | null = null; // NUEVO: ID del paquete de actividad del departure
 
   // Steps configuration
   items: MenuItem[] = [];
@@ -153,7 +154,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   isSyncInProgress: boolean = false;
   isAuthenticated: boolean = false;
 
-  // ✅ NUEVO: Propiedades para controlar el estado de carga del botón "Sin Vuelos"
+  // NUEVO: Propiedades para controlar el estado de carga del botón "Sin Vuelos"
   isFlightlessProcessing: boolean = false;
   flightlessProcessingMessage: string = '';
 
@@ -165,13 +166,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     numPasajeros: number;
   } | null = null;
 
-  // ✅ NUEVO: Propiedad para detectar modo standalone
+  // NUEVO: Propiedad para detectar modo standalone
   isStandaloneMode: boolean = false;
 
-  // ✅ NUEVO: Trigger para refrescar el resumen
+  // NUEVO: Trigger para refrescar el resumen
   summaryRefreshTrigger: any = null;
 
   constructor(
+    private titleService: Title,
     private route: ActivatedRoute,
     private router: Router,
     private tourNetService: TourNetService,
@@ -195,9 +197,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
-    console.log('🔄 CheckoutV2Component ngOnInit iniciado');
+    this.titleService.setTitle('Checkout - Different Roads');
 
-    // ✅ NUEVO: Detectar si estamos en modo standalone
+    // NUEVO: Detectar si estamos en modo standalone
     this.detectStandaloneMode();
 
     // Configurar los steps
@@ -205,19 +207,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     // Verificar estado de autenticación inicial (solo si NO es modo standalone)
     if (!this.isStandaloneMode) {
-      console.log('🔒 Modo normal - verificando autenticación');
       this.authService.isLoggedIn().subscribe((isLoggedIn) => {
         this.isAuthenticated = isLoggedIn;
-        console.log('🔍 Estado de autenticación:', isLoggedIn);
       });
     } else {
       // En modo standalone, asumir que no necesitamos autenticación
       this.isAuthenticated = false;
-      console.log(
-        '🔓 Modo standalone detectado - omitiendo validación de autenticación'
-      );
-      console.log('🔓 isAuthenticated establecido a:', this.isAuthenticated);
-      console.log('🔓 isStandaloneMode establecido a:', this.isStandaloneMode);
     }
 
     // Leer step de URL si está presente (para redirección después del login)
@@ -226,7 +221,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         const stepParam = parseInt(params['step']);
         if (!isNaN(stepParam) && stepParam >= 0 && stepParam <= 3) {
           this.activeIndex = stepParam;
-          console.log('📍 Step activo desde URL:', this.activeIndex);
         }
       }
     });
@@ -237,7 +231,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       if (reservationIdParam) {
         this.reservationId = +reservationIdParam;
 
-        // ✅ NUEVO: Restaurar resumen desde localStorage antes de cargar datos
+        // NUEVO: Restaurar resumen desde localStorage antes de cargar datos
         this.restoreSummaryFromLocalStorage();
 
         // Cargar datos de la reservación desde el backend
@@ -252,14 +246,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     // No se ejecuta aquí para evitar llamadas duplicadas
   }
 
-  // ✅ NUEVO: Método para disparar la actualización del resumen del pedido
+  // NUEVO: Método para disparar la actualización del resumen del pedido
   triggerSummaryRefresh(): void {
-    console.log('🔄 Actualizando resumen del pedido...');
     this.summaryRefreshTrigger = { timestamp: Date.now() };
   }
 
   /**
-   * ✅ NUEVO: Detectar si estamos en modo standalone basándose en la URL
+   * NUEVO: Detectar si estamos en modo standalone basándose en la URL
    */
   private detectStandaloneMode(): void {
     // Verificar tanto la URL del router como la URL del navegador
@@ -268,31 +261,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     this.isStandaloneMode =
       routerUrl.includes('/standalone/') || windowUrl.includes('/standalone/');
-
-    console.log('🔍 Router URL:', routerUrl);
-    console.log('🔍 Window URL:', windowUrl);
-    console.log('🔍 ¿Modo standalone?', this.isStandaloneMode);
-
-    if (this.isStandaloneMode) {
-      console.log(
-        '🔓 Modo standalone activado - las validaciones de autenticación serán omitidas'
-      );
-    } else {
-      console.log(
-        '🔒 Modo normal - las validaciones de autenticación están activas'
-      );
-    }
   }
 
   ngAfterViewInit(): void {
-    // Las referencias a los componentes hijos ya están disponibles
-    console.log('✅ Componentes hijos inicializados:', {
-      travelerSelector: !!this.travelerSelector,
-      roomSelector: !!this.roomSelector,
-      insuranceSelector: !!this.insuranceSelector,
-      infoTravelers: !!this.infoTravelers,
-    });
-
     // Si hay un step activo en la URL, inicializar el componente correspondiente
     if (this.activeIndex >= 0) {
       this.initializeComponentForStep(this.activeIndex);
@@ -370,7 +341,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           }
         },
         error: (error) => {
-          console.error('Error al verificar precios:', error);
           // No mostramos error al usuario ya que esto es una verificación en segundo plano
         },
       });
@@ -428,7 +398,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         }
       },
       error: (error) => {
-        console.error('Error al verificar estado del job:', error);
         // Si hay error al verificar el job, asumir que terminó (podría haberse eliminado)
         this.onJobCompleted(false);
       },
@@ -519,7 +488,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       this.jobMonitoringSubscription.unsubscribe();
     }
 
-    // ✅ NUEVO: Limpiar el resumen del localStorage al destruir el componente
+    // NUEVO: Limpiar el resumen del localStorage al destruir el componente
     this.clearSummaryFromLocalStorage();
   }
 
@@ -612,19 +581,19 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       this.updateOrderSummary(this.ageGroupCounts);
     }
 
-    // ✅ Esperar a que terminen guardados pendientes en actividades antes de refrescar
+    // Esperar a que terminen guardados pendientes en actividades antes de refrescar
     try {
       await this.activitiesOptionals?.waitForPendingSaves?.();
     } catch (err) {
-      console.error('❌ Error esperando guardados de actividades:', err);
+      console.error('Error esperando guardados de actividades:', err);
     }
 
-    // ✅ Disparar actualización del summary inmediatamente
+    // Disparar actualización del summary inmediatamente
     this.triggerSummaryRefresh();
   }
 
   /**
-   * 🔥 NUEVO: Maneja el evento de guardado completado desde actividades opcionales
+   * xNUEVO: Maneja el evento de guardado completado desde actividades opcionales
    */
   onSaveCompleted(event: {
     component: string;
@@ -632,7 +601,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     error?: string;
   }): void {
     if (event.success) {
-      console.log(`✅ Guardado exitoso en ${event.component}`);
       // El padre se encarga de obtener la información por su cuenta
       if (
         this.travelerSelector &&
@@ -641,7 +609,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         this.updateOrderSummary(this.ageGroupCounts);
       }
     } else {
-      console.error(`❌ Error en guardado de ${event.component}:`, event.error);
+      console.error(`Error en guardado de ${event.component}:`, event.error);
       // Mostrar error al usuario si es necesario
       this.showErrorToast(
         `Error al guardar ${event.component}: ${event.error}`
@@ -650,7 +618,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
-   * 🔥 NUEVO: Muestra un toast de error
+   * NUEVO: Muestra un toast de error
    */
   private showErrorToast(message: string): void {
     this.messageService.add({
@@ -717,26 +685,19 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   onRoomAssignmentsChange(roomAssignments: {
     [travelerId: number]: number;
   }): void {
-    console.log(
-      '🏨 Cambios en asignaciones de habitaciones recibidos en checkout-v2:',
-      roomAssignments
-    );
 
     // Actualizar el resumen del pedido cuando cambien las habitaciones
     if (
       Object.keys(this.ageGroupCounts).length > 0 &&
       Object.keys(this.pricesByAgeGroup).length > 0
     ) {
-      console.log(
-        '🔄 Actualizando resumen del pedido por cambios en habitaciones...'
-      );
       this.updateOrderSummary(this.ageGroupCounts);
     }
 
     // Forzar detección de cambios
     this.cdr.detectChanges();
 
-    // ✅ Disparar actualización del summary inmediatamente
+    // Disparar actualización del summary inmediatamente
     this.triggerSummaryRefresh();
   }
 
@@ -834,12 +795,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           this.itineraryData = itineraries[0];
           this.itineraryId = this.itineraryData.id;
         } else {
-          console.warn('No se encontraron itinerarios para el tourId:', tourId);
           this.itineraryId = null;
         }
       },
       error: (error) => {
-        console.error('Error al cargar itinerario por tourId:', error);
         this.itineraryId = null;
       },
     });
@@ -853,7 +812,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         this.returnDate = departure.arrivalDate ?? '';
         this.departureData = departure; // Almacenar datos del departure
 
-        // ✅ NUEVO: Obtener el departureActivityPackId desde el departure
+        // NUEVO: Obtener el departureActivityPackId desde el departure
         // Por ahora, vamos a usar un valor por defecto o buscar en la BD
         this.loadDepartureActivityPackId(departureId);
 
@@ -868,17 +827,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  // ✅ NUEVO: Método para cargar el departureActivityPackId
+  // NUEVO: Método para cargar el departureActivityPackId
   private loadDepartureActivityPackId(departureId: number): void {
-    // ✅ SIMPLIFICADO: No hacer nada especial, solo mantener el departureId como referencia
+    // SIMPLIFICADO: No hacer nada especial, solo mantener el departureId como referencia
     this.departureActivityPackId = departureId;
-
-    console.log(
-      '🔄 departureActivityPackId cargado:',
-      this.departureActivityPackId
-    );
-
-    // ✅ ELIMINADO: No forzar actualización del summary automáticamente
   }
 
   // Método para cargar precios del departure
@@ -936,56 +888,37 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }
     });
 
-    // ✅ MEJORADO: Verificar si hay un resumen persistido en localStorage
+    // MEJORADO: Verificar si hay un resumen persistido en localStorage
     if (this.reservationId && this.summary.length === 0) {
-      console.log(
-        '🔄 Verificando si hay resumen persistido en localStorage...'
-      );
       this.restoreSummaryFromLocalStorage();
     }
 
-    // ✅ MEJORADO: Solo inicializar el resumen si no hay uno persistido
+    // MEJORADO: Solo inicializar el resumen si no hay uno persistido
     if (this.summary.length === 0) {
-      console.log(
-        '🔄 No hay resumen persistido, inicializando resumen automáticamente...'
-      );
       this.initializeOrderSummary();
     } else {
-      console.log(
-        '✅ Resumen restaurado desde localStorage, no se necesita inicialización'
-      );
-      // ✅ NUEVO: Recalcular totales del resumen restaurado
+      // NUEVO: Recalcular totales del resumen restaurado
       this.calculateTotals();
       this.updateReservationTotalAmount();
     }
 
-    // ✅ NUEVO: Forzar actualización adicional después de un delay para asegurar que los componentes estén listos
+    // NUEVO: Forzar actualización adicional después de un delay para asegurar que los componentes estén listos
     setTimeout(() => {
       if (this.summary.length === 0) {
-        console.log(
-          '⚠️ Resumen aún vacío después del delay, forzando actualización...'
-        );
         this.forceSummaryUpdate();
-      } else {
-        console.log(
-          '✅ Resumen ya tiene contenido, no se necesita actualización forzada'
-        );
       }
     }, 500);
   }
 
   // Método para inicializar el resumen automáticamente
   private initializeOrderSummary(): void {
-    // ✅ SIMPLIFICADO: Solo verificar una vez cuando se cargan los precios
+    // SIMPLIFICADO: Solo verificar una vez cuando se cargan los precios
     this.checkAndInitializeSummary();
 
-    // ✅ ELIMINADO: No llamar múltiples veces con delays que sobrescriben el summary
+    // ELIMINADO: No llamar múltiples veces con delays que sobrescriben el summary
     // Solo verificar una vez más después de un delay si el summary está vacío
     setTimeout(() => {
       if (this.summary.length === 0) {
-        console.log(
-          '🔄 Summary vacío después del delay, verificando nuevamente...'
-        );
         this.checkAndInitializeSummary();
       }
     }, 2000);
@@ -1046,11 +979,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     error?: string;
   }): void {
     if (event.saving) {
-      console.log('💾 Guardando información de viajeros...');
       // Aquí podrías mostrar un indicador de carga si es necesario
     } else if (event.success !== undefined) {
       if (event.success) {
-        console.log('✅ Guardado exitoso de información de viajeros');
         // Aquí podrías mostrar un mensaje de éxito si es necesario
       } else {
         console.error(
@@ -1073,7 +1004,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     error?: string;
   }): void {
     if (event.success) {
-      console.log(`✅ Guardado exitoso en ${event.component}:`, event.data);
       // Actualizar resumen del pedido si es necesario
       if (
         this.travelerSelector &&
@@ -1133,14 +1063,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       this.updateOrderSummary(basicTravelers);
     }
 
-    // ✅ Guardar inmediatamente cambios de seguro
+    // Guardar inmediatamente cambios de seguro
     try {
       await this.insuranceSelector?.saveInsuranceAssignments?.();
     } catch (err) {
-      console.error('❌ Error guardando asignaciones de seguro:', err);
+      console.error('Error guardando asignaciones de seguro:', err);
     }
 
-    // ✅ Disparar actualización del summary inmediatamente
+    // Disparar actualización del summary inmediatamente
     this.triggerSummaryRefresh();
   }
 
@@ -1151,50 +1081,29 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     selectedFlight: IFlightPackDTO | null;
     totalPrice: number;
   }): Promise<void> {
-    console.log(
-      '🔄 checkout-v2: onFlightSelectionChange llamado con:',
-      flightData
-    );
-    console.log('🕐 Timestamp:', new Date().toISOString());
-    console.log('📊 selectedFlight anterior:', this.selectedFlight);
-    console.log('💰 flightPrice anterior:', this.flightPrice);
 
     this.selectedFlight = flightData.selectedFlight;
     this.flightPrice = flightData.totalPrice; // Ahora es el precio por persona
 
-    console.log('✅ Vuelo seleccionado actualizado:', this.selectedFlight);
-    console.log('💰 Precio del vuelo actualizado:', this.flightPrice);
 
-    // ✅ MEJORADO: Verificar si es una opción "Sin Vuelos"
+    // MEJORADO: Verificar si es una opción "Sin Vuelos"
     if (this.selectedFlight && this.isNoFlightOption(this.selectedFlight)) {
-      console.log('🚫 CASO ESPECIAL: "Sin Vuelos" seleccionado');
-      console.log('🚫 selectedFlight es una opción sin vuelos');
-      console.log('🚫 flightPrice es:', this.flightPrice);
 
-      // ✅ NUEVO: Forzar precio 0 para opciones "Sin Vuelos"
+      // NUEVO: Forzar precio 0 para opciones "Sin Vuelos"
       this.flightPrice = 0;
-      console.log('🚫 Precio forzado a 0 para "Sin Vuelos"');
     }
 
-    // ✅ MEJORADO: Verificar si no hay vuelo seleccionado
+    // MEJORADO: Verificar si no hay vuelo seleccionado
     if (!this.selectedFlight) {
-      console.log('🚫 CASO ESPECIAL: No hay vuelo seleccionado');
-      console.log('🚫 selectedFlight es null');
-      console.log('🚫 flightPrice es:', this.flightPrice);
 
-      // ✅ NUEVO: Forzar precio 0 cuando no hay vuelo
+      // NUEVO: Forzar precio 0 cuando no hay vuelo
       this.flightPrice = 0;
-      console.log('🚫 Precio forzado a 0 para estado sin vuelo');
     }
 
     // Determinar si hay vuelos disponibles
     this.hasAvailableFlights = this.checkIfFlightsAvailable();
-    console.log(
-      '🛫 hasAvailableFlights actualizado:',
-      this.hasAvailableFlights
-    );
 
-    // ✅ MEJORADO: Actualizar el resumen siempre que tengamos datos de precios
+    // MEJORADO: Actualizar el resumen siempre que tengamos datos de precios
     if (Object.keys(this.pricesByAgeGroup).length > 0) {
       let travelersToUse;
 
@@ -1203,36 +1112,20 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         Object.keys(this.ageGroupCounts).length > 0
       ) {
         travelersToUse = this.ageGroupCounts;
-        console.log(
-          '📊 Actualizando resumen con datos de viajeros existentes:',
-          travelersToUse
-        );
       } else {
         travelersToUse = this.buildFallbackAgeGroupCounts(this.totalPassengers);
-        console.log(
-          '📊 Actualizando resumen con datos básicos de viajeros:',
-          travelersToUse
-        );
       }
 
-      // ✅ NUEVO: Forzar actualización inmediata del summary
+      // NUEVO: Forzar actualización inmediata del summary
       this.updateOrderSummary(travelersToUse);
-      console.log(
-        '✅ Resumen actualizado inmediatamente después del cambio de vuelo'
-      );
-    } else {
-      console.log(
-        '⚠️ No hay precios por grupo de edad disponibles, no se puede actualizar el resumen'
-      );
-    }
 
-    // ✅ NUEVO: Limpiar resumen anterior del localStorage antes de persistir el nuevo
+
+    // NUEVO: Limpiar resumen anterior del localStorage antes de persistir el nuevo
     if (this.reservationId) {
       localStorage.removeItem(`checkout_summary_${this.reservationId}`);
-      console.log('🗑️ Resumen anterior del localStorage eliminado');
     }
 
-    // ✅ Guardar inmediatamente cambios de vuelos
+    // Guardar inmediatamente cambios de vuelos
     try {
       if (
         this.flightManagement?.defaultFlightsComponent?.saveFlightAssignments
@@ -1240,33 +1133,27 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         await this.flightManagement.defaultFlightsComponent.saveFlightAssignments();
       }
     } catch (err) {
-      console.error('❌ Error guardando asignaciones de vuelos:', err);
+      console.error('Error guardando asignaciones de vuelos:', err);
     }
 
-    // ✅ Disparar actualización del summary inmediatamente
+    // Disparar actualización del summary inmediatamente
     this.triggerSummaryRefresh();
+    }
   }
 
   /**
    * Método para verificar si hay vuelos disponibles
-   * ✅ MODIFICADO: Ahora verifica si hay flightPacks disponibles en default-flights
+   * MODIFICADO: Ahora verifica si hay flightPacks disponibles en default-flights
    * para determinar si mostrar la opción "Sin Vuelos"
    */
   private checkIfFlightsAvailable(): boolean {
-    // ✅ NUEVA LÓGICA: Mostrar la opción "Sin Vuelos" solo cuando hay flightPacks disponibles
+    // NUEVA LÓGICA: Mostrar la opción "Sin Vuelos" solo cuando hay flightPacks disponibles
     // Esto asegura que la opción esté disponible cuando realmente hay vuelos en el sistema
 
     // Verificar si hay flightPacks disponibles
     if (this.availableFlights && this.availableFlights.length > 0) {
-      console.log(
-        '✅ Hay flightPacks disponibles - mostrando opción "Sin Vuelos"'
-      );
       return true;
     }
-
-    console.log(
-      '❌ No hay flightPacks disponibles - ocultando opción "Sin Vuelos"'
-    );
     return false;
   }
 
@@ -1301,10 +1188,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               return isFlightlessOption;
             });
 
-          console.log(
-            'Vuelos disponibles en el sistema:',
-            this.hasAvailableFlights
-          );
         },
         error: (error) => {
           console.error('Error al verificar disponibilidad de vuelos:', error);
@@ -1319,23 +1202,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   private checkAndInitializeSummary(): void {
     // ✅ NUEVO: No sobrescribir el summary si ya tiene contenido
     if (this.summary.length > 0) {
-      console.log(
-        '🔄 Summary ya tiene contenido, no sobrescribiendo:',
-        this.summary.length,
-        'elementos'
-      );
       return;
     }
 
     // Verificar si tenemos todo lo necesario para inicializar
     const hasPrices = Object.keys(this.pricesByAgeGroup).length > 0;
     const hasTravelers = Object.keys(this.ageGroupCounts).length > 0;
-
-    console.log('🔄 checkAndInitializeSummary - Estado:', {
-      hasPrices,
-      hasTravelers: !!hasTravelers,
-      summaryLength: this.summary.length,
-    });
 
     if (hasPrices && hasTravelers) {
       this.updateOrderSummary(this.ageGroupCounts);
@@ -1350,13 +1222,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   // NUEVO: Método para forzar la actualización del summary cuando se cargan datos de habitaciones
   private forceSummaryUpdate(): void {
-    // ✅ NUEVO: No sobrescribir el summary si ya tiene contenido
+    // NUEVO: No sobrescribir el summary si ya tiene contenido
     if (this.summary.length > 0) {
-      console.log(
-        '🔄 forceSummaryUpdate: Summary ya tiene contenido, no sobrescribiendo:',
-        this.summary.length,
-        'elementos'
-      );
       return;
     }
 
@@ -1370,13 +1237,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
   // Método para actualizar el resumen del pedido
   updateOrderSummary(ageGroupCounts: { [ageGroupId: number]: number }): void {
-    console.log(
-      '🔄 updateOrderSummary llamado con ageGroupCounts:',
-      ageGroupCounts
-    );
-    console.log('📊 selectedFlight actual:', this.selectedFlight);
-    console.log('💰 flightPrice actual:', this.flightPrice);
-
     this.summary = [];
 
     // Plan básico por grupo de edad (dinámico)
@@ -1392,13 +1252,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }
     });
 
-    // ✅ CORREGIDO: Manejo mejorado de vuelos
+    // CORREGIDO: Manejo mejorado de vuelos
     if (this.selectedFlight) {
       // Verificar si es una opción "Sin Vuelos"
       const isNoFlightOption = this.isNoFlightOption(this.selectedFlight);
 
       if (isNoFlightOption) {
-        // ✅ CASO "Sin Vuelos": Agregar al resumen con precio 0 y texto "incluido"
+        // CASO "Sin Vuelos": Agregar al resumen con precio 0 y texto "incluido"
         const totalTravelers = Object.values(ageGroupCounts).reduce(
           (a, b) => a + b,
           0
@@ -1410,10 +1270,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           description: 'Sin Vuelos',
         };
         this.summary.push(noFlightItem);
-
-        console.log(
-          '🚫 Agregando "Sin Vuelos" al resumen con precio 0 (incluido)'
-        );
       } else if (this.flightPrice > 0) {
         // Vuelo con precio: agregar normalmente
         const totalTravelers = Object.values(ageGroupCounts).reduce(
@@ -1429,14 +1285,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           } - ${this.selectedFlight.flights[0]?.arrivalCity || ''}`,
         };
         this.summary.push(flightItem);
-
-        console.log(
-          '✈️ Agregando vuelo al resumen con precio:',
-          this.flightPrice
-        );
       }
     } else {
-      // ✅ CASO: No hay vuelo seleccionado (estado inicial o después de recarga)
+      // CASO: No hay vuelo seleccionado (estado inicial o después de recarga)
       const totalTravelers = Object.values(ageGroupCounts).reduce(
         (a, b) => a + b,
         0
@@ -1448,10 +1299,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         description: 'Sin Vuelos',
       };
       this.summary.push(noFlightItem);
-
-      console.log(
-        '🚫 No hay vuelo seleccionado - agregando "Sin Vuelos" al resumen'
-      );
     }
 
     // Habitaciones seleccionadas
@@ -1515,7 +1362,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       });
     }
 
-    // ✅ SEGURO SELECCIONADO (solo desde BD)
+    // SEGURO SELECCIONADO (solo desde BD)
     if (this.selectedInsurance) {
       const totalTravelers = Object.values(ageGroupCounts).reduce(
         (a, b) => a + b,
@@ -1545,26 +1392,20 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     // Actualizar totales en la reserva (solo localmente, no en BD)
     this.updateReservationTotalAmount();
 
-    // ✅ NUEVO: Log del resumen final para debugging
-    console.log('📋 Resumen final del pedido:', this.summary);
-    console.log('📊 Cantidad de elementos en el resumen:', this.summary.length);
-    console.log('💰 Subtotal calculado:', this.subtotal);
-    console.log('💰 Total calculado:', this.totalAmountCalculated);
 
-    // ✅ NUEVO: Log específico para verificar "Sin Vuelos"
+    // NUEVO: Log específico para verificar "Sin Vuelos"
     const hasNoFlight = this.summary.some(
       (item) => item.description === 'Sin Vuelos'
     );
-    console.log('🚫 ¿Tiene "Sin Vuelos" en el resumen?', hasNoFlight);
 
-    // ✅ NUEVO: Persistir el resumen en localStorage para mantener consistencia
+    // NUEVO: Persistir el resumen en localStorage para mantener consistencia
     this.persistSummaryToLocalStorage();
 
     // Forzar detección de cambios
     this.cdr.detectChanges();
   }
 
-  // ✅ NUEVO: Método para verificar si un vuelo es la opción "Sin Vuelos"
+  // NUEVO: Método para verificar si un vuelo es la opción "Sin Vuelos"
   private isNoFlightOption(flight: IFlightPackDTO): boolean {
     if (!flight) return false;
 
@@ -1582,7 +1423,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     );
   }
 
-  // ✅ NUEVO: Método para persistir el resumen en localStorage
+  // NUEVO: Método para persistir el resumen en localStorage
   private persistSummaryToLocalStorage(): void {
     if (this.reservationId) {
       const summaryData = {
@@ -1598,17 +1439,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           `checkout_summary_${this.reservationId}`,
           JSON.stringify(summaryData)
         );
-        console.log('💾 Resumen persistido en localStorage:', summaryData);
       } catch (error) {
-        console.warn(
-          '⚠️ No se pudo persistir el resumen en localStorage:',
-          error
-        );
+        console.warn('No se pudo persistir el resumen en localStorage:', error);
       }
     }
   }
 
-  // ✅ NUEVO: Método para recuperar el resumen desde localStorage
+  // NUEVO: Método para recuperar el resumen desde localStorage
   private restoreSummaryFromLocalStorage(): void {
     if (this.reservationId) {
       try {
@@ -1626,22 +1463,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             this.summary = summaryData.summary || [];
             this.subtotal = summaryData.subtotal || 0;
             this.totalAmountCalculated = summaryData.total || 0;
-
-            console.log(
-              '🔄 Resumen restaurado desde localStorage:',
-              summaryData
-            );
             this.cdr.detectChanges();
           } else {
-            console.log('⏰ Datos del resumen expirados, no se restauran');
-            localStorage.removeItem(`checkout_summary_${this.reservationId}`);
+            localStorage.removeItem(`checkout_summary_${this.reservationId}`);  
           }
         }
       } catch (error) {
-        console.warn(
-          '⚠️ Error al restaurar resumen desde localStorage:',
-          error
-        );
         localStorage.removeItem(`checkout_summary_${this.reservationId}`);
       }
     }
@@ -1660,11 +1487,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     // MODIFICADO: No calcular total en frontend, usar el que viene del backend
     // El totalAmountCalculated se actualizará desde el backend cuando se recargue el resumen
-    console.log(
-      '📊 Total calculado en frontend (solo para referencia):',
-      this.subtotal
-    );
-    console.log('📊 Total real debe venir del backend:', this.totalAmount);
+
   }
 
   // Método para actualizar totalAmount en la reserva
@@ -1674,16 +1497,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     }
 
     // MODIFICADO: No sobrescribir el totalAmount del backend
-    // El total debe venir del backend, no calcularse en el frontend
-    console.log(
-      '📊 Total del backend (reservationData):',
-      this.reservationData.totalAmount
-    );
-    console.log(
-      '📊 Total local (no debe sobrescribir al backend):',
-      this.totalAmountCalculated
-    );
-
     // Solo actualizar la variable local para mantener consistencia, pero no sobrescribir el backend
     this.totalAmount = this.reservationData.totalAmount;
     this.totalAmountCalculated = this.reservationData.totalAmount;
@@ -1691,20 +1504,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   // Método para guardar actividades seleccionadas (CON SOPORTE COMPLETO PARA PACKS)
   async saveActivitiesAssignments(): Promise<boolean> {
-    console.log('=== INICIO saveActivitiesAssignments ===');
 
     if (
       !this.reservationId ||
       !this.selectedActivities ||
       this.selectedActivities.length === 0
     ) {
-      console.log('No hay actividades para guardar, retornando true');
-      console.log('reservationId:', this.reservationId);
-      console.log('selectedActivities:', this.selectedActivities);
-      console.log(
-        'selectedActivities.length:',
-        this.selectedActivities?.length
-      );
       return true; // Si no hay actividades seleccionadas, consideramos exitoso
     }
 
@@ -1720,28 +1525,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
       if (existingTravelers.length === 0) {
         console.error('No se encontraron viajeros para esta reserva');
-        console.log(
-          'travelerSelector.existingTravelers:',
-          this.travelerSelector.existingTravelers
-        );
         throw new Error('No se encontraron viajeros para esta reserva');
       }
 
-      console.log(
-        `Guardando actividades para ${existingTravelers.length} viajeros`
-      );
-      console.log(
-        'Viajeros encontrados:',
-        existingTravelers.map((t) => ({
-          id: t.id,
-          name: (t as any).name || 'Sin nombre',
-        }))
-      );
+     
 
       // Limpiar actividades y packs existentes para esta reserva
-      console.log('Limpiando actividades existentes...');
       await this.clearExistingActivitiesAndPacks(existingTravelers);
-      console.log('Actividades existentes limpiadas');
 
       // Separar actividades individuales y packs
       const individualActivities = this.selectedActivities.filter(
@@ -1750,12 +1540,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       const activityPacks = this.selectedActivities.filter(
         (activity) => activity.type === 'pack'
       );
-
-      console.log(
-        `Actividades individuales: ${individualActivities.length}, Packs: ${activityPacks.length}`
-      );
-      console.log('Actividades individuales:', individualActivities);
-      console.log('Packs de actividades:', activityPacks);
 
       const createPromises: Promise<any>[] = [];
 
@@ -1768,20 +1552,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             activityId: activity.id,
           };
 
-          console.log(
-            `Creando asignación de actividad ${activity.id} para viajero ${traveler.id}:`,
-            activityAssignment
-          );
-
           const createPromise = new Promise((resolve, reject) => {
             this.reservationTravelerActivityService
               .create(activityAssignment)
               .subscribe({
                 next: (result) => {
-                  console.log(
-                    `Actividad ${activity.id} asignada al viajero ${traveler.id} exitosamente:`,
-                    result
-                  );
                   resolve(result);
                 },
                 error: (error) => {
@@ -1813,20 +1588,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             activityPackId: pack.id,
           };
 
-          console.log(
-            `Creando asignación de pack ${pack.id} para viajero ${traveler.id}:`,
-            packAssignment
-          );
-
           const createPromise = new Promise((resolve, reject) => {
             this.reservationTravelerActivityPackService
               .create(packAssignment)
               .subscribe({
                 next: (result) => {
-                  console.log(
-                    `Pack ${pack.id} asignado al viajero ${traveler.id} exitosamente:`,
-                    result
-                  );
                   resolve(result);
                 },
                 error: (error) => {
@@ -1851,9 +1617,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
       // Ejecutar todas las operaciones de creación
       if (createPromises.length > 0) {
-        console.log(
-          `Ejecutando ${createPromises.length} operaciones de creación...`
-        );
         try {
           // Usar Promise.allSettled para manejar mejor los errores y asegurar que todas las operaciones se completen
           const results = await Promise.allSettled(createPromises);
@@ -1864,10 +1627,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           );
           const failed = results.filter(
             (result) => result.status === 'rejected'
-          );
-
-          console.log(
-            `Operaciones completadas: ${successful.length} exitosas, ${failed.length} fallidas`
           );
 
           // Si hay operaciones fallidas, mostrar detalles y fallar
@@ -1897,7 +1656,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             );
           }
 
-          console.log('Todas las actividades se guardaron exitosamente');
         } catch (error) {
           console.error(
             'Error durante la ejecución de operaciones de creación:',
@@ -1906,13 +1664,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           throw error; // Re-lanzar el error para que sea capturado por el catch externo
         }
       } else {
-        console.log('No hay actividades para crear');
       }
 
-      console.log('=== FIN saveActivitiesAssignments (EXITOSO) ===');
       return true;
     } catch (error) {
-      console.log('=== ERROR en saveActivitiesAssignments ===');
       console.error('Error completo:', error);
       console.error('Stack trace:', (error as any)?.stack);
       console.error('Mensaje del error:', (error as any)?.message);
@@ -1932,10 +1687,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   private async clearExistingActivitiesAndPacks(
     existingTravelers: any[]
   ): Promise<void> {
-    console.log(`=== INICIO clearExistingActivitiesAndPacks ===`);
-    console.log(
-      `Limpiando actividades existentes para ${existingTravelers.length} viajeros`
-    );
 
     const deletePromises: Promise<any>[] = [];
     let totalActivitiesFound = 0;
@@ -1945,7 +1696,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     for (const traveler of existingTravelers) {
       try {
-        console.log(`Procesando viajero ${traveler.id}...`);
 
         // Obtener y eliminar actividades individuales existentes
         const existingActivities = await new Promise<any[]>(
@@ -1954,9 +1704,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               .getByReservationTraveler(traveler.id)
               .subscribe({
                 next: (activities) => {
-                  console.log(
-                    `Viajero ${traveler.id} tiene ${activities.length} actividades individuales`
-                  );
                   totalActivitiesFound += activities.length;
                   resolve(activities);
                 },
@@ -1978,17 +1725,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
         existingActivities.forEach((activity) => {
           const deletePromise = new Promise((resolve, reject) => {
-            console.log(
-              `Eliminando actividad ${activity.id} del viajero ${traveler.id}...`
-            );
             this.reservationTravelerActivityService
               .delete(activity.id)
               .subscribe({
                 next: (result) => {
-                  console.log(
-                    `Actividad ${activity.id} eliminada del viajero ${traveler.id} exitosamente:`,
-                    result
-                  );
                   totalActivitiesDeleted++;
                   resolve(result);
                 },
@@ -2015,9 +1755,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             .getByReservationTraveler(traveler.id)
             .subscribe({
               next: (packs) => {
-                console.log(
-                  `Viajero ${traveler.id} tiene ${packs.length} packs de actividades`
-                );
                 totalPacksFound += packs.length;
                 resolve(packs);
               },
@@ -2038,17 +1775,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
         existingPacks.forEach((pack) => {
           const deletePromise = new Promise((resolve, reject) => {
-            console.log(
-              `Eliminando pack ${pack.id} del viajero ${traveler.id}...`
-            );
             this.reservationTravelerActivityPackService
               .delete(pack.id)
               .subscribe({
                 next: (result) => {
-                  console.log(
-                    `Pack ${pack.id} eliminado del viajero ${traveler.id} exitosamente:`,
-                    result
-                  );
                   totalPacksDeleted++;
                   resolve(result);
                 },
@@ -2076,12 +1806,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     // Esperar a que se completen todas las eliminaciones
     if (deletePromises.length > 0) {
-      console.log(
-        `Esperando a que se completen ${deletePromises.length} eliminaciones...`
-      );
       try {
         await Promise.all(deletePromises);
-        console.log('Todas las eliminaciones se completaron');
       } catch (error) {
         console.warn(
           'Algunas eliminaciones fallaron, pero continuando:',
@@ -2089,15 +1815,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         );
       }
     } else {
-      console.log('No hay elementos para eliminar');
     }
 
-    console.log(`=== RESUMEN clearExistingActivitiesAndPacks ===`);
-    console.log(`Total actividades encontradas: ${totalActivitiesFound}`);
-    console.log(`Total packs encontrados: ${totalPacksFound}`);
-    console.log(`Total actividades eliminadas: ${totalActivitiesDeleted}`);
-    console.log(`Total packs eliminados: ${totalPacksDeleted}`);
-    console.log(`=== FIN clearExistingActivitiesAndPacks ===`);
   }
 
   // Método auxiliar para limpiar actividades existentes
@@ -2259,46 +1978,30 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Inicializa el componente info-travelers cuando se activa su step
    */
   private initializeInfoTravelersComponent(): void {
-    console.log('🔄 Intentando inicializar componente info-travelers...');
 
     // Verificar que tengamos todos los datos necesarios
     if (!this.infoTravelers) {
-      console.log('⚠️ Componente info-travelers no disponible');
       return;
     }
 
     if (!this.departureId || !this.reservationId) {
-      console.log('⚠️ Faltan datos necesarios:', {
-        departureId: this.departureId,
-        reservationId: this.reservationId,
-      });
       return;
     }
-
-    console.log('✅ Datos disponibles, verificando estado del componente...');
 
     // Verificar si el componente ya tiene datos cargados
     if (
       !this.infoTravelers.travelers ||
       this.infoTravelers.travelers.length === 0
     ) {
-      console.log(
-        '📋 Componente info-travelers sin datos, forzando recarga...'
-      );
 
       // Usar un pequeño delay para asegurar que el componente esté completamente renderizado
       setTimeout(() => {
         try {
           this.infoTravelers.reloadData();
-          console.log('✅ Recarga de datos iniciada');
         } catch (error) {
-          console.error('❌ Error al recargar datos:', error);
+          console.error('Error al recargar datos:', error);
         }
       }, 200);
-    } else {
-      console.log('✅ Componente info-travelers ya tiene datos cargados:', {
-        travelersCount: this.infoTravelers.travelers.length,
-      });
     }
   }
 
@@ -2306,15 +2009,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Inicializa componentes de personalización
    */
   private initializePersonalizationComponents(): void {
-    console.log('🎨 Inicializando componentes de personalización...');
   }
 
   /**
-   * Inicializa componente de gestión de vuelos
    */
   private initializeFlightManagementComponent(): void {
-    // Lógica para componente de vuelos si es necesaria
-    console.log('✈️ Inicializando componente de gestión de vuelos...');
+
   }
 
   /**
@@ -2322,7 +2022,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    */
   private initializePaymentComponent(): void {
     // Lógica para componente de pago si es necesaria
-    console.log('💳 Inicializando componente de pago...');
   }
 
   // Método para actualizar la URL cuando cambia el step
@@ -2340,62 +2039,25 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   // Método auxiliar para logging detallado
   private logComponentState(): void {
-    console.log('=== ESTADO DE COMPONENTES ===');
-    console.log('travelerSelector:', {
-      available: !!this.travelerSelector,
-      hasUnsavedChanges: this.travelerSelector?.hasUnsavedChanges,
-      travelersNumbers: this.travelerSelector?.ageGroupCounts,
-      existingTravelers: this.travelerSelector?.existingTravelers?.length || 0,
-    });
-    console.log('roomSelector:', {
-      available: !!this.roomSelector,
-      selectedRooms: this.roomSelector?.selectedRooms,
-      allRoomsAvailability:
-        this.roomSelector?.allRoomsAvailability?.length || 0,
-    });
-    console.log('insuranceSelector:', {
-      available: !!this.insuranceSelector,
-      selectedInsurance: !!this.insuranceSelector?.selectedInsurance,
-    });
-    console.log('infoTravelers:', {
-      available: !!this.infoTravelers,
-    });
-    console.log('reservationData:', {
-      id: this.reservationId,
-      totalPassengers: this.totalPassengers,
-      totalAmount: this.totalAmount,
-      totalAmountCalculated: this.totalAmountCalculated,
-    });
-    console.log('selectedActivities:', {
-      count: this.selectedActivities?.length || 0,
-      activities: this.selectedActivities,
-    });
-    console.log('=============================');
   }
 
   // Método para guardar todos los datos de los viajeros
   private async saveTravelersData(): Promise<boolean> {
-    console.log('=== DEBUG: saveTravelersData iniciado ===');
 
     if (!this.infoTravelers) {
-      console.log('No hay componente infoTravelers, retornando true');
       return true; // Si no hay componente, no hay nada que guardar
     }
 
     try {
-      console.log('Validando campos obligatorios...');
       // Validar que todos los campos obligatorios estén completados
       if (!this.infoTravelers.validateFormAndShowToast()) {
-        console.log('Validación falló, retornando false');
         // El toast ya se mostró automáticamente en validateFormAndShowToast()
         return false; // No continuar si hay campos faltantes
       }
 
-      console.log('Validación exitosa, guardando datos...');
 
       // Llamar al método saveAllTravelersData del componente hijo y esperar a que se complete
       await this.infoTravelers.saveAllTravelersData();
-      console.log('Datos guardados exitosamente, retornando true');
       return true;
     } catch (error) {
       console.error('Error en saveTravelersData:', error);
@@ -2411,7 +2073,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   // NUEVO: Método para guardar todos los datos del paso 0 (personaliza tu viaje)
   private async saveStep0Data(): Promise<boolean> {
-    console.log('=== DEBUG: saveStep0Data iniciado ===');
 
     try {
       // Verificar que los componentes necesarios estén disponibles
@@ -2437,15 +2098,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         return false;
       }
 
-      console.log('Guardando datos del paso 0 (personaliza tu viaje)...');
 
       // 1. Guardar cambios de travelers si hay pendientes
       if (this.travelerSelector.hasUnsavedChanges) {
-        console.log('Guardando cambios de travelers...');
         const travelersSaved =
           await this.travelerSelector.saveTravelersChanges();
         if (!travelersSaved) {
-          console.log('Error al guardar travelers, retornando false');
           return false;
         }
       }
@@ -2462,7 +2120,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             'Por favor, selecciona al menos una habitación antes de continuar.',
           life: 5000,
         });
-        console.log('No hay habitaciones seleccionadas, retornando false');
         return false;
       }
 
@@ -2473,7 +2130,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           0
         );
 
-      console.log(`Total de pasajeros: ${totalPassengers}`);
 
       // Calcular la capacidad total de las habitaciones seleccionadas
       let totalCapacity = 0;
@@ -2485,16 +2141,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           if (room) {
             const roomCapacity = room.isShared ? 1 : room.capacity || 1;
             totalCapacity += roomCapacity * qty;
-            console.log(
-              `Habitación ${tkId}: capacidad ${roomCapacity}, cantidad ${qty}, subtotal ${
-                roomCapacity * qty
-              }`
-            );
           }
         }
       });
-
-      console.log(`Capacidad total de habitaciones: ${totalCapacity}`);
 
       // Validar que la capacidad sea suficiente
       if (totalCapacity < totalPassengers) {
@@ -2508,7 +2157,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }
 
       // 4. Recargar travelers después de guardar cambios
-      console.log('Recargando travelers...');
       await this.roomSelector.loadExistingTravelers();
       this.insuranceSelector.loadExistingTravelers();
 
@@ -2518,17 +2166,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       await new Promise((resolve) => setTimeout(resolve, 300));
 
       // 6. Guardar asignaciones de habitaciones y actividades EN PARALELO (SIN seguros)
-      console.log('Guardando asignaciones en paralelo (sin seguros)...');
 
       const [roomsSaved, activitiesSaved] = await Promise.allSettled([
         this.roomSelector.saveRoomAssignments(),
         this.saveActivitiesAssignments(),
       ]);
-
-      console.log('Resultados de las operaciones:', {
-        rooms: roomsSaved,
-        activities: activitiesSaved,
-      });
 
       // Verificar que las operaciones fueron exitosas
       if (roomsSaved.status === 'rejected') {
@@ -2574,7 +2216,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
       // 7. Actualizar datos de la reserva
       if (this.reservationId && this.reservationData) {
-        console.log('Actualizando datos de la reserva...');
         const reservationUpdateData = {
           ...this.reservationData,
           totalPassengers: this.totalPassengers,
@@ -2586,10 +2227,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             .update(this.reservationId!, reservationUpdateData)
             .subscribe({
               next: (response) => {
-                console.log(
-                  'Respuesta del servicio de actualización:',
-                  response
-                );
                 let isSuccess = false;
 
                 if (typeof response === 'boolean') {
@@ -2605,9 +2242,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                 }
 
                 if (isSuccess) {
-                  console.log(
-                    'Actualización exitosa, actualizando datos locales...'
-                  );
                   this.reservationData.totalPassengers = this.totalPassengers;
 
                   this.messageService.add({
@@ -2653,7 +2287,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         });
       }
 
-      console.log('=== DEBUG: saveStep0Data completado exitosamente ===');
       return true;
     } catch (error) {
       console.error('Error en saveStep0Data:', error);
@@ -2669,13 +2302,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   async nextStepWithValidation(targetStep: number): Promise<void> {
-    console.log(
-      '🔄 nextStepWithValidation llamado para targetStep:',
-      targetStep
-    );
-    console.log('🔍 Estado actual - isStandaloneMode:', this.isStandaloneMode);
-    console.log('🔍 Estado actual - isAuthenticated:', this.isAuthenticated);
-
     // NUEVO: Activar loading para el paso 0
     if (targetStep === 1) {
       this.isStep0Saving = true;
@@ -2684,30 +2310,22 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     try {
       // ✅ NUEVO: En modo standalone, omitir validación de autenticación
       if (this.isStandaloneMode) {
-        console.log(
-          '🔓 Modo standalone: omitiendo validación de autenticación para step',
-          targetStep
-        );
         await this.performStepValidation(targetStep);
         return;
       }
 
       // Verificar autenticación para pasos que la requieren (solo en modo normal)
       if (targetStep >= 2) {
-        console.log('🔒 Modo normal: verificando autenticación para step >= 2');
         return new Promise((resolve) => {
           this.authService.isLoggedIn().subscribe(async (isLoggedIn) => {
-            console.log('🔍 Resultado de isLoggedIn():', isLoggedIn);
             if (!isLoggedIn) {
               // Usuario no está logueado, mostrar modal
-              console.log('❌ Usuario no logueado - mostrando modal de login');
               sessionStorage.setItem('redirectUrl', window.location.pathname);
               this.loginDialogVisible = true;
               resolve();
               return;
             }
             // Usuario está logueado, actualizar variable local y continuar con la validación normal
-            console.log('✅ Usuario logueado - continuando con validación');
             this.isAuthenticated = true;
             await this.performStepValidation(targetStep);
             resolve();
@@ -2716,9 +2334,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }
 
       // Para el paso 0 (personalizar viaje) y paso 1 (vuelos), no se requiere autenticación
-      console.log(
-        'ℹ️ Step < 2, no requiere autenticación - continuando directamente'
-      );
       await this.performStepValidation(targetStep);
     } finally {
       // NUEVO: Desactivar loading para el paso 0
@@ -2729,10 +2344,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private async performStepValidation(targetStep: number): Promise<void> {
-    console.log(
-      '=== DEBUG: performStepValidation iniciado para targetStep:',
-      targetStep
-    );
 
     // Log del estado inicial de los componentes
     this.logComponentState();
@@ -2762,22 +2373,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     // NUEVO: Guardar datos del paso 0 (personaliza tu viaje) antes de continuar al paso 1
     if (targetStep === 1) {
-      console.log('Validando paso 0 (personaliza tu viaje)...');
       const step0Saved = await this.saveStep0Data();
       if (!step0Saved) {
-        console.log(
-          'Error al guardar datos del paso 0, NO continuando al siguiente paso'
-        );
         return; // No continuar si no se pudieron guardar los datos
       }
-      console.log(
-        'Datos del paso 0 guardados exitosamente, continuando al siguiente paso'
-      );
     }
 
     // Guardar datos de viajeros antes de continuar al paso de pago (targetStep === 3)
     if (targetStep === 3) {
-      console.log('Validando paso 3 (info-travelers)...');
 
       if (!this.infoTravelers) {
         console.error('Componente infoTravelers no está disponible');
@@ -2792,16 +2395,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }
 
       const saved = await this.saveTravelersData();
-      console.log('Resultado de saveTravelersData:', saved);
       if (!saved) {
-        console.log('Validación falló, NO continuando al siguiente paso');
         return; // No continuar si no se pudieron guardar los datos
       }
-      console.log('Validación exitosa, continuando al siguiente paso');
     }
 
     // Navegar al siguiente paso
-    console.log('Navegando al siguiente paso:', targetStep);
     this.onActiveIndexChange(targetStep);
   }
 
@@ -2923,10 +2522,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     useFlightless: boolean = false
   ): Promise<void> {
     // ✅ NUEVO: En modo standalone, proceder directamente sin verificar autenticación
-    if (this.isStandaloneMode) {
-      console.log(
-        '🔓 Modo standalone: procediendo sin verificar autenticación'
-      );
+    if (this.isStandaloneMode) {  
 
       if (useFlightless) {
         // Lógica para continuar sin vuelos - guardar como vuelo seleccionado
@@ -2972,25 +2568,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       // ✅ NUEVO: Activar estado de procesamiento
       this.isFlightlessProcessing = true;
       this.flightlessProcessingMessage = 'Procesando selección sin vuelos...';
-      console.log('🚀 Iniciando handleFlightlessSelection...');
-      console.log('🕐 Timestamp:', new Date().toISOString());
-      console.log(
-        '📊 Estado actual - hasAvailableFlights:',
-        this.hasAvailableFlights
-      );
-      console.log('📦 availableFlights:', this.availableFlights);
-      console.log(
-        '📊 selectedFlight actual antes de la selección:',
-        this.selectedFlight
-      );
 
       // Buscar el paquete de vuelos real que corresponde a "sin vuelos"
       if (this.hasAvailableFlights && this.availableFlights) {
-        console.log(
-          '🔍 Buscando paquete sin vuelos en',
-          this.availableFlights.length,
-          'paquetes disponibles...'
-        );
 
         const flightlessPack = this.availableFlights.find(
           (pack: IFlightPackDTO) => {
@@ -3002,30 +2582,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               name.includes('pack sin vuelos') ||
               description.includes('pack sin vuelos');
 
-            console.log(
-              `🔍 Evaluando paquete ${pack.id} - name: "${name}", description: "${description}", isFlightless: ${isFlightless}`
-            );
-
             return isFlightless;
           }
         );
 
         if (flightlessPack) {
-          console.log('✅ Paquete sin vuelos encontrado:', flightlessPack);
-          console.log('🆔 ID del paquete:', flightlessPack.id);
-          console.log('📝 Nombre del paquete:', flightlessPack.name);
-          console.log(
-            '📄 Descripción del paquete:',
-            flightlessPack.description
-          );
-
           // ✅ NUEVO: Usar la lógica simplificada del componente default-flights y ESPERAR
           if (this.flightManagement && this.reservationId) {
-            console.log(
-              '🔄 Usando lógica simplificada del componente default-flights...'
-            );
-
-            // ✅ NUEVO: Actualizar mensaje de procesamiento
+            // NUEVO: Actualizar mensaje de procesamiento
             this.flightlessProcessingMessage =
               'Guardando asignaciones sin vuelos...';
 
@@ -3035,26 +2599,18 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               true
             );
 
-            console.log('✅ Asignaciones sin vuelos guardadas exitosamente');
-
             // ✅ NUEVO: Continuar con la selección de "Sin Vuelos" y ESPERAR
             await this.continueWithFlightlessSelection(flightlessPack);
           } else {
-            console.log(
-              '⚠️ No se puede acceder al componente default-flights, continuando directamente...'
-            );
             await this.continueWithFlightlessSelection(flightlessPack);
           }
         } else {
           console.error('❌ No se encontró paquete sin vuelos disponible');
-          console.log(
-            '🔍 Paquetes revisados:',
             this.availableFlights.map((p) => ({
               id: p.id,
               name: p.name,
               description: p.description,
             }))
-          );
 
           // ✅ NUEVO: Mostrar error y desactivar procesamiento
           this.messageService.add({
@@ -3066,11 +2622,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         }
       } else {
         console.error('❌ No hay vuelos disponibles o no se han cargado');
-        console.log('📊 hasAvailableFlights:', this.hasAvailableFlights);
-        console.log(
-          '📦 availableFlights length:',
-          this.availableFlights?.length || 0
-        );
 
         // ✅ NUEVO: Mostrar error y desactivar procesamiento
         this.messageService.add({
@@ -3081,11 +2632,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         });
       }
     } catch (error) {
-      console.error('💥 Error al manejar selección sin vuelos:', error);
-      console.error(
-        '💥 Stack trace:',
-        error instanceof Error ? error.stack : 'No stack trace available'
-      );
 
       // ✅ NUEVO: Mostrar error y desactivar procesamiento
       this.messageService.add({
@@ -3099,7 +2645,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       // ✅ NUEVO: Desactivar estado de procesamiento
       this.isFlightlessProcessing = false;
       this.flightlessProcessingMessage = '';
-      console.log('✅ Procesamiento de sin vuelos completado');
     }
   }
 
@@ -3109,18 +2654,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   private async continueWithFlightlessSelection(
     flightlessPack: IFlightPackDTO
   ): Promise<void> {
-    console.log('🔄 Continuando con selección de "Sin Vuelos"');
-    console.log('📦 Paquete sin vuelos:', flightlessPack);
 
     // ✅ NUEVO: Actualizar mensaje de procesamiento
     this.flightlessProcessingMessage = 'Actualizando resumen y datos...';
 
     // Actualizar el selectedFlight
     this.selectedFlight = flightlessPack;
-    console.log(
-      '✅ selectedFlight actualizado con el paquete sin vuelos:',
-      this.selectedFlight
-    );
 
     // Llamar a onFlightSelectionChange para actualizar el resumen
     this.onFlightSelectionChange({
@@ -3144,16 +2683,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     // ✅ NUEVO: Mostrar mensaje de éxito
     this.messageService.add({
       severity: 'success',
-      summary: 'Sin vuelos seleccionado',
+      summary: 'Sin vuelos seleccionado', 
       detail:
         'La opción sin vuelos ha sido seleccionada y guardada correctamente. Ahora puedes continuar al siguiente paso.',
       life: 5000,
     });
 
     // ✅ NUEVO: NO cambiar automáticamente de paso - el usuario debe hacer clic en "Continuar"
-    console.log(
-      '✅ Selección sin vuelos completada. El usuario debe hacer clic en "Continuar" para avanzar.'
-    );
+    
   }
 
   closeLoginModal(): void {
@@ -3260,10 +2797,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     if (this.reservationId) {
       try {
         localStorage.removeItem(`checkout_summary_${this.reservationId}`);
-        console.log(
-          '🗑️ Resumen del localStorage eliminado para reservación:',
-          this.reservationId
-        );
       } catch (error) {
         console.warn('⚠️ Error al limpiar resumen del localStorage:', error);
       }
@@ -3273,13 +2806,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   // ✅ NUEVO: Método para limpiar localStorage cuando se complete el checkout
   public onCheckoutComplete(): void {
     this.clearSummaryFromLocalStorage();
-    console.log('✅ Checkout completado, resumen del localStorage limpiado');
   }
 
   // ✅ NUEVO: Método para limpiar localStorage cuando se cancele el checkout
   public onCheckoutCancel(): void {
     this.clearSummaryFromLocalStorage();
-    console.log('❌ Checkout cancelado, resumen del localStorage limpiado');
   }
 
   /**
@@ -3300,12 +2831,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * @param stepNumber Número del step al que navegar
    */
   public onNavigateToStep(stepNumber: number): void {
-    console.log(`🔄 Navegando al step ${stepNumber} desde payment-management`);
 
     if (stepNumber === 1) {
-      // Navegar al step 1 (selección de vuelos)
-      console.log('📍 Navegando a selección de vuelos (step 1)');
-
       // Cambiar al step 1
       this.onActiveIndexChange(1);
 
@@ -3321,7 +2848,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       // Opcional: Limpiar estado relacionado con vuelos si es necesario
       this.clearFlightSelectionState();
     } else {
-      console.log(`⚠️ Step ${stepNumber} no manejado específicamente`);
       // Para otros steps, usar la navegación estándar
       this.onActiveIndexChange(stepNumber);
     }
@@ -3332,11 +2858,19 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * @param discount Cantidad del descuento en euros
    */
   onPointsDiscountChange(discount: number): void {
-    console.log('💰 Descuento por puntos actualizado:', discount);
     this.pointsDiscount = discount;
     
     // Actualizar el resumen del pedido para reflejar el descuento
     this.forceSummaryUpdate();
+  }
+
+  /**
+   * Maneja el cambio de total desde el summary-table
+   * @param newTotal Nuevo total calculado
+   */
+  onTotalChanged(newTotal: number): void {
+    this.totalAmountCalculated = newTotal;
+    this.cdr.detectChanges();
   }
 
   /**
@@ -3351,8 +2885,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * ✅ NUEVO: Limpia el estado relacionado con la selección de vuelos
    */
   private clearFlightSelectionState(): void {
-    console.log('🧹 Limpiando estado de selección de vuelos...');
-
     // Resetear vuelo seleccionado
     this.selectedFlight = null;
     this.flightPrice = 0;
@@ -3361,8 +2893,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     if (this.travelerSelector && Object.keys(this.ageGroupCounts).length > 0) {
       this.updateOrderSummary(this.ageGroupCounts);
     }
-
-    console.log('✅ Estado de vuelos limpiado');
   }
 
   /**

@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ToursService } from '../../../core/services/tours.service';
 import { AnalyticsService, EcommerceItem } from '../../../core/services/analytics.service';
 import { AuthenticateService } from '../../../core/services/auth-service.service';
+import { Title } from '@angular/platform-browser';
 
 interface ITour {
   imageUrl: string;
@@ -74,6 +75,7 @@ export class ToursComponent implements OnInit, OnChanges {
   tourType: string = '';
 
   constructor(
+    private readonly titleService: Title,
     private readonly toursService: ToursService,
     private readonly route: ActivatedRoute,
     private readonly analyticsService: AnalyticsService,
@@ -81,6 +83,7 @@ export class ToursComponent implements OnInit, OnChanges {
   ) {}
 
   ngOnInit() {
+    this.titleService.setTitle('Tours y Experiencias - Different Roads');
     // Handle initialTags from parent component
     if (this.initialTags && this.initialTags.length > 0) {
       this.selectedTagOption = [...this.initialTags];

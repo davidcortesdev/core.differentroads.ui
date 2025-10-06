@@ -253,6 +253,7 @@
         [currency]="'EUR'"
         [title]="'Resumen del pedido'"
         [pointsDiscount]="pointsDiscount"
+        (totalChanged)="onTotalChanged($event)"
       >
       </app-summary-table>
     </div>

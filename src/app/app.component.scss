@@ -1,3 +1,13 @@
+/* Estilos para el contenido principal */
+.main-content {
+  transition: opacity 0.3s ease;
+}
+
+.main-content.blocked {
+  pointer-events: none;
+  opacity: 0.3;
+}
+
 ::ng-deep {
     .p-carousel-content .p-carousel-item {
       max-width: 30rem !important;

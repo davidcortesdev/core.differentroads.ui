@@ -117,6 +117,7 @@ import { AccordionModule } from 'primeng/accordion';
 import { ChipModule } from 'primeng/chip';
 import { TagModule } from 'primeng/tag';
 import { SecondFooterSectionComponent } from './layout/footer/components/second-footer-section/second-footer-section.component';
+import { Footer2Component } from './layout/footer/components/footer2/footer2.component';
 import { TimelineModule } from 'primeng/timeline';
 import { BadgeModule } from 'primeng/badge';
 import { OverlayBadgeModule } from 'primeng/overlaybadge';
@@ -185,7 +186,7 @@ import { FlightSearchComponent } from './pages/checkout/components/flights/compo
 import { TravelerItemComponent } from './pages/checkout/components/traveler-item/traveler-item.component';
 import { FlightSectionComponent } from './pages/checkout/components/flight-section/flight-section.component';
 import { LoginModalComponent } from './shared/components/login-modal/login-modal.component';
-import { LoginModalComponent as FlightLoginModalComponent } from './pages/checkout/components/flights/components/login-modal/login-modal.component'; import { BookingsComponent } from './pages/bookings/bookings.component';
+import { BookingsComponent } from './pages/bookings/bookings.component';
 import { BookingActivitiesComponent } from './pages/bookings/booking-activities/booking-activities.component';
 import { BookingCodeSectionComponent } from './pages/bookings/booking-code-section/booking-code-section.component';
 import { BookingDetailsViewComponent } from './pages/bookings/booking-details-view/booking-details-view.component';
@@ -360,6 +361,7 @@ registerLocaleData(localeEs);
     ReviewSectionComponent,
     ReviewsComponent,
     SecondFooterSectionComponent,
+    Footer2Component,
     BasicPageComponent,
     TitleAndQuillComponent,
     CheckoutComponent,
@@ -389,7 +391,7 @@ registerLocaleData(localeEs);
     TravelerItemComponent,
     FlightSectionComponent,
     LoginModalComponent,
-    FlightLoginModalComponent,
+
     BookingsComponent,
     BookingActivitiesComponent,
     BookingCodeSectionComponent,

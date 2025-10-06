@@ -15,6 +15,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
 import { UsersNetService } from '../../../../core/services/usersNet.service';
 import { HubspotService } from '../../../../core/services/hubspot.service';
+import { AnalyticsService } from '../../../../core/services/analytics.service';
 import { ConfirmationCodeComponent } from '../../../../shared/components/confirmation-code/confirmation-code.component';
 
 @Component({
@@ -74,7 +75,8 @@ export class SignUpFormComponent {
     private router: Router,
     private authService: AuthenticateService,
     private usersNetService: UsersNetService,
-    private hubspotService: HubspotService
+    private hubspotService: HubspotService,
+    private analyticsService: AnalyticsService
   ) {
     this.signUpForm = this.fb.group(
       {
@@ -92,6 +94,9 @@ export class SignUpFormComponent {
   signInWithGoogle(): void {
     this.isLoading = true;
     this.authService.handleGoogleSignIn().then(() => {
+      // Disparar evento sign_up para Google
+      this.trackSignUp('google');
+      
       this.isLoading = false;
     }).catch((error) => {
       this.isLoading = false;
@@ -147,6 +152,9 @@ export class SignUpFormComponent {
                   next: (user) => {
                     console.log('Usuario creado exitosamente:', user);
                     
+                    // Disparar evento sign_up
+                    this.trackSignUp('manual');
+                    
                     this.isLoading = false;
                     this.isConfirming = true;
                     this.registeredUsername = this.signUpForm.value.email;
@@ -177,6 +185,9 @@ export class SignUpFormComponent {
     this.isRedirecting = true;
     this.successMessage = 'Verificación exitosa. Redirigiendo al inicio de sesión...';
     
+    // Disparar evento sign_up para confirmación exitosa
+    this.trackSignUp('manual');
+    
     setTimeout(() => {
       this.router.navigate(['/login']);
     }, 2000);
@@ -205,5 +216,19 @@ export class SignUpFormComponent {
 
   onSuccessMessageChange(message: string): void {
     this.successMessage = message;
+  }
+
+  /**
+   * Disparar evento sign_up cuando el usuario se registra exitosamente
+   */
+  private trackSignUp(method: string): void {
+    this.analyticsService.signUp(
+      method,
+      this.analyticsService.getUserData(
+        this.signUpForm.value.email,
+        this.signUpForm.value.phone,
+        undefined // No tenemos Cognito ID aún en este punto
+      )
+    );
   }
 }

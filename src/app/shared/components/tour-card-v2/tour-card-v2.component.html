@@ -8,11 +8,11 @@
     }"
     [styleClass]="'tour-card-wrapper'"
   >
-    <ng-template pTemplate="header">
+    <ng-template #header>
       <app-tour-card-header-v2 [tourData]="tourData" (tourClick)="handleTourClick()"></app-tour-card-header-v2>
     </ng-template>
     
-    <ng-template pTemplate="content">
+    <ng-template #content>
       <app-tour-card-content-v2 
         [tourData]="tourData" 
         [showScalapayPrice]="showScalapayPrice"

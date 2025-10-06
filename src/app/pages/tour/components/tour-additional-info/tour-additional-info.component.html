@@ -96,6 +96,8 @@
       babies: travelersSelected?.babies || 0
     } : null"
     [periodId]="isUpdateMode ? periodID : ''"
+    [onlySendEmail]="isDownloadMode || isShareMode"
+    [isShareMode]="isShareMode"
     (close)="handleCloseModal()"
   ></app-budget-dialog>
 </p-dialog>

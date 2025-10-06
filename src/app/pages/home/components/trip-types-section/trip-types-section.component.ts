@@ -36,7 +36,9 @@ export class TripTypesSectionComponent {
     },
   ];
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router
+  ) {}
 
   navigateToTripType(type: string): void {
     this.router.navigate(['/tours'], {

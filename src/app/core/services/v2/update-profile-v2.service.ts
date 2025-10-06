@@ -131,6 +131,8 @@ export class UpdateProfileV2Service {
     const fieldValues: any[] = [];
     
     const fieldMappings = [
+      // Excluimos la imagen por ahora ya que el DataURL es demasiado grande para el API
+      // { fieldCode: 'image', value: personalInfo.avatarUrl },
       { fieldCode: 'phone', value: personalInfo.telefono },
       { fieldCode: 'birth_date', value: this.formatDate(personalInfo.fechaNacimiento) },
       { fieldCode: 'national_id', value: personalInfo.dni },
@@ -143,14 +145,15 @@ export class UpdateProfileV2Service {
 
     fieldMappings.forEach(mapping => {
       if (mapping.value && mapping.value.toString().trim()) {
-        fieldValues.push({
+        const fieldValue = {
           userId: parseInt(userId),
           userFieldId: this.getFieldIdByCode(mapping.fieldCode),
           value: mapping.value.toString().trim()
-        });
+        };
+        
+        fieldValues.push(fieldValue);
       }
     });
-
     return fieldValues;
   }
 
@@ -170,7 +173,8 @@ export class UpdateProfileV2Service {
       'city': 7,
       'postal_code': 8,
       'country': 9,
-      'notes': 10
+      'notes': 10,
+      'image': 12
     };
     
     return fieldIdMap[fieldCode] || 0;
@@ -188,7 +192,6 @@ export class UpdateProfileV2Service {
       email: personalInfo.email || '',
       lastName: personalInfo.apellido || '',
       phone: personalInfo.telefono || '',
-      avatarUrl: personalInfo.avatarUrl || '',
       hasWebAccess: true,
       hasMiddleAccess: false,
       hasMiddleAtcAccess: false,

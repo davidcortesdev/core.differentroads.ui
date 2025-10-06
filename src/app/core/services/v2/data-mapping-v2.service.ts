@@ -324,6 +324,9 @@ export class DataMappingV2Service {
       if (fieldName && fieldValue.value) {
         // Mapear nombres de campos a propiedades de PersonalInfo según la API
         switch (fieldName) {
+          case 'Imagen de Perfil':
+            combinedData.avatarUrl = fieldValue.value;
+            break;
           case 'Teléfono':
             combinedData.telefono = fieldValue.value;
             break;

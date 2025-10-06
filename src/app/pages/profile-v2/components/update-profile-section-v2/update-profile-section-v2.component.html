@@ -37,7 +37,7 @@
             [showUploadButton]="false"
             [showCancelButton]="false"
             chooseLabel="Adjuntar foto"
-            (onRemove)="uploadedFiles = []"
+            (onRemove)="onRemoveImage()"
             styleClass="custom-upload"
           >
             <ng-template pTemplate="content" let-files>

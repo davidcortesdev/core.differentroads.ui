@@ -46,9 +46,18 @@ export class UpdateProfileSectionV2Component{
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.previewImageUrl = e.target.result;
+        // Asignar la URL de la imagen al personalInfo para que se guarde
+        this.personalInfo.avatarUrl = e.target.result;
       };
       reader.readAsDataURL(file);
     }
+  }
+
+  onRemoveImage() {
+    this.uploadedFiles = [];
+    this.previewImageUrl = null;
+    // Limpiar la URL de la imagen del personalInfo
+    this.personalInfo.avatarUrl = '';
   }
 
   // Validaciones de campos

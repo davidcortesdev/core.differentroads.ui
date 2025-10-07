@@ -372,7 +372,15 @@ export class AuthenticateService {
 
   // Navegar al perfil del usuario
   navigateToProfile(userId: string) {
-    this.router.navigate(['/profile-v2', userId]);
+    this.router.navigate(['/profile-v2', userId]).then(success => {
+      if (!success) {
+        // Si la navegación falla, intentar con la ruta absoluta
+        window.location.href = `/profile-v2/${userId}`;
+      }
+    }).catch(error => {
+      // En caso de error, usar navegación directa
+      window.location.href = `/profile-v2/${userId}`;
+    });
   }
 
   // Navegar a la página de login
@@ -382,11 +390,8 @@ export class AuthenticateService {
 
   // Método para navegar después de completar la verificación del usuario
   navigateAfterUserVerification(): void {
-    console.log('🧭 navigateAfterUserVerification() ejecutándose...');
-    
     // Check if redirectUrl exists in sessionStorage
     const redirectUrl = sessionStorage.getItem('redirectUrl');
-    console.log('🧭 redirectUrl en sessionStorage:', redirectUrl);
     
     if (redirectUrl) {
       // Parse the URL to separate path and query parameters
@@ -394,16 +399,12 @@ export class AuthenticateService {
       const path = urlParts[0];
       const queryParams = urlParts[1] ? this.parseQueryString(urlParts[1]) : {};
       
-      console.log('🧭 Path:', path);
-      console.log('🧭 Query params:', queryParams);
-      
       // Navigate to the path with query parameters
       this.router.navigate([path], { queryParams });
       // Clear the redirectUrl from sessionStorage
       sessionStorage.removeItem('redirectUrl');
     } else {
       // Default navigation to home
-      console.log('🧭 Navegando a /home por defecto');
       this.router.navigate(['/home']);
     }
   }

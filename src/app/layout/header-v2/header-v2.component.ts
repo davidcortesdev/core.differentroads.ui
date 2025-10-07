@@ -1,40 +1,14 @@
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  ElementRef,
-  Renderer2,
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, Renderer2 } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { LanguageService } from '../../core/services/language.service';
 import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 import { AuthenticateService } from '../../core/services/auth-service.service';
 import { UsersNetService } from '../../core/services/usersNet.service';
-import {
-  MenuItemService,
-  IMenuItemResponse,
-} from '../../core/services/menu/menu-item.service';
-import {
-  TourLocationService,
-  CountryWithToursResponse,
-} from '../../core/services/tour/tour-location.service';
-import {
-  LocationNetService,
-  Location,
-} from '../../core/services/locations/locationNet.service';
+import { MenuItemService, IMenuItemResponse } from '../../core/services/menu/menu-item.service';
+import { TourLocationService, CountryWithToursResponse } from '../../core/services/tour/tour-location.service';
+import { LocationNetService, Location } from '../../core/services/locations/locationNet.service';
 import { TourTagService } from '../../core/services/tag/tour-tag.service';
-
-import {
-  Subject,
-  takeUntil,
-  finalize,
-  filter,
-  debounceTime,
-  distinctUntilChanged,
-  switchMap,
-  of,
-  forkJoin,
-} from 'rxjs';
+import { Subject, takeUntil, finalize, filter, debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs';
 import { Router } from '@angular/router';
 import { AnalyticsService } from '../../core/services/analytics.service';
 
@@ -71,6 +45,7 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   readonly chipIcon = 'pi pi-user';
   chipImage = '';
   readonly chipAlt = 'Avatar image';
+  currentUserId: string = ''; // Almacenar el userId real del usuario
 
   constructor(
     private languageService: LanguageService,
@@ -490,6 +465,9 @@ export class HeaderV2Component implements OnInit, OnDestroy {
               if (users && users.length > 0) {
                 const user = users[0];
                 const displayName = user?.name || email;
+                
+                // Almacenar el userId real del usuario
+                this.currentUserId = user?.id || '';
 
                 this.chipLabel = `Hola, ${displayName}`;
                 this.chipImage = ''; // El nuevo modelo no tiene profileImage
@@ -528,27 +506,7 @@ export class HeaderV2Component implements OnInit, OnDestroy {
       {
         label: 'Ver Perfil',
         icon: 'pi pi-user',
-        command: () => {
-          // Obtener el userId real del usuario, no el cognitoId
-          this.authService.getCognitoId().pipe(
-            takeUntil(this.destroy$),
-            switchMap((cognitoId: string) => {
-              if (cognitoId) {
-                return this.usersNetService.getUsersByCognitoId(cognitoId);
-              } else {
-                return of([]);
-              }
-            })
-          ).subscribe((users: any[]) => {
-            if (users && users.length > 0) {
-              const user = users[0];
-              const userId = user?.id; // Usar el ID real del usuario, no el cognitoId
-              if (userId) {
-                this.authService.navigateToProfile(userId);
-              }
-            }
-          });
-        },
+        command: () => this.navigateToUserProfile(),
       },
       {
         label: 'Desconectar',
@@ -556,6 +514,48 @@ export class HeaderV2Component implements OnInit, OnDestroy {
         command: () => this.authService.logOut(),
       },
     ];
+  }
+
+  /**
+   * Navega al perfil del usuario obteniendo su ID real
+   */
+  private navigateToUserProfile(): void {
+    // Obtener el userId real del usuario usando el email
+    this.authService.getUserEmail().pipe(
+      takeUntil(this.destroy$),
+      switchMap((email: string) => {
+        if (email) {
+          return this.usersNetService.getUsersByEmail(email);
+        } else {
+          return of([]);
+        }
+      })
+    ).subscribe({
+      next: (users: any[]) => {
+        if (users && users.length > 0) {
+          const user = users[0];
+          const userId = user?.id;
+          if (userId) {
+            this.router.navigate(['/profile-v2', userId]);
+          } else {
+            console.error('No se pudo obtener el userId del usuario');
+          }
+        } else {
+          const cognitoId = this.authService.getCognitoIdValue();
+          if (cognitoId) {
+            this.router.navigate(['/profile-v2', cognitoId]);
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error al obtener usuario por email:', error);
+        // En caso de error, usar cognitoId como fallback
+        const cognitoId = this.authService.getCognitoIdValue();
+        if (cognitoId) {
+          this.router.navigate(['/profile-v2', cognitoId]);
+        }
+      }
+    });
   }
 
   private navigateToSlug(slug: string): void {

@@ -363,8 +363,6 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
 
     // Emitir cambios para notificar al componente padre
     this.ageGroupCountsChange.emit({ ...this.ageGroupCounts });
-
-    console.log('🔄 Conteos actualizados desde BD:', this.ageGroupCounts);
   }
 
   private loadDepartureData(): void {

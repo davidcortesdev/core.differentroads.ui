@@ -18,8 +18,9 @@
             text-align: center;
 
             img {
-                max-height: 50px; // Adjust as needed for logo size
+                max-height: 56px; // Adjust to fit the largest optimized image
                 margin-bottom: 5px;
+                object-fit: contain; // Maintain aspect ratio
             }
 
             span {
@@ -40,6 +41,8 @@
     .top-logos .logo-group {
         flex-direction: row; // Keep top logos and text side-by-side
         img {
+            max-height: 56px;
+            object-fit: contain;
             margin-right: 5px;
             margin-bottom: 0;
         }

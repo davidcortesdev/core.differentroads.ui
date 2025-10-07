@@ -1,12 +1,205 @@
 import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Observable, throwError, of, forkJoin } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
 import { PersonalInfo } from '../../models/v2/profile-v2.model';
+import { environment } from '../../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UpdateProfileV2Service {
+  private readonly API_URL = `${environment.usersApiUrl}/User`;
+  private readonly USER_FIELD_VALUE_API_URL = `${environment.usersApiUrl}/UserFieldValue`;
+  
+  private readonly httpOptions = {
+    headers: new HttpHeaders({
+      'Content-Type': 'application/json',
+    }),
+  };
 
-  constructor() { }
+  constructor(private http: HttpClient) { }
+
+
+  /**
+   * Actualiza el perfil completo del usuario
+   * @param userId - ID del usuario
+   * @param personalInfo - Datos personales del usuario
+   * @returns Observable con el resultado de la actualización
+   */
+  updateUserProfile(userId: string, personalInfo: PersonalInfo): Observable<PersonalInfo> {
+    const basicUserData = this.mapToBasicUserData(personalInfo);
+    
+    return this.updateBasicUserData(userId, basicUserData).pipe(
+      switchMap(() => this.updateAdditionalFields(userId, personalInfo)),
+      switchMap(() => of(personalInfo)),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Actualiza los datos básicos del usuario (nombre, apellido, email, teléfono, avatar)
+   * @param userId - ID del usuario
+   * @param userData - Datos del usuario en formato API
+   * @returns Observable con la respuesta de la API
+   */
+  private updateBasicUserData(userId: string, userData: any): Observable<any> {
+    return this.http.put<any>(`${this.API_URL}/${userId}`, userData, this.httpOptions).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Obtiene los valores de campos adicionales existentes del usuario
+   * @param userId - ID del usuario
+   * @returns Observable con los valores de campos existentes
+   */
+  private getExistingFieldValues(userId: string): Observable<any[]> {
+    const params = new HttpParams().set('userId', userId);
+    return this.http.get<any[]>(this.USER_FIELD_VALUE_API_URL, { 
+      params, 
+      ...this.httpOptions 
+    }).pipe(
+      catchError(() => of([]))
+    );
+  }
+
+  /**
+   * Actualiza los campos adicionales del usuario (DNI, dirección, ciudad, etc.)
+   * @param userId - ID del usuario
+   * @param personalInfo - Datos personales del usuario
+   * @returns Observable con el resultado
+   */
+  private updateAdditionalFields(userId: string, personalInfo: PersonalInfo): Observable<any[]> {
+    return this.getExistingFieldValues(userId).pipe(
+      switchMap(existingFieldValues => {
+        const fieldValues = this.mapToFieldValues(userId, personalInfo);
+        
+        if (fieldValues.length === 0) {
+          return of([]);
+        }
+        
+        return this.processFieldUpdates(fieldValues, existingFieldValues);
+      }),
+      catchError(() => {
+        // Si no se pueden obtener los valores existentes, intentar crear nuevos
+        const fieldValues = this.mapToFieldValues(userId, personalInfo);
+        return this.processFieldUpdates(fieldValues, []);
+      })
+    );
+  }
+
+  /**
+   * Procesa las actualizaciones de campos (actualizar existentes o crear nuevos)
+   * @param fieldValues - Valores de campos a procesar
+   * @param existingFieldValues - Valores existentes
+   * @returns Observable con el resultado
+   */
+  private processFieldUpdates(fieldValues: any[], existingFieldValues: any[]): Observable<any[]> {
+    const existingMap = new Map();
+    existingFieldValues.forEach(existing => {
+      existingMap.set(existing.userFieldId, existing);
+    });
+    
+    const updateObservables = fieldValues.map(fieldValue => {
+      const existing = existingMap.get(fieldValue.userFieldId);
+      
+      if (existing) {
+        // Actualizar campo existente
+        const updateData = {
+          userId: fieldValue.userId,
+          userFieldId: fieldValue.userFieldId,
+          value: fieldValue.value
+        };
+        return this.http.put(`${this.USER_FIELD_VALUE_API_URL}/${existing.id}`, updateData, this.httpOptions);
+      } else {
+        // Crear nuevo campo
+        return this.http.post(this.USER_FIELD_VALUE_API_URL, fieldValue, this.httpOptions);
+      }
+    });
+    
+    return forkJoin(updateObservables);
+  }
+
+  /**
+   * Mapea los datos personales a valores de campos para la API
+   * @param userId - ID del usuario
+   * @param personalInfo - Datos personales del usuario
+   * @returns Array de valores de campos
+   */
+  private mapToFieldValues(userId: string, personalInfo: PersonalInfo): any[] {
+    const fieldValues: any[] = [];
+    
+    const fieldMappings = [
+      // Excluimos la imagen por ahora ya que el DataURL es demasiado grande para el API
+      // { fieldCode: 'image', value: personalInfo.avatarUrl },
+      { fieldCode: 'phone', value: personalInfo.telefono },
+      { fieldCode: 'birth_date', value: this.formatDate(personalInfo.fechaNacimiento) },
+      { fieldCode: 'national_id', value: personalInfo.dni },
+      { fieldCode: 'address', value: personalInfo.direccion },
+      { fieldCode: 'city', value: personalInfo.ciudad },
+      { fieldCode: 'postal_code', value: personalInfo.codigoPostal },
+      { fieldCode: 'country', value: personalInfo.pais },
+      { fieldCode: 'notes', value: personalInfo.notas }
+    ];
+
+    fieldMappings.forEach(mapping => {
+      if (mapping.value && mapping.value.toString().trim()) {
+        const fieldValue = {
+          userId: parseInt(userId),
+          userFieldId: this.getFieldIdByCode(mapping.fieldCode),
+          value: mapping.value.toString().trim()
+        };
+        
+        fieldValues.push(fieldValue);
+      }
+    });
+    return fieldValues;
+  }
+
+  /**
+   * Obtiene el ID del campo por código según la API de UserField
+   * @param fieldCode - Código del campo
+   * @returns ID del campo
+   */
+  private getFieldIdByCode(fieldCode: string): number {
+    const fieldIdMap: { [key: string]: number } = {
+      'first_name': 1,
+      'last_name': 2,
+      'phone': 3,
+      'birth_date': 4,
+      'national_id': 5,
+      'address': 6,
+      'city': 7,
+      'postal_code': 8,
+      'country': 9,
+      'notes': 10,
+      'image': 12
+    };
+    
+    return fieldIdMap[fieldCode] || 0;
+  }
+
+  /**
+   * Mapea los datos personales a formato de datos básicos para la API
+   * @param personalInfo - Datos personales del usuario
+   * @returns Datos formateados para la API
+   */
+  private mapToBasicUserData(personalInfo: PersonalInfo): any {
+    return {
+      cognitoId: personalInfo.id?.toString() || '',
+      name: personalInfo.nombre || '',
+      email: personalInfo.email || '',
+      lastName: personalInfo.apellido || '',
+      phone: personalInfo.telefono || '',
+      hasWebAccess: true,
+      hasMiddleAccess: false,
+      hasMiddleAtcAccess: false,
+      hasTourOperationAccess: false,
+      retailerId: 7
+    };
+  }
+
 
   /**
    * Formatea una fecha a formato YYYY-MM-DD
@@ -16,7 +209,6 @@ export class UpdateProfileV2Service {
   formatDate(dateInput: string | Date | undefined): string {
     if (!dateInput) return '';
     
-    // Handle Date objects
     if (dateInput instanceof Date) {
       const year = dateInput.getFullYear();
       const month = String(dateInput.getMonth() + 1).padStart(2, '0');
@@ -24,14 +216,12 @@ export class UpdateProfileV2Service {
       return `${year}-${month}-${day}`;
     }
     
-    // Handle strings in DD/MM/YYYY format
     if (typeof dateInput === 'string' && dateInput.includes('/')) {
       const [day, month, year] = dateInput.split('/');
       if (!day || !month || !year) return '';
       return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
     }
     
-    // Para otras cadenas de texto (como objetos Date convertidos a string)
     if (typeof dateInput === 'string') {
       try {
         const date = new Date(dateInput);
@@ -42,51 +232,20 @@ export class UpdateProfileV2Service {
           return `${year}-${month}-${day}`;
         }
       } catch (e) {
-        // Error parsing date - return empty string
+        return '';
       }
     }
     
-    // Return empty string for any other type
     return '';
   }
 
   /**
-   * Prepara los datos del formulario para enviar a la API
-   * @param personalInfo - Datos personales del usuario
-   * @param uploadedFiles - Archivos subidos
-   * @returns Objeto con los datos formateados para la API V2
+   * Maneja errores de las llamadas HTTP
+   * @param error - Error de la petición HTTP
+   * @returns Observable con error manejado
    */
-  prepareDataForAPI(personalInfo: PersonalInfo, uploadedFiles: any[]): any {
-    return {
-      // Datos personales
-      personalInfo: {
-        nombre: personalInfo.nombre,
-        apellido: personalInfo.apellido,
-        email: personalInfo.email,
-        telefono: personalInfo.telefono,
-        fechaNacimiento: personalInfo.fechaNacimiento,
-        nacionalidad: personalInfo.nacionalidad,
-        ciudad: personalInfo.ciudad,
-        codigoPostal: personalInfo.codigoPostal,
-        // Datos DNI
-        dni: personalInfo.dni,
-        fechaExpedicionDni: personalInfo.fechaExpedicionDni,
-        fechaCaducidadDni: personalInfo.fechaCaducidadDni,
-        // Datos Pasaporte
-        pasaporte: personalInfo.pasaporte,
-        fechaExpedicionPasaporte: personalInfo.fechaExpedicionPasaporte,
-        fechaVencimientoPasaporte: personalInfo.fechaVencimientoPasaporte,
-        paisExpedicion: personalInfo.paisExpedicion
-      },
-      // Archivos subidos
-      uploadedFiles: uploadedFiles.map(file => ({
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        // TODO: Agregar URL del archivo subido cuando se implemente el servicio de archivos
-        // url: file.url
-      }))
-    };
+  private handleError(error: any): Observable<never> {
+    return throwError(() => error);
   }
 
   /**
@@ -105,9 +264,6 @@ export class UpdateProfileV2Service {
     } else if (personalInfo.nombre.trim().length < 2) {
       errors['nombre'] = 'El nombre debe tener al menos 2 caracteres';
       isValid = false;
-    } else if (personalInfo.nombre.trim().length > 50) {
-      errors['nombre'] = 'El nombre no puede tener más de 50 caracteres';
-      isValid = false;
     } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(personalInfo.nombre.trim())) {
       errors['nombre'] = 'El nombre solo puede contener letras y espacios';
       isValid = false;
@@ -119,9 +275,6 @@ export class UpdateProfileV2Service {
       isValid = false;
     } else if (personalInfo.apellido.trim().length < 2) {
       errors['apellido'] = 'El apellido debe tener al menos 2 caracteres';
-      isValid = false;
-    } else if (personalInfo.apellido.trim().length > 50) {
-      errors['apellido'] = 'El apellido no puede tener más de 50 caracteres';
       isValid = false;
     } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(personalInfo.apellido.trim())) {
       errors['apellido'] = 'El apellido solo puede contener letras y espacios';
@@ -150,10 +303,7 @@ export class UpdateProfileV2Service {
     }
 
     // Validación de DNI
-    if (!personalInfo.dni?.trim()) {
-      errors['dni'] = 'El DNI es requerido';
-      isValid = false;
-    } else {
+    if (personalInfo.dni?.trim()) {
       const dniRegex = /^[0-9]{8}[TRWAGMYFPDXBNJZSQVHLCKE]$/i;
       if (!dniRegex.test(personalInfo.dni)) {
         errors['dni'] = 'El DNI debe tener 8 números seguidos de una letra válida';
@@ -161,14 +311,6 @@ export class UpdateProfileV2Service {
       }
     }
 
-    // Validación de pasaporte
-    if (personalInfo.pasaporte?.trim()) {
-      const passportRegex = /^[A-Z0-9]{6,10}$/;
-      if (!passportRegex.test(personalInfo.pasaporte)) {
-        errors['pasaporte'] = 'El pasaporte debe tener entre 6 y 10 caracteres alfanuméricos';
-        isValid = false;
-      }
-    }
 
     // Validación de código postal
     if (personalInfo.codigoPostal?.trim()) {
@@ -179,64 +321,26 @@ export class UpdateProfileV2Service {
       }
     }
 
-    // Validación de fecha de nacimiento
-    if (personalInfo.fechaNacimiento?.trim()) {
-      const birthDate = new Date(personalInfo.fechaNacimiento);
-      const today = new Date();
-      const age = today.getFullYear() - birthDate.getFullYear();
-      
-      if (isNaN(birthDate.getTime())) {
-        errors['fechaNacimiento'] = 'La fecha de nacimiento no es válida';
-        isValid = false;
-      } else if (age < 0 || age > 120) {
-        errors['fechaNacimiento'] = 'La edad debe estar entre 0 y 120 años';
-        isValid = false;
-      }
-    }
-
-    // Validación de fechas de DNI
-    if (personalInfo.fechaExpedicionDni && personalInfo.fechaCaducidadDni) {
-      const expedicionDni = new Date(personalInfo.fechaExpedicionDni);
-      const caducidadDni = new Date(personalInfo.fechaCaducidadDni);
-      
-      if (!isNaN(expedicionDni.getTime()) && !isNaN(caducidadDni.getTime())) {
-        if (expedicionDni >= caducidadDni) {
-          errors['fechaExpedicionDni'] = 'La fecha de expedición debe ser anterior a la de caducidad';
-          isValid = false;
-        }
-        
-        // Validar que la caducidad no sea muy antigua (más de 10 años)
-        const maxCaducidad = new Date();
-        maxCaducidad.setFullYear(maxCaducidad.getFullYear() + 10);
-        if (caducidadDni > maxCaducidad) {
-          errors['fechaCaducidadDni'] = 'La fecha de caducidad no puede ser más de 10 años en el futuro';
-          isValid = false;
-        }
-      }
-    }
-
-    // Validación de fechas de Pasaporte
-    if (personalInfo.fechaExpedicionPasaporte && personalInfo.fechaVencimientoPasaporte) {
-      const expedicionPasaporte = new Date(personalInfo.fechaExpedicionPasaporte);
-      const vencimientoPasaporte = new Date(personalInfo.fechaVencimientoPasaporte);
-      
-      if (!isNaN(expedicionPasaporte.getTime()) && !isNaN(vencimientoPasaporte.getTime())) {
-        if (expedicionPasaporte >= vencimientoPasaporte) {
-          errors['fechaExpedicionPasaporte'] = 'La fecha de expedición debe ser anterior a la de vencimiento';
-          isValid = false;
-        }
-        
-        // Validar que el vencimiento no sea muy lejano (más de 10 años)
-        const maxVencimiento = new Date();
-        maxVencimiento.setFullYear(maxVencimiento.getFullYear() + 10);
-        if (vencimientoPasaporte > maxVencimiento) {
-          errors['fechaVencimientoPasaporte'] = 'La fecha de vencimiento no puede ser más de 10 años en el futuro';
-          isValid = false;
-        }
-      }
-    }
-
     return { errors, isValid };
+  }
+
+  /**
+   * Valida un archivo de imagen
+   * @param file - Archivo a validar
+   * @param maxSize - Tamaño máximo en bytes
+   * @returns Objeto con resultado de validación
+   */
+  validateImageFile(file: File, maxSize: number = 5000000): { isValid: boolean, error?: string } {
+    if (file.size > maxSize) {
+      return { isValid: false, error: 'El archivo excede el tamaño máximo permitido' };
+    }
+
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      return { isValid: false, error: 'Solo se permiten archivos JPG, JPEG, PNG o WEBP' };
+    }
+
+    return { isValid: true };
   }
 
   /**
@@ -257,23 +361,6 @@ export class UpdateProfileV2Service {
     return value.toUpperCase().slice(0, 9);
   }
 
-  /**
-   * Valida y filtra el input de nacionalidad
-   * @param value - Valor del input
-   * @returns Valor filtrado
-   */
-  validateNacionalidadInput(value: string): string {
-    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').slice(0, 50);
-  }
-
-  /**
-   * Valida y filtra el input de pasaporte
-   * @param value - Valor del input
-   * @returns Valor filtrado
-   */
-  validatePasaporteInput(value: string): string {
-    return value.toUpperCase().slice(0, 10);
-  }
 
   /**
    * Valida y filtra el input de ciudad
@@ -293,14 +380,6 @@ export class UpdateProfileV2Service {
     return value.replace(/\D/g, '').slice(0, 5);
   }
 
-  /**
-   * Valida y filtra el input de país de expedición
-   * @param value - Valor del input
-   * @returns Valor filtrado
-   */
-  validatePaisExpedicionInput(value: string): string {
-    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').slice(0, 50);
-  }
 
   /**
    * Valida y filtra el input de nombre
@@ -321,23 +400,20 @@ export class UpdateProfileV2Service {
   }
 
   /**
-   * Valida un archivo de imagen
-   * @param file - Archivo a validar
-   * @param maxSize - Tamaño máximo en bytes
-   * @returns Objeto con resultado de validación
+   * Valida y filtra el input de dirección
+   * @param value - Valor del input
+   * @returns Valor filtrado
    */
-  validateImageFile(file: File, maxSize: number = 5000000): { isValid: boolean, error?: string } {
-    // Validar tamaño del archivo
-    if (file.size > maxSize) {
-      return { isValid: false, error: 'El archivo excede el tamaño máximo permitido' };
-    }
+  validateDireccionInput(value: string): string {
+    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s\-\.]/g, '').slice(0, 100);
+  }
 
-    // Validar tipo de archivo
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    if (!validTypes.includes(file.type)) {
-      return { isValid: false, error: 'Solo se permiten archivos JPG, JPEG, PNG o WEBP' };
-    }
-
-    return { isValid: true };
+  /**
+   * Valida y filtra el input de país
+   * @param value - Valor del input
+   * @returns Valor filtrado
+   */
+  validatePaisInput(value: string): string {
+    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').slice(0, 50);
   }
 }

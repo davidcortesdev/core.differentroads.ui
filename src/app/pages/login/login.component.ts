@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { LoginFormComponent } from './components/login-form/login-form.component';
 import { AuthenticateService } from '../../core/services/auth-service.service';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-login',
@@ -12,11 +13,13 @@ import { AuthenticateService } from '../../core/services/auth-service.service';
 })
 export class LoginComponent implements OnInit {
   constructor(
+    private titleService: Title,
     private authService: AuthenticateService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
+    this.titleService.setTitle('Iniciar Sesión - Different Roads');
     if (this.authService.getCurrentUser()) {
       this.router.navigate(['/home']);
     }

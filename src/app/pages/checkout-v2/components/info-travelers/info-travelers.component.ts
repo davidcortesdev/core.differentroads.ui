@@ -71,6 +71,11 @@ import {
   ReservationStatusService,
 } from '../../../../core/services/reservation/reservation-status.service';
 import { FlightSearchService, IBookingRequirements, IPassengerConditions } from '../../../../core/services/flight-search.service';
+import { AuthenticateService } from '../../../../core/services/auth-service.service';
+import { UsersNetService } from '../../../../core/services/usersNet.service';
+import { IUserResponse } from '../../../../core/models/users/user.model';
+import { PersonalInfo } from '../../../../core/models/v2/profile-v2.model';
+import { PersonalInfoV2Service } from '../../../../core/services/v2/personal-info-v2.service';
 
 @Component({
   selector: 'app-info-travelers',
@@ -102,6 +107,12 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
   // Estados de carga
   checkingReservationStatus: boolean = false;
+  
+  // Información del perfil del usuario autenticado
+  currentUserProfile: IUserResponse | null = null;
+  loadingUserProfile: boolean = false;
+  // Información personal en el mismo formato usado por personal-info-section-v2
+  currentPersonalInfo: PersonalInfo | null = null;
 
   departureReservationFields: IDepartureReservationFieldResponse[] = [];
   mandatoryTypes: IMandatoryTypeResponse[] = [];
@@ -231,6 +242,9 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     private reservationStatusService: ReservationStatusService,
     private reservationService: ReservationService,
     private flightSearchService: FlightSearchService,
+    private authenticateService: AuthenticateService,
+    private usersNetService: UsersNetService,
+    private personalInfoV2Service: PersonalInfoV2Service
   ) {
     this.travelersForm = this.fb.group({
       travelers: this.fb.array([]),
@@ -758,6 +772,11 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     setTimeout(() => {
       this.validateFormInRealTime();
     }, 50);
+
+    // Cargar información del perfil del usuario autenticado para el viajero líder
+    if (this.isUserAuthenticated()) {
+      this.loadCurrentUserProfile();
+    }
   }
 
   /**
@@ -2634,6 +2653,111 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         this.loadReservationStatuses();
       }
     });
+  }
+
+  /**
+   * Obtiene la información del perfil del usuario autenticado
+   */
+  private loadCurrentUserProfile(): void {
+    this.loadingUserProfile = true;
+    
+    // Obtener el email del usuario autenticado
+    this.authenticateService.getUserAttributes().subscribe({
+      next: (attributes) => {
+        // Generar datos en el mismo flujo que personal-info-section-v2
+        const seedId: string = attributes?.sub || attributes?.email || 'user-000';
+        this.currentPersonalInfo = this.personalInfoV2Service.generateMockData(seedId);
+        // Mantener compatibilidad si se requiere usar UsersNetService para email/teléfono reales
+        if (attributes?.email) {
+          this.currentPersonalInfo.email = attributes.email;
+        }
+        this.populateLeadTravelerWithProfile();
+        this.loadingUserProfile = false;
+      },
+      error: (error) => {
+        console.error('Error al obtener atributos del usuario:', error);
+        this.loadingUserProfile = false;
+      }
+    });
+  }
+
+  /**
+   * Rellena los campos del viajero líder con la información del perfil del usuario
+   */
+  private populateLeadTravelerWithProfile(): void {
+    if (!this.currentUserProfile || !this.travelers || this.travelers.length === 0) {
+      return;
+    }
+
+    // Buscar el viajero líder
+    const leadTraveler = this.travelers.find(traveler => traveler.isLeadTraveler);
+    if (!leadTraveler) {
+      return;
+    }
+
+    // Obtener el formulario del viajero líder
+    const leadTravelerIndex = this.travelers.findIndex(traveler => traveler.isLeadTraveler);
+    const leadTravelerForm = this.getTravelerForm(leadTravelerIndex);
+    
+    if (!leadTravelerForm) {
+      return;
+    }
+    // Rellenar campos del líder basados en los códigos de los ReservationFields
+    // Sin sobrescribir valores ya introducidos por el usuario
+    this.departureReservationFields.forEach((field) => {
+      const fieldDetails = this.getReservationFieldDetails(field.reservationFieldId);
+      if (!fieldDetails) return;
+
+      const codeLower = (fieldDetails.code || '').toLowerCase();
+      const controlName = `${fieldDetails.code}_${leadTraveler.id}`;
+      const control = leadTravelerForm.get(controlName) as FormControl | null;
+      if (!control) return;
+
+      // No sobrescribir si ya tiene valor
+      const currentVal = control ? control.value : null;
+      const hasValue = currentVal !== null && currentVal !== undefined && String(currentVal).trim() !== '';
+      if (hasValue) return;
+
+      // Email
+      const emailFromProfile = this.currentPersonalInfo?.email || this.currentUserProfile?.email;
+      if (codeLower.includes('email') && emailFromProfile) {
+        control.setValue(emailFromProfile);
+        return;
+      }
+
+      // Teléfono (phone)
+      const phoneFromProfile = this.currentPersonalInfo?.telefono || this.currentUserProfile?.phone;
+      if ((codeLower.includes('phone') || codeLower.includes('tel') || codeLower.includes('telefono')) && phoneFromProfile) {
+        control.setValue(phoneFromProfile);
+        return;
+      }
+
+      // Nombre (first name)
+      const isFirstName = (codeLower.includes('first') && codeLower.includes('name')) || codeLower === 'firstname' || codeLower === 'first_name' || codeLower === 'name' || codeLower.includes('nombre');
+      const firstNameFromProfile = this.currentPersonalInfo?.nombre || this.currentUserProfile?.name;
+      if (isFirstName && firstNameFromProfile) {
+        control.setValue(firstNameFromProfile);
+        return;
+      }
+
+      // Apellido (last name / surname)
+      const isLastName = (codeLower.includes('last') && codeLower.includes('name')) || codeLower === 'lastname' || codeLower === 'last_name' || codeLower.includes('surname') || codeLower.includes('apellido');
+      const lastNameFromProfile = this.currentPersonalInfo?.apellido || this.currentUserProfile?.lastName;
+      if (isLastName && lastNameFromProfile) {
+        control.setValue(lastNameFromProfile);
+        return;
+      }
+    });
+
+    // Marcar el formulario como tocado para activar las validaciones
+    leadTravelerForm.markAsTouched();
+  }
+
+  /**
+   * Verifica si el usuario está autenticado
+   */
+  private isUserAuthenticated(): boolean {
+    return this.authenticateService.getCurrentUser();
   }
 
 

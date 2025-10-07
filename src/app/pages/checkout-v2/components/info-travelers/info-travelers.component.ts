@@ -380,16 +380,24 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         field.reservationFieldId
       );
       if (fieldDetails) {
-        const existingValue = this.getExistingFieldValue(
-          traveler.id,
-          fieldDetails.id
-        );
+        // Para el viajero líder, SIEMPRE usar datos del usuario autenticado
+        let controlValue: any = null;
+        
+        if (traveler.isLeadTraveler && this.currentPersonalInfo) {
+          // Para el viajero líder, usar datos del usuario autenticado
+          controlValue = this.getUserDataForField(fieldDetails);
+          if (controlValue) {
+            console.log(`✅ Campo "${fieldDetails.name}" precargado con: "${controlValue}"`);
+          }
+        } else {
+          // Para otros viajeros, usar datos existentes
+          controlValue = this.getExistingFieldValue(traveler.id, fieldDetails.id);
+        }
 
         // Para campos de fecha, convertir string a Date si es necesario
-        let controlValue: any = existingValue;
-        if (fieldDetails.fieldType === 'date' && existingValue) {
+        if (fieldDetails.fieldType === 'date' && controlValue) {
           // Si el valor está en formato dd/mm/yyyy, convertirlo a Date
-          const parsedDate = this.parseDateFromDDMMYYYY(existingValue);
+          const parsedDate = this.parseDateFromDDMMYYYY(controlValue);
           if (parsedDate) {
             controlValue = parsedDate;
           }
@@ -2715,6 +2723,57 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
     // Marcar el formulario como tocado para activar las validaciones
     leadTravelerForm.markAsTouched();
+  }
+
+  /**
+   * Obtiene el valor del usuario autenticado para un campo específico
+   */
+  private getUserDataForField(fieldDetails: IReservationFieldResponse): string | null {
+    const userData = this.currentPersonalInfo;
+    if (!userData) return null;
+
+    const codeLower = (fieldDetails.code || '').toLowerCase();
+    console.log(`🔍 Mapeando campo "${fieldDetails.name}" (${codeLower}) para el viajero líder`);
+
+    // Mapeo por código de campo
+    switch (codeLower) {
+      case 'email':
+        return userData.email || null;
+      case 'phone':
+      case 'telefono':
+        return userData.telefono || null;
+      case 'firstname':
+      case 'first_name':
+      case 'name':
+      case 'nombre':
+        return userData.nombre || null;
+      case 'lastname':
+      case 'last_name':
+      case 'surname':
+      case 'apellido':
+        return userData.apellido || null;
+      case 'birthdate':
+      case 'fecha_nacimiento':
+        return userData.fechaNacimiento || null;
+      case 'dni':
+      case 'national_id':
+        return userData.dni || null;
+      case 'country':
+      case 'pais':
+        return userData.pais || null;
+      case 'city':
+      case 'ciudad':
+        return userData.ciudad || null;
+      case 'postal_code':
+      case 'codigo_postal':
+        return userData.codigoPostal || null;
+      case 'address':
+      case 'direccion':
+        return userData.direccion || null;
+      default:
+        console.log(`⚠️ Campo "${fieldDetails.name}" (${codeLower}) no tiene mapeo definido`);
+        return null;
+    }
   }
 
   /**

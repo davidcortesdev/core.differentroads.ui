@@ -71,11 +71,9 @@ import {
   ReservationStatusService,
 } from '../../../../core/services/reservation/reservation-status.service';
 import { FlightSearchService, IBookingRequirements, IPassengerConditions } from '../../../../core/services/flight-search.service';
-import { AuthenticateService } from '../../../../core/services/auth-service.service';
-import { UsersNetService } from '../../../../core/services/usersNet.service';
 import { IUserResponse } from '../../../../core/models/users/user.model';
 import { PersonalInfo } from '../../../../core/models/v2/profile-v2.model';
-import { PersonalInfoV2Service } from '../../../../core/services/v2/personal-info-v2.service';
+import { CheckoutUserDataService } from '../../../../core/services/v2/checkout-user-data.service';
 
 @Component({
   selector: 'app-info-travelers',
@@ -242,9 +240,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     private reservationStatusService: ReservationStatusService,
     private reservationService: ReservationService,
     private flightSearchService: FlightSearchService,
-    private authenticateService: AuthenticateService,
-    private usersNetService: UsersNetService,
-    private personalInfoV2Service: PersonalInfoV2Service
+
+    private checkoutUserDataService: CheckoutUserDataService
   ) {
     this.travelersForm = this.fb.group({
       travelers: this.fb.array([]),
@@ -2661,21 +2658,14 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   private loadCurrentUserProfile(): void {
     this.loadingUserProfile = true;
     
-    // Obtener el email del usuario autenticado
-    this.authenticateService.getUserAttributes().subscribe({
-      next: (attributes) => {
-        // Generar datos en el mismo flujo que personal-info-section-v2
-        const seedId: string = attributes?.sub || attributes?.email || 'user-000';
-        this.currentPersonalInfo = this.personalInfoV2Service.generateMockData(seedId);
-        // Mantener compatibilidad si se requiere usar UsersNetService para email/teléfono reales
-        if (attributes?.email) {
-          this.currentPersonalInfo.email = attributes.email;
-        }
+    this.checkoutUserDataService.getCurrentUserData().subscribe({
+      next: (userData) => {
+        this.currentPersonalInfo = userData;
         this.populateLeadTravelerWithProfile();
         this.loadingUserProfile = false;
       },
       error: (error) => {
-        console.error('Error al obtener atributos del usuario:', error);
+        console.error('Error al obtener datos del usuario:', error);
         this.loadingUserProfile = false;
       }
     });
@@ -2685,7 +2675,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
    * Rellena los campos del viajero líder con la información del perfil del usuario
    */
   private populateLeadTravelerWithProfile(): void {
-    if (!this.currentUserProfile || !this.travelers || this.travelers.length === 0) {
+    if (!this.currentPersonalInfo || !this.travelers || this.travelers.length === 0) {
       return;
     }
 
@@ -2702,6 +2692,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     if (!leadTravelerForm) {
       return;
     }
+
     // Rellenar campos del líder basados en los códigos de los ReservationFields
     // Sin sobrescribir valores ya introducidos por el usuario
     this.departureReservationFields.forEach((field) => {
@@ -2714,39 +2705,12 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       if (!control) return;
 
       // No sobrescribir si ya tiene valor
-      const currentVal = control ? control.value : null;
+      const currentVal = control.value;
       const hasValue = currentVal !== null && currentVal !== undefined && String(currentVal).trim() !== '';
       if (hasValue) return;
 
-      // Email
-      const emailFromProfile = this.currentPersonalInfo?.email || this.currentUserProfile?.email;
-      if (codeLower.includes('email') && emailFromProfile) {
-        control.setValue(emailFromProfile);
-        return;
-      }
-
-      // Teléfono (phone)
-      const phoneFromProfile = this.currentPersonalInfo?.telefono || this.currentUserProfile?.phone;
-      if ((codeLower.includes('phone') || codeLower.includes('tel') || codeLower.includes('telefono')) && phoneFromProfile) {
-        control.setValue(phoneFromProfile);
-        return;
-      }
-
-      // Nombre (first name)
-      const isFirstName = (codeLower.includes('first') && codeLower.includes('name')) || codeLower === 'firstname' || codeLower === 'first_name' || codeLower === 'name' || codeLower.includes('nombre');
-      const firstNameFromProfile = this.currentPersonalInfo?.nombre || this.currentUserProfile?.name;
-      if (isFirstName && firstNameFromProfile) {
-        control.setValue(firstNameFromProfile);
-        return;
-      }
-
-      // Apellido (last name / surname)
-      const isLastName = (codeLower.includes('last') && codeLower.includes('name')) || codeLower === 'lastname' || codeLower === 'last_name' || codeLower.includes('surname') || codeLower.includes('apellido');
-      const lastNameFromProfile = this.currentPersonalInfo?.apellido || this.currentUserProfile?.lastName;
-      if (isLastName && lastNameFromProfile) {
-        control.setValue(lastNameFromProfile);
-        return;
-      }
+      // Mapear campos del usuario a los campos del formulario
+      this.mapUserDataToFormField(control, codeLower, fieldDetails.fieldType);
     });
 
     // Marcar el formulario como tocado para activar las validaciones
@@ -2754,11 +2718,81 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
+   * Mapea los datos del usuario a un campo específico del formulario
+   */
+  private mapUserDataToFormField(control: FormControl, fieldCode: string, fieldType: string): void {
+    const userData = this.currentPersonalInfo;
+    if (!userData) return;
+
+    let valueToSet: any = null;
+
+    // Mapeo por código de campo
+    switch (fieldCode) {
+      case 'email':
+        valueToSet = userData.email;
+        break;
+      case 'phone':
+      case 'telefono':
+        valueToSet = userData.telefono;
+        break;
+      case 'firstname':
+      case 'first_name':
+      case 'name':
+      case 'nombre':
+        valueToSet = userData.nombre;
+        break;
+      case 'lastname':
+      case 'last_name':
+      case 'surname':
+      case 'apellido':
+        valueToSet = userData.apellido;
+        break;
+      case 'birthdate':
+      case 'fecha_nacimiento':
+        valueToSet = userData.fechaNacimiento;
+        break;
+      case 'dni':
+      case 'national_id':
+        valueToSet = userData.dni;
+        break;
+      case 'country':
+      case 'pais':
+        valueToSet = userData.pais;
+        break;
+      case 'city':
+      case 'ciudad':
+        valueToSet = userData.ciudad;
+        break;
+      case 'postal_code':
+      case 'codigo_postal':
+        valueToSet = userData.codigoPostal;
+        break;
+      case 'address':
+      case 'direccion':
+        valueToSet = userData.direccion;
+        break;
+    }
+
+    // Si encontramos un valor, establecerlo en el control
+    if (valueToSet && valueToSet.trim() !== '') {
+      // Para campos de fecha, convertir string a Date si es necesario
+      if (fieldType === 'date' && typeof valueToSet === 'string' && valueToSet.includes('/')) {
+        const parsedDate = this.parseDateFromDDMMYYYY(valueToSet);
+        if (parsedDate) {
+          control.setValue(parsedDate);
+        } else {
+          control.setValue(valueToSet);
+        }
+      } else {
+        control.setValue(valueToSet);
+      }
+    }
+  }
+
+  /**
    * Verifica si el usuario está autenticado
    */
   private isUserAuthenticated(): boolean {
-    return this.authenticateService.getCurrentUser();
+    return this.checkoutUserDataService.isUserAuthenticated();
   }
-
-
 }

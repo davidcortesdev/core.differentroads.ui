@@ -1,14 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TourNetService, Tour } from '../../core/services/tourNet.service';
 import { catchError, of } from 'rxjs';
-import { ItineraryService } from '../../core/services/itinerary/itinerary.service';
 import { SelectedDepartureEvent } from './components/tour-itinerary-v2/components/selector-itinerary/selector-itinerary.component';
 import { ActivityHighlight } from '../../shared/components/activity-card/activity-card.component';
 import { AnalyticsService } from '../../core/services/analytics.service';
 import { AuthenticateService } from '../../core/services/auth-service.service';
-import { UsersNetService } from '../../core/services/usersNet.service';
 import { Title } from '@angular/platform-browser';
 
 // ✅ INTERFACES para tipado fuerte
@@ -114,10 +111,8 @@ export class TourV2Component implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private tourNetService: TourNetService,
-    private ItineraryService: ItineraryService,
     private analyticsService: AnalyticsService,
     private authService: AuthenticateService,
-    private usersNetService: UsersNetService
   ) {}
 
   ngOnInit(): void {

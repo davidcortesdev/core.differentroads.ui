@@ -3,12 +3,18 @@
   <p-dataView #dv [value]="tours" [layout]="'grid'">
     <ng-template let-tours #grid>
       <div class="grid">
-        <div
-          *ngFor="let tour of tours"
-          class="col-12 sm:col-6 lg:col-3"
-        >
-          <app-tour-card-v2 [tourData]="tour" [showScalapayPrice]="false"></app-tour-card-v2>
-        </div>
+                <div
+                  *ngFor="let tour of tours; let i = index"
+                  class="col-12 sm:col-6 lg:col-3"
+                >
+                  <app-tour-card-v2 
+                    [tourData]="tour" 
+                    [showScalapayPrice]="false"
+                    [itemListId]="title || 'home_grid'"
+                    [itemListName]="title || 'Grid de tours'"
+                    [index]="i"
+                  ></app-tour-card-v2>
+                </div>
       </div>
     </ng-template>
   </p-dataView>

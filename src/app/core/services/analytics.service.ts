@@ -595,6 +595,54 @@ export class AnalyticsService {
     }
     return `${countryCode}${phone}`;
   }
+
+  /**
+   * Convertir string listId a ID numérico para GA4
+   */
+  getNumericListId(listId: string): string {
+    const listIdMap: { [key: string]: string } = {
+      'checkout': '1000',
+      'saved_budgets': '1001',
+      'tour_detail': '2000',
+      'todos_los_tours': '2001',
+      'ofertas': '2002',
+      'home_featured': '3000',
+      'home_recommended': '3001',
+      'home_carousel': '3002',
+      'home_grid': '3003',
+      'search_results': '4000',
+      'filtered_results': '4001'
+    };
+    
+    if (listIdMap[listId]) {
+      return listIdMap[listId];
+    }
+    
+    if (listId.startsWith('destination_')) {
+      const destinationName = listId.replace('destination_', '');
+      return (5000 + Math.abs(this.simpleHash(destinationName) % 1000)).toString();
+    }
+    
+    if (listId.startsWith('tags_')) {
+      const tagName = listId.replace('tags_', '');
+      return (6000 + Math.abs(this.simpleHash(tagName) % 1000)).toString();
+    }
+    
+    return (7000 + Math.abs(this.simpleHash(listId) % 1000)).toString();
+  }
+
+  /**
+   * Hash simple para generar IDs numéricos
+   */
+  private simpleHash(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return hash;
+  }
 }
 
 

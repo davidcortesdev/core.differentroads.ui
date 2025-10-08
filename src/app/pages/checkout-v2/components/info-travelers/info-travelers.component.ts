@@ -8,8 +8,8 @@ import {
   OnChanges,
   SimpleChanges,
 } from '@angular/core';
-import { Subject, forkJoin } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Subject, forkJoin, of } from 'rxjs';
+import { takeUntil, catchError, switchMap } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
 import {
   DepartureReservationFieldService,
@@ -386,9 +386,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         if (traveler.isLeadTraveler && this.currentPersonalInfo) {
           // Para el viajero líder, usar datos del usuario autenticado
           controlValue = this.getUserDataForField(fieldDetails);
-          if (controlValue) {
-            console.log(`✅ Campo "${fieldDetails.name}" precargado con: "${controlValue}"`);
-          }
         } else {
           // Para otros viajeros, usar datos existentes
           controlValue = this.getExistingFieldValue(traveler.id, fieldDetails.id);
@@ -396,8 +393,17 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
         // Para campos de fecha, convertir string a Date si es necesario
         if (fieldDetails.fieldType === 'date' && controlValue) {
-          // Si el valor está en formato dd/mm/yyyy, convertirlo a Date
-          const parsedDate = this.parseDateFromDDMMYYYY(controlValue);
+          let parsedDate: Date | null = null;
+          
+          // Intentar parsear como fecha ISO primero (YYYY-MM-DD)
+          if (typeof controlValue === 'string' && controlValue.includes('-')) {
+            parsedDate = this.parseDateFromISO(controlValue);
+          }
+          // Si no es ISO, intentar parsear como dd/mm/yyyy
+          else if (typeof controlValue === 'string' && controlValue.includes('/')) {
+            parsedDate = this.parseDateFromDDMMYYYY(controlValue);
+          }
+          
           if (parsedDate) {
             controlValue = parsedDate;
           }
@@ -777,11 +783,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     setTimeout(() => {
       this.validateFormInRealTime();
     }, 50);
-
-    // Cargar información del perfil del usuario autenticado para el viajero líder
-    if (this.isUserAuthenticated()) {
-      this.loadCurrentUserProfile();
-    }
   }
 
   /**
@@ -795,17 +796,33 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     this.loading = true;
     this.error = null;
 
-    forkJoin({
-      departureFields: this.departureReservationFieldService.getByDeparture(
-        this.departureId
-      ),
-      mandatoryTypes: this.mandatoryTypeService.getAll(),
-      reservationFields: this.reservationFieldService.getAllOrdered(),
-      travelers: this.reservationTravelerService.getByReservationOrdered(
-        this.reservationId
-      ),
-      ageGroups: this.ageGroupService.getAllOrdered(),
-    })
+    // Cargar datos del usuario autenticado primero si está disponible
+    const userDataObservable = this.isUserAuthenticated() 
+      ? this.checkoutUserDataService.getCurrentUserData().pipe(
+          catchError((error) => {
+            console.warn('No se pudieron cargar los datos del usuario:', error);
+            return of(null);
+          })
+        )
+      : of(null);
+
+    userDataObservable.pipe(
+      switchMap((userData) => {
+        this.currentPersonalInfo = userData;
+        
+        return forkJoin({
+          departureFields: this.departureReservationFieldService.getByDeparture(
+            this.departureId!
+          ),
+          mandatoryTypes: this.mandatoryTypeService.getAll(),
+          reservationFields: this.reservationFieldService.getAllOrdered(),
+          travelers: this.reservationTravelerService.getByReservationOrdered(
+            this.reservationId!
+          ),
+          ageGroups: this.ageGroupService.getAllOrdered(),
+        });
+      })
+    )
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: ({
@@ -2001,6 +2018,25 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
+   * Parsear string ISO (YYYY-MM-DD) a Date
+   */
+  private parseDateFromISO(dateString: string): Date | null {
+    if (!dateString || typeof dateString !== 'string') {
+      return null;
+    }
+
+    // Intentar parsear como fecha ISO
+    const date = new Date(dateString);
+    
+    // Verificar que la fecha es válida
+    if (isNaN(date.getTime())) {
+      return null;
+    }
+
+    return date;
+  }
+
+  /**
    * Manejar cambio en campo de fecha
    */
   onDateFieldChange(travelerId: number, fieldCode: string, value: any): void {
@@ -2730,10 +2766,11 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
    */
   private getUserDataForField(fieldDetails: IReservationFieldResponse): string | null {
     const userData = this.currentPersonalInfo;
-    if (!userData) return null;
+    if (!userData) {
+      return null;
+    }
 
     const codeLower = (fieldDetails.code || '').toLowerCase();
-    console.log(`🔍 Mapeando campo "${fieldDetails.name}" (${codeLower}) para el viajero líder`);
 
     // Mapeo por código de campo
     switch (codeLower) {
@@ -2771,7 +2808,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       case 'direccion':
         return userData.direccion || null;
       default:
-        console.log(`⚠️ Campo "${fieldDetails.name}" (${codeLower}) no tiene mapeo definido`);
         return null;
     }
   }
@@ -2781,7 +2817,9 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
    */
   private mapUserDataToFormField(control: FormControl, fieldCode: string, fieldType: string): void {
     const userData = this.currentPersonalInfo;
-    if (!userData) return;
+    if (!userData) {
+      return;
+    }
 
     let valueToSet: any = null;
 
@@ -2835,8 +2873,18 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     // Si encontramos un valor, establecerlo en el control
     if (valueToSet && valueToSet.trim() !== '') {
       // Para campos de fecha, convertir string a Date si es necesario
-      if (fieldType === 'date' && typeof valueToSet === 'string' && valueToSet.includes('/')) {
-        const parsedDate = this.parseDateFromDDMMYYYY(valueToSet);
+      if (fieldType === 'date' && typeof valueToSet === 'string') {
+        let parsedDate: Date | null = null;
+        
+        // Intentar parsear como fecha ISO primero (YYYY-MM-DD)
+        if (valueToSet.includes('-')) {
+          parsedDate = this.parseDateFromISO(valueToSet);
+        }
+        // Si no es ISO, intentar parsear como dd/mm/yyyy
+        else if (valueToSet.includes('/')) {
+          parsedDate = this.parseDateFromDDMMYYYY(valueToSet);
+        }
+        
         if (parsedDate) {
           control.setValue(parsedDate);
         } else {

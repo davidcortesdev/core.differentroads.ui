@@ -90,7 +90,6 @@ export class TourV2Component implements OnInit {
 
   selectedActivityPackId: number | null = null; // ✅ AGREGAR
   onActivityPackIdUpdate(activityPackId: number | null): void {
-    console.log('📦 ActivityPackId recibido en padre:', activityPackId);
     this.selectedActivityPackId = activityPackId;
   }
 
@@ -129,9 +128,6 @@ export class TourV2Component implements OnInit {
       // Detectar si estamos en modo preview basándonos en la URL
       const currentUrl = this.router.url;
       const isPreview = currentUrl.includes('/preview');
-      
-      console.log('URL actual:', currentUrl);
-      console.log('¿Es preview?', isPreview);
       
       if (slug) {
         this.tourSlug = slug;
@@ -280,20 +276,24 @@ export class TourV2Component implements OnInit {
    */
   private trackViewItem(tour: Tour): void {
     const tourData = tour as any;
-    const numericListId = '1234567';
+    
+    // Obtener contexto de navegación desde query parameters
+    const queryParams = this.route.snapshot.queryParams;
+    const itemListId = queryParams['listId'] || '';
+    const itemListName = queryParams['listName'] || '';
     
     this.analyticsService.getCurrentUserData().subscribe((userData: any) => {
-      this.fireViewItemEvent(numericListId, tourData, tour, userData);
+      this.fireViewItemEvent(itemListId, itemListName, tourData, tour, userData);
     });
   }
 
   /**
    * Disparar el evento view_item con los datos proporcionados
    */
-  private fireViewItemEvent(numericListId: string, tourData: any, tour: Tour, userData: any): void {
+  private fireViewItemEvent(itemListId: string, itemListName: string, tourData: any, tour: Tour, userData: any): void {
     this.analyticsService.viewItem(
-      numericListId,
-      'Planea tu viaje de este verano',
+      itemListId,
+      itemListName,
       {
         item_id: tourData.tkId?.toString() || tour.id?.toString() || '',
         item_name: tour.name || '',
@@ -306,8 +306,8 @@ export class TourV2Component implements OnInit {
         item_category3: tourData.marketingSection?.marketingSeasonTag || 'Clasico',
         item_category4: tourData.monthTags?.join(', ') || '',
         item_category5: tourData.tourType === 'FIT' ? 'Privados' : 'Grupos',
-        item_list_id: numericListId,
-        item_list_name: 'Planea tu viaje de este verano',
+        item_list_id: itemListId,
+        item_list_name: itemListName,
         item_variant: '',
         price: tourData.basePrice || 0,
         quantity: 1,
@@ -322,21 +322,17 @@ export class TourV2Component implements OnInit {
    * Obtener datos del usuario actual si está logueado
    */
   private getUserData() {
-    console.log('🔍 getUserData - Usuario autenticado:', this.authService.isAuthenticatedValue());
     if (this.authService.isAuthenticatedValue()) {
       const email = this.authService.getUserEmailValue();
       const cognitoId = this.authService.getCognitoIdValue();
-      console.log('🔍 getUserData - Email:', email, 'CognitoId:', cognitoId);
       
       const userData = this.analyticsService.getUserData(
         email,
         undefined,
         cognitoId
       );
-      console.log('🔍 getUserData - Datos retornados:', userData);
       return userData;
     }
-    console.log('🔍 getUserData - Usuario no autenticado, retornando undefined');
     return undefined;
   }
 }

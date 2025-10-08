@@ -44,7 +44,7 @@ import {
 } from '../../../../core/services/reservation/reservation-traveler-activity-pack.service';
 import { Subscription, forkJoin, of, Observable } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { ActivityHighlight } from '../../../../shared/components/activity-card/activity-card.component';
 import { environment } from '../../../../../environments/environment';
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
@@ -147,6 +147,7 @@ export class TourHeaderV2Component
     private el: ElementRef,
     private renderer: Renderer2,
     private router: Router,
+    private route: ActivatedRoute,
     private authService: AuthenticateService,
     private usersNetService: UsersNetService,
     private analyticsService: AnalyticsService
@@ -161,13 +162,6 @@ export class TourHeaderV2Component
   ngOnChanges(changes: SimpleChanges) {
     if (changes['tourId'] && changes['tourId'].currentValue) {
       this.loadTourData(changes['tourId'].currentValue);
-    }
-    if (changes['selectedActivityPackId']) {
-      console.log('🎯 ===== ACTIVITY PACK ID RECIBIDO EN TOUR HEADER =====');
-      console.log(
-        '📦 NUEVO ID:',
-        changes['selectedActivityPackId'].currentValue
-      );
     }
   }
 
@@ -555,13 +549,7 @@ export class TourHeaderV2Component
             const exists = existingActivities.some(
               (existing) => existing.activityId === parseInt(activity.id)
             );
-            if (exists) {
-              console.log('⚠️ Booking - Actividad ya existe para el viajero:', {
-                travelerId,
-                activityId: activity.id,
-                activityTitle: activity.title,
-              });
-            }
+
             return exists;
           }),
           catchError((error) => {
@@ -578,13 +566,7 @@ export class TourHeaderV2Component
             const exists = existingPacks.some(
               (existing) => existing.activityPackId === parseInt(activity.id)
             );
-            if (exists) {
-              console.log('⚠️ Booking - Paquete ya existe para el viajero:', {
-                travelerId,
-                activityPackId: activity.id,
-                activityTitle: activity.title,
-              });
-            }
+
             return exists;
           }),
           catchError((error) => {
@@ -635,11 +617,7 @@ export class TourHeaderV2Component
     return this.checkExistingActivity(travelerId, activity).pipe(
       switchMap((exists) => {
         if (exists) {
-          console.log('⚠️ Booking - Omitiendo actividad duplicada:', {
-            travelerId,
-            activityId: activity.id,
-            activityTitle: activity.title,
-          });
+
           return of({
             success: true,
             activity: activity,
@@ -657,15 +635,7 @@ export class TourHeaderV2Component
           .create(travelerActivityData)
           .pipe(
             map((result) => {
-              console.log(
-                '✅ Booking - Actividad individual creada exitosamente:',
-                {
-                  travelerId,
-                  activityId: activity.id,
-                  activityTitle: activity.title,
-                  result,
-                }
-              );
+
               return {
                 success: true,
                 activity: activity,
@@ -673,15 +643,7 @@ export class TourHeaderV2Component
               };
             }),
             catchError((error) => {
-              console.error(
-                '❌ Booking - Error creando actividad individual:',
-                {
-                  travelerId,
-                  activityId: activity.id,
-                  activityTitle: activity.title,
-                  error: error,
-                }
-              );
+
 
               return of({
                 success: false,
@@ -732,11 +694,7 @@ export class TourHeaderV2Component
     return this.checkExistingActivity(travelerId, activity).pipe(
       switchMap((exists) => {
         if (exists) {
-          console.log('⚠️ Booking - Omitiendo paquete duplicado:', {
-            travelerId,
-            activityPackId: activity.id,
-            activityTitle: activity.title,
-          });
+
           return of({
             success: true,
             activity: activity,
@@ -755,15 +713,7 @@ export class TourHeaderV2Component
           .create(travelerActivityPackData)
           .pipe(
             map((result) => {
-              console.log(
-                '✅ Booking - Paquete de actividades creado exitosamente:',
-                {
-                  travelerId,
-                  activityPackId: activity.id,
-                  activityTitle: activity.title,
-                  result,
-                }
-              );
+
               return {
                 success: true,
                 activity: activity,
@@ -832,10 +782,6 @@ export class TourHeaderV2Component
         isFromDeparture: true,
       });
 
-      console.log('🎯 Agregando paquete automático del departure:', {
-        activityPackId: departureActivityPackId,
-        isFromDeparture: true,
-      });
     }
 
     if (allActivitiesToProcess.length === 0) {
@@ -870,24 +816,6 @@ export class TourHeaderV2Component
         const successful = results.filter((r) => r.success).length;
         const failed = results.filter((r) => !r.success).length;
 
-        // ✅ LOGGING MEJORADO para debugging
-        console.log('🎯 Resultados de creación de actividades/paquetes:', {
-          total: results.length,
-          successful,
-          failed,
-          departurePackId: departureActivityPackId,
-          manualActivities: addedActivities.length,
-          details: results.map((r) => ({
-            type: r.activity.type,
-            id: r.activity.id,
-            title: r.activity.title,
-            success: r.success,
-            error: r.error,
-            isFromDeparture: allActivitiesToProcess.find(
-              (p) => p.activity.id === r.activity.id
-            )?.isFromDeparture,
-          })),
-        });
 
         return { successful, failed, details: results };
       }),
@@ -899,6 +827,9 @@ export class TourHeaderV2Component
   }
 
   onBookingClick(): void {
+    // Disparar evento add_to_cart incluso si no hay fecha seleccionada
+    this.trackAddToCart();
+
     if (!this.selectedDeparture || !this.selectedDeparture.id) {
       alert('Por favor, selecciona una fecha de salida antes de continuar.');
       return;
@@ -915,32 +846,10 @@ export class TourHeaderV2Component
       (this.selectedActivityPackId && this.selectedActivityPackId > 0)
     ) {
       const activitySummary = this.getActivitySummary();
-      console.log(
-        '🎯 Resumen de actividades antes de reservar:',
-        activitySummary
-      );
 
-      // ✅ LOG ADICIONAL para mostrar qué se va a procesar
-      console.log('📋 Detalle de elementos a procesar:', {
-        manualActivities: this.addedActivities.map((a) => ({
-          id: a.id,
-          title: a.title,
-          type: a.type,
-          price: a.price,
-        })),
-        departurePack: this.selectedActivityPackId
-          ? {
-              id: this.selectedActivityPackId,
-              title: 'Paquete automático del departure',
-              type: 'pack',
-              price: 0,
-            }
-          : null,
-        totalElements:
-          activitySummary.totalActivities + activitySummary.totalPacks,
-      });
     }
 
+    // Dispara evento add_to_cart
     this.isCreatingReservation = true;
 
     // Obtener el ID del usuario logueado
@@ -971,6 +880,52 @@ export class TourHeaderV2Component
         console.error('Error obteniendo Cognito ID:', error);
         this.createReservation(null); // Usar null en caso de error
       },
+    });
+  }
+
+  /**
+   * Disparar evento add_to_cart cuando el usuario hace clic en "Reservar mi tour"
+   */
+  private trackAddToCart(): void {
+    if (!this.tour) return;
+
+    const tourData = this.tour as any;
+    
+    // Obtener contexto de navegación desde query parameters
+    const queryParams = this.route.snapshot.queryParams;
+    const itemListId = queryParams['listId'] || ''; // Default para página de detalle
+    const itemListName = queryParams['listName'] || ''; // Default para página de detalle
+
+    this.analyticsService.getCurrentUserData().subscribe(userData => {
+      this.analyticsService.addToCart(
+        'EUR',
+        this.selectedDeparture?.price || tourData.basePrice || tourData.minPrice || 0,
+        {
+          item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+          item_name: tourData.name || '',
+          coupon: '',
+          discount: 0,
+          index: 1,
+          item_brand: 'Different Roads',
+          item_category: tourData.destination?.continent || '',
+          item_category2: tourData.destination?.country || '',
+          item_category3: tourData.marketingSection?.marketingSeasonTag || 'Clasico',
+          item_category4: tourData.monthTags?.join(', ') || '',
+          item_category5: tourData.tourType === 'FIT' ? 'Privados' : 'Grupos',
+          item_list_id: itemListId,
+          item_list_name: itemListName,
+          item_variant: `${tourData.tkId || tourData.id} - ${this.selectedDeparture?.city || 'Sin fecha seleccionada'}`,
+          price: this.selectedDeparture?.price || tourData.basePrice || tourData.minPrice || 0,
+          quantity: 1,
+          puntuacion: tourData.rating?.toString() || '5.0',
+          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+          start_date: this.selectedDeparture?.departureDate || '',
+          end_date: this.selectedDeparture?.returnDate || '',
+          pasajeros_adultos: this.passengersData?.adults?.toString() || '1',
+          pasajeros_niños: ((this.passengersData?.children || 0) + (this.passengersData?.babies || 0)).toString()
+        },
+        userData
+      );
     });
   }
 
@@ -1143,16 +1098,9 @@ export class TourHeaderV2Component
         )
         .subscribe({
           next: ({ reservation, travelers, activityResults }) => {
-            // ✅ NAVEGAR DIRECTAMENTE AL CHECKOUT sin mostrar alerts
-            console.log('✅ Reservación creada exitosamente:', {
-              reservationId: reservation.id,
-              travelersCount: travelers.length,
-              activitiesSuccessful: activityResults.successful,
-              activitiesFailed: activityResults.failed,
-            });
 
             // Disparar evento add_to_cart
-            this.trackAddToCart(reservation);
+            this.trackAddToCart();
 
             this.router.navigate(['/checkout-v2', reservation.id]);
           },
@@ -1190,44 +1138,6 @@ export class TourHeaderV2Component
     );
   }
 
-  /**
-   * Disparar evento add_to_cart cuando se añade un tour al carrito
-   */
-  private trackAddToCart(reservation: IReservationResponse): void {
-    if (!this.tour) return;
-
-    const tourData = this.tour as any;
-    
-    this.analyticsService.addToCart(
-      'EUR',
-      this.totalPriceWithActivities || this.totalPrice || 0,
-      {
-        item_id: tourData.tkId?.toString() || this.tour.id?.toString() || '',
-        item_name: this.tour.name || '',
-        coupon: '',
-        discount: 0,
-        index: 0,
-        item_brand: 'Different Roads',
-        item_category: tourData.destination?.continent || '',
-        item_category2: tourData.destination?.country || '',
-        item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-        item_category4: tourData.monthTags?.join(', ') || '',
-        item_category5: tourData.tourType || '',
-        item_list_id: 'tour_detail',
-        item_list_name: 'Ficha de tour',
-        item_variant: `${tourData.tkId || this.tour.id} - ${this.selectedCity || 'Sin vuelo'}`,
-        price: this.totalPriceWithActivities || this.totalPrice || 0,
-        quantity: 1,
-        puntuacion: tourData.rating?.toString() || '',
-        duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-        start_date: this.selectedDeparture?.departureDate || '',
-        end_date: this.selectedDeparture?.returnDate || '',
-        pasajeros_adultos: this.passengersData?.adults?.toString() || '0',
-        pasajeros_niños: ((this.passengersData?.children || 0) + (this.passengersData?.babies || 0)).toString()
-      },
-      this.getUserData()
-    );
-  }
 
   /**
    * Obtener datos del usuario actual si está logueado

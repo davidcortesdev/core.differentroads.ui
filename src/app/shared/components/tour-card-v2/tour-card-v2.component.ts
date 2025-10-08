@@ -77,31 +77,33 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
     if (this.itemListId && this.itemListName) {
       const numericListId = this.analyticsService.getNumericListId(this.itemListId);
       
-      this.analyticsService.selectItem(
-        numericListId,
-        this.itemListName,
-        {
-          item_id: this.tourData.externalID?.toString() || '',
-          item_name: this.tourData.title || '',
-          coupon: '',
-          discount: 0,
-          index: (this.index || 0) + 1, // GA4 usa índice basado en 1
-          item_brand: 'Different Roads',
-          item_category: '', // No disponible en TourDataV2
-          item_category2: '', // No disponible en TourDataV2
-          item_category3: this.tourData.tag || '',
-          item_category4: this.tourData.availableMonths?.join(', ') || '',
-          item_category5: this.tourData.isByDr ? 'Grupos' : 'Privados',
-          item_list_id: numericListId,
-          item_list_name: this.itemListName,
-          item_variant: '',
-          price: this.tourData.price || 0,
-          quantity: 1,
-          puntuacion: this.tourData.rating?.toString() || '',
-          duracion: this.tourData.itineraryDaysCount ? `${this.tourData.itineraryDaysCount} días` : ''
-        },
-        this.getUserData()
-      );
+      this.analyticsService.getCurrentUserData().subscribe(userData => {
+        this.analyticsService.selectItem(
+          numericListId,
+          this.itemListName!,
+          {
+            item_id: this.tourData.externalID?.toString() || '',
+            item_name: this.tourData.title || '',
+            coupon: '',
+            discount: 0,
+            index: (this.index || 0) + 1, // GA4 usa índice basado en 1
+            item_brand: 'Different Roads',
+            item_category: '', // No disponible en TourDataV2
+            item_category2: '', // No disponible en TourDataV2
+            item_category3: this.tourData.tag || '',
+            item_category4: this.tourData.availableMonths?.join(', ') || '',
+            item_category5: this.tourData.isByDr ? 'Grupos' : 'Privados',
+            item_list_id: numericListId,
+            item_list_name: this.itemListName,
+            item_variant: '',
+            price: this.tourData.price || 0,
+            quantity: 1,
+            puntuacion: this.tourData.rating?.toString() || '',
+            duracion: this.tourData.itineraryDaysCount ? `${this.tourData.itineraryDaysCount} días` : ''
+          },
+          userData
+        );
+      });
     }
     
     this.router.navigate(['/tour', this.tourData.webSlug]);

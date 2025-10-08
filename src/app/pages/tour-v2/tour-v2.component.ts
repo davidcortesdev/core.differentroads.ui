@@ -8,6 +8,7 @@ import { SelectedDepartureEvent } from './components/tour-itinerary-v2/component
 import { ActivityHighlight } from '../../shared/components/activity-card/activity-card.component';
 import { AnalyticsService } from '../../core/services/analytics.service';
 import { AuthenticateService } from '../../core/services/auth-service.service';
+import { UsersNetService } from '../../core/services/usersNet.service';
 import { Title } from '@angular/platform-browser';
 
 // ✅ INTERFACES para tipado fuerte
@@ -116,7 +117,8 @@ export class TourV2Component implements OnInit {
     private tourNetService: TourNetService,
     private ItineraryService: ItineraryService,
     private analyticsService: AnalyticsService,
-    private authService: AuthenticateService
+    private authService: AuthenticateService,
+    private usersNetService: UsersNetService
   ) {}
 
   ngOnInit(): void {
@@ -277,32 +279,42 @@ export class TourV2Component implements OnInit {
    * Disparar evento view_item cuando se visualiza la ficha del tour
    */
   private trackViewItem(tour: Tour): void {
-    const tourData = tour as any; // Usar any para acceder a propiedades dinámicas
+    const tourData = tour as any;
+    const numericListId = '1234567';
     
+    this.analyticsService.getCurrentUserData().subscribe((userData: any) => {
+      this.fireViewItemEvent(numericListId, tourData, tour, userData);
+    });
+  }
+
+  /**
+   * Disparar el evento view_item con los datos proporcionados
+   */
+  private fireViewItemEvent(numericListId: string, tourData: any, tour: Tour, userData: any): void {
     this.analyticsService.viewItem(
-      'tour_detail',
-      'Ficha de tour',
+      numericListId,
+      'Planea tu viaje de este verano',
       {
         item_id: tourData.tkId?.toString() || tour.id?.toString() || '',
         item_name: tour.name || '',
         coupon: '',
         discount: 0,
-        index: 0,
+        index: 1, // Un solo item, índice 1
         item_brand: 'Different Roads',
         item_category: tourData.destination?.continent || '',
         item_category2: tourData.destination?.country || '',
-        item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+        item_category3: tourData.marketingSection?.marketingSeasonTag || 'Clasico',
         item_category4: tourData.monthTags?.join(', ') || '',
-        item_category5: tourData.tourType || '',
-        item_list_id: 'tour_detail',
-        item_list_name: 'Ficha de tour',
+        item_category5: tourData.tourType === 'FIT' ? 'Privados' : 'Grupos',
+        item_list_id: numericListId,
+        item_list_name: 'Planea tu viaje de este verano',
         item_variant: '',
         price: tourData.basePrice || 0,
         quantity: 1,
-        puntuacion: tourData.rating?.toString() || '',
+        puntuacion: tourData.rating?.toString() || '5.0',
         duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : ''
       },
-      this.getUserData()
+      userData
     );
   }
 
@@ -310,13 +322,21 @@ export class TourV2Component implements OnInit {
    * Obtener datos del usuario actual si está logueado
    */
   private getUserData() {
+    console.log('🔍 getUserData - Usuario autenticado:', this.authService.isAuthenticatedValue());
     if (this.authService.isAuthenticatedValue()) {
-      return this.analyticsService.getUserData(
-        this.authService.getUserEmailValue(),
+      const email = this.authService.getUserEmailValue();
+      const cognitoId = this.authService.getCognitoIdValue();
+      console.log('🔍 getUserData - Email:', email, 'CognitoId:', cognitoId);
+      
+      const userData = this.analyticsService.getUserData(
+        email,
         undefined,
-        this.authService.getCognitoIdValue()
+        cognitoId
       );
+      console.log('🔍 getUserData - Datos retornados:', userData);
+      return userData;
     }
+    console.log('🔍 getUserData - Usuario no autenticado, retornando undefined');
     return undefined;
   }
 }

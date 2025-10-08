@@ -1,4 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { AuthenticateService } from './auth-service.service';
+import { UsersNetService } from './usersNet.service';
+import { PersonalInfoV2Service } from './v2/personal-info-v2.service';
+import { Observable, of, map, switchMap } from 'rxjs';
 
 /**
  * Interfaz para los datos de usuario que se envían en los eventos
@@ -84,6 +88,9 @@ export interface FilterParams {
   providedIn: 'root'
 })
 export class AnalyticsService {
+  private authService = inject(AuthenticateService);
+  private usersNetService = inject(UsersNetService);
+  private personalInfoService = inject(PersonalInfoV2Service);
 
   constructor() {
     this.initDataLayer();
@@ -642,6 +649,76 @@ export class AnalyticsService {
       hash = hash & hash; // Convert to 32bit integer
     }
     return hash;
+  }
+
+  /**
+   * Obtiene los datos completos del usuario usando el mismo patrón que el header
+   * Combina email, cognitoId y datos de la base de datos
+   */
+  getCurrentUserData(): Observable<UserData | undefined> {
+    return this.authService.getUserEmail().pipe(
+      switchMap((email: string) => {
+        if (!email) {
+          return of(undefined);
+        }
+
+        return this.authService.getCognitoId().pipe(
+          switchMap((cognitoId: string) => {
+            if (!cognitoId) {
+              return of({
+                email_address: email,
+                phone_number: '',
+                user_id: ''
+              });
+            }
+
+            // Usar el mismo patrón que el header pero con PersonalInfoV2Service
+            return this.usersNetService.getUsersByCognitoId(cognitoId).pipe(
+              switchMap((users) => {
+                if (users && users.length > 0) {
+                  const user = users[0];
+                  // Obtener datos completos usando PersonalInfoV2Service
+                  return this.personalInfoService.getUserData(user.id.toString()).pipe(
+                    map((personalInfo: any) => {
+                      const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono) : '';
+                      return {
+                        email_address: personalInfo?.email || email,
+                        phone_number: phone,
+                        user_id: cognitoId
+                      };
+                    })
+                  );
+                }
+                // Si no encuentra usuario, intentar con email directamente
+                return this.usersNetService.getUsersByEmail(email).pipe(
+                  switchMap((usersByEmail) => {
+                    if (usersByEmail && usersByEmail.length > 0) {
+                      const user = usersByEmail[0];
+                      return this.personalInfoService.getUserData(user.id.toString()).pipe(
+                        map((personalInfo: any) => {
+                          const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono) : '';
+                          return {
+                            email_address: personalInfo?.email || email,
+                            phone_number: phone,
+                            user_id: cognitoId
+                          };
+                        })
+                      );
+                    }
+                    // Fallback final
+                    return of({
+                      email_address: email,
+                      phone_number: '',
+                      user_id: cognitoId
+                    });
+                  })
+                );
+              })
+            );
+          })
+        );
+      })
+    );
   }
 }
 

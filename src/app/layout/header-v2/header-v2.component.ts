@@ -576,19 +576,32 @@ export class HeaderV2Component implements OnInit, OnDestroy {
    * Disparar evento menu_interaction cuando el usuario hace clic en elementos del menú
    */
   onMenuInteraction(clickElement: string): void {
-    this.analyticsService.menuInteraction(
-      clickElement,
-      this.getUserData()
-    );
+    this.analyticsService.getCurrentUserData().subscribe({
+      next: (userData) => {
+        this.analyticsService.menuInteraction(clickElement, userData);
+      },
+      error: (error) => {
+        console.error('Error obteniendo datos de usuario para analytics:', error);
+        // Fallback con datos básicos
+        this.analyticsService.menuInteraction(clickElement, this.getUserData());
+      }
+    });
   }
 
   /**
    * Disparar evento click_logo cuando el usuario hace clic en el logo
    */
   onLogoClick(): void {
-    this.analyticsService.clickLogo(
-      this.getUserData()
-    );
+    this.analyticsService.getCurrentUserData().subscribe({
+      next: (userData) => {
+        this.analyticsService.clickLogo(userData);
+      },
+      error: (error) => {
+        console.error('Error obteniendo datos de usuario para analytics:', error);
+        // Fallback con datos básicos
+        this.analyticsService.clickLogo(this.getUserData());
+      }
+    });
   }
 
   /**

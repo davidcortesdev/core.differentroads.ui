@@ -3359,6 +3359,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     const tourData = this.reservationData.tour || {};
     
+    // Obtener item_list_id y item_list_name dinámicamente desde query params
+    const queryParams = this.route.snapshot.queryParams;
+    const itemListId = queryParams['listId'] || 'checkout';
+    const itemListName = queryParams['listName'] || 'Carrito de compra';
+    
     // Obtener actividades seleccionadas
     const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
       ? this.selectedActivities.map(a => a.description || a.name).join(', ')
@@ -3370,6 +3375,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     // Obtener ciudad de vuelo seleccionado
     const flightCity = this.selectedFlight?.name || 'Sin vuelo';
     
+    // Calcular pasajeros niños dinámicamente
+    const childrenCount = this.getChildrenPassengersCount();
+    
     this.analyticsService.addPersonalInfo(
       {
         currency: 'EUR',
@@ -3380,15 +3388,15 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           item_name: this.tourName || tourData.name || '',
           coupon: '',
           discount: 0,
-          index: 0,
+          index: 1,
           item_brand: 'Different Roads',
           item_category: tourData.destination?.continent || '',
           item_category2: tourData.destination?.country || '',
           item_category3: tourData.marketingSection?.marketingSeasonTag || '',
           item_category4: tourData.monthTags?.join(', ') || '',
           item_category5: tourData.tourType || '',
-          item_list_id: 'checkout',
-          item_list_name: 'Carrito de compra',
+          item_list_id: itemListId,
+          item_list_name: itemListName,
           item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
           price: this.totalAmountCalculated || this.totalAmount || 0,
           quantity: 1,
@@ -3397,7 +3405,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           start_date: this.departureDate || '',
           end_date: this.returnDate || '',
           pasajeros_adultos: this.totalPassengers?.toString() || '0',
-          pasajeros_niños: '0',
+          pasajeros_niños: childrenCount,
           actividades: activitiesText,
           seguros: selectedInsurance,
           vuelo: flightCity

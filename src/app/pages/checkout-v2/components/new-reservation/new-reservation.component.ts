@@ -365,7 +365,7 @@ export class NewReservationComponent implements OnInit {
         } else if (status.code === 'COMPLETED') {
           this.status = 'SUCCESS';
           
-          // Disparar evento purchase
+          // Disparar evento purchase cuando se visita la página de gracias tras compra exitosa
           this.trackPurchase();
           
           // ✅ NUEVO: Si el pago está completado, verificar y reservar vuelos Amadeus
@@ -434,9 +434,6 @@ export class NewReservationComponent implements OnInit {
             this.updatePaymentStatus();
 
             this.status = 'SUCCESS';
-            
-            // Disparar evento purchase
-            this.trackPurchase();
             
             this.showMessage(
               'success',

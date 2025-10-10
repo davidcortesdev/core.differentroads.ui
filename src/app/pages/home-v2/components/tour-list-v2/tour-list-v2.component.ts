@@ -556,6 +556,9 @@ export class TourListV2Component implements OnInit, OnDestroy {
                     '',
                   tripType: [], // TourNetService no tiene tripType
                   externalID: tour.tkId || '',
+                  // ✅ NUEVOS CAMPOS: Para analytics
+                  continent: '', // TourNetService no tiene continent - pendiente de agregar
+                  country: '', // TourNetService no tiene country - pendiente de agregar
                 };
               }
             )

@@ -88,11 +88,11 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
             discount: 0,
             index: (this.index || 0) + 1, // GA4 usa índice basado en 1
             item_brand: 'Different Roads',
-            item_category: '', // No disponible en TourDataV2
-            item_category2: '', // No disponible en TourDataV2
+            item_category: this.tourData.continent || '',
+            item_category2: this.tourData.country || '',
             item_category3: this.tourData.tag || '',
             item_category4: this.tourData.availableMonths?.join(', ') || '',
-            item_category5: this.tourData.isByDr ? 'Grupos' : 'Privados',
+            item_category5: this.tourData.tripType?.join(', ') || (this.tourData.isByDr ? 'Grupos' : 'Privados'),
             item_list_id: numericListId,
             item_list_name: this.itemListName,
             item_variant: '',

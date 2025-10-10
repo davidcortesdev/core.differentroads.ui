@@ -37,6 +37,10 @@ const routes: Routes = [
     children: [
       { path: 'checkout/:reservationId', component: CheckoutV2Component },
       { path: 'bookingsv2/:id', component: Bookingsv2Component },
+      {
+        path: 'reservation/:reservationId/:paymentId',
+        component: NewReservationComponent,
+      },
     ],
   },
   {

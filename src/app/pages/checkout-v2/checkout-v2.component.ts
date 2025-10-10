@@ -2903,6 +2903,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     const tourData = this.reservationData.tour || {};
     
+    // Obtener item_list_id y item_list_name dinámicamente desde query params
+    const queryParams = this.route.snapshot.queryParams;
+    const itemListId = queryParams['listId'] || 'checkout';
+    const itemListName = queryParams['listName'] || 'Carrito de compra';
+    
+    // Calcular pasajeros niños dinámicamente
+    const childrenCount = this.getChildrenPassengersCount();
+    
     this.analyticsService.viewCart(
       'EUR',
       this.totalAmountCalculated || this.totalAmount || 0,
@@ -2911,15 +2919,15 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         item_name: this.tourName || tourData.name || '',
         coupon: '',
         discount: 0,
-        index: 0,
+        index: 1,
         item_brand: 'Different Roads',
         item_category: tourData.destination?.continent || '',
         item_category2: tourData.destination?.country || '',
         item_category3: tourData.marketingSection?.marketingSeasonTag || '',
         item_category4: tourData.monthTags?.join(', ') || '',
         item_category5: tourData.tourType || '',
-        item_list_id: 'checkout',
-        item_list_name: 'Carrito de compra',
+        item_list_id: itemListId,
+        item_list_name: itemListName,
         item_variant: `${tourData.tkId || tourData.id} - ${this.selectedFlight?.name || 'Sin vuelo'}`,
         price: this.totalAmountCalculated || this.totalAmount || 0,
         quantity: 1,
@@ -2928,10 +2936,49 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         start_date: this.departureDate || '',
         end_date: this.returnDate || '',
         pasajeros_adultos: this.totalPassengers?.toString() || '0',
-        pasajeros_niños: '0'
+        pasajeros_niños: childrenCount
       },
       this.getUserData()
     );
+  }
+
+  /**
+   * Calcular el número de pasajeros niños (menores de edad) dinámicamente
+   */
+  private getChildrenPassengersCount(): string {
+    if (!this.ageGroups || this.ageGroups.length === 0) {
+      return '0';
+    }
+
+    let childrenCount = 0;
+
+    // Recorrer todos los age groups y sumar los que NO sean adultos
+    this.ageGroups.forEach((ageGroup) => {
+      const name = ageGroup.name?.toLowerCase() || '';
+      const code = ageGroup.code?.toLowerCase() || '';
+      const lowerAge = ageGroup.lowerLimitAge || 0;
+
+      // Identificar si NO es adulto (menores de 18 años o con nombres de niño/bebé)
+      const isNotAdult = 
+        name.includes('child') ||
+        name.includes('niño') ||
+        name.includes('menor') ||
+        name.includes('bebé') ||
+        name.includes('baby') ||
+        name.includes('infant') ||
+        code.includes('child') ||
+        code.includes('niño') ||
+        code.includes('menor') ||
+        code.includes('baby') ||
+        lowerAge < 18;
+
+      // Si no es adulto, sumar la cantidad de pasajeros de ese grupo
+      if (isNotAdult && this.ageGroupCounts[ageGroup.id]) {
+        childrenCount += this.ageGroupCounts[ageGroup.id];
+      }
+    });
+
+    return childrenCount.toString();
   }
 
   /**

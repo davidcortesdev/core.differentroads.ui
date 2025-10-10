@@ -36,6 +36,7 @@ const routes: Routes = [
     component: StandaloneComponent,
     children: [
       { path: 'checkout/:reservationId', component: CheckoutV2Component },
+      { path: 'bookingsv2/:id', component: Bookingsv2Component },
     ],
   },
   {
@@ -48,7 +49,7 @@ const routes: Routes = [
       {
         path: 'profile',
         component: ProfileComponent,
-      },   
+      },
       {
         path: 'profile-v2/:userId',
         component: ProfileV2Component,

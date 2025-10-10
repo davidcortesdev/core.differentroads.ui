@@ -3336,32 +3336,33 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     const tourData = this.reservationData.tour || {};
     
+    // Obtener item_list_id y item_list_name dinámicamente desde query params
+    const queryParams = this.route.snapshot.queryParams;
+    const itemListId = queryParams['listId'] || 'saved_budgets';
+    const itemListName = queryParams['listName'] || 'Presupuestos guardados';
+    
     this.analyticsService.addToWishlist(
-      'saved_budgets',
-      'Presupuestos guardados',
+      itemListId,
+      itemListName,
       {
         item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
         item_name: this.tourName || tourData.name || '',
         coupon: '',
         discount: 0,
-        index: 0,
+        index: 1, // Índice dinámico basado en la posición del tour
         item_brand: 'Different Roads',
         item_category: tourData.destination?.continent || '',
         item_category2: tourData.destination?.country || '',
         item_category3: tourData.marketingSection?.marketingSeasonTag || '',
         item_category4: tourData.monthTags?.join(', ') || '',
         item_category5: tourData.tourType || '',
-        item_list_id: 'saved_budgets',
-        item_list_name: 'Presupuestos guardados',
+        item_list_id: itemListId,
+        item_list_name: itemListName,
         item_variant: '',
         price: this.totalAmountCalculated || 0,
         quantity: 1,
         puntuacion: tourData.rating?.toString() || '',
-        duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-        start_date: this.departureDate || '',
-        end_date: this.returnDate || '',
-        pasajeros_adultos: this.totalPassengers?.toString() || '0',
-        pasajeros_niños: '0'
+        duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : ''
       },
       this.getUserData()
     );

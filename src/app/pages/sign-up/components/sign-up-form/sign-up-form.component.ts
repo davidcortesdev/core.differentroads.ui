@@ -179,8 +179,8 @@ export class SignUpFormComponent {
     this.isRedirecting = true;
     this.successMessage = 'Verificación exitosa. Redirigiendo al inicio de sesión...';
     
-    // Disparar evento sign_up para confirmación exitosa
-    this.trackSignUp('manual');
+    // Disparar evento sign_up para confirmación exitosa con datos completos
+    this.trackSignUpWithCompleteData('manual');
     
     setTimeout(() => {
       this.router.navigate(['/login']);
@@ -224,5 +224,29 @@ export class SignUpFormComponent {
         undefined // No tenemos Cognito ID aún en este punto
       )
     );
+  }
+
+  /**
+   * Disparar evento sign_up con datos completos después de verificación exitosa
+   */
+  private trackSignUpWithCompleteData(method: string): void {
+    // Obtener datos completos del usuario después de la verificación
+    this.analyticsService.getCurrentUserData().subscribe({
+      next: (userData) => {
+        this.analyticsService.signUp(method, userData);
+      },
+      error: (error) => {
+        console.error('Error obteniendo datos de usuario para analytics:', error);
+        // Fallback con datos del formulario
+        this.analyticsService.signUp(
+          method,
+          this.analyticsService.getUserData(
+            this.signUpForm.value.email,
+            this.signUpForm.value.phone,
+            undefined
+          )
+        );
+      }
+    });
   }
 }

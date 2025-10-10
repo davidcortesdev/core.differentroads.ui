@@ -94,9 +94,6 @@ export class SignUpFormComponent {
   signInWithGoogle(): void {
     this.isLoading = true;
     this.authService.handleGoogleSignIn().then(() => {
-      // Disparar evento sign_up para Google
-      this.trackSignUp('google');
-      
       this.isLoading = false;
     }).catch((error) => {
       this.isLoading = false;
@@ -151,9 +148,6 @@ export class SignUpFormComponent {
                 .subscribe({
                   next: (user) => {
                     console.log('Usuario creado exitosamente:', user);
-                    
-                    // Disparar evento sign_up
-                    this.trackSignUp('manual');
                     
                     this.isLoading = false;
                     this.isConfirming = true;

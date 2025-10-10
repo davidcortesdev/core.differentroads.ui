@@ -1,5 +1,4 @@
-import { Injectable, inject } from '@angular/core';
-import { AuthenticateService } from './auth-service.service';
+import { Injectable, Injector, forwardRef, Inject } from '@angular/core';
 import { UsersNetService } from './usersNet.service';
 import { PersonalInfoV2Service } from './v2/personal-info-v2.service';
 import { Observable, of, map, switchMap } from 'rxjs';
@@ -88,12 +87,30 @@ export interface FilterParams {
   providedIn: 'root'
 })
 export class AnalyticsService {
-  private authService = inject(AuthenticateService);
-  private usersNetService = inject(UsersNetService);
-  private personalInfoService = inject(PersonalInfoV2Service);
-
-  constructor() {
+  private _authService: any; // Lazy-loaded para evitar dependencia circular
+  
+  constructor(
+    private injector: Injector,
+    private usersNetService: UsersNetService,
+    private personalInfoService: PersonalInfoV2Service
+  ) {
     this.initDataLayer();
+  }
+  
+  /**
+   * Obtiene AuthenticateService de forma lazy para evitar dependencia circular
+   */
+  private getAuthService(): any {
+    if (!this._authService) {
+      // Importar dinámicamente para evitar dependencia circular
+      const AuthenticateService = require('./auth-service.service').AuthenticateService;
+      this._authService = this.injector.get(AuthenticateService);
+    }
+    return this._authService;
+  }
+  
+  private get authService(): any {
+    return this.getAuthService();
   }
 
   /**

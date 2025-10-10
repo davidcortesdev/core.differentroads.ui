@@ -119,6 +119,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   private viewFlightsInfoEventFired: boolean = false;
   private viewPersonalInfoEventFired: boolean = false;
   private viewPaymentInfoEventFired: boolean = false;
+  // Flag para controlar si ya se inicializó el componente
+  private componentInitialized: boolean = false;
 
   // Datos de precios por grupo de edad
   departurePriceSupplements: IDeparturePriceSupplementResponse[] = [];
@@ -545,10 +547,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         // Ejecutar verificación de precios inmediatamente cuando tengamos los datos básicos
         this.executePriceCheck();
 
-        // Disparar evento view_cart SOLO la primera vez que se visualiza el checkout
-        if (!this.viewCartEventFired && this.activeIndex === 0) {
+        // Disparar evento view_cart SOLO la primera vez que se inicializa el componente
+        if (!this.componentInitialized && this.activeIndex === 0) {
           this.trackViewCart();
-          this.viewCartEventFired = true;
+          this.componentInitialized = true;
         }
 
         // Si hay un step activo, inicializar el componente correspondiente
@@ -808,21 +810,32 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   private loadDepartureData(departureId: number): void {
     this.departureService.getById(departureId).subscribe({
       next: (departure) => {
-        this.departureDate = departure.departureDate ?? '';
-        this.returnDate = departure.arrivalDate ?? '';
-        this.departureData = departure; // Almacenar datos del departure
+        // Verificar que departure no sea null antes de acceder a sus propiedades
+        if (departure) {
+          this.departureDate = departure.departureDate ?? '';
+          this.returnDate = departure.arrivalDate ?? '';
+          this.departureData = departure; // Almacenar datos del departure
 
-        // NUEVO: Obtener el departureActivityPackId desde el departure
-        // Por ahora, vamos a usar un valor por defecto o buscar en la BD
-        this.loadDepartureActivityPackId(departureId);
+          // NUEVO: Obtener el departureActivityPackId desde el departure
+          // Por ahora, vamos a usar un valor por defecto o buscar en la BD
+          this.loadDepartureActivityPackId(departureId);
 
-        // Solo asignar si no se ha obtenido desde el tour (como respaldo)
-        if (!this.itineraryId && departure.itineraryId) {
-          this.itineraryId = departure.itineraryId;
+          // Solo asignar si no se ha obtenido desde el tour (como respaldo)
+          if (!this.itineraryId && departure.itineraryId) {
+            this.itineraryId = departure.itineraryId;
+          }
+        } else {
+          // Si departure es null, establecer valores por defecto
+          this.departureDate = '';
+          this.returnDate = '';
+          this.departureData = null;
         }
       },
       error: (error) => {
         // Error al cargar los datos del departure - continuando sin fechas
+        this.departureDate = '';
+        this.returnDate = '';
+        this.departureData = null;
       },
     });
   }
@@ -2911,35 +2924,71 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     // Calcular pasajeros niños dinámicamente
     const childrenCount = this.getChildrenPassengersCount();
     
-    this.analyticsService.viewCart(
-      'EUR',
-      this.totalAmountCalculated || this.totalAmount || 0,
-      {
-        item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
-        item_name: this.tourName || tourData.name || '',
-        coupon: '',
-        discount: 0,
-        index: 1,
-        item_brand: 'Different Roads',
-        item_category: tourData.destination?.continent || '',
-        item_category2: tourData.destination?.country || '',
-        item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-        item_category4: tourData.monthTags?.join(', ') || '',
-        item_category5: tourData.tourType || '',
-        item_list_id: itemListId,
-        item_list_name: itemListName,
-        item_variant: `${tourData.tkId || tourData.id} - ${this.selectedFlight?.name || 'Sin vuelo'}`,
-        price: this.totalAmountCalculated || this.totalAmount || 0,
-        quantity: 1,
-        puntuacion: tourData.rating?.toString() || '',
-        duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-        start_date: this.departureDate || '',
-        end_date: this.returnDate || '',
-        pasajeros_adultos: this.totalPassengers?.toString() || '0',
-        pasajeros_niños: childrenCount
+    this.analyticsService.getCurrentUserData().subscribe({
+      next: (userData) => {
+        this.analyticsService.viewCart(
+          'EUR',
+          this.totalAmountCalculated || this.totalAmount || 0,
+          {
+            item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+            item_name: this.tourName || tourData.name || '',
+            coupon: '',
+            discount: 0,
+            index: 1,
+            item_brand: 'Different Roads',
+            item_category: tourData.destination?.continent || '',
+            item_category2: tourData.destination?.country || '',
+            item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+            item_category4: tourData.monthTags?.join(', ') || '',
+            item_category5: tourData.tourType || '',
+            item_list_id: itemListId,
+            item_list_name: itemListName,
+            item_variant: `${tourData.tkId || tourData.id} - ${this.selectedFlight?.name || 'Sin vuelo'}`,
+            price: this.totalAmountCalculated || this.totalAmount || 0,
+            quantity: 1,
+            puntuacion: tourData.rating?.toString() || '',
+            duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+            start_date: this.departureDate || '',
+            end_date: this.returnDate || '',
+            pasajeros_adultos: this.totalPassengers?.toString() || '0',
+            pasajeros_niños: childrenCount
+          },
+          userData
+        );
       },
-      this.getUserData()
-    );
+      error: (error) => {
+        console.error('Error obteniendo datos de usuario para analytics:', error);
+        this.analyticsService.viewCart(
+          'EUR',
+          this.totalAmountCalculated || this.totalAmount || 0,
+          {
+            item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+            item_name: this.tourName || tourData.name || '',
+            coupon: '',
+            discount: 0,
+            index: 1,
+            item_brand: 'Different Roads',
+            item_category: tourData.destination?.continent || '',
+            item_category2: tourData.destination?.country || '',
+            item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+            item_category4: tourData.monthTags?.join(', ') || '',
+            item_category5: tourData.tourType || '',
+            item_list_id: itemListId,
+            item_list_name: itemListName,
+            item_variant: `${tourData.tkId || tourData.id} - ${this.selectedFlight?.name || 'Sin vuelo'}`,
+            price: this.totalAmountCalculated || this.totalAmount || 0,
+            quantity: 1,
+            puntuacion: tourData.rating?.toString() || '',
+            duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+            start_date: this.departureDate || '',
+            end_date: this.returnDate || '',
+            pasajeros_adultos: this.totalPassengers?.toString() || '0',
+            pasajeros_niños: childrenCount
+          },
+          this.getUserData()
+        );
+      }
+    });
   }
 
   /**

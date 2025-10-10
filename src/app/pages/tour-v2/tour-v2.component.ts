@@ -69,6 +69,9 @@ export class TourV2Component implements OnInit {
   preview: boolean = false;
   // Total del carrito
   totalPrice: number = 0;
+  
+  // Flag para evitar disparos duplicados del evento view_item
+  private viewItemTracked: boolean = false;
 
   // Ciudad seleccionada - no debe tener valor inicial
   selectedCity: string = '';
@@ -125,6 +128,11 @@ export class TourV2Component implements OnInit {
       const isPreview = currentUrl.includes('/preview');
       
       if (slug) {
+        // Resetear el flag cuando se navega a un tour diferente
+        if (this.tourSlug !== slug) {
+          this.viewItemTracked = false;
+        }
+        
         this.tourSlug = slug;
         this.preview = isPreview;
         this.loadTourBySlug(slug);
@@ -268,8 +276,14 @@ export class TourV2Component implements OnInit {
 
   /**
    * Disparar evento view_item cuando se visualiza la ficha del tour
+   * Solo se ejecuta una vez por sesión para evitar duplicados
    */
   private trackViewItem(tour: Tour): void {
+    // Evitar disparos duplicados
+    if (this.viewItemTracked) {
+      return;
+    }
+    
     const tourData = tour as any;
     
     // Obtener contexto de navegación desde query parameters
@@ -279,6 +293,8 @@ export class TourV2Component implements OnInit {
     
     this.analyticsService.getCurrentUserData().subscribe((userData: any) => {
       this.fireViewItemEvent(itemListId, itemListName, tourData, tour, userData);
+      // Marcar como trackeado después de disparar el evento
+      this.viewItemTracked = true;
     });
   }
 

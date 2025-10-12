@@ -5,6 +5,29 @@
 @import url("//cdn.quilljs.com/1.3.7/quill.core.css");
 @import url("//cdn.quilljs.com/1.3.7/quill.snow.css");
 
+/**
+ * Estilos para optimizar el renderizado de contenido Quill
+ * 
+ * El editor Quill genera párrafos con márgenes por defecto que crean espaciado excesivo
+ * en el contenido renderizado. Estos estilos sobrescriben los valores por defecto
+ * para lograr un espaciado más compacto y profesional.
+ */
+.itinerary-content div p {
+  margin: 0 0 4px !important;
+  line-height: 1.4 !important;
+}
+
+.itinerary-content div p:last-child {
+  margin-bottom: 0 !important;
+}
+
+.itinerary-content div p:empty {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 0 !important;
+}
+
 * {
   font-family: "General Sans", sans-serif;
 }

@@ -199,9 +199,6 @@ export class Bookingsv2Component implements OnInit {
   // Nueva propiedad para almacenar el total de la reserva
   bookingTotal: number = 0;
 
-  // Propiedad para detectar si está en iframe
-  isInIframe: boolean = false;
-
   constructor(
     private router: Router,
     private route: ActivatedRoute,
@@ -217,9 +214,6 @@ export class Bookingsv2Component implements OnInit {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
     });
-
-    // Detectar si estamos en un iframe
-    this.isInIframe = window.self !== window.top;
   }
 
   ngOnInit(): void {

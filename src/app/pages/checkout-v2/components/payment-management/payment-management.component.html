@@ -97,6 +97,60 @@
             </div>
         </div>
       </p-panel>
+
+      <!-- Transfer 25% Payment Panel - Solo visible en touroperacion -->
+      <p-panel 
+        *ngIf="showTransfer25Option"
+        styleClass="payment-panel" 
+        [ngClass]="{ 'selected': paymentType === 'transfer25' }" 
+        (click)="selectPaymentType('transfer25')"
+        showHeader="false">
+        <div class="payment-option">
+          <p-radioButton 
+            name="paymentType" 
+            value="transfer25" 
+            [ngModel]="paymentType"
+            (ngModelChange)="selectPaymentType('transfer25')">
+          </p-radioButton>
+          <span class="option-text">Hacer transferencia del 25% del total</span>
+          <span class="option-price" aria-label="Precio 25%">
+            {{ transfer25Amount | currencyFormat }}
+          </span>
+        </div>
+      </p-panel>
+    </div>
+  </section>
+
+  <!-- Transfer 25% Upload Section - Solo visible en touroperacion -->
+  <section *ngIf="paymentType === 'transfer25' && showTransfer25Option" class="transfer25-section">
+    <div class="header-container">
+      <div class="title-with-icon">
+        <span class="title">Adjuntar justificante de transferencia</span>
+      </div>
+      <div class="title-underline"></div>
+    </div>
+
+    <div class="upload-container">
+      <p class="upload-description">
+        Por favor, adjunta el justificante de la transferencia bancaria del 25% ({{ transfer25Amount | currencyFormat }}).
+      </p>
+      
+      <app-upload-button
+        label="Subir justificante de transferencia"
+        accept="image/*, .pdf"
+        [maxFileSize]="1000000"
+        folder="vouchers"
+        [auto]="false"
+        chooseIcon="pi pi-upload"
+        styleClass="upload-button"
+        (onUploadSuccess)="handleTransfer25VoucherUpload($event)"
+        (onUploadError)="handleTransfer25VoucherError($event)">
+      </app-upload-button>
+
+      <div *ngIf="transfer25VoucherUrl" class="voucher-uploaded">
+        <i class="pi pi-check-circle" style="color: var(--success-green); margin-right: 0.5rem;"></i>
+        <span>Justificante subido correctamente</span>
+      </div>
     </div>
   </section>
 

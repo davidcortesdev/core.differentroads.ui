@@ -8,7 +8,11 @@ import {
   Payment,
   PaymentStatus,
 } from '../../core/models/bookings/payment.model';
-import { ReservationService, IReservationResponse, IReservationSummaryResponse } from '../../core/services/reservation/reservation.service';
+import {
+  ReservationService,
+  IReservationResponse,
+  IReservationSummaryResponse,
+} from '../../core/services/reservation/reservation.service';
 import { TourNetService } from '../../core/services/tour/tourNet.service';
 import { CMSTourService } from '../../core/services/cms/cms-tour.service';
 import { RetailerService } from '../../core/services/retailer/retailer.service';
@@ -195,6 +199,9 @@ export class Bookingsv2Component implements OnInit {
   // Nueva propiedad para almacenar el total de la reserva
   bookingTotal: number = 0;
 
+  // Propiedad para detectar si está en iframe
+  isInIframe: boolean = false;
+
   constructor(
     private router: Router,
     private route: ActivatedRoute,
@@ -210,6 +217,9 @@ export class Bookingsv2Component implements OnInit {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
     });
+
+    // Detectar si estamos en un iframe
+    this.isInIframe = window.self !== window.top;
   }
 
   ngOnInit(): void {
@@ -243,7 +253,6 @@ export class Bookingsv2Component implements OnInit {
       .subscribe({
         next: (reservation) => {
           this.reservation = reservation;
-          
 
           // Actualizar datos básicos de la reserva
           this.updateBasicBookingData(reservation);
@@ -279,7 +288,7 @@ export class Bookingsv2Component implements OnInit {
     this.reservationService.getSummary(reservationId).subscribe({
       next: (summary) => {
         this.reservationSummary = summary;
-        
+
         // Actualizar elementos del viaje con el resumen
         this.updateTripItemsFromSummary(summary);
       },
@@ -288,7 +297,6 @@ export class Bookingsv2Component implements OnInit {
       },
     });
   }
-
 
   // Método ACTUALIZADO para los datos de elementos del viaje
   updateTripItemsData(reservation: IReservationResponse): void {
@@ -311,7 +319,7 @@ export class Bookingsv2Component implements OnInit {
       this.tripItems = [];
 
       // Agregar cada item del resumen
-      summary.items.forEach(item => {
+      summary.items.forEach((item) => {
         this.tripItems.push({
           quantity: item.quantity,
           unitPrice: item.amount,
@@ -326,12 +334,16 @@ export class Bookingsv2Component implements OnInit {
   updateBasicBookingData(reservation: IReservationResponse): void {
     this.bookingData = {
       title: 'Cargando...', // Temporal mientras cargamos el nombre real
-      date: reservation.reservedAt ? new Date(reservation.reservedAt).toLocaleDateString() : 'Fecha no disponible',
+      date: reservation.reservedAt
+        ? new Date(reservation.reservedAt).toLocaleDateString()
+        : 'Fecha no disponible',
       bookingCode: reservation.id.toString() || reservation.tkId,
-      bookingReference: reservation.tkId || "",
+      bookingReference: reservation.tkId || '',
       status: this.getStatusText(reservation.reservationStatusId),
       retailer: 'Cargando...', // Temporal mientras cargamos el nombre real
-      creationDate: reservation.createdAt ? new Date(reservation.createdAt).toLocaleDateString() : '',
+      creationDate: reservation.createdAt
+        ? new Date(reservation.createdAt).toLocaleDateString()
+        : '',
       price: reservation.totalAmount,
     };
 
@@ -359,7 +371,7 @@ export class Bookingsv2Component implements OnInit {
       next: (tour) => {
         // Actualizar el título del tour
         this.bookingData.title = tour.name || `Tour ${tourId}`;
-        
+
         // Actualizar el nombre del tour en bookingImages
         if (this.bookingImages.length > 0) {
           this.bookingImages[0].name = tour.name || `Tour ${tourId}`;
@@ -400,13 +412,13 @@ export class Bookingsv2Component implements OnInit {
   private loadRetailerData(retailerId: number): void {
     this.retailerService.getRetailerById(retailerId).subscribe({
       next: (retailer) => {
-        
         // Actualizar el nombre del retailer
         this.bookingData.retailer = retailer.name || `Retailer ${retailerId}`;
-        
+
         // Actualizar el retailer en bookingImages
         if (this.bookingImages.length > 0) {
-          this.bookingImages[0].retailer = retailer.name || `Retailer ${retailerId}`;
+          this.bookingImages[0].retailer =
+            retailer.name || `Retailer ${retailerId}`;
         }
       },
       error: (error) => {
@@ -423,12 +435,11 @@ export class Bookingsv2Component implements OnInit {
   private loadDepartureData(departureId: number): void {
     this.departureService.getById(departureId).subscribe({
       next: (departure) => {
-        
         // Actualizar la fecha de salida en bookingData
         if (departure.departureDate) {
           this.bookingData.date = departure.departureDate;
         }
-        
+
         // Actualizar la fecha de salida en bookingImages
         if (this.bookingImages.length > 0 && departure.departureDate) {
           this.bookingImages[0].departureDate = departure.departureDate;
@@ -451,14 +462,17 @@ export class Bookingsv2Component implements OnInit {
         tourName: 'Cargando...',
         imageUrl: 'https://picsum.photos/400/200', // Imagen temporal
         retailer: 'Cargando...',
-        creationDate: reservation.createdAt ? new Date(reservation.createdAt).toLocaleDateString() : '',
-        departureDate: reservation.reservedAt ? new Date(reservation.reservedAt).toLocaleDateString() : '',
+        creationDate: reservation.createdAt
+          ? new Date(reservation.createdAt).toLocaleDateString()
+          : '',
+        departureDate: reservation.reservedAt
+          ? new Date(reservation.reservedAt).toLocaleDateString()
+          : '',
         passengers: reservation.totalPassengers,
         price: reservation.totalAmount,
       };
     }
   }
-
 
   // Actualizar información de pagos
   updatePaymentInfo(reservation: IReservationResponse): void {
@@ -498,7 +512,6 @@ export class Bookingsv2Component implements OnInit {
       });
     }
   }
-
 
   // Método addActivity adaptado para trabajar con el componente hijo
   addActivity(activityId: string): void {

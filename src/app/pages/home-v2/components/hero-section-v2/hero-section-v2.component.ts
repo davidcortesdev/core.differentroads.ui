@@ -266,7 +266,7 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
 
   /**
    * Aplicar preset de días desde la fecha de ida
-   * @param days Número de días a sumar
+   * @param days Número de días a sumar/restar
    */
   applyDatePreset(days: number): void {
     if (this.departureDate) {
@@ -280,13 +280,20 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
   }
 
   /**
-   * Aplicar preset "Hoy" - selecciona hoy como fecha de ida
+   * Aplicar preset de días desde hoy
+   * @param days Número de días a sumar/restar desde hoy
    */
-  applyTodayPreset(): void {
+  applyPresetFromToday(days: number): void {
     const today = new Date();
-    this.rangeDates = [today];
-    this.departureDate = today;
-    this.returnDate = null;
+    const departure = new Date(today);
+    departure.setDate(today.getDate() + days);
+    
+    const returnDate = new Date(departure);
+    returnDate.setDate(departure.getDate() + Math.abs(days));
+    
+    this.rangeDates = [departure, returnDate];
+    this.departureDate = departure;
+    this.returnDate = returnDate;
   }
 
   /**

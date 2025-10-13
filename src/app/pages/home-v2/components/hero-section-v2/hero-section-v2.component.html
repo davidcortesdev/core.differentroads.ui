@@ -57,23 +57,22 @@
             (onSelect)="onRangeSelect($event)"
             appendTo="body"
             styleClass="range-datepicker"
-            dateFormat="dd/mm/yy"
           >
-            <ng-template #buttonbar>
+            <!-- Template personalizado para la barra de botones -->
+            <ng-template #buttonbar let-clickCallBack="clickCallBack">
               <div class="date-presets">
                 <button 
                   type="button" 
                   class="preset-btn" 
                   *ngFor="let preset of datePresets"
                   (click)="applyDatePreset(preset.value)"
-                  [disabled]="!departureDate"
                 >
                   {{ preset.label }}
                 </button>
                 <button 
                   type="button" 
                   class="preset-btn today-btn"
-                  (click)="applyTodayPreset()"
+                  (click)="applyPresetFromToday(0)"
                 >
                   Hoy
                 </button>

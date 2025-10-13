@@ -5,11 +5,13 @@ $azul: var(--background-azul);
     @content;
   }
 }
+
 @mixin tablet {
   @media (max-width: 768px) {
     @content;
   }
 }
+
 @mixin desktop {
   @media (min-width: 769px) {
     @content;
@@ -32,9 +34,11 @@ $azul: var(--background-azul);
   @include mobile {
     font-size: $mobile;
   }
+
   @include tablet {
     font-size: $tablet;
   }
+
   @include desktop {
     font-size: $desktop;
   }
@@ -44,9 +48,11 @@ $azul: var(--background-azul);
   @include mobile {
     margin-top: $mobile;
   }
+
   @include tablet {
     margin-top: $tablet;
   }
+
   @include desktop {
     margin-top: $desktop;
   }
@@ -91,9 +97,11 @@ $azul: var(--background-azul);
   @include mobile {
     padding: 0 0.5rem;
   }
+
   @include tablet {
     padding: 0 1rem;
   }
+
   @include desktop {
     padding: 0;
   }
@@ -105,9 +113,11 @@ $azul: var(--background-azul);
     @include mobile {
       margin: 1rem 0 2rem;
     }
+
     @include tablet {
       margin: 1.25rem 0 2.25rem;
     }
+
     @include desktop {
       margin: 1rem 0 2.5rem;
     }
@@ -228,28 +238,16 @@ $azul: var(--background-azul);
       }
     }
 
-    .option-price,
-    .scalapay-logo {
+    .option-price {
       margin-left: auto;
       flex-shrink: 0;
-      @include mobile {
-        margin-left: 0;
-      }
-    }
-
-    .option-price {
       font-weight: bold;
       font-size: 1.125rem;
       white-space: nowrap;
-      @include mobile {
-        font-size: 0.95rem;
-      }
-    }
 
-    .scalapay-logo {
-      height: 24px;
       @include mobile {
-        height: 20px;
+        margin-left: 0;
+        font-size: 0.95rem;
       }
     }
 
@@ -273,13 +271,11 @@ $azul: var(--background-azul);
     }
   }
 
-  .payment-methods-section,
-  .installments-section {
+  .payment-methods-section {
     @include responsive-margin(2.5rem, 2.25rem, 2rem);
   }
 
-  .payment-methods-row,
-  .installment-panels-row {
+  .payment-methods-row {
     display: flex;
     gap: 1rem;
     margin-top: 1rem;
@@ -294,8 +290,7 @@ $azul: var(--background-azul);
     }
   }
 
-  .payment-method-container,
-  .installment-panel-container {
+  .payment-method-container {
     flex: 1;
     height: 100%;
   }
@@ -309,13 +304,6 @@ $azul: var(--background-azul);
     }
   }
 
-  .installment-content {
-    margin-left: 1rem;
-    @include mobile {
-      margin-left: 0.5rem;
-    }
-  }
-
   .scalapay-widget-container {
     text-align: center;
     font-size: 14px;
@@ -325,6 +313,7 @@ $azul: var(--background-azul);
     .info-container p.installment-info {
       display: none !important;
     }
+
     img.logo {
       max-width: 120px !important;
       margin: 0 auto;
@@ -476,10 +465,12 @@ $azul: var(--background-azul);
     margin-top: 2.5rem;
     margin-bottom: 3.5rem;
   }
+
   @include tablet {
     margin-top: 2.25rem;
     margin-bottom: 3.25rem;
   }
+
   @include desktop {
     margin-top: 2rem;
     margin-bottom: 3rem;
@@ -494,9 +485,11 @@ $azul: var(--background-azul);
     @include mobile {
       padding: 1rem;
     }
+
     @include tablet {
       padding: 1.25rem;
     }
+
     @include desktop {
       padding: 1.5rem;
     }
@@ -510,9 +503,11 @@ $azul: var(--background-azul);
       @include mobile {
         font-size: 0.9rem;
       }
+
       @include tablet {
         font-size: 0.92rem;
       }
+
       @include desktop {
         font-size: 0.95rem;
       }
@@ -532,10 +527,12 @@ $azul: var(--background-azul);
         font-size: 0.9rem;
         padding: 0.6rem;
       }
+
       @include tablet {
         font-size: 0.92rem;
         padding: 0.65rem;
       }
+
       @include desktop {
         font-size: 0.95rem;
         padding: 0.75rem;

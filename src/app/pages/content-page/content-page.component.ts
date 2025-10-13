@@ -1,14 +1,10 @@
 import { Component, OnDestroy, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
-import { CollectionsService } from '../../core/services/collections.service';
 import { LandingsService } from '../../core/services/landings.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { BlogsService } from '../../core/services/blogs.service';
 import { PressService } from '../../core/services/press.service';
-import { Blog } from '../../core/models/blogs/blog.model';
 import { filter, Observable, Subject, takeUntil } from 'rxjs';
 import { Press } from '../../core/models/press/press.model';
-import { Collection } from '../../core/models/collections/collection.model';
 import { Landing } from '../../core/models/landings/landing.model';
 import { Title, Meta } from '@angular/platform-browser';
 
@@ -74,8 +70,6 @@ export class ContentPageComponent implements OnInit, OnChanges, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private landingsService: LandingsService,
-    private collectionsService: CollectionsService,
-    private blogService: BlogsService,
     private pressService: PressService,
     private sanitizer: DomSanitizer,
     private titleService: Title,
@@ -230,32 +224,7 @@ export class ContentPageComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   private fetchCollectionData(): void {
-    this.collectionsService
-      .getCollectionBySlug(this.slug)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (data: Collection) => {
-          this.blocks = data.blocks || ['collection'];
-          this.bannerImage = data.banner[0]?.url || '';
-          this.bannerImageAlt = data.banner[0]?.alt || '';
-          this.bannerTitle = data.bannerTitle || '';
-          this.bannerSubtitle = '';
-          this.bannerDescription = data.content || '';
-          this.contentTitle = data.titleContent || '';
-          this.contentDescription = data.description || '';
-          this.updatePageTitle(data.title);
-
-          this.extractCollectionTags(data);
-
-          if (this.collectionTags.length > 0) {
-            this.showTours = true;
-            this.isTagBasedCollection = true;
-          }
-        },
-        error: (error: any) => {
-          console.error('Error fetching collection data:', error);
-        },
-      });
+    //TODO: Pendiente de desarrollar proximamente
   }
 
   private fetchPressData(): void {
@@ -279,23 +248,8 @@ export class ContentPageComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   private fetchBlogData(): void {
-    this.blogService
-      .getBlogBySlug(this.slug)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (data: Blog) => {
-          this.bannerTitle = data.title || '';
-          this.bannerSubtitle = data.subtitle || '';
-          this.bannerDescription = data.content || '';
-          this.blocks = data.blocks || [];
-          this.contentTitle = data.title || '';
-          this.contentDescription = data.content || '';
-          this.updatePageTitle(data.title);
-        },
-        error: (error: any) => {
-          console.error('Error fetching blog data:', error);
-        },
-      });
+    //TODO: Pendiente de desarrollar proximamente
+
   }
 
   private extractCollectionTags(data: any): void {

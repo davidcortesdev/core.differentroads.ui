@@ -94,9 +94,6 @@ export class SignUpFormComponent {
   signInWithGoogle(): void {
     this.isLoading = true;
     this.authService.handleGoogleSignIn().then(() => {
-      // Disparar evento sign_up para Google
-      this.trackSignUp('google');
-      
       this.isLoading = false;
     }).catch((error) => {
       this.isLoading = false;
@@ -152,9 +149,6 @@ export class SignUpFormComponent {
                   next: (user) => {
                     console.log('Usuario creado exitosamente:', user);
                     
-                    // Disparar evento sign_up
-                    this.trackSignUp('manual');
-                    
                     this.isLoading = false;
                     this.isConfirming = true;
                     this.registeredUsername = this.signUpForm.value.email;
@@ -185,8 +179,8 @@ export class SignUpFormComponent {
     this.isRedirecting = true;
     this.successMessage = 'Verificación exitosa. Redirigiendo al inicio de sesión...';
     
-    // Disparar evento sign_up para confirmación exitosa
-    this.trackSignUp('manual');
+    // Disparar evento sign_up para confirmación exitosa con datos completos
+    this.trackSignUpWithCompleteData('manual');
     
     setTimeout(() => {
       this.router.navigate(['/login']);
@@ -230,5 +224,29 @@ export class SignUpFormComponent {
         undefined // No tenemos Cognito ID aún en este punto
       )
     );
+  }
+
+  /**
+   * Disparar evento sign_up con datos completos después de verificación exitosa
+   */
+  private trackSignUpWithCompleteData(method: string): void {
+    // Obtener datos completos del usuario después de la verificación
+    this.analyticsService.getCurrentUserData().subscribe({
+      next: (userData) => {
+        this.analyticsService.signUp(method, userData);
+      },
+      error: (error) => {
+        console.error('Error obteniendo datos de usuario para analytics:', error);
+        // Fallback con datos del formulario
+        this.analyticsService.signUp(
+          method,
+          this.analyticsService.getUserData(
+            this.signUpForm.value.email,
+            this.signUpForm.value.phone,
+            undefined
+          )
+        );
+      }
+    });
   }
 }

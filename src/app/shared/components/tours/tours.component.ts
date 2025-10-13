@@ -251,7 +251,7 @@ export class ToursComponent implements OnInit, OnChanges {
    */
   private trackViewItemList(tours: any[]): void {
     const items: EcommerceItem[] = tours.map((tour, index) => ({
-      item_id: tour.externalID?.toString() || tour.id?.toString() || '',
+      item_id: tour.id?.toString() || tour.externalID?.toString() || '',
       item_name: tour.name || '',
       coupon: '',
       discount: 0,

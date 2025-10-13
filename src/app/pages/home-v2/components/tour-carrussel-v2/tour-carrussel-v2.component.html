@@ -9,12 +9,15 @@
     [showNavigators]="false"
     [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
   >
-    <ng-template let-tour #item>
-      <app-tour-card-v2
-        [tourData]="tour"
-        [showScalapayPrice]="true"
-        [isLargeCard]="true"
-      ></app-tour-card-v2>
-    </ng-template>
+            <ng-template let-tour #item>
+              <app-tour-card-v2
+                [tourData]="tour"
+                [showScalapayPrice]="true"
+                [isLargeCard]="true"
+                [itemListId]="configurationId?.toString() || 'home_carousel'"
+                [itemListName]="title || 'Carrusel de tours'"
+                [index]="tours.indexOf(tour)"
+              ></app-tour-card-v2>
+            </ng-template>
   </p-carousel>
 </section>

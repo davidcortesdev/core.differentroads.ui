@@ -11,6 +11,7 @@ import {
 import { Subject, forkJoin, of } from 'rxjs';
 import { takeUntil, switchMap, catchError } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
+import { AnalyticsService } from '../../../../core/services/analytics.service';
 
 // Importar la interface del selector
 import { SelectedDepartureEvent } from '../tour-itinerary-v2/components/selector-itinerary/selector-itinerary.component';
@@ -81,6 +82,7 @@ interface AllowedPassengerTypes {
 })
 export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   @Input() tourId: number | undefined;
+  @Input() tourData: any = null; // Datos completos del tour para analytics
   @Input() selectedDepartureEvent: SelectedDepartureEvent | null = null;
   @Input() preview: boolean = false;
   @Output() priceUpdate = new EventEmitter<number>();
@@ -173,7 +175,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     private tourAgeGroupsService: TourAgeGroupsService,
     private ageGroupService: AgeGroupService,
     private tourDeparturesPricesService: TourDeparturesPricesService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private analyticsService: AnalyticsService
   ) {
     this.updatePassengerText();
 
@@ -312,6 +315,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           }
 
           this.citiesLoading = false;
+          
+          // Después de cargar ciudades, intentar cargar departures
+          this.loadAllDeparturesForTour();
         },
         error: (error) => {
           console.error('Error cargando ciudades:', error);
@@ -370,7 +376,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
               children: true,
               babies: true,
             };
-            console.log('⚠️',this.tourAgeGroups)
             return of([]);
           }
 

@@ -1,40 +1,13 @@
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  ElementRef,
-  Renderer2,
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, Renderer2 } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { LanguageService } from '../../core/services/language.service';
 import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 import { AuthenticateService } from '../../core/services/auth-service.service';
 import { UsersNetService } from '../../core/services/usersNet.service';
-import {
-  MenuItemService,
-  IMenuItemResponse,
-} from '../../core/services/menu/menu-item.service';
-import {
-  TourLocationService,
-  CountryWithToursResponse,
-} from '../../core/services/tour/tour-location.service';
-import {
-  LocationNetService,
-  Location,
-} from '../../core/services/locations/locationNet.service';
-import { TourTagService } from '../../core/services/tag/tour-tag.service';
-
-import {
-  Subject,
-  takeUntil,
-  finalize,
-  filter,
-  debounceTime,
-  distinctUntilChanged,
-  switchMap,
-  of,
-  forkJoin,
-} from 'rxjs';
+import { MenuItemService, IMenuItemResponse } from '../../core/services/menu/menu-item.service';
+import { TourLocationService, CountryWithToursResponse } from '../../core/services/tour/tour-location.service';
+import { LocationNetService, Location } from '../../core/services/locations/locationNet.service';
+import { Subject, takeUntil, finalize, filter, debounceTime, distinctUntilChanged, switchMap, of, timeout } from 'rxjs';
 import { Router } from '@angular/router';
 import { AnalyticsService } from '../../core/services/analytics.service';
 
@@ -71,6 +44,8 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   readonly chipIcon = 'pi pi-user';
   chipImage = '';
   readonly chipAlt = 'Avatar image';
+  currentUserId: string = ''; // Almacenar el userId real del usuario
+  currentUserName: string = ''; // Almacenar el nombre del usuario
 
   constructor(
     private languageService: LanguageService,
@@ -79,7 +54,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
     private menuItemService: MenuItemService,
     private tourLocationService: TourLocationService,
     private locationNetService: LocationNetService,
-    private tourTagService: TourTagService,
     private elementRef: ElementRef,
     private renderer: Renderer2,
     private router: Router,
@@ -118,6 +92,9 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   }
 
   // Métodos públicos
+  /**
+   * Filtra las opciones de idioma según la consulta del usuario
+   */
   filterLanguages(event: AutoCompleteCompleteEvent): void {
     const query = event.query.toUpperCase();
     this.filteredLanguages = this.languages.filter((lang) =>
@@ -125,26 +102,29 @@ export class HeaderV2Component implements OnInit, OnDestroy {
     );
   }
 
+  /**
+   * Cambia el idioma de la aplicación
+   */
   onLanguageChange(lang: string): void {
     if (typeof lang === 'string') {
       this.languageService.setLanguage(lang.toLowerCase());
     }
   }
 
+  /**
+   * Maneja el click en el chip de usuario (login si no está autenticado)
+   */
   onChipClick(): void {
     if (!this.isLoggedIn) {
       this.authService.navigateToLogin();
     }
-    // Si está autenticado, la lógica para mostrar el menú se maneja en el template
   }
 
-  // Método para cerrar todos los menús móviles
+  /**
+   * Cierra todos los menús móviles activos
+   */
   public closeAllMobileMenus(): void {
-    // Find all mobile active menus and remove the active class
-    const mobileActiveMenus = document.querySelectorAll(
-      '.p-menubar-mobile-active'
-    );
-    mobileActiveMenus.forEach((menu) => {
+    document.querySelectorAll('.p-menubar-mobile-active').forEach((menu) => {
       menu.classList.remove('p-menubar-mobile-active');
     });
   }
@@ -156,14 +136,20 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   }
 
   // Métodos privados
+  /**
+   * Verifica si hay una redirección de autenticación pendiente
+   */
   private async checkAuthRedirect(): Promise<void> {
     try {
       await this.authService.handleAuthRedirect();
     } catch (error) {
-      // Error handling - could be logged to a service in production
+      // Error handling
     }
   }
 
+  /**
+   * Inicializa el idioma actual de la aplicación
+   */
   private initializeLanguage(): void {
     this.languageService
       .getCurrentLang()
@@ -171,38 +157,45 @@ export class HeaderV2Component implements OnInit, OnDestroy {
       .subscribe((lang) => (this.selectedLanguage = lang.toUpperCase()));
   }
 
+  /**
+   * Inicializa la configuración del menú
+   */
   private initializeMenu(): void {
     this.fetchMenuConfig();
   }
 
+  /**
+   * Configura el listener para cerrar menús al hacer click fuera del header
+   */
   private initializeClickOutside(): void {
-    // Only add listener in mobile view
+    if (this.documentClickListener) {
+      this.documentClickListener();
+      this.documentClickListener = null;
+    }
+
     if (this.isMobileView) {
       this.documentClickListener = this.renderer.listen(
         'document',
         'click',
         (event) => {
-          // Check if click is outside the header element
           if (!this.elementRef.nativeElement.contains(event.target)) {
             this.closeAllMobileMenus();
           }
         }
       );
-    } else if (this.documentClickListener) {
-      // Remove listener if not in mobile view
-      this.documentClickListener();
-      this.documentClickListener = null;
     }
   }
 
+  /**
+   * Inicializa el menú de usuario y observa cambios de autenticación
+   */
   private initializeUserMenu(): void {
-    // Observa el estado de autenticación y actualiza la UI cuando cambie
     this.authService
       .isLoggedIn()
       .pipe(
         takeUntil(this.destroy$),
-        debounceTime(300), // Evitar cambios demasiado rápidos
-        distinctUntilChanged() // Solo procesar cuando realmente cambie
+        debounceTime(300),
+        distinctUntilChanged()
       )
       .subscribe((isLoggedIn) => {
         this.isLoggedIn = isLoggedIn;
@@ -215,7 +208,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
         }
       });
 
-    // Observar cambios en atributos del usuario
     this.authService.userAttributesChanged
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
@@ -225,6 +217,9 @@ export class HeaderV2Component implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Resetea el menú de usuario al estado de no autenticado
+   */
   private resetUserMenu(): void {
     this.chipLabel = 'Iniciar Sesión';
     this.chipImage = '';
@@ -236,10 +231,12 @@ export class HeaderV2Component implements OnInit, OnDestroy {
     ];
   }
 
+  /**
+   * Obtiene la configuración del menú desde el servicio
+   */
   private fetchMenuConfig(): void {
     this.isLoadingMenu = true;
 
-    // Obtener todos los elementos de menú activos sin importar el tipo
     this.menuItemService
       .getAll({ isActive: true })
       .pipe(
@@ -248,7 +245,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (menuItems: IMenuItemResponse[]) => {
-          // Procesar los elementos de menú y crear el menú unificado
           this.processMenuItems([menuItems]);
         },
         error: (error) => {
@@ -257,37 +253,29 @@ export class HeaderV2Component implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Procesa los elementos del menú y los ordena por prioridad
+   */
   private processMenuItems(menuItemsArrays: IMenuItemResponse[][]): void {
-    // Combinar todos los elementos de menú en un solo array
     const allMenuItems = menuItemsArrays.flat();
-
-    // Ordenar todos los elementos por el campo orden
     const sortedAllItems = allMenuItems.sort((a, b) => a.orden - b.orden);
-
-    // Crear un solo menú con todos los elementos ordenados
     const singleMenuItems = this.mapMenuItemResponseToPrimeNG(sortedAllItems);
 
-    // Asignar el mismo menú a todas las propiedades para mantener compatibilidad
     this.leftMenuItems = singleMenuItems;
     this.rightMenuItems = [];
     this.combinedMenuItems = singleMenuItems;
 
-    // Ahora que los menús están cargados, obtener países para los continentes
     this.loadContinentsFromLeftMenu();
   }
 
-  private loadCountriesWithTours(): void {
-    // Solo procesar continentes del menú izquierdo
-    this.loadContinentsFromLeftMenu();
-  }
-
+  /**
+   * Carga los países para cada continente del menú izquierdo
+   */
   private loadContinentsFromLeftMenu(): void {
-    // Usar los IDs de los elementos del menú izquierdo directamente
     if (this.leftMenuItems && this.leftMenuItems.length > 0) {
       this.leftMenuItems.forEach((menuItem, index) => {
         const continentId = (menuItem as any).id as string;
 
-        // Verificar que el ID existe
         if (!continentId) {
           return;
         }
@@ -297,22 +285,22 @@ export class HeaderV2Component implements OnInit, OnDestroy {
           .pipe(takeUntil(this.destroy$))
           .subscribe({
             next: (countries: CountryWithToursResponse[]) => {
-              // Extraer countryIds para este continente
               const countryIds = countries.map(
                 (country) => (country as any).countryId
               );
-
-              // Obtener nombres de países usando los countryIds
               this.loadCountryNames(countryIds, parseInt(continentId));
             },
             error: (error: any) => {
-              // Error handling - could be logged to a service in production
+              // Error handling
             },
           });
       });
     }
   }
 
+  /**
+   * Carga los nombres de países por sus IDs y los agrupa por continente
+   */
   private loadCountryNames(countryIds: number[], continentId?: number): void {
     if (countryIds.length === 0) {
       return;
@@ -321,7 +309,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
     countryIds.forEach((countryId, index) => {
       this.locationNetService.getLocationById(countryId).subscribe({
         next: (location) => {
-          // Almacenar país para el continente
           if (continentId && !this.countriesByContinent[continentId]) {
             this.countriesByContinent[continentId] = [];
           }
@@ -329,124 +316,100 @@ export class HeaderV2Component implements OnInit, OnDestroy {
             this.countriesByContinent[continentId].push(location);
           }
 
-          // Actualizar menús cuando se complete la carga
           if (index === countryIds.length - 1) {
             this.updateMenusWithCountries();
           }
         },
         error: (error) => {
-          // Error handling - could be logged to a service in production
+          // Error handling
         },
       });
     });
   }
 
+  /**
+   * Actualiza los menús con la información de países cargada
+   */
   private updateMenusWithCountries(): void {
-    // Verificar si tenemos países cargados
     const hasCountries = Object.keys(this.countriesByContinent).length > 0;
 
     if (!hasCountries) {
       return;
     }
 
-    // Actualizar menú único (continentes) con países como submenús
     if (this.leftMenuItems && this.leftMenuItems.length > 0) {
       this.leftMenuItems = this.leftMenuItems.map((menuItem) => {
-        // Usar directamente el ID del menú como continentId
         const continentId = (menuItem as any).id;
 
         if (continentId && this.countriesByContinent[parseInt(continentId)]) {
           const countries = this.countriesByContinent[parseInt(continentId)];
 
-          const updatedMenuItem = {
+          return {
             ...menuItem,
             items: countries.map((country: Location) => ({
               label: country.name,
               command: () => {
-                // Disparar evento menu_interaction para submenús
                 this.onMenuInteraction(country.name);
-                
                 this.router.navigate([`/tours/${country.code.toLowerCase()}`]);
               },
             })),
           };
-
-          return updatedMenuItem;
         }
 
         return menuItem;
       });
     }
 
-    // Actualizar menú combinado para móvil (ahora es el mismo que el menú principal)
     this.combinedMenuItems = this.leftMenuItems;
   }
 
-  private findContinentIdByName(continentName: string): number | null {
-    // Buscar el continentId basado en el nombre del continente desde los datos de la API
-    for (const [continentId, countries] of Object.entries(
-      this.countriesByContinent
-    )) {
-      if (countries.length > 0) {
-        // Usar el continentName del primer país como referencia
-        const firstCountry = countries[0];
-        if (
-          firstCountry &&
-          (firstCountry as any).continentName === continentName
-        ) {
-          return parseInt(continentId);
-        }
-      }
-    }
 
-    return null;
-  }
-
+  /**
+   * Convierte los elementos del menú de la API al formato de PrimeNG
+   */
   private mapMenuItemResponseToPrimeNG(
     menuItems: IMenuItemResponse[]
   ): MenuItem[] {
     return menuItems.map((item) => ({
       label: item.name,
-      // Preservar el ID original para las URLs
       id: item.id.toString(),
-      // No agregar routerLink aquí para permitir submenús
       command: () => {
-        // Disparar evento menu_interaction
         this.onMenuInteraction(item.name);
-        
         this.navigateToSlug(item.slugContenido);
       },
     }));
   }
 
+  /**
+   * Crea una ruta a partir de un slug
+   */
   private createRouteFromSlug(slug: string): string {
-    // Crear ruta basada en el slug
-    // Esto puede necesitar ajustes según la estructura de rutas de tu aplicación
     return `/${slug}`;
   }
 
+  /**
+   * Configura el manejo de menús responsivos
+   */
   private handleResponsiveMenus(): void {
-    // Initial check on component initialization
     this.checkScreenSize();
-
-    // Usar bind para mantener el contexto this
-    const boundCheckScreenSize = this.checkScreenSize.bind(this);
-
-    // Agregar listener con referencia a función vinculada
-    window.addEventListener('resize', boundCheckScreenSize);
+    window.addEventListener('resize', this.checkScreenSize.bind(this));
   }
 
+  /**
+   * Verifica el tamaño de pantalla y ajusta la vista móvil
+   */
   private checkScreenSize(): void {
-    // Set mobile view flag based on screen width (tablet breakpoint)
     const wasMobileView = this.isMobileView;
-    this.isMobileView = window.innerWidth <= 992; // Same as $tablet-breakpoint
+    this.isMobileView = window.innerWidth <= 992;
 
-    // If mobile view status changed, update click outside listener
     if (wasMobileView !== this.isMobileView) {
       this.initializeClickOutside();
     }
   }
 
+  /**
+   * Pobla el menú de usuario con datos del usuario autenticado
+   */
   populateUserMenu(): void {
     if (this.isLoadingUser) {
       return;
@@ -457,29 +420,18 @@ export class HeaderV2Component implements OnInit, OnDestroy {
       .pipe(
         takeUntil(this.destroy$),
         filter((email) => !!email),
-        debounceTime(300)
+        debounceTime(100)
       )
       .subscribe((email) => {
         this.isLoadingUser = true;
         this.chipLabel = 'Cargando...';
 
-        // Combinar email y Cognito ID en un solo flujo
-        this.authService
-          .getCognitoId()
+        // Obtener usuario por email directamente
+        this.usersNetService
+          .getUsersByEmail(email)
           .pipe(
             takeUntil(this.destroy$),
-            switchMap((cognitoId: string) => {
-              if (cognitoId) {
-                return this.usersNetService.getUsersByCognitoId(cognitoId);
-              } else {
-                // Si no hay Cognito ID, mostrar solo el email
-                this.chipLabel = `Hola, ${email}`;
-                this.setUserMenuItems();
-                this.isLoadingUser = false;
-                this.showUserInfo = true;
-                return of([]);
-              }
-            }),
+            timeout(5000), // Timeout de 5 segundos
             finalize(() => {
               this.isLoadingUser = false;
               this.showUserInfo = true;
@@ -489,21 +441,19 @@ export class HeaderV2Component implements OnInit, OnDestroy {
             next: (users: any[]) => {
               if (users && users.length > 0) {
                 const user = users[0];
-                const displayName = user?.name || email;
-
+                const displayName = user?.name && user?.lastName 
+                  ? `${user.name} ${user.lastName}`.trim()
+                  : user?.name || email;
+                
+                this.currentUserId = user?.id || '';
                 this.chipLabel = `Hola, ${displayName}`;
-                this.chipImage = ''; // El nuevo modelo no tiene profileImage
+                this.chipImage = '';
                 this.setUserMenuItems();
-
-                // Asegurar que el estado se actualice correctamente
                 this.isLoadingUser = false;
                 this.showUserInfo = true;
               } else {
-                // Si no se encuentra el usuario, mostrar solo el email
                 this.chipLabel = `Hola, ${email}`;
                 this.setUserMenuItems();
-
-                // Asegurar que el estado se actualice correctamente
                 this.isLoadingUser = false;
                 this.showUserInfo = true;
               }
@@ -511,8 +461,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
             error: (error: any) => {
               this.chipLabel = `Hola, ${email}`;
               this.setUserMenuItems();
-
-              // Asegurar que el estado se actualice correctamente
               this.isLoadingUser = false;
               this.showUserInfo = true;
             },
@@ -528,27 +476,7 @@ export class HeaderV2Component implements OnInit, OnDestroy {
       {
         label: 'Ver Perfil',
         icon: 'pi pi-user',
-        command: () => {
-          // Obtener el userId real del usuario, no el cognitoId
-          this.authService.getCognitoId().pipe(
-            takeUntil(this.destroy$),
-            switchMap((cognitoId: string) => {
-              if (cognitoId) {
-                return this.usersNetService.getUsersByCognitoId(cognitoId);
-              } else {
-                return of([]);
-              }
-            })
-          ).subscribe((users: any[]) => {
-            if (users && users.length > 0) {
-              const user = users[0];
-              const userId = user?.id; // Usar el ID real del usuario, no el cognitoId
-              if (userId) {
-                this.authService.navigateToProfile(userId);
-              }
-            }
-          });
-        },
+        command: () => this.navigateToUserProfile(),
       },
       {
         label: 'Desconectar',
@@ -558,22 +486,59 @@ export class HeaderV2Component implements OnInit, OnDestroy {
     ];
   }
 
+  /**
+   * Navega al perfil del usuario usando su ID real de la base de datos
+   */
+  private navigateToUserProfile(): void {
+    this.authService.getUserEmail().pipe(
+      takeUntil(this.destroy$),
+      switchMap((email: string) => {
+        if (email) {
+          return this.usersNetService.getUsersByEmail(email);
+        } else {
+          return of([]);
+        }
+      })
+    ).subscribe({
+      next: (users: any[]) => {
+        if (users && users.length > 0) {
+          const user = users[0];
+          const userId = user?.id;
+          
+          this.currentUserId = userId || '';
+          this.currentUserName = user?.name || '';
+          
+          if (userId) {
+            this.router.navigate(['/profile-v2', userId]);
+          }
+        } else {
+          const cognitoId = this.authService.getCognitoIdValue();
+          if (cognitoId) {
+            this.router.navigate(['/profile-v2', cognitoId]);
+          }
+        }
+      },
+      error: (error) => {
+        const cognitoId = this.authService.getCognitoIdValue();
+        if (cognitoId) {
+          this.router.navigate(['/profile-v2', cognitoId]);
+        }
+      }
+    });
+  }
+
+  /**
+   * Navega a una ruta usando un slug
+   */
   private navigateToSlug(slug: string): void {
     const route = this.createRouteFromSlug(slug);
     if (route) {
-      this.router
-        .navigate([route])
-        .then(() => {
-          // Navigation successful
-        })
-        .catch((error) => {
-          // Navigation error handling
-        });
+      this.router.navigate([route]);
     }
   }
 
   /**
-   * Disparar evento menu_interaction cuando el usuario hace clic en elementos del menú
+   * Registra la interacción del usuario con elementos del menú para analytics
    */
   onMenuInteraction(clickElement: string): void {
     this.analyticsService.getCurrentUserData().subscribe({
@@ -589,7 +554,7 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   }
 
   /**
-   * Disparar evento click_logo cuando el usuario hace clic en el logo
+   * Registra el click en el logo para analytics
    */
   onLogoClick(): void {
     this.analyticsService.getCurrentUserData().subscribe({
@@ -605,13 +570,13 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   }
 
   /**
-   * Obtener datos del usuario para analytics
+   * Obtiene los datos del usuario para analytics
    */
   private getUserData() {
     if (this.authService.isAuthenticatedValue()) {
       return this.analyticsService.getUserData(
         this.authService.getUserEmailValue(),
-        undefined, // No tenemos teléfono en el header
+        undefined,
         this.authService.getCognitoIdValue()
       );
     }

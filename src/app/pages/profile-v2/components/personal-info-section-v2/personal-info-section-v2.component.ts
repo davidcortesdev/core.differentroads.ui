@@ -201,8 +201,14 @@ export class PersonalInfoSectionV2Component implements OnInit {
    * Maneja el evento cuando el perfil se actualiza exitosamente
    */
   onProfileUpdated(): void {
-    // No recargar datos desde la API para evitar problemas de caché
-    // Los datos ya están actualizados en el componente
+    // Formatear la fecha de nacimiento para mostrar correctamente
+    if (this.personalInfo.fechaNacimiento) {
+      this.personalInfo.fechaNacimiento = this.personalInfoService.formatDateForDisplay(this.personalInfo.fechaNacimiento);
+    }
+    
+    // Actualizar los datos originales con los nuevos datos formateados
+    this.originalPersonalInfo = { ...this.personalInfo };
+    
     this.isEditing = false;
     this.successMessage = 'Perfil actualizado correctamente';
     

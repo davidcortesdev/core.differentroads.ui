@@ -54,6 +54,15 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
   selectedTripType: string | null = null;
   destinationInput: string | null = null;
 
+  // DatePicker Range properties
+  rangeDates: Date[] = [];
+  datePresets = [
+    { label: '±3 días', value: 3 },
+    { label: '±7 días', value: 7 },
+    { label: '±14 días', value: 14 },
+    { label: '±30 días', value: 30 }
+  ];
+
   filteredDestinations: Country[] = [];
   filteredTripTypes: ITripTypeResponse[] = [];
 
@@ -214,14 +223,17 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
       queryParams.destination = this.destinationInput.trim();
     }
 
-    if (this.departureDate) {
+    // Usar fechas del rango
+    if (this.rangeDates && this.rangeDates.length >= 2) {
+      queryParams.departureDate = this.rangeDates[0].toISOString().split('T')[0];
+      queryParams.returnDate = this.rangeDates[1].toISOString().split('T')[0];
+    } else if (this.departureDate) {
       queryParams.departureDate = this.departureDate
         .toISOString()
         .split('T')[0];
-    }
-
-    if (this.returnDate) {
-      queryParams.returnDate = this.returnDate.toISOString().split('T')[0];
+      if (this.returnDate) {
+        queryParams.returnDate = this.returnDate.toISOString().split('T')[0];
+      }
     }
 
     if (this.selectedTripType) {
@@ -232,6 +244,74 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     this.trackSearch(queryParams);
 
     this.router.navigate(['/tours'], { queryParams });
+  }
+
+  /**
+   * Manejar selección de rango de fechas
+   * @param event Evento del datepicker con array de fechas
+   */
+  onRangeSelect(event: Date[]): void {
+    this.rangeDates = event;
+    if (event && event.length >= 2) {
+      this.departureDate = event[0];
+      this.returnDate = event[1];
+    } else if (event && event.length === 1) {
+      this.departureDate = event[0];
+      this.returnDate = null;
+    } else {
+      this.departureDate = null;
+      this.returnDate = null;
+    }
+  }
+
+  /**
+   * Aplicar preset de días desde la fecha de ida
+   * @param days Número de días a sumar
+   */
+  applyDatePreset(days: number): void {
+    if (this.departureDate) {
+      const departure = new Date(this.departureDate);
+      const returnDate = new Date(departure);
+      returnDate.setDate(departure.getDate() + days);
+      
+      this.rangeDates = [departure, returnDate];
+      this.returnDate = returnDate;
+    }
+  }
+
+  /**
+   * Aplicar preset "Hoy" - selecciona hoy como fecha de ida
+   */
+  applyTodayPreset(): void {
+    const today = new Date();
+    this.rangeDates = [today];
+    this.departureDate = today;
+    this.returnDate = null;
+  }
+
+  /**
+   * Limpiar fechas seleccionadas
+   */
+  clearDates(): void {
+    this.rangeDates = [];
+    this.departureDate = null;
+    this.returnDate = null;
+  }
+
+  /**
+   * Obtener fecha mínima (hoy)
+   */
+  get minDate(): Date {
+    return new Date();
+  }
+
+  /**
+   * Obtener fecha máxima (1 año desde hoy)
+   */
+  get maxDate(): Date {
+    const maxDate = new Date();
+    maxDate.setFullYear(maxDate.getFullYear() + 1);
+    return maxDate;
   }
 
   private setInitialValues(): void {
@@ -246,6 +326,13 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
 
     if (this.initialReturnDate) {
       this.returnDate = new Date(this.initialReturnDate);
+    }
+
+    // Inicializar rangeDates si tenemos fechas iniciales
+    if (this.departureDate && this.returnDate) {
+      this.rangeDates = [this.departureDate, this.returnDate];
+    } else if (this.departureDate) {
+      this.rangeDates = [this.departureDate];
     }
 
     if (this.initialTripType) {

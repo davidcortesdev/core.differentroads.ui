@@ -40,30 +40,54 @@
           <label for="destionationInput" class="label">¿Cuál es tu próximo destino?</label>
         </p-iftalabel>
       </div>
-      <div class="input-sm">
+      <div class="input-range">
         <p-iftaLabel>
           <p-datepicker
-            [(ngModel)]="departureDate"
+            [(ngModel)]="rangeDates"
+            selectionMode="range"
             [showIcon]="false"
-            id="departureDateInput"
+            [numberOfMonths]="2"
+            [showButtonBar]="true"
+            [minDate]="minDate"
+            [maxDate]="maxDate"
+            [readonlyInput]="true"
+            id="rangeDateInput"
             fluid="true"
-            placeholder="DD/MM/AAAA"
+            placeholder="Seleccionar fechas"
+            (onSelect)="onRangeSelect($event)"
+            appendTo="body"
+            styleClass="range-datepicker"
+            dateFormat="dd/mm/yy"
           >
+            <ng-template #buttonbar>
+              <div class="date-presets">
+                <button 
+                  type="button" 
+                  class="preset-btn" 
+                  *ngFor="let preset of datePresets"
+                  (click)="applyDatePreset(preset.value)"
+                  [disabled]="!departureDate"
+                >
+                  {{ preset.label }}
+                </button>
+                <button 
+                  type="button" 
+                  class="preset-btn today-btn"
+                  (click)="applyTodayPreset()"
+                >
+                  Hoy
+                </button>
+                <button 
+                  type="button" 
+                  class="preset-btn clear-btn"
+                  (click)="clearDates()"
+                >
+                  Limpiar
+                </button>
+              </div>
+            </ng-template>
           </p-datepicker>
-          <label for="departureDateInput" class="label">Ida</label>
-        </p-iftaLabel>
-      </div>
-      <div class="input-sm">
-        <p-iftaLabel>
-          <p-datepicker
-            [(ngModel)]="returnDate"
-            [showIcon]="false"
-            id="returnDateInput"
-            fluid="true"
-            placeholder="DD/MM/AAAA"
-          >
-          </p-datepicker>
-          <label for="returnDateInput" class="label">Vuelta</label>
+          <label for="rangeDateInput" class="label">Fechas de viaje</label>
         </p-iftaLabel>
       </div>
       <div class="input-md">

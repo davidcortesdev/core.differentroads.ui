@@ -891,10 +891,10 @@ export class TourHeaderV2Component
 
     const tourData = this.tour as any;
     
-    // Obtener contexto de navegación desde query parameters
-    const queryParams = this.route.snapshot.queryParams;
-    const itemListId = queryParams['listId'] || ''; // Default para página de detalle
-    const itemListName = queryParams['listName'] || ''; // Default para página de detalle
+    // Obtener contexto de navegación desde el state del router (sin modificar URL)
+    const state = window.history.state;
+    const itemListId = state?.['listId'] || '';
+    const itemListName = state?.['listName'] || '';
 
     this.analyticsService.getCurrentUserData().subscribe(userData => {
       this.analyticsService.addToCart(
@@ -1102,10 +1102,10 @@ export class TourHeaderV2Component
             // Disparar evento add_to_cart
             this.trackAddToCart();
 
-            // Obtener contexto de la lista para pasarlo al checkout
-            const queryParams = this.route.snapshot.queryParams;
-            const listId = queryParams['listId'] || '';
-            const listName = queryParams['listName'] || '';
+            // Obtener contexto de la lista desde el state del router
+            const state = window.history.state;
+            const listId = state?.['listId'] || '';
+            const listName = state?.['listName'] || '';
             
             this.router.navigate(['/checkout-v2', reservation.id], {
               queryParams: {

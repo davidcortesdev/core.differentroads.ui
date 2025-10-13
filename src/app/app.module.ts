@@ -27,28 +27,6 @@ import { FooterComponent } from './layout/footer/footer.component';
 import { MainComponent } from './layout/main/main.component';
 import { StandaloneComponent } from './layout/standalone/standalone.component';
 
-// Page Components
-import { HomeComponent } from './pages/home/home.component';
-import { HeroSectionComponent } from './pages/home/components/hero-section/hero-section.component';
-import { ToursSectionComponent } from './pages/home/components/tours-section/tours-section.component';
-import { HighlightSectionComponent } from './pages/home/components/highlight-section/highlight-section.component';
-import { FullCardSectionComponent } from './pages/home/components/full-card-section/full-card-section.component';
-import { CarouselSectionComponent } from './pages/home/components/carousel-section/carousel-section.component';
-
-// Community Components
-import { CommunitySectionComponent } from './pages/home/components/community-section/community-section.component';
-import { CommunityHeroComponent } from './pages/home/components/community-section/components/community-hero/community-hero.component';
-import { CommunityGalleryComponent } from './pages/home/components/community-section/components/community-gallery/community-gallery.component';
-import { CommunityReviewsComponent } from './pages/home/components/community-section/components/community-reviews/community-reviews.component';
-import { NewsLetterSectionComponent } from './pages/home/components/community-section/components/newsletter-section/newsletter-section.component';
-import { PublicitySectionComponent } from './pages/home/components/publicity-section/publicity-section.component';
-
-// Tour List Component
-import { ToursListComponent } from './pages/home/components/tours-list-section/tours-list-section.component';
-
-// Content List
-import { ContentListComponent } from './pages/home/components/content-list/content-list-section.component';
-
 // PrimeNG Configuration
 import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeng/themes/aura';
@@ -78,10 +56,8 @@ import { RippleModule } from 'primeng/ripple';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { DataViewModule } from 'primeng/dataview';
-import { DynamicComponentsComponent } from './pages/home/components/dynamic-components/dynamic-components.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { CommonModule, NgComponentOutlet, DatePipe } from '@angular/common';
-import { PartnersSectionComponent } from './pages/home/components/partners-section/partners-section.component';
 import { TourComponent } from './pages/tour/tour.component';
 import { TourHeaderComponent } from './pages/tour/components/tour-header/tour-header.component';
 import { TourOverviewComponent } from './pages/tour/components/tour-overview/tour-overview.component';
@@ -167,7 +143,6 @@ import { BudgetDialogComponent } from './shared/components/budget-dialog/budget-
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { Amplify } from 'aws-amplify';
 import awsconfig from '../../src/aws-exports';
-import { TripTypesSectionComponent } from './pages/home/components/trip-types-section/trip-types-section.component';
 import { ConfirmationCodeComponent } from './shared/components/confirmation-code/confirmation-code.component';
 import { ScalapayService } from './core/services/checkout/payment/scalapay.service';
 import { PopoverModule } from 'primeng/popover';
@@ -319,30 +294,17 @@ registerLocaleData(localeEs);
     StandaloneComponent,
 
     // Page Components
-    HomeComponent,
-    DynamicComponentsComponent,
-    HeroSectionComponent,
-    ToursSectionComponent,
-    HighlightSectionComponent,
-    FullCardSectionComponent,
-    CarouselSectionComponent,
     // Community Components
-    CommunitySectionComponent,
-    CommunityHeroComponent,
-    CommunityGalleryComponent,
-    CommunityReviewsComponent,
-    PublicitySectionComponent,
 
     // Tours List
-    ToursListComponent,
     TourCardComponent,
     TourCardV2Component,
 
     // Content List
-    ContentListComponent,
+    
     NotFoundComponent,
 
-    PartnersSectionComponent,
+    
     TourComponent,
     TourHeaderComponent,
     TourOverviewComponent,
@@ -384,7 +346,7 @@ registerLocaleData(localeEs);
     PaymentsInformationSectionComponent,
     InsurancesComponent,
     BudgetDialogComponent,
-    TripTypesSectionComponent,
+    
     TourDateSelectorComponent,
     DiscountCodeComponent,
     FlightSearchComponent,
@@ -516,7 +478,6 @@ registerLocaleData(localeEs);
     NewsLetterSectionV2Component,
     CommonModule,
     NgComponentOutlet,
-    NewsLetterSectionComponent,
     // ConfirmationCodeComponent, <-- Eliminar o comentar esta línea
     MenubarModule,
     RippleModule,

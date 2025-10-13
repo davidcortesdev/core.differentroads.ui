@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes, ExtraOptions } from '@angular/router';
 import { MainComponent } from './layout/main/main.component';
-import { HomeComponent } from './pages/home/home.component';
 import { HomeV2Component } from './pages/home-v2/home-v2.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { TourComponent } from './pages/tour/tour.component';
@@ -48,7 +47,6 @@ const routes: Routes = [
     component: MainComponent,
     children: [
       { path: '', redirectTo: 'home-v2', pathMatch: 'full' },
-      { path: 'home', component: HomeComponent },
       { path: 'home-v2', component: HomeV2Component },
       {
         path: 'profile',

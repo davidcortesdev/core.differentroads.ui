@@ -56,6 +56,7 @@
             placeholder="Seleccionar fechas"
             appendTo="body"
             styleClass="range-datepicker"
+            (ngModelChange)="onDateSelect($event)"
           >
             <!-- Template personalizado para la barra de botones -->
             <ng-template pTemplate="footer">

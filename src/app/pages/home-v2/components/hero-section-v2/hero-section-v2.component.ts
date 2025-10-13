@@ -248,6 +248,24 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
   }
 
   /**
+   * Manejar selección de fechas del datepicker
+   * @param selectedDates Array de fechas seleccionadas
+   */
+  onDateSelect(selectedDates: Date[]): void {
+    // Sincronizar departureDate y returnDate con las fechas seleccionadas
+    if (selectedDates && selectedDates.length >= 2) {
+      this.departureDate = selectedDates[0];
+      this.returnDate = selectedDates[1];
+    } else if (selectedDates && selectedDates.length === 1) {
+      this.departureDate = selectedDates[0];
+      this.returnDate = null;
+    } else {
+      this.departureDate = null;
+      this.returnDate = null;
+    }
+  }
+
+  /**
    * Aplicar preset de días desde la fecha de ida
    * @param days Número de días a sumar/restar
    */

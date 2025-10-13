@@ -25,7 +25,6 @@ import { HomeV2Component } from './pages/home-v2/home-v2.component';
 // ========================================
 // PAGE COMPONENTS - TOUR
 // ========================================
-import { TourComponent } from './pages/tour/tour.component';
 import { TourV2Component } from './pages/tour-v2/tour-v2.component';
 
 // ========================================
@@ -120,7 +119,6 @@ const routes: Routes = [
       // TOUR ROUTES
       // ========================================
       { path: 'tours', component: ToursComponent },
-      { path: 'tour-old/:slug', component: TourComponent },
       { path: 'tour/:slug', component: TourV2Component },
       { path: 'tour/:slug/preview', component: TourV2Component },
 

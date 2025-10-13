@@ -130,24 +130,6 @@ import { PartnersSectionV2Component } from './pages/home-v2/components/partners-
 import { PublicitySectionV2Component } from './pages/home-v2/components/publicity-section-v2/publicity-section-v2.component';
 
 // ========================================
-// PAGE COMPONENTS - TOUR
-// ========================================
-import { TourComponent } from './pages/tour/tour.component';
-import { TourHeaderComponent } from './pages/tour/components/tour-header/tour-header.component';
-import { TourOverviewComponent } from './pages/tour/components/tour-overview/tour-overview.component';
-import { TourHighlightsComponent } from './pages/tour/components/tour-highlights/tour-highlights.component';
-import { TourItineraryComponent } from './pages/tour/components/tour-itinerary/tour-itinerary.component';
-import { TourItineraryPanelComponent } from './pages/tour/components/tour-itinerary-panel/tour-itinerary-panel.component';
-import { TourDeparturesComponent } from './pages/tour/components/tour-departures/tour-departures.component';
-import { TourAdditionalInfoComponent } from './pages/tour/components/tour-additional-info/tour-additional-info.component';
-import { TourReviewsComponent } from './pages/tour/components/tour-reviews/tour-reviews.component';
-import { TourGalleryComponent } from './pages/tour/components/tour-gallery/tour-gallery.component';
-import { TourFaqComponent } from './pages/tour/components/tour-faq/tour-faq.component';
-import { TourRelatedComponent } from './pages/tour/components/tour-related/tour-related.component';
-import { TourDateSelectorComponent } from './pages/tour/components/tour-date-selector/tour-date-selector.component';
-import { TourInfoAccordionComponent } from './pages/tour/components/tour-info-accordion/tour-info-accordion.component';
-
-// ========================================
 // PAGE COMPONENTS - TOUR V2
 // ========================================
 import { TourV2Component } from './pages/tour-v2/tour-v2.component';
@@ -372,24 +354,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     ContentListV2Component,
     PartnersSectionV2Component,
     PublicitySectionV2Component,
-
-    // ========================================
-    // PAGE COMPONENTS - TOUR
-    // ========================================
-    TourComponent,
-    TourHeaderComponent,
-    TourOverviewComponent,
-    TourHighlightsComponent,
-    TourItineraryComponent,
-    TourItineraryPanelComponent,
-    TourDeparturesComponent,
-    TourAdditionalInfoComponent,
-    TourReviewsComponent,
-    TourGalleryComponent,
-    TourFaqComponent,
-    TourRelatedComponent,
-    TourDateSelectorComponent,
-    TourInfoAccordionComponent,
 
     // ========================================
     // PAGE COMPONENTS - TOUR V2

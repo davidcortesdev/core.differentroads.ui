@@ -36,7 +36,6 @@ import { NewReservationComponent } from './pages/checkout-v2/components/new-rese
 // ========================================
 // PAGE COMPONENTS - BOOKINGS
 // ========================================
-import { BookingsComponent } from './pages/bookings/bookings.component';
 import { Bookingsv2Component } from './pages/bookingsv2/bookings.component';
 
 // ========================================
@@ -138,7 +137,6 @@ const routes: Routes = [
       // ========================================
       // BOOKINGS ROUTES
       // ========================================
-      { path: 'bookings/:id', component: BookingsComponent },
       { path: 'bookingsv2/:id', component: Bookingsv2Component },
 
       // ========================================

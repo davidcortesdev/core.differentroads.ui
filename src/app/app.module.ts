@@ -175,22 +175,6 @@ import { PaymentInfoComponent } from './pages/checkout-v2/components/new-reserva
 import { SummaryInfoComponent } from './pages/checkout-v2/components/new-reservation/summary-info/summary-info.component';
 
 // ========================================
-// PAGE COMPONENTS - BOOKINGS
-// ========================================
-import { BookingsComponent } from './pages/bookings/bookings.component';
-import { BookingActivitiesComponent } from './pages/bookings/booking-activities/booking-activities.component';
-import { BookingCodeSectionComponent } from './pages/bookings/booking-code-section/booking-code-section.component';
-import { BookingDetailsViewComponent } from './pages/bookings/booking-details-view/booking-details-view.component';
-import { BookingDocumentActionsComponent } from './pages/bookings/booking-document-actions/booking-document-actions.component';
-import { BookingDocumentationComponent } from './pages/bookings/booking-documentation/booking-documentation.component';
-import { BookingFlightsComponent } from './pages/bookings/booking-flights/booking-flights.component';
-import { BookingHeaderSectionComponent } from './pages/bookings/booking-header-section/booking-header-section.component';
-import { BookingPaymentHistoryComponent } from './pages/bookings/booking-payment-history/booking-payment-history.component';
-import { BookingPersonalDataComponent } from './pages/bookings/booking-personal-data/booking-personal-data.component';
-import { BookingUpdateTravelComponent } from './pages/bookings/booking-update-travel/booking-update-travel.component';
-import { PassengerCardComponent } from './pages/bookings/passenger-card/passenger-card.component';
-
-// ========================================
 // PAGE COMPONENTS - BOOKINGS V2
 // ========================================
 import { Bookingsv2Component } from './pages/bookingsv2/bookings.component';
@@ -370,22 +354,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     SectionFlightComponent,
     PaymentInfoComponent,
     SummaryInfoComponent,
-
-    // ========================================
-    // PAGE COMPONENTS - BOOKINGS
-    // ========================================
-    BookingsComponent,
-    BookingActivitiesComponent,
-    BookingCodeSectionComponent,
-    BookingDetailsViewComponent,
-    BookingDocumentActionsComponent,
-    BookingDocumentationComponent,
-    BookingFlightsComponent,
-    BookingHeaderSectionComponent,
-    BookingPaymentHistoryComponent,
-    BookingPersonalDataComponent,
-    BookingUpdateTravelComponent,
-    PassengerCardComponent,
 
     // ========================================
     // PAGE COMPONENTS - BOOKINGS V2

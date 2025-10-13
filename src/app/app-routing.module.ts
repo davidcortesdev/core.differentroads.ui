@@ -5,9 +5,6 @@ import { HomeV2Component } from './pages/home-v2/home-v2.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { TourComponent } from './pages/tour/tour.component';
 import { TourV2Component } from './pages/tour-v2/tour-v2.component';
-import { ProfileComponent } from './pages/profile/profile.component';
-import { PersonalInfoSectionComponent } from './pages/profile/components/personal-info-section/personal-info-section.component';
-import { UpdateProfileSectionComponent } from './pages/profile/components/update-profile-section/update-profile-section.component';
 import { LoginComponent } from './pages/login/login.component';
 import { SignUpComponent } from './pages/sign-up/sign-up.component';
 import { ForgetPasswordComponent } from './pages/forget-password/forget-password.component';
@@ -23,7 +20,6 @@ import { PaymentsComponent } from './pages/payments/payments.component';
 import { AirportSearchComponent } from './features/airports/airport-search/airport-search.component';
 import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
 import { ReviewSurveyComponent } from './pages/review-survey/review-survey.component';
-import { ReviewSectionComponent } from './pages/profile/components/review-section/review-section.component';
 import { NewReservationComponent } from './pages/checkout-v2/components/new-reservation/new-reservation.component';
 import { StandaloneComponent } from './layout/standalone/standalone.component';
 import { ProfileV2Component } from './pages/profile-v2/profile-v2.component';
@@ -48,10 +44,6 @@ const routes: Routes = [
     children: [
       { path: '', redirectTo: 'home-v2', pathMatch: 'full' },
       { path: 'home-v2', component: HomeV2Component },
-      {
-        path: 'profile',
-        component: ProfileComponent,
-      },
       {
         path: 'profile-v2/:userId',
         component: ProfileV2Component,

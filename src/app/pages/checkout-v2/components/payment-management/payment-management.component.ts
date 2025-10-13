@@ -1,8 +1,23 @@
-import { Component, Input, OnInit, OnDestroy, Output, EventEmitter, OnChanges, AfterViewInit } from '@angular/core';
+import {
+  Component,
+  Input,
+  OnInit,
+  OnDestroy,
+  Output,
+  EventEmitter,
+  OnChanges,
+  AfterViewInit,
+} from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { IScalapayOrderResponse, NewScalapayService } from '../../services/newScalapay.service';
+import {
+  IScalapayOrderResponse,
+  NewScalapayService,
+} from '../../services/newScalapay.service';
 import { Router } from '@angular/router';
-import { PaymentsNetService, PaymentStatusFilter } from '../../services/paymentsNet.service';
+import {
+  PaymentsNetService,
+  PaymentStatusFilter,
+} from '../../services/paymentsNet.service';
 import { PaymentStatusNetService } from '../../services/paymentStatusNet.service';
 import { PaymentMethodNetService } from '../../services/paymentMethodNet.service';
 import { IFormData, NewRedsysService } from '../../services/newRedsys.service';
@@ -10,7 +25,10 @@ import { ReservationStatusService } from '../../../../core/services/reservation/
 import { ReservationService } from '../../../../core/services/reservation/reservation.service';
 import { MessageService } from 'primeng/api';
 import { CurrencyService } from '../../../../core/services/currency.service';
-import { FlightSearchService, IPriceChangeInfo } from '../../../../core/services/flight-search.service';
+import {
+  FlightSearchService,
+  IPriceChangeInfo,
+} from '../../../../core/services/flight-search.service';
 import { PointsService } from '../../../../core/services/points.service';
 
 // Simplified interfaces for points redemption
@@ -56,7 +74,11 @@ export interface PointsDistributionSummary {
   mainTravelerPoints: number;
 }
 
-export type PaymentType = 'complete' | 'deposit' | 'installments';
+export type PaymentType =
+  | 'complete'
+  | 'deposit'
+  | 'installments'
+  | 'transfer25';
 export type PaymentMethod = 'creditCard' | 'transfer';
 // Removed InstallmentOption type since we no longer have specific installment options
 
@@ -69,16 +91,22 @@ export interface PaymentOption {
   selector: 'app-payment-management',
   templateUrl: './payment-management.component.html',
   standalone: false,
-  styleUrl: './payment-management.component.scss'
+  styleUrl: './payment-management.component.scss',
 })
-export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
+export class PaymentManagementComponent
+  implements OnInit, OnDestroy, OnChanges, AfterViewInit
+{
   // Inputs
   @Input() set totalPrice(value: number) {
     const previousPrice = this._totalPrice;
     this._totalPrice = value;
-    
+
     // Solo reinicializar el widget si el precio cambió y hay un valor válido
-    if (value && value !== previousPrice && this.paymentState.type === 'installments') {
+    if (
+      value &&
+      value !== previousPrice &&
+      this.paymentState.type === 'installments'
+    ) {
       console.log(`💰 Precio actualizado: ${previousPrice} → ${value}`);
       setTimeout(() => {
         this.forceScalapayReload();
@@ -91,11 +119,11 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     // Primero cargar el script de ScalaPay
     this.initializeScalapayScript();
   }
-  
+
   get totalPrice(): number {
     return this._totalPrice;
   }
-  
+
   private _totalPrice: number = 0;
   @Input() reservationId!: number;
   @Input() depositAmount: number = 200;
@@ -129,30 +157,35 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     totalPointsToUse: 0,
     pointsPerTraveler: {},
     maxDiscountPerTraveler: 50, // 50€ máximo por persona
-    totalDiscount: 0
+    totalDiscount: 0,
   };
 
   // Travelers data for points distribution
   travelers: TravelerData[] = [];
 
+  // Transfer 25% voucher attachment
+  transfer25VoucherUrl: string | null = null;
+
+  // Configuration flags
+  @Input() showTransfer25Option: boolean = false; // Por defecto oculto para otros proyectos
+
   // State management
   readonly dropdownStates = {
     main: true,
     paymentMethods: true,
-    pointsRedemption: true
+    pointsRedemption: true,
   };
 
   readonly paymentState = {
     type: null as PaymentType | null,
     method: null as PaymentMethod | null,
-    isLoading: false
+    isLoading: false,
   };
 
-
   constructor(
-    private readonly scalapayService: NewScalapayService, 
-    private readonly router: Router, 
-    private readonly paymentsService: PaymentsNetService, 
+    private readonly scalapayService: NewScalapayService,
+    private readonly router: Router,
+    private readonly paymentsService: PaymentsNetService,
     private readonly paymentStatusService: PaymentStatusNetService,
     private readonly paymentMethodService: PaymentMethodNetService,
     private readonly redsysService: NewRedsysService,
@@ -162,7 +195,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     private readonly currencyService: CurrencyService,
     private readonly flightSearchService: FlightSearchService,
     private readonly pointsService: PointsService
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     this.loadPaymentIds();
@@ -177,6 +210,12 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
       this.paymentState.type = null;
       this.updateDropdownVisibility();
     }
+
+    // Si transfer25 no está habilitado pero está seleccionado, limpiar la selección
+    if (this.paymentState.type === 'transfer25' && !this.showTransfer25Option) {
+      this.paymentState.type = null;
+      this.updateDropdownVisibility();
+    }
   }
 
   /**
@@ -188,16 +227,16 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     this.flightSearchService.getSelectionStatus(this.reservationId).subscribe({
       next: (hasSelection: boolean) => {
         this.hasAmadeusFlight = hasSelection;
-        
+
         if (hasSelection) {
           console.log('✅ Vuelo Amadeus detectado, validando precio...');
-          
+
           // Verificar vuelos de specific-search para depósito
           this.checkSpecificSearchFlights();
-          
+
           // Limpiar selecciones no permitidas para vuelos de Amadeus
           this.cleanupInvalidSelectionsForAmadeus();
-          
+
           this.validateAmadeusPrice();
         } else {
           console.log('ℹ️ No hay vuelo Amadeus seleccionado');
@@ -210,7 +249,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
         this.hasAmadeusFlight = false;
         this.hasSpecificSearchFlights = false;
         this.specificSearchFlightsCost = 0;
-      }
+      },
     });
   }
 
@@ -224,7 +263,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     if (this.hasSpecificSearchFlights && this.specificSearchFlightsCost > 0) {
       console.log('✅ Los valores de specific-search ya están establecidos:', {
         hasSpecificSearchFlights: this.hasSpecificSearchFlights,
-        specificSearchFlightsCost: this.specificSearchFlightsCost
+        specificSearchFlightsCost: this.specificSearchFlightsCost,
       });
       return;
     }
@@ -234,7 +273,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     console.log('🔍 Verificando vuelos de specific-search...');
     console.log('📊 Estado actual:', {
       hasSpecificSearchFlights: this.hasSpecificSearchFlights,
-      specificSearchFlightsCost: this.specificSearchFlightsCost
+      specificSearchFlightsCost: this.specificSearchFlightsCost,
     });
   }
 
@@ -244,19 +283,23 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
   private cleanupInvalidSelectionsForAmadeus(): void {
     // Si estaba seleccionado transferencia, limpiarlo (nunca permitida para Amadeus)
     if (this.paymentState.method === 'transfer') {
-      console.log('🔄 Limpiando selección de transferencia (no permitido para Amadeus)');
+      console.log(
+        '🔄 Limpiando selección de transferencia (no permitido para Amadeus)'
+      );
       this.paymentState.method = null;
     }
-    
+
     // Si estaba seleccionado depósito, verificar si se permite
     if (this.paymentState.type === 'deposit' && this.hasAmadeusFlight) {
       // Solo permitir depósito si hay vuelos de specific-search
       if (!this.hasSpecificSearchFlights) {
-        console.log('🔄 Limpiando selección de depósito (no permitido para Amadeus sin vuelos de specific-search)');
+        console.log(
+          '🔄 Limpiando selección de depósito (no permitido para Amadeus sin vuelos de specific-search)'
+        );
         this.paymentState.type = null;
       }
     }
-    
+
     // Actualizar visibilidad de dropdowns
     this.updateDropdownVisibility();
   }
@@ -271,26 +314,28 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
       next: (validation: IPriceChangeInfo | null) => {
         if (validation) {
           this.priceValidation = validation;
-          
+
           // Rellenar specificSearchFlightsCost con el precio actual del vuelo
           this.specificSearchFlightsCost = validation.currentPrice;
           this.hasSpecificSearchFlights = true;
-          
+
           console.log('✅ Precio del vuelo obtenido:', validation.currentPrice);
           console.log('📊 Estado actualizado:', {
             hasSpecificSearchFlights: this.hasSpecificSearchFlights,
-            specificSearchFlightsCost: this.specificSearchFlightsCost
+            specificSearchFlightsCost: this.specificSearchFlightsCost,
           });
-          
+
           if (validation.hasChanged) {
             console.log('⚠️ Cambio de precio detectado:', validation);
             this.showPriceChangeDialog = true;
-            
+
             // Mostrar mensaje informativo
             this.messageService.add({
               severity: 'warn',
               summary: 'Precio cambiado',
-              detail: `El precio del vuelo ha cambiado. Diferencia: ${validation.priceDifference.toFixed(2)} ${validation.currency || 'EUR'}`,
+              detail: `El precio del vuelo ha cambiado. Diferencia: ${validation.priceDifference.toFixed(
+                2
+              )} ${validation.currency || 'EUR'}`,
               life: 5000,
             });
           } else {
@@ -304,7 +349,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
         console.error('❌ Error al validar precio del vuelo:', error);
         // En caso de error, permitir continuar
         this.priceValidation = null;
-      }
+      },
     });
   }
 
@@ -316,7 +361,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
           this.transferMethodId = methods[0].id;
         }
       },
-      error: (error) => console.error('Error loading transfer method:', error)
+      error: (error) => console.error('Error loading transfer method:', error),
     });
 
     this.paymentMethodService.getPaymentMethodByCode('REDSYS').subscribe({
@@ -325,7 +370,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
           this.redsysMethodId = methods[0].id;
         }
       },
-      error: (error) => console.error('Error loading redsys method:', error)
+      error: (error) => console.error('Error loading redsys method:', error),
     });
 
     // Cargar estados de pago
@@ -335,7 +380,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
           this.pendingStatusId = statuses[0].id;
         }
       },
-      error: (error) => console.error('Error loading pending status:', error)
+      error: (error) => console.error('Error loading pending status:', error),
     });
   }
 
@@ -356,12 +401,15 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     return this.paymentState.method;
   }
 
-
   get isPaymentValid(): boolean {
     if (!this.paymentState.type) return false;
 
     if (this.paymentState.type === 'installments') {
       return true; // Para installments, siempre es válido ya que no hay opciones específicas
+    }
+
+    if (this.paymentState.type === 'transfer25') {
+      return this.showTransfer25Option; // Solo válido si la opción está habilitada
     }
 
     return !!this.paymentState.method;
@@ -373,25 +421,25 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
 
   get shouldShowDepositOption(): boolean {
     if (!this.departureDate) return false;
-    
+
     const today = new Date();
     const departureDate = new Date(this.departureDate);
-    
+
     // Extraer el número de días del paymentDeadline (asumiendo formato "X días antes del tour")
     const deadlineMatch = this.paymentDeadline.match(/(\d+)\s*días?\s*antes/);
     if (!deadlineMatch) return false;
-    
+
     const daysBeforeDeparture = parseInt(deadlineMatch[1]);
     const deadlineDate = new Date(departureDate);
     deadlineDate.setDate(departureDate.getDate() - daysBeforeDeparture);
-    
+
     const isWithinDeadline = today < deadlineDate;
-    
+
     // Para vuelos de Amadeus, solo permitir depósito si hay vuelos de specific-search
     if (this.hasAmadeusFlight) {
       return this.hasSpecificSearchFlights && isWithinDeadline;
     }
-    
+
     return isWithinDeadline;
   }
 
@@ -423,20 +471,34 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     return true; // Siempre mostrar Scalapay para todos los tipos de vuelos
   }
 
+  /**
+   * Calcula el 25% del precio total para la opción de transferencia del 25%
+   */
+  get transfer25Amount(): number {
+    return this.totalPrice * 0.25;
+  }
+
   // Payment type management
   selectPaymentType(type: PaymentType): void {
     // Si se intenta seleccionar depósito pero no está disponible, no hacer nada
     if (type === 'deposit' && !this.shouldShowDepositOption) {
       return;
     }
-    
+
+    // Si se intenta seleccionar transfer25 pero no está habilitado, no hacer nada
+    if (type === 'transfer25' && !this.showTransfer25Option) {
+      return;
+    }
+
     this.paymentState.type = type;
     this.updateDropdownVisibility();
     this.resetRelatedSelections(type);
-    
+
     // Si se selecciona installments, inicializar/recargar el widget de Scalapay
     if (type === 'installments') {
-      console.log('💳 Opción de installments seleccionada, inicializando widget...');
+      console.log(
+        '💳 Opción de installments seleccionada, inicializando widget...'
+      );
       // Dar tiempo para que el DOM se actualice
       setTimeout(() => {
         // Asegurarse de que el script esté cargado
@@ -455,7 +517,6 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     this.paymentState.method = method;
   }
 
-
   // Dropdown management
   toggleDropdown(dropdown: keyof typeof this.dropdownStates): void {
     this.dropdownStates[dropdown] = !this.dropdownStates[dropdown];
@@ -471,12 +532,43 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
   }
 
   /**
+   * Maneja la subida exitosa del justificante de transferencia del 25%
+   */
+  handleTransfer25VoucherUpload(response: any): void {
+    console.log('Voucher uploaded successfully:', response);
+
+    if (response.secure_url) {
+      this.transfer25VoucherUrl = response.secure_url;
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Justificante subido',
+        detail: 'El justificante se ha subido correctamente.',
+        life: 3000,
+      });
+    }
+  }
+
+  /**
+   * Maneja errores en la subida del justificante de transferencia del 25%
+   */
+  handleTransfer25VoucherError(error: any): void {
+    console.error('Error uploading voucher:', error);
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error de subida',
+      detail:
+        'Ha ocurrido un error al subir el justificante. Por favor, inténtalo de nuevo.',
+      life: 4000,
+    });
+  }
+
+  /**
    * Maneja la decisión del usuario sobre el cambio de precio
    * @param continueWithNewPrice true para continuar con el nuevo precio, false para volver
    */
   handlePriceChangeDecision(continueWithNewPrice: boolean): void {
     this.showPriceChangeDialog = false;
-    
+
     if (continueWithNewPrice) {
       console.log('✅ Usuario decidió continuar con el nuevo precio');
       this.messageService.add({
@@ -493,7 +585,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
         detail: 'Será redirigido al paso de selección de vuelos',
         life: 3000,
       });
-      
+
       // Emitir evento para navegar al step 1 (selección de vuelos)
       this.navigateToStep.emit(1);
     }
@@ -503,12 +595,15 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     if (!this.isPaymentValid) return;
 
     // Validar canje de puntos antes del pago
-    if (this.pointsRedemption.enabled && this.pointsRedemption.totalPointsToUse > 0) {
+    if (
+      this.pointsRedemption.enabled &&
+      this.pointsRedemption.totalPointsToUse > 0
+    ) {
       const validationResult = this.validatePointsRedemption(
         this.pointsRedemption.totalPointsToUse,
         this.pointsRedemption.pointsPerTraveler
       );
-      
+
       if (!validationResult.isValid) {
         this.showValidationError(validationResult);
         return; // No proceder con el pago si hay errores de validación
@@ -533,13 +628,19 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
       this.messageService.add({
         severity: 'success',
         summary: 'Reserva actualizada',
-        detail: 'Estado de la reservación actualizado correctamente. Procesando pago...',
+        detail:
+          'Estado de la reservación actualizado correctamente. Procesando pago...',
         life: 3000,
       });
 
       // Procesar canje de puntos antes del pago
-      if (this.pointsRedemption.enabled && this.pointsRedemption.totalPointsToUse > 0) {
-        const redemptionSuccess = await this.processPointsRedemption(this.reservationId.toString());
+      if (
+        this.pointsRedemption.enabled &&
+        this.pointsRedemption.totalPointsToUse > 0
+      ) {
+        const redemptionSuccess = await this.processPointsRedemption(
+          this.reservationId.toString()
+        );
         if (!redemptionSuccess) {
           // Si falla el canje de puntos, continuar sin descuento
           this.messageService.add({
@@ -561,18 +662,20 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
         detail: 'El pago se ha procesado correctamente.',
         life: 5000,
       });
-
     } catch (error) {
       console.error('Payment processing failed:', error);
-      
+
       // Determinar el tipo de error para mostrar mensaje apropiado
-      let errorMessage = 'Ha ocurrido un error inesperado. Por favor, inténtelo nuevamente.';
-      
+      let errorMessage =
+        'Ha ocurrido un error inesperado. Por favor, inténtelo nuevamente.';
+
       if (error instanceof Error) {
         if (error.message.includes('estado')) {
-          errorMessage = 'Error al actualizar el estado de la reservación. El pago no se procesará.';
+          errorMessage =
+            'Error al actualizar el estado de la reservación. El pago no se procesará.';
         } else if (error.message.includes('pago')) {
-          errorMessage = 'Error al procesar el pago. La reservación se mantendrá en su estado actual.';
+          errorMessage =
+            'Error al procesar el pago. La reservación se mantendrá en su estado actual.';
         }
       }
 
@@ -594,48 +697,56 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
   private async updateReservationStatusToPrebooked(): Promise<boolean> {
     try {
       console.log('🔄 Actualizando estado de reservación a PREBOOKED...');
-      
+
       // Obtener estado PREBOOKED
       const reservationStatus = await firstValueFrom(
         this.reservationStatusService.getByCode('PREBOOKED')
       );
-      
+
       if (!reservationStatus || reservationStatus.length === 0) {
         throw new Error('No se pudo obtener el estado PREBOOKED');
       }
 
       // Actualizar estado de la reservación
       const success = await firstValueFrom(
-        this.reservationService.updateStatus(this.reservationId!, reservationStatus[0].id)
+        this.reservationService.updateStatus(
+          this.reservationId!,
+          reservationStatus[0].id
+        )
       );
 
       if (success) {
-        console.log('✅ Estado de reservación actualizado correctamente a PREBOOKED');
-        
-        
+        console.log(
+          '✅ Estado de reservación actualizado correctamente a PREBOOKED'
+        );
+
         return true;
       } else {
         throw new Error('La actualización del estado falló');
       }
-
     } catch (error) {
       console.error('❌ Error al actualizar estado de reservación:', error);
       this.messageService.add({
         severity: 'error',
         summary: 'Error interno al guardar su reserva',
-        detail: 'No se pudo actualizar el estado de la reservación. Intente nuevamente más tarde o contacte con nuestro equipo de soporte.',
+        detail:
+          'No se pudo actualizar el estado de la reservación. Intente nuevamente más tarde o contacte con nuestro equipo de soporte.',
         life: 5000,
       });
       throw error; // Re-lanzar el error para que se maneje en el método principal
     }
   }
 
-
   /**
    * Procesa el pago según el método seleccionado
    */
   private async processPaymentBasedOnMethod(): Promise<void> {
-    console.log('💳 Procesando pago con método:', this.paymentMethod, 'tipo:', this.paymentState.type);
+    console.log(
+      '💳 Procesando pago con método:',
+      this.paymentMethod,
+      'tipo:',
+      this.paymentState.type
+    );
 
     if (this.paymentState.type === 'installments') {
       await this.processInstallmentPayment();
@@ -662,8 +773,9 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     console.log('🚀 Cargando script de Scalapay...');
     const script = document.createElement('script');
     script.type = 'module';
-    script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js?version=V5';
-    
+    script.src =
+      'https://cdn.scalapay.com/widget/scalapay-widget-loader.js?version=V5';
+
     script.onload = () => {
       console.log('✅ Script de Scalapay cargado correctamente');
       // Inicializar el widget después de que se cargue el script
@@ -671,21 +783,24 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
         this.initializeScalapayWidget();
       }, 500);
     };
-    
+
     script.onerror = (error) => {
       console.error('❌ Error al cargar script de Scalapay:', error);
     };
-    
+
     document.head.appendChild(script);
   }
 
   private isScalapayScriptLoaded(): boolean {
-    return !!document.querySelector('script[src*="scalapay-widget-loader.js?version=V5"]');
+    return !!document.querySelector(
+      'script[src*="scalapay-widget-loader.js?version=V5"]'
+    );
   }
 
-
   private updateDropdownVisibility(): void {
-    this.dropdownStates.paymentMethods = ['complete', 'deposit'].includes(this.paymentState.type!);
+    this.dropdownStates.paymentMethods = ['complete', 'deposit'].includes(
+      this.paymentState.type!
+    );
   }
 
   private resetRelatedSelections(type: PaymentType): void {
@@ -696,7 +811,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
 
   private reloadScalapayWidgets(): void {
     if (!this.totalPrice) return;
-    
+
     setTimeout(() => {
       this.updatePriceContainers();
       this.dispatchScalapayReloadEvent();
@@ -708,7 +823,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
       console.warn('⚠️ No hay precio disponible para actualizar');
       return;
     }
-    
+
     const formattedPrice = `€ ${this.totalPrice.toFixed(2)}`;
     const mainContainer = document.getElementById('price-container-main');
     if (mainContainer) {
@@ -717,12 +832,17 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
       console.log('🔍 Estado del contenedor:', {
         id: mainContainer.id,
         content: mainContainer.textContent,
-        visible: mainContainer.style.display !== 'none'
+        visible: mainContainer.style.display !== 'none',
       });
     } else {
-      console.warn('⚠️ Contenedor de precio no encontrado - ID: price-container-main');
-      console.log('🔍 Elementos disponibles:', 
-        Array.from(document.querySelectorAll('[id*="price"]')).map(el => el.id)
+      console.warn(
+        '⚠️ Contenedor de precio no encontrado - ID: price-container-main'
+      );
+      console.log(
+        '🔍 Elementos disponibles:',
+        Array.from(document.querySelectorAll('[id*="price"]')).map(
+          (el) => el.id
+        )
       );
     }
   }
@@ -743,9 +863,9 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
       paymentType: this.paymentState.type,
       scriptLoaded: this.isScalapayScriptLoaded(),
       containerExists: !!document.getElementById('price-container-main'),
-      widgetExists: !!document.querySelector('scalapay-widget')
+      widgetExists: !!document.querySelector('scalapay-widget'),
     });
-    
+
     if (!this.totalPrice) {
       console.log('⏳ Sin precio disponible, reintentando en 500ms...');
       setTimeout(() => {
@@ -753,28 +873,31 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
       }, 500);
       return;
     }
-    
+
     // Verificar que los elementos DOM estén presentes
     const container = document.getElementById('price-container-main');
     const widget = document.querySelector('scalapay-widget');
-    
+
     if (!container) {
       console.error('❌ Contenedor de precio no encontrado!');
       return;
     }
-    
+
     if (!widget) {
       console.error('❌ Elemento scalapay-widget no encontrado!');
       return;
     }
-    
-    console.log('🚀 Inicializando widget de Scalapay con precio:', this.totalPrice);
+
+    console.log(
+      '🚀 Inicializando widget de Scalapay con precio:',
+      this.totalPrice
+    );
     this.updatePriceContainers();
-    
+
     // Dar tiempo para que el DOM se actualice antes de disparar el evento
     setTimeout(() => {
       this.dispatchScalapayReloadEvent();
-      
+
       // Verificar si el widget se inicializó correctamente después de un tiempo
       setTimeout(() => {
         this.verifyWidgetInitialization();
@@ -789,14 +912,14 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     const container = document.getElementById('price-container-main');
     const widget = document.querySelector('scalapay-widget');
     const isReady = !!(container && widget && this.totalPrice);
-    
+
     console.log('🔍 Estado de readiness del widget:', {
       containerExists: !!container,
       widgetExists: !!widget,
       priceAvailable: !!this.totalPrice,
-      ready: isReady
+      ready: isReady,
     });
-    
+
     return isReady;
   }
 
@@ -805,14 +928,14 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
    */
   private forceScalapayReload(): void {
     console.log('🔄 Forzando recarga completa del widget de Scalapay');
-    
+
     // Primero actualizar el precio
     this.updatePriceContainers();
-    
+
     // Luego disparar los eventos necesarios
     setTimeout(() => {
       this.dispatchScalapayReloadEvent();
-      
+
       // Si no funciona, intentar inicializar de nuevo
       setTimeout(() => {
         if (!this.isScalapayWidgetVisible()) {
@@ -829,17 +952,18 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
   private isScalapayWidgetVisible(): boolean {
     const widget = document.querySelector('scalapay-widget');
     if (!widget) return false;
-    
-    const hasContent = widget.children.length > 0 || 
-                      (widget.textContent?.trim().length || 0) > 0 || 
-                      (widget.innerHTML?.trim().length || 0) > 0;
-    
+
+    const hasContent =
+      widget.children.length > 0 ||
+      (widget.textContent?.trim().length || 0) > 0 ||
+      (widget.innerHTML?.trim().length || 0) > 0;
+
     console.log('👁️ Widget visibility check:', {
       exists: !!widget,
       hasContent,
-      innerHTML: widget.innerHTML?.slice(0, 100)
+      innerHTML: widget.innerHTML?.slice(0, 100),
     });
-    
+
     return hasContent;
   }
 
@@ -849,28 +973,32 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
   private verifyWidgetInitialization(): void {
     const widget = document.querySelector('scalapay-widget');
     const container = document.getElementById('price-container-main');
-    
+
     if (!widget) {
       console.error('❌ Widget no encontrado después de la inicialización');
       return;
     }
-    
+
     if (!container) {
-      console.error('❌ Contenedor de precio no encontrado después de la inicialización');
+      console.error(
+        '❌ Contenedor de precio no encontrado después de la inicialización'
+      );
       return;
     }
-    
+
     const isVisible = this.isScalapayWidgetVisible();
     console.log('✅ Verificación de inicialización:', {
       widgetExists: !!widget,
       containerExists: !!container,
       containerContent: container.textContent,
       widgetVisible: isVisible,
-      widgetHTML: widget.innerHTML?.slice(0, 200)
+      widgetHTML: widget.innerHTML?.slice(0, 200),
     });
-    
+
     if (!isVisible) {
-      console.warn('⚠️ El widget no parece haberse inicializado correctamente. Reintentando...');
+      console.warn(
+        '⚠️ El widget no parece haberse inicializado correctamente. Reintentando...'
+      );
       setTimeout(() => {
         this.forceScalapayReload();
       }, 1000);
@@ -880,13 +1008,14 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
   }
 
   private async processInstallmentPayment(): Promise<void> {
-
-    const baseUrl = (window.location.href).replace(this.router.url, '');
+    const baseUrl = window.location.href.replace(this.router.url, '');
 
     console.log('baseUrl', baseUrl);
 
     //El payment se crea en el backend
-    const response = await this.scalapayService.createOrder(this.reservationId, baseUrl).toPromise();
+    const response = await this.scalapayService
+      .createOrder(this.reservationId, baseUrl)
+      .toPromise();
 
     if (response?.checkoutUrl) {
       window.location.href = response.checkoutUrl;
@@ -895,33 +1024,42 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
 
   private async processCreditCardPayment(amount: number): Promise<void> {
     // Obtener currencyId para EUR
-    const currencyId = await this.currencyService.getCurrencyIdByCode('EUR').toPromise();
+    const currencyId = await this.currencyService
+      .getCurrencyIdByCode('EUR')
+      .toPromise();
 
     if (!currencyId) {
       throw new Error('No se pudo obtener el ID de la moneda EUR');
     }
 
-    const response = await this.paymentsService.create({
-      reservationId: this.reservationId,
-      amount: amount,
-      paymentDate: new Date(),
-      paymentMethodId: this.redsysMethodId,
-      paymentStatusId: this.pendingStatusId,
-      currencyId: currencyId
-    }).toPromise();
+    const response = await this.paymentsService
+      .create({
+        reservationId: this.reservationId,
+        amount: amount,
+        paymentDate: new Date(),
+        paymentMethodId: this.redsysMethodId,
+        paymentStatusId: this.pendingStatusId,
+        currencyId: currencyId,
+      })
+      .toPromise();
 
     if (!response) {
       throw new Error('Error al crear el pago');
     }
 
-    const formData: IFormData | undefined = await this.redsysService.generateFormData(response.id, "https://www.differentroads.es/", "https://redsys-dev.differentroads.es").toPromise();
+    const formData: IFormData | undefined = await this.redsysService
+      .generateFormData(
+        response.id,
+        'https://www.differentroads.es/',
+        'https://redsys-dev.differentroads.es'
+      )
+      .toPromise();
     if (formData) {
       await this.enviarFormARedsys(formData);
     }
   }
 
   private async enviarFormARedsys(formData: IFormData): Promise<void> {
-
     if (formData) {
       // Create and submit form to Redsys
       const form = document.createElement('form');
@@ -953,24 +1091,31 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
 
   private async processTransferPayment(): Promise<void> {
     // Determinar el importe según el tipo de pago
-    const amount = this.paymentState.type === 'deposit' ? this.depositAmount : this.totalPrice;
+    const amount =
+      this.paymentState.type === 'deposit'
+        ? this.depositAmount
+        : this.totalPrice;
 
     // Obtener currencyId para EUR
-    const currencyId = await this.currencyService.getCurrencyIdByCode('EUR').toPromise();
+    const currencyId = await this.currencyService
+      .getCurrencyIdByCode('EUR')
+      .toPromise();
 
     if (!currencyId) {
       throw new Error('No se pudo obtener el ID de la moneda EUR');
     }
 
     // Crear el pago en la API
-    const response = await this.paymentsService.create({
-      reservationId: this.reservationId,
-      amount: amount,
-      paymentDate: new Date(),
-      paymentMethodId: this.transferMethodId,
-      paymentStatusId: this.pendingStatusId,
-      currencyId: currencyId
-    }).toPromise();
+    const response = await this.paymentsService
+      .create({
+        reservationId: this.reservationId,
+        amount: amount,
+        paymentDate: new Date(),
+        paymentMethodId: this.transferMethodId,
+        paymentStatusId: this.pendingStatusId,
+        currencyId: currencyId,
+      })
+      .toPromise();
 
     if (!response) {
       throw new Error('Error al crear el pago por transferencia');
@@ -979,20 +1124,18 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     // Emitir evento de pago completado
     this.paymentCompleted.emit({
       method: this.paymentMethod || undefined,
-      type: this.paymentState.type!
+      type: this.paymentState.type!,
     });
 
     // Redirigir a new-reservation con los parámetros necesarios
-    this.router.navigate([
-      `/reservation/${this.reservationId}/${response.id}`
-    ]);
+    this.router.navigate([`/reservation/${this.reservationId}/${response.id}`]);
   }
 
   // ===== MÉTODOS PARA CANJE DE PUNTOS =====
 
   /**
    * Carga los puntos del usuario autenticado
-   * 
+   *
    * NOTA PARA INTEGRACIÓN CON API:
    * Este método debe ser reemplazado por una llamada al endpoint de saldo de puntos.
    */
@@ -1000,10 +1143,10 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     // TODO: Reemplazar con llamada real a la API
     // const balance = await this.pointsService.getTravelerPoints(email).toPromise();
     // this.pointsSummary = balance;
-    
+
     // TEMPORAL: Usar datos mock para desarrollo
     const userId = 'mock-user-id';
-    
+
     // Datos mock simplificados
     this.pointsSummary = {
       travelerId: userId,
@@ -1013,20 +1156,20 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
       usedPoints: 300,
       categoryStartDate: new Date('2024-01-01'),
       nextCategory: 'NOMADA',
-      pointsToNextCategory: 2
+      pointsToNextCategory: 2,
     };
   }
 
   /**
    * Carga los datos de los viajeros para la distribución de puntos
-   * 
+   *
    * NOTA PARA INTEGRACIÓN CON API:
    * Este método debe ser reemplazado por una llamada al endpoint de viajeros de la reserva.
    */
   private loadTravelersData(): void {
     // TODO: Reemplazar con llamada real a la API
     // const travelers = await this.reservationService.getTravelers(this.reservationId).toPromise();
-    
+
     // TEMPORAL: Usar datos mock si no se proporcionaron viajeros
     if (!this.travelers || this.travelers.length === 0) {
       this.travelers = [
@@ -1036,7 +1179,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
           email: 'juan@example.com',
           hasEmail: true,
           maxPoints: 50,
-      assignedPoints: 0
+          assignedPoints: 0,
         },
         {
           id: 'traveler-2',
@@ -1044,8 +1187,8 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
           email: 'maria@example.com',
           hasEmail: true,
           maxPoints: 50,
-          assignedPoints: 0
-        }
+          assignedPoints: 0,
+        },
       ];
     }
   }
@@ -1067,10 +1210,13 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
   /**
    * Calcula los puntos necesarios para la siguiente categoría
    */
-  private calculatePointsToNextCategory(currentTrips: number, currentCategory: string): number | undefined {
+  private calculatePointsToNextCategory(
+    currentTrips: number,
+    currentCategory: string
+  ): number | undefined {
     const nextCategory = this.getNextCategory(currentCategory);
     if (!nextCategory) return undefined;
-    
+
     switch (nextCategory) {
       case 'VIAJERO':
         return Math.max(0, 3 - currentTrips);
@@ -1121,7 +1267,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
    */
   getMaxDiscountForCategory(): number {
     if (!this.pointsSummary) return 0;
-    
+
     // Lógica simplificada para obtener el descuento máximo por categoría
     switch (this.pointsSummary.currentCategory) {
       case 'TROTAMUNDOS':
@@ -1160,8 +1306,8 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     if (travelerId === 'main-traveler') {
       return 'Titular de la reserva';
     }
-    
-    const traveler = this.travelers.find(t => t.id === travelerId);
+
+    const traveler = this.travelers.find((t) => t.id === travelerId);
     return traveler ? traveler.name : 'Viajero desconocido';
   }
 
@@ -1172,40 +1318,40 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
    * @returns Objeto con resultado de validación completo
    */
   validatePointsRedemption(
-    pointsToUse: number, 
+    pointsToUse: number,
     distribution: { [travelerId: string]: number }
   ): ValidationResult {
     if (!this.pointsSummary) {
       return {
         isValid: false,
         message: 'No se pudo validar el canje de puntos.',
-        errorType: 'distribution_error'
+        errorType: 'distribution_error',
       };
     }
 
     const availablePoints = this.getAvailablePoints();
     const maxDiscount = this.getMaxDiscountForCategory();
-    
+
     if (pointsToUse > availablePoints) {
       return {
         isValid: false,
         message: 'No tienes suficientes puntos disponibles.',
-        errorType: 'insufficient_points'
+        errorType: 'insufficient_points',
       };
     }
-    
+
     if (pointsToUse > maxDiscount) {
       return {
         isValid: false,
         message: 'Excedes el límite de descuento para tu categoría.',
-        errorType: 'category_limit'
+        errorType: 'category_limit',
       };
     }
 
     return {
       isValid: true,
       message: 'Validación exitosa',
-      errorType: 'success'
+      errorType: 'success',
     };
   }
 
@@ -1213,9 +1359,14 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
    * Muestra mensajes de error de validación
    * @param validationResult Resultado de la validación
    */
-  showValidationError(validationResult: { isValid: boolean; message: string; errorType: string; details?: string[] }): void {
+  showValidationError(validationResult: {
+    isValid: boolean;
+    message: string;
+    errorType: string;
+    details?: string[];
+  }): void {
     if (validationResult.isValid) return;
-    
+
     // Mostrar mensaje principal
     this.messageService.add({
       severity: 'error',
@@ -1223,10 +1374,10 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
       detail: validationResult.message,
       life: 5000,
     });
-    
+
     // Mostrar detalles adicionales si existen
     if (validationResult.details && validationResult.details.length > 0) {
-      validationResult.details.forEach(detail => {
+      validationResult.details.forEach((detail) => {
         this.messageService.add({
           severity: 'warn',
           summary: 'Detalle adicional',
@@ -1253,16 +1404,16 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
    */
   updatePointsToUse(pointsToUse: number): void {
     if (pointsToUse < 0) pointsToUse = 0;
-    
+
     // Obtener límites máximos
     const availablePoints = this.getAvailablePoints();
     const maxDiscountForCategory = this.getMaxDiscountForCategory();
     const maxAllowed = Math.min(availablePoints, maxDiscountForCategory);
-    
+
     // Limitar estrictamente al máximo permitido
     if (pointsToUse > maxAllowed) {
       pointsToUse = maxAllowed;
-      
+
       // Mostrar mensaje informativo
       this.messageService.add({
         severity: 'warn',
@@ -1271,10 +1422,10 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
         life: 3000,
       });
     }
-    
+
     this.pointsRedemption.totalPointsToUse = pointsToUse;
     this.pointsRedemption.totalDiscount = pointsToUse; // 1 punto = 1 euro
-    
+
     // Distribuir puntos entre viajeros automáticamente
     this.distributePointsAmongTravelers(pointsToUse);
   }
@@ -1285,13 +1436,13 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
   setMaximumPoints(): void {
     const availablePoints = this.getAvailablePoints();
     const maxDiscountForCategory = this.getMaxDiscountForCategory();
-    
+
     // El máximo real es el menor entre los puntos disponibles y el límite de categoría
     const maximumPoints = Math.min(availablePoints, maxDiscountForCategory);
-    
+
     this.pointsRedemption.totalPointsToUse = maximumPoints;
     this.pointsRedemption.totalDiscount = maximumPoints; // 1 punto = 1 euro
-    
+
     // Distribuir puntos entre viajeros automáticamente
     this.distributePointsAmongTravelers(maximumPoints);
   }
@@ -1304,17 +1455,23 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
    */
   private distributePointsAmongTravelers(totalPoints: number): void {
     // Resetear asignaciones
-    this.travelers.forEach(traveler => {
+    this.travelers.forEach((traveler) => {
       traveler.assignedPoints = 0;
     });
 
     const maxPointsPerPerson = this.pointsRedemption.maxDiscountPerTraveler;
     let remainingPoints = totalPoints;
-    const eligibleTravelers = this.travelers.filter(t => t.hasEmail);
-    const pointsPerEligibleTraveler = eligibleTravelers.length > 0 ? Math.floor(totalPoints / eligibleTravelers.length) : 0;
+    const eligibleTravelers = this.travelers.filter((t) => t.hasEmail);
+    const pointsPerEligibleTraveler =
+      eligibleTravelers.length > 0
+        ? Math.floor(totalPoints / eligibleTravelers.length)
+        : 0;
 
-    eligibleTravelers.forEach(traveler => {
-      let pointsToAssign = Math.min(pointsPerEligibleTraveler, maxPointsPerPerson);
+    eligibleTravelers.forEach((traveler) => {
+      let pointsToAssign = Math.min(
+        pointsPerEligibleTraveler,
+        maxPointsPerPerson
+      );
       if (remainingPoints > 0) {
         pointsToAssign = Math.min(pointsToAssign, remainingPoints);
         traveler.assignedPoints = pointsToAssign;
@@ -1330,7 +1487,8 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
       const canAssignMore = maxPointsPerPerson - currentAssigned;
       const pointsToAdd = Math.min(remainingPoints, canAssignMore);
       firstTraveler.assignedPoints = currentAssigned + pointsToAdd;
-      this.pointsRedemption.pointsPerTraveler[firstTraveler.id] = firstTraveler.assignedPoints;
+      this.pointsRedemption.pointsPerTraveler[firstTraveler.id] =
+        firstTraveler.assignedPoints;
     }
   }
 
@@ -1340,7 +1498,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
    * @param points Puntos a asignar
    */
   assignPointsToTraveler(travelerId: string, points: number): void {
-    const traveler = this.travelers.find(t => t.id === travelerId);
+    const traveler = this.travelers.find((t) => t.id === travelerId);
     if (!traveler) return;
 
     // Validar que el viajero pueda recibir puntos
@@ -1356,14 +1514,19 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
 
     // Calcular el máximo permitido para este viajero
     const maxForThisTraveler = this.calculateMaxPointsForTraveler(travelerId);
-    
+
     // Aplicar límites automáticamente
     const originalPoints = points;
     points = Math.max(0, Math.min(points, maxForThisTraveler));
 
     // Si se aplicó algún límite, mostrar mensaje informativo
     if (originalPoints !== points) {
-      this.showLimitAppliedMessage(originalPoints, points, travelerId, maxForThisTraveler);
+      this.showLimitAppliedMessage(
+        originalPoints,
+        points,
+        travelerId,
+        maxForThisTraveler
+      );
     }
 
     // Actualizar asignación del viajero
@@ -1383,7 +1546,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     const maxPointsPerPerson = this.pointsRedemption.maxDiscountPerTraveler;
     const availablePoints = this.getAvailablePoints();
     const maxDiscount = this.getMaxDiscountForCategory();
-    
+
     // El máximo es el menor entre el límite por persona y los puntos disponibles
     return Math.min(maxPointsPerPerson, availablePoints, maxDiscount);
   }
@@ -1395,10 +1558,15 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
    * @param travelerId ID del viajero
    * @param maxAllowed Máximo permitido
    */
-  private showLimitAppliedMessage(originalPoints: number, finalPoints: number, travelerId: string, maxAllowed: number): void {
-    const traveler = this.travelers.find(t => t.id === travelerId);
+  private showLimitAppliedMessage(
+    originalPoints: number,
+    finalPoints: number,
+    travelerId: string,
+    maxAllowed: number
+  ): void {
+    const traveler = this.travelers.find((t) => t.id === travelerId);
     const travelerName = traveler ? traveler.name : 'Viajero';
-    
+
     let reason = '';
     if (originalPoints > (traveler?.maxPoints || 0)) {
       reason = `límite por persona (${traveler?.maxPoints || 0}€)`;
@@ -1418,12 +1586,13 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
    * Recalcula los totales de puntos después de cambios manuales
    */
   private recalculatePointsTotals(): void {
-    const totalAssigned = Object.values(this.pointsRedemption.pointsPerTraveler)
-      .reduce((sum, points) => sum + points, 0);
+    const totalAssigned = Object.values(
+      this.pointsRedemption.pointsPerTraveler
+    ).reduce((sum, points) => sum + points, 0);
 
     this.pointsRedemption.totalPointsToUse = totalAssigned;
     this.pointsRedemption.totalDiscount = totalAssigned;
-    
+
     // Emitir el cambio de descuento por puntos
     this.pointsDiscountChange.emit(this.pointsRedemption.totalDiscount);
   }
@@ -1449,9 +1618,9 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
    * @param travelerId ID del viajero
    */
   getTravelerMaxPointsDisplay(travelerId: string): number {
-    const traveler = this.travelers.find(t => t.id === travelerId);
+    const traveler = this.travelers.find((t) => t.id === travelerId);
     if (!traveler) return 0;
-    
+
     // Siempre mostrar el límite fijo por persona (50€ según el documento)
     return traveler.maxPoints;
   }
@@ -1462,8 +1631,9 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
    * @param points Puntos a validar
    */
   canAssignPointsToTraveler(travelerId: string, points: number): boolean {
-    const traveler = this.travelers.find(t => t.id === travelerId);
-    if (!traveler || (travelerId !== 'main-traveler' && !traveler.hasEmail)) return false;
+    const traveler = this.travelers.find((t) => t.id === travelerId);
+    if (!traveler || (travelerId !== 'main-traveler' && !traveler.hasEmail))
+      return false;
 
     const maxForThisTraveler = this.calculateMaxPointsForTraveler(travelerId);
     return points >= 0 && points <= maxForThisTraveler;
@@ -1486,14 +1656,17 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     travelersWithPoints: number;
     mainTravelerPoints: number;
   } {
-    const travelersWithPoints = this.travelers.filter(t => t.assignedPoints > 0).length;
-    const mainTravelerPoints = this.pointsRedemption.pointsPerTraveler['main-traveler'] || 0;
+    const travelersWithPoints = this.travelers.filter(
+      (t) => t.assignedPoints > 0
+    ).length;
+    const mainTravelerPoints =
+      this.pointsRedemption.pointsPerTraveler['main-traveler'] || 0;
 
     return {
       totalPoints: this.pointsRedemption.totalPointsToUse,
       totalDiscount: this.pointsRedemption.totalDiscount,
       travelersWithPoints,
-      mainTravelerPoints
+      mainTravelerPoints,
     };
   }
 
@@ -1501,7 +1674,10 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
    * Obtiene el precio final después de aplicar descuentos de puntos
    */
   getFinalPrice(): number {
-    const basePrice = this.paymentState.type === 'deposit' ? this.depositTotalAmount : this.totalPrice;
+    const basePrice =
+      this.paymentState.type === 'deposit'
+        ? this.depositTotalAmount
+        : this.totalPrice;
     return Math.max(0, basePrice - this.pointsRedemption.totalDiscount);
   }
 
@@ -1520,10 +1696,14 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     if (!this.pointsSummary) return '';
     // Simplified mock logic
     switch (this.pointsSummary.currentCategory) {
-      case 'TROTAMUNDOS': return 'pi pi-leaf';
-      case 'VIAJERO': return 'pi pi-send';
-      case 'NOMADA': return 'pi pi-globe';
-      default: return 'pi pi-star';
+      case 'TROTAMUNDOS':
+        return 'pi pi-leaf';
+      case 'VIAJERO':
+        return 'pi pi-send';
+      case 'NOMADA':
+        return 'pi pi-globe';
+      default:
+        return 'pi pi-star';
     }
   }
 
@@ -1534,10 +1714,14 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
     if (!this.pointsSummary) return '';
     // Simplified mock logic
     switch (this.pointsSummary.currentCategory) {
-      case 'TROTAMUNDOS': return 'category-trotamundos';
-      case 'VIAJERO': return 'category-viajero';
-      case 'NOMADA': return 'category-nomada';
-      default: return '';
+      case 'TROTAMUNDOS':
+        return 'category-trotamundos';
+      case 'VIAJERO':
+        return 'category-viajero';
+      case 'NOMADA':
+        return 'category-nomada';
+      default:
+        return '';
     }
   }
 
@@ -1546,27 +1730,30 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
    */
   getProgressText(): string {
     if (!this.pointsSummary || !this.pointsSummary.nextCategory) return '';
-    
+
     const nextCategoryName = this.pointsSummary.nextCategory;
     const tripsNeeded = this.pointsSummary.pointsToNextCategory || 0;
-    
+
     if (tripsNeeded <= 0) {
       return `¡Felicidades! Has alcanzado el nivel ${nextCategoryName}`;
     }
-    
-    return `Te faltan ${tripsNeeded} viaje${tripsNeeded > 1 ? 's' : ''} para ser ${nextCategoryName}`;
+
+    return `Te faltan ${tripsNeeded} viaje${
+      tripsNeeded > 1 ? 's' : ''
+    } para ser ${nextCategoryName}`;
   }
 
   /**
    * Obtiene el porcentaje de progreso hacia la siguiente categoría
    */
   getProgressPercentage(): number {
-    if (!this.pointsSummary || !this.pointsSummary.pointsToNextCategory) return 100;
-    
+    if (!this.pointsSummary || !this.pointsSummary.pointsToNextCategory)
+      return 100;
+
     // Simplified mock logic
     const currentTrips = 1; // Mock value
     const totalTripsNeeded = 3; // Mock value for VIAJERO
-    
+
     return Math.min(100, (currentTrips / totalTripsNeeded) * 100);
   }
 
@@ -1579,11 +1766,11 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
    * @returns Array de transacciones registradas
    */
   async registerPointsRedemption(
-    reservationId: string, 
+    reservationId: string,
     pointsDistribution: { [travelerId: string]: number }
   ): Promise<any[]> {
     const transactions: any[] = [];
-    
+
     try {
       // Crear transacción para cada viajero que recibió puntos
       Object.entries(pointsDistribution).forEach(([travelerId, points]) => {
@@ -1594,18 +1781,17 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
             type: 'redemption',
             category: 'travel',
             concept: `Canje de puntos en reserva ${reservationId}`,
-            reservationId
+            reservationId,
           };
-          
+
           transactions.push(transaction);
         }
       });
-      
+
       // TODO: Implementar llamada a la API para registrar transacciones
       // await this.pointsService.registerTransactions(transactions);
-      
+
       return transactions;
-      
     } catch (error) {
       console.error('❌ Error al registrar transacciones de canje:', error);
       throw new Error('No se pudieron registrar las transacciones de puntos');
@@ -1621,7 +1807,6 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
       // Reducir puntos disponibles
       this.pointsSummary.availablePoints -= pointsUsed;
       this.pointsSummary.usedPoints += pointsUsed;
-      
     }
   }
 
@@ -1630,18 +1815,23 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
    * @param transactions Transacciones registradas
    * @param totalDiscount Descuento total aplicado
    */
-  private showRedemptionConfirmation(transactions: any[], totalDiscount: number): void {
+  private showRedemptionConfirmation(
+    transactions: any[],
+    totalDiscount: number
+  ): void {
     const travelersCount = transactions.length;
     const totalPoints = transactions.reduce((sum, t) => sum + t.points, 0);
-    
+
     // Mensaje principal
     this.messageService.add({
       severity: 'success',
       summary: 'Canje de puntos exitoso',
-      detail: `Se han canjeado ${totalPoints} puntos por ${totalDiscount.toFixed(2)}€ de descuento.`,
+      detail: `Se han canjeado ${totalPoints} puntos por ${totalDiscount.toFixed(
+        2
+      )}€ de descuento.`,
       life: 6000,
     });
-    
+
     // Mensaje adicional con detalles
     if (travelersCount > 1) {
       this.messageService.add({
@@ -1659,37 +1849,47 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
    * @returns Promise<boolean> - true si el canje fue exitoso
    */
   async processPointsRedemption(reservationId: string): Promise<boolean> {
-    if (!this.pointsRedemption.enabled || this.pointsRedemption.totalPointsToUse <= 0) {
+    if (
+      !this.pointsRedemption.enabled ||
+      this.pointsRedemption.totalPointsToUse <= 0
+    ) {
       return true; // No hay canje de puntos
     }
-    
+
     try {
       // TODO: Implementar llamada real a la API
-      console.log(`Processing points redemption for reservation ${reservationId}`);
-      
+      console.log(
+        `Processing points redemption for reservation ${reservationId}`
+      );
+
       // Simular éxito
       const success = true;
-      
+
       if (success) {
         // Actualizar saldo del usuario
-        this.updateUserPointsAfterRedemption(this.pointsRedemption.totalPointsToUse);
-        
+        this.updateUserPointsAfterRedemption(
+          this.pointsRedemption.totalPointsToUse
+        );
+
         // Mostrar confirmación al usuario
-        this.showRedemptionConfirmation([], this.pointsRedemption.totalDiscount);
+        this.showRedemptionConfirmation(
+          [],
+          this.pointsRedemption.totalDiscount
+        );
       }
-      
+
       return success;
-      
     } catch (error) {
       console.error('❌ Error al procesar canje de puntos:', error);
-      
+
       this.messageService.add({
         severity: 'error',
         summary: 'Error en canje de puntos',
-        detail: 'No se pudo procesar el canje de puntos. El pago continuará sin descuento.',
+        detail:
+          'No se pudo procesar el canje de puntos. El pago continuará sin descuento.',
         life: 5000,
       });
-      
+
       return false;
     }
   }
@@ -1698,14 +1898,17 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
    * Obtiene el resumen de canje para mostrar en la confirmación
    */
   getRedemptionSummary(): PointsDistributionSummary {
-    const travelersWithPoints = this.travelers.filter(t => t.assignedPoints > 0).length;
-    const mainTravelerPoints = this.pointsRedemption.pointsPerTraveler['main-traveler'] || 0;
+    const travelersWithPoints = this.travelers.filter(
+      (t) => t.assignedPoints > 0
+    ).length;
+    const mainTravelerPoints =
+      this.pointsRedemption.pointsPerTraveler['main-traveler'] || 0;
 
     return {
       totalPoints: this.pointsRedemption.totalPointsToUse,
       totalDiscount: this.pointsRedemption.totalDiscount,
       travelersWithPoints,
-      mainTravelerPoints
+      mainTravelerPoints,
     };
   }
 
@@ -1713,14 +1916,20 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
    * Obtiene el máximo de puntos permitidos (menor entre disponibles y límite de categoría)
    */
   getMaxAllowedPoints(): number {
-    return Math.min(this.getAvailablePoints(), this.getMaxDiscountForCategory());
+    return Math.min(
+      this.getAvailablePoints(),
+      this.getMaxDiscountForCategory()
+    );
   }
 
   /**
    * Verifica si el total de puntos asignados excede el máximo permitido
    */
   isTotalExceeded(): boolean {
-    return this.getPointsDistributionSummary().totalPoints > this.getMaxAllowedPoints();
+    return (
+      this.getPointsDistributionSummary().totalPoints >
+      this.getMaxAllowedPoints()
+    );
   }
 
   // ===== MÉTODOS PARA REVERSO POR CANCELACIÓN =====
@@ -1730,40 +1939,52 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
    * @param reservationId ID de la reserva a cancelar
    * @param reason Razón de la cancelación
    */
-  async processReservationCancellation(reservationId: string, reason: string = 'Usuario canceló la reserva'): Promise<boolean> {
+  async processReservationCancellation(
+    reservationId: string,
+    reason: string = 'Usuario canceló la reserva'
+  ): Promise<boolean> {
     try {
-      console.log(`Processing reservation cancellation for ${reservationId} due to: ${reason}`);
+      console.log(
+        `Processing reservation cancellation for ${reservationId} due to: ${reason}`
+      );
 
       // Verificar uso de puntos en la reserva
-      if (this.pointsRedemption.enabled && this.pointsRedemption.totalPointsToUse > 0) {
+      if (
+        this.pointsRedemption.enabled &&
+        this.pointsRedemption.totalPointsToUse > 0
+      ) {
         // TODO: Implementar reverso real de puntos
-        console.log(`Reverting ${this.pointsRedemption.totalPointsToUse} points for cancellation`);
-          
-          // Mostrar mensaje de confirmación al usuario
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Puntos revertidos',
-            detail: `Se han revertido ${this.pointsRedemption.totalPointsToUse} puntos a tu cuenta por la cancelación de la reserva.`,
-            life: 5000,
-          });
+        console.log(
+          `Reverting ${this.pointsRedemption.totalPointsToUse} points for cancellation`
+        );
 
-          // Actualizar saldo de puntos del usuario
-          this.updateUserPointsAfterReversal(this.pointsRedemption.totalPointsToUse);
+        // Mostrar mensaje de confirmación al usuario
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Puntos revertidos',
+          detail: `Se han revertido ${this.pointsRedemption.totalPointsToUse} puntos a tu cuenta por la cancelación de la reserva.`,
+          life: 5000,
+        });
+
+        // Actualizar saldo de puntos del usuario
+        this.updateUserPointsAfterReversal(
+          this.pointsRedemption.totalPointsToUse
+        );
       }
 
       // TODO: Cancelar la reserva en el sistema
       return true;
-
     } catch (error) {
       console.error('❌ Error al procesar cancelación de reserva:', error);
-      
+
       this.messageService.add({
         severity: 'error',
         summary: 'Error en cancelación',
-        detail: 'No se pudo procesar la cancelación de la reserva. Contacta con soporte.',
+        detail:
+          'No se pudo procesar la cancelación de la reserva. Contacta con soporte.',
         life: 5000,
       });
-      
+
       return false;
     }
   }
@@ -1777,7 +1998,6 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
       // Añadir los puntos revertidos al saldo disponible
       this.pointsSummary.availablePoints += pointsReversed;
       this.pointsSummary.totalPoints += pointsReversed;
-      
     }
   }
 
@@ -1786,7 +2006,10 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
    */
   simulateReservationCancellation(): void {
     const reservationId = `reservation_${Date.now()}`;
-    this.processReservationCancellation(reservationId, 'Simulación de cancelación');
+    this.processReservationCancellation(
+      reservationId,
+      'Simulación de cancelación'
+    );
   }
 
   /**
@@ -1795,15 +2018,15 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
   async simulateTripCompletion(): Promise<void> {
     try {
       console.log('Simulating trip completion');
-      
+
       // TODO: Implementar llamada real a la API para generar puntos
       this.messageService.add({
         severity: 'info',
         summary: 'Simulación de finalización',
-        detail: 'La simulación de finalización de viaje se ha ejecutado (sin API real).',
+        detail:
+          'La simulación de finalización de viaje se ha ejecutado (sin API real).',
         life: 3000,
       });
-      
     } catch (error) {
       console.error('Error en simulación de finalización:', error);
       this.messageService.add({
@@ -1818,11 +2041,17 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
   /**
    * Obtiene información sobre los puntos usados en la reserva actual
    */
-  getPointsUsedInReservation(): { used: boolean; amount: number; canRevert: boolean } {
+  getPointsUsedInReservation(): {
+    used: boolean;
+    amount: number;
+    canRevert: boolean;
+  } {
     return {
-      used: this.pointsRedemption.enabled && this.pointsRedemption.totalPointsToUse > 0,
+      used:
+        this.pointsRedemption.enabled &&
+        this.pointsRedemption.totalPointsToUse > 0,
       amount: this.pointsRedemption.totalPointsToUse,
-      canRevert: true // Simplified - always allow reversal
+      canRevert: true, // Simplified - always allow reversal
     };
   }
 

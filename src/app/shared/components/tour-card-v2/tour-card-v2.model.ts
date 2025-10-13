@@ -1,4 +1,5 @@
 export interface TourDataV2 {
+  id?: number; // ID real de base de datos del tour
   imageUrl: string;
   title: string;
   rating: number;

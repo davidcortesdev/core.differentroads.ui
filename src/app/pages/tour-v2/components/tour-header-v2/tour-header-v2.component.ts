@@ -901,7 +901,7 @@ export class TourHeaderV2Component
         'EUR',
         this.selectedDeparture?.price || tourData.basePrice || tourData.minPrice || 0,
         {
-          item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+          item_id: tourData.id?.toString() || tourData.tkId?.toString() || '',
           item_name: tourData.name || '',
           coupon: '',
           discount: 0,

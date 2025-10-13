@@ -676,7 +676,7 @@ export class NewReservationComponent implements OnInit {
               coupon: reservationData.coupon?.code || '',
               payment_type: paymentType,
               items: [{
-                item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+                item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
                 item_name: reservationData.tourName || tourData.name || '',
                 coupon: '',
                 discount: 0,
@@ -719,7 +719,7 @@ export class NewReservationComponent implements OnInit {
               coupon: reservationData.coupon?.code || '',
               payment_type: paymentType,
               items: [{
-                item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+                item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
                 item_name: reservationData.tourName || tourData.name || '',
                 coupon: '',
                 discount: 0,

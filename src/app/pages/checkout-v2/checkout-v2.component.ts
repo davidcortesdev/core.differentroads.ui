@@ -2930,7 +2930,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           'EUR',
           this.totalAmountCalculated || this.totalAmount || 0,
           {
-            item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+            item_id: tourData.id?.toString() || tourData.tkId?.toString() || '',
             item_name: this.tourName || tourData.name || '',
             coupon: '',
             discount: 0,
@@ -2962,7 +2962,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           'EUR',
           this.totalAmountCalculated || this.totalAmount || 0,
           {
-            item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+            item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
             item_name: this.tourName || tourData.name || '',
             coupon: '',
             discount: 0,
@@ -3062,7 +3062,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             value: this.totalAmountCalculated || this.totalAmount || 0,
             coupon: this.reservationData.coupon?.code || '',
             items: [{
-              item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
               item_name: this.tourName || tourData.name || '',
               coupon: '',
               discount: 0,
@@ -3099,7 +3099,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             value: this.totalAmountCalculated || this.totalAmount || 0,
             coupon: this.reservationData.coupon?.code || '',
             items: [{
-              item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
               item_name: this.tourName || tourData.name || '',
               coupon: '',
               discount: 0,
@@ -3163,7 +3163,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             value: this.totalAmountCalculated || this.totalAmount || 0,
             coupon: this.reservationData.coupon?.code || '',
             items: [{
-              item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
               item_name: this.tourName || tourData.name || '',
               coupon: '',
               discount: 0,
@@ -3200,7 +3200,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             value: this.totalAmountCalculated || this.totalAmount || 0,
             coupon: this.reservationData.coupon?.code || '',
             items: [{
-              item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
               item_name: this.tourName || tourData.name || '',
               coupon: '',
               discount: 0,
@@ -3267,7 +3267,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             value: this.totalAmountCalculated || this.totalAmount || 0,
             coupon: this.reservationData.coupon?.code || '',
             items: [{
-              item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
               item_name: this.tourName || tourData.name || '',
               coupon: '',
               discount: 0,
@@ -3305,7 +3305,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             value: this.totalAmountCalculated || this.totalAmount || 0,
             coupon: this.reservationData.coupon?.code || '',
             items: [{
-              item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
               item_name: this.tourName || tourData.name || '',
               coupon: '',
               discount: 0,
@@ -3373,7 +3373,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             value: this.totalAmountCalculated || this.totalAmount || 0,
             coupon: this.reservationData.coupon?.code || '',
             items: [{
-              item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
               item_name: this.tourName || tourData.name || '',
               coupon: '',
               discount: 0,
@@ -3411,7 +3411,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             value: this.totalAmountCalculated || this.totalAmount || 0,
             coupon: this.reservationData.coupon?.code || '',
             items: [{
-              item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
               item_name: this.tourName || tourData.name || '',
               coupon: '',
               discount: 0,
@@ -3489,7 +3489,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             coupon: this.reservationData.coupon?.code || '',
             payment_type: paymentType,
             items: [{
-              item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '',
               item_name: this.tourName || tourData.name || '',
               coupon: '',
               discount: 0,
@@ -3528,7 +3528,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             coupon: this.reservationData.coupon?.code || '',
             payment_type: paymentType,
             items: [{
-              item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '',
               item_name: this.tourName || tourData.name || '',
               coupon: '',
               discount: 0,
@@ -3596,7 +3596,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             value: this.totalAmountCalculated || this.totalAmount || 0,
             coupon: this.reservationData.coupon?.code || '',
             items: [{
-              item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '',
               item_name: this.tourName || tourData.name || '',
               coupon: '',
               discount: 0,
@@ -3634,7 +3634,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             value: this.totalAmountCalculated || this.totalAmount || 0,
             coupon: this.reservationData.coupon?.code || '',
             items: [{
-              item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '',
               item_name: this.tourName || tourData.name || '',
               coupon: '',
               discount: 0,
@@ -3702,7 +3702,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             value: this.totalAmountCalculated || this.totalAmount || 0,
             coupon: this.reservationData.coupon?.code || '',
             items: [{
-              item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '',
               item_name: this.tourName || tourData.name || '',
               coupon: '',
               discount: 0,
@@ -3740,7 +3740,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             value: this.totalAmountCalculated || this.totalAmount || 0,
             coupon: this.reservationData.coupon?.code || '',
             items: [{
-              item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '',
               item_name: this.tourName || tourData.name || '',
               coupon: '',
               discount: 0,
@@ -3792,7 +3792,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           itemListId,
           itemListName,
           {
-            item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+            item_id: tourData.id?.toString() || tourData.tkId?.toString() || '',
             item_name: this.tourName || tourData.name || '',
             coupon: '',
             discount: 0,
@@ -3820,7 +3820,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           itemListId,
           itemListName,
           {
-            item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
+            item_id: tourData.id?.toString() || tourData.tkId?.toString() || '',
             item_name: this.tourName || tourData.name || '',
             coupon: '',
             discount: 0,

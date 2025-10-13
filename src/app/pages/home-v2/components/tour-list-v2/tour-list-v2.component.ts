@@ -538,17 +538,18 @@ export class TourListV2Component implements OnInit, OnDestroy {
                 const imageUrl = cms?.imageUrl || '';
 
                 return {
-                  imageUrl: imageUrl, // ✅ IMAGEN CORRECTA DEL CMS
-                  title: tour.name || '', // ✅ TÍTULO ORIGINAL
-                  description: '', // ✅ DESCRIPCIÓN REMOVIDA
-                  rating: 5, // Valor por defecto
-                  tag: tourTag, // ✅ TAG REAL
-                  price: tourPrice, // ✅ PRECIO REAL
-                  availableMonths: availableMonths, // ✅ MESES REALES
-                  departureDates: departureDates, // ✅ FECHAS DE DEPARTURE
-                  nextDepartureDate: nextDepartureDate, // ✅ PRÓXIMA FECHA DE SALIDA
-                  itineraryDaysCount: itineraryDaysCount, // ✅ CANTIDAD DE DÍAS
-                  itineraryDaysText: itineraryDaysText, // ✅ TEXTO DE DÍAS FORMATEADO
+                  id: tour.id,
+                  imageUrl: imageUrl,
+                  title: tour.name || '',
+                  description: '',
+                  rating: 5,
+                  tag: tourTag,
+                  price: tourPrice,
+                  availableMonths: availableMonths,
+                  departureDates: departureDates,
+                  nextDepartureDate: nextDepartureDate,
+                  itineraryDaysCount: itineraryDaysCount,
+                  itineraryDaysText: itineraryDaysText,
                   isByDr: true, // Valor por defecto
                   webSlug:
                     tour.slug ||

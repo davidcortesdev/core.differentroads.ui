@@ -308,7 +308,7 @@ export class TourV2Component implements OnInit {
       itemListId,
       itemListName,
       {
-        item_id: tourData.tkId?.toString() || tour.id?.toString() || '',
+        item_id: tour.id?.toString() || tourData.tkId?.toString() || '',
         item_name: tour.name || '',
         coupon: '',
         discount: 0,

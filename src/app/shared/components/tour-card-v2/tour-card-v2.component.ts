@@ -75,14 +75,12 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
   handleTourClick(): void {
     // Disparar evento select_item si tenemos información de la lista
     if (this.itemListId && this.itemListName) {
-      const numericListId = this.analyticsService.getNumericListId(this.itemListId);
-      
       this.analyticsService.getCurrentUserData().subscribe(userData => {
         this.analyticsService.selectItem(
-          numericListId,
+          this.itemListId!, // Usar el ID real de la lista directamente
           this.itemListName!,
           {
-            item_id: this.tourData.externalID?.toString() || '',
+            item_id: this.tourData.id?.toString() || '', // ✅ ID REAL DE BASE DE DATOS
             item_name: this.tourData.title || '',
             coupon: '',
             discount: 0,
@@ -93,8 +91,8 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
             item_category3: this.tourData.tag || '',
             item_category4: this.tourData.availableMonths?.join(', ') || '',
             item_category5: this.tourData.tripType?.join(', ') || (this.tourData.isByDr ? 'Grupos' : 'Privados'),
-            item_list_id: numericListId,
-            item_list_name: this.itemListName,
+            item_list_id: this.itemListId!, // Usar el ID real de la lista directamente
+            item_list_name: this.itemListName!,
             item_variant: '',
             price: this.tourData.price || 0,
             quantity: 1,
@@ -110,7 +108,7 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
     if (this.itemListId && this.itemListName) {
       this.router.navigate(['/tour', this.tourData.webSlug], {
         state: {
-          listId: this.itemListId,
+          listId: this.itemListId, // Pasar el ID real de la lista directamente
           listName: this.itemListName
         }
       });

@@ -24,51 +24,23 @@ $azul: var(--background-azul);
   justify-content: center;
 }
 
-@mixin flex-between {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
 @mixin responsive-font($mobile, $tablet, $desktop) {
-  @include mobile {
-    font-size: $mobile;
-  }
-
+  font-size: $desktop;
+  
   @include tablet {
     font-size: $tablet;
   }
-
-  @include desktop {
-    font-size: $desktop;
-  }
-}
-
-@mixin responsive-margin($mobile, $tablet, $desktop) {
+  
   @include mobile {
-    margin-top: $mobile;
-  }
-
-  @include tablet {
-    margin-top: $tablet;
-  }
-
-  @include desktop {
-    margin-top: $desktop;
+    font-size: $mobile;
   }
 }
 
 @mixin button-styles {
   width: 100%;
-  border-radius: 100px;
-  height: 40px;
+  border-radius: 50px;
+  height: 50px;
   margin-top: 20px;
-
-  @include mobile {
-    height: 45px;
-    border-radius: 45px;
-    margin-top: 0;
-  }
 
   @include tablet {
     height: 47px;
@@ -76,10 +48,10 @@ $azul: var(--background-azul);
     margin-top: 10px;
   }
 
-  @include desktop {
-    height: 50px;
-    border-radius: 50px;
-    margin-top: 20px;
+  @include mobile {
+    height: 45px;
+    border-radius: 45px;
+    margin-top: 0;
   }
 }
 
@@ -93,32 +65,24 @@ $azul: var(--background-azul);
   padding: 0;
   margin-top: -20px;
 
-  @include mobile {
-    padding: 0 0.5rem;
-  }
-
   @include tablet {
     padding: 0 1rem;
   }
 
-  @include desktop {
-    padding: 0;
+  @include mobile {
+    padding: 0 0.5rem;
   }
 
   .header-container {
     cursor: pointer;
     margin: 1rem 0 2.5rem;
 
-    @include mobile {
-      margin: 1rem 0 2rem;
-    }
-
     @include tablet {
       margin: 1.25rem 0 2.25rem;
     }
 
-    @include desktop {
-      margin: 1rem 0 2.5rem;
+    @include mobile {
+      margin: 1rem 0 2rem;
     }
   }
 
@@ -155,16 +119,12 @@ $azul: var(--background-azul);
     margin-top: -15px;
     max-width: 278px;
 
-    @include mobile {
-      max-width: 100%;
-    }
-
     @include tablet {
       max-width: 255px;
     }
 
-    @include desktop {
-      max-width: 278px;
+    @include mobile {
+      max-width: 100%;
     }
 
     &.pay {
@@ -181,16 +141,12 @@ $azul: var(--background-azul);
     margin-bottom: 0.75rem;
     padding-top: 1.125rem;
 
-    @include mobile {
-      margin-bottom: 1rem;
-    }
-
     @include tablet {
       margin-bottom: 0.875rem;
     }
 
-    @include desktop {
-      margin-bottom: 0.75rem;
+    @include mobile {
+      margin-bottom: 1rem;
     }
   }
 
@@ -210,18 +166,15 @@ $azul: var(--background-azul);
       margin-left: 1rem;
       flex-grow: 1;
       word-wrap: break-word;
-
-      @include mobile {
-        margin-left: 0;
-        font-size: 0.85rem;
-      }
+      font-size: 1rem;
 
       @include tablet {
         font-size: 0.95rem;
       }
 
-      @include desktop {
-        font-size: 1rem;
+      @include mobile {
+        margin-left: 0;
+        font-size: 0.85rem;
       }
 
       .specific-search-info {
@@ -256,22 +209,26 @@ $azul: var(--background-azul);
       margin-left: 4px;
       display: inline-block;
 
-      @include mobile {
-        height: 16px;
-      }
-
       @include tablet {
         height: 18px;
       }
 
-      @include desktop {
-        height: 20px;
+      @include mobile {
+        height: 16px;
       }
     }
   }
 
   .payment-methods-section {
-    @include responsive-margin(2.5rem, 2.25rem, 2rem);
+    margin-top: 2rem;
+
+    @include tablet {
+      margin-top: 2.25rem;
+    }
+
+    @include mobile {
+      margin-top: 2.5rem;
+    }
   }
 
   .payment-methods-row {
@@ -282,10 +239,6 @@ $azul: var(--background-azul);
     @include mobile {
       flex-direction: column;
       gap: 0.75rem;
-    }
-
-    @include desktop {
-      flex-direction: row;
     }
   }
 
@@ -324,7 +277,11 @@ $azul: var(--background-azul);
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    @include responsive-margin(2rem, 1.75rem, 2rem);
+    margin-top: 2rem;
+
+    @include tablet {
+      margin-top: 1.75rem;
+    }
 
     .back-button {
       flex-shrink: 0;
@@ -360,10 +317,8 @@ $azul: var(--background-azul);
     }
   }
 
-  .back-button {
-    &.p-button {
-      @include button-styles;
-    }
+  .back-button.p-button {
+    @include button-styles;
   }
 
   .p-checkbox .p-checkbox-box.p-focus {
@@ -374,13 +329,10 @@ $azul: var(--background-azul);
 .price-change-content {
   text-align: center;
 
-  .price-change-icon {
+  .price-change-icon i {
+    font-size: 3rem;
+    color: #f39c12;
     margin-bottom: 1rem;
-
-    i {
-      font-size: 3rem;
-      color: #f39c12;
-    }
   }
 
   h3 {
@@ -425,14 +377,12 @@ $azul: var(--background-azul);
           color: #28a745;
         }
 
-        &.difference-price {
-          &.increase {
-            color: #dc3545;
-          }
+        &.difference-price.increase {
+          color: #dc3545;
+        }
 
-          &.decrease {
-            color: #28a745;
-          }
+        &.difference-price.decrease {
+          color: #28a745;
         }
       }
     }
@@ -455,24 +405,18 @@ $azul: var(--background-azul);
   }
 }
 
-// Transfer 25% section styles
 .transfer25-section {
   margin-top: 2rem;
-  margin-bottom: 3rem; // Agregar espacio inferior para separar de la sección de puntos
-
-  @include mobile {
-    margin-top: 2.5rem;
-    margin-bottom: 3.5rem;
-  }
+  margin-bottom: 3rem;
 
   @include tablet {
     margin-top: 2.25rem;
     margin-bottom: 3.25rem;
   }
 
-  @include desktop {
-    margin-top: 2rem;
-    margin-bottom: 3rem;
+  @include mobile {
+    margin-top: 2.5rem;
+    margin-bottom: 3.5rem;
   }
 
   .upload-container {
@@ -481,16 +425,12 @@ $azul: var(--background-azul);
     border-radius: 10px;
     margin-top: 1rem;
 
-    @include mobile {
-      padding: 1rem;
-    }
-
     @include tablet {
       padding: 1.25rem;
     }
 
-    @include desktop {
-      padding: 1.5rem;
+    @include mobile {
+      padding: 1rem;
     }
 
     .upload-description {
@@ -499,16 +439,12 @@ $azul: var(--background-azul);
       font-size: 0.95rem;
       line-height: 1.5;
 
-      @include mobile {
-        font-size: 0.9rem;
-      }
-
       @include tablet {
         font-size: 0.92rem;
       }
 
-      @include desktop {
-        font-size: 0.95rem;
+      @include mobile {
+        font-size: 0.9rem;
       }
     }
 
@@ -521,20 +457,16 @@ $azul: var(--background-azul);
       border-radius: 8px;
       color: var(--success-green);
       font-weight: 500;
-
-      @include mobile {
-        font-size: 0.9rem;
-        padding: 0.6rem;
-      }
+      font-size: 0.95rem;
 
       @include tablet {
         font-size: 0.92rem;
         padding: 0.65rem;
       }
 
-      @include desktop {
-        font-size: 0.95rem;
-        padding: 0.75rem;
+      @include mobile {
+        font-size: 0.9rem;
+        padding: 0.6rem;
       }
     }
   }

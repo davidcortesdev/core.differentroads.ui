@@ -106,7 +106,17 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
       });
     }
     
-    this.router.navigate(['/tour', this.tourData.webSlug]);
+    // Navegar pasando los datos a través del state (sin modificar la URL visible)
+    if (this.itemListId && this.itemListName) {
+      this.router.navigate(['/tour', this.tourData.webSlug], {
+        state: {
+          listId: this.itemListId,
+          listName: this.itemListName
+        }
+      });
+    } else {
+      this.router.navigate(['/tour', this.tourData.webSlug]);
+    }
   }
 
   private calculateMonthlyPrice(): number {

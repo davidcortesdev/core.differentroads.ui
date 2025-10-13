@@ -10,7 +10,7 @@
                   <app-tour-card-v2 
                     [tourData]="tour" 
                     [showScalapayPrice]="false"
-                    [itemListId]="title || 'home_grid'"
+                    [itemListId]="configurationId?.toString() || 'home_grid'"
                     [itemListName]="title || 'Grid de tours'"
                     [index]="i"
                   ></app-tour-card-v2>

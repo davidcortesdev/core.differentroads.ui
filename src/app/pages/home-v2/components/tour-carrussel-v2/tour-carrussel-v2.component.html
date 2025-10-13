@@ -14,7 +14,7 @@
                 [tourData]="tour"
                 [showScalapayPrice]="true"
                 [isLargeCard]="true"
-                [itemListId]="title || 'home_carousel'"
+                [itemListId]="configurationId?.toString() || 'home_carousel'"
                 [itemListName]="title || 'Carrusel de tours'"
                 [index]="tours.indexOf(tour)"
               ></app-tour-card-v2>

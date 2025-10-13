@@ -286,10 +286,12 @@ export class TourV2Component implements OnInit {
     
     const tourData = tour as any;
     
-    // Obtener contexto de navegación desde query parameters
-    const queryParams = this.route.snapshot.queryParams;
-    const itemListId = queryParams['listId'] || '';
-    const itemListName = queryParams['listName'] || '';
+    // Obtener contexto de navegación desde el state de la navegación (sin modificar URL)
+    const navigation = this.router.getCurrentNavigation();
+    const state = navigation?.extras?.state || window.history.state;
+    
+    const itemListId = state?.['listId'] || '';
+    const itemListName = state?.['listName'] || '';
     
     this.analyticsService.getCurrentUserData().subscribe((userData: any) => {
       this.fireViewItemEvent(itemListId, itemListName, tourData, tour, userData);

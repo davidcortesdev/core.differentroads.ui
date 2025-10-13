@@ -1102,7 +1102,17 @@ export class TourHeaderV2Component
             // Disparar evento add_to_cart
             this.trackAddToCart();
 
-            this.router.navigate(['/checkout-v2', reservation.id]);
+            // Obtener contexto de la lista para pasarlo al checkout
+            const queryParams = this.route.snapshot.queryParams;
+            const listId = queryParams['listId'] || '';
+            const listName = queryParams['listName'] || '';
+            
+            this.router.navigate(['/checkout-v2', reservation.id], {
+              queryParams: {
+                listId: listId,
+                listName: listName
+              }
+            });
           },
           error: (error) => {
             console.error('💥 Booking - Error fatal en el proceso:', {

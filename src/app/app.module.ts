@@ -220,16 +220,6 @@ import { ReviewSectionV2Component } from './pages/profile-v2/components/review-s
 import { UpdateProfileSectionV2Component } from './pages/profile-v2/components/update-profile-section-v2/update-profile-section-v2.component';
 
 // ========================================
-// PAGE COMPONENTS - RESERVATION
-// ========================================
-import { ReservationComponent } from './pages/reservation/reservation.component';
-import { TravelInformationSectionComponent } from './pages/reservation/components/travel-information-section/travel-information-section.component';
-import { TravelersInformationSectionComponent } from './pages/reservation/components/travelers-information-section/travelers-information-section.component';
-import { FlightsSectionComponent } from './pages/reservation/components/flights-section/flights-section.component';
-import { PricesSectionComponent } from './pages/reservation/components/prices-section/prices-section.component';
-import { PaymentsInformationSectionComponent } from './pages/reservation/components/payments-information-section/payments-information-section.component';
-
-// ========================================
 // PAGE COMPONENTS - OTHER PAGES
 // ========================================
 import { NotFoundComponent } from './pages/not-found/not-found.component';
@@ -425,16 +415,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     MembershipBenefitsComponent,
     ReviewSectionV2Component,
     UpdateProfileSectionV2Component,
-
-    // ========================================
-    // PAGE COMPONENTS - RESERVATION
-    // ========================================
-    ReservationComponent,
-    TravelInformationSectionComponent,
-    TravelersInformationSectionComponent,
-    FlightsSectionComponent,
-    PricesSectionComponent,
-    PaymentsInformationSectionComponent,
 
     // ========================================
     // PAGE COMPONENTS - OTHER PAGES

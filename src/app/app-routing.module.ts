@@ -45,11 +45,6 @@ import { Bookingsv2Component } from './pages/bookingsv2/bookings.component';
 import { ProfileV2Component } from './pages/profile-v2/profile-v2.component';
 
 // ========================================
-// PAGE COMPONENTS - RESERVATION
-// ========================================
-import { ReservationComponent } from './pages/reservation/reservation.component';
-
-// ========================================
 // PAGE COMPONENTS - OTHER PAGES
 // ========================================
 import { NotFoundComponent } from './pages/not-found/not-found.component';
@@ -134,12 +129,6 @@ const routes: Routes = [
       // ========================================
       // RESERVATION ROUTES
       // ========================================
-      // Versión antigua
-      { path: 'reservation/:id', component: ReservationComponent },
-      {
-        path: 'reservation/:id/:status/:paymentID',
-        component: ReservationComponent,
-      },
       // Versión nueva
       {
         path: 'reservation/:reservationId/:paymentId',

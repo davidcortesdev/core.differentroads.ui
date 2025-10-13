@@ -254,18 +254,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     this.summaryRefreshTrigger = { timestamp: Date.now() };
   }
 
-  /**
-   * NUEVO: Detectar si estamos en modo standalone basándose en la URL
-   */
-  private detectStandaloneMode(): void {
-    // Verificar tanto la URL del router como la URL del navegador
-    const routerUrl = this.router.url;
-    const windowUrl = window.location.pathname;
-
-    this.isStandaloneMode =
-      routerUrl.includes('/standalone/') || windowUrl.includes('/standalone/');
-  }
-
   ngAfterViewInit(): void {
     // Si hay un step activo en la URL, inicializar el componente correspondiente
     if (this.activeIndex >= 0) {

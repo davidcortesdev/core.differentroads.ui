@@ -146,25 +146,6 @@ import { TourReviewsV2Component } from './pages/tour-v2/components/tour-reviews-
 import { TourInfoAccordionV2Component } from './pages/tour-v2/components/tour-info-accordion-v2/tour-info-accordion-v2.component';
 
 // ========================================
-// PAGE COMPONENTS - CHECKOUT
-// ========================================
-import { CheckoutComponent } from './pages/checkout/checkout.component';
-import { CustomizeTripComponent } from './pages/checkout/components/customize-trip/customize-trip.component';
-import { OptionalActivitiesComponent } from './pages/checkout/components/customize-trip/components/optional-activities/optional-activities.component';
-import { TravelerSelectorComponent } from './pages/checkout/components/customize-trip/components/traveler-selector/traveler-selector.component';
-import { RoomSelectorComponent } from './pages/checkout/components/customize-trip/components/room-selector/room-selector.component';
-import { InsurancesComponent } from './pages/checkout/components/customize-trip/components/insurances/insurances.component';
-import { FlightsComponent } from './pages/checkout/components/flights/flights.component';
-import { FlightItineraryComponent } from './pages/checkout/components/flights/components/flight-itinerary/flight-itinerary.component';
-import { FlightSearchComponent } from './pages/checkout/components/flights/components/flight-search/flight-search.component';
-import { FlightSectionComponent } from './pages/checkout/components/flight-section/flight-section.component';
-import { TravelersComponent } from './pages/checkout/components/travelers/travelers.component';
-import { TravelerItemComponent } from './pages/checkout/components/traveler-item/traveler-item.component';
-import { TravelerActivitySelectorComponent } from './pages/checkout/components/traveler-activity-selector/traveler-activity-selector.component';
-import { PaymentComponent } from './pages/checkout/components/payment/payment.component';
-import { DiscountCodeComponent } from './pages/checkout/components/discount-code/discount-code.component';
-
-// ========================================
 // PAGE COMPONENTS - CHECKOUT V2
 // ========================================
 import { CheckoutV2Component } from './pages/checkout-v2/checkout-v2.component';
@@ -370,25 +351,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     TourDeparturesV2Component,
     TourReviewsV2Component,
     TourInfoAccordionV2Component,
-
-    // ========================================
-    // PAGE COMPONENTS - CHECKOUT
-    // ========================================
-    CheckoutComponent,
-    CustomizeTripComponent,
-    OptionalActivitiesComponent,
-    TravelerSelectorComponent,
-    RoomSelectorComponent,
-    InsurancesComponent,
-    FlightsComponent,
-    FlightItineraryComponent,
-    FlightSearchComponent,
-    FlightSectionComponent,
-    TravelersComponent,
-    TravelerItemComponent,
-    TravelerActivitySelectorComponent,
-    PaymentComponent,
-    DiscountCodeComponent,
 
     // ========================================
     // PAGE COMPONENTS - CHECKOUT V2

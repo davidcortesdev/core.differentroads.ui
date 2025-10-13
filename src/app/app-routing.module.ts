@@ -30,7 +30,6 @@ import { TourV2Component } from './pages/tour-v2/tour-v2.component';
 // ========================================
 // PAGE COMPONENTS - CHECKOUT
 // ========================================
-import { CheckoutComponent } from './pages/checkout/checkout.component';
 import { CheckoutV2Component } from './pages/checkout-v2/checkout-v2.component';
 import { NewReservationComponent } from './pages/checkout-v2/components/new-reservation/new-reservation.component';
 
@@ -125,7 +124,6 @@ const routes: Routes = [
       // ========================================
       // CHECKOUT ROUTES
       // ========================================
-      { path: 'checkout/:id', component: CheckoutComponent },
       { path: 'checkout-v2/:reservationId', component: CheckoutV2Component },
 
       // ========================================

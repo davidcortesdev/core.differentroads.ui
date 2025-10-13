@@ -5,6 +5,7 @@ import {
   AfterViewInit,
   ViewChild,
   ElementRef,
+  DoCheck,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import {
@@ -34,7 +35,7 @@ interface TripQueryParams {
   templateUrl: './hero-section-v2.component.html',
   styleUrls: ['./hero-section-v2.component.scss'],
 })
-export class HeroSectionV2Component implements OnInit, AfterViewInit {
+export class HeroSectionV2Component implements OnInit, AfterViewInit, DoCheck {
   @Input() initialDestination: string | null = null;
   @Input() initialDepartureDate: Date | null = null;
   @Input() initialReturnDate: Date | null = null;
@@ -89,6 +90,25 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     // Ensure video plays when view is initialized
     if (this.isVideo && this.bannerContent) {
       setTimeout(() => this.playVideo(), 200);
+    }
+  }
+
+  ngDoCheck(): void {
+    // Sincronizar departureDate y returnDate con rangeDates automáticamente
+    if (this.rangeDates && this.rangeDates.length > 0) {
+      if (this.rangeDates[0] !== this.departureDate) {
+        this.departureDate = this.rangeDates[0];
+      }
+      if (this.rangeDates.length >= 2 && this.rangeDates[1] !== this.returnDate) {
+        this.returnDate = this.rangeDates[1];
+      } else if (this.rangeDates.length === 1 && this.returnDate !== null) {
+        this.returnDate = null;
+      }
+    } else if (this.rangeDates && this.rangeDates.length === 0) {
+      if (this.departureDate !== null || this.returnDate !== null) {
+        this.departureDate = null;
+        this.returnDate = null;
+      }
     }
   }
 
@@ -244,24 +264,6 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     this.trackSearch(queryParams);
 
     this.router.navigate(['/tours'], { queryParams });
-  }
-
-  /**
-   * Manejar selección de rango de fechas
-   * @param event Evento del datepicker con array de fechas
-   */
-  onRangeSelect(event: Date[]): void {
-    this.rangeDates = event;
-    if (event && event.length >= 2) {
-      this.departureDate = event[0];
-      this.returnDate = event[1];
-    } else if (event && event.length === 1) {
-      this.departureDate = event[0];
-      this.returnDate = null;
-    } else {
-      this.departureDate = null;
-      this.returnDate = null;
-    }
   }
 
   /**

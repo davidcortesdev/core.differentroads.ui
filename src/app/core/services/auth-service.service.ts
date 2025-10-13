@@ -15,6 +15,7 @@ import {
 } from 'aws-amplify/auth';
 import { UsersService } from './users.service';
 import { PointsService } from './points.service'; // new import
+import { AnalyticsService } from './analytics.service'; // new import
 import { firstValueFrom, catchError, tap, switchMap } from 'rxjs';
 
 @Injectable({
@@ -39,7 +40,8 @@ export class AuthenticateService {
     private router: Router,
     private usersService: UsersService,
     private hubspotService: HubspotService,
-    private pointsService: PointsService // new injection
+    private pointsService: PointsService, // new injection
+    private analyticsService: AnalyticsService // new injection
   ) {
     this.userPool = new CognitoUserPool({
       UserPoolId: environment.cognitoUserPoolId,
@@ -442,7 +444,13 @@ export class AuthenticateService {
           this.isAuthenticated.next(true);
           this.currentUserEmail.next(attributes.email);
           this.currentUserCognitoId.next(user.userId);
-          await this.createUserIfNotExists(attributes.email);
+          const isNewUser = await this.createUserIfNotExists(attributes.email);
+          
+          // Disparar evento sign_up para Google solo si es un usuario nuevo
+          if (isNewUser) {
+            this.trackSignUp('google');
+          }
+          
           this.userAttributesChanged.next();
         }
       }
@@ -451,8 +459,8 @@ export class AuthenticateService {
     }
   }
 
-  async createUserIfNotExists(email: string): Promise<void> {
-    if (!email) return;
+  async createUserIfNotExists(email: string): Promise<boolean> {
+    if (!email) return false;
 
     try {
       // Primero intentamos obtener el usuario
@@ -490,9 +498,12 @@ export class AuthenticateService {
 
       if (user) {
         // console.log('Usuario existente:', user);
+        return false; // Usuario ya existía
       }
+      return true; // Usuario fue creado
     } catch (error) {
       console.error('Error en createUserIfNotExists:', error);
+      return false;
     }
   }
 
@@ -528,5 +539,17 @@ export class AuthenticateService {
         console.error(`Error obteniendo usuario por email ${email}:`, err);
       },
     });
+  }
+
+  /**
+   * Dispara evento sign_up para analytics
+   */
+  private trackSignUp(method: string): void {
+    const userData = this.analyticsService.getUserData(
+      this.getUserEmailValue(),
+      undefined, // No tenemos phone en Google flow
+      this.getCognitoIdValue()
+    );
+    this.analyticsService.signUp(method, userData);
   }
 }

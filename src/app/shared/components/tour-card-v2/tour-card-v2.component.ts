@@ -9,6 +9,8 @@ import {
 import { Router } from '@angular/router';
 import { DOCUMENT } from '@angular/common';
 import { TourDataV2 } from './tour-card-v2.model';
+import { AnalyticsService, EcommerceItem } from '../../../core/services/analytics.service';
+import { AuthenticateService } from '../../../core/services/auth-service.service';
 
 @Component({
   selector: 'app-tour-card-v2',
@@ -20,6 +22,9 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
   @Input() tourData!: TourDataV2;
   @Input() isLargeCard = false;
   @Input() showScalapayPrice = false;
+  @Input() itemListId?: string; // ID de la lista para analytics
+  @Input() itemListName?: string; // Nombre de la lista para analytics
+  @Input() index?: number; // Índice del item en la lista
 
   monthlyPrice = 0;
   private originalConsoleWarn: any = null;
@@ -27,7 +32,9 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
   private maxScalapayInitAttempts = 3;
   constructor(
     private router: Router,
-    @Inject(DOCUMENT) private document: Document
+    @Inject(DOCUMENT) private document: Document,
+    private analyticsService: AnalyticsService,
+    private authService: AuthenticateService
   ) {}
 
   ngOnInit(): void {
@@ -66,11 +73,70 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
   }
 
   handleTourClick(): void {
-    this.router.navigate(['/tour', this.tourData.webSlug]);
+    // Disparar evento select_item si tenemos información de la lista
+    if (this.itemListId && this.itemListName) {
+      this.analyticsService.getCurrentUserData().subscribe(userData => {
+        this.analyticsService.selectItem(
+          this.itemListId!, // Usar el ID real de la lista directamente
+          this.itemListName!,
+          {
+            item_id: this.tourData.id?.toString() || '', // ✅ ID REAL DE BASE DE DATOS
+            item_name: this.tourData.title || '',
+            coupon: '',
+            discount: 0,
+            index: (this.index || 0) + 1, // GA4 usa índice basado en 1
+            item_brand: 'Different Roads',
+            item_category: this.tourData.continent || '',
+            item_category2: this.tourData.country || '',
+            item_category3: this.tourData.tag || '',
+            item_category4: this.tourData.availableMonths?.join(', ') || '',
+            item_category5: this.tourData.tripType?.join(', ') || (this.tourData.isByDr ? 'Grupos' : 'Privados'),
+            item_list_id: this.itemListId!, // Usar el ID real de la lista directamente
+            item_list_name: this.itemListName!,
+            item_variant: '',
+            price: this.tourData.price || 0,
+            quantity: 1,
+            puntuacion: this.tourData.rating?.toString() || '',
+            duracion: this.tourData.itineraryDaysCount ? `${this.tourData.itineraryDaysCount} días` : ''
+          },
+          userData
+        );
+      });
+    }
+    
+    // Navegar pasando los datos a través del state (sin modificar la URL visible)
+    if (this.itemListId && this.itemListName) {
+      this.router.navigate(['/tour', this.tourData.webSlug], {
+        state: {
+          listId: this.itemListId, // Pasar el ID real de la lista directamente
+          listName: this.itemListName
+        }
+      });
+    } else {
+      this.router.navigate(['/tour', this.tourData.webSlug]);
+    }
   }
 
   private calculateMonthlyPrice(): number {
     return this.tourData.price / 4;
+  }
+
+  /**
+   * Obtener datos del usuario actual si está logueado
+   */
+  private getUserData() {
+    if (this.authService.isAuthenticatedValue()) {
+      const email = this.authService.getUserEmailValue();
+      const userId = this.authService.getCognitoIdValue();
+      const phone = '';
+      
+      return this.analyticsService.getUserData(
+        email,
+        phone,
+        userId
+      );
+    }
+    return undefined;
   }
 
   private suppressScalapayWarnings(): void {

@@ -541,19 +541,32 @@ export class HeaderV2Component implements OnInit, OnDestroy {
    * Registra la interacción del usuario con elementos del menú para analytics
    */
   onMenuInteraction(clickElement: string): void {
-    this.analyticsService.menuInteraction(
-      clickElement,
-      this.getUserData()
-    );
+    this.analyticsService.getCurrentUserData().subscribe({
+      next: (userData) => {
+        this.analyticsService.menuInteraction(clickElement, userData);
+      },
+      error: (error) => {
+        console.error('Error obteniendo datos de usuario para analytics:', error);
+        // Fallback con datos básicos
+        this.analyticsService.menuInteraction(clickElement, this.getUserData());
+      }
+    });
   }
 
   /**
    * Registra el click en el logo para analytics
    */
   onLogoClick(): void {
-    this.analyticsService.clickLogo(
-      this.getUserData()
-    );
+    this.analyticsService.getCurrentUserData().subscribe({
+      next: (userData) => {
+        this.analyticsService.clickLogo(userData);
+      },
+      error: (error) => {
+        console.error('Error obteniendo datos de usuario para analytics:', error);
+        // Fallback con datos básicos
+        this.analyticsService.clickLogo(this.getUserData());
+      }
+    });
   }
 
   /**

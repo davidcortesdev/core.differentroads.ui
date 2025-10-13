@@ -529,17 +529,17 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                 const imageUrl = cms?.imageUrl || '';
 
                 return {
-                  imageUrl: imageUrl, // ✅ IMAGEN CORRECTA DEL CMS
-                  title: tour.name || '', // ✅ TÍTULO ORIGINAL
-                  description: '', // ✅ DESCRIPCIÓN REMOVIDA
+                  id: tour.id,
+                  imageUrl: imageUrl,
+                  title: tour.name || '',
+                  description: '',
                   rating: 5, // Valor por defecto
-                  tag: tourTag, // ✅ TAG REAL
-                  price: tourPrice, // ✅ PRECIO REAL
-                  availableMonths: availableMonths, // ✅ MESES REALES
-                  departureDates: departureDates, // ✅ FECHAS DE DEPARTURE
-                  nextDepartureDate: nextDepartureDate, // ✅ PRÓXIMA FECHA DE SALIDA
-                  itineraryDaysCount: itineraryDaysCount, // ✅ CANTIDAD DE DÍAS
-                  itineraryDaysText: itineraryDaysText, // ✅ TEXTO DE DÍAS FORMATEADO
+                  tag: tourTag,
+                  price: tourPrice,
+                  availableMonths: availableMonths,
+                  nextDepartureDate: nextDepartureDate,
+                  itineraryDaysCount: itineraryDaysCount,
+                  itineraryDaysText: itineraryDaysText,
                   isByDr: true, // Valor por defecto
                   webSlug:
                     tour.slug ||
@@ -547,6 +547,8 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                     '',
                   tripType: [], // TourNetService no tiene tripType
                   externalID: tour.tkId || '',
+                  continent: '', // TourNetService no tiene continent - pendiente de agregar
+                  country: '', // TourNetService no tiene country - pendiente de agregar
                 };
               }
             )

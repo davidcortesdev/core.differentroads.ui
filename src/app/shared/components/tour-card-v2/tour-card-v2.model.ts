@@ -1,4 +1,5 @@
 export interface TourDataV2 {
+  id?: number; // ID real de base de datos del tour
   imageUrl: string;
   title: string;
   rating: number;
@@ -16,6 +17,9 @@ export interface TourDataV2 {
   // ✅ NUEVOS CAMPOS: Para días de itinerario
   itineraryDaysCount?: number;
   itineraryDaysText?: string; // Texto formateado como "Colombia en: 10 días"
+  // ✅ NUEVOS CAMPOS: Para analytics (continent, country)
+  continent?: string;
+  country?: string;
 }
 
 export enum TripTypeV2 {

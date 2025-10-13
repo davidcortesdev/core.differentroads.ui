@@ -502,13 +502,22 @@ export class TourAdditionalInfoComponent implements OnInit, OnChanges, OnDestroy
    * Disparar evento generated_lead (contact_form) cuando el formulario de contacto se envíe con éxito
    */
   private trackContactForm(): void {
-    this.analyticsService.generatedLead(
-      'ficha_tour',
-      this.analyticsService.getUserData(
-        this.userEmail,
-        '', // No tenemos teléfono en este contexto
-        this.authService.getCognitoIdValue()
-      )
-    );
+    this.analyticsService.getCurrentUserData().subscribe({
+      next: (userData) => {
+        this.analyticsService.generatedLead('ficha_tour', userData);
+      },
+      error: (error) => {
+        console.error('Error obteniendo datos de usuario para analytics:', error);
+        // Fallback con datos básicos
+        this.analyticsService.generatedLead(
+          'ficha_tour',
+          this.analyticsService.getUserData(
+            this.userEmail,
+            '',
+            this.authService.getCognitoIdValue()
+          )
+        );
+      }
+    });
   }
 }

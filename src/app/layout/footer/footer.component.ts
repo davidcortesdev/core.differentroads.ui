@@ -228,14 +228,23 @@ export class FooterComponent implements OnInit, AfterViewInit, OnDestroy {
    * Disparar evento generated_lead cuando la suscripción a newsletter sea exitosa
    */
   private trackGeneratedLead(email: string): void {
-    this.analyticsService.generatedLead(
-      'Newsletter',
-      this.analyticsService.getUserData(
-        email,
-        undefined, // No tenemos teléfono en la suscripción
-        this.authService.getCognitoIdValue()
-      )
-    );
+    this.analyticsService.getCurrentUserData().subscribe({
+      next: (userData) => {
+        this.analyticsService.generatedLead('Newsletter', userData);
+      },
+      error: (error) => {
+        console.error('Error obteniendo datos de usuario para analytics:', error);
+        // Fallback con email básico
+        this.analyticsService.generatedLead(
+          'Newsletter',
+          this.analyticsService.getUserData(
+            email,
+            undefined,
+            this.authService.getCognitoIdValue()
+          )
+        );
+      }
+    });
   }
 
   /**

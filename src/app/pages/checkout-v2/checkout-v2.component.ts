@@ -2918,10 +2918,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     const tourData = this.reservationData.tour || {};
     
-    // Obtener item_list_id y item_list_name dinámicamente desde query params (solo si existen)
-    const queryParams = this.route.snapshot.queryParams;
-    const itemListId = queryParams['listId'] || '';
-    const itemListName = queryParams['listName'] || '';
+    // Obtener item_list_id y item_list_name desde el state del router (heredados desde home)
+    const state = window.history.state;
+    const itemListId = state?.['listId'] || '';
+    const itemListName = state?.['listName'] || '';
     
     // Calcular pasajeros niños dinámicamente
     const childrenCount = this.getChildrenPassengersCount();
@@ -3056,10 +3056,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     const tourData = this.reservationData.tour || {};
     
-    // Obtener item_list_id y item_list_name dinámicamente desde query params (solo si existen)
-    const queryParams = this.route.snapshot.queryParams;
-    const itemListId = queryParams['listId'] || '';
-    const itemListName = queryParams['listName'] || '';
+    // Obtener item_list_id y item_list_name desde el state del router (heredados desde home)
+    const state = window.history.state;
+    const itemListId = state?.['listId'] || '';
+    const itemListName = state?.['listName'] || '';
     
     // Obtener actividades seleccionadas
     const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
@@ -3157,10 +3157,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     const tourData = this.reservationData.tour || {};
     
-    // Obtener item_list_id y item_list_name dinámicamente desde query params (solo si existen)
-    const queryParams = this.route.snapshot.queryParams;
-    const itemListId = queryParams['listId'] || '';
-    const itemListName = queryParams['listName'] || '';
+    // Obtener item_list_id y item_list_name desde el state del router (heredados desde home)
+    const state = window.history.state;
+    const itemListId = state?.['listId'] || '';
+    const itemListName = state?.['listName'] || '';
     
     // Obtener actividades seleccionadas
     const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
@@ -3258,10 +3258,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     const tourData = this.reservationData.tour || {};
     
-    // Obtener item_list_id y item_list_name dinámicamente desde query params (solo si existen)
-    const queryParams = this.route.snapshot.queryParams;
-    const itemListId = queryParams['listId'] || '';
-    const itemListName = queryParams['listName'] || '';
+    // Obtener item_list_id y item_list_name desde el state del router (heredados desde home)
+    const state = window.history.state;
+    const itemListId = state?.['listId'] || '';
+    const itemListName = state?.['listName'] || '';
     
     // Obtener actividades seleccionadas
     const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
@@ -3364,10 +3364,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     const tourData = this.reservationData.tour || {};
     
-    // Obtener item_list_id y item_list_name dinámicamente desde query params (solo si existen)
-    const queryParams = this.route.snapshot.queryParams;
-    const itemListId = queryParams['listId'] || '';
-    const itemListName = queryParams['listName'] || '';
+    // Obtener item_list_id y item_list_name desde el state del router (heredados desde home)
+    const state = window.history.state;
+    const itemListId = state?.['listId'] || '';
+    const itemListName = state?.['listName'] || '';
     
     // Obtener actividades seleccionadas
     const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
@@ -3470,10 +3470,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     const tourData = this.reservationData.tour || {};
     
-    // Obtener item_list_id y item_list_name dinámicamente desde query params (solo si existen)
-    const queryParams = this.route.snapshot.queryParams;
-    const itemListId = queryParams['listId'] || '';
-    const itemListName = queryParams['listName'] || '';
+    // Obtener item_list_id y item_list_name desde el state del router (heredados desde home)
+    const state = window.history.state;
+    const itemListId = state?.['listId'] || '';
+    const itemListName = state?.['listName'] || '';
     
     // Obtener actividades seleccionadas
     const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
@@ -3587,10 +3587,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     const tourData = this.reservationData.tour || {};
     
-    // Obtener item_list_id y item_list_name dinámicamente desde query params (solo si existen)
-    const queryParams = this.route.snapshot.queryParams;
-    const itemListId = queryParams['listId'] || '';
-    const itemListName = queryParams['listName'] || '';
+    // Obtener item_list_id y item_list_name desde el state del router (heredados desde home)
+    const state = window.history.state;
+    const itemListId = state?.['listId'] || '';
+    const itemListName = state?.['listName'] || '';
     
     // Obtener actividades seleccionadas
     const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
@@ -3693,10 +3693,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     const tourData = this.reservationData.tour || {};
     
-    // Obtener item_list_id y item_list_name dinámicamente desde query params (solo si existen)
-    const queryParams = this.route.snapshot.queryParams;
-    const itemListId = queryParams['listId'] || '';
-    const itemListName = queryParams['listName'] || '';
+    // Obtener item_list_id y item_list_name desde el state del router (heredados desde home)
+    const state = window.history.state;
+    const itemListId = state?.['listId'] || '';
+    const itemListName = state?.['listName'] || '';
     
     // Obtener actividades seleccionadas
     const activitiesText = this.selectedActivities && this.selectedActivities.length > 0

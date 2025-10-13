@@ -1102,8 +1102,18 @@ export class TourHeaderV2Component
             // Disparar evento add_to_cart
             this.trackAddToCart();
 
-            // Navegar al checkout sin queryParams (los datos se obtienen desde la reserva)
-            this.router.navigate(['/checkout-v2', reservation.id]);
+            // Obtener contexto de la lista desde el state del router y pasarlo al checkout
+            const state = window.history.state;
+            const listId = state?.['listId'] || '';
+            const listName = state?.['listName'] || '';
+            
+            // Navegar al checkout pasando los datos por state (sin modificar URL)
+            this.router.navigate(['/checkout-v2', reservation.id], {
+              state: {
+                listId: listId,
+                listName: listName
+              }
+            });
           },
           error: (error) => {
             console.error('💥 Booking - Error fatal en el proceso:', {

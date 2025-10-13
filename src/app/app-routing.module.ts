@@ -59,11 +59,6 @@ import { ReviewSurveyComponent } from './pages/review-survey/review-survey.compo
 import { ToursComponent } from './shared/components/tours/tours.component';
 
 // ========================================
-// FEATURES
-// ========================================
-import { AirportSearchComponent } from './features/airports/airport-search/airport-search.component';
-
-// ========================================
 // ROUTES CONFIGURATION
 // ========================================
 const routes: Routes = [
@@ -152,7 +147,6 @@ const routes: Routes = [
       // ========================================
       // FEATURES ROUTES
       // ========================================
-      { path: 'aeropuertos', component: AirportSearchComponent },
       { path: 'reviews/:id', component: ReviewSurveyComponent },
 
       // ========================================

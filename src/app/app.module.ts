@@ -243,11 +243,6 @@ import { TourCardHeaderV2Component } from './shared/components/tour-card-v2/tour
 import { TourCardContentV2Component } from './shared/components/tour-card-v2/tour-card-content-v2/tour-card-content-v2.component';
 
 // ========================================
-// FEATURES
-// ========================================
-import { AirportSearchComponent } from './features/airports/airport-search/airport-search.component';
-
-// ========================================
 // CORE - PIPES
 // ========================================
 import { CurrencyPipe } from './core/pipes/currency.pipe';
@@ -422,11 +417,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     TourCardV2Component,
     TourCardHeaderV2Component,
     TourCardContentV2Component,
-
-    // ========================================
-    // FEATURES
-    // ========================================
-    AirportSearchComponent,
 
     // ========================================
     // OTHER COMPONENTS

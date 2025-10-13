@@ -72,6 +72,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   // Datos del tour
   tourName: string = '';
+  tourData: any = null; // Tour completo cargado desde la BD
   departureDate: string = '';
   returnDate: string = '';
   departureId: number | null = null;
@@ -766,6 +767,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       next: (tour) => {
         this.tourName = tour.name || '';
         this.tourSlug = tour.slug || '';
+        this.tourData = tour; // Guardar el tour completo para usarlo en analytics
 
         // Cargar itinerario basado en el tourId
         this.loadItineraryByTourId(tourId);
@@ -812,17 +814,17 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       next: (departure) => {
         // Verificar que departure no sea null antes de acceder a sus propiedades
         if (departure) {
-          this.departureDate = departure.departureDate ?? '';
-          this.returnDate = departure.arrivalDate ?? '';
-          this.departureData = departure; // Almacenar datos del departure
+        this.departureDate = departure.departureDate ?? '';
+        this.returnDate = departure.arrivalDate ?? '';
+        this.departureData = departure; // Almacenar datos del departure
 
-          // NUEVO: Obtener el departureActivityPackId desde el departure
-          // Por ahora, vamos a usar un valor por defecto o buscar en la BD
-          this.loadDepartureActivityPackId(departureId);
+        // NUEVO: Obtener el departureActivityPackId desde el departure
+        // Por ahora, vamos a usar un valor por defecto o buscar en la BD
+        this.loadDepartureActivityPackId(departureId);
 
-          // Solo asignar si no se ha obtenido desde el tour (como respaldo)
-          if (!this.itineraryId && departure.itineraryId) {
-            this.itineraryId = departure.itineraryId;
+        // Solo asignar si no se ha obtenido desde el tour (como respaldo)
+        if (!this.itineraryId && departure.itineraryId) {
+          this.itineraryId = departure.itineraryId;
           }
         } else {
           // Si departure es null, establecer valores por defecto
@@ -2916,41 +2918,44 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     const tourData = this.reservationData.tour || {};
     
-    // Obtener item_list_id y item_list_name dinámicamente desde query params
+    // Obtener item_list_id y item_list_name dinámicamente desde query params (solo si existen)
     const queryParams = this.route.snapshot.queryParams;
-    const itemListId = queryParams['listId'] || 'checkout';
-    const itemListName = queryParams['listName'] || 'Carrito de compra';
+    const itemListId = queryParams['listId'] || '';
+    const itemListName = queryParams['listName'] || '';
     
     // Calcular pasajeros niños dinámicamente
     const childrenCount = this.getChildrenPassengersCount();
     
+    // Obtener ID del tour usando el helper
+    const tourItemId = this.getTourItemId();
+    
     this.analyticsService.getCurrentUserData().subscribe({
       next: (userData) => {
-        this.analyticsService.viewCart(
-          'EUR',
-          this.totalAmountCalculated || this.totalAmount || 0,
-          {
-            item_id: tourData.id?.toString() || tourData.tkId?.toString() || '',
-            item_name: this.tourName || tourData.name || '',
-            coupon: '',
-            discount: 0,
+    this.analyticsService.viewCart(
+      'EUR',
+      this.totalAmountCalculated || this.totalAmount || 0,
+      {
+            item_id: tourItemId,
+        item_name: this.tourName || tourData.name || '',
+        coupon: '',
+        discount: 0,
             index: 1,
-            item_brand: 'Different Roads',
-            item_category: tourData.destination?.continent || '',
-            item_category2: tourData.destination?.country || '',
-            item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-            item_category4: tourData.monthTags?.join(', ') || '',
-            item_category5: tourData.tourType || '',
+        item_brand: 'Different Roads',
+        item_category: tourData.destination?.continent || '',
+        item_category2: tourData.destination?.country || '',
+        item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+        item_category4: tourData.monthTags?.join(', ') || '',
+        item_category5: tourData.tourType || '',
             item_list_id: itemListId,
             item_list_name: itemListName,
-            item_variant: `${tourData.tkId || tourData.id} - ${this.selectedFlight?.name || 'Sin vuelo'}`,
-            price: this.totalAmountCalculated || this.totalAmount || 0,
-            quantity: 1,
-            puntuacion: tourData.rating?.toString() || '',
-            duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-            start_date: this.departureDate || '',
-            end_date: this.returnDate || '',
-            pasajeros_adultos: this.totalPassengers?.toString() || '0',
+        item_variant: `${tourData.tkId || tourData.id} - ${this.selectedFlight?.name || 'Sin vuelo'}`,
+        price: this.totalAmountCalculated || this.totalAmount || 0,
+        quantity: 1,
+        puntuacion: tourData.rating?.toString() || '',
+        duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+        start_date: this.departureDate || '',
+        end_date: this.returnDate || '',
+        pasajeros_adultos: this.totalPassengers?.toString() || '0',
             pasajeros_niños: childrenCount
           },
           userData
@@ -2962,7 +2967,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           'EUR',
           this.totalAmountCalculated || this.totalAmount || 0,
           {
-            item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
+            item_id: this.getTourItemId(), // ✅ Priorizar ID real de BD
             item_name: this.tourName || tourData.name || '',
             coupon: '',
             discount: 0,
@@ -2984,11 +2989,24 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             end_date: this.returnDate || '',
             pasajeros_adultos: this.totalPassengers?.toString() || '0',
             pasajeros_niños: childrenCount
-          },
-          this.getUserData()
-        );
+      },
+      this.getUserData()
+    );
       }
     });
+  }
+
+  /**
+   * Obtener el ID del tour desde múltiples fuentes
+   * Prioridad: tourData.id (de BD) > reservationData.tour.id > tourId > tkId
+   */
+  private getTourItemId(): string {
+    const tourData = this.reservationData?.tour || {};
+    return this.tourData?.id?.toString() || 
+           tourData.id?.toString() || 
+           this.tourId?.toString() || 
+           tourData.tkId?.toString() || 
+           '';
   }
 
   /**
@@ -3038,10 +3056,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     const tourData = this.reservationData.tour || {};
     
-    // Obtener item_list_id y item_list_name dinámicamente desde query params
+    // Obtener item_list_id y item_list_name dinámicamente desde query params (solo si existen)
     const queryParams = this.route.snapshot.queryParams;
-    const itemListId = queryParams['listId'] || 'checkout';
-    const itemListName = queryParams['listName'] || 'Carrito de compra';
+    const itemListId = queryParams['listId'] || '';
+    const itemListName = queryParams['listName'] || '';
     
     // Obtener actividades seleccionadas
     const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
@@ -3056,33 +3074,33 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     
     this.analyticsService.getCurrentUserData().subscribe({
       next: (userData) => {
-        this.analyticsService.beginCheckout(
-          {
-            currency: 'EUR',
-            value: this.totalAmountCalculated || this.totalAmount || 0,
-            coupon: this.reservationData.coupon?.code || '',
-            items: [{
-              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
-              item_name: this.tourName || tourData.name || '',
-              coupon: '',
-              discount: 0,
+    this.analyticsService.beginCheckout(
+      {
+        currency: 'EUR',
+        value: this.totalAmountCalculated || this.totalAmount || 0,
+        coupon: this.reservationData.coupon?.code || '',
+        items: [{
+              item_id: this.getTourItemId(),
+          item_name: this.tourName || tourData.name || '',
+          coupon: '',
+          discount: 0,
               index: 1,
-              item_brand: 'Different Roads',
-              item_category: tourData.destination?.continent || '',
-              item_category2: tourData.destination?.country || '',
-              item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-              item_category4: tourData.monthTags?.join(', ') || '',
-              item_category5: tourData.tourType || '',
+          item_brand: 'Different Roads',
+          item_category: tourData.destination?.continent || '',
+          item_category2: tourData.destination?.country || '',
+          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+          item_category4: tourData.monthTags?.join(', ') || '',
+          item_category5: tourData.tourType || '',
               item_list_id: itemListId,
               item_list_name: itemListName,
-              item_variant: `${tourData.tkId || tourData.id} - ${this.selectedFlight?.name || 'Sin vuelo'}`,
-              price: this.totalAmountCalculated || this.totalAmount || 0,
-              quantity: 1,
-              puntuacion: tourData.rating?.toString() || '',
-              duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-              start_date: this.departureDate || '',
-              end_date: this.returnDate || '',
-              pasajeros_adultos: this.totalPassengers?.toString() || '0',
+          item_variant: `${tourData.tkId || tourData.id} - ${this.selectedFlight?.name || 'Sin vuelo'}`,
+          price: this.totalAmountCalculated || this.totalAmount || 0,
+          quantity: 1,
+          puntuacion: tourData.rating?.toString() || '',
+          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+          start_date: this.departureDate || '',
+          end_date: this.returnDate || '',
+          pasajeros_adultos: this.totalPassengers?.toString() || '0',
               pasajeros_niños: childrenCount,
               actividades: activitiesText,
               seguros: selectedInsurance
@@ -3099,7 +3117,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             value: this.totalAmountCalculated || this.totalAmount || 0,
             coupon: this.reservationData.coupon?.code || '',
             items: [{
-              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
+              item_id: this.getTourItemId(), // ✅ Priorizar ID real de BD
               item_name: this.tourName || tourData.name || '',
               coupon: '',
               discount: 0,
@@ -3121,12 +3139,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               end_date: this.returnDate || '',
               pasajeros_adultos: this.totalPassengers?.toString() || '0',
               pasajeros_niños: childrenCount,
-              actividades: activitiesText,
-              seguros: selectedInsurance
-            }]
-          },
-          this.getUserData()
-        );
+          actividades: activitiesText,
+          seguros: selectedInsurance
+        }]
+      },
+      this.getUserData()
+    );
       }
     });
   }
@@ -3139,10 +3157,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     const tourData = this.reservationData.tour || {};
     
-    // Obtener item_list_id y item_list_name dinámicamente desde query params
+    // Obtener item_list_id y item_list_name dinámicamente desde query params (solo si existen)
     const queryParams = this.route.snapshot.queryParams;
-    const itemListId = queryParams['listId'] || 'checkout';
-    const itemListName = queryParams['listName'] || 'Carrito de compra';
+    const itemListId = queryParams['listId'] || '';
+    const itemListName = queryParams['listName'] || '';
     
     // Obtener actividades seleccionadas
     const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
@@ -3157,33 +3175,33 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     
     this.analyticsService.getCurrentUserData().subscribe({
       next: (userData) => {
-        this.analyticsService.viewFlightsInfo(
-          {
-            currency: 'EUR',
-            value: this.totalAmountCalculated || this.totalAmount || 0,
-            coupon: this.reservationData.coupon?.code || '',
-            items: [{
-              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
-              item_name: this.tourName || tourData.name || '',
-              coupon: '',
-              discount: 0,
+    this.analyticsService.viewFlightsInfo(
+      {
+        currency: 'EUR',
+        value: this.totalAmountCalculated || this.totalAmount || 0,
+        coupon: this.reservationData.coupon?.code || '',
+        items: [{
+              item_id: this.getTourItemId(),
+          item_name: this.tourName || tourData.name || '',
+          coupon: '',
+          discount: 0,
               index: 1,
-              item_brand: 'Different Roads',
-              item_category: tourData.destination?.continent || '',
-              item_category2: tourData.destination?.country || '',
-              item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-              item_category4: tourData.monthTags?.join(', ') || '',
-              item_category5: tourData.tourType || '',
+          item_brand: 'Different Roads',
+          item_category: tourData.destination?.continent || '',
+          item_category2: tourData.destination?.country || '',
+          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+          item_category4: tourData.monthTags?.join(', ') || '',
+          item_category5: tourData.tourType || '',
               item_list_id: itemListId,
               item_list_name: itemListName,
-              item_variant: `${tourData.tkId || tourData.id} - ${this.selectedFlight?.name || 'Sin vuelo'}`,
-              price: this.totalAmountCalculated || this.totalAmount || 0,
-              quantity: 1,
-              puntuacion: tourData.rating?.toString() || '',
-              duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-              start_date: this.departureDate || '',
-              end_date: this.returnDate || '',
-              pasajeros_adultos: this.totalPassengers?.toString() || '0',
+          item_variant: `${tourData.tkId || tourData.id} - ${this.selectedFlight?.name || 'Sin vuelo'}`,
+          price: this.totalAmountCalculated || this.totalAmount || 0,
+          quantity: 1,
+          puntuacion: tourData.rating?.toString() || '',
+          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+          start_date: this.departureDate || '',
+          end_date: this.returnDate || '',
+          pasajeros_adultos: this.totalPassengers?.toString() || '0',
               pasajeros_niños: childrenCount,
               actividades: activitiesText,
               seguros: selectedInsurance
@@ -3200,7 +3218,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             value: this.totalAmountCalculated || this.totalAmount || 0,
             coupon: this.reservationData.coupon?.code || '',
             items: [{
-              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
+              item_id: this.getTourItemId(), // ✅ Priorizar ID real de BD
               item_name: this.tourName || tourData.name || '',
               coupon: '',
               discount: 0,
@@ -3222,12 +3240,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               end_date: this.returnDate || '',
               pasajeros_adultos: this.totalPassengers?.toString() || '0',
               pasajeros_niños: childrenCount,
-              actividades: activitiesText,
-              seguros: selectedInsurance
-            }]
-          },
-          this.getUserData()
-        );
+          actividades: activitiesText,
+          seguros: selectedInsurance
+        }]
+      },
+      this.getUserData()
+    );
       }
     });
   }
@@ -3240,10 +3258,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     const tourData = this.reservationData.tour || {};
     
-    // Obtener item_list_id y item_list_name dinámicamente desde query params
+    // Obtener item_list_id y item_list_name dinámicamente desde query params (solo si existen)
     const queryParams = this.route.snapshot.queryParams;
-    const itemListId = queryParams['listId'] || 'checkout';
-    const itemListName = queryParams['listName'] || 'Carrito de compra';
+    const itemListId = queryParams['listId'] || '';
+    const itemListName = queryParams['listName'] || '';
     
     // Obtener actividades seleccionadas
     const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
@@ -3261,33 +3279,33 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     
     this.analyticsService.getCurrentUserData().subscribe({
       next: (userData) => {
-        this.analyticsService.addFlightsInfo(
-          {
-            currency: 'EUR',
-            value: this.totalAmountCalculated || this.totalAmount || 0,
-            coupon: this.reservationData.coupon?.code || '',
-            items: [{
-              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
-              item_name: this.tourName || tourData.name || '',
-              coupon: '',
-              discount: 0,
+    this.analyticsService.addFlightsInfo(
+      {
+        currency: 'EUR',
+        value: this.totalAmountCalculated || this.totalAmount || 0,
+        coupon: this.reservationData.coupon?.code || '',
+        items: [{
+              item_id: this.getTourItemId(),
+          item_name: this.tourName || tourData.name || '',
+          coupon: '',
+          discount: 0,
               index: 1,
-              item_brand: 'Different Roads',
-              item_category: tourData.destination?.continent || '',
-              item_category2: tourData.destination?.country || '',
-              item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-              item_category4: tourData.monthTags?.join(', ') || '',
-              item_category5: tourData.tourType || '',
+          item_brand: 'Different Roads',
+          item_category: tourData.destination?.continent || '',
+          item_category2: tourData.destination?.country || '',
+          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+          item_category4: tourData.monthTags?.join(', ') || '',
+          item_category5: tourData.tourType || '',
               item_list_id: itemListId,
               item_list_name: itemListName,
-              item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
-              price: this.totalAmountCalculated || this.totalAmount || 0,
-              quantity: 1,
-              puntuacion: tourData.rating?.toString() || '',
-              duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-              start_date: this.departureDate || '',
-              end_date: this.returnDate || '',
-              pasajeros_adultos: this.totalPassengers?.toString() || '0',
+          item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
+          price: this.totalAmountCalculated || this.totalAmount || 0,
+          quantity: 1,
+          puntuacion: tourData.rating?.toString() || '',
+          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+          start_date: this.departureDate || '',
+          end_date: this.returnDate || '',
+          pasajeros_adultos: this.totalPassengers?.toString() || '0',
               pasajeros_niños: childrenCount,
               actividades: activitiesText,
               seguros: selectedInsurance,
@@ -3305,7 +3323,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             value: this.totalAmountCalculated || this.totalAmount || 0,
             coupon: this.reservationData.coupon?.code || '',
             items: [{
-              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
+              item_id: this.getTourItemId(), // ✅ Priorizar ID real de BD
               item_name: this.tourName || tourData.name || '',
               coupon: '',
               discount: 0,
@@ -3327,13 +3345,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               end_date: this.returnDate || '',
               pasajeros_adultos: this.totalPassengers?.toString() || '0',
               pasajeros_niños: childrenCount,
-              actividades: activitiesText,
-              seguros: selectedInsurance,
-              vuelo: flightCity
-            }]
-          },
-          this.getUserData()
-        );
+          actividades: activitiesText,
+          seguros: selectedInsurance,
+          vuelo: flightCity
+        }]
+      },
+      this.getUserData()
+    );
       }
     });
   }
@@ -3346,10 +3364,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     const tourData = this.reservationData.tour || {};
     
-    // Obtener item_list_id y item_list_name dinámicamente desde query params
+    // Obtener item_list_id y item_list_name dinámicamente desde query params (solo si existen)
     const queryParams = this.route.snapshot.queryParams;
-    const itemListId = queryParams['listId'] || 'checkout';
-    const itemListName = queryParams['listName'] || 'Carrito de compra';
+    const itemListId = queryParams['listId'] || '';
+    const itemListName = queryParams['listName'] || '';
     
     // Obtener actividades seleccionadas
     const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
@@ -3367,33 +3385,33 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     
     this.analyticsService.getCurrentUserData().subscribe({
       next: (userData) => {
-        this.analyticsService.viewPersonalInfo(
-          {
-            currency: 'EUR',
-            value: this.totalAmountCalculated || this.totalAmount || 0,
-            coupon: this.reservationData.coupon?.code || '',
-            items: [{
-              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
-              item_name: this.tourName || tourData.name || '',
-              coupon: '',
-              discount: 0,
+    this.analyticsService.viewPersonalInfo(
+      {
+        currency: 'EUR',
+        value: this.totalAmountCalculated || this.totalAmount || 0,
+        coupon: this.reservationData.coupon?.code || '',
+        items: [{
+              item_id: this.getTourItemId(),
+          item_name: this.tourName || tourData.name || '',
+          coupon: '',
+          discount: 0,
               index: 1,
-              item_brand: 'Different Roads',
-              item_category: tourData.destination?.continent || '',
-              item_category2: tourData.destination?.country || '',
-              item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-              item_category4: tourData.monthTags?.join(', ') || '',
-              item_category5: tourData.tourType || '',
+          item_brand: 'Different Roads',
+          item_category: tourData.destination?.continent || '',
+          item_category2: tourData.destination?.country || '',
+          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+          item_category4: tourData.monthTags?.join(', ') || '',
+          item_category5: tourData.tourType || '',
               item_list_id: itemListId,
               item_list_name: itemListName,
-              item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
-              price: this.totalAmountCalculated || this.totalAmount || 0,
-              quantity: 1,
-              puntuacion: tourData.rating?.toString() || '',
-              duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-              start_date: this.departureDate || '',
-              end_date: this.returnDate || '',
-              pasajeros_adultos: this.totalPassengers?.toString() || '0',
+          item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
+          price: this.totalAmountCalculated || this.totalAmount || 0,
+          quantity: 1,
+          puntuacion: tourData.rating?.toString() || '',
+          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+          start_date: this.departureDate || '',
+          end_date: this.returnDate || '',
+          pasajeros_adultos: this.totalPassengers?.toString() || '0',
               pasajeros_niños: childrenCount,
               actividades: activitiesText,
               seguros: selectedInsurance,
@@ -3411,7 +3429,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             value: this.totalAmountCalculated || this.totalAmount || 0,
             coupon: this.reservationData.coupon?.code || '',
             items: [{
-              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
+              item_id: this.getTourItemId(), // ✅ Priorizar ID real de BD
               item_name: this.tourName || tourData.name || '',
               coupon: '',
               discount: 0,
@@ -3433,13 +3451,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               end_date: this.returnDate || '',
               pasajeros_adultos: this.totalPassengers?.toString() || '0',
               pasajeros_niños: childrenCount,
-              actividades: activitiesText,
-              seguros: selectedInsurance,
-              vuelo: flightCity
-            }]
-          },
-          this.getUserData()
-        );
+          actividades: activitiesText,
+          seguros: selectedInsurance,
+          vuelo: flightCity
+        }]
+      },
+      this.getUserData()
+    );
       }
     });
   }
@@ -3452,10 +3470,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     const tourData = this.reservationData.tour || {};
     
-    // Obtener item_list_id y item_list_name dinámicamente desde query params
+    // Obtener item_list_id y item_list_name dinámicamente desde query params (solo si existen)
     const queryParams = this.route.snapshot.queryParams;
-    const itemListId = queryParams['listId'] || 'checkout';
-    const itemListName = queryParams['listName'] || 'Carrito de compra';
+    const itemListId = queryParams['listId'] || '';
+    const itemListName = queryParams['listName'] || '';
     
     // Obtener actividades seleccionadas
     const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
@@ -3482,34 +3500,34 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     
     this.analyticsService.getCurrentUserData().subscribe({
       next: (userData) => {
-        this.analyticsService.addPaymentInfo(
-          {
-            currency: 'EUR',
-            value: this.totalAmountCalculated || this.totalAmount || 0,
-            coupon: this.reservationData.coupon?.code || '',
-            payment_type: paymentType,
-            items: [{
-              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '',
-              item_name: this.tourName || tourData.name || '',
-              coupon: '',
-              discount: 0,
+    this.analyticsService.addPaymentInfo(
+      {
+        currency: 'EUR',
+        value: this.totalAmountCalculated || this.totalAmount || 0,
+        coupon: this.reservationData.coupon?.code || '',
+        payment_type: paymentType,
+        items: [{
+              item_id: this.getTourItemId(),
+          item_name: this.tourName || tourData.name || '',
+          coupon: '',
+          discount: 0,
               index: 1,
-              item_brand: 'Different Roads',
-              item_category: tourData.destination?.continent || '',
-              item_category2: tourData.destination?.country || '',
-              item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-              item_category4: tourData.monthTags?.join(', ') || '',
-              item_category5: tourData.tourType || '',
+          item_brand: 'Different Roads',
+          item_category: tourData.destination?.continent || '',
+          item_category2: tourData.destination?.country || '',
+          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+          item_category4: tourData.monthTags?.join(', ') || '',
+          item_category5: tourData.tourType || '',
               item_list_id: itemListId,
               item_list_name: itemListName,
-              item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
-              price: this.totalAmountCalculated || this.totalAmount || 0,
-              quantity: 1,
-              puntuacion: tourData.rating?.toString() || '',
-              duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-              start_date: this.departureDate || '',
-              end_date: this.returnDate || '',
-              pasajeros_adultos: this.totalPassengers?.toString() || '0',
+          item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
+          price: this.totalAmountCalculated || this.totalAmount || 0,
+          quantity: 1,
+          puntuacion: tourData.rating?.toString() || '',
+          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+          start_date: this.departureDate || '',
+          end_date: this.returnDate || '',
+          pasajeros_adultos: this.totalPassengers?.toString() || '0',
               pasajeros_niños: childrenCount,
               actividades: activitiesText,
               seguros: selectedInsurance,
@@ -3528,7 +3546,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             coupon: this.reservationData.coupon?.code || '',
             payment_type: paymentType,
             items: [{
-              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '',
+              item_id: this.getTourItemId(),
               item_name: this.tourName || tourData.name || '',
               coupon: '',
               discount: 0,
@@ -3550,13 +3568,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               end_date: this.returnDate || '',
               pasajeros_adultos: this.totalPassengers?.toString() || '0',
               pasajeros_niños: childrenCount,
-              actividades: activitiesText,
-              seguros: selectedInsurance,
-              vuelo: flightCity
-            }]
-          },
-          this.getUserData()
-        );
+          actividades: activitiesText,
+          seguros: selectedInsurance,
+          vuelo: flightCity
+        }]
+      },
+      this.getUserData()
+    );
       }
     });
   }
@@ -3569,10 +3587,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     const tourData = this.reservationData.tour || {};
     
-    // Obtener item_list_id y item_list_name dinámicamente desde query params
+    // Obtener item_list_id y item_list_name dinámicamente desde query params (solo si existen)
     const queryParams = this.route.snapshot.queryParams;
-    const itemListId = queryParams['listId'] || 'checkout';
-    const itemListName = queryParams['listName'] || 'Carrito de compra';
+    const itemListId = queryParams['listId'] || '';
+    const itemListName = queryParams['listName'] || '';
     
     // Obtener actividades seleccionadas
     const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
@@ -3590,33 +3608,33 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     
     this.analyticsService.getCurrentUserData().subscribe({
       next: (userData) => {
-        this.analyticsService.viewPaymentInfo(
-          {
-            currency: 'EUR',
-            value: this.totalAmountCalculated || this.totalAmount || 0,
-            coupon: this.reservationData.coupon?.code || '',
-            items: [{
-              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '',
-              item_name: this.tourName || tourData.name || '',
-              coupon: '',
-              discount: 0,
+    this.analyticsService.viewPaymentInfo(
+      {
+        currency: 'EUR',
+        value: this.totalAmountCalculated || this.totalAmount || 0,
+        coupon: this.reservationData.coupon?.code || '',
+        items: [{
+              item_id: this.getTourItemId(),
+          item_name: this.tourName || tourData.name || '',
+          coupon: '',
+          discount: 0,
               index: 1,
-              item_brand: 'Different Roads',
-              item_category: tourData.destination?.continent || '',
-              item_category2: tourData.destination?.country || '',
-              item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-              item_category4: tourData.monthTags?.join(', ') || '',
-              item_category5: tourData.tourType || '',
+          item_brand: 'Different Roads',
+          item_category: tourData.destination?.continent || '',
+          item_category2: tourData.destination?.country || '',
+          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+          item_category4: tourData.monthTags?.join(', ') || '',
+          item_category5: tourData.tourType || '',
               item_list_id: itemListId,
               item_list_name: itemListName,
-              item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
-              price: this.totalAmountCalculated || this.totalAmount || 0,
-              quantity: 1,
-              puntuacion: tourData.rating?.toString() || '',
-              duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-              start_date: this.departureDate || '',
-              end_date: this.returnDate || '',
-              pasajeros_adultos: this.totalPassengers?.toString() || '0',
+          item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
+          price: this.totalAmountCalculated || this.totalAmount || 0,
+          quantity: 1,
+          puntuacion: tourData.rating?.toString() || '',
+          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+          start_date: this.departureDate || '',
+          end_date: this.returnDate || '',
+          pasajeros_adultos: this.totalPassengers?.toString() || '0',
               pasajeros_niños: childrenCount,
               actividades: activitiesText,
               seguros: selectedInsurance,
@@ -3634,7 +3652,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             value: this.totalAmountCalculated || this.totalAmount || 0,
             coupon: this.reservationData.coupon?.code || '',
             items: [{
-              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '',
+              item_id: this.getTourItemId(),
               item_name: this.tourName || tourData.name || '',
               coupon: '',
               discount: 0,
@@ -3656,13 +3674,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               end_date: this.returnDate || '',
               pasajeros_adultos: this.totalPassengers?.toString() || '0',
               pasajeros_niños: childrenCount,
-              actividades: activitiesText,
-              seguros: selectedInsurance,
-              vuelo: flightCity
-            }]
-          },
-          this.getUserData()
-        );
+          actividades: activitiesText,
+          seguros: selectedInsurance,
+          vuelo: flightCity
+        }]
+      },
+      this.getUserData()
+    );
       }
     });
   }
@@ -3675,10 +3693,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     const tourData = this.reservationData.tour || {};
     
-    // Obtener item_list_id y item_list_name dinámicamente desde query params
+    // Obtener item_list_id y item_list_name dinámicamente desde query params (solo si existen)
     const queryParams = this.route.snapshot.queryParams;
-    const itemListId = queryParams['listId'] || 'checkout';
-    const itemListName = queryParams['listName'] || 'Carrito de compra';
+    const itemListId = queryParams['listId'] || '';
+    const itemListName = queryParams['listName'] || '';
     
     // Obtener actividades seleccionadas
     const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
@@ -3696,33 +3714,33 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     
     this.analyticsService.getCurrentUserData().subscribe({
       next: (userData) => {
-        this.analyticsService.addPersonalInfo(
-          {
-            currency: 'EUR',
-            value: this.totalAmountCalculated || this.totalAmount || 0,
-            coupon: this.reservationData.coupon?.code || '',
-            items: [{
-              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '',
-              item_name: this.tourName || tourData.name || '',
-              coupon: '',
-              discount: 0,
+    this.analyticsService.addPersonalInfo(
+      {
+        currency: 'EUR',
+        value: this.totalAmountCalculated || this.totalAmount || 0,
+        coupon: this.reservationData.coupon?.code || '',
+        items: [{
+              item_id: this.getTourItemId(),
+          item_name: this.tourName || tourData.name || '',
+          coupon: '',
+          discount: 0,
               index: 1,
-              item_brand: 'Different Roads',
-              item_category: tourData.destination?.continent || '',
-              item_category2: tourData.destination?.country || '',
-              item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-              item_category4: tourData.monthTags?.join(', ') || '',
-              item_category5: tourData.tourType || '',
+          item_brand: 'Different Roads',
+          item_category: tourData.destination?.continent || '',
+          item_category2: tourData.destination?.country || '',
+          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+          item_category4: tourData.monthTags?.join(', ') || '',
+          item_category5: tourData.tourType || '',
               item_list_id: itemListId,
               item_list_name: itemListName,
-              item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
-              price: this.totalAmountCalculated || this.totalAmount || 0,
-              quantity: 1,
-              puntuacion: tourData.rating?.toString() || '',
-              duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-              start_date: this.departureDate || '',
-              end_date: this.returnDate || '',
-              pasajeros_adultos: this.totalPassengers?.toString() || '0',
+          item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
+          price: this.totalAmountCalculated || this.totalAmount || 0,
+          quantity: 1,
+          puntuacion: tourData.rating?.toString() || '',
+          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
+          start_date: this.departureDate || '',
+          end_date: this.returnDate || '',
+          pasajeros_adultos: this.totalPassengers?.toString() || '0',
               pasajeros_niños: childrenCount,
               actividades: activitiesText,
               seguros: selectedInsurance,
@@ -3740,7 +3758,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             value: this.totalAmountCalculated || this.totalAmount || 0,
             coupon: this.reservationData.coupon?.code || '',
             items: [{
-              item_id: tourData.id?.toString() || tourData.tkId?.toString() || '',
+              item_id: this.getTourItemId(),
               item_name: this.tourName || tourData.name || '',
               coupon: '',
               discount: 0,
@@ -3762,13 +3780,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               end_date: this.returnDate || '',
               pasajeros_adultos: this.totalPassengers?.toString() || '0',
               pasajeros_niños: childrenCount,
-              actividades: activitiesText,
-              seguros: selectedInsurance,
-              vuelo: flightCity
-            }]
-          },
-          this.getUserData()
-        );
+          actividades: activitiesText,
+          seguros: selectedInsurance,
+          vuelo: flightCity
+        }]
+      },
+      this.getUserData()
+    );
       }
     });
   }
@@ -3788,27 +3806,27 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     
     this.analyticsService.getCurrentUserData().subscribe({
       next: (userData) => {
-        this.analyticsService.addToWishlist(
+    this.analyticsService.addToWishlist(
           itemListId,
           itemListName,
-          {
-            item_id: tourData.id?.toString() || tourData.tkId?.toString() || '',
-            item_name: this.tourName || tourData.name || '',
-            coupon: '',
-            discount: 0,
+      {
+            item_id: this.getTourItemId(),
+        item_name: this.tourName || tourData.name || '',
+        coupon: '',
+        discount: 0,
             index: 1, // Índice dinámico basado en la posición del tour
-            item_brand: 'Different Roads',
-            item_category: tourData.destination?.continent || '',
-            item_category2: tourData.destination?.country || '',
-            item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-            item_category4: tourData.monthTags?.join(', ') || '',
-            item_category5: tourData.tourType || '',
+        item_brand: 'Different Roads',
+        item_category: tourData.destination?.continent || '',
+        item_category2: tourData.destination?.country || '',
+        item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+        item_category4: tourData.monthTags?.join(', ') || '',
+        item_category5: tourData.tourType || '',
             item_list_id: itemListId,
             item_list_name: itemListName,
-            item_variant: '',
-            price: this.totalAmountCalculated || 0,
-            quantity: 1,
-            puntuacion: tourData.rating?.toString() || '',
+        item_variant: '',
+        price: this.totalAmountCalculated || 0,
+        quantity: 1,
+        puntuacion: tourData.rating?.toString() || '',
             duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : ''
           },
           userData
@@ -3820,7 +3838,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           itemListId,
           itemListName,
           {
-            item_id: tourData.id?.toString() || tourData.tkId?.toString() || '',
+            item_id: this.getTourItemId(),
             item_name: this.tourName || tourData.name || '',
             coupon: '',
             discount: 0,
@@ -3838,9 +3856,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             quantity: 1,
             puntuacion: tourData.rating?.toString() || '',
             duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : ''
-          },
-          this.getUserData()
-        );
+      },
+      this.getUserData()
+    );
       }
     });
   }

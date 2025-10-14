@@ -21,6 +21,7 @@ import { CountriesService } from '../../../../core/services/locations/countries.
 import { Country } from '../../../../shared/models/country.model';
 import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
+import { TourService } from '../../../../core/services/tour/tour.service';
 
 interface TripQueryParams {
   destination?: string;

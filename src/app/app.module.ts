@@ -21,7 +21,6 @@ import localeEs from '@angular/common/locales/es';
 // ========================================
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { CookieService } from 'ngx-cookie-service';
 import { GoogleMapsModule } from '@angular/google-maps';
 import { Amplify } from 'aws-amplify';
 import awsconfig from '../../src/aws-exports';
@@ -524,7 +523,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     // SERVICES
     // ========================================
     MessageService,
-    CookieService,
     DatePipe,
     RetailerService,
   ],

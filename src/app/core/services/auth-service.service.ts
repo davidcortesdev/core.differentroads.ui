@@ -7,14 +7,13 @@ import {
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { HubspotService } from './hubspot.service';
-import { Subject, Observable, BehaviorSubject, from, of } from 'rxjs';
+import { Subject, Observable, BehaviorSubject } from 'rxjs';
 import {
   signInWithRedirect,
   getCurrentUser,
   fetchUserAttributes,
 } from 'aws-amplify/auth';
 import { AnalyticsService } from './analytics.service'; // new import
-import { firstValueFrom, catchError, tap, switchMap } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',

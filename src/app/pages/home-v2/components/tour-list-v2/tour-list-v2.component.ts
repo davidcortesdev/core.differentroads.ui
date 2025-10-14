@@ -1,9 +1,9 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-  TourNetService,
+  TourService,
   Tour as TourNetTour,
-} from '../../../../core/services/tour/tourNet.service';
+} from '../../../../core/services/tour/tour.service';
 import {
   CMSTourService,
   ICMSTourResponse,
@@ -75,7 +75,7 @@ export class TourListV2Component implements OnInit, OnDestroy {
 
   constructor(
     private readonly router: Router,
-    private readonly tourNetService: TourNetService,
+    private readonly tourService: TourService,
     private readonly cmsTourService: CMSTourService,
     private readonly homeSectionConfigurationService: HomeSectionConfigurationService,
     private readonly homeSectionTourFilterService: HomeSectionTourFilterService,
@@ -436,7 +436,7 @@ export class TourListV2Component implements OnInit, OnDestroy {
         concatMap((id: string) => {
           // Combinar datos del TourNetService, CMSTourService y datos adicionales
           return forkJoin({
-            tourData: this.tourNetService.getTourById(Number(id)),
+            tourData: this.tourService.getTourById(Number(id)),
             cmsData: this.cmsTourService.getAllTours({ tourId: Number(id) }),
             additionalData: this.getAdditionalTourData(Number(id)),
           }).pipe(

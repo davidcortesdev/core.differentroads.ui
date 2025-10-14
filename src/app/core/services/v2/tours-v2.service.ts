@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, catchError, map, of } from 'rxjs';
+import { Observable, catchError, map, of, forkJoin } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 // Interfaces para la respuesta de la API
@@ -112,10 +112,20 @@ export class ToursServiceV2 {
       return of([]);
     }
 
-    // Obtener todos los tours de una vez usando el filtro
-    return this.getTours().pipe(
-      map(tours => {
-        return tours.filter(tour => ids.includes(tour.id));
+    const requests = ids.map(id => 
+      this.getTourById(id, false).pipe(
+        catchError(err => {
+          console.warn('No se pudo obtener el tour', id, err);
+          return of(undefined);
+        })
+      )
+    );
+    return forkJoin(requests).pipe(
+      map(results => {
+        // Preservar el orden de ids recibido
+        const valid = results.filter((t): t is TourV2 => !!t);
+        const byId = new Map(valid.map(t => [t.id, t] as [number, TourV2]));
+        return ids.map(id => byId.get(id)).filter((t): t is TourV2 => !!t);
       }),
       catchError(error => {
         console.error('Error obteniendo múltiples tours:', error);

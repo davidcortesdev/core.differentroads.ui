@@ -7,6 +7,8 @@ import {
   ElementRef,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subject, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, switchMap, catchError } from 'rxjs/operators';
 import {
   HomeSectionContentService,
   IHomeSectionContentResponse,
@@ -19,6 +21,7 @@ import {
 import { CountriesService } from '../../../../core/services/countries.service';
 import { Country } from '../../../../shared/models/country.model';
 import { AnalyticsService } from '../../../../core/services/analytics.service';
+import { TourSearchService } from '../../../../core/services/tour/tour-search.service';
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
 
 interface TripQueryParams {
@@ -69,6 +72,10 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
 
   filteredDestinations: Country[] = [];
   filteredTripTypes: ITripTypeResponse[] = [];
+  // Autocomplete (tour-dev)
+  suggestions: any[] = [];
+  showSuggestions: boolean = false;
+  private destinationInput$ = new Subject<string>();
 
   destinations: Country[] = [];
   tripTypes: ITripTypeResponse[] = [];
@@ -79,6 +86,7 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     private tripTypeService: TripTypeService,
     private countriesService: CountriesService,
     private analyticsService: AnalyticsService,
+    private tourSearchService: TourSearchService,
     private authService: AuthenticateService
   ) {}
 
@@ -87,6 +95,24 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     this.loadBannerContent();
     this.loadDestinations();
     this.loadTripTypes();
+
+    // Autocomplete pipeline (debounce + call tour-dev)
+    this.destinationInput$
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        filter((q) => !!q && q.trim().length >= 2),
+        switchMap((q) => {
+          const normalized = q.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+          return this.tourSearchService
+            .autocomplete({ searchText: normalized, maxResults: 8 })
+            .pipe(catchError(() => of([])));
+        })
+      )
+      .subscribe((results: any[]) => {
+        this.suggestions = Array.isArray(results) ? results : [];
+        this.showSuggestions = this.suggestions.length > 0;
+      });
   }
 
   ngAfterViewInit(): void {
@@ -212,6 +238,23 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     );
   }
 
+  // Autocomplete handlers
+  onDestinationInput(value: string): void {
+    this.destinationInput = value;
+    if (!value || value.trim().length < 2) {
+      this.suggestions = [];
+      this.showSuggestions = false;
+      return;
+    }
+    this.destinationInput$.next(value);
+  }
+
+  onSuggestionClick(s: any): void {
+    this.destinationInput = s?.name || '';
+    this.suggestions = [];
+    this.showSuggestions = false;
+  }
+
   filterTripTypes(event: { query: string }): void {
     const query = event.query.toLowerCase().trim();
     this.filteredTripTypes = this.tripTypes.filter(
@@ -262,10 +305,29 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
       queryParams.tripType = this.selectedTripType.toString().trim();
     }
 
+    // Añadir flexibilidad al navegar para que la lista pueda usarla
+    if (this.dateFlexibility > 0) {
+      (queryParams as any).flexDays = this.dateFlexibility;
+    }
+
     // Disparar evento search antes de navegar
     this.trackSearch(queryParams);
 
     this.router.navigate(['/tours'], { queryParams });
+
+    // Opcional: adelantar pre-búsqueda para analytics/UX (IDs de tours)
+    try {
+      const startDate = queryParams.departureDate ? new Date(queryParams.departureDate).toISOString() : undefined;
+      const endDate = queryParams.returnDate ? new Date(queryParams.returnDate).toISOString() : undefined;
+      const tripTypeId = this.selectedTripType ? Number(this.selectedTripType) : undefined;
+      this.tourSearchService.search({
+        searchText: this.destinationInput || undefined,
+        startDate,
+        endDate,
+        tripTypeId,
+        flexDays: this.dateFlexibility || undefined,
+      }).subscribe({ next: () => {}, error: () => {} });
+    } catch {}
   }
 
   /**

@@ -105,6 +105,37 @@
             p-iftalabel .label {
                 padding-left: 0.9rem;
             }
+
+            // Panel de sugerencias del autocomplete
+            position: relative;
+            .suggestions-panel {
+                position: absolute;
+                top: 48px;
+                left: 0;
+                right: 0;
+                z-index: var(--z-index-dropdown);
+                background: var(--surface-card);
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+                padding: 4px;
+
+                .suggestion {
+                    width: 100%;
+                    text-align: left;
+                    padding: 8px 12px;
+                    background: transparent;
+                    border: none;
+                    cursor: pointer;
+                    font-size: var(--font-sm);
+                    display: flex;
+                    justify-content: space-between;
+
+                    &:hover {
+                        background: var(--primary-color-light);
+                    }
+                }
+            }
         }
 
         .input-md {

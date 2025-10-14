@@ -40,10 +40,18 @@
             placeholder="Pais, Ciudad, Ofertas, Destinos, todo lo que se te ocurra..."
             class="input-text radius firstElement"
             fluid="true"
-            [(ngModel)]="destinationInput"
+            [ngModel]="destinationInput"
+            (ngModelChange)="onDestinationInput($event)"
             (keyup.enter)="searchTrips()"
           />
           <label for="destionationInput" class="label">¿Cuál es tu próximo destino?</label>
+          <!-- Panel de sugerencias -->
+          <div class="suggestions-panel" *ngIf="showSuggestions">
+            <button type="button" class="suggestion" *ngFor="let s of suggestions" (click)="onSuggestionClick(s)">
+              {{ s.name }}
+              <small *ngIf="s.type">— {{ s.type }}</small>
+            </button>
+          </div>
         </p-iftalabel>
       </div>
       <div class="input-range">

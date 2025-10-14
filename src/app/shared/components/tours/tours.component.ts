@@ -1,7 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
-import { catchError } from 'rxjs';
+import { catchError, of, switchMap, map } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { ToursService } from '../../../core/services/tours.service';
+import { TourSearchService, TourSearchParams } from '../../../core/services/tour/tour-search.service';
+import { ToursServiceV2 } from '../../../core/services/v2/tours-v2.service';
 import { AnalyticsService, EcommerceItem } from '../../../core/services/analytics.service';
 import { AuthenticateService } from '../../../core/services/auth-service.service';
 import { Title } from '@angular/platform-browser';
@@ -73,10 +75,13 @@ export class ToursComponent implements OnInit, OnChanges {
   minDate: Date | null = null;
   maxDate: Date | null = null;
   tourType: string = '';
+  flexDays?: number;
 
   constructor(
     private readonly titleService: Title,
     private readonly toursService: ToursService,
+    private readonly tourSearchService: TourSearchService,
+    private readonly toursServiceV2: ToursServiceV2,
     private readonly route: ActivatedRoute,
     private readonly analyticsService: AnalyticsService,
     private readonly authService: AuthenticateService
@@ -99,6 +104,7 @@ export class ToursComponent implements OnInit, OnChanges {
         ? new Date(params['returnDate'])
         : null;
       this.tourType = params['tripType'] || '';
+      this.flexDays = params['flexDays'] ? Number(params['flexDays']) : undefined;
       this.selectedOrderOption = params['order'] || 'next-departures';
 
       // Handle initialization of filter options from query params
@@ -143,76 +149,96 @@ export class ToursComponent implements OnInit, OnChanges {
   }
 
   loadTours() {
-    const filters = {
-      destination: this.destination,
-      minDate: this.minDate ? this.minDate.toISOString() : '',
-      maxDate: this.maxDate ? this.maxDate.toISOString() : '',
-      tourType: this.tourType,
-      price: this.selectedPriceOption,
-      tourSeason: this.selectedSeasonOption,
-      month: this.selectedMonthOption,
-      sort: this.selectedOrderOption,
-      ...(this.selectedTagOption.length > 0 && {
-        tags: this.selectedTagOption,
-      }),
+    // Construir filtros
+    // Normalizar el texto para evitar problemas con acentos (p.ej. "Japón" -> "Japon")
+    const normalizedSearch = this.destination
+      ? this.destination.normalize('NFD').replace(/\p{Diacritic}/gu, '')
+      : undefined;
+
+    const searchParams: TourSearchParams = {
+      searchText: normalizedSearch || undefined,
+      startDate: this.minDate ? this.minDate.toISOString() : undefined,
+      endDate: this.maxDate ? this.maxDate.toISOString() : undefined,
+      tripTypeId: this.tourType ? Number(this.tourType) : undefined,
+      flexDays: this.flexDays,
     };
 
-    this.toursService
-      .getFilteredToursList(filters)
+    this.tourSearchService
+      .search(searchParams)
       .pipe(
-        catchError((error: Error) => {
-          // Silent error handling
-          return [];
-        })
+        switchMap((ids) => {
+          const tourIds = (ids || []).map((x) => x.tourId).filter(Boolean);
+          if (!tourIds.length) {
+            // Fallback al CMS si no hay resultados
+            const filters = {
+              destination: this.destination,
+              minDate: this.minDate ? this.minDate.toISOString() : '',
+              maxDate: this.maxDate ? this.maxDate.toISOString() : '',
+              tourType: this.tourType,
+              price: this.selectedPriceOption,
+              tourSeason: this.selectedSeasonOption,
+              month: this.selectedMonthOption,
+              sort: this.selectedOrderOption,
+              ...(this.selectedTagOption.length > 0 && {
+                tags: this.selectedTagOption,
+              }),
+            };
+            return this.toursService.getFilteredToursList(filters).pipe(
+              map((cms) => ({ cms }))
+            );
+          }
+          return this.toursServiceV2.getToursByIds(tourIds).pipe(
+            map((api) => ({ api }))
+          );
+        }),
+        catchError(() => of({ cms: null, api: null }))
       )
-      .subscribe((tours: any) => {
-        // Process month options
-        this.monthOptions =
-          tours.filtersOptions?.month?.map((month: string) => {
-            return {
+      .subscribe((result: any) => {
+        let toursData: any[] = [];
+        if (result?.api) {
+          toursData = result.api;
+        } else if (result?.cms) {
+          toursData = result.cms.data || [];
+          // Opciones de filtros desde CMS
+          this.monthOptions =
+            result.cms.filtersOptions?.month?.map((month: string) => ({
               name: month.toUpperCase(),
               value: month,
-            };
-          }) || [];
-
-        // Process tag options
-        this.tagOptions =
-          tours.filtersOptions?.tags?.map((tag: string) => {
-            return {
+            })) || [];
+          this.tagOptions =
+            result.cms.filtersOptions?.tags?.map((tag: string) => ({
               name: tag.toUpperCase(),
               value: tag,
-            };
-          }) || [];
-
-        // Process tour data
-        this.displayedTours = tours.data.map((tour: any) => {
-          const days = tour?.activePeriods?.[0]?.days || '';
-
-          return {
-            imageUrl: tour.image?.[0]?.url || '',
-            title: tour.name || '',
-            description:
-              tour.country && days ? `${tour.country} en: ${days} dias` : '',
-            rating: 5,
-            tag: tour.marketingSection?.marketingSeasonTag || '',
-            price: tour.price || 0,
-            availableMonths:
-              (tour.monthTags || [])?.map((month: string) =>
-                month.substring(0, 3).toUpperCase()
-              ) || [],
-            isByDr: tour.tourType !== 'FIT',
-            webSlug: tour.webSlug || '',
-            externalID: tour.externalID,
-          };
-        });
-
-        // Disparar evento de analytics view_item_list
-        if (tours.data && tours.data.length > 0) {
-          this.trackViewItemList(tours.data);
+            })) || [];
         }
 
-        // Emit tours to parent component
+        // Normalizar tours (API tour-dev trae shape distinto al CMS)
+        this.displayedTours = toursData.map((tour: any) => {
+          const days = tour?.activePeriods?.[0]?.days || tour?.days || '';
+          return {
+            imageUrl: tour.image?.[0]?.url || tour.imageUrl || '',
+            title: tour.name || '',
+            description:
+              (tour.country && days) ? `${tour.country} en: ${days} dias` : '',
+            rating: 5,
+            tag: tour.marketingSection?.marketingSeasonTag || tour.tag || '',
+            price: tour.price || tour.minPrice || 0,
+            availableMonths:
+              (tour.monthTags || [])?.map((month: string) => month.substring(0, 3).toUpperCase()) || [],
+            isByDr: tour.tourType ? tour.tourType !== 'FIT' : true,
+            webSlug: tour.webSlug || tour.slug || '',
+            externalID: tour.externalID,
+          } as ITour;
+        });
+
+        if (this.displayedTours.length > 0) {
+          this.trackViewItemList(toursData);
+        }
         this.toursLoaded.emit(this.displayedTours);
+        // Mensaje "sin resultados": solo si no hay ni API ni CMS
+        if (this.displayedTours.length === 0) {
+          console.info('No se encontraron tours para la búsqueda actual.');
+        }
       });
   }
 

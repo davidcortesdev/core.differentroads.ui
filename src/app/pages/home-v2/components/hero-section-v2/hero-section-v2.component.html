@@ -84,7 +84,7 @@
                 <button 
                   type="button" 
                   class="preset-btn today-btn"
-                  (click)="applyPresetFromToday(7)"
+                  (click)="applyPresetFromToday()"
                   aria-label="Seleccionar desde hoy por 7 días"
                   title="Viaje desde hoy por 7 días"
                 >
@@ -104,6 +104,9 @@
                 <small class="range-duration">
                   <i class="pi pi-calendar"></i>
                   <strong>{{ getDaysInRange() }}</strong> {{ getDaysInRange() === 1 ? 'día' : 'días' }} de viaje
+                  <span *ngIf="dateFlexibility > 0" class="flexibility-badge">
+                    ±{{ dateFlexibility }} días
+                  </span>
                 </small>
               </div>
             </ng-template>

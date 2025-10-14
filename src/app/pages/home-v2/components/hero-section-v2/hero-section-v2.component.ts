@@ -56,11 +56,11 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
 
   // DatePicker Range properties
   rangeDates: Date[] = [];
+  dateFlexibility: number = 0; // Flexibilidad de días (±X)
   datePresets = [
+    { label: '±2 días', value: 2 },
     { label: '±3 días', value: 3 },
-    { label: '±7 días', value: 7 },
-    { label: '±14 días', value: 14 },
-    { label: '±30 días', value: 30 }
+    { label: '±7 días', value: 7 }
   ];
   
   // Validation state
@@ -284,65 +284,41 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
   }
 
   /**
-   * Aplicar preset de días desde la fecha de ida seleccionada
-   * Si hay fecha de ida, calcula el rango desde esa fecha
-   * Si no hay fecha de ida, calcula el rango desde hoy
-   * @param days Número de días a sumar para la fecha de vuelta
+   * Aplicar flexibilidad de fechas (±X días)
+   * Indica cuántos días antes o después el usuario acepta viajar
+   * manteniendo la misma duración del viaje
+   * @param flexibility Número de días de flexibilidad (±X)
    */
-  applyDatePreset(days: number): void {
-    const startDate = this.departureDate ? new Date(this.departureDate) : new Date();
-    
-    // Normalizar la fecha de inicio (inicio del día)
-    startDate.setHours(0, 0, 0, 0);
-    
-    const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + days);
-    
-    this.rangeDates = [startDate, endDate];
-    this.departureDate = startDate;
-    this.returnDate = endDate;
-    
-    // Track analytics event
-    this.trackDatePresetUsed(days, 'from_selected');
+  applyDatePreset(flexibility: number): void {
+    this.dateFlexibility = flexibility;
+    // La flexibilidad se usará en la búsqueda para encontrar opciones alternativas
   }
 
   /**
-   * Aplicar preset de días desde hoy
-   * Establece la fecha de ida como hoy + 7 días y la vuelta +días adicionales
-   * @param additionalDays Días adicionales desde la fecha base (por defecto 7)
+   * Establecer fechas para "Desde Hoy"
+   * Establece un viaje comenzando hoy por 7 días
    */
-  applyPresetFromToday(additionalDays: number = 7): void {
+  applyPresetFromToday(): void {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const departureDate = new Date(today);
-    const returnDate = new Date(departureDate);
-    returnDate.setDate(departureDate.getDate() + additionalDays);
+    const returnDate = new Date(today);
+    returnDate.setDate(today.getDate() + 7);
     
-    this.rangeDates = [departureDate, returnDate];
-    this.departureDate = departureDate;
+    this.rangeDates = [today, returnDate];
+    this.departureDate = today;
     this.returnDate = returnDate;
-    
-    // Track analytics event
-    this.trackDatePresetUsed(additionalDays, 'from_today');
+    this.dateFlexibility = 0;
   }
 
   /**
-   * Limpiar fechas seleccionadas
+   * Limpiar fechas seleccionadas y flexibilidad
    */
   clearDates(): void {
     this.rangeDates = [];
     this.departureDate = null;
     this.returnDate = null;
-    
-    // Track analytics event usando dataLayer directamente
-    if (typeof window !== 'undefined' && (window as any).dataLayer) {
-      (window as any).dataLayer.push({
-        event: 'date_picker_interaction',
-        interaction_type: 'clear_dates',
-        location: 'hero_section'
-      });
-    }
+    this.dateFlexibility = 0;
   }
 
   /**
@@ -415,23 +391,6 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     );
   }
 
-  /**
-   * Track cuando se usa un preset de fechas
-   * @param days Número de días del preset
-   * @param type Tipo de preset (from_selected o from_today)
-   */
-  private trackDatePresetUsed(days: number, type: 'from_selected' | 'from_today'): void {
-    // Track analytics event usando dataLayer directamente
-    if (typeof window !== 'undefined' && (window as any).dataLayer) {
-      (window as any).dataLayer.push({
-        event: 'date_picker_interaction',
-        interaction_type: 'preset_used',
-        preset_type: type,
-        preset_days: days,
-        location: 'hero_section'
-      });
-    }
-  }
 
   /**
    * Validar que el rango de fechas sea válido

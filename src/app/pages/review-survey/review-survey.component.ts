@@ -5,16 +5,13 @@ import { ReviewStatusService } from '../../core/services/reviews/review-status.s
 import { PeriodsService } from '../../core/services/periods.service';
 import { DatePipe } from '@angular/common';
 import {
-  TourFilter,
   TourNetService,
 } from '../../core/services/tourNet.service';
-import { switchMap, take, of } from 'rxjs';
 import {
   TravelersNetService,
   Traveler,
 } from '../../core/services/travelersNet.service';
 import { CloudinaryService } from '../../core/services/cloudinary.service';
-import { CldImage } from '../../shared/models/cloudinary/cld-image.model';
 import {
   DepartureService,
   IDepartureResponse,

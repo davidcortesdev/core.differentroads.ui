@@ -23,9 +23,8 @@ import {
   AgeGroupService,
   IAgeGroupResponse,
 } from '../../../../../../../core/services/agegroup/age-group.service';
-import { catchError, map, of, forkJoin } from 'rxjs';
+import { catchError, map, of } from 'rxjs';
 import { ActivityHighlight } from '../../../../../../../shared/components/activity-card/activity-card.component';
-import { environment } from '../../../../../../../../environments/environment';
 
 // Interface para el formato de precio siguiendo el ejemplo
 interface PriceData {

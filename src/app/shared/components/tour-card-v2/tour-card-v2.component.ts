@@ -1,7 +1,6 @@
 import {
   Component,
   Input,
-  ChangeDetectionStrategy,
   OnInit,
   AfterViewInit,
   Inject,
@@ -9,7 +8,7 @@ import {
 import { Router } from '@angular/router';
 import { DOCUMENT } from '@angular/common';
 import { TourDataV2 } from './tour-card-v2.model';
-import { AnalyticsService, EcommerceItem } from '../../../core/services/analytics.service';
+import { AnalyticsService } from '../../../core/services/analytics.service';
 import { AuthenticateService } from '../../../core/services/auth-service.service';
 
 @Component({

@@ -10,13 +10,11 @@ import {
 } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import {
-  IScalapayOrderResponse,
   NewScalapayService,
 } from '../../services/newScalapay.service';
 import { Router } from '@angular/router';
 import {
   PaymentsNetService,
-  PaymentStatusFilter,
 } from '../../services/paymentsNet.service';
 import { PaymentStatusNetService } from '../../services/paymentStatusNet.service';
 import { PaymentMethodNetService } from '../../services/paymentMethodNet.service';

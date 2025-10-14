@@ -14,7 +14,6 @@ import { MessageService } from 'primeng/api';
 import {
   DepartureReservationFieldService,
   IDepartureReservationFieldResponse,
-  DepartureReservationFieldFilters,
 } from '../../../../core/services/departure/departure-reservation-field.service';
 import {
   MandatoryTypeService,
@@ -52,11 +51,9 @@ import {
 } from '../../../../core/services/reservation/reservation-traveler-activity-pack.service';
 import {
   ActivityPriceService,
-  IActivityPriceResponse,
 } from '../../../../core/services/activity/activity-price.service';
 import {
   ActivityPackPriceService,
-  IActivityPackPriceResponse,
 } from '../../../../core/services/activity/activity-pack-price.service';
 import {
   FormGroup,
@@ -67,10 +64,9 @@ import {
 } from '@angular/forms';
 import { ReservationService } from '../../../../core/services/reservation/reservation.service';
 import {
-  IReservationStatusResponse,
   ReservationStatusService,
 } from '../../../../core/services/reservation/reservation-status.service';
-import { FlightSearchService, IBookingRequirements, IPassengerConditions } from '../../../../core/services/flight-search.service';
+import { FlightSearchService, IBookingRequirements } from '../../../../core/services/flight-search.service';
 import { IUserResponse } from '../../../../core/models/users/user.model';
 import { PersonalInfo } from '../../../../core/models/v2/profile-v2.model';
 import { CheckoutUserDataService } from '../../../../core/services/v2/checkout-user-data.service';

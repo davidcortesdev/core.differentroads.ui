@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MessageService } from 'primeng/api';
 import { catchError, of, forkJoin, firstValueFrom, map } from 'rxjs';
@@ -36,7 +36,6 @@ import {
 } from '../../../core/services/agegroup/age-group.service';
 import {
   DepartureService,
-  IDepartureResponse,
 } from '../../../core/services/departure/departure.service';
 
 // Interface para el formato de precio esperado

@@ -1,6 +1,4 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { MessageModule } from 'primeng/message';
 import { PointsV2Service } from '../../core/services/v2/points-v2.service';
 import { ReservationService, IReservationSummaryResponse } from '../../core/services/reservation/reservation.service';
 import { MessageService } from 'primeng/api';

@@ -14,11 +14,9 @@ import { CAROUSEL_CONFIG } from '../../../../shared/constants/carousel.constants
 // Servicios de Home únicamente
 import {
   HomeSectionConfigurationService,
-  IHomeSectionConfigurationResponse,
 } from '../../../../core/services/home/home-section-configuration.service';
 import {
   HomeSectionContentService,
-  IHomeSectionContentResponse,
 } from '../../../../core/services/home/home-section-content.service';
 import {
   HomeSectionCardService,

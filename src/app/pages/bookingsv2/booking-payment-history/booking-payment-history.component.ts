@@ -3,8 +3,6 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
   Payment,
-  PaymentStatus,
-  VoucherReviewStatus,
 } from '../../../core/models/bookings/payment.model';
 
 // Interfaces existentes

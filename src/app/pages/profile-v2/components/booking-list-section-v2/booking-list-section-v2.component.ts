@@ -4,7 +4,7 @@ import { MessageService } from 'primeng/api';
 import { BookingItem } from '../../../../core/models/v2/profile-v2.model';
 import { BookingsServiceV2 } from '../../../../core/services/v2/bookings-v2.service';
 import { ReservationResponse } from '../../../../core/models/v2/profile-v2.model';
-import { ToursServiceV2, TourV2 } from '../../../../core/services/v2/tours-v2.service';
+import { ToursServiceV2 } from '../../../../core/services/v2/tours-v2.service';
 import { DataMappingV2Service } from '../../../../core/services/v2/data-mapping-v2.service';
 import { CMSTourService, ICMSTourResponse } from '../../../../core/services/cms/cms-tour.service';
 import { switchMap, map, catchError, of, forkJoin } from 'rxjs';

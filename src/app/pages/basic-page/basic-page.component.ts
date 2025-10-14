@@ -1,7 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { catchError } from 'rxjs/operators';
-import { of } from 'rxjs';
 import { Page } from '../../core/models/pages/page.model';
 import { Title, Meta } from '@angular/platform-browser';
 

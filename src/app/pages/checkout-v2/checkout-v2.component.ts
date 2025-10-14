@@ -42,7 +42,6 @@ import { AnalyticsService } from '../../core/services/analytics.service';
 import { IFlightPackDTO } from './services/flightsNet.service';
 import {
   ReservationTravelerService,
-  IReservationTravelerResponse,
 } from '../../core/services/reservation/reservation-traveler.service';
 import { PriceCheckService } from './services/price-check.service';
 import {

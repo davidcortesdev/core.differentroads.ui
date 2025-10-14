@@ -10,7 +10,6 @@ import { Router } from '@angular/router';
 import {
   HomeSectionContentService,
   IHomeSectionContentResponse,
-  ContentType,
 } from '../../../../core/services/home/home-section-content.service';
 import {
   TripTypeService,

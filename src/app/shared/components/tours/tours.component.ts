@@ -1,9 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
-import { catchError, of, switchMap, map } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { ToursService } from '../../../core/services/tours.service';
-import { TourSearchService, TourSearchParams } from '../../../core/services/tour/tour-search.service';
-import { ToursServiceV2 } from '../../../core/services/v2/tours-v2.service';
 import { AnalyticsService, EcommerceItem } from '../../../core/services/analytics.service';
 import { AuthenticateService } from '../../../core/services/auth-service.service';
 import { Title } from '@angular/platform-browser';
@@ -79,9 +75,6 @@ export class ToursComponent implements OnInit, OnChanges {
 
   constructor(
     private readonly titleService: Title,
-    private readonly toursService: ToursService,
-    private readonly tourSearchService: TourSearchService,
-    private readonly toursServiceV2: ToursServiceV2,
     private readonly route: ActivatedRoute,
     private readonly analyticsService: AnalyticsService,
     private readonly authService: AuthenticateService
@@ -163,54 +156,7 @@ export class ToursComponent implements OnInit, OnChanges {
       flexDays: this.flexDays,
     };
 
-    this.tourSearchService
-      .searchWithScore(searchParams)
-      .pipe(
-        switchMap((scored) => {
-          const tourIds = (scored || []).map((x: any) => x.tourId).filter(Boolean);
-          if (!tourIds.length) {
-            return of({ api: [] });
-          }
-          return this.toursServiceV2.getToursByIds(tourIds).pipe(
-            map((api) => ({ api }))
-          );
-        }),
-        catchError(() => of({ api: [] }))
-      )
-      .subscribe((result: any) => {
-        let toursData: any[] = [];
-        if (Array.isArray(result?.api)) {
-          toursData = result.api;
-        }
-
-        // Normalizar tours (API tour-dev trae shape distinto al CMS)
-        this.displayedTours = toursData.map((tour: any) => {
-          const days = tour?.activePeriods?.[0]?.days || tour?.days || '';
-          return {
-            imageUrl: tour.image?.[0]?.url || tour.imageUrl || '',
-            title: tour.name || '',
-            description:
-              (tour.country && days) ? `${tour.country} en: ${days} dias` : '',
-            rating: 5,
-            tag: tour.marketingSection?.marketingSeasonTag || tour.tag || '',
-            price: tour.price || tour.minPrice || 0,
-            availableMonths:
-              (tour.monthTags || [])?.map((month: string) => month.substring(0, 3).toUpperCase()) || [],
-            isByDr: tour.tourType ? tour.tourType !== 'FIT' : true,
-            webSlug: tour.webSlug || tour.slug || '',
-            externalID: tour.externalID,
-          } as ITour;
-        });
-
-        if (this.displayedTours.length > 0) {
-          this.trackViewItemList(toursData);
-        }
-        this.toursLoaded.emit(this.displayedTours);
-        // Mensaje "sin resultados": cuando no hay resultados de la API
-        if (this.displayedTours.length === 0) {
-          console.info('No se encontraron tours para la búsqueda actual.');
-        }
-      });
+//TODO: pendiente de desarrollar proximamente
   }
 
   // Filter change methods

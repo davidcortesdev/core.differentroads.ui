@@ -29,7 +29,6 @@ import {
 } from '../../../../core/services/reservation/reservation-traveler-activity.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { forkJoin } from 'rxjs';
-import { firstValueFrom } from 'rxjs';
 import { MessageService } from 'primeng/api';
 
 @Component({

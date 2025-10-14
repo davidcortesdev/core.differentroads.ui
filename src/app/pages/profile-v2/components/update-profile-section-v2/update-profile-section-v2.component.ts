@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { PersonalInfo } from '../../../../core/models/v2/profile-v2.model';
 import { UpdateProfileV2Service } from '../../../../core/services/v2/update-profile-v2.service';
 

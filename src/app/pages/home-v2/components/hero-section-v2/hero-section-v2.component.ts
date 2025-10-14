@@ -12,7 +12,6 @@ import { debounceTime, distinctUntilChanged, filter, switchMap, catchError } fro
 import {
   HomeSectionContentService,
   IHomeSectionContentResponse,
-  ContentType,
 } from '../../../../core/services/home/home-section-content.service';
 import {
   TripTypeService,

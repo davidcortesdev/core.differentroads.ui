@@ -1,4 +1,4 @@
-import { Injectable, Injector, forwardRef, Inject } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { UsersNetService } from './usersNet.service';
 import { PersonalInfoV2Service } from './v2/personal-info-v2.service';
 import { Observable, of, map, switchMap } from 'rxjs';

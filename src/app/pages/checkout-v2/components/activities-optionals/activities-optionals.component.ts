@@ -22,15 +22,12 @@ import {
 } from '../../../../core/services/activity/activity-pack-price.service';
 import {
   ReservationTravelerActivityService,
-  IReservationTravelerActivityResponse,
 } from '../../../../core/services/reservation/reservation-traveler-activity.service';
 import {
   ReservationTravelerActivityPackService,
-  IReservationTravelerActivityPackResponse,
 } from '../../../../core/services/reservation/reservation-traveler-activity-pack.service';
 import {
   ReservationTravelerService,
-  IReservationTravelerResponse,
 } from '../../../../core/services/reservation/reservation-traveler.service';
 import {
   AgeGroupService,

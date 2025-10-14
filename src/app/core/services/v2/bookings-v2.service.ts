@@ -105,15 +105,4 @@ export class BookingsServiceV2 {
       })
     );
   }
-
-  /**
-   * Descarga documento de reserva (voucher)
-   * @param bookingId - ID de la reserva
-   * @param force - Forzar regeneración del documento
-   * @returns Observable con URL del documento
-   */
-  downloadBookingDocument(bookingId: string, force = false): Observable<{ fileUrl: string }> {
-    const url = `${environment.notificationsApiUrl}/documents/bookingBone/${bookingId}?force=${force}`;
-    return this.http.get<{ fileUrl: string }>(url);
-  }
 }

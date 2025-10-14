@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { BookingItem, PersonalInfo } from '../../models/v2/profile-v2.model';
 import { ReservationResponse } from '../../models/v2/profile-v2.model';
 import { TourV2 } from './tours-v2.service';
-import { OrderV2 } from './orders-v2.service';
 import { ICMSTourResponse } from '../cms/cms-tour.service';
 
 /**
@@ -61,35 +60,6 @@ export class DataMappingV2Service {
   }
 
   /**
-   * Mapea una orden (presupuesto) con información de tour a BookingItem V2
-   * @param order - Datos de orden de la API
-   * @param tour - Información del tour (opcional)
-   * @param cmsTour - Información del tour CMS con imagen (opcional)
-   * @returns BookingItem V2
-   */
-  mapOrderToBookingItem(order: OrderV2, tour: TourV2 | null = null, cmsTour: ICMSTourResponse | null = null): BookingItem {
-    return {
-      id: order._id,
-      title: tour?.name || `Presupuesto ${order.ID}`,
-      number: order.ID,
-      budgetNumber: order.ID,
-      ID: order.ID,
-      _id: order._id,
-      creationDate: order.createdAt ? new Date(order.createdAt) : new Date(),
-      status: this.mapOrderStatus(order.status),
-      departureDate: this.extractOrderDepartureDate(order),
-      image: this.getImageFromCMS(cmsTour) || this.getDefaultImage(),
-      passengers: order.travelers?.length || 1,
-      price: order.price || 0,
-      tourID: order.periodID,
-      code: order.ID,
-      summary: order.summary,
-      imageLoading: false,
-      imageLoaded: true
-    };
-  }
-
-  /**
    * Mapea múltiples reservas con tours a array de BookingItem V2
    * @param reservations - Array de reservas
    * @param tours - Array de tours correspondientes
@@ -110,19 +80,6 @@ export class DataMappingV2Service {
         listType,
         cmsTours[index] || null
       )
-    );
-  }
-
-  /**
-   * Mapea múltiples órdenes con tours a array de BookingItem V2
-   * @param orders - Array de órdenes
-   * @param tours - Array de tours correspondientes
-   * @param cmsTours - Array de tours CMS con imágenes (opcional)
-   * @returns Array de BookingItem V2
-   */
-  mapOrdersToBookingItems(orders: OrderV2[], tours: (TourV2 | null)[], cmsTours: (ICMSTourResponse | null)[] = []): BookingItem[] {
-    return orders.map((order, index) => 
-      this.mapOrderToBookingItem(order, tours[index] || null, cmsTours[index] || null)
     );
   }
 
@@ -180,17 +137,6 @@ export class DataMappingV2Service {
     }
     // Fallback: fecha de creación + 30 días
     return new Date(new Date(reservation.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000);
-  }
-
-  /**
-   * Extrae la fecha de salida de una orden
-   */
-  private extractOrderDepartureDate(order: OrderV2): Date {
-    // Para órdenes, usar fecha de creación + 30 días como fallback
-    if (order.createdAt) {
-      return new Date(new Date(order.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000);
-    }
-    return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   }
 
   /**

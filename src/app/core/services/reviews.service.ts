@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, map, switchMap, of, tap, catchError, throwError } from 'rxjs';
+import { Observable, tap, catchError, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { PeriodsService } from './periods.service';
-import { Period } from '../models/tours/period.model';
 
 export interface ReviewFilter {
   id?: number;
@@ -65,39 +64,6 @@ export class ReviewsService {
       params = this.addFilterParams(params, filter);
     }
     return this.http.get<Review[]>(`${this.API_URL}`, { params });
-  }
-
-  /**
-   * Get reviews by period external ID
-   * @param externalId External ID of the period
-   * @returns Observable of Review array with period information
-   */
-  getReviewsByPeriodExternalId(externalId: string): Observable<Review[]> {
-    return this.periodsService.getPeriodDetail(externalId).pipe(
-      tap(period => console.log('Periodo obtenido:', period)), 
-      switchMap((period: Period) => {
-        if (!period) {
-          return of([]);
-        }
-      
-        const filter: ReviewFilter = {
-          externalId: externalId
-        };
-        
-        return this.getReviews(filter).pipe(
-          tap(reviews => console.log('Reseñas obtenidas:', reviews)), 
-          map(reviews => {
-            return reviews.map(review => ({
-              ...review,
-              tourName: period.tourName, 
-              reviewDate: period.dayOne, 
-              
-              travelerName: review.travelerName || 'Viajero Anónimo'
-            }));
-          })
-        );
-      })
-    );
   }
 
   /**

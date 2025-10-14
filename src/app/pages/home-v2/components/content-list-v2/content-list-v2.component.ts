@@ -8,7 +8,6 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { BlogListContent } from '../../../../core/models/blocks/blog-list-content.model';
-import { catchError, map } from 'rxjs/operators';
 import { BlockType } from '../../../../core/models/blocks/block.model';
 import { PressListContent } from '../../../../core/models/blocks/press-list-content.model';
 

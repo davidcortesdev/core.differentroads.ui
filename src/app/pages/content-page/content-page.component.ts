@@ -1,9 +1,7 @@
 import { Component, OnDestroy, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { filter, Observable, Subject, takeUntil } from 'rxjs';
-import { Press } from '../../core/models/press/press.model';
-import { Landing } from '../../core/models/landings/landing.model';
+import { filter, Subject, takeUntil } from 'rxjs';
 import { Title, Meta } from '@angular/platform-browser';
 
 export interface ITour {

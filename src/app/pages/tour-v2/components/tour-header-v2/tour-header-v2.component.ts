@@ -13,9 +13,9 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import {
-  TourNetService,
+  TourService,
   Tour,
-} from '../../../../core/services/tourNet.service';
+} from '../../../../core/services/tour/tour.service';
 import {
   TourLocationService,
   ITourLocationResponse,
@@ -136,7 +136,7 @@ export class TourHeaderV2Component
   isCreatingReservation = false;
 
   constructor(
-    private tourNetService: TourNetService,
+    private tourService: TourService,
     private tourLocationService: TourLocationService,
     private locationNetService: LocationNetService,
     private reservationService: ReservationService,
@@ -304,7 +304,7 @@ export class TourHeaderV2Component
 
   private loadTourData(tourId: number) {
     this.subscriptions.add(
-      this.tourNetService.getTourById(tourId).subscribe({
+      this.tourService.getTourById(tourId).subscribe({
         next: (tourData) => {
           this.tour = { ...tourData };
           this.loadCountryAndContinent(tourId);

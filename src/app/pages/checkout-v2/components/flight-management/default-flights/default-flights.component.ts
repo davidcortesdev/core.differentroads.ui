@@ -6,7 +6,6 @@ import {
   SimpleChanges,
   Output,
   EventEmitter,
-  ViewChild,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import {

@@ -50,7 +50,6 @@ import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { BasicPageComponent } from './pages/basic-page/basic-page.component';
 import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
 import { ContentPageComponent } from './pages/content-page/content-page.component';
-import { PaymentsComponent } from './pages/payments/payments.component';
 import { ReviewSurveyComponent } from './pages/review-survey/review-survey.component';
 
 // ========================================
@@ -116,11 +115,6 @@ const routes: Routes = [
       { path: 'checkout-v2/:reservationId', component: CheckoutV2Component },
 
       // ========================================
-      // PAYMENT ROUTES
-      // ========================================
-      { path: 'payment/:id', component: PaymentsComponent },
-
-      // ========================================
       // RESERVATION ROUTES
       // ========================================
       // Versión nueva
@@ -147,7 +141,7 @@ const routes: Routes = [
       // ========================================
       // FEATURES ROUTES
       // ========================================
-      { path: 'reviews/:id', component: ReviewSurveyComponent },
+      { path: 'reviews/:periodTkId', component: ReviewSurveyComponent },
 
       // ========================================
       // 404 - NOT FOUND (debe ser siempre la última)

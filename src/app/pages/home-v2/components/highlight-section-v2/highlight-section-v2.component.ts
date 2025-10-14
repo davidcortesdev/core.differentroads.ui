@@ -13,7 +13,6 @@ import { Subject, takeUntil } from 'rxjs';
 // Servicios de Home
 import {
   HomeSectionConfigurationService,
-  IHomeSectionConfigurationResponse,
 } from '../../../../core/services/home/home-section-configuration.service';
 import {
   HomeSectionImageService,

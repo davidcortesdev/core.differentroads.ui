@@ -7,9 +7,7 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import {
   IPaymentResponse,
-  IPaymentStatusResponse,
   PaymentsNetService,
-  PaymentStatusFilter,
 } from '../../services/paymentsNet.service';
 import { PaymentStatusNetService } from '../../services/paymentStatusNet.service';
 import { PaymentMethodNetService } from '../../services/paymentMethodNet.service';
@@ -19,11 +17,9 @@ import { forkJoin } from 'rxjs';
 // IMPORTACIONES PARA TRAVELERS (solo para obtener el nombre del lead traveler)
 import {
   ReservationTravelerService,
-  IReservationTravelerResponse,
 } from '../../../../core/services/reservation/reservation-traveler.service';
 import {
   ReservationTravelerFieldService,
-  IReservationTravelerFieldResponse,
 } from '../../../../core/services/reservation/reservation-traveler-field.service';
 import {
   FlightSearchService,

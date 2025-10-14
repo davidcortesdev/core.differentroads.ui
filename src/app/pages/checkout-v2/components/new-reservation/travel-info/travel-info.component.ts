@@ -18,9 +18,9 @@ import {
   IReservationTravelerFieldResponse,
 } from '../../../../../core/services/reservation/reservation-traveler-field.service';
 import {
-  TourNetService,
+  TourService,
   Tour,
-} from '../../../../../core/services/tourNet.service';
+} from '../../../../../core/services/tour/tour.service';
 import {
   DepartureService,
   IDepartureResponse,
@@ -52,7 +52,7 @@ export class TravelInfoComponent implements OnInit, OnChanges {
   constructor(
     private reservationTravelerService: ReservationTravelerService,
     private reservationTravelerFieldService: ReservationTravelerFieldService,
-    private tourNetService: TourNetService,
+    private tourService: TourService,
     private departureService: DepartureService
   ) {}
 
@@ -151,7 +151,7 @@ export class TravelInfoComponent implements OnInit, OnChanges {
 
     console.log('Cargando información del tour con ID:', this.tourId);
 
-    this.tourNetService.getTourById(this.tourId).subscribe({
+    this.tourService.getTourById(this.tourId).subscribe({
       next: (tour) => {
         this.tourInfo = tour;
         console.log('Información del tour cargada:', tour);

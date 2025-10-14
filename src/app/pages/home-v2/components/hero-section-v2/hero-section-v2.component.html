@@ -111,7 +111,12 @@
               </div>
             </ng-template>
           </p-datepicker>
-          <label for="rangeDateInput" class="label">Fechas de viaje</label>
+          <label for="rangeDateInput" class="label">
+            Fechas de viaje
+            <ng-container *ngIf="formattedRange">
+              <span class="preview"> — {{ formattedRange }} <span *ngIf="flexibilitySuffix">{{ flexibilitySuffix }}</span></span>
+            </ng-container>
+          </label>
         </p-iftaLabel>
       </div>
       <div class="input-md">

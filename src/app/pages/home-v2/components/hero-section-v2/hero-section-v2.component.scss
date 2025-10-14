@@ -171,6 +171,12 @@
         font-weight: 500;
         font-size: var(--font-label);
         margin-top: 2px;
+        .preview {
+            font-weight: 500;
+            color: var(--text-color);
+            opacity: 0.9;
+            margin-left: 4px;
+        }
     }
 
     .spinner {

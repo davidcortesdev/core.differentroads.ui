@@ -337,6 +337,27 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     return maxDate;
   }
 
+  /**
+   * Texto de rango seleccionado para previsualizar junto al campo
+   */
+  get formattedRange(): string {
+    if (!this.rangeDates || this.rangeDates.length === 0) {
+      return '';
+    }
+    const fmt = (d: Date) => d.toLocaleDateString('es-ES');
+    if (this.rangeDates.length === 1) {
+      return fmt(this.rangeDates[0]);
+    }
+    return `${fmt(this.rangeDates[0])} - ${fmt(this.rangeDates[1])}`;
+  }
+
+  /**
+   * Etiqueta de flexibilidad (±X días) para previsualización
+   */
+  get flexibilitySuffix(): string {
+    return this.dateFlexibility > 0 ? `(±${this.dateFlexibility} días)` : '';
+  }
+
   private setInitialValues(): void {
     if (this.initialDestination) {
       this.selectedDestination = this.initialDestination.trim();

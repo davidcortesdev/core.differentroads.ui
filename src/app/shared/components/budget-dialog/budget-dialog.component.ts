@@ -570,14 +570,23 @@ export class BudgetDialogComponent implements OnInit, OnDestroy, OnChanges {
    * Disparar evento generated_lead (contact_form) cuando el formulario de contacto se envíe con éxito
    */
   private trackContactForm(): void {
-    this.analyticsService.generatedLead(
-      'ficha_tour',
-      this.analyticsService.getUserData(
-        this.traveler.email,
-        this.traveler.phone,
-        this.authService.getCognitoIdValue()
-      )
-    );
+    this.analyticsService.getCurrentUserData().subscribe({
+      next: (userData) => {
+        this.analyticsService.generatedLead('ficha_tour', userData);
+      },
+      error: (error) => {
+        console.error('Error obteniendo datos de usuario para analytics:', error);
+        // Fallback con datos del formulario
+        this.analyticsService.generatedLead(
+          'ficha_tour',
+          this.analyticsService.getUserData(
+            this.traveler.email,
+            this.traveler.phone,
+            this.authService.getCognitoIdValue()
+          )
+        );
+      }
+    });
   }
 
   /**

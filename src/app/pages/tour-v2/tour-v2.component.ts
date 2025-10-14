@@ -1,9 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TourNetService, Tour } from '../../core/services/tourNet.service';
 import { catchError, of } from 'rxjs';
-import { ItineraryService } from '../../core/services/itinerary/itinerary.service';
 import { SelectedDepartureEvent } from './components/tour-itinerary-v2/components/selector-itinerary/selector-itinerary.component';
 import { ActivityHighlight } from '../../shared/components/activity-card/activity-card.component';
 import { AnalyticsService } from '../../core/services/analytics.service';
@@ -71,6 +69,9 @@ export class TourV2Component implements OnInit {
   preview: boolean = false;
   // Total del carrito
   totalPrice: number = 0;
+  
+  // Flag para evitar disparos duplicados del evento view_item
+  private viewItemTracked: boolean = false;
 
   // Ciudad seleccionada - no debe tener valor inicial
   selectedCity: string = '';
@@ -89,7 +90,6 @@ export class TourV2Component implements OnInit {
 
   selectedActivityPackId: number | null = null; // ✅ AGREGAR
   onActivityPackIdUpdate(activityPackId: number | null): void {
-    console.log('📦 ActivityPackId recibido en padre:', activityPackId);
     this.selectedActivityPackId = activityPackId;
   }
 
@@ -114,9 +114,8 @@ export class TourV2Component implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private tourNetService: TourNetService,
-    private ItineraryService: ItineraryService,
     private analyticsService: AnalyticsService,
-    private authService: AuthenticateService
+    private authService: AuthenticateService,
   ) {}
 
   ngOnInit(): void {
@@ -128,10 +127,12 @@ export class TourV2Component implements OnInit {
       const currentUrl = this.router.url;
       const isPreview = currentUrl.includes('/preview');
       
-      console.log('URL actual:', currentUrl);
-      console.log('¿Es preview?', isPreview);
-      
       if (slug) {
+        // Resetear el flag cuando se navega a un tour diferente
+        if (this.tourSlug !== slug) {
+          this.viewItemTracked = false;
+        }
+        
         this.tourSlug = slug;
         this.preview = isPreview;
         this.loadTourBySlug(slug);
@@ -275,34 +276,58 @@ export class TourV2Component implements OnInit {
 
   /**
    * Disparar evento view_item cuando se visualiza la ficha del tour
+   * Solo se ejecuta una vez por sesión para evitar duplicados
    */
   private trackViewItem(tour: Tour): void {
-    const tourData = tour as any; // Usar any para acceder a propiedades dinámicas
+    // Evitar disparos duplicados
+    if (this.viewItemTracked) {
+      return;
+    }
     
+    const tourData = tour as any;
+    
+    // Obtener contexto de navegación desde el state de la navegación (sin modificar URL)
+    const navigation = this.router.getCurrentNavigation();
+    const state = navigation?.extras?.state || window.history.state;
+    
+    const itemListId = state?.['listId'] || '';
+    const itemListName = state?.['listName'] || '';
+    
+    this.analyticsService.getCurrentUserData().subscribe((userData: any) => {
+      this.fireViewItemEvent(itemListId, itemListName, tourData, tour, userData);
+      // Marcar como trackeado después de disparar el evento
+      this.viewItemTracked = true;
+    });
+  }
+
+  /**
+   * Disparar el evento view_item con los datos proporcionados
+   */
+  private fireViewItemEvent(itemListId: string, itemListName: string, tourData: any, tour: Tour, userData: any): void {
     this.analyticsService.viewItem(
-      'tour_detail',
-      'Ficha de tour',
+      itemListId,
+      itemListName,
       {
-        item_id: tourData.tkId?.toString() || tour.id?.toString() || '',
+        item_id: tour.id?.toString() || tourData.tkId?.toString() || '',
         item_name: tour.name || '',
         coupon: '',
         discount: 0,
-        index: 0,
+        index: 1, // Un solo item, índice 1
         item_brand: 'Different Roads',
         item_category: tourData.destination?.continent || '',
         item_category2: tourData.destination?.country || '',
-        item_category3: tourData.marketingSection?.marketingSeasonTag || '',
+        item_category3: tourData.marketingSection?.marketingSeasonTag || 'Clasico',
         item_category4: tourData.monthTags?.join(', ') || '',
-        item_category5: tourData.tourType || '',
-        item_list_id: 'tour_detail',
-        item_list_name: 'Ficha de tour',
+        item_category5: tourData.tourType === 'FIT' ? 'Privados' : 'Grupos',
+        item_list_id: itemListId,
+        item_list_name: itemListName,
         item_variant: '',
         price: tourData.basePrice || 0,
         quantity: 1,
-        puntuacion: tourData.rating?.toString() || '',
+        puntuacion: tourData.rating?.toString() || '5.0',
         duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : ''
       },
-      this.getUserData()
+      userData
     );
   }
 
@@ -311,11 +336,15 @@ export class TourV2Component implements OnInit {
    */
   private getUserData() {
     if (this.authService.isAuthenticatedValue()) {
-      return this.analyticsService.getUserData(
-        this.authService.getUserEmailValue(),
+      const email = this.authService.getUserEmailValue();
+      const cognitoId = this.authService.getCognitoIdValue();
+      
+      const userData = this.analyticsService.getUserData(
+        email,
         undefined,
-        this.authService.getCognitoIdValue()
+        cognitoId
       );
+      return userData;
     }
     return undefined;
   }

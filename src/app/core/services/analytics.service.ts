@@ -1,4 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector, forwardRef, Inject } from '@angular/core';
+import { UsersNetService } from './usersNet.service';
+import { PersonalInfoV2Service } from './v2/personal-info-v2.service';
+import { Observable, of, map, switchMap } from 'rxjs';
 
 /**
  * Interfaz para los datos de usuario que se envían en los eventos
@@ -84,9 +87,30 @@ export interface FilterParams {
   providedIn: 'root'
 })
 export class AnalyticsService {
-
-  constructor() {
+  private _authService: any; // Lazy-loaded para evitar dependencia circular
+  
+  constructor(
+    private injector: Injector,
+    private usersNetService: UsersNetService,
+    private personalInfoService: PersonalInfoV2Service
+  ) {
     this.initDataLayer();
+  }
+  
+  /**
+   * Obtiene AuthenticateService de forma lazy para evitar dependencia circular
+   */
+  private getAuthService(): any {
+    if (!this._authService) {
+      // Importar dinámicamente para evitar dependencia circular
+      const AuthenticateService = require('./auth-service.service').AuthenticateService;
+      this._authService = this.injector.get(AuthenticateService);
+    }
+    return this._authService;
+  }
+  
+  private get authService(): any {
+    return this.getAuthService();
   }
 
   /**
@@ -594,6 +618,77 @@ export class AnalyticsService {
       return phone;
     }
     return `${countryCode}${phone}`;
+  }
+
+
+  /**
+   * Obtiene los datos completos del usuario usando el mismo patrón que el header
+   * Combina email, cognitoId y datos de la base de datos
+   */
+  getCurrentUserData(): Observable<UserData | undefined> {
+    return this.authService.getUserEmail().pipe(
+      switchMap((email: string) => {
+        if (!email) {
+          return of(undefined);
+        }
+
+        return this.authService.getCognitoId().pipe(
+          switchMap((cognitoId: string) => {
+            if (!cognitoId) {
+              return of({
+                email_address: email,
+                phone_number: '',
+                user_id: ''
+              });
+            }
+
+            // Usar el mismo patrón que el header pero con PersonalInfoV2Service
+            return this.usersNetService.getUsersByCognitoId(cognitoId).pipe(
+              switchMap((users) => {
+                if (users && users.length > 0) {
+                  const user = users[0];
+                  // Obtener datos completos usando PersonalInfoV2Service
+                  return this.personalInfoService.getUserData(user.id.toString()).pipe(
+                    map((personalInfo: any) => {
+                      const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono) : '';
+                      return {
+                        email_address: personalInfo?.email || email,
+                        phone_number: phone,
+                        user_id: cognitoId
+                      };
+                    })
+                  );
+                }
+                // Si no encuentra usuario, intentar con email directamente
+                return this.usersNetService.getUsersByEmail(email).pipe(
+                  switchMap((usersByEmail) => {
+                    if (usersByEmail && usersByEmail.length > 0) {
+                      const user = usersByEmail[0];
+                      return this.personalInfoService.getUserData(user.id.toString()).pipe(
+                        map((personalInfo: any) => {
+                          const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono) : '';
+                          return {
+                            email_address: personalInfo?.email || email,
+                            phone_number: phone,
+                            user_id: cognitoId
+                          };
+                        })
+                      );
+                    }
+                    // Fallback final
+                    return of({
+                      email_address: email,
+                      phone_number: '',
+                      user_id: cognitoId
+                    });
+                  })
+                );
+              })
+            );
+          })
+        );
+      })
+    );
   }
 }
 

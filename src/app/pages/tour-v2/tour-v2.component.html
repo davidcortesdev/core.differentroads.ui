@@ -55,6 +55,7 @@
     <section class="tour-section tour-departures-section">
       <app-tour-departures-v2
         [tourId]="tour.id"
+        [tourData]="tour"
         [selectedDepartureEvent]="selectedDepartureEvent"
         (priceUpdate)="onPriceUpdate($event)"
         (cityUpdate)="onCityUpdate($event)"

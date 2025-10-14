@@ -83,8 +83,15 @@
 
   <!-- Tours list section -->
   <div class="tours-list">
+    <!-- Mostrar indicador de carga mientras se buscan tours -->
+    <div *ngIf="isLoadingTours" class="loading-message">
+      <p>Buscando tours...</p>
+    </div>
+    
+    <!-- Mostrar grid de tours cuando la búsqueda ha finalizado -->
     <app-tour-grid-v2
-      [tourIds]="[1, 2, 3]"
+      *ngIf="!isLoadingTours"
+      [tourIds]="tourIds"
       [itemListId]="getListId()"
       [itemListName]="getListName()"
       [showScalapayPrice]="true"

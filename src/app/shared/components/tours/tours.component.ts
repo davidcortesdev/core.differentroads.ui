@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { AnalyticsService, EcommerceItem } from '../../../core/services/analytics.service';
 import { AuthenticateService } from '../../../core/services/auth-service.service';
 import { Title } from '@angular/platform-browser';
-import { TourSearchParams } from '../../../core/services/tour/tour.service';
+import { TourSearchParams, TourService } from '../../../core/services/tour/tour.service';
 
 interface ITour {
   imageUrl: string;
@@ -68,17 +68,20 @@ export class ToursComponent implements OnInit, OnChanges {
 
   // Core data
   displayedTours: ITour[] = [];
+  tourIds: number[] = []; // IDs de tours obtenidos de la búsqueda
   destination: string = '';
   minDate: Date | null = null;
   maxDate: Date | null = null;
   tourType: string = '';
   flexDays?: number;
+  isLoadingTours: boolean = false;
 
   constructor(
     private readonly titleService: Title,
     private readonly route: ActivatedRoute,
     private readonly analyticsService: AnalyticsService,
-    private readonly authService: AuthenticateService
+    private readonly authService: AuthenticateService,
+    private readonly tourService: TourService
   ) {}
 
   ngOnInit() {
@@ -157,7 +160,21 @@ export class ToursComponent implements OnInit, OnChanges {
       //flexDays: this.flexDays,
     };
 
-//TODO: pendiente de desarrollar proximamente
+    // Realizar búsqueda de tours usando el servicio
+    this.isLoadingTours = true;
+    
+    this.tourService.search(searchParams).subscribe({
+      next: (results) => {        
+        // Extraer los IDs de los resultados
+        this.tourIds = results.map(result => result.tourId);
+        this.isLoadingTours = false;
+      },
+      error: (error) => {
+        console.error('Error al buscar tours:', error);
+        this.tourIds = [];
+        this.isLoadingTours = false;
+      }
+    });
   }
 
   // Filter change methods

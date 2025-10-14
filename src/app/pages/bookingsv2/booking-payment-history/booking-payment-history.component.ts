@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { BookingsService } from '../../../core/services/bookings.service';
 import {
   Payment,
   PaymentStatus,
@@ -66,7 +65,6 @@ export class BookingPaymentHistoryV2Component implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private bookingsService: BookingsService,
     private router: Router
   ) {
     this.paymentForm = this.fb.group({
@@ -76,77 +74,13 @@ export class BookingPaymentHistoryV2Component implements OnInit {
 
   ngOnInit(): void {
     if (this.bookingID) {
-      this.bookingsService.getPayments(this.bookingID).subscribe((payments) => {
-        const totalCompleted = payments.reduce(
-          (sum, payment) =>
-            payment.status === 'COMPLETED' ? sum + payment.amount : sum,
-          0
-        );
-        this.paymentInfo = {
-          totalPrice: this.bookingTotal,
-          paidAmount: totalCompleted,
-          pendingAmount: this.bookingTotal - totalCompleted,
-        };
-        // Mapear pagos e incluir paymentId y voucherId asumidos de la respuesta
-        this.paymentHistory = /*  MOCKEO PARA PRUEBAS[{
-          createdAt: 'someday',
-          amount: 3,
-          status: PaymentStatus.PENDING,
-          publicID: '123', 
-          updatedAt: 'someOtherDay',
-          bookingID: '123',
-        },{
-          createdAt: 'someday',
-          amount: 4,
-          status: PaymentStatus.COMPLETED,
-          publicID: '234', 
-          updatedAt: 'someOtherDay',
-          bookingID: '234',
-        },{
-          createdAt:'someday',
-          amount: 5,
-          status: PaymentStatus.PENDING,
-          publicID: '345',
-          updatedAt:'someOtherDay',
-          bookingID: '345',
-        },{
-          createdAt:'someday',
-          amount: 6,
-          status: PaymentStatus.PENDING,
-          publicID: '456',
-          updatedAt:'someOtherDay',
-          bookingID: '456',
-        },{
-          createdAt:'someday',
-          amount: 7,
-          status: PaymentStatus.PENDING,
-          publicID: '567',
-          updatedAt:'someOtherDay',
-          bookingID: '567',
-        }]*/payments.filter(
-          (payment) => payment.status !== 'PENDING'
-        );
-      });
+      //TODO: Implementar leyendo los datos de mysql
     }
   }
 
   private refreshPayments(): void {
     if (this.bookingID) {
-      this.bookingsService.getPayments(this.bookingID).subscribe((payments) => {
-        const totalCompleted = payments.reduce(
-          (sum, payment) =>
-            payment.status === 'COMPLETED' ? sum + payment.amount : sum,
-          0
-        );
-        this.paymentInfo = {
-          totalPrice: this.bookingTotal,
-          paidAmount: totalCompleted,
-          pendingAmount: this.bookingTotal - totalCompleted,
-        };
-        this.paymentHistory = payments.filter(
-          (payment) => payment.status !== 'PENDING'
-        );
-      });
+      //TODO: Implementar leyendo los datos de mysql
     }
   }
 
@@ -196,29 +130,7 @@ export class BookingPaymentHistoryV2Component implements OnInit {
     }
     this.isApproveLoading = true;
     this.approveMessage = null;
-    this.bookingsService
-      .reviewVoucher(
-        this.bookingID,
-        this.selectedPayment.publicID,
-        this.selectedPayment.vouchers[0].id,
-        VoucherReviewStatus.APPROVED
-      )
-      .subscribe({
-        next: () => {
-          if (this.selectedPayment) {
-            this.selectedPayment.status = PaymentStatus.COMPLETED;
-          }
-          this.isApproveLoading = false;
-          this.displayReviewModal = false;
-          this.refreshPayments();
-        },
-        error: (error) => {
-          console.error('Error al aprobar revisión de pago:', error);
-          this.isApproveLoading = false;
-          this.isApproveSuccess = false;
-          this.approveMessage = 'No se pudo conectar con el servidor. Por favor, inténtalo de nuevo.';
-        },
-      });
+    //TODO: Implementar leyendo los datos de mysql
   }
 
   rejectPaymentReview(): void {
@@ -230,27 +142,8 @@ export class BookingPaymentHistoryV2Component implements OnInit {
       return;
     }
     this.isRejectLoading = true;
-    this.bookingsService
-      .reviewVoucher(
-        this.bookingID,
-        this.selectedPayment.publicID,
-        this.selectedPayment.vouchers[0].id,
-        VoucherReviewStatus.DENIED
-      )
-      .subscribe({
-        next: () => {
-          if (this.selectedPayment) {
-            this.selectedPayment.status = PaymentStatus.FAILED;
-          }
-          this.isRejectLoading = false;
-          this.displayReviewModal = false;
-          this.refreshPayments();
-        },
-        error: (error) => {
-          console.error('Error al rechazar revisión de pago:', error);
-          this.isRejectLoading = false;
-        },
-      });
+    //TODO: Implementar leyendo los datos de mysql
+
   }
 
   viewPaymentReview(): void {

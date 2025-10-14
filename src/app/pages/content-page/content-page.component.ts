@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { PressService } from '../../core/services/press.service';
 import { filter, Observable, Subject, takeUntil } from 'rxjs';
 import { Press } from '../../core/models/press/press.model';
 import { Landing } from '../../core/models/landings/landing.model';
@@ -68,7 +67,6 @@ export class ContentPageComponent implements OnInit, OnChanges, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private pressService: PressService,
     private sanitizer: DomSanitizer,
     private titleService: Title,
     private meta: Meta
@@ -208,23 +206,7 @@ export class ContentPageComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   private fetchPressData(): void {
-    this.pressService
-      .getPressBySlug(this.slug)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (data: Press) => {
-          this.bannerTitle = data.title || '';
-          this.bannerSubtitle = data.subtitle || '';
-          this.bannerDescription = data.content || '';
-          this.blocks = data.blocks || [];
-          this.contentTitle = data.title || '';
-          this.contentDescription = data.content || '';
-          this.updatePageTitle(data.title);
-        },
-        error: (error: any) => {
-          console.error('Error fetching press data:', error);
-        },
-      });
+    //TODO: Pendiente de desarrollar proximamente
   }
 
   private fetchBlogData(): void {

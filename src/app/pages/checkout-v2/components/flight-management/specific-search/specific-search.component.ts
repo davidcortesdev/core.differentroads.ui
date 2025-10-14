@@ -2,9 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output, OnDestroy, OnChanges, S
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { forkJoin, of, Subject, Observable } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { ITempFlightOffer } from '../../../../../core/models/amadeus/flight.types';
 import { FlightSegment, Flight } from '../../../../../core/models/tours/flight.model';
-import { AmadeusService } from '../../../../../core/services/amadeus.service';
 import { TextsService } from '../../../../../core/services/checkout/texts.service';
 import { TravelersService } from '../../../../../core/services/checkout/travelers.service';
 import { DepartureConsolidadorSearchLocationService, ConsolidadorSearchLocationWithSourceResponse } from '../../../../../core/services/departure/departure-consolidador-search-location.service';
@@ -68,7 +66,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     { label: '2+ Escalas', value: 'multiples' },
   ];
   readonly aerolineaOptions = this.aerolineas.map((a) => ({ label: a.nombre, value: a.codigo }));
-  flightOffers: ITempFlightOffer[] = [];
   isLoading = false;
   isLoadingDetails = false;
   searchPerformed = false;
@@ -102,7 +99,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
   constructor(
     private readonly fb: FormBuilder,
-    private readonly amadeusService: AmadeusService,
     private readonly travelersService: TravelersService,
     private readonly textsService: TextsService,
     private readonly departureConsolidadorSearchLocationService: DepartureConsolidadorSearchLocationService,
@@ -821,24 +817,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
   getAirlineName(code: string): string {
     return code;
-  }
-
-  hasHandBaggage(offer: ITempFlightOffer): boolean {
-    return offer.offerData.travelerPricings.some((tp: any) =>
-      tp.fareDetailsBySegment.some(
-        (seg: any) =>
-          seg.includedCabinBags && seg.includedCabinBags.quantity > 0
-      )
-    );
-  }
-
-  hasCheckedBaggage(offer: ITempFlightOffer): boolean {
-    return offer.offerData.travelerPricings.some((tp: any) =>
-      tp.fareDetailsBySegment.some(
-        (seg: any) =>
-          seg.includedCheckedBags && seg.includedCheckedBags.quantity > 0
-      )
-    );
   }
 
   selectFlight(flightPack: any): void {

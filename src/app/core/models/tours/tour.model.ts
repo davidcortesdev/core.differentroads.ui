@@ -1,8 +1,13 @@
 import { CldImage } from '../commons/cld-image.model';
-import { CMSCollections } from '../commons/cms-collections.model';
 import { SEO } from '../commons/seo.model';
 
-export interface Tour extends CMSCollections {
+export interface Tour {
+  id: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  availableLangs: string[];
+  isLangAvailable: boolean;
   description: string;
   externalID: string;
   name: string;

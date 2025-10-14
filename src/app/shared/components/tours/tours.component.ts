@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
 import { catchError } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { ToursService } from '../../../core/services/tours.service';
 import { AnalyticsService, EcommerceItem } from '../../../core/services/analytics.service';
 import { AuthenticateService } from '../../../core/services/auth-service.service';
 import { Title } from '@angular/platform-browser';
@@ -76,7 +75,6 @@ export class ToursComponent implements OnInit, OnChanges {
 
   constructor(
     private readonly titleService: Title,
-    private readonly toursService: ToursService,
     private readonly route: ActivatedRoute,
     private readonly analyticsService: AnalyticsService,
     private readonly authService: AuthenticateService
@@ -157,63 +155,7 @@ export class ToursComponent implements OnInit, OnChanges {
       }),
     };
 
-    this.toursService
-      .getFilteredToursList(filters)
-      .pipe(
-        catchError((error: Error) => {
-          // Silent error handling
-          return [];
-        })
-      )
-      .subscribe((tours: any) => {
-        // Process month options
-        this.monthOptions =
-          tours.filtersOptions?.month?.map((month: string) => {
-            return {
-              name: month.toUpperCase(),
-              value: month,
-            };
-          }) || [];
-
-        // Process tag options
-        this.tagOptions =
-          tours.filtersOptions?.tags?.map((tag: string) => {
-            return {
-              name: tag.toUpperCase(),
-              value: tag,
-            };
-          }) || [];
-
-        // Process tour data
-        this.displayedTours = tours.data.map((tour: any) => {
-          const days = tour?.activePeriods?.[0]?.days || '';
-
-          return {
-            imageUrl: tour.image?.[0]?.url || '',
-            title: tour.name || '',
-            description:
-              tour.country && days ? `${tour.country} en: ${days} dias` : '',
-            rating: 5,
-            tag: tour.marketingSection?.marketingSeasonTag || '',
-            price: tour.price || 0,
-            availableMonths:
-              (tour.monthTags || [])?.map((month: string) =>
-                month.substring(0, 3).toUpperCase()
-              ) || [],
-            isByDr: tour.tourType !== 'FIT',
-            webSlug: tour.webSlug || '',
-            externalID: tour.externalID,
-          };
-        });
-
-        // Disparar evento de analytics view_item_list
-        if (tours.data && tours.data.length > 0) {
-          this.trackViewItemList(tours.data);
-        }
-
-        // Emit tours to parent component
-        this.toursLoaded.emit(this.displayedTours);
-      });
+//TODO: pendiente de desarrollar proximamente
   }
 
   // Filter change methods

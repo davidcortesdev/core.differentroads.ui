@@ -225,7 +225,6 @@ import { UploadButtonComponent } from './shared/components/upload-button/upload-
 import { HotelCardComponent } from './shared/components/hotel-card/hotel-card.component';
 import { ActivitiesCarouselComponent } from './shared/components/activities-carousel/activities-carousel.component';
 import { ActivityCardComponent } from './shared/components/activity-card/activity-card.component';
-import { TourMapComponent } from './shared/components/tour-map/tour-map.component';
 import { TourMapV2Component } from './shared/components/tour-map-v2/tour-map-v2.component';
 import { CookiesComponent } from './shared/components/cookies/cookies.component';
 import { CookiesConsentComponent } from './shared/components/cookies-consent/cookies-consent.component';
@@ -399,7 +398,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     HotelCardComponent,
     ActivitiesCarouselComponent,
     ActivityCardComponent,
-    TourMapComponent,
     TourMapV2Component,
     CookiesComponent,
     CookiesConsentComponent,

@@ -209,7 +209,6 @@ import { BasicPageComponent } from './pages/basic-page/basic-page.component';
 import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
 import { TitleAndQuillComponent } from './pages/basic-page/components/title-and-quill/title-and-quill.component';
 import { ContentPageComponent } from './pages/content-page/content-page.component';
-import { PaymentsComponent } from './pages/payments/payments.component';
 import { ReviewSurveyComponent } from './pages/review-survey/review-survey.component';
 import { ImageUploadModalComponent } from './pages/review-survey/image-upload-modal/image-upload-modal.component';
 
@@ -381,7 +380,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     BasicPagePreviewComponent,
     TitleAndQuillComponent,
     ContentPageComponent,
-    PaymentsComponent,
     ReviewSurveyComponent,
     ImageUploadModalComponent,
 

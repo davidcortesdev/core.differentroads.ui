@@ -2,7 +2,6 @@ import { Activity } from './activity.model';
 import { Insurance } from './insurance.model';
 import { ReservationMode } from './reservation-mode.model';
 import { Flight } from './flight.model';
-import { CMSCollections } from '../commons/cms-collections.model';
 import { PeriodHotel } from './tour.model';
  
 export enum ReservationFieldMandatory {
@@ -10,7 +9,13 @@ export enum ReservationFieldMandatory {
   LEAD = 'LEAD',
   NONE = 'NONE',
 }
-export interface Period extends CMSCollections {
+export interface Period {
+  id: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  availableLangs: string[];
+  isLangAvailable: boolean;
   dayOne: string;
   externalID: string;
   name: string;

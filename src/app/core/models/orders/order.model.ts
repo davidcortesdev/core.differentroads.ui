@@ -1,5 +1,11 @@
-import { Pagination } from '../commons/pagination.model';
 import { Flight } from '../tours/flight.model';
+
+export interface Pagination {
+  totalDocuments: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+}
 
 export interface Order {
   _id: string;

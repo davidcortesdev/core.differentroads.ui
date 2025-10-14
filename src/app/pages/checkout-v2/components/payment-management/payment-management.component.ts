@@ -10,13 +10,11 @@ import {
 } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import {
-  IScalapayOrderResponse,
   NewScalapayService,
 } from '../../services/newScalapay.service';
 import { Router } from '@angular/router';
 import {
   PaymentsNetService,
-  PaymentStatusFilter,
 } from '../../services/paymentsNet.service';
 import { PaymentStatusNetService } from '../../services/paymentStatusNet.service';
 import { PaymentMethodNetService } from '../../services/paymentMethodNet.service';
@@ -29,7 +27,6 @@ import {
   FlightSearchService,
   IPriceChangeInfo,
 } from '../../../../core/services/flight-search.service';
-import { PointsService } from '../../../../core/services/points.service';
 
 // Simplified interfaces for points redemption
 export interface PointsRedemptionConfig {
@@ -194,7 +191,6 @@ export class PaymentManagementComponent
     private readonly messageService: MessageService,
     private readonly currencyService: CurrencyService,
     private readonly flightSearchService: FlightSearchService,
-    private readonly pointsService: PointsService
   ) {}
 
   ngOnInit(): void {

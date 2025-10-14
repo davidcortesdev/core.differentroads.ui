@@ -25,7 +25,6 @@ import { TourDataV2 } from '../../../../shared/components/tour-card-v2/tour-card
 // Importar los servicios de configuración del home
 import {
   HomeSectionConfigurationService,
-  IHomeSectionConfigurationResponse,
 } from '../../../../core/services/home/home-section-configuration.service';
 import {
   HomeSectionTourFilterService,

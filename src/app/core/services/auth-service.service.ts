@@ -13,8 +13,6 @@ import {
   getCurrentUser,
   fetchUserAttributes,
 } from 'aws-amplify/auth';
-import { UsersService } from './users.service';
-import { PointsService } from './points.service'; // new import
 import { AnalyticsService } from './analytics.service'; // new import
 import { firstValueFrom, catchError, tap, switchMap } from 'rxjs';
 
@@ -38,9 +36,7 @@ export class AuthenticateService {
 
   constructor(
     private router: Router,
-    private usersService: UsersService,
     private hubspotService: HubspotService,
-    private pointsService: PointsService, // new injection
     private analyticsService: AnalyticsService // new injection
   ) {
     this.userPool = new CognitoUserPool({
@@ -69,10 +65,6 @@ export class AuthenticateService {
               this.currentUserCognitoId.next(user.userId);
             }
             
-            // Intentar crear el usuario en la base de datos si aún no existe
-            this.createUserIfNotExists(attributes.email).then(() => {
-              this.userAttributesChanged.next();
-            });
           }
         } catch (error) {
           console.error('Error fetching user attributes:', error);
@@ -444,12 +436,6 @@ export class AuthenticateService {
           this.isAuthenticated.next(true);
           this.currentUserEmail.next(attributes.email);
           this.currentUserCognitoId.next(user.userId);
-          const isNewUser = await this.createUserIfNotExists(attributes.email);
-          
-          // Disparar evento sign_up para Google solo si es un usuario nuevo
-          if (isNewUser) {
-            this.trackSignUp('google');
-          }
           
           this.userAttributesChanged.next();
         }
@@ -459,87 +445,6 @@ export class AuthenticateService {
     }
   }
 
-  async createUserIfNotExists(email: string): Promise<boolean> {
-    if (!email) return false;
-
-    try {
-      // Primero intentamos obtener el usuario
-      const user = await firstValueFrom(
-        this.usersService.getUserByEmail(email).pipe(
-          catchError((error) => {
-            // Si el usuario no existe (404), creamos uno nuevo
-            if (error.status === 404) {
-              return from(
-                firstValueFrom(
-                  this.usersService.createUser({
-                    email: email,
-                    names: 'pendiente',
-                    lastname: 'pendiente',
-                    phone: 0,
-                  })
-                )
-              ).pipe(
-                tap(() => {
-                  console.log('Usuario creado en la base de datos.');
-                  this.assignNewTravelerPoints(email);
-                }),
-                catchError((createError) => {
-                  console.error('Error al crear el usuario:', createError);
-                  return of(null);
-                })
-              );
-            } else {
-              console.error('Error al obtener el usuario:', error);
-              return of(null);
-            }
-          })
-        )
-      );
-
-      if (user) {
-        // console.log('Usuario existente:', user);
-        return false; // Usuario ya existía
-      }
-      return true; // Usuario fue creado
-    } catch (error) {
-      console.error('Error en createUserIfNotExists:', error);
-      return false;
-    }
-  }
-
-  // New method to assign 100 points to new travelers
-  assignNewTravelerPoints(email: string): void {
-    this.usersService.getUserByEmail(email).subscribe({
-      next: (user) => {
-        if (user && user._id) {
-          const pointsObject = {
-            travelerID: user._id,
-            type: 'income',
-            points: 100, 
-            extraData: {
-              bookingID: 'N/A',
-              tourName: 'N/A',
-            },
-            category: 'Paquete de Binevenida',
-            concept: 'Registro',
-            origin: 'System',
-            transactionEmail: email,
-          };
-          this.pointsService.createPoints(pointsObject).subscribe({
-            next: (res) => {
-              console.log(`100 puntos asignados al nuevo usuario ${email}:`, res);
-            },
-            error: (err) => {
-              console.error(`Error asignando puntos al usuario ${email}:`, err);
-            },
-          });
-        }
-      },
-      error: (err) => {
-        console.error(`Error obteniendo usuario por email ${email}:`, err);
-      },
-    });
-  }
 
   /**
    * Dispara evento sign_up para analytics

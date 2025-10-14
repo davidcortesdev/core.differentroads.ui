@@ -21,7 +21,6 @@ import localeEs from '@angular/common/locales/es';
 // ========================================
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { CookieService } from 'ngx-cookie-service';
 import { GoogleMapsModule } from '@angular/google-maps';
 import { Amplify } from 'aws-amplify';
 import awsconfig from '../../src/aws-exports';
@@ -209,7 +208,6 @@ import { BasicPageComponent } from './pages/basic-page/basic-page.component';
 import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
 import { TitleAndQuillComponent } from './pages/basic-page/components/title-and-quill/title-and-quill.component';
 import { ContentPageComponent } from './pages/content-page/content-page.component';
-import { PaymentsComponent } from './pages/payments/payments.component';
 import { ReviewSurveyComponent } from './pages/review-survey/review-survey.component';
 import { ImageUploadModalComponent } from './pages/review-survey/image-upload-modal/image-upload-modal.component';
 
@@ -219,16 +217,12 @@ import { ImageUploadModalComponent } from './pages/review-survey/image-upload-mo
 import { BannerComponent } from './shared/components/banner/banner.component';
 import { ToursComponent } from './shared/components/tours/tours.component';
 import { ReviewsComponent } from './shared/components/reviews/reviews.component';
-import { BudgetDialogComponent } from './shared/components/budget-dialog/budget-dialog.component';
 import { LoginModalComponent } from './shared/components/login-modal/login-modal.component';
 import { UploadButtonComponent } from './shared/components/upload-button/upload-button.component';
 import { HotelCardComponent } from './shared/components/hotel-card/hotel-card.component';
 import { ActivitiesCarouselComponent } from './shared/components/activities-carousel/activities-carousel.component';
 import { ActivityCardComponent } from './shared/components/activity-card/activity-card.component';
-import { TourMapComponent } from './shared/components/tour-map/tour-map.component';
 import { TourMapV2Component } from './shared/components/tour-map-v2/tour-map-v2.component';
-import { CookiesComponent } from './shared/components/cookies/cookies.component';
-import { CookiesConsentComponent } from './shared/components/cookies-consent/cookies-consent.component';
 import { ImageCropperComponent } from './shared/components/image-cropper/image-cropper.component';
 import { SeoLinksComponent } from './shared/components/seo-links/seo-links.component';
 
@@ -383,7 +377,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     BasicPagePreviewComponent,
     TitleAndQuillComponent,
     ContentPageComponent,
-    PaymentsComponent,
     ReviewSurveyComponent,
     ImageUploadModalComponent,
 
@@ -393,16 +386,12 @@ export function HttpLoaderFactory(http: HttpClient) {
     BannerComponent,
     ToursComponent,
     ReviewsComponent,
-    BudgetDialogComponent,
     LoginModalComponent,
     UploadButtonComponent,
     HotelCardComponent,
     ActivitiesCarouselComponent,
     ActivityCardComponent,
-    TourMapComponent,
     TourMapV2Component,
-    CookiesComponent,
-    CookiesConsentComponent,
     ImageCropperComponent,
     SeoLinksComponent,
 
@@ -534,7 +523,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     // SERVICES
     // ========================================
     MessageService,
-    CookieService,
     DatePipe,
     RetailerService,
   ],

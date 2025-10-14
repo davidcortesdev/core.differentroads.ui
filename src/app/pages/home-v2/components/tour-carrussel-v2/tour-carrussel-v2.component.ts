@@ -8,7 +8,6 @@ import {
   CMSTourService,
   ICMSTourResponse,
 } from '../../../../core/services/cms/cms-tour.service';
-import { Tour } from '../../../../core/models/tours/tour.model';
 import {
   catchError,
   Observable,
@@ -28,7 +27,6 @@ import { TourDataV2 } from '../../../../shared/components/tour-card-v2/tour-card
 // Importar los servicios de configuración del home
 import {
   HomeSectionConfigurationService,
-  IHomeSectionConfigurationResponse,
 } from '../../../../core/services/home/home-section-configuration.service';
 import {
   HomeSectionTourFilterService,

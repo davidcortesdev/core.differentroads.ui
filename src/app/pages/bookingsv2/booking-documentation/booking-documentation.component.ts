@@ -1,6 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { TableRowCollapseEvent, TableRowExpandEvent } from 'primeng/table';
-import { BookingsService } from '../../../core/services/bookings.service';
 import { Document } from '../../../core/models/document/document.model';
 import { NotificationLog } from '../../../core/models/notification-log/notification-log.model';
 import { BookingNote } from '../../../core/models/bookings/booking-note.model';
@@ -38,7 +37,7 @@ export class BookingDocumentationV2Component implements OnInit {
   // Add property for type options
   typeOptions: SelectItem[] = [];
 
-  constructor(private bookingsService: BookingsService) {}
+  constructor() {}
 
   ngOnInit(): void {
     if (this.bookingId) {
@@ -49,16 +48,8 @@ export class BookingDocumentationV2Component implements OnInit {
   }
 
   loadDocuments(): void {
-    this.bookingsService.getBookingDocumentation(this.bookingId).subscribe({
-      next: (docs) => {
-        this.documents = docs;
-        this.groupDocumentsByType();
-        console.log('Documents loaded:', this.documents);
-      },
-      error: (err) => {
-        console.error('Error loading documents:', err);
-      },
-    });
+    //TODO: Implementar leyendo los datos de mysql
+
   }
 
   groupDocumentsByType(): void {
@@ -116,32 +107,13 @@ export class BookingDocumentationV2Component implements OnInit {
 
   // Add method to load notification logs
   loadNotificationLogs(): void {
-    this.bookingsService.getBookingNotificationLog(this.bookingId).subscribe({
-      next: (logs) => {
-        this.notificationLogs = logs;
-        console.log('Notification logs loaded:', this.notificationLogs);
-      },
-      error: (err) => {
-        console.error('Error loading notification logs:', err);
-      },
-    });
+    //TODO: Implementar leyendo los datos de mysql
   }
 
   // Add method to load notes
   loadNotes(): void {
-    this.bookingsService.getBookingNotes(this.bookingId).subscribe({
-      next: (notes) => {
-        this.notes = notes;
-        // Generar opciones únicas para filtro de estado
-        this.typeOptions = Array.from(new Set(notes.map((n) => n.type))).map(
-          (t) => ({ label: t, value: t })
-        );
-        console.log('Notes loaded:', this.notes);
-      },
-      error: (err) => {
-        console.error('Error loading notes:', err);
-      },
-    });
+    //TODO: Implementar leyendo los datos de mysql
+      
   }
 
   /** devuelve severidad válida para p-tag */

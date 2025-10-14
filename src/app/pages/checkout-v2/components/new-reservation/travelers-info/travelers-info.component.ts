@@ -6,8 +6,7 @@ import {
   OnChanges,
   SimpleChanges,
 } from '@angular/core';
-import { forkJoin, of } from 'rxjs';
-import { map, switchMap, catchError } from 'rxjs/operators';
+import { forkJoin } from 'rxjs';
 
 // Importaciones de servicios
 import {
@@ -24,11 +23,9 @@ import {
 } from '../../../../../core/services/reservation/reservation-traveler-accommodation.service';
 import {
   DepartureAccommodationTypeService,
-  IDepartureAccommodationTypeResponse,
 } from '../../../../../core/services/departure/departure-accommodation-type.service';
 import {
   DepartureAccommodationService,
-  IDepartureAccommodationResponse,
 } from '../../../../../core/services/departure/departure-accommodation.service';
 
 // Interfaces

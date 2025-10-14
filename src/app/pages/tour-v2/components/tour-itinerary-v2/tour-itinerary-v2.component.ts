@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
-import { forkJoin, of, Observable } from 'rxjs';
+import { of } from 'rxjs';
 import { catchError, map, finalize, switchMap } from 'rxjs/operators';
 import { ActivityHighlight } from '../../../../shared/components/activity-card/activity-card.component';
 

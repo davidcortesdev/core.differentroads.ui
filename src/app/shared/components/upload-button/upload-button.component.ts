@@ -6,7 +6,6 @@ import {
 import { MessageService } from 'primeng/api';
 import { catchError, finalize, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
-import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-upload-button',

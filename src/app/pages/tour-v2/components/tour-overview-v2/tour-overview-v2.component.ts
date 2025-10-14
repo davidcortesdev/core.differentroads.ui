@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TourNetService } from '../../../../core/services/tourNet.service';
-import { CMSTourService, ICMSTourResponse } from '../../../../core/services/cms/cms-tour.service';
+import { CMSTourService } from '../../../../core/services/cms/cms-tour.service';
 import { CMSCreatorService } from '../../../../core/services/cms/cms-creator.service';
 import { TourLocationService, ITourLocationResponse } from '../../../../core/services/tour/tour-location.service';
 import { LocationNetService, Location } from '../../../../core/services/locations/locationNet.service';

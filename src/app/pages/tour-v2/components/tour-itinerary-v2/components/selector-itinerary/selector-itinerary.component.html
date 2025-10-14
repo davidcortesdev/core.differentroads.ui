@@ -41,13 +41,13 @@
       placeholder="Elige fecha"
       [disabled]="dateOptions.length === 0"
     >
-      <ng-template pTemplate="selectedItem">
+      <ng-template #selectedItem>
         <div class="date-option-item">
           <span>{{ selectedDeparture ? (selectedDeparture.departureDate | date : "dd/MM/yyyy") : "Elige fecha" }}</span>
         </div>
       </ng-template>
            
-      <ng-template let-option pTemplate="item">
+      <ng-template let-option #item>
         <div class="date-option-item">
           <span class="date-option-item-text">
             {{ option.departureDate | date : "dd/MM/yyyy" }}

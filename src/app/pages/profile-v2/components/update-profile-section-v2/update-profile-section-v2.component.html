@@ -40,7 +40,7 @@
             (onRemove)="onRemoveImage()"
             styleClass="custom-upload"
           >
-            <ng-template pTemplate="content" let-files>
+            <ng-template #content let-files>
               <div class="upload-list" *ngIf="uploadedFiles.length">
                 <div class="file-item" *ngFor="let file of uploadedFiles">
                   <span class="file-name">{{ file.name }}</span>

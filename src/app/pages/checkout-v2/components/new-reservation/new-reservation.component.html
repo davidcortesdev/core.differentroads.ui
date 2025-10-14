@@ -90,7 +90,7 @@
 
     <!-- Recuadro coral con información bancaria -->
     <p-panel styleClass="bank-panel" *ngIf="paymentType === 'Transfer'">
-      <ng-template pTemplate="header">
+      <ng-template #header>
         <div class="pan-hdr">
           Realiza el pago a través de una de estas entidades bancarias y adjunta
           el justificante
@@ -217,7 +217,7 @@
   <!-- ✅ NUEVA SECCIÓN: Información de reserva de vuelos Amadeus -->
   <div class="amadeus-flight-section" *ngIf="hasAmadeusFlight || flightBookingResponse">
     <p-panel styleClass="amadeus-panel">
-      <ng-template pTemplate="header">
+      <ng-template #header>
         <div class="amadeus-header">
           <i class="pi pi-plane" style="margin-right: 0.5rem;"></i>
           Reserva de Vuelos Amadeus

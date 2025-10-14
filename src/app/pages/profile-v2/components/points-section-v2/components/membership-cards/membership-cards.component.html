@@ -5,14 +5,14 @@
       [styleClass]="getCardClass(card)"
       [style]="{ width: '100%', height: '440px' }"
     >
-      <ng-template pTemplate="header">
+      <ng-template #header>
         <div class="card-image-container">
           <div class="card-image-wrapper">
             <img [alt]="card.title" [src]="card.image" class="card-image" loading="lazy"/>
           </div>
         </div>
       </ng-template>
-      <ng-template pTemplate="title">
+      <ng-template #title>
         <div class="card-header">
           <span class="card-type">{{ card.type }}</span>
           <h2 class="card-title">{{ card.title }}</h2>
@@ -21,7 +21,7 @@
       <div class="card-content">
         <div [innerHTML]="card.benefits" class="formated-content"></div>
       </div>
-      <ng-template pTemplate="footer">
+      <ng-template #footer>
         <div class="card-status">
           <span [class.unlocked]="card.unlocked">
             {{ getRemainingTripsText(card) }}

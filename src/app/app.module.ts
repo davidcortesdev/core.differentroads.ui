@@ -219,7 +219,6 @@ import { ImageUploadModalComponent } from './pages/review-survey/image-upload-mo
 import { BannerComponent } from './shared/components/banner/banner.component';
 import { ToursComponent } from './shared/components/tours/tours.component';
 import { ReviewsComponent } from './shared/components/reviews/reviews.component';
-import { BudgetDialogComponent } from './shared/components/budget-dialog/budget-dialog.component';
 import { LoginModalComponent } from './shared/components/login-modal/login-modal.component';
 import { UploadButtonComponent } from './shared/components/upload-button/upload-button.component';
 import { HotelCardComponent } from './shared/components/hotel-card/hotel-card.component';
@@ -392,7 +391,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     BannerComponent,
     ToursComponent,
     ReviewsComponent,
-    BudgetDialogComponent,
     LoginModalComponent,
     UploadButtonComponent,
     HotelCardComponent,

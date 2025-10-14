@@ -29,7 +29,6 @@ import {
   FlightSearchService,
   IPriceChangeInfo,
 } from '../../../../core/services/flight-search.service';
-import { PointsService } from '../../../../core/services/points.service';
 
 // Simplified interfaces for points redemption
 export interface PointsRedemptionConfig {
@@ -194,7 +193,6 @@ export class PaymentManagementComponent
     private readonly messageService: MessageService,
     private readonly currencyService: CurrencyService,
     private readonly flightSearchService: FlightSearchService,
-    private readonly pointsService: PointsService
   ) {}
 
   ngOnInit(): void {

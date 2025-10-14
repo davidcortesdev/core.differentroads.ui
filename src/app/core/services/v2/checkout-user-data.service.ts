@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { Observable, throwError, of, forkJoin } from 'rxjs';
 import { catchError, switchMap, map } from 'rxjs/operators';
 import { AuthenticateService } from '../auth-service.service';
-import { UsersService } from '../users.service';
 import { UsersNetService } from '../usersNet.service';
 import { PersonalInfo } from '../../models/v2/profile-v2.model';
 import { PersonalInfoV2Service } from './personal-info-v2.service';
@@ -14,7 +13,6 @@ export class CheckoutUserDataService {
 
   constructor(
     private authenticateService: AuthenticateService,
-    private usersService: UsersService,
     private usersNetService: UsersNetService,
     private personalInfoService: PersonalInfoV2Service
   ) { }

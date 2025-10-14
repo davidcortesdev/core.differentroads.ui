@@ -83,23 +83,11 @@
 
   <!-- Tours list section -->
   <div class="tours-list">
-    <p-dataView #dv [value]="displayedTours" [layout]="layout">
-      <ng-template let-tours #grid>
-        <div class="grid">
-          <div
-            *ngFor="let tour of displayedTours; let i = index"
-            class="col-12 sm:col-6 lg:col-3"
-          >
-            <app-tour-card
-              [tourData]="tour"
-              [showScalapayPrice]="true"
-              [itemListId]="getListId()"
-              [itemListName]="getListName()"
-              [index]="i + 1"
-            ></app-tour-card>
-          </div>
-        </div>
-      </ng-template>
-    </p-dataView>
+    <app-tour-grid-v2
+      [tourIds]="[1, 2, 3]"
+      [itemListId]="getListId()"
+      [itemListName]="getListName()"
+      [showScalapayPrice]="true"
+    ></app-tour-grid-v2>
   </div>
 </div>

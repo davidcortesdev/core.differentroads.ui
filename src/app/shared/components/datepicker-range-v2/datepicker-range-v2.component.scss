@@ -42,18 +42,13 @@
                 width: auto;
                 min-width: 600px;
                 
-                .p-datepicker-panel {
-                    padding: 1rem;
-                }
+                 .p-datepicker-panel { padding: 1rem; }
                 
-                .p-datepicker-calendar-container {
-                    display: flex;
-                    gap: 1rem;
-                    
-                    .p-datepicker-calendar {
-                        flex: 1;
-                    }
-                }
+                 .p-datepicker-calendar-container {
+                     display: flex;
+                     gap: 1rem;
+                     .p-datepicker-calendar { flex: 1; }
+                 }
                 
                 .p-datepicker-buttonbar {
                     padding: 1rem;
@@ -69,20 +64,20 @@
                         
                         .preset-btn {
                             padding: 0.5rem 1rem;
-                            border: 1px solid var(--border-color, #ced4da);
-                            background-color: var(--surface-card);
+                            border: 1px solid #ced4da;
+                             background: var(--surface-card);
                             color: var(--text-color);
                             border-radius: 10px;
                             cursor: pointer;
                             font-size: 0.875rem;
                             font-weight: 500;
-                            transition: all 0.2s ease;
+                             transition: all 0.2s;
                             display: inline-flex;
                             align-items: center;
                             gap: 0.25rem;
                             
                             &:hover {
-                                background-color: var(--primary-color);
+                                background: var(--primary-color);
                                 color: var(--primary-color-text);
                                 border-color: var(--primary-color);
                                 transform: translateY(-1px);
@@ -100,7 +95,7 @@
                             }
                             
                             &.today-btn {
-                                background-color: var(--primary-color);
+                                background: var(--primary-color);
                                 color: var(--primary-color-text);
                                 border-color: var(--primary-color);
                                 
@@ -110,17 +105,15 @@
                             }
                             
                             &.clear-btn {
-                                background-color: var(--red-500);
+                                background: var(--red-500);
                                 color: white;
                                 border-color: var(--red-500);
                                 
                                 &:hover {
-                                    background-color: var(--red-600);
+                                    background: var(--red-600);
                                 }
                                 
-                                i {
-                                    font-size: 0.75rem;
-                                }
+                                 i { font-size: 0.75rem; }
                             }
                         }
                     }
@@ -128,7 +121,7 @@
                     .date-range-info {
                         text-align: center;
                         padding-top: 0.5rem;
-                        border-top: 1px solid var(--border-color, #ced4da);
+                        border-top: 1px solid #ced4da;
                         margin-top: 0.5rem;
                         
                         .range-duration {
@@ -138,14 +131,8 @@
                             color: var(--primary-color);
                             font-size: 0.875rem;
                             
-                            i {
-                                font-size: 1rem;
-                            }
-                            
-                            strong {
-                                font-size: 1.25rem;
-                                font-weight: 600;
-                            }
+                             i { font-size: 1rem; }
+                             strong { font-size: 1.25rem; font-weight: 600; }
 
                             .flexibility-badge {
                                 background: var(--primary-color);
@@ -162,7 +149,7 @@
                 .p-datepicker-calendar {
                     .p-datepicker-date {
                         position: relative;
-                        transition: all 0.2s ease;
+                             transition: all 0.2s;
                         
                         &.p-datepicker-date-range-start,
                         &.p-datepicker-date-range-end {
@@ -192,7 +179,7 @@
                             text-decoration: line-through;
                             
                             &:hover {
-                                background-color: transparent !important;
+                                background: transparent !important;
                             }
                         }
                         
@@ -218,21 +205,19 @@
                         font-size: 0.875rem;
                     }
                     
-                    thead th {
-                        padding: 0.5rem;
-                    }
+                     thead th { padding: 0.5rem; }
                 }
                 
                 .p-datepicker-header {
                     padding: 0.5rem;
-                    border-bottom: 1px solid var(--border-color, #ced4da);
+                        border-bottom: 1px solid #ced4da;
                     
                     .p-datepicker-prev,
                     .p-datepicker-next {
                         width: 2rem;
                         height: 2rem;
                         border-radius: 50%;
-                        transition: all 0.2s ease;
+                             transition: all 0.2s;
                         
                         &:hover {
                             background-color: var(--primary-color);
@@ -252,10 +237,10 @@
                             color: var(--text-color);
                             padding: 0.25rem 0.5rem;
                             border-radius: 10px;
-                            transition: all 0.2s ease;
+                             transition: all 0.2s;
                             
                             &:hover {
-                                background-color: var(--primary-color-light);
+                                background: var(--primary-color-light);
                                 color: var(--primary-color);
                             }
                         }
@@ -264,8 +249,7 @@
             }
         }
 
-        // Responsive para tablets
-        @media screen and (max-width: 992px) and (min-width: 481px) {
+         @media (max-width: 992px) {
             .range-datepicker {
                 .p-datepicker {
                     min-width: 100%;
@@ -308,8 +292,7 @@
             }
         }
 
-        // Responsive para móviles
-        @media screen and (max-width: 480px) {
+         @media (max-width: 480px) {
             .range-datepicker {
                 .p-datepicker {
                     min-width: 100%;

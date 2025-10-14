@@ -32,7 +32,7 @@
   </p-panel>
   
   <p-panel class="datos-panel">
-    <ng-template pTemplate="header">
+    <ng-template #header>
       <div class="panel-header">
         <span>Datos personales</span>
         <button class="edit-button" (click)="toggleEditMode()">
@@ -131,7 +131,7 @@
 
 <!-- Sección de Cambio de Contraseña (siempre visible) -->
 <p-panel class="password-panel">
-  <ng-template pTemplate="header">
+  <ng-template #header>
     <div class="panel-header">
       <span>Cambiar contraseña</span>
     </div>

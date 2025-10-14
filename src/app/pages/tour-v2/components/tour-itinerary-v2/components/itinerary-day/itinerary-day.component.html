@@ -45,7 +45,7 @@
         styleClass="customized-timeline"
       >
         <!-- Template del marcador - EXACTAMENTE IGUAL -->
-        <ng-template pTemplate="marker" let-event>
+        <ng-template #marker let-event>
           <div class="timeline-marker-wrapper">
             <span
               class="pi"
@@ -59,14 +59,14 @@
         </ng-template>
         
         <!-- Template del contenido - MANTIENE P-PANEL ORIGINAL -->
-        <ng-template pTemplate="content" let-event>
+        <ng-template #content let-event>
           <p-panel
             [toggleable]="true"
             styleClass="custom-panel"
             [(collapsed)]="event.collapsed"
             #itineraryPanel
           >
-            <ng-template pTemplate="header">
+            <ng-template #header>
               <div
                 class="panel-header-content"
                 [attr.data-index]="itineraryItems.indexOf(event)"
@@ -79,7 +79,7 @@
               </div>
             </ng-template>
             
-            <ng-template pTemplate="content">
+            <ng-template #content>
               <div class="itinerary-content">
                 
                 <!-- Contenedor de texto -->

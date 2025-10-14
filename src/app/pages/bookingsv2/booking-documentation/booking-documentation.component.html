@@ -96,7 +96,7 @@
         responsiveLayout="scroll"
         dataKey="_id"
       >
-        <ng-template pTemplate="header">
+        <ng-template #header>
           <tr>
             <th>Tipo</th>
             <!--             <th>Destinatario</th> -->
@@ -106,7 +106,7 @@
           </tr>
         </ng-template>
 
-        <ng-template pTemplate="body" let-log>
+        <ng-template #body let-log>
           <tr>
             <td>{{ log.name }}</td>
             <!-- <td>{{ log.recipient }}</td> -->
@@ -116,7 +116,7 @@
           </tr>
         </ng-template>
 
-        <ng-template pTemplate="emptymessage">
+        <ng-template #emptymessage>
           <tr>
             <td colspan="4">No hay notificaciones registradas.</td>
           </tr>
@@ -141,7 +141,7 @@
         styleClass="p-datatable-gridlines p-datatable-sm"
         [globalFilterFields]="['message', 'category', 'type']"
       >
-        <ng-template pTemplate="header">
+        <ng-template #header>
           <tr>
             <th pSortableColumn="createdAt">
               Fecha de creación <p-sortIcon field="createdAt"></p-sortIcon>
@@ -161,7 +161,7 @@
           </tr>
         </ng-template>
 
-        <ng-template pTemplate="body" let-note>
+        <ng-template #body let-note>
           <tr>
             <td>{{ note.createdAt | date : "short" }}</td>
             <td pTooltip="{{ note.message }}" tooltipPosition="top">
@@ -176,7 +176,7 @@
           </tr>
         </ng-template>
 
-        <ng-template pTemplate="emptymessage">
+        <ng-template #emptymessage>
           <tr>
             <td colspan="4">No hay notas registradas.</td>
           </tr>

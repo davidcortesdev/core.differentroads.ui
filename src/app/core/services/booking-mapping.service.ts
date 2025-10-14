@@ -7,7 +7,7 @@ import {
   TravelerInfo,
 } from '../models/reservation/reservation.model';
 import { BookingTraveler } from '../models/bookings/booking-traveler.model';
-import { Payment, PaymentStatus } from '../models/bookings/payment.model';
+import { Payment } from '../models/bookings/payment.model';
 
 @Injectable()
 export class BookingMappingService {

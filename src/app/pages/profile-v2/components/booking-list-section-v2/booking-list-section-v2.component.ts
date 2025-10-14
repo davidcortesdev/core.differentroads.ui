@@ -6,7 +6,6 @@ import { BookingsServiceV2 } from '../../../../core/services/v2/bookings-v2.serv
 import { ReservationResponse } from '../../../../core/models/v2/profile-v2.model';
 import { ToursServiceV2, TourV2 } from '../../../../core/services/v2/tours-v2.service';
 import { DataMappingV2Service } from '../../../../core/services/v2/data-mapping-v2.service';
-import { NotificationsServiceV2 } from '../../../../core/services/v2/notifications-v2.service';
 import { CMSTourService, ICMSTourResponse } from '../../../../core/services/cms/cms-tour.service';
 import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
 
@@ -33,7 +32,6 @@ export class BookingListSectionV2Component implements OnInit {
     private bookingsService: BookingsServiceV2,
     private toursService: ToursServiceV2,
     private dataMappingService: DataMappingV2Service,
-    private notificationsService: NotificationsServiceV2,
     private cmsTourService: CMSTourService
   ) {}
 
@@ -268,30 +266,7 @@ export class BookingListSectionV2Component implements OnInit {
 
   sendItem(item: BookingItem) {
     this.notificationLoading[item.id] = true;
-    
-    this.notificationsService.sendDocument({
-      userId: this.userId,
-      documentType: 'voucher',
-      documentId: item.id,
-      recipientEmail: 'user@example.com' // TODO: Obtener email real del usuario
-    }).subscribe({
-      next: (response) => {
-        this.notificationLoading[item.id] = false;
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Éxito',
-          detail: response.message,
-        });
-      },
-      error: (error) => {
-        this.notificationLoading[item.id] = false;
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Error al enviar el documento',
-        });
-      }
-    });
+    //TODO: Implementar leyendo los datos de mysql
   }
 
 

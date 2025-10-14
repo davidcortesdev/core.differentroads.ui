@@ -11,7 +11,6 @@ export const environment = {
   redsysMerchantTerminal: '1',
 
   googleMapsApiKey: 'AIzaSyB6sxlxeTVlRllpGPyDPbKmaZPQJsb8YAs',
-  notificationsApiUrl: 'https://api.differentroads.co/dev/v3/notification',
 
   cloudinary: {
     uploadPreset: 'dr_uploads',

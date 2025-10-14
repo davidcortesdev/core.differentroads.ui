@@ -57,6 +57,41 @@
         padding: var(--space-lg);
         width: var(--container-w);
         max-width: var(--container-max);
+        
+        .validation-error {
+            background-color: rgba(239, 68, 68, 0.95);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            animation: slideDown 0.3s ease-out;
+            
+            i {
+                font-size: 1.25rem;
+                flex-shrink: 0;
+            }
+            
+            span {
+                flex: 1;
+            }
+            
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        }
     }
 
     &-form {
@@ -230,6 +265,7 @@
                         flex-wrap: wrap;
                         gap: 0.5rem;
                         justify-content: center;
+                        margin-bottom: 0.5rem;
                         
                         .preset-btn {
                             padding: 0.5rem 1rem;
@@ -239,12 +275,28 @@
                             border-radius: var(--radius);
                             cursor: pointer;
                             font-size: 0.875rem;
+                            font-weight: 500;
                             transition: all 0.2s ease;
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 0.25rem;
                             
                             &:hover {
                                 background-color: var(--primary-color);
                                 color: var(--primary-color-text);
                                 border-color: var(--primary-color);
+                                transform: translateY(-1px);
+                                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                            }
+                            
+                            &:active {
+                                transform: translateY(0);
+                                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+                            }
+                            
+                            &:focus-visible {
+                                outline: 2px solid var(--primary-color);
+                                outline-offset: 2px;
                             }
                             
                             &.today-btn {
@@ -265,6 +317,34 @@
                                 &:hover {
                                     background-color: var(--red-600);
                                 }
+                                
+                                i {
+                                    font-size: 0.75rem;
+                                }
+                            }
+                        }
+                    }
+                    
+                    .date-range-info {
+                        text-align: center;
+                        padding-top: 0.5rem;
+                        border-top: 1px solid var(--border-color);
+                        margin-top: 0.5rem;
+                        
+                        .range-duration {
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            color: var(--primary-color);
+                            font-size: 0.875rem;
+                            
+                            i {
+                                font-size: 1rem;
+                            }
+                            
+                            strong {
+                                font-size: 1.25rem;
+                                font-weight: 600;
                             }
                         }
                     }
@@ -273,15 +353,109 @@
                 // Estilos para fechas seleccionadas en rango
                 .p-datepicker-calendar {
                     .p-datepicker-date {
+                        position: relative;
+                        transition: all 0.2s ease;
+                        
                         &.p-datepicker-date-range-start,
                         &.p-datepicker-date-range-end {
-                            background-color: var(--datepicker-range-selected);
-                            color: var(--primary-color-text);
+                            background-color: var(--datepicker-range-selected) !important;
+                            color: var(--primary-color-text) !important;
+                            font-weight: 600;
+                            border-radius: 50%;
+                            
+                            &:hover {
+                                background-color: var(--primary-color-hover) !important;
+                            }
                         }
                         
                         &.p-datepicker-date-range {
-                            background-color: var(--datepicker-range-hover);
+                            background-color: var(--datepicker-range-hover) !important;
+                            color: var(--text-color) !important;
+                            border-radius: 0;
+                            
+                            &:hover {
+                                background-color: var(--primary-color-light) !important;
+                            }
+                        }
+                        
+                        // Estilos para fechas deshabilitadas (pasadas)
+                        &.p-disabled {
+                            opacity: 0.4;
+                            cursor: not-allowed;
+                            text-decoration: line-through;
+                            
+                            &:hover {
+                                background-color: transparent !important;
+                            }
+                        }
+                        
+                        // Hover en fechas disponibles
+                        &:not(.p-disabled):hover {
+                            background-color: var(--primary-color-light);
+                            border-radius: 50%;
+                        }
+                        
+                        // Fecha de hoy destacada
+                        &.p-datepicker-today {
+                            border: 2px solid var(--primary-color);
+                            font-weight: 600;
+                            
+                            &:not(.p-datepicker-date-range-start):not(.p-datepicker-date-range-end) {
+                                background-color: transparent;
+                                color: var(--primary-color);
+                            }
+                        }
+                    }
+                    
+                    // Estilos para los nombres de los días de la semana
+                    .p-datepicker-weekday {
+                        font-weight: 600;
+                        color: var(--text-color-secondary);
+                        font-size: 0.875rem;
+                    }
+                    
+                    // Estilos para el header del mes
+                    thead th {
+                        padding: 0.5rem;
+                    }
+                }
+                
+                // Estilos para los botones de navegación del calendario
+                .p-datepicker-header {
+                    padding: 0.5rem;
+                    border-bottom: 1px solid var(--border-color);
+                    
+                    .p-datepicker-prev,
+                    .p-datepicker-next {
+                        width: 2rem;
+                        height: 2rem;
+                        border-radius: 50%;
+                        transition: all 0.2s ease;
+                        
+                        &:hover {
+                            background-color: var(--primary-color);
                             color: var(--primary-color-text);
+                        }
+                        
+                        &:focus-visible {
+                            outline: 2px solid var(--primary-color);
+                            outline-offset: 2px;
+                        }
+                    }
+                    
+                    .p-datepicker-title {
+                        .p-datepicker-month,
+                        .p-datepicker-year {
+                            font-weight: 600;
+                            color: var(--text-color);
+                            padding: 0.25rem 0.5rem;
+                            border-radius: var(--radius);
+                            transition: all 0.2s ease;
+                            
+                            &:hover {
+                                background-color: var(--primary-color-light);
+                                color: var(--primary-color);
+                            }
                         }
                     }
                 }
@@ -430,6 +604,7 @@
                     .p-datepicker {
                         min-width: 100%;
                         width: 100%;
+                        max-width: 90vw;
                         
                         .p-datepicker-calendar-container {
                             flex-direction: column;
@@ -437,10 +612,29 @@
                         }
                         
                         .p-datepicker-buttonbar {
+                            padding: 0.75rem;
+                            
                             .date-presets {
+                                gap: 0.375rem;
+                                
                                 .preset-btn {
-                                    flex: 1;
-                                    min-width: 80px;
+                                    flex: 1 1 auto;
+                                    min-width: 75px;
+                                    padding: 0.375rem 0.75rem;
+                                    font-size: 0.8125rem;
+                                }
+                            }
+                            
+                            .date-range-info {
+                                padding-top: 0.375rem;
+                                margin-top: 0.375rem;
+                                
+                                .range-duration {
+                                    font-size: 0.8125rem;
+                                    
+                                    strong {
+                                        font-size: 1.125rem;
+                                    }
                                 }
                             }
                         }
@@ -538,6 +732,11 @@
                 .p-datepicker {
                     min-width: 100%;
                     width: 100%;
+                    max-width: 95vw;
+                    
+                    .p-datepicker-panel {
+                        padding: 0.5rem;
+                    }
                     
                     .p-datepicker-calendar-container {
                         flex-direction: column;
@@ -545,10 +744,69 @@
                     }
                     
                     .p-datepicker-buttonbar {
+                        padding: 0.5rem;
+                        
                         .date-presets {
+                            gap: 0.25rem;
+                            
                             .preset-btn {
                                 font-size: 0.75rem;
-                                padding: 0.375rem 0.75rem;
+                                padding: 0.25rem 0.5rem;
+                                flex: 1 1 auto;
+                                min-width: 60px;
+                                
+                                i {
+                                    font-size: 0.625rem;
+                                }
+                            }
+                        }
+                        
+                        .date-range-info {
+                            padding-top: 0.25rem;
+                            margin-top: 0.25rem;
+                            
+                            .range-duration {
+                                font-size: 0.75rem;
+                                gap: 0.25rem;
+                                
+                                i {
+                                    font-size: 0.875rem;
+                                }
+                                
+                                strong {
+                                    font-size: 1rem;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Reducir tamaño de celdas de fechas en móvil
+                    .p-datepicker-calendar {
+                        .p-datepicker-date {
+                            padding: 0.375rem;
+                            font-size: 0.875rem;
+                        }
+                        
+                        .p-datepicker-weekday {
+                            padding: 0.375rem;
+                            font-size: 0.75rem;
+                        }
+                    }
+                    
+                    .p-datepicker-header {
+                        padding: 0.375rem;
+                        
+                        .p-datepicker-prev,
+                        .p-datepicker-next {
+                            width: 1.75rem;
+                            height: 1.75rem;
+                        }
+                        
+                        .p-datepicker-title {
+                            .p-datepicker-month,
+                            .p-datepicker-year {
+                                font-size: 0.875rem;
+                                padding: 0.125rem 0.375rem;
                             }
                         }
                     }

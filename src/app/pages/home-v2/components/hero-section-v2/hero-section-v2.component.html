@@ -24,6 +24,12 @@
   />
   
   <div class="hero-search">
+    <!-- Mensaje de validación de fechas -->
+    <div class="validation-error" *ngIf="showDateValidationError">
+      <i class="pi pi-exclamation-triangle"></i>
+      <span>{{ dateValidationMessage }}</span>
+    </div>
+    
     <div class="hero-form">
       <div class="input-lg">
         <p-iftalabel>
@@ -51,38 +57,59 @@
             [minDate]="minDate"
             [maxDate]="maxDate"
             [readonlyInput]="true"
+            [firstDayOfWeek]="1"
+            dateFormat="dd/mm/yy"
             id="rangeDateInput"
             fluid="true"
-            placeholder="Seleccionar fechas"
+            placeholder="Seleccionar fechas de viaje"
             appendTo="body"
             styleClass="range-datepicker"
             (ngModelChange)="onDateSelect($event)"
+            [ariaLabel]="'Selector de fechas de viaje'"
+            [ariaLabelledBy]="'rangeDateInput'"
+            [tabindex]="0"
+            [showOtherMonths]="true"
+            [selectOtherMonths]="false"
+            [showWeek]="false"
+            [touchUI]="false"
           >
             <!-- Template personalizado para la barra de botones -->
             <ng-template pTemplate="footer">
-              <div class="date-presets">
+              <div class="date-presets" role="group" aria-label="Presets de fechas rápidas">
                 <button 
                   type="button" 
                   class="preset-btn" 
                   *ngFor="let preset of datePresets"
                   (click)="applyDatePreset(preset.value)"
+                  [attr.aria-label]="'Seleccionar rango de ' + preset.label"
+                  [title]="'Aplicar preset de ' + preset.label"
                 >
                   {{ preset.label }}
                 </button>
                 <button 
                   type="button" 
                   class="preset-btn today-btn"
-                  (click)="applyPresetFromToday(0)"
+                  (click)="applyPresetFromToday(7)"
+                  aria-label="Seleccionar desde hoy por 7 días"
+                  title="Viaje desde hoy por 7 días"
                 >
-                  Hoy
+                  Desde Hoy
                 </button>
                 <button 
                   type="button" 
                   class="preset-btn clear-btn"
                   (click)="clearDates()"
+                  aria-label="Limpiar fechas seleccionadas"
+                  title="Borrar fechas"
                 >
-                  Limpiar
+                  <i class="pi pi-times"></i> Limpiar
                 </button>
+              </div>
+              <div class="date-range-info" *ngIf="getDaysInRange() > 0">
+                <small class="range-duration">
+                  <i class="pi pi-calendar"></i>
+                  <strong>{{ getDaysInRange() }}</strong> {{ getDaysInRange() === 1 ? 'día' : 'días' }} de viaje
+                </small>
               </div>
             </ng-template>
           </p-datepicker>

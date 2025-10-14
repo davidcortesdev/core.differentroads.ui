@@ -95,11 +95,9 @@ import { AppComponent } from './app.component';
 // ========================================
 // LAYOUT COMPONENTS
 // ========================================
-import { HeaderComponent } from './layout/header/header.component';
 import { HeaderV2Component } from './layout/header-v2/header-v2.component';
 import { FooterComponent } from './layout/footer/footer.component';
 import { Footer2Component } from './layout/footer/components/footer2/footer2.component';
-import { SecondFooterSectionComponent } from './layout/footer/components/second-footer-section/second-footer-section.component';
 import { MainComponent } from './layout/main/main.component';
 import { StandaloneComponent } from './layout/standalone/standalone.component';
 
@@ -278,11 +276,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     // ========================================
     // LAYOUT COMPONENTS
     // ========================================
-    HeaderComponent,
     HeaderV2Component,
     FooterComponent,
     Footer2Component,
-    SecondFooterSectionComponent,
     MainComponent,
     StandaloneComponent,
 

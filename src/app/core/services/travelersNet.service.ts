@@ -22,8 +22,7 @@ export interface TravelerFilter {
   providedIn: 'root'
 })
 export class TravelersNetService {
-  private apiUrl = environment.travelersApiUrl || environment.apiUrl + '/api/travelers';
-  private tourApiUrl = environment.apiUrl + '/api/tours';
+  private apiUrl = environment.travelersApiUrl + '/api/travelers';
 
   constructor(private http: HttpClient) { }
 
@@ -142,12 +141,4 @@ export class TravelersNetService {
     return this.http.post<Traveler>(`${this.apiUrl}/travelers`, traveler);
   }
 
-  /**
-   * Obtiene el ID del tour a partir del ID del período
-   * @param periodId ID del período
-   * @returns Observable con el ID del tour
-   */
-  getTourIdByPeriodId(periodId: string): Observable<number> {
-    return this.http.get<number>(`${this.tourApiUrl}/byPeriod/${periodId}`);
-  }
 }

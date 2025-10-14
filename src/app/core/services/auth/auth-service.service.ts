@@ -5,15 +5,15 @@ import {
   CognitoUserPool,
 } from 'amazon-cognito-identity-js';
 import { Router } from '@angular/router';
-import { environment } from '../../../environments/environment';
-import { HubspotService } from './hubspot.service';
+import { environment } from '../../../../environments/environment';
+import { HubspotService } from '../integrations/hubspot.service';
 import { Subject, Observable, BehaviorSubject } from 'rxjs';
 import {
   signInWithRedirect,
   getCurrentUser,
   fetchUserAttributes,
 } from 'aws-amplify/auth';
-import { AnalyticsService } from './analytics.service'; // new import
+import { AnalyticsService } from '../analytics/analytics.service'; // new import
 
 @Injectable({
   providedIn: 'root',
@@ -57,13 +57,13 @@ export class AuthenticateService {
           const attributes = await fetchUserAttributes();
           if (attributes && attributes.email) {
             this.currentUserEmail.next(attributes.email);
-            
+
             // Obtener el Cognito ID del usuario actual
             const user = await getCurrentUser();
             if (user) {
               this.currentUserCognitoId.next(user.userId);
             }
-            
+
           }
         } catch (error) {
           console.error('Error fetching user attributes:', error);
@@ -166,7 +166,7 @@ export class AuthenticateService {
           } else if (error.code === 'UserNotConfirmedException') {
             errorMessage =
               'El usuario no ha sido confirmado. Por favor, verifica tu correo electrónico';
-              this.resendConfirmationCode(emailaddress);
+            this.resendConfirmationCode(emailaddress);
           } else if (error.code === 'TooManyFailedAttemptsException') {
             errorMessage =
               'Demasiados intentos fallidos. Intenta de nuevo más tarde';
@@ -385,13 +385,13 @@ export class AuthenticateService {
   navigateAfterUserVerification(): void {
     // Check if redirectUrl exists in sessionStorage
     const redirectUrl = sessionStorage.getItem('redirectUrl');
-    
+
     if (redirectUrl) {
       // Parse the URL to separate path and query parameters
       const urlParts = redirectUrl.split('?');
       const path = urlParts[0];
       const queryParams = urlParts[1] ? this.parseQueryString(urlParts[1]) : {};
-      
+
       // Navigate to the path with query parameters
       this.router.navigate([path], { queryParams });
       // Clear the redirectUrl from sessionStorage
@@ -406,14 +406,14 @@ export class AuthenticateService {
   private parseQueryString(queryString: string): { [key: string]: string } {
     const params: { [key: string]: string } = {};
     const pairs = queryString.split('&');
-    
+
     for (const pair of pairs) {
       const [key, value] = pair.split('=');
       if (key && value) {
         params[decodeURIComponent(key)] = decodeURIComponent(value);
       }
     }
-    
+
     return params;
   }
 
@@ -435,7 +435,7 @@ export class AuthenticateService {
           this.isAuthenticated.next(true);
           this.currentUserEmail.next(attributes.email);
           this.currentUserCognitoId.next(user.userId);
-          
+
           this.userAttributesChanged.next();
         }
       }

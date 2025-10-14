@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { LocationAirportNetService } from './locations/locationAirportNet.service';
-import { LocationNetService } from './locations/locationNet.service';
+import { LocationAirportNetService } from './locationAirportNet.service';
+import { LocationNetService } from './locationNet.service';
+
 
 export interface AirportCityInfo {
   cityName: string;

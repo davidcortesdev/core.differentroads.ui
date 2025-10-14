@@ -15,10 +15,10 @@ import {
   TripTypeService,
   ITripTypeResponse,
 } from '../../../../core/services/trip-type/trip-type.service';
-import { CountriesService } from '../../../../core/services/countries.service';
+import { CountriesService } from '../../../../core/services/locations/countries.service';
 import { Country } from '../../../../shared/models/country.model';
-import { AnalyticsService } from '../../../../core/services/analytics.service';
-import { AuthenticateService } from '../../../../core/services/auth-service.service';
+import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
+import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 
 interface TripQueryParams {
   destination?: string;

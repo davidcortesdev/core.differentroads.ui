@@ -8,7 +8,7 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { Subscription, catchError, finalize, of, tap } from 'rxjs';
-import { ReviewsService } from '../../../../core/services/reviews.service';
+import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
 import { TourService } from '../../../../core/services/tour/tour.service';
 import { TourDataV2 } from '../tour-card-v2.model';
 
@@ -75,7 +75,7 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
                 .pipe(
                   tap((rating) => {
                     if (rating) {
-                      this.averageRating = Math.ceil(rating * 10) / 10;
+                      this.averageRating = Math.ceil(rating.averageRating * 10) / 10;
                     }
                   }),
                   catchError((error) => {

@@ -22,11 +22,11 @@ import { IFormData, NewRedsysService } from '../../services/newRedsys.service';
 import { ReservationStatusService } from '../../../../core/services/reservation/reservation-status.service';
 import { ReservationService } from '../../../../core/services/reservation/reservation.service';
 import { MessageService } from 'primeng/api';
-import { CurrencyService } from '../../../../core/services/currency.service';
+import { CurrencyService } from '../../../../core/services/masterdata/currency.service';
 import {
   FlightSearchService,
   IPriceChangeInfo,
-} from '../../../../core/services/flight-search.service';
+} from '../../../../core/services/flight/flight-search.service';
 
 // Simplified interfaces for points redemption
 export interface PointsRedemptionConfig {

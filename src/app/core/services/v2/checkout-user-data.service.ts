@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
-import { AuthenticateService } from '../auth-service.service';
-import { UsersNetService } from '../usersNet.service';
+
 import { PersonalInfo } from '../../models/v2/profile-v2.model';
 import { PersonalInfoV2Service } from './personal-info-v2.service';
+import { AuthenticateService } from '../auth/auth-service.service';
+import { UsersNetService } from '../users/usersNet.service';
 
 @Injectable({
   providedIn: 'root'

@@ -11,7 +11,7 @@ import {
 import { Subject, forkJoin, of } from 'rxjs';
 import { takeUntil, switchMap, catchError } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
-import { AnalyticsService } from '../../../../core/services/analytics.service';
+import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 
 // Importar la interface del selector
 import { SelectedDepartureEvent } from '../tour-itinerary-v2/components/selector-itinerary/selector-itinerary.component';

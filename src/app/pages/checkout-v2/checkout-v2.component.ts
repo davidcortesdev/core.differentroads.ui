@@ -36,9 +36,9 @@ import { InsuranceComponent } from './components/insurance/insurance.component';
 import { InfoTravelersComponent } from './components/info-travelers/info-travelers.component';
 import { forkJoin } from 'rxjs';
 import { PaymentsNetService } from './services/paymentsNet.service';
-import { AuthenticateService } from '../../core/services/auth-service.service';
-import { UsersNetService } from '../../core/services/usersNet.service';
-import { AnalyticsService } from '../../core/services/analytics.service';
+import { AuthenticateService } from '../../core/services/auth/auth-service.service';
+import { UsersNetService } from '../../core/services/users/usersNet.service';
+import { AnalyticsService } from '../../core/services/analytics/analytics.service';
 import { IFlightPackDTO } from './services/flightsNet.service';
 import {
   ReservationTravelerService,

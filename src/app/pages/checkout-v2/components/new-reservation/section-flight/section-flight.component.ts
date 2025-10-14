@@ -17,7 +17,7 @@ import {
 } from '../../../../../core/services/flight/reservationflight.service';
 import {
   IFlightResponse,
-} from '../../../../../core/services/flight-search.service';
+} from '../../../../../core/services/flight/flight-search.service';
 
 // Interfaces para el template
 interface FormattedFlight {

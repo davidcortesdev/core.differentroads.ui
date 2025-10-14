@@ -21,7 +21,7 @@ import {
   ReservationTravelerActivityPackService,
   IReservationTravelerActivityPackResponse,
 } from '../../../../../core/services/reservation/reservation-traveler-activity-pack.service';
-import { FlightSearchService } from '../../../../../core/services/flight-search.service';
+import { FlightSearchService } from '../../../../../core/services/flight/flight-search.service';
 
 @Component({
   selector: 'app-default-flights',

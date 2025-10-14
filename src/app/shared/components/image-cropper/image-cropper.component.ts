@@ -1,5 +1,5 @@
 import { Component, ViewChild, ElementRef, Input, Output, EventEmitter } from '@angular/core';
-import { CloudinaryService } from '../../../core/services/cloudinary.service';
+import { CloudinaryService } from '../../../core/services/media/cloudinary.service';
 import { CldImage } from '../../models/cloudinary/cld-image.model';
 import Cropper from 'cropperjs';
 

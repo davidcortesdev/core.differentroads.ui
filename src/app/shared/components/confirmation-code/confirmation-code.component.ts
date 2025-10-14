@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { AuthenticateService } from '../../../core/services/auth-service.service';
+import { AuthenticateService } from '../../../core/services/auth/auth-service.service';
 
 @Component({
   selector: 'app-confirmation-code',

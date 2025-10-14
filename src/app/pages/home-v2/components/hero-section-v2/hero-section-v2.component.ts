@@ -20,8 +20,8 @@ import {
 import { CountriesService } from '../../../../core/services/countries.service';
 import { Country } from '../../../../shared/models/country.model';
 import { AnalyticsService } from '../../../../core/services/analytics.service';
-import { TourSearchService } from '../../../../core/services/tour/tour-search.service';
 import { AuthenticateService } from '../../../../core/services/auth-service.service';
+import { TourService } from '../../../../core/services/tour/tour.service';
 
 interface TripQueryParams {
   destination?: string;
@@ -85,8 +85,8 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     private tripTypeService: TripTypeService,
     private countriesService: CountriesService,
     private analyticsService: AnalyticsService,
-    private tourSearchService: TourSearchService,
-    private authService: AuthenticateService
+    private authService: AuthenticateService,
+    private tourService: TourService
   ) {}
 
   ngOnInit(): void {
@@ -103,7 +103,7 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
         filter((q) => !!q && q.trim().length >= 2),
         switchMap((q) => {
           const normalized = q.normalize('NFD').replace(/\p{Diacritic}/gu, '');
-          return this.tourSearchService
+          return this.tourService
             .autocomplete({ searchText: normalized, maxResults: 8 })
             .pipe(catchError(() => of([])));
         })
@@ -319,12 +319,12 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
       const startDate = queryParams.departureDate ? new Date(queryParams.departureDate).toISOString() : undefined;
       const endDate = queryParams.returnDate ? new Date(queryParams.returnDate).toISOString() : undefined;
       const tripTypeId = this.selectedTripType ? Number(this.selectedTripType) : undefined;
-      this.tourSearchService.search({
+      this.tourService.search({
         searchText: this.destinationInput || undefined,
         startDate,
         endDate,
         tripTypeId,
-        flexDays: this.dateFlexibility || undefined,
+        //flexDays: this.dateFlexibility || undefined,
       }).subscribe({ next: () => {}, error: () => {} });
     } catch {}
   }

@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { AnalyticsService, EcommerceItem } from '../../../core/services/analytics.service';
 import { AuthenticateService } from '../../../core/services/auth-service.service';
 import { Title } from '@angular/platform-browser';
+import { TourSearchParams } from '../../../core/services/tour/tour.service';
 
 interface ITour {
   imageUrl: string;
@@ -153,7 +154,7 @@ export class ToursComponent implements OnInit, OnChanges {
       startDate: this.minDate ? this.minDate.toISOString() : undefined,
       endDate: this.maxDate ? this.maxDate.toISOString() : undefined,
       tripTypeId: this.tourType ? Number(this.tourType) : undefined,
-      flexDays: this.flexDays,
+      //flexDays: this.flexDays,
     };
 
 //TODO: pendiente de desarrollar proximamente

@@ -91,6 +91,85 @@ export interface ITourResponse {
 // Alias para compatibilidad con código existente
 export type Tour = ITourResponse;
 
+/**
+ * DTO para ciudades de salida de vuelos.
+ */
+export interface DepartureCityDto {
+  name: string | null;
+  activityId: number;
+  activityPackId: number;
+}
+
+/**
+ * DTO para precios finales de tours.
+ */
+export interface FinalPriceDTO {
+  departureId: number;
+  ageGroupId: number;
+  total: number;
+}
+
+/**
+ * Coincidencia de búsqueda.
+ */
+export interface SearchMatch {
+  type: string | null;
+  score: number;
+  description: string | null;
+}
+
+/**
+ * Resultado simple de búsqueda de tours (solo IDs).
+ */
+export interface TourSearchSimpleResult {
+  tourId: number;
+}
+
+/**
+ * Resultado detallado de búsqueda de tours (con score y coincidencias).
+ */
+export interface TourSearchDetailedResult {
+  tourId: number;
+  score: number;
+  matches: SearchMatch[] | null;
+}
+
+/**
+ * Resultado de búsqueda unificada (tours, ubicaciones, tags).
+ */
+export interface UnifiedSearchResult {
+  type: string | null;
+  id: number;
+  name: string | null;
+  description: string | null;
+  score: number;
+  additionalData: { [key: string]: any } | null;
+}
+
+/**
+ * Parámetros para búsqueda de tours.
+ */
+export interface TourSearchParams {
+  searchText?: string;
+  startDate?: string;
+  endDate?: string;
+  tripTypeId?: number;
+  fuzzyThreshold?: number;
+  tagScoreThreshold?: number;
+}
+
+/**
+ * Parámetros para autocompletado de búsqueda.
+ */
+export interface TourAutocompleteParams {
+  searchText?: string;
+  minScoreThreshold?: number;
+  maxResults?: number;
+  includeTours?: boolean;
+  includeLocations?: boolean;
+  includeTags?: boolean;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -308,6 +387,184 @@ export class TourService {
    */
   getWithActiveFlightConsolidator(filterByVisible: boolean = true): Observable<ITourResponse[]> {
     return this.getAll({ isConsolidadorVuelosActive: true, filterByVisible });
+  }
+
+  /**
+   * Actualiza el precio mínimo (MinPrice) de un tour basándose en el BasePeriodPrice mínimo de todos sus períodos.
+   * @param id ID del tour a actualizar.
+   * @returns `true` si la actualización fue exitosa.
+   */
+  updateMinPrice(id: number): Observable<boolean> {
+    return this.http.put<boolean>(`${this.API_URL}/${id}/update-min-price`, {}).pipe(
+      catchError((error) => {
+        console.error(`Error al actualizar precio mínimo del tour con ID ${id}:`, error);
+        return of(false);
+      })
+    );
+  }
+
+  /**
+   * Obtiene la lista de ciudades de salida disponibles para el tour (de los vuelos).
+   * @param id ID del tour.
+   * @param tourVisibility Si es true, solo devuelve ciudades de tours visibles.
+   * @returns Observable de array de ciudades de salida.
+   */
+  getDepartureCities(id: number, tourVisibility?: boolean): Observable<DepartureCityDto[]> {
+    let params = new HttpParams();
+    
+    if (tourVisibility !== undefined) {
+      params = params.set('tourVisibility', tourVisibility.toString());
+    }
+
+    return this.http.get<DepartureCityDto[]>(`${this.API_URL}/${id}/departure-cities`, { params }).pipe(
+      catchError((error) => {
+        console.error(`Error al obtener ciudades de salida del tour con ID ${id}:`, error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Obtiene la lista de IDs de grupos de edad (agegroups) disponibles para el tour.
+   * @param id ID del tour.
+   * @param tourVisibility Si es true, solo devuelve agegroups de tours visibles.
+   * @returns Observable de array de IDs de agegroups.
+   */
+  getAgeGroups(id: number, tourVisibility?: boolean): Observable<number[]> {
+    let params = new HttpParams();
+    
+    if (tourVisibility !== undefined) {
+      params = params.set('tourVisibility', tourVisibility.toString());
+    }
+
+    return this.http.get<number[]>(`${this.API_URL}/${id}/agegroups`, { params }).pipe(
+      catchError((error) => {
+        console.error(`Error al obtener agegroups del tour con ID ${id}:`, error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Obtiene los precios finales de un tour para una actividad específica.
+   * @param activityId ID de la actividad.
+   * @returns Observable de array de precios finales.
+   */
+  getDeparturesPrices(activityId: number): Observable<FinalPriceDTO[]> {
+    return this.http.get<FinalPriceDTO[]>(`${this.API_URL}/${activityId}/departures-prices`).pipe(
+      catchError((error) => {
+        console.error(`Error al obtener precios de salidas para la actividad con ID ${activityId}:`, error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Realiza una búsqueda avanzada de tours devolviendo solo IDs.
+   * Incluye búsqueda fuzzy en títulos, slugs y subtítulos, y búsqueda en APIs externas.
+   * @param params Parámetros de búsqueda.
+   * @returns Observable de array de resultados simples de búsqueda (solo IDs de tours).
+   */
+  search(params: TourSearchParams): Observable<TourSearchSimpleResult[]> {
+    let httpParams = new HttpParams();
+
+    if (params.searchText) {
+      httpParams = httpParams.set('searchText', params.searchText);
+    }
+    if (params.startDate) {
+      httpParams = httpParams.set('startDate', params.startDate);
+    }
+    if (params.endDate) {
+      httpParams = httpParams.set('endDate', params.endDate);
+    }
+    if (params.tripTypeId !== undefined) {
+      httpParams = httpParams.set('tripTypeId', params.tripTypeId.toString());
+    }
+    if (params.fuzzyThreshold !== undefined) {
+      httpParams = httpParams.set('fuzzyThreshold', params.fuzzyThreshold.toString());
+    }
+    if (params.tagScoreThreshold !== undefined) {
+      httpParams = httpParams.set('tagScoreThreshold', params.tagScoreThreshold.toString());
+    }
+
+    return this.http.get<TourSearchSimpleResult[]>(`${this.API_URL}/search`, { params: httpParams }).pipe(
+      catchError((error) => {
+        console.error('Error al buscar tours:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Realiza una búsqueda avanzada de tours con score y detalle de coincidencias.
+   * Incluye búsqueda fuzzy en títulos, slugs y subtítulos, y búsqueda en APIs externas.
+   * @param params Parámetros de búsqueda.
+   * @returns Observable de array de resultados detallados de búsqueda (con score y coincidencias).
+   */
+  searchWithScore(params: TourSearchParams): Observable<TourSearchDetailedResult[]> {
+    let httpParams = new HttpParams();
+
+    if (params.searchText) {
+      httpParams = httpParams.set('searchText', params.searchText);
+    }
+    if (params.startDate) {
+      httpParams = httpParams.set('startDate', params.startDate);
+    }
+    if (params.endDate) {
+      httpParams = httpParams.set('endDate', params.endDate);
+    }
+    if (params.tripTypeId !== undefined) {
+      httpParams = httpParams.set('tripTypeId', params.tripTypeId.toString());
+    }
+    if (params.fuzzyThreshold !== undefined) {
+      httpParams = httpParams.set('fuzzyThreshold', params.fuzzyThreshold.toString());
+    }
+    if (params.tagScoreThreshold !== undefined) {
+      httpParams = httpParams.set('tagScoreThreshold', params.tagScoreThreshold.toString());
+    }
+
+    return this.http.get<TourSearchDetailedResult[]>(`${this.API_URL}/search-with-score`, { params: httpParams }).pipe(
+      catchError((error) => {
+        console.error('Error al buscar tours con score:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Realiza una búsqueda unificada en tours, ubicaciones y tags ordenada por score.
+   * Ideal para autocompletado y sugerencias en tiempo real.
+   * @param params Parámetros de autocompletado.
+   * @returns Observable de array de resultados unificados de búsqueda.
+   */
+  autocomplete(params: TourAutocompleteParams): Observable<UnifiedSearchResult[]> {
+    let httpParams = new HttpParams();
+
+    if (params.searchText) {
+      httpParams = httpParams.set('searchText', params.searchText);
+    }
+    if (params.minScoreThreshold !== undefined) {
+      httpParams = httpParams.set('minScoreThreshold', params.minScoreThreshold.toString());
+    }
+    if (params.maxResults !== undefined) {
+      httpParams = httpParams.set('maxResults', params.maxResults.toString());
+    }
+    if (params.includeTours !== undefined) {
+      httpParams = httpParams.set('includeTours', params.includeTours.toString());
+    }
+    if (params.includeLocations !== undefined) {
+      httpParams = httpParams.set('includeLocations', params.includeLocations.toString());
+    }
+    if (params.includeTags !== undefined) {
+      httpParams = httpParams.set('includeTags', params.includeTags.toString());
+    }
+
+    return this.http.get<UnifiedSearchResult[]>(`${this.API_URL}/autocomplete`, { params: httpParams }).pipe(
+      catchError((error) => {
+        console.error('Error al realizar autocompletado:', error);
+        return of([]);
+      })
+    );
   }
 
   // ====== MÉTODOS DE COMPATIBILIDAD CON CÓDIGO EXISTENTE ======

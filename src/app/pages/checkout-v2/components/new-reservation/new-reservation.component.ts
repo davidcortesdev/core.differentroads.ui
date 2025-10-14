@@ -24,9 +24,9 @@ import {
 import {
   FlightSearchService,
   IAmadeusFlightCreateOrderResponse,
-} from '../../../../core/services/flight-search.service';
-import { AnalyticsService } from '../../../../core/services/analytics.service';
-import { AuthenticateService } from '../../../../core/services/auth-service.service';
+} from '../../../../core/services/flight/flight-search.service';
+import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
+import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { Title } from '@angular/platform-browser';
 
 // Interfaz para información bancaria

@@ -5,7 +5,7 @@ import {
   IFlightPackDTO,
   IFlightDetailDTO,
 } from '../../../services/flightsNet.service';
-import { FlightSearchService, IFlightDetailDTO as IFlightSearchFlightDetailDTO } from '../../../../../core/services/flight-search.service';
+import { FlightSearchService, IFlightDetailDTO as IFlightSearchFlightDetailDTO } from '../../../../../core/services/flight/flight-search.service';
 import { FlightsNetService } from '../../../services/flightsNet.service';
 
 @Component({

@@ -14,9 +14,9 @@ import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { AuthenticateService } from '../../../../core/services/auth-service.service';
-import { UsersNetService } from '../../../../core/services/usersNet.service';
-import { AnalyticsService } from '../../../../core/services/analytics.service';
+import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
+import { UsersNetService } from '../../../../core/services/users/usersNet.service';
+import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 import { ConfirmationCodeComponent } from '../../../../shared/components/confirmation-code/confirmation-code.component';
 import { UserCreate } from '../../../../core/models/users/user.model';
 @Component({

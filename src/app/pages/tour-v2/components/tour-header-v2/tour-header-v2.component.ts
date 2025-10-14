@@ -47,9 +47,9 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ActivityHighlight } from '../../../../shared/components/activity-card/activity-card.component';
 import { environment } from '../../../../../environments/environment';
-import { AuthenticateService } from '../../../../core/services/auth-service.service';
-import { UsersNetService } from '../../../../core/services/usersNet.service';
-import { AnalyticsService } from '../../../../core/services/analytics.service';
+import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
+import { UsersNetService } from '../../../../core/services/users/usersNet.service';
+import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 
 // ✅ INTERFACES para tipado fuerte
 interface PassengersData {

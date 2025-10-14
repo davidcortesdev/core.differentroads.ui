@@ -17,7 +17,7 @@ import {
   Tour,
   TourService,
 } from '../../../../core/services/tour/tour.service';
-import { AuthenticateService } from '../../../../core/services/auth-service.service';
+import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { IFlightPackDTO } from '../../services/flightsNet.service';
 import { DefaultFlightsComponent } from './default-flights/default-flights.component';
 import { FlightSelectionState } from '../../types/flight-selection-state';

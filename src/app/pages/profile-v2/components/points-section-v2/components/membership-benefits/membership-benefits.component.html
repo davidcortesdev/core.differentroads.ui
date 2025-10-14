@@ -1,6 +1,6 @@
 <div class="benefits-section" *ngIf="pointsSummary">
   <p-panel styleClass="benefits-panel">
-    <ng-template pTemplate="header">
+    <ng-template #header>
       <div class="benefits-header">
         <h3 class="benefits-title">
           <i [class]="getCategoryIcon(currentCategory)"></i>

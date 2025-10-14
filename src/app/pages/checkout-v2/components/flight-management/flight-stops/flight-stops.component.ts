@@ -6,8 +6,8 @@ import {
 import {
   FlightSearchService,
   IFlightDetailDTO as IFlightSearchFlightDetailDTO,
-} from '../../../../../core/services/flight-search.service';
-import { AirportCityCacheService } from '../../../../../core/services/airport-city-cache.service';
+} from '../../../../../core/services/flight/flight-search.service';
+import { AirportCityCacheService } from '../../../../../core/services/locations/airport-city-cache.service';
 
 @Component({
   selector: 'app-flight-stops',

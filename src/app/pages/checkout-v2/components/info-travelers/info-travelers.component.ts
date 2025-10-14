@@ -66,7 +66,7 @@ import { ReservationService } from '../../../../core/services/reservation/reserv
 import {
   ReservationStatusService,
 } from '../../../../core/services/reservation/reservation-status.service';
-import { FlightSearchService, IBookingRequirements } from '../../../../core/services/flight-search.service';
+import { FlightSearchService, IBookingRequirements } from '../../../../core/services/flight/flight-search.service';
 import { IUserResponse } from '../../../../core/models/users/user.model';
 import { PersonalInfo } from '../../../../core/models/v2/profile-v2.model';
 import { CheckoutUserDataService } from '../../../../core/services/v2/checkout-user-data.service';

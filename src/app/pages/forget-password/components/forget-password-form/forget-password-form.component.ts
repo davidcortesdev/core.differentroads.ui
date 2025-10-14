@@ -11,7 +11,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { PasswordModule } from 'primeng/password';
 import { CommonModule } from '@angular/common'; // Import CommonModule
-import { AuthenticateService } from '../../../../core/services/auth-service.service';
+import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 
 @Component({
   selector: 'app-forget-password-form',

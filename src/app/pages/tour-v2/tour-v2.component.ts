@@ -4,8 +4,8 @@ import { TourService, Tour } from '../../core/services/tour/tour.service';
 import { catchError, of } from 'rxjs';
 import { SelectedDepartureEvent } from './components/tour-itinerary-v2/components/selector-itinerary/selector-itinerary.component';
 import { ActivityHighlight } from '../../shared/components/activity-card/activity-card.component';
-import { AnalyticsService } from '../../core/services/analytics.service';
-import { AuthenticateService } from '../../core/services/auth-service.service';
+import { AnalyticsService } from '../../core/services/analytics/analytics.service';
+import { AuthenticateService } from '../../core/services/auth/auth-service.service';
 import { Title } from '@angular/platform-browser';
 
 // ✅ INTERFACES para tipado fuerte

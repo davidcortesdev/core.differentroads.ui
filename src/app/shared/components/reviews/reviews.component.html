@@ -9,7 +9,7 @@
       [responsiveOptions]="responsiveOptions"
       [showNavigators]="false"
       [showIndicators]="false">
-      <ng-template let-item pTemplate="item">
+      <ng-template let-item #item>
         <div class="padre">
           <p-card class="review-card skeleton-card">
             <ng-template #title>
@@ -44,7 +44,7 @@
     [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
     [showNavigators]="true"
     [showIndicators]="true">
-    <ng-template let-review pTemplate="item">
+    <ng-template let-review #item>
       <div class="padre">
         <p-card class="review-card">
           <ng-template #title>

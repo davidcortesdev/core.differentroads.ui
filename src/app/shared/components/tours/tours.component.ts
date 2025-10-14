@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { AnalyticsService, EcommerceItem } from '../../../core/services/analytics.service';
-import { AuthenticateService } from '../../../core/services/auth-service.service';
+import { AnalyticsService, EcommerceItem } from '../../../core/services/analytics/analytics.service';
+import { AuthenticateService } from '../../../core/services/auth/auth-service.service';
 import { Title } from '@angular/platform-browser';
 import { TourSearchParams, TourService } from '../../../core/services/tour/tour.service';
 

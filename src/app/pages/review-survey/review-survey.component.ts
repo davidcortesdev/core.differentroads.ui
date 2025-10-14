@@ -115,8 +115,9 @@ export class ReviewSurveyComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
-      if (params['id']) {
-        this.periodExternalId = params['id'];
+      console.log('params', params);
+      if (params['periodTkId']) {
+        this.periodExternalId = params['periodTkId'];
         this.loadTripInfoFromPeriod(this.periodExternalId);
         this.getTourIdFromExternalId(this.periodExternalId);
         this.loadRawDepartureInfo(this.periodExternalId);
@@ -183,30 +184,7 @@ export class ReviewSurveyComponent implements OnInit {
   }
 
   loadTripInfoFromPeriod(externalId: string): void {
-    this.periodsService.getPeriodNameAndDepartureDate(externalId).subscribe({
-      next: (info) => {
-        this.tripInfo = {
-          title: info.tourName || 'Título no disponible',
-          date: info.dayOne || 'Fecha no disponible',
-          tourId: info.tourId ? Number(info.tourId) : undefined,
-        };
-
-        if (
-          this.tripInfo.date &&
-          this.tripInfo.date !== 'Fecha no disponible'
-        ) {
-          this.formattedDate =
-            this.datePipe.transform(this.tripInfo.date, 'dd/MM/yyyy') ||
-            'dd/MM/yyyy';
-        } else {
-          this.formattedDate = 'dd/MM/yyyy';
-        }
-      },
-      error: (error: any) => {
-        this.setErrorTripInfo();
-        this.formattedDate = 'dd/MM/yyyy';
-      },
-    });
+   
   }
 
   getTourIdFromExternalId(externalId: string): void {

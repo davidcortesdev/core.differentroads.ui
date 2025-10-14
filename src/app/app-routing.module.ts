@@ -147,7 +147,7 @@ const routes: Routes = [
       // ========================================
       // FEATURES ROUTES
       // ========================================
-      { path: 'reviews/:id', component: ReviewSurveyComponent },
+      { path: 'reviews/:periodTkId', component: ReviewSurveyComponent },
 
       // ========================================
       // 404 - NOT FOUND (debe ser siempre la última)

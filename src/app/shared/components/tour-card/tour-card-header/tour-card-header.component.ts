@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { Subscription, catchError, finalize, of, tap } from 'rxjs';
 import { ReviewsService } from '../../../../core/services/reviews.service';
-import { TourNetService } from '../../../../core/services/tourNet.service';
+import { TourService } from '../../../../core/services/tour/tour.service';
 
 interface TourHeaderData {
   imageUrl: string;
@@ -39,7 +39,7 @@ export class TourCardHeaderComponent implements OnInit, OnDestroy {
 
   constructor(
     private reviewsService: ReviewsService,
-    private tourNetService: TourNetService
+    private tourService: TourService
   ) {}
 
   ngOnInit() {
@@ -62,7 +62,7 @@ export class TourCardHeaderComponent implements OnInit, OnDestroy {
     this.isLoadingRating = true;
     
     this.subscriptions.add(
-      this.tourNetService.getTourIdByTKId(tkId).pipe(
+      this.tourService.getTourIdByTKId(tkId).pipe(
         tap(id => {
           if (!id) {
             //console.warn('No se encontró ID para el tour con tkId:', tkId);

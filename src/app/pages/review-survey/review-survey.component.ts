@@ -5,8 +5,8 @@ import { ReviewStatusService } from '../../core/services/reviews/review-status.s
 import { PeriodsService } from '../../core/services/periods.service';
 import { DatePipe } from '@angular/common';
 import {
-  TourNetService,
-} from '../../core/services/tourNet.service';
+  TourService,
+} from '../../core/services/tour/tour.service';
 import {
   TravelersNetService,
   Traveler,
@@ -102,7 +102,7 @@ export class ReviewSurveyComponent implements OnInit {
     private reviewStatusService: ReviewStatusService,
     private reviewImageService: ReviewImageService,
     private datePipe: DatePipe,
-    private tourNetService: TourNetService,
+    private tourService: TourService,
     private travelersNetService: TravelersNetService,
     private cloudinaryService: CloudinaryService,
     private departureService: DepartureService
@@ -185,34 +185,7 @@ export class ReviewSurveyComponent implements OnInit {
   }
 
   getTourIdFromExternalId(externalId: string): void {
-    this.tourNetService.getTourIdByPeriodId(externalId).subscribe({
-      next: (tourId) => {
-        if (tourId) {
-          this.tripInfo.tourId = Number(tourId);
-          const tkid = externalId;
-          this.periodsService.getRawDepartureByTkId(tkid).subscribe({
-            next: (salidas) => {
-              if (!Array.isArray(salidas) || salidas.length === 0) {
-                return;
-              }
-              const salida = salidas[0];
-              const departureId = salida.id || salida.departureId;
-              if (departureId) {
-                this.tripInfo.departureId = departureId;
-              }
-            },
-            error: (error) => {
-              // Error silencioso para no afectar la UX
-            },
-          });
-        } else {
-          this.setErrorTripInfo();
-        }
-      },
-      error: (error) => {
-        this.setErrorTripInfo();
-      },
-    });
+    //TODO: Revisar si hace falta obtener la información de la departure
   }
 
   private setErrorTripInfo(): void {

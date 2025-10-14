@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { CAROUSEL_CONFIG } from '../../constants/carousel.constants';
 import { ReviewsService } from '../../../core/services/reviews.service';
-import { TourNetService } from '../../../core/services/tourNet.service';
+import { TourService } from '../../../core/services/tour/tour.service';
 import { TravelersNetService } from '../../../core/services/travelersNet.service';
 import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
@@ -75,7 +75,7 @@ export class ReviewsComponent implements OnInit {
 
   constructor(
     private reviewsService: ReviewsService,
-    private tourNetService: TourNetService,
+    private tourService: TourService,
     private travelersNetService: TravelersNetService,
     private cdr: ChangeDetectorRef,
     private router: Router
@@ -204,7 +204,7 @@ export class ReviewsComponent implements OnInit {
 
     // Crear observables para obtener información de cada tour
     const tourObservables = uniqueTourIds.map(tourId => 
-      this.tourNetService.getTourById(tourId)
+      this.tourService.getTourById(tourId)
     );
 
     forkJoin(tourObservables).subscribe({

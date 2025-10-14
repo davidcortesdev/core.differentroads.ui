@@ -13,7 +13,7 @@ import {
   IReservationResponse,
   IReservationSummaryResponse,
 } from '../../core/services/reservation/reservation.service';
-import { TourNetService } from '../../core/services/tour/tourNet.service';
+import { TourService } from '../../core/services/tour/tour.service';
 import { CMSTourService } from '../../core/services/cms/cms-tour.service';
 import { RetailerService } from '../../core/services/retailer/retailer.service';
 import { DepartureService } from '../../core/services/departure/departure.service';
@@ -205,7 +205,7 @@ export class Bookingsv2Component implements OnInit {
     private messageService: MessageService,
     private fb: FormBuilder,
     private reservationService: ReservationService,
-    private tourNetService: TourNetService,
+    private tourService: TourService,
     private cmsTourService: CMSTourService,
     @Inject(RetailerService) private retailerService: RetailerService,
     private departureService: DepartureService,
@@ -361,7 +361,7 @@ export class Bookingsv2Component implements OnInit {
 
   // Método para cargar datos del tour
   private loadTourData(tourId: number): void {
-    this.tourNetService.getTourById(tourId).subscribe({
+    this.tourService.getTourById(tourId).subscribe({
       next: (tour) => {
         // Actualizar el título del tour
         this.bookingData.title = tour.name || `Tour ${tourId}`;

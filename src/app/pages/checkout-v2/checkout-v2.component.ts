@@ -9,7 +9,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { MenuItem, MessageService } from 'primeng/api';
 import { HttpClient } from '@angular/common/http';
-import { TourNetService } from '../../core/services/tourNet.service';
+import { TourService } from '../../core/services/tour/tour.service';
 import { ReservationService } from '../../core/services/reservation/reservation.service';
 import {
   DepartureService,
@@ -181,7 +181,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     private titleService: Title,
     private route: ActivatedRoute,
     private router: Router,
-    private tourNetService: TourNetService,
+    private tourService: TourService,
     private reservationService: ReservationService,
     private departureService: DepartureService,
     private departurePriceSupplementService: DeparturePriceSupplementService,
@@ -774,7 +774,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   // Método para cargar datos del tour y obtener el itinerario
   private loadTourData(tourId: number): void {
-    this.tourNetService.getTourById(tourId).subscribe({
+    this.tourService.getTourById(tourId).subscribe({
       next: (tour) => {
         this.tourName = tour.name || '';
         this.tourSlug = tour.slug || '';

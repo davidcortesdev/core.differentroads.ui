@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TourNetService, Tour } from '../../core/services/tourNet.service';
+import { TourService, Tour } from '../../core/services/tour/tour.service';
 import { catchError, of } from 'rxjs';
 import { SelectedDepartureEvent } from './components/tour-itinerary-v2/components/selector-itinerary/selector-itinerary.component';
 import { ActivityHighlight } from '../../shared/components/activity-card/activity-card.component';
@@ -113,7 +113,7 @@ export class TourV2Component implements OnInit {
     private titleService: Title,
     private route: ActivatedRoute,
     private router: Router,
-    private tourNetService: TourNetService,
+    private tourService: TourService,
     private analyticsService: AnalyticsService,
     private authService: AuthenticateService,
   ) {}
@@ -147,7 +147,7 @@ export class TourV2Component implements OnInit {
     this.loading = true;
     this.error = null;
 
-    this.tourNetService
+    this.tourService
       .getTours({ slug, filterByVisible: !this.preview })
       .pipe(
         catchError((err: Error) => {

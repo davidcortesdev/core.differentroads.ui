@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { Subscription, catchError, finalize, of, tap } from 'rxjs';
 import { ReviewsService } from '../../../../core/services/reviews.service';
-import { TourNetService } from '../../../../core/services/tourNet.service';
+import { TourService } from '../../../../core/services/tour/tour.service';
 import { TourDataV2 } from '../tour-card-v2.model';
 
 @Component({
@@ -29,7 +29,7 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
 
   constructor(
     private reviewsService: ReviewsService,
-    private tourNetService: TourNetService
+    private tourService: TourService
   ) {}
 
   ngOnInit() {
@@ -52,7 +52,7 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
     this.isLoadingRating = true;
 
     this.subscriptions.add(
-      this.tourNetService
+      this.tourService
         .getTourIdByTKId(tkId)
         .pipe(
           tap((id) => {

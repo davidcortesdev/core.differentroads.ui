@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ReviewsService } from '../../core/services/reviews/reviews.service';
 import { ReviewStatusService } from '../../core/services/reviews/review-status.service';
-import { PeriodsService } from '../../core/services/periods.service';
+import { PeriodsService } from '../../core/services/departure/periods.service';
 import { DatePipe } from '@angular/common';
 import {
   TourService,
@@ -10,8 +10,8 @@ import {
 import {
   TravelersNetService,
   Traveler,
-} from '../../core/services/travelersNet.service';
-import { CloudinaryService } from '../../core/services/cloudinary.service';
+} from '../../core/services/travelers/travelersNet.service';
+import { CloudinaryService } from '../../core/services/media/cloudinary.service';
 import {
   DepartureService,
   IDepartureResponse,

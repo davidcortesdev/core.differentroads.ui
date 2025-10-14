@@ -1,15 +1,15 @@
 import { Component, OnInit, OnDestroy, ElementRef, Renderer2 } from '@angular/core';
 import { MenuItem } from 'primeng/api';
-import { LanguageService } from '../../core/services/language.service';
+import { LanguageService } from '../../core/services/localization/language.service';
 import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
-import { AuthenticateService } from '../../core/services/auth-service.service';
-import { UsersNetService } from '../../core/services/usersNet.service';
+import { AuthenticateService } from '../../core/services/auth/auth-service.service';
+import { UsersNetService } from '../../core/services/users/usersNet.service';
 import { MenuItemService, IMenuItemResponse } from '../../core/services/menu/menu-item.service';
 import { TourLocationService, CountryWithToursResponse } from '../../core/services/tour/tour-location.service';
 import { LocationNetService, Location } from '../../core/services/locations/locationNet.service';
 import { Subject, takeUntil, finalize, filter, debounceTime, distinctUntilChanged, switchMap, of, timeout } from 'rxjs';
 import { Router } from '@angular/router';
-import { AnalyticsService } from '../../core/services/analytics.service';
+import { AnalyticsService } from '../../core/services/analytics/analytics.service';
 
 @Component({
   selector: 'app-header-v2',

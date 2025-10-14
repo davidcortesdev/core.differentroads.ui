@@ -1,6 +1,6 @@
 import { Injectable, Injector } from '@angular/core';
-import { UsersNetService } from './usersNet.service';
-import { PersonalInfoV2Service } from './v2/personal-info-v2.service';
+import { UsersNetService } from '../users/usersNet.service';
+import { PersonalInfoV2Service } from '../v2/personal-info-v2.service';
 import { Observable, of, map, switchMap } from 'rxjs';
 
 /**
@@ -103,7 +103,7 @@ export class AnalyticsService {
   private getAuthService(): any {
     if (!this._authService) {
       // Importar dinámicamente para evitar dependencia circular
-      const AuthenticateService = require('./auth-service.service').AuthenticateService;
+      const AuthenticateService = require('../auth/auth-service.service').AuthenticateService;
       this._authService = this.injector.get(AuthenticateService);
     }
     return this._authService;

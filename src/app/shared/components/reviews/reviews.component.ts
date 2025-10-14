@@ -6,9 +6,9 @@ import {
   ChangeDetectorRef,
 } from '@angular/core';
 import { CAROUSEL_CONFIG } from '../../constants/carousel.constants';
-import { ReviewsService } from '../../../core/services/reviews.service';
+import { ReviewsService } from '../../../core/services/reviews/reviews.service';
 import { TourService } from '../../../core/services/tour/tour.service';
-import { TravelersNetService } from '../../../core/services/travelersNet.service';
+import { TravelersNetService } from '../../../core/services/travelers/travelersNet.service';
 import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
@@ -32,6 +32,10 @@ export class ReviewsComponent implements OnInit {
   skeletonArray = Array(6).fill({});
   showFullReviewModal = false;
   selectedReview: any = null;
+  
+  // Nuevas propiedades para aprovechar los métodos del servicio
+  totalReviews = 0;
+  averageRating = 0;
 
   readonly responsiveOptions = [
     {
@@ -85,34 +89,53 @@ export class ReviewsComponent implements OnInit {
     // Si recibe reviews desde el padre, las usa directamente pero las enriquece
     if (this.reviews && this.reviews.length > 0) {
       this.enrichReviewsWithTourData(this.reviews);
+      // Cargar estadísticas adicionales si es posible
+      this.loadReviewStats();
     } else {
       // Si no, carga las reviews desde el servicio
       this.loadReviews();
+      // Las estadísticas se cargarán junto con las reviews
     }
   }
 
   loadReviews(): void {
     this.loading = true;
     
-    // Construir filtros basados en los inputs
-    const filter: any = {};
-    
-    if (this.tourId) {
-      filter.tourId = this.tourId;
-    }
+    // Construir filtros adicionales basados en los inputs
+    const additionalFilters: any = {};
     
     if (this.showOnHomePage !== undefined) {
-      filter.showOnHomePage = this.showOnHomePage;
+      additionalFilters.showOnHomePage = this.showOnHomePage;
     }
     
     if (this.showOnTourPage !== undefined) {
-      filter.showOnTourPage = this.showOnTourPage;
+      additionalFilters.showOnTourPage = this.showOnTourPage;
     }
 
-    // Usar getTopReviews si hay límite, sino getReviews
-    const reviewsObservable = this.limit 
-      ? this.reviewsService.getTopReviews(this.limit, filter)
-      : this.reviewsService.getReviews(filter);
+    // Determinar qué método usar según los inputs y usar los métodos específicos del servicio
+    let reviewsObservable;
+    
+    if (this.showOnHomePage) {
+      // Usar método específico para homepage
+      reviewsObservable = this.limit 
+        ? this.reviewsService.getTopReviews(this.limit, additionalFilters)
+        : this.reviewsService.getForHomePage(additionalFilters);
+    } else if (this.showOnTourPage && this.tourId) {
+      // Usar método específico para tour page
+      reviewsObservable = this.limit 
+        ? this.reviewsService.getTopReviews(this.limit, { tourId: this.tourId, ...additionalFilters })
+        : this.reviewsService.getForTourPage(this.tourId, additionalFilters);
+    } else if (this.tourId) {
+      // Usar método específico por tour ID
+      reviewsObservable = this.limit 
+        ? this.reviewsService.getTopReviews(this.limit, { tourId: this.tourId, ...additionalFilters })
+        : this.reviewsService.getByTourId(this.tourId, additionalFilters);
+    } else {
+      // Usar getAll como fallback
+      reviewsObservable = this.limit 
+        ? this.reviewsService.getTopReviews(this.limit, additionalFilters)
+        : this.reviewsService.getAll(additionalFilters);
+    }
 
     reviewsObservable.pipe(
       switchMap(reviews => {
@@ -123,19 +146,15 @@ export class ReviewsComponent implements OnInit {
         // Mapear reviews al formato esperado
         const mappedReviews = reviews.map(review => ({
           ...review,
-          traveler: review.travelerName,
-          tour: review.tourName,
+          traveler: 'Usuario desconocido', // Se enriquecerá después
+          tour: 'Tour', // Se enriquecerá después con tourService
           review: review.text,
           score: review.rating,
-          date: review.reviewDate || review.createdAt
+          date: review.reviewDate
         }));
 
-        // Si las reviews no tienen travelerName, obtener nombres de travelers
-        if (reviews.some(review => !review.travelerName)) {
-          return this.enrichWithTravelerNames(mappedReviews);
-        }
-
-        return of(mappedReviews);
+        // Obtener nombres de travelers
+        return this.enrichWithTravelerNames(mappedReviews);
       }),
       catchError(error => {
         console.error('Error loading reviews:', error);
@@ -144,12 +163,59 @@ export class ReviewsComponent implements OnInit {
     ).subscribe({
       next: (reviewsWithTravelers) => {
         this.enrichReviewsWithTourData(reviewsWithTravelers);
+        // Cargar estadísticas después de las reviews
+        this.loadReviewStats();
       },
       error: (error) => {
         console.error('Error in loadReviews:', error);
         this.enrichedReviews = [];
         this.loading = false;
         this.cdr.markForCheck();
+      }
+    });
+  }
+
+  /**
+   * Carga estadísticas de reviews (conteo y rating promedio)
+   */
+  loadReviewStats(): void {
+    // Construir filtros para las estadísticas
+    const statsFilters: any = {};
+    
+    if (this.tourId) {
+      statsFilters.tourId = this.tourId;
+    }
+    
+    if (this.showOnHomePage !== undefined) {
+      statsFilters.showOnHomePage = this.showOnHomePage;
+    }
+    
+    if (this.showOnTourPage !== undefined) {
+      statsFilters.showOnTourPage = this.showOnTourPage;
+    }
+
+    // Cargar conteo y rating promedio en paralelo
+    forkJoin({
+      count: this.reviewsService.getCount(statsFilters).pipe(
+        catchError(error => {
+          console.error('Error al cargar conteo de reviews:', error);
+          return of(0);
+        })
+      ),
+      averageRating: this.reviewsService.getAverageRating(statsFilters).pipe(
+        catchError(error => {
+          console.error('Error al cargar rating promedio:', error);
+          return of({ averageRating: 0, totalReviews: 0 });
+        })
+      )
+    }).subscribe({
+      next: (stats) => {
+        this.totalReviews = stats.count;
+        this.averageRating = Math.ceil(stats.averageRating.averageRating * 10) / 10;
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Error cargando estadísticas de reviews:', error);
       }
     });
   }
@@ -250,5 +316,87 @@ export class ReviewsComponent implements OnInit {
     if (tourSlug) {
       this.router.navigate(['/tour-v2', tourSlug]);
     }
+  }
+
+  /**
+   * Métodos de utilidad adicionales para aprovechar el ReviewsService
+   */
+
+  /**
+   * Obtiene reviews por ID de departure
+   * @param departureId ID del departure
+   */
+  loadReviewsByDeparture(departureId: number): void {
+    this.loading = true;
+    this.reviewsService.getByDepartureId(departureId).pipe(
+      switchMap(reviews => {
+        if (reviews.length === 0) {
+          return of([]);
+        }
+        const mappedReviews = reviews.map(review => ({
+          ...review,
+          traveler: 'Usuario desconocido', // Se enriquecerá después
+          tour: 'Tour', // Se enriquecerá después con tourService
+          review: review.text,
+          score: review.rating,
+          date: review.reviewDate
+        }));
+        return this.enrichWithTravelerNames(mappedReviews);
+      }),
+      catchError(error => {
+        console.error('Error loading reviews by departure:', error);
+        return of([]);
+      })
+    ).subscribe({
+      next: (reviewsWithTravelers) => {
+        this.enrichReviewsWithTourData(reviewsWithTravelers);
+        this.loadReviewStats();
+      },
+      error: (error) => {
+        console.error('Error in loadReviewsByDeparture:', error);
+        this.enrichedReviews = [];
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  /**
+   * Obtiene reviews por ID de traveler
+   * @param travelerId ID del traveler
+   */
+  loadReviewsByTraveler(travelerId: number): void {
+    this.loading = true;
+    this.reviewsService.getByTravelerId(travelerId).pipe(
+      switchMap(reviews => {
+        if (reviews.length === 0) {
+          return of([]);
+        }
+        const mappedReviews = reviews.map(review => ({
+          ...review,
+          traveler: 'Usuario desconocido', // Se enriquecerá después
+          tour: 'Tour', // Se enriquecerá después con tourService
+          review: review.text,
+          score: review.rating,
+          date: review.reviewDate
+        }));
+        return this.enrichWithTravelerNames(mappedReviews);
+      }),
+      catchError(error => {
+        console.error('Error loading reviews by traveler:', error);
+        return of([]);
+      })
+    ).subscribe({
+      next: (reviewsWithTravelers) => {
+        this.enrichReviewsWithTourData(reviewsWithTravelers);
+        this.loadReviewStats();
+      },
+      error: (error) => {
+        console.error('Error in loadReviewsByTraveler:', error);
+        this.enrichedReviews = [];
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
+    });
   }
 }

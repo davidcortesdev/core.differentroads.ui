@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core'; // <-- New import
 import { HttpClient } from '@angular/common/http';
-import { Country } from '../../shared/models/country.model';
 import { catchError, map, Observable, of } from 'rxjs';
+import { Country } from '../../../shared/models/country.model';
 
 @Injectable({ providedIn: 'root' })
 export class CountriesService {

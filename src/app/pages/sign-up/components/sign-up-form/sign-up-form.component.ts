@@ -12,10 +12,10 @@ import { DividerModule } from 'primeng/divider';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { AuthenticateService } from '../../../../core/services/auth-service.service';
-import { UsersNetService } from '../../../../core/services/usersNet.service';
-import { HubspotService } from '../../../../core/services/hubspot.service';
-import { AnalyticsService } from '../../../../core/services/analytics.service';
+import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
+import { UsersNetService } from '../../../../core/services/users/usersNet.service';
+import { HubspotService } from '../../../../core/services/integrations/hubspot.service';
+import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 import { ConfirmationCodeComponent } from '../../../../shared/components/confirmation-code/confirmation-code.component';
 
 @Component({

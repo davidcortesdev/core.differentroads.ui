@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { LoginFormComponent } from './components/login-form/login-form.component';
-import { AuthenticateService } from '../../core/services/auth-service.service';
+import { AuthenticateService } from '../../core/services/auth/auth-service.service';
 import { Title } from '@angular/platform-browser';
 
 @Component({

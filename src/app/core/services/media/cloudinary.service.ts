@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
-import { CldImage } from '../../shared/models/cloudinary/cld-image.model';
+import { CldImage } from '../../models/commons/cld-image.model';
 import { throwError } from 'rxjs';
 
 @Injectable({

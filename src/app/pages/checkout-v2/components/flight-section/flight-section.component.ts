@@ -3,7 +3,7 @@ import {
   IFlightPackDTO,
   IFlightResponse,
 } from '../../services/flightsNet.service';
-import { AirportCityCacheService } from '../../../../core/services/airport-city-cache.service';
+import { AirportCityCacheService } from '../../../../core/services/locations/airport-city-cache.service';
 
 @Component({
   selector: 'app-flight-section-v2',

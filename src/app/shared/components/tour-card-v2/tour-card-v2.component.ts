@@ -8,8 +8,8 @@ import {
 import { Router } from '@angular/router';
 import { DOCUMENT } from '@angular/common';
 import { TourDataV2 } from './tour-card-v2.model';
-import { AnalyticsService } from '../../../core/services/analytics.service';
-import { AuthenticateService } from '../../../core/services/auth-service.service';
+import { AnalyticsService } from '../../../core/services/analytics/analytics.service';
+import { AuthenticateService } from '../../../core/services/auth/auth-service.service';
 
 @Component({
   selector: 'app-tour-card-v2',

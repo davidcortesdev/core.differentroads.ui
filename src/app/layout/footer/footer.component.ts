@@ -17,8 +17,8 @@ import {
 } from '../../core/services/cms/cms-footer-link.service';
 import { Subscription } from 'rxjs';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { AnalyticsService } from '../../core/services/analytics.service';
-import { AuthenticateService } from '../../core/services/auth-service.service';
+import { AnalyticsService } from '../../core/services/analytics/analytics.service';
+import { AuthenticateService } from '../../core/services/auth/auth-service.service';
 
 // Constants for contact information
 const CONTACT_INFO = {

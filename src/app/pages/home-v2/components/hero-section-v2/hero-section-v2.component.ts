@@ -58,12 +58,7 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
 
   // DatePicker Range properties
   rangeDates: Date[] = [];
-  dateFlexibility: number = 0; // Flexibilidad de días (±X)
-  datePresets = [
-    { label: '±2 días', value: 2 },
-    { label: '±3 días', value: 3 },
-    { label: '±7 días', value: 7 }
-  ];
+  dateFlexibility: number = 0;
   
   // Validation state
   showDateValidationError: boolean = false;
@@ -330,56 +325,10 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
   }
 
   /**
-   * Manejar selección de fechas del datepicker
-   * El modelo rangeDates se actualiza automáticamente con [(ngModel)]
-   * Solo sincronizamos las propiedades individuales
+   * Manejar cambio de flexibilidad desde el componente datepicker
    */
-  onDateSelect(): void {
-    if (this.rangeDates && this.rangeDates.length >= 2) {
-      this.departureDate = this.rangeDates[0];
-      this.returnDate = this.rangeDates[1];
-    } else if (this.rangeDates && this.rangeDates.length === 1) {
-      this.departureDate = this.rangeDates[0];
-      this.returnDate = null;
-    }
-  }
-
-  /**
-   * Aplicar flexibilidad de fechas (±X días)
-   * Indica cuántos días antes o después el usuario acepta viajar
-   * manteniendo la misma duración del viaje
-   * @param flexibility Número de días de flexibilidad (±X)
-   */
-  applyDatePreset(flexibility: number): void {
+  onFlexibilityChange(flexibility: number): void {
     this.dateFlexibility = flexibility;
-    // La flexibilidad se usará en la búsqueda para encontrar opciones alternativas
-  }
-
-  /**
-   * Establecer fechas para "Desde Hoy"
-   * Establece un viaje comenzando hoy por 7 días
-   */
-  applyPresetFromToday(): void {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const returnDate = new Date(today);
-    returnDate.setDate(today.getDate() + 7);
-    
-    this.rangeDates = [today, returnDate];
-    this.departureDate = today;
-    this.returnDate = returnDate;
-    this.dateFlexibility = 0;
-  }
-
-  /**
-   * Limpiar fechas seleccionadas y flexibilidad
-   */
-  clearDates(): void {
-    this.rangeDates = [];
-    this.departureDate = null;
-    this.returnDate = null;
-    this.dateFlexibility = 0;
   }
 
   /**
@@ -398,26 +347,6 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     return maxDate;
   }
 
-  /**
-   * Texto de rango seleccionado para previsualizar junto al campo
-   */
-  get formattedRange(): string {
-    if (!this.rangeDates || this.rangeDates.length === 0) {
-      return '';
-    }
-    const fmt = (d: Date) => d.toLocaleDateString('es-ES');
-    if (this.rangeDates.length === 1) {
-      return fmt(this.rangeDates[0]);
-    }
-    return `${fmt(this.rangeDates[0])} - ${fmt(this.rangeDates[1])}`;
-  }
-
-  /**
-   * Etiqueta de flexibilidad (±X días) para previsualización
-   */
-  get flexibilitySuffix(): string {
-    return this.dateFlexibility > 0 ? `(±${this.dateFlexibility} días)` : '';
-  }
 
   private setInitialValues(): void {
     if (this.initialDestination) {
@@ -498,21 +427,5 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     }
     
     return true;
-  }
-
-  /**
-   * Obtener el número de días del rango seleccionado
-   * @returns Número de días entre las fechas seleccionadas
-   */
-  getDaysInRange(): number {
-    if (!this.rangeDates || this.rangeDates.length < 2) {
-      return 0;
-    }
-    
-    const [start, end] = this.rangeDates;
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    return diffDays;
   }
 }

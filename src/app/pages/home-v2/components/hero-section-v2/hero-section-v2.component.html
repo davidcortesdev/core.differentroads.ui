@@ -55,75 +55,12 @@
         </p-iftalabel>
       </div>
       <div class="input-range">
-        <p-iftaLabel [ngClass]="{ 'has-range': formattedRange }">
-          <p-datepicker
-            [(ngModel)]="rangeDates"
-            selectionMode="range"
-            [showIcon]="false"
-            [numberOfMonths]="2"
-            [showButtonBar]="true"
-            [minDate]="minDate"
-            [maxDate]="maxDate"
-            [readonlyInput]="true"
-            [firstDayOfWeek]="1"
-            dateFormat="dd/mm/yy"
-            id="rangeDateInput"
-            fluid="true"
-            placeholder="Seleccionar fechas de viaje"
-            appendTo="body"
-            [ariaLabel]="'Selector de fechas de viaje'"
-            [showOtherMonths]="true"
-            [selectOtherMonths]="false"
-            [showWeek]="false"
-          >
-            <!-- Template personalizado para la barra de botones -->
-            <ng-template pTemplate="footer">
-              <div class="date-presets" role="group" aria-label="Presets de fechas rápidas">
-                <button 
-                  type="button" 
-                  class="preset-btn" 
-                  *ngFor="let preset of datePresets"
-                  (click)="applyDatePreset(preset.value)"
-                  [attr.aria-label]="'Seleccionar rango de ' + preset.label"
-                  [title]="'Aplicar preset de ' + preset.label"
-                >
-                  {{ preset.label }}
-                </button>
-                <button 
-                  type="button" 
-                  class="preset-btn today-btn"
-                  (click)="applyPresetFromToday()"
-                  aria-label="Seleccionar desde hoy por 7 días"
-                  title="Viaje desde hoy por 7 días"
-                >
-                  Desde Hoy
-                </button>
-                <button 
-                  type="button" 
-                  class="preset-btn clear-btn"
-                  (click)="clearDates()"
-                  aria-label="Limpiar fechas seleccionadas"
-                  title="Borrar fechas"
-                >
-                  <i class="pi pi-times"></i> Limpiar
-                </button>
-              </div>
-              <div class="date-range-info" *ngIf="getDaysInRange() > 0">
-                <small class="range-duration">
-                  <i class="pi pi-calendar"></i>
-                  <strong>{{ getDaysInRange() }}</strong> {{ getDaysInRange() === 1 ? 'día' : 'días' }} de viaje
-                  <span *ngIf="dateFlexibility > 0" class="flexibility-badge">
-                    ±{{ dateFlexibility }} días
-                  </span>
-                </small>
-              </div>
-            </ng-template>
-          </p-datepicker>
-          <label for="rangeDateInput" class="label">Fechas de viaje</label>
-          <div class="input-overlay-text" *ngIf="formattedRange">
-            {{ formattedRange }} <span *ngIf="flexibilitySuffix">{{ flexibilitySuffix }}</span>
-          </div>
-        </p-iftaLabel>
+        <app-datepicker-range-v2
+          [(ngModel)]="rangeDates"
+          [minDate]="minDate"
+          [maxDate]="maxDate"
+          (flexibilityChange)="onFlexibilityChange($event)"
+        ></app-datepicker-range-v2>
       </div>
       <div class="input-md">
         <p-iftaLabel>

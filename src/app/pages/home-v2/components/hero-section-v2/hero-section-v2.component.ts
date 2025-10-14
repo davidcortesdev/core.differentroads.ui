@@ -270,18 +270,15 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
 
   /**
    * Manejar selección de fechas del datepicker
-   * @param selectedDates Array de fechas seleccionadas
+   * El modelo rangeDates se actualiza automáticamente con [(ngModel)]
+   * Solo sincronizamos las propiedades individuales
    */
-  onDateSelect(selectedDates: Date[]): void {
-    // Sincronizar departureDate y returnDate con las fechas seleccionadas
-    if (selectedDates && selectedDates.length >= 2) {
-      this.departureDate = selectedDates[0];
-      this.returnDate = selectedDates[1];
-    } else if (selectedDates && selectedDates.length === 1) {
-      this.departureDate = selectedDates[0];
-      this.returnDate = null;
-    } else {
-      this.departureDate = null;
+  onDateSelect(): void {
+    if (this.rangeDates && this.rangeDates.length >= 2) {
+      this.departureDate = this.rangeDates[0];
+      this.returnDate = this.rangeDates[1];
+    } else if (this.rangeDates && this.rangeDates.length === 1) {
+      this.departureDate = this.rangeDates[0];
       this.returnDate = null;
     }
   }

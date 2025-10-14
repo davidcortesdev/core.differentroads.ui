@@ -63,15 +63,10 @@
             fluid="true"
             placeholder="Seleccionar fechas de viaje"
             appendTo="body"
-            styleClass="range-datepicker"
-            (ngModelChange)="onDateSelect($event)"
             [ariaLabel]="'Selector de fechas de viaje'"
-            [ariaLabelledBy]="'rangeDateInput'"
-            [tabindex]="0"
             [showOtherMonths]="true"
             [selectOtherMonths]="false"
             [showWeek]="false"
-            [touchUI]="false"
           >
             <!-- Template personalizado para la barra de botones -->
             <ng-template pTemplate="footer">

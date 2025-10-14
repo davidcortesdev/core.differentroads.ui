@@ -47,7 +47,7 @@
         </p-iftalabel>
       </div>
       <div class="input-range">
-        <p-iftaLabel>
+        <p-iftaLabel [ngClass]="{ 'has-range': formattedRange }">
           <p-datepicker
             [(ngModel)]="rangeDates"
             selectionMode="range"
@@ -111,12 +111,10 @@
               </div>
             </ng-template>
           </p-datepicker>
-          <label for="rangeDateInput" class="label">
-            Fechas de viaje
-            <ng-container *ngIf="formattedRange">
-              <span class="preview"> — {{ formattedRange }} <span *ngIf="flexibilitySuffix">{{ flexibilitySuffix }}</span></span>
-            </ng-container>
-          </label>
+          <label for="rangeDateInput" class="label">Fechas de viaje</label>
+          <div class="input-overlay-text" *ngIf="formattedRange">
+            {{ formattedRange }} <span *ngIf="flexibilitySuffix">{{ flexibilitySuffix }}</span>
+          </div>
         </p-iftaLabel>
       </div>
       <div class="input-md">

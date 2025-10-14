@@ -125,6 +125,7 @@
         div {
             p-iftaLabel {
                 border: none;
+                position: relative;
             }
 
             p-floatlabel {
@@ -171,12 +172,34 @@
         font-weight: 500;
         font-size: var(--font-label);
         margin-top: 2px;
-        .preview {
-            font-weight: 500;
-            color: var(--text-color);
-            opacity: 0.9;
-            margin-left: 4px;
-        }
+    }
+
+    // Texto superpuesto dentro del input para mostrar placeholder o rango
+    .input-overlay-text {
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        top: 26px; // verticalmente alineado con el texto del input
+        pointer-events: none;
+        color: var(--p-select-placeholder-color); // igual que "Single"
+        font-weight: 400; // igual que placeholder
+        font-size: var(--font-sm);
+        line-height: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    // Cuando hay rango seleccionado, usa color de texto normal
+    // Ajuste de color cuando hay selección (opcional, puede sobrescribirse)
+    // Oculta el texto nativo del input cuando hay rango para evitar duplicados
+    p-iftaLabel.has-range ::ng-deep .p-inputtext::placeholder {
+        color: transparent;
+    }
+    p-iftaLabel.has-range ::ng-deep .p-inputtext {
+        color: transparent;            // oculta el valor nativo
+        caret-color: transparent;      // evita ver el cursor
+        text-shadow: none;             // evita halos grises
     }
 
     .spinner {

@@ -250,6 +250,7 @@ import { RetailerService } from './core/services/retailer/retailer.service';
 // OTHER COMPONENTS
 // ========================================
 import { SummaryTableComponent } from './components/summary-table/summary-table.component';
+import { TourGridV2Component } from './pages/home-v2/components/tour-grid-v2/tour-grid-v2.component';
 
 // ========================================
 // LOCALE & FACTORY FUNCTIONS
@@ -407,6 +408,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     // OTHER COMPONENTS
     // ========================================
     SummaryTableComponent,
+     TourGridV2Component,
   ],
   imports: [
     // ========================================

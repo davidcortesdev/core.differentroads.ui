@@ -164,52 +164,23 @@ export class ToursComponent implements OnInit, OnChanges {
     };
 
     this.tourSearchService
-      .search(searchParams)
+      .searchWithScore(searchParams)
       .pipe(
-        switchMap((ids) => {
-          const tourIds = (ids || []).map((x) => x.tourId).filter(Boolean);
+        switchMap((scored) => {
+          const tourIds = (scored || []).map((x: any) => x.tourId).filter(Boolean);
           if (!tourIds.length) {
-            // Fallback al CMS si no hay resultados
-            const filters = {
-              destination: this.destination,
-              minDate: this.minDate ? this.minDate.toISOString() : '',
-              maxDate: this.maxDate ? this.maxDate.toISOString() : '',
-              tourType: this.tourType,
-              price: this.selectedPriceOption,
-              tourSeason: this.selectedSeasonOption,
-              month: this.selectedMonthOption,
-              sort: this.selectedOrderOption,
-              ...(this.selectedTagOption.length > 0 && {
-                tags: this.selectedTagOption,
-              }),
-            };
-            return this.toursService.getFilteredToursList(filters).pipe(
-              map((cms) => ({ cms }))
-            );
+            return of({ api: [] });
           }
           return this.toursServiceV2.getToursByIds(tourIds).pipe(
             map((api) => ({ api }))
           );
         }),
-        catchError(() => of({ cms: null, api: null }))
+        catchError(() => of({ api: [] }))
       )
       .subscribe((result: any) => {
         let toursData: any[] = [];
-        if (result?.api) {
+        if (Array.isArray(result?.api)) {
           toursData = result.api;
-        } else if (result?.cms) {
-          toursData = result.cms.data || [];
-          // Opciones de filtros desde CMS
-          this.monthOptions =
-            result.cms.filtersOptions?.month?.map((month: string) => ({
-              name: month.toUpperCase(),
-              value: month,
-            })) || [];
-          this.tagOptions =
-            result.cms.filtersOptions?.tags?.map((tag: string) => ({
-              name: tag.toUpperCase(),
-              value: tag,
-            })) || [];
         }
 
         // Normalizar tours (API tour-dev trae shape distinto al CMS)
@@ -235,7 +206,7 @@ export class ToursComponent implements OnInit, OnChanges {
           this.trackViewItemList(toursData);
         }
         this.toursLoaded.emit(this.displayedTours);
-        // Mensaje "sin resultados": solo si no hay ni API ni CMS
+        // Mensaje "sin resultados": cuando no hay resultados de la API
         if (this.displayedTours.length === 0) {
           console.info('No se encontraron tours para la búsqueda actual.');
         }

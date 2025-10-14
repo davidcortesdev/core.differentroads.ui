@@ -48,8 +48,8 @@
           <!-- Panel de sugerencias -->
           <div class="suggestions-panel" *ngIf="showSuggestions">
             <button type="button" class="suggestion" *ngFor="let s of suggestions" (click)="onSuggestionClick(s)">
-              {{ s.name }}
-              <small *ngIf="s.type">— {{ s.type }}</small>
+              <span class="suggestion-name">{{ s.name }}</span>
+              <span *ngIf="s.type" class="type-badge">{{ s.type }}</span>
             </button>
           </div>
         </p-iftalabel>

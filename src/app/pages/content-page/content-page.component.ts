@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
-import { LandingsService } from '../../core/services/landings.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { PressService } from '../../core/services/press.service';
 import { filter, Observable, Subject, takeUntil } from 'rxjs';
@@ -69,7 +68,6 @@ export class ContentPageComponent implements OnInit, OnChanges, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private landingsService: LandingsService,
     private pressService: PressService,
     private sanitizer: DomSanitizer,
     private titleService: Title,
@@ -202,25 +200,7 @@ export class ContentPageComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   private fetchLandingData(): void {
-    this.landingsService
-      .getLandingBySlug(this.slug)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (data: Landing) => {
-          this.blocks = data.blocks || [];
-          this.bannerImage = data.banner[0]?.url || '';
-          this.bannerImageAlt = data.banner[0]?.alt || '';
-          this.bannerTitle = data.title || '';
-          this.bannerSubtitle = data.description || '';
-          this.bannerDescription = data.description || '';
-          this.contentTitle = data.titleContent || '';
-          this.contentDescription = data.description || '';
-          this.updatePageTitle(data.title);
-        },
-        error: (error: any) => {
-          console.error('Error fetching landing data:', error);
-        },
-      });
+    //TODO: Pendiente de desarrollar proximamente
   }
 
   private fetchCollectionData(): void {

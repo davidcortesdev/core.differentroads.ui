@@ -13,7 +13,6 @@ import {
 })
 export class PointsService {
   private readonly API_URL = `${environment.dataApiUrl}/points`;
-  private apiUrl = `${environment.apiUrl}/points`;
 
   constructor(private http: HttpClient) {}
 

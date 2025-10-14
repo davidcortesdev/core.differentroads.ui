@@ -1,57 +1,28 @@
 <div class="datepicker-range-container">
   <p-iftaLabel [ngClass]="{ 'has-range': formattedRange }">
     <p-datepicker
-      [(ngModel)]="rangeDates"
-      (ngModelChange)="onDateChange()"
+      [(ngModel)]="rangeDates2"
       selectionMode="range"
-      [showIcon]="false"
+      [showIcon]="true"
+      [iconDisplay]="'input'"
       [numberOfMonths]="2"
       [showButtonBar]="true"
-      [minDate]="minDate"
-      [maxDate]="maxDate"
       [readonlyInput]="true"
-      [firstDayOfWeek]="1"
-      dateFormat="dd/mm/yy"
-      [id]="inputId"
       fluid="true"
-      [placeholder]="placeholder"
-      appendTo="body"
-      [ariaLabel]="label"
-      [showOtherMonths]="true"
-      [selectOtherMonths]="false"
-      [showWeek]="false"
+      placeholder="Seleccionar fechas"
     >
       <!-- Template personalizado para la barra de botones -->
-      <ng-template pTemplate="footer">
+      <ng-template #footer>
         <div class="date-presets" role="group" aria-label="Presets de fechas rápidas">
-          <button 
-            type="button" 
-            class="preset-btn" 
+          <p-button 
             *ngFor="let preset of datePresets"
+            size="small"
             (click)="applyDatePreset(preset.value)"
             [attr.aria-label]="'Seleccionar rango de ' + preset.label"
             [title]="'Aplicar preset de ' + preset.label"
           >
             {{ preset.label }}
-          </button>
-          <button 
-            type="button" 
-            class="preset-btn today-btn"
-            (click)="applyPresetFromToday()"
-            aria-label="Seleccionar desde hoy por 7 días"
-            title="Viaje desde hoy por 7 días"
-          >
-            Desde Hoy
-          </button>
-          <button 
-            type="button" 
-            class="preset-btn clear-btn"
-            (click)="clearDates()"
-            aria-label="Limpiar fechas seleccionadas"
-            title="Borrar fechas"
-          >
-            <i class="pi pi-times"></i> Limpiar
-          </button>
+          </p-button>
         </div>
         <div class="date-range-info" *ngIf="getDaysInRange() > 0">
           <small class="range-duration">

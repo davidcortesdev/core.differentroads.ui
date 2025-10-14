@@ -50,7 +50,8 @@ export class DatepickerRangeV2Component implements ControlValueAccessor {
   @Output() flexibilityChange = new EventEmitter<number>();
 
   // Datos del rango
-  rangeDates: Date[] = [];
+  rangeDates: Date[] | undefined;
+  rangeDates2: Date[] | undefined;
   dateFlexibility: number = 0;
 
   // Presets de flexibilidad
@@ -72,33 +73,6 @@ export class DatepickerRangeV2Component implements ControlValueAccessor {
     this.flexibilityChange.emit(flexibility);
   }
 
-  /**
-   * Establecer fechas para "Desde Hoy"
-   * Viaje comenzando hoy por 7 días
-   */
-  applyPresetFromToday(): void {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const returnDate = new Date(today);
-    returnDate.setDate(today.getDate() + 7);
-    
-    this.rangeDates = [today, returnDate];
-    this.dateFlexibility = 0;
-    this.onChange(this.rangeDates);
-    this.onTouched();
-  }
-
-  /**
-   * Limpiar fechas seleccionadas y flexibilidad
-   */
-  clearDates(): void {
-    this.rangeDates = [];
-    this.dateFlexibility = 0;
-    this.onChange(this.rangeDates);
-    this.flexibilityChange.emit(0);
-    this.onTouched();
-  }
 
   /**
    * Texto de rango seleccionado para previsualizar
@@ -140,7 +114,7 @@ export class DatepickerRangeV2Component implements ControlValueAccessor {
    * Manejar cambio de fechas
    */
   onDateChange(): void {
-    this.onChange(this.rangeDates);
+    //this.onChange(this.rangeDates);
     this.onTouched();
   }
 

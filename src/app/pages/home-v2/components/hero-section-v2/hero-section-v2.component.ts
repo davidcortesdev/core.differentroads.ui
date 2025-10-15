@@ -53,7 +53,7 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
   selectedDestination: string | null = null;
   departureDate: Date | null = null;
   returnDate: Date | null = null;
-  selectedTripType: string | null = null;
+  selectedTripTypeId: number | null = null;
   destinationInput: string | null = null;
 
   // DatePicker Range properties
@@ -216,6 +216,11 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     this.tripTypeService.getActiveTripTypes().subscribe({
       next: (tripTypes) => {
         this.tripTypes = tripTypes;
+        // Si viene initialTripType (code), mapea a id
+        if (this.initialTripType && this.selectedTripTypeId == null) {
+          const match = this.tripTypes.find(t => t.code === this.initialTripType);
+          this.selectedTripTypeId = match ? match.id : null;
+        }
       },
       error: (error) => {
         console.error('Error loading trip types:', error);
@@ -295,8 +300,8 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
       }
     }
 
-    if (this.selectedTripType) {
-      queryParams.tripType = this.selectedTripType.toString().trim();
+    if (this.selectedTripTypeId !== null && this.selectedTripTypeId !== undefined) {
+      queryParams.tripType = this.selectedTripTypeId.toString();
     }
 
     // Añadir flexibilidad al navegar para que la lista pueda usarla
@@ -310,15 +315,18 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     this.router.navigate(['/tours'], { queryParams });
 
     // Pre-búsqueda opcional con todos los parámetros
-    const startDate = queryParams.departureDate ? new Date(queryParams.departureDate).toISOString() : undefined;
-    const endDate = queryParams.returnDate ? new Date(queryParams.returnDate).toISOString() : undefined;
-    const tripTypeId = this.selectedTripType ? Number(this.selectedTripType) : undefined;
+    const startDate = this.rangeDates?.[0] ? this.rangeDates[0].toISOString() : undefined;
+    const endDate = this.rangeDates?.[1] ? this.rangeDates[1].toISOString() : undefined;
+    const tripTypeId = this.selectedTripTypeId !== null && this.selectedTripTypeId !== undefined ? this.selectedTripTypeId : undefined;
+    
+    
     this.tourService.searchWithScore({
       searchText: this.destinationInput || undefined,
       startDate,
       endDate,
       tripTypeId,
-      flexDays: this.dateFlexibility || undefined,
+      fuzzyThreshold: 0.7,
+      tagScoreThreshold: 0.3,
     }).subscribe({ next: () => {}, error: () => {} });
   }
 
@@ -375,9 +383,10 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     }
 
     if (this.initialTripType) {
-      this.selectedTripType = this.initialTripType.trim();
+      const match = this.tripTypes.find(t => t.code === this.initialTripType);
+      this.selectedTripTypeId = match ? match.id : null;
     } else {
-      this.selectedTripType = null;
+      this.selectedTripTypeId = null;
     }
   }
 

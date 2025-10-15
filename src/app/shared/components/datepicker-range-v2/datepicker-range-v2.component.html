@@ -2,6 +2,7 @@
   <p-iftaLabel>
     <p-datepicker
       [(ngModel)]="rangeDates"
+      (ngModelChange)="onDateChange()"
       selectionMode="range"
       [showIcon]="true"
       [iconDisplay]="'input'"

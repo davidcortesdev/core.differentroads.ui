@@ -156,7 +156,6 @@ export interface TourSearchParams {
   tripTypeId?: number;
   fuzzyThreshold?: number;
   tagScoreThreshold?: number;
-  flexDays?: number; // días de flexibilidad alrededor de las fechas
 }
 
 /**
@@ -487,9 +486,6 @@ export class TourService {
     if (params.tagScoreThreshold !== undefined) {
       httpParams = httpParams.set('tagScoreThreshold', params.tagScoreThreshold.toString());
     }
-    if (params.flexDays !== undefined) {
-      httpParams = httpParams.set('flexDays', params.flexDays.toString());
-    }
 
     return this.http.get<TourSearchSimpleResult[]>(`${this.API_URL}/search`, { params: httpParams }).pipe(
       catchError((error) => {
@@ -525,9 +521,6 @@ export class TourService {
     }
     if (params.tagScoreThreshold !== undefined) {
       httpParams = httpParams.set('tagScoreThreshold', params.tagScoreThreshold.toString());
-    }
-    if (params.flexDays !== undefined) {
-      httpParams = httpParams.set('flexDays', params.flexDays.toString());
     }
 
     return this.http.get<TourSearchDetailedResult[]>(`${this.API_URL}/search-with-score`, { params: httpParams }).pipe(

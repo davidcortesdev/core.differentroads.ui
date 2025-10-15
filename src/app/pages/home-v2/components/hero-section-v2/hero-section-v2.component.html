@@ -67,7 +67,7 @@
         <p-iftaLabel>
           <p-select
             [options]="tripTypes"
-            [(ngModel)]="selectedTripType"
+            [(ngModel)]="selectedTripTypeId"
             id="tripTypeInput"
             placeholder="Seleccionar tipo"
             [style]="{'width': '100%'}"
@@ -78,7 +78,7 @@
             [inputId]="'tripTypeInput'"
             fluid="true"
             optionLabel="name"
-            optionValue="code"
+            optionValue="id"
           >
           </p-select>
           <label for="tripTypeInput" class="label">Tipo de viaje</label>

@@ -1,7 +1,5 @@
 import { Component, OnInit, OnDestroy, ElementRef, Renderer2 } from '@angular/core';
 import { MenuItem } from 'primeng/api';
-import { LanguageService } from '../../core/services/localization/language.service';
-import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 import { AuthenticateService } from '../../core/services/auth/auth-service.service';
 import { UsersNetService } from '../../core/services/users/usersNet.service';
 import { MenuItemService, IMenuItemResponse } from '../../core/services/menu/menu-item.service';
@@ -27,11 +25,7 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   showUserInfo = false;
   loadingAuthState = true;
 
-  selectedLanguage = 'ES';
-  readonly languages: readonly string[] = ['ES', 'EN'] as const;
-  filteredLanguages: string[] = [];
   leftMenuItems?: MenuItem[];
-  rightMenuItems?: MenuItem[];
   userMenuItems?: MenuItem[];
   combinedMenuItems?: MenuItem[];
 
@@ -45,10 +39,8 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   chipImage = '';
   readonly chipAlt = 'Avatar image';
   currentUserId: string = ''; // Almacenar el userId real del usuario
-  currentUserName: string = ''; // Almacenar el nombre del usuario
 
   constructor(
-    private languageService: LanguageService,
     private authService: AuthenticateService,
     private usersNetService: UsersNetService,
     private menuItemService: MenuItemService,
@@ -64,7 +56,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
     this.loadingAuthState = true;
 
     // Inicializar componentes en paralelo
-    this.initializeLanguage();
     this.initializeMenu();
     this.initializeUserMenu();
     this.handleResponsiveMenus();
@@ -93,25 +84,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
 
   // Métodos públicos
   /**
-   * Filtra las opciones de idioma según la consulta del usuario
-   */
-  filterLanguages(event: AutoCompleteCompleteEvent): void {
-    const query = event.query.toUpperCase();
-    this.filteredLanguages = this.languages.filter((lang) =>
-      lang.includes(query)
-    );
-  }
-
-  /**
-   * Cambia el idioma de la aplicación
-   */
-  onLanguageChange(lang: string): void {
-    if (typeof lang === 'string') {
-      this.languageService.setLanguage(lang.toLowerCase());
-    }
-  }
-
-  /**
    * Maneja el click en el chip de usuario (login si no está autenticado)
    */
   onChipClick(): void {
@@ -129,12 +101,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
     });
   }
 
-  // Getter para clases CSS condicionales
-  get userChipClass(): string {
-    if (this.loadingAuthState) return 'auth-loading';
-    return this.showUserInfo ? 'user-info-visible' : 'user-info-hidden';
-  }
-
   // Métodos privados
   /**
    * Verifica si hay una redirección de autenticación pendiente
@@ -145,16 +111,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
     } catch (error) {
       // Error handling
     }
-  }
-
-  /**
-   * Inicializa el idioma actual de la aplicación
-   */
-  private initializeLanguage(): void {
-    this.languageService
-      .getCurrentLang()
-      .pipe(takeUntil(this.destroy$), filter(Boolean))
-      .subscribe((lang) => (this.selectedLanguage = lang.toUpperCase()));
   }
 
   /**
@@ -262,7 +218,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
     const singleMenuItems = this.mapMenuItemResponseToPrimeNG(sortedAllItems);
 
     this.leftMenuItems = singleMenuItems;
-    this.rightMenuItems = [];
     this.combinedMenuItems = singleMenuItems;
 
     this.loadContinentsFromLeftMenu();
@@ -506,7 +461,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
           const userId = user?.id;
           
           this.currentUserId = userId || '';
-          this.currentUserName = user?.name || '';
           
           if (userId) {
             this.router.navigate(['/profile-v2', userId]);

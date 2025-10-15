@@ -39,8 +39,6 @@ export class PointsSectionV2Component implements OnInit {
     // Cargar todos los datos desde la API
     this.pointsService.getLoyaltyBalanceFromAPI(this.userId).subscribe({
       next: (balance) => {
-        console.log('Loyalty Balance from API:', balance);
-        
         // Cargar tarjetas de membresía
         this.pointsService.getMembershipCardsFromAPI().subscribe({
           next: (cards) => {
@@ -49,22 +47,15 @@ export class PointsSectionV2Component implements OnInit {
             // Cargar transacciones de puntos
             this.pointsService.getLoyaltyTransactionsFromAPI(this.userId).subscribe({
               next: (transactions) => {
-                console.log('Loyalty Transactions from API:', transactions);
-                
                 // Cargar tipos de transacciones
                 this.pointsService.getLoyaltyTransactionTypesFromAPI().subscribe({
                   next: (transactionTypes) => {
-                    console.log('Loyalty Transaction Types from API:', transactionTypes);
-                    
                     // Cargar historial de viajes completados
                     this.bookingsService.getTravelHistory(parseInt(this.userId)).subscribe({
                       next: (travelHistory) => {
-                        console.log('Travel History from API:', travelHistory);
-                        
                         // Procesar datos de la API
                         this.processApiData(balance, transactions, transactionTypes, travelHistory);
-      
-      this.isLoading = false;
+                        this.isLoading = false;
                       },
                       error: (error) => {
                         console.error('Error loading travel history:', error);
@@ -103,7 +94,7 @@ export class PointsSectionV2Component implements OnInit {
 
   private processApiData(balance: any, transactions: any[], transactionTypes: any[], travelHistory: any[]): void {
     // Procesar saldo de puntos
-    this.totalPoints = balance?.totalPoints || balance?.balance || 0;
+    this.totalPoints = balance?.pointsAvailable || balance?.totalPoints || balance?.balance || 0;
 
     // Procesar transacciones
     this.points = transactions && transactions.length > 0 
@@ -120,8 +111,6 @@ export class PointsSectionV2Component implements OnInit {
     
     // Marcar la categoría actual en las tarjetas
     this.updateCurrentCategoryInCards();
-    
-    // El resumen de puntos se obtiene directamente de la API
   }
 
   private calculateCompletedTrips(travelHistory: any[]): number {
@@ -130,17 +119,25 @@ export class PointsSectionV2Component implements OnInit {
   }
 
   private mapApiTransactionsToPoints(transactions: any[]): PointsRecord[] {
-    return transactions.map(transaction => ({
-      booking: transaction.bookingId || transaction.booking || '',
-      category: transaction.category || 'General',
-      concept: transaction.concept || transaction.description || '',
-      tour: transaction.tourName || transaction.tour || '',
-      points: transaction.points || transaction.amount || 0,
-      type: transaction.type === 'EARNED' || transaction.type === 'ACCRUAL' ? 'Acumular' : 'Canjear',
-      amount: transaction.amount || 0,
-      date: new Date(transaction.date || transaction.createdAt),
-      status: transaction.status || 'Confirmed'
-    }));
+    return transactions.map(transaction => {
+      // Determinar el tipo basado en transactionTypeId (1=EARNED, 2=REDEEMED)
+      const isEarned = transaction.transactionTypeId === 1 || 
+                       transaction.type === 'EARNED' || 
+                       transaction.type === 'ACCRUAL' ||
+                       transaction.points > 0;
+      
+      return {
+        booking: transaction.referenceId || transaction.bookingId || transaction.booking || 'N/A',
+        category: transaction.category || transaction.referenceType || 'General',
+        concept: transaction.comment || transaction.concept || transaction.description || 'Sin concepto',
+        tour: transaction.tourName || transaction.tour || transaction.comment || 'Tour no especificado',
+        points: Math.abs(transaction.points || 0),
+        type: isEarned ? 'Acumular' : 'Canjear',
+        amount: transaction.amountBase || transaction.amount || 0,
+        date: new Date(transaction.transactionDate || transaction.date || transaction.createdAt),
+        status: transaction.status || 'Confirmed'
+      };
+    });
   }
 
 

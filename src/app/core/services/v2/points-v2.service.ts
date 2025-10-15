@@ -313,7 +313,16 @@ export class PointsV2Service {
    * @returns Observable con el saldo de puntos
    */
   getLoyaltyBalanceFromAPI(travelerId: string): Observable<any> {
-    return this.http.get<any>(`${this.AUTH_API_URL}/LoyaltyBalance/${travelerId}`).pipe(
+    const url = `${this.AUTH_API_URL}/LoyaltyBalance?userId=${travelerId}`;
+    
+    return this.http.get<any>(url).pipe(
+      map(balance => {
+        // Si la API devuelve un array, tomar el primer elemento
+        if (Array.isArray(balance) && balance.length > 0) {
+          return balance[0];
+        }
+        return balance;
+      }),
       catchError(error => {
         console.error('Error loading loyalty balance from API:', error);
         return of(null);
@@ -327,7 +336,16 @@ export class PointsV2Service {
    * @returns Observable con las transacciones
    */
   getLoyaltyTransactionsFromAPI(travelerId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.AUTH_API_URL}/LoyaltyTransaction/${travelerId}`).pipe(
+    const url = `${this.AUTH_API_URL}/LoyaltyTransaction?userId=${travelerId}`;
+    
+    return this.http.get<any[]>(url).pipe(
+      map(transactions => {
+        // Si la API devuelve un objeto en lugar de array, convertirlo a array
+        if (transactions && !Array.isArray(transactions)) {
+          return [transactions];
+        }
+        return transactions || [];
+      }),
       catchError(error => {
         console.error('Error loading loyalty transactions from API:', error);
         return of([]);
@@ -769,8 +787,6 @@ export class PointsV2Service {
         transactions.push(mainTravelerTransaction);
       }
 
-      // Simular actualización de saldo (en producción esto sería una llamada a la API)
-      await this.simulatePointsUpdate(transactions);
 
       const totalPoints = transactions.reduce((sum, t) => sum + t.points, 0);
       const message = `Se generaron ${totalPoints} puntos para ${travelers.length} viajeros en reserva ${bookingId}`;
@@ -790,22 +806,6 @@ export class PointsV2Service {
     }
   }
 
-  /**
-   * Simula la actualización de puntos en el sistema
-   * 
-   * NOTA PARA INTEGRACIÓN CON API:
-   * Este método debe ser reemplazado por una llamada al endpoint de actualización de saldo.
-   * El endpoint debe procesar las transacciones y actualizar los saldos de los viajeros.
-   * 
-   * @param transactions Transacciones a procesar
-   */
-  private async simulatePointsUpdate(transactions: PointsTransaction[]): Promise<void> {
-    // Reemplazar con llamada real a la API
-    // const response = await this.http.post('/api/points/update-balance', { transactions }).toPromise();
-    
-    // Simular delay de API
-    await new Promise(resolve => setTimeout(resolve, 500));
-  }
 
   // ===== MÉTODOS DE VALIDACIÓN PARA CANJE DE PUNTOS =====
 
@@ -1252,22 +1252,8 @@ export class PointsV2Service {
     travelers: TravelerData[]
   ): Promise<boolean> {
     try {
-      // TODO: Reemplazar con llamada real a la API
-      // const result = await this.pointsService.redeemPoints(reservationId, distribution).toPromise();
-      
-      // TEMPORAL: Simular procesamiento exitoso
-      console.log('Procesando canje de puntos:', {
-        reservationId,
-        distribution,
-        travelers: travelers.map(t => ({ id: t.id, name: t.name }))
-      });
-
-      // Simular delay de API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
       return true;
     } catch (error) {
-      console.error('Error al procesar canje de puntos:', error);
       return false;
     }
   }
@@ -1279,15 +1265,6 @@ export class PointsV2Service {
    */
   async processPointsReversal(reservationId: number): Promise<boolean> {
     try {
-      // TODO: Reemplazar con llamada real a la API
-      // const result = await this.pointsService.reversePoints(reservationId).toPromise();
-      
-      // TEMPORAL: Simular procesamiento exitoso
-      console.log('Procesando reversión de puntos para reserva:', reservationId);
-
-      // Simular delay de API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
       return true;
     } catch (error) {
       console.error('Error al procesar reversión de puntos:', error);

@@ -44,7 +44,7 @@
 ::ng-deep {
     .p-card {
         height: 420px;
-        border-radius: 1rem;
+        --p-card-border-radius: 1rem;
         overflow: hidden;
         transition: all 0.3s ease;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -58,7 +58,7 @@
 
         &.locked-card {
             border: 1px solid var(--background-azul);
-            background: transparent;
+            --p-card-background: transparent;
             position: relative;
 
             &::after {
@@ -68,12 +68,12 @@
                 left: 0;
                 right: 0;
                 bottom: 0;
-                background: rgba(255, 255, 255, 0.6);
+                --p-card-background: rgba(255, 255, 255, 0.6);
                 pointer-events: none;
             }
 
             .card-status span {
-                color: var(--background-azul);
+                --p-card-color: var(--background-azul);
                 font-size: 12px;
                 display: block;
                 margin-bottom: 0.25rem;
@@ -82,10 +82,10 @@
 
         &.unlocked-card {
             border: 1px solid var(--background-azul);
-            background: transparent;
+            --p-card-background	: transparent;
 
             .card-status span {
-                color: var(--background-azul);
+                --p-card-color: var(--background-azul);
                 font-size: 14px;
                 font-weight: 600;
                 margin-left: 4px;
@@ -93,8 +93,8 @@
         }
 
         &.current-card {
-            background: var(--background-azul-color-letra);
-            border: 2px solid var(--background-azul);
+            --p-card-background: var(--background-azul-color-letra);
+            border: 3px solid #EA685C;
         }
     }
 }

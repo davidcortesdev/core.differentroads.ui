@@ -145,12 +145,13 @@ export class PointsSectionV2Component implements OnInit {
     this.membershipCards = this.membershipCards.map(card => {
       // Verificar si la categoría está desbloqueada basándose en viajes completados
       const isUnlocked = this.currentTrips >= (card.minTrips || 0);
+      const isCurrent = card.category === this.currentCategory;
       
       return {
         ...card,
         unlocked: isUnlocked,
-        isCurrent: card.category === this.currentCategory,
-        type: card.category === this.currentCategory ? 'Tu categoría actual' : 'Categoría de viajero'
+        isCurrent: isCurrent,
+        type: isCurrent ? 'Tu categoría actual' : 'Categoría de viajero'
       };
     });
   }

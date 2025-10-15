@@ -419,9 +419,8 @@ export class PointsV2Service {
     // Mapear el nombre de la categoría a TravelerCategory
     const categoryMap: { [key: string]: TravelerCategory } = {
       'Trotamundos': TravelerCategory.TROTAMUNDOS,
-      'Viajante': TravelerCategory.VIAJERO,
-      'Nómada': TravelerCategory.NOMADA,
-      'Nomada': TravelerCategory.NOMADA
+      'Viajero': TravelerCategory.VIAJERO,
+      'Nómada': TravelerCategory.NOMADA
     };
 
     const category = categoryMap[apiCategory.name] || TravelerCategory.TROTAMUNDOS;
@@ -456,7 +455,7 @@ export class PointsV2Service {
     ];
 
     // Agregar beneficios específicos según la categoría
-    if (apiCategory.name === 'Viajante') {
+    if (apiCategory.name === 'Viajero') {
       benefits.push('Upgrade gratuito de habitación', 'Tours exclusivos', 'Prioridad en reservas');
     } else if (apiCategory.name === 'Nómada') {
       benefits.push('Suite gratuita en cada viaje', 'Tours privados', 'Concierge personal', 'Acceso VIP a eventos');
@@ -481,9 +480,8 @@ export class PointsV2Service {
   private mapNameToCategory(name: string): TravelerCategory {
     const categoryMap: { [key: string]: TravelerCategory } = {
       'Trotamundos': TravelerCategory.TROTAMUNDOS,
-      'Viajante': TravelerCategory.VIAJERO,
-      'Nómada': TravelerCategory.NOMADA,
-      'Nomada': TravelerCategory.NOMADA
+      'Viajero': TravelerCategory.VIAJERO,
+      'Nómada': TravelerCategory.NOMADA
     };
     return categoryMap[name] || TravelerCategory.TROTAMUNDOS;
   }

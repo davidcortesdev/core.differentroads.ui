@@ -74,6 +74,10 @@ const routes: Routes = [
         path: 'reservation/:reservationId/:paymentId',
         component: NewReservationComponent,
       },
+      {
+        path: 'reservation/:reservationId',
+        component: NewReservationComponent,
+      },
     ],
   },
 
@@ -117,9 +121,14 @@ const routes: Routes = [
       // ========================================
       // RESERVATION ROUTES
       // ========================================
-      // Versión nueva
+      // Versión nueva con paymentId
       {
         path: 'reservation/:reservationId/:paymentId',
+        component: NewReservationComponent,
+      },
+      // Versión nueva sin paymentId (opcional)
+      {
+        path: 'reservation/:reservationId',
         component: NewReservationComponent,
       },
 

@@ -31,6 +31,7 @@ import awsconfig from '../../src/aws-exports';
 import { providePrimeNG } from 'primeng/config';
 import MyPreset from './mytheme';
 import { MessageService } from 'primeng/api';
+import { es } from 'primelocale/es.json';
 
 // ========================================
 // PRIMENG MODULES
@@ -252,6 +253,7 @@ import { RetailerService } from './core/services/retailer/retailer.service';
 import { SummaryTableComponent } from './components/summary-table/summary-table.component';
 import { TourGridV2Component } from './pages/home-v2/components/tour-grid-v2/tour-grid-v2.component';
 import { DatepickerRangeV2Component } from './shared/components/datepicker-range-v2/datepicker-range-v2.component';
+
 
 // ========================================
 // LOCALE & FACTORY FUNCTIONS
@@ -515,23 +517,13 @@ export function HttpLoaderFactory(http: HttpClient) {
     // PRIMENG CONFIGURATION
     // ========================================
     providePrimeNG({
+      translation: es,
       theme: {
         preset: MyPreset,
         options: {
           darkModeSelector: false || 'none',
         },
       },
-      translation: {
-        dayNames: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
-        dayNamesShort: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
-        dayNamesMin: ['D', 'L', 'M', 'X', 'J', 'V', 'S'],
-        monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
-        monthNamesShort: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
-        today: 'Hoy',
-        clear: 'Limpiar',
-        firstDayOfWeek: 1,
-        dateFormat: 'dd/mm/yy'
-      }
     }),
 
     // ========================================

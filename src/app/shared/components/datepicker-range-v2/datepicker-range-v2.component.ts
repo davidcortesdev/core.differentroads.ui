@@ -39,7 +39,8 @@ export class DatepickerRangeV2Component implements ControlValueAccessor {
   datePresets = [
     { label: '±2 días', value: 2 },
     { label: '±3 días', value: 3 },
-    { label: '±7 días', value: 7 }
+    { label: '±7 días', value: 7 },
+    { label: '±30 días', value: 30 }
   ];
 
   // ControlValueAccessor

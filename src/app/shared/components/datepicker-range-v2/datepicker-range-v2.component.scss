@@ -1,5 +1,8 @@
 p-iftaLabel {
-    --p-iftalabel-color:red;}
+    --p-iftalabel-color:#002b57;
+    --p-iftalabel-font-size: var(--font-label);
+    --p-iftalabel-font-weight: 500;	
+}
 
 .date-presets {
     display: flex;

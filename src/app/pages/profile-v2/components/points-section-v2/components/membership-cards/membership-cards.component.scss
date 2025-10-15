@@ -58,7 +58,7 @@
 
         &.locked-card {
             border: 1px solid var(--background-azul);
-            --p-card-background: transparent;
+            background: transparent;
             position: relative;
 
             &::after {
@@ -68,12 +68,12 @@
                 left: 0;
                 right: 0;
                 bottom: 0;
-                --p-card-background: rgba(255, 255, 255, 0.6);
+                background: rgba(255, 255, 255, 0.6);
                 pointer-events: none;
             }
 
             .card-status span {
-                --p-card-color: var(--background-azul);
+                color: var(--background-azul);
                 font-size: 12px;
                 display: block;
                 margin-bottom: 0.25rem;
@@ -82,10 +82,10 @@
 
         &.unlocked-card {
             border: 1px solid var(--background-azul);
-            --p-card-background	: transparent;
+            background	: transparent;
 
             .card-status span {
-                --p-card-color: var(--background-azul);
+                color: var(--background-azul);
                 font-size: 14px;
                 font-weight: 600;
                 margin-left: 4px;
@@ -93,7 +93,7 @@
         }
 
         &.current-card {
-            --p-card-background: var(--background-azul-color-letra);
+            background: var(--background-azul-color-letra);
             border: 3px solid #EA685C;
         }
     }

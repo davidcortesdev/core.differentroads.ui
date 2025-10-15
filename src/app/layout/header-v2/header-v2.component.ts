@@ -433,8 +433,8 @@ export class HeaderV2Component implements OnInit, OnDestroy {
               label: tag.name,
               command: () => {
                 this.onMenuInteraction(tag.name);
-                // Construir slug completo: /menuTipo/menuItem/tagCode
-                const tagSlug = this.textToSlug(tag.code);
+                // Construir slug completo: /menuTipo/menuItem/tagName
+                const tagSlug = this.textToSlug(tag.name);
                 const fullSlug = this.buildFullSlug(
                   menuTipoSlug, 
                   menuItemSlug, 
@@ -463,7 +463,8 @@ export class HeaderV2Component implements OnInit, OnDestroy {
     return menuItems.map((item) => {
       const menuTipo = this.menuTipoById[item.menuTipoId];
       const menuTipoSlug = menuTipo?.slug || '';
-      const menuItemSlug = item.slugContenido;
+      // Si slugContenido está vacío, usar el name convertido a slug
+      const menuItemSlug = item.slugContenido || this.textToSlug(item.name);
       
       // Construir slug completo: /menuTipo.slug/menuItem.slug
       const fullSlug = this.buildFullSlug(menuTipoSlug, menuItemSlug);

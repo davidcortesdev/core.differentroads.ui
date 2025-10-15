@@ -83,23 +83,18 @@
 
   <!-- Tours list section -->
   <div class="tours-list">
-    <p-dataView #dv [value]="displayedTours" [layout]="layout">
-      <ng-template let-tours #grid>
-        <div class="grid">
-          <div
-            *ngFor="let tour of displayedTours; let i = index"
-            class="col-12 sm:col-6 lg:col-3"
-          >
-            <app-tour-card
-              [tourData]="tour"
-              [showScalapayPrice]="true"
-              [itemListId]="getListId()"
-              [itemListName]="getListName()"
-              [index]="i + 1"
-            ></app-tour-card>
-          </div>
-        </div>
-      </ng-template>
-    </p-dataView>
+    <!-- Mostrar indicador de carga mientras se buscan tours -->
+    <div *ngIf="isLoadingTours" class="loading-message">
+      <p>Buscando tours...</p>
+    </div>
+    
+    <!-- Mostrar grid de tours cuando la búsqueda ha finalizado -->
+    <app-tour-grid-v2
+      *ngIf="!isLoadingTours"
+      [tourIds]="tourIds"
+      [itemListId]="getListId()"
+      [itemListName]="getListName()"
+      [showScalapayPrice]="true"
+    ></app-tour-grid-v2>
   </div>
 </div>

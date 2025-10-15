@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { AnalyticsService, EcommerceItem } from '../../../core/services/analytics/analytics.service';
 import { AuthenticateService } from '../../../core/services/auth/auth-service.service';
 import { Title } from '@angular/platform-browser';
+import { TourSearchParams, TourService } from '../../../core/services/tour/tour.service';
 
 interface ITour {
   imageUrl: string;
@@ -67,16 +68,20 @@ export class ToursComponent implements OnInit, OnChanges {
 
   // Core data
   displayedTours: ITour[] = [];
+  tourIds: number[] = []; // IDs de tours obtenidos de la búsqueda
   destination: string = '';
   minDate: Date | null = null;
   maxDate: Date | null = null;
   tourType: string = '';
+  flexDays?: number;
+  isLoadingTours: boolean = false;
 
   constructor(
     private readonly titleService: Title,
     private readonly route: ActivatedRoute,
     private readonly analyticsService: AnalyticsService,
-    private readonly authService: AuthenticateService
+    private readonly authService: AuthenticateService,
+    private readonly tourService: TourService
   ) {}
 
   ngOnInit() {
@@ -96,6 +101,7 @@ export class ToursComponent implements OnInit, OnChanges {
         ? new Date(params['returnDate'])
         : null;
       this.tourType = params['tripType'] || '';
+      this.flexDays = params['flexDays'] ? Number(params['flexDays']) : undefined;
       this.selectedOrderOption = params['order'] || 'next-departures';
 
       // Handle initialization of filter options from query params
@@ -140,21 +146,35 @@ export class ToursComponent implements OnInit, OnChanges {
   }
 
   loadTours() {
-    const filters = {
-      destination: this.destination,
-      minDate: this.minDate ? this.minDate.toISOString() : '',
-      maxDate: this.maxDate ? this.maxDate.toISOString() : '',
-      tourType: this.tourType,
-      price: this.selectedPriceOption,
-      tourSeason: this.selectedSeasonOption,
-      month: this.selectedMonthOption,
-      sort: this.selectedOrderOption,
-      ...(this.selectedTagOption.length > 0 && {
-        tags: this.selectedTagOption,
-      }),
+    // Construir filtros
+    // Normalizar el texto para evitar problemas con acentos (p.ej. "Japón" -> "Japon")
+    const normalizedSearch = this.destination
+      ? this.destination.normalize('NFD').replace(/\p{Diacritic}/gu, '')
+      : undefined;
+
+    const searchParams: TourSearchParams = {
+      searchText: normalizedSearch || undefined,
+      startDate: this.minDate ? this.minDate.toISOString() : undefined,
+      endDate: this.maxDate ? this.maxDate.toISOString() : undefined,
+      tripTypeId: this.tourType ? Number(this.tourType) : undefined,
+      //flexDays: this.flexDays,
     };
 
-//TODO: pendiente de desarrollar proximamente
+    // Realizar búsqueda de tours usando el servicio
+    this.isLoadingTours = true;
+    
+    this.tourService.search(searchParams).subscribe({
+      next: (results) => {        
+        // Extraer los IDs de los resultados
+        this.tourIds = results.map(result => result.tourId);
+        this.isLoadingTours = false;
+      },
+      error: (error) => {
+        console.error('Error al buscar tours:', error);
+        this.tourIds = [];
+        this.isLoadingTours = false;
+      }
+    });
   }
 
   // Filter change methods

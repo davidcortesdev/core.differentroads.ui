@@ -3,7 +3,6 @@
     --container-w: 80%;
     --container-max: 1200px;
     --space-sm: 0.5rem;
-    --space-md: 1rem;
     --space-lg: 2rem;
     --min-w-mob: 7rem;
     --min-w-desk: 11rem;
@@ -11,7 +10,6 @@
     --input-h-mob: 45px;
     --font-xs: 12px;
     --font-sm: 14px;
-    --font-md: 16px;
     --font-label: 16px;
     --font-mob: 14px;
     --radius: 10px;
@@ -47,6 +45,41 @@
         padding: var(--space-lg);
         width: var(--container-w);
         max-width: var(--container-max);
+        
+        .validation-error {
+            background-color: rgba(239, 68, 68, 0.95);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            animation: slideDown 0.3s ease-out;
+            
+            i {
+                font-size: 1.25rem;
+                flex-shrink: 0;
+            }
+            
+            span {
+                flex: 1;
+            }
+            
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        }
     }
 
     &-form {
@@ -60,6 +93,53 @@
             p-iftalabel .label {
                 padding-left: 0.9rem;
             }
+
+            position: relative;
+            .suggestions-panel {
+                position: absolute;
+                top: 48px;
+                left: 0;
+                right: 0;
+                z-index: var(--z-index-dropdown);
+                background: #ffffff;
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+                padding: 4px;
+
+                .suggestion {
+                    width: 100%;
+                    text-align: left;
+                    padding: 10px 14px;
+                    background: #ffffff;
+                    border: none;
+                    cursor: pointer;
+                    font-size: var(--font-sm);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-radius: 6px;
+
+                    &:hover {
+                        background: var(--primary-color-light);
+                    }
+
+                    .suggestion-name {
+                        color: var(--text-color);
+                        font-weight: 500;
+                    }
+
+                    .type-badge {
+                        background: var(--primary-color-light);
+                        color: var(--primary-color);
+                        font-weight: 600;
+                        font-size: 0.75rem;
+                        padding: 2px 8px;
+                        border-radius: 999px;
+                        text-transform: capitalize;
+                    }
+                }
+            }
         }
 
         .input-md {
@@ -72,9 +152,14 @@
             min-width: 9rem;
         }
 
+        .input-range {
+            flex: 1.2;
+            min-width: 18rem;
+        }
+
         div {
             p-iftaLabel {
-                border: none;
+                position: relative;
             }
 
             p-floatlabel {
@@ -92,7 +177,6 @@
                 }
 
                 .input-text {
-                    border: none;
                     font-size: var(--font-sm);
                     width: 100%;
                 }
@@ -145,7 +229,7 @@
 
         .p-select {
             height: 52px;
-            border-radius: 0px;
+            border-radius: 0;
             border-right: none;
             position: relative !important;
 
@@ -154,17 +238,15 @@
             }
         }
 
-        // Input styles
         .p-inputtext {
             border-radius: 0;
             font-size: var(--font-sm);
 
             &.radius {
-                border-radius: 50px 0px 0px 50px;
+                border-radius: 50px 0 0 50px;
             }
         }
 
-        // Button styles - Desktop
         .p-button-icon,
         .p-button-icon:before,
         .p-button-icon:after {
@@ -176,13 +258,12 @@
             width: var(--btn-w-desk);
 
             &.radius {
-                border-radius: 0px 50px 50px 0px;
+                border-radius: 0 50px 50px 0;
                 height: 3.28rem;
             }
         }
     }
 
-    // Responsive styles
     @media screen and (min-width: 993px) and (max-width: 1366px) {
         &-form {
             .input-lg {
@@ -198,6 +279,11 @@
             .input-sm {
                 flex: 0.6;
                 min-width: 7rem;
+            }
+
+            .input-range {
+                flex: 1.2;
+                min-width: 18rem;
             }
 
             div p-floatlabel {
@@ -225,6 +311,12 @@
                 .input-md {
                     flex: 0 0 48%;
                     margin-bottom: 10px;
+                }
+
+                .input-range {
+                    flex: 0 0 100%;
+                    margin-bottom: 10px;
+                    min-width: auto;
                 }
 
                 .input-sm {
@@ -297,7 +389,6 @@
                     }
                 }
 
-                // Remove icon margin for tablets
                 .p-button-icon,
                 .p-button-icon:before,
                 .p-button-icon:after {
@@ -327,7 +418,8 @@
 
                 .input-lg,
                 .input-md,
-                .input-sm {
+                .input-sm,
+                .input-range {
                     flex: 0 0 100%;
                     width: 100%;
                     min-width: var(--min-w-mob);
@@ -382,7 +474,6 @@
                 text-align: center;
             }
 
-            // Remove icon margin for mobile and center it
             .p-button-icon,
             .p-button-icon:before,
             .p-button-icon:after {
@@ -395,16 +486,6 @@
 
         .label {
             font-size: var(--font-mob) !important;
-        }
-    }
-
-    @media screen and (max-width: 400px) {
-        &-form {
-            .input-lg,
-            .input-md,
-            .input-sm {
-                min-width: var(--min-w-mob);
-            }
         }
     }
 
@@ -475,7 +556,7 @@
         }
     }
 }
-// Panel styles
+
 ::ng-deep .custom-select-panel {
     width: 100% !important;
     box-sizing: border-box !important;

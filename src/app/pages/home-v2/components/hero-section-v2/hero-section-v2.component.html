@@ -24,6 +24,12 @@
   />
   
   <div class="hero-search">
+    <!-- Mensaje de validación de fechas -->
+    <div class="validation-error" *ngIf="showDateValidationError">
+      <i class="pi pi-exclamation-triangle"></i>
+      <span>{{ dateValidationMessage }}</span>
+    </div>
+    
     <div class="hero-form">
       <div class="input-lg">
         <p-iftalabel>
@@ -34,37 +40,27 @@
             placeholder="Pais, Ciudad, Ofertas, Destinos, todo lo que se te ocurra..."
             class="input-text radius firstElement"
             fluid="true"
-            [(ngModel)]="destinationInput"
+            [ngModel]="destinationInput"
+            (ngModelChange)="onDestinationInput($event)"
             (keyup.enter)="searchTrips()"
           />
           <label for="destionationInput" class="label">¿Cuál es tu próximo destino?</label>
+          <!-- Panel de sugerencias -->
+          <div class="suggestions-panel" *ngIf="showSuggestions">
+            <button type="button" class="suggestion" *ngFor="let s of suggestions" (click)="onSuggestionClick(s)">
+              <span class="suggestion-name">{{ s.name }}</span>
+              <span *ngIf="s.type" class="type-badge">{{ s.type }}</span>
+            </button>
+          </div>
         </p-iftalabel>
       </div>
-      <div class="input-sm">
-        <p-iftaLabel>
-          <p-datepicker
-            [(ngModel)]="departureDate"
-            [showIcon]="false"
-            id="departureDateInput"
-            fluid="true"
-            placeholder="DD/MM/AAAA"
-          >
-          </p-datepicker>
-          <label for="departureDateInput" class="label">Ida</label>
-        </p-iftaLabel>
-      </div>
-      <div class="input-sm">
-        <p-iftaLabel>
-          <p-datepicker
-            [(ngModel)]="returnDate"
-            [showIcon]="false"
-            id="returnDateInput"
-            fluid="true"
-            placeholder="DD/MM/AAAA"
-          >
-          </p-datepicker>
-          <label for="returnDateInput" class="label">Vuelta</label>
-        </p-iftaLabel>
+      <div class="input-range">
+        <app-datepicker-range-v2
+          [(ngModel)]="rangeDates"
+          [minDate]="minDate"
+          [maxDate]="maxDate"
+          (flexibilityChange)="onFlexibilityChange($event)"
+        ></app-datepicker-range-v2>
       </div>
       <div class="input-md">
         <p-iftaLabel>

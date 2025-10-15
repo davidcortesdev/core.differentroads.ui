@@ -165,6 +165,7 @@ export class PaymentManagementComponent
 
   // Configuration flags
   @Input() showTransfer25Option: boolean = false; // Por defecto oculto para otros proyectos
+  @Input() isTourOperator: boolean = false; // Indica si es TO (Tour Operator)
 
   // State management
   readonly dropdownStates = {
@@ -208,7 +209,23 @@ export class PaymentManagementComponent
     }
 
     // Si transfer25 no está habilitado pero está seleccionado, limpiar la selección
-    if (this.paymentState.type === 'transfer25' && !this.showTransfer25Option) {
+    if (this.paymentState.type === 'transfer25' && !this.shouldShowTransfer25Option) {
+      this.paymentState.type = null;
+      this.updateDropdownVisibility();
+    }
+
+    // Si cambió a TO, limpiar selecciones no permitidas
+    if (this.isTourOperator) {
+      if (this.paymentState.type !== 'transfer25') {
+        // Si es TO y no está seleccionado transfer25, limpiar selección
+        this.paymentState.type = null;
+        this.paymentState.method = null;
+        this.updateDropdownVisibility();
+      }
+    }
+
+    // Si ya no es TO, limpiar transfer25 si showTransfer25Option es false
+    if (!this.isTourOperator && !this.showTransfer25Option && this.paymentState.type === 'transfer25') {
       this.paymentState.type = null;
       this.updateDropdownVisibility();
     }
@@ -416,6 +433,9 @@ export class PaymentManagementComponent
   }
 
   get shouldShowDepositOption(): boolean {
+    // Si es TO, no mostrar la opción de depósito
+    if (this.isTourOperator) return false;
+
     if (!this.departureDate) return false;
 
     const today = new Date();
@@ -462,9 +482,13 @@ export class PaymentManagementComponent
   /**
    * Controla si se debe mostrar la opción de pagos a plazos (Scalapay)
    * Para vuelos de Amadeus: Siempre se permite Scalapay
+   * Si es TO, no se muestra
    */
   get shouldShowInstallmentsOption(): boolean {
-    return true; // Siempre mostrar Scalapay para todos los tipos de vuelos
+    // Si es TO, no mostrar la opción de pagos a plazos
+    if (this.isTourOperator) return false;
+
+    return true; // Siempre mostrar Scalapay para todos los tipos de vuelos (excepto TO)
   }
 
   /**
@@ -474,15 +498,48 @@ export class PaymentManagementComponent
     return this.totalPrice * 0.25;
   }
 
+  /**
+   * Controla si se debe mostrar la opción de pago completo
+   * Si es TO, no se muestra. Si no es TO, siempre se muestra
+   */
+  get shouldShowCompleteOption(): boolean {
+    return !this.isTourOperator;
+  }
+
+  /**
+   * Controla si se debe mostrar la opción de transferencia del 25%
+   * Si es TO, siempre se muestra (cuando showTransfer25Option es true)
+   * Si no es TO, se muestra según showTransfer25Option
+   */
+  get shouldShowTransfer25Option(): boolean {
+    return this.isTourOperator || this.showTransfer25Option;
+  }
+
   // Payment type management
   selectPaymentType(type: PaymentType): void {
+    // Si es TO y se intenta seleccionar algo que no sea transfer25, no hacer nada
+    if (this.isTourOperator && type !== 'transfer25') {
+      console.log('⚠️ TO solo puede seleccionar transfer25');
+      return;
+    }
+
     // Si se intenta seleccionar depósito pero no está disponible, no hacer nada
     if (type === 'deposit' && !this.shouldShowDepositOption) {
       return;
     }
 
     // Si se intenta seleccionar transfer25 pero no está habilitado, no hacer nada
-    if (type === 'transfer25' && !this.showTransfer25Option) {
+    if (type === 'transfer25' && !this.shouldShowTransfer25Option) {
+      return;
+    }
+
+    // Si se intenta seleccionar complete pero no está disponible, no hacer nada
+    if (type === 'complete' && !this.shouldShowCompleteOption) {
+      return;
+    }
+
+    // Si se intenta seleccionar installments pero no está disponible, no hacer nada
+    if (type === 'installments' && !this.shouldShowInstallmentsOption) {
       return;
     }
 

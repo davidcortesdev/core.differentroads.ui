@@ -19,6 +19,7 @@
     <div *ngIf="dropdownStates.main" class="payment-panels">
       <!-- Complete Payment Panel -->
       <p-panel 
+        *ngIf="shouldShowCompleteOption"
         styleClass="payment-panel" 
         [ngClass]="{ 'selected': paymentType === 'complete' }" 
         (click)="selectPaymentType('complete')"
@@ -100,7 +101,7 @@
 
       <!-- Transfer 25% Payment Panel - Solo visible en TO -->
       <p-panel 
-        *ngIf="showTransfer25Option"
+        *ngIf="shouldShowTransfer25Option"
         styleClass="payment-panel" 
         [ngClass]="{ 'selected': paymentType === 'transfer25' }" 
         (click)="selectPaymentType('transfer25')"
@@ -122,7 +123,7 @@
   </section>
 
   <!-- Transfer 25% Upload Section - Solo visible en touroperacion -->
-  <section *ngIf="paymentType === 'transfer25' && showTransfer25Option" class="transfer25-section">
+  <section *ngIf="paymentType === 'transfer25' && shouldShowTransfer25Option" class="transfer25-section">
     <div class="header-container">
       <div class="title-with-icon">
         <span class="title">Adjuntar justificante de transferencia</span>

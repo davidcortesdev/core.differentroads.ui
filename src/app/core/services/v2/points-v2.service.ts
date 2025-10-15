@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MessageService } from 'primeng/api';
+import { Observable, of, map, catchError } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 import { MembershipCard, PointsRecord, TravelerCategory, CategoryConfig, PointsTransaction, TravelerPointsSummary, TransactionType, TransactionCategory } from '../../models/v2/profile-v2.model';
 
 // Interfaces para canje de puntos
@@ -43,6 +46,7 @@ export interface PointsDistributionSummary {
   providedIn: 'root'
 })
 export class PointsV2Service {
+  private readonly AUTH_API_URL = environment.usersApiUrl;
 
   // ===== CONSTANTES DEL SISTEMA =====
   private readonly POINTS_PERCENTAGE = 0.03; // 3% del PVP
@@ -50,6 +54,7 @@ export class PointsV2Service {
   private readonly MAX_POINTS_PER_PERSON = 50; // Máximo 50€ por persona por reserva
 
   constructor(
+    private http: HttpClient,
     private sanitizer: DomSanitizer,
     private messageService: MessageService
   ) { }
@@ -300,84 +305,181 @@ export class PointsV2Service {
     return this.sanitizer.bypassSecurityTrustHtml(content);
   }
 
-  // ===== DATOS MOCK PARA DESARROLLO =====
+
 
   /**
-   * Genera datos mock de puntos para un usuario
-   * @param userId ID del usuario para generar datos únicos
-   * @returns Array de registros de puntos
+   * Obtiene el saldo de puntos desde la API
+   * @param travelerId ID del viajero
+   * @returns Observable con el saldo de puntos
    */
-  generateMockPoints(userId: string): PointsRecord[] {
-    
-    // Simular viajes con diferentes importes para calcular puntos realistas
-    const mockBookings = [
-      { id: '001', tour: 'Tour por Italia - Roma, Florencia y Venecia', amount: 2500, date: new Date('2024-01-15') },
-      { id: '002', tour: 'Aventura en Tailandia', amount: 2000, date: new Date('2024-02-20') },
-      { id: '003', tour: 'Escapada a París', amount: 1500, date: new Date('2024-03-10') },
-      { id: '004', tour: 'Tour por Grecia', amount: 0, date: new Date('2024-04-05') },
-      { id: '005', tour: 'Viaje a Japón', amount: 0, date: new Date('2024-05-12') }
-    ];
-
-    const pointsRecords: PointsRecord[] = [];
-
-    // Generar puntos por viajes (3% del importe) - solo para viajes con amount > 0
-    mockBookings.forEach(booking => {
-      if (booking.amount > 0) {
-        const points = this.calculatePointsFromAmount(booking.amount);
-        pointsRecords.push({
-          booking: booking.id,
-          category: 'Viaje',
-          concept: 'Puntos por reserva de tour',
-          tour: booking.tour,
-          points: points,
-          type: 'Acumular',
-          amount: booking.amount,
-          date: booking.date,
-          status: 'Confirmed'
-        });
-      }
-    });
-
-    // Simular algunos canjes de puntos
-    const redemptions = [
-      { id: 'R001', concept: 'Descuento aplicado en reserva', points: 10, amount: 10, date: new Date('2024-03-25') },
-      { id: 'R002', concept: 'Descuento en actividad opcional', points: 8, amount: 8, date: new Date('2024-04-15') },
-      { id: 'R003', concept: 'Descuento en seguro de viaje', points: 1, amount: 1, date: new Date('2024-05-20') }
-    ];
-
-    redemptions.forEach(redemption => {
-      pointsRecords.push({
-        booking: redemption.id,
-        category: 'Canje',
-        concept: redemption.concept,
-        tour: 'Descuento aplicado',
-        points: redemption.points,
-        type: 'Canjear',
-        amount: redemption.amount,
-        date: redemption.date,
-        status: 'Confirmed'
-      });
-    });
-
-    // Ordenar por fecha (más recientes primero)
-    return pointsRecords.sort((a, b) => {
-      const dateA = a.date ? new Date(a.date).getTime() : 0;
-      const dateB = b.date ? new Date(b.date).getTime() : 0;
-      return dateB - dateA;
-    });
+  getLoyaltyBalanceFromAPI(travelerId: string): Observable<any> {
+    return this.http.get<any>(`${this.AUTH_API_URL}/LoyaltyBalance/${travelerId}`).pipe(
+      catchError(error => {
+        console.error('Error loading loyalty balance from API:', error);
+        return of(null);
+      })
+    );
   }
 
   /**
-   * Genera cantidad mock de viajes para un usuario
-   * @param userId ID del usuario
-   * @returns Número de viajes completados
+   * Obtiene las transacciones de puntos desde la API
+   * @param travelerId ID del viajero
+   * @returns Observable con las transacciones
    */
-  generateMockTripsCount(userId: string): number {
-    // Simular cantidad de viajes basada en el userId
-    
-    
-    // Retornar 5 viajes para que le falte 1 para ser Nómada (6 viajes)
-    return 5;
+  getLoyaltyTransactionsFromAPI(travelerId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.AUTH_API_URL}/LoyaltyTransaction/${travelerId}`).pipe(
+      catchError(error => {
+        console.error('Error loading loyalty transactions from API:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Obtiene los tipos de transacciones desde la API
+   * @returns Observable con los tipos de transacciones
+   */
+  getLoyaltyTransactionTypesFromAPI(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.AUTH_API_URL}/LoyaltyTransactionType`).pipe(
+      catchError(error => {
+        console.error('Error loading loyalty transaction types from API:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Obtiene las categorías de membresía desde la API
+   * @returns Observable con las tarjetas de membresía
+   */
+  getMembershipCardsFromAPI(): Observable<MembershipCard[]> {
+    return this.http.get<any[]>(`${this.AUTH_API_URL}/LoyaltyProgramCategory`).pipe(
+      map(apiCategories => apiCategories.map(category => this.mapApiCategoryToMembershipCard(category))),
+      catchError(error => {
+        console.error('Error loading membership categories from API:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Carga todos los datos de puntos desde la API
+   * @param travelerId ID del viajero
+   * @returns Observable con todos los datos
+   */
+  loadAllPointsDataFromAPI(travelerId: string): Observable<{
+    balance: any;
+    transactions: any[];
+    transactionTypes: any[];
+    membershipCards: MembershipCard[];
+  }> {
+    return this.http.get<any>(`${this.AUTH_API_URL}/LoyaltyBalance/${travelerId}`).pipe(
+      map(balance => ({
+        balance,
+        transactions: [], // Se puede implementar si hay endpoint específico
+        transactionTypes: [], // Se puede implementar si hay endpoint específico
+        membershipCards: [] // Se cargará por separado
+      })),
+      catchError(error => {
+        console.error('Error loading all points data from API:', error);
+        return of({
+          balance: null,
+          transactions: [],
+          transactionTypes: [],
+          membershipCards: []
+        });
+      })
+    );
+  }
+
+  /**
+   * Convierte una categoría del API a MembershipCard
+   * @param apiCategory Categoría desde el API
+   * @returns MembershipCard
+   */
+  private mapApiCategoryToMembershipCard(apiCategory: any): MembershipCard {
+    // Mapear el nombre de la categoría a TravelerCategory
+    const categoryMap: { [key: string]: TravelerCategory } = {
+      'Trotamundos': TravelerCategory.TROTAMUNDOS,
+      'Viajante': TravelerCategory.VIAJERO,
+      'Nómada': TravelerCategory.NOMADA,
+      'Nomada': TravelerCategory.NOMADA
+    };
+
+    const category = categoryMap[apiCategory.name] || TravelerCategory.TROTAMUNDOS;
+
+    return {
+      type: 'Categoría de viajero',
+      title: apiCategory.name,
+      image: `https://picsum.photos/300/200?random=${apiCategory.id}`,
+      benefits: this.sanitizeHtml(this.generateBenefitsFromCategory(apiCategory)),
+      unlocked: true, // Todas las categorías están desbloqueadas para mostrar
+      isCurrent: false, // Se determinará en el componente
+      requirement: this.generateRequirementFromCategory(apiCategory),
+      minTrips: this.getMinTripsForCategory(category),
+      maxTrips: this.getMaxTripsForCategory(category),
+      remainingTrips: 0,
+      statusText: 'Desbloqueado',
+      category: category,
+      maxDiscount: apiCategory.redeemCapPerBookingAmount || 0,
+      color: this.getCategoryColor(category),
+      icon: this.getCategoryIcon(category)
+    };
+  }
+
+  /**
+   * Genera beneficios basados en la categoría del API
+   */
+  private generateBenefitsFromCategory(apiCategory: any): string {
+    const benefits = [
+      `Descuento del ${apiCategory.accrualRatePercent}% en todos los tours`,
+      'Acceso prioritario a nuevas rutas',
+      'Asistencia 24/7'
+    ];
+
+    // Agregar beneficios específicos según la categoría
+    if (apiCategory.name === 'Viajante') {
+      benefits.push('Upgrade gratuito de habitación', 'Tours exclusivos', 'Prioridad en reservas');
+    } else if (apiCategory.name === 'Nómada') {
+      benefits.push('Suite gratuita en cada viaje', 'Tours privados', 'Concierge personal', 'Acceso VIP a eventos');
+    }
+
+    benefits.push(`Canje máximo de ${apiCategory.redeemCapPerBookingAmount}€ por compra`);
+
+    return benefits.map(benefit => `• ${benefit}`).join('<br>');
+  }
+
+  /**
+   * Genera requisitos basados en la categoría del API
+   */
+  private generateRequirementFromCategory(apiCategory: any): string {
+    const minTrips = this.getMinTripsForCategory(this.mapNameToCategory(apiCategory.name));
+    return `Completar ${minTrips} viajes para desbloquear`;
+  }
+
+  /**
+   * Mapea el nombre de la categoría a TravelerCategory
+   */
+  private mapNameToCategory(name: string): TravelerCategory {
+    const categoryMap: { [key: string]: TravelerCategory } = {
+      'Trotamundos': TravelerCategory.TROTAMUNDOS,
+      'Viajante': TravelerCategory.VIAJERO,
+      'Nómada': TravelerCategory.NOMADA,
+      'Nomada': TravelerCategory.NOMADA
+    };
+    return categoryMap[name] || TravelerCategory.TROTAMUNDOS;
+  }
+
+  /**
+   * Obtiene el color por defecto para una categoría
+   */
+  private getCategoryColor(category: TravelerCategory): string {
+    const colors: { [key in TravelerCategory]: string } = {
+      [TravelerCategory.TROTAMUNDOS]: '#4A90E2',
+      [TravelerCategory.VIAJERO]: '#7B68EE',
+      [TravelerCategory.NOMADA]: '#FFD700'
+    };
+    return colors[category] || '#4A90E2';
   }
 
   /**

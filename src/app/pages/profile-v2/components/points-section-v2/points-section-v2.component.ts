@@ -28,30 +28,109 @@ export class PointsSectionV2Component implements OnInit {
   }
 
   ngOnInit(): void {
-    this.generateMockData();
+    this.loadData();
+  }
+
+  private loadData(): void {
+    this.isLoading = true;
+    
+    // Cargar todos los datos desde la API
+    this.pointsService.getLoyaltyBalanceFromAPI(this.userId).subscribe({
+      next: (balance) => {
+        console.log('Loyalty Balance from API:', balance);
+        
+        // Cargar tarjetas de membresía
+        this.pointsService.getMembershipCardsFromAPI().subscribe({
+          next: (cards) => {
+            this.membershipCards = cards;
+            
+            // Cargar transacciones de puntos
+            this.pointsService.getLoyaltyTransactionsFromAPI(this.userId).subscribe({
+              next: (transactions) => {
+                console.log('Loyalty Transactions from API:', transactions);
+                
+                // Cargar tipos de transacciones
+                this.pointsService.getLoyaltyTransactionTypesFromAPI().subscribe({
+                  next: (transactionTypes) => {
+                    console.log('Loyalty Transaction Types from API:', transactionTypes);
+                    
+                    // Procesar datos de la API
+                    this.processApiData(balance, transactions, transactionTypes);
+                    
+                    this.isLoading = false;
+                  },
+                  error: (error) => {
+                    console.error('Error loading transaction types:', error);
+                    this.processApiData(balance, transactions, []);
+                    this.isLoading = false;
+                  }
+                });
+              },
+              error: (error) => {
+                console.error('Error loading transactions:', error);
+                this.processApiData(balance, [], []);
+                this.isLoading = false;
+              }
+            });
+          },
+          error: (error) => {
+            console.error('Error loading membership cards:', error);
+            this.processApiData(balance, [], []);
+            this.isLoading = false;
+          }
+        });
+      },
+      error: (error) => {
+        console.error('Error loading loyalty balance:', error);
+      }
+    });
+  }
+
+  private processApiData(balance: any, transactions: any[], transactionTypes: any[]): void {
+    // Procesar saldo de puntos
+    if (balance) {
+      this.totalPoints = balance.totalPoints || balance.balance || 0;
+    } else {
+      // Fallback a datos mock
+      this.totalPoints = this.pointsService.calculateTotalPoints(this.points);
+    }
+
+    // Procesar transacciones
+    if (transactions && transactions.length > 0) {
+      this.points = this.mapApiTransactionsToPoints(transactions);
+    }
+    
+    // Determinar categoría basada en viajes
+    this.currentCategory = this.pointsService.determineCategoryByTrips(this.currentTrips);
+    
+    // Marcar la categoría actual en las tarjetas
+    this.updateCurrentCategoryInCards();
+    
+    // Generar resumen de puntos
+    this.generatePointsSummary();
+  }
+
+  private mapApiTransactionsToPoints(transactions: any[]): PointsRecord[] {
+    return transactions.map(transaction => ({
+      booking: transaction.bookingId || transaction.booking || '',
+      category: transaction.category || 'General',
+      concept: transaction.concept || transaction.description || '',
+      tour: transaction.tourName || transaction.tour || '',
+      points: transaction.points || transaction.amount || 0,
+      type: transaction.type === 'EARNED' || transaction.type === 'ACCRUAL' ? 'Acumular' : 'Canjear',
+      amount: transaction.amount || 0,
+      date: new Date(transaction.date || transaction.createdAt),
+      status: transaction.status || 'Confirmed'
+    }));
   }
 
 
-  private generateMockData(): void {
-    this.isLoading = true;
-    
-    // Simular carga de datos
-    setTimeout(() => {
-      this.points = this.pointsService.generateMockPoints(this.userId);
-      this.totalPoints = this.pointsService.calculateTotalPoints(this.points);
-      this.currentTrips = this.pointsService.generateMockTripsCount(this.userId);
-      
-      // Determinar categoría basada en viajes
-      this.currentCategory = this.pointsService.determineCategoryByTrips(this.currentTrips);
-      
-      // Generar tarjetas con la categoría actual
-      this.membershipCards = this.pointsService.generateMockMembershipCards(this.currentCategory);
-      
-      // Generar resumen de puntos
-      this.generatePointsSummary();
-      
-      this.isLoading = false;
-    }, 1000);
+  private updateCurrentCategoryInCards(): void {
+    this.membershipCards = this.membershipCards.map(card => ({
+      ...card,
+      isCurrent: card.category === this.currentCategory,
+      type: card.category === this.currentCategory ? 'Tu categoría actual' : 'Categoría de viajero'
+    }));
   }
 
   private generatePointsSummary(): void {

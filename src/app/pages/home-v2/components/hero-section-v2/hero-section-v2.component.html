@@ -60,13 +60,14 @@
           [minDate]="minDate"
           [maxDate]="maxDate"
           (flexibilityChange)="onFlexibilityChange($event)"
+          (datesChange)="onDatesChange($event)"
         ></app-datepicker-range-v2>
       </div>
       <div class="input-md">
         <p-iftaLabel>
           <p-select
             [options]="tripTypes"
-            [(ngModel)]="selectedTripType"
+            [(ngModel)]="selectedTripTypeId"
             id="tripTypeInput"
             placeholder="Seleccionar tipo"
             [style]="{'width': '100%'}"
@@ -77,7 +78,7 @@
             [inputId]="'tripTypeInput'"
             fluid="true"
             optionLabel="name"
-            optionValue="code"
+            optionValue="id"
           >
           </p-select>
           <label for="tripTypeInput" class="label">Tipo de viaje</label>

@@ -1,7 +1,8 @@
 <div class="datepicker-range-container">
-  <p-iftaLabel [ngClass]="{ 'has-range': formattedRange }">
+  <p-iftaLabel>
     <p-datepicker
-      [(ngModel)]="rangeDates2"
+      [(ngModel)]="rangeDates"
+      (ngModelChange)="onDateChange()"
       selectionMode="range"
       [showIcon]="true"
       [iconDisplay]="'input'"
@@ -36,8 +37,5 @@
       </ng-template>
     </p-datepicker>
     <label [for]="inputId" class="label">{{ label }}</label>
-    <div class="input-overlay-text" *ngIf="formattedRange">
-      {{ formattedRange }} <span *ngIf="flexibilitySuffix">{{ flexibilitySuffix }}</span>
-    </div>
   </p-iftaLabel>
 </div>

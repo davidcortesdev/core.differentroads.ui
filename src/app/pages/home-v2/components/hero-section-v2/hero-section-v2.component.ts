@@ -309,19 +309,17 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
 
     this.router.navigate(['/tours'], { queryParams });
 
-    // Opcional: adelantar pre-búsqueda para analytics/UX (IDs de tours)
-    try {
-      const startDate = queryParams.departureDate ? new Date(queryParams.departureDate).toISOString() : undefined;
-      const endDate = queryParams.returnDate ? new Date(queryParams.returnDate).toISOString() : undefined;
-      const tripTypeId = this.selectedTripType ? Number(this.selectedTripType) : undefined;
-      this.tourService.search({
-        searchText: this.destinationInput || undefined,
-        startDate,
-        endDate,
-        tripTypeId,
-        //flexDays: this.dateFlexibility || undefined,
-      }).subscribe({ next: () => {}, error: () => {} });
-    } catch {}
+    // Pre-búsqueda opcional con todos los parámetros
+    const startDate = queryParams.departureDate ? new Date(queryParams.departureDate).toISOString() : undefined;
+    const endDate = queryParams.returnDate ? new Date(queryParams.returnDate).toISOString() : undefined;
+    const tripTypeId = this.selectedTripType ? Number(this.selectedTripType) : undefined;
+    this.tourService.searchWithScore({
+      searchText: this.destinationInput || undefined,
+      startDate,
+      endDate,
+      tripTypeId,
+      flexDays: this.dateFlexibility || undefined,
+    }).subscribe({ next: () => {}, error: () => {} });
   }
 
   /**
@@ -329,6 +327,13 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
    */
   onFlexibilityChange(flexibility: number): void {
     this.dateFlexibility = flexibility;
+  }
+
+  /**
+   * Recibir cambios de fechas desde el datepicker
+   */
+  onDatesChange(dates: Date[]): void {
+    this.rangeDates = dates || [];
   }
 
   /**

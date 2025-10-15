@@ -1,5 +1,5 @@
-import { Component, Input, Output, EventEmitter, forwardRef } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Component, Input, Output, EventEmitter, forwardRef, OnInit } from '@angular/core';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
   selector: 'app-datepicker-range-v2',
@@ -14,7 +14,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
     }
   ]
 })
-export class DatepickerRangeV2Component implements ControlValueAccessor {
+export class DatepickerRangeV2Component implements OnInit {
   @Input() label: string = 'Fechas de viaje';
   @Input() inputId: string = 'rangeDateInput';
   @Input() placeholder: string = 'Seleccionar fechas de viaje';
@@ -25,14 +25,11 @@ export class DatepickerRangeV2Component implements ControlValueAccessor {
     return date;
   })();
 
-  /**
-   * Emite cuando cambia la flexibilidad de fechas
-   */
   @Output() flexibilityChange = new EventEmitter<number>();
+  @Output() datesChange = new EventEmitter<Date[]>();
 
   // Datos del rango
   rangeDates: Date[] | undefined;
-  rangeDates2: Date[] | undefined;
   dateFlexibility: number = 0;
 
   // Presets de flexibilidad
@@ -47,6 +44,12 @@ export class DatepickerRangeV2Component implements ControlValueAccessor {
   private onChange: (value: Date[]) => void = () => {};
   private onTouched: () => void = () => {};
 
+  constructor() {}
+
+  ngOnInit(): void {
+    // Inicialización del componente
+  }
+
   /**
    * Aplicar flexibilidad de fechas (±X días)
    */
@@ -54,7 +57,6 @@ export class DatepickerRangeV2Component implements ControlValueAccessor {
     this.dateFlexibility = flexibility;
     this.flexibilityChange.emit(flexibility);
   }
-
 
   /**
    * Texto de rango seleccionado para previsualizar
@@ -96,13 +98,26 @@ export class DatepickerRangeV2Component implements ControlValueAccessor {
    * Manejar cambio de fechas
    */
   onDateChange(): void {
-    //this.onChange(this.rangeDates);
+    this.onChange(this.rangeDates || []);
+    this.onTouched();
+    this.datesChange.emit(this.rangeDates || []);
+  }
+
+  /**
+   * Limpiar fechas seleccionadas
+   */
+  clearDates(): void {
+    this.rangeDates = undefined;
+    this.dateFlexibility = 0;
+    this.datesChange.emit([]);
+    this.flexibilityChange.emit(0);
+    this.onChange([]);
     this.onTouched();
   }
 
   // ControlValueAccessor implementation
   writeValue(value: Date[]): void {
-    this.rangeDates = value || [];
+    this.rangeDates = value && value.length > 0 ? value : undefined;
   }
 
   registerOnChange(fn: (value: Date[]) => void): void {

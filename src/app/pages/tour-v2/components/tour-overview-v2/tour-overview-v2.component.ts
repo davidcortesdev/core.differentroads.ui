@@ -245,7 +245,7 @@ export class TourOverviewV2Component implements OnInit {
         // Cargar tags para cada tipo de relación visible
         visibleRelationTypeIds.forEach(relationTypeId => {
           tagObservables.push(
-            this.tourTagService.getAll({ tourId: id, tourTagRelationTypeId: relationTypeId }).pipe(
+            this.tourTagService.getAll({ tourId: [id], tourTagRelationTypeId: relationTypeId }).pipe(
               catchError(error => {
                 console.warn(`⚠️ No se encontraron tags para relationTypeId ${relationTypeId}:`, error);
                 return of([]);

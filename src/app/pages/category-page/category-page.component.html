@@ -1,0 +1,35 @@
+<div class="category-page-container">
+  <div class="category-header">
+    <h1>{{ formatSlug(categorySlug || menuItemSlug) }}</h1>
+    <p class="breadcrumb">
+      <a routerLink="/home-v2">Inicio</a>
+      <span class="separator">/</span>
+      <span>{{ formatSlug(menuTipoSlug) }}</span>
+      <span class="separator" *ngIf="menuItemSlug">/</span>
+      <span *ngIf="menuItemSlug">{{ formatSlug(menuItemSlug) }}</span>
+      <span class="separator" *ngIf="categorySlug">/</span>
+      <span *ngIf="categorySlug">{{ formatSlug(categorySlug) }}</span>
+    </p>
+  </div>
+
+  <div class="category-content" *ngIf="!isLoading">
+    <div class="content-info">
+      <p>Mostrando tours para <strong>{{ formatSlug(categorySlug || menuItemSlug) }}</strong></p>
+    </div>
+
+    <!-- TODO: Aquí irá el componente de tours filtrados por tag/categoría -->
+    <div class="tours-placeholder">
+      <p>Componente de tours para categorías (en desarrollo)</p>
+      <p class="debug-info">
+        Tipo: {{ menuTipoSlug }}<br>
+        Item: {{ menuItemSlug }}<br>
+        Categoría: {{ categorySlug }}
+      </p>
+    </div>
+  </div>
+
+  <div class="loading-state" *ngIf="isLoading">
+    <p-progressSpinner></p-progressSpinner>
+  </div>
+</div>
+

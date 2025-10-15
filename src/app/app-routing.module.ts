@@ -47,6 +47,8 @@ import { ProfileV2Component } from './pages/profile-v2/profile-v2.component';
 // PAGE COMPONENTS - OTHER PAGES
 // ========================================
 import { NotFoundComponent } from './pages/not-found/not-found.component';
+import { DestinationPageComponent } from './pages/destination-page/destination-page.component';
+import { CategoryPageComponent } from './pages/category-page/category-page.component';
 import { BasicPageComponent } from './pages/basic-page/basic-page.component';
 import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
 import { ContentPageComponent } from './pages/content-page/content-page.component';
@@ -142,6 +144,20 @@ const routes: Routes = [
       // FEATURES ROUTES
       // ========================================
       { path: 'reviews/:periodTkId', component: ReviewSurveyComponent },
+
+      // ========================================
+      // DYNAMIC MENU ROUTES - DESTINATIONS
+      // ========================================
+      { 
+        path: ':menuTipoSlug/:menuItemSlug/:destinationSlug', 
+        component: DestinationPageComponent,
+        data: { type: 'destination' }
+      },
+      { 
+        path: ':menuTipoSlug/:menuItemSlug', 
+        component: CategoryPageComponent,
+        data: { type: 'category' }
+      },
 
       // ========================================
       // 404 - NOT FOUND (debe ser siempre la última)

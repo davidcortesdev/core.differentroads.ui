@@ -1,0 +1,35 @@
+<div class="destination-page-container">
+  <div class="destination-header">
+    <h1>{{ formatSlug(destinationSlug || menuItemSlug) }}</h1>
+    <p class="breadcrumb">
+      <a routerLink="/home-v2">Inicio</a>
+      <span class="separator">/</span>
+      <span>{{ formatSlug(menuTipoSlug) }}</span>
+      <span class="separator" *ngIf="menuItemSlug">/</span>
+      <span *ngIf="menuItemSlug">{{ formatSlug(menuItemSlug) }}</span>
+      <span class="separator" *ngIf="destinationSlug">/</span>
+      <span *ngIf="destinationSlug">{{ formatSlug(destinationSlug) }}</span>
+    </p>
+  </div>
+
+  <div class="destination-content" *ngIf="!isLoading">
+    <div class="content-info">
+      <p>Mostrando tours para <strong>{{ formatSlug(destinationSlug || menuItemSlug) }}</strong></p>
+    </div>
+
+    <!-- TODO: Aquí irá el componente de tours filtrados por ubicación -->
+    <div class="tours-placeholder">
+      <p>Componente de tours para destinos (en desarrollo)</p>
+      <p class="debug-info">
+        Tipo: {{ menuTipoSlug }}<br>
+        Item: {{ menuItemSlug }}<br>
+        Destino: {{ destinationSlug }}
+      </p>
+    </div>
+  </div>
+
+  <div class="loading-state" *ngIf="isLoading">
+    <p-progressSpinner></p-progressSpinner>
+  </div>
+</div>
+

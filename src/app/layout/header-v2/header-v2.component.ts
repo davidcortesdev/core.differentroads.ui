@@ -41,10 +41,10 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   userMenuItems?: MenuItem[];
   combinedMenuItems?: ExtendedMenuItem[];
 
-  // Almacenar países por continente para submenús
-  countriesByContinent: { [continentId: number]: Location[] } = {};
-  // Almacenar tags por categoría para submenús
-  tagsByCategory: { [categoryId: number]: ITagResponse[] } = {};
+  // Almacenar países por menuItemId (clave única)
+  countriesByMenuItem: { [menuItemId: number]: Location[] } = {};
+  // Almacenar tags por menuItemId (clave única)
+  tagsByMenuItem: { [menuItemId: number]: ITagResponse[] } = {};
   // Almacenar tipos de menú por ID
   menuTipoById: { [menuTipoId: number]: IMenuTipoResponse } = {};
   isLoggedIn = false;
@@ -265,9 +265,10 @@ export class HeaderV2Component implements OnInit, OnDestroy {
     if (this.leftMenuItems && this.leftMenuItems.length > 0) {
       this.leftMenuItems.forEach((menuItem, index) => {
         const entidadId = menuItem.entidadId;
+        const menuItemId = parseInt(menuItem.id || '0');
         const menuTipoId = this.getMenuTipoIdFromMenuItem(menuItem);
 
-        if (!entidadId || !menuTipoId) {
+        if (!entidadId || !menuItemId || !menuTipoId) {
           return;
         }
 
@@ -278,9 +279,9 @@ export class HeaderV2Component implements OnInit, OnDestroy {
 
         // Verificar el code del menuTipo para determinar qué cargar
         if (menuTipo.code === 'CONTINENTE') {
-          this.loadCountriesForContinent(entidadId);
+          this.loadCountriesForContinent(entidadId, menuItemId);
         } else if (menuTipo.code === 'CATEGORIA') {
-          this.loadTagsForCategory(entidadId);
+          this.loadTagsForCategory(entidadId, menuItemId);
         }
       });
     }
@@ -296,7 +297,7 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   /**
    * Carga los países para un continente específico
    */
-  private loadCountriesForContinent(continentId: number): void {
+  private loadCountriesForContinent(continentId: number, menuItemId: number): void {
     this.tourLocationService
       .getCountriesWithToursByContinent(continentId)
       .pipe(takeUntil(this.destroy$))
@@ -305,7 +306,7 @@ export class HeaderV2Component implements OnInit, OnDestroy {
           const countryIds = countries.map(
             (country) => (country as any).countryId
           );
-          this.loadCountryNames(countryIds, continentId);
+          this.loadCountryNames(countryIds, menuItemId);
         },
         error: (error: any) => {
           // Error handling
@@ -316,16 +317,16 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   /**
    * Carga los tags para una categoría específica
    */
-  private loadTagsForCategory(categoryId: number): void {
+  private loadTagsForCategory(categoryId: number, menuItemId: number): void {
     this.tagService
       .getAll({ tagCategoryId: categoryId, isActive: true })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (tags: ITagResponse[]) => {
-          if (!this.tagsByCategory[categoryId]) {
-            this.tagsByCategory[categoryId] = [];
+          if (!this.tagsByMenuItem[menuItemId]) {
+            this.tagsByMenuItem[menuItemId] = [];
           }
-          this.tagsByCategory[categoryId] = tags;
+          this.tagsByMenuItem[menuItemId] = tags;
           this.updateMenusWithTags();
         },
         error: (error: any) => {
@@ -335,9 +336,9 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga los nombres de países por sus IDs y los agrupa por continente
+   * Carga los nombres de países por sus IDs y los agrupa por menuItemId
    */
-  private loadCountryNames(countryIds: number[], continentId?: number): void {
+  private loadCountryNames(countryIds: number[], menuItemId: number): void {
     if (countryIds.length === 0) {
       return;
     }
@@ -345,12 +346,10 @@ export class HeaderV2Component implements OnInit, OnDestroy {
     countryIds.forEach((countryId, index) => {
       this.locationNetService.getLocationById(countryId).subscribe({
         next: (location) => {
-          if (continentId && !this.countriesByContinent[continentId]) {
-            this.countriesByContinent[continentId] = [];
+          if (!this.countriesByMenuItem[menuItemId]) {
+            this.countriesByMenuItem[menuItemId] = [];
           }
-          if (continentId) {
-            this.countriesByContinent[continentId].push(location);
-          }
+          this.countriesByMenuItem[menuItemId].push(location);
 
           if (index === countryIds.length - 1) {
             this.updateMenusWithCountries();
@@ -367,7 +366,7 @@ export class HeaderV2Component implements OnInit, OnDestroy {
    * Actualiza los menús con la información de países cargada
    */
   private updateMenusWithCountries(): void {
-    const hasCountries = Object.keys(this.countriesByContinent).length > 0;
+    const hasCountries = Object.keys(this.countriesByMenuItem).length > 0;
 
     if (!hasCountries) {
       return;
@@ -375,30 +374,37 @@ export class HeaderV2Component implements OnInit, OnDestroy {
 
     if (this.leftMenuItems && this.leftMenuItems.length > 0) {
       this.leftMenuItems = this.leftMenuItems.map((menuItem) => {
-        const continentId = (menuItem as any).id;
+        const menuItemId = parseInt(menuItem.id || '0');
+        const menuTipoId = menuItem.menuTipoId;
 
-        if (continentId && this.countriesByContinent[parseInt(continentId)]) {
-          const countries = this.countriesByContinent[parseInt(continentId)];
-          const menuTipoSlug = menuItem.menuTipoSlug || '';
-          const menuItemSlug = menuItem.menuItemSlug || '';
+        // Verificar si este menuItem es de tipo CONTINENTE
+        if (menuItemId && menuTipoId) {
+          const menuTipo = this.menuTipoById[menuTipoId];
+          
+          // Solo actualizar si es de tipo CONTINENTE y tiene países cargados
+          if (menuTipo?.code === 'CONTINENTE' && this.countriesByMenuItem[menuItemId]) {
+            const countries = this.countriesByMenuItem[menuItemId];
+            const menuTipoSlug = menuItem.menuTipoSlug || '';
+            const menuItemSlug = menuItem.menuItemSlug || '';
 
-          return {
-            ...menuItem,
-            items: countries.map((country: Location) => ({
-              label: country.name,
-              command: () => {
-                this.onMenuInteraction(country.name);
-                // Construir slug completo: /menuTipo/menuItem/countryName
-                const countrySlug = this.textToSlug(country.name);
-                const fullSlug = this.buildFullSlug(
-                  menuTipoSlug, 
-                  menuItemSlug, 
-                  countrySlug
-                );
-                this.router.navigate([fullSlug]);
-              },
-            })),
-          };
+            return {
+              ...menuItem,
+              items: countries.map((country: Location) => ({
+                label: country.name,
+                command: () => {
+                  this.onMenuInteraction(country.name);
+                  // Construir slug completo: /menuTipo/menuItem/countryName
+                  const countrySlug = this.textToSlug(country.name);
+                  const fullSlug = this.buildFullSlug(
+                    menuTipoSlug, 
+                    menuItemSlug, 
+                    countrySlug
+                  );
+                  this.router.navigate([fullSlug]);
+                },
+              })),
+            };
+          }
         }
 
         return menuItem;
@@ -412,7 +418,7 @@ export class HeaderV2Component implements OnInit, OnDestroy {
    * Actualiza los menús con la información de tags cargada
    */
   private updateMenusWithTags(): void {
-    const hasTags = Object.keys(this.tagsByCategory).length > 0;
+    const hasTags = Object.keys(this.tagsByMenuItem).length > 0;
 
     if (!hasTags) {
       return;
@@ -420,30 +426,37 @@ export class HeaderV2Component implements OnInit, OnDestroy {
 
     if (this.leftMenuItems && this.leftMenuItems.length > 0) {
       this.leftMenuItems = this.leftMenuItems.map((menuItem) => {
-        const categoryId = menuItem.entidadId;
+        const menuItemId = parseInt(menuItem.id || '0');
+        const menuTipoId = menuItem.menuTipoId;
 
-        if (categoryId && this.tagsByCategory[categoryId]) {
-          const tags = this.tagsByCategory[categoryId];
-          const menuTipoSlug = menuItem.menuTipoSlug || '';
-          const menuItemSlug = menuItem.menuItemSlug || '';
+        // Verificar si este menuItem es de tipo CATEGORIA
+        if (menuItemId && menuTipoId) {
+          const menuTipo = this.menuTipoById[menuTipoId];
+          
+          // Solo actualizar si es de tipo CATEGORIA y tiene tags cargados
+          if (menuTipo?.code === 'CATEGORIA' && this.tagsByMenuItem[menuItemId]) {
+            const tags = this.tagsByMenuItem[menuItemId];
+            const menuTipoSlug = menuItem.menuTipoSlug || '';
+            const menuItemSlug = menuItem.menuItemSlug || '';
 
-          return {
-            ...menuItem,
-            items: tags.map((tag: ITagResponse) => ({
-              label: tag.name,
-              command: () => {
-                this.onMenuInteraction(tag.name);
-                // Construir slug completo: /menuTipo/menuItem/tagName
-                const tagSlug = this.textToSlug(tag.name);
-                const fullSlug = this.buildFullSlug(
-                  menuTipoSlug, 
-                  menuItemSlug, 
-                  tagSlug
-                );
-                this.router.navigate([fullSlug]);
-              },
-            })),
-          };
+            return {
+              ...menuItem,
+              items: tags.map((tag: ITagResponse) => ({
+                label: tag.name,
+                command: () => {
+                  this.onMenuInteraction(tag.name);
+                  // Construir slug completo: /menuTipo/menuItem/tagName
+                  const tagSlug = this.textToSlug(tag.name);
+                  const fullSlug = this.buildFullSlug(
+                    menuTipoSlug, 
+                    menuItemSlug, 
+                    tagSlug
+                  );
+                  this.router.navigate([fullSlug]);
+                },
+              })),
+            };
+          }
         }
 
         return menuItem;

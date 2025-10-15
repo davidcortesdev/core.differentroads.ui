@@ -42,40 +42,6 @@ export class DatepickerRangeV2Component implements ControlValueAccessor {
     { label: '±7 días', value: 7 }
   ];
 
-  // Configuración de traducción para el datepicker
-  spanishLocale = {
-    dayNames: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
-    dayNamesShort: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
-    dayNamesMin: ['D', 'L', 'M', 'X', 'J', 'V', 'S'],
-    monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
-    monthNamesShort: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
-    chooseYear: 'Elegir Año',
-    chooseMonth: 'Elegir Mes',
-    chooseDate: 'Elegir Fecha',
-    prevDecade: 'Década Anterior',
-    nextDecade: 'Década Siguiente',
-    prevYear: 'Año Anterior',
-    nextYear: 'Año Siguiente',
-    prevMonth: 'Mes Anterior',
-    nextMonth: 'Mes Siguiente',
-    prevHour: 'Hora Anterior',
-    nextHour: 'Hora Siguiente',
-    prevMinute: 'Minuto Anterior',
-    nextMinute: 'Minuto Siguiente',
-    prevSecond: 'Segundo Anterior',
-    nextSecond: 'Segundo Siguiente',
-    am: 'am',
-    pm: 'pm',
-    today: 'Hoy',
-    weekHeader: 'Sem',
-    firstDayOfWeek: 1,
-    dateFormat: 'dd/mm/yy',
-    accept: 'Aceptar',
-    reject: 'Rechazar',
-    clear: 'Limpiar',
-    apply: 'Aplicar'
-  };
-
   // ControlValueAccessor
   private onChange: (value: Date[]) => void = () => {};
   private onTouched: () => void = () => {};

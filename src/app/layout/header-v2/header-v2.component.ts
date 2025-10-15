@@ -16,6 +16,7 @@ import { AnalyticsService } from '../../core/services/analytics/analytics.servic
 interface ExtendedMenuItem extends MenuItem {
   menuTipoSlug?: string;
   menuItemSlug?: string;
+  entidadId?: number;
 }
 
 @Component({
@@ -258,21 +259,21 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   private loadContinentsFromLeftMenu(): void {
     if (this.leftMenuItems && this.leftMenuItems.length > 0) {
       this.leftMenuItems.forEach((menuItem, index) => {
-        const continentId = (menuItem as any).id as string;
+        const continentId = menuItem.entidadId;
 
         if (!continentId) {
           return;
         }
 
         this.tourLocationService
-          .getCountriesWithToursByContinent(parseInt(continentId))
+          .getCountriesWithToursByContinent(continentId)
           .pipe(takeUntil(this.destroy$))
           .subscribe({
             next: (countries: CountryWithToursResponse[]) => {
               const countryIds = countries.map(
                 (country) => (country as any).countryId
               );
-              this.loadCountryNames(countryIds, parseInt(continentId));
+              this.loadCountryNames(countryIds, continentId);
             },
             error: (error: any) => {
               // Error handling
@@ -376,6 +377,7 @@ export class HeaderV2Component implements OnInit, OnDestroy {
         id: item.id.toString(),
         menuTipoSlug: menuTipoSlug,
         menuItemSlug: menuItemSlug,
+        entidadId: item.entidadId,
         command: () => {
           this.onMenuInteraction(item.name);
           this.router.navigate([fullSlug]);

@@ -7,10 +7,9 @@ export interface TagCreate {
   code: string;
   name: string;
   description?: string;
-  id: number;
-  rkId: string;
-  tagCategoryId: number;
-  languageId: number;
+  tkId?: string;
+  tagCategoryId?: number | null;
+  languageId?: number | null;
   isActive?: boolean;
 }
 
@@ -18,10 +17,9 @@ export interface TagUpdate {
   code: string;
   name: string;
   description?: string;
-  id: number;
-  rkId: string;
-  tagCategoryId: number;
-  languageId: number;
+  tkId?: string;
+  tagCategoryId?: number | null;
+  languageId?: number | null;
   isActive?: boolean;
 }
 
@@ -30,9 +28,9 @@ export interface ITagResponse {
   name: string;
   description: string;
   id: number;
-  rkId: string;
-  tagCategoryId: number;
-  languageId: number;
+  tkId: string;
+  tagCategoryId: number | null;
+  languageId: number | null;
   isActive: boolean;
 }
 
@@ -44,10 +42,11 @@ export interface TagFilters {
   name?: string;
   description?: string;
   id?: number;
-  rkId?: string;
+  tkId?: string;
   tagCategoryId?: number;
   languageId?: number;
   isActive?: boolean;
+  useExactMatchForStrings?: boolean;
 }
 
 @Injectable({

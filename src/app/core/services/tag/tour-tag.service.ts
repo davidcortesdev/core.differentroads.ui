@@ -30,33 +30,17 @@ export interface ITourTagResponse {
  */
 export interface TourTagFilters {
   id?: number;
-  tourId?: number;
-  tagId?: number;
+  tourId?: number[];
+  tagId?: number[];
   tourTagRelationTypeId?: number;
-  displayOrder?: number;
+  useExactMatchForStrings?: boolean;
 }
 
 /**
- * Interfaz para la respuesta de tours por tipo de etiqueta.
+ * Interfaz para la respuesta de tags con tours.
  */
-export interface ToursByTagTypeResponse {
-  id: number;
-  name: string;
-  description?: string;
-  tagTypeId: number;
-  tagTypeName: string;
-  tourCount: number;
-  tours?: TourSummary[];
-}
-
-/**
- * Interfaz para resumen de tour.
- */
-export interface TourSummary {
-  id: number;
-  name: string;
-  code?: string;
-  isActive: boolean;
+export interface TagWithToursResponse {
+  tagId: number;
 }
 
 @Injectable({
@@ -79,10 +63,16 @@ export class TourTagService {
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          params = params.set(
-            key.charAt(0).toUpperCase() + key.slice(1),
-            value.toString()
-          );
+          const capitalizedKey = key.charAt(0).toUpperCase() + key.slice(1);
+          
+          // Manejar arrays (tourId y tagId)
+          if (Array.isArray(value)) {
+            value.forEach((item) => {
+              params = params.append(capitalizedKey, item.toString());
+            });
+          } else {
+            params = params.set(capitalizedKey, value.toString());
+          }
         }
       });
     }
@@ -147,13 +137,13 @@ export class TourTagService {
   }
 
   /**
-   * Obtiene todos los tours relacionados con etiquetas de un tipo específico.
-   * @param tagTypeId ID del tipo de etiqueta.
-   * @returns Lista de tours agrupados por etiquetas del tipo especificado.
+   * Obtiene todos los tags relacionados con tours visibles a partir del ID de una categoría de tag.
+   * @param tagCategoryId ID de la categoría de tag
+   * @returns Lista de tags con tours
    */
-  getToursByTagType(tagTypeId: number): Observable<ToursByTagTypeResponse[]> {
-    return this.http.get<ToursByTagTypeResponse[]>(
-      `${this.API_URL}/tours-by-tagtype/${tagTypeId}`
+  getTagsWithTours(tagCategoryId: number): Observable<TagWithToursResponse[]> {
+    return this.http.get<TagWithToursResponse[]>(
+      `${this.API_URL}/tags-with-tours/${tagCategoryId}`
     );
   }
 

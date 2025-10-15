@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { MembershipCard, PointsRecord, TravelerCategory, TravelerPointsSummary } from '../../../../core/models/v2/profile-v2.model';
 import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
+import { BookingsServiceV2 } from '../../../../core/services/v2/bookings-v2.service';
 
 
 @Component({
@@ -22,7 +23,8 @@ export class PointsSectionV2Component implements OnInit {
   isLoading: boolean = true;
 
   constructor(
-    private pointsService: PointsV2Service
+    private pointsService: PointsV2Service,
+    private bookingsService: BookingsServiceV2
   ) {
     this.points = [];
   }
@@ -54,60 +56,77 @@ export class PointsSectionV2Component implements OnInit {
                   next: (transactionTypes) => {
                     console.log('Loyalty Transaction Types from API:', transactionTypes);
                     
-                    // Procesar datos de la API
-                    this.processApiData(balance, transactions, transactionTypes);
-                    
-                    this.isLoading = false;
+                    // Cargar historial de viajes completados
+                    this.bookingsService.getTravelHistory(parseInt(this.userId)).subscribe({
+                      next: (travelHistory) => {
+                        console.log('Travel History from API:', travelHistory);
+                        
+                        // Procesar datos de la API
+                        this.processApiData(balance, transactions, transactionTypes, travelHistory);
+      
+      this.isLoading = false;
+                      },
+                      error: (error) => {
+                        console.error('Error loading travel history:', error);
+                        this.processApiData(balance, transactions, transactionTypes, []);
+                        this.isLoading = false;
+                      }
+                    });
                   },
                   error: (error) => {
                     console.error('Error loading transaction types:', error);
-                    this.processApiData(balance, transactions, []);
+                    this.processApiData(balance, transactions, [], []);
                     this.isLoading = false;
                   }
                 });
               },
               error: (error) => {
                 console.error('Error loading transactions:', error);
-                this.processApiData(balance, [], []);
+                this.processApiData(balance, [], [], []);
                 this.isLoading = false;
               }
             });
           },
           error: (error) => {
             console.error('Error loading membership cards:', error);
-            this.processApiData(balance, [], []);
+            this.processApiData(balance, [], [], []);
             this.isLoading = false;
           }
         });
       },
       error: (error) => {
         console.error('Error loading loyalty balance:', error);
+        this.isLoading = false;
       }
     });
   }
 
-  private processApiData(balance: any, transactions: any[], transactionTypes: any[]): void {
+  private processApiData(balance: any, transactions: any[], transactionTypes: any[], travelHistory: any[]): void {
     // Procesar saldo de puntos
-    if (balance) {
-      this.totalPoints = balance.totalPoints || balance.balance || 0;
-    } else {
-      // Fallback a datos mock
-      this.totalPoints = this.pointsService.calculateTotalPoints(this.points);
-    }
+    this.totalPoints = balance?.totalPoints || balance?.balance || 0;
 
     // Procesar transacciones
-    if (transactions && transactions.length > 0) {
-      this.points = this.mapApiTransactionsToPoints(transactions);
-    }
+    this.points = transactions && transactions.length > 0 
+      ? this.mapApiTransactionsToPoints(transactions) 
+      : [];
+
+    // Procesar historial de viajes
+    this.currentTrips = travelHistory && travelHistory.length > 0 
+      ? this.calculateCompletedTrips(travelHistory) 
+      : 0;
     
-    // Determinar categoría basada en viajes
+    // Determinar categoría basada en viajes reales
     this.currentCategory = this.pointsService.determineCategoryByTrips(this.currentTrips);
     
     // Marcar la categoría actual en las tarjetas
     this.updateCurrentCategoryInCards();
     
-    // Generar resumen de puntos
-    this.generatePointsSummary();
+    // El resumen de puntos se obtiene directamente de la API
+  }
+
+  private calculateCompletedTrips(travelHistory: any[]): number {
+    // Contar solo viajes completados (status 3 = Completed)
+    return travelHistory.filter(trip => trip.reservationStatusId === 3).length;
   }
 
   private mapApiTransactionsToPoints(transactions: any[]): PointsRecord[] {
@@ -133,32 +152,6 @@ export class PointsSectionV2Component implements OnInit {
     }));
   }
 
-  private generatePointsSummary(): void {
-    const incomePoints = this.points
-      .filter(p => p.type === 'income')
-      .reduce((total, point) => total + point.points, 0);
-    
-    const usedPoints = this.points
-      .filter(p => p.type === 'redemption')
-      .reduce((total, point) => total + point.points, 0);
-
-    // Asegurarnos de que currentTrips esté disponible
-    const currentTrips = this.currentTrips;
-    const currentCategory = this.currentCategory;
-    const nextCategory = this.getNextCategory();
-    const pointsToNextCategory = this.calculatePointsToNextCategory();
-
-    this.pointsSummary = {
-      travelerId: this.userId,
-      currentCategory: currentCategory,
-      totalPoints: incomePoints,
-      availablePoints: incomePoints - usedPoints,
-      usedPoints: usedPoints,
-      categoryStartDate: new Date('2024-01-01'), // Mock date
-      nextCategory: nextCategory,
-      pointsToNextCategory: pointsToNextCategory
-    };
-  }
 
   getNextCategory(): TravelerCategory | undefined {
     switch (this.currentCategory) {

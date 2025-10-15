@@ -411,7 +411,7 @@ export class PointsV2Service {
     return {
       type: 'Categoría de viajero',
       title: apiCategory.name,
-      image: `https://picsum.photos/300/200?random=${apiCategory.id}`,
+      image: apiCategory.imageUrl || null,
       benefits: this.sanitizeHtml(this.generateBenefitsFromCategory(apiCategory)),
       unlocked: true, // Todas las categorías están desbloqueadas para mostrar
       isCurrent: false, // Se determinará en el componente
@@ -482,38 +482,6 @@ export class PointsV2Service {
     return colors[category] || '#4A90E2';
   }
 
-  /**
-   * Genera datos mock de tarjetas de membresía basadas en el nuevo sistema
-   * @param currentCategory Categoría actual del viajero
-   * @returns Array de tarjetas de membresía
-   */
-  generateMockMembershipCards(currentCategory: TravelerCategory = TravelerCategory.TROTAMUNDOS): MembershipCard[] {
-    const configs = this.getAllCategoryConfigs();
-    
-    return configs.map(config => {
-      const isCurrent = config.name === currentCategory;
-      const isUnlocked = this.isCategoryUnlocked(config.name, currentCategory);
-      
-      return {
-        type: isCurrent ? 'Tu categoría actual' : 'Categoría de viajero',
-        title: config.displayName,
-        image: `https://picsum.photos/300/200?random=${config.id}`,
-        benefits: this.sanitizeHtml(`<p>${config.benefits.map(benefit => `• ${benefit}`).join('<br>')}</p>`),
-        unlocked: isUnlocked,
-        isCurrent: isCurrent,
-        requirement: config.requirements,
-        minTrips: this.getMinTripsForCategory(config.name),
-        maxTrips: this.getMaxTripsForCategory(config.name),
-        remainingTrips: this.getMinTripsForCategory(config.name),
-        statusText: isUnlocked ? 'Desbloqueado' : 'Bloqueado',
-        // Campos adicionales del nuevo sistema
-        category: config.name,
-        maxDiscount: config.maxDiscountPerPurchase,
-        color: config.color,
-        icon: config.icon
-      };
-    });
-  }
 
   /**
    * Verifica si una categoría está desbloqueada

@@ -7,6 +7,7 @@ import { MenuTipoService, IMenuTipoResponse } from '../../core/services/menu/men
 import { TourLocationService, CountryWithToursResponse } from '../../core/services/tour/tour-location.service';
 import { LocationNetService, Location } from '../../core/services/locations/locationNet.service';
 import { TagService, ITagResponse } from '../../core/services/tag/tag.service';
+import { TourTagService } from '../../core/services/tag/tour-tag.service';
 import { Subject, takeUntil, finalize, filter, debounceTime, distinctUntilChanged, switchMap, of, timeout, forkJoin } from 'rxjs';
 import { Router } from '@angular/router';
 import { AnalyticsService } from '../../core/services/analytics/analytics.service';
@@ -64,6 +65,7 @@ export class HeaderV2Component implements OnInit, OnDestroy {
     private tourLocationService: TourLocationService,
     private locationNetService: LocationNetService,
     private tagService: TagService,
+    private tourTagService: TourTagService,
     private elementRef: ElementRef,
     private renderer: Renderer2,
     private router: Router,
@@ -315,12 +317,26 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga los tags para una categoría específica
+   * Carga los tags para una categoría específica que tengan tours asociados
    */
   private loadTagsForCategory(categoryId: number, menuItemId: number): void {
-    this.tagService
-      .getAll({ tagCategoryId: categoryId, isActive: true })
-      .pipe(takeUntil(this.destroy$))
+    this.tourTagService
+      .getTagsWithTours(categoryId)
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap((tagsWithTours) => {
+          // Extraer los IDs de tags que tienen tours
+          const tagIds = tagsWithTours.map(t => t.tagId);
+          
+          if (tagIds.length === 0) {
+            return of([]);
+          }
+          
+          // Obtener la información completa de cada tag en paralelo
+          const tagRequests = tagIds.map(tagId => this.tagService.getById(tagId));
+          return forkJoin(tagRequests);
+        })
+      )
       .subscribe({
         next: (tags: ITagResponse[]) => {
           if (!this.tagsByMenuItem[menuItemId]) {

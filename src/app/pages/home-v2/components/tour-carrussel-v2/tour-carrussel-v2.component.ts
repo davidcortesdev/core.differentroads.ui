@@ -378,7 +378,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                 : of([]);
 
             // Obtener tags del tour
-            const tagRequest = this.tourTagService.getAll({ tourId }).pipe(
+            const tagRequest = this.tourTagService.getAll({ tourId: [tourId] }).pipe(
               map((tourTags) => {
                 // Por ahora retornamos un array vacío, pero aquí podrías obtener los nombres de los tags
                 return [];

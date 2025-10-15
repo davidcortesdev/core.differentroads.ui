@@ -1237,40 +1237,6 @@ export class PointsV2Service {
     return true;
   }
 
-  // ===== MÉTODOS DE TRANSACCIONES =====
-
-  /**
-   * Procesa el canje de puntos creando las transacciones correspondientes
-   * @param reservationId ID de la reserva
-   * @param distribution Distribución de puntos por viajero
-   * @param travelers Datos de los viajeros
-   * @returns Promise<boolean> - true si el canje fue exitoso
-   */
-  async processPointsRedemption(
-    reservationId: number,
-    distribution: { [travelerId: string]: number },
-    travelers: TravelerData[]
-  ): Promise<boolean> {
-    try {
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }
-
-  /**
-   * Procesa la reversión de puntos al cancelar una reserva
-   * @param reservationId ID de la reserva
-   * @returns Promise<boolean> - true si la reversión fue exitosa
-   */
-  async processPointsReversal(reservationId: number): Promise<boolean> {
-    try {
-      return true;
-    } catch (error) {
-      console.error('Error al procesar reversión de puntos:', error);
-      return false;
-    }
-  }
 
   // ===== MÉTODOS DE UTILIDAD =====
 

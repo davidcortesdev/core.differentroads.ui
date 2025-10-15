@@ -96,6 +96,13 @@ export class HeaderV2Component implements OnInit, OnDestroy {
 
   // Métodos públicos
   /**
+   * Getter que determina si se debe mostrar el skeleton de carga
+   */
+  get isLoadingUserData(): boolean {
+    return this.loadingAuthState || this.isLoadingUser;
+  }
+
+  /**
    * Maneja el click en el chip de usuario (login si no está autenticado)
    */
   onChipClick(): void {

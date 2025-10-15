@@ -17,7 +17,7 @@
       </ng-template>
       <ng-template #end>
         <div class="busqPerfil">
-          <ng-container *ngIf="!isLoadingUser; else userSkeleton">
+          <ng-container *ngIf="!isLoadingUserData; else userSkeleton">
             <p-chip
               [label]="chipLabel"
               [icon]="chipIcon"
@@ -28,7 +28,7 @@
               styleClass="user-chip"
             >
             </p-chip>
-            <p-menu #menu [model]="userMenuItems" [popup]="true" styleClass="user-popup-menu" autoDisplay="true" baseZIndex="1000"/>
+            <p-menu #menu [model]="userMenuItems" [popup]="true" styleClass="user-popup-menu" [baseZIndex]="1000"/>
           </ng-container>
           <ng-template #userSkeleton>
             <p-skeleton width="150px" height="32px" styleClass="user-skeleton"></p-skeleton>

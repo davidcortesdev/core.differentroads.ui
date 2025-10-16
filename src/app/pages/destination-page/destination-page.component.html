@@ -1,0 +1,34 @@
+<div class="destination-page-container">
+  <div class="destination-header">
+    <h1>{{ destinationSlug ? formatSlug(destinationSlug) : 'Destinos en ' + formatSlug(continentSlug) }}</h1>
+    <p class="breadcrumb">
+      <a routerLink="/home-v2">Inicio</a>
+      <span class="separator">/</span>
+      <span>Destinos</span>
+      <span class="separator">/</span>
+      <span>{{ formatSlug(continentSlug) }}</span>
+      <span class="separator" *ngIf="destinationSlug">/</span>
+      <span *ngIf="destinationSlug">{{ formatSlug(destinationSlug) }}</span>
+    </p>
+  </div>
+
+  <div class="destination-content" *ngIf="!isLoading">
+    <div class="content-info">
+      <p>Mostrando tours para <strong>{{ destinationSlug ? formatSlug(destinationSlug) : formatSlug(continentSlug) }}</strong></p>
+    </div>
+
+    <!-- TODO: Aquí irá el componente de tours filtrados por ubicación -->
+    <div class="tours-placeholder">
+      <p>Componente de tours para destinos (en desarrollo)</p>
+      <p class="debug-info">
+        Continente: {{ continentSlug }}<br>
+        País/Destino: {{ destinationSlug || 'Todos' }}
+      </p>
+    </div>
+  </div>
+
+  <div class="loading-state" *ngIf="isLoading">
+    <p-progressSpinner></p-progressSpinner>
+  </div>
+</div>
+

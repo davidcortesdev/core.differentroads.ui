@@ -207,6 +207,8 @@ import { UpdateProfileSectionV2Component } from './pages/profile-v2/components/u
 // PAGE COMPONENTS - OTHER PAGES
 // ========================================
 import { NotFoundComponent } from './pages/not-found/not-found.component';
+import { DestinationPageComponent } from './pages/destination-page/destination-page.component';
+import { CategoryPageComponent } from './pages/category-page/category-page.component';
 import { BasicPageComponent } from './pages/basic-page/basic-page.component';
 import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
 import { TitleAndQuillComponent } from './pages/basic-page/components/title-and-quill/title-and-quill.component';
@@ -379,6 +381,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     // PAGE COMPONENTS - OTHER PAGES
     // ========================================
     NotFoundComponent,
+    DestinationPageComponent,
+    CategoryPageComponent,
     BasicPageComponent,
     BasicPagePreviewComponent,
     TitleAndQuillComponent,

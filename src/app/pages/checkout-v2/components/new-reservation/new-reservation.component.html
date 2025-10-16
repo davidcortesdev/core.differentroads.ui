@@ -210,7 +210,7 @@
 
   <!-- Panel de información de pago -->
   <app-payment-info 
-    *ngIf="!isInIframe"
+    *ngIf="hasPaymentId"
     [reservationId]="reservationId">
   </app-payment-info>
 

@@ -47,6 +47,8 @@ import { ProfileV2Component } from './pages/profile-v2/profile-v2.component';
 // PAGE COMPONENTS - OTHER PAGES
 // ========================================
 import { NotFoundComponent } from './pages/not-found/not-found.component';
+import { DestinationPageComponent } from './pages/destination-page/destination-page.component';
+import { CategoryPageComponent } from './pages/category-page/category-page.component';
 import { BasicPageComponent } from './pages/basic-page/basic-page.component';
 import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
 import { ContentPageComponent } from './pages/content-page/content-page.component';
@@ -72,6 +74,10 @@ const routes: Routes = [
       { path: 'bookingsv2/:id', component: Bookingsv2Component },
       {
         path: 'reservation/:reservationId/:paymentId',
+        component: NewReservationComponent,
+      },
+      {
+        path: 'reservation/:reservationId',
         component: NewReservationComponent,
       },
     ],
@@ -117,9 +123,14 @@ const routes: Routes = [
       // ========================================
       // RESERVATION ROUTES
       // ========================================
-      // Versión nueva
+      // Versión nueva con paymentId
       {
         path: 'reservation/:reservationId/:paymentId',
+        component: NewReservationComponent,
+      },
+      // Versión nueva sin paymentId (opcional)
+      {
+        path: 'reservation/:reservationId',
         component: NewReservationComponent,
       },
 
@@ -131,8 +142,8 @@ const routes: Routes = [
       // ========================================
       // CONTENT PAGES ROUTES
       // ========================================
-      { path: 'pages/:slug', component: BasicPageComponent },
       { path: 'preview/pages', component: BasicPagePreviewComponent },
+      { path: 'pages/:slug', component: BasicPageComponent },
       { path: 'landing/:slug', component: ContentPageComponent },
       { path: 'collection/:slug', component: ContentPageComponent },
       { path: 'press/:slug', component: ContentPageComponent },
@@ -144,7 +155,39 @@ const routes: Routes = [
       { path: 'reviews/:periodTkId', component: ReviewSurveyComponent },
 
       // ========================================
-      // 404 - NOT FOUND (debe ser siempre la última)
+      // DYNAMIC MENU ROUTES - DESTINATIONS (más específicas primero)
+      // ========================================
+      // Destino con continente y país: /destino/africa/marruecos
+      { 
+        path: 'destino/:menuItemSlug/:destinationSlug', 
+        component: DestinationPageComponent,
+        data: { type: 'destination' }
+      },
+      // Destino solo con continente: /destino/africa
+      { 
+        path: 'destino/:menuItemSlug', 
+        component: DestinationPageComponent,
+        data: { type: 'destination' }
+      },
+
+      // ========================================
+      // DYNAMIC MENU ROUTES - CATEGORIES (al final, son las más genéricas)
+      // ========================================
+      // Categoría con sub-item: /temporada/semana-santa
+      { 
+        path: ':menuItemSlug/:subItemSlug', 
+        component: CategoryPageComponent,
+        data: { type: 'category' }
+      },
+      // Categoría sola: /temporada
+      { 
+        path: ':menuItemSlug', 
+        component: CategoryPageComponent,
+        data: { type: 'category' }
+      },
+
+      // ========================================
+      // 404 - NOT FOUND (siempre debe ser la última)
       // ========================================
       { path: '**', component: NotFoundComponent },
     ],

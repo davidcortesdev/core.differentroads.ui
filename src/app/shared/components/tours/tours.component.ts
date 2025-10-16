@@ -22,6 +22,7 @@ export class ToursComponent implements OnInit, OnChanges, OnDestroy {
   minDate: Date | null = null;
   maxDate: Date | null = null;
   tourType: string = '';
+  flexDays: number | null = null;
   isLoadingTours: boolean = false;
 
   private destroy$ = new Subject<void>();
@@ -47,6 +48,9 @@ export class ToursComponent implements OnInit, OnChanges, OnDestroy {
           ? new Date(params['returnDate'])
           : null;
         this.tourType = params['tripType'] || '';
+        this.flexDays = params['flexDays']
+          ? Number(params['flexDays'])
+          : null;
 
         this.loadTours();
       });
@@ -77,6 +81,7 @@ export class ToursComponent implements OnInit, OnChanges, OnDestroy {
       startDate: this.minDate?.toISOString(),
       endDate: this.maxDate?.toISOString(),
       tripTypeId: this.tourType ? Number(this.tourType) : undefined,
+      flexDays: this.flexDays !== null ? this.flexDays : undefined,
     };
 
     this.isLoadingTours = true;

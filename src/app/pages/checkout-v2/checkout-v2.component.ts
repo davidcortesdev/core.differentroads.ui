@@ -173,6 +173,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   // NUEVO: Propiedad para mostrar opción de transferencia del 25%
   showTransfer25Option: boolean = false;
+  
+  // NUEVO: Propiedad para indicar si es Tour Operator (TO)
+  isTourOperator: boolean = false;
 
   // NUEVO: Trigger para refrescar el resumen
   summaryRefreshTrigger: any = null;
@@ -522,10 +525,19 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         this.showTransfer25Option = true;
         console.log('✅ showTransfer25Option activado desde URL');
       }
+      
+      // Si viene el parámetro isTourOperator=true, activar modo TO
+      if (params['isTourOperator'] === 'true' || params['isTO'] === 'true') {
+        this.isTourOperator = true;
+        // Si es TO, también activar showTransfer25Option automáticamente
+        this.showTransfer25Option = true;
+        console.log('✅ isTourOperator activado desde URL');
+      }
     });
 
     console.log('🔍 Modo standalone:', this.isStandaloneMode);
     console.log('🔍 showTransfer25Option:', this.showTransfer25Option);
+    console.log('🔍 isTourOperator:', this.isTourOperator);
   }
 
   // Método para cargar datos de la reservación

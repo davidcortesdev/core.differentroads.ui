@@ -297,6 +297,9 @@ export class DataMappingV2Service {
           case 'Notas':
             combinedData.notas = fieldValue.value;
             break;
+          case 'Sexo':
+            combinedData.sexo = fieldValue.value;
+            break;
         }
       }
     });
@@ -322,6 +325,7 @@ export class DataMappingV2Service {
       { fieldName: 'ciudad', value: userData.ciudad },
       { fieldName: 'codigo_postal', value: userData.codigoPostal },
       { fieldName: 'fecha_nacimiento', value: userData.fechaNacimiento },
+      { fieldName: 'sexo', value: userData.sexo },
     ];
 
     fieldMappings.forEach(mapping => {

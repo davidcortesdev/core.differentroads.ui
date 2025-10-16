@@ -140,6 +140,7 @@ export class UpdateProfileV2Service {
       { fieldCode: 'city', value: personalInfo.ciudad },
       { fieldCode: 'postal_code', value: personalInfo.codigoPostal },
       { fieldCode: 'country', value: personalInfo.pais },
+      { fieldCode: 'sexo', value: personalInfo.sexo },
       { fieldCode: 'notes', value: personalInfo.notas }
     ];
 
@@ -174,7 +175,8 @@ export class UpdateProfileV2Service {
       'postal_code': 8,
       'country': 9,
       'notes': 10,
-      'image': 12
+      'image': 12,
+      'sexo': 14
     };
     
     return fieldIdMap[fieldCode] || 0;

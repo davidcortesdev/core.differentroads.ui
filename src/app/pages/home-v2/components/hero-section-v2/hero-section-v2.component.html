@@ -27,6 +27,7 @@
             (completeMethod)="onCompleteMethod($event)"
             optionLabel="name"
             [forceSelection]="false"
+            styleClass="custom-autocomplete"
             (keyup.enter)="searchTrips()"
             >
             <ng-template let-sugerencia #item>

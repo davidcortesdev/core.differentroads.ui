@@ -20,13 +20,13 @@
     --border-color: #ced4da;
     --z-index-base: 1;
     --z-index-dropdown: 1000;
-    --p-autocomplete-border-radius:50px;
 }
 p-iftaLabel {
     --p-iftalabel-color:#002b57;
     --p-iftalabel-font-size: var(--font-label);
     --p-iftalabel-font-weight: 500;	
 }
+
 
 .hero {
     height: var(--hero-h);
@@ -51,7 +51,8 @@ p-iftaLabel {
         padding: var(--space-lg);
         width: var(--container-w);
         max-width: var(--container-max);
-        
+
+
         .validation-error {
             background-color: rgba(239, 68, 68, 0.95);
             color: white;
@@ -122,7 +123,8 @@ p-iftaLabel {
             font-size: var(--font-sm);
         }
 
-        .p-select-panel {
+D        .p-select-panel,
+        .p-autocomplete-panel {
             z-index: var(--z-index-dropdown) !important;
         }
 
@@ -134,6 +136,18 @@ p-iftaLabel {
 
             .p-select-trigger {
                 border-left: none;
+            }
+        }
+
+        // Estilos para el autocomplete
+        .p-autocomplete {
+            width: 100%;
+            
+            .p-autocomplete-input {
+                border-radius: 50px 0 0 50px;
+                font-size: var(--font-sm);
+                height: 52px;
+                border-right: none;
             }
         }
 
@@ -262,6 +276,14 @@ p-iftaLabel {
             }
 
             ::ng-deep {
+                .p-autocomplete {
+                    .p-autocomplete-input {
+                        border-radius: var(--radius);
+                        font-size: var(--font-sm) !important;
+                        border-right: 1px solid var(--border-color);
+                    }
+                }
+
                 .p-inputtext {
                     border-radius: var(--radius);
                     font-size: var(--font-sm) !important;
@@ -343,6 +365,15 @@ p-iftaLabel {
             .p-select-label {
                 margin-top: -1px;
                 font-size: 12px;
+            }
+
+            .p-autocomplete {
+                .p-autocomplete-input {
+                    height: var(--input-h-mob);
+                    border-radius: var(--radius);
+                    font-size: var(--font-xs) !important;
+                    border-right: 1px solid var(--border-color);
+                }
             }
 
             .p-inputtext {

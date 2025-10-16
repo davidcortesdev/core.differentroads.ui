@@ -201,7 +201,64 @@ export class BookingListSectionV2Component implements OnInit {
    * Carga presupuestos recientes usando servicios v2
    */
   private loadRecentBudgets(userId: number): void {
-    //TODO: Pendiente de modificar, hay que usar lo mismo que this.bookingsService.getActiveBookings pero filtrando por el id de presupuesto
+    this.bookingsService.getRecentBudgets(userId).pipe(
+      switchMap((reservations: ReservationResponse[]) => {
+        if (!reservations || reservations.length === 0) {
+          return of([]);
+        }
+
+        // Obtener información de tours y imágenes CMS para cada presupuesto
+        const tourPromises = reservations.map(reservation => 
+          forkJoin({
+            tour: this.toursService.getTourById(reservation.tourId).pipe(
+              catchError(error => {
+                console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
+                return of(null);
+              })
+            ),
+            cmsTour: this.cmsTourService.getAllTours({ tourId: reservation.tourId }).pipe(
+              map((cmsTours: ICMSTourResponse[]) => cmsTours.length > 0 ? cmsTours[0] : null),
+              catchError(error => {
+                console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
+                return of(null);
+              })
+            )
+          }).pipe(
+            map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
+          )
+        );
+
+        return forkJoin(tourPromises);
+      }),
+      map((reservationTourPairs: any[]) => {
+        // Mapear usando el servicio de mapeo con imágenes CMS
+        return this.dataMappingService.mapReservationsToBookingItems(
+          reservationTourPairs.map(pair => pair.reservation),
+          reservationTourPairs.map(pair => pair.tour),
+          'recent-budgets',
+          reservationTourPairs.map(pair => pair.cmsTour)
+        );
+      }),
+      catchError(error => {
+        console.error('Error obteniendo presupuestos recientes:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Error al cargar los presupuestos recientes'
+        });
+        return of([]);
+      })
+    ).subscribe({
+      next: (bookingItems: BookingItem[]) => {
+        this.bookingItems = bookingItems;
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error en la suscripción:', error);
+        this.bookingItems = [];
+        this.loading = false;
+      }
+    });
   }
 
 

@@ -68,14 +68,15 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
             if (tags && tags.length > 0) {
               this.tagData = tags[0];
               this.tagId = this.tagData.id;
+              this.updatePageInfo();
             } else {
               console.warn(`No se encontró tag para: ${tagName}`);
+              this.router.navigate(['/not-found']);
             }
-            this.updatePageInfo();
           },
           error: (error) => {
             console.error('Error al buscar tag:', error);
-            this.updatePageInfo();
+            this.router.navigate(['/not-found']);
           }
         });
     } else {
@@ -90,14 +91,15 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
             if (categories && categories.length > 0) {
               this.categoryData = categories[0];
               this.categoryId = this.categoryData.id;
+              this.updatePageInfo();
             } else {
               console.warn(`No se encontró categoría para: ${categoryName}`);
+              this.router.navigate(['/not-found']);
             }
-            this.updatePageInfo();
           },
           error: (error) => {
             console.error('Error al buscar categoría:', error);
-            this.updatePageInfo();
+            this.router.navigate(['/not-found']);
           }
         });
     }

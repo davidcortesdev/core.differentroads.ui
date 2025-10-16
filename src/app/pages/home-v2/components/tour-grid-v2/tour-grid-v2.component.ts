@@ -38,15 +38,15 @@ import {
   IItineraryDayResponse,
 } from '../../../../core/services/itinerary/itinerary-day/itinerary-day.service';
 
+// Importar traducciones de PrimeNG directamente
+import { es } from 'primelocale/es.json';
+
 export interface FilterChangeEvent {
   orderOption?: string;
   priceOption?: string[];
   seasonOption?: string[];
   monthOption?: string[];
 }
-
-// Meses en formato corto (basado en traducciones de PrimeNG)
-const MONTH_NAMES_SHORT = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
 
 @Component({
   selector: 'app-tour-grid-v2',
@@ -117,20 +117,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
   ];
   selectedSeasonOption: string[] = [];
 
-  monthOptions: { name: string; value: string }[] = [
-    { name: 'Enero', value: MONTH_NAMES_SHORT[0] },
-    { name: 'Febrero', value: MONTH_NAMES_SHORT[1] },
-    { name: 'Marzo', value: MONTH_NAMES_SHORT[2] },
-    { name: 'Abril', value: MONTH_NAMES_SHORT[3] },
-    { name: 'Mayo', value: MONTH_NAMES_SHORT[4] },
-    { name: 'Junio', value: MONTH_NAMES_SHORT[5] },
-    { name: 'Julio', value: MONTH_NAMES_SHORT[6] },
-    { name: 'Agosto', value: MONTH_NAMES_SHORT[7] },
-    { name: 'Septiembre', value: MONTH_NAMES_SHORT[8] },
-    { name: 'Octubre', value: MONTH_NAMES_SHORT[9] },
-    { name: 'Noviembre', value: MONTH_NAMES_SHORT[10] },
-    { name: 'Diciembre', value: MONTH_NAMES_SHORT[11] },
-  ];
+  monthOptions: { name: string; value: string }[] = [];
   selectedMonthOption: string[] = [];
   
   private destroy$ = new Subject<void>();
@@ -145,7 +132,29 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
   ) {}
 
   ngOnInit(): void {
+    this.initializeMonthOptions();
     this.loadTours();
+  }
+
+  /**
+   * Inicializa las opciones de meses usando las traducciones de PrimeNG
+   */
+  private initializeMonthOptions(): void {
+    const monthNames = es.monthNames;
+    const monthNamesShort = es.monthNamesShort;
+    
+    this.monthOptions = monthNames.map((name: string, index: number) => ({
+      name: name,
+      value: monthNamesShort[index].toUpperCase()
+    }));
+  }
+
+  /**
+   * Obtiene el mes corto desde las traducciones de PrimeNG
+   */
+  private getMonthShort(monthIndex: number): string {
+    const monthNamesShort = es.monthNamesShort;
+    return monthNamesShort[monthIndex]?.toUpperCase() || '';
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -555,7 +564,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
         if (departure.departureDate) {
           const date = new Date(departure.departureDate);
           const monthIndex = date.getMonth(); // 0-11
-          const month = MONTH_NAMES_SHORT[monthIndex]; // Usar constante consistente
+          const month = this.getMonthShort(monthIndex); // Leer desde PrimeNG
           if (!availableMonths.includes(month)) {
             availableMonths.push(month);
           }

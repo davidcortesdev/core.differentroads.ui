@@ -103,8 +103,8 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
   selectedOrderOption: string = 'next-departures';
 
   priceOptions: { name: string; value: string }[] = [
-    { name: 'Menos de $1000', value: '0-1000' },
-    { name: '$1000 - $3000', value: '1000-3000' },
+    { name: 'Menos de 1000', value: '0-1000' },
+    { name: '1000 - 3000', value: '1000-3000' },
     { name: '+ 3000', value: '3000+' },
   ];
   selectedPriceOption: string[] = [];

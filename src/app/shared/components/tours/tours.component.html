@@ -1,19 +1,19 @@
 <div class="tours-container" *ngIf="showTours">
-  <!-- Hero section only shown when not used within content-page -->
+  <!-- Sección hero: se muestra solo cuando NO es una colección de ofertas -->
   <app-hero-section-v2
     *ngIf="!isOffersCollection"
     [initialDestination]="destination"
     [initialDepartureDate]="minDate"
     [initialReturnDate]="maxDate"
     [initialTripType]="tourType"
-  ></app-hero-section-v2>
+  />
 
-  <!-- Nuevo componente de filtros y lista de tours -->
+  <!-- Grid de tours con filtros integrados -->
   <app-tour-grid-v2
     [tourIds]="tourIds"
     [itemListId]="getListId()"
     [itemListName]="getListName()"
     [showScalapayPrice]="true"
     [showFilters]="true"
-  ></app-tour-grid-v2>
+  />
 </div>

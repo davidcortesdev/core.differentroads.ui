@@ -1,12 +1,12 @@
 <div class="tours-container" *ngIf="showTours">
   <!-- Hero section only shown when not used within content-page -->
-  <app-hero-section
+  <app-hero-section-v2
     *ngIf="!isOffersCollection"
     [initialDestination]="destination"
     [initialDepartureDate]="minDate"
     [initialReturnDate]="maxDate"
     [initialTripType]="tourType"
-  ></app-hero-section>
+  ></app-hero-section-v2>
 
   <!-- Combined filters section from both components -->
   <div class="tours-filters">

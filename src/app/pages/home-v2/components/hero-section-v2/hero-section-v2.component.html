@@ -1,97 +1,66 @@
 <section class="hero">
   <!-- Video de fondo dinámico -->
-  <video
-    *ngIf="isVideo && getBannerUrl()"
-    class="hero-bg"
-    autoplay
-    loop
-    muted
-    playsinline
-    preload="auto"
-    (loadeddata)="onVideoLoaded()"
-    (canplay)="onVideoCanPlay()"
-    #videoElement
-  >
+  <video *ngIf="isVideo && getBannerUrl()" class="hero-bg" autoplay loop muted playsinline preload="auto"
+    (loadeddata)="onVideoLoaded()" (canplay)="onVideoCanPlay()" #videoElement>
     <source [src]="getBannerUrl()" type="video/mp4" />
   </video>
-  
+
   <!-- Imagen de fondo dinámica -->
-  <img
-    *ngIf="isImage && getBannerUrl()"
-    class="hero-bg"
-    [src]="getBannerUrl()"
-    [alt]="getBannerAltText()"
-  />
-  
+  <img *ngIf="isImage && getBannerUrl()" class="hero-bg" [src]="getBannerUrl()" [alt]="getBannerAltText()" />
+
   <div class="hero-search">
     <!-- Mensaje de validación de fechas -->
     <div class="validation-error" *ngIf="showDateValidationError">
       <i class="pi pi-exclamation-triangle"></i>
       <span>{{ dateValidationMessage }}</span>
     </div>
-    
+
     <div class="hero-form">
       <div class="input-lg">
         <p-iftalabel>
-          <input
-            pInputText
-            id="destionationInput"
-            autocomplete="off"
-            placeholder="Pais, Ciudad, Ofertas, Destinos, todo lo que se te ocurra..."
-            class="input-text radius firstElement"
-            fluid="true"
-            [ngModel]="destinationInput"
-            (ngModelChange)="onDestinationInput($event)"
+          <p-autocomplete 
+            id="destionationInput" 
+            [(ngModel)]="destinationInput"
+            placeholder="Pais, Ciudad, Ofertas, Destinos, todo lo que se te ocurra..." 
+            [fluid]="true"
+            [suggestions]="sugerencias"
+            (completeMethod)="onCompleteMethod($event)"
+            optionLabel="name"
+            [forceSelection]="false"
             (keyup.enter)="searchTrips()"
-          />
+            >
+            <ng-template let-sugerencia #item>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <i *ngIf="sugerencia.type === 'Location'" class="pi pi-map-marker"></i>
+                  <i *ngIf="sugerencia.type === 'Tag'" class="pi pi-tag"></i>
+                  <i *ngIf="sugerencia.type === 'Tour'" class="pi pi-compass"></i>
+                  <div>{{ sugerencia.name }}</div>
+              </div>
+          </ng-template>
+          </p-autocomplete>
+
           <label for="destionationInput" class="label">¿Cuál es tu próximo destino?</label>
-          <!-- Panel de sugerencias -->
-          <div class="suggestions-panel" *ngIf="showSuggestions">
-            <button type="button" class="suggestion" *ngFor="let s of suggestions" (click)="onSuggestionClick(s)">
-              <span class="suggestion-name">{{ s.name }}</span>
-              <span *ngIf="s.type" class="type-badge">{{ s.type }}</span>
-            </button>
-          </div>
+
         </p-iftalabel>
       </div>
       <div class="input-range">
-        <app-datepicker-range-v2
-          [(ngModel)]="rangeDates"
-          [minDate]="minDate"
-          [maxDate]="maxDate"
+        <app-datepicker-range-v2 [(ngModel)]="rangeDates" [minDate]="minDate" [maxDate]="maxDate"
           (flexibilityChange)="onFlexibilityChange($event)"
-          (datesChange)="onDatesChange($event)"
-        ></app-datepicker-range-v2>
+          (datesChange)="onDatesChange($event)"></app-datepicker-range-v2>
       </div>
       <div class="input-md">
         <p-iftaLabel>
-          <p-select
-            [options]="tripTypes"
-            [(ngModel)]="selectedTripTypeId"
-            id="tripTypeInput"
-            placeholder="Seleccionar tipo"
-            [style]="{'width': '100%'}"
-            class="border"
-            [appendTo]="'body'"
-            [showClear]="true"
-            styleClass="custom-select-panel"
-            [inputId]="'tripTypeInput'"
-            fluid="true"
-            optionLabel="name"
-            optionValue="id"
-          >
+          <p-select [options]="tripTypes" [(ngModel)]="selectedTripTypeId" id="tripTypeInput"
+            placeholder="Seleccionar tipo" [style]="{'width': '100%'}" class="border" [appendTo]="'body'"
+            [showClear]="true" styleClass="custom-select-panel" [inputId]="'tripTypeInput'" fluid="true"
+            optionLabel="name" optionValue="id">
           </p-select>
           <label for="tripTypeInput" class="label">Tipo de viaje</label>
         </p-iftaLabel>
       </div>
       <div class="input-sm">
-        <p-button
-          type="button"
-          icon="pi pi-search"
-          fluid="true"
-          styleClass="btn-search radius"
-          (click)="searchTrips()"
-        ></p-button>
+        <p-button type="button" icon="pi pi-search" fluid="true" styleClass="btn-search radius"
+          (click)="searchTrips()"></p-button>
       </div>
     </div>
   </div>

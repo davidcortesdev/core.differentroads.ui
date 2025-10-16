@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { PersonalInfo } from '../../../../core/models/v2/profile-v2.model';
 import { UpdateProfileV2Service } from '../../../../core/services/v2/update-profile-v2.service';
+import { CloudinaryService } from '../../../../core/services/media/cloudinary.service';
 
 @Component({
   selector: 'app-update-profile-section-v2',
@@ -22,12 +23,21 @@ export class UpdateProfileSectionV2Component{
   
   // Estados de carga y errores
   isSaving: boolean = false;
+  isUploadingImage: boolean = false;
   errorMessage: string = '';
   successMessage: string = '';
 
+  // Opciones para el dropdown de sexo
+  sexoOptions = [
+    { label: 'Masculino', value: 'Masculino' },
+    { label: 'Femenino', value: 'Femenino' },
+    { label: 'Otro', value: 'Otro' }
+  ];
 
-
-  constructor(private updateProfileService: UpdateProfileV2Service) { }
+  constructor(
+    private updateProfileService: UpdateProfileV2Service,
+    private cloudinaryService: CloudinaryService
+  ) { }
 
 
   formatDate(dateInput: string | Date | undefined): string {
@@ -39,15 +49,35 @@ export class UpdateProfileSectionV2Component{
     for (let file of event.files) {
       const validation = this.updateProfileService.validateImageFile(file, this.maxFileSize);
       if (!validation.isValid) {
+        this.errorMessage = validation.error || 'Error al validar el archivo';
         return;
       }
 
       this.uploadedFiles = [file];
+      this.isUploadingImage = true;
+      this.errorMessage = '';
+      
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.previewImageUrl = e.target.result;
-        // Asignar la URL de la imagen al personalInfo para que se guarde
-        this.personalInfo.avatarUrl = e.target.result;
+        
+        // Subir la imagen a Cloudinary
+        this.cloudinaryService.uploadImage(e.target.result).subscribe({
+          next: (uploadedImage) => {
+            // Guardar la URL de Cloudinary en lugar del DataURL
+            this.personalInfo.avatarUrl = uploadedImage.url;
+            this.isUploadingImage = false;
+            this.successMessage = 'Imagen cargada correctamente';
+            setTimeout(() => this.successMessage = '', 3000);
+          },
+          error: (error) => {
+            console.error('Error uploading image:', error);
+            this.errorMessage = 'Error al subir la imagen. Por favor, intenta de nuevo.';
+            this.isUploadingImage = false;
+            this.uploadedFiles = [];
+            this.previewImageUrl = null;
+          }
+        });
       };
       reader.readAsDataURL(file);
     }
@@ -101,17 +131,19 @@ export class UpdateProfileSectionV2Component{
 
   // Métodos para limpiar errores en otros campos
   onNombreInput(event: any) {
-    const input = event.target as HTMLInputElement;
-    const filteredValue = this.updateProfileService.validateNombreInput(input.value);
-    input.value = filteredValue;
     this.clearFieldError('nombre');
+    // Aplicar validación al modelo, no al DOM
+    if (this.personalInfo.nombre) {
+      this.personalInfo.nombre = this.updateProfileService.validateNombreInput(this.personalInfo.nombre);
+    }
   }
 
   onApellidoInput(event: any) {
-    const input = event.target as HTMLInputElement;
-    const filteredValue = this.updateProfileService.validateApellidoInput(input.value);
-    input.value = filteredValue;
     this.clearFieldError('apellido');
+    // Aplicar validación al modelo, no al DOM
+    if (this.personalInfo.apellido) {
+      this.personalInfo.apellido = this.updateProfileService.validateApellidoInput(this.personalInfo.apellido);
+    }
   }
 
   onEmailInput(event: any) {
@@ -122,6 +154,9 @@ export class UpdateProfileSectionV2Component{
     this.clearFieldError('fechaNacimiento');
   }
 
+  onSexoChange(event: any) {
+    this.clearFieldError('sexo');
+  }
 
   onSubmit() {
     this.isFormSubmitted = true;

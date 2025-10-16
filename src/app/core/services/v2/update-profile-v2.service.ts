@@ -131,8 +131,7 @@ export class UpdateProfileV2Service {
     const fieldValues: any[] = [];
     
     const fieldMappings = [
-      // Excluimos la imagen por ahora ya que el DataURL es demasiado grande para el API
-      // { fieldCode: 'image', value: personalInfo.avatarUrl },
+      { fieldCode: 'image', value: personalInfo.avatarUrl },
       { fieldCode: 'phone', value: personalInfo.telefono },
       { fieldCode: 'birth_date', value: this.formatDate(personalInfo.fechaNacimiento) },
       { fieldCode: 'national_id', value: personalInfo.dni },
@@ -140,6 +139,7 @@ export class UpdateProfileV2Service {
       { fieldCode: 'city', value: personalInfo.ciudad },
       { fieldCode: 'postal_code', value: personalInfo.codigoPostal },
       { fieldCode: 'country', value: personalInfo.pais },
+      { fieldCode: 'sexo', value: personalInfo.sexo },
       { fieldCode: 'notes', value: personalInfo.notas }
     ];
 
@@ -174,7 +174,8 @@ export class UpdateProfileV2Service {
       'postal_code': 8,
       'country': 9,
       'notes': 10,
-      'image': 12
+      'image': 12,
+      'sexo': 14
     };
     
     return fieldIdMap[fieldCode] || 0;
@@ -387,7 +388,7 @@ export class UpdateProfileV2Service {
    * @returns Valor filtrado
    */
   validateNombreInput(value: string): string {
-    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').slice(0, 50);
+    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚàèìòùÀÈÌÒÙâêîôûÂÊÎÔÛäëïöüÄËÏÖÜñÑçÇ\s]/g, '').slice(0, 50);
   }
 
   /**
@@ -396,7 +397,7 @@ export class UpdateProfileV2Service {
    * @returns Valor filtrado
    */
   validateApellidoInput(value: string): string {
-    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').slice(0, 50);
+    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚàèìòùÀÈÌÒÙâêîôûÂÊÎÔÛäëïöüÄËÏÖÜñÑçÇ\s]/g, '').slice(0, 50);
   }
 
   /**
@@ -405,7 +406,7 @@ export class UpdateProfileV2Service {
    * @returns Valor filtrado
    */
   validateDireccionInput(value: string): string {
-    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s\-\.]/g, '').slice(0, 100);
+    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚàèìòùÀÈÌÒÙâêîôûÂÊÎÔÛäëïöüÄËÏÖÜñÑçÇ\s]/g, '').slice(0, 100);
   }
 
   /**
@@ -414,6 +415,6 @@ export class UpdateProfileV2Service {
    * @returns Valor filtrado
    */
   validatePaisInput(value: string): string {
-    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').slice(0, 50);
+    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚàèìòùÀÈÌÒÙâêîôûÂÊÎÔÛäëïöüÄËÏÖÜñÑçÇ\s]/g, '').slice(0, 50);
   }
 }

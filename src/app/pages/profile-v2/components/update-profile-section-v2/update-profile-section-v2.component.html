@@ -26,8 +26,16 @@
       <form class="profile-form">
         <!-- Sección de Avatar -->
         <div class="form-field">
-          <label>Adjuntar foto</label>
+          <p-iftalabel>Adjuntar foto</p-iftalabel>
+          
+          <!-- Indicador de carga de imagen -->
+          <div *ngIf="isUploadingImage" class="upload-loading">
+            <p-progressSpinner styleClass="w-4rem h-4rem" strokeWidth="4"></p-progressSpinner>
+            <span>Subiendo imagen...</span>
+          </div>
+          
           <p-fileUpload
+            *ngIf="!isUploadingImage"
             chooseIcon="pi pi-upload"
             mode="advanced"
             [maxFileSize]="maxFileSize"
@@ -39,6 +47,7 @@
             chooseLabel="Adjuntar foto"
             (onRemove)="onRemoveImage()"
             styleClass="custom-upload"
+            severity="danger"
           >
             <ng-template #content let-files>
               <div class="upload-list" *ngIf="uploadedFiles.length">
@@ -51,163 +60,179 @@
         </div>
 
         <!-- Datos de Contacto -->
-        <div class="form-field">
-          <label>Nombre:</label>
+        <p-floatlabel variant="on">
           <input
             pInputText
+            id="nombre"
             [(ngModel)]="personalInfo.nombre"
             name="nombre"
-            placeholder="Ingrese su nombre"
             (input)="onNombreInput($event)"
             [class.error]="hasFieldError('nombre')"
           />
+          <label for="nombre">Nombre</label>
           <small class="error-message" *ngIf="hasFieldError('nombre')">
             {{ getFieldError('nombre') }}
           </small>
-        </div>
+        </p-floatlabel>
 
-        <div class="form-field">
-          <label>Apellido:</label>
+        <p-floatlabel variant="on">
           <input
             pInputText
+            id="apellido"
             [(ngModel)]="personalInfo.apellido"
             name="apellido"
-            placeholder="Ingrese su apellido"
             (input)="onApellidoInput($event)"
             [class.error]="hasFieldError('apellido')"
           />
+          <label for="apellido">Apellido</label>
           <small class="error-message" *ngIf="hasFieldError('apellido')">
             {{ getFieldError('apellido') }}
           </small>
-        </div>
+        </p-floatlabel>
 
-        <div class="form-field">
-          <label>Email:</label>
+
+        <p-floatlabel variant="on">
           <input
             pInputText
+            id="email"
             [(ngModel)]="personalInfo.email"
             name="email"
-            placeholder="Ingrese su email"
             (input)="onEmailInput($event)"
             [class.error]="hasFieldError('email')"
           />
+          <label for="email">Email</label>
           <small class="error-message" *ngIf="hasFieldError('email')">
             {{ getFieldError('email') }}
           </small>
-        </div>
+        </p-floatlabel>
 
-        <div class="form-field">
-          <label>Teléfono:</label>
+        <p-floatlabel variant="on">
           <input
             pInputText
+            id="telefono"
             [(ngModel)]="personalInfo.telefono"
             name="telefono"
-            placeholder="Ingrese su teléfono"
             (input)="onTelefonoInput($event)"
             [class.error]="hasFieldError('telefono')"
             styleClass="p-inputtext-sm"
           />
+          <label for="telefono">Teléfono</label>
           <small class="error-message" *ngIf="hasFieldError('telefono')">
             {{ getFieldError('telefono') }}
           </small>
-        </div>
+        </p-floatlabel>
 
         <!-- Datos Personales -->
-        <div class="form-field">
-          <label>Fecha de nacimiento:</label>
+        <p-floatlabel variant="on">
           <p-datepicker 
-            [(ngModel)]="personalInfo.fechaNacimiento"
+            inputId="fechaNacimiento"
             name="fechaNacimiento"
-            dateFormat="dd/mm/yy"
-            placeholder="Seleccione una fecha"
-            styleClass="p-datepicker -sm custom-calendar"
-            [showIcon]="true"
+            [(ngModel)]="personalInfo.fechaNacimiento"
+            showIcon
+            iconDisplay="input"
             (onSelect)="onFechaNacimientoChange($event)"
-            [class.error]="hasFieldError('fechaNacimiento')"
-          >
-          </p-datepicker >
+            [class.error]="hasFieldError('fechaNacimiento')"/>
+          <label for="fechaNacimiento">Fecha de nacimiento</label>
           <small class="error-message" *ngIf="hasFieldError('fechaNacimiento')">
             {{ getFieldError('fechaNacimiento') }}
           </small>
-        </div>
+      </p-floatlabel>
 
-        <div class="form-field">
-          <label>DNI/NIE:</label>
+        <p-floatlabel class="w-full md:w-56" variant="on">
+          <p-select 
+            [(ngModel)]="personalInfo.sexo" 
+            name="sexo"
+            inputId="sexo" 
+            [options]="sexoOptions" 
+            optionLabel="label"
+            optionValue="value"
+            (onChange)="onSexoChange($event)"
+            [class.error]="hasFieldError('sexo')"
+            styleClass="w-full" />
+          <label for="sexo">Sexo</label>
+          <small class="error-message" *ngIf="hasFieldError('sexo')">
+            {{ getFieldError('sexo') }}
+          </small>
+        </p-floatlabel>
+        
+
+        <p-floatlabel variant="on">
           <input
             pInputText
+            id="dni"
             [(ngModel)]="personalInfo.dni"
             name="dni"
-            placeholder="Ingrese su DNI/NIE"
             (input)="onDniInput($event)"
             [class.error]="hasFieldError('dni')"
           />
+          <label for="dni">DNI/NIE</label>
           <small class="error-message" *ngIf="hasFieldError('dni')">
             {{ getFieldError('dni') }}
           </small>
-        </div>
+        </p-floatlabel>
 
         <!-- Dirección -->
-        <div class="form-field">
-          <label>Dirección:</label>
+        <p-floatlabel variant="on">
           <input
             pInputText
+            id="direccion"
             [(ngModel)]="personalInfo.direccion"
             name="direccion"
-            placeholder="Ingrese su dirección"
             (input)="onDireccionInput($event)"
           />
-        </div>
+          <label for="direccion">Dirección</label>
+        </p-floatlabel>
 
-        <div class="form-field">
-          <label>Ciudad:</label>
+        <p-floatlabel variant="on">
           <input
             pInputText
+            id="ciudad"
             [(ngModel)]="personalInfo.ciudad"
             name="ciudad"
-            placeholder="Ingrese su ciudad"
             (input)="onCiudadInput($event)"
           />
-        </div>
+          <label for="ciudad">Ciudad</label>
+        </p-floatlabel>
 
-        <div class="form-field">
-          <label>Código postal:</label>
+        <p-floatlabel variant="on">
           <input
             pInputText
+            id="codigoPostal"
             [(ngModel)]="personalInfo.codigoPostal"
             name="codigoPostal"
-            placeholder="Ingrese su código postal"
             (input)="onCodigoPostalInput($event)"
             [class.error]="hasFieldError('codigoPostal')"
           />
+          <label for="codigoPostal">Código postal</label>
           <small class="error-message" *ngIf="hasFieldError('codigoPostal')">
             {{ getFieldError('codigoPostal') }}
           </small>
-        </div>
+        </p-floatlabel>
 
-        <div class="form-field">
-          <label>País:</label>
+        <p-floatlabel variant="on">
           <input
             pInputText
+            id="pais"
             [(ngModel)]="personalInfo.pais"
             name="pais"
-            placeholder="Ingrese su país"
             (input)="onPaisInput($event)"
           />
-        </div>
+          <label for="pais">País</label>
+        </p-floatlabel>
 
         <!-- Notas -->
-        <div class="form-field">
-          <label>Notas:</label>
+        <p-floatlabel variant="on">
           <textarea
-            pInputTextarea
+            pTextarea
+            id="notas"
             [(ngModel)]="personalInfo.notas"
             name="notas"
-            placeholder="Notas adicionales"
             rows="3"
             (input)="onNotasInput($event)"
             styleClass="p-inputtext-sm"
           ></textarea>
-        </div>
+          <label for="notas">Notas</label>
+        </p-floatlabel>
 
       <!-- Botones -->
       <div class="button-container">

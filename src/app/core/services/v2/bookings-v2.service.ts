@@ -37,10 +37,10 @@ export class BookingsServiceV2 {
       .set('useExactMatchForStrings', 'false');
 
     return this.http.get<ReservationResponse[]>(this.API_URL, { params }).pipe(
-      // Filtrar solo reservas activas (status 1 y 2)
+      // Filtrar solo reservas activas (status 5 = BOOKED, 6 = CONFIRMED)
       map((reservations: ReservationResponse[]) => 
         reservations.filter(reservation => 
-          reservation.reservationStatusId === 1 || reservation.reservationStatusId === 2
+          reservation.reservationStatusId === 5 || reservation.reservationStatusId === 6
         )
       )
     );
@@ -57,10 +57,10 @@ export class BookingsServiceV2 {
       .set('useExactMatchForStrings', 'false');
 
     return this.http.get<ReservationResponse[]>(this.API_URL, { params }).pipe(
-      // Filtrar solo historial (status 3 y 4)
+      // Filtrar solo historial (status 7 = PAID, 8 = CANCELLED)
       map((reservations: ReservationResponse[]) => 
         reservations.filter(reservation => 
-          reservation.reservationStatusId === 3 || reservation.reservationStatusId === 4
+          reservation.reservationStatusId === 7 || reservation.reservationStatusId === 8
         )
       )
     );
@@ -77,10 +77,10 @@ export class BookingsServiceV2 {
       .set('useExactMatchForStrings', 'false');
 
     return this.http.get<ReservationResponse[]>(this.API_URL, { params }).pipe(
-      // Filtrar solo presupuestos (status 0)
+      // Filtrar solo presupuestos (status 3 = BUDGET)
       map((reservations: ReservationResponse[]) => 
         reservations.filter(reservation => 
-          reservation.reservationStatusId === 0
+          reservation.reservationStatusId === 3
         )
       )
     );

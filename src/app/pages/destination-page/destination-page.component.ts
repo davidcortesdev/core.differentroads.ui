@@ -12,9 +12,8 @@ import { Subject, takeUntil } from 'rxjs';
 export class DestinationPageComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   
-  menuTipoSlug: string = '';
-  menuItemSlug: string = '';
-  destinationSlug: string = '';
+  continentSlug: string = ''; // menuItemSlug = continente (ej: "africa")
+  destinationSlug: string = ''; // destinationSlug = país (ej: "marruecos")
   isLoading = true;
 
   constructor(
@@ -28,9 +27,8 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
     this.route.params
       .pipe(takeUntil(this.destroy$))
       .subscribe(params => {
-        this.menuTipoSlug = params['menuTipoSlug'] || '';
-        this.menuItemSlug = params['menuItemSlug'] || '';
-        this.destinationSlug = params['destinationSlug'] || '';
+        this.continentSlug = params['menuItemSlug'] || ''; // El continente
+        this.destinationSlug = params['destinationSlug'] || ''; // El país (opcional)
         
         this.loadDestinationData();
       });
@@ -47,13 +45,12 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
     // Actualizar título
     const title = this.destinationSlug 
       ? `${this.formatSlug(this.destinationSlug)} - Different Roads`
-      : `${this.formatSlug(this.menuItemSlug)} - Different Roads`;
+      : `Destinos en ${this.formatSlug(this.continentSlug)} - Different Roads`;
     this.titleService.setTitle(title);
 
     // TODO: Aquí cargarás los tours por ubicación/país
     console.log('Cargando destino:', {
-      menuTipoSlug: this.menuTipoSlug,
-      menuItemSlug: this.menuItemSlug,
+      continentSlug: this.continentSlug,
       destinationSlug: this.destinationSlug
     });
 

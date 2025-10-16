@@ -12,9 +12,8 @@ import { Subject, takeUntil } from 'rxjs';
 export class CategoryPageComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   
-  menuTipoSlug: string = '';
-  menuItemSlug: string = '';
-  categorySlug: string = '';
+  categorySlug: string = ''; // menuItemSlug = categoría (ej: "temporada")
+  subItemSlug: string = ''; // subItemSlug = tag específico (ej: "semana-santa")
   isLoading = true;
 
   constructor(
@@ -28,9 +27,8 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
     this.route.params
       .pipe(takeUntil(this.destroy$))
       .subscribe(params => {
-        this.menuTipoSlug = params['menuTipoSlug'] || '';
-        this.menuItemSlug = params['menuItemSlug'] || '';
-        this.categorySlug = params['categorySlug'] || '';
+        this.categorySlug = params['menuItemSlug'] || ''; // La categoría principal
+        this.subItemSlug = params['subItemSlug'] || ''; // El tag específico (opcional)
         
         this.loadCategoryData();
       });
@@ -45,16 +43,15 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     
     // Actualizar título
-    const title = this.categorySlug 
-      ? `${this.formatSlug(this.categorySlug)} - Different Roads`
-      : `${this.formatSlug(this.menuItemSlug)} - Different Roads`;
+    const title = this.subItemSlug 
+      ? `${this.formatSlug(this.subItemSlug)} - Different Roads`
+      : `${this.formatSlug(this.categorySlug)} - Different Roads`;
     this.titleService.setTitle(title);
 
     // TODO: Aquí cargarás los tours por tag/categoría
     console.log('Cargando categoría:', {
-      menuTipoSlug: this.menuTipoSlug,
-      menuItemSlug: this.menuItemSlug,
-      categorySlug: this.categorySlug
+      categorySlug: this.categorySlug,
+      subItemSlug: this.subItemSlug
     });
 
     // Simular carga

@@ -133,8 +133,8 @@ const routes: Routes = [
       // ========================================
       // CONTENT PAGES ROUTES
       // ========================================
-      { path: 'pages/:slug', component: BasicPageComponent },
       { path: 'preview/pages', component: BasicPagePreviewComponent },
+      { path: 'pages/:slug', component: BasicPageComponent },
       { path: 'landing/:slug', component: ContentPageComponent },
       { path: 'collection/:slug', component: ContentPageComponent },
       { path: 'press/:slug', component: ContentPageComponent },
@@ -146,21 +146,39 @@ const routes: Routes = [
       { path: 'reviews/:periodTkId', component: ReviewSurveyComponent },
 
       // ========================================
-      // DYNAMIC MENU ROUTES - DESTINATIONS
+      // DYNAMIC MENU ROUTES - DESTINATIONS (más específicas primero)
       // ========================================
+      // Destino con continente y país: /destino/africa/marruecos
       { 
-        path: ':menuTipoSlug/:menuItemSlug/:destinationSlug', 
+        path: 'destino/:menuItemSlug/:destinationSlug', 
         component: DestinationPageComponent,
         data: { type: 'destination' }
       },
+      // Destino solo con continente: /destino/africa
       { 
-        path: ':menuTipoSlug/:menuItemSlug', 
+        path: 'destino/:menuItemSlug', 
+        component: DestinationPageComponent,
+        data: { type: 'destination' }
+      },
+
+      // ========================================
+      // DYNAMIC MENU ROUTES - CATEGORIES (al final, son las más genéricas)
+      // ========================================
+      // Categoría con sub-item: /temporada/semana-santa
+      { 
+        path: ':menuItemSlug/:subItemSlug', 
+        component: CategoryPageComponent,
+        data: { type: 'category' }
+      },
+      // Categoría sola: /temporada
+      { 
+        path: ':menuItemSlug', 
         component: CategoryPageComponent,
         data: { type: 'category' }
       },
 
       // ========================================
-      // 404 - NOT FOUND (debe ser siempre la última)
+      // 404 - NOT FOUND (siempre debe ser la última)
       // ========================================
       { path: '**', component: NotFoundComponent },
     ],

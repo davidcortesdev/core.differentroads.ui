@@ -155,6 +155,11 @@ const routes: Routes = [
       { path: 'reviews/:periodTkId', component: ReviewSurveyComponent },
 
       // ========================================
+      // NOT FOUND ROUTE (debe estar antes de las rutas dinámicas)
+      // ========================================
+      { path: 'not-found', component: NotFoundComponent },
+
+      // ========================================
       // DYNAMIC MENU ROUTES - DESTINATIONS (más específicas primero)
       // ========================================
       // Destino con continente y país: /destino/africa/marruecos

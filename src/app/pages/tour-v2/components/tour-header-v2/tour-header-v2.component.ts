@@ -1108,7 +1108,7 @@ export class TourHeaderV2Component
             const listName = state?.['listName'] || '';
             
             // Navegar al checkout pasando los datos por state (sin modificar URL)
-            this.router.navigate(['/checkout-v2', reservation.id], {
+            this.router.navigate(['/checkout', reservation.id], {
               state: {
                 listId: listId,
                 listName: listName

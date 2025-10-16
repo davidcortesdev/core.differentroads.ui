@@ -21,23 +21,6 @@
   // Estilos para la lista de tours
   .tours-list {
     padding: 2rem 3.5rem;
-
-    ::ng-deep {
-      .p-dataview {
-        .p-dataview-content {
-          background: transparent;
-          padding: 0;
-        }
-
-        .grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-          gap: 1rem;
-          margin: 0;
-          padding: 0;
-        }
-      }
-    }
   }
 
   ::ng-deep {

@@ -117,6 +117,7 @@
         <p-floatlabel variant="on">
           <p-datepicker 
             inputId="fechaNacimiento"
+            name="fechaNacimiento"
             [(ngModel)]="personalInfo.fechaNacimiento"
             showIcon
             iconDisplay="input"
@@ -131,6 +132,7 @@
         <p-floatlabel class="w-full md:w-56" variant="on">
           <p-select 
             [(ngModel)]="personalInfo.sexo" 
+            name="sexo"
             inputId="sexo" 
             [options]="sexoOptions" 
             optionLabel="label"

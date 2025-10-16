@@ -1,27 +1,41 @@
 <div class="category-page-container">
   <div class="category-header">
-    <h1>{{ subItemSlug ? formatSlug(subItemSlug) : formatSlug(categorySlug) }}</h1>
+    <h1>{{ subItemSlug ? getTagName() : getCategoryName() }}</h1>
     <p class="breadcrumb">
       <a routerLink="/home-v2">Inicio</a>
       <span class="separator">/</span>
-      <span>{{ formatSlug(categorySlug) }}</span>
+      <span>{{ getCategoryName() }}</span>
       <span class="separator" *ngIf="subItemSlug">/</span>
-      <span *ngIf="subItemSlug">{{ formatSlug(subItemSlug) }}</span>
+      <span *ngIf="subItemSlug">{{ getTagName() }}</span>
     </p>
   </div>
 
   <div class="category-content" *ngIf="!isLoading">
     <div class="content-info">
-      <p>Mostrando tours para <strong>{{ subItemSlug ? formatSlug(subItemSlug) : formatSlug(categorySlug) }}</strong></p>
+      <p>Mostrando tours para <strong>{{ subItemSlug ? getTagName() : getCategoryName() }}</strong></p>
     </div>
 
     <!-- TODO: Aquí irá el componente de tours filtrados por tag/categoría -->
     <div class="tours-placeholder">
-      <p>Componente de tours para categorías (en desarrollo)</p>
-      <p class="debug-info">
-        Categoría: {{ categorySlug }}<br>
-        Sub-item: {{ subItemSlug || 'Todos' }}
-      </p>
+      <div *ngIf="isLoadingTours" class="loading-tours">
+        <p-progressSpinner [style]="{ width: '50px', height: '50px' }"></p-progressSpinner>
+        <p>Cargando tours...</p>
+      </div>
+      
+      <div *ngIf="!isLoadingTours">
+        <p>Componente de tours para categorías (en desarrollo)</p>
+        <p class="debug-info">
+          Categoría ID: {{ categoryId || 'No encontrado' }}<br>
+          Categoría: {{ getCategoryName() }}<br>
+          <ng-container *ngIf="subItemSlug">
+            Tag ID: {{ tagId || 'No encontrado' }}<br>
+            Tag: {{ getTagName() }}<br>
+          </ng-container>
+          <br>
+          <strong>Tours encontrados: {{ tourIds.length }}</strong><br>
+          <span *ngIf="tourIds.length > 0">IDs: {{ tourIds.join(', ') }}</span>
+        </p>
+      </div>
     </div>
   </div>
 

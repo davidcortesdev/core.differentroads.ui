@@ -37,6 +37,14 @@
           <strong>Tours encontrados: {{ tourIds.length }}</strong><br>
           <span *ngIf="tourIds.length > 0">IDs: {{ tourIds.join(', ') }}</span>
         </p>
+
+        <!-- Grid de tours -->
+        <app-tour-grid-v2
+          [tourIds]="tourIds"
+          [itemListId]="destinationSlug ? getDestinationName() : getContinentName()"
+          [itemListName]="destinationSlug ? getDestinationName() : getContinentName()"
+          [showScalapayPrice]="true"
+        ></app-tour-grid-v2>
       </div>
     </div>
   </div>

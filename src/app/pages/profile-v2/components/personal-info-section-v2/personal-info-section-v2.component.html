@@ -68,6 +68,12 @@
         </span>
       </div>
       <div class="info-item">
+        <span class="label">Sexo:</span>
+        <span class="value" [class.pending]="!personalInfo.sexo">
+          {{ personalInfo.sexo || 'Pendiente' }}
+        </span>
+      </div>
+      <div class="info-item">
         <span class="label">DNI/NIE:</span>
         <span class="value" [class.pending]="!personalInfo.dni">
           {{ personalInfo.dni || 'Pendiente' }}

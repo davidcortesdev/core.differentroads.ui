@@ -25,7 +25,12 @@ export class UpdateProfileSectionV2Component{
   errorMessage: string = '';
   successMessage: string = '';
 
-
+  // Opciones para el dropdown de sexo
+  sexoOptions = [
+    { label: 'Masculino', value: 'Masculino' },
+    { label: 'Femenino', value: 'Femenino' },
+    { label: 'Otro', value: 'Otro' }
+  ];
 
   constructor(private updateProfileService: UpdateProfileV2Service) { }
 
@@ -122,6 +127,9 @@ export class UpdateProfileSectionV2Component{
     this.clearFieldError('fechaNacimiento');
   }
 
+  onSexoChange(event: any) {
+    this.clearFieldError('sexo');
+  }
 
   onSubmit() {
     this.isFormSubmitted = true;

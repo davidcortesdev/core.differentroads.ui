@@ -5,6 +5,26 @@
     --p-inputtext-background: transparent;
     --p-inputtext-hover-border-color: none;
 
+    p-floatlabel {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    p-select {
+        width: 100%;
+        margin-bottom: 18px;
+        --p-select-background: white;
+    }
+
+    p-datepicker{
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
     ::ng-deep {
         .p-panel {
             border-radius: 0.875rem;
@@ -35,20 +55,6 @@
             }
         }
 
-        .p-inputtext,
-        .p-inputtext:enabled:focus {
-            border-color: var(--background-azul);
-            box-shadow: var(--background-azul);
-            outline: var(--background-azul);
-            outline-offset: var(--background-azul);
-        }
-        .p-calendar input,
-        .p-autocomplete input {
-            &::placeholder {
-                font-size: 12px !important;
-            }
-        }
-
         .custom-calendar {
             width: 100% !important;
 
@@ -59,63 +65,7 @@
             input {
                 width: 100% !important;
                 font-size: 12px !important;
-
-                &::placeholder {
-                    font-size: 12px !important;
-                }
             }
-            .p-datepicker-dropdown {
-                color: var(--background-azul);
-                border: 1px solid var(--background-azul);
-            }
-            /* .p-datepicker {
-                font-size: 12px !important;
-
-                .p-datepicker-header {
-                    .p-datepicker-title {
-                        .p-datepicker-month,
-                        .p-datepicker-year {
-                            font-size: 12px !important;
-                        }
-                    }
-                }
-
-                table {
-                    th,
-                    td {
-                        font-size: 12px !important;
-                    }
-                }
-            } */
-        }
-
-        .custom-autocomplete {
-            width: 100% !important;
-            .p-autocomplete-dropdown {
-                color: var(--background-azul);
-                border: 1px solid var(--background-azul);
-            }
-            input {
-                width: 100% !important;
-                font-size: 12px !important;
-
-                &::placeholder {
-                    font-size: 12px !important;
-                }
-            }
-
-            .p-autocomplete-option-selected {
-                background: #fff;
-                color: var(--background-azul);
-            }
-
-            /*   .p-autocomplete-panel {
-                .p-autocomplete-items {
-                    .p-autocomplete-item {
-                        font-size: 12px !important;
-                    }
-                }
-            } */
         }
 
         .custom-upload {
@@ -148,64 +98,53 @@
 }
 
 .update-profile-container {
-    .form-field {
-        margin-bottom: 10px;
+    .form-container {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
 
-        label {
-            display: block;
+    .form-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+
+        h4 {
             color: var(--background-azul);
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .p-inputtext,
-        .p-dropdown,
-        .p-calendar,
-        .p-autocomplete,
-        .p-inputmask {
-            background: transparent;
-            width: 100%;
-            border: none;
+            margin: 0 0 0.5rem 0;
+            padding-bottom: 0.5rem;
             border-bottom: 1px solid var(--background-azul);
-            border-radius: 0;
-            padding: 4px 0;
-            font-size: 12px;
-            line-height: 1.2;
-
-            &.error {
-                border-bottom-color: #dc3545;
-            }
         }
+    }
 
-        .error-message {
-            color: #dc3545;
-            font-size: 11px;
-            margin-top: 4px;
-            display: block;
-        }
+    .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
 
-        /* .p-dropdown {
-            &:enabled:focus {
-                border-color: var(--background-azul); // Cambia el color del borde cuando se selecciona
-                box-shadow: none;
-            }
+    .error-message {
+        color: #dc3545;
+        font-size: 11px;
+        margin-top: 4px;
+        display: block;
+    }
 
-            &:enabled:hover {
-                border-color: var(--background-azul);
-            }
-
-            &.p-dropdown-open {
-                border-color: #ced4da; // Cambia el color del borde cuando está abierto
-            }
-        } */
+    .success-message {
+        color: #28a745;
+        font-size: 11px;
+        margin-top: 4px;
+        display: block;
     }
 
     .button-container {
         display: flex;
         justify-content: center;
         gap: 1rem;
-        margin-top: 1rem;
+        margin-top: 2rem;
     }
 
     .btn-save {

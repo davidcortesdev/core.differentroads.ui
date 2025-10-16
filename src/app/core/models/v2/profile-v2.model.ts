@@ -41,6 +41,7 @@ export interface PersonalInfo {
     codigoPostal?: string;
     pais?: string;
     fechaNacimiento?: string;
+    sexo?: string;
     notas?: string;
   }
 

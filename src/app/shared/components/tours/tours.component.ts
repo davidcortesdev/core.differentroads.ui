@@ -4,7 +4,7 @@ import { AnalyticsService, EcommerceItem } from '../../../core/services/analytic
 import { AuthenticateService } from '../../../core/services/auth/auth-service.service';
 import { Title } from '@angular/platform-browser';
 import { TourSearchParams, TourService } from '../../../core/services/tour/tour.service';
-import { FilterChangeEvent } from '../tours-filter-list/tours-filter-list.component';
+import { FilterChangeEvent } from '../../../pages/home-v2/components/tour-grid-v2/tour-grid-v2.component';
 
 interface ITour {
   imageUrl: string;

@@ -9,11 +9,12 @@
   ></app-hero-section-v2>
 
   <!-- Nuevo componente de filtros y lista de tours -->
-  <app-tours-filter-list
+  <app-tour-grid-v2
     [tourIds]="tourIds"
     [itemListId]="getListId()"
     [itemListName]="getListName()"
-    [isLoadingTours]="isLoadingTours"
+    [showScalapayPrice]="true"
+    [showFilters]="true"
     (filterChange)="onFilterChange($event)"
-  ></app-tours-filter-list>
+  ></app-tour-grid-v2>
 </div>

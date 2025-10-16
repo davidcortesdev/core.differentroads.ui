@@ -37,12 +37,13 @@
         </p>
 
         <!-- Grid de tours -->
-        <app-tours-filter-list
+        <app-tour-grid-v2
           [tourIds]="tourIds"
           [itemListId]="subItemSlug ? getTagName() : getCategoryName()"
           [itemListName]="subItemSlug ? getTagName() : getCategoryName()"
           [showScalapayPrice]="true"
-        ></app-tours-filter-list>
+          [showFilters]="true"
+        ></app-tour-grid-v2>
       </div>
     </div>
   </div>

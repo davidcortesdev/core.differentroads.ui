@@ -39,12 +39,13 @@
         </p>
 
         <!-- Grid de tours -->
-        <app-tours-filter-list
+        <app-tour-grid-v2
           [tourIds]="tourIds"
           [itemListId]="destinationSlug ? getDestinationName() : getContinentName()"
           [itemListName]="destinationSlug ? getDestinationName() : getContinentName()"
           [showScalapayPrice]="true"
-        ></app-tours-filter-list>
+          [showFilters]="true"
+        ></app-tour-grid-v2>
       </div>
     </div>
   </div>

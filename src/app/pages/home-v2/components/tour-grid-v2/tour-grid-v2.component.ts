@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, OnChanges, SimpleChanges, EventEmitter, Output } from '@angular/core';
 import {
   TourService,
   Tour as TourNetTour,
@@ -38,6 +38,13 @@ import {
   IItineraryDayResponse,
 } from '../../../../core/services/itinerary/itinerary-day/itinerary-day.service';
 
+export interface FilterChangeEvent {
+  orderOption?: string;
+  priceOption?: string[];
+  seasonOption?: string[];
+  monthOption?: string[];
+}
+
 @Component({
   selector: 'app-tour-grid-v2',
   standalone: false,
@@ -70,8 +77,44 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
    */
   @Input() maxToursToShow?: number;
 
+  /**
+   * Mostrar o ocultar la sección de filtros
+   */
+  @Input() showFilters: boolean = false;
+
+  /**
+   * Output para notificar cambios en filtros
+   */
+  @Output() filterChange = new EventEmitter<FilterChangeEvent>();
+
   tours: TourDataV2[] = [];
   isLoading: boolean = false;
+  
+  // Opciones de filtros
+  orderOptions = [
+    { name: 'Próximas salidas', value: 'next-departures' },
+    { name: 'Precio (de menor a mayor)', value: 'min-price' },
+    { name: 'Precio (de mayor a menor)', value: 'max-price' },
+  ];
+  selectedOrderOption: string = 'next-departures';
+
+  priceOptions: { name: string; value: string }[] = [
+    { name: 'Menos de $1000', value: '0-1000' },
+    { name: '$1000 - $3000', value: '1000-3000' },
+    { name: '+ 3000', value: '3000+' },
+  ];
+  selectedPriceOption: string[] = [];
+
+  seasonOptions: { name: string; value: string }[] = [
+    { name: 'Verano', value: 'Verano' },
+    { name: 'Invierno', value: 'invierno' },
+    { name: 'Primavera', value: 'Primavera' },
+    { name: 'Otoño', value: 'otono' },
+  ];
+  selectedSeasonOption: string[] = [];
+
+  monthOptions: { name: string; value: string }[] = [];
+  selectedMonthOption: string[] = [];
   
   private destroy$ = new Subject<void>();
 
@@ -98,6 +141,34 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /**
+   * Métodos para manejar cambios en filtros
+   */
+  onOrderChange(): void {
+    this.emitFilterChange();
+  }
+
+  onPriceFilterChange(): void {
+    this.emitFilterChange();
+  }
+
+  onSeasonFilterChange(): void {
+    this.emitFilterChange();
+  }
+
+  onMonthFilterChange(): void {
+    this.emitFilterChange();
+  }
+
+  private emitFilterChange(): void {
+    this.filterChange.emit({
+      orderOption: this.selectedOrderOption,
+      priceOption: this.selectedPriceOption,
+      seasonOption: this.selectedSeasonOption,
+      monthOption: this.selectedMonthOption,
+    });
   }
 
   /**

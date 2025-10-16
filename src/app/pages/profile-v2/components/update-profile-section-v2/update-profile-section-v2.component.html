@@ -39,6 +39,7 @@
             chooseLabel="Adjuntar foto"
             (onRemove)="onRemoveImage()"
             styleClass="custom-upload"
+            severity="danger"
           >
             <ng-template #content let-files>
               <div class="upload-list" *ngIf="uploadedFiles.length">

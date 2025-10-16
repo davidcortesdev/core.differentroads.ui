@@ -114,8 +114,8 @@ export class PointsSectionV2Component implements OnInit {
   }
 
   private calculateCompletedTrips(travelHistory: any[]): number {
-    // Contar solo viajes completados (status 3 = Completed)
-    return travelHistory.filter(trip => trip.reservationStatusId === 3).length;
+    // Contar solo viajes completados (status 7 = PAID)
+    return travelHistory.filter(trip => trip.reservationStatusId === 7).length;
   }
 
   private mapApiTransactionsToPoints(transactions: any[]): PointsRecord[] {
@@ -217,7 +217,7 @@ export class PointsSectionV2Component implements OnInit {
     return this.pointsService.getCategoryBadgeClass(category);
   }
 
-  // ===== MÉTODOS PARA HISTORIAL (E4-02) =====
+  // ===== MÉTODOS PARA HISTORIAL =====
   getFormattedDate(date: Date | undefined): string {
     if (!date) return 'N/A';
     return new Date(date).toLocaleDateString('es-ES', {

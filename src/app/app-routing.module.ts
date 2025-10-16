@@ -71,7 +71,7 @@ const routes: Routes = [
     component: StandaloneComponent,
     children: [
       { path: 'checkout/:reservationId', component: CheckoutV2Component },
-      { path: 'bookingsv2/:id', component: Bookingsv2Component },
+      { path: 'bookings/:id', component: Bookingsv2Component },
       {
         path: 'reservation/:reservationId/:paymentId',
         component: NewReservationComponent,
@@ -105,7 +105,7 @@ const routes: Routes = [
       // ========================================
       // PROFILE ROUTES
       // ========================================
-      { path: 'profile-v2/:userId', component: ProfileV2Component },
+      { path: 'profile/:userId', component: ProfileV2Component },
 
       // ========================================
       // TOUR ROUTES
@@ -117,7 +117,7 @@ const routes: Routes = [
       // ========================================
       // CHECKOUT ROUTES
       // ========================================
-      { path: 'checkout-v2/:reservationId', component: CheckoutV2Component },
+      { path: 'checkout/:reservationId', component: CheckoutV2Component },
 
       // ========================================
       // RESERVATION ROUTES
@@ -136,7 +136,7 @@ const routes: Routes = [
       // ========================================
       // BOOKINGS ROUTES
       // ========================================
-      { path: 'bookingsv2/:id', component: Bookingsv2Component },
+      { path: 'bookings/:id', component: Bookingsv2Component },
 
       // ========================================
       // CONTENT PAGES ROUTES

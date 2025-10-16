@@ -658,19 +658,19 @@ export class HeaderV2Component implements OnInit, OnDestroy {
           this.currentUserId = userId || '';
           
           if (userId) {
-            this.router.navigate(['/profile-v2', userId]);
+            this.router.navigate(['/profile', userId]);
           }
         } else {
           const cognitoId = this.authService.getCognitoIdValue();
           if (cognitoId) {
-            this.router.navigate(['/profile-v2', cognitoId]);
+            this.router.navigate(['/profile', cognitoId]);
           }
         }
       },
       error: (error) => {
         const cognitoId = this.authService.getCognitoIdValue();
         if (cognitoId) {
-          this.router.navigate(['/profile-v2', cognitoId]);
+          this.router.navigate(['/profile', cognitoId]);
         }
       }
     });

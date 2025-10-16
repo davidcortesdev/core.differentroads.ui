@@ -135,35 +135,83 @@ export class SignUpFormComponent {
             .signUp(this.signUpForm.value.email, this.signUpForm.value.password)
             .then((cognitoUserId) => {
               console.log('Usuario creado en Cognito con ID:', cognitoUserId);
+              
+              // Primero buscar si el usuario ya existe en UsersNet por email
               this.usersNetService
-                .createUser({
-                  cognitoId: cognitoUserId,
-                  name: this.signUpForm.value.firstName,
-                  lastName: this.signUpForm.value.lastName,
-                  email: this.signUpForm.value.email,
-                  phone: this.signUpForm.value.phone,
-                  hasWebAccess: true,
-                  hasMiddleAccess: false
-                })
+                .getUsersByEmail(this.signUpForm.value.email)
                 .subscribe({
-                  next: (user) => {
-                    console.log('Usuario creado exitosamente:', user);
-                    
-                    this.isLoading = false;
-                    this.isConfirming = true;
-                    this.registeredUsername = this.signUpForm.value.email;
-                    this.userPassword = this.signUpForm.value.password;
-                    console.log('Registro completado. Esperando confirmación.');
+                  next: (existingUsers) => {
+                    const userData = {
+                      cognitoId: cognitoUserId,
+                      name: this.signUpForm.value.firstName,
+                      lastName: this.signUpForm.value.lastName,
+                      email: this.signUpForm.value.email,
+                      phone: this.signUpForm.value.phone,
+                      hasWebAccess: true,
+                      hasMiddleAccess: false
+                    };
+
+                    if (existingUsers && existingUsers.length > 0) {
+                      // Usuario existe, actualizar solo name, lastName, phone y cognitoId
+                      const existingUser = existingUsers[0];
+                      console.log('Usuario ya existe en UsersNet, actualizando datos:', existingUser);
+                      
+                      const updateData = {
+                        cognitoId: cognitoUserId,
+                        name: this.signUpForm.value.firstName,
+                        lastName: this.signUpForm.value.lastName,
+                        phone: this.signUpForm.value.phone
+                      };
+                      
+                      this.usersNetService
+                        .updateUser(existingUser.id, updateData)
+                        .subscribe({
+                          next: (updated) => {
+                            console.log('Usuario actualizado exitosamente:', updated);
+                            
+                            this.isLoading = false;
+                            this.isConfirming = true;
+                            this.registeredUsername = this.signUpForm.value.email;
+                            this.userPassword = this.signUpForm.value.password;
+                            console.log('Registro completado. Esperando confirmación.');
+                          },
+                          error: (error: unknown) => {
+                            this.isLoading = false;
+                            this.errorMessage = error instanceof Error ? error.message : 'Error al actualizar usuario';
+                          }
+                        });
+                    } else {
+                      // Usuario no existe, crear nuevo
+                      console.log('Usuario no existe en UsersNet, creando nuevo usuario');
+                      
+                      this.usersNetService
+                        .createUser(userData)
+                        .subscribe({
+                          next: (user) => {
+                            console.log('Usuario creado exitosamente:', user);
+                            
+                            this.isLoading = false;
+                            this.isConfirming = true;
+                            this.registeredUsername = this.signUpForm.value.email;
+                            this.userPassword = this.signUpForm.value.password;
+                            console.log('Registro completado. Esperando confirmación.');
+                          },
+                          error: (error: unknown) => {
+                            this.isLoading = false;
+                            this.errorMessage = error instanceof Error ? error.message : 'Registro fallido';
+                          }
+                        });
+                    }
                   },
-                  error: (error: any) => {
+                  error: (error: unknown) => {
                     this.isLoading = false;
-                    this.errorMessage = error.message || 'Registro fallido';
+                    this.errorMessage = error instanceof Error ? error.message : 'Error al verificar usuario existente';
                   }
                 });
             })
             .catch((error) => {
               this.isLoading = false;
-              this.errorMessage = error.message || 'Registro fallido';
+              this.errorMessage = error instanceof Error ? error.message : 'Registro fallido';
             });
         },
         error: (hubspotError) => {

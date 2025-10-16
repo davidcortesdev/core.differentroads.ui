@@ -255,6 +255,7 @@ import { RetailerService } from './core/services/retailer/retailer.service';
 import { SummaryTableComponent } from './components/summary-table/summary-table.component';
 import { TourGridV2Component } from './pages/home-v2/components/tour-grid-v2/tour-grid-v2.component';
 import { DatepickerRangeV2Component } from './shared/components/datepicker-range-v2/datepicker-range-v2.component';
+import { ToursFilterListComponent } from './shared/components/tours-filter-list/tours-filter-list.component';
 
 
 // ========================================
@@ -417,6 +418,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     SummaryTableComponent,
      TourGridV2Component,
      DatepickerRangeV2Component,
+     ToursFilterListComponent,
   ],
   imports: [
     // ========================================

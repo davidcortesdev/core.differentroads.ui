@@ -4,6 +4,7 @@ import { AnalyticsService, EcommerceItem } from '../../../core/services/analytic
 import { AuthenticateService } from '../../../core/services/auth/auth-service.service';
 import { Title } from '@angular/platform-browser';
 import { TourSearchParams, TourService } from '../../../core/services/tour/tour.service';
+import { FilterChangeEvent } from '../tours-filter-list/tours-filter-list.component';
 
 interface ITour {
   imageUrl: string;
@@ -177,7 +178,31 @@ export class ToursComponent implements OnInit, OnChanges {
     });
   }
 
-  // Filter change methods
+  // Manejar cambios de filtros desde el componente hijo
+  onFilterChange(event: FilterChangeEvent) {
+    // Actualizar las opciones de filtro con los valores del evento
+    if (event.orderOption !== undefined) {
+      this.selectedOrderOption = event.orderOption;
+      this.trackFilterOrder();
+    }
+    if (event.priceOption !== undefined) {
+      this.selectedPriceOption = event.priceOption;
+      this.trackFilter();
+    }
+    if (event.seasonOption !== undefined) {
+      this.selectedSeasonOption = event.seasonOption;
+      this.trackFilter();
+    }
+    if (event.monthOption !== undefined) {
+      this.selectedMonthOption = event.monthOption;
+      this.trackFilter();
+    }
+    
+    // Recargar los tours con los nuevos filtros
+    this.loadTours();
+  }
+
+  // Filter change methods (mantener por compatibilidad interna)
   onTagFilterChange() {
     this.trackFilter();
     this.loadTours();

@@ -146,7 +146,7 @@ export class LoginFormComponent implements OnInit {
                 // Disparar evento login
                 this.trackLogin(method, usersByEmail[0]);
                 
-                this.updateUserWithCognitoId(usersByEmail[0].id, cognitoId, method);
+                this.updateUserWithCognitoId(usersByEmail[0].id, cognitoId, usersByEmail[0].email, usersByEmail[0].name, method);
               } else {
                 // Usuario no existe, crearlo
                 console.log('🆕 Usuario no encontrado, creando nuevo usuario');
@@ -174,7 +174,7 @@ export class LoginFormComponent implements OnInit {
               // Disparar evento login
               this.trackLogin(method, usersByEmail[0]);
               
-              this.updateUserWithCognitoId(usersByEmail[0].id, cognitoId, method);
+              this.updateUserWithCognitoId(usersByEmail[0].id, cognitoId, usersByEmail[0].email, usersByEmail[0].name, method);
             } else {
               console.log('🆕 Usuario no encontrado, creando nuevo usuario');
               this.createNewUser(cognitoId, email, method);
@@ -192,11 +192,18 @@ export class LoginFormComponent implements OnInit {
   /**
    * Actualiza un usuario existente con el Cognito ID
    */
-  private updateUserWithCognitoId(userId: number, cognitoId: string, method: string = 'manual'): void {
+  private updateUserWithCognitoId(userId: number, cognitoId: string, email: string | undefined, name: string | undefined, method: string = 'manual'): void {
     console.log('🔄 Actualizando usuario con Cognito ID...');
-    console.log('📝 Datos de actualización:', { userId, cognitoId });
+    console.log('📝 Datos de actualización:', { userId, cognitoId, email, name });
     
-    this.usersNetService.updateUser(userId, { cognitoId }).subscribe({
+    // Preparar datos de actualización con campos requeridos
+    const updateData = {
+      cognitoId: cognitoId,
+      name: name || email || 'Usuario', // Usar email como fallback si no hay nombre
+      email: email || ''
+    };
+    
+    this.usersNetService.updateUser(userId, updateData).subscribe({
       next: (success) => {
         if (success) {
           console.log('✅ Usuario actualizado con Cognito ID exitosamente');

@@ -3,6 +3,7 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { LocationNetService, Location } from '../../core/services/locations/locationNet.service';
+import { TourLocationService } from '../../core/services/tour/tour-location.service';
 
 @Component({
   selector: 'app-destination-page',
@@ -21,13 +22,16 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
   continentId: number | null = null;
   destinationId: number | null = null;
   
+  tourIds: number[] = []; // IDs de tours filtrados por ubicación
   isLoading = true;
+  isLoadingTours = false;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private titleService: Title,
-    private locationService: LocationNetService
+    private locationService: LocationNetService,
+    private tourLocationService: TourLocationService
   ) {}
 
   ngOnInit(): void {
@@ -126,6 +130,49 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
     });
 
     this.isLoading = false;
+    
+    // Cargar tours basados en las ubicaciones
+    this.loadTours();
+  }
+
+  /**
+   * Carga los tours filtrados por las ubicaciones seleccionadas
+   */
+  private loadTours(): void {
+    const locationIds: number[] = [];
+    
+    // Si hay destino específico, usar solo ese
+    if (this.destinationId) {
+      locationIds.push(this.destinationId);
+    } 
+    // Si solo hay continente, usar ese
+    else if (this.continentId) {
+      locationIds.push(this.continentId);
+    }
+
+    // Si no hay ubicaciones, no hacer nada
+    if (locationIds.length === 0) {
+      console.warn('No hay IDs de ubicación para filtrar tours');
+      return;
+    }
+
+    this.isLoadingTours = true;
+    
+    this.tourLocationService
+      .getToursByLocations(locationIds)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (tourIds) => {
+          this.tourIds = tourIds;
+          console.log(`Tours encontrados para las ubicaciones [${locationIds.join(', ')}]:`, tourIds);
+          this.isLoadingTours = false;
+        },
+        error: (error) => {
+          console.error('Error al cargar tours por ubicaciones:', error);
+          this.tourIds = [];
+          this.isLoadingTours = false;
+        }
+      });
   }
 
   /**

@@ -19,15 +19,25 @@
 
     <!-- TODO: Aquí irá el componente de tours filtrados por ubicación -->
     <div class="tours-placeholder">
-      <p>Componente de tours para destinos (en desarrollo)</p>
-      <p class="debug-info">
-        Continente ID: {{ continentId || 'No encontrado' }}<br>
-        Continente: {{ getContinentName() }}<br>
-        <ng-container *ngIf="destinationSlug">
-          Destino ID: {{ destinationId || 'No encontrado' }}<br>
-          Destino: {{ getDestinationName() }}<br>
-        </ng-container>
-      </p>
+      <div *ngIf="isLoadingTours" class="loading-tours">
+        <p-progressSpinner [style]="{ width: '50px', height: '50px' }"></p-progressSpinner>
+        <p>Cargando tours...</p>
+      </div>
+      
+      <div *ngIf="!isLoadingTours">
+        <p>Componente de tours para destinos (en desarrollo)</p>
+        <p class="debug-info">
+          Continente ID: {{ continentId || 'No encontrado' }}<br>
+          Continente: {{ getContinentName() }}<br>
+          <ng-container *ngIf="destinationSlug">
+            Destino ID: {{ destinationId || 'No encontrado' }}<br>
+            Destino: {{ getDestinationName() }}<br>
+          </ng-container>
+          <br>
+          <strong>Tours encontrados: {{ tourIds.length }}</strong><br>
+          <span *ngIf="tourIds.length > 0">IDs: {{ tourIds.join(', ') }}</span>
+        </p>
+      </div>
     </div>
   </div>
 

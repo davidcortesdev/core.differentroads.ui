@@ -483,19 +483,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
                 : of([]);
 
             // Obtener tags del tour
-            const tagRequest = this.tourTagService.getAll({ tourId: [tourId] }).pipe(
-              map((tourTags) => {
-                // Mapear los tagIds a strings
-                return tourTags.map(tourTag => tourTag.tagId.toString());
-              }),
-              catchError((error) => {
-                console.error(
-                  `❌ Error obteniendo tags para tour ${tourId}:`,
-                  error
-                );
-                return of([]);
-              })
-            );
+            const tagRequest = of([]);
 
             return forkJoin([tagRequest, itineraryDaysRequest]).pipe(
               map(([tags, itineraryDays]) => {

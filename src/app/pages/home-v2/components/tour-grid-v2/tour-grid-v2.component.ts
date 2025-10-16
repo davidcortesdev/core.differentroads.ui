@@ -83,11 +83,12 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
   @Input() showFilters: boolean = false;
 
   /**
-   * Output para notificar cambios en filtros
+   * Output para notificar cambios en filtros (opcional, para compatibilidad)
    */
   @Output() filterChange = new EventEmitter<FilterChangeEvent>();
 
-  tours: TourDataV2[] = [];
+  tours: TourDataV2[] = []; // Tours filtrados y ordenados que se muestran
+  allTours: TourDataV2[] = []; // Todos los tours sin filtrar
   isLoading: boolean = false;
   
   // Opciones de filtros
@@ -113,7 +114,20 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
   ];
   selectedSeasonOption: string[] = [];
 
-  monthOptions: { name: string; value: string }[] = [];
+  monthOptions: { name: string; value: string }[] = [
+    { name: 'Enero', value: 'ENE' },
+    { name: 'Febrero', value: 'FEB' },
+    { name: 'Marzo', value: 'MAR' },
+    { name: 'Abril', value: 'ABR' },
+    { name: 'Mayo', value: 'MAY' },
+    { name: 'Junio', value: 'JUN' },
+    { name: 'Julio', value: 'JUL' },
+    { name: 'Agosto', value: 'AGO' },
+    { name: 'Septiembre', value: 'SEP' },
+    { name: 'Octubre', value: 'OCT' },
+    { name: 'Noviembre', value: 'NOV' },
+    { name: 'Diciembre', value: 'DIC' },
+  ];
   selectedMonthOption: string[] = [];
   
   private destroy$ = new Subject<void>();
@@ -147,22 +161,50 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
    * Métodos para manejar cambios en filtros
    */
   onOrderChange(): void {
-    this.emitFilterChange();
+    this.applyFiltersAndSort();
   }
 
   onPriceFilterChange(): void {
-    this.emitFilterChange();
+    this.applyFiltersAndSort();
   }
 
   onSeasonFilterChange(): void {
-    this.emitFilterChange();
+    this.applyFiltersAndSort();
   }
 
   onMonthFilterChange(): void {
-    this.emitFilterChange();
+    this.applyFiltersAndSort();
   }
 
-  private emitFilterChange(): void {
+  /**
+   * Aplica todos los filtros y ordenamiento a la lista de tours
+   */
+  private applyFiltersAndSort(): void {
+    // Comenzar con todos los tours
+    let filteredTours = [...this.allTours];
+
+    // Aplicar filtro de precio
+    if (this.selectedPriceOption && this.selectedPriceOption.length > 0) {
+      filteredTours = this.filterByPrice(filteredTours);
+    }
+
+    // Aplicar filtro de temporada
+    if (this.selectedSeasonOption && this.selectedSeasonOption.length > 0) {
+      filteredTours = this.filterBySeason(filteredTours);
+    }
+
+    // Aplicar filtro de mes
+    if (this.selectedMonthOption && this.selectedMonthOption.length > 0) {
+      filteredTours = this.filterByMonth(filteredTours);
+    }
+
+    // Aplicar ordenamiento
+    filteredTours = this.sortTours(filteredTours);
+
+    // Actualizar la lista de tours mostrados
+    this.tours = filteredTours;
+
+    // Emitir evento de cambio (para compatibilidad con componentes existentes)
     this.filterChange.emit({
       orderOption: this.selectedOrderOption,
       priceOption: this.selectedPriceOption,
@@ -172,11 +214,131 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
+   * Filtra tours por rango de precio
+   */
+  private filterByPrice(tours: TourDataV2[]): TourDataV2[] {
+    return tours.filter(tour => {
+      return this.selectedPriceOption.some(priceRange => {
+        const price = tour.price || 0;
+        
+        if (priceRange === '0-1000') {
+          return price < 1000;
+        } else if (priceRange === '1000-3000') {
+          return price >= 1000 && price <= 3000;
+        } else if (priceRange === '3000+') {
+          return price > 3000;
+        }
+        
+        return false;
+      });
+    });
+  }
+
+  /**
+   * Filtra tours por temporada
+   */
+  private filterBySeason(tours: TourDataV2[]): TourDataV2[] {
+    return tours.filter(tour => {
+      // Si el tour tiene fechas de departure, verificar en qué temporada caen
+      if (tour.departureDates && tour.departureDates.length > 0) {
+        return tour.departureDates.some(dateStr => {
+          const date = new Date(dateStr);
+          const month = date.getMonth(); // 0-11
+          
+          return this.selectedSeasonOption.some(season => {
+            const seasonLower = season.toLowerCase();
+            
+            // Verano: Junio (5), Julio (6), Agosto (7)
+            if (seasonLower === 'verano') {
+              return month >= 5 && month <= 7;
+            }
+            // Otoño: Septiembre (8), Octubre (9), Noviembre (10)
+            else if (seasonLower === 'otono' || seasonLower === 'otoño') {
+              return month >= 8 && month <= 10;
+            }
+            // Invierno: Diciembre (11), Enero (0), Febrero (1)
+            else if (seasonLower === 'invierno') {
+              return month === 11 || month <= 1;
+            }
+            // Primavera: Marzo (2), Abril (3), Mayo (4)
+            else if (seasonLower === 'primavera') {
+              return month >= 2 && month <= 4;
+            }
+            
+            return false;
+          });
+        });
+      }
+      
+      return false;
+    });
+  }
+
+  /**
+   * Filtra tours por mes
+   */
+  private filterByMonth(tours: TourDataV2[]): TourDataV2[] {
+    return tours.filter(tour => {
+      // Verificar si el tour tiene salidas en los meses seleccionados
+      if (tour.availableMonths && tour.availableMonths.length > 0) {
+        return tour.availableMonths.some(month => 
+          this.selectedMonthOption.includes(month)
+        );
+      }
+      
+      return false;
+    });
+  }
+
+  /**
+   * Ordena los tours según la opción seleccionada
+   */
+  private sortTours(tours: TourDataV2[]): TourDataV2[] {
+    const sorted = [...tours];
+    
+    switch (this.selectedOrderOption) {
+      case 'next-departures':
+        // Ordenar por próxima fecha de salida
+        sorted.sort((a, b) => {
+          const dateA = a.nextDepartureDate ? new Date(a.nextDepartureDate).getTime() : Number.MAX_SAFE_INTEGER;
+          const dateB = b.nextDepartureDate ? new Date(b.nextDepartureDate).getTime() : Number.MAX_SAFE_INTEGER;
+          return dateA - dateB;
+        });
+        break;
+        
+      case 'min-price':
+        // Ordenar por precio de menor a mayor
+        sorted.sort((a, b) => {
+          const priceA = a.price || 0;
+          const priceB = b.price || 0;
+          return priceA - priceB;
+        });
+        break;
+        
+      case 'max-price':
+        // Ordenar por precio de mayor a menor
+        sorted.sort((a, b) => {
+          const priceA = a.price || 0;
+          const priceB = b.price || 0;
+          return priceB - priceA;
+        });
+        break;
+        
+      default:
+        // Sin ordenamiento específico
+        break;
+    }
+    
+    return sorted;
+  }
+
+  /**
    * Carga los tours a partir de los IDs proporcionados
    */
   private loadTours(): void {
     if (!this.tourIds || this.tourIds.length === 0) {
       this.tours = [];
+      this.allTours = [];
       return;
     }
 
@@ -190,6 +352,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
     
     this.isLoading = true;
     this.tours = [];
+    this.allTours = [];
 
     // Cargar tours secuencialmente y mostrarlos a medida que llegan
     of(...tourIdsAsStrings)
@@ -238,7 +401,10 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
       )
       .subscribe({
         next: (accumulatedTours: TourDataV2[]) => {
-          this.tours = accumulatedTours;
+          // Guardar todos los tours sin filtrar
+          this.allTours = accumulatedTours;
+          // Aplicar filtros y ordenamiento
+          this.applyFiltersAndSort();
         },
         complete: () => {
           this.isLoading = false;
@@ -387,7 +553,8 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
           const date = new Date(departure.departureDate);
           const month = date
             .toLocaleDateString('es-ES', { month: 'short' })
-            .toUpperCase();
+            .toUpperCase()
+            .replace('.', ''); // Eliminar el punto si existe
           if (!availableMonths.includes(month)) {
             availableMonths.push(month);
           }

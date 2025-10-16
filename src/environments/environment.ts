@@ -44,4 +44,7 @@ export const environment = {
 
   // Configuración general
   retaileriddefault: 7,
+  
+  // URLs externas
+  tourOperationUrl: 'https://touroperacion-dev.differentroads.es',
 };

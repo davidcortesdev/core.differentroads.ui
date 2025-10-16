@@ -636,6 +636,13 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
             );
 
           this.loading = false;
+
+          // Si no hay departure preseleccionado, auto-seleccionar la más cercana reservable
+          if (!this.selectedDeparture && this.allDepartures.length > 0) {
+            setTimeout(() => {
+              this.autoSelectNearestBookableDeparture();
+            }, 200);
+          }
         },
         error: (error) => {
           console.error('Error cargando departures del tour:', error);
@@ -712,12 +719,51 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         (dep) => dep.id === this.selectedDeparture?.departure.id
       );
 
-      if (selectedDepartureFromSelector) {
+      // Intentar seleccionar la salida del selector si es reservable
+      if (selectedDepartureFromSelector && selectedDepartureFromSelector.isBookable) {
         this.addToCart(selectedDepartureFromSelector);
+      } else if (selectedDepartureFromSelector && !selectedDepartureFromSelector.isBookable) {
+        // Si la salida del selector no es reservable, buscar la más cercana que sí lo sea
+        this.autoSelectNearestBookableDeparture();
+      } else {
+        // Si no hay salida del selector, auto-seleccionar la más cercana reservable
+        this.autoSelectNearestBookableDeparture();
       }
 
       this.emitCityUpdate();
     }, 100);
+  }
+
+  /**
+   * Auto-selecciona la salida más cercana que sea reservable (isBookable: true)
+   */
+  private autoSelectNearestBookableDeparture(): void {
+    if (this.filteredDepartures.length === 0) return;
+
+    // Filtrar solo salidas reservables
+    const bookableDepartures = this.filteredDepartures.filter(
+      (dep) => dep.isBookable === true
+    );
+
+    if (bookableDepartures.length === 0) {
+      console.warn('No hay salidas reservables disponibles');
+      return;
+    }
+
+    // Obtener la fecha actual
+    const now = new Date();
+
+    // Buscar la primera salida futura y reservable
+    const futureDeparture = bookableDepartures.find(
+      (dep) => new Date(dep.departureDate) >= now
+    );
+
+    // Si hay una salida futura, seleccionarla; si no, seleccionar la primera disponible
+    const nearestBookable = futureDeparture || bookableDepartures[0];
+
+    if (nearestBookable) {
+      this.addToCart(nearestBookable);
+    }
   }
 
   private formatDate(dateString: string): string {
@@ -840,6 +886,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         status: 'available',
         waitingList: false,
         group: this.selectedDeparture?.tripType?.name || 'group',
+        isBookable: this.departureDetails.isBookable ?? true,
       };
       return [departure];
     }
@@ -855,6 +902,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         status: 'available',
         waitingList: false,
         group: 'group',
+        isBookable: departure.isBookable ?? true,
       };
     });
   }
@@ -1067,6 +1115,17 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   }
 
   addToCart(item: any): void {
+    // Validar que la salida sea reservable
+    if (!item.isBookable) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Salida no disponible',
+        detail: 'Esta salida no está disponible para reservar.',
+        life: 3000,
+      });
+      return;
+    }
+
     this.selectedDepartureId = item.id;
     this.calculateAndEmitPrice();
     this.departureUpdate.emit(item);

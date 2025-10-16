@@ -185,7 +185,7 @@
       <ng-template #list let-departures>
         <div class="dep-list">
           <ng-container *ngFor="let item of departures; trackBy: trackByDepartureId">
-            <div class="dep-item">
+            <div class="dep-item" [ngClass]="{'not-bookable': !item.isBookable}">
               <div class="dates">
                 <div class="d-date">
                   <span class="d-name">{{
@@ -241,14 +241,16 @@
                 <button 
                   type="button" 
                   pButton 
-                  [disabled]="item.status === 'complete'"
+                  [disabled]="item.status === 'complete' || !item.isBookable"
                   (click)="addToCart(item)"
                   class="p-button-rounded"
                   [style.background-color]="selectedDepartureId === item.id ? 'transparent' : null"
                   [style.color]="selectedDepartureId === item.id ? 'var(--p-primary-color)' : null"
                   [style.border]="selectedDepartureId === item.id ? '1px solid var(--p-primary-color)' : null"
+                  [pTooltip]="!item.isBookable ? 'Esta salida no está disponible para reservar' : ''"
+                  tooltipPosition="top"
                 >
-                  {{ item.status === 'complete' ? 'COMPLETO' : (selectedDepartureId === item.id ? 'Añadido' : 'Añadir') }}
+                  {{ item.status === 'complete' ? 'COMPLETO' : (!item.isBookable ? 'NO DISPONIBLE' : (selectedDepartureId === item.id ? 'Añadido' : 'Añadir')) }}
                 </button>
               </div>
               

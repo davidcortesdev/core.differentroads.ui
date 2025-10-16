@@ -232,6 +232,22 @@ $primary: var(--p-primary-color);
             .actions {
                 @include flex;
             }
+
+            // Estilo para salidas no reservables
+            &.not-bookable {
+                opacity: 0.6;
+                background-color: #f5f5f5;
+                border-color: #e0e0e0;
+                pointer-events: auto; // Permitir ver tooltip
+                
+                .dates, .f-price {
+                    color: #999;
+                }
+                
+                .amount {
+                    color: #999 !important;
+                }
+            }
         }
         .p-button {
             border-radius: 1.5rem;

@@ -45,6 +45,7 @@ export class SignUpFormComponent {
   successMessage: string = '';
   registeredUsername: string = '';
   userPassword: string = '';
+  registeredUser: IUserResponse | null = null;
 
   // Mensajes de error personalizados
   errorMessages: { [key: string]: { [key: string]: string } } = {
@@ -174,11 +175,8 @@ export class SignUpFormComponent {
                           next: (updated) => {
                             console.log('Usuario actualizado exitosamente:', updated);
                             
-                            // Verificar si debe redirigir a tour operation
-                            if (this.shouldRedirectToTourOperation(existingUser)) {
-                              this.redirectToTourOperation();
-                              return;
-                            }
+                            // Guardar el usuario para verificar después de la confirmación
+                            this.registeredUser = existingUser;
                             
                             this.isLoading = false;
                             this.isConfirming = true;
@@ -201,11 +199,8 @@ export class SignUpFormComponent {
                           next: (user) => {
                             console.log('Usuario creado exitosamente:', user);
                             
-                            // Verificar si debe redirigir a tour operation
-                            if (this.shouldRedirectToTourOperation(user)) {
-                              this.redirectToTourOperation();
-                              return;
-                            }
+                            // Guardar el usuario para verificar después de la confirmación
+                            this.registeredUser = user;
                             
                             this.isLoading = false;
                             this.isConfirming = true;
@@ -242,14 +237,22 @@ export class SignUpFormComponent {
   onConfirmSuccess(): void {
     this.isLoading = false;
     this.isRedirecting = true;
-    this.successMessage = 'Verificación exitosa. Redirigiendo al inicio de sesión...';
     
     // Disparar evento sign_up para confirmación exitosa con datos completos
     this.trackSignUpWithCompleteData('manual');
     
-    setTimeout(() => {
-      this.router.navigate(['/login']);
-    }, 2000);
+    // Verificar si debe redirigir a tour operation después de confirmar la cuenta
+    if (this.registeredUser && this.shouldRedirectToTourOperation(this.registeredUser)) {
+      this.successMessage = 'Verificación exitosa. Redirigiendo a Tour Operation...';
+      setTimeout(() => {
+        this.redirectToTourOperation();
+      }, 2000);
+    } else {
+      this.successMessage = 'Verificación exitosa. Redirigiendo al inicio de sesión...';
+      setTimeout(() => {
+        this.router.navigate(['/login']);
+      }, 2000);
+    }
   }
 
   getErrorMessage(controlName: string, errors: any): string {

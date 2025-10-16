@@ -15,12 +15,8 @@ import { NewScalapayService } from '../../services/newScalapay.service';
 import { MessageService } from 'primeng/api';
 import { forkJoin } from 'rxjs';
 // IMPORTACIONES PARA TRAVELERS (solo para obtener el nombre del lead traveler)
-import {
-  ReservationTravelerService,
-} from '../../../../core/services/reservation/reservation-traveler.service';
-import {
-  ReservationTravelerFieldService,
-} from '../../../../core/services/reservation/reservation-traveler-field.service';
+import { ReservationTravelerService } from '../../../../core/services/reservation/reservation-traveler.service';
+import { ReservationTravelerFieldService } from '../../../../core/services/reservation/reservation-traveler-field.service';
 import {
   FlightSearchService,
   IAmadeusFlightCreateOrderResponse,
@@ -50,7 +46,7 @@ interface BankInfo {
 export class NewReservationComponent implements OnInit {
   // Propiedades principales
   reservationId: number = 0;
-  paymentId: number = 0;
+  paymentId: number | undefined = 0;
   reservation: IReservationResponse | undefined;
   payment: IPaymentResponse | undefined;
 
@@ -99,6 +95,9 @@ export class NewReservationComponent implements OnInit {
   // Propiedad para detectar si está en iframe
   isInIframe: boolean = false;
 
+  // Propiedad para detectar si tiene paymentId válido
+  hasPaymentId: boolean = false;
+
   constructor(
     private titleService: Title,
     private route: ActivatedRoute,
@@ -135,9 +134,15 @@ export class NewReservationComponent implements OnInit {
     // Obtener parámetros de la ruta
     this.route.params.subscribe((params) => {
       this.reservationId = params['reservationId'];
-      this.paymentId = params['paymentId'];
+      this.paymentId = params['paymentId']
+        ? Number(params['paymentId'])
+        : undefined;
       console.log('Reservation ID obtenido:', this.reservationId);
       console.log('Payment ID obtenido:', this.paymentId);
+
+      // Validar si tiene paymentId válido
+      this.hasPaymentId = !!this.paymentId && this.paymentId > 0;
+      console.log('hasPaymentId:', this.hasPaymentId);
     });
 
     // Iniciar carga de datos
@@ -306,6 +311,13 @@ export class NewReservationComponent implements OnInit {
    * Carga la información del pago
    */
   private loadPayment(): void {
+    // Validar que existe paymentId antes de cargar
+    if (!this.paymentId || this.paymentId <= 0) {
+      console.log('No hay paymentId, saltando carga de información de pago');
+      this.loading = false;
+      return;
+    }
+
     this.paymentService.getPaymentById(this.paymentId).subscribe({
       next: (payment: IPaymentResponse) => {
         this.payment = payment;
@@ -374,7 +386,7 @@ export class NewReservationComponent implements OnInit {
           this.status = 'PENDING';
         } else if (status.code === 'COMPLETED') {
           this.status = 'SUCCESS';
-          
+
           // Disparar evento purchase cuando se visita la página de gracias tras compra exitosa
           this.trackPurchase();
 
@@ -444,7 +456,7 @@ export class NewReservationComponent implements OnInit {
             this.updatePaymentStatus();
 
             this.status = 'SUCCESS';
-            
+
             // Disparar evento purchase
             this.trackPurchase();
 
@@ -649,15 +661,18 @@ export class NewReservationComponent implements OnInit {
 
     const reservationData = this.reservation as any; // Usar any para acceder a propiedades dinámicas
     const tourData = reservationData.tour || {};
-    
+
     // Obtener item_list_id y item_list_name desde el state del router (heredados desde home)
     const state = window.history.state;
     const itemListId = state?.['listId'] || '';
     const itemListName = state?.['listName'] || '';
-    
+
     // Obtener información del pago
     const paymentType = this.paymentType || 'completo, transferencia';
-    const transactionId = this.payment?.transactionReference || this.payment?.id?.toString() || `#${this.reservationId}`;
+    const transactionId =
+      this.payment?.transactionReference ||
+      this.payment?.id?.toString() ||
+      `#${this.reservationId}`;
     const totalValue = this.reservation.totalAmount || 0;
 
     // Obtener actividades seleccionadas (si están disponibles)
@@ -673,7 +688,7 @@ export class NewReservationComponent implements OnInit {
 
     // Obtener información de vuelo (si está disponible)
     const flightCity = reservationData.flight?.originCity || 'Sin vuelo';
-    
+
     // Calcular pasajeros niños dinámicamente desde los travelers
     this.reservationTravelerService
       .getByReservation(this.reservationId)
@@ -683,7 +698,7 @@ export class NewReservationComponent implements OnInit {
           const childrenCount = travelers.filter(
             (traveler) => traveler.ageGroupId !== 1
           ).length;
-    
+
           this.analyticsService.purchase(
             {
               transaction_id: transactionId,
@@ -693,33 +708,44 @@ export class NewReservationComponent implements OnInit {
               currency: 'EUR',
               coupon: reservationData.coupon?.code || '',
               payment_type: paymentType,
-              items: [{
-                item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
-                item_name: reservationData.tourName || tourData.name || '',
-                coupon: '',
-                discount: 0,
-                index: 1,
-                item_brand: 'Different Roads',
-                item_category: tourData.destination?.continent || '',
-                item_category2: tourData.destination?.country || '',
-                item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-                item_category4: tourData.monthTags?.join(', ') || '',
-                item_category5: tourData.tourType || '',
-                item_list_id: itemListId,
-                item_list_name: itemListName,
-                item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
-                price: totalValue,
-                quantity: 1,
-                puntuacion: tourData.rating?.toString() || '',
-                duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-                start_date: reservationData.departureDate || '',
-                end_date: reservationData.returnDate || '',
-                pasajeros_adultos: this.reservation?.totalPassengers?.toString() || '0',
-                pasajeros_niños: childrenCount.toString(),
-                actividades: activitiesText,
-                seguros: selectedInsurance,
-                vuelo: flightCity
-              }]
+              items: [
+                {
+                  item_id:
+                    tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
+                  item_name: reservationData.tourName || tourData.name || '',
+                  coupon: '',
+                  discount: 0,
+                  index: 1,
+                  item_brand: 'Different Roads',
+                  item_category: tourData.destination?.continent || '',
+                  item_category2: tourData.destination?.country || '',
+                  item_category3:
+                    tourData.marketingSection?.marketingSeasonTag || '',
+                  item_category4: tourData.monthTags?.join(', ') || '',
+                  item_category5: tourData.tourType || '',
+                  item_list_id: itemListId,
+                  item_list_name: itemListName,
+                  item_variant: `${
+                    tourData.tkId || tourData.id
+                  } - ${flightCity}`,
+                  price: totalValue,
+                  quantity: 1,
+                  puntuacion: tourData.rating?.toString() || '',
+                  duracion: tourData.days
+                    ? `${tourData.days} días, ${
+                        tourData.nights || tourData.days - 1
+                      } noches`
+                    : '',
+                  start_date: reservationData.departureDate || '',
+                  end_date: reservationData.returnDate || '',
+                  pasajeros_adultos:
+                    this.reservation?.totalPassengers?.toString() || '0',
+                  pasajeros_niños: childrenCount.toString(),
+                  actividades: activitiesText,
+                  seguros: selectedInsurance,
+                  vuelo: flightCity,
+                },
+              ],
             },
             this.getUserData()
           );
@@ -731,42 +757,53 @@ export class NewReservationComponent implements OnInit {
             {
               transaction_id: transactionId,
               value: totalValue,
-              tax: 0.60,
-              shipping: 0.00,
+              tax: 0.6,
+              shipping: 0.0,
               currency: 'EUR',
               coupon: reservationData.coupon?.code || '',
               payment_type: paymentType,
-              items: [{
-                item_id: tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
-                item_name: reservationData.tourName || tourData.name || '',
-                coupon: '',
-                discount: 0,
-                index: 1,
-                item_brand: 'Different Roads',
-                item_category: tourData.destination?.continent || '',
-                item_category2: tourData.destination?.country || '',
-                item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-                item_category4: tourData.monthTags?.join(', ') || '',
-                item_category5: tourData.tourType || '',
-                item_list_id: itemListId,
-                item_list_name: itemListName,
-                item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
-                price: totalValue,
-                quantity: 1,
-                puntuacion: tourData.rating?.toString() || '',
-                duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-                start_date: reservationData.departureDate || '',
-                end_date: reservationData.returnDate || '',
-                pasajeros_adultos: this.reservation?.totalPassengers?.toString() || '0',
-                pasajeros_niños: '0',
-                actividades: activitiesText,
-                seguros: selectedInsurance,
-                vuelo: flightCity
-              }]
+              items: [
+                {
+                  item_id:
+                    tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
+                  item_name: reservationData.tourName || tourData.name || '',
+                  coupon: '',
+                  discount: 0,
+                  index: 1,
+                  item_brand: 'Different Roads',
+                  item_category: tourData.destination?.continent || '',
+                  item_category2: tourData.destination?.country || '',
+                  item_category3:
+                    tourData.marketingSection?.marketingSeasonTag || '',
+                  item_category4: tourData.monthTags?.join(', ') || '',
+                  item_category5: tourData.tourType || '',
+                  item_list_id: itemListId,
+                  item_list_name: itemListName,
+                  item_variant: `${
+                    tourData.tkId || tourData.id
+                  } - ${flightCity}`,
+                  price: totalValue,
+                  quantity: 1,
+                  puntuacion: tourData.rating?.toString() || '',
+                  duracion: tourData.days
+                    ? `${tourData.days} días, ${
+                        tourData.nights || tourData.days - 1
+                      } noches`
+                    : '',
+                  start_date: reservationData.departureDate || '',
+                  end_date: reservationData.returnDate || '',
+                  pasajeros_adultos:
+                    this.reservation?.totalPassengers?.toString() || '0',
+                  pasajeros_niños: '0',
+                  actividades: activitiesText,
+                  seguros: selectedInsurance,
+                  vuelo: flightCity,
+                },
+              ],
             },
             this.getUserData()
           );
-        }
+        },
       });
   }
 

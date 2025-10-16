@@ -209,6 +209,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     },
     sex: {
       required: () => 'Debe seleccionar un sexo.',
+      pattern: () => 'Debe seleccionar Masculino, Femenino u Otro.',
     },
     country: {
       required: () => 'Debe seleccionar un país.',
@@ -493,8 +494,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         }
         break;
       case 'sex':
-        // Para campos de sexo, validar que sea M o F
-        validators.push(Validators.pattern(/^[MF]$/));
+        // Para campos de sexo, validar que sea Masculino, Femenino u Otro
+        validators.push(Validators.pattern(/^(Masculino|Femenino|Otro)$/));
         break;
       case 'country':
         // Para campos de país, validar que sea un código válido
@@ -2767,15 +2768,11 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       return null;
     }
 
-    // Primero verificar por código para casos específicos
-    if (fieldDetails.code === 'sexo') {
-      return userData.sexo || null;
-    }
-
-    const codeLower = (fieldDetails.code || '').toLowerCase();
-
-    // Mapeo por código de campo
-    switch (codeLower) {
+    // Verificar por código exacto primero (más específico)
+    const fieldCode = fieldDetails.code;
+    
+    // Mapeo directo por código exacto
+    switch (fieldCode) {
       case 'email':
         return userData.email || null;
       case 'phone':
@@ -2809,12 +2806,18 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       case 'address':
       case 'direccion':
         return userData.direccion || null;
-      case 'sex':
       case 'sexo':
-      case 'gender':
         return userData.sexo || null;
       default:
-        return null;
+        // Fallback: mapeo por código en minúsculas
+        const codeLower = (fieldCode || '').toLowerCase();
+        switch (codeLower) {
+          case 'sex':
+          case 'gender':
+            return userData.sexo || null;
+          default:
+            return null;
+        }
     }
   }
 
@@ -2829,12 +2832,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
     let valueToSet: any = null;
 
-    // Primero verificar por código para casos específicos
-    if (fieldCode === 'sexo') {
-      valueToSet = userData.sexo;
-    } else {
-      // Mapeo por código de campo
-      switch (fieldCode) {
+    // Mapeo directo por código exacto
+    switch (fieldCode) {
       case 'email':
         valueToSet = userData.email;
         break;
@@ -2878,12 +2877,19 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       case 'direccion':
         valueToSet = userData.direccion;
         break;
-      case 'sex':
       case 'sexo':
-      case 'gender':
         valueToSet = userData.sexo;
         break;
-      }
+      default:
+        // Fallback: mapeo por código en minúsculas
+        const codeLower = (fieldCode || '').toLowerCase();
+        switch (codeLower) {
+          case 'sex':
+          case 'gender':
+            valueToSet = userData.sexo;
+            break;
+        }
+        break;
     }
 
     // Si encontramos un valor, establecerlo en el control

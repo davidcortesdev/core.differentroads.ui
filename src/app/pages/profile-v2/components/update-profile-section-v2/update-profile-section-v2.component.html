@@ -118,7 +118,6 @@
           <p-datepicker 
             inputId="fechaNacimiento"
             [(ngModel)]="personalInfo.fechaNacimiento"
-            dateFormat="dd/mm/yy"
             showIcon
             iconDisplay="input"
             (onSelect)="onFechaNacimientoChange($event)"
@@ -140,10 +139,11 @@
             [class.error]="hasFieldError('sexo')"
             styleClass="w-full" />
           <label for="sexo">Sexo</label>
+          <small class="error-message" *ngIf="hasFieldError('sexo')">
+            {{ getFieldError('sexo') }}
+          </small>
         </p-floatlabel>
-        <small class="error-message" *ngIf="hasFieldError('sexo')">
-          {{ getFieldError('sexo') }}
-        </small>
+        
 
         <p-floatlabel variant="on">
           <input

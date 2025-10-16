@@ -365,14 +365,14 @@ export class AuthenticateService {
 
   // Navegar al perfil del usuario
   navigateToProfile(userId: string) {
-    this.router.navigate(['/profile-v2', userId]).then(success => {
+    this.router.navigate(['/profile', userId]).then(success => {
       if (!success) {
         // Si la navegación falla, intentar con la ruta absoluta
-        window.location.href = `/profile-v2/${userId}`;
+        window.location.href = `/profile/${userId}`;
       }
     }).catch(error => {
       // En caso de error, usar navegación directa
-      window.location.href = `/profile-v2/${userId}`;
+      window.location.href = `/profile/${userId}`;
     });
   }
 

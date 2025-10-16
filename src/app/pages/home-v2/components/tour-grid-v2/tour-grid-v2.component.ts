@@ -45,6 +45,9 @@ export interface FilterChangeEvent {
   monthOption?: string[];
 }
 
+// Meses en formato corto (basado en traducciones de PrimeNG)
+const MONTH_NAMES_SHORT = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+
 @Component({
   selector: 'app-tour-grid-v2',
   standalone: false,
@@ -115,18 +118,18 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
   selectedSeasonOption: string[] = [];
 
   monthOptions: { name: string; value: string }[] = [
-    { name: 'Enero', value: 'ENE' },
-    { name: 'Febrero', value: 'FEB' },
-    { name: 'Marzo', value: 'MAR' },
-    { name: 'Abril', value: 'ABR' },
-    { name: 'Mayo', value: 'MAY' },
-    { name: 'Junio', value: 'JUN' },
-    { name: 'Julio', value: 'JUL' },
-    { name: 'Agosto', value: 'AGO' },
-    { name: 'Septiembre', value: 'SEP' },
-    { name: 'Octubre', value: 'OCT' },
-    { name: 'Noviembre', value: 'NOV' },
-    { name: 'Diciembre', value: 'DIC' },
+    { name: 'Enero', value: MONTH_NAMES_SHORT[0] },
+    { name: 'Febrero', value: MONTH_NAMES_SHORT[1] },
+    { name: 'Marzo', value: MONTH_NAMES_SHORT[2] },
+    { name: 'Abril', value: MONTH_NAMES_SHORT[3] },
+    { name: 'Mayo', value: MONTH_NAMES_SHORT[4] },
+    { name: 'Junio', value: MONTH_NAMES_SHORT[5] },
+    { name: 'Julio', value: MONTH_NAMES_SHORT[6] },
+    { name: 'Agosto', value: MONTH_NAMES_SHORT[7] },
+    { name: 'Septiembre', value: MONTH_NAMES_SHORT[8] },
+    { name: 'Octubre', value: MONTH_NAMES_SHORT[9] },
+    { name: 'Noviembre', value: MONTH_NAMES_SHORT[10] },
+    { name: 'Diciembre', value: MONTH_NAMES_SHORT[11] },
   ];
   selectedMonthOption: string[] = [];
   
@@ -551,10 +554,8 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
       sortedDepartures.forEach((departure: IDepartureResponse) => {
         if (departure.departureDate) {
           const date = new Date(departure.departureDate);
-          const month = date
-            .toLocaleDateString('es-ES', { month: 'short' })
-            .toUpperCase()
-            .replace('.', ''); // Eliminar el punto si existe
+          const monthIndex = date.getMonth(); // 0-11
+          const month = MONTH_NAMES_SHORT[monthIndex]; // Usar constante consistente
           if (!availableMonths.includes(month)) {
             availableMonths.push(month);
           }

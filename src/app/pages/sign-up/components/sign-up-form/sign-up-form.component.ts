@@ -141,11 +141,12 @@ export class SignUpFormComponent {
                 .getUsersByEmail(this.signUpForm.value.email)
                 .subscribe({
                   next: (existingUsers) => {
+                    // Datos completos para crear usuario (todos los campos requeridos)
                     const userData = {
                       cognitoId: cognitoUserId,
                       name: this.signUpForm.value.firstName,
-                      lastName: this.signUpForm.value.lastName,
                       email: this.signUpForm.value.email,
+                      lastName: this.signUpForm.value.lastName,
                       phone: this.signUpForm.value.phone,
                       hasWebAccess: true,
                       hasMiddleAccess: false
@@ -156,9 +157,11 @@ export class SignUpFormComponent {
                       const existingUser = existingUsers[0];
                       console.log('Usuario ya existe en UsersNet, actualizando datos:', existingUser);
                       
+                      // Datos de actualización (campos requeridos + los que queremos actualizar)
                       const updateData = {
                         cognitoId: cognitoUserId,
                         name: this.signUpForm.value.firstName,
+                        email: this.signUpForm.value.email,
                         lastName: this.signUpForm.value.lastName,
                         phone: this.signUpForm.value.phone
                       };

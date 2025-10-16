@@ -131,8 +131,7 @@ export class UpdateProfileV2Service {
     const fieldValues: any[] = [];
     
     const fieldMappings = [
-      // Excluimos la imagen por ahora ya que el DataURL es demasiado grande para el API
-      // { fieldCode: 'image', value: personalInfo.avatarUrl },
+      { fieldCode: 'image', value: personalInfo.avatarUrl },
       { fieldCode: 'phone', value: personalInfo.telefono },
       { fieldCode: 'birth_date', value: this.formatDate(personalInfo.fechaNacimiento) },
       { fieldCode: 'national_id', value: personalInfo.dni },

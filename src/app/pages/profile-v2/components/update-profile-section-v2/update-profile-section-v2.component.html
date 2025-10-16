@@ -27,7 +27,15 @@
         <!-- Sección de Avatar -->
         <div class="form-field">
           <p-iftalabel>Adjuntar foto</p-iftalabel>
+          
+          <!-- Indicador de carga de imagen -->
+          <div *ngIf="isUploadingImage" class="upload-loading">
+            <p-progressSpinner styleClass="w-4rem h-4rem" strokeWidth="4"></p-progressSpinner>
+            <span>Subiendo imagen...</span>
+          </div>
+          
           <p-fileUpload
+            *ngIf="!isUploadingImage"
             chooseIcon="pi pi-upload"
             mode="advanced"
             [maxFileSize]="maxFileSize"

@@ -277,7 +277,13 @@ export class DataMappingV2Service {
             combinedData.telefono = fieldValue.value;
             break;
           case 'Fecha de nacimiento':
-            combinedData.fechaNacimiento = fieldValue.value;
+            // Convertir de YYYY-MM-DD (API) a DD/MM/YYYY (visualización)
+            if (fieldValue.value && fieldValue.value.includes('-')) {
+              const [year, month, day] = fieldValue.value.split('-');
+              combinedData.fechaNacimiento = `${day}/${month}/${year}`;
+            } else {
+              combinedData.fechaNacimiento = fieldValue.value;
+            }
             break;
           case 'DNI/NIE':
             combinedData.dni = fieldValue.value;
@@ -319,6 +325,7 @@ export class DataMappingV2Service {
     
     // Mapear campos de PersonalInfo a userFieldValues
     const fieldMappings = [
+      { fieldName: 'image', value: userData.avatarUrl },
       { fieldName: 'dni', value: userData.dni },
       { fieldName: 'nacionalidad', value: userData.pais },
       { fieldName: 'telefono', value: userData.telefono },

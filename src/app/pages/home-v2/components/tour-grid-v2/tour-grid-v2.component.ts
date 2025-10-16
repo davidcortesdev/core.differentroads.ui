@@ -358,23 +358,20 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
     const tourIdsToLoad = this.maxToursToShow 
       ? this.tourIds.slice(0, this.maxToursToShow)
       : this.tourIds;
-
-    // Convertir IDs a strings
-    const tourIdsAsStrings = tourIdsToLoad.map((id) => id.toString());
     
     this.isLoading = true;
     this.tours = [];
     this.allTours = [];
 
     // Cargar tours secuencialmente y mostrarlos a medida que llegan
-    of(...tourIdsAsStrings)
+    of(...tourIdsToLoad)
       .pipe(
-        concatMap((id: string) => {
+        concatMap((id: number) => {
           // Combinar datos del TourNetService, CMSTourService y datos adicionales
           return forkJoin({
-            tourData: this.tourService.getTourById(Number(id)),
-            cmsData: this.cmsTourService.getAllTours({ tourId: Number(id) }),
-            additionalData: this.getAdditionalTourData(Number(id)),
+            tourData: this.tourService.getTourById(id),
+            cmsData: this.cmsTourService.getAllTours({ tourId: id }),
+            additionalData: this.getAdditionalTourData(id),
           }).pipe(
             catchError((error: Error) => {
               console.error(

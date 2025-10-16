@@ -19,7 +19,6 @@ import { UsersNetService } from '../../../../core/services/users/usersNet.servic
 import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 import { ConfirmationCodeComponent } from '../../../../shared/components/confirmation-code/confirmation-code.component';
 import { UserCreate, IUserResponse } from '../../../../core/models/users/user.model';
-import { environment } from '../../../../../environments/environment';
 @Component({
   selector: 'app-login-form',
   standalone: true,
@@ -128,14 +127,17 @@ export class LoginFormComponent implements OnInit {
           // Usuario encontrado por Cognito ID
           console.log('🎉 Usuario encontrado por Cognito ID:', users[0]);
           
-          // Disparar evento login
-          this.trackLogin(method, users[0]);
-          
-          // Verificar si debe redirigir a tour operation
-          if (this.shouldRedirectToTourOperation(users[0])) {
-            this.redirectToTourOperation();
+          // Verificar si tiene acceso a la web
+          if (!users[0].hasWebAccess) {
+            this.isLoading = false;
+            this.errorMessage = 'No tienes permisos para acceder a esta plataforma.';
+            // Cerrar sesión de Cognito
+            this.authService.logOut();
             return;
           }
+          
+          // Disparar evento login
+          this.trackLogin(method, users[0]);
           
           this.isLoading = false;
           
@@ -220,9 +222,12 @@ export class LoginFormComponent implements OnInit {
         // Obtener el usuario actualizado para verificar permisos
         this.usersNetService.getUserById(userId).subscribe({
           next: (user) => {
-            // Verificar si debe redirigir a tour operation
-            if (this.shouldRedirectToTourOperation(user)) {
-              this.redirectToTourOperation();
+            // Verificar si tiene acceso a la web
+            if (!user.hasWebAccess) {
+              this.isLoading = false;
+              this.errorMessage = 'No tienes permisos para acceder a esta plataforma.';
+              // Cerrar sesión de Cognito
+              this.authService.logOut();
               return;
             }
             
@@ -276,14 +281,17 @@ export class LoginFormComponent implements OnInit {
       next: (user) => {
         console.log('✅ Nuevo usuario creado exitosamente:', user);
         
-        // Disparar evento login
-        this.trackLogin(method, user);
-        
-        // Verificar si debe redirigir a tour operation
-        if (this.shouldRedirectToTourOperation(user)) {
-          this.redirectToTourOperation();
+        // Verificar si tiene acceso a la web
+        if (!user.hasWebAccess) {
+          this.isLoading = false;
+          this.errorMessage = 'No tienes permisos para acceder a esta plataforma.';
+          // Cerrar sesión de Cognito
+          this.authService.logOut();
           return;
         }
+        
+        // Disparar evento login
+        this.trackLogin(method, user);
         
         console.log('🔄 Estado antes de navegar - isLoading:', this.isLoading);
         this.isLoading = false;
@@ -388,21 +396,5 @@ export class LoginFormComponent implements OnInit {
         user.cognitoId
       )
     );
-  }
-
-  /**
-   * Verifica si el usuario debe ser redirigido a la plataforma de tour operation
-   */
-  private shouldRedirectToTourOperation(user: IUserResponse): boolean {
-    return !user.hasWebAccess && user.hasTourOperationAccess;
-  }
-
-  /**
-   * Redirige al usuario a la plataforma de tour operation
-   */
-  private redirectToTourOperation(): void {
-    this.isLoading = false;
-    console.log('🔀 Redirigiendo a Tour Operation...');
-    window.location.href = environment.tourOperationUrl;
   }
 }

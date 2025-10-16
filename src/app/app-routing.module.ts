@@ -91,10 +91,9 @@ const routes: Routes = [
     component: MainComponent,
     children: [
       // ========================================
-      // HOME & REDIRECT
+      // HOME
       // ========================================
-      { path: '', redirectTo: 'home-v2', pathMatch: 'full' },
-      { path: 'home-v2', component: HomeV2Component },
+      { path: '', component: HomeV2Component, pathMatch: 'full' },
 
       // ========================================
       // AUTH ROUTES

@@ -58,8 +58,8 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
     error?: string;
   }>();
 
-  // SIMPLIFICADO: Una sola fuente de verdad - la lista de travelers
-  existingTravelers: IReservationTravelerResponse[] = [];
+  // ULTRA SIMPLIFICADO: Una sola lista que se muestra
+  travelers: IReservationTravelerResponse[] = [];
 
   adultsErrorMsg = '';
   loading: boolean = false;
@@ -110,7 +110,8 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
    * Cuenta directamente desde la lista de travelers
    */
   getCountForAgeGroup(ageGroupId: number): number {
-    return this.existingTravelers.filter(t => t.ageGroupId === ageGroupId).length;
+    const count = this.travelers.filter(t => t.ageGroupId === ageGroupId).length;
+    return count;
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -149,7 +150,10 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
         ];
         this.departureData = departure;
         this.reservationData = reservation;
-        this.existingTravelers = travelers;
+        
+        // SIMPLIFICADO: Guardar la lista que se muestra
+        this.travelers = [...travelers];
+        
         this.departurePriceSupplements = supplements || [];
 
         // Cargar AgeGroups
@@ -169,7 +173,7 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   /**
-   * NUEVO: Emitir conteos actuales al componente padre
+   * Emitir conteos actuales al componente padre
    */
   private emitCurrentCounts(): void {
     const counts: { [ageGroupId: number]: number } = {};
@@ -271,7 +275,8 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
       .getByReservationOrdered(this.reservationId)
       .subscribe({
         next: (travelers) => {
-          this.existingTravelers = travelers;
+          // SIMPLIFICADO: Guardar la lista que se muestra
+          this.travelers = [...travelers];
           this.loading = false;
           
           // Emitir conteos actuales
@@ -309,18 +314,14 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   /**
-   * SIMPLIFICADO: Manejar cambios en el número de pasajeros
-   * Incrementa = crear traveler | Decrementa = eliminar traveler
+   * ULTRA SIMPLIFICADO: Manejar cambios en el número de pasajeros
+   * Hace la petición y si es exitosa actualiza la lista
    */
   async handlePassengersForAgeGroup(ageGroupId: number, newValue: number): Promise<void> {
     const currentValue = this.getCountForAgeGroup(ageGroupId);
     
-    console.log(`🔄 Cambio en grupo ${ageGroupId}: ${currentValue} → ${newValue}`);
-
     // Validación básica
-    if (newValue < 0) {
-      return;
-    }
+    if (newValue < 0) return;
 
     // Validar mínimos para el primer grupo (adultos)
     if (this.isFirstAgeGroup(ageGroupId) && newValue === 0) {
@@ -334,65 +335,56 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
 
     // Determinar acción
     if (newValue > currentValue) {
-      // INCREMENTAR: Crear travelers
+      // AÑADIR: Hacer petición → si OK → añadir a lista
       const toCreate = newValue - currentValue;
-      await this.createTravelers(ageGroupId, toCreate);
+      await this.addTraveler(ageGroupId, toCreate);
     } else if (newValue < currentValue) {
-      // DECREMENTAR: Eliminar travelers
+      // ELIMINAR: Hacer petición → si OK → quitar de lista
       const toRemove = currentValue - newValue;
-      await this.removeTravelers(ageGroupId, toRemove);
+      await this.deleteTraveler(ageGroupId, toRemove);
     }
 
-    // Validar adultos después del cambio
+    // Validar adultos y emitir cambios
     this.validateAdultsMinimum();
-
-    // Emitir conteos actualizados
     this.emitCurrentCounts();
   }
 
   /**
-   * NUEVO: Crear travelers para un grupo de edad
+   * SIMPLIFICADO: Añadir traveler
+   * 1. Hacer petición al backend
+   * 2. Si devuelve true → añadir a la lista
    */
-  private async createTravelers(ageGroupId: number, count: number): Promise<void> {
+  private async addTraveler(ageGroupId: number, count: number): Promise<void> {
     if (!this.reservationId || count <= 0) return;
 
-    console.log(`➕ Creando ${count} travelers para grupo ${ageGroupId}`);
     this.loading = true;
 
     try {
-      const travelersToCreate: ReservationTravelerCreate[] = [];
-      
       for (let i = 0; i < count; i++) {
         const travelerNumber = this.getNextTravelerNumber();
-        const isFirst = this.existingTravelers.length === 0 && i === 0;
+        const isFirst = this.travelers.length === 0;
         
-        travelersToCreate.push({
+        const travelerData: ReservationTravelerCreate = {
           reservationId: this.reservationId,
           travelerNumber: travelerNumber,
           isLeadTraveler: isFirst,
           tkId: '',
           ageGroupId: ageGroupId,
-        });
-      }
+        };
 
-      // Crear todos en paralelo
-      const createPromises = travelersToCreate.map(data =>
-        new Promise<IReservationTravelerResponse>((resolve, reject) => {
-          this.reservationTravelerService.create(data).subscribe({
-            next: (traveler) => {
-              console.log(`✅ Creado traveler ${traveler.id} (número ${traveler.travelerNumber})`);
-              resolve(traveler);
-            },
+        // Hacer petición
+        const newTraveler = await new Promise<IReservationTravelerResponse>((resolve, reject) => {
+          this.reservationTravelerService.create(travelerData).subscribe({
+            next: resolve,
             error: reject
           });
-        })
-      );
+        });
 
-      const newTravelers = await Promise.all(createPromises);
-      
-      // Agregar a la lista
-      this.existingTravelers.push(...newTravelers);
-      console.log(`📊 Total travelers: ${this.existingTravelers.length}`);
+        // Si la petición devuelve true (el traveler creado), añadir a la lista
+        if (newTraveler) {
+          this.travelers = [...this.travelers, newTraveler];
+        }
+      }
 
       // Actualizar total en reserva
       await this.updateReservationTotalPassengers();
@@ -404,7 +396,7 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
         life: 2000,
       });
     } catch (error) {
-      console.error('❌ Error creando travelers:', error);
+      console.error('❌ Error añadiendo traveler:', error);
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
@@ -417,49 +409,44 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   /**
-   * NUEVO: Eliminar travelers de un grupo de edad
+   * SIMPLIFICADO: Eliminar traveler
+   * 1. Hacer petición al backend
+   * 2. Si devuelve true → quitar de la lista
    */
-  private async removeTravelers(ageGroupId: number, count: number): Promise<void> {
+  private async deleteTraveler(ageGroupId: number, count: number): Promise<void> {
     if (count <= 0) return;
 
-    console.log(`🗑️ Eliminando ${count} travelers del grupo ${ageGroupId}`);
     this.loading = true;
 
     try {
       // Obtener travelers a eliminar (no eliminar el líder)
-      const travelersOfGroup = this.existingTravelers
+      const travelersToDelete = this.travelers
         .filter(t => t.ageGroupId === ageGroupId && !t.isLeadTraveler)
-        .sort((a, b) => b.travelerNumber - a.travelerNumber) // Eliminar los últimos primero
+        .sort((a, b) => b.travelerNumber - a.travelerNumber) // Últimos primero
         .slice(0, count);
 
-      if (travelersOfGroup.length === 0) {
+      if (travelersToDelete.length === 0) {
         console.warn('⚠️ No hay travelers para eliminar');
         return;
       }
 
-      // Eliminar todos en paralelo
-      const deletePromises = travelersOfGroup.map(traveler =>
-        new Promise<void>((resolve, reject) => {
-          this.reservationTravelerService.delete(traveler.id).subscribe({
-            next: (success) => {
-              if (success) {
-                console.log(`✅ Eliminado traveler ${traveler.id} (número ${traveler.travelerNumber})`);
-                resolve();
-              } else {
-                reject(new Error(`Failed to delete traveler ${traveler.id}`));
-              }
-            },
-            error: reject
+      for (const traveler of travelersToDelete) {
+        // Hacer petición
+        try {
+          await new Promise<void>((resolve, reject) => {
+            this.reservationTravelerService.delete(traveler.id).subscribe({
+              next: () => resolve(),  // Si llega aquí, fue exitoso (sin error)
+              error: reject
+            });
           });
-        })
-      );
 
-      await Promise.all(deletePromises);
-
-      // Quitar de la lista
-      const idsToRemove = travelersOfGroup.map(t => t.id);
-      this.existingTravelers = this.existingTravelers.filter(t => !idsToRemove.includes(t.id));
-      console.log(`📊 Total travelers: ${this.existingTravelers.length}`);
+          // Si la petición no lanza error, quitar de la lista
+          this.travelers = this.travelers.filter(t => t.id !== traveler.id);
+        } catch (error) {
+          console.error(`Error eliminando traveler ${traveler.id}:`, error);
+          throw error;  // Re-lanzar para que se maneje en el catch principal
+        }
+      }
 
       // Actualizar total en reserva
       await this.updateReservationTotalPassengers();
@@ -471,7 +458,7 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
         life: 2000,
       });
     } catch (error) {
-      console.error('❌ Error eliminando travelers:', error);
+      console.error('❌ Error eliminando traveler:', error);
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
@@ -484,13 +471,13 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   /**
-   * NUEVO: Obtener el siguiente número de traveler disponible
+   * Obtener el siguiente número de traveler disponible
    */
   private getNextTravelerNumber(): number {
-    if (this.existingTravelers.length === 0) {
+    if (this.travelers.length === 0) {
       return 1;
     }
-    const maxNumber = Math.max(...this.existingTravelers.map(t => t.travelerNumber));
+    const maxNumber = Math.max(...this.travelers.map(t => t.travelerNumber));
     return maxNumber + 1;
   }
 
@@ -578,14 +565,14 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   /**
-   * SIMPLIFICADO: Actualizar el total de pasajeros en la reserva
+   * Actualizar el total de pasajeros en la reserva
    */
   private async updateReservationTotalPassengers(): Promise<void> {
     if (!this.reservationId || !this.reservationData) {
       return;
     }
 
-    const newTotal = this.existingTravelers.length;
+    const newTotal = this.travelers.length;
 
     return new Promise((resolve, reject) => {
       const updateData = {
@@ -600,7 +587,6 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
           next: (success) => {
             if (success) {
               this.reservationData.totalPassengers = newTotal;
-              console.log(`📝 Total pasajeros actualizado en reserva: ${newTotal}`);
               resolve();
             } else {
               reject(new Error('Failed to update reservation'));

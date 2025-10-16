@@ -1546,7 +1546,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }
 
       // Obtener los travelers desde el componente travelerSelector
-      const existingTravelers = this.travelerSelector.existingTravelers || [];
+      const existingTravelers = this.travelerSelector.travelers || [];
 
       if (existingTravelers.length === 0) {
         console.error('No se encontraron viajeros para esta reserva');

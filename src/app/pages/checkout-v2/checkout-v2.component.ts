@@ -998,11 +998,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       this.executePriceCheck();
     }
 
-    try {
-      await this.travelerSelector?.saveTravelersChanges?.();
-    } catch (err) {
-      console.error('❌ Error guardando cambios de viajeros:', err);
-    }
+    // Los travelers ya se guardan automáticamente al hacer cambios
 
     this.triggerSummaryRefresh();
   }
@@ -2112,16 +2108,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         return false;
       }
 
-      // 1. Guardar cambios de travelers si hay pendientes
-      if (this.travelerSelector.hasUnsavedChanges) {
-        const travelersSaved =
-          await this.travelerSelector.saveTravelersChanges();
-        if (!travelersSaved) {
-          return false;
-        }
-      }
+      // Los travelers se guardan automáticamente al hacer cambios, no hay pendientes
 
-      // 2. Verificar habitaciones seleccionadas
+      // 1. Verificar habitaciones seleccionadas
       const hasSelectedRooms = Object.values(
         this.roomSelector.selectedRooms
       ).some((qty: number) => qty > 0);

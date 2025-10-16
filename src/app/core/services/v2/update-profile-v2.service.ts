@@ -389,7 +389,7 @@ export class UpdateProfileV2Service {
    * @returns Valor filtrado
    */
   validateNombreInput(value: string): string {
-    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').slice(0, 50);
+    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚàèìòùÀÈÌÒÙâêîôûÂÊÎÔÛäëïöüÄËÏÖÜñÑçÇ\s]/g, '').slice(0, 50);
   }
 
   /**
@@ -398,7 +398,7 @@ export class UpdateProfileV2Service {
    * @returns Valor filtrado
    */
   validateApellidoInput(value: string): string {
-    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').slice(0, 50);
+    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚàèìòùÀÈÌÒÙâêîôûÂÊÎÔÛäëïöüÄËÏÖÜñÑçÇ\s]/g, '').slice(0, 50);
   }
 
   /**
@@ -407,7 +407,7 @@ export class UpdateProfileV2Service {
    * @returns Valor filtrado
    */
   validateDireccionInput(value: string): string {
-    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s\-\.]/g, '').slice(0, 100);
+    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚàèìòùÀÈÌÒÙâêîôûÂÊÎÔÛäëïöüÄËÏÖÜñÑçÇ\s]/g, '').slice(0, 100);
   }
 
   /**
@@ -416,6 +416,6 @@ export class UpdateProfileV2Service {
    * @returns Valor filtrado
    */
   validatePaisInput(value: string): string {
-    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').slice(0, 50);
+    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚàèìòùÀÈÌÒÙâêîôûÂÊÎÔÛäëïöüÄËÏÖÜñÑçÇ\s]/g, '').slice(0, 50);
   }
 }

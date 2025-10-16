@@ -106,17 +106,19 @@ export class UpdateProfileSectionV2Component{
 
   // Métodos para limpiar errores en otros campos
   onNombreInput(event: any) {
-    const input = event.target as HTMLInputElement;
-    const filteredValue = this.updateProfileService.validateNombreInput(input.value);
-    input.value = filteredValue;
     this.clearFieldError('nombre');
+    // Aplicar validación al modelo, no al DOM
+    if (this.personalInfo.nombre) {
+      this.personalInfo.nombre = this.updateProfileService.validateNombreInput(this.personalInfo.nombre);
+    }
   }
 
   onApellidoInput(event: any) {
-    const input = event.target as HTMLInputElement;
-    const filteredValue = this.updateProfileService.validateApellidoInput(input.value);
-    input.value = filteredValue;
     this.clearFieldError('apellido');
+    // Aplicar validación al modelo, no al DOM
+    if (this.personalInfo.apellido) {
+      this.personalInfo.apellido = this.updateProfileService.validateApellidoInput(this.personalInfo.apellido);
+    }
   }
 
   onEmailInput(event: any) {

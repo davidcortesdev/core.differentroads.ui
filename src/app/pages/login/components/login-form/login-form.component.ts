@@ -18,7 +18,8 @@ import { AuthenticateService } from '../../../../core/services/auth/auth-service
 import { UsersNetService } from '../../../../core/services/users/usersNet.service';
 import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 import { ConfirmationCodeComponent } from '../../../../shared/components/confirmation-code/confirmation-code.component';
-import { UserCreate } from '../../../../core/models/users/user.model';
+import { UserCreate, IUserResponse } from '../../../../core/models/users/user.model';
+import { environment } from '../../../../../environments/environment';
 @Component({
   selector: 'app-login-form',
   standalone: true,
@@ -126,10 +127,17 @@ export class LoginFormComponent implements OnInit {
         if (users && users.length > 0) {
           // Usuario encontrado por Cognito ID
           console.log('🎉 Usuario encontrado por Cognito ID:', users[0]);
-          this.isLoading = false;
           
           // Disparar evento login
           this.trackLogin(method, users[0]);
+          
+          // Verificar si debe redirigir a tour operation
+          if (this.shouldRedirectToTourOperation(users[0])) {
+            this.redirectToTourOperation();
+            return;
+          }
+          
+          this.isLoading = false;
           
           // Navegar después de encontrar el usuario
           this.authService.navigateAfterUserVerification();
@@ -208,13 +216,30 @@ export class LoginFormComponent implements OnInit {
         if (success) {
           console.log('✅ Usuario actualizado con Cognito ID exitosamente');
         }
-        console.log('🔄 Estado antes de navegar - isLoading:', this.isLoading);
-        this.isLoading = false;
-        console.log('🔄 Estado después de setear isLoading = false:', this.isLoading);
-        console.log('🧭 Iniciando navegación...');
-        // Navegar después de actualizar el usuario
-        this.authService.navigateAfterUserVerification();
-        console.log('🧭 Navegación iniciada');
+        
+        // Obtener el usuario actualizado para verificar permisos
+        this.usersNetService.getUserById(userId).subscribe({
+          next: (user) => {
+            // Verificar si debe redirigir a tour operation
+            if (this.shouldRedirectToTourOperation(user)) {
+              this.redirectToTourOperation();
+              return;
+            }
+            
+            console.log('🔄 Estado antes de navegar - isLoading:', this.isLoading);
+            this.isLoading = false;
+            console.log('🔄 Estado después de setear isLoading = false:', this.isLoading);
+            console.log('🧭 Iniciando navegación...');
+            // Navegar después de actualizar el usuario
+            this.authService.navigateAfterUserVerification();
+            console.log('🧭 Navegación iniciada');
+          },
+          error: (error) => {
+            console.error('❌ Error obteniendo usuario actualizado:', error);
+            this.isLoading = false;
+            this.authService.navigateAfterUserVerification();
+          }
+        });
       },
       error: (error) => {
         console.error('❌ Error actualizando usuario con Cognito ID:', error);
@@ -253,6 +278,12 @@ export class LoginFormComponent implements OnInit {
         
         // Disparar evento login
         this.trackLogin(method, user);
+        
+        // Verificar si debe redirigir a tour operation
+        if (this.shouldRedirectToTourOperation(user)) {
+          this.redirectToTourOperation();
+          return;
+        }
         
         console.log('🔄 Estado antes de navegar - isLoading:', this.isLoading);
         this.isLoading = false;
@@ -348,7 +379,7 @@ export class LoginFormComponent implements OnInit {
   /**
    * Disparar evento login cuando el usuario inicia sesión exitosamente
    */
-  private trackLogin(method: string, user: any): void {    
+  private trackLogin(method: string, user: IUserResponse): void {    
     this.analyticsService.login(
       method,
       this.analyticsService.getUserData(
@@ -357,5 +388,21 @@ export class LoginFormComponent implements OnInit {
         user.cognitoId
       )
     );
+  }
+
+  /**
+   * Verifica si el usuario debe ser redirigido a la plataforma de tour operation
+   */
+  private shouldRedirectToTourOperation(user: IUserResponse): boolean {
+    return !user.hasWebAccess && user.hasTourOperationAccess;
+  }
+
+  /**
+   * Redirige al usuario a la plataforma de tour operation
+   */
+  private redirectToTourOperation(): void {
+    this.isLoading = false;
+    console.log('🔀 Redirigiendo a Tour Operation...');
+    window.location.href = environment.tourOperationUrl;
   }
 }

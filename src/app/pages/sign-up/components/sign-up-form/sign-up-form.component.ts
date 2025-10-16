@@ -17,6 +17,8 @@ import { UsersNetService } from '../../../../core/services/users/usersNet.servic
 import { HubspotService } from '../../../../core/services/integrations/hubspot.service';
 import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 import { ConfirmationCodeComponent } from '../../../../shared/components/confirmation-code/confirmation-code.component';
+import { IUserResponse } from '../../../../core/models/users/user.model';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-sign-up-form',
@@ -172,6 +174,12 @@ export class SignUpFormComponent {
                           next: (updated) => {
                             console.log('Usuario actualizado exitosamente:', updated);
                             
+                            // Verificar si debe redirigir a tour operation
+                            if (this.shouldRedirectToTourOperation(existingUser)) {
+                              this.redirectToTourOperation();
+                              return;
+                            }
+                            
                             this.isLoading = false;
                             this.isConfirming = true;
                             this.registeredUsername = this.signUpForm.value.email;
@@ -192,6 +200,12 @@ export class SignUpFormComponent {
                         .subscribe({
                           next: (user) => {
                             console.log('Usuario creado exitosamente:', user);
+                            
+                            // Verificar si debe redirigir a tour operation
+                            if (this.shouldRedirectToTourOperation(user)) {
+                              this.redirectToTourOperation();
+                              return;
+                            }
                             
                             this.isLoading = false;
                             this.isConfirming = true;
@@ -299,5 +313,21 @@ export class SignUpFormComponent {
         );
       }
     });
+  }
+
+  /**
+   * Verifica si el usuario debe ser redirigido a la plataforma de tour operation
+   */
+  private shouldRedirectToTourOperation(user: IUserResponse): boolean {
+    return !user.hasWebAccess && user.hasTourOperationAccess;
+  }
+
+  /**
+   * Redirige al usuario a la plataforma de tour operation
+   */
+  private redirectToTourOperation(): void {
+    this.isLoading = false;
+    console.log('🔀 Redirigiendo a Tour Operation...');
+    window.location.href = environment.tourOperationUrl;
   }
 }

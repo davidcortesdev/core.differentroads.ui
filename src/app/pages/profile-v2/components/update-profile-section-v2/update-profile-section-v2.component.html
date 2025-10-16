@@ -114,37 +114,36 @@
         </p-floatlabel>
 
         <!-- Datos Personales -->
+        <p-floatlabel variant="on">
           <p-datepicker 
-            id="fechaNacimiento"
+            inputId="fechaNacimiento"
             [(ngModel)]="personalInfo.fechaNacimiento"
-            name="fechaNacimiento"
             dateFormat="dd/mm/yy"
-            styleClass="p-datepicker -sm custom-calendar"
-            [showIcon]="true"
-            [iconDisplay]="'input'"
+            showIcon
+            iconDisplay="input"
             (onSelect)="onFechaNacimientoChange($event)"
-            [class.error]="hasFieldError('fechaNacimiento')"
-          >
+            [class.error]="hasFieldError('fechaNacimiento')"/>
           <label for="fechaNacimiento">Fecha de nacimiento</label>
           <small class="error-message" *ngIf="hasFieldError('fechaNacimiento')">
             {{ getFieldError('fechaNacimiento') }}
           </small>
-        </p-datepicker>
+      </p-floatlabel>
 
-
-        <p-select
-            id="sexo"
-            [(ngModel)]="personalInfo.sexo"
-            [options]="sexoOptions"
+        <p-floatlabel class="w-full md:w-56" variant="on">
+          <p-select 
+            [(ngModel)]="personalInfo.sexo" 
+            inputId="sexo" 
+            [options]="sexoOptions" 
             optionLabel="label"
+            optionValue="value"
             (onChange)="onSexoChange($event)"
             [class.error]="hasFieldError('sexo')"
-            class="w-full md:w-56"
-            placeholder="Sexo">
-          <small class="error-message" *ngIf="hasFieldError('sexo')">
-            {{ getFieldError('sexo') }}
-          </small>
-        </p-select>
+            styleClass="w-full" />
+          <label for="sexo">Sexo</label>
+        </p-floatlabel>
+        <small class="error-message" *ngIf="hasFieldError('sexo')">
+          {{ getFieldError('sexo') }}
+        </small>
 
         <p-floatlabel variant="on">
           <input
@@ -213,7 +212,7 @@
         <!-- Notas -->
         <p-floatlabel variant="on">
           <textarea
-            pInputTextarea
+            pTextarea
             id="notas"
             [(ngModel)]="personalInfo.notas"
             name="notas"

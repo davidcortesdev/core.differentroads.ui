@@ -18,7 +18,7 @@ import { AuthenticateService } from '../../../../core/services/auth/auth-service
 import { UsersNetService } from '../../../../core/services/users/usersNet.service';
 import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 import { ConfirmationCodeComponent } from '../../../../shared/components/confirmation-code/confirmation-code.component';
-import { UserCreate } from '../../../../core/models/users/user.model';
+import { UserCreate, IUserResponse } from '../../../../core/models/users/user.model';
 @Component({
   selector: 'app-login-form',
   standalone: true,
@@ -126,10 +126,20 @@ export class LoginFormComponent implements OnInit {
         if (users && users.length > 0) {
           // Usuario encontrado por Cognito ID
           console.log('🎉 Usuario encontrado por Cognito ID:', users[0]);
-          this.isLoading = false;
+          
+          // Verificar si tiene acceso a la web
+          if (!users[0].hasWebAccess) {
+            this.isLoading = false;
+            this.errorMessage = 'No tienes permisos para acceder a esta plataforma.';
+            // Cerrar sesión de Cognito
+            this.authService.logOut();
+            return;
+          }
           
           // Disparar evento login
           this.trackLogin(method, users[0]);
+          
+          this.isLoading = false;
           
           // Navegar después de encontrar el usuario
           this.authService.navigateAfterUserVerification();
@@ -146,7 +156,7 @@ export class LoginFormComponent implements OnInit {
                 // Disparar evento login
                 this.trackLogin(method, usersByEmail[0]);
                 
-                this.updateUserWithCognitoId(usersByEmail[0].id, cognitoId, method);
+                this.updateUserWithCognitoId(usersByEmail[0].id, cognitoId, usersByEmail[0].email, usersByEmail[0].name, method);
               } else {
                 // Usuario no existe, crearlo
                 console.log('🆕 Usuario no encontrado, creando nuevo usuario');
@@ -174,7 +184,7 @@ export class LoginFormComponent implements OnInit {
               // Disparar evento login
               this.trackLogin(method, usersByEmail[0]);
               
-              this.updateUserWithCognitoId(usersByEmail[0].id, cognitoId, method);
+              this.updateUserWithCognitoId(usersByEmail[0].id, cognitoId, usersByEmail[0].email, usersByEmail[0].name, method);
             } else {
               console.log('🆕 Usuario no encontrado, creando nuevo usuario');
               this.createNewUser(cognitoId, email, method);
@@ -192,22 +202,49 @@ export class LoginFormComponent implements OnInit {
   /**
    * Actualiza un usuario existente con el Cognito ID
    */
-  private updateUserWithCognitoId(userId: number, cognitoId: string, method: string = 'manual'): void {
+  private updateUserWithCognitoId(userId: number, cognitoId: string, email: string | undefined, name: string | undefined, method: string = 'manual'): void {
     console.log('🔄 Actualizando usuario con Cognito ID...');
-    console.log('📝 Datos de actualización:', { userId, cognitoId });
+    console.log('📝 Datos de actualización:', { userId, cognitoId, email, name });
     
-    this.usersNetService.updateUser(userId, { cognitoId }).subscribe({
+    // Preparar datos de actualización con campos requeridos
+    const updateData = {
+      cognitoId: cognitoId,
+      name: name || email || 'Usuario', // Usar email como fallback si no hay nombre
+      email: email || ''
+    };
+    
+    this.usersNetService.updateUser(userId, updateData).subscribe({
       next: (success) => {
         if (success) {
           console.log('✅ Usuario actualizado con Cognito ID exitosamente');
         }
-        console.log('🔄 Estado antes de navegar - isLoading:', this.isLoading);
-        this.isLoading = false;
-        console.log('🔄 Estado después de setear isLoading = false:', this.isLoading);
-        console.log('🧭 Iniciando navegación...');
-        // Navegar después de actualizar el usuario
-        this.authService.navigateAfterUserVerification();
-        console.log('🧭 Navegación iniciada');
+        
+        // Obtener el usuario actualizado para verificar permisos
+        this.usersNetService.getUserById(userId).subscribe({
+          next: (user) => {
+            // Verificar si tiene acceso a la web
+            if (!user.hasWebAccess) {
+              this.isLoading = false;
+              this.errorMessage = 'No tienes permisos para acceder a esta plataforma.';
+              // Cerrar sesión de Cognito
+              this.authService.logOut();
+              return;
+            }
+            
+            console.log('🔄 Estado antes de navegar - isLoading:', this.isLoading);
+            this.isLoading = false;
+            console.log('🔄 Estado después de setear isLoading = false:', this.isLoading);
+            console.log('🧭 Iniciando navegación...');
+            // Navegar después de actualizar el usuario
+            this.authService.navigateAfterUserVerification();
+            console.log('🧭 Navegación iniciada');
+          },
+          error: (error) => {
+            console.error('❌ Error obteniendo usuario actualizado:', error);
+            this.isLoading = false;
+            this.authService.navigateAfterUserVerification();
+          }
+        });
       },
       error: (error) => {
         console.error('❌ Error actualizando usuario con Cognito ID:', error);
@@ -243,6 +280,15 @@ export class LoginFormComponent implements OnInit {
     this.usersNetService.createUser(newUser).subscribe({
       next: (user) => {
         console.log('✅ Nuevo usuario creado exitosamente:', user);
+        
+        // Verificar si tiene acceso a la web
+        if (!user.hasWebAccess) {
+          this.isLoading = false;
+          this.errorMessage = 'No tienes permisos para acceder a esta plataforma.';
+          // Cerrar sesión de Cognito
+          this.authService.logOut();
+          return;
+        }
         
         // Disparar evento login
         this.trackLogin(method, user);
@@ -341,7 +387,7 @@ export class LoginFormComponent implements OnInit {
   /**
    * Disparar evento login cuando el usuario inicia sesión exitosamente
    */
-  private trackLogin(method: string, user: any): void {    
+  private trackLogin(method: string, user: IUserResponse): void {    
     this.analyticsService.login(
       method,
       this.analyticsService.getUserData(

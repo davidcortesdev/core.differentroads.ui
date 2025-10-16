@@ -165,6 +165,37 @@ export class UsersNetService {
   }
 
   /**
+   * Obtiene usuarios con acceso middle ATC
+   * @param hasMiddleAtcAccess true para usuarios con acceso middle ATC, false para los que no
+   * @returns Lista de usuarios con el acceso middle ATC especificado
+   */
+  getUsersByMiddleAtcAccess(
+    hasMiddleAtcAccess: boolean
+  ): Observable<IUserResponse[]> {
+    return this.getUsers({ HasMiddleAtcAccess: hasMiddleAtcAccess });
+  }
+
+  /**
+   * Obtiene usuarios con acceso tour operation
+   * @param hasTourOperationAccess true para usuarios con acceso tour operation, false para los que no
+   * @returns Lista de usuarios con el acceso tour operation especificado
+   */
+  getUsersByTourOperationAccess(
+    hasTourOperationAccess: boolean
+  ): Observable<IUserResponse[]> {
+    return this.getUsers({ HasTourOperationAccess: hasTourOperationAccess });
+  }
+
+  /**
+   * Obtiene usuarios por Retailer ID
+   * @param retailerId ID del retailer
+   * @returns Lista de usuarios con ese Retailer ID
+   */
+  getUsersByRetailerId(retailerId: number): Observable<IUserResponse[]> {
+    return this.getUsers({ RetailerId: retailerId });
+  }
+
+  /**
    * Obtiene todos los usuarios
    * @returns Lista de todos los usuarios
    */

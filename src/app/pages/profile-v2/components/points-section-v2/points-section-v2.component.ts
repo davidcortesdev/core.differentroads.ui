@@ -239,34 +239,6 @@ export class PointsSectionV2Component implements OnInit {
     return type === 'acumular' ? 'action-income' : 'action-redemption';
   }
 
-  // ===== MÉTODOS PARA BENEFICIOS (E4-03) =====
-  getMaxDiscountForCurrentCategory(): number {
-    return this.pointsService.getMaxDiscountForCategory(this.currentCategory);
-  }
-
-  getNextCategoryFromSummary(): TravelerCategory | undefined {
-    return this.pointsSummary?.nextCategory;
-  }
-
-  getProgressText(): string {
-    const nextCategory = this.getNextCategory();
-    if (!nextCategory) return 'Categoría máxima alcanzada';
-    
-    const tripsNeeded = this.pointsSummary?.pointsToNextCategory || 0;
-    const nextCategoryName = this.getCategoryDisplayName(nextCategory);
-    
-    return `Faltan ${tripsNeeded} viajes para ${nextCategoryName}`;
-  }
-
-  getProgressPercentage(): number {
-    if (!this.pointsSummary?.nextCategory) return 100;
-    
-    const currentTrips = this.currentTrips;
-    const tripsNeeded = this.pointsSummary.pointsToNextCategory || 0;
-    const totalTrips = currentTrips + tripsNeeded;
-    
-    return totalTrips > 0 ? (currentTrips / totalTrips) * 100 : 0;
-  }
 
   // ===== MÉTODOS PARA TARJETAS DE CATEGORÍA =====
   getCardCategoryName(card: MembershipCard): string {

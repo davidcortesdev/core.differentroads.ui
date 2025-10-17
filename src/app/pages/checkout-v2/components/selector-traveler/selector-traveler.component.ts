@@ -50,8 +50,7 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
   // Datos del departure price supplement
   departurePriceSupplements: IDeparturePriceSupplementResponse[] = [];
 
-  // Datos de los grupos de edad (ordenados para UI)
-  ageGroups: IAgeGroupResponse[] = [];
+  // Grupos de edad ordenados para UI
   orderedAgeGroups: IAgeGroupResponse[] = [];
 
   constructor(
@@ -179,7 +178,7 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
 
     forkJoin(ageGroupRequests).subscribe({
       next: (ageGroups) => {
-        this.ageGroups = ageGroups;
+        // Ordenar y guardar directamente
         this.orderedAgeGroups = [...ageGroups].sort(
           (a, b) => a.displayOrder - b.displayOrder
         );
@@ -400,7 +399,7 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
    * Obtener el máximo para un grupo de edad (público para template)
    */
   getMaxForAgeGroup(ageGroupId: number): number {
-    const ageGroup = this.ageGroups.find((ag) => ag.id === ageGroupId);
+    const ageGroup = this.orderedAgeGroups.find((ag) => ag.id === ageGroupId);
     if (!ageGroup) return 20;
 
     const name = ageGroup.name.toLowerCase();

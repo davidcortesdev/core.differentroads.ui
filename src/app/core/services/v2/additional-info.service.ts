@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, catchError } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
 import { AuthenticateService } from '../auth/auth-service.service';
 import { AnalyticsService } from '../analytics/analytics.service';
@@ -207,9 +207,18 @@ export class AdditionalInfoService {
     // Construcción de datos para el backend
     const reservationData = this.buildReservationData();
     
-    // Llamada HTTP al endpoint de creación de presupuestos
+    // TEMPORAL: Simular respuesta exitosa hasta que el backend implemente el endpoint
+    return of({
+      success: true,
+      message: 'Tour añadido a tus favoritos',
+      data: { id: 'temp_' + Date.now(), status: 'saved' }
+    });
+    
+    // TODO: Descomentar cuando el backend implemente el endpoint
+    /*
     return this.http.post(`${this.API_BASE_URL}/budgets`, reservationData).pipe(
       map((response: any) => {
+        
         // Procesamiento de la respuesta del backend
         const totalPassengers = this.travelersData ? 
           (this.travelersData.adults || 0) + (this.travelersData.childs || 0) + (this.travelersData.babies || 0) : 0;
@@ -219,13 +228,23 @@ export class AdditionalInfoService {
           ? 'Presupuesto guardado correctamente'
           : 'Tour añadido a tus favoritos';
         
-        return {
+        const result = {
           success: true,
           message: message,
           data: response
         };
+        
+        return result;
+      }),
+      catchError((error) => {
+        return of({
+          success: false,
+          message: 'Error de conexión con el servidor',
+          error: error
+        });
       })
     );
+    */
   }
 
   /**
@@ -294,7 +313,14 @@ export class AdditionalInfoService {
     const updateData = this.buildReservationUpdateData(existingOrder);
     const budgetId = existingOrder.id || existingOrder._id;
     
-    // Llamada HTTP al endpoint de actualización de presupuestos
+    return of({
+      success: true,
+      message: 'Presupuesto actualizado correctamente',
+      data: { id: budgetId, status: 'updated' }
+    });
+    
+    // TODO: Descomentar cuando el backend implemente el endpoint
+    /*
     return this.http.put(`${this.API_BASE_URL}/budgets/${budgetId}`, updateData).pipe(
       map((response: any) => ({
         success: true,
@@ -302,6 +328,7 @@ export class AdditionalInfoService {
         data: response
       }))
     );
+    */
   }
 
   /**
@@ -364,7 +391,7 @@ export class AdditionalInfoService {
           userData
         );
       },
-      error: () => {
+      error: (error) => {
         // Fallback sin datos de usuario
         const item = {
           item_id: tourId,
@@ -465,7 +492,14 @@ export class AdditionalInfoService {
    * @returns Observable con la respuesta del servidor
    */
   sendBudgetByEmail(budgetData: any): Observable<any> {
-    // Llamada HTTP al endpoint de compartir presupuestos
+    return of({
+      success: true,
+      message: 'Email enviado correctamente',
+      data: { id: 'share_' + Date.now(), status: 'sent' }
+    });
+    
+    // TODO: Descomentar cuando el backend implemente el endpoint
+    /*
     return this.http.post(`${this.API_BASE_URL}/budgets/share`, budgetData).pipe(
       map((response: any) => ({
         success: true,
@@ -473,6 +507,7 @@ export class AdditionalInfoService {
         data: response
       }))
     );
+    */
   }
 
   /**
@@ -499,7 +534,27 @@ export class AdditionalInfoService {
     // Construcción de datos para la generación del PDF
     const downloadData = this.buildReservationData();
     
-    // Llamada HTTP al endpoint de descarga de PDF
+    // Simular descarga de PDF
+    const fileName = `presupuesto-${this.tourId}-${Date.now()}.pdf`;
+    const mockContent = 'Presupuesto simulado - ' + new Date().toISOString();
+    const blob = new Blob([mockContent], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    return of({
+      success: true,
+      message: 'Presupuesto descargado correctamente',
+      fileName: fileName
+    });
+    
+    // TODO: Descomentar cuando el backend implemente el endpoint
+    /*
     return this.http.post(`${this.API_BASE_URL}/budgets/download`, downloadData, { 
       responseType: 'blob' 
     }).pipe(
@@ -522,6 +577,7 @@ export class AdditionalInfoService {
         };
       })
     );
+    */
   }
 
 }

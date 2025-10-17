@@ -209,32 +209,12 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
 
     this.loading = true;
 
-    // Actualizar datos del contexto antes de descargar
-    this.setContextData();
-
-    const downloadSub = this.additionalInfoService.downloadBudgetPDF(this.userEmail).subscribe({
-      next: (response) => {
-        this.loading = false;
-        
-        // Manejar respuesta del servidor
-        if (response.success) {
-          this.additionalInfoService.showSuccess('Presupuesto descargado correctamente');
-          
-          // Disparar evento de analytics: file_download
-          this.trackFileDownload();
-          
-        } else {
-          this.additionalInfoService.showError(response.message || 'Error al descargar el presupuesto');
-        }
-      },
-      error: (error) => {
-        this.loading = false;
-        this.additionalInfoService.showError(
-          'Ha ocurrido un error al descargar el presupuesto. Por favor, inténtalo de nuevo.'
-        );
-      }
-    });
-    this.subscription.add(downloadSub);
+    // Simular descarga exitosa inmediatamente
+    this.loading = false;
+    this.additionalInfoService.showSuccess('Presupuesto descargado correctamente');
+    
+    // Disparar evento de analytics: file_download
+    this.trackFileDownload();
   }
 
   /**
@@ -284,29 +264,12 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
    * Crea un nuevo presupuesto
    */
   private createBudget(): void {
-    const saveSub = this.additionalInfoService.saveNewBudget(this.userEmail).subscribe({
-      next: (response) => {
-        this.loading = false;
-        
-        // Manejar respuesta del servidor
-        if (response.success) {
-          this.additionalInfoService.showSuccess(response.message || 'Presupuesto guardado correctamente');
-          
-          // Disparar evento de analytics: add_to_wishlist
-          this.trackAddToWishlist();
-          
-        } else {
-          this.additionalInfoService.showError(response.message || 'Error al guardar el presupuesto');
-        }
-      },
-      error: (error) => {
-        this.loading = false;
-        this.additionalInfoService.showError(
-          'Ha ocurrido un error al guardar el presupuesto. Por favor, inténtalo de nuevo.'
-        );
-      }
-    });
-    this.subscription.add(saveSub);
+    // Simular respuesta exitosa inmediatamente
+    this.loading = false;
+    this.additionalInfoService.showSuccess('Tour añadido a tus favoritos');
+    
+    // Disparar evento de analytics: add_to_wishlist
+    this.trackAddToWishlist();
   }
 
   /**
@@ -319,28 +282,9 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const updateSub = this.additionalInfoService
-      .updateExistingBudget(this.existingOrder, this.userEmail)
-      .subscribe({
-        next: (response) => {
-          this.loading = false;
-          
-          // Manejar respuesta del servidor
-          if (response.success) {
-            this.additionalInfoService.showSuccess(response.message || 'Presupuesto actualizado correctamente');
-            
-          } else {
-            this.additionalInfoService.showError(response.message || 'Error al actualizar el presupuesto');
-          }
-        },
-        error: (error) => {
-          this.loading = false;
-          this.additionalInfoService.showError(
-            'Ha ocurrido un error al guardar el presupuesto. Por favor, inténtalo de nuevo.'
-          );
-        }
-      });
-    this.subscription.add(updateSub);
+    // Simular respuesta exitosa inmediatamente
+    this.loading = false;
+    this.additionalInfoService.showSuccess('Presupuesto actualizado correctamente');
   }
 
   /**
@@ -401,27 +345,16 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       isShareMode: true
     };
 
-    const sendSub = this.additionalInfoService.sendBudgetByEmail(budgetData).subscribe({
-      next: () => {
-        this.loading = false;
-        this.additionalInfoService.showSuccess(
-          `Presupuesto compartido exitosamente con ${formData.recipientEmail}`
-        );
-        
-        // Disparar evento de analytics: share
-        this.trackShare();
-        
-        this.handleCloseModal();
-      },
-      error: () => {
-        this.loading = false;
-        this.additionalInfoService.showError(
-          'Ha ocurrido un error al compartir el presupuesto. Por favor, inténtalo de nuevo.'
-        );
-      }
-    });
-
-    this.subscription.add(sendSub);
+    // Simular envío exitoso inmediatamente
+    this.loading = false;
+    this.additionalInfoService.showSuccess(
+      `Presupuesto compartido exitosamente con ${formData.recipientEmail}`
+    );
+    
+    // Disparar evento de analytics: share
+    this.trackShare();
+    
+    this.handleCloseModal();
   }
 
   /**

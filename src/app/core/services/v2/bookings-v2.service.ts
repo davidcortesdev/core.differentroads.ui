@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { map, Observable } from 'rxjs';
+import { map, Observable, switchMap, of } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { ReservationResponse } from '../../models/v2/profile-v2.model';
 
@@ -104,5 +104,96 @@ export class BookingsServiceV2 {
         throw new Error('Reserva no encontrada');
       })
     );
+  }
+
+  /**
+   * Obtiene reservas donde un email aparece como viajero
+   * @param email - Email del viajero
+   * @returns Observable de array de ReservationResponse
+   */
+  getReservationsByTravelerEmail(email: string): Observable<ReservationResponse[]> {
+    // Primero obtener todos los ReservationTraveler que tienen este email
+    const travelersUrl = `${environment.reservationsApiUrl}/ReservationTraveler`;
+    const travelersParams = new HttpParams()
+      .set('useExactMatchForStrings', 'false');
+
+    return this.http.get<any[]>(travelersUrl, { params: travelersParams }).pipe(
+      switchMap((travelers: any[]) => {
+        // Filtrar viajeros que tienen el email en sus campos
+        const travelersWithEmail = travelers.filter(traveler => {
+          // Verificar si el viajero tiene campos con email
+          return this.hasEmailInFields(traveler, email);
+        });
+
+        // Obtener IDs únicos de reservas
+        const reservationIds = [...new Set(travelersWithEmail.map(t => t.reservationId))];
+        
+        if (reservationIds.length === 0) {
+          return of([]);
+        }
+
+        // Obtener todas las reservas de estos IDs
+        return this.getReservationsByIds(reservationIds);
+      })
+    );
+  }
+
+  /**
+   * Obtiene reservas activas donde un email aparece como viajero
+   * @param email - Email del viajero
+   * @returns Observable de array de ReservationResponse
+   */
+  getActiveBookingsByTravelerEmail(email: string): Observable<ReservationResponse[]> {
+    return this.getReservationsByTravelerEmail(email).pipe(
+      map((reservations: ReservationResponse[]) => 
+        reservations.filter(reservation => 
+          reservation.reservationStatusId === 5 || reservation.reservationStatusId === 6
+        )
+      )
+    );
+  }
+
+  /**
+   * Obtiene historial de viajes donde un email aparece como viajero
+   * @param email - Email del viajero
+   * @returns Observable de array de ReservationResponse
+   */
+  getTravelHistoryByTravelerEmail(email: string): Observable<ReservationResponse[]> {
+    return this.getReservationsByTravelerEmail(email).pipe(
+      map((reservations: ReservationResponse[]) => 
+        reservations.filter(reservation => 
+          reservation.reservationStatusId === 7 || reservation.reservationStatusId === 8
+        )
+      )
+    );
+  }
+
+  /**
+   * Verifica si un viajero tiene el email especificado en sus campos
+   * @param traveler - Objeto del viajero
+   * @param email - Email a buscar
+   * @returns true si el viajero tiene el email
+   */
+  private hasEmailInFields(traveler: any, email: string): boolean {
+    // Si el viajero tiene campos, verificar si alguno contiene el email
+    if (traveler.fields && Array.isArray(traveler.fields)) {
+      return traveler.fields.some((field: any) => 
+        field.reservationFieldId === 11 && field.value === email
+      );
+    }
+    return false;
+  }
+
+  /**
+   * Obtiene reservas por sus IDs
+   * @param reservationIds - Array de IDs de reservas
+   * @returns Observable de array de ReservationResponse
+   */
+  private getReservationsByIds(reservationIds: number[]): Observable<ReservationResponse[]> {
+    const params = new HttpParams()
+      .set('Ids', reservationIds.join(','))
+      .set('useExactMatchForStrings', 'false');
+
+    return this.http.get<ReservationResponse[]>(this.API_URL, { params });
   }
 }

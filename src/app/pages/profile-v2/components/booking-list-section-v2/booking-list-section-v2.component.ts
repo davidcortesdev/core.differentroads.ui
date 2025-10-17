@@ -7,6 +7,7 @@ import { ReservationResponse } from '../../../../core/models/v2/profile-v2.model
 import { ToursServiceV2 } from '../../../../core/services/v2/tours-v2.service';
 import { DataMappingV2Service } from '../../../../core/services/v2/data-mapping-v2.service';
 import { CMSTourService, ICMSTourResponse } from '../../../../core/services/cms/cms-tour.service';
+import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
 
 
@@ -32,7 +33,8 @@ export class BookingListSectionV2Component implements OnInit {
     private bookingsService: BookingsServiceV2,
     private toursService: ToursServiceV2,
     private dataMappingService: DataMappingV2Service,
-    private cmsTourService: CMSTourService
+    private cmsTourService: CMSTourService,
+    private authService: AuthenticateService
   ) {}
 
   ngOnInit() {
@@ -71,16 +73,37 @@ export class BookingListSectionV2Component implements OnInit {
 
   /**
    * Carga reservas activas usando servicios v2
+   * Incluye reservas donde el usuario es titular + reservas donde aparece como viajero
    */
   private loadActiveBookings(userId: number): void {
-    this.bookingsService.getActiveBookings(userId).pipe(
-      switchMap((reservations: ReservationResponse[]) => {
-        if (!reservations || reservations.length === 0) {
+    // Obtener email del usuario actual
+    const userEmail = this.authService.getUserEmailValue();
+    
+    if (!userEmail) {
+      console.warn('No se pudo obtener el email del usuario');
+      this.bookingItems = [];
+      this.loading = false;
+      return;
+    }
+
+    // Combinar reservas del usuario como titular + reservas donde aparece como viajero
+    forkJoin({
+      userReservations: this.bookingsService.getActiveBookings(userId),
+      travelerReservations: this.bookingsService.getActiveBookingsByTravelerEmail(userEmail)
+    }).pipe(
+      switchMap(({ userReservations, travelerReservations }) => {
+        // Combinar y eliminar duplicados basándose en el ID de reserva
+        const allReservations = [...userReservations, ...travelerReservations];
+        const uniqueReservations = allReservations.filter((reservation, index, self) => 
+          index === self.findIndex(r => r.id === reservation.id)
+        );
+
+        if (uniqueReservations.length === 0) {
           return of([]);
         }
 
         // Obtener información de tours y imágenes CMS para cada reserva
-        const tourPromises = reservations.map(reservation => 
+        const tourPromises = uniqueReservations.map(reservation => 
           forkJoin({
             tour: this.toursService.getTourById(reservation.tourId).pipe(
               catchError(error => {

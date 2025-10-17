@@ -85,6 +85,7 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
   allRoomsAvailability: RoomAvailability[] = [];
   selectedRooms: { [tkId: string]: number } = {};
   errorMsg: string | null = null;
+  errorMsgType: 'error' | 'warning' | 'info' = 'error'; // Tipo de mensaje
 
   // Propiedades para guardado automático
   saving: boolean = false;
@@ -475,6 +476,7 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     this.currentRoomAssignments = [];
     this.selectedRooms = {};
     this.errorMsg = 'Por favor, selecciona las habitaciones para los viajeros';
+    this.errorMsgType = 'info';
     console.log('🧹 Asignaciones limpiadas, esperando selección del usuario');
   }
 
@@ -927,6 +929,7 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     const validationResult = this.validateRoomSelections();
     if (!validationResult.isValid) {
       this.errorMsg = validationResult.message;
+      this.errorMsgType = 'error';
       this.processingStatus = '❌ Selección inválida';
       this.clearCountdown();
       return;
@@ -970,6 +973,7 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     const validationResult = this.validateRoomSelections();
     if (!validationResult.isValid) {
       this.errorMsg = validationResult.message;
+      this.errorMsgType = 'error';
       return;
     }
 
@@ -1229,6 +1233,7 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
       const validation = this.validateChildrenAssignments();
       if (!validation.isValid) {
         this.errorMsg = validation.errorMessage;
+        this.errorMsgType = 'error';
         this.currentRoomAssignments = []; // Limpiar asignaciones inválidas
         return;
       }
@@ -1247,6 +1252,7 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     const validationResult = this.validateRoomSelections();
     if (!validationResult.isValid) {
       this.errorMsg = validationResult.message;
+      this.errorMsgType = 'error';
       return false;
     }
 
@@ -1491,18 +1497,40 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
       // Actualizar contadores de viajeros basándose en los viajeros reales
       this.updateTravelersNumbersFromExistingTravelers();
 
-      // Recargar y validar asignaciones (sin redistribuir)
+      // Cargar asignaciones existentes SIN validar ni limpiar
+      // (dejar que el usuario ajuste manualmente si es necesario)
       if (this.existingTravelers.length > 0) {
-        await this.loadAndValidateExistingAssignments();
+        await this.loadExistingTravelerAccommodations();
+        
+        // Solo construir asignaciones desde BD sin validar
+        if (this.existingTravelerAccommodations.length > 0) {
+          this.currentRoomAssignments = this.buildAssignmentsFromDB();
+          this.syncSelectedRoomsFromAssignments();
+        }
       }
+
+      // Mostrar mensaje informativo para que el usuario revise/ajuste
+      this.processingStatus = '⚠️ Viajeros actualizados';
+      this.errorMsg = 'Por favor, revisa y ajusta las habitaciones si es necesario';
+      this.errorMsgType = 'warning';
+
+      // Limpiar los mensajes después de 5 segundos
+      setTimeout(() => {
+        if (this.processingStatus === '⚠️ Viajeros actualizados') {
+          this.processingStatus = '';
+          this.errorMsg = null;
+        }
+      }, 5000);
 
       // Actualizar UI sin redistribuir
       this.updateUIWithoutDistribution();
 
-      console.log('✅ Recarga completa');
+      console.log('✅ Recarga completa - habitaciones mantenidas');
     } catch (error) {
       console.error('❌ Error al recargar habitaciones:', error);
       this.errorMsg = 'Error al recargar las habitaciones.';
+      this.errorMsgType = 'error';
+      this.processingStatus = '❌ Error al recargar';
     }
   }
 

@@ -290,6 +290,7 @@
   margin-top: 16px;
 
   .info-message,
+  .warning-message,
   .error-message {
     display: flex;
     align-items: center;
@@ -307,6 +308,12 @@
   .info-message {
     background-color: #e4e4e7;
     color: var(--background-azul);
+  }
+
+  .warning-message {
+    background-color: #fff8e1;
+    border: 1px solid #ffb74d;
+    color: #e65100;
   }
 
   .error-message {

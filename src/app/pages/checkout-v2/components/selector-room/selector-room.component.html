@@ -93,7 +93,11 @@
     </p>
   </div>
 
-  <div *ngIf="errorMsg" class="error-message">
+  <div *ngIf="errorMsg" [ngClass]="{
+    'error-message': errorMsgType === 'error',
+    'warning-message': errorMsgType === 'warning',
+    'info-message': errorMsgType === 'info'
+  }">
     <i class="pi pi-info-circle"></i>
     <p>{{ errorMsg }}</p>
   </div>

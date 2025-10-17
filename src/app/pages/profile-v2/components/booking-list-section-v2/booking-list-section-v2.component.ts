@@ -32,6 +32,13 @@ export class BookingListSectionV2Component implements OnInit {
   downloadLoading: { [key: string]: boolean } = {};
   notificationLoading: { [key: string]: boolean } = {};
 
+  // Propiedades para el modal de puntos
+  pointsModalVisible: boolean = false;
+  selectedBookingItem: BookingItem | null = null;
+  userPoints: number = 0;
+  pointsToUse: number = 0;
+  applyingPoints: boolean = false;
+
   constructor(
     private router: Router,
     private messageService: MessageService,
@@ -80,49 +87,58 @@ export class BookingListSectionV2Component implements OnInit {
 
   /**
    * Carga reservas activas usando servicios v2
+   * Incluye reservas donde el usuario es titular + reservas donde aparece como viajero
    */
   private loadActiveBookings(userId: number): void {
-    this.bookingsService
-      .getActiveBookings(userId)
-      .pipe(
-        switchMap((reservations: ReservationResponse[]) => {
-          if (!reservations || reservations.length === 0) {
-            return of([]);
-          }
+    // Obtener email del usuario actual
+    const userEmail = this.authService.getUserEmailValue();
+    
+    if (!userEmail) {
+      console.warn('No se pudo obtener el email del usuario');
+      this.bookingItems = [];
+      this.loading = false;
+      return;
+    }
 
-          // Obtener información de tours y imágenes CMS para cada reserva
-          const tourPromises = reservations.map((reservation) =>
-            forkJoin({
-              tour: this.toursService.getTourById(reservation.tourId).pipe(
-                catchError((error) => {
-                  console.warn(
-                    `Error obteniendo tour ${reservation.tourId}:`,
-                    error
-                  );
-                  return of(null);
-                })
-              ),
-              cmsTour: this.cmsTourService
-                .getAllTours({ tourId: reservation.tourId })
-                .pipe(
-                  map((cmsTours: ICMSTourResponse[]) =>
-                    cmsTours.length > 0 ? cmsTours[0] : null
-                  ),
-                  catchError((error) => {
-                    console.warn(
-                      `Error obteniendo CMS tour ${reservation.tourId}:`,
-                      error
-                    );
-                    return of(null);
-                  })
-                ),
-            }).pipe(
-              map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
+    // Combinar reservas del usuario como titular + reservas donde aparece como viajero
+    forkJoin({
+      userReservations: this.bookingsService.getActiveBookings(userId),
+      travelerReservations: this.bookingsService.getActiveBookingsByTravelerEmail(userEmail)
+    }).pipe(
+      switchMap(({ userReservations, travelerReservations }) => {
+        // Combinar y eliminar duplicados basándose en el ID de reserva
+        const allReservations = [...userReservations, ...travelerReservations];
+        const uniqueReservations = allReservations.filter((reservation, index, self) => 
+          index === self.findIndex(r => r.id === reservation.id)
+        );
+
+        if (uniqueReservations.length === 0) {
+          return of([]);
+        }
+
+        // Obtener información de tours y imágenes CMS para cada reserva
+        const tourPromises = uniqueReservations.map(reservation => 
+          forkJoin({
+            tour: this.toursService.getTourById(reservation.tourId).pipe(
+              catchError(error => {
+                console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
+                return of(null);
+              })
+            ),
+            cmsTour: this.cmsTourService.getAllTours({ tourId: reservation.tourId }).pipe(
+              map((cmsTours: ICMSTourResponse[]) => cmsTours.length > 0 ? cmsTours[0] : null),
+              catchError(error => {
+                console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
+                return of(null);
+              })
             )
-          );
+          }).pipe(
+            map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
+          )
+        );
 
-          return forkJoin(tourPromises);
-        }),
+        return forkJoin(tourPromises);
+      }),
         map((reservationTourPairs: any[]) => {
           // Mapear usando el servicio de mapeo con imágenes CMS
           return this.dataMappingService.mapReservationsToBookingItems(
@@ -549,5 +565,86 @@ export class BookingListSectionV2Component implements OnInit {
 
   getReserveLabel(): string {
     return 'Reservar';
+  }
+
+  // ===== MÉTODOS PARA CANJE DE PUNTOS =====
+
+  /**
+   * Determina si debe mostrar el botón de usar puntos
+   */
+  shouldShowUsePoints(): boolean {
+    return this.listType === 'active-bookings';
+  }
+
+  /**
+   * Abre el modal para usar puntos
+   */
+  openPointsModal(item: BookingItem): void {
+    this.selectedBookingItem = item;
+    this.pointsToUse = 0;
+    this.pointsModalVisible = true;
+    
+    // Cargar puntos del usuario
+    this.loadUserPoints();
+  }
+
+  /**
+   * Cierra el modal de puntos
+   */
+  closePointsModal(): void {
+    this.pointsModalVisible = false;
+    this.selectedBookingItem = null;
+    this.pointsToUse = 0;
+  }
+
+  /**
+   * Carga los puntos disponibles del usuario
+   */
+  private loadUserPoints(): void {
+    // TODO: Implementar carga de puntos del usuario
+    // Por ahora usar un valor de ejemplo
+    this.userPoints = 150; // Este valor vendrá de la API de puntos
+  }
+
+  /**
+   * Calcula el nuevo total después del descuento
+   */
+  calculateNewTotal(): number {
+    if (!this.selectedBookingItem || !this.selectedBookingItem.price) {
+      return 0;
+    }
+    return Math.max(0, this.selectedBookingItem.price - this.pointsToUse);
+  }
+
+  /**
+   * Verifica si se pueden aplicar los puntos
+   */
+  canApplyPoints(): boolean {
+    return this.pointsToUse > 0 && 
+           this.pointsToUse <= this.userPoints && 
+           this.pointsToUse <= (this.selectedBookingItem?.price || 0);
+  }
+
+  /**
+   * Aplica los puntos a la reserva
+   */
+  applyPoints(): void {
+    if (!this.canApplyPoints() || !this.selectedBookingItem) {
+      return;
+    }
+
+    this.applyingPoints = true;
+
+    // TODO: Implementar llamada a la API para aplicar puntos
+    // Por ahora simular el proceso
+    setTimeout(() => {
+      this.applyingPoints = false;
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Puntos aplicados',
+        detail: `Se han aplicado ${this.pointsToUse} puntos a la reserva`
+      });
+      this.closePointsModal();
+    }, 2000);
   }
 }

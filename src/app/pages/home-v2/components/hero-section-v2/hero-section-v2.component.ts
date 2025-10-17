@@ -7,19 +7,21 @@ import {
   ElementRef,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import {
   HomeSectionContentService,
   IHomeSectionContentResponse,
-  ContentType,
 } from '../../../../core/services/home/home-section-content.service';
 import {
   TripTypeService,
   ITripTypeResponse,
 } from '../../../../core/services/trip-type/trip-type.service';
-import { CountriesService } from '../../../../core/services/countries.service';
+import { CountriesService } from '../../../../core/services/locations/countries.service';
 import { Country } from '../../../../shared/models/country.model';
-import { AnalyticsService } from '../../../../core/services/analytics.service';
-import { AuthenticateService } from '../../../../core/services/auth-service.service';
+import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
+import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
+import { TourService, UnifiedSearchResult } from '../../../../core/services/tour/tour.service';
 
 interface TripQueryParams {
   destination?: string;
@@ -35,6 +37,7 @@ interface TripQueryParams {
   styleUrls: ['./hero-section-v2.component.scss'],
 })
 export class HeroSectionV2Component implements OnInit, AfterViewInit {
+
   @Input() initialDestination: string | null = null;
   @Input() initialDepartureDate: Date | null = null;
   @Input() initialReturnDate: Date | null = null;
@@ -51,11 +54,23 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
   selectedDestination: string | null = null;
   departureDate: Date | null = null;
   returnDate: Date | null = null;
-  selectedTripType: string | null = null;
-  destinationInput: string | null = null;
+  selectedTripTypeId: number | null = null;
+  destinationInput: string | UnifiedSearchResult | null = null;
+
+  // DatePicker Range properties
+  rangeDates: Date[] = [];
+  dateFlexibility: number = 0;
+
+  // Validation state
+  showDateValidationError: boolean = false;
+  dateValidationMessage: string = '';
 
   filteredDestinations: Country[] = [];
   filteredTripTypes: ITripTypeResponse[] = [];
+  
+  // Autocomplete con PrimeNG
+  sugerencias: UnifiedSearchResult[] = [];
+  selectedSuggestion: UnifiedSearchResult | null = null;
 
   destinations: Country[] = [];
   tripTypes: ITripTypeResponse[] = [];
@@ -66,8 +81,9 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     private tripTypeService: TripTypeService,
     private countriesService: CountriesService,
     private analyticsService: AnalyticsService,
-    private authService: AuthenticateService
-  ) {}
+    private authService: AuthenticateService,
+    private tourService: TourService
+  ) { }
 
   ngOnInit(): void {
     this.setInitialValues();
@@ -76,12 +92,35 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     this.loadTripTypes();
   }
 
+  /**
+   * Método que se ejecuta cuando el usuario escribe en el autocomplete
+   * Normaliza el texto y busca sugerencias
+   */
+  onCompleteMethod(event: { query: string }): void {
+    const query = event.query.trim();
+    
+    if (!query || query.length < 2) {
+      this.sugerencias = [];
+      return;
+    }
+
+    // Normalizar el texto eliminando diacríticos
+    const normalized = query.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+    
+    this.tourService
+      .autocomplete({ searchText: normalized, maxResults: 8 })
+      .pipe(catchError(() => of([])))
+      .subscribe((results: UnifiedSearchResult[]) => {
+        this.sugerencias = Array.isArray(results) ? results : [];
+      });
+  }
   ngAfterViewInit(): void {
     // Ensure video plays when view is initialized
     if (this.isVideo && this.bannerContent) {
       setTimeout(() => this.playVideo(), 200);
     }
   }
+
 
   private loadBannerContent(): void {
     // Assuming banner content has a specific configuration ID
@@ -182,6 +221,11 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     this.tripTypeService.getActiveTripTypes().subscribe({
       next: (tripTypes) => {
         this.tripTypes = tripTypes;
+        // Si viene initialTripType (code), mapea a id
+        if (this.initialTripType && this.selectedTripTypeId == null) {
+          const match = this.tripTypes.find(t => t.code === this.initialTripType);
+          this.selectedTripTypeId = match ? match.id : null;
+        }
       },
       error: (error) => {
         console.error('Error loading trip types:', error);
@@ -198,6 +242,7 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     );
   }
 
+
   filterTripTypes(event: { query: string }): void {
     const query = event.query.toLowerCase().trim();
     this.filteredTripTypes = this.tripTypes.filter(
@@ -208,31 +253,112 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
   }
 
   searchTrips(): void {
-    const queryParams: TripQueryParams = {};
+    // Validar fechas antes de buscar
+    if (this.rangeDates && this.rangeDates.length > 0 && !this.isValidDateRange()) {
+      this.showDateValidationError = true;
+      this.dateValidationMessage = 'Por favor, selecciona un rango de fechas válido (fecha de inicio y fin)';
 
-    if (this.destinationInput) {
-      queryParams.destination = this.destinationInput.trim();
+      // Ocultar mensaje después de 3 segundos
+      setTimeout(() => {
+        this.showDateValidationError = false;
+      }, 3000);
+
+      return;
     }
 
-    if (this.departureDate) {
+    // Limpiar errores de validación
+    this.showDateValidationError = false;
+    this.dateValidationMessage = '';
+
+    const queryParams: TripQueryParams = {};
+
+    // Extraer el nombre del destino (puede ser string u objeto UnifiedSearchResult)
+    let destinationText: string | null = null;
+    if (this.destinationInput) {
+      if (typeof this.destinationInput === 'string') {
+        destinationText = this.destinationInput.trim();
+      } else if (typeof this.destinationInput === 'object' && 'name' in this.destinationInput) {
+        destinationText = (this.destinationInput as UnifiedSearchResult).name || '';
+      }
+    }
+    
+    if (destinationText) {
+      queryParams.destination = destinationText;
+    }
+
+    // Usar fechas del rango
+    if (this.rangeDates && this.rangeDates.length >= 2) {
+      queryParams.departureDate = this.rangeDates[0].toISOString().split('T')[0];
+      queryParams.returnDate = this.rangeDates[1].toISOString().split('T')[0];
+    } else if (this.departureDate) {
       queryParams.departureDate = this.departureDate
         .toISOString()
         .split('T')[0];
+      if (this.returnDate) {
+        queryParams.returnDate = this.returnDate.toISOString().split('T')[0];
+      }
     }
 
-    if (this.returnDate) {
-      queryParams.returnDate = this.returnDate.toISOString().split('T')[0];
+    if (this.selectedTripTypeId !== null && this.selectedTripTypeId !== undefined) {
+      queryParams.tripType = this.selectedTripTypeId.toString();
     }
 
-    if (this.selectedTripType) {
-      queryParams.tripType = this.selectedTripType.toString().trim();
+    // Añadir flexibilidad al navegar para que la lista pueda usarla
+    if (this.dateFlexibility > 0) {
+      (queryParams as any).flexDays = this.dateFlexibility;
     }
 
     // Disparar evento search antes de navegar
     this.trackSearch(queryParams);
 
     this.router.navigate(['/tours'], { queryParams });
+
+    // Pre-búsqueda opcional con todos los parámetros
+    const startDate = this.rangeDates?.[0] ? this.rangeDates[0].toISOString() : undefined;
+    const endDate = this.rangeDates?.[1] ? this.rangeDates[1].toISOString() : undefined;
+    const tripTypeId = this.selectedTripTypeId !== null && this.selectedTripTypeId !== undefined ? this.selectedTripTypeId : undefined;
+
+    this.tourService.searchWithScore({
+      searchText: destinationText || undefined,
+      startDate,
+      endDate,
+      tripTypeId,
+      fuzzyThreshold: 0.7,
+      tagScoreThreshold: 0.3,
+      flexDays: this.dateFlexibility > 0 ? this.dateFlexibility : undefined,
+    }).subscribe({ next: () => { }, error: () => { } });
   }
+
+  /**
+   * Manejar cambio de flexibilidad desde el componente datepicker
+   */
+  onFlexibilityChange(flexibility: number): void {
+    this.dateFlexibility = flexibility;
+  }
+
+  /**
+   * Recibir cambios de fechas desde el datepicker
+   */
+  onDatesChange(dates: Date[]): void {
+    this.rangeDates = dates || [];
+  }
+
+  /**
+   * Obtener fecha mínima (hoy)
+   */
+  get minDate(): Date {
+    return new Date();
+  }
+
+  /**
+   * Obtener fecha máxima (1 año desde hoy)
+   */
+  get maxDate(): Date {
+    const maxDate = new Date();
+    maxDate.setFullYear(maxDate.getFullYear() + 1);
+    return maxDate;
+  }
+
 
   private setInitialValues(): void {
     if (this.initialDestination) {
@@ -248,10 +374,18 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
       this.returnDate = new Date(this.initialReturnDate);
     }
 
+    // Inicializar rangeDates si tenemos fechas iniciales
+    if (this.departureDate && this.returnDate) {
+      this.rangeDates = [this.departureDate, this.returnDate];
+    } else if (this.departureDate) {
+      this.rangeDates = [this.departureDate];
+    }
+
     if (this.initialTripType) {
-      this.selectedTripType = this.initialTripType.trim();
+      const match = this.tripTypes.find(t => t.code === this.initialTripType);
+      this.selectedTripTypeId = match ? match.id : null;
     } else {
-      this.selectedTripType = null;
+      this.selectedTripTypeId = null;
     }
   }
 
@@ -279,5 +413,32 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
       '', // No tenemos teléfono en este contexto
       this.authService.getCognitoIdValue()
     );
+  }
+
+
+  /**
+   * Validar que el rango de fechas sea válido
+   * @returns true si el rango es válido, false en caso contrario
+   */
+  isValidDateRange(): boolean {
+    if (!this.rangeDates || this.rangeDates.length < 2) {
+      return false;
+    }
+
+    const [start, end] = this.rangeDates;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // La fecha de inicio no puede ser anterior a hoy
+    if (start < today) {
+      return false;
+    }
+
+    // La fecha de fin debe ser posterior a la fecha de inicio
+    if (end <= start) {
+      return false;
+    }
+
+    return true;
   }
 }

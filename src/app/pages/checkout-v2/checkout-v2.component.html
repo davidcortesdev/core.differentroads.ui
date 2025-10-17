@@ -176,6 +176,8 @@
               [totalPrice]="totalAmountCalculated"
               [reservationId]="reservationId ?? 0"
               [departureDate]="departureDate"
+              [showTransfer25Option]="showTransfer25Option"
+              [isTourOperator]="isTourOperator"
               (navigateToStep)="onNavigateToStep($event)"
               (pointsDiscountChange)="onPointsDiscountChange($event)"
               (paymentCompleted)="onPaymentCompleted($event)"
@@ -253,6 +255,7 @@
         [currency]="'EUR'"
         [title]="'Resumen del pedido'"
         [pointsDiscount]="pointsDiscount"
+        (totalChanged)="onTotalChanged($event)"
       >
       </app-summary-table>
     </div>

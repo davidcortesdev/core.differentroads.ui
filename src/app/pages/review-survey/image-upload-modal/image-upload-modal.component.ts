@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CloudinaryService } from '../../../core/services/cloudinary.service';
 
 @Component({
   selector: 'app-image-upload-modal',

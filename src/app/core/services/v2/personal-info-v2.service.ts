@@ -30,16 +30,30 @@ export class PersonalInfoV2Service {
    * @returns Fecha formateada o string vacío
    */
   formatDateForDisplay(dateInput: Date | string): string {
-    if (!dateInput) return '';
+    if (!dateInput || dateInput === '' || dateInput === 'null' || dateInput === 'undefined') {
+      return 'Pendiente';
+    }
     
     if (typeof dateInput === 'string' && dateInput.includes('/')) {
       return dateInput;
     }
     
     const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    
+    // Verificar si la fecha es válida
+    if (isNaN(date.getTime())) {
+      return 'Pendiente';
+    }
+    
     const day = String(date.getUTCDate()).padStart(2, '0');
     const month = String(date.getUTCMonth() + 1).padStart(2, '0');
     const year = date.getUTCFullYear();
+    
+    // Verificar si los valores son válidos
+    if (day === 'NaN' || month === 'NaN' || isNaN(year)) {
+      return 'Pendiente';
+    }
+    
     return `${day}/${month}/${year}`;
   }
 
@@ -134,8 +148,7 @@ export class PersonalInfoV2Service {
         return this.dataMappingService.combineUserData(user, userFields, userFieldValues);
       }),
       catchError((error) => {
-        console.warn('Error al obtener datos del usuario desde las APIs, usando datos mock:', error);
-        return of(this.generateMockData(userId));
+        return throwError(() => error);
       })
     );
   }
@@ -231,36 +244,6 @@ export class PersonalInfoV2Service {
         return of(null);
       })
     );
-  }
-
-  /**
-   * Genera datos mock para desarrollo (método de respaldo)
-   * @param userId - ID del usuario
-   * @returns Datos mock de PersonalInfo
-   */
-  private generateMockData(userId: string): PersonalInfo {
-    const userSuffix = userId.slice(-3);
-    
-    return {
-      id: `user-${userSuffix}`,
-      nombre: `Nombre`,
-      apellido: 'Apellido',
-      avatarUrl: 'https://picsum.photos/200',
-      email: `usuario${userSuffix}@example.com`,
-      telefono: '600123456',
-      dni: '12345678A',
-      nacionalidad: 'Española',
-      pasaporte: 'AB1234567',
-      fechaExpedicionPasaporte: '2020-01-15',
-      fechaVencimientoPasaporte: '2030-01-15',
-      sexo: 'Hombre',
-      fechaNacimiento: '1990-05-15',
-      ciudad: 'Madrid',
-      codigoPostal: '28001',
-      fechaExpedicionDni: '2018-03-10',
-      fechaCaducidadDni: '2028-03-10',
-      paisExpedicion: 'España',
-    };
   }
 
   /**

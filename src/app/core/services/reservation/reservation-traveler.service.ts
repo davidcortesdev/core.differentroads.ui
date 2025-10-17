@@ -150,20 +150,10 @@ export class ReservationTravelerService {
    * @returns Observable que emite true si la eliminación fue exitosa, false si no se encontró el recurso.
    */
   delete(id: number): Observable<boolean> {
-    return this.http
-      .delete(`${this.API_URL}/${id}`, { observe: 'response' })
-      .pipe(
-        map((response) => {
-          // 204 No Content indica eliminación exitosa
-          return response.status === 204;
-        }),
+      return this.http.delete<boolean>(`${this.API_URL}/${id}`).pipe(
         catchError((error) => {
-          // 404 Not Found indica que el recurso no existe
-          if (error.status === 404) {
-            return of(false);
-          }
-          // Re-lanzar otros errores
-          throw error;
+          console.error(`Error al eliminar viajero de reservación con ID ${id}:`, error);
+          return of(false);
         })
       );
   }

@@ -9,7 +9,7 @@ import {
   Output,
   EventEmitter,
 } from '@angular/core';
-import { forkJoin, of, Observable } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 import { catchError, map, finalize } from 'rxjs/operators';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Panel } from 'primeng/panel';
@@ -18,8 +18,6 @@ import { ActivityHighlight } from '../../../../../../shared/components/activity-
 // Importar servicios para itinerary, itinerary days y CMS
 import {
   ItineraryService,
-  IItineraryResponse,
-  ItineraryFilters,
 } from '../../../../../../core/services/itinerary/itinerary.service';
 import {
   ItineraryDayService,

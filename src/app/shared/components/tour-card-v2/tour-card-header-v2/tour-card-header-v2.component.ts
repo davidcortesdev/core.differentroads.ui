@@ -8,8 +8,8 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { Subscription, catchError, finalize, of, tap } from 'rxjs';
-import { ReviewsService } from '../../../../core/services/reviews.service';
-import { TourNetService } from '../../../../core/services/tourNet.service';
+import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
+import { TourService } from '../../../../core/services/tour/tour.service';
 import { TourDataV2 } from '../tour-card-v2.model';
 
 @Component({
@@ -29,7 +29,7 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
 
   constructor(
     private reviewsService: ReviewsService,
-    private tourNetService: TourNetService
+    private tourService: TourService
   ) {}
 
   ngOnInit() {
@@ -52,7 +52,7 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
     this.isLoadingRating = true;
 
     this.subscriptions.add(
-      this.tourNetService
+      this.tourService
         .getTourIdByTKId(tkId)
         .pipe(
           tap((id) => {
@@ -75,7 +75,7 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
                 .pipe(
                   tap((rating) => {
                     if (rating) {
-                      this.averageRating = Math.ceil(rating * 10) / 10;
+                      this.averageRating = Math.ceil(rating.averageRating * 10) / 10;
                     }
                   }),
                   catchError((error) => {

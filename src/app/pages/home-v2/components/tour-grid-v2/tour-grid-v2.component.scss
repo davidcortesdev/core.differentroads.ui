@@ -1,0 +1,71 @@
+.tour-grid-container {
+  width: 100%;
+
+  // Estilos para la sección de filtros
+  .tours-filters {
+    padding: 2rem 3.5rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    .space {
+      flex-grow: 1;
+    }
+
+    .filter-box {
+      min-width: 10rem;
+    }
+  }
+
+  // Estilos para la lista de tours
+  .tours-list {
+    padding: 2rem 3.5rem;
+  }
+
+  ::ng-deep {
+    .p-dataview {
+      .p-dataview-content {
+        background: transparent;
+        padding: 0;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+        margin: 0;
+        padding: 0;
+      }
+    }
+  }
+
+  .loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+    padding: 2rem;
+  }
+
+  .no-tours-message {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-color-secondary);
+    font-size: 1.1rem;
+
+    p {
+      margin: 0;
+    }
+  }
+
+  // Media queries para responsive
+  @media (max-width: 600px) {
+    .tours-filters {
+      .space {
+        display: none;
+      }
+    }
+  }
+}
+

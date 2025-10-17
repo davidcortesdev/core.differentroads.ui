@@ -7,26 +7,24 @@ export interface TagCategoryCreate {
   code: string;
   name: string;
   description?: string;
-  id: number;
-  rkId: string;
-  isActive?: boolean;
+  slug: string;
+  isActive: boolean;
 }
 
 export interface TagCategoryUpdate {
   code: string;
   name: string;
   description?: string;
-  id: number;
-  rkId: string;
-  isActive?: boolean;
+  slug: string;
+  isActive: boolean;
 }
 
 export interface ITagCategoryResponse {
+  id: number;
   code: string;
   name: string;
   description: string;
-  id: number;
-  rkId: string;
+  slug: string;
   isActive: boolean;
 }
 
@@ -34,11 +32,11 @@ export interface ITagCategoryResponse {
  * Interfaz para los filtros disponibles en el método getAll.
  */
 export interface TagCategoryFilters {
+  id?: number;
   code?: string;
   name?: string;
   description?: string;
-  id?: number;
-  rkId?: string;
+  slug?: string;
   isActive?: boolean;
 }
 
@@ -51,7 +49,7 @@ export class TagCategoryService {
   constructor(private http: HttpClient) {}
 
   /**
-   * Obtiene todas las categorías de etiquetas según los criterios de filtrado.
+   * Obtiene todas las categorías de etiquetas disponibles.
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de categorías de etiquetas.
    */
@@ -74,43 +72,44 @@ export class TagCategoryService {
   }
 
   /**
-   * Crea una nueva categoría de etiqueta.
-   * @param data Datos para crear la categoría.
-   * @returns La categoría creada.
-   */
-  create(data: TagCategoryCreate): Observable<ITagCategoryResponse> {
-    return this.http.post<ITagCategoryResponse>(`${this.API_URL}`, data, {
-      headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-    });
-  }
-
-  /**
-   * Obtiene una categoría específica por su ID.
-   * @param id ID de la categoría.
-   * @returns La categoría encontrada.
+   * Obtiene una categoría de etiqueta específica por su ID.
+   * @param id ID de la categoría de etiqueta.
+   * @returns Categoría de etiqueta específica.
    */
   getById(id: number): Observable<ITagCategoryResponse> {
     return this.http.get<ITagCategoryResponse>(`${this.API_URL}/${id}`);
   }
 
   /**
-   * Actualiza una categoría existente.
-   * @param id ID de la categoría a actualizar.
-   * @param data Datos actualizados.
-   * @returns Resultado de la operación.
+   * Crea una nueva categoría de etiqueta.
+   * @param data Datos para crear la categoría.
+   * @returns Categoría creada.
    */
-  update(id: number, data: TagCategoryUpdate): Observable<boolean> {
-    return this.http.put<boolean>(`${this.API_URL}/${id}`, data, {
+  create(data: TagCategoryCreate): Observable<ITagCategoryResponse> {
+    return this.http.post<ITagCategoryResponse>(this.API_URL, data, {
       headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
     });
   }
 
   /**
-   * Elimina una categoría existente.
+   * Actualiza una categoría de etiqueta existente.
+   * @param id ID de la categoría a actualizar.
+   * @param data Datos actualizados.
+   * @returns Categoría actualizada.
+   */
+  update(id: number, data: TagCategoryUpdate): Observable<ITagCategoryResponse> {
+    return this.http.put<ITagCategoryResponse>(`${this.API_URL}/${id}`, data, {
+      headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+    });
+  }
+
+  /**
+   * Elimina una categoría de etiqueta existente.
    * @param id ID de la categoría a eliminar.
-   * @returns Resultado de la operación.
+   * @returns Boolean indicando éxito.
    */
   delete(id: number): Observable<boolean> {
     return this.http.delete<boolean>(`${this.API_URL}/${id}`);
   }
 }
+

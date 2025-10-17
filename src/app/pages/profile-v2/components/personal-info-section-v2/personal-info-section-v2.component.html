@@ -32,7 +32,7 @@
   </p-panel>
   
   <p-panel class="datos-panel">
-    <ng-template pTemplate="header">
+    <ng-template #header>
       <div class="panel-header">
         <span>Datos personales</span>
         <button class="edit-button" (click)="toggleEditMode()">
@@ -57,8 +57,16 @@
           {{ personalInfo.email || 'Pendiente' }}
         </span>
       </div>
-  
+
+      <p-divider></p-divider>
+
       <!-- Datos personales -->
+      <div class="info-item">
+        <span class="label">Fecha de nacimiento:</span>
+        <span class="value" [class.pending]="!personalInfo.fechaNacimiento">
+          {{ personalInfo.fechaNacimiento || 'Pendiente' }}
+        </span>
+      </div>
       <div class="info-item">
         <span class="label">Sexo:</span>
         <span class="value" [class.pending]="!personalInfo.sexo">
@@ -66,9 +74,19 @@
         </span>
       </div>
       <div class="info-item">
-        <span class="label">Fecha de nacimiento:</span>
-        <span class="value" [class.pending]="!personalInfo.fechaNacimiento">
-          {{ personalInfo.fechaNacimiento || 'Pendiente' }}
+        <span class="label">DNI/NIE:</span>
+        <span class="value" [class.pending]="!personalInfo.dni">
+          {{ personalInfo.dni || 'Pendiente' }}
+        </span>
+      </div>
+
+      <p-divider></p-divider>
+
+      <!-- Dirección -->
+      <div class="info-item">
+        <span class="label">Dirección:</span>
+        <span class="value" [class.pending]="!personalInfo.direccion">
+          {{ personalInfo.direccion || 'Pendiente' }}
         </span>
       </div>
       <div class="info-item">
@@ -84,29 +102,19 @@
         </span>
       </div>
       <div class="info-item">
-        <span class="label">Nacionalidad:</span>
-        <span class="value" [class.pending]="!personalInfo.nacionalidad">
-          {{ personalInfo.nacionalidad || 'Pendiente' }}
+        <span class="label">País:</span>
+        <span class="value" [class.pending]="!personalInfo.pais">
+          {{ personalInfo.pais || 'Pendiente' }}
         </span>
       </div>
-  
+
       <p-divider></p-divider>
-  
-      <!-- DNI -->
+
+      <!-- Notas -->
       <div class="info-item">
-        <span class="label">DNI:</span>
-        <span class="value" [class.pending]="!personalInfo.dni">
-          {{ personalInfo.dni || 'Pendiente' }}
-        </span>
-      </div>
-  
-      <p-divider></p-divider>
-  
-      <!-- Datos Pasaporte -->
-      <div class="info-item">
-        <span class="label">Pasaporte:</span>
-        <span class="value" [class.pending]="!personalInfo.pasaporte">
-          {{ personalInfo.pasaporte || 'Pendiente' }}
+        <span class="label">Notas:</span>
+        <span class="value" [class.pending]="!personalInfo.notas">
+          {{ personalInfo.notas || 'Pendiente' }}
         </span>
       </div>
     </div>
@@ -129,7 +137,7 @@
 
 <!-- Sección de Cambio de Contraseña (siempre visible) -->
 <p-panel class="password-panel">
-  <ng-template pTemplate="header">
+  <ng-template #header>
     <div class="panel-header">
       <span>Cambiar contraseña</span>
     </div>

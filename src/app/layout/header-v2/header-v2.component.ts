@@ -1,42 +1,26 @@
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  ElementRef,
-  Renderer2,
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, Renderer2 } from '@angular/core';
 import { MenuItem } from 'primeng/api';
-import { LanguageService } from '../../core/services/language.service';
-import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
-import { AuthenticateService } from '../../core/services/auth-service.service';
-import { UsersNetService } from '../../core/services/usersNet.service';
-import {
-  MenuItemService,
-  IMenuItemResponse,
-} from '../../core/services/menu/menu-item.service';
-import {
-  TourLocationService,
-  CountryWithToursResponse,
-} from '../../core/services/tour/tour-location.service';
-import {
-  LocationNetService,
-  Location,
-} from '../../core/services/locations/locationNet.service';
+import { AuthenticateService } from '../../core/services/auth/auth-service.service';
+import { UsersNetService } from '../../core/services/users/usersNet.service';
+import { MenuItemService, IMenuItemResponse } from '../../core/services/menu/menu-item.service';
+import { MenuTipoService, IMenuTipoResponse } from '../../core/services/menu/menu-tipo.service';
+import { TourLocationService, CountryWithToursResponse } from '../../core/services/tour/tour-location.service';
+import { LocationNetService, Location } from '../../core/services/locations/locationNet.service';
+import { TagService, ITagResponse } from '../../core/services/tag/tag.service';
 import { TourTagService } from '../../core/services/tag/tour-tag.service';
-
-import {
-  Subject,
-  takeUntil,
-  finalize,
-  filter,
-  debounceTime,
-  distinctUntilChanged,
-  switchMap,
-  of,
-  forkJoin,
-} from 'rxjs';
+import { Subject, takeUntil, finalize, filter, debounceTime, distinctUntilChanged, switchMap, of, timeout, forkJoin } from 'rxjs';
 import { Router } from '@angular/router';
-import { AnalyticsService } from '../../core/services/analytics.service';
+import { AnalyticsService } from '../../core/services/analytics/analytics.service';
+
+/**
+ * Interfaz extendida de MenuItem para almacenar información adicional
+ */
+interface ExtendedMenuItem extends MenuItem {
+  menuTipoId?: number;
+  menuTipoSlug?: string;
+  menuItemSlug?: string;
+  entidadId?: number;
+}
 
 @Component({
   selector: 'app-header-v2',
@@ -54,16 +38,16 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   showUserInfo = false;
   loadingAuthState = true;
 
-  selectedLanguage = 'ES';
-  readonly languages: readonly string[] = ['ES', 'EN'] as const;
-  filteredLanguages: string[] = [];
-  leftMenuItems?: MenuItem[];
-  rightMenuItems?: MenuItem[];
+  leftMenuItems?: ExtendedMenuItem[];
   userMenuItems?: MenuItem[];
-  combinedMenuItems?: MenuItem[];
+  combinedMenuItems?: ExtendedMenuItem[];
 
-  // Almacenar países por continente para submenús
-  countriesByContinent: { [continentId: number]: Location[] } = {};
+  // Almacenar países por menuItemId (clave única)
+  countriesByMenuItem: { [menuItemId: number]: Location[] } = {};
+  // Almacenar tags por menuItemId (clave única)
+  tagsByMenuItem: { [menuItemId: number]: ITagResponse[] } = {};
+  // Almacenar tipos de menú por ID
+  menuTipoById: { [menuTipoId: number]: IMenuTipoResponse } = {};
   isLoggedIn = false;
   isMobileView = false;
 
@@ -71,14 +55,16 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   readonly chipIcon = 'pi pi-user';
   chipImage = '';
   readonly chipAlt = 'Avatar image';
+  currentUserId: string = ''; // Almacenar el userId real del usuario
 
   constructor(
-    private languageService: LanguageService,
     private authService: AuthenticateService,
     private usersNetService: UsersNetService,
     private menuItemService: MenuItemService,
+    private menuTipoService: MenuTipoService,
     private tourLocationService: TourLocationService,
     private locationNetService: LocationNetService,
+    private tagService: TagService,
     private tourTagService: TourTagService,
     private elementRef: ElementRef,
     private renderer: Renderer2,
@@ -90,7 +76,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
     this.loadingAuthState = true;
 
     // Inicializar componentes en paralelo
-    this.initializeLanguage();
     this.initializeMenu();
     this.initializeUserMenu();
     this.handleResponsiveMenus();
@@ -118,91 +103,82 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   }
 
   // Métodos públicos
-  filterLanguages(event: AutoCompleteCompleteEvent): void {
-    const query = event.query.toUpperCase();
-    this.filteredLanguages = this.languages.filter((lang) =>
-      lang.includes(query)
-    );
+  /**
+   * Getter que determina si se debe mostrar el skeleton de carga
+   */
+  get isLoadingUserData(): boolean {
+    return this.loadingAuthState || this.isLoadingUser;
   }
 
-  onLanguageChange(lang: string): void {
-    if (typeof lang === 'string') {
-      this.languageService.setLanguage(lang.toLowerCase());
-    }
-  }
-
+  /**
+   * Maneja el click en el chip de usuario (login si no está autenticado)
+   */
   onChipClick(): void {
     if (!this.isLoggedIn) {
       this.authService.navigateToLogin();
     }
-    // Si está autenticado, la lógica para mostrar el menú se maneja en el template
   }
 
-  // Método para cerrar todos los menús móviles
+  /**
+   * Cierra todos los menús móviles activos
+   */
   public closeAllMobileMenus(): void {
-    // Find all mobile active menus and remove the active class
-    const mobileActiveMenus = document.querySelectorAll(
-      '.p-menubar-mobile-active'
-    );
-    mobileActiveMenus.forEach((menu) => {
+    document.querySelectorAll('.p-menubar-mobile-active').forEach((menu) => {
       menu.classList.remove('p-menubar-mobile-active');
     });
   }
 
-  // Getter para clases CSS condicionales
-  get userChipClass(): string {
-    if (this.loadingAuthState) return 'auth-loading';
-    return this.showUserInfo ? 'user-info-visible' : 'user-info-hidden';
-  }
-
   // Métodos privados
+  /**
+   * Verifica si hay una redirección de autenticación pendiente
+   */
   private async checkAuthRedirect(): Promise<void> {
     try {
       await this.authService.handleAuthRedirect();
     } catch (error) {
-      // Error handling - could be logged to a service in production
+      // Error handling
     }
   }
 
-  private initializeLanguage(): void {
-    this.languageService
-      .getCurrentLang()
-      .pipe(takeUntil(this.destroy$), filter(Boolean))
-      .subscribe((lang) => (this.selectedLanguage = lang.toUpperCase()));
-  }
-
+  /**
+   * Inicializa la configuración del menú
+   */
   private initializeMenu(): void {
     this.fetchMenuConfig();
   }
 
+  /**
+   * Configura el listener para cerrar menús al hacer click fuera del header
+   */
   private initializeClickOutside(): void {
-    // Only add listener in mobile view
+    if (this.documentClickListener) {
+      this.documentClickListener();
+      this.documentClickListener = null;
+    }
+
     if (this.isMobileView) {
       this.documentClickListener = this.renderer.listen(
         'document',
         'click',
         (event) => {
-          // Check if click is outside the header element
           if (!this.elementRef.nativeElement.contains(event.target)) {
             this.closeAllMobileMenus();
           }
         }
       );
-    } else if (this.documentClickListener) {
-      // Remove listener if not in mobile view
-      this.documentClickListener();
-      this.documentClickListener = null;
     }
   }
 
+  /**
+   * Inicializa el menú de usuario y observa cambios de autenticación
+   */
   private initializeUserMenu(): void {
-    // Observa el estado de autenticación y actualiza la UI cuando cambie
     this.authService
       .isLoggedIn()
       .pipe(
         takeUntil(this.destroy$),
-        debounceTime(300), // Evitar cambios demasiado rápidos
-        distinctUntilChanged() // Solo procesar cuando realmente cambie
+        debounceTime(300),
+        distinctUntilChanged()
       )
       .subscribe((isLoggedIn) => {
         this.isLoggedIn = isLoggedIn;
@@ -215,7 +191,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
         }
       });
 
-    // Observar cambios en atributos del usuario
     this.authService.userAttributesChanged
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
@@ -225,6 +200,9 @@ export class HeaderV2Component implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Resetea el menú de usuario al estado de no autenticado
+   */
   private resetUserMenu(): void {
     this.chipLabel = 'Iniciar Sesión';
     this.chipImage = '';
@@ -236,84 +214,147 @@ export class HeaderV2Component implements OnInit, OnDestroy {
     ];
   }
 
+  /**
+   * Obtiene la configuración del menú desde el servicio
+   */
   private fetchMenuConfig(): void {
     this.isLoadingMenu = true;
 
-    // Obtener todos los elementos de menú activos sin importar el tipo
-    this.menuItemService
-      .getAll({ isActive: true })
+    // Cargar menuItems y menuTipos en paralelo
+    forkJoin({
+      menuItems: this.menuItemService.getAll({ isActive: true }),
+      menuTipos: this.menuTipoService.getAll({ isActive: true })
+    })
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => (this.isLoadingMenu = false))
       )
       .subscribe({
-        next: (menuItems: IMenuItemResponse[]) => {
-          // Procesar los elementos de menú y crear el menú unificado
+        next: ({ menuItems, menuTipos }) => {
+          // Almacenar menuTipos por ID para acceso rápido
+          this.menuTipoById = menuTipos.reduce((acc, tipo) => {
+            acc[tipo.id] = tipo;
+            return acc;
+          }, {} as { [id: number]: IMenuTipoResponse });
+
           this.processMenuItems([menuItems]);
         },
         error: (error) => {
+          console.error('Error al cargar configuración del menú:', error);
           this.isLoadingMenu = false;
         },
       });
   }
 
+  /**
+   * Procesa los elementos del menú y los ordena por prioridad
+   */
   private processMenuItems(menuItemsArrays: IMenuItemResponse[][]): void {
-    // Combinar todos los elementos de menú en un solo array
     const allMenuItems = menuItemsArrays.flat();
-
-    // Ordenar todos los elementos por el campo orden
     const sortedAllItems = allMenuItems.sort((a, b) => a.orden - b.orden);
-
-    // Crear un solo menú con todos los elementos ordenados
     const singleMenuItems = this.mapMenuItemResponseToPrimeNG(sortedAllItems);
 
-    // Asignar el mismo menú a todas las propiedades para mantener compatibilidad
     this.leftMenuItems = singleMenuItems;
-    this.rightMenuItems = [];
     this.combinedMenuItems = singleMenuItems;
 
-    // Ahora que los menús están cargados, obtener países para los continentes
     this.loadContinentsFromLeftMenu();
   }
 
-  private loadCountriesWithTours(): void {
-    // Solo procesar continentes del menú izquierdo
-    this.loadContinentsFromLeftMenu();
-  }
-
+  /**
+   * Carga los submenús dinámicos (países para continentes o tags para categorías)
+   */
   private loadContinentsFromLeftMenu(): void {
-    // Usar los IDs de los elementos del menú izquierdo directamente
     if (this.leftMenuItems && this.leftMenuItems.length > 0) {
       this.leftMenuItems.forEach((menuItem, index) => {
-        const continentId = (menuItem as any).id as string;
+        const entidadId = menuItem.entidadId;
+        const menuItemId = parseInt(menuItem.id || '0');
+        const menuTipoId = this.getMenuTipoIdFromMenuItem(menuItem);
 
-        // Verificar que el ID existe
-        if (!continentId) {
+        if (!entidadId || !menuItemId || !menuTipoId) {
           return;
         }
 
-        this.tourLocationService
-          .getCountriesWithToursByContinent(parseInt(continentId))
-          .pipe(takeUntil(this.destroy$))
-          .subscribe({
-            next: (countries: CountryWithToursResponse[]) => {
-              // Extraer countryIds para este continente
-              const countryIds = countries.map(
-                (country) => (country as any).countryId
-              );
+        const menuTipo = this.menuTipoById[menuTipoId];
+        if (!menuTipo) {
+          return;
+        }
 
-              // Obtener nombres de países usando los countryIds
-              this.loadCountryNames(countryIds, parseInt(continentId));
-            },
-            error: (error: any) => {
-              // Error handling - could be logged to a service in production
-            },
-          });
+        // Verificar el code del menuTipo para determinar qué cargar
+        if (menuTipo.code === 'CONTINENTE') {
+          this.loadCountriesForContinent(entidadId, menuItemId);
+        } else if (menuTipo.code === 'CATEGORIA') {
+          this.loadTagsForCategory(entidadId, menuItemId);
+        }
       });
     }
   }
 
-  private loadCountryNames(countryIds: number[], continentId?: number): void {
+  /**
+   * Obtiene el menuTipoId de un menuItem
+   */
+  private getMenuTipoIdFromMenuItem(menuItem: ExtendedMenuItem): number | null {
+    return menuItem.menuTipoId || null;
+  }
+
+  /**
+   * Carga los países para un continente específico
+   */
+  private loadCountriesForContinent(continentId: number, menuItemId: number): void {
+    this.tourLocationService
+      .getCountriesWithToursByContinent(continentId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (countries: CountryWithToursResponse[]) => {
+          const countryIds = countries.map(
+            (country) => (country as any).countryId
+          );
+          this.loadCountryNames(countryIds, menuItemId);
+        },
+        error: (error: any) => {
+          // Error handling
+        },
+      });
+  }
+
+  /**
+   * Carga los tags para una categoría específica que tengan tours asociados
+   */
+  private loadTagsForCategory(categoryId: number, menuItemId: number): void {
+    this.tourTagService
+      .getTagsWithTours(categoryId)
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap((tagsWithTours) => {
+          // Extraer los IDs de tags que tienen tours
+          const tagIds = tagsWithTours.map(t => t.tagId);
+          
+          if (tagIds.length === 0) {
+            return of([]);
+          }
+          
+          // Obtener la información completa de cada tag en paralelo
+          const tagRequests = tagIds.map(tagId => this.tagService.getById(tagId));
+          return forkJoin(tagRequests);
+        })
+      )
+      .subscribe({
+        next: (tags: ITagResponse[]) => {
+          if (!this.tagsByMenuItem[menuItemId]) {
+            this.tagsByMenuItem[menuItemId] = [];
+          }
+          this.tagsByMenuItem[menuItemId] = tags;
+          this.updateMenusWithTags();
+        },
+        error: (error: any) => {
+          console.error('Error al cargar tags para categoría:', error);
+        },
+      });
+  }
+
+  /**
+   * Carga los nombres de países por sus IDs y los agrupa por menuItemId
+   */
+  private loadCountryNames(countryIds: number[], menuItemId: number): void {
     if (countryIds.length === 0) {
       return;
     }
@@ -321,132 +362,204 @@ export class HeaderV2Component implements OnInit, OnDestroy {
     countryIds.forEach((countryId, index) => {
       this.locationNetService.getLocationById(countryId).subscribe({
         next: (location) => {
-          // Almacenar país para el continente
-          if (continentId && !this.countriesByContinent[continentId]) {
-            this.countriesByContinent[continentId] = [];
+          if (!this.countriesByMenuItem[menuItemId]) {
+            this.countriesByMenuItem[menuItemId] = [];
           }
-          if (continentId) {
-            this.countriesByContinent[continentId].push(location);
-          }
+          this.countriesByMenuItem[menuItemId].push(location);
 
-          // Actualizar menús cuando se complete la carga
           if (index === countryIds.length - 1) {
             this.updateMenusWithCountries();
           }
         },
         error: (error) => {
-          // Error handling - could be logged to a service in production
+          // Error handling
         },
       });
     });
   }
 
+  /**
+   * Actualiza los menús con la información de países cargada
+   */
   private updateMenusWithCountries(): void {
-    // Verificar si tenemos países cargados
-    const hasCountries = Object.keys(this.countriesByContinent).length > 0;
+    const hasCountries = Object.keys(this.countriesByMenuItem).length > 0;
 
     if (!hasCountries) {
       return;
     }
 
-    // Actualizar menú único (continentes) con países como submenús
     if (this.leftMenuItems && this.leftMenuItems.length > 0) {
       this.leftMenuItems = this.leftMenuItems.map((menuItem) => {
-        // Usar directamente el ID del menú como continentId
-        const continentId = (menuItem as any).id;
+        const menuItemId = parseInt(menuItem.id || '0');
+        const menuTipoId = menuItem.menuTipoId;
 
-        if (continentId && this.countriesByContinent[parseInt(continentId)]) {
-          const countries = this.countriesByContinent[parseInt(continentId)];
+        // Verificar si este menuItem es de tipo CONTINENTE
+        if (menuItemId && menuTipoId) {
+          const menuTipo = this.menuTipoById[menuTipoId];
+          
+          // Solo actualizar si es de tipo CONTINENTE y tiene países cargados
+          if (menuTipo?.code === 'CONTINENTE' && this.countriesByMenuItem[menuItemId]) {
+            const countries = this.countriesByMenuItem[menuItemId];
+            const menuTipoSlug = menuItem.menuTipoSlug || '';
+            const menuItemSlug = menuItem.menuItemSlug || '';
 
-          const updatedMenuItem = {
-            ...menuItem,
-            items: countries.map((country: Location) => ({
-              label: country.name,
-              command: () => {
-                // Disparar evento menu_interaction para submenús
-                this.onMenuInteraction(country.name);
-                
-                this.router.navigate([`/tours/${country.code.toLowerCase()}`]);
-              },
-            })),
-          };
-
-          return updatedMenuItem;
+            return {
+              ...menuItem,
+              items: countries.map((country: Location) => ({
+                label: country.name,
+                command: () => {
+                  this.onMenuInteraction(country.name);
+                  // Construir slug completo: /menuTipo/menuItem/countryName
+                  const countrySlug = this.textToSlug(country.name);
+                  const fullSlug = this.buildFullSlug(
+                    menuTipoSlug, 
+                    menuItemSlug, 
+                    countrySlug
+                  );
+                  this.router.navigate([fullSlug]);
+                },
+              })),
+            };
+          }
         }
 
         return menuItem;
       });
     }
 
-    // Actualizar menú combinado para móvil (ahora es el mismo que el menú principal)
     this.combinedMenuItems = this.leftMenuItems;
   }
 
-  private findContinentIdByName(continentName: string): number | null {
-    // Buscar el continentId basado en el nombre del continente desde los datos de la API
-    for (const [continentId, countries] of Object.entries(
-      this.countriesByContinent
-    )) {
-      if (countries.length > 0) {
-        // Usar el continentName del primer país como referencia
-        const firstCountry = countries[0];
-        if (
-          firstCountry &&
-          (firstCountry as any).continentName === continentName
-        ) {
-          return parseInt(continentId);
-        }
-      }
+  /**
+   * Actualiza los menús con la información de tags cargada
+   */
+  private updateMenusWithTags(): void {
+    const hasTags = Object.keys(this.tagsByMenuItem).length > 0;
+
+    if (!hasTags) {
+      return;
     }
 
-    return null;
+    if (this.leftMenuItems && this.leftMenuItems.length > 0) {
+      this.leftMenuItems = this.leftMenuItems.map((menuItem) => {
+        const menuItemId = parseInt(menuItem.id || '0');
+        const menuTipoId = menuItem.menuTipoId;
+
+        // Verificar si este menuItem es de tipo CATEGORIA
+        if (menuItemId && menuTipoId) {
+          const menuTipo = this.menuTipoById[menuTipoId];
+          
+          // Solo actualizar si es de tipo CATEGORIA y tiene tags cargados
+          if (menuTipo?.code === 'CATEGORIA' && this.tagsByMenuItem[menuItemId]) {
+            const tags = this.tagsByMenuItem[menuItemId];
+            const menuTipoSlug = menuItem.menuTipoSlug || '';
+            const menuItemSlug = menuItem.menuItemSlug || '';
+
+            return {
+              ...menuItem,
+              items: tags.map((tag: ITagResponse) => ({
+                label: tag.name,
+                command: () => {
+                  this.onMenuInteraction(tag.name);
+                  // Construir slug completo: /menuTipo/menuItem/tagName
+                  const tagSlug = this.textToSlug(tag.name);
+                  const fullSlug = this.buildFullSlug(
+                    menuTipoSlug, 
+                    menuItemSlug, 
+                    tagSlug
+                  );
+                  this.router.navigate([fullSlug]);
+                },
+              })),
+            };
+          }
+        }
+
+        return menuItem;
+      });
+    }
+
+    this.combinedMenuItems = this.leftMenuItems;
   }
 
+
+  /**
+   * Convierte los elementos del menú de la API al formato de PrimeNG
+   */
   private mapMenuItemResponseToPrimeNG(
     menuItems: IMenuItemResponse[]
-  ): MenuItem[] {
-    return menuItems.map((item) => ({
-      label: item.name,
-      // Preservar el ID original para las URLs
-      id: item.id.toString(),
-      // No agregar routerLink aquí para permitir submenús
-      command: () => {
-        // Disparar evento menu_interaction
-        this.onMenuInteraction(item.name);
-        
-        this.navigateToSlug(item.slugContenido);
-      },
-    }));
+  ): ExtendedMenuItem[] {
+    return menuItems.map((item) => {
+      const menuTipo = this.menuTipoById[item.menuTipoId];
+      const menuTipoSlug = menuTipo?.slug || '';
+      // Si slugContenido está vacío, usar el name convertido a slug
+      const menuItemSlug = item.slugContenido || this.textToSlug(item.name);
+      
+      // Construir slug completo: /menuTipo.slug/menuItem.slug
+      const fullSlug = this.buildFullSlug(menuTipoSlug, menuItemSlug);
+
+      return {
+        label: item.name,
+        id: item.id.toString(),
+        menuTipoId: item.menuTipoId,
+        menuTipoSlug: menuTipoSlug,
+        menuItemSlug: menuItemSlug,
+        entidadId: item.entidadId,
+        command: () => {
+          this.onMenuInteraction(item.name);
+          this.router.navigate([fullSlug]);
+        },
+      } as ExtendedMenuItem;
+    });
   }
 
-  private createRouteFromSlug(slug: string): string {
-    // Crear ruta basada en el slug
-    // Esto puede necesitar ajustes según la estructura de rutas de tu aplicación
-    return `/${slug}`;
+  /**
+   * Construye un slug completo combinando menuTipo y menuItem slugs
+   */
+  private buildFullSlug(...slugParts: string[]): string {
+    return '/' + slugParts
+      .filter(part => part && part.trim() !== '')
+      .map(part => part.replace(/^\/+|\/+$/g, '')) // Eliminar barras al inicio y final
+      .join('/');
   }
 
+  /**
+   * Convierte un texto a formato slug (minúsculas, espacios a guiones, sin acentos)
+   */
+  private textToSlug(text: string): string {
+    return text
+      .toLowerCase()
+      .normalize('NFD') // Normalizar para separar caracteres base de diacríticos
+      .replace(/[\u0300-\u036f]/g, '') // Eliminar diacríticos (acentos)
+      .replace(/[^a-z0-9\s-]/g, '') // Eliminar caracteres especiales excepto espacios y guiones
+      .replace(/\s+/g, '-') // Reemplazar espacios por guiones
+      .replace(/-+/g, '-') // Reemplazar múltiples guiones por uno solo
+      .replace(/^-+|-+$/g, ''); // Eliminar guiones al inicio y final
+  }
+
+  /**
+   * Configura el manejo de menús responsivos
+   */
   private handleResponsiveMenus(): void {
-    // Initial check on component initialization
     this.checkScreenSize();
-
-    // Usar bind para mantener el contexto this
-    const boundCheckScreenSize = this.checkScreenSize.bind(this);
-
-    // Agregar listener con referencia a función vinculada
-    window.addEventListener('resize', boundCheckScreenSize);
+    window.addEventListener('resize', this.checkScreenSize.bind(this));
   }
 
+  /**
+   * Verifica el tamaño de pantalla y ajusta la vista móvil
+   */
   private checkScreenSize(): void {
-    // Set mobile view flag based on screen width (tablet breakpoint)
     const wasMobileView = this.isMobileView;
-    this.isMobileView = window.innerWidth <= 992; // Same as $tablet-breakpoint
+    this.isMobileView = window.innerWidth <= 992;
 
-    // If mobile view status changed, update click outside listener
     if (wasMobileView !== this.isMobileView) {
       this.initializeClickOutside();
     }
   }
 
+  /**
+   * Pobla el menú de usuario con datos del usuario autenticado
+   */
   populateUserMenu(): void {
     if (this.isLoadingUser) {
       return;
@@ -457,29 +570,18 @@ export class HeaderV2Component implements OnInit, OnDestroy {
       .pipe(
         takeUntil(this.destroy$),
         filter((email) => !!email),
-        debounceTime(300)
+        debounceTime(100)
       )
       .subscribe((email) => {
         this.isLoadingUser = true;
         this.chipLabel = 'Cargando...';
 
-        // Combinar email y Cognito ID en un solo flujo
-        this.authService
-          .getCognitoId()
+        // Obtener usuario por email directamente
+        this.usersNetService
+          .getUsersByEmail(email)
           .pipe(
             takeUntil(this.destroy$),
-            switchMap((cognitoId: string) => {
-              if (cognitoId) {
-                return this.usersNetService.getUsersByCognitoId(cognitoId);
-              } else {
-                // Si no hay Cognito ID, mostrar solo el email
-                this.chipLabel = `Hola, ${email}`;
-                this.setUserMenuItems();
-                this.isLoadingUser = false;
-                this.showUserInfo = true;
-                return of([]);
-              }
-            }),
+            timeout(5000), // Timeout de 5 segundos
             finalize(() => {
               this.isLoadingUser = false;
               this.showUserInfo = true;
@@ -489,21 +591,19 @@ export class HeaderV2Component implements OnInit, OnDestroy {
             next: (users: any[]) => {
               if (users && users.length > 0) {
                 const user = users[0];
-                const displayName = user?.name || email;
-
+                const displayName = user?.name && user?.lastName 
+                  ? `${user.name} ${user.lastName}`.trim()
+                  : user?.name || email;
+                
+                this.currentUserId = user?.id || '';
                 this.chipLabel = `Hola, ${displayName}`;
-                this.chipImage = ''; // El nuevo modelo no tiene profileImage
+                this.chipImage = '';
                 this.setUserMenuItems();
-
-                // Asegurar que el estado se actualice correctamente
                 this.isLoadingUser = false;
                 this.showUserInfo = true;
               } else {
-                // Si no se encuentra el usuario, mostrar solo el email
                 this.chipLabel = `Hola, ${email}`;
                 this.setUserMenuItems();
-
-                // Asegurar que el estado se actualice correctamente
                 this.isLoadingUser = false;
                 this.showUserInfo = true;
               }
@@ -511,8 +611,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
             error: (error: any) => {
               this.chipLabel = `Hola, ${email}`;
               this.setUserMenuItems();
-
-              // Asegurar que el estado se actualice correctamente
               this.isLoadingUser = false;
               this.showUserInfo = true;
             },
@@ -528,27 +626,7 @@ export class HeaderV2Component implements OnInit, OnDestroy {
       {
         label: 'Ver Perfil',
         icon: 'pi pi-user',
-        command: () => {
-          // Obtener el userId real del usuario, no el cognitoId
-          this.authService.getCognitoId().pipe(
-            takeUntil(this.destroy$),
-            switchMap((cognitoId: string) => {
-              if (cognitoId) {
-                return this.usersNetService.getUsersByCognitoId(cognitoId);
-              } else {
-                return of([]);
-              }
-            })
-          ).subscribe((users: any[]) => {
-            if (users && users.length > 0) {
-              const user = users[0];
-              const userId = user?.id; // Usar el ID real del usuario, no el cognitoId
-              if (userId) {
-                this.authService.navigateToProfile(userId);
-              }
-            }
-          });
-        },
+        command: () => this.navigateToUserProfile(),
       },
       {
         label: 'Desconectar',
@@ -558,47 +636,87 @@ export class HeaderV2Component implements OnInit, OnDestroy {
     ];
   }
 
-  private navigateToSlug(slug: string): void {
-    const route = this.createRouteFromSlug(slug);
-    if (route) {
-      this.router
-        .navigate([route])
-        .then(() => {
-          // Navigation successful
-        })
-        .catch((error) => {
-          // Navigation error handling
-        });
-    }
+  /**
+   * Navega al perfil del usuario usando su ID real de la base de datos
+   */
+  private navigateToUserProfile(): void {
+    this.authService.getUserEmail().pipe(
+      takeUntil(this.destroy$),
+      switchMap((email: string) => {
+        if (email) {
+          return this.usersNetService.getUsersByEmail(email);
+        } else {
+          return of([]);
+        }
+      })
+    ).subscribe({
+      next: (users: any[]) => {
+        if (users && users.length > 0) {
+          const user = users[0];
+          const userId = user?.id;
+          
+          this.currentUserId = userId || '';
+          
+          if (userId) {
+            this.router.navigate(['/profile', userId]);
+          }
+        } else {
+          const cognitoId = this.authService.getCognitoIdValue();
+          if (cognitoId) {
+            this.router.navigate(['/profile', cognitoId]);
+          }
+        }
+      },
+      error: (error) => {
+        const cognitoId = this.authService.getCognitoIdValue();
+        if (cognitoId) {
+          this.router.navigate(['/profile', cognitoId]);
+        }
+      }
+    });
   }
 
+
   /**
-   * Disparar evento menu_interaction cuando el usuario hace clic en elementos del menú
+   * Registra la interacción del usuario con elementos del menú para analytics
    */
   onMenuInteraction(clickElement: string): void {
-    this.analyticsService.menuInteraction(
-      clickElement,
-      this.getUserData()
-    );
+    this.analyticsService.getCurrentUserData().subscribe({
+      next: (userData) => {
+        this.analyticsService.menuInteraction(clickElement, userData);
+      },
+      error: (error) => {
+        console.error('Error obteniendo datos de usuario para analytics:', error);
+        // Fallback con datos básicos
+        this.analyticsService.menuInteraction(clickElement, this.getUserData());
+      }
+    });
   }
 
   /**
-   * Disparar evento click_logo cuando el usuario hace clic en el logo
+   * Registra el click en el logo para analytics
    */
   onLogoClick(): void {
-    this.analyticsService.clickLogo(
-      this.getUserData()
-    );
+    this.analyticsService.getCurrentUserData().subscribe({
+      next: (userData) => {
+        this.analyticsService.clickLogo(userData);
+      },
+      error: (error) => {
+        console.error('Error obteniendo datos de usuario para analytics:', error);
+        // Fallback con datos básicos
+        this.analyticsService.clickLogo(this.getUserData());
+      }
+    });
   }
 
   /**
-   * Obtener datos del usuario para analytics
+   * Obtiene los datos del usuario para analytics
    */
   private getUserData() {
     if (this.authService.isAuthenticatedValue()) {
       return this.analyticsService.getUserData(
         this.authService.getUserEmailValue(),
-        undefined, // No tenemos teléfono en el header
+        undefined,
         this.authService.getCognitoIdValue()
       );
     }

@@ -1,0 +1,41 @@
+<div class="datepicker-range-container">
+  <p-iftaLabel>
+    <p-datepicker
+      [(ngModel)]="rangeDates"
+      (ngModelChange)="onDateChange()"
+      selectionMode="range"
+      [showIcon]="true"
+      [iconDisplay]="'input'"
+      [numberOfMonths]="2"
+      [showButtonBar]="true"
+      [readonlyInput]="true"
+      fluid="true"
+      placeholder="Seleccionar fechas"
+    >
+      <!-- Template personalizado para la barra de botones -->
+      <ng-template #footer>
+        <div class="date-presets" role="group" aria-label="Presets de fechas rápidas">
+          <p-button 
+            *ngFor="let preset of datePresets"
+            size="small"
+            (click)="applyDatePreset(preset.value)"
+            [attr.aria-label]="'Seleccionar rango de ' + preset.label"
+            [title]="'Aplicar preset de ' + preset.label"
+          >
+            {{ preset.label }}
+          </p-button>
+        </div>
+        <div class="date-range-info" *ngIf="getDaysInRange() > 0">
+          <small class="range-duration">
+            <i class="pi pi-calendar"></i>
+            <strong>{{ getDaysInRange() }}</strong> {{ getDaysInRange() === 1 ? 'día' : 'días' }} de viaje
+            <span *ngIf="dateFlexibility > 0" class="flexibility-badge">
+              ±{{ dateFlexibility }} días
+            </span>
+          </small>
+        </div>
+      </ng-template>
+    </p-datepicker>
+    <label [for]="inputId" class="label">{{ label }}</label>
+  </p-iftaLabel>
+</div>

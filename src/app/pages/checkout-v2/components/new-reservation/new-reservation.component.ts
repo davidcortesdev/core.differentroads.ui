@@ -7,9 +7,7 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import {
   IPaymentResponse,
-  IPaymentStatusResponse,
   PaymentsNetService,
-  PaymentStatusFilter,
 } from '../../services/paymentsNet.service';
 import { PaymentStatusNetService } from '../../services/paymentStatusNet.service';
 import { PaymentMethodNetService } from '../../services/paymentMethodNet.service';
@@ -17,17 +15,14 @@ import { NewScalapayService } from '../../services/newScalapay.service';
 import { MessageService } from 'primeng/api';
 import { forkJoin } from 'rxjs';
 // IMPORTACIONES PARA TRAVELERS (solo para obtener el nombre del lead traveler)
+import { ReservationTravelerService } from '../../../../core/services/reservation/reservation-traveler.service';
+import { ReservationTravelerFieldService } from '../../../../core/services/reservation/reservation-traveler-field.service';
 import {
-  ReservationTravelerService,
-  IReservationTravelerResponse,
-} from '../../../../core/services/reservation/reservation-traveler.service';
-import {
-  ReservationTravelerFieldService,
-  IReservationTravelerFieldResponse,
-} from '../../../../core/services/reservation/reservation-traveler-field.service';
-import { FlightSearchService, IAmadeusFlightCreateOrderResponse } from '../../../../core/services/flight-search.service';
-import { AnalyticsService } from '../../../../core/services/analytics.service';
-import { AuthenticateService } from '../../../../core/services/auth-service.service';
+  FlightSearchService,
+  IAmadeusFlightCreateOrderResponse,
+} from '../../../../core/services/flight/flight-search.service';
+import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
+import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { Title } from '@angular/platform-browser';
 
 // Interfaz para información bancaria
@@ -42,13 +37,16 @@ interface BankInfo {
   selector: 'app-new-reservation',
   standalone: false,
   templateUrl: './new-reservation.component.html',
-  styleUrls: ['./new-reservation.component.scss', './amadeus-flight-section.scss'],
+  styleUrls: [
+    './new-reservation.component.scss',
+    './amadeus-flight-section.scss',
+  ],
   providers: [MessageService],
 })
 export class NewReservationComponent implements OnInit {
   // Propiedades principales
   reservationId: number = 0;
-  paymentId: number = 0;
+  paymentId: number | undefined = 0;
   reservation: IReservationResponse | undefined;
   payment: IPaymentResponse | undefined;
 
@@ -94,6 +92,12 @@ export class NewReservationComponent implements OnInit {
   flightBookingError: boolean = false;
   flightBookingResponse: IAmadeusFlightCreateOrderResponse | undefined;
 
+  // Propiedad para detectar si está en iframe
+  isInIframe: boolean = false;
+
+  // Propiedad para detectar si tiene paymentId válido
+  hasPaymentId: boolean = false;
+
   constructor(
     private titleService: Title,
     private route: ActivatedRoute,
@@ -119,6 +123,9 @@ export class NewReservationComponent implements OnInit {
       month: '2-digit',
       year: 'numeric',
     });
+
+    // Detectar si estamos en un iframe
+    this.isInIframe = window.self !== window.top;
   }
 
   ngOnInit(): void {
@@ -127,9 +134,15 @@ export class NewReservationComponent implements OnInit {
     // Obtener parámetros de la ruta
     this.route.params.subscribe((params) => {
       this.reservationId = params['reservationId'];
-      this.paymentId = params['paymentId'];
+      this.paymentId = params['paymentId']
+        ? Number(params['paymentId'])
+        : undefined;
       console.log('Reservation ID obtenido:', this.reservationId);
       console.log('Payment ID obtenido:', this.paymentId);
+
+      // Validar si tiene paymentId válido
+      this.hasPaymentId = !!this.paymentId && this.paymentId > 0;
+      console.log('hasPaymentId:', this.hasPaymentId);
     });
 
     // Iniciar carga de datos
@@ -298,6 +311,13 @@ export class NewReservationComponent implements OnInit {
    * Carga la información del pago
    */
   private loadPayment(): void {
+    // Validar que existe paymentId antes de cargar
+    if (!this.paymentId || this.paymentId <= 0) {
+      console.log('No hay paymentId, saltando carga de información de pago');
+      this.loading = false;
+      return;
+    }
+
     this.paymentService.getPaymentById(this.paymentId).subscribe({
       next: (payment: IPaymentResponse) => {
         this.payment = payment;
@@ -311,7 +331,9 @@ export class NewReservationComponent implements OnInit {
 
         // ✅ NUEVO: Verificar si el pago ya está completado al cargarlo
         if (payment.paymentStatusId === this.successId) {
-          console.log('✅ Pago ya completado al cargar, verificando vuelos Amadeus...');
+          console.log(
+            '✅ Pago ya completado al cargar, verificando vuelos Amadeus...'
+          );
           // No es necesario esperar aquí, loadPaymentStatus ya manejará la verificación
         }
 
@@ -364,10 +386,10 @@ export class NewReservationComponent implements OnInit {
           this.status = 'PENDING';
         } else if (status.code === 'COMPLETED') {
           this.status = 'SUCCESS';
-          
-          // Disparar evento purchase
+
+          // Disparar evento purchase cuando se visita la página de gracias tras compra exitosa
           this.trackPurchase();
-          
+
           // ✅ NUEVO: Si el pago está completado, verificar y reservar vuelos Amadeus
           console.log('✅ Pago completado, verificando vuelos Amadeus...');
           setTimeout(() => {
@@ -434,16 +456,16 @@ export class NewReservationComponent implements OnInit {
             this.updatePaymentStatus();
 
             this.status = 'SUCCESS';
-            
+
             // Disparar evento purchase
             this.trackPurchase();
-            
+
             this.showMessage(
               'success',
               'Pago completado',
               'El pago se ha procesado correctamente'
             );
-            
+
             // ✅ NUEVO: Verificar y reservar vuelos Amadeus después del pago exitoso
             setTimeout(() => {
               this.checkAndBookAmadeusFlight();
@@ -561,14 +583,16 @@ export class NewReservationComponent implements OnInit {
     }
 
     console.log('🔍 Verificando si hay vuelos Amadeus seleccionados...');
-    
+
     this.flightSearchService.getSelectionStatus(this.reservationId).subscribe({
       next: (hasSelection: boolean) => {
         this.hasAmadeusFlight = hasSelection;
         console.log('✅ Estado de selección de vuelos:', hasSelection);
-        
+
         if (hasSelection) {
-          console.log('✈️ Vuelo Amadeus detectado, procediendo con la reserva...');
+          console.log(
+            '✈️ Vuelo Amadeus detectado, procediendo con la reserva...'
+          );
           this.bookAmadeusFlight();
         } else {
           console.log('ℹ️ No hay vuelos Amadeus seleccionados');
@@ -577,7 +601,7 @@ export class NewReservationComponent implements OnInit {
       error: (error) => {
         console.error('❌ Error al verificar estado de vuelos:', error);
         this.flightBookingError = true;
-      }
+      },
     });
   }
 
@@ -589,15 +613,15 @@ export class NewReservationComponent implements OnInit {
 
     this.flightBookingLoading = true;
     this.flightBookingError = false;
-    
+
     console.log('🚀 Iniciando reserva de vuelo Amadeus...');
-    
+
     this.flightSearchService.bookFlight(this.reservationId).subscribe({
       next: (response: IAmadeusFlightCreateOrderResponse) => {
         console.log('✅ Reserva de vuelo exitosa:', response);
         this.flightBookingResponse = response;
         this.flightBookingLoading = false;
-        
+
         // Mostrar mensaje de éxito
         this.showMessage(
           'success',
@@ -609,14 +633,14 @@ export class NewReservationComponent implements OnInit {
         console.error('❌ Error al reservar vuelo:', error);
         this.flightBookingError = true;
         this.flightBookingLoading = false;
-        
+
         // Mostrar mensaje de error
         this.showMessage(
           'error',
           'Error en reserva de vuelo',
           'No se pudo completar la reserva del vuelo. Contacta con soporte.'
         );
-      }
+      },
     });
   }
 
@@ -637,62 +661,150 @@ export class NewReservationComponent implements OnInit {
 
     const reservationData = this.reservation as any; // Usar any para acceder a propiedades dinámicas
     const tourData = reservationData.tour || {};
-    
+
+    // Obtener item_list_id y item_list_name desde el state del router (heredados desde home)
+    const state = window.history.state;
+    const itemListId = state?.['listId'] || '';
+    const itemListName = state?.['listName'] || '';
+
     // Obtener información del pago
     const paymentType = this.paymentType || 'completo, transferencia';
-    const transactionId = this.payment?.id?.toString() || `#${this.reservationId}`;
+    const transactionId =
+      this.payment?.transactionReference ||
+      this.payment?.id?.toString() ||
+      `#${this.reservationId}`;
     const totalValue = this.reservation.totalAmount || 0;
-    
+
     // Obtener actividades seleccionadas (si están disponibles)
-    const activitiesText = reservationData.activities && reservationData.activities.length > 0
-      ? reservationData.activities.map((a: any) => a.description || a.name).join(', ')
-      : '';
-    
+    const activitiesText =
+      reservationData.activities && reservationData.activities.length > 0
+        ? reservationData.activities
+            .map((a: any) => a.description || a.name)
+            .join(', ')
+        : '';
+
     // Obtener seguro seleccionado
     const selectedInsurance = reservationData.insurance?.name || '';
-    
+
     // Obtener información de vuelo (si está disponible)
     const flightCity = reservationData.flight?.originCity || 'Sin vuelo';
-    
-    this.analyticsService.purchase(
-      {
-        transaction_id: transactionId,
-        value: totalValue,
-        tax: 0.60, // IVA fijo según el documento
-        shipping: 0.00, // Sin gastos de envío
-        currency: 'EUR',
-        coupon: reservationData.coupon?.code || '',
-        payment_type: paymentType,
-        items: [{
-          item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
-          item_name: reservationData.tourName || tourData.name || '',
-          coupon: '',
-          discount: 0,
-          index: 0,
-          item_brand: 'Different Roads',
-          item_category: tourData.destination?.continent || '',
-          item_category2: tourData.destination?.country || '',
-          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-          item_category4: tourData.monthTags?.join(', ') || '',
-          item_category5: tourData.tourType || '',
-          item_list_id: 'checkout',
-          item_list_name: 'Carrito de compra',
-          item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
-          price: totalValue,
-          quantity: 1,
-          puntuacion: tourData.rating?.toString() || '',
-          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-          start_date: reservationData.departureDate || '',
-          end_date: reservationData.returnDate || '',
-          pasajeros_adultos: this.reservation.totalPassengers?.toString() || '0',
-          pasajeros_niños: '0',
-          actividades: activitiesText,
-          seguros: selectedInsurance,
-          vuelo: flightCity
-        }]
-      },
-      this.getUserData()
-    );
+
+    // Calcular pasajeros niños dinámicamente desde los travelers
+    this.reservationTravelerService
+      .getByReservation(this.reservationId)
+      .subscribe({
+        next: (travelers) => {
+          // Contar travelers que NO son adultos (ageGroupId !== 1)
+          const childrenCount = travelers.filter(
+            (traveler) => traveler.ageGroupId !== 1
+          ).length;
+
+          this.analyticsService.purchase(
+            {
+              transaction_id: transactionId,
+              value: totalValue,
+              tax: 0.6, // IVA fijo según el documento
+              shipping: 0.0, // Sin gastos de envío
+              currency: 'EUR',
+              coupon: reservationData.coupon?.code || '',
+              payment_type: paymentType,
+              items: [
+                {
+                  item_id:
+                    tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
+                  item_name: reservationData.tourName || tourData.name || '',
+                  coupon: '',
+                  discount: 0,
+                  index: 1,
+                  item_brand: 'Different Roads',
+                  item_category: tourData.destination?.continent || '',
+                  item_category2: tourData.destination?.country || '',
+                  item_category3:
+                    tourData.marketingSection?.marketingSeasonTag || '',
+                  item_category4: tourData.monthTags?.join(', ') || '',
+                  item_category5: tourData.tourType || '',
+                  item_list_id: itemListId,
+                  item_list_name: itemListName,
+                  item_variant: `${
+                    tourData.tkId || tourData.id
+                  } - ${flightCity}`,
+                  price: totalValue,
+                  quantity: 1,
+                  puntuacion: tourData.rating?.toString() || '',
+                  duracion: tourData.days
+                    ? `${tourData.days} días, ${
+                        tourData.nights || tourData.days - 1
+                      } noches`
+                    : '',
+                  start_date: reservationData.departureDate || '',
+                  end_date: reservationData.returnDate || '',
+                  pasajeros_adultos:
+                    this.reservation?.totalPassengers?.toString() || '0',
+                  pasajeros_niños: childrenCount.toString(),
+                  actividades: activitiesText,
+                  seguros: selectedInsurance,
+                  vuelo: flightCity,
+                },
+              ],
+            },
+            this.getUserData()
+          );
+        },
+        error: (error) => {
+          console.error('Error obteniendo travelers para analytics:', error);
+          // Si hay error, disparar el evento con niños = 0
+          this.analyticsService.purchase(
+            {
+              transaction_id: transactionId,
+              value: totalValue,
+              tax: 0.6,
+              shipping: 0.0,
+              currency: 'EUR',
+              coupon: reservationData.coupon?.code || '',
+              payment_type: paymentType,
+              items: [
+                {
+                  item_id:
+                    tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
+                  item_name: reservationData.tourName || tourData.name || '',
+                  coupon: '',
+                  discount: 0,
+                  index: 1,
+                  item_brand: 'Different Roads',
+                  item_category: tourData.destination?.continent || '',
+                  item_category2: tourData.destination?.country || '',
+                  item_category3:
+                    tourData.marketingSection?.marketingSeasonTag || '',
+                  item_category4: tourData.monthTags?.join(', ') || '',
+                  item_category5: tourData.tourType || '',
+                  item_list_id: itemListId,
+                  item_list_name: itemListName,
+                  item_variant: `${
+                    tourData.tkId || tourData.id
+                  } - ${flightCity}`,
+                  price: totalValue,
+                  quantity: 1,
+                  puntuacion: tourData.rating?.toString() || '',
+                  duracion: tourData.days
+                    ? `${tourData.days} días, ${
+                        tourData.nights || tourData.days - 1
+                      } noches`
+                    : '',
+                  start_date: reservationData.departureDate || '',
+                  end_date: reservationData.returnDate || '',
+                  pasajeros_adultos:
+                    this.reservation?.totalPassengers?.toString() || '0',
+                  pasajeros_niños: '0',
+                  actividades: activitiesText,
+                  seguros: selectedInsurance,
+                  vuelo: flightCity,
+                },
+              ],
+            },
+            this.getUserData()
+          );
+        },
+      });
   }
 
   /**

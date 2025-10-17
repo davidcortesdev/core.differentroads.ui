@@ -1,0 +1,101 @@
+.category-page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+
+  .category-header {
+    margin-bottom: 2rem;
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--primary-color, #007bff);
+    }
+
+    .breadcrumb {
+      font-size: 0.9rem;
+      color: #666;
+
+      a {
+        color: var(--primary-color, #007bff);
+        text-decoration: none;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+
+      .separator {
+        margin: 0 0.5rem;
+      }
+    }
+  }
+
+  .category-content {
+    .content-info {
+      background-color: #f8f9fa;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+
+      p {
+        margin: 0;
+        font-size: 1rem;
+      }
+    }
+
+    .tours-placeholder {
+      padding: 3rem;
+      background-color: #fff;
+      border: 2px dashed #dee2e6;
+      border-radius: 8px;
+      text-align: center;
+
+      .loading-tours {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        padding: 2rem;
+      }
+
+      .debug-info {
+        margin-top: 1rem;
+        margin-bottom: 2rem;
+        padding: 1rem;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 0.9rem;
+        text-align: left;
+        display: inline-block;
+      }
+
+      app-tour-grid-v2 {
+        display: block;
+        margin-top: 2rem;
+      }
+    }
+  }
+
+  .loading-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .category-page-container {
+    padding: 1rem;
+
+    .category-header {
+      h1 {
+        font-size: 2rem;
+      }
+    }
+  }
+}
+

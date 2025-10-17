@@ -8,7 +8,7 @@
     styleClass="p-datatable-striped"
     currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
   >
-    <ng-template pTemplate="header">
+    <ng-template #header>
       <tr>
         <th pSortableColumn="booking">
           Reserva
@@ -27,7 +27,7 @@
         </th>
       </tr>
     </ng-template>
-    <ng-template pTemplate="body" let-point>
+    <ng-template #body let-point>
       <tr>
         <td class="booking-column">{{ point.booking }}</td>
         <td>{{ point.category }}</td>

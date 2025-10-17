@@ -1,0 +1,57 @@
+<div class="destination-page-container">
+  <div class="destination-header">
+    <h1>{{ destinationSlug ? getDestinationName() : 'Destinos en ' + getContinentName() }}</h1>
+    <p class="breadcrumb">
+      <a routerLink="/">Inicio</a>
+      <span class="separator">/</span>
+      <span>Destinos</span>
+      <span class="separator">/</span>
+      <span>{{ getContinentName() }}</span>
+      <span class="separator" *ngIf="destinationSlug">/</span>
+      <span *ngIf="destinationSlug">{{ getDestinationName() }}</span>
+    </p>
+  </div>
+
+  <div class="destination-content" *ngIf="!isLoading">
+    <div class="content-info">
+      <p>Mostrando tours para <strong>{{ destinationSlug ? getDestinationName() : getContinentName() }}</strong></p>
+    </div>
+
+    <!-- TODO: Aquí irá el componente de tours filtrados por ubicación -->
+    <div class="tours-placeholder">
+      <div *ngIf="isLoadingTours" class="loading-tours">
+        <p-progressSpinner [style]="{ width: '50px', height: '50px' }"></p-progressSpinner>
+        <p>Cargando tours...</p>
+      </div>
+      
+      <div *ngIf="!isLoadingTours">
+        <p>Componente de tours para destinos (en desarrollo)</p>
+        <p class="debug-info">
+          Continente ID: {{ continentId || 'No encontrado' }}<br>
+          Continente: {{ getContinentName() }}<br>
+          <ng-container *ngIf="destinationSlug">
+            Destino ID: {{ destinationId || 'No encontrado' }}<br>
+            Destino: {{ getDestinationName() }}<br>
+          </ng-container>
+          <br>
+          <strong>Tours encontrados: {{ tourIds.length }}</strong><br>
+          <span *ngIf="tourIds.length > 0">IDs: {{ tourIds.join(', ') }}</span>
+        </p>
+
+        <!-- Grid de tours -->
+        <app-tour-grid-v2
+          [tourIds]="tourIds"
+          [itemListId]="destinationSlug ? getDestinationName() : getContinentName()"
+          [itemListName]="destinationSlug ? getDestinationName() : getContinentName()"
+          [showScalapayPrice]="true"
+          [showFilters]="true"
+        ></app-tour-grid-v2>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading-state" *ngIf="isLoading">
+    <p-progressSpinner></p-progressSpinner>
+  </div>
+</div>
+

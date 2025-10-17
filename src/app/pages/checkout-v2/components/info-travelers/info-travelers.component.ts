@@ -8,13 +8,12 @@ import {
   OnChanges,
   SimpleChanges,
 } from '@angular/core';
-import { Subject, forkJoin } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Subject, forkJoin, of } from 'rxjs';
+import { takeUntil, catchError, switchMap } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
 import {
   DepartureReservationFieldService,
   IDepartureReservationFieldResponse,
-  DepartureReservationFieldFilters,
 } from '../../../../core/services/departure/departure-reservation-field.service';
 import {
   MandatoryTypeService,
@@ -52,11 +51,9 @@ import {
 } from '../../../../core/services/reservation/reservation-traveler-activity-pack.service';
 import {
   ActivityPriceService,
-  IActivityPriceResponse,
 } from '../../../../core/services/activity/activity-price.service';
 import {
   ActivityPackPriceService,
-  IActivityPackPriceResponse,
 } from '../../../../core/services/activity/activity-pack-price.service';
 import {
   FormGroup,
@@ -67,10 +64,12 @@ import {
 } from '@angular/forms';
 import { ReservationService } from '../../../../core/services/reservation/reservation.service';
 import {
-  IReservationStatusResponse,
   ReservationStatusService,
 } from '../../../../core/services/reservation/reservation-status.service';
-import { FlightSearchService, IBookingRequirements, IPassengerConditions } from '../../../../core/services/flight-search.service';
+import { FlightSearchService, IBookingRequirements } from '../../../../core/services/flight/flight-search.service';
+import { IUserResponse } from '../../../../core/models/users/user.model';
+import { PersonalInfo } from '../../../../core/models/v2/profile-v2.model';
+import { CheckoutUserDataService } from '../../../../core/services/v2/checkout-user-data.service';
 
 @Component({
   selector: 'app-info-travelers',
@@ -102,6 +101,12 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
   // Estados de carga
   checkingReservationStatus: boolean = false;
+  
+  // Información del perfil del usuario autenticado
+  currentUserProfile: IUserResponse | null = null;
+  loadingUserProfile: boolean = false;
+  // Información personal en el mismo formato usado por personal-info-section-v2
+  currentPersonalInfo: PersonalInfo | null = null;
 
   departureReservationFields: IDepartureReservationFieldResponse[] = [];
   mandatoryTypes: IMandatoryTypeResponse[] = [];
@@ -231,6 +236,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     private reservationStatusService: ReservationStatusService,
     private reservationService: ReservationService,
     private flightSearchService: FlightSearchService,
+
+    private checkoutUserDataService: CheckoutUserDataService
   ) {
     this.travelersForm = this.fb.group({
       travelers: this.fb.array([]),
@@ -369,16 +376,30 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         field.reservationFieldId
       );
       if (fieldDetails) {
-        const existingValue = this.getExistingFieldValue(
-          traveler.id,
-          fieldDetails.id
-        );
+        // Para el viajero líder, SIEMPRE usar datos del usuario autenticado
+        let controlValue: any = null;
+        
+        if (traveler.isLeadTraveler && this.currentPersonalInfo) {
+          // Para el viajero líder, usar datos del usuario autenticado
+          controlValue = this.getUserDataForField(fieldDetails);
+        } else {
+          // Para otros viajeros, usar datos existentes
+          controlValue = this.getExistingFieldValue(traveler.id, fieldDetails.id);
+        }
 
         // Para campos de fecha, convertir string a Date si es necesario
-        let controlValue: any = existingValue;
-        if (fieldDetails.fieldType === 'date' && existingValue) {
-          // Si el valor está en formato dd/mm/yyyy, convertirlo a Date
-          const parsedDate = this.parseDateFromDDMMYYYY(existingValue);
+        if (fieldDetails.fieldType === 'date' && controlValue) {
+          let parsedDate: Date | null = null;
+          
+          // Intentar parsear como fecha ISO primero (YYYY-MM-DD)
+          if (typeof controlValue === 'string' && controlValue.includes('-')) {
+            parsedDate = this.parseDateFromISO(controlValue);
+          }
+          // Si no es ISO, intentar parsear como dd/mm/yyyy
+          else if (typeof controlValue === 'string' && controlValue.includes('/')) {
+            parsedDate = this.parseDateFromDDMMYYYY(controlValue);
+          }
+          
           if (parsedDate) {
             controlValue = parsedDate;
           }
@@ -771,17 +792,33 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     this.loading = true;
     this.error = null;
 
-    forkJoin({
-      departureFields: this.departureReservationFieldService.getByDeparture(
-        this.departureId
-      ),
-      mandatoryTypes: this.mandatoryTypeService.getAll(),
-      reservationFields: this.reservationFieldService.getAllOrdered(),
-      travelers: this.reservationTravelerService.getByReservationOrdered(
-        this.reservationId
-      ),
-      ageGroups: this.ageGroupService.getAllOrdered(),
-    })
+    // Cargar datos del usuario autenticado primero si está disponible
+    const userDataObservable = this.isUserAuthenticated() 
+      ? this.checkoutUserDataService.getCurrentUserData().pipe(
+          catchError((error) => {
+            console.warn('No se pudieron cargar los datos del usuario:', error);
+            return of(null);
+          })
+        )
+      : of(null);
+
+    userDataObservable.pipe(
+      switchMap((userData) => {
+        this.currentPersonalInfo = userData;
+        
+        return forkJoin({
+          departureFields: this.departureReservationFieldService.getByDeparture(
+            this.departureId!
+          ),
+          mandatoryTypes: this.mandatoryTypeService.getAll(),
+          reservationFields: this.reservationFieldService.getAllOrdered(),
+          travelers: this.reservationTravelerService.getByReservationOrdered(
+            this.reservationId!
+          ),
+          ageGroups: this.ageGroupService.getAllOrdered(),
+        });
+      })
+    )
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: ({
@@ -1977,6 +2014,25 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
+   * Parsear string ISO (YYYY-MM-DD) a Date
+   */
+  private parseDateFromISO(dateString: string): Date | null {
+    if (!dateString || typeof dateString !== 'string') {
+      return null;
+    }
+
+    // Intentar parsear como fecha ISO
+    const date = new Date(dateString);
+    
+    // Verificar que la fecha es válida
+    if (isNaN(date.getTime())) {
+      return null;
+    }
+
+    return date;
+  }
+
+  /**
    * Manejar cambio en campo de fecha
    */
   onDateFieldChange(travelerId: number, fieldCode: string, value: any): void {
@@ -2636,5 +2692,210 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     });
   }
 
+  /**
+   * Obtiene la información del perfil del usuario autenticado
+   */
+  private loadCurrentUserProfile(): void {
+    this.loadingUserProfile = true;
+    
+    this.checkoutUserDataService.getCurrentUserData().subscribe({
+      next: (userData) => {
+        this.currentPersonalInfo = userData;
+        this.populateLeadTravelerWithProfile();
+        this.loadingUserProfile = false;
+      },
+      error: (error) => {
+        console.error('Error al obtener datos del usuario:', error);
+        this.loadingUserProfile = false;
+      }
+    });
+  }
 
+  /**
+   * Rellena los campos del viajero líder con la información del perfil del usuario
+   */
+  private populateLeadTravelerWithProfile(): void {
+    if (!this.currentPersonalInfo || !this.travelers || this.travelers.length === 0) {
+      return;
+    }
+
+    // Buscar el viajero líder
+    const leadTraveler = this.travelers.find(traveler => traveler.isLeadTraveler);
+    if (!leadTraveler) {
+      return;
+    }
+
+    // Obtener el formulario del viajero líder
+    const leadTravelerIndex = this.travelers.findIndex(traveler => traveler.isLeadTraveler);
+    const leadTravelerForm = this.getTravelerForm(leadTravelerIndex);
+    
+    if (!leadTravelerForm) {
+      return;
+    }
+
+    // Rellenar campos del líder basados en los códigos de los ReservationFields
+    // Sin sobrescribir valores ya introducidos por el usuario
+    this.departureReservationFields.forEach((field) => {
+      const fieldDetails = this.getReservationFieldDetails(field.reservationFieldId);
+      if (!fieldDetails) return;
+
+      const codeLower = (fieldDetails.code || '').toLowerCase();
+      const controlName = `${fieldDetails.code}_${leadTraveler.id}`;
+      const control = leadTravelerForm.get(controlName) as FormControl | null;
+      if (!control) return;
+
+      // No sobrescribir si ya tiene valor
+      const currentVal = control.value;
+      const hasValue = currentVal !== null && currentVal !== undefined && String(currentVal).trim() !== '';
+      if (hasValue) return;
+
+      // Mapear campos del usuario a los campos del formulario
+      this.mapUserDataToFormField(control, codeLower, fieldDetails.fieldType);
+    });
+
+    // Marcar el formulario como tocado para activar las validaciones
+    leadTravelerForm.markAsTouched();
+  }
+
+  /**
+   * Obtiene el valor del usuario autenticado para un campo específico
+   */
+  private getUserDataForField(fieldDetails: IReservationFieldResponse): string | null {
+    const userData = this.currentPersonalInfo;
+    if (!userData) {
+      return null;
+    }
+
+    const codeLower = (fieldDetails.code || '').toLowerCase();
+
+    // Mapeo por código de campo
+    switch (codeLower) {
+      case 'email':
+        return userData.email || null;
+      case 'phone':
+      case 'telefono':
+        return userData.telefono || null;
+      case 'firstname':
+      case 'first_name':
+      case 'name':
+      case 'nombre':
+        return userData.nombre || null;
+      case 'lastname':
+      case 'last_name':
+      case 'surname':
+      case 'apellido':
+        return userData.apellido || null;
+      case 'birthdate':
+      case 'fecha_nacimiento':
+        return userData.fechaNacimiento || null;
+      case 'dni':
+      case 'national_id':
+        return userData.dni || null;
+      case 'country':
+      case 'pais':
+        return userData.pais || null;
+      case 'city':
+      case 'ciudad':
+        return userData.ciudad || null;
+      case 'postal_code':
+      case 'codigo_postal':
+        return userData.codigoPostal || null;
+      case 'address':
+      case 'direccion':
+        return userData.direccion || null;
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Mapea los datos del usuario a un campo específico del formulario
+   */
+  private mapUserDataToFormField(control: FormControl, fieldCode: string, fieldType: string): void {
+    const userData = this.currentPersonalInfo;
+    if (!userData) {
+      return;
+    }
+
+    let valueToSet: any = null;
+
+    // Mapeo por código de campo
+    switch (fieldCode) {
+      case 'email':
+        valueToSet = userData.email;
+        break;
+      case 'phone':
+      case 'telefono':
+        valueToSet = userData.telefono;
+        break;
+      case 'firstname':
+      case 'first_name':
+      case 'name':
+      case 'nombre':
+        valueToSet = userData.nombre;
+        break;
+      case 'lastname':
+      case 'last_name':
+      case 'surname':
+      case 'apellido':
+        valueToSet = userData.apellido;
+        break;
+      case 'birthdate':
+      case 'fecha_nacimiento':
+        valueToSet = userData.fechaNacimiento;
+        break;
+      case 'dni':
+      case 'national_id':
+        valueToSet = userData.dni;
+        break;
+      case 'country':
+      case 'pais':
+        valueToSet = userData.pais;
+        break;
+      case 'city':
+      case 'ciudad':
+        valueToSet = userData.ciudad;
+        break;
+      case 'postal_code':
+      case 'codigo_postal':
+        valueToSet = userData.codigoPostal;
+        break;
+      case 'address':
+      case 'direccion':
+        valueToSet = userData.direccion;
+        break;
+    }
+
+    // Si encontramos un valor, establecerlo en el control
+    if (valueToSet && valueToSet.trim() !== '') {
+      // Para campos de fecha, convertir string a Date si es necesario
+      if (fieldType === 'date' && typeof valueToSet === 'string') {
+        let parsedDate: Date | null = null;
+        
+        // Intentar parsear como fecha ISO primero (YYYY-MM-DD)
+        if (valueToSet.includes('-')) {
+          parsedDate = this.parseDateFromISO(valueToSet);
+        }
+        // Si no es ISO, intentar parsear como dd/mm/yyyy
+        else if (valueToSet.includes('/')) {
+          parsedDate = this.parseDateFromDDMMYYYY(valueToSet);
+        }
+        
+        if (parsedDate) {
+          control.setValue(parsedDate);
+        } else {
+          control.setValue(valueToSet);
+        }
+      } else {
+        control.setValue(valueToSet);
+      }
+    }
+  }
+
+  /**
+   * Verifica si el usuario está autenticado
+   */
+  private isUserAuthenticated(): boolean {
+    return this.checkoutUserDataService.isUserAuthenticated();
+  }
 }

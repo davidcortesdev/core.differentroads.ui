@@ -2,8 +2,8 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { TourNetService } from '../../../../core/services/tourNet.service';
-import { CMSTourService, ICMSTourResponse } from '../../../../core/services/cms/cms-tour.service';
+import { TourService } from '../../../../core/services/tour/tour.service';
+import { CMSTourService } from '../../../../core/services/cms/cms-tour.service';
 import { CMSCreatorService } from '../../../../core/services/cms/cms-creator.service';
 import { TourLocationService, ITourLocationResponse } from '../../../../core/services/tour/tour-location.service';
 import { LocationNetService, Location } from '../../../../core/services/locations/locationNet.service';
@@ -93,7 +93,7 @@ export class TourOverviewV2Component implements OnInit {
   constructor(
     private router: Router,
     private sanitizer: DomSanitizer,
-    private tourNetService: TourNetService,
+    private tourService: TourService,
     private cmsTourService: CMSTourService,
     private cmsCreatorService: CMSCreatorService,
     private tourLocationService: TourLocationService,
@@ -120,7 +120,7 @@ export class TourOverviewV2Component implements OnInit {
   private loadEssentialData(id: number): void {
     // FASE 1: Cargar datos esenciales del tour
     forkJoin([
-      this.tourNetService.getTourById(id, !this.preview).pipe(
+      this.tourService.getTourById(id, !this.preview).pipe(
         catchError(error => {
           console.error('❌ Error loading tour data:', error);
           return of(null);
@@ -245,7 +245,7 @@ export class TourOverviewV2Component implements OnInit {
         // Cargar tags para cada tipo de relación visible
         visibleRelationTypeIds.forEach(relationTypeId => {
           tagObservables.push(
-            this.tourTagService.getAll({ tourId: id, tourTagRelationTypeId: relationTypeId }).pipe(
+            this.tourTagService.getAll({ tourId: [id], tourTagRelationTypeId: relationTypeId }).pipe(
               catchError(error => {
                 console.warn(`⚠️ No se encontraron tags para relationTypeId ${relationTypeId}:`, error);
                 return of([]);

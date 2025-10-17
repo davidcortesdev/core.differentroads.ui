@@ -1,10 +1,11 @@
 import { Component, Input, ChangeDetectionStrategy, OnInit, AfterViewInit, Inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { DOCUMENT } from '@angular/common';
-import { AnalyticsService } from '../../../core/services/analytics.service';
-import { AuthenticateService } from '../../../core/services/auth-service.service';
+import { AnalyticsService } from '../../../core/services/analytics/analytics.service';
+import { AuthenticateService } from '../../../core/services/auth/auth-service.service';
 
 interface TourData {
+  id?: number; // ID real de base de datos
   imageUrl: string;
   title: string;
   rating: number;
@@ -98,7 +99,7 @@ export class TourCardComponent implements OnInit, AfterViewInit {
         this.itemListId,
         this.itemListName,
         {
-          item_id: this.tourData.externalID?.toString() || '',
+          item_id: this.tourData.id?.toString() || this.tourData.externalID?.toString() || '',
           item_name: this.tourData.title || '',
           coupon: '',
           discount: 0,

@@ -15,9 +15,7 @@ import { IReservationTravelerResponse } from '../../../../../../core/services/re
 import { IAgeGroupResponse } from '../../../../../../core/services/agegroup/age-group.service';
 import { 
   ReservationTravelerAccommodationService,
-  IReservationTravelerAccommodationResponse,
-  ReservationTravelerAccommodationCreate
-} from '../../../../../../core/services/reservation/reservation-traveler-accommodation.service';
+  IReservationTravelerAccommodationResponse} from '../../../../../../core/services/reservation/reservation-traveler-accommodation.service';
 import {
   DepartureAccommodationService,
   IDepartureAccommodationResponse

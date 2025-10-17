@@ -1,14 +1,13 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-  TourNetService,
+  TourService,
   Tour as TourNetTour,
-} from '../../../../core/services/tour/tourNet.service';
+} from '../../../../core/services/tour/tour.service';
 import {
   CMSTourService,
   ICMSTourResponse,
 } from '../../../../core/services/cms/cms-tour.service';
-import { Tour } from '../../../../core/models/tours/tour.model';
 import {
   catchError,
   Observable,
@@ -28,7 +27,6 @@ import { TourDataV2 } from '../../../../shared/components/tour-card-v2/tour-card
 // Importar los servicios de configuración del home
 import {
   HomeSectionConfigurationService,
-  IHomeSectionConfigurationResponse,
 } from '../../../../core/services/home/home-section-configuration.service';
 import {
   HomeSectionTourFilterService,
@@ -105,7 +103,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
 
   constructor(
     private readonly router: Router,
-    private readonly tourNetService: TourNetService,
+    private readonly tourService: TourService,
     private readonly cmsTourService: CMSTourService,
     private readonly homeSectionConfigurationService: HomeSectionConfigurationService,
     private readonly homeSectionTourFilterService: HomeSectionTourFilterService,
@@ -380,7 +378,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                 : of([]);
 
             // Obtener tags del tour
-            const tagRequest = this.tourTagService.getAll({ tourId }).pipe(
+            const tagRequest = this.tourTagService.getAll({ tourId: [tourId] }).pipe(
               map((tourTags) => {
                 // Por ahora retornamos un array vacío, pero aquí podrías obtener los nombres de los tags
                 return [];
@@ -429,7 +427,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
         concatMap((id: string) => {
           // Combinar datos del TourNetService, CMSTourService y datos adicionales
           return forkJoin({
-            tourData: this.tourNetService.getTourById(Number(id)),
+            tourData: this.tourService.getTourById(Number(id)),
             cmsData: this.cmsTourService.getAllTours({ tourId: Number(id) }),
             additionalData: this.getAdditionalTourData(Number(id)),
           }).pipe(
@@ -529,17 +527,17 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                 const imageUrl = cms?.imageUrl || '';
 
                 return {
-                  imageUrl: imageUrl, // ✅ IMAGEN CORRECTA DEL CMS
-                  title: tour.name || '', // ✅ TÍTULO ORIGINAL
-                  description: '', // ✅ DESCRIPCIÓN REMOVIDA
+                  id: tour.id,
+                  imageUrl: imageUrl,
+                  title: tour.name || '',
+                  description: '',
                   rating: 5, // Valor por defecto
-                  tag: tourTag, // ✅ TAG REAL
-                  price: tourPrice, // ✅ PRECIO REAL
-                  availableMonths: availableMonths, // ✅ MESES REALES
-                  departureDates: departureDates, // ✅ FECHAS DE DEPARTURE
-                  nextDepartureDate: nextDepartureDate, // ✅ PRÓXIMA FECHA DE SALIDA
-                  itineraryDaysCount: itineraryDaysCount, // ✅ CANTIDAD DE DÍAS
-                  itineraryDaysText: itineraryDaysText, // ✅ TEXTO DE DÍAS FORMATEADO
+                  tag: tourTag,
+                  price: tourPrice,
+                  availableMonths: availableMonths,
+                  nextDepartureDate: nextDepartureDate,
+                  itineraryDaysCount: itineraryDaysCount,
+                  itineraryDaysText: itineraryDaysText,
                   isByDr: true, // Valor por defecto
                   webSlug:
                     tour.slug ||
@@ -547,6 +545,8 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                     '',
                   tripType: [], // TourNetService no tiene tripType
                   externalID: tour.tkId || '',
+                  continent: '', // TourNetService no tiene continent - pendiente de agregar
+                  country: '', // TourNetService no tiene country - pendiente de agregar
                 };
               }
             )

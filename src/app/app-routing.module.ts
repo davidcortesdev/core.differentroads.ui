@@ -1,101 +1,216 @@
+// ========================================
+// ANGULAR CORE
+// ========================================
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes, ExtraOptions } from '@angular/router';
+
+// ========================================
+// LAYOUT COMPONENTS
+// ========================================
 import { MainComponent } from './layout/main/main.component';
-import { HomeComponent } from './pages/home/home.component';
-import { HomeV2Component } from './pages/home-v2/home-v2.component';
-import { NotFoundComponent } from './pages/not-found/not-found.component';
-import { TourComponent } from './pages/tour/tour.component';
-import { TourV2Component } from './pages/tour-v2/tour-v2.component';
-import { ProfileComponent } from './pages/profile/profile.component';
-import { PersonalInfoSectionComponent } from './pages/profile/components/personal-info-section/personal-info-section.component';
-import { UpdateProfileSectionComponent } from './pages/profile/components/update-profile-section/update-profile-section.component';
+import { StandaloneComponent } from './layout/standalone/standalone.component';
+
+// ========================================
+// PAGE COMPONENTS - AUTH
+// ========================================
 import { LoginComponent } from './pages/login/login.component';
 import { SignUpComponent } from './pages/sign-up/sign-up.component';
 import { ForgetPasswordComponent } from './pages/forget-password/forget-password.component';
-import { BasicPageComponent } from './pages/basic-page/basic-page.component';
-import { CheckoutComponent } from './pages/checkout/checkout.component';
+
+// ========================================
+// PAGE COMPONENTS - HOME
+// ========================================
+import { HomeV2Component } from './pages/home-v2/home-v2.component';
+
+// ========================================
+// PAGE COMPONENTS - TOUR
+// ========================================
+import { TourV2Component } from './pages/tour-v2/tour-v2.component';
+
+// ========================================
+// PAGE COMPONENTS - CHECKOUT
+// ========================================
 import { CheckoutV2Component } from './pages/checkout-v2/checkout-v2.component';
-import { ContentPageComponent } from './pages/content-page/content-page.component';
-import { ToursComponent } from './shared/components/tours/tours.component';
-import { ReservationComponent } from './pages/reservation/reservation.component';
-import { BookingsComponent } from './pages/bookings/bookings.component';
-import { Bookingsv2Component } from './pages/bookingsv2/bookings.component';
-import { PaymentsComponent } from './pages/payments/payments.component';
-import { AirportSearchComponent } from './features/airports/airport-search/airport-search.component';
-import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
-import { ReviewSurveyComponent } from './pages/review-survey/review-survey.component';
-import { ReviewSectionComponent } from './pages/profile/components/review-section/review-section.component';
 import { NewReservationComponent } from './pages/checkout-v2/components/new-reservation/new-reservation.component';
-import { StandaloneComponent } from './layout/standalone/standalone.component';
+
+// ========================================
+// PAGE COMPONENTS - BOOKINGS
+// ========================================
+import { Bookingsv2Component } from './pages/bookingsv2/bookings.component';
+
+// ========================================
+// PAGE COMPONENTS - PROFILE
+// ========================================
 import { ProfileV2Component } from './pages/profile-v2/profile-v2.component';
 
+// ========================================
+// PAGE COMPONENTS - OTHER PAGES
+// ========================================
+import { NotFoundComponent } from './pages/not-found/not-found.component';
+import { DestinationPageComponent } from './pages/destination-page/destination-page.component';
+import { CategoryPageComponent } from './pages/category-page/category-page.component';
+import { BasicPageComponent } from './pages/basic-page/basic-page.component';
+import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
+import { ContentPageComponent } from './pages/content-page/content-page.component';
+import { ReviewSurveyComponent } from './pages/review-survey/review-survey.component';
+
+// ========================================
+// SHARED COMPONENTS
+// ========================================
+import { ToursComponent } from './shared/components/tours/tours.component';
+
+// ========================================
+// ROUTES CONFIGURATION
+// ========================================
 const routes: Routes = [
-  // Rutas standalone (sin header ni footer)
+  // ========================================
+  // STANDALONE ROUTES (sin header ni footer)
+  // ========================================
   {
     path: 'standalone',
     component: StandaloneComponent,
     children: [
       { path: 'checkout/:reservationId', component: CheckoutV2Component },
+      { path: 'bookings/:id', component: Bookingsv2Component },
+      {
+        path: 'reservation/:reservationId/:paymentId',
+        component: NewReservationComponent,
+      },
+      {
+        path: 'reservation/:reservationId',
+        component: NewReservationComponent,
+      },
     ],
   },
+
+  // ========================================
+  // MAIN LAYOUT ROUTES (con header y footer)
+  // ========================================
   {
     path: '',
     component: MainComponent,
     children: [
-      { path: '', redirectTo: 'home-v2', pathMatch: 'full' },
-      { path: 'home', component: HomeComponent },
-      { path: 'home-v2', component: HomeV2Component },
-      {
-        path: 'profile',
-        component: ProfileComponent,
-      },   
-      {
-        path: 'profile-v2/:userId',
-        component: ProfileV2Component,
-      },
+      // ========================================
+      // HOME
+      // ========================================
+      { path: '', component: HomeV2Component, pathMatch: 'full' },
+
+      // ========================================
+      // AUTH ROUTES
+      // ========================================
       { path: 'login', component: LoginComponent },
       { path: 'sign-up', component: SignUpComponent },
       { path: 'forget-password', component: ForgetPasswordComponent },
+
+      // ========================================
+      // PROFILE ROUTES
+      // ========================================
+      { path: 'profile/:userId', component: ProfileV2Component },
+
+      // ========================================
+      // TOUR ROUTES
+      // ========================================
       { path: 'tours', component: ToursComponent },
-      { path: 'tour-old/:slug', component: TourComponent },
       { path: 'tour/:slug', component: TourV2Component },
       { path: 'tour/:slug/preview', component: TourV2Component },
-      { path: 'pages/:slug', component: BasicPageComponent },
-      // Nueva ruta para previsualización
+
+      // ========================================
+      // CHECKOUT ROUTES
+      // ========================================
+      { path: 'checkout/:reservationId', component: CheckoutV2Component },
+
+      // ========================================
+      // RESERVATION ROUTES
+      // ========================================
+      // Versión nueva con paymentId
+      {
+        path: 'reservation/:reservationId/:paymentId',
+        component: NewReservationComponent,
+      },
+      // Versión nueva sin paymentId (opcional)
+      {
+        path: 'reservation/:reservationId',
+        component: NewReservationComponent,
+      },
+
+      // ========================================
+      // BOOKINGS ROUTES
+      // ========================================
+      { path: 'bookings/:id', component: Bookingsv2Component },
+
+      // ========================================
+      // CONTENT PAGES ROUTES
+      // ========================================
       { path: 'preview/pages', component: BasicPagePreviewComponent },
-      { path: 'checkout/:id', component: CheckoutComponent },
-      { path: 'checkout-v2/:reservationId', component: CheckoutV2Component },
-      { path: 'payment/:id', component: PaymentsComponent },
+      { path: 'pages/:slug', component: BasicPageComponent },
       { path: 'landing/:slug', component: ContentPageComponent },
       { path: 'collection/:slug', component: ContentPageComponent },
       { path: 'press/:slug', component: ContentPageComponent },
       { path: 'blog/:slug', component: ContentPageComponent },
-      { path: 'reservation/:id', component: ReservationComponent }, //OJO es el viejo
-      {
-        path: 'reservation/:id/:status/:paymentID',
-        component: ReservationComponent,
-      }, //OJO es el viejo
-      {
-        path: 'reservation/:reservationId/:paymentId',
-        component: NewReservationComponent,
-      }, //OJO es el nuevo
-      { path: 'bookings/:id', component: BookingsComponent },
-      { path: 'bookingsv2/:id', component: Bookingsv2Component },
-      { path: 'aeropuertos', component: AirportSearchComponent },
-      { path: 'reviews/:id', component: ReviewSurveyComponent },
+
+      // ========================================
+      // FEATURES ROUTES
+      // ========================================
+      { path: 'reviews/:periodTkId', component: ReviewSurveyComponent },
+
+      // ========================================
+      // NOT FOUND ROUTE (debe estar antes de las rutas dinámicas)
+      // ========================================
+      { path: 'not-found', component: NotFoundComponent },
+
+      // ========================================
+      // DYNAMIC MENU ROUTES - DESTINATIONS (más específicas primero)
+      // ========================================
+      // Destino con continente y país: /destino/africa/marruecos
+      { 
+        path: 'destino/:menuItemSlug/:destinationSlug', 
+        component: DestinationPageComponent,
+        data: { type: 'destination' }
+      },
+      // Destino solo con continente: /destino/africa
+      { 
+        path: 'destino/:menuItemSlug', 
+        component: DestinationPageComponent,
+        data: { type: 'destination' }
+      },
+
+      // ========================================
+      // DYNAMIC MENU ROUTES - CATEGORIES (al final, son las más genéricas)
+      // ========================================
+      // Categoría con sub-item: /temporada/semana-santa
+      { 
+        path: ':menuItemSlug/:subItemSlug', 
+        component: CategoryPageComponent,
+        data: { type: 'category' }
+      },
+      // Categoría sola: /temporada
+      { 
+        path: ':menuItemSlug', 
+        component: CategoryPageComponent,
+        data: { type: 'category' }
+      },
+
+      // ========================================
+      // 404 - NOT FOUND (siempre debe ser la última)
+      // ========================================
       { path: '**', component: NotFoundComponent },
     ],
   },
 ];
 
-// Configure the router to scroll to top on navigation
+// ========================================
+// ROUTER CONFIGURATION
+// ========================================
 const routerOptions: ExtraOptions = {
-  scrollPositionRestoration: 'enabled',
-  anchorScrolling: 'enabled',
-  scrollOffset: [0, 0],
-  onSameUrlNavigation: 'reload', // Añadir esta línea para forzar recarga en la misma URL
+  scrollPositionRestoration: 'enabled', // Restaura la posición de scroll al navegar
+  anchorScrolling: 'enabled', // Habilita el scroll a anclas
+  scrollOffset: [0, 0], // Offset para el scroll
+  onSameUrlNavigation: 'reload', // Fuerza recarga en la misma URL
 };
 
+// ========================================
+// APP ROUTING MODULE
+// ========================================
 @NgModule({
   imports: [RouterModule.forRoot(routes, routerOptions)],
   exports: [RouterModule],

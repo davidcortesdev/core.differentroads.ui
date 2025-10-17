@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { NotificationsService } from '../../../core/services/notifications.service';
 import { MessageService } from 'primeng/api';
 
 @Component({
@@ -21,7 +20,6 @@ export class BookingDocumentActionsV2Component implements OnInit {
 
   constructor(
     private messageService: MessageService,
-    private notificationsService: NotificationsService
   ) {}
 
   ngOnInit(): void {}
@@ -41,38 +39,7 @@ export class BookingDocumentActionsV2Component implements OnInit {
       summary: 'Info',
       detail: 'Generando documento...',
     });
-
-    this.notificationsService
-      .getBookingDocument(this.bookingId, true)
-      .subscribe({
-        next: (response) => {
-          this.isReprintVoucherLoading = false;
-          console.log(
-            'Document generated successfully:',
-            response,
-            response.fileUrl
-          );
-
-          if (response.fileUrl) {
-            window.open(response.fileUrl, '_blank');
-          } else {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: 'No se obtuvo el URL del documento',
-            });
-          }
-        },
-        error: (error) => {
-          this.isReprintVoucherLoading = false;
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Error al generar el documento',
-          });
-          console.error('Error generating document:', error);
-        },
-      });
+    //TODO: Implementar leyendo los datos de mysql
   }
 
   onReprintPaymentReminder(): void {

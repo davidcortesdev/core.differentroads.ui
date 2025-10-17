@@ -2,19 +2,16 @@ import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ReviewsService } from '../../core/services/reviews/reviews.service';
 import { ReviewStatusService } from '../../core/services/reviews/review-status.service';
-import { PeriodsService } from '../../core/services/periods.service';
+import { PeriodsService } from '../../core/services/departure/periods.service';
 import { DatePipe } from '@angular/common';
 import {
-  TourFilter,
-  TourNetService,
-} from '../../core/services/tourNet.service';
-import { switchMap, take, of } from 'rxjs';
+  TourService,
+} from '../../core/services/tour/tour.service';
 import {
   TravelersNetService,
   Traveler,
-} from '../../core/services/travelersNet.service';
-import { CloudinaryService } from '../../core/services/cloudinary.service';
-import { CldImage } from '../../shared/models/cloudinary/cld-image.model';
+} from '../../core/services/travelers/travelersNet.service';
+import { CloudinaryService } from '../../core/services/media/cloudinary.service';
 import {
   DepartureService,
   IDepartureResponse,
@@ -105,7 +102,7 @@ export class ReviewSurveyComponent implements OnInit {
     private reviewStatusService: ReviewStatusService,
     private reviewImageService: ReviewImageService,
     private datePipe: DatePipe,
-    private tourNetService: TourNetService,
+    private tourService: TourService,
     private travelersNetService: TravelersNetService,
     private cloudinaryService: CloudinaryService,
     private departureService: DepartureService
@@ -115,8 +112,9 @@ export class ReviewSurveyComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
-      if (params['id']) {
-        this.periodExternalId = params['id'];
+      console.log('params', params);
+      if (params['periodTkId']) {
+        this.periodExternalId = params['periodTkId'];
         this.loadTripInfoFromPeriod(this.periodExternalId);
         this.getTourIdFromExternalId(this.periodExternalId);
         this.loadRawDepartureInfo(this.periodExternalId);
@@ -183,61 +181,11 @@ export class ReviewSurveyComponent implements OnInit {
   }
 
   loadTripInfoFromPeriod(externalId: string): void {
-    this.periodsService.getPeriodNameAndDepartureDate(externalId).subscribe({
-      next: (info) => {
-        this.tripInfo = {
-          title: info.tourName || 'Título no disponible',
-          date: info.dayOne || 'Fecha no disponible',
-          tourId: info.tourId ? Number(info.tourId) : undefined,
-        };
-
-        if (
-          this.tripInfo.date &&
-          this.tripInfo.date !== 'Fecha no disponible'
-        ) {
-          this.formattedDate =
-            this.datePipe.transform(this.tripInfo.date, 'dd/MM/yyyy') ||
-            'dd/MM/yyyy';
-        } else {
-          this.formattedDate = 'dd/MM/yyyy';
-        }
-      },
-      error: (error: any) => {
-        this.setErrorTripInfo();
-        this.formattedDate = 'dd/MM/yyyy';
-      },
-    });
+   
   }
 
   getTourIdFromExternalId(externalId: string): void {
-    this.tourNetService.getTourIdByPeriodId(externalId).subscribe({
-      next: (tourId) => {
-        if (tourId) {
-          this.tripInfo.tourId = Number(tourId);
-          const tkid = externalId;
-          this.periodsService.getRawDepartureByTkId(tkid).subscribe({
-            next: (salidas) => {
-              if (!Array.isArray(salidas) || salidas.length === 0) {
-                return;
-              }
-              const salida = salidas[0];
-              const departureId = salida.id || salida.departureId;
-              if (departureId) {
-                this.tripInfo.departureId = departureId;
-              }
-            },
-            error: (error) => {
-              // Error silencioso para no afectar la UX
-            },
-          });
-        } else {
-          this.setErrorTripInfo();
-        }
-      },
-      error: (error) => {
-        this.setErrorTripInfo();
-      },
-    });
+    //TODO: Revisar si hace falta obtener la información de la departure
   }
 
   private setErrorTripInfo(): void {

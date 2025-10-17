@@ -1,6 +1,7 @@
-import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { PersonalInfo } from '../../../../core/models/v2/profile-v2.model';
 import { UpdateProfileV2Service } from '../../../../core/services/v2/update-profile-v2.service';
+import { CloudinaryService } from '../../../../core/services/media/cloudinary.service';
 
 @Component({
   selector: 'app-update-profile-section-v2',
@@ -22,52 +23,71 @@ export class UpdateProfileSectionV2Component{
   
   // Estados de carga y errores
   isSaving: boolean = false;
+  isUploadingImage: boolean = false;
   errorMessage: string = '';
   successMessage: string = '';
 
-
+  // Opciones para el dropdown de sexo
   sexoOptions = [
-    { label: 'Hombre', value: 'Hombre' },
-    { label: 'Mujer', value: 'Mujer' },
+    { label: 'Masculino', value: 'Masculino' },
+    { label: 'Femenino', value: 'Femenino' },
+    { label: 'Otro', value: 'Otro' }
   ];
 
-  filteredSexoOptions: any[] = [];
-
-  constructor(private updateProfileService: UpdateProfileV2Service) { }
+  constructor(
+    private updateProfileService: UpdateProfileV2Service,
+    private cloudinaryService: CloudinaryService
+  ) { }
 
 
   formatDate(dateInput: string | Date | undefined): string {
     return this.updateProfileService.formatDate(dateInput);
   }
 
-  filterSexo(event: any) {
-    let filtered: any[] = [];
-    let query = event.query;
-
-    for (let i = 0; i < this.sexoOptions.length; i++) {
-      let sexo = this.sexoOptions[i];
-      if (sexo.label.toLowerCase().indexOf(query.toLowerCase()) == 0) {
-        filtered.push(sexo);
-      }
-    }
-
-    this.filteredSexoOptions = filtered;
-  }
 
   onUpload(event: any) {
     for (let file of event.files) {
       const validation = this.updateProfileService.validateImageFile(file, this.maxFileSize);
       if (!validation.isValid) {
+        this.errorMessage = validation.error || 'Error al validar el archivo';
         return;
       }
 
       this.uploadedFiles = [file];
+      this.isUploadingImage = true;
+      this.errorMessage = '';
+      
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.previewImageUrl = e.target.result;
+        
+        // Subir la imagen a Cloudinary
+        this.cloudinaryService.uploadImage(e.target.result).subscribe({
+          next: (uploadedImage) => {
+            // Guardar la URL de Cloudinary en lugar del DataURL
+            this.personalInfo.avatarUrl = uploadedImage.url;
+            this.isUploadingImage = false;
+            this.successMessage = 'Imagen cargada correctamente';
+            setTimeout(() => this.successMessage = '', 3000);
+          },
+          error: (error) => {
+            console.error('Error uploading image:', error);
+            this.errorMessage = 'Error al subir la imagen. Por favor, intenta de nuevo.';
+            this.isUploadingImage = false;
+            this.uploadedFiles = [];
+            this.previewImageUrl = null;
+          }
+        });
       };
       reader.readAsDataURL(file);
     }
+  }
+
+  onRemoveImage() {
+    this.uploadedFiles = [];
+    this.previewImageUrl = null;
+    // Limpiar la URL de la imagen del personalInfo
+    this.personalInfo.avatarUrl = '';
   }
 
   // Validaciones de campos
@@ -83,16 +103,6 @@ export class UpdateProfileSectionV2Component{
     this.clearFieldError('dni');
   }
 
-  onNacionalidadInput(event: any) {
-    const input = event.target as HTMLInputElement;
-    input.value = this.updateProfileService.validateNacionalidadInput(input.value);
-  }
-
-  onPasaporteInput(event: any) {
-    const input = event.target as HTMLInputElement;
-    input.value = this.updateProfileService.validatePasaporteInput(input.value);
-    this.clearFieldError('pasaporte');
-  }
 
   onCiudadInput(event: any) {
     const input = event.target as HTMLInputElement;
@@ -105,24 +115,35 @@ export class UpdateProfileSectionV2Component{
     this.clearFieldError('codigoPostal');
   }
 
-  onPaisExpedicionInput(event: any) {
+  onDireccionInput(event: any) {
     const input = event.target as HTMLInputElement;
-    input.value = this.updateProfileService.validatePaisExpedicionInput(input.value);
+    input.value = this.updateProfileService.validateDireccionInput(input.value);
+  }
+
+  onPaisInput(event: any) {
+    const input = event.target as HTMLInputElement;
+    input.value = this.updateProfileService.validatePaisInput(input.value);
+  }
+
+  onNotasInput(event: any) {
+    this.clearFieldError('notas');
   }
 
   // Métodos para limpiar errores en otros campos
   onNombreInput(event: any) {
-    const input = event.target as HTMLInputElement;
-    const filteredValue = this.updateProfileService.validateNombreInput(input.value);
-    input.value = filteredValue;
     this.clearFieldError('nombre');
+    // Aplicar validación al modelo, no al DOM
+    if (this.personalInfo.nombre) {
+      this.personalInfo.nombre = this.updateProfileService.validateNombreInput(this.personalInfo.nombre);
+    }
   }
 
   onApellidoInput(event: any) {
-    const input = event.target as HTMLInputElement;
-    const filteredValue = this.updateProfileService.validateApellidoInput(input.value);
-    input.value = filteredValue;
     this.clearFieldError('apellido');
+    // Aplicar validación al modelo, no al DOM
+    if (this.personalInfo.apellido) {
+      this.personalInfo.apellido = this.updateProfileService.validateApellidoInput(this.personalInfo.apellido);
+    }
   }
 
   onEmailInput(event: any) {
@@ -133,24 +154,8 @@ export class UpdateProfileSectionV2Component{
     this.clearFieldError('fechaNacimiento');
   }
 
-  onFechaExpedicionDniChange(event: any) {
-    this.clearFieldError('fechaExpedicionDni');
-    this.clearFieldError('fechaCaducidadDni'); // Limpiar también el error de caducidad
-  }
-
-  onFechaCaducidadDniChange(event: any) {
-    this.clearFieldError('fechaCaducidadDni');
-    this.clearFieldError('fechaExpedicionDni'); // Limpiar también el error de expedición
-  }
-
-  onFechaExpedicionPasaporteChange(event: any) {
-    this.clearFieldError('fechaExpedicionPasaporte');
-    this.clearFieldError('fechaVencimientoPasaporte'); // Limpiar también el error de vencimiento
-  }
-
-  onFechaVencimientoPasaporteChange(event: any) {
-    this.clearFieldError('fechaVencimientoPasaporte');
-    this.clearFieldError('fechaExpedicionPasaporte'); // Limpiar también el error de expedición
+  onSexoChange(event: any) {
+    this.clearFieldError('sexo');
   }
 
   onSubmit() {

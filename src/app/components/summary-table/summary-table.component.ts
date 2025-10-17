@@ -1,6 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { MessageModule } from 'primeng/message';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { PointsV2Service } from '../../core/services/v2/points-v2.service';
 import { ReservationService, IReservationSummaryResponse } from '../../core/services/reservation/reservation.service';
 import { MessageService } from 'primeng/api';
@@ -55,6 +53,9 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
   @Input() isAuthenticated: boolean = false;
   @Input() selectedFlight: any = null;
   @Input() pointsDiscount: number = 0;
+
+  // NUEVO: Output para emitir cambios en el total
+  @Output() totalChanged = new EventEmitter<number>();
 
   // NUEVO: Propiedades para gestión de datos
   private destroy$: Subject<void> = new Subject<void>();
@@ -150,6 +151,9 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
     // Usar el totalAmount que viene del backend y restar el descuento de puntos
     this.subtotal = summary.totalAmount;
     this.total = summary.totalAmount - this.pointsDiscount;
+
+    // Emitir el cambio de total para que el componente padre pueda actualizarse
+    this.totalChanged.emit(this.total);
   }
 
   // NUEVO: Método para recargar información
@@ -182,6 +186,8 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
     
     // Recalcular total
     this.total = this.reservationSummary.totalAmount - this.pointsDiscount;
+    // Emitir el cambio de total por actualización de descuento
+    this.totalChanged.emit(this.total);
   }
 
   getDescription(item: any): string {

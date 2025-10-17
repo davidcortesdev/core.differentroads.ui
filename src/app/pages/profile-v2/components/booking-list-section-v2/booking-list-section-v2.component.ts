@@ -4,10 +4,8 @@ import { MessageService } from 'primeng/api';
 import { BookingItem } from '../../../../core/models/v2/profile-v2.model';
 import { BookingsServiceV2 } from '../../../../core/services/v2/bookings-v2.service';
 import { ReservationResponse } from '../../../../core/models/v2/profile-v2.model';
-import { ToursServiceV2, TourV2 } from '../../../../core/services/v2/tours-v2.service';
-import { OrdersServiceV2, OrderV2 } from '../../../../core/services/v2/orders-v2.service';
+import { ToursServiceV2 } from '../../../../core/services/v2/tours-v2.service';
 import { DataMappingV2Service } from '../../../../core/services/v2/data-mapping-v2.service';
-import { NotificationsServiceV2 } from '../../../../core/services/v2/notifications-v2.service';
 import { CMSTourService, ICMSTourResponse } from '../../../../core/services/cms/cms-tour.service';
 import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
 
@@ -33,9 +31,7 @@ export class BookingListSectionV2Component implements OnInit {
     private messageService: MessageService,
     private bookingsService: BookingsServiceV2,
     private toursService: ToursServiceV2,
-    private ordersService: OrdersServiceV2,
     private dataMappingService: DataMappingV2Service,
-    private notificationsService: NotificationsServiceV2,
     private cmsTourService: CMSTourService
   ) {}
 
@@ -205,53 +201,50 @@ export class BookingListSectionV2Component implements OnInit {
    * Carga presupuestos recientes usando servicios v2
    */
   private loadRecentBudgets(userId: number): void {
-    // Para presupuestos, usar el servicio de órdenes
-    // Nota: El servicio de órdenes usa email, no userId
-    // Por ahora usamos el userId como email (esto se puede mejorar)
-    this.ordersService.getRecentBudgets(this.userId).pipe(
-      switchMap((response: any) => {
-        const orders: OrderV2[] = response.data || response || [];
-        if (!orders || orders.length === 0) {
+    this.bookingsService.getRecentBudgets(userId).pipe(
+      switchMap((reservations: ReservationResponse[]) => {
+        if (!reservations || reservations.length === 0) {
           return of([]);
         }
 
-        // Obtener información de tours y imágenes CMS para cada orden
-        const tourPromises = orders.map((order: OrderV2) => 
+        // Obtener información de tours y imágenes CMS para cada presupuesto
+        const tourPromises = reservations.map(reservation => 
           forkJoin({
-            tour: this.toursService.getTourById(parseInt(order.periodID)).pipe(
+            tour: this.toursService.getTourById(reservation.tourId).pipe(
               catchError(error => {
-                console.warn(`Error obteniendo tour ${order.periodID}:`, error);
+                console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
                 return of(null);
               })
             ),
-            cmsTour: this.cmsTourService.getAllTours({ tourId: parseInt(order.periodID) }).pipe(
+            cmsTour: this.cmsTourService.getAllTours({ tourId: reservation.tourId }).pipe(
               map((cmsTours: ICMSTourResponse[]) => cmsTours.length > 0 ? cmsTours[0] : null),
               catchError(error => {
-                console.warn(`Error obteniendo CMS tour ${order.periodID}:`, error);
+                console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
                 return of(null);
               })
             )
           }).pipe(
-            map(({ tour, cmsTour }) => ({ order, tour, cmsTour }))
+            map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
           )
         );
 
         return forkJoin(tourPromises);
       }),
-      map((orderTourPairs: any[]) => {
+      map((reservationTourPairs: any[]) => {
         // Mapear usando el servicio de mapeo con imágenes CMS
-        return this.dataMappingService.mapOrdersToBookingItems(
-          orderTourPairs.map(pair => pair.order),
-          orderTourPairs.map(pair => pair.tour),
-          orderTourPairs.map(pair => pair.cmsTour)
+        return this.dataMappingService.mapReservationsToBookingItems(
+          reservationTourPairs.map(pair => pair.reservation),
+          reservationTourPairs.map(pair => pair.tour),
+          'recent-budgets',
+          reservationTourPairs.map(pair => pair.cmsTour)
         );
       }),
       catchError(error => {
-        console.error('Error obteniendo presupuestos:', error);
+        console.error('Error obteniendo presupuestos recientes:', error);
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: 'Error al cargar los presupuestos'
+          detail: 'Error al cargar los presupuestos recientes'
         });
         return of([]);
       })
@@ -321,7 +314,7 @@ export class BookingListSectionV2Component implements OnInit {
 
   viewItem(item: BookingItem) {
     if (this.listType === 'active-bookings') {
-      this.router.navigate(['bookingsv2', item.id]);
+      this.router.navigate(['bookings', item.id]);
     } else if (this.listType === 'recent-budgets') {
       this.router.navigate(['/checkout', item.id]);
     }
@@ -330,30 +323,7 @@ export class BookingListSectionV2Component implements OnInit {
 
   sendItem(item: BookingItem) {
     this.notificationLoading[item.id] = true;
-    
-    this.notificationsService.sendDocument({
-      userId: this.userId,
-      documentType: 'voucher',
-      documentId: item.id,
-      recipientEmail: 'user@example.com' // TODO: Obtener email real del usuario
-    }).subscribe({
-      next: (response) => {
-        this.notificationLoading[item.id] = false;
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Éxito',
-          detail: response.message,
-        });
-      },
-      error: (error) => {
-        this.notificationLoading[item.id] = false;
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Error al enviar el documento',
-        });
-      }
-    });
+    //TODO: Implementar leyendo los datos de mysql
   }
 
 

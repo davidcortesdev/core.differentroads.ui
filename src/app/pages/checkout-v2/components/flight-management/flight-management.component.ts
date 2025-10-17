@@ -15,9 +15,9 @@ import {
 } from '../../../../core/services/departure/departure.service';
 import {
   Tour,
-  TourNetService,
-} from '../../../../core/services/tourNet.service';
-import { AuthenticateService } from '../../../../core/services/auth-service.service';
+  TourService,
+} from '../../../../core/services/tour/tour.service';
+import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { IFlightPackDTO } from '../../services/flightsNet.service';
 import { DefaultFlightsComponent } from './default-flights/default-flights.component';
 import { FlightSelectionState } from '../../types/flight-selection-state';
@@ -73,7 +73,7 @@ export class FlightManagementComponent implements OnInit, OnChanges {
 
   constructor(
     private departureService: DepartureService,
-    private tourNetService: TourNetService,
+    private tourService: TourService,
     private authService: AuthenticateService,
     private router: Router
   ) {}
@@ -131,7 +131,7 @@ export class FlightManagementComponent implements OnInit, OnChanges {
 
     // Cargar datos del tour
     if (this.tourId) {
-      this.tourNetService.getTourById(this.tourId).subscribe({
+      this.tourService.getTourById(this.tourId).subscribe({
         next: (tour: Tour) => {
           tourConsolidadorActive = !!tour.isConsolidadorVuelosActive;
           checkBothResponses();

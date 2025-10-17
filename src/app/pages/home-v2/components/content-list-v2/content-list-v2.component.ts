@@ -8,9 +8,6 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { BlogListContent } from '../../../../core/models/blocks/blog-list-content.model';
-import { BlogsService } from '../../../../core/services/blogs.service';
-import { PressService } from '../../../../core/services/press.service';
-import { catchError, map } from 'rxjs/operators';
 import { BlockType } from '../../../../core/models/blocks/block.model';
 import { PressListContent } from '../../../../core/models/blocks/press-list-content.model';
 
@@ -43,8 +40,6 @@ export class ContentListV2Component implements OnInit {
   error = false;
 
   constructor(
-    private blogsService: BlogsService,
-    private pressService: PressService,
     private router: Router,
     private cdr: ChangeDetectorRef,
     @Inject('BASE_URL') private baseUrl: string
@@ -84,59 +79,12 @@ export class ContentListV2Component implements OnInit {
   }
 
   private loadBlogs() {
-    this.blogsService
-      .getAllBlogs()
-      .pipe(
-        map((blogs: any[]) => blogs.slice(0, 6)), // Limitar a 6 elementos
-        catchError((error) => {
-          console.error('Error loading blogs:', error);
-          this.error = true;
-          return [];
-        })
-      )
-      .subscribe((blogs) => {
-        console.log('Blogs loaded:', blogs);
-        this.contentData = blogs.map((blog: any) => ({
-          id: blog.id,
-          title: blog.title,
-          subtitle: blog.subtitle || '',
-          slug: blog.slug,
-          image: blog.image || [],
-          travels: blog.travels,
-          type: 'blog' as const,
-        }));
-        this.loading = false;
-        this.cdr.detectChanges();
-        console.log('ContentData updated:', this.contentData);
-      });
+        //TODO: Pendiente de desarrollar proximamente
+
   }
 
   private loadPress() {
-    this.pressService
-      .getAllPress()
-      .pipe(
-        map((press: any[]) => press.slice(0, 6)), // Limitar a 6 elementos
-        catchError((error) => {
-          console.error('Error loading press:', error);
-          this.error = true;
-          return [];
-        })
-      )
-      .subscribe((press) => {
-        console.log('Press loaded:', press);
-        this.contentData = press.map((pressItem: any) => ({
-          id: pressItem.id,
-          title: pressItem.title,
-          subtitle: pressItem.subtitle || '',
-          slug: pressItem.slug,
-          image: pressItem.image || [],
-          travels: pressItem.travels,
-          type: 'press' as const,
-        }));
-        this.loading = false;
-        this.cdr.detectChanges();
-        console.log('ContentData updated:', this.contentData);
-      });
+    //TODO: Pendiente de desarrollar proximamente
   }
 
   onContentClick(content: ContentData) {

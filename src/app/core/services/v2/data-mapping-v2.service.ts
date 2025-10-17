@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { BookingItem, PersonalInfo } from '../../models/v2/profile-v2.model';
 import { ReservationResponse } from '../../models/v2/profile-v2.model';
 import { TourV2 } from './tours-v2.service';
-import { OrderV2 } from './orders-v2.service';
 import { ICMSTourResponse } from '../cms/cms-tour.service';
 
 /**
@@ -61,35 +60,6 @@ export class DataMappingV2Service {
   }
 
   /**
-   * Mapea una orden (presupuesto) con información de tour a BookingItem V2
-   * @param order - Datos de orden de la API
-   * @param tour - Información del tour (opcional)
-   * @param cmsTour - Información del tour CMS con imagen (opcional)
-   * @returns BookingItem V2
-   */
-  mapOrderToBookingItem(order: OrderV2, tour: TourV2 | null = null, cmsTour: ICMSTourResponse | null = null): BookingItem {
-    return {
-      id: order._id,
-      title: tour?.name || `Presupuesto ${order.ID}`,
-      number: order.ID,
-      budgetNumber: order.ID,
-      ID: order.ID,
-      _id: order._id,
-      creationDate: order.createdAt ? new Date(order.createdAt) : new Date(),
-      status: this.mapOrderStatus(order.status),
-      departureDate: this.extractOrderDepartureDate(order),
-      image: this.getImageFromCMS(cmsTour) || this.getDefaultImage(),
-      passengers: order.travelers?.length || 1,
-      price: order.price || 0,
-      tourID: order.periodID,
-      code: order.ID,
-      summary: order.summary,
-      imageLoading: false,
-      imageLoaded: true
-    };
-  }
-
-  /**
    * Mapea múltiples reservas con tours a array de BookingItem V2
    * @param reservations - Array de reservas
    * @param tours - Array de tours correspondientes
@@ -110,19 +80,6 @@ export class DataMappingV2Service {
         listType,
         cmsTours[index] || null
       )
-    );
-  }
-
-  /**
-   * Mapea múltiples órdenes con tours a array de BookingItem V2
-   * @param orders - Array de órdenes
-   * @param tours - Array de tours correspondientes
-   * @param cmsTours - Array de tours CMS con imágenes (opcional)
-   * @returns Array de BookingItem V2
-   */
-  mapOrdersToBookingItems(orders: OrderV2[], tours: (TourV2 | null)[], cmsTours: (ICMSTourResponse | null)[] = []): BookingItem[] {
-    return orders.map((order, index) => 
-      this.mapOrderToBookingItem(order, tours[index] || null, cmsTours[index] || null)
     );
   }
 
@@ -180,17 +137,6 @@ export class DataMappingV2Service {
     }
     // Fallback: fecha de creación + 30 días
     return new Date(new Date(reservation.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000);
-  }
-
-  /**
-   * Extrae la fecha de salida de una orden
-   */
-  private extractOrderDepartureDate(order: OrderV2): Date {
-    // Para órdenes, usar fecha de creación + 30 días como fallback
-    if (order.createdAt) {
-      return new Date(new Date(order.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000);
-    }
-    return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   }
 
   /**
@@ -307,77 +253,58 @@ export class DataMappingV2Service {
       email: user.email || '',
       telefono: user.telefono || user.phone || '',
       avatarUrl: user.avatarUrl || user.avatar || '',
-      dni: user.dni || '',
-      nacionalidad: user.nacionalidad || user.nationality || '',
-      pasaporte: user.pasaporte || user.passport || '',
-      fechaExpedicionPasaporte: user.fechaExpedicionPasaporte || user.passportIssueDate || '',
-      fechaVencimientoPasaporte: user.fechaVencimientoPasaporte || user.passportExpiryDate || '',
-      sexo: user.sexo || user.gender || '',
-      fechaNacimiento: user.fechaNacimiento || user.birthDate || '',
-      ciudad: user.ciudad || user.city || '',
-      codigoPostal: user.codigoPostal || user.postalCode || '',
-      fechaExpedicionDni: user.fechaExpedicionDni || user.dniIssueDate || '',
-      fechaCaducidadDni: user.fechaCaducidadDni || user.dniExpiryDate || '',
-      paisExpedicion: user.paisExpedicion || user.issueCountry || '',
+      // Campos adicionales que se mapearán desde userFieldValues
+      dni: '',
+      direccion: '',
+      ciudad: '',
+      codigoPostal: '',
+      pais: '',
+      fechaNacimiento: '',
+      notas: ''
     };
 
     // Agregar campos adicionales desde userFieldValues
     userFieldValues.forEach(fieldValue => {
-      const fieldName = fieldMap.get(fieldValue.fieldId);
+      const fieldName = fieldMap.get(fieldValue.userFieldId);
+      
       if (fieldName && fieldValue.value) {
-        // Mapear nombres de campos a propiedades de PersonalInfo
-        switch (fieldName.toLowerCase()) {
-          case 'dni':
-          case 'document_number':
-            combinedData.dni = fieldValue.value;
+        // Mapear nombres de campos a propiedades de PersonalInfo según la API
+        switch (fieldName) {
+          case 'Imagen de Perfil':
+            combinedData.avatarUrl = fieldValue.value;
             break;
-          case 'nacionalidad':
-          case 'nationality':
-            combinedData.nacionalidad = fieldValue.value;
-            break;
-          case 'pasaporte':
-          case 'passport':
-            combinedData.pasaporte = fieldValue.value;
-            break;
-          case 'telefono':
-          case 'phone':
+          case 'Teléfono':
             combinedData.telefono = fieldValue.value;
             break;
-          case 'ciudad':
-          case 'city':
+          case 'Fecha de nacimiento':
+            // Convertir de YYYY-MM-DD (API) a DD/MM/YYYY (visualización)
+            if (fieldValue.value && fieldValue.value.includes('-')) {
+              const [year, month, day] = fieldValue.value.split('-');
+              combinedData.fechaNacimiento = `${day}/${month}/${year}`;
+            } else {
+              combinedData.fechaNacimiento = fieldValue.value;
+            }
+            break;
+          case 'DNI/NIE':
+            combinedData.dni = fieldValue.value;
+            break;
+          case 'Dirección':
+            combinedData.direccion = fieldValue.value;
+            break;
+          case 'Ciudad':
             combinedData.ciudad = fieldValue.value;
             break;
-          case 'codigo_postal':
-          case 'postal_code':
+          case 'Código Postal':
             combinedData.codigoPostal = fieldValue.value;
             break;
-          case 'sexo':
-          case 'gender':
+          case 'País':
+            combinedData.pais = fieldValue.value;
+            break;
+          case 'Notas':
+            combinedData.notas = fieldValue.value;
+            break;
+          case 'Sexo':
             combinedData.sexo = fieldValue.value;
-            break;
-          case 'fecha_nacimiento':
-          case 'birth_date':
-            combinedData.fechaNacimiento = fieldValue.value;
-            break;
-          case 'fecha_expedicion_dni':
-          case 'dni_issue_date':
-            combinedData.fechaExpedicionDni = fieldValue.value;
-            break;
-          case 'fecha_caducidad_dni':
-          case 'dni_expiry_date':
-            combinedData.fechaCaducidadDni = fieldValue.value;
-            break;
-          case 'fecha_expedicion_pasaporte':
-          case 'passport_issue_date':
-            combinedData.fechaExpedicionPasaporte = fieldValue.value;
-            break;
-          case 'fecha_vencimiento_pasaporte':
-          case 'passport_expiry_date':
-            combinedData.fechaVencimientoPasaporte = fieldValue.value;
-            break;
-          case 'pais_expedicion':
-          case 'issue_country':
-            combinedData.paisExpedicion = fieldValue.value;
             break;
         }
       }
@@ -398,19 +325,14 @@ export class DataMappingV2Service {
     
     // Mapear campos de PersonalInfo a userFieldValues
     const fieldMappings = [
+      { fieldName: 'image', value: userData.avatarUrl },
       { fieldName: 'dni', value: userData.dni },
-      { fieldName: 'nacionalidad', value: userData.nacionalidad },
-      { fieldName: 'pasaporte', value: userData.pasaporte },
+      { fieldName: 'nacionalidad', value: userData.pais },
       { fieldName: 'telefono', value: userData.telefono },
       { fieldName: 'ciudad', value: userData.ciudad },
       { fieldName: 'codigo_postal', value: userData.codigoPostal },
-      { fieldName: 'sexo', value: userData.sexo },
       { fieldName: 'fecha_nacimiento', value: userData.fechaNacimiento },
-      { fieldName: 'fecha_expedicion_dni', value: userData.fechaExpedicionDni },
-      { fieldName: 'fecha_caducidad_dni', value: userData.fechaCaducidadDni },
-      { fieldName: 'fecha_expedicion_pasaporte', value: userData.fechaExpedicionPasaporte },
-      { fieldName: 'fecha_vencimiento_pasaporte', value: userData.fechaVencimientoPasaporte },
-      { fieldName: 'pais_expedicion', value: userData.paisExpedicion }
+      { fieldName: 'sexo', value: userData.sexo },
     ];
 
     fieldMappings.forEach(mapping => {

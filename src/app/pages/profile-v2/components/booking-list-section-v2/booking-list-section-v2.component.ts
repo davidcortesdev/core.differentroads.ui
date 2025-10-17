@@ -92,7 +92,7 @@ export class BookingListSectionV2Component implements OnInit {
   private loadActiveBookings(userId: number): void {
     // Obtener email del usuario actual
     const userEmail = this.authService.getUserEmailValue();
-    
+
     if (!userEmail) {
       console.warn('No se pudo obtener el email del usuario');
       this.bookingItems = [];
@@ -103,42 +103,58 @@ export class BookingListSectionV2Component implements OnInit {
     // Combinar reservas del usuario como titular + reservas donde aparece como viajero
     forkJoin({
       userReservations: this.bookingsService.getActiveBookings(userId),
-      travelerReservations: this.bookingsService.getActiveBookingsByTravelerEmail(userEmail)
-    }).pipe(
-      switchMap(({ userReservations, travelerReservations }) => {
-        // Combinar y eliminar duplicados basándose en el ID de reserva
-        const allReservations = [...userReservations, ...travelerReservations];
-        const uniqueReservations = allReservations.filter((reservation, index, self) => 
-          index === self.findIndex(r => r.id === reservation.id)
-        );
+      travelerReservations:
+        this.bookingsService.getActiveBookingsByTravelerEmail(userEmail),
+    })
+      .pipe(
+        switchMap(({ userReservations, travelerReservations }) => {
+          // Combinar y eliminar duplicados basándose en el ID de reserva
+          const allReservations = [
+            ...userReservations,
+            ...travelerReservations,
+          ];
+          const uniqueReservations = allReservations.filter(
+            (reservation, index, self) =>
+              index === self.findIndex((r) => r.id === reservation.id)
+          );
 
-        if (uniqueReservations.length === 0) {
-          return of([]);
-        }
+          if (uniqueReservations.length === 0) {
+            return of([]);
+          }
 
-        // Obtener información de tours y imágenes CMS para cada reserva
-        const tourPromises = uniqueReservations.map(reservation => 
-          forkJoin({
-            tour: this.toursService.getTourById(reservation.tourId).pipe(
-              catchError(error => {
-                console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
-                return of(null);
-              })
-            ),
-            cmsTour: this.cmsTourService.getAllTours({ tourId: reservation.tourId }).pipe(
-              map((cmsTours: ICMSTourResponse[]) => cmsTours.length > 0 ? cmsTours[0] : null),
-              catchError(error => {
-                console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
-                return of(null);
-              })
+          // Obtener información de tours y imágenes CMS para cada reserva
+          const tourPromises = uniqueReservations.map((reservation) =>
+            forkJoin({
+              tour: this.toursService.getTourById(reservation.tourId).pipe(
+                catchError((error) => {
+                  console.warn(
+                    `Error obteniendo tour ${reservation.tourId}:`,
+                    error
+                  );
+                  return of(null);
+                })
+              ),
+              cmsTour: this.cmsTourService
+                .getAllTours({ tourId: reservation.tourId })
+                .pipe(
+                  map((cmsTours: ICMSTourResponse[]) =>
+                    cmsTours.length > 0 ? cmsTours[0] : null
+                  ),
+                  catchError((error) => {
+                    console.warn(
+                      `Error obteniendo CMS tour ${reservation.tourId}:`,
+                      error
+                    );
+                    return of(null);
+                  })
+                ),
+            }).pipe(
+              map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
             )
-          }).pipe(
-            map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
-          )
-        );
+          );
 
-        return forkJoin(tourPromises);
-      }),
+          return forkJoin(tourPromises);
+        }),
         map((reservationTourPairs: any[]) => {
           // Mapear usando el servicio de mapeo con imágenes CMS
           return this.dataMappingService.mapReservationsToBookingItems(
@@ -583,7 +599,7 @@ export class BookingListSectionV2Component implements OnInit {
     this.selectedBookingItem = item;
     this.pointsToUse = 0;
     this.pointsModalVisible = true;
-    
+
     // Cargar puntos del usuario
     this.loadUserPoints();
   }
@@ -620,9 +636,11 @@ export class BookingListSectionV2Component implements OnInit {
    * Verifica si se pueden aplicar los puntos
    */
   canApplyPoints(): boolean {
-    return this.pointsToUse > 0 && 
-           this.pointsToUse <= this.userPoints && 
-           this.pointsToUse <= (this.selectedBookingItem?.price || 0);
+    return (
+      this.pointsToUse > 0 &&
+      this.pointsToUse <= this.userPoints &&
+      this.pointsToUse <= (this.selectedBookingItem?.price || 0)
+    );
   }
 
   /**
@@ -642,7 +660,7 @@ export class BookingListSectionV2Component implements OnInit {
       this.messageService.add({
         severity: 'success',
         summary: 'Puntos aplicados',
-        detail: `Se han aplicado ${this.pointsToUse} puntos a la reserva`
+        detail: `Se han aplicado ${this.pointsToUse} puntos a la reserva`,
       });
       this.closePointsModal();
     }, 2000);

@@ -27,6 +27,13 @@ export class BookingListSectionV2Component implements OnInit {
   downloadLoading: { [key: string]: boolean } = {};
   notificationLoading: { [key: string]: boolean } = {};
 
+  // Propiedades para el modal de puntos
+  pointsModalVisible: boolean = false;
+  selectedBookingItem: BookingItem | null = null;
+  userPoints: number = 0;
+  pointsToUse: number = 0;
+  applyingPoints: boolean = false;
+
   constructor(
     private router: Router,
     private messageService: MessageService,
@@ -493,5 +500,86 @@ export class BookingListSectionV2Component implements OnInit {
   
   getReserveLabel(): string {
     return 'Reservar';
+  }
+
+  // ===== MÉTODOS PARA CANJE DE PUNTOS =====
+
+  /**
+   * Determina si debe mostrar el botón de usar puntos
+   */
+  shouldShowUsePoints(): boolean {
+    return this.listType === 'active-bookings';
+  }
+
+  /**
+   * Abre el modal para usar puntos
+   */
+  openPointsModal(item: BookingItem): void {
+    this.selectedBookingItem = item;
+    this.pointsToUse = 0;
+    this.pointsModalVisible = true;
+    
+    // Cargar puntos del usuario
+    this.loadUserPoints();
+  }
+
+  /**
+   * Cierra el modal de puntos
+   */
+  closePointsModal(): void {
+    this.pointsModalVisible = false;
+    this.selectedBookingItem = null;
+    this.pointsToUse = 0;
+  }
+
+  /**
+   * Carga los puntos disponibles del usuario
+   */
+  private loadUserPoints(): void {
+    // TODO: Implementar carga de puntos del usuario
+    // Por ahora usar un valor de ejemplo
+    this.userPoints = 150; // Este valor vendrá de la API de puntos
+  }
+
+  /**
+   * Calcula el nuevo total después del descuento
+   */
+  calculateNewTotal(): number {
+    if (!this.selectedBookingItem || !this.selectedBookingItem.price) {
+      return 0;
+    }
+    return Math.max(0, this.selectedBookingItem.price - this.pointsToUse);
+  }
+
+  /**
+   * Verifica si se pueden aplicar los puntos
+   */
+  canApplyPoints(): boolean {
+    return this.pointsToUse > 0 && 
+           this.pointsToUse <= this.userPoints && 
+           this.pointsToUse <= (this.selectedBookingItem?.price || 0);
+  }
+
+  /**
+   * Aplica los puntos a la reserva
+   */
+  applyPoints(): void {
+    if (!this.canApplyPoints() || !this.selectedBookingItem) {
+      return;
+    }
+
+    this.applyingPoints = true;
+
+    // TODO: Implementar llamada a la API para aplicar puntos
+    // Por ahora simular el proceso
+    setTimeout(() => {
+      this.applyingPoints = false;
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Puntos aplicados',
+        detail: `Se han aplicado ${this.pointsToUse} puntos a la reserva`
+      });
+      this.closePointsModal();
+    }, 2000);
   }
 }

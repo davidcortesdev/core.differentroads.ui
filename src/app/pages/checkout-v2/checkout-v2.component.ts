@@ -601,20 +601,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  async onActivitiesSelectionChange(activitiesData: {
-    selectedActivities: any[];
-    totalPrice: number;
-  }): Promise<void> {
-    this.selectedActivities = activitiesData.selectedActivities;
-    this.activitiesTotalPrice = activitiesData.totalPrice;
-
-    // Esperar a que terminen guardados pendientes en actividades antes de refrescar
-    try {
-      await this.activitiesOptionals?.waitForPendingSaves?.();
-    } catch (err) {
-      console.error('Error esperando guardados de actividades:', err);
-    }
-
+  /**
+   * Método llamado cuando se actualizan las actividades
+   */
+  onActivitiesUpdated(): void {
+    console.log('🎯 Las actividades se han actualizado');
     // Disparar actualización del summary inmediatamente
     this.triggerSummaryRefresh();
   }
@@ -635,26 +626,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     
     // Disparar actualización del summary
     this.triggerSummaryRefresh();
-  }
-
-  /**
-   * xNUEVO: Maneja el evento de guardado completado desde actividades opcionales
-   */
-  onSaveCompleted(event: {
-    component: string;
-    success: boolean;
-    error?: string;
-  }): void {
-    if (event.success) {
-      // El summary se actualiza automáticamente mediante refreshTrigger
-      this.triggerSummaryRefresh();
-    } else {
-      console.error(`Error en guardado de ${event.component}:`, event.error);
-      // Mostrar error al usuario si es necesario
-      this.showErrorToast(
-        `Error al guardar ${event.component}: ${event.error}`
-      );
-    }
   }
 
   /**

@@ -10,7 +10,8 @@ export const environment = {
   redsysUrl: 'https://sis.redsys.es/sis/realizarPago',
   redsysFuc: '355960907',
   redsysClaveComercio: 'GFxyQ+7SuRWSA/GWaB55hOFwqr8ujxPn',
-  redsysNotifyUrl: 'https://qt4uw3rgx6.execute-api.us-east-2.amazonaws.com/prod/redsys/notify',
+  redsysNotifyUrl:
+    'https://qt4uw3rgx6.execute-api.us-east-2.amazonaws.com/prod/redsys/notify',
   redsysMerchantTerminal: '2',
 
   // Google Maps
@@ -27,6 +28,7 @@ export const environment = {
   // APIs - ordenadas alfabéticamente
   amadeusApiUrl: 'https://amadeus.differentroads.es/api',
   cmsApiUrl: 'https://cms.differentroads.es/api',
+  documentationApiUrl: 'https://documentation.differentroads.es/api',
   hotelsApiUrl: 'https://hotels.differentroads.es/api',
   locationsApiUrl: 'https://locations.differentroads.es/api',
   masterdataApiUrl: 'https://masterdata.differentroads.es/api',
@@ -44,7 +46,7 @@ export const environment = {
 
   // Configuración general
   retaileriddefault: 7,
-  
+
   // URLs externas
   tourOperationUrl: 'https://touroperacion.differentroads.es',
 };

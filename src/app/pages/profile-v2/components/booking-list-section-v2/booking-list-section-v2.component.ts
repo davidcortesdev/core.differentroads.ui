@@ -6,9 +6,14 @@ import { BookingsServiceV2 } from '../../../../core/services/v2/bookings-v2.serv
 import { ReservationResponse } from '../../../../core/models/v2/profile-v2.model';
 import { ToursServiceV2 } from '../../../../core/services/v2/tours-v2.service';
 import { DataMappingV2Service } from '../../../../core/services/v2/data-mapping-v2.service';
-import { CMSTourService, ICMSTourResponse } from '../../../../core/services/cms/cms-tour.service';
+import {
+  CMSTourService,
+  ICMSTourResponse,
+} from '../../../../core/services/cms/cms-tour.service';
+import { DocumentPDFService } from '../../../../core/services/documentation/document-pdf.service';
+import { EmailSenderService } from '../../../../core/services/documentation/email-sender.service';
+import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
-
 
 @Component({
   selector: 'app-booking-list-section-v2',
@@ -18,7 +23,8 @@ import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
 })
 export class BookingListSectionV2Component implements OnInit {
   @Input() userId: string = '';
-  @Input() listType: 'active-bookings' | 'travel-history' | 'recent-budgets' = 'active-bookings';
+  @Input() listType: 'active-bookings' | 'travel-history' | 'recent-budgets' =
+    'active-bookings';
 
   bookingItems: BookingItem[] = [];
   isExpanded: boolean = true;
@@ -32,7 +38,10 @@ export class BookingListSectionV2Component implements OnInit {
     private bookingsService: BookingsServiceV2,
     private toursService: ToursServiceV2,
     private dataMappingService: DataMappingV2Service,
-    private cmsTourService: CMSTourService
+    private cmsTourService: CMSTourService,
+    private documentPDFService: DocumentPDFService,
+    private emailSenderService: EmailSenderService,
+    private authService: AuthenticateService
   ) {}
 
   ngOnInit() {
@@ -41,10 +50,10 @@ export class BookingListSectionV2Component implements OnInit {
 
   private loadData(): void {
     this.loading = true;
-    
+
     // Convertir userId de string a number para la API
     const userIdNumber = parseInt(this.userId, 10);
-    
+
     if (isNaN(userIdNumber)) {
       console.error('Error: userId no es un número válido:', this.userId);
       this.bookingItems = [];
@@ -73,195 +82,232 @@ export class BookingListSectionV2Component implements OnInit {
    * Carga reservas activas usando servicios v2
    */
   private loadActiveBookings(userId: number): void {
-    this.bookingsService.getActiveBookings(userId).pipe(
-      switchMap((reservations: ReservationResponse[]) => {
-        if (!reservations || reservations.length === 0) {
-          return of([]);
-        }
+    this.bookingsService
+      .getActiveBookings(userId)
+      .pipe(
+        switchMap((reservations: ReservationResponse[]) => {
+          if (!reservations || reservations.length === 0) {
+            return of([]);
+          }
 
-        // Obtener información de tours y imágenes CMS para cada reserva
-        const tourPromises = reservations.map(reservation => 
-          forkJoin({
-            tour: this.toursService.getTourById(reservation.tourId).pipe(
-              catchError(error => {
-                console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
-                return of(null);
-              })
-            ),
-            cmsTour: this.cmsTourService.getAllTours({ tourId: reservation.tourId }).pipe(
-              map((cmsTours: ICMSTourResponse[]) => cmsTours.length > 0 ? cmsTours[0] : null),
-              catchError(error => {
-                console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
-                return of(null);
-              })
+          // Obtener información de tours y imágenes CMS para cada reserva
+          const tourPromises = reservations.map((reservation) =>
+            forkJoin({
+              tour: this.toursService.getTourById(reservation.tourId).pipe(
+                catchError((error) => {
+                  console.warn(
+                    `Error obteniendo tour ${reservation.tourId}:`,
+                    error
+                  );
+                  return of(null);
+                })
+              ),
+              cmsTour: this.cmsTourService
+                .getAllTours({ tourId: reservation.tourId })
+                .pipe(
+                  map((cmsTours: ICMSTourResponse[]) =>
+                    cmsTours.length > 0 ? cmsTours[0] : null
+                  ),
+                  catchError((error) => {
+                    console.warn(
+                      `Error obteniendo CMS tour ${reservation.tourId}:`,
+                      error
+                    );
+                    return of(null);
+                  })
+                ),
+            }).pipe(
+              map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
             )
-          }).pipe(
-            map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
-          )
-        );
+          );
 
-        return forkJoin(tourPromises);
-      }),
-      map((reservationTourPairs: any[]) => {
-        // Mapear usando el servicio de mapeo con imágenes CMS
-        return this.dataMappingService.mapReservationsToBookingItems(
-          reservationTourPairs.map(pair => pair.reservation),
-          reservationTourPairs.map(pair => pair.tour),
-          'active-bookings',
-          reservationTourPairs.map(pair => pair.cmsTour)
-        );
-      }),
-      catchError(error => {
-        console.error('Error obteniendo reservas activas:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Error al cargar las reservas activas'
-        });
-        return of([]);
-      })
-    ).subscribe({
-      next: (bookingItems: BookingItem[]) => {
-        this.bookingItems = bookingItems;
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error en la suscripción:', error);
-        this.bookingItems = [];
-        this.loading = false;
-      }
-    });
+          return forkJoin(tourPromises);
+        }),
+        map((reservationTourPairs: any[]) => {
+          // Mapear usando el servicio de mapeo con imágenes CMS
+          return this.dataMappingService.mapReservationsToBookingItems(
+            reservationTourPairs.map((pair) => pair.reservation),
+            reservationTourPairs.map((pair) => pair.tour),
+            'active-bookings',
+            reservationTourPairs.map((pair) => pair.cmsTour)
+          );
+        }),
+        catchError((error) => {
+          console.error('Error obteniendo reservas activas:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al cargar las reservas activas',
+          });
+          return of([]);
+        })
+      )
+      .subscribe({
+        next: (bookingItems: BookingItem[]) => {
+          this.bookingItems = bookingItems;
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error en la suscripción:', error);
+          this.bookingItems = [];
+          this.loading = false;
+        },
+      });
   }
 
   /**
    * Carga historial de viajes usando servicios v2
    */
   private loadTravelHistory(userId: number): void {
-    this.bookingsService.getTravelHistory(userId).pipe(
-      switchMap((reservations: ReservationResponse[]) => {
-        if (!reservations || reservations.length === 0) {
-          return of([]);
-        }
+    this.bookingsService
+      .getTravelHistory(userId)
+      .pipe(
+        switchMap((reservations: ReservationResponse[]) => {
+          if (!reservations || reservations.length === 0) {
+            return of([]);
+          }
 
-        // Obtener información de tours y imágenes CMS para cada reserva
-        const tourPromises = reservations.map(reservation => 
-          forkJoin({
-            tour: this.toursService.getTourById(reservation.tourId).pipe(
-              catchError(error => {
-                console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
-                return of(null);
-              })
-            ),
-            cmsTour: this.cmsTourService.getAllTours({ tourId: reservation.tourId }).pipe(
-              map((cmsTours: ICMSTourResponse[]) => cmsTours.length > 0 ? cmsTours[0] : null),
-              catchError(error => {
-                console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
-                return of(null);
-              })
+          // Obtener información de tours y imágenes CMS para cada reserva
+          const tourPromises = reservations.map((reservation) =>
+            forkJoin({
+              tour: this.toursService.getTourById(reservation.tourId).pipe(
+                catchError((error) => {
+                  console.warn(
+                    `Error obteniendo tour ${reservation.tourId}:`,
+                    error
+                  );
+                  return of(null);
+                })
+              ),
+              cmsTour: this.cmsTourService
+                .getAllTours({ tourId: reservation.tourId })
+                .pipe(
+                  map((cmsTours: ICMSTourResponse[]) =>
+                    cmsTours.length > 0 ? cmsTours[0] : null
+                  ),
+                  catchError((error) => {
+                    console.warn(
+                      `Error obteniendo CMS tour ${reservation.tourId}:`,
+                      error
+                    );
+                    return of(null);
+                  })
+                ),
+            }).pipe(
+              map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
             )
-          }).pipe(
-            map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
-          )
-        );
+          );
 
-        return forkJoin(tourPromises);
-      }),
-      map((reservationTourPairs: any[]) => {
-        // Mapear usando el servicio de mapeo con imágenes CMS
-        return this.dataMappingService.mapReservationsToBookingItems(
-          reservationTourPairs.map(pair => pair.reservation),
-          reservationTourPairs.map(pair => pair.tour),
-          'travel-history',
-          reservationTourPairs.map(pair => pair.cmsTour)
-        );
-      }),
-      catchError(error => {
-        console.error('Error obteniendo historial de viajes:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Error al cargar el historial de viajes'
-        });
-        return of([]);
-      })
-    ).subscribe({
-      next: (bookingItems: BookingItem[]) => {
-        this.bookingItems = bookingItems;
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error en la suscripción:', error);
-        this.bookingItems = [];
-        this.loading = false;
-      }
-    });
+          return forkJoin(tourPromises);
+        }),
+        map((reservationTourPairs: any[]) => {
+          // Mapear usando el servicio de mapeo con imágenes CMS
+          return this.dataMappingService.mapReservationsToBookingItems(
+            reservationTourPairs.map((pair) => pair.reservation),
+            reservationTourPairs.map((pair) => pair.tour),
+            'travel-history',
+            reservationTourPairs.map((pair) => pair.cmsTour)
+          );
+        }),
+        catchError((error) => {
+          console.error('Error obteniendo historial de viajes:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al cargar el historial de viajes',
+          });
+          return of([]);
+        })
+      )
+      .subscribe({
+        next: (bookingItems: BookingItem[]) => {
+          this.bookingItems = bookingItems;
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error en la suscripción:', error);
+          this.bookingItems = [];
+          this.loading = false;
+        },
+      });
   }
 
   /**
    * Carga presupuestos recientes usando servicios v2
    */
   private loadRecentBudgets(userId: number): void {
-    this.bookingsService.getRecentBudgets(userId).pipe(
-      switchMap((reservations: ReservationResponse[]) => {
-        if (!reservations || reservations.length === 0) {
-          return of([]);
-        }
+    this.bookingsService
+      .getRecentBudgets(userId)
+      .pipe(
+        switchMap((reservations: ReservationResponse[]) => {
+          if (!reservations || reservations.length === 0) {
+            return of([]);
+          }
 
-        // Obtener información de tours y imágenes CMS para cada presupuesto
-        const tourPromises = reservations.map(reservation => 
-          forkJoin({
-            tour: this.toursService.getTourById(reservation.tourId).pipe(
-              catchError(error => {
-                console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
-                return of(null);
-              })
-            ),
-            cmsTour: this.cmsTourService.getAllTours({ tourId: reservation.tourId }).pipe(
-              map((cmsTours: ICMSTourResponse[]) => cmsTours.length > 0 ? cmsTours[0] : null),
-              catchError(error => {
-                console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
-                return of(null);
-              })
+          // Obtener información de tours y imágenes CMS para cada presupuesto
+          const tourPromises = reservations.map((reservation) =>
+            forkJoin({
+              tour: this.toursService.getTourById(reservation.tourId).pipe(
+                catchError((error) => {
+                  console.warn(
+                    `Error obteniendo tour ${reservation.tourId}:`,
+                    error
+                  );
+                  return of(null);
+                })
+              ),
+              cmsTour: this.cmsTourService
+                .getAllTours({ tourId: reservation.tourId })
+                .pipe(
+                  map((cmsTours: ICMSTourResponse[]) =>
+                    cmsTours.length > 0 ? cmsTours[0] : null
+                  ),
+                  catchError((error) => {
+                    console.warn(
+                      `Error obteniendo CMS tour ${reservation.tourId}:`,
+                      error
+                    );
+                    return of(null);
+                  })
+                ),
+            }).pipe(
+              map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
             )
-          }).pipe(
-            map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
-          )
-        );
+          );
 
-        return forkJoin(tourPromises);
-      }),
-      map((reservationTourPairs: any[]) => {
-        // Mapear usando el servicio de mapeo con imágenes CMS
-        return this.dataMappingService.mapReservationsToBookingItems(
-          reservationTourPairs.map(pair => pair.reservation),
-          reservationTourPairs.map(pair => pair.tour),
-          'recent-budgets',
-          reservationTourPairs.map(pair => pair.cmsTour)
-        );
-      }),
-      catchError(error => {
-        console.error('Error obteniendo presupuestos recientes:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Error al cargar los presupuestos recientes'
-        });
-        return of([]);
-      })
-    ).subscribe({
-      next: (bookingItems: BookingItem[]) => {
-        this.bookingItems = bookingItems;
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error en la suscripción:', error);
-        this.bookingItems = [];
-        this.loading = false;
-      }
-    });
+          return forkJoin(tourPromises);
+        }),
+        map((reservationTourPairs: any[]) => {
+          // Mapear usando el servicio de mapeo con imágenes CMS
+          return this.dataMappingService.mapReservationsToBookingItems(
+            reservationTourPairs.map((pair) => pair.reservation),
+            reservationTourPairs.map((pair) => pair.tour),
+            'recent-budgets',
+            reservationTourPairs.map((pair) => pair.cmsTour)
+          );
+        }),
+        catchError((error) => {
+          console.error('Error obteniendo presupuestos recientes:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al cargar los presupuestos recientes',
+          });
+          return of([]);
+        })
+      )
+      .subscribe({
+        next: (bookingItems: BookingItem[]) => {
+          this.bookingItems = bookingItems;
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error en la suscripción:', error);
+          this.bookingItems = [];
+          this.loading = false;
+        },
+      });
   }
-
-
 
   // Format date for budget display (Day Month format)
   formatShortDate(date: Date): string {
@@ -298,14 +344,12 @@ export class BookingListSectionV2Component implements OnInit {
     }, 0);
   }
 
-
   // Add this method to the component
   imageLoadError(item: BookingItem) {
     item.image = 'https://via.placeholder.com/300x200?text=Image+Error';
-          item.imageLoading = false;
-          item.imageLoaded = false;
+    item.imageLoading = false;
+    item.imageLoaded = false;
   }
-
 
   // ------------- ACTION METHODS -------------
   toggleContent() {
@@ -320,81 +364,114 @@ export class BookingListSectionV2Component implements OnInit {
     }
   }
 
-
   sendItem(item: BookingItem) {
     this.notificationLoading[item.id] = true;
-    //TODO: Implementar leyendo los datos de mysql
+
+    // Get the logged user's email
+    const userEmail = this.authService.getUserEmailValue();
+
+    if (!userEmail) {
+      this.notificationLoading[item.id] = false;
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo obtener el email del usuario logueado',
+      });
+      return;
+    }
+
+    // Prepare the request body
+    const requestBody = {
+      event: 'BUDGET',
+      email: userEmail,
+    };
+
+    // Call the email service
+    this.emailSenderService
+      .sendReservationWithoutDocuments(parseInt(item.id, 10), requestBody)
+      .subscribe({
+        next: (response) => {
+          this.notificationLoading[item.id] = false;
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: 'Email enviado correctamente',
+          });
+        },
+        error: (error) => {
+          this.notificationLoading[item.id] = false;
+          console.error('Error sending email:', error);
+
+          let errorMessage = 'Error al enviar el email';
+          if (error.status === 500) {
+            errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
+          } else if (error.status === 404) {
+            errorMessage = 'Reserva no encontrada.';
+          } else if (error.status === 403) {
+            errorMessage = 'No tienes permisos para enviar este email.';
+          }
+
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: errorMessage,
+          });
+        },
+      });
   }
 
-
   downloadItem(item: BookingItem) {
-    // TEMPORAL: Deshabilitar descarga hasta que la API esté disponible
-    this.messageService.add({
-      severity: 'warn',
-      summary: 'Función no disponible',
-      detail: 'La descarga de documentos no está disponible temporalmente. Contacta con soporte si necesitas el documento.',
-    });
-    return;
-
-    // Código original comentado hasta que la API funcione
-    /*
     this.downloadLoading[item.id] = true;
+
     this.messageService.add({
       severity: 'info',
       summary: 'Info',
-      detail: 'Generando documento...',
+      detail: 'Generando documento PDF...',
     });
 
-    // Intentar descarga con NotificationsServiceV2
-    this.notificationsService.downloadBookingDocument(item.id).subscribe({
-      next: (response) => {
-        this.downloadLoading[item.id] = false;
-        // Abrir el documento en una nueva pestaña
-        window.open(response.fileUrl, '_blank');
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Éxito',
-          detail: 'Documento descargado exitosamente',
-        });
-      },
-      error: (error) => {
-        console.error('Error con NotificationsServiceV2:', error);
-        
-        // Fallback: Intentar con BookingsServiceV2
-        this.bookingsService.downloadBookingDocument(item.id).subscribe({
-          next: (response) => {
-            this.downloadLoading[item.id] = false;
-            window.open(response.fileUrl, '_blank');
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Éxito',
-              detail: 'Documento descargado exitosamente',
-            });
-          },
-          error: (fallbackError) => {
-            this.downloadLoading[item.id] = false;
-            console.error('Error con BookingsServiceV2:', fallbackError);
-            
-            // Mostrar error final
-            let errorMessage = 'Error al descargar el documento';
-            if (fallbackError.status === 500) {
-              errorMessage = 'El documento no está disponible en este momento. Inténtalo más tarde.';
-            } else if (fallbackError.status === 404) {
-              errorMessage = 'Documento no encontrado.';
-            } else if (fallbackError.status === 403) {
-              errorMessage = 'No tienes permisos para descargar este documento.';
-            }
-            
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: errorMessage,
-            });
+    // Download PDF as blob
+    this.documentPDFService
+      .downloadReservationPDFAsBlob(parseInt(item.id, 10), 'BUDGET')
+      .subscribe({
+        next: (blob) => {
+          this.downloadLoading[item.id] = false;
+
+          // Create download link
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `presupuesto_${item.id}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: 'Documento PDF descargado exitosamente',
+          });
+        },
+        error: (error) => {
+          console.error('Error downloading PDF:', error);
+          this.downloadLoading[item.id] = false;
+
+          let errorMessage = 'Error al generar el documento PDF';
+          if (error.status === 500) {
+            errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
+          } else if (error.status === 404) {
+            errorMessage = 'Documento no encontrado.';
+          } else if (error.status === 403) {
+            errorMessage = 'No tienes permisos para descargar este documento.';
           }
-        });
-      }
-    });
-    */
+
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: errorMessage,
+          });
+        },
+      });
   }
 
   reserveItem(item: BookingItem) {
@@ -406,7 +483,6 @@ export class BookingListSectionV2Component implements OnInit {
   trackById(index: number, item: BookingItem): string {
     return item.id;
   }
-
 
   // ------------- DYNAMIC CONFIGURATION METHODS -------------
 
@@ -437,37 +513,40 @@ export class BookingListSectionV2Component implements OnInit {
     }
   }
 
-
   // Button visibility methods
   shouldShowDownload(): boolean {
-    return this.listType === 'active-bookings' || this.listType === 'recent-budgets';
+    return (
+      this.listType === 'active-bookings' || this.listType === 'recent-budgets'
+    );
   }
 
   shouldShowSend(): boolean {
-    return this.listType === 'active-bookings' || this.listType === 'recent-budgets';
+    return (
+      this.listType === 'active-bookings' || this.listType === 'recent-budgets'
+    );
   }
-  
+
   shouldShowView(): boolean {
     return true; // Always show view button
   }
-  
+
   shouldShowReserve(): boolean {
     return this.listType === 'recent-budgets';
   }
-  
+
   // Button label methods
   getDownloadLabel(): string {
     return 'Descargar';
   }
-  
+
   getSendLabel(): string {
     return 'Enviar';
   }
-  
+
   getViewLabel(): string {
     return 'Ver detalle';
   }
-  
+
   getReserveLabel(): string {
     return 'Reservar';
   }

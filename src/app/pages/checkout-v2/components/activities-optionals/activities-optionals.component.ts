@@ -61,17 +61,8 @@ export class ActivitiesOptionalsComponent
   @Input() departureId: number | null = null;
   @Input() reservationId: number | null = null; // Nuevo input para la reservación
 
-  // Outputs para comunicación con componente padre
-  @Output() activitiesSelectionChange = new EventEmitter<{
-    selectedActivities: ActivityWithPrice[];
-    totalPrice: number;
-  }>();
-
-  @Output() saveCompleted = new EventEmitter<{
-    component: string;
-    success: boolean;
-    error?: string;
-  }>();
+  // Output para notificar que se han actualizado las actividades
+  @Output() activitiesUpdated = new EventEmitter<void>();
 
   // Estado del componente
   optionalActivities: ActivityWithPrice[] = [];
@@ -239,7 +230,7 @@ export class ActivitiesOptionalsComponent
     assignedActivities.forEach((activityId) => {
       this.addedActivities.add(activityId);
     });
-    this.emitActivitiesChange();
+    // No emitir evento aquí, solo en guardados
   }
 
   private loadPricesForActivities(): void {
@@ -280,10 +271,6 @@ export class ActivitiesOptionalsComponent
               currency: 'EUR',
             })
           );
-
-          if (this.addedActivities.has(activity.id)) {
-            this.emitActivitiesChange();
-          }
         });
     } else if (activity.type === 'pack') {
       this.activityPackPriceService
@@ -309,10 +296,6 @@ export class ActivitiesOptionalsComponent
               currency: 'EUR',
             })
           );
-
-          if (this.addedActivities.has(activity.id)) {
-            this.emitActivitiesChange();
-          }
         });
     }
   }
@@ -375,7 +358,7 @@ export class ActivitiesOptionalsComponent
       this.debouncedSave(item, 'add');
     }
 
-    this.emitActivitiesChange();
+    // No emitir aquí, solo después de guardar
   }
 
   private addActivityToAllTravelers(item: ActivityWithPrice): void {
@@ -390,11 +373,7 @@ export class ActivitiesOptionalsComponent
         next: (travelers) => {
           if (travelers.length === 0) {
             this.setActivityLoading(item, false);
-            this.saveCompleted.emit({
-              component: 'activities-optionals',
-              success: false,
-              error: 'No hay viajeros en la reserva',
-            });
+            this.errorMessage = 'No hay viajeros en la reserva';
             return;
           }
 
@@ -425,24 +404,20 @@ export class ActivitiesOptionalsComponent
 
               this.updateActivityState(item.id, true);
               this.errorMessage = null;
-              this.saveCompleted.emit({
-                component: 'activities-optionals',
-                success: true,
-              });
+              
+              // Emitir que se actualizaron las actividades
+              this.emitActivitiesUpdated();
             })
             .catch((error) => {
               this.setActivityLoading(item, false);
               console.error('❌ Error guardando actividad:', error);
 
               this.addedActivities.delete(item.id);
-              this.emitActivitiesChange();
               this.errorMessage =
                 'Error al guardar la actividad. Inténtalo de nuevo.';
-              this.saveCompleted.emit({
-                component: 'activities-optionals',
-                success: false,
-                error: 'Error al guardar la actividad',
-              });
+              
+              // Emitir incluso en error
+              this.emitActivitiesUpdated();
             });
         },
         error: (error) => {
@@ -450,15 +425,11 @@ export class ActivitiesOptionalsComponent
           console.error('❌ Error obteniendo viajeros:', error);
 
           this.addedActivities.delete(item.id);
-          this.emitActivitiesChange();
           this.errorMessage =
             'Error al obtener información de viajeros. Inténtalo de nuevo.';
-
-          this.saveCompleted.emit({
-            component: 'activities-optionals',
-            success: false,
-            error: 'Error al obtener viajeros',
-          });
+          
+          // Emitir incluso en error
+          this.emitActivitiesUpdated();
         },
         complete: () => {
           this.pendingOperationsCount = Math.max(0, this.pendingOperationsCount - 1);
@@ -478,11 +449,7 @@ export class ActivitiesOptionalsComponent
         next: (travelers) => {
           if (travelers.length === 0) {
             this.setActivityLoading(item, false);
-            this.saveCompleted.emit({
-              component: 'activities-optionals',
-              success: false,
-              error: 'No hay viajeros en la reserva',
-            });
+            this.errorMessage = 'No hay viajeros en la reserva';
             return;
           }
 
@@ -514,10 +481,9 @@ export class ActivitiesOptionalsComponent
               if (allAssignments.length === 0) {
                 this.setActivityLoading(item, false);
                 this.errorMessage = null;
-                this.saveCompleted.emit({
-                  component: 'activities-optionals',
-                  success: true,
-                });
+                
+                // Emitir que se actualizaron las actividades
+                this.emitActivitiesUpdated();
                 return;
               }
 
@@ -545,24 +511,20 @@ export class ActivitiesOptionalsComponent
 
               this.updateActivityState(item.id, false);
               this.errorMessage = null;
-              this.saveCompleted.emit({
-                component: 'activities-optionals',
-                success: true,
-              });
+              
+              // Emitir que se actualizaron las actividades
+              this.emitActivitiesUpdated();
             })
             .catch((error) => {
               this.setActivityLoading(item, false);
               console.error('❌ Error eliminando actividad:', error);
 
               this.addedActivities.add(item.id);
-              this.emitActivitiesChange();
               this.errorMessage =
                 'Error al eliminar la actividad. Inténtalo de nuevo.';
-              this.saveCompleted.emit({
-                component: 'activities-optionals',
-                success: false,
-                error: 'Error al eliminar la actividad',
-              });
+              
+              // Emitir incluso en error
+              this.emitActivitiesUpdated();
             });
         },
         error: (error) => {
@@ -570,15 +532,11 @@ export class ActivitiesOptionalsComponent
           console.error('❌ Error obteniendo viajeros:', error);
 
           this.addedActivities.add(item.id);
-          this.emitActivitiesChange();
           this.errorMessage =
             'Error al obtener información de viajeros. Inténtalo de nuevo.';
-
-          this.saveCompleted.emit({
-            component: 'activities-optionals',
-            success: false,
-            error: 'Error al obtener viajeros',
-          });
+          
+          // Emitir incluso en error
+          this.emitActivitiesUpdated();
         },
         complete: () => {
           this.pendingOperationsCount = Math.max(0, this.pendingOperationsCount - 1);
@@ -592,7 +550,7 @@ export class ActivitiesOptionalsComponent
     } else {
       this.addedActivities.delete(activityId);
     }
-    this.emitActivitiesChange();
+    // No emitir aquí, se emite después de guardar en BD
   }
 
   isActivityAdded(item: ActivityWithPrice): boolean {
@@ -613,20 +571,9 @@ export class ActivitiesOptionalsComponent
     );
   }
 
-  private emitActivitiesChange(): void {
-    const selectedActivities = this.optionalActivities.filter((activity) =>
-      this.addedActivities.has(activity.id)
-    );
-
-    const totalPrice = selectedActivities.reduce((total, activity) => {
-      const price = this.getBasePrice(activity);
-      return total + (price || 0);
-    }, 0);
-
-    this.activitiesSelectionChange.emit({
-      selectedActivities,
-      totalPrice,
-    });
+  // Método para emitir que se actualizaron las actividades
+  private emitActivitiesUpdated(): void {
+    this.activitiesUpdated.emit();
   }
 
   // NUEVO: método público para esperar a que no haya operaciones pendientes
